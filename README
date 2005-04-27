@@ -1,0 +1,4 @@
+This package provides a few extensions for application development 
+using the famous Pytis toolkit.
+
+The Python module name is 'pytis.extensions'.
