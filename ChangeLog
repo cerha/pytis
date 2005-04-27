@@ -1,0 +1,5 @@
+2005-04-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (run_cb): Nová funkce.
+	(row_update): Nová funkce.
+
