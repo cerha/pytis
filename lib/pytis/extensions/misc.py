@@ -332,3 +332,44 @@ def smssend(tel, message):
 	return msg
     return None
         
+def run_cb(spec, begin_search=None, select_row=0):
+    """Vyvolá èíselník urèený specifikací.
+
+    Argumenty:
+
+      spec -- název specifikace obsahující metodu 'cb_spec'
+      begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
+        inkrementální vyhledávání.
+      select_row -- øádek, na který se má nastavit kurzor
+        
+    Vrací None (pokud není vybrán ¾ádný øádek) nebo instanci 'Value'
+    pro sloupec 'returned_column'.
+    """
+    resolver = lib.form.resolver()
+    cbspec = resolver.get(spec, 'cb_spec')
+    columns = cbspec.columns()
+    returned_column = cbspec.returned_column()
+    result = run_form(CodeBook, cbspec.name(), columns=columns,
+                     begin_search=begin_search,
+                     select_row=select_row)
+    if result:
+        return result[returned_column]
+
+def row_update(row, values=()):
+    """Provede update nad pøedaným øádkem.
+
+    Argumenty:
+
+      row -- pøedaná instance aktuálního PresentedRow.
+      values -- sekvence dvouprvkových sekvencí ('id', value) ,
+        kde 'id' je øetìzcový identifikátor políèka a value je
+        instance, kterou se bude políèko aktualizovat.
+    """        
+    data = row.data()
+    updaterow = row.row()
+    key = data.key()
+    if is_sequence(key):
+        key = key[0]
+    for col, val in values:
+        updaterow[col] = val
+    data.update(row[key.id()], updaterow)
