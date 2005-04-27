@@ -33,7 +33,7 @@ class DataSpec(object):
     Podrobný popis rozhraní viz. konstruktor tøídy.
 
     Po vytvoøení instance této tøídy je mo¾né získat odpovídající instanci
-    'DataFactory' voláním metody 'make()'.
+    'lib.data.DataFactory' voláním metody 'make()'.
     
     """
     
@@ -48,7 +48,7 @@ class DataSpec(object):
             Jedná se v¾dy o sloupce z tabulky 'table'.
           key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
             identifikátorem musí být pøítomný v 'columns'.
-          access_rights -- práva jako instance 'AccessRights'.
+          access_rights -- práva jako instance 'lib.data.AccessRights'.
           ignore_enumerators -- pokud bude pøedána pravdivá hodnota, budou
             enumerátory v¹ech sloupcù ignorovány.
 
@@ -60,7 +60,8 @@ class DataSpec(object):
         assert isinstance(columns, (types.ListType, types.TupleType))
         assert isinstance(key, types.StringType)
         assert isinstance(ignore_enumerators, types.BooleanType)
-        assert isinstance(access_rights, AccessRights) or access_rights is None
+        assert isinstance(access_rights, lib.data.AccessRights) \
+               or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
         for c in columns:
             assert isinstance(c, Column)
@@ -71,7 +72,7 @@ class DataSpec(object):
         self._access_rights = access_rights
 
     def make(self):
-        """Vta» instanci DataFactory odpovídající specifikaci."""
+        """Vta» instanci 'lib.data.DataFactory' odpovídající specifikaci."""
         t = self._table
         bindings = []
         for c in self._columns:
@@ -82,7 +83,7 @@ class DataSpec(object):
                 e = None
                 kwargs = {}
             if e:
-                enumerator = resolver().get(e, 'data_spec')
+                enumerator = lib.form.resolver().get(e, 'data_spec')
                 if not type:
                     kwargs['data_factory_kwargs'] = {'dbconnection_spec':
                                                      config.dbconnection}
@@ -94,15 +95,15 @@ class DataSpec(object):
                 enumerator = None
                 assert kwargs == {}, \
                        "Argumenty jsou zatím podporovány jen pro enumerator."
-            bindings.append(DBColumnBinding(c.id(), t, c.column(),
-                                            enumerator=enumerator,
-                                            type_=type))
+            bindings.append(lib.data.DBColumnBinding(c.id(), t, c.column(),
+                                                     enumerator=enumerator,
+                                                     type_=type))
         if not find('oid', bindings, key=lambda b: b.column()):
-            oid = DBColumnBinding('oid', t, 'oid', type_=lib.data.Oid())
+            oid = lib.data.DBColumnBinding('oid', t, 'oid', type_=lib.data.Oid())
             bindings.append(oid)
         key = find(self._key, bindings, key=lambda b: b.column())
-        return DataFactory(DBDataDefault, bindings, key,
-                           access_rights=self._access_rights)
+        return lib.data.DataFactory(lib.data.DBDataDefault, bindings, key,
+                                    access_rights=self._access_rights)
     
 
 class Column(object):
@@ -222,7 +223,7 @@ class ReusableSpec:
         """Vra» seznam specifikací sloupcù vyjmenovaných sloupcù.
 
         Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
-        v¹ech sloupcù.  Vrací sekvenci instancí 'DBColumnBinding'.
+        v¹ech sloupcù.  Vrací sekvenci instancí 'lib.data.DBColumnBinding'.
 
         """
         if len(args) == 0:

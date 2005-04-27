@@ -15,12 +15,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Definice speciálních typù.""" 
+"""Definice odvozených datových typù.""" 
 
 from pytis.extensions import *
 
-##############################################################################
-# Definice odvozených datových typù.
+
 
 class CodebookNull(lib.data.Codebook):
     """Codebook roz¹íøený o mo¾nost ponechat hodnotu None."""

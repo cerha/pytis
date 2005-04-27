@@ -24,6 +24,13 @@ import lib.output
 import lib.form
 import lib.data
 
+# TODO: je to tu potøeba?  Pøíle¾itostnì smazat!
+from lib.presentation import *
+from lib.util import *
+from lib.form import *
+
+import config
+
 
 def cfg_param(column, cfgspec='Nastaveni', value_column=None):
     """Vrací instanci Value pro konfiguraèní parametr.
