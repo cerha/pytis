@@ -1,0 +1,246 @@
+# -*- coding: iso-8859-2 -*-
+#
+# Copyright (C) 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Tøídy pro zjednodu¹ení a zpøehlednìní tvorby specifikaèních souborù.""" 
+
+from pytis.extensions import *
+from lib.presentation import *
+
+
+class DataSpec(object):
+    """Tøída zjednodu¹ující tvorbu datové specifikace.
+
+    Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává
+    tak nìkteré nízkoúrovòové detaily pøed tvùrcem specifikace.  Zároveò je
+    odstranìna duplicita nìkterých informací, které se pøi pøímém pou¾ití
+    specifikaèních tøíd datového rozhraní není mo¾né zcela vyhnout.
+
+    Podrobný popis rozhraní viz. konstruktor tøídy.
+
+    Po vytvoøení instance této tøídy je mo¾né získat odpovídající instanci
+    'DataFactory' voláním metody 'make()'.
+    
+    """
+    
+    def __init__(self, table, columns, key, access_rights=None,
+                 ignore_enumerators=False):
+        """Inicializuj specifikaci.
+
+        Argumenty:
+
+          table -- název datové tabulky jako øetìzec.
+          columns -- sekvence specifikací sloupcù jako instancí 'Column'.
+            Jedná se v¾dy o sloupce z tabulky 'table'.
+          key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
+            identifikátorem musí být pøítomný v 'columns'.
+          access_rights -- práva jako instance 'AccessRights'.
+          ignore_enumerators -- pokud bude pøedána pravdivá hodnota, budou
+            enumerátory v¹ech sloupcù ignorovány.
+
+        Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
+        automaticky doplnìn sloupec 'oid' typu 'lib.data.Oid'.
+
+        """
+        assert isinstance(table, types.StringType)
+        assert isinstance(columns, (types.ListType, types.TupleType))
+        assert isinstance(key, types.StringType)
+        assert isinstance(ignore_enumerators, types.BooleanType)
+        assert isinstance(access_rights, AccessRights) or access_rights is None
+        assert find(key, columns, key=lambda c: c.id()) is not None
+        for c in columns:
+            assert isinstance(c, Column)
+        self._table = table
+        self._key = key
+        self._columns = columns
+        self._ignore_enumerators = ignore_enumerators
+        self._access_rights = access_rights
+
+    def make(self):
+        """Vta» instanci DataFactory odpovídající specifikaci."""
+        t = self._table
+        bindings = []
+        for c in self._columns:
+            type = c.type()
+            kwargs = c.kwargs()
+            e = c.enumerator()
+            if self._ignore_enumerators:
+                e = None
+                kwargs = {}
+            if e:
+                enumerator = resolver().get(e, 'data_spec')
+                if not type:
+                    kwargs['data_factory_kwargs'] = {'dbconnection_spec':
+                                                     config.dbconnection}
+                    type = lib.data.Codebook(enumerator, **kwargs)
+                else:
+                    assert isinstance(type, lib.data.Codebook)
+                    assert kwargs == {}
+            else:
+                enumerator = None
+                assert kwargs == {}, \
+                       "Argumenty jsou zatím podporovány jen pro enumerator."
+            bindings.append(DBColumnBinding(c.id(), t, c.column(),
+                                            enumerator=enumerator,
+                                            type_=type))
+        if not find('oid', bindings, key=lambda b: b.column()):
+            oid = DBColumnBinding('oid', t, 'oid', type_=lib.data.Oid())
+            bindings.append(oid)
+        key = find(self._key, bindings, key=lambda b: b.column())
+        return DataFactory(DBDataDefault, bindings, key,
+                           access_rights=self._access_rights)
+    
+
+class Column(object):
+    def __init__(self, id, column=None, enumerator=None, type=None, **kwargs):
+        """Inicializuj specifikaci enumerátoru.
+
+        Argumenty:
+        
+          id -- identifikátor sloupce (øetìzec).  Pod tímto identifikátorem
+            bude sloubec vystupovat v aplikaci.
+          column -- název databázového sloupce (øetìzec nebo None).  Implicitnì
+            je doplnìna hodnota 'id', tak¾e pokud se název sloupce
+            shoduje s identifikátorem, není jej tøeba definovat.
+          enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
+            této specifikace bude získán datový objekt a pou¾it jako èíselník.
+            Typ bude v takovém pøípadì automaticky nastaven na
+            'lib.data.Codebook', pokud není urèen explicitnì (viz. ní¾e).
+          type -- explicitní urèení datového typu sloupce (instance
+            'lib.data.Type', nebo None).
+          **kwargs -- pokud jsou uvedeny jakékoliv dal¹í klíèové argumenty,
+            budou tyto pøedány konstruktoru datového typu sloupce.  Momentálnì
+            jsou v¹ak klíèové argumenty podporovány pouze v pøípadì, ¾e je
+            specifikován enumerator.  Potom je vytvoøen 'Codebook' s danými
+            argumenty.  Pokud je tøeba pøedat argumenty jinému typu, je
+            prozatím nutno pou¾ít argument 'type'.
+
+        """
+        assert isinstance(id, types.StringType)
+        assert isinstance(column, types.StringType) or column is None
+        assert isinstance(enumerator, types.StringType) or enumerator is None
+        assert isinstance(type, lib.data.Type) or type is None
+        if isinstance(type, lib.data.Codebook):
+            assert enumerator is not None
+        self._id = id
+        if column is None:
+            column = id
+        self._column = column
+        self._enumerator = enumerator
+        self._type = type
+        self._kwargs = kwargs
+    
+    def id(self):
+        return self._id
+    
+    def column(self):
+        return self._column
+
+    def enumerator(self):
+        return self._enumerator
+
+    def type(self):
+        return self._type
+    
+    def kwargs(self):
+        return self._kwargs
+
+
+Field = FieldSpec
+
+# Odvozené specializované tøídy
+
+class HGroup(GroupSpec):
+    """Horizontální seskupení políèek."""
+    def __init__(self, *items, **kwargs):
+        kwargs['orientation'] = Orientation.HORIZONTAL
+        GroupSpec.__init__(self, items, **kwargs)
+
+class VGroup(GroupSpec):
+    """Vertikální seskupení políèek."""
+    def __init__(self, *items, **kwargs):
+        kwargs['orientation'] = Orientation.VERTICAL
+        GroupSpec.__init__(self, items, **kwargs)
+        
+class LHGroup(GroupSpec):
+    """Horizontální seskupení políèek s labelem a orámováním."""
+    def __init__(self, label, *items, **kwargs):
+        kwargs['orientation'] = Orientation.HORIZONTAL
+        kwargs['label'] = label
+        GroupSpec.__init__(self, items, **kwargs)
+
+class LVGroup(GroupSpec):
+    """Vertikální seskupení políèek s labelem a orámováním."""
+    def __init__(self, label, *items, **kwargs):
+        kwargs['orientation'] = Orientation.VERTICAL
+        kwargs['label'] = label
+        GroupSpec.__init__(self, items, **kwargs)
+        
+
+class ReusableSpec:
+    def __init__(self, resolver):
+        self._resolver = resolver
+        self._bindings = self._bindings()
+        self._fields = self._fields()
+
+    def __getitem__(self, id):
+        return find(id, self._fields, key=lambda f: f.id())
+
+    def _bindings(self):
+        pass
+
+    def _fields(self):
+        pass
+
+    def fields(self, *args):
+        """Vra» seznam specifikací sloupcù vyjmenovaných sloupcù.
+
+        Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
+        v¹ech sloupcù.  Vrací sekvenci instancí 'FieldSpec'.
+
+        """
+        if len(args) == 0:
+            return self._fields
+        else:
+            return filter(lambda f: f.id() in args, self._fields)
+
+    def bindings(self, *args):
+        """Vra» seznam specifikací sloupcù vyjmenovaných sloupcù.
+
+        Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
+        v¹ech sloupcù.  Vrací sekvenci instancí 'DBColumnBinding'.
+
+        """
+        if len(args) == 0:
+            return self._bindings
+        else:
+            return filter(lambda b: b.id() in args, self._bindings)
+
+
+    def fields_complement(self, *args):
+        """Vra» seznam specifikací sloupcù, které nejsou vyjmenovány.
+
+        Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
+        v¹ech sloupcù.  Vrací sekvenci instancí 'FieldSpec'.
+
+        """
+        if len(args) == 0:
+            return self._fields
+        else:
+            return filter(lambda f: f.id() not in args, self._fields)
+
+
