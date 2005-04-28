@@ -332,8 +332,8 @@ def smssend(tel, message):
 	return msg
     return None
         
-def run_cb(spec, begin_search=None, condition=None, select_row=0,
-           columns=None):
+def run_cb(spec, begin_search=None, condition=None, columns=None,
+           returned_column=None, select_row=0):
     """Vyvolá èíselník urèený specifikací.
 
     Argumenty:
