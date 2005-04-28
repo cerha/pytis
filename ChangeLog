@@ -1,3 +1,9 @@
+2005-04-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (cb2colvalue): Pro validaci pou¾ij
+	exportovanou (stringovou) podobu pøedaného 'value'.
+	(run_cb): Doplnìny argumenty 'columns' a 'returned_column'
+
 2005-04-27  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (run_cb): Nová funkce.

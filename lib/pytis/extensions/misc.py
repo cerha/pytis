@@ -110,7 +110,7 @@ def cb2colvalue(value, column=None):
     """
     assert isinstance(value, lib.data.Value)
     assert isinstance(value.type(), lib.data.Codebook)
-    v, e = value.type().validate(value.value())
+    v, e = value.type().validate(value.export())
     if not v:
         #TODO: Co to je?
         return lib.data.Value(None, None)
@@ -332,7 +332,8 @@ def smssend(tel, message):
 	return msg
     return None
         
-def run_cb(spec, begin_search=None, select_row=0):
+def run_cb(spec, begin_search=None, condition=None, select_row=0,
+           columns=None):
     """Vyvolá èíselník urèený specifikací.
 
     Argumenty:
@@ -340,6 +341,11 @@ def run_cb(spec, begin_search=None, select_row=0):
       spec -- název specifikace obsahující metodu 'cb_spec'
       begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
         inkrementální vyhledávání.
+      condition -- podmínka pro filtrování záznamù
+      columns -- seznam sloupcù, pokud se má li¹it od seznamu uvedenému
+        ve specifikaci
+      returned_column -- název sloupce, jeho¾ hodnota se má vrátit, pokud
+        se li¹í od názvu uvedeného ve specifikaci
       select_row -- øádek, na který se má nastavit kurzor
         
     Vrací None (pokud není vybrán ¾ádný øádek) nebo instanci 'Value'
@@ -347,10 +353,13 @@ def run_cb(spec, begin_search=None, select_row=0):
     """
     resolver = lib.form.resolver()
     cbspec = resolver.get(spec, 'cb_spec')
-    columns = cbspec.columns()
-    returned_column = cbspec.returned_column()
+    if not columns:
+        columns = cbspec.columns()
+    if not returned_column:    
+        returned_column = cbspec.returned_column()
     result = run_form(CodeBook, cbspec.name(), columns=columns,
                      begin_search=begin_search,
+                     condition=condition, 
                      select_row=select_row)
     if result:
         return result[returned_column]
