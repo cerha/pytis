@@ -1,0 +1,67 @@
+#title Obecné principy návrhu systému a tvorby kódu
+
+* Obecné zásady
+
+Pøi tvorbì èehokoliv bychom mìli mít na pamìti následující principy:
+
+Srozumitelnost :: U v¹eho by mìlo být jasné, jak to funguje a k èemu to
+slou¾í.  Tím se nemyslí, ¾e v¹e musí být triviální, nýbr¾ se tím míní to, ¾e
+v¹e musí být pokud mo¾no samoobjasòující a pokud to není mo¾né, tak to musí
+být øádnì popsáno a vysvìtleno.
+
+Pøehlednost :: V tom, co vytvoøíme, se musí snadno orientovat autor,
+spoluautoøi i diváci.
+
+Konzistence :: Jednotlivé èásti systému si nesmí navzájem odporovat nebo
+realizovat jednu a tuté¾ vìc na rùzných místech rùznými prostøedky.
+
+Na "provizorní" øe¹ení musí být nahlí¾eno s maximální opatrností.  Taková
+øe¹ení bývají velmi vitální a mohou se snadno pøemìnit v nepøíjemné
+kostlivce.
+
+** Zásada dokumentovanosti
+
+Je u¾iteèné, kdy¾ je v dokumentaèních øetìzcích, pøíp. komentáøích, pojednáno
+o tom, proè jsou které vìci definovány, tak jak jsou definovány, a jaký
+zpùsob jejich pou¾ití se v aplikaci pøedpokládá (ne jak se to kóduje, nýbr¾
+kolik instancí té které tøídy se bude vytváøet, èemu budou odpovídat, co od
+dané tøídy oèekáváme, atd.).
+
+Pomù¾e to:
+
+- Autorovi utøídit si my¹lenky.
+
+- Ètenáøi snáze pochopit zámìr autora a u¹etøit si práci se znovuvynalézáním
+  ji¾ objeveného.
+
+- Zjednodu¹it si následnou práci na dokumentaèních øetìzcích i kódu.
+
+- V¹em zpìtnì zjistit, proè jsou nìkteré vìci udìlány, tak jak jsou.
+
+Zejména je hodnì dùle¾ité dbát na sdìlení vìcného zámìru, proto¾e to umo¾òuje
+velmi rychle pochopit hned ze zaèátku základní principy.  Pokud je èlovìk
+naopak nucen základní principy indukovat z jejich aplikací, dochází ke
+zbyteènému zdr¾ování a zejména vzniká zvý¹ené riziko vymy¹lení jiných
+základních principù a následných zmatkù.
+
+
+* Tvorba kódu
+
+** Modularita
+
+Kód by mìl být rozèlenìn do dostateènì malých celkù s jasnì definovanou
+funkcionalitou a pøesnì definovaným API.  To nám umo¾ní jednak se v ka¾dé
+èásti zamìøit pouze na jediný konkrétní problém a jednak udr¾et celý systém
+na uzdì.
+
+** Datová a funkèní abstrakce
+
+Ve¹kerá data, která se nelokálnì pøedávají mezi rùznými èástmi programu, by
+mìla mít jasnì definovanou podobu a mìla by být reprezentována instancemi
+na¹ich speciálních tøíd k tomu urèených.  To zajistí, ¾e je v¹ude jasné, co
+je co a jak to vypadá.
+
+Pro ka¾dý nástroj, který pou¾íváme (databázové rozhraní, u¾ivatelské
+rozhraní, logování, ...), bychom mìli mít vlastní jednoduché a jasnì
+definované API.  To nás odstíní od problémù a komplexnosti pou¾itého nástroje
+a umo¾ní nám snadno vyu¾ívat to a jen to, co potøebujeme.

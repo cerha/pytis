@@ -1,0 +1,170 @@
+#title Pøístupová práva do databáze
+
+* Cíle a popis mechanismu pøístupových práv
+
+Pøístupová práva do databáze zaji¹»ují, ¾e k datovým objektùm mohou
+pøistupovat a manipulovat s nimi pouze osoby k tomu oprávnìné.  Cílem je
+jednak zamezit neoprávnìnému pøístupu k datùm, a» u¾ pro ètení nebo zápis,
+a jednak zajistit dostateènì podrobnou strukturu práv umo¾òující operátorùm
+provádìt právì ty manipulace s daty, ke kterým jsou oprávnìni.
+
+Implementovaný mechanismus je navr¾en tak, aby pøedev¹ím splòoval vý¹e
+uvedený cíl a v druhé øadì pak aby v sobì skrýval co nejménì rizik,
+tj. zejména aby byl kryt systémovými prostøedky.
+
+** Mechanismus pøístupových práv
+
+Chce-li u¾ivatel pøistoupit do databáze, musí se do ní nejprve pøihlásit.
+Aplikace poèítá s tím, ¾e se tak dìje prostøednictvím u¾ivatelského jména a
+hesla ovìøovaného mechanismy databázového stroje (PostgreSQL).  Autentizace
+u¾ivatele je tedy provádìna automaticky spojením do databáze.  V¹echny
+databázové operace se pak provádí pod pøihlá¹eným u¾ivatelem.
+
+V nejjednodu¹¹ím pøípadì by bylo mo¾no pøístupová práva kompletnì spravovat
+prostøednictvím PostgreSQL.  Proto¾e v¹ak pøístupová práva PostgreSQL nejsou
+dostateènì strukturovaná[1], jsou práva spravována na aplikaèní úrovni.  To
+nevyluèuje vyu¾ití pøístupových práv PostgreSQL jako èásteèné doplòující nebo
+spí¹e duplicitní ochrany dat pøed neoprávnìným ètením a manipulací.
+
+Po pøihlá¹ení se u¾ivatele do databáze jsou zji¹tìny skupiny PostgreSQL, do
+kterých u¾ivatel patøí.  Pøi posuzování oprávnìní pøístupu k jednotlivým
+datovým objektùm je brána v potaz pouze pøíslu¹nost ke skupinám, u¾ivatelské
+jméno jako takové ji¾ nadále nikde nevystupuje.
+
+Pøístup k datovým objektùm je dán definicemi ve specifikaèních souborech,
+pøedávaných konstruktorùm odpovídajících data factories.  Pro ka¾dý sloupec
+datového objektu je mo¾no definovat konkrétní práva pro konkrétní skupiny
+u¾ivatelù.  Pro zjednodu¹ení lze definovat i práva obecná, pro v¹echny
+sloupce datového objektu, v¹echny datové operace a v¹echny skupiny u¾ivatelù.
+
+Na základì tìchto specifikací datové objekty ve svých veøejných metodách
+zpøístupòujících nebo modifikujících data pøístupová práva provìøují.  Pøi
+pøístupu k databázi pøes server se toto provìøování dìje na serveru.  Pøi
+pokusu o neoprávnìný pøístup je vyvolána výjimka.  Jsou ovìøována práva pøímá
+i nepøímá, napøíklad není dovoleno sloupec nepøístupný pro ètení zmiòovat
+v podmínce metody =lib.data.Data.select= za úèelem výbìru jinak pøístupných
+datových sloupcù.
+
+
+* Specifikace pøístupových práv
+
+Specifikace pøístupu do databáze se skládá ze dvou èástí:
+
+- Specifikace u¾ivatelù urèující, kdo má pøístup k databázi a do kterých
+  skupin u¾ivatelù je zaøazen.  Tato specifikace se v prùbìhu provozování
+  aplikace pomìrnì èasto mìní, jsou zøizováni a ru¹eni u¾ivatelé a jsou
+  pøiøazováni nebo vyøazováni z definovaných skupin u¾ivatelù.
+
+- Specifikace práv pøístupu k jednotlivým datovým objektùm urèující, které
+  skupiny u¾ivatelù mohou s kterými objekty manipulovat a jakým zpùsobem.
+  Tato specifikace se bìhem provozování aplikace pøíli¹ nemìní.
+
+** Specifikace u¾ivatelù
+
+Specifikace u¾ivatelù se provádí na úrovni PostgreSQL.  U¾ivatelé aplikace a
+PostgreSQL si navzájem odpovídají.  Aplikace pøedpokládá autentizaci
+u¾ivatelem jeho heslem do PostgreSQL, jiné zpùsoby autentizace (kromì
+autentizace pouhým u¾ivatelským jménem bez hesla) nejsou podporovány.
+
+Stejnì tak skupiny u¾ivatelù jsou spravovány standardními mechanismy
+PostgreSQL.  Pou¾ívají se skupiny PostgreSQL a z PostgreSQL se zji¹»uje, do
+kterých skupin je daný u¾ivatel zaøazen.
+
+V souèasné dobì je nutno správu u¾ivatelù v PostgreSQL provádìt ruènì, na
+úrovni správce databáze.  S ohledem na ponìkud svéráznou podobu definièních
+tabulek u¾ivatelù a skupin v PostgreSQL nelze v blízké dobì oèekávat správu
+u¾ivatelù pøímo z aplikace.
+
+Má-li tedy být novému u¾ivateli umo¾nìn pøístup do databáze, musí mu být
+zalo¾en úèet v PostgreSQL a musí tam být pøidán do patøièných skupin,
+napøíklad s pomocí SQL pøíkazù =CREATE USER= a =ALTER GROUP=.
+
+** Specifikace práv pøístupu k datovým objektùm
+
+Ve¹kerá práva pøístupu k datovým objektùm jsou specifikována pøes skupiny
+u¾ivatelù.  Konkrétní u¾ivatelské jméno je v tomto smìru nepodstatné a slou¾í
+pouze k autentizaci u¾ivatele a ke zji¹tìní skupin, do kterých je zaøazen.
+
+Na rozdíl od specifikace u¾ivatelù jsou práva pøístupu k datovým objektùm
+zaji¹»ována na aplikaèní úrovni.  Doporuèuje se v¹ak, v maximální mo¾né
+míøe[2], práva pøístupu k tabulkám a jiným databázovým objektùm duplicitnì
+regulovat i prostøednictvím standardních mechanismù pøístupových práv
+PostgreSQL.
+
+Pro specifikaci pøístupových práv slou¾í parametr =access_rights=
+konstruktoru tøídy =lib.data.RestrictedData=, typicky pøedávaný
+prostøednictvím stejnojmenného volitelného argumentu konstruktoru tøídy
+=lib.data.DataFactory=.  Hodnotou tohoto argumentu je instance tøídy
+=lib.data.AccessRights=.  Není-li argument uveden, je dovoleno v¹em v¹echno.
+V opaèném pøípadì jsou práva redukována pouze na ta v argumentu explicitnì
+uvedená, co není dovoleno, je zakázáno.
+
+Pro pøístup k databázi rozli¹ujeme práva pøístupu pro ètení, vkládání nových
+záznamù, modifikaci existujících záznamù a mazání záznamù.  Modifikaèní
+operace obvykle nelze provádìt bez práva ètení.
+
+Popis tøídy =lib.data.AccessRights= je k nalezení v její dokumentaci.  Zde
+uvedeme pouze nìkolik pøíkladù.
+
+Implicitní pøístupová práva dovolující v¹echno v¹em mají následující podobu:
+
+<example>
+AccessRights((None, (None, Permission.ALL)))
+</example>
+
+Taková specifikace øíká, ¾e pro v¹echny sloupce (první =None=) platí, ¾e pro
+v¹echny skupiny (druhé =None=) je povoleno v¹echno (=Permission.ALL=).  Pokud
+bychom pøístup k datovému objektu chtìli povolit pouze skupinì =banka=,
+pou¾ili bychom následující specifikaci:
+
+<example>
+AccessRights((None, (['banka'], Permission.ALL)))
+</example>
+
+Pokud bychom chtìli v¹em povolit ètení a skupinì =banka= v¹echny operace,
+zapsali bychom to takto:
+
+<example>
+AccessRights((None, (['banka'], Permission.ALL), (None, Permission.VIEW)))
+</example>
+
+Na poøadí polo¾ek ve specifikaci nezále¾í.
+
+Pokud bychom v nìjakém datovém objektu chtìli skupinì =banka= povolit v¹e a
+skupinám =foogroup= a =bargroup= povolit kompletní pøístup ke sloupci
+=foocolumn= s výjimkou vkládání nových záznamù, udìlali bychom to takto:
+
+<example>
+groups = ['foogroup', 'bargroup']
+AccessRights((None, (['banka'], Permission.ALL)),
+             (None, (groups, Permission.DELETE)),
+             (['foocolumn'], (groups, Permission.VIEW, Permission.UPDATE)))
+</example>
+
+V¹imnìme si, ¾e právo mazání je nutno definovat globálnì pro v¹echny sloupce
+(=None=).  To proto, ¾e mazání jednotlivého sloupce není mo¾né, lze mazat
+pouze celé øádky.
+
+** Doplòující poznámky
+
+Podobnì jako pro datové objekty mù¾e být umo¾nìno definovat pøístupová práva
+i pro jiné entity, napøíklad u¾ivatelské pøíkazy.  Tato práva jsou v¹ak pouze
+informací pro u¾ivatelské rozhraní, skuteèné provìøování pøístupu se provádí
+pouze v datových objektech na základì specifikací pøístupových práv pro daný
+objekt.
+
+Dojde-li ke zmìnì zaøazení u¾ivatele do skupin, je nutno restartovat v¹echna
+probíhající spojení aktuálního u¾ivatele do databáze, aby se tato zmìna
+projevila.  Pokud dojde k rozsáhlej¹ím zmìnám v zaøazení u¾ivatelù do skupin,
+je obvykle nejlep¹í a nejjednodu¹¹í po této zmìnì restartovat databázový stroj.
+
+
+Footnotes:
+
+[1] Chybí mo¾nost specifikovat pøístupová práva pro jednotlivé sloupce
+    tabulek.  To by sice mo¾ná bylo mo¾no øe¹it prostøednictvím views a
+    rules, ale takové øe¹ení by bylo velmi komplikované.
+
+[2] Aplikaèní pøístupová práva poskytují ¹ir¹í mo¾nosti ne¾ práva PostgreSQL,
+    právy PostgreSQL je tedy lze èásteènì doplnit èi duplikovat, nikoliv v¹ak
+    alternativnì plnì nahradit.

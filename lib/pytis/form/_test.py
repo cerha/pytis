@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+import locale
+
+from pytis.util import *
+import wx
+import pytis.util.test
+
+locale.setlocale(locale.LC_NUMERIC, 'C')
+
+tests = pytis.util.test.TestSuite()
+
+#================#
+# list.py        #
+#================#
+
+# Co je potøeba (bohu¾el ruènì, proto¾e tvorba testù je soustavnì
+# ignorována :-((((((( ) otestovat po zmìnách v inline editaci:
+#
+# - Vstup do editace políèka patøiènou klávesou.
+# - Do editace políèka nelze vstoupit ¾ádnou jinou klávesou ani clickem èi
+#   double-clickem.
+# - Zru¹ení editace políèka s vrácením obsahu klávesou Escape.
+# - Po zru¹ení editace políèka kurzor zùstane na onom políèku.
+# - Potvrzení editace políèka klávesou Enter.
+# - Po potvrzení editace políèka se kurzor pøesune na dal¹í políèko vpravo.
+#   Pokud takové políèko ji¾ není, pak: Jedná-li se o editaci existujícího
+#   øádku, kurzor pøeskoèí na první sloupec tého¾ øádku; jedná-li se o nový
+#   øádek, kurzor se zeptá na potvrzení jeho vlo¾ení -- je-li zamítnuto, skoèí
+#   na první sloupec, jinak je vlo¾en dal¹í nový øádek (èistý nebo kopie, podle
+#   zpùsobu posledního vlo¾ení nového øádku) a kurzor skoèí na jeho první
+#   sloupec.
+# - Je-li editován nový øádek, po pøesunu kurzoru po potvrzení políèka je nové
+#   políèko v re¾imu editace.
+# - My¹í klik pøesune kurzor na kliknuté políèko a vyselektuje øádek tohoto
+#   políèka, bez dal¹ích akcí (pokud se nejedná o pøeru¹ení editace).
+# - Pøi jakémkoliv pokusu o opu¹tìní rozeditovaného øádku naskoèí dialog
+#   s dotazem na zru¹ení editace.  Pøi kladné odpovìdi jsou vráceny pùvodní
+#   hodnoty øádku a provedena po¾adovaná akce, v opaèném pøípadì akce provedena
+#   není a kurzor zùstane na své pozici.
+# - Výjimka: Pokud výsledkem editace nejsou ¾ádné zmìny (týká se editace
+#   existujícího i nového øádku), dialog nenaskakuje a akce se provede.
+# - Do tìchto pokusù o opu¹tìní editace se poèítá i opu¹tìní formuláøe a
+#   ukonèení aplikace, av¹ak s tím rozdílem, ¾e se nelze vrátit do editace, je
+#   ji mo¾no pouze potrvdit nebo stornovat.
+# - Pøi zru¹ení nového editovaného øádku dojde ke správnému urèení poètu øádku
+#   gridu.
+# - Lze vlo¾it nový prázdný øádek patøiènou klávesou pøed aktuální záznam.
+# - Lze vlo¾it nový prázdný øádek patøiènou klávesou za aktuální záznam.
+# - Lze vlo¾it kopii aktuálního øádku patøiènou klávesou za aktuální záznam.
+# - Pøi jakémkoliv zalo¾ení nového øádku je kurzor na jeho prvním sloupci a
+#   ono políèko je automaticky v re¾imu editace.
+# - Klávesa ulo¾ení øádku (nebo obdobná akce provedená pøes dialog s dotazem)
+#   øádek ulo¾ení provede.
+# - Klávesa smazání øádku smazání provede.
+# - Pøi smazání editovaného øádku dojde ke správnému urèení poètu øádkù gridu.
+# - Pøi zadání nesprávné hodnoty do políèka naskoèí ihned po potvrzení políèka
+#   varovné dialogové okno a po jeho odklepnutí dojde k návratu do editace
+#   políèka.
+
+
+################
+
+
+def get_tests():
+    return tests
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='get_tests',
+                  argv=pytis.util.test.transform_args())

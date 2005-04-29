@@ -1,0 +1,144 @@
+# -*- coding: iso-8859-2 -*-
+
+# Cache
+# 
+# Copyright (C) 2002, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Implementace rùzných cachí.
+
+Modul nabízí tøídy umo¾òující provádìt rùzné typy cachování.
+
+"""
+
+import UserDict
+
+from pytis.util import *
+
+
+class _Cache(object, UserDict.UserDict):
+    """Bázový objekt pro v¹echny cache."""
+
+    def __init__(self, provider, validator=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          provider -- funkce jednoho argumentu, kterým je klíè, vracející
+            hodnotu odpovídající danému klíèi
+          validator -- funkce jednoho argumentu, kterým je klíè, vracející
+            pravdu právì kdy¾ polo¾ka odpovídající klíèi je platná; mù¾e být
+            té¾ 'None', v kterém¾to pøípadì jsou v¹echny polo¾ky automaticky
+            pova¾ovány za platné
+          
+        """
+        UserDict.UserDict.__init__(self)
+        assert callable(provider)
+        self._provider = provider
+        self._validator = validator
+
+    def __getitem__(self, key):
+        """Vra» hodnotu odpovídající klíèi 'key'.
+
+        Pokud hodnota není v cache pøítomna, pou¾ij pro její získání funkci
+        'provider' a ulo¾ ji do cache.  Metoda sama o sobì nevyvolává ¾ádnou
+        výjimku.
+
+        """
+        try:
+            result = super(_Cache, self).__getitem__(key)
+            if self._validator is not None and not self._validator(key):
+                raise KeyError()
+        except KeyError:
+            result = self[key] = self._provider(key)
+        return result
+
+    def __setitem__(self, key, value):
+        """Ulo¾ 'value' s 'key' do cache."""
+        super(_Cache, self).__setitem__(key, value)
+
+    def reset(self):
+        """Kompletnì zru¹ aktuální obsah cache."""
+        self.data = {}
+
+
+class SimpleCache(_Cache):
+    """Jednoduchá cache s neomezeným poètem ulo¾ených polo¾ek."""
+
+
+class LimitedCache(_Cache):
+    """Cache s omezeným poètem polo¾ek.
+
+    V konstruktoru je zadán maximální poèet polo¾ek cache, který není nikdy
+    pøekroèen.
+
+    """
+    def __init__(self, provider, limit=1000):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          provider -- stejné jako v pøedkovi
+          limit -- nezáporný integer urèující maximální povolený poèet polo¾ek
+            cache
+          
+        """
+        super(LimitedCache, self).__init__(provider)
+        assert type(limit) == type(0)
+        self._limit = limit
+        self._counter = Counter()
+        self._lock = thread.allocate_lock()
+
+    def __getitem__(self, key):
+        result = super(LimitedCache, self).__getitem__(key)
+        return result
+
+    def __setitem__(self, key, value):
+        self._lock.acquire()
+        try:
+            if self._counter.next() > self._limit:
+                self._collect()
+            super(LimitedCache, self).__setitem__(key, value)
+        finally:
+            self._lock.release()
+
+    def reset(self):
+        super(LimitedCache, self).reset()
+        self._counter.reset()
+        
+    def _collect(self):
+        self.reset()
+
+
+class RangeCache(_Cache):
+    """Cache s celoèíselnými klíèi ukládající souvislé úseky dat.
+
+    Tyto úseky jsou dány souvislými intervaly klíèù, dané velikosti.
+    V podstatì se tedy jedná o pole cachovaných hodnot.
+
+    """
+    def __init__(self, provider, size=1000):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          provider -- stejné jako v pøedkovi
+          size -- nezáporný integer, maximální velikost cachovaného úseku dat
+
+        """
+        super(RangeCache, self).__init__(self, provider)
+        assert type(size) == type(0)
+        self._size = size

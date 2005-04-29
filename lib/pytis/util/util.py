@@ -1,0 +1,1389 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Rùzné u¾iteèné pomùcky usnadòující psaní pythonových programù.
+
+Modul obsahuje víceménì triviální funkce, které svým charakterem nepatøí jinam
+a které slou¾í primárnì pro zjednodu¹ení zápisu èasto u¾ívaných konstrukcí.
+Pokud se nìjaký tématický okruh pomùcek rozmno¾í, mù¾e být pøesunut do
+samostatného modulu.
+
+Tento modul je výjimeèný ve dvou smìrech:
+
+1. Vzhledem k triviálnímu charakteru zde obsa¾ených funkcí a vzhledem k tomu,
+   ¾e jejich primárním úèelem je zkrátit a zèitelnit kód, je povoleno jej
+   importovat následujícím zpùsobem:
+   
+     from util import *
+
+2. Definuje symbol '_' jako exportovanou promìnnou.  To je z podobných dùvodù
+   jako vý¹e a s ohledem na bì¾nì pou¾ívané konvence gettextu.
+
+"""
+
+import cgitb
+import copy
+import gc
+import inspect
+import operator
+import os
+import string
+import sys
+import thread
+import types as pytypes
+
+import __builtin__
+if not __builtin__.__dict__.has_key('_'):
+    __builtin__.__dict__['_'] = lambda x: x
+
+
+### Tøídy
+
+class ProgramError(Exception):
+    """Výjimka signalizující programovou chybu.
+
+    Programová chyba je chyba, která by teoreticky nemìla nikdy nastat.
+    Vznikla chybou programu, a» u¾ pøímo v místì, kde je detekována, nebo
+    chybným voláním kódu zvnì (napøíklad nedodr¾ení typù argumentù metody).
+
+    Programovou chybou naopak není systémová chyba, její¾ vznik lze za urèitých
+    okolností oèekávat, ani chyba zpùsobená akcemi u¾ivatele (napøíklad chybnì
+    zadaná data na vstupu).
+
+    Tato výjimka by nemìla být odchytávána, s výjimkou funkcí pro o¹etøení
+    havárie programu.  Její výskyt znamená, ¾e program se dostal do
+    nedefinovaného stavu a mìl by být ukonèen.  (V urèitých, v dokumentaèních
+    øetìzcích jasnì definovaných, pøípadech tento po¾adavek nemusí být striktní
+    a mù¾e znamenat pouze lokální zhroucení týkající se urèitého modulu,
+    pøípadnì i s mo¾ností uzdravení reinicializací.)
+
+    Výjimka pouze dìdí obecnou výjimkovou tøídu a nedefinuje nic nového.
+    
+    """
+    pass
+
+
+class InvalidAccessError(Exception):
+    """Signalizace neautorizovaného pøístupu.
+
+    Tato výjimka je typicky vyvolávána na stranì vzdáleného serveru, pokud se
+    klient pokou¹í volat vzdálenou metodu bez potøebné dodateèné autorizace
+    nebo s argumenty chybných typù.
+
+    """
+    def __init__(self, *args):
+        import pytis.util
+        pytis.util.log(pytis.util.OPERATIONAL, 'Neoprávnìný pøístup', args)
+        super_(InvalidAccessError).__init__(self, *args)
+
+
+class FileError(Exception):
+    """Výjimka vyvolávaná po chybì pøi práci se soubory.
+
+    Nejedná se o duplikát 'os.OSError', pou¾ívá se napøíklad pokud nelze
+    z nìjakého zvlá¹tního dùvodu vytvoøit doèasný soubor.
+
+    """
+    pass
+
+    
+class Counter:
+    """Jednoduchý èítaè.
+
+    Po svém vytvoøení je inicializován na hodnotu 0 a pøi ka¾dém ètení metodou
+    'next()' je tato hodnota zvý¹ena.
+
+    Tøída není thread-safe.
+
+    """
+    def __init__(self):
+        """Inicializuj instanci."""
+        self._value = 0
+
+    def next(self):
+        """Zvy¹ hodnotu èítaèe o 1 a vra» ji."""
+        self._value = self._value + 1
+        return self._value
+
+    def current(self):
+        """Vra» aktuální hodnotu èítaèe bez jejího zvý¹ení."""
+        return self._value
+        
+    def reset(self):
+        """Nastav hodnotu èítaèe na 0."""
+        self._value = 0
+
+
+class Pipe:
+    """Jednoduchá roura umo¾òující zápis a ètení stringových dat.
+
+    Typické pou¾ití této tøídy je kdy¾ jedna funkce si ¾ádá stream pro zápis,
+    druhá pro ètení a je zapotøebí tyto dvì funkce propojit rourou.  Tøída
+    neposkytuje ¾ádný komfort, omezuje se pouze na nejzákladnìj¹í funkce.  Je
+    v¹ak thread-safe.
+
+    """
+    # Implementace této tøídy byla pùvodnì jednodu¹¹í, vyu¾ívala Queue.Queue.
+    # To v sobì ov¹em skrývalo nepøíjemný výkonnostní problém: Ve frontì se
+    # mù¾e ocitnout spousta krátkých øetìzcù a jsou-li èteny na konci v¹echny
+    # naráz, trvá to velmi dlouho.  Bylo tedy nutné pou¾ít mechanismus, kdy
+    # se nepracuje se zámky pøi ètení ka¾dého vlo¾eného stringu a nesèítá se
+    # mnoho krátkých stringù do jednoho velkého (je zde nepøíjemná kvadratická
+    # èasová slo¾itost vzhledem k poètu stringù).
+
+    # Invarianty:
+    # - v¾dy pracuje nejvý¹e jeden ètenáø
+    # - manipulace s bufferem kdekoliv je v¾dy kryta zámkem _buffer_lock
+    # - zámek _empty_lock je nastaven pouze na zaèátku do prvního zápisu
+    #   nebo volání close, a pak u¾ nikdy není nastaven na dobu del¹í ne¾
+    #   okam¾ik
+    # - zámek _read_lock smí uvolnit pouze dr¾itel zámku _read_lock_lock
+    
+    def __init__(self, cc=()):
+        """Inicializuj rouru.
+
+        Argumenty:
+
+          cc -- stream nebo sekvence streamù, do kterých budou kopírována
+            v¹echna do roury zapisovaná data; bude-li volána metoda 'close()',
+            budou uzavøeny i tyto streamy
+
+        """
+        self._cc = xtuple(cc)
+        self._closed = False
+        self._buffer = []
+        self._buffer_lock = thread.allocate_lock()
+        self._read_lock = thread.allocate_lock()
+        self._empty_lock = thread.allocate_lock()
+        self._empty_lock.acquire()
+        self._empty_lock_lock = thread.allocate_lock()
+
+    def _free_empty_lock(self):
+        self._empty_lock_lock.acquire()
+        try:
+            if self._empty_lock.locked():
+                self._empty_lock.release()
+        finally:
+            self._empty_lock_lock.release()
+
+    def write(self, string_):
+        """Stejné jako v pøípadì tøídy 'file'.
+
+        Zápis po zavolání metody 'close()' vyvolá výjimku 'ValueError'.
+        K tému¾ mù¾e dojít, pokud byl v konstruktoru specifikován kopírovací
+        stream a je ji¾ uzavøen.
+
+        """
+        if self._closed:
+            raise ValueError, "I/O operation on closed file"
+        self._buffer_lock.acquire()
+        try:
+            buffer = self._buffer
+            if not buffer or len(buffer[-1]) > 4096:
+                buffer.append(string_)
+            else:
+                buffer[-1] = buffer[-1] + string_
+            self._free_empty_lock()
+            for s in self._cc:
+                s.write(string_)
+        finally:
+            self._buffer_lock.release()
+
+    def read(self, size=-1):
+        """Stejné jako v pøípadì tøídy 'file'."""
+        self._read_lock.acquire()
+        try:
+            result = ''
+            buffer = self._buffer
+            while True:
+                self._buffer_lock.acquire()
+                try:
+                    while buffer:
+                        first = buffer[0]
+                        if size < 0:
+                            result = result + first
+                            del buffer[0]
+                        else:
+                            if len(first) <= size:
+                                result = result + first
+                                size = size - len(first)
+                                del buffer[0]
+                            else:
+                                result = result + first[:size]
+                                buffer[0] = first[size:]
+                                return result
+                finally:
+                    self._buffer_lock.release()
+                self._empty_lock.acquire()
+                self._free_empty_lock()
+                if self._closed:
+                    break
+            if not result and size != 0:
+                return None
+            else:
+                return result
+        finally:
+            self._read_lock.release()
+
+    def close(self):
+        """Stejné jako v pøípadì tøídy 'file'.
+
+        Tato metoda pøitom uzavírá pouze zápisový konec roury a cc stream
+        (byl-li v konstruktoru zadán) a ponechává data pro ètení.  Uvolnit data
+        lze následným zavoláním metody 'read()' bez argumentù.
+
+        """
+        self._closed = True
+        self._free_empty_lock()
+        for s in self._cc:
+            try:
+                s.close()
+            except:
+                pass
+
+
+class Popen:
+    """Tøída umo¾òující spou¹tìní programù a komunikaci s nimi.
+
+    Pøi vytváøení instance tøídy je vytvoøen nový proces, se kterým je mo¾no
+    komunikovat pomocí zadaných nebo novì vytvoøených streamù, blí¾e viz metoda
+    '__init__()'.
+
+    Streamy pro komunikaci s procesem jsou dostupné prostøednictvím metod
+    'from_child()' a 'to_child()'.  Process id spu¹tìného programu je
+    dostupné pøes metodu 'pid()'.
+    
+    """
+    def __init__(self, command, to_child=None, from_child=None,
+                 directory=None):
+        """Spus» 'command' v samostatném procesu.
+
+        Argumenty:
+
+          command -- string nebo sekvence stringù definující spou¹tìný pøíkaz a
+            jeho argumenty
+          to_child -- file descriptor nebo file object obsahující file
+            descriptor otevøené pro zápis, prostøednictvím kterého bude
+            zapisováno na standardní vstup spu¹tìného procesu; mù¾e být té¾
+            'None', v kterém¾to pøípadì bude pro tyto úèely vytvoøena nová
+            roura
+          from_child -- file descriptor nebo file object obsahující file
+            descriptor otevøené pro ètení, prostøednictvím kterého bude
+            dostupný standardní výstup spu¹tìného procesu; mù¾e být té¾ 'None',
+            v kterém¾to pøípadì bude pro tyto úèely vytvoøena nová roura
+          directory -- existující adresáø (coby string), ve kterém má být
+            proces spu¹tìn, nebo 'None', v kterém¾to pøípadì je proces spu¹tìn
+            v aktuálním adresáøi
+
+        """
+        if to_child is None:
+            r_to_child, w_to_child = os.pipe()
+        else:
+            if isinstance(to_child, file):
+                to_child = to_child.fileno()
+            r_to_child, w_to_child = to_child, None
+        if from_child is None:
+            r_from_child, w_from_child = os.pipe()
+        else:
+            if isinstance(from_child, file):
+                from_child = from_child.fileno()
+            r_from_child, w_from_child = None, from_child
+        pid = os.fork()
+        if pid == 0:
+            if directory is not None:
+                os.chdir(directory)
+            try:
+                if w_to_child is not None:
+                    os.close(w_to_child)
+                if r_from_child is not None:
+                    os.close(r_from_child)
+                os.dup2(r_to_child, 0)
+                os.dup2(w_from_child, 1)
+                if type(command) == type(''):
+                    command = ['/bin/sh', '-c', command]
+                for i in range(3, 256):
+                    try:
+                        os.close(i)
+                    except:
+                        pass
+                os.execvp(command[0], command)
+            finally:
+                os._exit(1)
+        if r_to_child is not None:
+            os.close(r_to_child)
+        if w_to_child is None:
+            self._to_child = None
+        else:
+            self._to_child = os.fdopen(w_to_child, 'w')
+        if w_from_child is not None and isinstance(w_from_child, int):
+            os.close(w_from_child)
+        if r_from_child is None:
+            self._from_child = None
+        else:
+            self._from_child = os.fdopen(r_from_child, 'r')
+        self._pid = pid
+
+    def from_child(self):
+        """Vra» file object pro ètení ze standardního výstupu procesu."""
+        return self._from_child
+
+    def to_child(self):
+        """Vra» file object pro zápis na standardní vstup procesu."""
+        return self._to_child
+
+    def pid(self):
+        """Vra» process id spu¹tìného programu."""
+        return self._pid
+
+    def wait(self):
+        """Èekej na dokonèení podprocesu."""
+        os.waitpid(self.pid(), 0)
+
+
+class Tmpdir(object):
+    """Tøída vytváøející pro dobu své existence doèasný adresáø.
+
+    Tøída zaji¹»uje vytvoøení doèasného adresáøe pøi svém vzniku a jeho smazání
+    vèetnì v¹ech souborù v nìm obsa¾ených pøi svém zániku.
+
+    """
+
+    def __init__(self, prefix='pytis', *args, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          prefix -- prefix jména adresáøe, string
+
+        """
+        self._tmpdir = mktempdir(prefix=prefix)
+        super(Tmpdir, self).__init__(*args, **kwargs)
+
+    def __del__(self):
+        self._cleanup()
+        
+    def _cleanup(self):
+        for file_name in os.listdir(self._tmpdir):
+            try:
+                os.remove(os.path.join(self._tmpdir, file_name))
+            except:
+                pass
+        try:
+            os.rmdir(self._tmpdir)
+        except:
+            pass
+    
+
+class Stack(object):
+    """Obecný zásobník.
+
+    Datová struktura typu LIFO, umo¾òující pracovat s prvky libovolného typu.
+
+    """
+
+    def __init__(self):
+        self._list = []
+        
+    def __str__(self):
+        classname = str(self.__class__).split('.')[-1]
+        contents = ', '.join(map(str, self._list))
+        return '<%s contents=%s>' % (classname, contents)
+
+    def push(self, item):
+        """Pøidej prvek na vrchol zásobníku.
+
+        Argumentem mù¾e být libovolný objekt.
+
+        """
+        self._list.append(item)
+        
+    def pop(self):
+        """Odeber objekt z vrcholu zásobníku.
+
+        Pøi pokusu o odebrání z prázdného zásobníku vyvolej `IndexError'.
+        
+        """
+        return self._list.pop()
+            
+    def top(self):
+        """Vra» nejvrchnìj¹í prvek ze zásobníku.
+
+        Pokud je zásobník prázdný, vra» None.
+        
+        """
+        if self.empty():
+            return None
+        return self._list[-1]
+
+    def empty(self):
+        """Vra» pravdu, je-li zásobník prázdný."""
+        return len(self._list) == 0
+        
+
+class XStack(Stack):
+    """Zásobník s aktivním prvkem a dal¹ími roz¹íøenými mo¾nostmi.
+
+    Roz¹iøuje mo¾nosti zásobníku o:
+
+      * aktivaci libovolného prvku
+      * zji¹tìní aktivního prvku
+      * zji¹tìní seznamu v¹ech prvkù
+      * vyjmutí libovolného prvku ze zásobníku
+
+    V zásobníku nesmí být pøítomen jeden objekt souèasnì vícekrát.  V takovém
+    pøípadì není chování zásobníku definováno.
+      
+    """
+    def __init__(self):
+        self._active = None
+        Stack.__init__(self)
+        
+    def push(self, item):
+        """Pøidej prvek na vrchol zásobníku.
+
+        Pøidaný prvek se automaticky stává aktivním.
+
+        """
+        Stack.push(self, item)
+        self.activate(item)
+
+    def pop(self):
+        """Odeber objekt z vrcholu zásobníku.
+
+        Pøi odebrání aktivního prvku se stává aktivním prvkem vrchní prvek
+        zásobníku.
+        
+        """
+        item = self.top()
+        Stack.pop(self)
+        if item is self._active:
+            self.activate(self.top())
+
+    def remove(self, item):
+        """Vyjmi daný prvek ze zásobníku.
+
+        Pokud byl vyjmutý prvek aktivním prvkem, je aktivován pøedcházející
+        prvek.
+        
+        """
+        prev = self.prev()
+        del self._list[self._list.index(item)]
+        if item is self._active:
+            self.activate(prev)
+
+    def items(self):
+        """Vra» seznam v¹ech prvkù jako tuple.
+
+        Prvek ``top'' je poslední.
+
+        """
+        return tuple(self._list)
+
+    def activate(self, item):
+        """Aktivuj daný prvek."""
+        assert item in self._list or item is None and self.empty()
+        self._active = item
+        
+    def active(self):
+        """Vra» právì aktivní prvek"""
+        assert self._active in self._list or \
+               self._active is None and self.empty()
+        return self._active
+
+    def next(self):
+        """Vra» prvek následující za právì aktivním prvkem.
+
+        Pokud je aktivní prvek jediným prvkem zásobníku, nebo je zásobník
+        prázdný, vra» None.
+
+        """
+        if len(self._list) <= 1:
+            return None
+        i = self._list.index(self._active)
+        return self._list[(i+1) % len(self._list)]
+
+    def prev(self):
+        """Vra» prvek pøedcházející pøed právì aktivním prvkem.
+
+        Pokud je aktivní prvek jediným prvkem zásobníku, nebo je zásobník
+        prázdný, vra» None.
+
+        """
+        if len(self._list) <= 1:
+            return None
+        i = self._list.index(self._active)
+        return self._list[i-1]
+
+
+### Funkce
+
+def gettext_(text):
+    """Vra» pøelo¾ený text jako unicode øetìzec.
+
+    Funkce také zachovává hodnotu None, je-li pøedána na vstupu.
+    
+    """
+    if text is None:
+        return None
+    else:
+        return unicode(_(text))
+
+def identity(x):
+    """Vra» 'x'."""
+    return x
+
+
+def is_(x, y):
+    """Vra» pravdu, právì kdy¾ je 'x' identické s 'y' ve smyslu operátoru 'is'.
+
+    'x' a 'y' mohou být libovolné objekty.
+
+    """
+    return x is y
+
+
+def xor(x, y):
+    """Vra» pravdivostní hodnotu exkluzivního OR výrazù 'x' a 'y'."""
+    return (x and not y) or (not x and y)
+
+
+def some(predicate, *sequences):
+    """Vra» pravdu, právì kdy¾ nìjaký prvek 'sequences' splòuje 'predicate'.
+
+    Argumenty:
+
+      predicate -- funkce s poètem argumentù rovným poètu prvkù 'sequences'
+        vracející pravdu nebo nepravdu
+      sequences -- sekvence vzájemnì stejnì dlouhých sekvencí, jejich¾
+        zazipováním vzniknou sekvence argumentù pro volání funkce 'predicate'
+
+    """
+    for elt in apply(zip, sequences):
+        if apply(predicate, elt):
+            return True
+    else:
+        return False
+
+        
+def xtuple(x):
+    """Vra» 'x' jako tuple.
+
+    Je-li 'x' sekvence, vra» tuple, jeho¾ prvky se shodují s prvky 'x'.  Jinak
+    vra» tuple, jeho¾ jediným prvkem je 'x'.
+    
+    """
+    if is_sequence(x):
+        return tuple(x)
+    else:
+        return (x,)
+
+
+def xlist(x):
+    """Vra» 'x' jako list.
+
+    Je-li 'x' sekvence, vra» list, jeho¾ prvky se shodují s prvky 'x'.  Jinak
+    vra» list, jeho¾ jediným prvkem je 'x'.
+    
+    """
+    if is_sequence(x):
+        return list(x)
+    else:
+        return [x]
+
+
+def safedel(object, element):
+    """Aplikuj operátor 'del' na 'element' of 'object' bez signalizace chyby.
+
+    Provádí pøíkaz 'del object[element]', av¹ak odchytává pøípadnou výjimku
+    'KeyError', resp. 'IndexError', místo ní nedìlá nic.
+    
+    Argumenty:
+
+      object -- dictionary nebo list, ze kterého má být odstranìn 'element'
+      element -- pro 'object' dictionary libovolný objekt, který je klíèem
+        'object'; pro 'object' list libovolný nezáporný integer
+
+    Vrací: 'object'.
+
+    """
+    if isinstance(object, dict):
+        try:
+            del object[element]
+        except KeyError:
+            pass
+    elif isinstance(object, list):
+        try:
+            del object[element]
+        except IndexError:
+            pass
+    return object
+        
+    
+def position(element, sequence, key=identity):
+    """Vra» pozici 'element' v 'sequence'.
+
+    Pokud se 'element' v 'sequence' nenachází, vra» 'None'.
+    
+    Porovnání prvkù je provádìno operátorem '=='.  Hodnoty prvkù 'sequence'
+    jsou získávány funkcí 'key', která musí jako svùj jediný argument pøijímat
+    prvky 'sequence'.
+
+    """
+    for i in range(len(sequence)):
+        if key(sequence[i]) == element:
+            return i
+    else:
+        return None
+
+
+if hasattr(operator, 'eq'):
+    _eq = operator.eq
+else:
+    _eq = (lambda x, y: x == y)
+
+def find(element, sequence, key=identity, test=_eq):
+    """Vra» nejlevìj¹í prvek 'sequence' rovnající se 'element'.
+    
+    Pokud se 'element' v 'sequence' nenachází, vra» 'None'.
+
+    Argumenty:
+
+      key -- funkce jednoho argumentu, kterým je prvek 'sequence', vracející
+        hodnotu pro porovnání s 'element'
+      test -- funkce dvou argumentù, z nich¾ první je 'element' a druhý prvek
+        'sequence' po aplikaci 'key'.  Je-li zadáno, provádí se porovnání touto
+        funkcí, jinak se porovnání provádí operátorem '=='.
+
+    """
+    for elt in sequence:
+        if test(element, key(elt)):
+            return elt
+    else:
+        return None
+
+
+def assoc(item, alist):
+    """Vra» nejlevìj¹í prvek z 'alist', jeho¾ první prvek se rovná 'item'.
+
+    Pokud takový prvek neexistuje, vra» 'None'.  Porovnání se provádí
+    operátorem '='.
+    
+    'alist' musí být sekvence neprázdných sekvencí.
+
+    """
+    return find(item, alist, key=(lambda x: x[0]))
+
+
+def rassoc(item, alist):
+    """Vra» nejlevìj¹í prvek z 'alist', jeho¾ druhý prvek se rovná 'item'.
+
+    Pokud takový prvek neexistuje, vra» 'None'.  Porovnání se provádí
+    operátorem '='.
+    
+    'alist' musí být sekvence dvouprvkových sekvencí.
+
+    """
+    return find(item, alist, key=(lambda x: x[1]))
+
+
+def remove_duplicates(list):
+    """Vra» prvky 'list', av¹ak bez jejich násobných výskytù.
+
+    Násobnost se testuje porovnáním prvkù pomocí operátoru '='.
+    
+    Funkce nezachovává poøadí prvkù.
+
+    """
+    if not list:
+        return list
+    result = copy.copy(list)
+    result.sort()
+    last = result[0]
+    i = 1
+    for x in result[1:]:
+        if x != last:
+            result[i] = last = x
+            i = i + 1
+    return result[:i]
+
+
+def flatten(list):
+    """Vra» 'list' bez vnoøených sekvencí.
+
+    Argumenty:
+
+      list -- libovolná sekvence
+
+    Vrací: Sekvenci tvoøenou prvky sekvence 'list', pøièem¾ ka¾dý prvek, který
+      je sám sekvencí, je ve vrácené sekvenci rekurzivnì nahrazen svými prvky.
+
+    """
+    result = []
+    if is_sequence(list):
+        result = result + reduce(operator.add, map(flatten, list), [])
+    else:
+        result.append(list)
+    return result
+
+
+def nreverse(list):
+    """Vra» prvky 'list' v opaèném poøadí.
+
+    Argumenty:
+
+      list -- libovolný list
+
+    Funkce je destruktivní, tj. hodnota 'list' je v ní zmìnìna.
+
+    """
+    list.reverse()
+    return list
+
+
+def starts_with(string, prefix):
+    """Vra» pravdu, právì kdy¾ 'string' zaèíná 'prefix'.
+
+    Argumenty:
+
+      string -- string
+      prefix -- string
+
+    """
+    return string[:len(prefix)] == prefix
+
+
+def super_(class_):
+    """Vra» prvního pøedka tøídy 'class_'."""
+    return class_.__bases__[0]
+
+
+def _mro(class_):
+    def dfs(dfs, queue, found):
+        if queue:
+            head = queue[0]
+            if head in found:
+                result = dfs(dfs, queue[1:], found)
+            else:
+                found.append(head)
+                result = dfs(dfs, list(head.__bases__) + queue[1:], found)
+        else:
+            result = found
+        return result
+    return dfs(dfs, [class_], [])
+
+
+def next_subclass(class_, instance):
+    """Vra» potomka následujícího 'class_' v hierarchii dìdiènosti 'instance'.
+
+    Pokud má tøída 'instance' atribut '__mro__', je pou¾it tento.  V opaèném
+    pøípadì je tento atribut tøídy vytvoøen prohledáváním pøedkù 'instance' do
+    hloubky.  'instance' musí být instancí 'class_'.
+
+    Vrací: Odpovídající tøídu; pokud taková není tak 'None'.
+    
+    """
+    iclass = instance.__class__
+    try:
+        mro = iclass.__mro__
+    except AttributeError:
+        mro = _mro(iclass)
+        iclass.__mro__ = mro
+    i = position(class_, mro)
+    if i is None or i == len(mro) - 1:
+        result = None
+    else:
+        result = mro[i+1]
+    return result
+
+
+def sameclass(o1, o2, strict=False):
+    """Vra» pravdu, právì kdy¾ 'o1' a 'o2' jsou instance té¾e tøídy.
+
+    Je-li argument 'strict' pravdivý, musí se rovnat tøídy obou objektù 'o1' a
+    'o2' ve smyslu operátoru '=='.  V opaèném pøípadì postaèí rovnost jmen tøíd
+    a jejich modulù.
+
+    """
+    try:
+        c1 = o1.__class__
+        c2 = o2.__class__
+    except:
+        return False
+    if c1 == c2:
+        return True
+    else:
+        if strict:
+            return False
+        else:
+            return c1.__name__ == c2.__name__ and \
+                   c1.__module__ == c2.__module__
+
+
+_public_attributes = {}
+def public_attributes(class_):
+    """Vra» tuple v¹ech jmen veøejných atributù tøídy 'class_'.
+
+    Vrácená jména jsou strings a obsahují i podìdìné atributy.  Nejsou mezi
+    nimi v¹ak ¾ádná jména zaèínající podtr¾ítkem.  Jména atributù jsou ve
+    vrácené sekvenci v poøadí dìdiènosti poèínaje od 'class_'.  Mohou se v nich
+    vyskytovat duplicity.
+
+    Dojde-li od posledního volání této funkce v 'class_' ke zmìnì atributù,
+    tato zmìna nemusí být zohlednìna.
+
+    """
+    global _public_attributes
+    try:
+        return _public_attributes[class_]
+    except KeyError:
+        pass
+    attrs = map(dir, _mro(class_))
+    att = reduce(operator.add, attrs)
+    public = tuple(filter(lambda s: not s or s[0] != '_', att))
+    result = remove_duplicates(list(public))
+    result = tuple(result)
+    _public_attributes[class_] = result
+    return result
+
+
+def direct_public_members(obj):
+    """Vra» tuple v¹ech pøímých veøejných atributù a metod tøídy objektu 'obj'.
+
+    Pøímými èleny tøídy jsou my¹leny ty, které nejsou shodné se stejnojmenným
+    èlenem nìkterého pøedka tøídy.  Veøejnými èleny tøídy jsou my¹leny ty,
+    jejich¾ název nezaèíná podtr¾ítkem.
+
+    """
+    if type(obj) == pytypes.ClassType:
+        cls = obj
+    else:
+        cls = obj.__class__
+    def public_members(cls):
+        members = inspect.getmembers(cls)
+        return filter(lambda x: x[0] and x[0][0] != '_', members)
+    members = public_members(cls)
+    super_members = map(lambda x: x[1],
+                        reduce(operator.add,
+                               map(public_members, cls.__bases__),
+                               []))
+    result = []
+    for name, value in members:
+        if find(value, super_members) is None:
+            result.append(name)
+    return tuple(result)
+
+
+def compare_objects(o1, o2):
+    """Porovnej 'o1' a 'o2' a vra» výsledek.
+
+    Výsledek odpovídá pravidlùm pro special metodu '__cmp__'.
+
+    Pro porovnání platí následující pravidla:
+
+    - Jestli¾e jsou oba objekty 'None', rovnají se.
+
+    - Jestli¾e jeden z objektù je instance tøídy a druhý není instancí tøídy,
+      instance je vìt¹í.
+
+    - Jestli¾e oba objekty jsou instance rùzných tøíd, vrátí se výsledek
+      porovnání 'id' jejich tøíd.
+
+    - Neplatí-li ¾ádná z pøedchozích podmínek, vrátí se výsledek volání
+      'cmp(o1, o2)'.
+      
+    """
+    try:
+        c1 = o1.__class__
+    except:
+        c1 = None
+    try:
+        c2 = o2.__class__
+    except:
+        c2 = None
+    if c1:
+        if c2:
+            if c1 == c2:
+                return cmp(o1, o2)
+            elif id(c1) < id(c2):
+                return -1
+            else:
+                return 1
+        else:
+            return 1
+    else:
+        if c2:
+            return -1
+        else:
+            return cmp(o1, o2)
+
+
+def compare_attr(self, other, attributes):
+    """Vra» celkový výsledek porovnání atributù objektù 'self' a 'other'.
+
+    Funkce porovnává tøídy objektù 'self' a 'other' a v pøípadì shody pak
+    uvedené atributy.  Návratová hodnota se øídí pravidly pro funkci 'cmp'.
+
+    Argumenty:
+
+      self, other -- instance tøíd
+      attributes -- sekvence jmen atributù instancí (strings), které mají být
+        porovnávány
+
+    Funkce je typicky urèena k pou¾ití v metodì '__cmp__'.
+
+    """
+    if sameclass(self, other):
+        sdict = self.__dict__
+        odict = other.__dict__
+        for a in attributes:
+            s, o = sdict[a], odict[a]
+            if s < o:
+                return -1
+            elif s > o:
+                return 1
+        else:
+            return 0
+    else:
+        return compare_objects(self, other)
+
+
+def hash_attr(self, attributes):
+    """Vra» hash-kód instance 'self'.
+
+    Kód je vytváøen dle hodnot 'attributes' instance, v souladu s pythonovými
+    pravidly pro hash kód.
+
+    Argumenty:
+
+      self -- instance tøídy, pro ní¾ má být hash kód vytvoøen
+      attributes -- sekvence jmen atributù (strings), jejich¾ hodnoty mají být
+        pøi vytváøení kódu uva¾ovány
+    
+    """
+    dict = self.__dict__
+    def h(obj):
+        if isinstance(obj, list):
+            obj = tuple(obj)
+        return hash(obj)
+    return reduce (operator.xor, map(lambda a: h(dict[a]), attributes))
+
+
+def is_sequence(x):
+    """Vra» pravdu, právì kdy¾ 'x' je list nebo tuple."""
+    t = type(x)
+    return t == pytypes.TupleType or t == pytypes.ListType
+
+
+def is_dictionary(x):
+    """Vra» pravdu, právì kdy¾ 'x' je dictionary."""
+    return type(x) == pytypes.DictionaryType
+
+def is_string(x):
+    """Vra» pravdu, právì kdy¾ 'x' je bì¾ný øetìzec."""
+    return isinstance(x, pytypes.StringType)
+
+def is_unicode(x):
+    """Vra» pravdu, právì kdy¾ 'x' je unicode øetìzec."""
+    return isinstance(x, pytypes.UnicodeType)
+
+def is_anystring(x):
+    """Vra» pravdu, právì kdy¾ 'x' je unicode øetìzec nebo bì¾ný øetìzec."""
+    return isinstance(x, pytypes.StringTypes)
+
+def ecase(value, *settings):
+    """Vra» hodnotu ze 'settings' odpovídající 'value'.
+
+    Pokud 'value' není v 'settings' obsa¾eno, vyvolej výjimku 'ProgramError'.
+    Je-li v 'settings' 'value' obsa¾eno vícekrát, je uva¾ován první výskyt.
+    
+    Argumenty:
+
+      value -- libovolný objekt; je porovnáván s prvními prvky prvkù 'settings'
+        operátorem '='
+      settings -- sekvence dvojic (KEY, VALUE), kde KEY odpovídá nìkteré
+        z mo¾ných hodnot 'value' a VALUE je hodnota, kterou má funkce vrátit
+        v pøípadì shody KEY a 'value' vrátit
+
+    Vrací: VALUE z dvojice ze 'settings', její¾ KEY odpovídá 'value'.
+
+    """
+    s = assoc(value, settings)
+    if s is None:
+        raise ProgramError('Invalid ecase value', value)
+    return s[1]
+
+    
+class _Throw(Exception):
+    """Výjimka pro nelokální pøechody."""
+    
+    def __init__(self, tag, value):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          tag -- string identifikující pøechod
+          value -- návratová hodnota pøechodu, libovolný objekt
+
+        """
+        Exception.__init__(self)
+        self._tag = tag
+        self._value = value
+
+    def tag(self):
+        """Vra» tag zadané v konstruktoru."""
+        return self._tag
+
+    def value(self):
+        """Vra» hodnotu 'value' zadanou v konstruktoru."""
+        return self._value
+
+def catch(tag, function, *args, **kwargs):
+    """Volej 'function' s o¹etøením nelokálního pøechodu.
+
+    Argumenty:
+
+      tag -- string identifikující pøechod
+      function -- funkce, která má být zavolána
+      args -- argumenty 'function'
+      kwargs -- klíèované argumenty 'function'
+
+    Jsou o¹etøeny pouze pøechody s tagem 'tag', ostatní odchyceny nejsou.
+    
+    Vrací: Nedo¹lo-li k pøechodu, je vrácena návratová hodnota 'function'.
+    Do¹lo-li k pøechodu, je vrácena hodnota z pøechodu pøedaná funkci 'throw_'.
+
+    Viz té¾ funkce 'throw_'.
+      
+    """
+    try:
+        result = apply(function, args, kwargs)
+    except _Throw, e:
+        if e.tag() == tag:
+            result = e.value()
+        else:
+            raise
+    return result
+    
+def throw(tag, value=None):
+    """Vyvolej nelokální pøechod identifikovaný 'tag'.
+
+    Argumenty:
+
+      tag -- string identifikující pøechod
+      value -- návratová hodnota pøechodu, libovolný objekt
+
+    Viz té¾ funkce 'catch'.
+
+    """
+    raise _Throw(tag, value)
+
+
+def copy_stream(input, output, close=False, in_thread=False, _catch=False):
+    """Zkopíruj data ze streamu 'input' do streamu 'output'.
+
+    Poèáteèní pozice ve streamech nejsou nijak nastavovány, to je starostí
+    volajícího.  Je-li argument 'close' pravdivý, je stream 'output' po
+    ukonèení kopírování uzavøen; v opaèném pøípadì není uzavøen ¾ádný stream.
+
+    """
+    if in_thread:
+        return thread.start_new_thread(copy_stream, (input, output),
+                                       {'close': close, '_catch': True})
+    try:
+        try:
+            import log
+            DEBUG = log.DEBUG
+            log = log.log
+            log(DEBUG, 'Kopíruji stream:', (input, output))
+            while True:
+                data = input.read(4096)
+                if not data:
+                    break
+                try:
+                    if output.closed:
+                        return
+                except AttributeError:
+                    pass
+                output.write(data)
+            log(DEBUG, 'Stream zkopírován:', (input, output))
+        except:
+            if not _catch:
+                raise
+    finally:
+        if close:
+            try:
+                output.close()
+            except:
+                pass
+
+
+def dev_null_stream(mode):
+    """Vra» bezdatový stream.
+
+    Vrácený stream je plnohodnotné file object a funguje jako zaøízení
+    '/dev/null' -- neposkytuje ¾ádná data a v¹echna pøijatá data zahazuje.
+
+    Argumenty:
+
+      mode -- jeden ze stringù 'r' (nech» je vrácený stream otevøen pro ètení)
+        nebo 'w' (nech» je vrácený stream otevøen pro zápis)
+
+    """
+    assert mode in ('r', 'w')
+    return open('/dev/null', mode)
+
+
+_mktempdir_counter = None
+def mktempdir(prefix='pytis'):
+    """Vytvoø podadresáø v adresáøi pro doèasné soubory.
+
+    Adresáø pro doèasné soubory je dán konfigurací.  Jméno podadresáøe se
+    skládá ze zadaného 'prefix', kterým musí být string, a generované pøípony.
+
+    Podadresáø je vytvoøen s pøístupovými právy 0700.  Není-li mo¾né adresáø
+    z nìjakého dùvodu vytvoøit, je vyvolána výjimka 'FileError'.
+    
+    Vrací: Jméno vytvoøeného adresáøe vèetnì kompletní cesty.  ®ádná dvì volání
+    této funkce nevrátí stejné jméno; to v¹ak neplatí v pøípadì pou¾ití
+    threads, proto¾e funkce není thread-safe.
+    
+    """
+    import config
+    global _mktempdir_counter
+    if _mktempdir_counter is None:
+        _mktempdir_counter = Counter()
+    pattern = os.path.join(config.tmp_dir,
+                           '%s%d.%%d' % (prefix, os.getpid()))
+    oldumask = os.umask(0077)
+    try:
+        for i in range(1000):
+            n = _mktempdir_counter.next()
+            try:
+                the_dir = pattern % n
+                os.mkdir(the_dir, 0700)
+                break
+            except OSError:
+                pass
+        else:
+            raise FileError(pattern)
+    finally:
+        os.umask(oldumask)
+    return the_dir
+
+
+def in_x():
+    """Vra» pravdu, právì kdy¾ je k dispozici prostøedí X Window."""
+    return os.getenv('DISPLAY')
+
+
+
+# Rùzné
+
+
+UNDEFINED = object()
+"""Objekt reprezentující nedefinovanou hodnotu.
+
+Typicky se pou¾ívá jako implicitní hodnota volitelných argumentù, aby nebylo
+nutno provádìt jejich definici a zkoumání prostøednictvím **kwargs.
+
+"""
+
+
+# Funkce pro ladìní
+
+
+def debugger():
+    """Vyvolej interaktivní debugger.
+
+    U¾iteèné pouze pro ladìní.
+
+    """
+    import pdb
+    pdb.set_trace()
+
+
+_mem_info = None
+def mem_info():
+    """Vypi¹ na standardní chybový výstup informaci o pamìti.
+
+    U¾iteèné pouze pro ladìní.
+
+    """
+    global _mem_info
+    if _mem_info is None:
+        class MemInfo:
+            def __init__(self):
+                self._length = 0
+                self._report_length = 1
+                self._count = Counter()
+            def update(self):
+                glen = len(gc.garbage)
+                if glen != self._length:
+                    nlen = gc.collect()
+                    sys.stderr.write(
+                        'Pending data length: %s; uncollectable: %s\n' %
+                        (glen, nlen))
+                    self._length = glen
+                    if glen > self._report_length:
+                        sys.stderr.write('Pending data: %s\n' % gc.garbage)
+                        self._report_length = 2 * glen
+        _mem_info = MemInfo()
+    _mem_info.update()
+
+
+def ipython():
+    """Vyvolej embedded IPython."""
+    try:
+        from IPython.Shell import IPythonShellEmbed
+    except ImportError:
+        sys.stderr.write('IPython not available\n')
+        return
+    ipshell = IPythonShellEmbed (
+        '-nosep',
+        banner='---\nEntering IPython, hit Ctrl-d to continue the program.',
+        exit_msg='Leaving IPython.\n---')
+    locals = inspect.currentframe().f_back.f_locals
+    ipshell(locals)
+
+
+def deepstr(obj):
+    """Vra» stringovou podobu 'obj'.
+
+    Je-li 'obj' sekvence, aplikuj se rekurzivnì na její prvky.
+
+    """
+    if is_sequence(obj):
+        result = map(deepstr, obj)
+        if isinstance(obj, tuple):
+            result = tuple(result)
+        result = str(result)
+    else:
+        result = str(obj)
+    return result
+
+
+def format_traceback():
+    """Vra» zformátovaný traceback aktuální výjimky, jako string."""
+    import traceback
+    einfo = __, einstance, tb = sys.exc_info()
+    if sys.modules.has_key('Pyro'):
+        import Pyro
+        tblist = Pyro.util.getPyroTraceback(einstance)
+    else:
+        tblist = apply(traceback.format_exception, einfo)
+    tbstring = string.join(tblist, '')
+    return tbstring
+
+    
+def exception_info(einfo=None):
+    """Vra» podrobný výpis informací o aktuální výjimce, jako string.
+
+    Tento výpis je zalo¾en na funkcích modulu 'cgitb', av¹ak místo HTML vrací
+    obyèejný textový string.
+
+    Argumenty:
+
+      einfo -- informace o výjimce ve tvaru vraceném funkcí 'sys.exc_info()',
+        nebo 'None' (v kterém¾to pøípadì je tato informace získána automaticky)
+
+    """
+    # Inicializace
+    etype, evalue, etb = einfo or sys.exc_info()
+    context = 5
+    import os, types, time, traceback, linecache, inspect
+    # Sestavení hlavièky
+    if type(etype) is types.ClassType:
+        etype = etype.__name__
+    date = time.ctime(time.time())
+    head =  '%s, %s\n' % (str(etype), date)
+    indent = ' ' * 5
+    # Frames
+    frames = []
+    records = inspect.getinnerframes(etb, context)
+    for frame, file, lnum, func, lines, index in records:
+        file = file and os.path.abspath(file) or '?'
+        args, varargs, varkw, locals = inspect.getargvalues(frame)
+        call = ''
+        if func != '?':
+            call = 'in ' + func + \
+                inspect.formatargvalues(args, varargs, varkw, locals,
+                    formatvalue=lambda value: '=' + deepstr(value))
+        highlight = {}
+        def reader(lnum=[lnum]):
+            highlight[lnum[0]] = 1
+            try:
+                return linecache.getline(file, lnum[0])
+            finally:
+                lnum[0] = lnum[0] + 1
+        vars = cgitb.scanvars(reader, frame, locals)        
+        rows = ['%s %s\n' % (file, call)]
+        if index is not None:
+            i = lnum - index
+            for line in lines:
+                num = ' ' * (5-len(str(i))) + str(i) + ' '
+                line = '%s%s' % (num, line)
+                if i in highlight:
+                    rows.append('=> ' + line)
+                else:
+                    rows.append('   ' + line)
+                i = i + 1
+        done, dump = {}, []
+        for name, where, value in vars:
+            if name in done:
+                continue
+            done[name] = True
+            if value is not cgitb.__UNDEF__:
+                if where == 'global':
+                    name = 'global ' + name
+                elif where == 'local':
+                    name = name
+                else:
+                    name = where + name.split('.')[-1]
+                dump.append('%s = %s' % (name, deepstr(value)))
+            else:
+                dump.append(name + ' undefined')
+        rows.append(', '.join(dump))
+        frames.append(string.join(rows) + '\n')
+    exception = ['%s: %s' % (str(etype), str(evalue))]
+    if type(evalue) is types.InstanceType:
+        for name in dir(evalue):
+            value = deepstr(getattr(evalue, name))
+            exception.append('\n%s%s =\n%s' % (indent, name, value))
+    return head + '\n' + \
+           string.join(traceback.format_exception(etype, evalue, etb)) + \
+           '\n' + string.join(frames) + \
+           '\n' + string.join(exception)
+
+
+def stack_info(depth=None):
+    """Vra» obsah zásobníku volání, jako string.
+
+    String je zformátovaný podobnì jako Pythonový traceback.  Poslední volání
+    je na konci.  Argument 'depth' mù¾e omezit hloubku jen na urèitý poèet
+    frames.
+
+    Funkce je typicky urèena k ladìní.
+    
+    """
+    stack = inspect.stack()[1:]
+    if depth is not None:
+        stack = stack[:depth]
+    stack.reverse()
+    return "\n".join(['  File "%s", line %d, in %s' % frame[1:4] + \
+                      (frame[5] and ':\n    %s' % frame[5] or '')
+                      for frame in stack])

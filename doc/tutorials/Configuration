@@ -1,0 +1,136 @@
+#title Tutoriál: Konfiguraèní mechanismus
+
+* Cíle
+
+Smyslem konfiguraèního mechanismu je umo¾nit tvorbu a správu konfigurace,
+s ohledem na následující po¾adavky:
+
+- Dostateèná dokumentace v¹ech konfiguraèních parametrù a jasná definice
+  jejich významu.
+
+- Obvyklý mechanismus zpracování konfigurace, vèetnì voleb pøíkazové øádky a
+  promìnných prostøedí.
+
+- Jednoduchá definice nových konfiguraèních parametrù.
+
+- Mo¾nost vytváøení konfiguraèních parametrù specifických pro konkrétní
+  aplikace, stejným zpùsobem jako v pøípadì standardních konfiguraèních
+  parametrù.
+  
+- Flexibilita umo¾òující udr¾ování implicitní definice konfigurace v CVS,
+  její správu na instalovaném stroji a takté¾ lokální definici pou¾ívanou pøi
+  vývoji a ladìní aplikací bez nutnosti zasahovat do souborù pod kontrolou
+  CVS.
+
+- V rámci mo¾ností usnadnìní ladìní.
+
+
+* Popis mechanismu
+
+Konfigurace je definována tøídou =lib.util.Configuration=.  Tato tøída
+obsahuje definice standardních konfiguraèních parametrù spoleèných pro
+v¹echny aplikace vystavìném nad toolkitem EBASu.  Mno¾inu konfiguraèních
+parametrù lze roz¹íøit pro konkrétní aplikaci vytvoøením instance
+odpovídajícího potomka této tøídy v definièních souborech aplikace a jeho
+ztoto¾nìním s modulem =config= (viz ní¾e).
+
+Ka¾dý konfiguraèní parametr je instancí tøídy
+=lib.util.Configuration.Option=.  Tato tøída definuje v¹echny specifikace
+konfiguraèního parametru, zejména jeho název a popis, jemu odpovídající volbu
+pøíkazové øádky a promìnnou prostøedí (jsou-li jaké) a implicitní hodnotu.
+
+Pro definici nového konfiguraèního parametru není nutno vytváøet instanci
+tøídy =lib.util.Configuration.Option= pøímo, staèí definovat jejího potomka
+ve tøídì =lib.util.Configuration=.  Tento potomek musí mít jméno ve tvaru
+=_Option_PARAMETER=, kde =PARAMETER= je název konfiguraèního parametru, tak
+jak se na nìj bude odkazovat kód.  Dokumentaèní øetìzec novì definované tøídy
+se automaticky stane dokumentací parametru ve vygenerovaném vzorovém
+konfiguraèním souboru.  S ohledem na tuto skuteènost mají dokumentaèní
+øetìzce tìchto tøíd nestandardní podobu, viz definované parametry ve tøídì
+=lib.form.Configuration=.
+
+Tøída =lib.util.Configuration.Option= definuje implicitní hodnoty pro v¹echny
+specifikace parametrù, obvykle ve významu "nedefinováno".  V ideálním pøípadì
+tak není nutno v definici nové tøídy uvádìt nic kromì patøièného
+dokumentaèního øetìzce.  Pokud v¹ak má být napøíklad parametr pøístupný pøes
+volbu pøíkazové øádky nebo mít jinou viditelnost v generovaném vzorovém
+konfiguraèním souboru, je nutno pøedefinovat odpovídající metody.
+
+Obvykle staèí v pøedefinovaných metodách pouze definovat správné návratové
+hodnoty a není nutno psát výkonný kód.  Tøída =lib.util.Configuration=
+zaji¹»uje na základì daných specifikací v¹e potøebné.  Výjimkou je uvedení
+popisu volby pøíkazové øádky ve výpisu pou¾ití, ve skriptu =ebas=.
+
+Konfigurace je implicitnì naèítána z konfiguraèního souboru
+=config/config.py=.  Kromì toho je naèítán té¾ soubor =config/_config.py=,
+pokud existuje.  Nastavení z =_config.py= mají vy¹¹í prioritu ne¾ nastavení
+z =config.py=.  Soubor =_config.py= je urèen pro lokální konfiguraci pøi
+vývoji a ladìní aplikace, ne pro pou¾ívání za ostrého bìhu aplikace.
+
+Je-li aplikace spu¹tìna bez optimalizace Pythonu (tj. =__debug__= je
+nastaveno na pravdu), jsou konfiguraèní parametry pøi zmìnì nìkterého
+z konfiguraèních souborù automaticky pøenaèítány.  Je pak ji¾ jen zále¾itostí
+modulù, které tyto parametry pou¾ívají, zda a jak na tuto zmìnu budou
+reagovat.  Zmìnu konfigurace lze zjistit dotazem na sériové èíslo konfigurace
+metodou =Configuration.serial_number=.
+
+Pøi zji¹»ování hodnoty konfiguraèního parametru má nejvy¹¹í prioritu volba
+pøíkazové øádky, poté hodnoty promìnných prostøedí v jejich uvedeném poøadí
+ve specifikaci, poté hodnota v konfiguraèním souboru a nakonec hodnota daná
+metodou =lib.util.Configuration.Option.default=.
+
+Hodnoty konfiguraèních parametrù mohou záviset na hodnotách jiných
+konfiguraèních parametrù.  Instanci tøídy =Option= je pøedávána instance
+konfigurace, odkud je mo¾no jiné konfiguraèní parametry získat.
+V závislostech parametrù v¹ak nesmí vzniknout cyklus.
+
+
+* Pou¾ití
+
+** Pøíklad definice konfiguraèního parametru
+
+Ve tøídì =lib.util.Configuration= je definována následující vnitøní tøída:
+
+<example>
+    class _Option_dbuser(Option):
+        """U¾ivatelské jméno (login) pro databázové spojení."""
+        def long_option(self):
+            return 'dbuser='
+        def default(self):
+            import getpass
+            return getpass.getuser()
+        def default_string(self):
+            return 'getpass.getuser()'
+</example>
+
+Definuje konfiguraèní parametr =dbuser=, urèující login u¾ivatele do
+databáze.  Parametr bude v programu pøístupný pod jménem =config.dbuser=.
+Jeho hodnotu lze zmìnit, jak je øeèeno metodou =long_option=. volbou
+pøíkazové øádky =--dbuser=, vy¾adující hodnotu.  Proto¾e nebyla zmìnìna
+viditelnost parametru ve vzorovém konfiguraèním souboru, objeví se v tomto
+souboru následující øádky:
+
+<example>
+  # U¾ivatelské jméno (login) pro databázové spojení.
+  #dbuser = getpass.getuser()
+</example>
+
+V¹imnìte si, ¾e se ve specifikaci li¹í implicitní hodnota jako taková (metoda
+=default=) a øetìzec urèený pro vzorový konfiguraèní soubor (metoda
+=default_string=).  Pokud by nebyla pøedefinována metoda =default_string=, ve
+vygenerovaném vzorovém konfiguraèním souboru by se objevilo jméno u¾ivatele,
+který tento soubor generoval.
+
+** Jak pøistupovat k hodnotì konfiguraèního parametru
+
+Inicializaèní soubor modulu =lib.util= vytváøí instanci tøídy
+=lib.util.Configuration= a instaluje ji jako fiktivní globální modul
+=config=.  Pøístupy k modulu =config= jsou tak efektivnì pøístupy k této
+instanci.
+
+Tøída =lib.util.Configuration= definuje virtuální atributy odpovídající
+jednotlivým konfiguraèním parametrùm.  Parametry tedy lze èíst teèkovou
+notací, jako kdyby se jednalo o atributy modulu =config=, napøíklad parametr
+=debug= je zpøístupnìn jako =config.debug=.  Do konfiguraèních parametrù lze
+i pøiøazovat nové hodnoty, toho by v¹ak nemìlo být vyu¾íváno pro jiné úèely
+ne¾ ladìní.

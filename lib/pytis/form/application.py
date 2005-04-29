@@ -1,0 +1,849 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Hlavní aplikaèní okno.
+
+Tento modul definuje tøídu 'Application', která pøedstavuje hlavní okno
+aplikace a zaji¹»uje základní slu¾by s ním související.  Modul se týká pouze
+u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
+
+"""
+
+import os.path
+import sys
+import time
+
+import config
+import pytis.form
+if config.server:
+    try:
+        import Pyro.util
+    except ImportError:
+        pass
+from pytis.form import *
+import wx
+
+
+_application = None
+
+
+def run_application(resolver=None):
+    """Vytvoø instanci tøídy 'defs.application.Application'.
+
+    Zavolej její metodu 'run()'.
+
+    Argumenty:
+
+      resolver -- instance tøídy 'FileResolver', která má být pou¾ita jako
+        resolver; mù¾e být té¾ 'None', v kterém¾to pøípadì bude vytvoøen
+        implicitní resolver
+
+    """
+    if resolver is None:
+        resolver = FileResolver(config.def_dir)
+    Application(resolver).run()
+
+
+class Application(wx.App, KeyHandler):
+    """Hlavní okno aplikace.
+
+    Aplikaèní okno sestává jednak ze statických prvkù a jednak z vymìnitelného
+    vnitøku okna.  Statickými prvky jsou pull-down menu a stavový øádek.  Jsou
+    vytvoøeny pøi vzniku aplikaèního okna a dále se ji¾ nemìní, kromì typu
+    aktivace polo¾ek menu pøi výmìnách vnitøku.  Vymìnitelný vnitøek mù¾e být
+    libovolná instance tøídy 'wx.Window'.
+
+    Statické prvky jsou parametrizovány specifikaèním souborem aplikace.  Tím
+    je soubor 'application.py' v adresáøi resolveru (urèeném konfiguraèní
+    volbou 'def_dir').  Pou¾itelné specifikaèní funkce jsou:
+
+      title -- titulek okna aplikace jako string.
+      menu -- specifikace pull-down menu je ve formátu specifikaèního
+        argumentu konstruktoru tøídy 'pytis.form.screen.MenuBar'.
+      status_fields -- specifikace polí stavové øádky ve formátu
+        specifikaèního argumentu konstruktoru tøídy
+        'pytis.form.screen.StatusBar'.
+      command_keys -- specifikace pøiøazení kláves pøíkazùm jako sekvence
+        dvojic (COMMAND, KEY), kde COMMAND je instance tøídy 'Command' a KEY je
+        jemu pøíslu¹ná klávesa.
+      default_font_encoding -- implicitní kódování fontù jako odpovídající wx
+        konstanta.
+      
+    Dynamický vnitøek lze nastavit metodami 'push()', 'pop()' a 'replace()'.
+    Celá aplikace funguje jako zásobník vnitøních oken a s nimi souvisejících
+    stavù statických prvkù.  Vnitøní okna lze na zásobník pøidávat, ze
+    zásobníku odstraòovat nebo nahrazovat horní element zásobníku.
+
+    Start u¾ivatelského spoèívá ve vytvoøení instance této tøídy (resp. tøídy z
+    ní odvozené) a volání její metody 'run()'.
+    
+    """
+    _menubar_forms = {}
+
+    _WINDOW_MENU_TITLE = _("Okna")
+
+    UI_ALWAYS_DISABLED = 'UI_ALWAYS_DISABLED'
+    """UI event pro staticky zakázané prvky."""
+    UI_OPENED_WINDOW = 'UI_OPENED_WINDOW'
+    """UI test na pøítomnost otevøeného okna v aplikaci."""
+    UI_OPENED_MORE_WINDOWS = 'UI_OPENED_MORE_WINDOWS'
+    """UI test na pøítomnost více ne¾ jednoho otevøeného okna v aplikaci."""
+    
+    def __init__(self, resolver):
+        """Inicializuj aplikaci.
+
+        Zde se pouze volají konstruktory pøedkù, vìt¹ina inicializací se ve
+        skuteènosti provádí a¾ v metodì 'OnInit'.
+
+        Argumenty:
+
+          resolver -- resolver, který má aplikace pou¾ívat; instance tøídy
+            'pytis.util.Resolver'
+
+        """
+        self._resolver = resolver
+        wx.App.__init__(self)
+        self._window_menu_item = {}
+        # Tento panel slou¾í pouze pro odchytávání klávesových událostí,
+        # proto¾e na frame se nedá navìsit EVT_KEY_DOWN.
+    
+    def OnInit(self):
+        init_colors()
+        frame = self._frame = wx.Frame(None, -1, 
+                                       self._spec('title', 'Application'),
+                                       pos=(0,0), size=(800, 600),
+                                       style=wx.DEFAULT_FRAME_STYLE)
+        self._panel = wx.Panel(self._frame, -1)
+        KeyHandler.__init__(self, self._panel)
+        self._logo = None
+        logo_file = self._spec('logo')
+        if logo_file is not None:
+            if os.access(logo_file, os.R_OK):
+                logo = wx.Image(logo_file, type=wx.BITMAP_TYPE_BMP)
+                self._logo = wx.StaticBitmap(self._frame, -1,
+                                               logo.ConvertToBitmap())
+                self._logo.Show(False)
+            else:
+                log(DEBUG, "Logo file is not accessible:", logo_file)
+        global _application
+        _application = self
+        keymap = self.keymap = Keymap()
+        custom_keys = self._spec('command_keys', ())
+        assert is_sequence(custom_keys), "Specifikace klávesových zkratek " + \
+               "'command_keys' musí vracet sekvenci dvojic (COMMAND, KEY)."
+        for cmd, key in command.DEFAULT_COMMAND_KEYS + custom_keys:
+            keymap.define_key(key, cmd)
+        self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
+        self._windows = XStack()
+        self._modals = Stack()
+        wm = Menu(self._WINDOW_MENU_TITLE,
+                  (MItem(_("Pøepnout na následující"),
+                         command=Application.COMMAND_NEXT_FORM,
+                         uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                   MItem(_("Pøepnout na pøedchozí"),
+                         command=Application.COMMAND_PREV_FORM,
+                         uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                   MItem(_("Zavøít aktuální"),
+                         command=Application.COMMAND_LEAVE_FORM,
+                         uievent_id=Application.UI_OPENED_WINDOW),
+                   MSeparator()),
+                  activation=(Window.ACT_WINDOW))
+        
+        menus = self._spec('menu') + (wm,)
+        self._menubar = mb = MenuBar(self._frame, menus, self)
+
+        default_font_encoding = self._spec('default_font_encoding')
+        if default_font_encoding is not None:
+            wx.Font.SetDefaultEncoding(default_font_encoding)
+        wx_callback(wx.EVT_SIZE, self._frame, self._on_frame_size)
+        self.SetTopWindow(self._frame)
+        self._frame.Show(True)
+        self._spec('init')
+        self._panel.SetFocus()
+        return True
+
+
+    def _spec(self, name, default_value=None):
+        try:
+            result = self._resolver.get('application', name)
+        except ResolverError, e:
+            log(OPERATIONAL, str(e))
+            result = default_value
+        return result
+
+    # Ostatní metody
+
+    def _window_menu(self):
+        mb = self._menubar
+        return mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
+
+    def _add_window_menu_item(self, form):
+        menu = self._window_menu()
+        if menu is not None:
+            item = RadioItem("%s (%s)" % (form.title(), form.descr()),
+                             help=_('Vyzvednout okno formuláøe "%s" %s') % \
+                                   (form.title(), str(form)),
+                             command=Application.COMMAND_RAISE_FORM,
+                             args={'form': form}).create(self._frame, menu)
+            self._window_menu_item[form] = item
+            menu.AppendItem(item)
+            self._check_window_menu_item(form)
+
+
+    def _remove_window_menu_item(self, form):
+        menu = self._window_menu()
+        item = self._window_menu_item[form]
+        menu.Remove(item.GetId())
+        item.Destroy()
+        del self._window_menu_item[form]
+
+    def _check_window_menu_item(self, form):
+        for i in self._window_menu().GetMenuItems():
+            if i.IsCheckable():
+                i.Check(False)
+        self._window_menu_item[form].Check(True)
+        
+    def _raise_form(self, form):
+        if form is not None:
+            if form not in self._frame.GetChildren():
+                log(EVENT, "Reparent -- mo¾ná je to tu opravdu potøeba...")
+                form.Reparent(self._frame)
+            old = self._windows.active()
+            if form is not old:
+                self.save()
+                old.hide()
+                self._windows.activate(form)
+                self.restore()
+
+    def _activate(self, activations, form):
+        self._menubar.activate(activations, form)
+            
+    def _set_form_state(self, form, select_row=None):
+        if select_row:
+            form.select_row(select_row)
+
+    # Ostatní veøejné metody
+
+    def run_form(self, form_class, name, *args, **kwargs):
+        """Vytvoø formuláø a spus» jej.
+
+        Argumenty:
+
+          form_class -- tøída vytváøeného formuláøe (libovolná tøída odvozená
+            od tøídy `Form')
+          name -- jméno specifikace pro resolver
+
+        Dal¹í argumenty budou pøedány konstruktoru formuláøe, tak jak následují
+        za argumentem `name'.  Argumenty `parent' a `resolver'
+        budou doplnìny automaticky.
+
+        Vytvoøený formuláø bude zobrazen v oknì aplikace, nebo v novém modálním
+        oknì, pokud jde o modální formuláø odvozený od tøídy 'PopupForm'.
+        Modální formuláø je spu¹tìn metodou 'run()' a její výsledek je
+        návratovou hodnotou volání této metody.  V tomto pøípadì je v¹ak návrat
+        z této metody proveden a¾ po ukonèení formuláøe (uzavøení jeho okna).
+        Pro nemodální formuláøe se metoda vrací ihned po zobrazení okna s
+        návratovou hodnotou None.  Nemodální formuláø je potom nutné z aplikace
+        odstranit metodou 'leave_form()'.
+          
+        """
+        result = None
+        state_kwargs = {}
+        for arg in ('select_row',):
+            if kwargs.has_key(arg):
+                state_kwargs[arg] = kwargs[arg]
+                del kwargs[arg]
+        try:
+            log(ACTION, 'Vytváøím nový formuláø:',
+                (form_class, name, args, kwargs))
+            message(_("Spou¹tím formuláø..."), root=True)
+            wx_yield_()
+            assert issubclass(form_class, Form)
+            assert is_anystring(name)
+            result = None
+            self.save()
+            form = find((form_class, name), self._windows.items(),
+                        key=lambda f: (f.__class__, f.name()))
+            if form is not None:
+                self._raise_form(form)
+                message(_('Formuláø "%s" nalezen na zásobníku oken.') % \
+                        form.title())
+                self._set_form_state(form, **state_kwargs)
+                return result
+            if issubclass(form_class, PopupForm):
+                parent = self._modals.top() or self._frame
+                kwargs['guardian'] = self._modals.top() or self
+            else:
+                assert self._modals.empty()
+                kwargs['guardian'] = self
+                parent = self._frame
+            args = (parent, self.resolver(), name) + args
+            form = catch('form-init-error', form_class, *args, **kwargs)
+            if form is None:
+                self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit"))
+            else:
+                self._set_form_state(form, **state_kwargs)
+                if isinstance(form, PopupForm):
+                    log(EVENT, "Zobrazuji modální formuláø:", form)
+                    self._modals.push(form)
+                    message('', root=True)
+                    form.show()
+                    try:
+                        result = form.run()
+                        log(EVENT, "Modální formuláø byl uzavøen:", form)
+                        log(EVENT, "Návratová hodnota:", result)
+                    finally:
+                        self._modals.pop()
+                        form.close()
+                    top = self.top_window()
+                    if top is not None:
+                        if isinstance(top, Refreshable):
+                            top.refresh()
+                        top.focus()
+                    else:
+                        self._panel.SetFocus()
+                else:
+                    log(EVENT, "Zobrazuji nemodální formuláø:", form)
+                    old = self._windows.active()
+                    if old is not None:
+                        old.hide()
+                    self._windows.push(form)
+                    message('', root=True)
+                    form.show()
+                    self._activate(form.ACTIVATIONS, form)
+                    self._add_window_menu_item(form)
+        except UserBreakException:
+            pass
+        except:
+            top_level_exception()
+        return result
+
+    def run_procedure(self, spec_name, proc_name, **kwargs):
+        """Spus» proceduru.
+
+        Argumenty:
+
+          spec_name -- jméno specifikace pro resolver.
+          proc_name -- jméno procedury, která má být spu¹tìna.  Jde o klíè do
+            slovníku, který je vracen specifikaèní funkcí 'proc_spec'.
+
+        Klíèové argumenty budou pøedány spou¹tìné proceduøe.
+
+        Návratová hodnota procedury je návratovou hodnotou volání této metody.         
+
+        """
+        result = None
+        try:
+            log(ACTION, 'Spou¹tím proceduru:', (spec_name, proc_name, kwargs))
+            message(_("Spou¹tím proceduru..."), root=True, timeout=2)
+            # Kvùli wx.SafeYield() se ztrácí focus, tak¾e
+            # si ho ulo¾íme a pak zase obnovíme.
+            focused = wx_focused_window()            
+            wx_yield_()
+            spec = self._resolver.get(spec_name, 'proc_spec')
+            assert is_dictionary(spec), \
+                   _("Specifikace procedur 'proc_spec' musí vracet slovník!")
+            assert spec.has_key(proc_name), \
+                  _("Specifikace procedur neobsahuje definici '%s'") % proc_name
+            proc = spec[proc_name]
+            result = proc(**kwargs)
+            log(ACTION, "Návratová hodnota procedury:", result)
+            if focused:
+                focused.SetFocus()
+        except UserBreakException:
+            pass
+        except:
+            top_level_exception()
+        return result
+
+    def new_record(self, name, key=None, prefill=None):
+        """Spus» interaktivní akci pøidání nového záznamu.
+        
+        Argumenty:
+        
+          name -- jméno specifikace pro resolver.
+          key -- klíè kopírovaného záznamu, nebo None.
+          prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
+            pøedvyplnìny pøi inicializaci formuláøe.
+
+        """
+        view = self._resolver.get(name, 'view_spec')
+        on_new_record = view.on_new_record()
+        if on_new_record is not None:
+            result = on_new_record(key=key, prefill=prefill)
+            top = current_form()
+            if isinstance(top, Refreshable):
+                top.refresh()
+        else:
+            result = run_form(PopupEditForm, name, select_row=key, new=True,
+                              prefill=prefill)
+        return result    
+            
+    def run_dialog(self, dialog_or_class_, *args, **kwargs):
+        """Zobraz dialog urèené tøídy s hlavním oknem aplikace jako rodièem.
+
+        Argumenty:
+          dialog_or_class_ -- tøída dialogu (odvozená od tøídy 'Dialog'), nebo
+            pøímo instance.  Pokud jde o tøídu, bude vytvoøena nová instance a
+            ta bude následnì spu¹tìna.
+          
+        Jako první argument konstruktoru dialogové tøídy ('parent') bude
+        doplnìno aktuální (vrchní) okno aplikace.  Ostatní argumenty jsou
+        pøedány tak, jak jsou.  Více o dialogových tøídách a jejich argumentech
+        konstruktoru v modulu 'pytis.form.dialog'.
+
+        Pokud je argumentem instance, jsou argumenty pøedány metodì 'run()'.
+
+        Dialog je spu¹tìn (metodou 'run()') a jeho návratová hodnota je také
+        návratovou hodnotou této metody.
+        
+        """
+
+        
+        if not isinstance(dialog_or_class_, Dialog):
+            class_ = dialog_or_class_
+            assert issubclass(class_, Dialog)
+            parent = self._frame
+            if not self._modals.empty() and \
+                   isinstance(self._modals.top(), wx.Window):
+                parent = self._modals.top()
+            dialog = class_(parent, *args, **kwargs)
+            args, kwargs = (), {}
+        else:
+            dialog = dialog_or_class_
+        self._modals.push(dialog)
+        try:
+            unlock_callbacks()
+            result = dialog.run(*args, **kwargs)
+        finally:
+            self._modals.pop()
+        top = self.top_window()
+        if top is not None:
+            top.focus()
+        else:
+            self._panel.SetFocus()
+        top = self
+        log(DEBUG, "Dialog ukonèen:", (dialog, result))
+        return result
+
+    def leave_form(self):
+        """Uzavøi aktuální formuláø otevøený v oknì aplikace.
+
+        Pokud není otevøen ¾ádný formuláø, zaloguj a jinak nedìlej nic.
+        
+        """
+        form = self._windows.active()
+        if form:
+            log(EVENT, "Zavírám okno nemodálního formuláøe:", form)
+            form.defocus()
+            self._remove_window_menu_item(form)
+            self._windows.remove(form)
+            form.close()
+            self.restore()
+        else:
+            log(EVENT, "Není otevøen ¾ádný formuláø.")
+
+    def exit(self, quietly=False):
+        """Ukonèi u¾ivatelské rozhraní aplikace.
+
+        Argumenty:
+
+          quietly -- právì kdy¾ je pravdivé, nejsou pøi ukonèení kladeny
+            u¾ivateli ¾ádné dotazy
+
+        """
+        # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
+        # situaci bylo mo¾no aplikaci ukonèit.
+        try:
+            log(ACTION, 'Voláno ukonèení aplikace')
+        except:
+            pass
+        try:
+            if not self._modals.empty():
+                log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
+                    self._modals.top())
+                return False
+            if not quietly and not self._windows.empty():
+                q = _("Aplikace obsahuje otevøené formuláøe\n" + \
+                      "Opravdu chcete ukonèit aplikaci?")
+                if not self.run_dialog(Question, q):
+                    return False
+        except:
+            pass
+        while not self._windows.empty():
+            try:
+                self.leave_form()
+            except:
+                break
+        try:
+            self._frame.Close()
+        except:
+            pass
+        global _application
+        _application = None
+
+    def run(self):
+        """Spus» bìh u¾ivatelského rozhraní.
+
+        Nevracej se døíve, ne¾ je bìh u¾ivatelského rozhraní definitivnì
+        ukonèen.
+
+        """
+        COMPLETELY_BROKEN = False
+        THREADING_BROKEN = False
+        if COMPLETELY_BROKEN or THREADING_BROKEN:
+            interrupt_init()
+        else:
+            interrupt_watcher()
+        TIME_SLICE = 0.2
+        timeout = [time.time() + TIME_SLICE]
+        pid = os.getpid()
+        def log_wrapper():
+            if THREADING_BROKEN:
+                if pid == os.getpid() and time.time() > timeout[0]:
+                    wx.Yield()
+                    timeout[0] = time.time() + TIME_SLICE
+            yield_()
+        if not COMPLETELY_BROKEN:
+            log.add_hook(log_wrapper)
+        self.MainLoop()
+
+    def top_window(self):
+        """Vra» momentálnì aktivní okno aplikace.
+        
+        """
+        if not self._modals.empty():
+            return self._modals.top()
+        else:
+            return self._windows.active()
+
+    def refresh(self):
+        """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
+        for stack in (self._modals, self._windows):
+            if not stack.empty():
+                top = stack.top()
+                if isinstance(top, Refreshable):
+                    top.refresh()
+        
+    def set_status(self, id, message, timeout=None, root=False):
+        """Nastav v poli stavové øádky daného 'id' zprávu 'message'.
+        
+        Argumenty:
+        
+          id -- identifikátor pole stavové øádky.
+          message -- string, který má být zobrazen, nebo 'None'; je-li 'None',
+            bude pøedchozí hlá¹ení smazáno.
+          timeout -- není-li 'None', zpráva zmizí po zadaném poètu sekund.
+          root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
+            aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního
+            okna aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno,
+            nebo se zobrazení zprávy v modálním oknì nepodaøilo.
+
+        Zobrazení není garantováno, nemusí se zobrazit napøíklad v pøípadì, kdy
+        stavový øádek neobsahuje odpovídající pole.
+
+        """
+        modal = self._modals.top()
+        if root or not isinstance(modal, Form) \
+               or not modal.set_status(id, message):
+            return self._statusbar.message(id, message, timeout=timeout)
+            
+    def get_status(self, id):
+        """Vra» text pole 'id' stavového øádku hlavního okna aplikace.
+
+        Pokud stavový øádek dané pole neobsahuje, vra» None.
+        
+        """
+        return self._statusbar.get_message(id)
+
+    def resolver(self):
+        """Vra» resolver instancí podle jména; instance 'pytis.util.Resolver'."""
+        return self._resolver
+
+    def save(self):
+        """Ulo¾ stav aplikace."""
+        form = self._windows.active()
+        if form:
+            form.save()
+            
+    def restore(self):
+        """Obnov stav aplikace."""
+        form = self._windows.active()
+        if form is not None:
+            form.resize()
+            form.show()
+            form.restore()
+            self._activate(form.ACTIVATIONS, form)
+            if Window.ACT_WINDOW in form.ACTIVATIONS:
+                self._check_window_menu_item(form)
+            form.SetFocus()    
+        else:
+            self._activate((), None)
+            self._panel.SetFocus()
+
+    def add_menu(self, menu, form=None):
+        """Volá stejnojmennou metodu instance tøídy 'MenuBar' v aplikaci."""
+        self._menubar.add_menu(menu, form=form)
+        
+    # Callbacky
+
+    def _on_frame_size(self, event):
+        size = event.GetSize()
+        self._frame.SetSize(size)
+        top = self._windows.active()
+        if top is not None:
+            top.resize()
+        if self._logo is not None:
+            logo = self._logo.GetBitmap()
+            logo_posx = max((size.GetWidth()-logo.GetWidth()) / 2, 0)
+            logo_posy = max((size.GetHeight()-logo.GetHeight()-50) / 2, 0)
+            self._logo.SetPosition((logo_posx,logo_posy))
+            if top is None:
+                self._logo.Show(True)
+        return True
+
+    def on_key_down(self, event, dont_skip=False):
+        # Toto je záchranný odchytávaè.  Vìøte tomu nebo ne, ale pokud tady ta
+        # metoda není, wxWindows se pøi více pøíle¾itostech po stisku klávesy
+        # zhroutí.
+        return KeyHandler.on_key_down(self, event)
+
+    def on_command(self, command, **kwargs):
+        """Po¹li 'command' s 'kwargs' aktuálnímu oknu.
+
+        Není-li ¾ádné aktuální okno nebo pokud toto okno nemá metodu
+        'on_command()', nedìlej nic a vra» nepravdu.
+
+        """
+        log(command.log_kind(), 'Vyvolán pøíkaz:', (command, kwargs))
+        try:
+            try:
+                busy_cursor(True)
+                if command == Application.COMMAND_SHOW_POPUP_MENU:
+                    top = self.top_window()
+                    if hasattr(top, 'show_popup_menu'):
+                        top.show_popup_menu()
+                elif not self._modals.empty():
+                    return self._modals.top().on_command(command, **kwargs)
+                elif command == Application.COMMAND_EXIT:
+                    self.exit()
+                elif command == Application.COMMAND_BREAK:
+                    message(_("Stop"), beep_=True)
+                elif command == Application.COMMAND_RUN_FORM:
+                    self.run_form(**kwargs)
+                elif command == Application.COMMAND_RUN_PROCEDURE:
+                    self.run_procedure(**kwargs)
+                elif command == Application.COMMAND_NEW_RECORD:
+                    self.new_record(**kwargs)
+                elif command == Application.COMMAND_LEAVE_FORM:
+                    self.leave_form()
+                elif command == Application.COMMAND_RAISE_FORM:
+                    self._raise_form(kwargs['form'])
+                elif command == Application.COMMAND_NEXT_FORM:
+                    self._raise_form(self._windows.next())
+                elif command == Application.COMMAND_PREV_FORM:
+                    self._raise_form(self._windows.prev())
+                elif command == Application.COMMAND_REFRESH:
+                    self.refresh()
+                elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
+                    config.custom_debug()
+                else:
+                    top = self._windows.active()
+                    if top is not None and top.on_command(command, **kwargs):
+                        return True
+                    if command.handler() is not None:
+                        command.handler()(**kwargs)
+                        return True
+                    return False
+            finally:
+                busy_cursor(False)
+            return True
+        except UserBreakException:
+            pass
+        except:
+            top_level_exception()
+
+    def on_ui_event(self, event, id):
+        """Zpracuj UI událost 'event' s identifikátorem 'id'.
+
+        Argumenty:
+
+          event -- iniciující událost, instance 'wx.UpdateUIEvent'
+          id -- identifikátor události, string
+
+        Metoda událost propaguje do aktuálního formuláøe, je-li jaký.
+        
+        """
+        if id == Application.UI_ALWAYS_DISABLED:
+            event.Enable(False)
+        elif id == Application.UI_OPENED_WINDOW:
+            event.Enable(self._windows.empty())
+        elif id == Application.UI_OPENED_MORE_WINDOWS:
+            event.Enable(len(self._windows.items()) > 1)
+        else:
+            top = self.top_window()
+            if isinstance(top, Form):
+                top.on_ui_event(event, id)
+
+
+
+# Funkce
+
+def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
+            root=False):
+    """Zaloguj a zobraz neinteraktivní 'message' v oknì aplikace.
+
+    Argumenty:
+
+      message -- øetìzec, který má být zobrazen; obsahuje-li jako poslední znak
+        dvojteèku, není tato v oknì aplikace zobrazena
+      kind -- druh zprávy, jedna z konstant modulu 'log'
+      data -- doplòující data pro logování, stejné jako v 'log.log'
+      beep_ -- právì kdy¾ je pravdivé, bude hlá¹ení doprovázeno pípnutím
+      timeout -- pokud je zadáno, zpráva zmizí po zadaném poètu sekund
+      root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
+        aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního okna
+        aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno, nebo se
+        zobrazení zprávy v modálním oknì nepodaøilo.
+        
+    Pro zobrazení zprávy ve stavové øádce platí stejná pravidla, jako v pøípadì
+    metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
+
+    """
+    if beep_:
+        beep()
+    if message or data:
+        log(kind, message, data=data)
+    if _application:
+        if message and message[-1] == ':':
+            message = message[:-1]
+        _application.set_status('message', message, timeout=timeout,
+                                root=root)
+
+
+def set_status(id, message, log_=True):
+    """Nastav pole 'id' stavové øádky na 'message'.
+
+    Argumenty:
+
+      id -- identifikátor pole stavové øádky.
+      message -- øetìzec, který má být zobrazen.
+      log_ -- pokud je pravda, bude událost zalogována.
+
+    Pro zobrazení zprávy ve stavové øádce platí stejná omezení, jako v pøípadì
+    metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
+
+    """
+    if log_:
+        log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
+    return _application.set_status(id, message)
+
+
+def get_status(id):
+    """Vra» text pole 'id' stavové øádky.
+
+    Argumenty:
+
+      id -- identifikátor pole stavové øádky.
+
+    """
+    return _application.get_status(id)
+
+
+def run_dialog(*args, **kwargs):
+    """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
+    return _application.run_dialog(*args, **kwargs)
+
+
+def run_form(*args, **kwargs):
+    """Zobraz formuláø v oknì aplikace (viz 'Application.run_form()')."""
+    return _application.run_form(*args, **kwargs)
+
+def run_procedure(*args, **kwargs):
+    """Spus» proceduru (viz 'Application.run_procedure()')."""
+    return _application.run_procedure(*args, **kwargs)
+
+def new_record(*args, **kwargs):
+    """Spus» akci pøidání nového záznamu (viz 'Application.new_record()')."""
+    return _application.new_record(*args, **kwargs)
+
+def leave_form():
+    """Odstraò aktuální okno formuláøe z aplikace."""
+    return _application.leave_form()
+
+
+def current_form():
+    """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje.
+
+    Pokud není otevøena ¾ádná aplikace, nebo souèasná aplikace nemá jako
+    aktivní okno instanci 'Form', vrací None.
+
+    """
+    f = _application.top_window()
+    if isinstance(f, Form):
+        return f
+    else:
+        return None
+
+def resolver():
+    """Vra» resolver aplikace získaný pøes 'Application.resolver()'."""
+    return _application.resolver()
+
+
+def add_menu(menu, form=None):
+    """Zavolej 'Application.add_menu()' aktuální aplikace."""
+    return _application.add_menu(menu, form=form)
+
+
+def exit(**kwargs):
+    """Ukonèi u¾ivatelské rozhraní aplikace.
+
+    Argumenty:
+
+      kwargs -- pøedáno metodì 'Application.exit()'
+
+    """
+    return _application.exit(**kwargs)
+
+
+def global_keymap():
+    """Vra» klávesovou mapu aplikace jako instanci tøídy 'Keymap'."""
+    try:
+        return _application.keymap
+    except AttributeError:
+        return Keymap()
+
+
+def wx_yield_(full=False):
+    """Zpracuj wx messages ve frontì.
+
+    Argumenty:
+
+      full -- právì kdy¾ je pravdivé, zpracuj i u¾ivatelské události
+
+    """
+    if full:
+        if _application is not None:
+            _application.Yield()
+    else:
+        wx.SafeYield()
+
+def refresh():
+    """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
+    _application.refresh()
+

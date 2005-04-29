@@ -1,0 +1,223 @@
+#title Tutoriál: Databázové rozhraní
+
+* Cíle a základní principy
+
+Cílem databázového rozhraní je poskytnout prostøedky pro nìkolik málo
+základních operací, které budeme provádìt nad databázovými daty.  Tento
+dokument poskytuje základní ideové informace o rozhraní a jednoduchý návod, jak
+s rozhraním zaèít pracovat.  Podrobný popis rozhraní naleznete v dokumentaci
+modulu =lib.data=.
+
+V první øadì je nutno si uvìdomit dùvody[1], které pro zavedení tohoto rozhraní
+máme:
+
+- Co nejvíce omezit nutnost definice jednoho a tého¾ na více místech.  Pokud
+  bychom pracovali s daty pøímo prostøednictvím SQL pøíkazù, museli bychom
+  popsat podobu pøíslu¹ných tabulek nìkolikrát (pro SELECT, INSERT, atd.).
+  Rozhraní by mìlo umo¾nit definovat napojení na databázi na jediném místì.
+
+- Unifikace pøístupu k datùm.  Díky jednoduchému jednotnému rozhraní nebude
+  k databázi pøistupováno na rùzných místech programu rùznì, dle aktuální
+  nálady konkrétního vývojáøe.
+
+- Odstínìní aplikaèního programu od pøímé komunikace s databázovým strojem.  To
+  umo¾ní o¹etøit pøípadné budoucí i souèasné problémy komunikace bez nutnosti
+  zasahovat do aplikaèního kódu.
+
+- V rámci mo¾ností daných pøedchozími body co nejvíce zjednodu¹it práci
+  s daty.[2]
+
+S ohledem na uvedené dùvody potøebnosti rozhraní, je toto zalo¾eno na
+následujících principech:
+
+- Datová abstrakce v¹ech objektù, se kterými pracujeme.  V¹echny tyto objekty
+  jsou reprezentovány tøídami rozhraní, co¾ jednak zavádí urèitou typovou
+  kontrolu a jednak umo¾òuje v pøípadì potøeby na rùzná místa zavést v¹elijaké
+  ¹olichy bez úèasti aplikaèního programátora.
+
+- Cílem rozhraní není nahrazovat funkcionalitu databázového serveru.  Rozhraní
+  se nesna¾í øe¹it komplikovaná provázání tabulek, toto se ponechává na
+  schopnostech serveru.[3]  Pøedpokládá se, ¾e se bude do znaèné míry pracovat
+  s *virtuálními tabulkami*, které budou víceménì odpovídat po¾adovaným datùm a
+  pomocí rules definují slo¾itìj¹í vazby na databázovém serveru.[4]
+
+- Cílem rozhraní není univerzálnost.  Nejde o to vytvoøit rozhraní nezávislé na
+  backendu, databázovém stroji, atd. ani o snahu vytvoøit rozhraní pou¾itelné
+  ve více aplikacích.  Nemusíme proto do rozhraní zavádìt zbyteèné komplikace
+  pro zaji¹tìní obecnosti a staèí se omezit jen na zcela konkrétní vìci, které
+  doopravdy potøebujeme.
+
+- Pøedchozí bod ov¹em nic nemìní na nutnosti aplikace vrstevnatého a
+  modulárního pøístupu, èistì z dùvodù pøehlednosti a údr¾by.  Proto je
+  rozhraní rozsekáno do malých èástí, z nich¾ ka¾dá implementuje svoji jedinou
+  konkrétní funkcionalitu a mnoho z tìchto èástí lze v pøípadì potøeby vymìnit.
+  
+
+* Pou¾ití
+
+Rozhraní je implementováno v modulu =lib.data=.  Zde uvádíme základní pøíklady
+pou¾ití modulu, pro podrobnìj¹í popis viz dokumentace modulu.
+
+Zaèneme jednoduchým pøíkladem.  Pøedstavme si, ¾e v databázi máme dvì tabulky
+vytvoøené tìmito SQL pøíkazy:
+
+<verbatim>
+CREATE TABLE cis (x int PRIMARY KEY, y text);
+CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), c int REFERENCES cis);
+</verbatim>
+
+Nìkde v aplikaci budeme chtít pracovat s tabulkou =tab=.  To nám umo¾ní
+instance =tab_data= tøídy =lib.data.data.Data=, kterou vytvoøíme následujícím
+zpùsobem:
+
+<example>
+  import lib.data as d
+
+  connection = d.dbdata.DBConnection(database='test', user='trpaslik')
+
+  C = d.dbdata.DBColumnBinding
+  D = d.dbdata.DBDataDefault
+
+  cis_key = C('id', 'cis', 'x')
+  cis_columns = (cis_key,
+		 C('popis', 'cis', 'y'))
+  cis_data = D(cis_columns, cis_key, connection)
+
+  tab_key = C('klic', 'tab', 'a')
+  tab_columns = (tab_key,
+		 C('popis', 'tab', 'b'),
+		 C('id', 'tab', 'c', related_to=cis_key, enumerator=cis_data))
+  tab_data = d.dbdata.DBDataDefault(tab_columns, tab_key, connection)
+</example>
+
+S =tab_data= pak mù¾eme provádìt základní datové operace:
+
+<example>
+  print 'øádky tabulky:'
+  tab_data.select()
+  while 1:
+      row = tab_data.fetchone()
+      if not row:
+	  break
+      print row
+  tab_data.close()
+
+  old_key = tab_data.columns()[0].type().validate('1')[0]
+  new_key = tab_data.columns()[0].type().validate('9')[0]
+  new_row_data = []
+  for c, v in zip(tab_data.columns(), ('9', 'pìkný øádek', 'devet')):
+      new_row_data.append ((c.id(), c.type().validate(v)[0]))
+  new_row = d.data.Row(new_row_data)
+  
+  if tab_data.insert(new_row):
+      print 'nový øádek vlo¾en'
+  if tab_data.delete(new_key):
+      print 'nový øádek vymazán'
+  if tab_data.update(old_key, new_row):
+      print 'starý øádek zmìnìn na nový'
+  if tab_data.row(new_key):
+      print 'nový øádek nalezen'
+</example>
+
+Rozebereme si nyní jednotlivé èásti pøíkladu.
+
+**Terminologická poznámka:** Hovoøíme-li o _datové tabulce_, máme tím na mysli
+instanci tøídy =lib.data.data.Data=.  Hovoøíme-li o _databázové tabulce_, máme
+tím na mysli tabulku v databázi.
+
+** Import modulu
+
+Pro kompletní práci s daty slou¾í modul =lib.data=.  Ten automaticky importuje
+své submoduly.
+
+** Specifikace spojení do databáze
+
+Parametry pøipojení do databáze definujeme pomocí instance tøídy
+=lib.data.dbdata.DBConnection=.  V konstruktoru staèí specifikovat pouze
+neimplicitní hodnoty parametrù.
+
+Objekt definující spojení je pouze specifikaèní a je pova¾ován za immutable.
+Proto a proto¾e obì tabulky, se kterými budeme pracovat, se nacházejí ve stejné
+databázi, jej mù¾eme vyu¾ít v jedné instanci pro obì tabulky.
+
+** Definice sloupcù
+
+Definice sloupcù je nejkomplikovanìj¹í èást celé zále¾itosti.  Ka¾dý sloupec je
+specifikován instancí tøídy =lib.data.dbdata.DBColumnBinding=, která definuje
+mapování sloupce _datové_ tabulky do _databázových_ tabulek.  V nejjednodu¹¹ím
+pøípadì je sloupec definován tøemi parametry: svým identifikátorem (libovolný
+neprázdný øetìzec, pøes který se na nìj budeme odkazovat) a tabulkou a sloupcem
+v databázi, kterým odpovídá.  Databázové rozhraní na základì této specifikace
+samo pøiøadí sloupci datový typ, odpovídající danému sloupci dané tabulky
+v databázi.  Pøedpokládá se, ¾e tímto zpùsobem bude specifikována naprostá
+vìt¹ina sloupcù.
+
+Napøíklad specifikace
+
+<verbatim>
+  d.dbdata.DBColumnBinding('klic', 'tab', 'a')
+</verbatim>
+
+definuje sloupec _datové_ tabulky, jen¾ budeme nazývat =klic= a který odpovídá
+sloupci =a= _databázové tabulky_ =tab=.
+
+Seznam tìchto "sloupcových" definic pøesnì definuje sloupce _datové_ tabulky,
+co se týèe jejich poètu, poøadí a napojení do databáze.
+
+V pøíkladu vidíme je¹tì jedno speciální napojení sloupce, a sice na èíselník.
+Pomocí argumentu konstruktoru =related_to= specifikujeme, ¾e odpovídající
+databázový sloupec je v relaci s jiným sloupcem databáze.  Relaci mù¾eme zavést
+pro libovolné dva sloupce dvou tabulek, její reálné vyu¾ití se v¹ak pøedpokládá
+pouze u vazeb na èíselníky.  Pomocí argumentu =enumerator= øíkáme, ¾e typ
+daného sloupce není zji¹»ován z databáze, nýbr¾ ¾e jím má být instance tøídy
+=lib.data.types.Ciselnik= obsahující zadanou _datovou_ tabulku.
+
+Klíèové sloupce umis»ujeme do pomocných promìnných, proto¾e je vyu¾ijeme jak
+v seznamu sloupcù, tak ve specifikaci klíèù.
+
+** Vytvoøení datového objektu
+
+Pokud ji¾ máme definovány klíèe, vytvoøen seznam specifikací sloupcù a
+definováno pøipojení do databáze, dostaneme ký¾ený datový objekt jednodu¹e
+vytvoøením instance tøídy =lib.data.dbdata.DBDataDefault=.  Pro pøístup do
+databáze pou¾íváme v¾dy právì tuto tøídu, která je potomkem abstraktní tøídy
+=lib.data.dbdata.DBData= a nestaráme se blí¾e o její pùvod.
+
+** Vytvoøení klíèù a nového øádku
+
+**TODO**
+
+Pro tyto operace dosud není hotovo nìjaké jednoduché rozhraní, tak¾e je
+zde demonstrován znaènì nemotorný low level postup.
+
+** Operace nad daty
+
+Tøída =lib.data.data.Data= definuje nìkolik základních operací, vesmìs
+odpovídajících základním SQL operacím:
+
+- Metody pro výbìr dat: =row=, =select=, =fetchone=, =close=.
+
+- Metody pro modifikaci dat: =insert=, =update=, =delete=.
+
+Odkazujeme-li se na nìjaký øádek dat (v metodách =row=, =update= a =delete=),
+pou¾íváme klíè tabulky reprezentovaný instancí tøídy =lib.data.types.Value=.
+S øádky dat se pracuje v¾dy prostøednictvím instancí tøídy =lib.data.data.Row=.
+
+
+Footnotes: 
+
+[1] Podobné dùvody existují pro zavedení rozhraní k u¾ivatelskému rozhraní.
+
+[2] Lze namítat, ¾e zejména zavedení tøíd =Value= a =Row= spí¹e práci
+komplikuje.  Tøída =Row= se ov¹em sna¾í emulovat lists a dictionaries, èím¾ se
+tyto komplikace do znaèné míry eliminují, pøièem¾ datová abstrakce zùstává.
+U =Value= k urèitému zeslo¾itìní skuteènì dochází, ale to není natolik záva¾né,
+aby to byl dostateèný argument proti výhodám zavedení této tøídy.
+
+[3] Pokud ov¹em server potøebnými schopnostmi disponuje.  PostgreSQL teoreticky
+ano, po praktické stránce to ov¹em mù¾e být hor¹í, ne v¹e (správnì) funguje.
+Je zapotøebí obezøetnosti a nebude-li mo¾no jinak, bude nutno obohatit
+funkcionalitu databázového rozhraní, co¾ by bylo nepøíjemné zejména z hlediska
+definice specifikací.
+
+[4] Tentý¾ mechanismus by mìl umo¾nit øe¹ení problému pøístupových práv.

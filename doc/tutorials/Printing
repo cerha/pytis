@@ -1,0 +1,224 @@
+#title Tutoriál: Tvorba výstupních sestav
+
+* Cíle
+
+Obecný cíl je jednoduchý: Mít mo¾nost z EBAS tisknout.  Typickými tisky,
+které by mìlo EBAS zvládnout, jsou:
+
+- Tisk úèetního deníku.
+
+- Tisk faktury.
+
+Na tisk nejsou kladeny velké prezentaèní nároky, výsledná podoba v¹ak musí
+být rozumnì pou¾itelná (viz faktura).  Ka¾dý tisk musí být mo¾no zobrazit
+v náhledu na obrazovce, aby bylo mo¾no zkontrolovat ti¹tìné údaje.  Formát
+výstupu pro tiskárnu mù¾e být jakýkoliv pou¾itelný, napøíklad èistý text,
+PostScript nebo PDF.
+
+Tisky by mìlo být mo¾no definovat podobným zpùsobem jako napøíklad
+obrazovkové formuláøe.  Definice tiskù by z hlediska potøeby lidské práce
+mìla být co nejjednodu¹¹í a nejbì¾nìj¹í typy tiskù by mìly být sestavovány
+automaticky.
+
+
+* Popis mechanismu
+
+Tiskový mechanismus sestává z následujících èástí:
+
+- Specifikaèní soubor výstupní sestavy.
+
+- Definice formátovacích znaèek.
+
+- Procesor formátovacích znaèek a dat, formátování pro náhled a tisk.
+
+- Vyvolání tiskového formuláøe.
+
+- Odeslání zformátované sestavy na tiskárnu.
+
+Nyní si je pøedstavíme malinko podrobnìji, jak z hlediska praktického
+pou¾ití, tak i z hlediska vnitøního fungování celého systému.  Rozdìlíme vý¹e
+uvedené èásti na dvì skupiny: vyvolání tisku a specifikace výstupní sestavy.
+
+** Vyvolání tisku
+
+Tisk je koncipován tak, ¾e ka¾dému formuláøi pøíslu¹í nejvý¹e jedna tisková
+sestava.  Základním aplikovaným principem je, ¾e tisknout lze zhruba to, co
+u¾ivatel vidí na obrazovce v aktuálním formuláøi, a» u¾ jednoduchém nebo
+slo¾eném (napøíklad duálním).
+
+Pro u¾ivatele je definován pøíkaz =Form.COMMAND_PRINT=, dostupný ze v¹ech
+formuláøù.  Ka¾dý formuláø mù¾e a nemusí na tento pøíkaz reagovat.
+Reaguje-li, zobrazí se tiskový náhled.  Z nìj pak lze stejným pøíkazem
+spustit tisk na tiskárnu.
+
+Pro zobrazení tiskového náhledu slou¾í formuláø =lib.form.PrintForm=, který
+je podobnì jako ostatní formuláøe potomkem =lib.form.Form= a ukládá se na
+frame stack.  Tento formuláø umí vyvolat formátování výstupu dle zadané
+specifikace, formátování samotné pak má na starosti modul =lib.output=,
+konkrétnì tøída =lib.output.Formatter=.
+
+V souèasné dobì na pøíkaz tisku reagují øádkové formuláøe typu =BrowseForm=.
+Po vyvolání tiskového pøíkazu spustí formátování výstupu dle specifikace,
+kterou hledají prostøednictvím resolverù v souboru =defs/output/FORMNAME.py=,
+kde =FORMNAME= je jméno onoho øádkového formuláøe.  Pokud tento specifikaèní
+soubor neexistuje, je prostøednictvím druhého resolveru, podstrèeného do
+=PrintForm=, proveden tisk formuláøe jako obyèejné tabulky.
+
+Tiskový náhled je generován stejnì jako finální tisk jako PostScript.  Je tedy
+toto¾ný s výsledným tiskem, a¾ na pøípadné rozdíly zpùsobené pou¾itými
+interprety PostScriptu.
+
+Výstupy jsou formátovány s vyu¾itím textového procesoru Lout.  Výhodou tohoto
+pøístupu je snadnost implementace formátování, nevýhodou jsou naopak, kromì
+samotného faktu nutné dostupnosti dal¹ího nástroje, nìkteré negativní
+vlastnosti Lout, napøíklad znaèná spotøeba pamìti nebo "divoké" chování pøi
+nevhodných specifikacích (øádky pøesahující ¹íøku stránky, apod.).
+
+Odeslání dat na tiskárnu je jednoduché, vyu¾ívá se pøíkazu =lpr=.  Pomocí
+pøenastavení konfiguraèní volby =printing_command= lze tento pøíkaz zmìnit,
+napøíklad na obyèejný =cat= do souboru pro úèely ladìní.
+
+** Specifikaèní soubory
+
+Podobnì jako ostatní prvky v EBAS (napøíklad formuláøe), jsou i výstupní
+sestavy specifikovány pythonovými soubory.  Tyto soubory umo¾òují definovat
+základní èásti ti¹tìného dokumentu (hlavièky, patièky, tìlo) prostøednictvím
+specifikaèních funkcí.  Nejdùle¾itìj¹ími z tìchto funkcí jsou =body= (tìlo
+dokumentu), =page_header= a =page_footer= (hlavièka a patièka stránky) a
+=coding= (kódování fontu pou¾itého ve výstupu).  Není nutné je uvádìt
+v¹echny, jediná povinná z nich je =body=.
+
+V¹echny tyto funkce mají jediný argument, kterým je resolver.  S pomocí nìj lze
+získávat obecné specifikace (napøíklad datové a prezentaèní specifikace tabulky
+pro urèení jejího formátování) a pøedané parametry (napøíklad pøedaný klíè
+aktuálního øádku od formuláøe).  Resolveru pøedané parametry nejsou
+specifikovány obecnì, jsou závislé na objektu, který je pøedává.  Resolver je
+instancí tøídy =lib.output.OutputResolver= a parametry lze získat jeho metodou
+=p=.
+
+Ka¾dá z funkcí odpovídajících nìjaké èásti dokumentu vrací specifikaci této
+èásti v podobì znaèek definovaných v modulu =lib.output=.  K dispozici jsou
+jednak jednoduché formátovací znaèky (jako =Paragraph= nebo =Bold=) a jednak
+funkce vy¹¹í úrovnì vracející znaèkování pro urèitý prvek (jako napøíklad
+funkce pro zpøístupnìní dat: =data_table= nebo =data_item=).  Formátovací
+znaèky jsou tøídy, jejich¾ dohromady poskládané instance vytváøí pøíslu¹nou
+specifikaci.  Kromì tìchto tøíd existují je¹tì dvì speciální znaèky: obyèejný
+string (pøedstavuje pøímo daný, ji¾ zformátovaný, text) a sekvence (spojení
+nìkolika znaèek, prvkù této sekvence, dohromady).
+
+Specifikace výstupu tedy mù¾e vyu¾ívat tøí vrstev prostøedkù:
+
+- Pøímo formátovací znaèky.
+
+- Knihovní formátovací funkce, umo¾òující jednodu¹e zapsat typické shluky
+  formátovacích znaèek.
+
+- Libovolný vlastní programový kód generující formátovací znaèky, pøípadnì
+  i s vyu¾itím knihovních formátovacích funkcí, pro komplikovanìj¹í
+  specifikace.
+
+
+* Pou¾ití
+
+Pøedvedeme si vytvoøení definice výstupní sestavy pro velmi zjednodu¹enou
+fakturu.
+
+V první øadì je nutné tisk faktury spojit s nìkterým formuláøem.  Vhodným
+formuláøem je spodní èást duálního formuláøe knihy vydaných (pøípadnì
+pøijatých) faktur, zobrazující polo¾ky faktury.  V tomto formuláøi patrnì
+nemá smysl tisknout nìco jiného ne¾ odpovídající fakturu.  V adresáøi
+=defs/output/=, obsahujícím definièní soubory v¹ech tiskových sestav, tedy
+vytvoøíme pythonový soubor s názvem odpovídajícím zvolenému formuláøi
+(napøíklad =VydFakturyPolozky.py=).
+
+Prakticky ve v¹ech výstupních sestavách je vhodné naimportovat modul
+=lib.output=, definující leccos týkající se výstupních sestav, nejlépe
+hvìzdièkovì, obsahující v¹echny formátovací znaèky a obecné formátovací funkce.
+Úvod na¹í specifikace tedy bude vypadat takto:
+
+<example>
+from lib.output import *
+</example>
+
+Bude-li jazykem faktury èe¹tina, je nutno tiskovému procesoru øíct, ¾e má
+pou¾ívat fonty v kódování Latin 2 (ISO 8859-2).  Toho dosáhneme definicí
+standardní specifikaèní funkce =coding=:
+
+<example>
+def coding(resolver):
+    return lib.output.Coding.LATIN2
+</example>
+
+V¹echny specifikaèní funkce mají jeden argument, kterým je resolver jmenných
+odkazù.  Ten v tiskových sestavách obvykle své vyu¾ití nenalezne, je to ale
+konzistentní s ostatními druhy specifikací, napøíklad formuláøovými.
+
+Specifikace výstupních sestav obsahuje definice hlavièek a patièek stránek a
+celého dokumentu.  Jim odpovídající funkce nemusíme definovat, pokud nám
+vyhovuje implicitní nastavení, tj. dokument nemá ¾ádné záhlaví ani zvlá¹tní
+ukonèení, stránky nemají ¾ádnou hlavièku a ve svých patièkách mají èíslo
+stránky.  Ve fakturách se obvykle stránky neèíslují, tak¾e pøedefinujeme
+funkci patièky stránky =page_footer=:
+
+<example>
+def page_footer(resolver):
+    return Null()
+</example>
+
+V¹imnìte si, ¾e se zde pou¾ívá znaèka prázdného obsahu =Null=, nikoliv
+prázdný øetìzec.  Je tak deklarováno, ¾e pøíslu¹ný objekt je skuteènì
+prázdný, nikoliv neprázdný obsahující text nulové délky.  Vìt¹inou na tom
+nezále¾í a =Null= i prázdný øetìzec mají shodný efekt, je v¹ak lépe dr¾et se
+logického významu pro pøedcházení pøípadným budoucím formátovacím problémùm.
+
+Koneènì definujeme to nejdùle¾itìj¹í -- samotný obsah ti¹tìného dokumentu,
+daný funkcí =body=.  Jde jen o ilustrativní pøíklad, tak¾e dokument bude pro
+jednoduchost obsahovat pouze èíslo faktury (tuènì), adresu dodavatele a
+seznam polo¾ek faktury v podobì jednoduché tabulky:
+
+<example>
+def body(resolver):
+    invoice_number = data_item(resolver, 'VydFaktury', 'number')
+    seller = data_item(resolver, 'VydFaktury', 'adresa')
+    return (Paragraph(Bold('Faktura è. ', invoice_number)),
+            Paragraph('Dodavatel:\n', seller),
+            data_table(resolver, 'VydFakturyPolozky'))
+</example>
+
+Zde ji¾ pou¾íváme jednoduché programové konstrukce (pøiøazení do pomocných
+promìnných).  Jako ve v¹ech specifikacích v EBAS, mù¾eme i zde vyu¾ívat
+kompletních mo¾ností Pythonu, co¾ nám umo¾òuje øadu vìcí zjednodu¹it nebo
+zpøehlednit.  To je pomìrnì velká vymo¾enost oproti pou¾ití nìkterých jiných
+nástrojù, jako tøeba XML.
+
+Ve funkci =body= se odkazujeme na data ze dvou rùzných tabulek.  V tom nám
+obecnì nic nebrání, nebo» tabulky lze v¾dy nalézt dle jejich zadaného jména.
+Trochu slo¾itìj¹í je to v¹ak s údaji o èísle faktury a dodavateli, kde není
+øeèeno který øádek z tabulky =VydFaktury= má být pou¾it, nebo» ve specifikaci
+neznáme klíè odpovídajícího øádku.  Správné záznamy dostaneme díky tomu, ¾e
+tisk je vyvoláván z duálního formuláøe, který poskytne informace o aktuálním
+øádku hlavního podformuláøe v parametrech resolveru, tak¾e funkce =data_item= a
+=data_table= dostanou prostøednictvím resolveru potøebné podklady.  Proto¾e obì
+tabulky =VydFakturyPolozky= i =VydFaktury= jsou duálnímu formuláøi známy a ten
+tudí¾ mù¾e do tisku pøedat informace o jejich aktuálním zobrazení, bude to
+fungovat.
+
+Na závìr si coby shrnutí uvedeme kompletní vytvoøenou specifikaci tisku na¹í
+prafaktury:
+
+<example>
+from lib.output import *
+
+def coding(resolver):
+    return lib.output.Coding.LATIN2
+
+def page_footer(resolver):
+    return Null()
+
+def body(resolver):
+    invoice_number = data_item(resolver, 'VydFaktury', 'number')
+    seller = data_item(resolver, 'VydFaktury', 'adresa')
+    return (Paragraph(Bold('Faktura è. ', invoice_number)),
+            Paragraph('Dodavatel:\n', seller),
+            data_table(resolver, 'VydFakturyPolozky'))
+</example>

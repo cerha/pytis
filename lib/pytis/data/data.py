@@ -1,0 +1,1548 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Tøídy pro zpøístupnìní tabulkových dat z rùzných zdrojù.
+
+Základem pøístupu k datùm je tøída 'Data' definující obecné rozhraní pøístupu
+k tabulkovým datùm.  Pøedpokládá se, ¾e právì s touto tøídou budou schopny
+pracovat ostatní moduly programu, které potøebují získávat nebo pøedávat vìt¹í
+mno¾ství tabulkových dat, zejména z objektù jako jsou databáze.  Specializované
+podtøídy umo¾òují pøístup k rùzným zdrojùm dat, viz napøíklad tøída
+'dbdata.DBData'.
+
+Kromì tøídy 'Data' modul definuje je¹tì pomocnou tøídu 'Row' reprezentující
+jeden øádek dat a pomocnou tøídu 'ColumnSpec' pou¾ívanou pro specifikaci
+sloupcù instancí tøídy 'Data'.
+
+K dispozici jsou také abstraktní tøídy pro pokroèilej¹í databázové funkce, viz
+napøíklad tøídy 'Counter' a 'Function'.  Tyto tøídy je nutno chápat jako
+volitelné, konkrétní databázový backend nemusí nabízet ¾ádnou jejich konkrétní
+implementaci.
+
+"""
+
+import copy
+import string
+import types
+
+import pytis.util
+from pytis.data import *
+
+
+FORWARD = 'FORWARD'
+"""Konstanta pro dopøedný posun v 'Data.fetchone'."""
+BACKWARD = 'BACKWARD'
+"""Konstanta pro zpìtný posun v 'Data.fetchone'."""
+
+def opposite_direction(direction):
+    """Vra» smìr opaèný k 'direction'.
+
+    'direction' i vrácený výsledek jsou nìkteré z konstant 'FORWARD' a
+    'BACKWARD'.
+
+    """
+    if direction == FORWARD:
+        return BACKWARD
+    elif direction == BACKWARD:
+        return FORWARD
+    else:
+        raise ProgramError('Invalid direction', direction)
+
+
+ASCENDENT = 'ASCENDENT'
+"""Konstanta pro vzestupné tøídìní."""
+DESCENDANT = 'DESCENDANT'
+"""Konstanta pro sestupné tøídìní."""
+
+
+
+### Datové tøídy
+
+
+class Operator:
+    """Podmínka pro metodu 'select()'.
+
+    Tøída má pouze specifikaèní charakter, její instance slou¾í pro zápis
+    podmínek metody.  Ka¾dý operátor je celkovì dán svým jménem, argumenty
+    a pojmenovanými argumenty.
+
+    """
+    def __init__(self, name, *args, **kwargs):
+        """Vytvoø operátor 'name' s argumenty 'args' a 'kwargs'.
+
+        Argumenty:
+
+          name -- jméno operátoru jako øetìzec
+          args -- argumenty operátoru
+          translation -- pøeklad operátoru na primitivní operátory, instance
+            'Operator'
+          kwargs -- pojmenované (klíèové) argumenty operátoru
+
+        """
+        self._name = name
+        self._translation = kwargs.get('translation')
+        self._args = args
+        self._kwargs = kwargs
+
+    def name(self):
+        """Vra» jméno operátoru zadané v konstruktoru."""
+        return self._name
+
+    def translation(self):
+        """Vra» pøeklad operátoru zadaný v konstruktoru."""
+        return self._translation
+
+    def args(self):
+        """Vra» tuple argumentù operátoru zadaných v konstruktoru."""
+        return self._args
+
+    def kwargs(self):
+        """Vra» dictionary klíèových argumentù zadaných v konstruktoru."""
+        return self._kwargs
+
+    def logical(self):
+        """Vra» pravdu, právì kdy¾ se jedná o logický operátor.
+
+        Logické operátory jsou 'AND', 'OR' a 'NOT'.  Ostatní operátory jsou
+        relaèní.
+        
+        """
+        return self._name in ('AND', 'OR', 'NOT')
+        
+    def __str__(self):
+        args = string.join(map(str, self.args()), ', ')
+        return '%s (%s)' % (self.name(), args)
+
+    def __cmp__(self, other):
+        if sameclass(self, other):
+            return cmp(self._name, other._name) or \
+                   cmp(self._args, other._args) or \
+                   cmp(self._kwargs, other._kwargs)
+        else:
+            return compare_objects(self, other)
+
+
+class Data(object):
+    """Základní abstrakce pøístupu k tabulkovým datùm.
+
+    Tabulková data jsou rozdìlena do sloupcù a øádkù.  Tøída umo¾òuje pracovat
+    s øádky dat zpùsobem analogickým práci s daty nad relaèní databází.
+    Specifikace sloupcù je fixní vzhledem k dané instanci tøídy.  Jeden nebo
+    více sloupcù tøídy jsou definovány jako klíèové, hodnoty tìchto sloupcù
+    v jednotlivých øádcích tyto øádky jednoznaènì identifikují.  Obsah øádkù je
+    dynamický, získávaný ze zdroje dat, poèet øádkù se mù¾e bìhem existence
+    instance tøídy mìnit.
+
+    Tøída definuje následující skupiny metod pro pøístup k datùm:
+
+    - Metodu pro výbìr konkrétního øádku: 'row()'.  Øádek je vybrán podle
+      zadaného klíèe.
+
+    - Metody pro výbìr v¹ech øádkù: 'select()', 'fetchone()', 'skip()' a
+      'close()'.  Po zavolání metody 'select()' je mo¾no postupnì získávat
+      jednotlivé øádky pomocí metody 'fetchone()'.  Tento zpùsob umo¾òuje
+      pøedávání i vìt¹ího mno¾ství dat z externích zdrojù bez nutnosti je
+      v¹echna najednou dr¾et v pamìti.  Metoda 'select' umo¾òuje kdykoliv
+      zpøístupnìní dat reinicializovat (\"rewind\").
+
+    - Metody pro modifikaci dat: 'insert()', 'update()' a 'delete()'.
+
+    - Metody pro získání informací o tabulce: 'columns()' a 'key()'.
+
+    - Metody pro nastavení callbackù pøi modifikaci dat:
+      'add_callback_on_change()', 'remove_callback_on_change()'.
+
+    Tato tøída má charakter abstraktní tøídy a chová se jako prázdná tabulka,
+    tj. jako read-only tabulka s definovanými sloupci, av¹ak ¾ádnými øádky.
+    
+    """
+    AGG_MIN = 'AGG_MIN'
+    """Konstanta získání minimální hodnoty pro metodu 'select()'."""
+    AGG_MAX = 'AGG_MAX'
+    """Konstanta získání maximální hodnoty pro metodu 'select()'."""
+    AGG_COUNT = 'AGG_COUNT'
+    """Konstanta získání poètu polo¾ek pro metodu 'select()'."""
+    AGG_SUM = 'AGG_SUM'
+    """Konstanta získání souètu polo¾ek pro metodu 'select()'."""
+    AGG_AVG = 'AGG_AVG'
+    """Konstanta získání prùmìrné hodnoty polo¾ek pro metodu 'select()'."""
+
+    class UnsupportedOperation(Exception):
+        """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
+    
+    def __init__(self, columns, key, ordering=None):
+        """Inicializuj datový zdroj.
+
+        Argumenty:
+        
+          columns -- sekvence instancí tøídy 'ColumnSpec', tato sekvence
+            jednoznaènì urèuje sloupce tabulky vèetnì jejich poøadí, které je
+            dáno jejich poøadím v 'columns'
+          key -- klíèový sloupec nebo seznam klíèových sloupcù, jejich¾
+            hodnoty jednoznaènì identifikují øádky tabulky; v¹echny tyto
+            sloupce musí být prvky 'columns'
+          ordering -- specifikace automaticky udr¾ovaného tøídìní, id sloupce
+            nebo tuple ids sloupcù nebo 'None'.  Není-li 'None', je automaticky
+            udr¾ováno poøadí øádkù dle daného sloupce (první z uvedených ids),
+            který musí být typu `types_.Integer'.  Pokud je argumentem tuple,
+            je poøadí udr¾ováno v¾dy pouze v rámci øádkù, které mají stejné
+            hodnoty v druhém a¾ posledním z uvedených sloupcù.
+            
+        """
+        assert not filter(lambda c: not isinstance(c, ColumnSpec),
+                          columns), \
+                          'Invalid column specification'
+        key = xtuple(key)
+        if ordering:
+            ordering = xtuple(ordering)
+        if __debug__:
+            for k in key:
+                assert k in columns, ('Key not among columns', k, columns)
+        self._columns = tuple(columns)
+        self._key = key
+        self._ordering = ordering
+        self._locked_row = None
+        self._change_number = pytis.util.Counter()
+        self._on_change_callbacks = []
+        self._select_last_row_number = None
+
+    def columns(self):
+        """Vra» specifikaci sloupcù zadanou v konstruktoru, jako tuple."""
+        return self._columns
+
+    def find_column(self, id):
+        """Vra» 'ColumnSpec' identifikovanou 'id'.
+
+        Pokud taková specifikace neexistuje, vra» 'None'.
+        
+        """
+        return find(id, self.columns(), key=ColumnSpec.id)
+        
+    def key(self):
+        """Vra» klíèové sloupce zadané v konstruktoru, jako tuple."""
+        return self._key
+
+    def row_key(self, row):
+        """Vra» hodnoty klíèe z 'row' jako tuple instancí 'Value'."""
+        keys = map(ColumnSpec.id, self.key())
+        return row.columns(keys)
+        
+    def row(self, key):
+        """Vra» øádek identifikovaný 'key' jako instanci 'Row'.
+
+        Pokud takový øádek neexistuje, vra» 'None'.
+
+        Argumenty:
+        
+          key -- instance nebo sekvence instancí tøídy 'types_.Value'
+            odpovídajících sloupcùm klíèe reprezentující hodnoty klíèe
+            po¾adovaného øádku
+
+        Délka 'key' musí odpovídat poètu klíèových sloupcù.
+        
+        V této tøídì metoda v¾dy pouze vrací 'None'.
+        
+        """
+        return None
+    
+    def select(self, condition=None, reuse=False, sort=()):
+        """Inicializuj nata¾ení v¹ech sloupcù z datového zdroje.
+
+        Metoda sama nemusí je¹tì je¹tì ¾ádná data natahovat, pouze tento pøenos
+        inicializuje, je-li tøeba.  Metoda vrací poèet øádkù, které budou
+        následnì k dispozici; pokud tato hodnota není známa, metoda vrátí
+        'None'.  Po zavolání této metody je mo¾no datové øádky získat
+        opakovaným voláním metody 'fetchone()'.  Pøeskakovat øádky lze metodu
+        'skip()'.
+
+        Opakované volání metody nemusí inicializovat zpøístupnìní shodných dat
+        jako v pøedchozím volání, pokud se data u datového zdroje mìní.
+
+        Argumenty:
+
+          condition -- podmínka omezující výbìr øádkù; instance tøídy
+            'Operator' nebo 'None'
+          reuse -- právì kdy¾ je pravda, instance smí pro select pou¾ít data
+            z pøedchozího dotazu, shoduje-li se jeho podmínka
+          sort -- sekvence specifikátorù tøídìní, ka¾dý specifikátor má podobu
+            ID nebo (ID, DIRECTION), kde ID je id tøídìného sloupce a DIRECTION
+            je jedna z konstant modulu 'ASCENDENT' a 'DESCENDANT', implicitní
+            hodnota je 'ASCENDENT'
+
+        Je-li 'condition' rùzné od 'None', specifikuje podmínku pro výbìr
+        øádkù.  Podtøídy nejsou povinny podmínky implementovat (mohou je
+        neimplementovat vùbec nebo mohou implementovat pouze nìkteré podmínky),
+        v takovém pøípadì to musí být uvedeno v dokumentaci a pøi zadání
+        nepodporované podmínky musí metoda vyvolat výjimku
+        'UnsupportedOperation'.
+
+        Tøídìní výbìru se provádí podle sloupcù uvedených v argumentu 'sort',
+        s prioritou dle jejich poøadí.  Tøídìní je takté¾ nepovinná operace a
+        podtøídy nejsou povinny je implementovat; pokud je neimplementují, musí
+        to být uvedeno v jejich dokumentaci.
+
+        V této tøídì metoda v¾dy pouze vrací 0.
+        
+        """
+        self._select_last_row_number = -1
+        return 0
+    
+    def select_map(self, function, **kwargs):
+        """Aplikuj 'function' na v¹echny øádky výbìru a vra» výsledky.
+
+        Zavolej metodu 'select()' s argumenty 'kwargs' a na v¹echny vrácené
+        øádky zavolej funkci 'function'.  Výsledky v¹ech volání 'function' vra»
+        jako seznam s poètem a poøadím prvkù odpovídajících vráceným datovým
+        øádkùm.
+
+        Argumenty:
+
+          function -- funkce jednoho argumentu, jím¾ je instance tøídy 'Row'
+          kwargs -- argumenty pøedané metodì 'select()'
+          
+        """
+        result = []
+        self.select(**kwargs)
+        while True:
+            row = self.fetchone()
+            if row is None:
+                self.close()
+                break
+            result.append(function(row))
+        return result
+
+    def select_aggregate(self, operation, condition=None):
+        """Vra» výslednou hodnotu agregaèní funkce.
+
+        Metoda je provádí select, jeho¾ hodnotou je výsledek agregaèní funkce
+        kompletnì vybraných dat.  Je-li vyvolána bìhem neuzavøeného select,
+        tento select nepøeru¹uje a je-li podmínka její a aktuálního select
+        shodná, vrací výsledek odpovídající obsahu onoho selectu (napøíklad
+        zpracováním v jediné transakci).
+
+        Argumenty:
+
+          operation -- dvojice (OPERATION, COLUMN), kde OPERATION je jednou
+            z 'AGG_*' konstant tøídy a COLUMN je id sloupce, nad kterým má být
+            operace provedena.
+          condition -- shodné se stejnojmenným argumentem metody 'select()'
+
+        Vrací: Instanci 'Value' odpovídající po¾adované agregaèní funkci.
+
+        Podtøídy nejsou povinny tuto metodu implementovat (mohou ji
+        neimplementovat vùbec nebo mohou implementovat pouze nìkteré podmínky),
+        v takovém pøípadì to musí být uvedeno v dokumentaci a pøi zadání
+        nepodporované podmínky musí metoda vyvolat výjimku
+        'UnsupportedOperation'.
+        
+        V této tøídì metoda v¾dy vyvolává výjimku 'UnsupportedOperation'.
+
+        """
+        raise self.UnsupportedOperation()
+        
+    def fetchone(self, direction=FORWARD):
+        """Vra» dal¹í øádek dat.
+
+        Opakovaným voláním této metody je mo¾no získat v¹echny øádky tabulky.
+        Pokud ji¾ ¾ádný dal¹í øádek dat k dispozici není, vra» 'None'.
+
+        Argumenty:
+
+          direction -- jedna z konstant 'FORWARD' a 'BACKWARD', urèuje, zda
+            má být vrácen pøedchozí nebo následující øádek
+
+        Ne v¹echny podtøídy jsou povinny implementovat vrácení pøedchozího
+        øádku (tj. situaci, kdy 'direction==BACKWARD').  Pokud je
+        neimplementují, musí to být uvedeno v dokumentaci a metoda musí
+        v pøípadì odpovídajícího po¾adavku vyvolat výjimku
+        'UnsupportedOperation'.
+
+        Smìr je vztahován k poslednì vrácenému øádku.  Má-li tabulka _n_ øádkù
+        a poslednì vrácený øádek byl _k_-tý, kde 0 < _k_ < n+1, znamená
+        'FORWARD' vrácení _k+1_ního øádku (pokud existuje) a 'BACKWARD'
+        _k-1_ního øádku (pokud existuje).  Dojde-li k pøekroèení prvního øádku,
+        nejblí¾e následující 'FORWARD' vrátí první øádek (pokud existuje),
+        a dojde-li k pøekroèení posledního øádku, nejblí¾e následující
+        'BACKWARD' vrátí poslední øádek (pokud existuje).
+
+        Prvnímu volání této metody musí pøedcházet volání metody 'select()'.
+        Pokud se tak nestane, je chování metody nespecifikováno.  Následující
+        volání metody 'select()' provede reinicializaci natahování dat,
+        tj. následné volání 'fetchone()' zaène vracet nová data, opìt od
+        zaèátku.
+
+        Ka¾dému volání 'fetchone()' musí pøedcházet volání 'select()',
+        'fetchone()' nebo 'skip()'.  Je-li bìhem provádìní výbìru volána jiná
+        veøejná (nebo nesouvisející neveøejná) metoda tøídy, je chování
+        následného volání metody 'fetchone()' bez bezprostøednì
+        pøedcházejícího volání 'select()' nedefinováno.
+
+        Po posledním volání této metody by mìla být zavolána metoda 'close()'.
+
+        V této tøídì metoda v¾dy pouze vrací 'None'.
+        
+        """
+        return None
+
+    def last_row_number(self):
+        """Vra» poøadí øádku poslednì vráceného metodou 'fetchone()'.
+
+        Øádky jsou èíslovány od 0.  Pokud v aktuálním selectu dosud nebyl ¾ádný
+        øádek pøes 'fetchone()' získán, vra» -1.
+
+        """
+        return self._select_last_row_number
+        
+    def skip(self, count, direction=FORWARD):
+        """Pøeskoè 'count' øádkù ve smìru 'direction'.
+
+        Argumenty:
+
+          count -- poèet øádkù, které mají být pøeskoèeny; musí to být
+            nezáporný integer
+          direction -- jedna z konstant 'FORWARD' a 'BACKWARD', urèuje smìr
+            pohybu pøi pøeskakování
+
+        Vrací: Poèet skuteènì pøeskoèených øádkù (mù¾e být ni¾¹í, dojde-li
+        k pøekroèení hranic dat) nebo 'None', pokud tento údaj není znám.
+
+        Pokud pøi skákání dojde k pøekroèení hranic dat, nadbyteèné
+        pøeskakování øádkù se ignoruje.
+
+        Metodu je mo¾no pou¾ít pouze bìhem otevøeného selectu (viz metody
+        'select()' a 'close()').
+
+        V této tøídì metoda pøeskakuje øádky prostøednictvím volání metody
+        'fetchone()' a vrací poèet øádkù, pro které tato volání nevrátila
+        'None'.
+        
+        """
+        for i in range(count):
+            if self.fetchone(direction) == None:
+                return i
+        return count
+
+    def rewind(self):
+        """Vra» se pøed zaèátek dat aktuálního selectu.
+
+        Metodu je mo¾no pou¾ít pouze bìhem otevøeného selectu (viz metody
+        'select()' a 'close()').
+
+        """
+        while self.fetchone(BACKWARD) != None:
+            pass
+
+    def search(self, condition, direction=FORWARD):
+        """Vyhledej nejbli¾¹í výskyt øádku splòujícího 'condition'.
+
+        Argumenty:
+
+          condition -- podmínkový výraz, který musí hledaný prvek splòovat,
+            instance tøídy 'Operator'
+          direction -- smìr vyhledávání, jedna z konstant 'FORWARD' a
+            'BACKWARD'
+
+        Vrací: Vzdálenost hledaného øádku od aktuálního øádku v poètu øádkù
+        jako kladný integer.  Pokud øádek nebyl nalezen, je vrácena 0.
+
+        Aktuální øádek je øádek, na který ukazuje ukazovátko.  Tj. napøíklad
+        øádek bezprostøednì pøedtím vyta¾ený metodou 'fetchone()'.
+
+        Metodu je mo¾no pou¾ít pouze bìhem otevøeného selectu (viz metody
+        'select()' a 'close()'), vyhledávání se provádí pouze mezi øádky
+        tohoto selectu.  Pozice ukazovátka selectu není touto metodou zmìnìna.
+        
+        Podtøídy nejsou povinny tuto metodu implementovat (mohou ji
+        neimplementovat vùbec nebo mohou implementovat pouze nìkteré podmínky),
+        v takovém pøípadì to musí být uvedeno v dokumentaci a pøi zadání
+        nepodporované podmínky musí metoda vyvolat výjimku
+        'UnsupportedOperation'.
+        
+        V této tøídì metoda v¾dy vyvolává výjimku 'UnsupportedOperation'.
+
+        """
+        raise self.UnsupportedOperation()
+
+    def search_key(self, key, direction=FORWARD):
+        """Stejné jako 'search()', ale hledá podle 'key' místo podmínky.
+
+        Argumenty:
+
+          key -- sekvence hodnot klíèe
+          direction -- stejné jako v 'search()'
+
+        """
+        eqs = map(lambda c, k: EQ(c.id(), k), self.key(), key)
+        condition = apply(AND, eqs)
+        return self.search(condition, direction=direction)
+
+    def close(self):
+        """Ukonèi aktuální select.
+
+        Tato metoda umo¾òuje explicitnì uzavøít aktuální ètení dat pomocí
+        'select()' + 'fetchone()' a uvolnit tak ji¾ pøípadné dále nepotøebné
+        datové struktury nebo prostøedky systému.
+
+        Metoda mù¾e být volána pouze kdy¾ je aktivní 'select()' spojení.
+        Pokud tomu tak není, je její chování nedefinováno.
+
+        V této tøídì tato metoda nedìlá nic.
+        
+        """
+        self._select_last_row_number = None
+    
+    def insert(self, row, after=None, before=None):
+        """Vlo¾ 'row' do tabulky.
+
+        Argumenty:
+        
+          row -- instance tøídy 'Row'
+          after -- 'None' nebo klíè øádku, za který má být nový øádek vlo¾en
+          before -- 'None' nebo klíè øádku, pøed který má být nový øádek vlo¾en
+
+        Argumenty 'after' a 'before' mají smysl pouze tehdy, pokud byl
+        v konstruktoru specifikován argument 'ordering'.  Nesmí být
+        specifikovány oba souèasnì.  Pokud øádek urèený nìkterým z tìchto
+        argumentù neexistuje, není nový øádek vlo¾en.  Pokud je v novém øádku
+        uvedena hodnota poøadového sloupce, je tato ignorována.  Pokud má
+        datový objekt ordering a oba argumenty 'after' a 'before' jsou 'None',
+        nový øádek mù¾e být vlo¾en na kteroukoliv pozici.
+        
+        'row' nemusí obsahovat obsahovat hodnoty pro v¹echny sloupce tabulky a
+        mù¾e obsahovat i dal¹í sloupce, které tabulka neobsahuje.  Zále¾í na
+        implementaci tabulkové tøídy, jak s takovým sloupcem nalo¾í -- mù¾e
+        napøíklad chybìjící sloupce doplnit implicitními hodnotami nebo je
+        dopoèítat nebo také mù¾e sloupec odmítnout do tabulky vlo¾it.  V ka¾dém
+        pøípadì platí, ¾e poøadí sloupcù v 'row' je z hlediska této metody
+        nepodstatné, sloupce jsou rozeznávány svými názvy.
+
+        Pokud 'row' obsahuje klíè a øádek s takovým klíèem ji¾ v tabulce
+        existuje, neprovádìj nic.  Pakli¾e 'row' obsahuje pouze nìkteré a ne
+        v¹echny sloupce klíèe, zále¾í na konkrétní implementaci, zda jej vlo¾í
+        èi nikoliv.
+        
+        Není specifikováno, na které místo tabulky má být øádek vlo¾en, obvykle
+        je to konec tabulky, není to v¹ak vy¾adováno.
+
+        Je-li sloupec do tabulky úspì¹nì vlo¾en, vra» dvojici (ROW, 'True'),
+        kde ROW je skuteèný nový øádek tabulky, který na základì vlo¾ení 'row'
+        vzniknul.  Pokud nemù¾e být obsah nového øádku zji¹tìn, vra» dvojici
+        ('None', 'True').  Pokud øádek nebyl do tabulky úspì¹nì vlo¾en, vra»
+        dvojici ('None', 'False').
+
+        V této tøídì metoda v¾dy pouze vrací ('None', 'False').
+        
+        """
+        return None, False
+
+    def update(self, key, row):
+        """Nahraï øádek identifikovaný klíèem 'key' øádkem 'row'.
+
+        Argumenty:
+        
+          key -- instance nebo seznam instancí tøídy 'types._Value', musí
+            odpovídat v¹em sloupcùm klíèe tabulky
+          row -- instance tøídy 'Row'
+
+        'row' nemusí obsahovat hodnoty pro v¹echny sloupce tabulky a mù¾e
+        obsahovat i dal¹í sloupce, které tabulka neobsahuje.  Zále¾í na
+        implementaci tabulkové tøídy, jak s takovým sloupcem nalo¾í -- mù¾e
+        napøíklad chybìjící sloupce doplnit implicitními hodnotami nebo je
+        dopoèítat nebo také mù¾e sloupec odmítnout do tabulky vlo¾it.  V ka¾dém
+        pøípadì platí, ¾e poøadí sloupcù v 'row' je z hlediska této metody
+        nepodstatné, sloupce jsou rozeznávány svými názvy.
+
+        Pokud 'key' v tabulce neidentifikuje ¾ádný existující øádek, neprovádìj
+        nic a vra» 'None'.  Pokud 'row' obsahuje klíè rùzný od 'key' a øádek
+        s takovým klíèem ji¾ v tabulce existuje, neprovádìj nic a vra» 'None'.
+        Pakli¾e 'row' obsahuje pouze nìkteré a ne v¹echny sloupce klíèe, zále¾í
+        na konkrétní implementaci, jak s tím nalo¾í.
+
+        Byl-li pro datový objekt v konstruktoru specifikován argument
+        'ordering', není poøadí øádku updatem zmìnìno.  Pøípadná novì zadaná
+        hodnota kteréhokoliv \"ordering\" sloupce je ignorována a je nahrazena
+        starou hodnotou.  Z toho plyne, ¾e updatem není mo¾no zmìnit hodnotu
+        ¾ádného sloupce uvedeného v 'ordering'.
+
+        Je-li sloupec úspì¹nì updatován, vra» dvojici (ROW, 'True'), kde ROW
+        je skuteèný updatovaný øádek tabulky, který na základì vlo¾ení 'row'
+        vzniknul.  Pokud takový øádek nelze zjistit, vra» ('None', 'True').
+        V opaèném pøípadì (tj. pokud øádek s 'key' neexistuje nebo pokud je
+        problematický klíè 'row', jak je uvedeno vý¹e) vra» dvojici
+        ('None', 'False').
+        
+        V této tøídì metoda v¾dy pouze vrací dvojici ('None', 'False').
+        
+        """
+        return None, False
+
+    def update_many(self, condition, row):
+        """Nahraï øádky identifikované 'condition' daty 'row'.
+
+        Argumenty:
+        
+          key -- instance nebo seznam instancí tøídy 'types._Value', musí
+            odpovídat v¹em sloupcùm klíèe tabulky; urèuje øádek, který má být
+            smazán
+          row -- instance tøídy 'Row'
+
+        'row' nemusí obsahovat hodnoty pro v¹echny sloupce tabulky a mù¾e
+        obsahovat i dal¹í sloupce, které tabulka neobsahuje.  Zále¾í na
+        implementaci tabulkové tøídy, jak s takovým sloupcem nalo¾í -- mù¾e
+        napøíklad chybìjící sloupce doplnit implicitními hodnotami nebo je
+        dopoèítat nebo také mù¾e sloupec odmítnout do tabulky vlo¾it.  V ka¾dém
+        pøípadì platí, ¾e poøadí sloupcù v 'row' je z hlediska této metody
+        nepodstatné, sloupce jsou rozeznávány svými názvy.
+
+        Pokud by zmìna øádkù mìla mít za následek zmìnu klíèe nìkterého øádku
+        na klíè po updatu existující v jiném øádku, je vyvolána výjimka a data
+        nejsou zmìnìna.
+
+        Byl-li pro datový objekt v konstruktoru specifikován argument
+        'ordering', není poøadí øádku updatem zmìnìno.  Pøípadná novì zadaná
+        hodnota kteréhokoliv \"ordering\" sloupce je ignorována.  Z toho plyne,
+        ¾e updatem není mo¾no zmìnit hodnotu ¾ádného sloupce uvedeného
+        v 'ordering'.
+
+        Vrací: Poèet updatovaných øádkù.
+        
+        V této tøídì metoda v¾dy pouze vrací '0'.
+        
+        """
+        return 0
+    
+    def delete(self, key):
+        """Sma¾ øádek identifikovaný 'key'.
+
+        Argumenty:
+        
+          key -- instance nebo seznam instancí tøídy 'types._Value', musí
+            odpovídat v¹em sloupcùm klíèe tabulky; urèuje øádek, který má být
+            smazán
+
+        Pokud je øádek smazán, vra» 1.
+        Pokud takový øádek nelze smazat (vèetnì situace, kdy neexistuje),
+        nedìlej nic a vra» 0.
+
+        V této tøídì metoda v¾dy pouze vrací 0.
+        
+        """
+        return 0
+
+    def delete_many(self, condition):
+        """Sma¾ øádky identifikované 'condition'.
+        
+        Argumenty:
+        
+          condition -- podmínka odpovídající øádkùm, které mají být
+            smazány; instance tøídy 'Operator'
+
+        Vrací: Poèet smazaných øádkù.
+
+        V této tøídì metoda v¾dy pouze vrací 0.
+
+        """
+        return 0
+        
+    def lock_row(self, key):
+        """Zamèi øádek odpovídající 'key' pro editaci a mazání.
+
+        Argumenty:
+
+          key -- klíè øádku, který má být zamèen
+
+        Jestli¾e 'key' neodpovídá ¾ádnému existujícímu øádku, je chování metody
+        nedefinováno.
+
+        Zamykání je neblokující, pokud je ji¾ po¾adovaný øádek zamèen, metoda
+        okam¾itì skonèí, bez toho ani¾ by se sama pokou¹ela o jeho dal¹í
+        zamykání.
+
+        Vrací: 'None', jestli¾e byl øádek zamèen, slovní popis existujícího
+        zámku, jestli¾e øádek je ji¾ zamèen.  Slovní popis obsahuje opravdu jen
+        popis zámku, ne tedy napøíklad informaci o tom ¾e záznam je zamèen,
+        zaèíná malým písmenem a není ukonèen ¾ádným interpunkèním znaménkem.
+
+        Cílem zamykání je informovat ostatní klienty, ¾e pøíslu¹ný záznam je
+        editován a ¾e by s ním nemìli manipulovat.  Zamykání nemusí technicky
+        zabraòovat modifikacím u zdroje dat, ke kterému se pøistupuje jinak ne¾
+        instancí této tøídy.  Není také nutno zaji¹»ovat o¹etøení pøístupu
+        k datùm z více threadù, jestli¾e tøída samotná není thread safe.
+
+        V ka¾dý okam¾ik mù¾e být zamèen nejvý¹e jeden øádek jedné instance této
+        tøídy.  Pøi pokusu o zamèení dal¹ího øádku je chování metody
+        nedefinováno.
+
+        """
+        if self._locked_row:
+            raise ProgramError('Attempt to lock more than one row')
+        self._locked_row = key
+        return None
+
+    def unlock_row(self):
+        """Odemèi aktuálnì zamèený øádek.
+
+        Jestli¾e není zamèen ¾ádný øádek, nedìlej nic.
+
+        """
+        self._locked_row = None
+
+    def locked_row(self):
+        """Vra» klíè aktuálnì zamèeného øádku.
+
+        Jestli¾e momentálnì není zamèený ¾ádný øádek, vra» 'None'.
+
+        """
+        return self._locked_row
+
+    def change_number(self):
+        """Vra» poèet dosud zaregistrovaných zmìn dat.
+
+        Tento poèet je vìt¹í nebo roven 0 a ka¾dá následující návratová hodnota
+        je vìt¹í nebo rovna pøedchozí návratové hodnotì.  Nic jiného
+        garantovaného není, zejména ne ¾e poèet odpovídá skuteènému poètu zmìn
+        dat, jedná se pouze o orientaèní hodnotu.  Pro podrobnìj¹í diskusi
+        spolehlivosti viz dokumentace metody `add_callback_on_change()'.
+        
+        """
+        return self._change_number.current()
+    
+    def add_callback_on_change(self, function):
+        """Zaregistruj 'function' do seznamu modifikaèních callbackù.
+
+        Dojde-li k oznámení o modifikaci dat, mù¾e pak být 'function' zavolána,
+        bez parametrù.  Zda je 'function' skuteènì zavolána, závisí na
+        konkrétní implementaci datové tøídy.  Nìkteré implementace mohou toto
+        volání garantovat, nìkteré mohou volání provádìt bez garance a nìkteré
+        nemusí volání provádìt nikdy.  Tato zpìtná volání jsou tedy pouze
+        pomocným mechanismem, který mù¾e být pro urèité úèely (napøíklad
+        pøekreslení tabulky na obrazovce) u¾iteèný, nelze na nìj v¹ak spoléhat.
+
+        **Pozor:** Vzhledem k tomu, ¾e se jedná o callbacky, bude 'function'
+        obvykle volána v samostatném threadu, je v ní tedy tøeba dbát na
+        pøípadné mo¾né kolize s hlavním threadem.
+
+        V této tøídì k ¾ádným modifikacím dat nedochází a tudí¾ se ani
+        neprovádí zpìtná volání.
+
+        """
+        self._on_change_callbacks.append(function)
+
+    def remove_callback_on_change(self, function):
+        """Odstraò 'function' ze seznamu modifikaèních callbackù.
+
+        Pokud 'function' v seznamu modifikaèních callbackù není, nedìlej nic.
+        
+        """
+        try:
+            self._on_change_callbacks.remove(function)
+        except ValueError:
+            pass
+
+    def _call_on_change_callbacks(self):
+        self._change_number.next()
+        for c in self._on_change_callbacks:
+            c()
+
+
+class Counter:
+    """Abstrakce pøístupu ke generátoru tickets.
+
+    Jedná se o jednoduchý èítaè vracející postupnì sekvenci unikátních
+    vzestupných èísel, blí¾e viz metoda 'next()'.
+
+    """    
+    def next(self):
+        """Vra» dal¹í hodnotu èítaèe jako integer.
+
+        V této tøídì metoda pouze vyvolává 'NotImplementedException'.
+        
+        """
+        raise NotImplementedException()
+
+
+class Function:
+    """Abstrakce databázových funkcí.
+
+    Podporovány jsou pouze jednoduché funkce, pøijímající pevný (ale libovolný)
+    poèet argumentù daných svojí pozicí a vracející seznam øádkù.
+
+    """
+    def call(self, row):
+        """Zavolej funkci a vra» výsledek.
+
+        Argumenty:
+
+          row -- instance tøídy 'Row' odpovídající argumentùm funkce, je
+            dùle¾ité poøadí prvkù v 'row'
+
+        Vrací: Sekvenci instancí tøídy 'Row' odpovídající výsledku volání
+        funkce.
+
+        """
+        raise NotImplementedException()
+
+
+
+class MemData(Data):
+    """Data dr¾ená v pamìti.
+
+    Tøída slou¾í jako jednoduchý datový objekt, který øádky svých dat dr¾í
+    v pamìti.  Je urèena pøedev¹ím pro ladìní a testování.
+
+    Tøída není thread-safe.
+
+    Modifikaèní metody nevolají ¾ádné callbacky.
+    
+    """
+    def __init__(self, columns, data=()):
+        """Inicializuj datový zdroj dle specifikace 'columns'.
+
+        'columns' jsou stejné jako v pøedkovi.  Klíèem je v¾dy první sloupec
+        'columns', z èeho¾ vyplývá, ¾e 'columns' nesmí být prázdné.
+
+        Argument 'data' mù¾e obsahovat sekvenci instancí 'Row', kterými má být
+        inicializován datový objekt.
+        
+        """
+        Data.__init__(self, columns, columns[0])
+        self._mem_data = []
+        self._mem_cursor = -1
+        for row in data:
+            self.insert(row)
+
+    def _mem_find_index(self, key):
+        if is_sequence(key):
+            key = key[0]
+        data = self._mem_data
+        k = self.key()[0].id()
+        for i in range(len(data)):
+            if data[i][k] == key:
+                return i
+        else:
+            return None
+
+    def _mem_create_row(self, row, index=None):
+        try:
+            key = row[self.key()[0].id()]
+        except:
+            return None
+        i = self._mem_find_index(key) 
+        if index != None and i != None and i != index:
+            return None
+        pairs = []
+        for c in self.columns():
+            id = c.id()
+            try:
+                val = row[id]
+            except:
+                val = None
+            pairs.append((id, val))
+        return Row(pairs)
+
+    def row(self, key):
+        index = self._mem_find_index(key)
+        if index == None:
+            return None
+        return self._mem_data[index]
+
+    def rewind(self):
+        self._mem_cursor = -1
+
+    def _condition2pyfunc(self, condition):
+        if condition is None:
+            return lambda row: True
+        op_name = condition.name()
+        if op_name == 'EQ':
+            col, value = condition.args()
+            return lambda row: row[col] == value
+        elif op_name == 'NOT':
+            func = self._condition2pyfunc(condition.args()[0])
+            return lambda row: not func(row)
+        elif op_name == 'AND':
+            fctns = [self._condition2pyfunc(c) for c in condition.args()]
+            return lambda row: reduce(lambda r, f: r and f(row), fctns, True)
+        else:
+            ProgramError("Operator not supported:", condition)
+        
+    def select(self, condition=None, reuse=False):
+        """Inicializace vytahování záznamù.
+
+        Bli¾¹í popis viz nadtøída.  Argumenty 'condition' a 'sort' jsou
+        ignorovány.
+        
+        """
+        self._mem_cursor = -1
+        self._mem_select = data = []
+        cond = self._condition2pyfunc(condition)
+        for row in self._mem_data:
+            if cond is None or cond(row):
+                data.append(row)
+
+    def close(self):
+        self._mem_select = []
+        
+    def fetchone(self, direction=FORWARD):
+        cursor = self._mem_cursor
+        data = self._mem_select
+        if direction == FORWARD:
+            if cursor >= len(data):
+                return None
+            elif cursor == len(data) - 1:
+                self._mem_cursor = cursor + 1
+                return None
+            else:
+                self._mem_cursor = cursor = cursor + 1
+                return data[cursor]
+        else:
+            if cursor < 0:
+                return None
+            elif cursor == 0:
+                self._mem_cursor = -1
+                return None
+            else:
+                self._mem_cursor = cursor = cursor - 1
+                return data[cursor]
+            
+    def last_row_number(self):
+        return self._mem_cursor
+
+    def insert(self, row):
+        """Vlo¾ 'row' do tabulky.
+
+        Pro bli¾¹í popis viz nadtøída.
+
+        'row' je vlo¾en na konec tabulky.  Chybìjící sloupce jsou nastaveny na
+        'None'.
+        
+        """
+        assert isinstance(row, Row)
+        new_row = self._mem_create_row(row)
+        if new_row == None:
+            return None, False
+        self._mem_data.append(new_row)
+        return new_row, True
+
+    def update(self, key, row):
+        """Updatuj 'row' v tabulce.
+
+        Pro bli¾¹í popis viz nadtøída.
+
+        'row' je v tabulce vlo¾en na místo øádku identifikovaného 'key''.
+        Chybìjící sloupce jsou nastaveny na 'None'.
+        
+        """
+        index = self._mem_find_index(key)
+        if index == None:
+            return None, False
+        new_row = self._mem_create_row(row, index)
+        if new_row == None:
+            return None, False
+        self._mem_data[index] = new_row
+        return new_row, True
+        
+    def delete(self, key):
+        index = self._mem_find_index(key)
+        if index == None:
+            return 0
+        del self._mem_data[index]
+        return 1
+
+
+
+### Pomocné funkce
+
+
+def EQ(x, y, ignore_case=False):
+    """Podmínkový operátor 'EQ' relace rovnosti '='.
+
+    Argumenty:
+
+      x -- identifikátor sloupce, string
+      y -- hodnota sloupce, instance tøídy 'types._Value'
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je primitivní.
+      
+    """
+    return Operator('EQ', x, y, ignore_case=ignore_case)
+
+def NE(x, y, ignore_case=False):
+    """Podmínkový operátor nerovnosti.
+
+    Argumenty:
+
+      x -- identifikátor sloupce, string
+      y -- hodnota sloupce, instance tøídy 'types._Value'
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je vyjádøený pomocí jiných operátorù.
+      
+    """
+    return NOT(EQ(x, y, ignore_case=ignore_case))
+    
+def WM(x, y, ignore_case=True):
+    """Podmínkový operátor 'WM' (\"wildcard matches\") porovnání dle vzoru.
+
+    Argumenty:
+
+      x -- identifikátor sloupce
+      y -- instance 'WMValue' definující vzor; její hodnota mù¾e jako wildcars
+        obsahovat znaky '*' (lze substituovat èímkoliv) a '?' (lze substituovat
+        libovolným znakem)
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je primitivní.
+      
+    """
+    return Operator('WM', x, y, ignore_case=ignore_case)
+    
+def NW(x, y, ignore_case=True):
+    """Podmínkový operátor negace porovnání dle vzoru.
+
+    Argumenty:
+
+      x -- identifikátor sloupce typu 'String', string
+      y -- string definující vzor; jako wildcars mù¾e obsahovat znaky '*' (lze
+        substituovat èímkoliv) a '?' (lze substituovat libovolným znakem)
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je vyjádøený pomocí jiných operátorù.
+      
+    """
+    return NOT(WM(x, y, ignore_case=ignore_case))
+
+def LT(x, y, ignore_case=False):
+    """Podmínkový operátor 'LT' relace '<'.
+
+    Argumenty:
+
+      x -- identifikátor sloupce, string
+      y -- hodnota sloupce, instance tøídy 'types._Value'
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je primitivní.
+      
+    """
+    return Operator('LT', x, y, ignore_case=ignore_case)
+
+def LE(x, y, ignore_case=False):
+    """Podmínkový operátor relace '<='.
+
+    Argumenty:
+
+      x -- identifikátor sloupce, string
+      y -- hodnota sloupce, instance tøídy 'types._Value'
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je vyjádøený pomocí jiných operátorù.
+      
+    """
+    return OR(LT(x, y, ignore_case=ignore_case),
+              EQ(x, y, ignore_case=ignore_case))
+
+def GT(x, y, ignore_case=False):
+    """Podmínkový operátor relace '>'.
+
+    Argumenty:
+
+      x -- identifikátor sloupce, string
+      y -- hodnota sloupce, instance tøídy 'types._Value'
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je vyjádøený pomocí jiných operátorù.
+
+    """
+    return AND(NOT(EQ(x, y, ignore_case=ignore_case)),
+               NOT(LT(x, y, ignore_case=ignore_case)))
+
+def GE(x, y, ignore_case=False):
+    """Podmínkový operátor relace '>='.
+
+    Argumenty:
+
+      x -- identifikátor sloupce, string
+      y -- hodnota sloupce, instance tøídy 'types._Value'
+      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
+        typ smysl)
+
+    Tento operátor je vyjádøený pomocí jiných operátorù.
+
+    """
+    return OR(GT(x, y, ignore_case=ignore_case),
+              EQ(x, y, ignore_case=ignore_case))
+
+def NOT(x):
+    """Podmínkový operátor 'NOT' negace.
+
+    Argumenty:
+
+      x -- operátor
+
+    Tento operátor je primitivní.
+
+    """
+    return Operator('NOT', x)
+
+def AND(*args):
+    """Podmínkový operátor 'AND' konjunkce.
+
+    Argumenty:
+
+      args -- sekvence operátorù (mù¾e být i prázdná)
+
+    Operátor je komutativní, na poøadí argumentù tedy nezále¾í.
+
+    Tento operátor je primitivní.
+      
+    """
+    return Operator(*(('AND',) + tuple(args)))
+
+def OR(*args):
+    """Podmínkový operátor disjunkce.
+
+    Argumenty:
+
+      args -- sekvence operátorù (mù¾e být i prázdná)
+
+    Operátor je komutativní, na poøadí argumentù tedy nezále¾í.
+
+    Tento operátor je vyjádøený pomocí jiných operátorù.
+
+    """
+    translation = NOT(apply(AND, map(NOT, args)))
+    return Operator(*(('OR',) + tuple(args)), **{'translation': translation})
+
+def IN(column_id, data, table_column_id, table_condition):
+    """Podmínkový operátor pøíslu¹nosti.
+
+    Argumenty:
+
+      column_id -- jméno sloupce (string), který má být prvkem mno¾iny
+      data -- instance tøídy 'Data' odpovídající tabulce, ze které má být
+        proveden výbìr mno¾iny
+      table_column_id -- jméno sloupce (string) 'table', ze kterého má být
+        proveden výbìr mno¾iny
+      table_condition -- podmínka omezující výbìr z 'table'
+
+    Tento operátor je primitivní.
+
+    """
+    return Operator('IN', column_id, data, table_column_id, table_condition)
+
+
+def reversed_sorting(sorting):
+    """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.
+
+    Prvky setøídìné dle vrácené hodnoty mají pøesnì obrácené poøadí ne¾ prvky
+    setøídìné dle 'sorting'.
+
+    """
+    def revspec(spec):
+        if is_sequence(spec):
+            id, dir = spec
+        else:
+            id, dir = spec, ASCENDENT
+        if dir == ASCENDENT:
+            result = DESCENDANT
+        elif dir == DESCENDANT:
+            result = ASCENDENT
+        else:
+            raise ProgramError('Invalid sorting direction', dir)
+        return id, result
+    reversed = map(revspec, sorting)
+    return tuple(reversed)
+
+
+
+# Pomocné tøídy
+
+
+class ColumnSpec:
+    """Specifikace sloupce tabulkových dat.
+
+    Ka¾dý sloupec je identifikován svým názvem (string) a typem (instance tøídy
+    'types_.Type').  Blí¾e viz metoda '__init__()'.
+
+    Instance tøídy jsou pova¾ovány za immutable, tudí¾ je mo¾no je sdílet.
+    
+    """
+    def __init__(self, id, type):
+        """Inicializuj specifikaci sloupce.
+
+        Argumenty:
+        
+          id -- string identifikující sloupec (název sloupce)
+          type -- typ sloupce, instance tøídy 'types_.Type'
+
+        Názvem sloupce mù¾e být libovolný øetìzec, nedoporuèuje se v¹ak
+        pou¾ívat prázdný øetìzec jako regulérní název sloupce.
+
+        """
+        self._id = id
+        self._type = type
+
+    def __str__(self):
+        return '<Column: id=%s, type=%s>' % (self.id(), self.type())
+        
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.
+
+        'self' a 'other' jsou shodné právì kdy¾ jsou té¾e tøídy a mají stejné
+        id a typ.
+
+        """
+        if sameclass(self, other):
+            res = compare_objects(self.type(), other.type())
+            if res:
+                return res
+            else:
+                return compare_objects(self.id(), other.id())
+        else:
+            return compare_objects(self, other)
+
+    def id(self):
+        """Vra» string identifikující sloupec zadaný v konstruktoru."""
+        return self._id
+
+    def type(self):
+        """Vra» typ sloupce jako instanci tøídy 'types_.Type'."""
+        return self._type
+
+
+class Row:
+    """Reprezentace jednoho øádku øádkových dat.
+
+    V podstatì se jedná o uspoøádaný seznam sloupcù (polo¾ek) a jejich hodnot.
+    Data jsou identifikována buïto svým poøadím, nebo názvem pøíslu¹ného
+    sloupce.  V prvním pøípadì se na nì lze odkazovat èíselným odkazem tak jako
+    u polo¾ek seznamù, v druhém pøípadì stringy, tak jako u hash tabulek.
+
+    Hodnotami sloupcù jsou instance tøídy 'types_.Value'.
+    
+    Tøída emuluje sekvenci i hash tabulku.  Kromì této emulace tøída
+    neposkytuje ¾ádné dal¹í metody.  Iniciální data musí být pøedána
+    v konstruktoru, pozdìji lze modifikovat ji¾ jen existující sloupce.
+    Mazání sloupcù není mo¾né.
+    
+    """
+    def __init__(self, data=()):
+        """Inicializuj øádek.
+
+        Argumenty:
+        
+          data -- sekvence dvouprvkových sekvencí, ka¾dá dvouprvková sekvence
+            obsahuje jako svùj první prvek identifikátor sloupce (string) a
+            jako druhý prvek jeho hodnotu (instance tøídy 'Value'); argument
+            není nutno klíèovat
+
+        Pøíklad obsahu 'data':
+        
+          (('poradi', Value(Integer.make(), 1)),
+           ('popis', Value(String.make(), 'prvni prvek')))
+          
+        """
+        if __debug__:
+            assert is_sequence(data), ("Agument must be a sequence", data)
+            for item in data:
+                assert is_sequence(item) and len(item) == 2, \
+                       ('Column definition must be (ID, VALUE) pair', item)
+                k, v = item
+                assert is_string(k), ('Invalid column id', k)
+                assert isinstance(v, Value), ('Invalid column value', v)
+        self._data = list(data)
+
+    def _index(self, key):
+        if is_string(key):
+            data = self._data
+            for i in range(len(data)):
+                if data[i][0] == key:
+                    result = i
+                    break
+            else:
+                raise KeyError(key)
+        elif type(key) == type(0) or type(key) == type(0L):
+            if key < 0:
+                result = len(self) + key
+                if result < 0:
+                    raise IndexError('List index out of range', key)
+            else:
+                result = key
+        else:
+            raise KeyError('Illegal key type', key)
+        return result
+
+    def __getstate__(self):
+        return self._data
+
+    def __setstate__(self, state):
+        if type(state) != types.ListType:
+            raise InvalidAccessError('Invalid row data', state)
+        for k, v in state:
+            if type(k) != types.StringType:
+                raise InvalidAccessError('Invalid row key', k)
+            if not isinstance(v, Value):
+                raise InvalidAccessError('Invalid row value', v)
+        self._data = state
+        
+    def __str__(self):
+        items = []
+        for i in range(len(self)):
+            items.append(self._data[i][0] + '==' + str(self[i]))
+        return '<Row: %s>' % string.join(items, ', ')
+
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' obsahují stejné názvy a hodnoty.
+
+        Hodnoty a názvy musí být stejné vèetnì svého poøadí.
+        
+        """
+        if sameclass(self, other):
+            l1 = len(self)
+            l2 = len(other)
+            if l1 < l2:
+                return -1
+            elif l1 > l2:
+                return 1
+            else:
+                data1 = self._data
+                data2 = other._data
+                for i in range(l1):
+                    k1, v1 = data1[i]
+                    k2, v2 = data2[i]
+                    x = cmp(k1, k2)
+                    if x:
+                        return x
+                    y = cmp(v1, v2)
+                    if y:
+                        return y
+                else:
+                    return 0
+        else:
+            return compare_objects(self, other)
+        
+    def __len__(self):
+        """Vra» poèet sloupcù v øádku."""
+        return len(self._data)
+
+    def __getitem__(self, key):
+        """Vra» sloupec dle 'key'.
+
+        Jestli¾e 'key' je string odpovídající názvu existujícího sloupce, vra»
+        hodnotu daného sloupce.
+        Jestli¾e 'key' je integer odpovídající sloupci analogicky jako
+        u sekvencí, vra» hodnotu daného sloupce.
+        Jinak vyvolej výjimku.
+        
+        """
+        index = self._index(key)
+        return self._data[index][1]
+
+    def __setitem__(self, key, value):
+        """Nastav hodnotu existujícího sloupce 'key' na 'value'.
+
+        Argumenty:
+        
+          key -- musí být existující klíè, a» u¾ string jako název sloupce
+            nebo integer jako poøadí sloupce
+          value -- nová hodnota sloupce, instance tøídy 'types_.Value'
+
+        Jestli¾e sloupec identifikovaný 'key' neexistuje, je chování metody
+        nedefinováno.
+
+        Zmìna sloupce se nepropaguje do instancí, je¾ jsou kopiemi této
+        instance.
+          
+        """
+        index = self._index(key)
+        self._data = data = copy.copy(self._data)
+        data[index] = (data[index][0], value)
+
+    def __getslice__(self, i, j):
+        """Vra» po¾adovaný slice jako instanci této tøídy."""
+        return self.__class__(self._data[i:j])
+
+    def __setslice__(self, i, j, data):
+        """Nastav po¾adovaný slice na 'data'.
+
+        'data' je ve stejném formátu jako argument metody '__init__()'.
+        'data' musí mít stejnou délku jako pùvodní 'slice', jinak je
+        vyvolána výjimka.
+        
+        """
+        n = len(data)
+        if n != j - i:
+            raise IndexError("Sequence length doesn't match")
+        for k in range(n):
+            self[i+k] = data[k]
+
+    def has_key(self, key):
+        """Vra» pravdu, právì kdy¾ øádek obsahuje sloupec jména 'key'."""
+        return some(lambda c, key=key: c[0] == key, self._data)
+
+    def keys(self):
+        """Vra» seznam názvù v¹ech sloupcù jako strings.
+
+        Poøadí polo¾ek vráceného seznamu je nedefinováno.
+        
+        """
+        return map (lambda c: c[0], self._data)
+
+    def items(self):
+        """Vra» seznam dvojic [ID, VALUE] odpovídajících v¹em sloupcùm.
+
+        ID je øetìzec, VALUE je instance tøídy 'types_.Value'.
+
+        Poøadí dvojic vráceného seznamu je nedefinováno.
+        
+        """
+        return map(copy.copy, self._data)
+
+    def columns(self, keys):
+        """Vra» hodnoty sloupcù odpovídající 'keys'.
+
+        Argumenty:
+
+          keys -- sekvence klíèù sloupcù, viz té¾ metoda '__getitem__()'
+
+        Vrací: tuple hodnot sloupcù, jejich¾ klíèe jsou dány argumentem 'keys',
+        v odpovídajícím poøadí.
+
+        """
+        values = map(lambda k, self=self: self[k], keys)
+        return tuple(values)
+
+    def append(self, key, value):
+        """Pøipoj na konec øádku sloupec 'key' s hodnotou 'value'.
+
+        Argumenty:
+
+          key -- id sloupce jako string, nesmí být shodné s id ¾ádného sloupce
+            v instanci ji¾ pøítomného
+          value -- hodnota sloupce jako instance tøídy 'types_.Value'
+
+        """
+        assert is_string(key)
+        assert isinstance(value, Value)
+        assert not some(lambda x, k=key: x[0] == k, self._data)
+        self._data.append((key, value))
+        
+    def update(self, dict):
+        """Updatuj hodnoty sloupcù hodnotami z 'dict'.
+
+        Argumenty:
+
+          dict -- slovník klíèovaný názvy sloupcù obsahující nové hodnoty pro
+            tyto sloupce jako instance tøídy 'types_.Value'.
+
+        Sloupcùm v 'dict' neobsa¾eným zùstanou zachovány jejich pùvodní
+        hodnoty.
+        
+        """
+        for k in dict.keys():
+            assert isinstance(dict[k], Value), \
+                   ('Invalid column value', dict[k])
+            if self.has_key(k):
+                self[k] = dict[k]
+
+
+class DataFactory(object):
+    """Factory na tvorbu datových objektù dle zadané specifikace.
+
+    V konstruktoru tøídy jsou zadány parametry datového objektu, jeho¾ instance
+    lze posléze vytváøet pomocí metody 'create()'.  Hlavní místo pou¾ití této
+    tøídy jsou specifikaèní soubory naèítané resolverem.  Resolver získá ze
+    statických specifikací instanci factory a s její pomocí pak na vy¾ádání, po
+    pøípadném doplnìní dynamických specifikací, vytváøí instance datových
+    objektù.
+
+    """
+    _data_object_cache = None
+
+    def __init__(self, class_, *args, **kwargs):
+        """Inicializuj instanci
+
+        Argumenty:
+
+          class_ -- tøída 'Data' nebo její podtøída
+          args -- tuple argumentù, které mají být pøi vytváøení instance
+            pøedány konstruktoru tøídy 'class_'
+          kwargs -- dictionary klíèovaných argumentù, které mají být pøi
+            vytváøení instance pøedány konstruktoru tøídy 'class_'
+
+        """
+        assert issubclass(class_, Data)
+        self._class_ = class_
+        self._args = args
+        self._kwargs = kwargs
+        self._kwargs_hashable = kwargs.items()
+        if DataFactory._data_object_cache is None:
+            DataFactory._data_object_cache = \
+              LimitedCache(DataFactory._get_data_object)        
+
+    def create(self, **kwargs):
+        """Vytvoø a vra» novou instanci datového objektu.
+
+        Instance je vytvoøena dle specifikace tøídy a argumentù jejího
+        konstruktoru zadaných v '__init__()'.
+
+        Argumenty:
+
+          kwargs -- dictionary klíèovaných argumentù, které mají být dodateènì
+            pøedány konstruktoru datové tøídy.  Je-li nìkterý argument zadán
+            zde i v '__init__()', tak vy¹¹í prioritu má ten zdej¹í.
+
+        Tato metoda vrací v¾dy zbrusu novou instanci datové tøídy.
+
+        """
+        _kwargs = copy.copy(self._kwargs)
+        _kwargs.update(kwargs)
+        # TODO: Cachovaní datových objektù zatím nemù¾eme pou¾ít,
+        #       proto¾e nará¾íme na problém udr¾ovaných konexí
+        # key = (self._class_, self._args, tuple(_kwargs.items()))
+        # data_object = DataFactory._data_object_cache[key]
+        # return copy.copy(data_object)
+        return apply(self._class_, self._args, _kwargs)
+
+    def __str__(self):
+        return '<DataFactory: class=%s, args=%s, kwargs=%s>' % \
+               (self._class_, deepstr(self._args), self._kwargs)
+
+    def _get_data_object(key):
+        c, a, k = key
+        return apply(c, a, dict(k))
+    _get_data_object = staticmethod(_get_data_object)
+
+    def access_rights(self):
+        if self._kwargs.has_key('access_rights'):
+            return self._kwargs['access_rights']
+        else:
+            return None
+
+    # "Podrobné" porovnávání data factories je pøíli¹ nároèné na CPU.
+#     def __cmp__(self, other):
+#         return compare_attr(self, other, ('_class_', '_args', '_kwargs'))
+#     def __hash__(self):
+#         return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))

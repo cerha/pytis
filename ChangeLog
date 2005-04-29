@@ -1,0 +1,666 @@
+2004-10-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlView._make_tables): O¹etøi výskyt `None'.	
+
+2004-10-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlSequence.output): doplnìny argumenty
+	pøíkazu `create sequence'.
+
+2004-09-21  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlView._format_rule): Zohledni pou¾ití
+	`table_alias'.
+
+2004-07-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlView._make_tables):
+	Pøi vytváøení seznamu `tables_from' a `tables' zohledni
+	`self._complexp'.
+
+2004-08-11  Petr Malivanek  <malivanek@asellus.cz>
+
+	* tools/gensql.py (): Nahrazení TRUE -> True, FALSE -> False
+
+2004-07-16  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable._make_view): Pøedávej `key_columns'
+	v rámci kwargs.	
+	(_GsqlView.__init__): Nový argument `table_alias'.
+	(_GsqlView._make_tables): Vytváøej dva seznamy tabulek `tables_from'
+	a `tables'.
+	(_GsqlView.output): Pro klauzuli `from' pou¾ívej seznam
+	`tables_from', zatímco pro generování rules pou¾ívej `tables'.	
+
+2004-07-01  Pavel Hanak  <hanak@asellus.cz>
+
+	* templates/template.py: Pøidáno kódování.
+
+	* tools/gensql.py (_GsqlView.__init__): Zpøehlednìní kódu.
+	(_GsqlView._split_columns): Pøejmenování funkce `separate_complex_columns'.
+	(_GsqlView._make_tables): Nová funkce.
+	(_GsqlView._format_complex_columns): Místo `c.name' testuj `c.sql'.	
+
+2004-06-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable._make_view): Nevytváøej sám seznam
+	`key_columns'.
+	(_GsqlTable.key_columns): Nová metoda.
+	(_GsqlView.output): Pøidán argument `table_keys' a zaji¹tìno
+	nastavení `self._key_columns' podle skuteèných `PrimaryColumns'.
+	(_GsqlDefs.__init__): Nový atribut `self._table_keys'.
+	(_GsqlDefs.add): Pøidej klíèové sloupce tabulek do
+	`self._table_keys'. 
+	(_GsqlDefs.gensql.process): Pokud je objekt view, pøedávej metodì
+	`output' i seznam klíèových sloupcù.
+
+2004-05-25  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable._format_column_doc): O¹etøi
+	mo¾né tvary jména sloupce.
+
+2004-05-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlSpec.outputall): Nová metoda.
+	(_GsqlTable.outputall): Nová metoda.
+	(_GsqlDefs.gensqlall): Nová metoda.
+	(_GSQL_OPTIONS): Doplnìna volba 'create-all'.
+
+2004-03-11  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable._make_view): O¹etøi uvedení
+	`exclude' sloupce ve tvaru `table.column'.
+
+2004-02-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable.__init__): Ukládej i atribut `name'.
+
+2003-12-08  Tomas Cerha  <cerha@brailcom.org>
+
+	All files without general significance removed.
+
+2003-08-26  Petr Malivanek  <malivanek@akont.cz>
+
+	* tools/gensql.py (_GsqlView._format_rule): Podmínka pøi vytváøení
+	WHERE podmínky pro UPDATE a DELETE rule se neporvnává se sting
+	'table', ale s promìnou table.
+	(_GsqlView.output): Seznam tabulek z kerých se vytváøí view se
+	bere jako seznam unikátních prvkù seznamu self._tables. Seznam
+	se vytvoøí do promìné tables_unique.
+
+2003-10-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (ViewColumn.__init__): Pøidán argument `type'.
+	(_GsqlView._make_complex_tables): O¹etøena mo¾nost výskytu `None'
+	v `c.name[i]'.
+	(_GsqlView._format_complex_columns): Vyu¾ívej `c.type' pro
+	zji¹tìní typu sloupce.
+
+2003-10-22  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlView._format_rule): Negeneruj `insert'
+	ev. `update' rule pro prázdný seznam `insert' a `update' sloupcù.
+	(ViewColumn.__init__): Opraven chybný assert.
+	(_GsqlView._complex_columns_length): Opraveno chybné zji¹»ování
+	`_complex_columns_length' pro `name=None'.
+
+2003-10-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlView.__init__): Nové atributy
+	`self._complexp', `self._simple_columns', `self._complex_columns'
+	`self._complex_len'.
+	(_GsqlView._separate_complex_columns): Nová metoda pro zji¹»ování
+	`complex_columns'.
+	(_GsqlView._complex_columns_length): Nová metoda zji¹»ující
+	velikost `complex_columns'.
+	(_GsqlView._make_complex_tables): Nová metoda zji¹»ující tabulky
+	pou¾ité pro jednotlivé selecty v unionu.
+	(_GsqlView._format_column): Zohledni mo¾nost výskytu sekvence
+	nejen v `column.name', ale i v `column.sql'.
+	(_GsqlView._format_complex_columns): Upraveno s vyu¾itím nových
+	atributù a opraveno chybné generování èárky na zaèátku seznamu
+	sloupcù.
+	(_GsqlView._format_rule): Zji¹»uj sloupce pro defaultní rules jen
+	u  view, kde nejsou `complex_columns', jinak generuj rule
+	'NOTHING' nebo explicitnì uvedený.
+	(_GsqlView.output): Nezji¹»uj `tables_unique' - u¾ ho máme v
+	`self._tables'. Generuj správnì klauzuli `where' pro jednotlivé
+	selecty `union all'.
+
+2003-09-23  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlTable._make_view): Umo¾ni pøedat vlastní
+	seznam `key_columns'.
+	(_GsqlView._format_rule): Doplnìna podpora pro defaultní rules,
+	které v pøípadì `insert' vkládají do pøíslu¹ných tabulek, a v
+	pøípadì `update' aktualizují pøíslu¹né tabulky.	
+	(ViewColumn.__init__): Nová argumenty `insert', `update'.
+	(_GsqlView._format_rule): Doplnìna podpora pro defaultní delete
+	rule. Úpravy ve formátování. Vyu¾ívej podporu pro specifikaci
+	`insert' a `update' u `ViewColumn'.	
+
+2003-09-16  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (ViewColumn.__init__): Doplnìn atribut `sql' pro
+	specifikaci sql výrazu jako view sloupce.
+	(_GsqlView.__init__): Seznam tabulek `self._tables' tvoø v¾dy na
+	základì seznamu sloupcù.
+	(_GsqlView._format_column): Existuje-li specifikace `column.sql'
+	pou¾ij ji jako `cname'.
+
+2003-09-02  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlTable._grant_command): Pøedefinuj metodu
+	kvùli generování práv pro sekvence.
+	(_GsqlTable._make_view): Jméno tabulky pøidávej v¾dy do 'depends'.
+	(_GsqlTable.output): Pro políèka `SERIAL' generuj 'GRANT' pøíkaz
+	na sekvenci.
+	(_GsqlTable.__init__): V `self._init_columns' uvádìj v¾dy jen
+	jméno sloupce bez tabulky.
+
+2003-08-28  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlTable._column_column): Nová metoda.
+	(_GsqlTable._make_view): Pou¾ívej ji pro filtrování sloupcù
+	uvedených v `exclude'.
+	(_GsqlTable._format_column): Pou¾ívej ji pro pøípadné odstranìní
+	jména tabulky ze jména sloupce.
+	(_GsqlTable.output): Nezapisuj výstup pro `self._views' (kvùli
+	poøadí v závislostech).
+	(_GsqlDefs.add): Je-li pøidávaná specifikace `_GsqlTable',
+	pøidávej i pøípadná definovaná `view' ze `self._views'.
+
+2003-08-27  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlTable._full_column_name): Nová funkce.
+	(_GsqlTable._make_view): Pou¾ívej jméno sloupce v¾dy ve tvaru
+	TABULKA.SLOUPEC.
+	(_GsqlView.__init__): Pokud není název tabulky v columns,
+	ulo¾ do `self._tables' `name'.
+	(_GsqlView._format_rule): Sestavuj správnì podmínky ve `WHERE'.
+
+2003-08-22  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlDefs.check_db): Oprava chybného pøedání
+	jména metodì `db_remove'.
+
+2003-08-22  Miroslav Macek  <macek@asellus.cz>
+
+	* tools/gensql.py: Dokumentace je v iso-8859-2 (Python2.3)
+
+2003-08-21  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlDefs._add_resolved): Nová metoda.
+	(_GsqlDefs.add): Pou¾ívej ji.
+	(_GsqlDefs._update_unresolved): Pou¾ívej ji.
+	(_GsqlSpec._revoke_command): Skupiny uvozuj klíèovým slovem "GROUP".
+
+2003-08-20  Pavel Hanak  <hanak@brailcom.cz>
+
+	* tools/gensql.py (_GsqlDefs._update_unresolved): Oprava chyby,
+	kdy se metodì `self._resolvedp' pøedávalo pouze jméno.
+	(_GsqlRaw.__init__): Doplnìna mo¾nost zadat "name" pro _GsqlRaw
+	objekt.
+
+2003-02-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlView._format_column): Opraven chybný odkaz
+	na jméno sloupce.  Nový argument `type'.  Je-li `columns' string,
+	pou¾ij ho pøímo jako jméno sloupce.
+	(_GsqlView._format_complex_columns): Øada oprav a úprav.
+	(_GsqlView.output): Pøidány nové øádky.
+
+2003-02-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_gsql_column_table_column): O¹etøuj pøípad, kdy
+	je `column' sekvence.
+	(_go): Nový argument `argv'.
+	(_GsqlView._format_complex_columns): Opravena øada chyb.
+	(_GsqlView._format_column): Nový argument `i'.
+
+2003-02-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlDefs.check_db): Pro volání getpass.getpass
+	pøesmìruj sys.stdout na sys.stderr.
+
+2003-02-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlDefs.check_db): O¹etøuj chybné/neuvedené
+	heslo.
+
+2003-02-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlTable.db_update.column_changed.normalize):
+	Doplnìno chybìjící return.
+	(_GsqlTable.db_update.column_changed): V testování not-null a
+	unique zohledòuj primární klíèe.
+	(_GSQL_OPTIONS): Nová volba `no-warn'.
+	(_go): Zohlednìna.
+	(_GsqlConfig.warnings): Nový atribut.
+	(_gsql_warning): Nová funkce.
+	(_GsqlTable.db_update): Pou¾ívej ji.  Opraveny SQL pøíkazy pro
+	update sloupce.
+	(reoutput, db_update): Pou¾ívej _gsql_warning.
+
+2003-02-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlFunction.db_all_names): Nevracej systémové
+	handlery.
+	(_GsqlSequence.check, _GsqlRaw.check): Zru¹eno.
+	(_GsqlSpec.db_update): Vracej SQL komentáø o aktuálnosti objektu.
+	(_GsqlRaw.db_update): Vracej SQL komentáø o nerozhodnutelnosti
+	aktuálnosti objektu.
+	(_GsqlSpec._grant_command, _GsqlSpec._revoke_command): Nové
+	(_GsqlSpec._groups, _GsqlSpec._group_list): Nové atributy.
+	metody.
+	(_GsqlTable.output, _GsqlView.output, _GsqlSequence.output):
+	Pou¾ívej je.
+	(_GsqlSpec.__init__): Nové argumenty `doc' a `grant', atributy
+	`_doc' a `_grant'.  Pøidávej skupiny z `grant' do `_group_list'.
+	(_GsqlTable.__init__, _GsqlView.__init__, _GsqlFunction.__init__)
+	(_GsqlSequence.__init__, _GsqlRaw.__init__): Zru¹eny argumenty
+	`doc', `depends' a `grant'; nový argument `kwargs', pøedávaný
+	konstruktoru pøedka.
+	(_GsqlTable.__init__): Nech» `_inherits' není nikdy None.
+	(_GsqlDefs.check_db): Pøidána dal¹í varování o neprovìøených
+	objektech.
+	(_GsqlTable.db_update): Implementováno.
+	(_GsqlTable._format_init_values): Nová metoda.
+	(_GsqlTable.output): Pou¾ívej ji.
+	(_GsqlDefs.check_db): Import libpq pøesunut na top-level úroveò.
+
+2003-02-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlSpec.check_presence): Zru¹eno.
+	(_GsqlSpec.db_all_names, _GsqlSpec.db_remove): Nové metody.
+	(_GsqlSpec.check): Pøejmenováno na `db_update'.  Zru¹en argument
+	`defined'.
+	(_GsqlFunction.db_all_names): Nová metoda.
+	(_GsqlDefs.check_db.process): Pøepracováno.
+
+2003-01-29  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlSpec.check): Nová metoda.
+	(_GsqlDefs.check_db): Implementováno.
+	(_go.extract_option): Pro volby s argumentem zahrnuj i =.
+	(_GsqlRaw.check, _GsqlSequence.check): Nové metody.
+	(_GsqlSpec.check_presence): Nová metoda.
+	(_GsqlSpec._SQL_NAME, _GsqlSpec._PGSQL_TYPE): Nové konstanty.
+	(_GsqlTable._SQL_NAME, _GsqlTable._PGSQL_TYPE) 
+	(_GsqlView._SQL_NAME, _GsqlView._PGSQL_TYPE) 
+	(_GsqlFunction._SQL_NAME, _GsqlSequence._SQL_NAME) 
+	(_GsqlSequence._PGSQL_TYPE): Nové konstanty.
+
+2003-01-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GSQL_OPTIONS): Nové volby `host', `user',
+	`password', 'create', `recreate'.
+	(_GsqlConfig): Nová tøída.
+	(_go): O¹etøuj v¹echny nové volby, vèetnì --check-db a --fix-db.
+	(_GsqlDefs.check_db, _GsqlDefs.fix_db, _GsqlDefs.regensql): Nové
+	metody.
+	(_GsqlDefs._process_resolved): Nová metoda.
+	(_GsqlDefs.gensql): Vyu¾ívej ji.
+	(_GsqlSpec.reoutput, _GsqlTable.reoutput, _GsqlView.reoutput)
+	(_GsqlFunction.reoutput, _GsqlRaw.reoutput): Nová metoda.
+	(_GsqlTable.output): Nový argument `_re'.
+
+2003-01-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlFunction.__init__): Nový argument
+	`use_functions'.
+	(_GsqlFunction._format_body): Generuj zdrojové texty i pro
+	`_use_functions'.
+	(_GsqlView.output): Místo pøes UNION spojuj záznamy pøes UNION
+	ALL.
+	(_GsqlView.__init__): V docstringu `join' definováno i pro
+	sjednocení tabulek.
+	(_GsqlView.output): Zohlednìna pøedchozí zmìna.
+	(_GsqlView._format_complex_columns): Pøepsáno.
+	(_GsqlView._format_rule): Èásteèná podpora sjednocení tabulek --
+	generování pro první tabulku.
+
+2003-01-23  Petr Malivanek  <malivanek@akont.cz>
+
+	* scripts/SosejGeminy.py (): Narhazení "= ''" za "= NULL" nebo v
+	podmince where "is NULL". 
+
+2002-12-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_gsql_format_type): Pou¾ívej `timestamp(0)'
+	místo `timestamp'.
+
+2002-12-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlDefs.gensql): Reportuj neresolvnuté
+	objekty.
+	(_GsqlFunction._format_body): Vyhazuj prázdné øádky v plpython
+	funkcích.
+
+2002-12-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlSpec.__init__): `_object_number'
+	pøejmenováno na `_serial_number'.  Nech» `name' smí být None.
+	(_GsqlSpec.object_number): Pøejmenováno na `serial_number'.
+	(_GsqlRaw): Nová tøída.
+	(sql_raw, sql_raw_include): Pøepracováno na vyu¾ití _GsqlRaw.
+	(include): Nezapisuj nic na sys.stdout.
+	(_gsql_process): Místo zápisu na sys.stdout registruj vytvoøenou
+	specifikaci do `_gsql_defs'.
+	(_GsqlDefs): Nová tøída.
+	(_gsql_defs): Nová globální promìnná.
+	(_gsql_gensql): Nová funkce.
+	(_go): Volej `_gsql_defs.gensql'.  Pøidána volba --help.
+	(_GsqlSpec.__init__): Do docstringu pøidán doplòující komentáø
+	o závislostech.
+	(_GsqlView.__init__): Nový argument `join'.
+	(ViewColumn.__init__): Roz¹íøen význam argumentu `name'
+	o specifikaci sjednocení tabulek.
+	(_GSQL_OPTIONS): Nová globální promìnná.
+	(_usage, _go): Pou¾ívej ji.
+	(_GsqlView._format_complex_columns): Nová metoda.
+	(_GsqlView.output): Pøidána podpora `_join' a "komplexních
+	sloupcù".
+
+2002-12-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlView._DEFAULT): Zru¹eno.
+	(_GsqlView.__init__): Nech» implicitní hodnotou `insert', `update'
+	a `delete' je (), místo pùvodního _DEFAULT.  Zmìnìn význam tìchto
+	argumentù.
+	(_GsqlView._format_rule): Zohlednìna pøedchozí zmìna.
+	(_GsqlTable.__init__): Nové argumenty `init_values' a
+	`init_columns' a atributy `_init_values' a `_init_columns'.
+	(_GsqlTable.output): Zohlednìna pøedchozí zmìna.
+	(sql_raw): Do docstringu doplnìno upozornìní o nevhodnosti bì¾ného
+	pou¾ívání.
+	(_GsqlTable.__init__): Nech» `view' smí být i sekvence.  Atribut
+	`_view' pøejmenován na `_views'.
+	(_GsqlTable.output): Zohlednìna pøedchozí zmìna.
+	(TableView.__init__): Nový argument a atribut `name'.
+	(_GsqlTable._make_view): Zohlednìna pøedchozí zmìna.
+	(_GsqlSpec.__init__): Nová metoda.
+	(_GsqlSpec.name): Nová metoda.
+	(_GsqlTable.__init__, _GsqlView.__init__, _GsqlFunction.__init__)
+	(_GsqlSequence.__init__): Zohlednìna pøedchozí zmìna.  Nový
+	argument `depends'.
+	(_GsqlView._format_rule): Opraveny parametry formátovacího stringu
+	pro CREATE RULE.
+	(_GsqlView.output): Místo CREATE VIEW generuj CREATE OR REPLACE
+	VIEW.
+	(_GsqlTable._format_rule, _GsqlView._format_rule): Nápodobnì pro
+	RULE.
+	(_GsqlSpec.depends): Nová metoda.
+	(_GsqlSpec.object_number): Nová metoda.
+
+2002-12-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlTable._make_view): Vracej view místo
+	nastavování atributu.  view.columns pøeveï na list.
+	(TableView.__init__): Pøidány asserts na typy argumentù.
+	(_GsqlView._format_rule): Opraveno získání jmen sloupcù pøi
+	konstrukci `settings' pro update.
+	(_GsqlView.output): Opravena konstrukce GRANTs.
+	(TableView.__init__): Nech» self.exclude je v¾dy sekvence.
+	Doplnìno, ¾e do `columns' jsou pøidány sloupce tabulky.
+	(_GsqlView._format_rule): Vynechávej `oid' sloupce.  Za ON vkládej
+	název operace, ne view.
+
+2002-12-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py (_GsqlFunction._format_body): Odstraòuj první
+	øádek zdrojového kódu pythonové funkce a pøípadný docstring.
+	Escapuj pythonový kód.
+	(_GsqlFunction.__init__): Roz¹íøeny mo¾nosti argumentù `name',
+	`body' a `doc'.
+	(sql_raw_input): Pøejmenováno na `sql_raw_include'.
+	(include): Nová funkce.
+
+2002-11-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/Printing: Updatováno pro nový tiskový mechanismus
+	a doplnìno.
+
+2002-11-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* templates/template.py: Odstranìn import lib.util.
+
+2002-10-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/management (Software): Pøidán odkaz na zdroj
+	softwaru na devel.brailcom.org.
+
+2002-10-15  Miroslav Macek  <macek@asellus.cz>
+
+	* icons/isas/logo.bmp: Nové logo.
+
+2002-10-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/AccessRights (Doplòující poznámky): Pøidána
+	poznámka o nutnosti restartu spojení po zmìnì skupin u¾ivatele.
+
+2002-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Moduly): Zmìnìno pravidlo pro import
+	wxPython.
+
+2002-10-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Moduly): Pøidáno pravidlo pro import
+	wxPython.
+
+2002-10-01  Pavel Hanak  <hanak@brailcom.cz>
+
+	* scripts/import_diana_kucty.py (insert_klient): Doplnìny polo¾ky
+	'zivnost' a 'sidlo'.
+
+2002-09-30  Petr Malivanek  <malivanek@akont.cz>
+
+	* scripts/import_diana_kucty.py (insert_klient): Upravy konstant.
+
+2002-09-30  Pavel Hanak  <hanak@brailcom.cz>
+
+	* scripts/import_diana_kucty.py: Kompletnì pøepracovaná verze.
+	(insert_klient): O¹etøuj 'os_cislo'.
+	(main): Pøidány konfiguraèní konstanty 'MENA', 'SLUZBA',
+	'ACC_MANAGER', 'ZISKANY', 'UROK_POPL_MAPPING'
+	(parse_fields): Úprava pro nové konstanty.
+	(insert_klient): Úprava pro nové polo¾ky.
+	(insert_ucet): 	Úprava pro nové polo¾ky.
+	(get_urok_popl): Nová funkce.
+
+2002-09-29  Pavel Hanak  <hanak@brailcom.cz>
+
+	* scripts/import_diana_kucty.py: První verze  skriptu
+	pro import klientù a úètù z programu Diana.
+	(insert_ucet): Oprava '.' -> ','
+	(parse_klient): Odchytávej výjimku pøi pøedání nesprávné struktury dat.
+	Formátovací úpravy a oprava chybných printù.
+	Zpøehlednìní zadávání struktury cvs a formátu datumu. 
+
+2002-09-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Dal¹í pravidla týkající se Pythonu):
+	Pøidána poznámka o catch/throw.
+
+2002-09-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/tips: Pøidán tip na `classmethod' a na
+	vícenásobnou dìdiènost potomkù `object'.
+
+2002-07-31  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/pychecker (PYTHONVER): Pou¾ívej Python 2.2.
+
+2002-07-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/find-prints.sh: Pøidány skripty `ebas*'.
+
+2002-07-19  Pavel Hanak  <hanak@brailcom.cz>
+
+	* scripts/pripisuj.py: Nultá verze.
+
+2002-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/EventInterruption: Nový tutoriál.
+
+2002-04-16  Tomá¹ Cerha  <cerha@brailcom.org>
+
+	* icons/logo.fig (Module): Pøidán pytel.
+	* icons/logo.bmp (Module): Pøegenerováno.
+
+2002-04-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/Printing (Vyvolání tisku): Aktualizováno vzhledem
+	ke zmìnì náhledu z textového na grafický.
+
+	* icons/logo.fig: Nový soubor.
+	* icons/logo.bmp: Nový generovaný soubor.
+
+2002-04-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/Printing: Nový dokument.
+
+2002-03-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/pdmchecker.sh (BADFILES): Vynechej v¹echny soubory,
+	jejich¾ názvy zaèínají podtr¾ítkem.
+
+2002-03-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genconfig.py (go): Upraveno aby fungovalo se souèasným
+	zpùsobem vytváøení konfigurace.
+
+2002-03-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genconfig.py: Nová pomùcka.
+
+2002-03-07  Pavel Hanak  <hanak@brailcom.cz>
+
+	* doc/standards/bugs: Popis nové chyby wxgtk.
+
+2002-03-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/pdmchecker.sh: Nový pomocný skript.
+
+2002-02-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/find-prints.sh: Hledej pouze obyèejné soubory.  Vynechávej
+	`_config.py'.
+
+2002-01-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/make-tags.sh: Zohlednìna zmìna banka.py -> ebas.
+
+	* tools/find-prints.sh: Zohlednìna zmìna banka.py -> ebas.
+
+2002-01-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Moduly): Nová sekce.
+
+2002-01-18  Tomá¹ Cerha  <cerha@brailcom.org>
+
+	* icons: Nový adresáø pro ikony s nìkolika základními ikonami pro
+	pou¾ití v dialogových oknech.
+
+2001-11-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Dal¹í pravidla týkající se Pythonu):
+	Volání funkcí s nepovinnými argumenty.
+
+2001-08-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Pojmenovávání metod a funkcí):
+	Pojmenovávání callbackových funkcí.
+
+2001-08-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/tips (pyunit): Nová sekce.
+
+2001-08-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/bugs (Python): Nová sekce; zdokumentována locales
+	chyba s reálnými èísly.
+
+	* doc/standards/management (©ablony souborù): Nová sekce.
+
+	* templates/template.py: Nová ¹ablona.
+
+2001-08-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/bugs (wxWindows): Nová sekce.
+
+	* doc/standards/formatting (Dokumentaèní øetìzce): Odkaz na
+	upravenou verzi pydoc.
+
+	* doc/standards/design (Zásada dokumentovanosti): Nová sekce.
+
+	* doc/standards/reliability (Nakládání s chybami): Nová sekce.
+	(Interaktivní testy a testování GUI): Napsáno.
+
+2001-08-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/cvs (CVS archívy): Zmìnìn i odkaz na stroj
+	s archívem.
+
+2001-08-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/cvs (CVS archívy): Zmìnìno umístìní CVS archívu.
+
+2001-08-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/management (Pravidla pro pravidla): Maximální
+	délka øádku v dokumentech je 77 znakù.
+
+2001-08-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Pojmenovávání metod a funkcí):
+	Zobecnìní pou¾ití slovesa ve jménech deklarativních funkcí.
+
+2001-08-01  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/management (Pravidla pro pravidla): Poznámka
+	o generování change reportù.
+
+	* doc/standards/standards: Pøidán odkaz na `bugs'.
+
+	* doc/standards/bugs: Nový dokument.
+
+	* doc/standards/formatting (Obsah dokumentaèních øetìzcù): Nová
+	sekce.
+	(Formátování dokumentaèních øetìzcù): Doplnìna nová pravidla
+	formátování.
+	(Dal¹í pravidla týkající se Pythonu): Nápodobnì.
+	(Formátování pythonového kódu): Nápodobnì.
+	(Pojmenovávání metod a funkcí): Nová sekce.
+	(Dokumentaèní øetìzce): Poznámka o pydoc.
+
+2001-07-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/Logging: Nový dokument.
+
+2001-07-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Formátování dokumentaèních øetìzcù):
+	Popis za "Vrací" pokraèuje bez odøádkování.
+
+	* doc/tutorials/Database: Pøidána metoda `close'.
+	Drobné úpravy.
+
+2001-07-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/Database: DBDataDefaultClass -> DBDataDefault.
+
+2001-07-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting (Dal¹í pravidla týkající se Pythonu):
+	Pou¾ívání gettextu.  Vyu¾ívání assert.  Tuples vs. lists.
+	(ChangeLog): Nová sekce.
+
+2001-07-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/standards/formatting: Doporuèený pøeklad "raise".
+	(Formátování dokumentaèních øetìzcù): Nová sekce.
+	(Dal¹í pravidla týkající se Pythonu): Povolen hvìzdièkový import
+	modulu `lib.util.log'.
+

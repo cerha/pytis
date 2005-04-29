@@ -1,0 +1,350 @@
+# -*- coding: iso-8859-2 -*-
+
+# Extra datové typy
+#
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Speciální datové typy.
+
+V tomto modulu jsou umístìny typy, které nepatøí do mno¾iny nejzákladnìj¹ích
+typù a/nebo nemohou být pøímo v 'types.py' kvùli cyklickým závislostem modulù.
+
+"""
+
+from pytis.data import *
+
+
+class Codebook(MutableType, Enumeration):
+    """Výètový typ získávající své hodnoty z objektu tøídy 'Data'.
+
+    Hodnoty tohoto typu (vnitøní i u¾ivatelské) odpovídají hodnotám sloupcù
+    daného datového objektu.  Vnitøní hodnotou je typicky pythonová hodnota
+    klíèového sloupce datového objektu.  U¾ivatelskou hodnotou je potom
+    exportovaná hodnota urèeného sloupce.  Výbìr sloupcù pou¾itých pro získání
+    vnitøní a u¾ivatelské hodnoty je mo¾né ovlivnit argumenty konstruktoru.
+
+    """
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+
+    def _make(class_, *args, **kwargs):
+        if kwargs.has_key('data_factory_kwargs') and \
+               type(kwargs['data_factory_kwargs']) == type({}):
+            kwargs = copy.copy(kwargs)
+            kwargs['data_factory_kwargs'] = \
+              tuple(kwargs['data_factory_kwargs'].items())
+        return Enumeration._make(class_, *args, **kwargs)
+    _make = staticmethod(_make)
+        
+    def __init__(self, data_factory, data_factory_kwargs={}, value_column=None,
+                 validity_column=None, use_key=False, not_null=True,
+                 **kwargs):
+        """Inicializuj pøedka dle hodnot poskytnutých datovým objektem 'data'.
+
+        Argumenty:
+        
+          data_factory -- instance tøídy 'DataFactory', hodnoty øádkù
+            odpovídající instance tøídy 'Data' v klíèových sloupcích poskytují
+            vnitøní hodnoty enumeratoru ve formì tuples
+          data_factory_kwargs -- dictionary klíèovaných argumentù pro metodu
+            'DataFactory.create()'
+          value_column -- id sloupce datového objektu poskytujícího po exportu
+            u¾ivatelskou hodnotu enumerátoru.  Je-li None, je u¾ivatelská
+            hodnota získávána z klíèe objektu 'data'.
+          use_key -- boolean pøíznak urèující, zda má být jako vnitøní hodnota
+            èíselníku pou¾ívána hodnota klíèového sloupce èíselníkové tabulky.
+            Pokud je tedy jako 'value_column' pou¾it jiný, ne¾ klíèový sloupec
+            a 'use_key' je pravdivé (implicitnì není), bude vnitøní hodnota
+            (získaná validací) rùzná od u¾ivatelské (validované) hodnoty.
+          
+          **kwargs, not_null -- argumenty pøedané konstruktoru pøedka
+        
+        """
+        super(Codebook, self).__init__(not_null=not_null, **kwargs)
+        assert isinstance(data_factory, DataFactory), data_factory
+        assert isinstance(value_column, types.StringType) \
+               or value_column is None
+        assert isinstance(use_key, types.BooleanType) 
+        # Ulo¾ argumenty
+        self._data_factory = data_factory
+        if type(data_factory_kwargs) == type(()):
+            data_factory_kwargs = dict(data_factory_kwargs)
+        self._data_factory_kwargs = data_factory_kwargs
+        # Vytáhni informace z dat
+        data = self._create_data()
+        if use_key or value_column is None:
+            key = data.key()
+            if len(key) != 1:
+                ProgramError("Only single-column key is supported by Codebook.")
+            internal_column = key[0].id()
+        else:
+            internal_column = value_column
+        if value_column is None:
+            value_column = internal_column
+        self._value_column = value_column
+        self._internal_column = internal_column
+        self._columns = columns = data.columns()
+        for c in columns:
+            cid = c.id()
+            if cid == internal_column:
+                self._internal_column_type = c.type()
+            if cid == value_column:
+                self._value_column_type = c.type()
+        if validity_column is None:
+            self._validity_condition = None
+        else:
+            c = data.find_column(validity_column)
+            assert c, ('Non-existent validity column', validity_column)
+            assert isinstance(c.type(), Boolean), \
+                   ('Invalid validity column type', c)
+            self._validity_condition = EQ(c.id(), Value(Boolean(), True))
+        # Initialize the runtime filter.
+        self._runtime_filter = None
+        self._runtime_filter_dirty = True
+        self._runtime_filter_provider = None
+        self._runtime_filter_args = None
+        
+    def _complete(self):
+        super(Codebook, self)._complete()
+        self._data = self._create_data()        
+        self._data_changed = False
+        def on_data_change():
+            self._data_changed = True
+        self._data.add_callback_on_change(on_data_change)
+        
+    def _create_data(self):
+        return apply(self._data_factory.create, (), self._data_factory_kwargs)
+
+    def __getattr__(self, name):
+        if name == '_data':
+            self._complete()
+            return self.__dict__[name]
+        else:
+            return super(Codebook, self).__getattr__(name)
+
+    # Informaèní metody
+    
+    def columns(self):
+        """Vra» specifikace v¹ech sloupcù datového objektu èíselníku.
+
+        Vrací: Tuple instancí tøídy 'pytis.data.ColumnSpec'.
+
+        """
+        return self._columns
+
+    def internal_column(self):
+        """Vra» id sloupce tvoøícího vnitøní hodnotu."""
+        return self._internal_column
+    
+    def value_column(self):
+        """Vra» id sloupce tvoøícího u¾ivatelskou hodnotu."""
+        return self._value_column
+
+    def maxlen(self):
+        """Vra» maximálních délku exportované hodnoty.
+
+        Vrací nezáporný integer udávající maximální mo¾nou délku hodnoty,
+        nebo 'None' znaèící, ¾e délka hodnoty není omezená.
+
+        """
+        t = self._value_column_type
+        return isinstance(t, String) and t.maxlen() or None
+
+    # Run-time filter
+
+    def set_runtime_filter_provider(self, provider, args):
+        """Nastav poskytovatele run-time podmínky filtrující øádky èíselníku.
+
+        Argumenty:
+        
+          provider -- None, nebo funkce, která vrací instanci tøídy 'Operator'.
+            Tato funkce bude volána v¾dy, kdy¾ je tøeba zjistit dodateènou
+            filtrovací podmínku.  args -- seznam argumentù (tuple), které mají
+            být pøedány této funkci.
+
+        Run-time podmínka umo¾òuje mìnit mno¾inu platných øádkù èíselníku za
+        bìhu.  Èíselník po zmìnì podmínky automaticky zmìní svou mno¾inu
+        platných hodnot tak, aby v¹echny øádky této podmínce odpovídaly.
+        Externí zmìnu je v¹ak tøeba ohlásit voláním metody
+        'notify_runtime_filter_change()'.
+
+        """
+        assert callable(provider) or provider is None
+        self._runtime_filter_provider = provider
+        self._runtime_filter_args = args
+
+    def notify_runtime_filter_change(self):
+        """Ohlas zmìnu run-time filtrovací podmínky.
+
+        Tato metoda by mìla být volána v¾dy, kdy¾ dojde k externí zmìnì
+        run-time filtrovací podmínky.  Èíselník se tak dozví, ¾e si má v
+        pøípadì potøeby zjistit novou hodnotu podmínky (viz metoda
+        'set_runtime_filter_provider()').
+        
+        """
+        self._runtime_filter_dirty = True
+        self._update(force=True)
+        
+    
+    def validity_condition(self):
+        """Vra» podmínku urèující platné øádky èíselníku.
+
+        Podmínka je vypoètena za aktuální  pøidané podmínky, kterou za bìhu
+        poskytuje funkce nastavená metodou 'set_runtime_filter_provider()'.
+
+        Vrací: Instanci tøídy 'pytis.data.Operator'.
+
+        """
+        f = self._runtime_filter_provider
+        if f is not None:
+            if self._runtime_filter_dirty:
+                self._runtime_filter = apply(f, self._runtime_filter_args)
+                assert isinstance(self._runtime_filter, Operator)
+                self._runtime_filter_dirty = False
+                self._update(force=True)
+            condition = self._runtime_filter
+        else:
+            condition = None
+        if self._validity_condition:
+            if condition:
+                return AND(condition, self._validity_condition)
+            else:
+                return self._validity_condition
+        else:
+            return condition
+            
+    # Validation and export
+
+    def _retrieve(self, column, value):
+        data = self._data
+        condition = EQ(column, value)
+        validity_condition = self.validity_condition()
+        if validity_condition is not None:
+            condition = AND(condition, validity_condition)
+        count = data.select(condition)
+        if count > 1:
+            raise ProgramError('Insufficient runtime filter for Codebook',
+                               condition)
+        row = data.fetchone()
+        data.close()
+        return row
+
+    def _update(self, force=False):
+        if force or self._data_changed:
+            self._data_changed = False
+            self._validation_cache.reset()
+            result = True
+        else:
+            result = False
+        return result
+            
+    def _validate(self, object):
+        """Zvaliduje 'object' dle standardních kritérií.
+
+        Obecné informace viz. 'Type.validate()'
+
+        Object je u¾ivatelská hodnota.  Odpovídající øádek bude vyhledán v
+        datovém objektu a pøíslu¹ná vnitøní hodnota bude vrácena.
+
+        """
+        value, error = self._value_column_type.validate(object)
+        if value is None:
+            result = None, error #self._validation_error(self.VM_INVALID_VALUE)
+        else:
+            row = self._retrieve(self._value_column, value)
+            if row is None:
+                result = None, self._validation_error(self.VM_INVALID_VALUE)
+            else:
+                if self._internal_column == self._value_column:
+                    result = Value(self, value.value()), None
+                else:
+                    v = row[self._internal_column]
+                    result = Value(self, v.value()), None
+        return result
+
+    def _export(self, value, column=None):
+        """Vra» stringovou reprezentaci 'value'.
+
+        Argumenty:
+
+          value -- viz 'Type.export()'
+
+        Pokud vnitøní hodnota èíselníku odpovídá u¾ivatelské, bude vrácena
+        exportovaná vnitøní hodnota i v pøípadì, ¾e tato není v èíselníku
+        obsa¾ena.
+
+        Je nutno mít na pamìti, ¾e vnitøní hodnoty èíselníku se mohou v èase
+        mìnit, vzhledem k mo¾ným updatùm dat v databázi.
+
+        """
+        if value is None:
+            result = ''
+        else:
+            if column is None:
+                column = self._value_column
+            if column == self._internal_column:
+                result = self._internal_column_type.export(value)
+            else:
+                v = Value(self._internal_column_type, value)
+                row = self._retrieve(self._internal_column, v)
+                if row is None:
+                    result = ''
+                else:
+                    result = row[column].export()
+        return result
+
+
+    def data_value(self, value, column):
+        """Vra» hodnotu daného sloupce z odpovídajícího øádku datového objektu.
+        
+        Argumenty:
+
+          value -- vnitøní hodnota èíselníku
+          column -- identifikátor sloupce, string
+
+        Vrací: Instanci tøídy 'Value'.  Pokud øádek odpovídající dané hodnotì
+          'value' v datovém objektu není nalezen ('value' není vnitøní hodnotou
+          èíselníku), vra» instanci tøídy 'Value' s hodnotou 'None'.  Pozor,
+          vrácená hodnota není exportovanou hodnotou èíselníku, jedná se
+          o obyèejnou datovou hodnotu.
+
+        V pøípadì neexistujícího názvu sloupce vyvolej výjimku 'ProgramError'.
+
+        """
+        # TODO: test
+        if value is None:
+            return pytis.data.Value(self, None)
+        v = Value(self._internal_column_type, value)
+        row = self._retrieve(self._internal_column, v)
+        if row is None:
+            return pytis.data.Value(self, None)
+        else:
+            try:
+                result = row[column]
+            except KeyError:
+                raise ProgramError('Invalid column id', column)
+        return result
+
+    
+
+def _codebook_data(codebook):
+    # Tato metoda zpøístupòuje datový objekt èíselníku, který je nutný pro
+    # introspekci zále¾itostí souvisejících s wildcard matching v dbdata.py.
+    # Je to docela o¹klivý hack, ale èist¹í øe¹ení se hledá tì¾ko.    
+    return codebook._data
+
+
+

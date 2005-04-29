@@ -1,0 +1,56 @@
+# -*- coding: iso-8859-2 -*-
+
+# Rùzné formátovací funkce
+# 
+# Copyright (C) 2002, 2003, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Rùzné formátovací funkce.
+
+Pro jména veøejných funkcí platí konvence, ¾e zaèínají prefixem 'f_'.
+
+"""
+
+from pytis.output import *
+
+
+_FONT_STEP = 1.2
+
+def f_larger(*contents):
+    """Nech» 'contents' je vysázeno fontem vìt¹í velikosti vzhledem k okolí."""
+    return FontSize(_FONT_STEP, *contents)
+
+def f_smaller(*contents):
+    """Nech» 'contents' je vysázeno fontem men¹í velikosti vzhledem k okolí."""
+    return FontSize(1.0/_FONT_STEP, *contents)
+
+
+def f_table(*data, **kwargs):
+    """Jednoduchá tabulka.
+
+    Argumenty:
+
+      data -- neprázdná sekvence neprázdných sekvencí, odpovídá øádkùm (vnìj¹í
+        sekvence) formátovaným do sloupcù (vnitøní sekvence); v¹echny vnitøní
+        sekvence musí mít stejnou délku
+      kwargs -- argumenty pøedané konstruktoru tøídy 'Table'
+
+    Jedná se o zcela jednoduchou tabulku s automaticky zarovnanými sloupci,
+    nepøesahující velikost stránky.
+
+    """
+    column_spec = Table.Column(alignment=Table.Column.ALIGN_LEFT)
+    return Table((column_spec,) * len(data[0]), *data, **kwargs)

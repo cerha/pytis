@@ -1,0 +1,263 @@
+#title Zaji¹tování spolehlivosti napsaného kódu
+
+* Motivace a úèel
+
+Tento dokument definuje postupy, jejich¾ cílem je zajistit, aby námi napsaný
+kód neobsahoval extrémní mno¾ství chyb a abychom se pøíli¹ èasto nesetkávali
+s nepøíjemnými pøekvapeními.  Je tøeba si uvìdomit, ¾e u tohoto softwarového
+systému je nutná znaèná míra spolehlivosti, kterou sice nemù¾eme v rámci daných
+omezení plnì zajistit, mù¾eme se jí v¹ak alespoò trochu pøiblí¾it.
+
+Nepøíjemná pøekvapení nám mù¾e pøipravit napøíklad:
+
+- Nedokumentovaný nebo nedostateènì dokumentovaný objekt, o nìm¾ jeho u¾ivatelé
+  nìco chybnì implicitnì pøedpokládají.
+
+- "Drobná" zmìna kódu, která zmìní chování objektu a následnì zpùsobí havárii
+  v úplnì jiné èásti systému.
+
+Tento dokument se týká pouze funkènosti a spolehlivosti napsaného kódu.
+Nezabývá se tvorbou specifikací, návrhem algoritmù a postupù (viz dokument
+[[design]]) ani obecnými konvencemi psaní kódu a dokumentace (ty jsou definovány
+v dokumentu [[formatting]]).  Takté¾ se nezabývá testováním systému jako celku,
+tyto postupy bude potøeba vymyslet, a¾ to bude aktuální.
+
+Postupy zde uvedené by mìly být pokud mo¾no nepøíli¹ slo¾ité, a» u¾ co se týèe
+jejich pochopení a osvojení nebo realizace.  Výjimku tvoøí tvorba testù, která
+je v¾dy pracná (nikoliv z hlediska pou¾itých nástrojù, nýbr¾ z hlediska
+vymy¹lení testù, jejich mno¾ství a následné údr¾by).  I zde ov¹em do znaèné
+míry platí, ¾e se jedná pouze o urèité uèesání toho, co by èlovìk *mìl udìlat
+tak jako tak*, pouze uvedené do urèité formy.  Z dlouhodobého hlediska se pak
+formální práce navíc vyplatí, nebo» umo¾òuje po ka¾dé zmìnì kódu velmi snadno
+dát orientaèní odpovìï na otázku "funguje *v¹e* i po této zmìnì?".
+
+
+* Kontrola kódu
+
+Ka¾dý nový kód, a» u¾ zbrusu nový nebo modifikovaný stávající, musí projít
+jakýmsi základním kontrolním procesem.  Tento proces je definován následujícím
+kontrolním seznamem akcí, které se musí provést v¾dy pøed tím, ne¾ je mo¾no kód
+prohlásit za hotový a funkèní:
+
+1. Optická kontrola kódu.
+
+   Je nutno celý kód projít a podívat se, není-li tam nìco oèividnì ¹karedého
+   nebo neladícího.  Èlovìk by mìl mít pocit, ¾e kód vypadá dobøe a neskrývá se
+   v nìm nìjaká záludnost.  To se týká jak výkonných èástí, tak jmen
+   identifikátorù a obsahu dokumentaèních øetìzcù a komentáøù.  Pokud tento
+   pocit v nìkterém místì nemá, je tøeba kód opravit nebo (není-li okam¾itá
+   oprava mo¾ná) toto místo patøiènì okomentovat a oznaèit symbolem =TODO=.
+
+2. Import modulu.
+
+   Ovìøí se tak, ¾e kód je alespoò syntakticky správnì.
+
+3. Kontrola dokumentaèních øetìzcù -- existence a úplnost.
+
+   V¹echny veøejné metody, které nedìdí dokumentaèní øetìzec bez jakékoliv
+   zmìny od svého pøedka, musí být vybaveny vlastním dokumentaèním øetìzcem.
+   Tento øetìzec musí plnì specifikovat chování metody -- pokud by nìkdo pouze
+   podle dokumentaèních øetìzcù napsal nový kód bez nahlí¾ení do kódu
+   stávajícího, pøíslu¹ný objekt musí stále plnì fungovat.
+
+4. Kontrola [[http://pychecker.sourceforge.net/][pycheckerem]].[1]
+
+   To u¹etøí práci pøi následném ladìní a také zajistí, ¾e napøíklad nechybí
+   dokumentaèní øetìzce.
+
+5. Doplnìní a aktualizace testù.
+
+   Pro v¹echny nové dokumentaèní øetìzce je tøeba vytvoøit nové testy kompletnì
+   ovìøující v dokumentaèním øetìzci popsanou funkcionalitu (je-li to mo¾né a
+   schùdné).  Pro v¹echny modifikované dokumentaèní øetìzce je nutno
+   zkontrolovat, zda jim odpovídající testy stále je¹tì platí a zda není tøeba
+   doplnit nové testy.
+
+   Testy se nemusí (ale mohou) psát pro èistì na¹e pomocné nástroje, které
+   nejsou souèástí distribuce systému, jako napøíklad nìkteré ladící nástroje.
+
+6. Provedení testù.
+
+   Spustí se v¹echny testy a zkontroluje se, ¾e v¹echny uspìly.
+
+7. Audit.
+
+   Pokud se jedná o zcela nový kód nebo rozsáhlej¹í zmìny, mìl by být
+   zkontrolován jiným vývojáøem, ne¾ který jej psal.  Tato kontrola by mìla
+   spoèívat v pøimìøené aplikaci bodù 1., 3. a 6.
+   
+
+* Psaní testù
+
+Pro testování kódu pou¾íváme nástroj [[http://pyunit.sourceforge.net/][PyUnit]].  Tento nástroj je dostupný
+v Debianu a pro úvod do jeho pou¾ívání odkazujeme na jeho dokumentaci, která je
+pomìrnì krátká a snadno pochopitelná.
+
+** Pravidla pro psaní testù
+
+PyUnit je celkovì obecný prostøedek, zpùsob jeho pou¾ití v na¹em systému
+definují následující pravidla:
+
+- Ka¾dý koncový adresáø hierarchie modulù obsahuje v jednom souboru testy pro
+  v¹echny moduly tohoto adresáøe.  Tento soubor je ve stejném adresáøi a
+  jmenuje se =_test.py=.
+
+- Ka¾dý nekoncový adresáø (tj. adresáø obsahující dal¹í modulové podadresáøe)
+  má té¾ soubor =_test.py=, který kromì pøípadných testù pro soubory v tomto
+  adresáøi obsahuje té¾ volání testování pro v¹echny podadresáøe.  To znamená,
+  ¾e provìøit celý adresáøový strom lze v¾dy spu¹tìním testování v koøeni
+  daného stromu.
+
+- Ka¾dý soubor =_test.py= musí definovat funkci =get_tests()=, která vrací
+  kompletní test suite daného souboru (kromì testù, které z nìjakého dùvodu
+  nemají být provádìny).
+
+- Soubor =_test.py= je spustitelný a pøi svém spu¹tìní musí provést v¹echny své
+  testy.
+
+- Nalezne-li se v kódu chyba (neodhalená ¾ádným testem), mìl by se pro ni
+  vytvoøit nový test.  (Pøi psaní kódu a tvorbì testù se dost èasto zapomíná na
+  rùzné okrajové podmínky.)
+
+- Testy nemusí mít ¾ádné dokumentaèní øetìzce (nepøedstavují API).
+
+Modul =lib.util.test= obsahuje drobné pomùcky usnadòující definování testù.
+Mìl by být vyu¾íván.
+
+©ablona souboru =_test.py=:
+
+<example>
+#!/usr/bin/env python
+
+import unittest
+
+import lib.util.test
+import types_
+
+tests = lib.util.test.TestSuite()
+
+...
+
+class TheTest(unittest.TestCase):
+    def check_something(self):
+        assert ...
+    def check_something_else(self):
+        assert ...
+tests.add(TheTest)
+
+class AnotherTest(unittest.TestCase):
+    def check_something(self):
+        assert ...
+tests.add(AnotherTest)
+
+...
+
+def get_tests():
+    return tests
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='get_tests')
+</example>
+
+Konkrétní pøíklady testù lze nalézt ve stávajících souborech =_test.py=.
+
+Pokud pro nìjakou funkcionalitu nelze rozumnì test vytvoøit (bylo by to pøíli¹
+pracné nebo nelze jednodu¹e naemulovat odpovídající situaci), je potøeba
+vytvoøit prázdný test a oznaèit jej komentáøem obsahujícím øetìzec =EMPTY=.
+Budeme tak mít zdokumentováno co není (o)testováno.
+
+** Interaktivní testy a testování GUI
+
+Bohu¾el se neobejdeme bez interaktivních testù, tj. testù vy¾adujících bìhem
+svého bìhu ruèní obsluhu.  Interaktivní testy jsou velmi nepøíjemné, proto¾e
+zdr¾ují, pøidávají práci, jejich výsledky jsou závislé na spolehlivosti
+obsluhy a lidé je neradi spou¹tìjí, tak¾e odhalování chyb se zpo¾ïuje.
+Neinteraktivní testy GUI v¹ak vzhledem k chybìjícímu know-how nejsme schopni
+vytváøet.
+
+Pro tvorbu interaktivních testù platí následující zásady:
+
+- Interaktivním testùm je nutno se co nejvíce vyhýbat a omezit je skuteènì
+  jenom na to, co opravdu nelze otestovat automaticky.  Pokud napøíklad
+  testujeme, ¾e funguje konstrukce u¾ivatelského rozhraní na základì na¹í
+  specifikace, není potøeba to dìlat interaktivnì, informace o struktuøe
+  zkonstruovaného u¾ivatelského rozhraní (tlaèítka, nápisy na nich, atd.) by
+  mìlo být mo¾no zjistit prostøedky wxWindows.  Co se stane po stisku
+  tlaèítka lze také zjistit programovì, zavoláním odpovídající callbackové
+  funkce.  Vizuálnì je pak nutno kontrolovat spí¹e jenom celkový vzhled
+  (jestli nìkde není nìco rozsypaného, apod.) a pøípadnì, ¾e callbacky jsou
+  navì¹eny na správné prvky.
+
+- Obecná pravidla pro testy platí beze zmìny i pro interaktivní testy.
+  To zejména znamená, ¾e interaktivní testy vyu¾ívají modul `unittest'
+  (PyUnit) se v¹ím, co s tím souvisí.
+
+- Abychom umo¾nili spou¹tìní testování jak vèetnì interaktivních testù tak
+  i bez nich (dle konfiguraèní volby), metody interaktivních testù budou
+  zaèínají prefixem =check_interactive_=.
+
+- Tøídy pro interaktivní testy dìdí tøídu
+  =lib.util.test.InteractiveTestCase=.  Pro interakci s obsluhou slou¾í
+  metoda =ask_user= této tøídy.
+
+- Instrukce pro obsluhu musí být naprosto pøesné a na otázku musí být
+  schopen odpovìdìt ka¾dý, i kdy¾ spou¹tí test poprvé.
+
+Primitivní pøíklad interaktivního testu:
+
+<example>
+  class PrintTest(lib.util.test.InteractiveTestCase):
+       def check_interactive_print(self):
+           print '\nAhoj'
+           self.ask_user('''Na prvním pøedchozím neprázdném øádku by
+  mìlo být vypsáno "Ahoj" (bez uvozovek) a nic jiného.  Nápis "Ahoj" je
+  na samostatném øádku.  Nápis musí souhlasit vèetnì velikosti písmen.''',
+                         'Vypsalo se "Ahoj" dle popisu')
+</example>
+
+Dal¹í pøíklady lze nalézt v souboru =src/lib/form/_test.py=.
+
+** Korespondence testù a dokumentaèních øetìzcù
+
+*Tady by mìlo být uvedeno, jak v dokumentaèních øetìzcích nebo poblí¾ nich
+vyznaèit, pro které v¹echny jejich èásti (ne)existují testy.  Tato informace by
+mìla být dostupná kvùli snadné aktualizaci testù po zmìnì dokumentaèních
+øetìzcù a také jako upozornìní na netestovaná místa.*
+
+** Záludnosti PyUnit
+
+Pøi pou¾ití PyUnit je mo¾no narazit na následující problémy:
+
+- Obsahuje-li testovací tøída více testovacích metod, je pøi bìhu testování pro
+  ka¾dou z nich provedena kompletní inicializace tøídy, vèetnì vytvoøení její
+  instance.  Jedinou rozumnou mo¾ností, jak pøedávat data mezi tìmito metodami,
+  tudí¾ je pou¾ívat sdílené atributy tøídy.
+
+
+* Nakládání s chybami
+
+Chyby v softwaru, s jeho¾ pomocí na¹e aplikace pobì¾í (Python, PostgreSQL,
+wxWindows, ..., ne v¹ak tøeba Emacs), se evidují v souboru [[bugs]].  Cílem této
+evidence je mít neustálý pøehled o existujících chybách a vyhnout se tak
+opakovaným pøekvapením zpùsobovaným tými¾ problémy nebo dokonce
+znovuobjevením se tìchto problémù a¾ za bìhu aplikace u zákazníka.
+
+Pokud nìkdo narazí na nìjakou chybu v tìchto softwarech podstatnou pro bìh
+na¹í aplikace, nech» její popis do [[bugs]] zaøadí.  Popis by mìl obsahovat:
+
+- V jakém softwaru a verzi se chyba objevila.
+
+- Jaké dùsledky má nebo mù¾e mít na na¹i aplikaci.
+
+- Jakým zpùsobem se s chybou vypoøádáme.
+
+- Zda byla chyba oznámena vývojáøùm daného softwaru a jak na ni reagovali.
+
+Tak budeme mít v¹echny problémy tohoto druhu evidované a mù¾eme je v patøièný
+okam¾ik zrevidovat.
+
+
+Footnotes: 
+[1]  pychecker je bohu¾el nemodulární a tím pádem nevhodný pro pøidávání
+     vlastních testù.  O rozumnìj¹ím nástroji v¹ak nevím, tak¾e se (prozatím?)
+     musíme spokojit s tím, co je.

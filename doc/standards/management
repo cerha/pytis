@@ -1,0 +1,41 @@
+#title Obecná organizaèní pravidla
+
+* Pravidla pro pravidla
+
+V¹echna pravidla, na kterých se domluvíme, se zanesou do dokumentù v CVS
+adresáøi =doc/standards/=.  Úèelem tìchto dokumentù je:
+
+- Mo¾nost kdykoliv si pravidla ujasnit, ovìøit èi zopakovat.
+
+- Mo¾nost rychle a snadno s pravidly seznámit pøípadné nové vývojáøe.
+
+- Zamezení vymý¹lení jedné a té¾e vìci opakovanì stále dokola jenom proto, ¾e
+  se na ni èasem zapomene.
+
+Dokumenty jsou v plain text formátu, je mo¾no (a doporuèeno) pou¾ívat
+znaèkování Emacs Wiki (http://www.gci-net.com/~johnw/Emacs/emacs-wiki.el).
+Øádky v tìchto dokumentech by nemìly pøesahovat délku 77 znakù, aby
+nepøesáhly standardní maximální délku 79 znakù ani po odsazení anebo ve
+výstupu diffu.
+
+K oznamování zmìn v dokumentech do mailing listu lze vyu¾ít pøíkazu
+
+<verbatim>
+  diff -C 3 --show-function-line='^\*+ '
+</verbatim>
+
+V závislosti na charakteru dokumentu a zmìn mù¾e být nìkdy vhodnìj¹í uvádìt
+více kontextových øádkù, napø. =-C 7=.
+
+
+* Software
+
+Software, který je vy¾adován EBASem a není souèástí Debianu (nebo v nìm není
+v potøebné verzi) je k dispozici na [[http://devel.brailcom.org/ebas]].
+
+
+* ©ablony souborù
+
+V CVS adresáøi =templates= jsou ¹ablony èasto pou¾ívaných schémat souborù,
+je¾ lze vyu¾ít pøi zakládání nových souborù.
+

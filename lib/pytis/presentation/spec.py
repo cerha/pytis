@@ -1,0 +1,1382 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Tøídy pro specifikaci prezentaèní vlastností formuláøù.
+
+Tøída 'ViewSpec' zastøe¹uje ostatní specifikaèní tøídy definované tímto
+modulem ('FieldSpec', 'GroupSpec', 'LayoutSpec').
+
+Vytvoøení instance formuláøové tøídy je potom v podstatì interpretací
+pøíslu¹ných specifikací.
+
+V¹echny tøídy tohoto modulu mají specifikaèní charakter a jejich instance jsou
+pova¾ovány za immutable, tudí¾ mohou být libovolnì sdíleny.
+
+"""
+
+import pytis.form
+import pytis.data
+
+from pytis.util import *
+from pytis.presentation import *
+
+
+class BorderStyle:
+    """Výètová tøída definující konstanty pro styl orámování."""
+    ALL    = 'ALL'
+    """Mezera je kolem dokola."""
+    TOP    = 'TOP'
+    """Mezera je jen nahoøe."""
+    BOTTOM = 'BOTTOM'
+    """Mezera je jen dole."""
+    LEFT   = 'LEFT'
+    """Mezera je jen vpravo."""
+    RIGHT  = 'RIGHT'
+    """Mezera je jen vlevo."""
+    
+class Orientation:
+    """Výètová tøída definující konstanty pro smìrovou orientaci."""
+    HORIZONTAL = 'HORIZONTAL'
+    """Horizontální orientace."""
+    VERTICAL = 'VERTICAL'
+    """Vertikální orientace."""
+
+
+    
+class Button:
+    """Specifikace tlaèítka navázaného na proceduru pro pou¾ití ve formuláøích.
+
+    Takto lze do formuláøe umístit tlaèítka, jejich¾ stisk vyvolá libovolnou
+    u¾ivatelem definovanou akci.  Pøi spu¹tìní akce pøitom lze pøistupovat k
+    aktuálním hodnotám políèek formuláøe (viz konstruktor).
+
+    Tlaèítko lze umístit do LayoutSpec jako jednu z polo¾ek (v¹ude tam, kde
+    bì¾nì uvádíme id políèka pro umístìní vstupního políèka, nebo vnoøenou
+    LayoutSpec).  Pokud ve specifikaci není 'LayoutSpec' definována explicitnì,
+    nelze tlaèítko pou¾ít.
+
+    """
+    
+    def __init__(self, label, handler, width=None, tooltip=None,
+                 active_in_popup_form=True):
+        """Inicializuj specifikaèní instanci.
+
+        Argumenty:
+
+          label -- nápis tlaèítka jako string.
+          handler -- funkce jednoho argumentu, kterým je instance
+            'PresentedRow' obsahující aktuální hodnoty políèek formuláøe.  Tato
+            funkce je vyvolána pøi stisku tlaèítka.
+          width -- ¹íøka (poèet znakù).  Implicitnì je ¹íøka nastavena
+            automaticky podle ¹íøky nápisu ('label'), ale pokud je tento
+            argument specifikován, bude ¹íøka nastavena podle dané celoèíselné
+            hodnoty.
+          tooltip -- text, který se zobrazí jako bublinová nápovìda pro toto
+            tlaèítko.
+          active_in_popup_form -- Pokud je zde specifikována pravdivá hodnota,
+            nebude tlaèítko aktivní v popup (modálních) formuláøích.  To je
+            urèeno zejména pro tlaèítka, která mají vyvolat otevøení nového
+            formuláøe na zásobníku oken aplikace, co¾ není právì v dobì práce s
+            modálním formuláøem mo¾né.
+        
+        """
+        assert isinstance(label, types.StringTypes)
+        assert callable(handler)
+        assert width is None or isinstance(width, types.IntType)
+        assert tooltip is None or isinstance(tooltip, types.StringTypes)
+        assert isinstance(active_in_popup_form, types.BooleanType)
+        self._label = gettext_(label)
+        self._handler = handler
+        self._width = width
+        self._tooltip = gettext_(tooltip)
+        self._active_in_popup_form = active_in_popup_form
+        
+    def label(self):
+        return self._label
+    
+    def handler(self):
+        return self._handler
+    
+    def width(self):
+        return self._width
+    
+    def tooltip(self):
+        return self._tooltip
+    
+    def active_in_popup_form(self):
+        return self._active_in_popup_form
+
+class GroupSpec:
+    """Definice skupiny vstupních polí editaèního formuláøe.
+
+    Tato specifikace se nestará o vzhled jednotlivých vstupních polí, pouze
+    definuje jejich rozlo¾ení ve formuláøi.
+
+    Skupina mù¾e obsa¾ené prvky skládat horizontálnì, nebo vertikálnì a skupiny
+    se mohou libovolnì vnoøovat (prvkem je buïto pøímo vstupní políèko, nebo
+    jiná skupina -- viz argument 'items' konstruktoru).
+
+    Dal¹ími argumenty konstruktoru lze urèit rozestupy políèek, mezeru kolem
+    celé skupiny, styl orámování, nadpis skupiny apod.
+
+    Postup skládání políèek a skupin ve formuláøi je následovný:
+
+    Podle orientace skupiny jsou obsa¾ené celky skládány buïto horizontálnì
+    (vedle sebe), nebo vertikálnì (nad sebe).  Obsa¾enými celky se rozumí
+    sekvence za sebou následujících políèek a vnoøených skupin.  V¹echna za
+    sebou následující políèka jsou skládána pod sebe do møí¾ky (nehledì na to,
+    jde-li o vertikální, nebo horizontální skupinu).  Teprve celky takto
+    seskupených políèek a vnoøených skupin jsou skládány podle orientace
+    skupiny.  Samostatná vedle sebe umístìná políèka je mo¾no vytvoøit jejich
+    umístìním do samstatných vnoøených podskupin (jednoprvkových).
+    
+    """
+    def __init__(self, items, orientation=Orientation.HORIZONTAL,
+                 box=False, label=None,
+                 gap=2, space=1, border=3, border_style=BorderStyle.ALL):
+        """Inicializace a doplnìní výchozích hodnot atributù.
+
+        Argumenty:
+
+          items -- obsah této skupiny jako sekvence vnoøených skupin (instancí
+            'GroupSpec'), nebo pøímo vstupních políèek urèených svým
+            identifikátorem (øetìzec).
+          orientation -- orientace skládání obsa¾ených prvkù; konstanta
+            tøídy 'Orientation'.
+          label -- název skupiny uvedený v záhlaví rámeèku - pokud není None,
+            skupina bude orámována; string;
+          gap -- velikost vertikální mezery mezi jednotlivými políèky
+            v dialog units; integer; 1 du = 1/4 ¹íøky bì¾ného znaku.
+            Relevantní pouze pokud 'items' obsahuje pøímo políèka.
+          space -- velikost mezery mezi políèkem a jeho labelem v du; integer;
+            Relevantní pouze pokud 'items' obsahuje pøímo políèka.
+          border -- velikost mezery kolem celé skupiny v du; integer;
+          border_style -- styl orámování; mezera je implicitnì ze v¹ech stran,
+            mù¾e v¹ak být pouze vpravo, vlevo, nahoøe, nebo dole; Konstanta
+            tøídy 'BorderStyle'.
+
+        'label' je v¾dy pova¾ován za jazykovì závislý text a tudí¾ automaticky
+        podléhá jazykové konverzi.
+            
+
+        """
+        assert is_sequence(items)
+        assert label is None or is_anystring(label)
+        assert type(gap) == type(0)
+        assert gap >= 0
+        assert orientation in public_attributes(Orientation)
+        assert border_style in public_attributes(BorderStyle)
+        for item in items:
+            # není tøeba kontrolovat rekurzivnì, proto¾e kontrola probìhne pro
+            # ka¾dou instanci na její úrovni...
+            assert isinstance(item, GroupSpec) or isinstance(item, Button) \
+                   or is_anystring(item), (item, label)
+        self._items = items
+        self._label = gettext_(label)
+        self._orientation = orientation
+        self._gap = gap
+        self._space = space
+        self._border = border
+        self._border_style = border_style
+
+    def items(self):
+        """Vra» prvky skupiny jako tuple."""
+        return tuple(self._items)
+
+    def label(self):
+        """Vra» název skupiny."""
+        return self._label
+
+    def orientation(self):
+        """Vra» orientaci skládání prvkù; konstanta tøídy 'Orientation'."""
+        return self._orientation
+
+    def gap(self):
+        """Vra» ¹íøku mezery vertikální mezi políèky v du."""
+        return self._gap
+
+    def space(self):
+        """Vra» ¹íøku mezery mezi políèkem a jeho labelem v du."""
+        return self._space
+
+    def border(self):
+        """Vra» ¹íøku mezery kolem celé skupiny v du."""
+        return self._border
+
+    def border_style(self):
+        """Vra» styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
+        return self._border_style
+
+
+class LayoutSpec:
+    """Specifikace rozmístìní vstupních polí editaèního formuláøe.
+
+    Editaèní formuláø pro jeden záznam tabulky (na úrovni u¾ivatelského
+    rozhraní) se sestává z nìkolika editaèních polí - jedno pro ka¾dou polo¾ku
+    záznamu.  Tato pole mohou být vizuálnì seskupena do skupin.  Skupina je
+    specifikována instancí tøídy 'GroupSpec'.  Zpùsob rozlo¾ení polí ve skupinì
+    je popsán v dokumentaci tøídy 'GroupSpec'.
+
+    """
+    def __init__(self, caption, group, order=None):
+        """Inicializace a doplnìní defaultních hodnot atributù.
+
+        Argumenty:
+          caption -- nadpis editaèního formuláøe jednoho záznamu
+          group -- specifikace skupiny políèek nejvý¹¹í úrovnì; instance
+            'GroupSpec'. Tato skupina mù¾e obsahovat dal¹í vnoøené skupiny
+            (viz dokumentace tøídy 'GroupSpec').
+          order -- specifikace poøadí procházení mezi políèky jako sekvence
+            øatìzcù - identifikátorù políèek.  Pokud není None, je poøadí
+            procházení políèek urèeno poøadím jejich identifikátorù v této
+            sekvenci.  V takovém pøípadì musí sekvence obsahovat identifikátory
+            v¹ech políèek obsa¾ených v 'group'.  Pokud je ponechána výchozí
+            hodnota 'None', je poøadí procházení dáno poøadím políèek v
+            'group' pøi procházení stromu do hloubky.  Tento výchozí zpùsob
+            urèení poøadí v naprosté vìt¹inì pøípadú vyhovuje a je z pohledu
+            u¾ivatele nejpøirozenìj¹í, proto se pou¾ítí tohoto argumentu
+            doporuèuje jen v nevyhnutelných pøípadech!  Prioritním øe¹ením by
+            v¾dy mìla být reorganizace skupin formuláøe.
+
+        'caption' je v¾dy pova¾ován za jazykovì závislý text a tudí¾ automaticky
+        podléhá jazykové konverzi.
+
+        """
+        assert caption is None or is_anystring(caption)
+        assert isinstance(group, GroupSpec)
+        assert order is None or is_sequence(order)
+        self._caption = gettext_(caption)
+        self._group = group
+        def find_fields(group):
+            # Extract field ids from group by recursing it.
+            fields = []
+            for item in group.items():
+                if isinstance(item, GroupSpec):
+                    fields += find_fields(item)
+                elif not isinstance(item, Button):
+                    fields.append(item)
+            return fields
+        if order is None:
+            order = find_fields(group)
+        elif __debug__:
+            found = find_fields(group)
+            for id in order:
+                assert is_string(id)
+                assert id in found, \
+                       (_("Invalid field id in 'order' specification:"), id)
+            for id in found:
+                assert id in order, \
+                       (_("Field id missing in 'order' specification:"), id)
+            assert len(found) == len(order), \
+                   _("Duplicate field id in 'order' spcification.")
+        self._order = order
+
+    def caption(self):
+        """Vra» nadpis pro editaèní formuláø jednoho záznamu."""
+        return self._caption
+
+    def group(self):
+        """Vra» skupinu políèek nejvý¹¹í úrovnì; instance 'GroupSpec'."""
+        return self._group
+    
+    def order(self):
+        """Vra» tuple id v¹ech políèek editaèního formuláøe v poøadí procházení.
+        
+        Pokud nebylo poøadí v konstruktoru urèeno, odpovídá poøadí ve skupinách.
+
+        """
+        return self._order
+
+
+class ViewSpec:    
+    """Kompletující specifikace prezentaèních vlastnoostí pro formuláøe.
+
+    Instance této tøídy zná ve¹keré prezentaèní vlasnosti urèité entity
+    (tabulky z pohledu aplikace).  Tøída definuje API pro pøístup k tìmto
+    vlastnostem.  Toto API je vyu¾íváno formuláøovými tøídami.
+
+    Ka¾dá instance této tøídy definuje vlastnosti pro v¹echny zpùsoby
+    zobrazení (editaèní formuláø, editaèní seznam, apod.).
+
+    Ka¾dý typ formuláøe z potom vyu¾ívá ze specifikace pouze tu èást, která je
+    pro nìj relevantní.
+
+    """
+    def __init__(self, title, fields, layout=None, columns=None,
+                 popup_menu=None, sorting=None, grouping=None, redirect=None,
+                 check=None, cleanup=None, on_new_record=None,
+                 on_edit_record=None, on_delete_record=None,
+                 enable_inline_insert=True, on_line_commit=None,
+                 focus_field=None, description=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          title -- titulek záhlaví seznamových formuláøù jako øetìzec; mù¾e
+            být té¾ 'None', v kterém¾to pøípadì formuláø ¾ádné záhlaví nemá.
+          fields -- specifikace políèek jednoho záznamu jako sekvence instancí
+            tøídy 'FieldSpec'.  
+          layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
+            instance tøídy 'LayoutSpec'.
+          columns -- specifikace sloupcù tabulkového formuláøe, sekvence
+            indentifikátorù políèek z 'fields'.
+          popup_menu -- specifikace polo¾ek kontextového menu pro jeden øádek
+            tabulky.  Tato políèka budou pøidána do kontextového popup menu
+            vyvolaného pravým tlaèítkem my¹i nad jedním záznamem v seznamovém
+            formuláøi.  Jde o sekvenci instancí 'pytis.form.MItem'.
+          sorting -- výchozí seøazení tabulky.  Specifikace øazení ve formátu
+            odpovídajícím argumentu 'sort' metody 'pytis.data.select()', nebo
+            None.  Potom je výchozí seøazení tabulky podle klíèového sloupce
+            datového objektu vzestupnì.
+          grouping -- výchozí vizuální seskupování tabulky.  Idendifikátor
+            sloupce, podle kterého mají být øádky seskupeny, nebo None.
+            Vizuální seskupování umo¾òuje graficky odli¹it skupiny øádkù,
+            které následují bezprostøednì po sobì a pøitom mají stejnou
+            hodnotu seskupovacího sloupce.  To má význam pouze u sloupcù,
+            podle kterých je zároveò øazeno.
+          redirect -- pøesmìrování formuløe pro zobrazení/editaci jednoho
+            záznamu.  Jedná se o funkci jednoho argumentu, jím¾ je instance
+            'PresentedRow' reprezentující øádek dat, pro který je
+            pøesmìrování po¾adováno.  Vrácenou hodnotou musí být název
+            specifikace, nad kterou bude vytváøený formuláø sestaven.  Pokud
+            funkce vrátí None, nebo není ¾ádná funkce specifikována, k ¾ádnému
+            pøesmìrování nedojde.
+          check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
+            funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
+            reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
+            od validace hodnot políèek, která závisí na datovém typu a má k
+            dispozici pouze vlastní obsah políèka, má tato funkce k dispozici i
+            hodnoty ostatních políèek, tak¾e je vhodná pro ovìøení vzájemné
+            sluèitelnosti tìchto hodnot.  Tato funkce vrací None, pokud je
+            v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
+            id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.  Formuláø
+            by potom mìl u¾ivatele vrátit do editace daného polèka.
+          cleanup -- funkce provádìjící závìreèné akce pøi uzavøení
+            formuláøe.  Jedná se o funkci jednoho argumentu, jím¾ je instance
+            'PresentedRow' obsahující aktuální data formuláøe.  Funkce je
+            spou¹tìna v¾dy pøi pøi uzavøení editaèního formuláøe tlaèítkem
+            \"Ok\" (potvrzením) a to i v pøípadì, ¾e ¾ádná data nebyla
+            zmìnìna.
+          on_new_record -- akce vlo¾ení nového záznamu.  Pokud je None, bude
+            provedena výchozí akce (otevøení PopupEditForm nad danou
+            specifikací).  Pøedáním funkce dvou klíèových argumentù ('key' a
+            'prefill', viz 'pytis.form.new_record()') lze pøedefinovat pøidání
+            nového záznamu libovolnou vlastní funkcionalitou.
+          on_edit_record -- akce editace záznamu.  Pokud je None, bude
+            provedena výchozí akce (otevøení PopupEditForm nad danou
+            specifikací).  Pøedáním funkce jednoho klíèového argumentu,
+            jím¾ je instance 'PresentedRow', lze pøedefinovat editaci záznamu
+            libovolnou vlastní funkcionalitou.
+          on_delete_record -- akce vymazání záznamu.  Pokud je None, bude
+            provedena výchozí akce (vymazání záznamu).  Pøedáním funkce
+            jednoho klíèového argumentu, jím¾ je instance 'PresentedRow', lze
+            pøedefinovat vymazání záznamu libovolnou vlastní
+            funkcionalitou. Pokud tato funkce vrací None, nedojde k ¾ádným
+            dal¹ím akcím, pokud vrací instancí 'pytis.data.Operator', bude
+            provedeno 'pytis.data.delete_many()' s pøíslu¹nou podmínkou.
+          on_line_commit -- akce volaná po ulo¾ení øádku v inline editaci.
+            Pøedáním funkce jednoho argumentu, jím¾ je instance
+            `PresentedRow', lze vyvolat doplòující akce po editaci inline
+            záznamu.
+             
+           enable_inline_insert -- umo¾òuje zakázat vkládání záznamù v re¾imu
+             inline editace (v øádkovém formuláøi).  Typicky je to nutné v
+             pøípadì, kdy øádkový formuláø neobsahuje v¹echny sloupce nutné k
+             úspì¹nému vlo¾ení nového záznamu do databáze.  Pokud je pravdivý,
+             bude u¾ivteli pokus o vlo¾ení záznamu odmítnut s pøíslu¹nou
+             zprávou.  Vkládání pomocí editaèního formuláøe je pøitom dostupné
+             v¾dy.
+           focus_field -- øetìzcová hodnota identifikátoru políèka urèující,
+             které políèko má po otevøení formuláøe fokus, nebo funkce jednoho
+             argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
+             vrací pøíslu¹ný identifikátor políèka.
+           description -- popis formuláøe pro bublinkový help.
+
+        Pokud není argument 'layout' nebo 'columns' uveden, bude vygenerován
+        implicitní layout a seznam sloupcù, odpovídající poøadí políèek ve
+        'fields'.
+        
+        Klíèové atributy 'layout' a 'columns' mohou být uvádìny bez
+        identifikátoru a tudí¾ by mìlo být zaruèeno, ¾e budou v budoucnu
+        zachovány vèetnì poøadí.
+
+        """
+        assert is_anystring(title)
+        assert is_sequence(fields)
+        # Initialize field dictionary
+        self._field_dict = {}
+        for f in fields:
+            assert isinstance(f, FieldSpec)
+            self._field_dict[f.id()] = f
+        self._fields = tuple(fields)
+        # Initialize `layout' specification parameter
+        if layout is None:
+            ids = tuple(map(lambda f: f.id(), self._fields))
+            layout = LayoutSpec(title, GroupSpec(ids))
+        elif __debug__:
+            assert isinstance(layout, LayoutSpec)
+            def recourse_group(group):
+                for item in group.items():
+                    if isinstance(item, GroupSpec):
+                        recourse_group(item)
+                    elif not isinstance(item, Button):
+                        assert self._field_dict.has_key(item), \
+                               (_("Unknown field id in 'layout' spec.:"), item)
+            recourse_group(layout.group())
+            for f in fields:
+                for (s, c) in (('computer', f.computer()),
+                               ('editable', f.editable())):
+                    if isinstance(c, Computer):
+                        for dep in c.depends():
+                            assert self._field_dict.has_key(dep), \
+                              ("Unknown field id '%s' in dependencies for " + \
+                               "'%s' specification of '%s'.") % (dep, s, f.id())
+        # Initialize `columns' specification parameter
+        if columns is None:
+            columns=tuple(map(lambda f: f.id(), self._fields))
+        elif __debug__:
+            assert is_sequence(columns)
+            for id in columns:
+                assert is_string(id)
+                assert self._field_dict.has_key(id), \
+                       (_("Unknown column id in 'columns' specification:"), id)
+        # Initialize other specification parameters
+        if popup_menu is not None:
+            assert is_sequence(popup_menu)
+            for item in popup_menu:
+                assert isinstance(item, (pytis.form.MItem, pytis.form.MSeparator,
+                                         pytis.form.Menu))
+        if sorting is not None:
+            assert is_sequence(sorting)
+            for item in sorting:
+                assert is_sequence(item)
+        assert grouping is None or self._field_dict.has_key(grouping)
+        assert redirect is None or callable(redirect)
+        assert check is None or callable(check)
+        assert cleanup is None or callable(cleanup)
+        assert on_new_record is None or callable(on_new_record)
+        assert on_edit_record is None or callable(on_edit_record)
+        assert on_delete_record is None or callable(on_delete_record)
+        assert on_line_commit is None or callable(on_line_commit)
+        assert focus_field is None or is_anystring(focus_field) \
+               or callable(focus_field)
+        self._title = gettext_(title)
+        self._columns = columns
+        self._layout = layout
+        self._popup_menu = popup_menu
+        self._sorting = sorting
+        self._grouping = grouping
+        self._redirect = redirect
+        self._check = check
+        self._cleanup = cleanup
+        self._on_new_record = on_new_record
+        self._on_edit_record = on_edit_record
+        self._on_delete_record = on_delete_record
+        self._on_line_commit = on_line_commit
+        self._enable_inline_insert = enable_inline_insert
+        self._focus_field = focus_field
+        self._description = description
+                
+    def fields(self):
+        """Vra» tuple specifikací v¹ech políèek v layoutu."""
+        return self._fields
+        
+    def field(self, id):
+        """Vra» specifikaci políèka daného 'id' jako instanci 'FieldSpec'."""
+        return self._field_dict.get(id)
+        
+    def layout(self):
+        """Vra» specifikaci rozvr¾ení editaèního formuláøe."""
+        return self._layout
+
+    def columns(self):
+        """Vra» tuple identifikátorù sloupcù pro tabulkový formuláø."""
+        return self._columns
+
+    def title(self):        
+        """Vra» titulek tabulkového formuláøe jako string, nebo None."""
+        return self._title
+
+    def popup_menu(self):        
+        """Vra» specifikaci polo¾ek kontextového menu pro záznam v tabulce."""
+        return self._popup_menu
+
+    def sorting(self):
+        """Vra» specifikaci výchozího øazení."""
+        return self._sorting
+
+    def grouping(self):
+        """Vra» id sloupce výchozího vizuálního seskupování, nebo None."""
+        return self._grouping
+
+    def redirect(self):
+        """Vra» funkci zaji¹»ující pøesmìrování na jiný název specifikace."""
+        return self._redirect
+        
+    def cleanup(self):
+        """Vra» funkci provádìjící akce pøi uzavøení formuláøe."""
+        return self._cleanup
+
+    def check(self):
+        """Vra» funkci provádìjící kontrolu integrity záznamu."""
+        return self._check
+
+    def on_new_record(self):
+        """Vra» funkci provádìjící vlo¾ení nového záznamu, nebo None."""
+        return self._on_new_record
+
+    def on_edit_record(self):
+        """Vra» funkci provádìjící editaci záznamu, nebo None."""
+        return self._on_edit_record
+
+    def on_delete_record(self):
+        """Vra» funkci provádìjící mazání záznamu, nebo None."""
+        return self._on_delete_record
+
+    def on_line_commit(self):
+        """Vra» funkci volanou po ulo¾ení inline øádku."""
+        return self._on_line_commit
+
+    def enable_inline_insert(self):
+        """Vra» pravdu, je li povoleno vkládání øádkù v in-line re¾imu."""
+        return self._enable_inline_insert
+
+    def focus_field(self):
+        """Vra» øetìzec nebo funkci, urèující políèko formuláøe s fokusem."""
+        return self._focus_field
+
+    def description(self):
+        """Vra» øetìzec nebo funkci, urèující políèko formuláøe s fokusem."""
+        return self._description
+
+    
+class DualSpec:
+    """Specifikace duálního formuláøe.
+
+
+    """
+    def __init__(self, main_name, side_name, binding_column,
+                 side_binding_column=None, side_columns=None,
+                 hide_binding_column=True, append_condition=None,
+                 title=None, side_title=None, description=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          main_name -- jméno specifikace hlavního formuláøe; øetìzec.
+          side_name -- jméno specifikace vedlej¹ího formuláøe; øetìzec.
+          binding_column -- identifikátor vazebního sloupce.  Tento sloupec
+            bude pou¾it pro filtrování vedlej¹ího formuláøe pøi pohybu po
+            záznamech v hlavním formuláøi.  Filtrovací podmínka je implicitnì
+            rovnost hodnot zvolených sloupcù hlavního a vedlej¹ího formuláøe.
+          side_binding_column -- identifikátor vazebního sloupce ve vedlej¹ím
+            formuláøi, pokud je jiný, ne¾ `binding_column'.  Výchozí hodnota
+            `None' znamená, ¾e název vazebního sloupce je ve vedlej¹ím
+            formuláøi stejný, jako v hlavním formuláøi.
+          side_columns -- sekvence identifikátorù sloupcù vedlej¹ího formuláøe.
+            Pokud je None, budou ve vedlej¹ím formuláøi zobrazeny v¹echny
+            sloupce dané jeho specifikací.
+          hide_binding_column -- vazební sloupec mù¾e být (a implicitnì je)
+            ve vedlej¹ím formuláøi vypu¹tìn (jeho hodnota je pro v¹echny
+            vyfiltrované záznamy shodná -- odpovídá hodnotì z hlavního
+            formuláøe).
+          append_condition -- None nebo funkce jednoho argumentu, kterým je
+            aktuální øádek hlavního formuláøe. V tomto pøípadì musí funkce
+            vrátit instanci Operator, která se pøipojí k implicitní
+            podmínce provazující vazební sloupce.
+          title -- titulek hlavního formuláøe jako øetìzec.  Pokud není
+            None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
+            ze specifikace hlavního formuláøe.
+          side_title -- titulek vedlej¹ího formuláøe jako øetìzec.  Pokud není
+            None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
+            ze specifikace vedlej¹ího formuláøe.
+            
+        """
+        assert is_anystring(main_name)
+        assert is_anystring(side_name)
+        assert is_anystring(binding_column)
+        assert is_anystring(title) or title is None
+        assert is_anystring(side_title) or side_title is None
+        assert append_condition is None or callable(append_condition)
+        assert is_anystring(side_binding_column)
+        assert side_columns is None or is_sequence(side_columns)
+        self._main_name = main_name
+        self._side_name = side_name
+        self._binding_column = binding_column
+        if side_binding_column is None:
+            side_binding_column = binding_column
+        self._side_columns = side_columns
+        self._side_binding_column = side_binding_column
+        self._hide_binding_column = hide_binding_column
+        self._append_condition = append_condition
+        self._title = title
+        self._side_title = side_title
+
+    def main_name(self):
+        """Vra» název specifikace hlavního formuláøe jako øetìzec."""
+        return self._main_name
+        
+    def side_name(self):
+        """Vra» název specifikace vedlej¹ího formuláøe jako øetìzec."""
+        return self._side_name
+        
+    def binding_column(self):
+        """Vra» id vazebního sloupce hlavního formuláøe jako øetìzec."""
+        return self._binding_column
+
+    def side_binding_column(self):
+        """Vra» id vazebního sloupce vedlej¹ího formuláøe jako øetìzec."""
+        return self._side_binding_column
+
+    def side_columns(self):
+        """Vra» seznam id sloupcù, vedlej¹ího formuláøe."""
+        return self._side_columns
+
+    def hide_binding_column(self):
+        """Vra» pravdu, pokud má být vazební sloupec skryt ve vedlej¹ím fm."""
+        return self._hide_binding_column
+
+    def append_condition(self):
+        """Vra» doplòující podmínku."""
+        return self._append_condition
+    
+    def title(self):
+        """Vra» titulek hlavního formuláøe jako øetìzec."""
+        return self._title
+
+    def side_title(self):
+        """Vra» titulek vedlej¹ího formuláøe jako øetìzec."""
+        return self._side_title
+
+
+class Editable:
+    """Výètová tøída definující konstanty urèující editovatelnost políèka."""
+    ALWAYS = 'ALWAYS'
+    """Políèko je editovatelné v¾dy."""
+    ONCE = 'ONCE'
+    """Políèko je editovatelné pouze jednou, pøi vytváøení nového záznamu."""
+    NEVER = 'NEVER'
+    """Políèko není editovatelné nikdy."""
+
+    
+class SelectionType:
+    """Výètová tøída definující konstanty pro zpùsob výbìru z mno¾iny hodnot.
+    """
+    CHOICE = 'CHOICE'
+    """Výbìr, kdy je viditelná jen právì vybraná hodnota."""
+    RADIO_BOX = 'RADIO_BOX'
+    """Pro ka¾dou hodnotu vytvoø za¹krtávací políèko."""
+    LIST_BOX = 'LIST_BOX'
+    """Viditelná je vybraná hodnota a \"nìkolik\" kolem."""
+
+
+
+class Color:
+    """Na GUI toolkitu nezávislé konstanty pro nìkteré barvy."""
+    WHITE = 'WHITE'
+    BLACK = 'BLACK'
+    RED = 'RED'
+    RED20 = 'RED20'
+    GREEN = 'GREEN'
+    BLUE = 'BLUE'
+    YELLOW = 'YELLOW'
+    GRAY   = 'GRAY'
+    GRAY10 = 'GRAY10'
+    GRAY20 = 'GRAY20'
+    GRAY30 = 'GRAY30'
+    GRAY40 = 'GRAY40'
+    GRAY50 = 'GRAY50'
+    GRAY60 = 'GRAY60'
+    GRAY70 = 'GRAY70'
+    GRAY80 = 'GRAY80'
+    GRAY90 = 'GRAY90'
+
+
+class FieldStyle:
+    """Specifikaèní tøída definující podobu vnitøku políèka s hodnotou."""
+
+    def __init__(self, foreground=Color.BLACK, background=Color.WHITE,
+                 bold=False, slanted=False):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          foreground -- barva textu políèka, jedna z konstant tøídy 'Color'
+          background -- barva pozadí políèka, jedna z konstant tøídy 'Color'
+          bold -- pøíznak urèující, zda má být text políèka tuèný
+          slanted -- pøíznak urèující, zda má být text políèka sklonìný
+          
+        """
+        self._foreground = foreground
+        self._background = background
+        self._bold = bold
+        self._slanted = slanted
+
+    def foreground(self):
+        """Vra» barvu textu zadanou v konstruktoru."""
+        return self._foreground
+
+    def background(self):
+        """Vra» barvu pozadí zadanou v konstruktoru."""
+        return self._background
+
+    def bold(self):
+        """Vra» pravdu, právì kdy¾ má text blikat."""
+        return self._bold
+
+    def slanted(self):
+        """Vra» pravdu, právì kdy¾ má být text tuèný."""
+        return self._slanted
+
+
+FIELD_STYLE_DEFAULT = FieldStyle()
+FIELD_STYLE_EMPHASIS = FieldStyle(bold=True)
+FIELD_STYLE_WARNING = FieldStyle(foreground=Color.RED)
+
+    
+class PostProcess:
+    "Výètová tøída definující konstanty pro zpùsob zpracování u¾iv. vstupu."
+    UPPER = 'UPPER'
+    """Pøeveï ve¹kerá písmena na velká."""
+    LOWER = 'LOWER'
+    """Pøeveï ve¹kerá písmena na malá."""
+
+    
+class TextFilter:
+    """Výètová tøída definující konstanty pro zpùsob filtrování u¾iv. vstupu.
+    """
+    ASCII = 'ASCII'
+    """Non-ASCII characters are filtered out."""
+    ALPHA = 'ALPHA'
+    """Non-alpha characters are filtered out."""
+    FLOAT = 'FLOAT'
+    """Non-alpha characters exclude '.' are filtered out."""    
+    ALPHANUMERIC = 'ALPHANUMERIC'
+    """Non-alphanumeric characters are filtered out."""
+    NUMERIC = 'NUMERIC'
+    """Non-numeric characters are filtered out."""
+    INCLUDE_LIST = 'INCLUDE_LIST'
+    """Use an include list.
+
+    The validator checks if the user input is on the list, complaining if
+    not.
+    """
+    EXCLUDE_LIST = 'EXCLUDE_LIST'
+    """Use an exclude list.
+
+    The validator checks if the user input is on the list, complaining if it
+    is.
+    """
+
+
+class Computer:
+    """Specifikace funkce pro dopoèítání hodnoty sloupce."""
+    
+    def __init__(self, function, depends=None):
+        """Inicializuj specifikaci.
+
+        Argumenty:
+
+          function -- libovolná funkce vracející hodnotu kompatibilní s vnitøní
+            hodnotou datového typu odpovídajícího sloupci, pro který je
+            pou¾ita.
+          depends -- seznam sloupcù, na kterých dané poèítané políèko závisí.
+            Mìl by obsahovat v¹echny sloupce, které poèítací funkce pou¾ívá pro
+            urèení výsledné hodnoty.  Hodnota potom bude pøepoèítána pouze
+            pøi zmìnì v uvedených políèkách. Pokud je uveden prázdný seznam,
+            nebude hodnota pøepoèítána nikdy (stále v¹ak bude vypoèítána pøi
+            inicializaci formuláøe). Jedná se o seznam identifikátorù sloupcù
+            jako øetìzcù.
+
+        """
+        import re
+        assert callable(function)
+        self._function = function
+        if depends is None:
+            raise ProgramError("Computer has no dependency specification!")
+        assert is_sequence(depends)
+        self._depends = depends
+
+    def __call__(self, *args, **kwargs):
+        return apply(self._function, args, kwargs)
+
+    def function(self):
+        """Vra» funkci zadanou v konstruktoru."""
+        return self._function
+
+    def depends(self):
+        """Vra» seznam id sloupcù, ne kterých poèítaná hodnota závisí."""
+        return self._depends
+
+
+class CodeBookSpec:
+    """Specifikace èíselníkového políèka.
+
+    Specifikace pro argument 'codebook' konstruktoru tøídy 'FieldSpec'
+
+    """
+    def __init__(self, name, returned_column, columns=None, display=None,
+                 display_size=20, insert_unknown_values=False,
+                 begin_search=None):
+        
+        """Inicializace a doplnìní výchozích hodnot atributù.
+
+        Argumenty:
+        
+          name -- název specifikace pro resolver (øetìzec)
+          returned_column -- identifikátor sloupce ze specifikace, jeho¾
+            hodnota má být èíselníkem vrácena a doplnìna jako hodnota políèka.
+          columns -- sekvence identifikátorù sloupcù, které mají být zobrazeny
+            v èíselníkovém formuláøi (tøída 'CodeBook').  Pokud je 'None',
+            bude èíselník zobrazovat v¹echny sloupce ze specifikace dané
+            tabulky.
+          display -- pokud není 'None', bude èíselníkové políèko vybaveno
+            displejem, (viz 'CodeBookField').  Hodnotou je identifikátor
+            sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
+            musí být obsa¾en v datové specifikaci èíselníku).
+          display_size -- ¹íøka políèka displeje ve znacích
+          insert_unknown_values -- pokud má pravdivou hodnotu, umo¾ni vkládání
+            neznámých hodnot do èíselníku pøímo pøi jejich vyplnìní do
+            èíselníkového políèka.  V takovém pøípadì je u¾ivateli nabídnuta
+            mo¾nost vlo¾it nový záznam do èíselníku, pokud vyplní (jinak
+            validní) hodnotu, která není v èíselníku pøítomna.
+          begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
+            spustit automatické inkrementální vyhledávání.
+          
+        """
+        assert isinstance(name, types.StringType)
+        assert isinstance(returned_column, types.StringType)
+        assert columns is None or is_sequence(columns)
+        assert display is None or isinstance(display, types.StringType)
+        assert type(display_size) == type(0)
+        self._name = name
+        self._returned_column = returned_column
+        self._columns = columns
+        self._display = display
+        self._display_size = display_size
+        self._insert_unknown_values = insert_unknown_values
+        self._begin_search = begin_search
+
+    def name(self):
+        """Vra» název specifikace èíselníku."""
+        return self._name
+        
+    def returned_column(self):
+        """Vra» seznam identifikátorù sloupcù, tvoøících návratovou hodnotu."""
+        return self._returned_column
+        
+    def returned_columns(self):
+        """Pouze pro zpìtnou kompatibilitu.  Nepou¾ívat!."""
+        return (self._returned_column,)
+        
+    def columns(self):
+        """Vra» seznam id sloupcù, zobrazených ve výbìrovém formuláøi."""
+        return self._columns
+        
+    def display(self):
+        """Vra» id sloupce zobrazovaného v displeji."""
+        return self._display
+        
+    def display_size(self):
+        """Vra» velikost displeje (poèet znakù)."""
+        return self._display_size
+        
+    def insert_unknown_values(self):
+        """Vra» pravdu, pokud mají být do èíselníku vkládány neznámé hodnoty."""
+        return self._insert_unknown_values
+
+    def begin_search(self):
+        """Vra» identifikátor sloupce pro inkrementální vyhledávání."""
+        return self._begin_search
+        
+    
+class RefSpec:
+    """Specifikace seznamu závislých záznamù pro vstupní políèko 'ListField'.
+
+    Tato specifikace je urèena pro pou¾ití jako argument 'references'
+    specifikace vstupního pole (tøída 'FieldSpec').
+
+    """
+    def __init__(self, name, key, columns, sorting=(), returned_columns=None):
+        """Inicializuj specifikaci.
+
+        Argumenty:
+
+          name -- název specifikace závislé tabulky pro resolver.  Data pro
+            zobrazený seznam, jako¾to i prezentaèní vlastnosti sloupcù jsou
+            urèena touto specifikací získanou pomocí resolveru.
+          key -- id sloupce v závislé tabulce, jeho¾ hodnota se musí shodovat s
+            vnitøní hodnotou políèka (urèenou pøes 'computer'), aby byl
+            odpovídající záznam v sezamu zobrazen.
+          columns -- tuple identifikátorù sloupcù ze závislé tabulky, které
+            mají být v seznamu viditelné.
+          sorting -- urèuje zpùsob øazení záznamù ve formátu argumentu 'sort'
+            metody 'pytis.data.Data.select()'.
+          returned_columns -- seznam dvojic ('menutext', 'id_sloupce'), kde
+            menutext se zobrazí v popup_menu a id_sloupce se pou¾ije pro
+            nastavení hodnoty get_value(). Pokud je None, pak se vrací
+            implicitní hodnota (tedy self._value) a popup_menu se nevytváøí.  
+
+        """
+        assert isinstance(name, types.StringType)
+        assert isinstance(key, types.StringType)
+        assert is_sequence(columns)
+        assert sorting is None or is_sequence(sorting)
+        self._name = name
+        self._key = key
+        self._columns = columns
+        self._sorting = sorting
+        self._returned_columns = returned_columns
+        
+    def name(self):
+        """Vra» jméno specifikace závislé tabulky pro resolver."""
+        return self._name
+
+    def key(self):
+        """Vra» id sloupce, pøes který jsou vybírány závislé záznamy."""
+        return self._key
+
+    def columns(self):
+        """Vra» seznam id sloupcù, které mají být zobrazeny."""
+        return self._columns
+
+    def sorting(self):
+        """Vra» specifikaci tøídìní."""
+        return self._sorting
+
+    def returned_columns(self):
+        """Vra» seznam specifikací pro vracené sloupce."""
+        return self._returned_columns
+
+class FieldSpec:
+    """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
+
+    Tato specifikace je pou¾itelná pro v¹echny druhy práce s políèky
+    zobrazujícími hodnoty, zejména v obrazovkových formuláøích, øádkových
+    formuláøích a výstupních sestavách.
+
+    Ka¾dý modul pracující s políèky si z této ponìkud komplexní specifikace
+    vybírá pouze pro nìj relevantní informace.  Pøesný zpùsob interpretace
+    tìchto specifikací závisí na tøídách implemenujících prvky u¾ivatelské
+    rozhraní.  Detailní popis je proto v pøípadì této tøídy tøeba hledat v
+    dokumentaci tøíd 'EditForm', 'ListForm', 'InputField' apod.
+
+    """
+    def __init__(self, id, label='', column_label=None, descr=None,
+                 width=None, column_width=None, height=None, 
+                 editable=None, compact=False, type_=None, 
+                 default=None, computer=None,
+                 separator=':', line_separator='; ',
+                 codebook=None, references=None,
+                 codebook_runtime_filter=None, 
+                 selection_type=SelectionType.CHOICE,
+                 orientation=Orientation.VERTICAL,
+                 post_process=None, filter=None, filter_list=None,
+                 check=None, style=FIELD_STYLE_DEFAULT):
+        """Inicializace a doplnìní výchozích hodnot atributù.
+
+        Argumenty:
+
+          id  -- textový identifikátor pole; neprázdný string.
+          label -- text nápisu u vstupního pole; string
+          column_label -- nadpis sloupce, je-li políèko ve sloupci, jako
+            string.  Je-li 'None', je pou¾ita hodnota 'label'.
+          descr -- podrobnìj¹í popis v rozsahu cca jedné vìty vhodný napøíklad
+            pro zobrazení bublinové nápovìdy.
+          width -- ¹íøka pole ve znacích; kladné celé èíslo, nebo 0,
+            v kterém¾to pøípadì je pole skryté.  Je-li 'None', bude pou¾ita
+            implicitní ¹íøka.
+          height -- vý¹ka pole ve znacích, kladné reálné èíslo.
+          column_width -- ¹íøka sloupce v tabulce ve znacích, kladné celé
+            èíslo.  Je-li 'None', je pou¾ita hodnota 'width'.
+          editable -- instance Computer nebo jedna z konstant tøídy 'Editable',
+            urèující za jakých okolností je políèko editovatelné.  Je-li 'None',
+            bude pou¾ita implicitní hodnota, kterou je obvykle
+            'Editable.ALWAYS', ale pro nìkteré kombinace ostatních parametrù
+            (napø. 'computer') mù¾e být implicitní hodnota jiná.
+            Pokud je editable instancí tøídy `Computer', budou jeho funkci
+            pøedány dva argumenty: instance PresentedRow a identifikátor
+            políèka.          
+          compact -- pravdivá hodnota znamená, ¾e bude textový popisek políèka
+            v editaèním formuláøi pøimknut k hornímu okraji vstupního prvku
+            (bude tedy nad políèkem).  V opaèném pøípadì (výchozí chování) je
+            popisek vlevo od políèka.
+          type_ -- explicitní urèení typu hodnoty, se kterou pracuje toto
+            políèko; instance 'pytis.data.Type'.  Typ mù¾e být vìt¹inou urèen
+            podle navázaného sloupeèku datového objektu.  Nìkterá
+            (napø. dopoèítávaná) políèka v¹ak nemusí být navázána na konkrétní
+            datový sloupec, nebo lze z nìjakého dùvodu chtít pro prezentaci
+            hodnot pou¾ít jiný typ (ten v¹ak *musí* být instancí typu sloupce
+            z datového objektu, pokud je políèko na nìjaký navázáno).  Viz také
+            metoda 'type()'.  Není-li zadáno, je pou¾it typ z datového
+            objektu.
+          default -- funkce pro výpoèet výchozí hodnoty políèka.  Callable
+            object vracející hodnotu kompatibilní s vnitøní hodnotou
+            odpovídajícího datového typu (viz argument 'type_').
+          computer -- 'None' nebo instance tøídy 'Computer', specifikuje
+            dopoèítávané políèko (viz. také ní¾e).  
+          separator -- oddìlovaè jednotlivých hodnot vícehodnotového
+            sloupeèku. string.  Relevantní pouze pokud má navázaný datový
+            sloupeèek vícenásobnou vazbu na zdroj dat, data jsou pak spojena
+            tímto oddìlovaèem do jediného stringu.
+          line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
+            víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
+            read-only políèka.
+          codebook -- specifikace èíselníku, pokud je políèko na nìjaký vázáno;
+            instance 'CodeBookSpec'.
+          codebook_runtime_filter -- dopoèítávaè run-time filtrovací
+            podmínky èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit
+            mno¾inu hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací
+            funkce dostane jako argument aktuální data formuláøe jako instanci
+            'PresentedRow' a vrací filtrovací podmínku typu
+            'pytis.data.Operator'.  Èíselník bude po zmìnì závislých políèek
+            aktualizován tak, aby obsahoval pouze øádku vyhovující dané podmínce.
+          references -- specifikace vazby na jinou tabulku, pro políèko
+            zobrazující seznam závislých záznamù.  Pokud není None, jedná se o
+            instanci tøídy 'RefSpec'.  V takovém pøípadì musí být nutnì urèen
+            také 'computer', proto¾e seznamové políèko je svou podstatou
+            virtuální -- jedná se o výpis závislých záznamù z jiné tabulky -- a
+            jeho vnitøní hodnota, urèená pomocí computeru, slou¾í jako klíè do
+            této závislé tabulky.  Toto políèko není samostatnì nijak
+            editovatelné, pouze zobrazuje data.  Umo¾òuje v¹ak vyvolat
+            samostatný formuláø pro zobrazená data.  Blí¾e viz dokumentace
+            'pytis.form.ListField'.
+          selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
+            tøídy 'SelectionType'; relevantní jen pro vstupní pole dat
+            výètových typù.
+          orientation -- orientace políèka, jedna z konstant tøídy
+            'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
+            napø. 'inputfield.RadioBoxInputField'.
+          post_process -- funkce upravující nìjakým zpùsobem vkládaný text.
+            Jedná se o funkci jednoho argumentu, kterým je hodnota políèka
+            získaná metodou 'InputField.get_value()'.  Vrácená hodnota je
+            potom nastavena jako nová hodnota políèka (musí to tedy být hodnota
+            akceptovatelná metodou 'InputField.set_value()'). Tato funkce je
+            volána pøi ka¾dé zmìnì hodnoty textového políèka.  Pøíkladem
+            postprocessingu mù¾e být zmìna velikosti písmen, pokud chceme, aby
+            textové políèko mohlo obsahovat jen velká písmena.  Hodnotou tohoto
+            argumentu mù¾e být také nìkterá z konstant tøídy 'PostProcess',
+            èím¾ je u¹etøeno psaní nìkterých èasto pou¾ívaných funkcí.
+          filter -- specifikace jednoho z pøednastavených filtrù znakù
+            propou¹tìných do textového políèka z u¾ivatelského vstupu.  Jedna
+            z konstant tøídy 'TextFilter'.
+          filter_list -- seznam povolených, nebo zakázaných znakù, pokud je
+            hodnotou atributu 'filter' konstanta 'INCLUDE_LIST' nebo
+            'EXCLUDE_LIST'.  Jedná se o sekvenci znakù.
+          check -- funkce pro ovìøení integrity dat formuláøe.  Jedná se o
+            funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
+            reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
+            od validace hodnot políèek, která závisí na datovém typu a má k
+            dispozici pouze vlastní obsah políèka, má tato funkce k dispozici i
+            hodnoty ostatních políèek, tak¾e je vhodná pro ovìøení vzájemné
+            sluèitelnosti tìchto hodnot.  Tato funkce vrací pravdu, pokud je
+            v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
+            nepravdu, pokud je nutné hodnotu políèka upravit.
+            POZOR: Tato fnkce by nemìla být nadále vyu¾ívána.  Namísto ní,
+            nech» je vyu¾ívána stejnojmenná funkce specifikovaná ve `ViewSpec'.
+          style -- instance tøídy 'FieldStyle' urèující vizuální styl políèka
+            nebo funkce dvou argumentù vracející instanci tøídy 'FieldStyle'.
+            Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
+            a aktuální datový øádek jako instance 'PresentedRow' nebo
+            'pytis.data.Row', v tomto poøadí.
+            
+        Nejdùle¾itìj¹ím parametrem vstupního pole je 'id'. To specifikuje jeho
+        vazbu do datového zdroje.
+
+        Atributy 'width' a 'height' mohou mít u nìkterých typù vstupních polí
+        speciální význam (viz dokumentace vstupních polí).
+
+        Argumenty `label' a `width' smí být uvádìny té¾ jako pozièní (bez
+        klíèe), tak¾e jejich poøadí by mìlo být zaruèeno.
+
+        Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
+        hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
+        poèítána.  Takový sloupec mù¾e být plnì \"virtuální\", tj. není
+        pøítomen v datovém objektu a jeho hodnota je v¾dy poèítána, nebo mù¾e
+        být v datovém objektu, av¹ak hodnota je dopoèítávána v prùbìhu editace
+        (i novì vytvoøeného) záznamu.
+
+        Dopoèítávání pomocí 'computer' nelze zamìòovat s výpoètem výchozí
+        hodnoty (specifikátor 'default').  Výpoèet výchozí hodnoty je proveden
+        pouze jednou pøi vytváøení nového øádku.  Funkce pro výpoèet výchozí
+        hodnoty nezná hodnotu ostatních políèek a v prùbìhu editace se ji¾
+        neuplatòuje.  Computer naproti tomu pøepoèítává hodnotu políèka v¾dy,
+        kdy¾ dojde ke zmìnì hodnoty políèka, na kterém je závislý (viz
+        dokumentace tøídy 'Computer').
+
+        Závislosti poèítaných políèek mohou být i tranzitivní (poèítaná políèka
+        mohou záviset na jiných poèítaných políèkách), ale graf závislostí musí
+        tvoøit strom (nesmí vzniknout cyklus).
+        
+        V ka¾dém pøípadì je poèítaný sloupec implicitnì needitovatelný
+        ('Editable.NEVER'), pokud není explicitnì nastaven jako editovatelný
+        pomocí specifikátoru 'editable'.
+
+        """
+        assert is_string(id)
+        assert label is None or is_anystring(label)
+        assert descr is None or is_anystring(descr)
+        assert type_ is None or isinstance(type_, pytis.data.Type)
+        assert default is None or callable(default)
+        assert computer is None or isinstance(computer, Computer)
+        assert codebook is None or isinstance(codebook, CodeBookSpec)
+        assert width is None or isinstance(width, types.IntType)
+        assert codebook_runtime_filter is None or \
+               isinstance(codebook_runtime_filter, Computer)
+        assert selection_type is None or \
+               selection_type in public_attributes(SelectionType)
+        assert post_process is None or callable(post_process) or \
+               post_process in public_attributes(PostProcess)
+        assert filter is None or filter in public_attributes(TextFilter)
+        assert filter not in ('INCLUDE_LIST','EXCLUDE_LIST') or \
+               is_sequence(filter_list)
+        if editable is None:
+            if width == 0 or computer: editable = editable = Editable.NEVER
+            else: editable = Editable.ALWAYS
+        assert editable in public_attributes(Editable) or \
+               isinstance(editable, Computer)
+        assert references is None or isinstance(references, RefSpec)
+        assert check is None or callable(check)
+        if check is not None:
+            log(EVENT, "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
+        self._id = id
+        self._label = gettext_(label)
+        self._descr = gettext_(descr)
+        self._width = width
+        if column_width is None:
+            column_width = width
+        self._column_width = column_width
+        self._column_label = column_label
+        self._type = type_
+        # We don't want the first enumeration value for codebook fields
+        # as default value.  This is a hack.  TODO: better solution?
+        if codebook is not None and default is None and selection_type is None:
+            default = lambda: None
+        self._compact = compact
+        self._default = default
+        self._computer = computer
+        self._height = height
+        self._editable = editable
+        self._separator = separator
+        self._line_separator = line_separator
+        self._codebook = codebook
+        self._codebook_runtime_filter = codebook_runtime_filter
+        self._references = references
+        self._orientation = orientation
+        self._selection_type = selection_type
+        self._post_process = post_process
+        self._filter = filter
+        self._filter_list = filter_list
+        self._check = check
+        self._style = style
+
+    def __str__(self):
+        return "<FieldSpec: id='%s'; label='%s'>" % \
+               (self.id(), self.label())
+        
+    def id(self):
+        """Vra» id pole zadané v konstruktoru jako string."""
+        return self._id
+
+    def label(self):
+        """Vra» textový popisek tohoto pole jako string."""
+        return self._label
+
+    def column_label(self):
+        """Vra» textový popisek pro nadpis sloupce v tabulkovém zobrazení.
+
+        Pokud nebyl nadpis sloupce (`column_width') v konstruktoru
+        specifikován, bude vrácen popisek políèka (metoda `label()').
+            
+        """
+        if self._column_label is None:
+            return self.label()
+        else:
+            return self._column_label
+
+    def descr(self):
+        """Vra» podrobnìj¹í popis (nápovìdu) tohoto pole jako string."""
+        return self._descr
+
+    def width(self, default=12):
+        """Vra» ¹íøku pole ve znacích; kladné celé èíslo.
+
+        Argumenty:
+
+          default -- hodnota, která má být doplnìna v pøípadì, ¾e ¹íøka nebyla
+            v konstruktoru specifikována; integer.
+
+        """
+        if self._width is None:
+            return default
+        else:
+            return self._width
+
+    def column_width(self, default=10):
+        """Vra» ¹íøku sloupce ve znacích; kladné celé èíslo.
+
+        Argumenty:
+
+          default -- hodnota, která má být doplnìna v pøípadì, ¾e v
+            konstruktoru nebyla specifikována ani ¹íøka sloupce, ani ¹íøka
+            políèka.
+
+        Pokud nebyla ¹íøka sloupce (`column_width') v konstruktoru
+        specifikována, bude vrácena obecná ¹íøka políèka (výsledek metody
+        `width()').
+            
+        """
+        if self._column_width is None:
+            return self.width(default)
+        else:
+            return self._column_width
+
+    def height(self, default=1):
+        """Vra» vý¹ku políèka ve znacích
+
+        Argumenty:
+
+          default -- hodnota, která má být doplnìna v pøípadì, ¾e vý¹ka nebyla
+            v konstruktoru specifikována; integer.
+            
+        """
+        if self._height is None:
+            return default
+        else:
+            return self._height
+
+    def editable(self):
+        """Vra» jednu z konstant 'Editable' dle editovatelnosti políèka."""
+        return self._editable
+
+    def compact(self):
+        """Vra» pravdu, má li být popisek pøimknut k hornímu okraji políèka."""
+        return self._compact
+        
+    def type(self, data):
+        """Vra» datový typ ze specifikace, nebo z datového sloupce.
+
+        Pokud byl typ explicitnì urèen v konstruktoru, bude vrácen tento typ,
+        jinak bude vrácen typ urèený sloupeèkem datového objektu pøedaného jako
+        argument.
+        
+        """
+        column = data.find_column(self.id())
+        if self._type is not None:
+            type = self._type
+            assert column is None or \
+                   isinstance(type, column.type().__class__)
+        else:
+            assert column != None, \
+                   ('Data type not specified for virtual column ' + \
+                    '(column not found in data object is supposed virtual).',
+                    self.id())
+            type = column.type()
+        return type
+        
+    def default(self):
+        """Vra» funkci pro výpoèet výchozí hodnoty."""
+        return self._default
+
+    def computer(self):
+        """Vra» instanci 'Computer' pro dopoèítávání hodnoty."""
+        return self._computer
+
+    def separator(self):
+        """Vra» oddìlovaè jednotlivých hodnot vícehodnotového sloupeèku."""
+        return self._separator
+
+    def line_separator(self):
+        """Vra» odddìlovaè øádkù zadaný v konstruktoru."""
+        return self._line_separator
+    
+    def codebook(self):
+        """Vra» specifikaci navázaného èíselníku."""
+        return self._codebook
+
+    def codebook_runtime_filter(self):
+        """Vra» specifikaci computeru run-time podmínky pro èíselník."""
+        return self._codebook_runtime_filter
+
+    def references(self):
+        """Vra» specifikaci seznamu závislých záznamù."""
+        return self._references
+
+    def selection_type(self):
+        """Vra» zpùsob výbìru z mno¾iny hodnot jako konstantu 'SelectionType'.
+        """
+        return self._selection_type
+
+    def orientation(self):
+        """Vra» orientaci políèka jako konstantu 'Orientation'."""
+        return self._orientation
+
+    def post_process(self):
+        """Vra» funkci zpracovávající u¾ivatelský vstup."""
+        return self._post_process
+
+    def filter(self):
+        """Vra» typ filtru jako konstantu tøídy TextFilter."""
+        return self._filter
+
+    def filter_list(self):
+        """Vra» seznam povolených/zakázaných znakù pro filter."""
+        return self._filter_list
+
+    def check(self):
+        """Vra» funkci pro ovìøení integrity dat formuláøe."""
+        return self._check
+
+    def style(self):
+        """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
+        return self._style
+
+
+class Spec(object):
+    """Odkaz na specifikaci.
+
+    Specifikaèní funkce èasto pou¾ívají klíèové argumenty k rozli¹ení
+    jednotlivých variant specifikací vycházejících ze stejného základu.
+    Kombinace názvu specifikace a argumentù specifikaèní funkce urèují ka¾dou
+    takovou variantu.  Tato tøída zabaluje tyto parametry to jediné instance
+    vhodné pro odkazování se na konkrétní variantu specifikace.
+
+    """
+    def __init__(self, name, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          name -- jméno specifikaèního souboru jako øetìzec.
+          **kwargs -- argumenty, které budou pøedány specifikaèní funkci pøi
+            získávání specifikací z daného souboru.
+
+
+        """
+        assert isinstance(name, types.StringType)
+        self._name = name
+        self._kwargs = kwargs
+
+        
+    def name(self):
+        """Vra» název specifikaèního modulu jako øetìzec."""
+        return self._name
+
+    def kwargs(self):
+        """Vra» klíèové argumenty specifikaèní funkce jako slovník."""
+        return self._kwargs

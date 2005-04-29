@@ -1,0 +1,1275 @@
+# -*- coding: iso-8859-2 -*-
+
+# Datové typy
+#
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Práce s datovými typy, jejich hodnotami a vnìj¹í reprezentací.
+
+Základní ideou modulu je, ¾e uvnitø programu v¾dy pracujeme s hodnotami
+urèitého, námi definovaného, typu.  Z dùvodu datové abstrakce pøi práci s daty
+nepou¾íváme pøímo standardní typy Pythonu a jeho knihoven, nýbr¾ na¹e vlastní
+obálky okolo nich, které nám zajistí nezávislost vùèi konkrétní reprezentaci
+hodnot daného typu v rùzných èástech programu (PostgreSQL, wxWindows, ...).
+Kromì toho nám tyto typové obálky mohou také poskytovat nìkteré doplòující
+funkce související s typy dat, jako je napøíklad validace vstupní hodnoty
+daného typu reprezentované stringem a její pøevod na interní reprezentaci, se
+kterou dále v programu pracujeme.
+
+Základem modulu je abstraktní tøída 'Type', která je spoleèným základem v¹ech
+typových tøíd.  Jejím podìdìním vznikají konkrétní typy nebo jejich spoleèné
+specializovanìj¹í základy.  Hodnoty daných typù jsou pak reprezentovány
+instancemi samostatné tøídy 'Value'.
+
+"""
+
+import math
+import re
+import thread
+
+from mx import DateTime as DT
+
+from pytis.data import *
+
+
+
+
+class _MType(type):
+
+    def __call__ (self, *args, **kwargs):
+        return self.make(*args, **kwargs)
+    
+    
+class Type(object):
+    """Abstraktní tøída slou¾ící jako spoleèný základ v¹ech typù.
+
+    Tuto tøídu musí povinnì dìdit v¹echny typové tøídy.
+
+    Instance této tøídy jsou pova¾ovány za immutable, nesmí být po své
+    inicializaci modifikovány a mohou být neomezenì sdíleny.
+    
+    """
+    __metaclass__ = _MType
+    
+    class _TypeTable:
+
+        def __init__(self):
+            self._id_counter = Counter()
+            self._init_args_to_id = {}
+            self._id_to_init_args = {}
+            self._init_args_to_type = {}
+
+        def _key(self, class_, args, kwargs):
+            return (class_.__module__, class_.__name__) + \
+                   args + tuple(kwargs.items())
+
+        def id_of_initargs(self, class_, args, kwargs):
+            table = self._init_args_to_id
+            key = self._key(class_, args, kwargs)
+            if table.has_key(key):
+                result = table[key]
+            else:
+                result = table[key] = self._id_counter.next()
+                self._id_to_init_args[result] = \
+                  class_.__module__, class_.__name__, args, kwargs
+            return result
+
+        def get(self, id):
+            if type(id) != type(0):
+                raise Exception('Invalid id type', id)
+            return self._id_to_init_args.get(id)
+
+        def get_instance(self, class_, *args, **kwargs):
+            table = self._init_args_to_type
+            key = self._key(class_, args, kwargs)
+            if table.has_key(key):
+                result = table[key]
+            else:
+                result = table[key] = class_.__new__(class_)
+                assert isinstance(result, class_)
+                result.__init__(*args, **kwargs)
+                result._id = self.id_of_initargs(class_, args, kwargs)
+            assert result is not None
+            return result
+
+    _type_table = _TypeTable()
+    _remote_type_table = None
+    _remote_type_table_cache = {}
+
+    VM_NULL_VALUE = 'VM_NULL_VALUE'
+    _VALIDATION_MESSAGES = {VM_NULL_VALUE: _("Prázdná hodnota")}
+    _SPECIAL_VALUES = ()
+
+    def _make(class_, *args, **kwargs):
+        result = Type._type_table.get_instance(class_, *args, **kwargs)
+        assert result is not None
+        return result
+    _make = staticmethod(_make)
+
+    def make(class_, *args, **kwargs):
+        """Pouze pro úèely zpìtné kompatibility a pro metatøídu.
+
+        V novém kódu nepou¾ívat.
+
+        """
+        return class_._make(class_, *args, **kwargs)
+    make = classmethod(make)
+
+    def __init__(self, not_null=False, constraints=(), validation_messages={}):
+        """Inicializuj instanci.
+
+        Argumenty:
+        
+          not_null -- pøíznak udávající, zda hodnoty tohoto typu smí být
+            prázdné.  Za prázdnou hodnotu je pova¾ována hodnota None, nebo
+            libovolná jiná hodnota na None mapovaná (viz. konstanta
+            _SPECIAL_VALUES).  Pokud tento argument pravdivý, neprojde prázdná
+            hodnota validací.
+          constraints -- sekvence validaèních funkcí.  Ka¾dá z tìchto funkcí je
+            funkcí jednoho argumentu, kterým je vnitøní hodnota typu.  Funkce
+            pro tuto hodnotu musí vrátit buï 'None', je-li hodnota správná,
+            nebo chybovou hlá¹ku jako string v opaèném pøípadì.
+          validation_messages -- dictionary identifikátorù a validaèních
+            hlá¹ek.  Klíèe jsou identifikátory validaèních hlá¹ek definované
+            konstantami tøídy s názvy zaèínajícími prefixem 'VM_' a hodnoty
+            jsou hlá¹ky coby stringy.  Hlá¹ky z tohoto argumentu, jsou-li pro
+            daný identifikátor definovány, mají pøednost pøed implicitními
+            hlá¹kami definovanými typem.
+          
+        """
+        super(Type, self).__init__()
+        assert isinstance(not_null, types.BooleanType) 
+        self._not_null = not_null
+        self._constraints = xtuple(constraints)
+        self._validation_messages = copy.copy(self._VALIDATION_MESSAGES)
+        self._validation_messages.update(validation_messages)
+        self._fetched = True
+        # Cachujeme na úrovni instancí, proto¾e ty jsou stejnì sdílené, viz
+        # `__new__'.
+        self._validation_cache = LimitedCache(self._validating_provider)
+
+    def _complete(self):
+        """Dokonèi v¹echny odlo¾ené inicializace instance.
+
+        Po zavolání této metody musí být instance typu plnì kompletní, vèetnì
+        v¹ech líných inicializací.
+
+        """
+        pass
+        
+    def type_table(class_):
+        """Vra» tabulku typù jako instanci '_TypeTable'.
+
+        Jediný úèel této metody je zpøístupnit tabulku typù pro vzdálené
+        pøedávání typù ze serveru na klienta.  Pro jiné úèely by tabulka typù
+        nemìla být pou¾ívána.
+
+        """
+        return Type._type_table
+    type_table = classmethod(type_table)
+    
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' reprezentují tentý¾ typ."""
+        if not sameclass(self, other):
+            result = compare_objects(self, other)
+        elif self._id == other._id:
+            result = 0
+        elif self._constraints == other._constraints \
+                 and self._not_null == other._not_null:
+            result = 0
+        else:
+            result = compare_objects(self, other)
+        return result
+
+    def __getstate__(self):
+        assert self._id is not None, ('Improper type instance', self)
+        return self._id
+    
+    def __setstate__(self, state):
+        if type(state) != type(0):
+            raise InvalidAccessError('Invalid type identifier', state)
+        self._id = state
+        self._fetched = False
+
+    def __getattr__(self, name):
+        if self._fetched:
+            raise AttributeError(name)
+        assert self._id is not None, ('Improper type instance', self)
+        id = self._id
+        cache = self._remote_type_table_cache
+        if cache.has_key(id):
+            t = cache[id]
+            if t.__class__ != self.__class__:
+                raise ('Incorrect type class', self, t.__class__,
+                       self.__class__)
+        else:
+            remote_table = Type._remote_type_table
+            if remote_table is None:
+                import config, pytis.remote, Pyro.core
+                server = config.server
+                if server is None:
+                    raise AttributeError(name)
+                uri = 'PYROLOC://%s/%s' % (server, pytis.remote.NAME_TYPE_TABLE)
+                remote_table = Type._remote_type_table = \
+                               Pyro.core.getProxyForURI(uri)
+            class_module, class_name_, args, kwargs = \
+               remote_table.get(id)
+            if class_module != self.__class__.__module__ or \
+                   class_name_ != self.__class__.__name__:
+                raise Exception('Invalid type class', id, class_module,
+                                class_name_, self.__class__.__name__)
+            t = self.__class__(*args, **kwargs)
+            t._complete()
+            cache[id] = t
+        self.__dict__.update(t.__dict__)
+        self._id = id
+        self._fetched = True
+        try:
+            return self.__dict__[name]
+        except KeyError:
+            raise AttributeError(name)
+        
+    def validate(self, object, strict=True, **kwargs):
+        """Zvaliduj 'object' a vra» instanci tøídy 'Value' a popis chyby.
+
+        Argumenty:
+        
+          object -- objekt, který má být pøeveden na hodnotu
+          strict -- pokud úèelem validace není kontrola dat, ale pouhé
+            pøevedení hodnoty na instanci Value, mù¾e být tento boolean pøíznak
+            nastaven na nepravdivou hodnotu a validace tak bude tolerantnìj¹í.
+            Nebodou napøíklad probíhat konroly constraintù apod.
+          kwargs -- klíèové argumenty specifické pro konkrétní typ
+
+        Vrací: dvojici (VALUE, ERROR).  VALUE je instance tøídy 'Value' (je-li
+        'object' správný) nebo je 'None' (je-li 'object' nesprávný).  Je-li
+        'object' správný, je ERROR 'None', v opaèném pøípadì je instancí tøídy
+        'ValidationError', která obsahuje popis chyby.
+
+        Vìt¹ina typù vy¾aduje, aby 'object' byl string, obvykle reprezentující
+        vstup u¾ivatele nebo hodnotu získanou ze souboru nebo od procesu.
+        Nìkteré sofistikovanìj¹í typy v¹ak akceptují nebo vy¾adují 'object'
+        jiného typu.  V¹echny typy by mìly, pokud mo¾no, akceptovat string a
+        pokud to nelze (napøíklad kvùli zbyteèným komplikacím), mìly by
+        akceptovat objekt, který lze snadno zkonstruovat z dat pøevzatých
+        z u¾ivatelského rozhraní.  Pokud 'object' není string ani jiný typ
+        explicitnì povolený v dokumentaci pøíslu¹né typové tøídy, je chování
+        této metody nedefinováno.
+
+        Argument 'kwargs' umo¾òuje konkrétnímu typu nabízet parametrizaci
+        validace.  Napøíklad typ reprezentující reálná èísla mù¾e umo¾nit
+        specifikovat parametry zaokrouhlení.  Takto lze upravovat validaci
+        u¾ivatelských vstupù rùznými parametry, které nejsou souèástí
+        specifikace typu.
+
+        V této tøídì metoda vrací v¾dy dvojici (VALUE, None), kde VALUE má za
+        svoji hodnotu 'None'.  Potomci tøídy nech» tuto metodu
+        nepøedefinovávají, nebo» metoda mù¾e provádìt i rùzné doplòující akce;
+        nech» potomci pøedefinovávají metodu `_validate()'.
+
+        Není-li v dokumentaci konkrétního typu øeèeno jinak, akceptuje prázdný
+        string stejnì jako 'None' jako speciální prázdnou hodnotu, pro kterou
+        vrací dvojici (VALUE, None), kde VALUE má za svoji hodnotu 'None'.
+        
+        """
+        # Tato metoda je zároveò pou¾ívána i pro pøevod hodnot získaných
+        # z databázového rozhraní.  To není úplnì ideální, ale je to zatím
+        # postaèující a rozli¹ení tìchto dvou pou¾ití nestojí za komplikace
+        # s tím spojené (pou¾ití pro databáze je omezeno na modul `dbdata').
+        # Pokud by bylo potøeba v budoucnu toto rozli¹it, lze pøidat dal¹í
+        # metodu nebo argument.  Nyní je to èásteènì øe¹eno argumentem
+        # 'strict'.
+        try:
+            key = (object, strict, tuple(kwargs.items()))
+            result = self._validation_cache[key], None
+        except ValidationError, e:
+            result = None, e
+        return result
+
+    def _validating_provider(self, key):
+        object, strict, kwargs = key[0], key[1], dict(key[2])
+        special = rassoc(object, self._SPECIAL_VALUES)
+        if special:
+            value = Value(self, special[0])
+        elif object is None:
+            value = Value(self, None)
+        else:
+            value, error = apply(self._validate, (object,), kwargs)
+            if error: raise error
+        if strict:
+            self._check_constraints(value.value())
+        return value
+    
+    def _validate(self, object, **kwargs):
+        return Value(self, None), None
+    
+    def wm_validate(self, object):
+        """Zvaliduj objekt pro wildcard matching.
+
+        Argumenty:
+
+          object -- validovaný objekt, string
+
+        Vrací: dvojici (VALUE, ERROR).  VALUE je instance tøídy 'WMValue'
+        (je-li 'object' správný) nebo je 'None' (je-li 'object' nesprávný).
+        Je-li 'object' správný, je ERROR 'None', v opaèném pøípadì je instancí
+        tøídy 'ValidationError', která obsahuje popis chyby.
+
+        Ne v¹echny typy musí tento druh validace podporovat.  Ty, které
+        nepodporují, vrací dvojici (None, ERROR).
+
+        """
+        assert isinstance(object, types.StringTypes)
+        return WMValue(self, object), None
+
+    def _validation_error(self, id, *args):
+        message = self._validation_messages[id] % args
+        return ValidationError(message)
+        
+    def _check_constraints(self, value):
+        if self._not_null and value is None:
+            raise self._validation_error(self.VM_NULL_VALUE)
+        for c in self._constraints:
+            cresult = c(value)
+            if cresult is not None:
+                raise ValidationError(cresult)
+
+    def constraints(self):
+        """Vra» constraints zadaná v konstruktoru."""
+        return self._constraints
+
+    def not_null(self):
+        """Vra» pravdu, pokud hodnoty tohoto typu smí být prázdné."""
+        return self._not_null
+
+    def export(self, value, *args, **kwargs):
+        """Vra» stringovou reprezentaci 'value' schopnou validace.
+
+        'value' je hodnota vrácená metodou 'Value.value' z objektu vytvoøeného
+        v metodì 'validate' na základì *string* parametru.  Pro objekty vzniklé
+        z argumentu 'validate', který nebyl string, je chování této metody
+        nedefinováno.  Výjimkou je hodnota 'None', pro kterou v¹echny typy,
+        v jejich¾ dokumentaci není øeèeno jinak, vrací prázdný string.
+
+        V této tøídì metoda vrací výsledek operátoru '``', pouze pro 'value'
+        rovno 'None' vrací prázdný string.  Potomci tøídy nech» tuto metodu
+        nepøedefinovávají, nebo» metoda mù¾e provádìt i rùzné doplòující akce;
+        nech» potomci pøedefinovávají metodu `_export()'.
+
+        """
+        special = assoc(value, self._SPECIAL_VALUES)
+        if special:
+            return special[1]
+        exported = apply(self._export, (value,)+args, kwargs)
+        nullsub = assoc(None, self._SPECIAL_VALUES)
+        if nullsub is not None and is_sequence(exported):
+            return tuple(map(lambda v, n=nullsub[1]: v or n, exported))
+        return exported
+
+    def _export(self, value):
+        return `value`
+
+    def default_value(self):
+        """Vra» implicitní hodnotu typu jako instanci 'Value'.
+
+        Pokud taková hodnota neexistuje nebo nemá smysl, vra» 'None'.
+        
+        Vrácená hodnota mù¾e být vyu¾ita napøíklad v inicializaci nových
+        záznamù.
+
+        """
+        return Value(self, None)
+
+
+class MutableType(object):
+    """Abstraktní typová tøída, kterou povinnì dìdí v¹echny mutable typy.
+
+    Mutable typ je takový, jeho¾ validaèní a exportní metody mohou pro tuté¾
+    instanci dávat v èase rozdílné výsledky.
+
+    """
+    __metaclass__ = _MType
+    
+    def _update(self, force=False):
+        """Updatuj data typu.
+
+        Bezprostøednì po zavolání této metody by mìla validace a exporty
+        pracovat s aktuálními daty.
+
+        Argumenty:
+
+          force -- právì kdy¾ je pravda, je update vynucený, jinak mù¾e a
+            nemusí být proveden, vìt¹inou v závislosti na nároènosti operace
+
+        Vrací: Pravdu, právì kdy¾ update dat byl skuteènì proveden.
+
+        """
+        return True
+
+    def _with_update(self, function, args=(), kwargs={}):
+        updated = self._update()
+        value, ok = apply(function, args, kwargs)
+        if not ok and not updated:
+            self._update(force=True)
+            value, __ = apply(function, args, kwargs)
+        return value
+        
+
+class Number(Type):
+    """Abstraktní typová tøída, která je základem v¹ech numerických typù.
+
+    Tøída víceménì nic nového nedefinuje, je urèena pouze k podìdìní v¹emi
+    numerickými typy, aby tyto byly jako¾to èíselné snadno rozpoznatelné.
+
+    """
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+    
+class Integer(Number):
+    """Libovolný integer."""
+
+    VM_NONINTEGER = 'VM_NONINTEGER'
+    _VALIDATION_MESSAGES = Number._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update({VM_NONINTEGER: _("Není to celé èíslo")})
+    
+    def _validate(self, string):
+        """Pokus se pøevést 'string' na plain nebo long integer.
+        
+        Pokud je 'string' mo¾no pøevést na plain integer, je správný a vrácená
+        instance tøídy 'Value' obsahuje odpovídající hodnotu jako plain
+        integer.  V jiném pøípadì platí analogické pravidlo pro long integers.
+        Pokud 'string' není mo¾no pøevést na plain ani long integer, 'string'
+        není správný a je vrácena chyba.
+
+        Metoda validuje v¹echny zápisy integers akceptované Pythonem, zejména
+        tedy i long integers ve tvaru '1L'.
+        
+        """
+        assert isinstance(string, types.StringTypes), ('Not a string', string)
+        error = None
+        try:
+            value = int(string)
+        except:
+            # Dokumentace Pythonu 1.5.2 neøíká, ¾e by `int' mohlo metat metat
+            # nìjakou výjimkou, ale evidentnì by mìlo, pokud `string' nelze
+            # na obyèejný integer pøevést.
+            try:
+                value = long(string)
+            except:
+                # Podobnì jako `int' i `long' by mìlo v pøípadì nemo¾nosti
+                # pøevodu metat výjimku.
+                value = None
+        if value is not None:
+            result = Value(self, value), None
+        else:
+            result = None, self._validation_error(self.VM_NONINTEGER)
+        return result
+
+
+class Serial(Integer):
+    """Integer s automaticky generovanými hodnotami.
+
+    Typ oproti 'Integer' nezavádí ¾ádné nové rysy, jeho význam je èistì
+    specifikaèní.  Napøíklad u¾ivatelské rozhraní tak získává informaci, ¾e
+    není tøeba ani ¾ádoucí explicitnì nastavovat hodnoty sloupcù tohoto typu
+    v øádku pøi vkládání nového záznamu.
+
+    """
+    pass
+
+
+class Float(Number):
+    """Èíslo v pohyblivé øádové èárce v rozsahu podporovaném Pythonem."""
+
+    CEILING = 'CEILING'
+    """Konstanta pro typ zaokrouhlení ve 'validate'."""
+    FLOOR = 'FLOOR'
+    """Konstanta pro typ zaokrouhlení ve 'validate'."""
+
+    VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
+    _VALIDATION_MESSAGES = Number._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update(
+        {VM_INVALID_NUMBER: _("Není to povolené èíslo")})
+    
+    def __init__(self, precision=None, **kwargs):
+        """Definuj typ reálného èísla.
+
+        Argumenty:
+
+          precision -- nezáporný integer udávající poèet èísel za desetinnou
+            èárkou uvádìný pøi exportu, nebo 'None' (pak není pøesnost umìle
+            omezena)
+
+        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
+             
+        """
+        super(Float, self).__init__(**kwargs)
+        assert precision is None or precision >= 0, \
+               ('Invalid precision', precision)
+        if precision is None:
+            format = '%f'
+        else:
+            format = '%%.%df' % precision
+        self._format_string = format
+        self._precision = precision
+
+    def precision(self):
+        """Vra» pøesnost èísla zadanou v konstruktoru jako integer."""
+        return self._precision
+    
+    def _validate(self, string, precision=None, rounding=None):
+        """Pokus se pøevést 'string' na float.
+
+        Pokud je 'string' mo¾no pøevést na float, je správný a vrácená instance
+        tøídy 'Value' obsahuje odpovídající hodnotu jako plain integer.  Pokud
+        'string' pøevést mo¾no není, 'string' není správný a je vrácena chyba.
+
+        Metoda validuje v¹echny zápisy floats akceptované Pythonem.
+
+        Argumenty:
+
+          precision -- nezáporný integer udávající poèet èísel za desetinnou
+            èárkou, na která má být zvalidované èíslo zaokrouhleno, nebo 'None'
+            (pak není pøesnost umìle omezena)
+          rounding -- specifikace zaokrouhlení pøi po¾adavku na omezenou
+            pøesnost; 'None' znaèí standardní zaokrouhlení, konstanta 'CEILING'
+            zaokrouhlení smìrem nahoru, konstanta 'FLOOR' zaokrouhlení smìrem
+            dolù (pozor na záporná èísla, platí to pro nì také pøesnì takto!)
+        
+        """
+        assert isinstance(string, types.StringTypes), ('Not a string', string)
+        assert precision is None or \
+               type(precision) == type(0) and precision >=0, \
+               ('Invalid precision', precision)
+        error = None
+        try:
+            import locale
+            # TODO: Odporný hack, z nìjakého dùvodu následující
+            # metoda bez toho nezafunguje
+            locale.getlocale(locale.LC_NUMERIC)
+            value = locale.atof(string)
+        except:
+            # Dokumentace Pythonu 1.5.2 neøíká, ¾e by `float' mohlo metat metat
+            # nìjakou výjimkou, ale evidentnì by mìlo, pokud `string' nelze
+            # na float pøevést.
+            value = None
+        if value is not None:
+            if precision is not None:
+                # Pozor na pøevody mezi binárními a dekadickými èísly!
+                rvalue = round(value, precision)
+                if rounding:
+                    if rounding == self.CEILING:
+                        if rvalue < value:
+                            rvalue = rvalue + math.pow(10, -precision)
+                    elif rounding == self.FLOOR:
+                        if rvalue > value:
+                            rvalue = rvalue - math.pow(10, -precision)
+                    else:
+                        raise ProgramError('Invalid rounding argument',
+                                           rounding)
+                value = rvalue
+            result = Value(self, value), None
+        else:
+            result = None, self._validation_error(self.VM_INVALID_NUMBER)
+        return result
+
+    def _export(self, value, locale_format=True):
+        if locale_format:
+            import locale
+            return unicode(locale.format(self._format_string, value, 1))
+        else:
+            return unicode(self._format_string % value)
+
+class String(Type):
+    """Libovolný string.
+
+    Lze také specifikovat, ¾e øetìzec mù¾e mít pouze omezenou délku, blí¾e viz
+    metody '__init__' a 'maxlen'.
+
+    """    
+
+    VM_STRING_TOO_LONG = 'VM_STRING_TOO_LONG'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update(
+      {VM_STRING_TOO_LONG: _("Øetìzec je pøíli¹ dlouhý: (%s, %s)")})
+
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+    
+    def __init__(self, maxlen=None, **kwargs):
+        """Definuj stringový typ maximální délky.
+
+        Argumenty:
+        
+          maxlen -- maximální délka stringu jako integer, nebo 'None';
+            pokud je 'None', délka stringu není omezena
+             
+        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
+
+        """
+        super(String, self).__init__(**kwargs)
+        self._maxlen = maxlen
+
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' jsou té¾e tøídy a max. délky."""
+        result = super(String, self).__cmp__(other)
+        if not result:
+            result = cmp (self.maxlen(), other.maxlen())
+        return result
+
+    def maxlen(self):
+        """Vra» maximální povolenou délku stringu jako integer, nebo 'None'.
+
+        'None' znaèí, ¾e délka øetìzce není omezená.
+        
+        """
+        return self._maxlen
+
+    def _check_constraints(self, value):
+        super(String, self)._check_constraints(value)
+        self._check_maxlen(value)
+
+    def _check_maxlen(self, value):
+        if value is not None and self._maxlen is not None \
+               and len(value) > self._maxlen:
+            raise self._validation_error(self.VM_STRING_TOO_LONG,
+                                         self._maxlen, value)
+        
+    def _validate(self, string):
+        """Vra» instanci tøídy 'Value' s hodnotou 'string'.
+
+        Pokud byla v konstruktoru specifikována maximální délka, 'string' je
+        správný právì tehdy, není-li del¹í ne¾ tato délka.
+        
+        """
+        assert isinstance(string, types.StringTypes), ('Not a string', string)
+        return Value(self, unicode(string)), None
+
+    def _export(self, value):
+        # Pozor, na triviální funkci této metody se spoléhá Value.__init__ --
+        # pøi zmìnì zde je nutná zmìna i tam.
+        assert isinstance(value, types.StringTypes), \
+               ('Value not a string', value)
+        return unicode(value)
+
+
+class Color(String):
+    """Barva reprezentovaná øetìzcem '#RRGGBB'."""
+
+    VM_COLOR_FORMAT = 'VM_COLOR_FORMAT'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update(
+        {VM_COLOR_FORMAT: _("Formát barvy neodpovídá masce '#RRGGBB'.")})
+    
+    _VALIDATION_REGEX = re.compile('^\#[0-9a-hA-H]{6,6}$')
+
+    def _validate(self, string, *args, **kwargs):
+        value, error = super(Color, self)._validate(string, *args, **kwargs)
+        if error is None and self._VALIDATION_REGEX.match(string) is None:
+            value, error = None, self._validation_error(self.VM_COLOR_FORMAT)
+        return value, error
+            
+class DateTime(Type):
+    """Èasový okam¾ik reprezentovaný instancí tøídy 'DateTime.DateTime'.
+
+    Tøída je schopna pracovat pouze s absolutním èasovým okam¾ikem.  Èas je
+    navíc v¾dy uva¾ován v UTC, èasové zóny nejsou podporovány.  Datum je
+    podporováno pouze od roku 1000 dále.
+
+    Formát data a èasu je shodný pro import a export a je dán parametrem
+    'format' metody '__init__()'.
+    
+    """
+    VM_DT_FORMAT = 'VM_DT_FORMAT'
+    VM_DT_VALUE = 'VM_DT_VALUE'
+    VM_DT_AGE = 'VM_DT_AGE'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update(
+        {VM_DT_FORMAT: _("Chybný formát data nebo èasu"),
+         VM_DT_VALUE: _("Chybné datum nebo èas"),
+         VM_DT_AGE: _("Datum mimo povolený rozsah")})
+    
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+
+    DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S'
+    """Implicitní formát data a èasu."""
+    SQL_FORMAT = DEFAULT_FORMAT
+    """Formát data a èasu pou¾ívaný standardnì SQL stroji."""
+    CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
+    """Èeský \"úèetnický\" formát data a èasu."""
+
+    if __debug__:
+        _dt_type = type(DT.DateTimeFrom('2001-01-01'))
+
+    def __init__(self, format=None, mindate=None, maxdate=None, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          format -- specifikace vstupního i výstupního formátu data a/nebo
+            èasu, v podobì akceptované funkcí 'time.strftime()'; mù¾e být té¾
+            'None', v kterém¾to pøípadì se pou¾ije konfiguraèní volba
+            'config.date_time_format'.  Tøída obsahuje pøeddefinované konstanty
+            '*_FORMAT', které lze vyu¾ít jako hodnotu tohoto parametru.
+          mindate. maxdate -- omezení validity èasu
+
+        """
+        assert mindate is None or isinstance(mindate, types.StringTypes)
+        assert maxdate is None or isinstance(maxdate, types.StringTypes)
+        if format is None:
+            import config
+            format = config.date_time_format
+        self._format = format
+        self._mindate = mindate
+        self._maxdate = maxdate
+        self._check_matcher = {}
+        if mindate:
+            try:
+                self._mindate = DT.strptime(mindate, self.SQL_FORMAT)
+            except:
+                raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
+        if maxdate:
+            try:
+                self._maxdate = DT.strptime(maxdate, self.SQL_FORMAT)
+            except:
+                raise ProgramError('Bad value for maxdate', maxdate)                
+        super(DateTime, self).__init__(**kwargs)
+
+    def _check_format(self, format, string):
+        try:
+            matcher = self._check_matcher[format]
+        except KeyError:
+            special = {'%Y': r'\d\d\d\d', ' ': '\s+'}
+            def subst(match):
+                m = match.group(1)
+                try:
+                    return special[m]
+                except KeyError:
+                    return m.startswith('%') and '\d?\d' or re.escape(m)
+            regexp = re.sub('(\%[a-zA-Z]|.|\s+)', subst, format)
+            self._check_matcher[format] = matcher = re.compile(regexp)
+        if not matcher.match(string):
+            raise ValidationError(self.VM_DT_FORMAT)
+        
+    def _check_format(self, format, string):
+        try:
+            matcher = self._check_matcher[format]
+        except KeyError:
+            special = {'%Y': r'\d\d\d\d', ' ': '\s+'}
+            def subst(match):
+                m = match.group(1)
+                try:
+                    return special[m]
+                except KeyError:
+                    return m.startswith('%') and '\d?\d' or re.escape(m)
+            regexp = re.sub('(\%[a-zA-Z]|.|\s+)', subst, format)
+            self._check_matcher[format] = matcher = re.compile(regexp)
+        return matcher.match(string)
+        
+    def _validate(self, string, format=None, local=True):
+        """Stejné jako v pøedkovi a¾ na klíèované argumenty.
+
+        Argumenty:
+
+          string -- stejné jako v pøedkovi
+          format -- po¾adovaný formát hodnoty 'string', ve tvaru po¾adovaném
+            metodou '__init__()'
+          local -- pravdivé právì kdy¾ zadaná hodnota je v lokálním èase;
+            v opaèném pøípadì je v UTC
+          
+        """
+        assert isinstance(string, types.StringTypes)
+        if format is None:
+            format = self._format
+        # Vyu¾ití `strptime' je nejjednodu¹¹í øe¹ení.  GNU `strptime' je
+        # dostateènì tolerantní vùèi nadbyteèným mezerám atd., tak¾e by jeho
+        # pou¾itím nemìl vzniknout problém, pokud nehodláme software provozovat
+        # na ne-GNU systémech, které `strptime' øádnì nepodporují.  Musíme
+        # ov¹em oøezat mezery zprava, proto¾e v mx.DateTime vadí, je tam nìjaká
+        # chyba, standardní `time.strptime' funguje.
+        string = string.strip()
+        dt = None
+        try:
+            if not self._check_format(format, string):
+                raise ValidationError(self.VM_DT_FORMAT)
+            dt = DT.strptime(string, format)
+            if local:
+                dt = dt.gmtime()
+            if (self._mindate and dt < self._mindate) or \
+                   (self._maxdate and dt > self._maxdate):
+                result = None, self._validation_error(self.VM_DT_AGE)
+            else:    
+                result = Value(self, dt), None
+        except Exception, e:
+            result = None, self._validation_error(self.VM_DT_FORMAT)
+        # TODO: zjistit, proè zde bylo udìláno toto omezení
+        # Pro správnou funkènost tøídy Time je ale tøeba ho zru¹it
+        #if dt is not None and dt.year < 1000:
+        #    result = None, self._validation_error(self.VM_DT_AGE)
+        return result
+    
+    def _export(self, value, local=True):
+        """Stejné jako v pøedkovi a¾ na klíèované argumenty.
+
+        Argumenty:
+
+          local -- pravdivé právì kdy¾ zadaná hodnota je v lokálním èase;
+            v opaèném pøípadì je v UTC
+          
+        """
+        assert type(value) == self._dt_type, 'Value is not DateTime'
+        if local:
+            value = value.localtime()
+        return value.strftime(self._format)
+
+    def now(class_, **kwargs):
+        """Vra» instanci 'Value' tohoto typu odpovídající aktuálnímu okam¾iku.
+
+        Argumenty:
+
+          kwargs -- argumenty pøedané konstruktoru tøídy typu
+          
+        """
+        type = class_(**kwargs)
+        return Value(type, DT.now())
+    now = classmethod(now)
+
+
+class Date(DateTime):
+    """Datum bez èasového údaje."""
+
+    DEFAULT_FORMAT = '%Y-%m-%d'
+    """Implicitní formát data."""
+    SQL_FORMAT = DEFAULT_FORMAT
+    """Formát data pou¾ívaný standardnì SQL stroji."""
+    CZECH_FORMAT = '%d.%m.%Y'
+    """Èeský \"úèetnický\" formát data."""
+
+    def __init__(self, format=None, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          format -- specifikace vstupního i výstupního formátu data, v podobì
+            akceptované funkcí 'time.strftime()'; mù¾e být té¾ 'None',
+            v kterém¾to pøípadì se pou¾ije konfiguraèní volba
+            'config.date_format'.  Tøída obsahuje pøeddefinované konstanty
+            '*_FORMAT', které lze vyu¾ít jako hodnotu tohoto parametru.
+
+        """
+        if format is None:
+            import config
+            format = config.date_format
+        super(Date, self).__init__(format=format, **kwargs)
+
+    def _validate(self, *args, **kwargs):
+        kwargs['local'] = False
+        return super(Date, self)._validate(*args, **kwargs)
+        
+    def _export(self, *args, **kwargs):
+        kwargs['local'] = False
+        return super(Date, self)._export(*args, **kwargs)
+
+
+class Time(DateTime):
+    """Èas bez datumového údaje."""
+
+    DEFAULT_FORMAT = '%H:%M:%S'
+    """Implicitní formát èasu."""
+    SQL_FORMAT = DEFAULT_FORMAT
+    """Formát èasu pou¾ívaný standardnì SQL stroji."""
+    SHORT_FORMAT = '%H:%M'
+    """Formát èasu bez zobrazení sekund."""
+
+    def __init__(self, format=None, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          format -- specifikace vstupního i výstupního formátu èasu, v podobì
+            akceptované funkcí 'time.strftime()'; mù¾e být té¾ 'None',
+            v kterém¾to pøípadì se pou¾ije konfiguraèní volba
+            'config.time_format'.  Tøída obsahuje pøeddefinované konstanty
+            '*_FORMAT', které lze vyu¾ít jako hodnotu tohoto parametru.
+
+        """
+        if format is None:
+            import config
+            format = config.time_format
+        super(Time, self).__init__(format=format, **kwargs)
+
+    def _validate(self, *args, **kwargs):
+        kwargs['local'] = False
+        return super(Time, self)._validate(*args, **kwargs)
+        
+    def _export(self, *args, **kwargs):
+        kwargs['local'] = False
+        return super(Time, self)._export(*args, **kwargs)
+
+
+class Enumeration(Type):
+    """Výètový typ.
+
+    Hodnoty tohoto typu jsou dány fixním nebo v èase variabilním výètem.
+
+    """
+
+    VM_INVALID_VALUE =  'VM_INVALID_VALUE'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update({VM_INVALID_VALUE: _("Nesprávná hodnota")})
+
+    def values(self):
+        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu.
+
+        V této tøídì metoda vyvolá výjimku 'ProgramError', pøedpokládá se její
+        pøedefinování v potomcích.
+        
+        """
+        raise ProgramError('Not implemented', 'Enumeration.values')
+    
+    
+class FixedEnumeration(Enumeration):
+    """Výètový typ.
+
+    Hodnoty tohoto typu mohou být pouze prvky pevnì stanovené mno¾iny zadané
+    jako parametr konstruktoru této tøídy.  Blí¾e viz metoda '__init__'.
+    
+    """
+    
+    def __init__(self, enumeration, **kwargs):
+        """Inicializuje výètový typ dle specifikace 'enumeration'.
+
+        Argumenty:
+        
+          enumeration -- specifikace výètových hodnot
+          
+        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
+
+        Specifikace má podobu sekvence dvouprvkových sekvencí.  První prvek
+        ka¾dé dvouprvkové sekvence je objekt (ne nutnì string) odpovídající
+        reprezentaci hodnoty v u¾ivatelském rozhraní (\"u¾ivatelská hodnota\")
+        a druhý prvek je libovolný objekt reprezentující hodnotu internì
+        (\"interní hodnota\").
+
+        Korespondence mezi u¾ivatelskými a interními hodnotami by mìla být 1:1.
+        Je-li tato korespondence 1:N, tøída nemusí pracovat správnì.  Naproti
+        tomu korespondence N:1 je legální, je v¹ak tøeba si uvìdomit, ¾e
+        v¹echny u¾ivatelské hodnoty pak mohou být nabízeny u¾ivateli pro výbìr
+        v u¾ivatelském rozhraní, co¾ není v¾dy ¾ádoucí.
+
+        Typ zachovává konvenci, ¾e prázdný string odpovídá nedefinované
+        hodnotì.
+
+        Pøíklad specifikace:
+          (('Èe¹tina', 'cs'), ('Angliètina', 'en'), ('Nìmèina', 'de'))
+        
+        """
+        super(FixedEnumeration, self).__init__(**kwargs)
+        self._enumeration = enumeration
+
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.
+
+        'self' a 'other' jsou shodné, právì kdy¾ jsou té¾e tøídy a jejich
+        enumerations se rovnají.
+        
+        """
+        result = super(FixedEnumeration, self).__cmp__(other)
+        if not result:
+            result = cmp(self._enumeration, other._enumeration)
+        return result
+        
+    def values(self):
+        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu."""
+        return map(lambda x: x[0], self._enumeration)
+    
+    def _validate(self, object):
+        """Vra» instanci tøídy 'Value' s hodnotou definovanou pro 'object'.
+
+        'object' je správný právì tehdy, je-li jednou z u¾ivatelských hodnot
+        definovaných v metodì '__init__'.  Blí¾e o mapování objektù na hodnoty
+        viz metoda '__init__'.
+
+        """
+        for s, v in self._enumeration:
+            if s == object:
+                value = v
+                break
+        else:
+            return None, self._validation_error(self.VM_INVALID_VALUE)
+        return Value(self, value), None
+
+    def _export(self, value):
+        for s, v in self._enumeration:
+            if v == value:
+                return s
+        else:
+            raise ProgramError('Invalid internal value', value)
+        
+    def default_value(self):
+        if self._enumeration:
+            return Value(self, self._enumeration[0][1])
+        else:
+            return super(FixedEnumeration, self).default_value()
+
+
+class Boolean(FixedEnumeration):
+    """Jednoduchý výètový typ implementující hodnoty \"pravda\" a \"nepravda\".
+
+    Za pravdu je pova¾ován string 'T', za nepravdu string 'F'; tyto stringy
+    jsou u¾ivatelskými hodnotami výètu.  Odpovídající vnitøní hodnoty jsou
+    blí¾e nespecifikované pythonové objekty s pythonovu sémantikou pravdy a
+    nepravdy.
+    
+    """
+    def __init__(self, **kwargs):
+        super(Boolean, self).__init__((('F', False), ('T', True)), **kwargs)
+
+    def _validate(self, object, extended=False):
+        """Vra» instanci tøídy 'Value' s hodnotou definovanou pro 'object'.
+
+        Je-li argument 'extended' pravdivý, jsou kromì \"oficiálních\" hodnot
+        'object' zvalidovány i následující stringové hodnoty:
+
+          \'t\', \'1\' -- jako reprezentace pravdivé hodnoty
+          \'f\', \'0\', \'\' -- jako reprezentace nepravdivé hodnoty
+        
+        """
+        if not extended and isinstance(object, str):
+            object = string.strip(object)
+            if object in ('t', '1'):
+                object = 'T'
+            elif object in ('', 'f', '0'):
+                object = 'F'
+        return super(Boolean, self)._validate(object)
+
+
+class Sequence(Type):
+    """Typ, jeho¾ hodnotou je tuple hodnot, instancí tøídy 'Value'.
+
+    Typ je charakterizován tuplem instancí tøídy 'Type' definujícím typy
+    v tuple hodnot.  Hodnoty musí typové specifikaci odpovídat.  Mezi
+    jednotlivými typy v tuple typù nesmí být typ 'Sequence'.
+
+    """
+    
+    VM_NONTUPLE = 'VM_NONTUPLE'
+    VM_ARG_NUMBER = 'VM_ARG_NUMBER'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update({VM_NONTUPLE: _("Objekt není tuple"),
+                                 VM_ARG_NUMBER: _("Chybný poèet argumentù")})
+    
+    def __init__(self, subtypes, **kwargs):
+        """Vytvoø typ slo¾ený ze 'subtypes'.
+
+        Argumenty:
+
+          subtypes -- seznam instancí tøídy 'Type', který definuje typy prvkù
+            hodnoty typu.
+            
+        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
+
+        """
+        assert not filter(lambda t: isinstance(t, Sequence), subtypes), \
+               'Sequence type within subtypes'
+        super(Sequence, self).__init__(**kwargs)
+        self._subtypes = subtypes
+
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.
+
+        'self' a 'other' jsou shodné, právì kdy¾ jsou té¾e tøídy a jejich
+        tuples typù polo¾ek se rovnají.
+        
+        """
+        result = super(Sequence, self).__cmp__(other)
+        if not result:
+            result = (self._subtypes == other._subtypes)
+        return result
+
+    def __len__(self):
+        """Vra» poèet prvkù tuple typové specifikace."""
+        return len(self._subtypes)
+        
+    def _validate(self, object):
+        if type(object) != type(()):
+            return None, self._validation_error(self.VM_NONTUPLE)
+        subtypes = self._subtypes
+        if len(object) != len(subtypes):
+            return None, ValidationError(VM_ARG_NUMBER)
+        vlist = []
+        for t, o in zip(subtypes, object):
+            v, e = t.validate(o)
+            if e:
+                return None, e
+            vlist.append(v)
+        return Value(self, tuple(vlist)), None
+
+    def _export(self, value):
+        """Vra» tuple stringù odpovídajících exportùm hodnot 'value'."""
+        assert type(value) == type(()), ('value not a tuple', value)
+        vlist = map(lambda v: v.type().export(v.value()), value)
+        return tuple(vlist)
+
+
+
+# Pomocné tøídy
+
+
+class ValidationError(Exception):
+    """Popis chyby pøi neúspìchu validace v 'Type.validate'.
+
+    Popis lze získat veøejnou metodou 'message'.  Popisem je string a mìl by
+    být srozumitelný jako zpráva pro u¾ivatele.
+    
+    """
+    def __init__(self, message):
+        """Inicializuj zprávu o chybì.
+
+        Argumenty:
+        
+          message -- string obsahující zprávu o chybì pro u¾ivatele
+         
+        """
+        super_(ValidationError).__init__(self, message)
+        self._message = message
+
+    def __str__(self):
+        return '<ValidationError: ' + self.message() + '>'
+
+    def message(self):
+        """Vra» zprávu o chybì jako string srozumitelný pro u¾ivatele."""
+        return self._message
+
+
+class _Value(object):
+    """Obecná reprezentace hodnoty daného typu.
+
+    Ka¾dá hodnota se skládá z typu (instance tøídy 'Type') a hodnoty samotné.
+    Hodnota samotná mù¾e být cokoliv, bez ohledu na uvedený typ.
+
+    """
+    def __init__(self, type, value):
+        """Inicializuj instanci.
+
+        Argumenty:
+        
+          type -- instance tøídy 'Type'
+          value -- hodnota samotná, libovolný objekt
+
+        """
+        self._type = type
+        self._value = value
+
+    def __getstate__(self):
+        return {'_type': self._type,
+                '_value': self._value}
+
+    def __setstate__(self, state):
+        type = state['_type']
+        if not isinstance(type, Type):
+            raise InvalidAccessError('Invalid argument type', '_Value.type',
+                                     type)
+        self._type = type
+        self._value = state['_value']
+        self._init()
+    
+    def __str__(self):
+        return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
+                                            self.type(), self.value())
+
+    def __cmp__(self, other):
+        """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.
+
+        'self' a 'other' jsou shodné, právì kdy¾ se rovnají jejich typy a
+        hodnoty.
+        
+        """
+        if sameclass(self, other):
+            t1, t2 = self.type(), other.type()
+            if t1 == t2:
+                res = 0
+            else:
+                res = compare_objects(t1, t2)
+            if res:
+                return res
+            else:
+                return compare_objects(self.value(), other.value())
+        else:
+            return compare_objects(self, other)
+
+    def type(self):
+        """Vra» typ hodnoty jako instanci tøídy 'Type' zadanou v '__init__()'.
+        """
+        return self._type
+
+    def value(self):
+        """Vra» hodnotu zadanou v '__init__()'."""
+        return self._value
+
+
+class Value(_Value):
+    """Reprezentace hodnoty daného typu.
+
+    Ka¾dá hodnota se skládá z typu (instance tøídy 'Type') a hodnoty samotné.
+    Hodnota samotná mù¾e být cokoliv, bez ohledu na uvedený typ.
+
+    Pro zápis hodnoty do u¾ivatelského rozhraní nebo databáze lze vyu¾ít metodu
+    'export()'.
+    
+    """
+    _VOID = object()
+    
+    def __init__(self, type, value):
+        """Inicializuj hodnotu daného typu.
+
+        Argumenty:
+        
+          type -- instance tøídy 'Type'
+          value -- hodnota samotná, libovolný objekt
+         
+        """
+        super(Value, self).__init__(type, value)
+        self._init()
+
+    def _init(self):
+        if self._type.__class__ == String:    # pozor, nebezpeèná vìc!
+            self._exported = unicode(self._value or '')
+        else:
+            self._exported = self._VOID
+        
+    def export(self, *args, **kwargs):
+        """Vra» stringovou reprezentaci hodnoty schopnou validace.
+
+        Tato metoda je pouze zkratkou pro volání
+        'self.type().export(self.value())'.  Pokud jsou metodì pøedány
+        argumenty, je metoda `Type.export()' volána i s tìmito argumenty.
+        
+        """
+        # Abychom to zbyteènì nekomplikovali, tak cachujeme pouze exporty bez
+        # argumentù.
+        if args or kwargs:
+            exported = apply(self.type().export,
+                             (self.value(),) + args, kwargs)
+        else:
+            exported = self._exported
+            if exported is self._VOID:
+                exported = self.type().export(self.value())
+                self._exported = exported
+        return exported
+
+
+class WMValue(_Value):
+    """Reprezentace specifikace pro wildcard match daného typu."""

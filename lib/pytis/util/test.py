@@ -1,0 +1,151 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Pomùcky pro testování.
+
+Modul definuje tøídy, které mírnì usnadòují vytváøení sad testù v na¹ich
+souborech '_test.py'.
+
+"""
+# Tento modul je vyèlenìn z util.py, aby je neèinil závislým na PyUnit, které
+# není pro bìh systému zapotøebí.
+
+
+import string
+import sys
+import types
+import unittest
+
+from pytis.util import *
+
+
+class TestSuite(unittest.TestSuite):
+    """Mírnì vylep¹ená tøída 'unittest.TestSuite'.
+
+    Cílem tøídy je je¹tì více zestruènit nìkteré èasto pou¾ívané operace
+    v na¹em kódu.  Oproti podìdìné tøídì poskytuje doplòující metodu 'add'.
+
+    U¾iteèné (pouze) pro tvorbu testù.
+    
+    """
+    def add(self, class_):
+        """Pøidej do testù v¹echny metody tøídy 'class_' s prefixem 'check_'.
+
+        Nepøidávej metody, které jsou beze zmìny podìdìny od pøedka.  Je-li
+        'config.run_interactive_tests' nepravda, nepøidávej metody zaèínající
+        prefixem 'check_interactive_'.
+        
+        Testy jsou pøidány jako samostatná test suite.
+        
+        """
+        def prefix_test(prefix, starts_with=starts_with):
+            return (lambda x, prefix=prefix, s=starts_with: s(x, prefix))
+        tests = filter(prefix_test('check_'), direct_public_members(class_))
+        import config
+        if not config.test_run_interactive:
+            tests = filter(lambda t, f=prefix_test('check_interactive_'): \
+                           not f(t),
+                           tests)
+        methods = map(class_, tests)
+        self.addTest(unittest.TestSuite(methods))
+
+
+class InteractiveTestCase(unittest.TestCase):
+    """Základní tøída pro interaktivní testy.
+
+    Tøída definuje novou metodu 'ask_user()' pro interakci s obsluhou
+    testování.
+    
+    """
+    def _format_instructions(self, instructions):
+        lines = string.split(instructions, '\n')
+        formatted_lines = map(lambda l: '|' + l, lines)
+        instructions = string.join(formatted_lines, '\n')
+        return instructions
+    
+    def _print_instructions(self, instructions):
+        print
+        print instructions
+        if instructions and instructions[-1] != '\n':
+            print
+
+    def _ask_question(self, question):
+        if question:
+            while 1:
+                answer = raw_input(_('|%s (A/N)? ') % question)
+                if not answer:
+                    continue
+                the_answer = string.lower(string.lstrip(answer)[0])
+                if the_answer == 'a':
+                    print
+                    return True
+                elif the_answer == 'n':
+                    print
+                    return False
+        else:
+            raw_input(_("Stiskni Enter..."))
+            return True
+
+    def ask_user(self, instructions, question):
+        """Vypi¹ 'instructions' a zeptej se, zda test uspìl.
+
+        Argumenty:
+
+          instructions -- libovolný string, který bude u¾ivateli vypsán jako
+            instrukce, co má udìlat a co má zkontrolovat
+          question -- jednoøádkový string jako otázka polo¾ená u¾ivateli nebo
+            'None'; string se neukonèuje otazníkem, ten bude doplnìn
+            automaticky
+
+        Jestli¾e 'question' je 'None', jsou u¾ivateli pouze vypsány
+        'instructions' a u¾ivatel je po¾ádán o odklepnutí.  Jestli¾e 'question'
+        je string, je u¾ivatel po¾ádán o odpovìï ANO/NE.
+
+        Metoda nic nevrací, v pøípadì kladné odpovìdi na otázku neudìlá nic
+        zvlá¹tního, v pøípadì záporné odpovìdi automaticky provede 'fail()'.
+
+        """
+        self._print_instructions(self._format_instructions(instructions))
+        if not self._ask_question(question):
+            self.fail()
+
+
+def transform_args():
+    """Vra» seznam ztransformovaných argumentù pøíkazového øádku.
+
+    Jsou provádìny následující transformace:
+
+    - Ka¾dý argument, který odpovídá potomku tøídy 'unittest.TestCase', nahraï
+      seznamem metod této tøídy zaèínajících prefixem 'check_'.
+
+    """
+    import __main__
+    argv = sys.argv
+    for i in range(len(argv))[1:]:
+        try:
+            object = eval('__main__.%s' % argv[i])
+        except:
+            continue
+        if type(object) == types.ClassType and \
+           issubclass(object, unittest.TestCase):
+            a = []
+            for m in dir(object):
+                if starts_with (m, 'check_'):
+                    a.append('%s.%s' % (argv[i], m))
+            argv[i:i+1] = a
+    return argv

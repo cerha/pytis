@@ -1,0 +1,1431 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Abstrakce vstupních políèek pro pou¾ití ve formuláøích.
+
+Ka¾dé vstupní políèko má nápis (label) a vlastní UI pøípravek obsluhující vstup
+a hodnoty (widget).
+
+Tøída, která bude pro které vstupní políèko pou¾ita je dána datovým typem
+hodnoty, pro kterou je políèko vytváøeno - ten je zji¹tìn z datového objektu.
+Vytvoøení patøièné tøídy.
+
+"""
+
+import pytis.data
+from pytis.form import *
+#from wxPython.pytis.maskededit import wxMaskedTextCtrl
+
+
+class _TextValidator(wx.PyValidator):
+    def __init__(self, control, filter):
+        wx.PyValidator.__init__(self)
+        self._control = control
+        self._filter = filter
+        wx_callback(wx.EVT_CHAR, self, self._on_char)
+
+    def Clone(self): 
+        return _TextValidator(self._control, self._filter)
+    
+    def _on_char(self, event):
+        key = event.GetKeyCode()
+        if self._filter is not None \
+               and key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 \
+               and not self._filter(chr(key)):
+            message(_("Nepovolený znak!"), beep_=True)
+            return True
+        else: 
+            event.Skip()
+            return True
+
+        
+class InputField(object, KeyHandler, CallbackHandler):
+    """Abstraktní tøída vstupního pole.
+
+    Vstupní políèko není samo o sobì wx prvkem. Odpovídající prvky
+    u¾ivatelského rozhraní lze získat metodami 'label()' a 'widget()'.
+    Políèko je rozdìleno na èásti widget a label, aby mohly být tyto dvì èásti
+    umístìny do gridu...
+
+    Tato tøída není sama o sobì instanciovatelná! Odvozením dal¹í
+    tøídy a pøedefinováním dále popsaných metod v¹ak lze vytvoøit políèka
+    s libvolným chováním realizovaná libovolným UI prvkem.
+
+    Tøída je 'CallbackHandler'. Argument callbackové funkce závisí na typu
+    callbacku a je zdokumentován v dokumentaci callbackové konstanty.
+    
+    """
+
+    _DEFAULT_WIDTH = 13
+    _DEFAULT_HEIGHT = 1
+
+    UI_IS_MODIFIED = 'UI_IS_MODIFIED'
+    """Povolení události, pouze pokud je obsah políèka zmìnìn."""
+    UI_IS_ENABLED =  'UI_IS_ENABLED'
+    """Povolení události, pouze pokud je políèko editovatelné."""
+
+    CALL_LEAVE_FIELD = 'CALL_LEAVE_FIELD'
+    """Callback volaný pøi po¾adavku na opu¹tìní políèka. Bez argumentù."""
+    CALL_COMMIT_FIELD = 'CALL_COMMIT_FIELD'
+    """Voláno pøi opu¹tìní políèka s potvrzením hodnoty. Bez argumentù."""
+    CALL_FIELD_CHANGE = 'CALL_FIELD_CHANGE'
+    """Callback volaný pøi zmìnì políèka, pokud je nová hodnota validní.
+
+    Argumenty:
+
+      fid -- id políèka, string.
+      value -- nová hodnota políèka, instance 'pytis.data.Value'.
+    
+    """
+    CALL_SKIP_NAVIGATION = 'CALL_SKIP_NAVIGATION'
+    """Voláno, pokud má být nìjaký ui prvek pøeskoèen pøi navigaci.
+
+    To je vhodné napøíklad pro tlaèítka políèek typu 'Invocable', nebo display
+    u 'CodeBookField'.  Navigaci v¹ak zaji¹»uje nadøízený formuláø.
+
+    Argumenty:
+
+      object -- ui prvek který má být pøeskoèen.
+      dir -- smìr pohybu, boolean, pravda pøi pohybu vpøed.
+
+    """
+
+    _focused_field = None
+    _last_focused_field = None
+    
+    def create(cls, parent, fspec, data, guardian=None, inline=False,
+               accessible=True):
+        """Vra» instanci políèka odpovídajícího typu.
+        
+        Argumewnty jsou toto¾né, jako u metody 'InputField.__init__()'.
+        
+        """
+        field = TextField # default
+        type = fspec.type(data)
+        if fspec.width() == 0: 
+            field = HiddenField
+        elif fspec.references() is not None: 
+            field = ListField
+        elif isinstance(type, pytis.data.Date):
+            field = DateField
+        elif isinstance(type, pytis.data.Boolean):
+            field = CheckBoxField
+        elif isinstance(type, pytis.data.Color):
+            field = ColorSelectionField
+        elif isinstance(type, pytis.data.String):
+            field = StringField
+        elif isinstance(type, pytis.data.Number):
+            field = NumericField
+        elif isinstance(type, pytis.data.xtypes.Codebook):
+            selection_type = fspec.selection_type()
+            if fspec.codebook() != None:
+                field = CodeBookField
+            elif not inline and selection_type == SelectionType.LIST_BOX:
+                field = ListBoxField
+            elif not inline and selection_type == spec.SelectionType.RADIO_BOX:
+                field = RadioBoxField
+            else: field = ChoiceField
+        return field(parent, fspec, data, guardian=guardian, inline=inline,
+                     accessible=accessible)
+
+    create = classmethod(create)
+
+    def __init__(self, parent, fspec, data, guardian=None, inline=False,
+                 accessible=True):
+        """Vytvoø vstupní políèko, podle specifikace a typu dat.
+
+        Argumenty:
+
+          parent -- libovolná instance 'wx.Window', která má být pou¾ívána
+            jako wx rodiè v¹ech vytváøených wx prvkù
+          fspec -- specifikace prezentaèních vlastností, instance tøídy
+            'spec.FieldSpec'
+          data -- datový objekt, instance tøídy 'pytis.data.Data'
+          guardian -- nadøazený 'KeyHandler'.
+          inline -- pokud je pravda, bude vytvoøen pouze vlastní vstupní
+            prvek.  Label a ve¹keré blbinky kolem budou vynechány.  To je
+            vhodné pøi pou¾ití políèka pro in-line editaci v øádkovém
+            formuláøi.
+          accessible -- pravda, pokud má u¾ivatel mít právo editace políèka.
+            Takto znepøístupnìné políèko ji¾ nelze zpøístupnit a vzhled je
+            jiný, ne¾ v pøípadì políèka zakázaného voláním metody 'disable()'.
+          
+        Metodu '__init__()' nech» odvozené tøídy nepøedefinovávají. Nech»
+        pøedefinovávají metody '_create_widget()' a '_create_label'.
+
+        """
+        assert self != None
+        #assert isinstance(parent, wx.Window)
+        assert isinstance(guardian, KeyHandler)
+        assert isinstance(fspec, FieldSpec)
+        CallbackHandler.__init__(self)
+        self._parent = parent
+        self._type = fspec.type(data)
+        self._spec = fspec
+        self._guardian = guardian
+        self._id = id = fspec.id()
+        self._inline = inline
+        self._initial_value = None
+        self._want_focus = False
+        self._is_changed = False
+        self._initialized = False
+        self._accessible = self._enabled = accessible
+        self._ctrl = self._create_ctrl()
+        self._unregistered_widgets = {}
+        if inline:
+            self._widget = self._ctrl
+        else:
+            self._label = self._create_label()
+            self._widget = self._create_widget()
+        self._init_ctrl()
+        if not self._enabled:
+            self._disable(True)
+            self._register_skip_navigation_callback()            
+
+    def __str__(self):
+        return "<%s id='%s'>" % (self.__class__.__name__, self.id())
+        
+    def _skip_navigation_callback(self, widget):
+        def cb(e):
+            if not self._unregistered_widgets.has_key(widget):
+                self._run_callback(self.CALL_SKIP_NAVIGATION,
+                                   (widget, e.GetDirection()))
+                return True
+            else:
+                e.Skip()
+                return True
+        return cb
+    
+    def _init_ctrl(self):
+        control = self._ctrl
+        KeyHandler.__init__(self, control)
+        wx_callback(wx.EVT_IDLE, control, self._on_idle)
+        wx_callback(wx.EVT_KILL_FOCUS, control, self._on_kill_focus)
+        wx_callback(wx.EVT_SET_FOCUS, control, self._on_set_focus)
+        wx_callback(wx.EVT_COMMAND_RIGHT_CLICK, control, control.GetId(),
+                    self._on_popup_menu) # or wxMSW
+        wx_callback(wx.EVT_RIGHT_UP, control, self._on_popup_menu) # for wxGTK
+        if self._spec.descr() is not None and config.show_tooltips:
+            control.SetToolTipString(self._spec.descr())
+            
+    def _create_label(self):
+        # Return field label as 'wx.StaticText' instance.
+        label = self.spec().label()
+        if label:
+            label = label + ':'            
+        return wx.StaticText(self._parent, -1, label,
+                             style=wx.ALIGN_RIGHT)
+
+    def _create_ctrl(self):
+        # Return the actual control element for this field.
+        raise ProgramError("This method must be overriden!")
+
+    def _create_widget(self):
+        # Return the complete widget containing all control elements.
+        # For simple fields that's the actual control, but some more
+        # sophisticated classes may add additional buttons etc.
+        return self._ctrl
+
+    def _menu(self):
+        # Return the tuple of popup menu items ('MItem' instances).
+        return (MItem("Vrátit pùvodní hodnotu",
+                      command = InputField.COMMAND_RESET_FIELD,
+                      uievent_id = self.UI_IS_MODIFIED),
+                )
+
+    def guardian(self):
+        return self._guardian
+    
+    def on_ui_event(self, event, id):
+        if id == self.UI_IS_MODIFIED:
+            if self.is_modified():
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True
+        elif id == self.UI_IS_ENABLED:
+            if self._enabled:
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True
+        else:
+            return False
+
+    def on_command(self, command, **kwargs):
+        if command == self.COMMAND_RESET_FIELD:
+            self.reset()
+            return True
+        elif command == self.COMMAND_COMMIT_FIELD:
+            return self._run_callback(self.CALL_COMMIT_FIELD, ())
+        elif command == self.COMMAND_LEAVE_FIELD:
+            return self._run_callback(self.CALL_LEAVE_FIELD, ())
+        return False
+    
+    def show_popup_menu(self, position=None):
+        """Zobraz kontextové menu vstupního políèka.
+
+        Argumenty:
+        
+          position -- tuple (x, y) udávající pozici relativnì k vstupnímu
+            prvku tohoto políèka.
+        
+        """
+        control = self._ctrl
+        if position is None:
+            size = control.GetSize()
+            position = (size.x/3, size.y/2)
+        menu = Menu('', self._menu()).create(control, self)
+        control.PopupMenu(menu, position)
+        menu.Destroy()
+
+    def _on_popup_menu(self, event):
+        self.show_popup_menu(position=(event.GetX(), event.GetY()))
+        event.Skip()
+
+    def _validation_error_handler(self):
+        # O¹etøi validaèní chybu.
+        
+        # Tato metoda je volána, pokud u¾ivatel opou¹tí políèko, ve kterém
+        # zmìnil hodnotu, ale nová hodnota není validní.  Vrací pravdu pokud
+        # byla situace nìjak o¹etøena, nebo nepravdu, pokud má být situace
+        # o¹etøena standardním zpùsobem (zobrazením chybové zprávy ve stavovém
+        # øádku).
+        
+        # V této tøídì nedìlá nic, ale odvozená tøída mù¾e pøedefinováním
+        # vyvolat napøíklad nìjakou interaktivní akci apod.
+
+        return False
+        
+    def _on_idle(self, event):
+        if self._is_changed:
+            # Pokud je hodnota validní, dej o zmìnì vìdìt formuláøi.
+            value, error = self.validate(quiet=True)
+            if not error:
+                self._run_callback(self.CALL_FIELD_CHANGE, (self.id(), value))
+            self._is_changed = False
+        if self._want_focus and not self.has_focus():
+            self._set_focus()
+        if hasattr(self, '_call_on_idle') and self._call_on_idle is not None:
+            self._call_on_idle()
+            self._call_on_idle = None
+        event.Skip()
+        return True
+    
+    def _on_set_focus(self, event):
+        self._want_focus = False
+        last = InputField._last_focused()
+        # TODO: Zkusit to pøes `wx.Window.SetFocusFromKbd()'
+        if last is not None and last is not self and last.enabled() \
+               and last.is_modified():
+            value, error = last.validate(interactive=False)
+            if error:
+                last.set_focus()
+                return True
+        InputField._focus(self)
+        event.Skip()
+        return True
+
+    def _on_kill_focus(self, event):
+        InputField._defocus(self)
+        event.Skip()
+        return True
+
+    def _enable_event_handlers(self):
+        self._ctrl.SetEvtHandlerEnabled(True)
+
+    def _disable_event_handlers(self):
+        self._ctrl.SetEvtHandlerEnabled(False)
+
+    def _register_skip_navigation_callback(self):
+        control = self._ctrl
+        wx_callback(wx.EVT_NAVIGATION_KEY, control,
+                    self._skip_navigation_callback(control))
+        if self._unregistered_widgets.has_key(control):
+            del(self._unregistered_widgets[control])
+
+    def _unregister_skip_navigation_callback(self):
+        #self._ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
+        # Vý¹e uvedený Disconnect nefunguje, tak¾e si to ubastlíme po svém...
+        self._unregistered_widgets[self._ctrl] = 1
+
+    def _on_change(self, event=None):
+        """Event handler volaný pøi jakékoliv zmìnì hodnoty políèka.
+        
+        Odvozené tøídy by tuto metodu nemìly pøedefinovávat. Nech» radìji
+        pøedefiují metodu '_on_change_hook()'. Ka¾dá tøída by mìla zabezpeèit
+        o¹etøení editaèních událostí voláním této metody.
+
+        """
+        # Toto je hack aby bylo mo¾né vytváøet zakázaná políèka, která nejsou
+        # za¹edivìna a vypadají tedy stejnì jako editovatelná, ale nelze je
+        # zmìnit.  Zde tedy po ka¾dém pokusu o zmìnu vrátíme pùvodní hodnotu a
+        # hotovo.  V jiných pøípadech by nemìlo dojít k tomu, ¾e políèko, které
+        # je `self._enabled' zmìní hodnotu, tak¾e by to snad nemuselo nièemu
+        # vadit...
+        #if self._enabled:  Dìlá to problémy s dopoèítávanými políèky, tak¾e
+        # je to zatím vyøazeno.  Nejlep¹í by bylo to vymyslet úplnì jinak...
+        self._disable_event_handlers()
+        self._post_process()
+        self._on_change_hook()
+        self._is_changed = True
+        if event:
+            event.Skip()
+        self._enable_event_handlers()
+        #else:
+        #    self.reset()
+        #return True
+
+    def _post_process(self):
+        """Aplikuj postprocessing.
+        
+        Voláno po ka¾dé zmìnì hodnoty políèka.
+        
+        """
+        pass
+    
+    def _on_change_hook(self):
+        """O¹etøi zmìny textu políèka.
+        
+        Pøedefinováním této metody lze provádìt libovolné doplòující akce
+        pøi ka¾dé zmìnì textu políèka.
+        
+        """
+        pass
+
+    def has_focus(self):
+        """Vra» pravdu právì kdy¾ je políèko zaostøeno pro u¾iv. vstup."""
+        return InputField.focused() is self
+
+    def width(self):
+        """Vra» ¹íøku políèka danou specifikací; poèet znakù."""
+        return self.spec().width(self._DEFAULT_WIDTH)
+
+    def height(self):
+        """Vra» vý¹ku políèka danou specifikací; poèet znakù."""
+        return self.spec().height(self._DEFAULT_HEIGHT)
+
+    def id(self):
+        """Vra» identifikátor políèka (string)."""
+        return self._id
+
+    def spec(self):
+        """Vra» prezentaèní specifikaci políèka jako 'FieldSpec'."""
+        return self._spec
+
+    def type(self):
+        """Vra» datový typ políèka jako instanci 'pytis.data.Type'."""
+        return self._type
+
+    def widget(self):
+        """Vra» ovládací prvek jako instanci 'wx.Window'."""
+        return self._widget
+
+    def label(self):
+        """Vra» nadpis políèka jako 'wx.StaticText'."""
+        return self._label
+
+    def validate(self, quiet=False, interactive=True):
+        """Zvaliduj hodnotu políèka a vra» instanci 'Value' a popis chyby.
+
+        Argumenty:
+        
+          quiet -- v pøípadì pravdivé hodnoty je výsledek validace metodou
+            pouze vrácen a chyba není nijak ohla¹ována.  V opaèném pøípadì je
+            chyba ohlá¹ena zpÙsobem, který závísí na argumentu `interactive'.
+          interactive -- pokud je pravdivý, dojde k ohlá¹ení chyby vyskoèiv¹ím
+            dialogem s popisem chyby.  V opaèném pøípadì je pouze zobrazena
+            zpráva ve stavové øádce.
+
+        Vrací: Tuple (value, error), tak, jak ho vrátí
+        'pytis.data.Type.validate()' pøíslu¹ného datového typu pro hodnotu
+        zadanou v políèku.
+
+        """
+
+        value, error = self._type.validate(self.get_value())
+        if error and not quiet:
+            if not self._validation_error_handler():
+                if interactive:
+                    msg = _('Chyba validace políèka!\n\n%s: %s') % \
+                          (self.spec().label(), error.message())
+                    run_dialog(Error, msg, title=_("Chyba validace"))
+                else:
+                    message(error.message(), beep_=True)
+            else:
+                # Revalidate after succesful handler invocation.
+                value, error = self._type.validate(self.get_value())
+        return value, error
+
+    def enabled(self):
+        """Vra» pravdu, pokud je políèko editovatelné."""
+        return self._enabled
+    
+    def enable(self):
+        """Povol u¾ivatelský vstup do políèka."""
+        if self._accessible:
+            self._enabled = True
+            self._enable()        
+            self._unregister_skip_navigation_callback()
+    
+    def _enable(self):
+        self._ctrl.Enable(True)
+
+    def disable(self, change_appearance=True):
+        """Zaka¾ u¾ivatelský vstup do políèka.
+
+        Voláním této metody se políèko stane read-only.  Nebude tedy aktivní na
+        u¾ivatelský vstup.  Pokud není nastaven argument `change_appearance' na
+        nepravdivou hodnotu, bude také zmìnìn vzhled políèka (za¹edivìní).
+
+        Odvozené tøídy nech» tuto metodu nepøedefinovávájí, nech» radìji
+        pøedefinují metodu '_disable()'.
+
+        """
+        if self._accessible:
+            self._enabled = False
+            self._disable(change_appearance)
+            self._register_skip_navigation_callback()
+
+    def _disable(self, change_appearance):
+        if change_appearance:
+            self._ctrl.Enable(False)
+        else:
+            # Here we rely on a simple hack in InputField._on_change() that
+            # resets field value after each attempt to chnge it, so the field
+            # is in fact editable, but it is not possible to change it
+            # effectively.
+            pass
+
+    def set_focus(self):
+        """Uèiò toto políèko aktivním pro vstup z klávesnice."""
+        self._want_focus = True
+
+    def _set_focus(self):
+        self._ctrl.SetFocus()
+
+    def initialized(self):
+        """Vra» pravdu právì kdy¾ políèko ji¾ bylo inicializováno.""" 
+        return self._initialized
+        
+
+    def init(self, value):
+        """Nastav poèáteèní hodnotu políèka na 'value'. 
+
+        Argumenty:
+
+          value -- poèáteèní hodnota políèka (stejná, jako pro metodu
+            'set_value()').
+
+        Takto nastavenou poèáteèní hodnotu lze kdykoliv vrátit metodou
+        'reset()'.  Metodou 'is_modified()' lze potom zjistit, zda se souèasná
+        hodnota políèka li¹í od této poèáteèní hodnoty.
+
+        """
+        self._disable_event_handlers()
+        self.set_value(value)
+        self._initial_value = self.get_value()
+        self._on_change_hook()
+        self._enable_event_handlers()
+        self._initialized = True
+
+    def get_value(self):
+        """Vra» hodnotu políèka jako string.
+        
+        Tuto metodu je tøeba pøedefinovat v odvozené tøídì.
+        
+        """
+        raise ProgramError("This method must be overriden!")
+
+    def set_value(self, value):
+        """Nastav hodnotu políèka na 'value'.
+
+        Argumenty:
+
+          value -- hodnota políèka, string (pokud datový typ políèka nevy¾aduje
+            jinak)
+
+        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
+        v opaèném pøípadì.
+
+        Pokud je hodnota None, nebude provedeno nic, pouze vráceno False.
+
+        Odvozené tøídy nech» tuto metodu nepøedefinovávájí, nech» pøedefinují
+        metodu '_set_value()'.
+
+        """
+        log(DEBUG, 'Nastavení hodnoty políèka:', (self.id(), value))
+        if value is not None:
+            return self._set_value(value)
+        else:
+            return False
+
+    def _set_value(self):
+        raise ProgramError("This method must be overriden!")
+
+    def is_modified(self):
+        """Vra» pravdu, právì pokud byla hodnota políèka zmìnìna u¾ivatelem.
+
+        Políèko je nastaveno do poèáteèního stavu po ka¾dém volání metody
+        'init()'. Metoda vrátí pravdu právì kdy¾ je souèasná hodnota políèka
+        rozdílná od hodnoty v poèáteèním stavu.
+        
+        """
+        return self._initial_value != self.get_value()
+
+    def reset(self):
+        """Nastav hodnotu políèka na pùvodní hodnotu.
+
+        Pùvodní hodnotou je my¹lena hodnota po posledním volání metody
+        'init()'. Pokud motoda 'init()' nebyla doposud volána, je chování
+        metody nespecifikováno.
+        
+        """
+        log(DEBUG, 'Reset hodnoty políèka', self.id())
+        self._set_value(self._initial_value)
+
+    def _alive(self):
+        try:
+            self._ctrl.GetId()
+            return True
+        except wx.PyDeadObjectError:
+            return False   
+        
+    # Class methods
+        
+    def _defocus(cls, field):
+        if cls._focused_field is field:
+            cls._last_focused_field = cls._focused_field
+            cls._focused_field = None
+
+    def _focus(cls, field):
+        #import weakref
+        current = cls.focused()
+        cls._focused_field = field #weakref.ref(field)
+        if current is not None:
+            cls._last_focused_field = current
+    
+    def _last_focused(cls):
+        field = cls._last_focused_field
+        cls._last_focused_field = None
+        if field is not None and field._alive():
+            return field
+        return None
+
+    def focused(cls):
+        field = cls._focused_field
+        if field is not None and field._alive():
+            return field
+        return None
+         
+    _focus   = classmethod(_focus)
+    _defocus = classmethod(_defocus)
+    _last_focused = classmethod(_last_focused)
+    focused = classmethod(focused)
+    
+        
+class Unlabeled:
+    """Mix-in tøída pro políèka .
+
+    Nìkteré prvky mají label spojen pøímo s controlem, tak¾e label zobrazený
+    v gridu musí být prázdný.
+
+    """
+    def _create_label(self):
+        # Return an empty label as 'wx.StaticText' instance.
+        return wx.StaticText(self._parent, -1, '')
+
+
+class TextField(InputField):
+    """Textové vstupní políèko."""
+    
+    NUMBERS = map(str, range(10))
+    SIGNS = ['-', '+']
+    DECIMAL_POINTS = ['.', ',']
+    FLOAT = map(str, range(10)) + SIGNS + DECIMAL_POINTS
+    ASCII   = map(chr, range(127))
+    LETTERS = map(chr, range(ord('a'),ord('z')+1) + \
+                  range(ord('A'),ord('Z')+1))
+
+    def _create_ctrl(self):
+        control = wx.TextCtrl(self._parent, -1, '', style=self._style())
+        if not self._inline:
+            width, height = self.width(), self.height()
+            size = dlg2px(control, 4*(width+1)+2, 8*height+4)
+            control.SetMinSize(size)
+        maxlen = self._maxlen()
+        if maxlen is not None:
+            control.SetMaxLength(maxlen)
+            wx_callback(wx.EVT_TEXT_MAXLEN, control, control.GetId(),
+                        self._on_maxlen)
+        filter = self._filter()
+        control.SetValidator(_TextValidator(control, filter=filter))
+        wx_callback(wx.EVT_TEXT, control, control.GetId(), self._on_change)
+        if self.height() > 1: # For multiline fields add a custom key handler
+            wx_callback(wx.EVT_KEY_DOWN, control,
+                        lambda e: self._on_key_down_multiline(e, control))
+        return control
+    
+    def _maxlen(self):
+        """Vra» maximální délku zadaného textu."""
+        return None
+
+    def _style(self):
+        # Return the style for created text control (to be redefined).
+        style = 0 #wx.NO_BORDER
+        if self.height() > 1:
+            style = style | wx.TE_MULTILINE
+        return style
+
+    def _on_set_focus(self, event):
+        super_(TextField)._on_set_focus(self, event)
+        if self._enabled:
+            event.GetEventObject().SetSelection(-1, -1)
+        
+    def _on_maxlen(self, event):
+        # User tried to enter more text into the control than the limit
+        beep()
+        message(_("Pøekroèena maximální délka."))
+    
+    def _on_key_down_multiline(self, event, control):
+        # Used only for multiline fields,
+        if event.GetKeyCode() == wx.WXK_RETURN and self._enabled:
+            control.WriteText("\n");
+            self._on_change()
+            return True
+        else:
+            # Other keys are processed in a standard way.
+            event.Skip()
+            return True
+
+    def _post_process_func(self):
+        """Vra» funkci odpovídající specifikaci postprocessingu políèka.
+
+        Vrací: Funkci je funkcí jednoho argumentu (pùvodní text), která vrací
+        øetìzec (zmìnìný text).
+        
+        """
+        try:
+            return self._stored_post_process_func
+        except:            
+            pp_spec = self.spec().post_process()
+            if callable(pp_spec):
+                self._stored_post_process_func = pp_spec
+            else:
+                mapping = {
+                    None: None,
+                    PostProcess.UPPER: lambda s: s.upper(),
+                    PostProcess.LOWER: lambda s: s.lower(),
+                    }
+                assert pp_spec in mapping.keys()
+                self._stored_post_process_func = mapping[pp_spec]
+            return self._stored_post_process_func
+
+    def _filter(self):
+        """Vra» filtraèní funkci odpovídající specifikaci políèka.
+        
+        Vrací: Funkci jednoho argumentu, která vrací pravdu, pokud znak
+        odpovídá specifikaci filtru pro dané políèko, nepravdu v opaèném
+        pøípadì.
+
+        Pokud políèko nemá nastavenu filtraci, vrací None.
+        
+        """
+        filter_spec = self.spec().filter()
+        if filter_spec is None:
+            return None
+        if filter_spec == TextFilter.EXCLUDE_LIST:
+            return lambda char, list=self.spec().filter_list(): \
+                                      char not in list
+        mapping = {
+            TextFilter.ASCII: self.ASCII,
+            TextFilter.ALPHA: self.LETTERS,
+	    TextFilter.FLOAT: self.FLOAT,
+            TextFilter.ALPHANUMERIC: self.LETTERS + self.NUMBERS,
+            TextFilter.NUMERIC: self.NUMBERS,
+            TextFilter.INCLUDE_LIST: self.spec().filter_list(),
+            }
+        assert filter_spec in mapping.keys()
+        return lambda char, list=mapping[filter_spec]: char in list
+
+    def get_value(self):
+        return self._ctrl.GetValue()
+
+    def _enable(self):
+        control = self._ctrl
+        control.SetEditable(True)
+        control.SetBackgroundColour(wx.WHITE)
+        control.SetValidator(_TextValidator(control, filter=self._filter()))
+
+    def _post_process(self):
+        f = self._post_process_func()
+        oldval = self.get_value()
+        if f:
+            args = (oldval,)
+            val = f(*args)
+            if val != oldval:
+                self._set_value(val)
+
+    def _disable(self, change_appearance):
+        self._ctrl.SetEditable(False)
+        self._ctrl.SetValidator(wx.DefaultValidator)
+        if change_appearance:
+            if self._accessible:
+                color = config.field_disabled_color 
+            else:
+                color = config.field_inaccessible_color
+            def call_on_idle():
+                self._ctrl.SetBackgroundColour(color)
+                self._ctrl.Refresh()
+            # Pokud to udìlám pøímo, u nìkterých políèek se zmìna neprojeví!
+            self._call_on_idle = call_on_idle
+            
+    def _set_value(self, value):
+        """Nastav hodnotu políèka na 'value'.
+
+        Argumenty:
+
+            value -- hodnota políèka, string
+
+        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
+        v opaèném pøípadì.
+
+        """
+        assert isinstance(value, types.StringTypes), \
+               ('String or Unicode expected', value)
+        self._ctrl.SetValue(value)
+        return True
+
+
+class StringField(TextField):
+    """Textové vstupní políèko pro data typu 'pytis.data.String'."""
+
+    def _maxlen(self):
+        return self._type.maxlen()
+
+class NumericField(TextField):
+    """Textové vstupní políèko pro data typu 'pytis.data.Number'."""
+
+    def _style(self):
+        return super(NumericField, self)._style()#| wx.TE_RIGHT
+
+
+class CheckBoxField(Unlabeled, InputField):
+    """Vstupní pole pro typ Boolean realizované pomocí 'wx.CheckBox'."""
+
+    def _create_ctrl(self):
+        """Vra» instanci 'wx.CheckBox'."""
+        if self._inline:
+            label = ''
+        else:
+            label = self.spec().label()
+        control = wx.CheckBox(self._parent, -1, label)
+        wx_callback(wx.EVT_CHECKBOX, control, control.GetId(), self._on_change)
+        return control
+                    
+    def get_value(self):
+        """Vra» hodnotu políèka jako string.
+
+        Je vrácen string 'T', je-li políèko zatr¾eno, string 'F' jinak.
+
+        """
+        return self._ctrl.GetValue() and 'T' or 'F'
+
+    def _set_value(self, value):
+        """Nastav hodnotu políèka na 'value'.
+
+        Argumenty:
+
+            value -- hodnota políèka, string 'T' (pravda) nebo 'F' (nepravda)
+              nebo prázdný øetìzec (nepravda)
+
+        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
+        v opaèném pøípadì.
+
+        """
+        assert value in ('T','F',''), ('Invalid argument', value)
+        wxvalue = value == 'T' and True or False
+        self._ctrl.SetValue(wxvalue)
+        return True
+
+
+class EnumerationField(InputField):
+    """Abstrakce vstupního pole pro výètový typ.
+    
+    Tento typ vstupního pole je reprezentován pomocí výbìru z pevnì dané
+    mno¾iny hodnot. Mno¾inu hodnot urèuje datový typ samotný (viz metoda
+    'pytis.data.Codebook.values()').
+
+    Proto¾e pracujeme s datovým typem 'pytis.data.Codebook', jsou vstupními a
+    výstupními hodnotami metod 'get_value()' a '_set_value()' sekvence, nebo»
+    datový typ mù¾e potenciálnì pracovat i se sloupeèky s vícenásobnou vazbou,
+    tak¾e pro jistotu pou¾ívá sekvence v¾dy - i pokud jsou jednoprvkové.
+
+    Tato tøída není urèena k pøímému pou¾ití. Je to rodièivská tøída pro
+    vstupní pole nad výètovým typem dat.
+    
+    """
+    def _values(self):
+        """Vra» list v¹ech hodnot daných datovým typem."""
+        assert isinstance(self._type, pytis.data.xtypes.Codebook)
+        return map(lambda v: v[0], self._type.values())
+
+    def get_value(self):
+        """Vra» hodnotu políèka jako jednoprvkový tuple obsahující string."""
+        return self._ctrl.GetStringSelection()
+
+    def _set_value(self, value):
+        """Nastav hodnotu políèka na 'value'.
+
+        Argumenty:
+
+            value -- hodnota políèka, jednoprvkový tuple obsahující string nebo
+              pøímo string
+
+        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
+        v opaèném pøípadì.
+
+        """
+        assert isinstance(value, types.StringTypes), ('Invalid value', value)
+        self._ctrl.SetStringSelection(value)
+        # TODO: Tento test nefunguje pro políèka, která vzniknou z Codebookù
+        # if self._ctrl.GetStringSelection() != value:
+        #     raise ProgramError("Setting field value failed!",
+        #                        self.id(), value[0])
+        return True
+        
+
+
+class ChoiceField(EnumerationField):
+    """Vstupní pole pro výètový typ reprezentované pomocí 'wx.Choice'."""
+
+    def _create_ctrl(self):
+        """Vra» instanci 'wx.Choice' podle specifikace."""
+        control = wx.Choice(self._parent, -1, (-1,-1), (-1,-1),
+                            choices=self._values())
+        wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
+        return control
+
+    
+class RadioBoxField(Unlabeled, EnumerationField):
+    """Vstupní pole pro výètový typ reprezentované pomocí 'wx.RadioBox'.
+
+    Interpretace specifikace:
+
+      orientation -- tento specifikaèní atribut udává hlavní orientaci skládání
+        jednotlivých prvkù. Hodnotou je konstanta 'spec.Orientation'.
+      width -- v pøípadì horizontální orientace udává maximální poèet sloupcù
+        prvkù vedle sebe.
+      height -- v pøípadì vertikální orientace udává maximální poèet øad
+        prvkù nad sebou.
+
+    """
+
+    _DEFAULT_WIDTH = 1
+
+    def _create_ctrl(self):
+        """Vra» instanci 'wx.RadioBox' podle specifikace."""
+        if self._spec.orientation() == Orientation.VERTICAL:
+            style = wx.RA_SPECIFY_COLS
+            dimension = self.width()
+        else:
+            style = wx.RA_SPECIFY_ROWS
+            dimension = self.height()
+        label = self.spec().label()
+        if label:
+            label = label + ':'
+        control = wx.RadioBox(self._parent, -1, label,
+                              choices=self._values(), style=style,
+                              majorDimension=dimension)
+        wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
+        return control
+
+
+class ListBoxField(EnumerationField):
+    """Vstupní pole pro výètový typ reprezentované pomocí 'wx.ListBox'."""
+
+    def _create_ctrl(self):
+        """Vra» instanci 'wx.ListBox' podle specifikace."""
+        choices = self._values()
+        control = wx.ListBox(self._parent, -1, choices=choices,
+                             style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
+        wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
+        return control
+    
+
+class Invocable:
+    """Podìdìním této tøídy lze pøidat vlastnost vyvolání výbìru.
+
+    Abstraktní tøída pro políèka, která umo¾òují vyvolat pro výbìr hodnoty
+    nìjakou akci (vìt¹inou v podobì modálního popup okna).
+
+    Tøída, která dìdí z této tøídy musí být zárovìò potomkem jiné tøídy, která
+    definuje metodu '_create_widget()' (nebo ji definovat sama). Tato metoda
+    bude pou¾ita k vytvoøení ovládacího prvku a navíc bude k tomuto ovládacímu
+    prvku pøibaleno tlaèítko pro vyvolání výbìru.
+
+    Výbìr lze vyvolat také klávesou pøíkazu
+    'Invocable.COMMAND_INVOKE_SELECTION', pokud základní tøída vytváøející
+    ovládací prvek pou¾ije metodu '_add_key_handler()' (co¾ by mìla v¾dy).
+
+    """
+    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat hodnotu")
+    
+    def _call_next_method(self, name, *args, **kwargs):
+        # Will not work in derived classes!
+        for base in self.__class__.__bases__:
+            if hasattr(base, name) and base != Invocable:
+                method = getattr(base, name)
+                return method(self, *args, **kwargs)
+        else:
+            raise ProgramError(repr(self) + " has no next method '%s'" % name)
+    
+    def _create_widget(self):
+        """Zavolej '_create_widget()' odvozené tøídy a pøidej tlaèítko.
+
+        Více informací viz. dokumentace tøídy 'Invocable'.
+        
+        """
+        widget = self._call_next_method('_create_widget')
+        if self._inline:
+            return widget
+        button_height = self._ctrl.GetSize().GetHeight()
+        self._invocation_button = button = self._create_button(button_height)
+        sizer = wx.BoxSizer()
+        sizer.Add(widget, 0, wx.RIGHT, 4)
+        sizer.Add(button)
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(),
+                    lambda e: self._on_invoke_selection())
+        wx_callback(wx.EVT_NAVIGATION_KEY, button,
+                    self._skip_navigation_callback(button))
+        return sizer
+
+    def _create_button(self, height):
+        button = wx.Button(self._parent, -1, "...")
+        button.SetMinSize((dlg2px(button, 12), height))
+        return button
+
+    def _disable(self, change_appearance):
+        self._invocation_button.Enable(False)
+        self._call_next_method('_disable', change_appearance)
+    
+    def _enable(self):
+        self._invocation_button.Enable(True)
+        self._call_next_method('_enable')
+    
+    def _on_invoke_selection(self, **kwargs):
+        """Callback pro akci vyvolání výbìru."""
+        raise ProgramError("This method must be overriden!")
+
+    def _menu(self):
+        return InputField._menu(self) + \
+               (MSeparator(),
+                MItem(self._INVOKE_SELECTION_MENU_TITLE,
+                      command=self.COMMAND_INVOKE_SELECTION,
+                      uievent_id=self.UI_IS_ENABLED,
+                      args={'originator': self}))
+    
+    def on_command(self, command, **kwargs):
+        if self._enabled:
+            if command == Invocable.COMMAND_INVOKE_SELECTION:
+                return self._on_invoke_selection()
+            if command == Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE:
+                return self._on_invoke_selection(alternate=True)
+        return InputField.on_command(self, command, **kwargs)
+
+
+class DateField(Invocable, TextField):
+    """Vstupní pole pro datový typ 'pytis.data.Date'.
+
+    Jako akci pro vyvolání výbìru definuje zobrazení dialogu s kalendáøem,
+    který je nastaven na datum odpovídající hodnotì políèka a po ukonèení
+    nastaví hodnotu políèka na vybraný datum.
+
+    """
+
+    _DEFAULT_WIDTH = 10
+    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z kalendáøe")
+    
+    def _on_invoke_selection(self, **kwargs):
+        """Zobraz kalendáø a po jeho skonèení nastav hodnotu políèka."""
+        d = pytis.data.Date.make()
+        result, error = d.validate(self.get_value())
+        if result is not None:
+            date = result.value()
+        else:
+            date = None
+        date = run_dialog(Calendar, date)
+        if date != None:
+            self.set_value(d.export(date))
+        return True
+
+
+class ColorSelectionField(Invocable, TextField):
+    """Vstupní pole pro výbìr barvy."""
+
+    _DEFAULT_WIDTH = 7
+    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat barvu")
+    
+    def _on_invoke_selection(self, **kwargs):
+        """Zobraz kalendáø a po jeho skonèení nastav hodnotu políèka."""
+        color = run_dialog(ColorSelector, self.get_value())
+        if color != None:
+            self.set_value(color)
+        return True
+
+    def _create_button(self, height):
+        button = wx.Button(self._parent, -1, "")
+        button.SetMinSize((height, height))
+        return button
+
+    def _set_value(self, value):
+        super(ColorSelectionField, self)._set_value(value)
+        self._invocation_button.SetBackgroundColour(value)
+        self._invocation_button.SetForegroundColour(value)
+
+
+class CodeBookField(Invocable, TextField):
+    """Vstupní pole pro data navázaná na èíselník.
+
+    Bude pou¾ito v pøípadì, ¾e datový sloupeèek je typu 'pytis.data.Codebook' a
+    prezentaèní specifikace políèka definuje navázaný èíselník
+    (viz. 'FieldSpec.codebook()').
+
+    Tento typ vstupního pole pracuje s vícehodnotovými políèky, tak¾e hodnoty
+    jsou sekvencemi (viz. 'MultiTextField') a to i v pøípadì, ¾e jsou tyto
+    sekvence jednoprvkové.
+       
+    Jako akci pro vyvolání výbìru definuje zobrazení formuláøe 'list.CodeBook'.
+    Název specifikace èíselníku a dal¹í vlastnosti jsou dány specifikátorem
+    'codebook' ve specifikaci políèka (instance 'CodeBookSpec').
+
+    K políèku mù¾e být volitelnì pøidru¾en displej, který je urèen k zobrazení
+    popisu z èíselníku k vybrané hodnotì.  Specifikace displeje je také
+    souèástí 'CodeBookSpec'.
+
+    """
+    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z èíselníku")
+    
+    def _create_widget(self):
+        """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
+        widget = Invocable._create_widget(self)
+        cbspec = self.spec().codebook()
+        if self._inline or cbspec.display() is None:
+            return widget
+        self._display_column = cbspec.display()
+        display = wx.TextCtrl(self._parent, -1, '',
+                              style=wx.TE_READONLY)
+        size = char2px(display, cbspec.display_size(), 1)
+        size.SetHeight(self._ctrl.GetSize().GetHeight())
+        display.SetMinSize(size)
+        display.SetBackgroundColour(wx.Colour(213, 213, 213))
+        sizer = wx.BoxSizer()
+        sizer.Add(widget, 0, wx.RIGHT, 4)
+        sizer.Add(display)
+        self._display = display
+        wx_callback(wx.EVT_NAVIGATION_KEY, display,
+                    self._skip_navigation_callback(display))
+        return sizer
+
+    def _menu(self):
+        return Invocable._menu(self) + \
+               (MItem("Vyhledávat v èíselníku",
+                      command=self.COMMAND_INVOKE_SELECTION_ALTERNATE,
+                      uievent_id=self.UI_IS_ENABLED,
+                      args={'originator': self}),)
+
+    def _maxlen(self):
+        return self._type.maxlen()
+
+    def _on_change_hook(self):
+        if hasattr(self, '_display_column'):
+            v, e = self.validate(quiet=True)
+            if e is None:
+                d = v.export(self._display_column)
+            else:
+                d = ''
+            self._display.SetValue(d)
+
+    def _on_invoke_selection(self, alternate=False, **kwargs):
+        """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
+        t = self.type()
+        value, error = t.validate(self.get_value())
+        if not error:
+            icol = find(t.internal_column(), t.columns(), key=lambda c: c.id())
+            select_row = (pytis.data.Value(icol.type(), value.value()),)
+        else:
+            select_row = None
+        # Show the CodeBook form.
+        cbspec = self.spec().codebook()
+        returned_column = cbspec.returned_column()
+        begin_search = alternate and cbspec.begin_search() or None
+        result = run_form(CodeBook, cbspec.name(), columns=cbspec.columns(),
+                          begin_search=begin_search,
+                          select_row=select_row, ctype=t)
+        if result != None:
+            self.set_value(result.format(returned_column))
+        self.set_focus()
+        return True
+
+    def _validation_error_handler(self):
+        cbspec = self.spec().codebook()
+        if not cbspec.insert_unknown_values():
+            return False
+        value = self.get_value()
+        icol = find(t.internal_column(), t.columns(), key=lambda c: c.id())
+        value, error = icol.type().validate(value)
+        if error:
+            return False
+        msg = _("Èíselník neobsahuje hodnotu %s") % value +"\n"+ \
+              _("Chcete do èíselníku pøidat nový záznam?")
+        if (run_dialog(Question, msg)):
+            prefill = {cbspec.returned_column(): value}
+            result = run_form(PopupEditForm, cbspec.name(), prefill=prefill)
+            #TODO: Update datového objektu èíselníku?
+            self._on_change_hook()
+            return result is not None
+        return False
+    
+    
+class ListField(InputField):
+    """Seznamové políèko pro zobrazení záznamù ze závislé tabulky
+
+    Políèko slou¾í k zobrazení mno¾niny záznamù z jiné tabulky (datového
+    objektu) vztahujících se k nastavené vnitøní hodnotì políèka (viz také
+    metoda '_set_value()').  Typické vyu¾ití je pøi vazbì pøes cyzí klíè v
+    relaèní databázi.
+
+    Vzhled a chování je urèeno specifikátorem 'references' ve specifikaci
+    políèka (viz. 'pytis.form.FieldSpec').  Datový objekt navázané tabulky je
+    získán pomocí resolveru podle jména urèeného specifikací. 
+
+    """
+    _DEFAULT_WIDTH = 30
+    _DEFAULT_HEIGHT = 6
+
+    UI_LIST_ITEM_SELECTED = 'UI_LIST_ITEM_SELECTED'
+
+    def _create_ctrl(self):
+        self._ref_spec = refspec = self.spec().references()
+        # Naètu specifikace.
+        resolver = pytis.form.application._application.resolver()
+        data_spec = resolver.get(refspec.name(), 'data_spec')
+        view_spec = resolver.get(refspec.name(), 'view_spec')
+        assert isinstance(data_spec, pytis.data.DataFactory)
+        assert isinstance(view_spec, ViewSpec)
+        self._list_data = \
+            data_spec.create(dbconnection_spec=config.dbconnection)
+        # Vytvoøím vlastní seznamový widget.
+        style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL
+        list = wx.ListCtrl(self._parent, -1, style=style)
+        # Specifikace sloupcù ulo¾ím do dictionary.
+        colspec = {}
+        for id in view_spec.columns():
+            colspec[id] = view_spec.field(id)
+        self._colspec = colspec
+        # Nastavím záhlaví sloupcù.
+        total_width = 0
+        columns = refspec.columns()
+        for i in range(len(columns)):
+            col = colspec[columns[i]]
+            list.InsertColumn(i, col.label())
+            width = col.column_width()
+            if width < len(col.label()):
+                width = len(col.label())
+            list.SetColumnWidth(i, dlg2px(list, 4*(width+1)))
+            total_width = total_width + width
+        # Spoèítám celkovou vý¹ku.
+        #list.InsertStringItem(0, 'XXX')
+        #rect = list.GetItemRect(0) # to vrací (0,0,0,0)  :-(
+        #list.DeleteAllItems()
+        # TODO/wx: Nìjak spoèítat skuteènou vý¹ku záhlaví a øádku.
+        # Tohle jsou "empirické" vzorce!!!
+        header_height = char2px(list, 1, float(9)/4).GetHeight()
+        row_height = char2px(list, 1, float(10)/7).GetHeight()
+        height = header_height + row_height * self.height()
+        self._DEFAULT_WIDTH = total_width + 3
+        list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
+        #list.SetMargins(0,0)
+        self._list =  list
+        self._get_item = None
+        return list
+
+    def _selected_item(self):
+        item = self._list.GetNextItem(-1, wx.LIST_NEXT_ALL,
+                                      wx.LIST_STATE_SELECTED)
+        if item == -1:
+            return None
+        return item
+
+    def _choose_returned_column(self, column):
+        """Vra» hodnotu vybraného sloupce."""        
+        i = self._selected_item()
+        columns = self._ref_spec.columns()
+        self._get_item = None
+        for j in range(len(columns)):
+            if columns[j] == column:
+                ctype = self._colspec[column].type(self._list_data)
+                itemtext = self._list.GetItem(i,j).GetText()
+                val, error = ctype._validate(itemtext)
+                if not error:
+                    self._get_item = val
+                else:
+                    self._get_item = None
+                break            
+        
+    def _enable(self):
+        pass # ListControl se stejnì nedá nijak editovat
+    
+    def _disable(self, change_appearance):
+        pass # ListControl se stejnì nedá nijak editovat
+
+    def get_item(self):
+        """Vra» aktuální hodnotu vybraného políèka."""
+        return self._get_item
+
+    def get_value(self):
+        """Vra» aktuální vnitøní hodnotu políèka."""
+        return self._value
+
+    def _set_value(self, value):
+        """Nastav vnitøní hodnotu políèka a pøenaèti seznam závislých záznamù.
+        
+        Ka¾dé nastavení hodnotu vyvolá výbìr z navázaného datového objektu.
+        Výbìr vyfiltruje z navázané tabulky ty záznamy jejich¾ sloupeèek urèený
+        specifikací 'references' (instance 'RefSpec') jako 'key' se svou
+        hodnotou shoduje s hodnotou pøedanou argumentem 'value'.
+        
+        """
+        self._value = value
+        list = self._list
+        list.DeleteAllItems()
+        v = pytis.data.Value(self.type(), value)
+        self._list_data.select(pytis.data.EQ(self._ref_spec.key(), v),
+                               sort=self._ref_spec.sorting())
+        n = 0
+        self._list_rows = []
+        while 1:
+            row = self._list_data.fetchone()
+            if row is None: break
+            self._list_rows.append(row)
+            columns = self._ref_spec.columns()
+            list.InsertStringItem(n, row[columns[0]].export())
+            for i in range(1, len(columns)):
+                list.SetStringItem(n, i, row[columns[i]].export())
+            n = n + 1
+
+        return True
+
+    def _selected_item_key(self):
+        i = self._selected_item()
+        return self._list_data.row_key(self._list_rows[i])
+
+    def _menu(self):
+        menu = (MItem("Editovat",
+                      command=self.COMMAND_INVOKE_EDIT_FORM,
+                      uievent_id=self.UI_LIST_ITEM_SELECTED,
+                      args={'originator': self}),
+                MItem("Celá tabulka",
+                      command=self.COMMAND_INVOKE_BROWSE_FORM,
+                      uievent_id=self.UI_LIST_ITEM_SELECTED,
+                      args={'originator': self})
+                )
+        if self._ref_spec.returned_columns():
+            user_popup = [MItem("Vybrat " + m,
+                                command=self.COMMAND_CHOOSE_KEY,
+                                args={'id': self.id(),
+                                      'returned_key': k,
+                                      'originator': self},
+                                uievent_id=self.UI_LIST_ITEM_SELECTED)
+                          for m, k in self._ref_spec.returned_columns()]
+            menu = menu + tuple(user_popup)
+        return menu   
+
+    def on_ui_event(self, event, id):
+        if id == self.UI_LIST_ITEM_SELECTED:
+            if self._selected_item() is not None:
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True
+        else:
+            return InputField.on_ui_event(self, event, id)
+
+    def on_command(self, command, **kwargs):
+        if command == self.COMMAND_INVOKE_EDIT_FORM:
+            run_form(PopupEditForm, self._ref_spec.name(),
+                     key=self._selected_item_key())
+            return True
+        elif command == self.COMMAND_INVOKE_BROWSE_FORM:
+            if isinstance(current_form(), PopupForm):
+                run_dialog(Warning, _("Celou tabulku nemù¾ete zobrazit, " + \
+                                   "pokud je otevøeno modální okno formuláøe!"))
+                return True
+            run_form(BrowseForm, self._ref_spec.name(),
+                          select_row=self._selected_item_key())
+            return True
+        elif command == self.COMMAND_CHOOSE_KEY:
+            if kwargs.has_key('returned_key'):
+                self._choose_returned_column(kwargs['returned_key'])
+            return True
+        else:            
+            return InputField.on_command(self, command, **kwargs)
+
+
+class HiddenField(InputField):
+    """Skryté (virtuální) políèko. Políèko pouze dr¾í nastavenou hodnotu."""
+
+    def _init_ctrl(self):
+        pass
+    
+    def _enable(self):
+        pass
+
+    def _disable(self, change_appearance):
+        pass
+    
+    def _set_focus(self):
+        pass
+    
+    def _create_ctrl(self):
+        return None
+
+    def _enable_event_handlers(self):
+        pass
+    
+    def _disable_event_handlers(self):
+        pass
+
+    def _register_skip_navigation_callback(self):
+        pass
+        
+    def _create_label(self):
+        return None
+    
+    def get_value(self):
+        """Vra» døíve ulo¾enou hodnotu políèka."""
+        try:
+            return self._value
+        except:
+            return None
+        
+    def _set_value(self, value):
+        """Nastav hodnotu políèka na 'value'."""
+        self._value = value
+        return True
+

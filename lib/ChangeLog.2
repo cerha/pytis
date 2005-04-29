@@ -1,0 +1,2858 @@
+2005-04-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/util/resolver.py (Resolver.get): Pokud je v názvu modulu
+	dvojteèka, pova¾uj za název modulu pouze èást pøed dvojteèkou a co
+	je za ní pøedej jako argument `variant'.
+
+2005-04-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/data/types_.py (Type.validate): Doplnìn komentáø.
+
+	* lib/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Kosmetické úpravy.
+
+	* lib/form/inputfield.py
+	(CodeBookField._validation_error_handler): Pøedpokládej jedinou
+	hodnotu v 'returned_column'.
+
+2005-04-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (CodeBook._init_attributes): Zru¹eny argumenty
+	'returned_column' a 'returned_columns'.
+	(CodeBook._on_activation): Vracej instanci 'PresentedRow' pro
+	aktuální øádek.
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Zohledni, ¾e vyvolaný Codeboook vrací 'PresentedRow'.
+
+	* lib/data/data.py (DataFactory.create): Cachování objektù zatím
+	nelze pou¾ít, proto¾e nará¾íme na problém udr¾ovaných konexí.
+
+2005-04-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/presentation/__init__.py: Importuj `spec'.  O¹etøi cyklické
+	závislosti.
+
+	* lib/presentation/field.py Importuj lib.data a v¹e z lib.util.
+	(Editable, SelectionType)
+	(Orientation, Color, FieldStyle, PostProcess, TextFilter)
+	(Computer, CodeBookSpec, RefSpec, Editable)
+	(SelectionType, Orientation, Color, FieldStyle, PostProcess)
+	(FIELD_STYLE_EMPHASIS, FIELD_STYLE_WARNING, FIELD_STYLE_DEFAULT)
+	(TextFilter, Computer, CodeBookSpec, RefSpec, FieldSpec):
+	Everything moved to the `spec' module.
+	(PresentedRow.format): Odstranìn hack exportem codebookù, které
+	mají runtime condition.
+	(PresentedRow.format): Odchytávej výjimky pøi exportu vypoèítané
+	hodnoty.  Odmítej víceprvkové hodnoty.
+
+	* lib/presentation/spec.py: New module.
+
+	* lib/form/__init__.py (list): Don't import `spec'.
+
+	* lib/form/spec.py: Moved to `lib.presentation'.
+
+	* lib/form/search.py (SFDialog._selected_condition): Validuj
+	boolean hodnoty s argumentem `extended', nikoliv `strict'.
+	Odstranìn hack na validaci codebookù.
+
+	* lib/form/list.py (ListForm._on_line_commit): Nezískávej
+	view_spec pøes resolver, ale pou¾ij `self._view'.
+	(CodeBook._init_attributes): Nový argument 'returned_column'.
+	(CodeBook._on_activation): Pracuj s 'self._returned_column'.
+	(CodeBook): Odstranìna zakomentovaná metoda `select_row()'.
+	(BrowseForm._redirected_name): Pøidán assert na typ vrácené
+	hodnoty.  Pokud není funkce definována, vracej None.
+
+	* lib/form/inputfield.py (InputField.create): Namísto typu
+	`_Codebook' pracuj s `Codebook'.  Vytváøej v¾dy jen jeden control
+	voláním metody `self._create_ctrl()'.  Namísto
+	`self._init_controls()' volej `self._init_ctrl()'.
+	(InputField._init_controls): Pøejmenováno na `_init_ctrl()'.
+	Zru¹en cyklus -- máme jen jeden control.
+	(InputField._create_controls): Pøejmenováno na `_create_ctrl()'.
+	(InputField._create_widget): Netrap se s pakováním controls, máme
+	jen jeden.
+	(InputField.show_popup_menu, InputField._enable_event_handlers)
+	(InputField._disable_event_handlers)
+	(InputField._register_skip_navigation_callback)
+	(InputField._unregister_skip_navigation_callback)
+	(InputField._alive): Pracuj se `self._ctrl' namísto
+	`self._controls'.
+	(InputField._enable, InputField._disable InputField._set_focus):
+	Implementováno implicitní chování.
+	(GenericField): Tøída zru¹ena.
+	(TextField): Odvozeno z `InputField', ne 'GenericField'.
+	(TextField._create_controls, TextField._create_text_control):
+	Zru¹eno.
+	(TextField._text_control_style): Pøejmenováno na `_style()'.
+	(TextField._create_ctrl): Nová metoda.
+	(TextField._on_kill_focus): Zru¹eno.
+	(TextField._filter_func): Pøejmenováno na `_filter()'.
+	(TextField.get_value, TextField._enable, TextField._disable)
+	(TextField._disable.call_on_idle, TextField._set_value): Pracuj se
+	`self._ctrl' namísto `self._controls'.
+	(NumericField._text_conterol_style): Pøejmenováno na `_style()'.
+	(CheckBoxField): Odvozeno z `InputField', ne 'GenericField'.
+	(CheckBoxField._create_controls, ChoiceField._create_controls)
+	(RadioBoxField._create_controls, ListBoxField._create_controls)
+	(ListField._create_controls): Pøejmenováno na `_create_ctrl()'.
+	(CheckBoxField.get_value, CheckBoxField._set_value): Pracuj se
+	`self._ctrl' namísto `self._controls'.
+	(EnumerationField): Odvozeno z `InputField', ne 'GenericField'.
+	(EnumerationField._values): Namísto typu `_Codebook' pracuj s
+	`Codebook'.
+	(EnumerationField.get_value): Zru¹eno v¹e týkající se
+	MultiCodebook.
+	(Invocable._INVOKE_SELECTION_MENU_TITLE)
+	(ColorSelectionField._INVOKE_SELECTION_MENU_TITLE)
+	(CodeBookField._INVOKE_SELECTION_MENU_TITLE)
+	(Invocable._INVOKE_SELECTION_MENU_TITLE): Nová konstanta.
+	(Invocable._create_widget, CodeBookField._create_widget): Pracuj
+	se `self._ctrl' namísto `self._controls'.
+	(Invocable._menu): Nová metoda.
+	(ColorSelectionField._menu, CodeBookField._menu): Zru¹eno.
+	(InlineMultiTextField, MultiTextField): Zru¹eno.
+	(CodeBookField): Odvozeno z `TextField;, nikoliv `MultiTextField'.
+	(CodeBookField._menu): Vyu¾ívej `_menu()' pøedka.
+	(CodeBookField._number_of_fields): Zru¹eno.
+	(CodeBookField._on_change_hook): Vyu¾ívej `Codebook.export()'
+	namísto `Codebook.data_value()'.
+	(CodeBookField._set_value): Zru¹eno
+	(CodeBookField._on_invoke_selection): Výraznì pøepsáno pro pou¾ití
+	s novými Codebooky.
+	(CodeBookField._validation_error_handler): Pracuj s hodnotou jako
+	s øetìzcem, ne tuplem.  Pou¾ívej `CodeBookSpec.returned_column()'
+	(HiddenField, ListField): Odvozeno z `InputField', nikoliv
+	`GenericField'.
+	(ListField._create_controls): Pøejmenováno na `_create_ctrl()'.
+	(ListField._menu): Pou¾ívej `RefSpec.returned_column()'.
+
+	* lib/data/xtypes.py (_Codebook): Pøejmenováno na `Codebook'.
+	(Codebook): Aktualizace docstringu.
+	(Codebook.VM_PARTIAL_VALIDATION): Zru¹eno.
+	(Codebook._SPECIAL_VALUES): Nová konstanta.
+	(Codebook.__init__): Zru¹eny argumenty `value_columns' a `strict'.
+	Nové argumenty `value_column', `not_null', `use_key'.  Zru¹eno v¹e
+	kolem MultiCodebookù.
+	(Codebook.value_columns, Codebook.number_of_columns): Zru¹eno.
+	(Codebook.maxlen): Zru¹eno v¹e kolem MultiCodebookù.
+	(Codebook.strict): Zru¹eno.
+	(Codebook._validate_retrieve, Codebook._value_retrieve): Zru¹eno.
+	(Codebook._retrieve): Zru¹en argument `strict'.  Zjednodu¹eno.
+	(Codebook._row_values, Codebook.values): Zru¹eno.
+	(Codebook._validate): Zru¹en argument `strict'.  Kompletnì
+	pøepsáno.
+	(Codebook.wm_validate): Zru¹eno.
+	(Codebook._export): Zru¹en argument `strict'.  Kompletnì pøepsáno.
+	(Codebook.data_value): Pou¾ívej `self._retrieve()' namísto
+	`self._value_retrieve()'.
+	(SingleCodebook, MultiCodebook): Zru¹eno.
+
+	* lib/data/types_.py (Type.VM_NULL_VALUE): Nová zpráva.
+	(Type._VALIDATION_MESSAGES): Pøidáno `VM_NULL_VALUE'.
+	(Type.__init__): Nový argument `not_null'.
+	(Type.__cmp__): Porovnávej také `self._not_null'.
+	(Type.validate): Nový argument `strict'.  Neu¹etøuj TypeError pøi
+	výbìru z cache.  To by mìlo být provádìno cache samotnou.  Pøidej
+	`strict' jako souèást klíèe chache.
+	(Type._validating_provider): Získávej z klíèe také hodnotu
+	`strict'.  Kontroluj `constraints' pouze pokud je strict pravdivé.
+	(Type.wm_validate): Pou¾ívej kontrolu typu namísto
+	`is_anystring()'.
+	(Type._check_constraints): Kontroluj také `not_null'.
+	(Type.not_null): Nová metoda.
+	(Type.default_value): Vracej pøímo `Value(self, None).
+	(Integer._validate, Float._validate): Pou¾ívej kontrolu typu
+	namísto `is_anystring()'.
+	(String._validate_maxlen): Pøejmenováno na `_check_maxlen()'
+	(String._check_constraints): `_validate_maxlen' ->
+	`_check_maxlen'.
+	(String._validate, String._export, DateTime.__init__)
+	(Boolean._validate): Pou¾ívej kontrolu typu namísto
+	`is_anystring()'.
+	(DateTime._check_format): Nová metoda.
+	(Date._validate): Kontroluj, zda je èas nulový.
+	(FixedEnumeration.default_value): Pou¾ívej `super()' namísto
+	`super_()'.
+	(Boolean._validate): Argument `strict' pøejmenován na `extended'.
+	(Value._init): Opraven nefunkèní nebezpeèný hack s 
+
+	* lib/data/dbdata.py
+	(DBDataPostgreSQL._pg_create_make_row_template): Namísto typu
+	`_Codebook' pracuj s `Codebook'.  Zru¹eno v¹e, co se týká
+	MultiCodebookù.
+	(DBDataPostgreSQL._pg_validate_codebook): Zru¹eno v¹e, co se týká
+	MultiCodebookù.
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Zru¹eno v¹e, co se
+	týká MultiCodebookù.  Provádìj v¾dy pouze nestriktní validaci
+	naètených dat.
+	(DBDataPostgreSQL._pg_value): Zru¹eno v¹e, co se týká
+	MultiCodebookù.
+	(_validate_not_null): Zru¹eno.
+	(PostgreSQLStandardBindingHandler._pdbb_get_type): Vyu¾ívej pøímo
+	asgument 'not_null', namísto obecného 'constraints'.
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Namísto typu `_Codebook', `SingleCodebook' a `MultiCodebook'
+	pracuj v¾dy s `Codebook'.  Nepøedávej `constraints', jen
+	`not_null'
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql): Namísto
+	typu `_Codebook' pracuj s `Codebook'. `_Codebook.value_columns()'
+	-> `Codebook.value_columns()'.
+	(PostgreSQLUserGroups._pgg_retrieve_access_groups): O¹etøi pøípad
+	prázdné mno¾iny skoupin.
+
+	* lib/data/data.py (MemData.__init__): Nový argument 'data'.
+	(MemData._condition2pyfunc): Nová metoda.
+	(MemData.select): Vytvoø data selectu odpovídající podmínce.
+	(MemData.close): Vyprázdni data selectu.
+	(MemData._mem_find_index): Pou¾ívej data selectu.
+
+	* lib/data/_test.py: V¹echny testovací metody pøejmenovány z
+	'check_*' na 'test_*'.
+	(_TypeCheck._test_validity): Vupisuj stringovou reprezentaci
+	hodnoty v assertu.
+	(Date.test_validation): Testuj, zda dvouciferný letopoèet skuteènì
+	neprojde.
+	(Codebook.setUp): Pøedávej data konstruktoru tøídy 'MemData'.
+	(Codebook._test_validate): Nová metoda.
+	(Codebook.test_validate): Vyu¾ívej ji.
+	(Codebook.test_validate_invalid): Nová metoda.
+	(Codebook.test_validity_column): Nová metoda.
+	(Codebook.test_export): Pøidány nové testy.
+	(Codebook.test_export_column): Nová metoda.
+	(tests): Pøidej tøídu 'Codebook'.
+
+2005-04-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/dialog.py (db_operation): Pokud je definována také
+	obalená databázová výjimka, vypi¹ jí do dialogu.
+
+2005-04-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/dialog.py (Calendar.__init__): Do styly pøidán flag pro
+	zobrazení sousedních týdnù.
+	(Calendar._create_content): Roz¹iø dialog natvrdo o 150 pixelù.
+
+	* lib/data/types_.py (DateTime.__init__): Inicializuj
+	`self._check_matcher'.
+	(DateTime._check_format): Namísto metání výjimky vracej pravdu èi
+	nepravdu.
+	(DateTime._validate): Testuj návratovou hodnotu
+	`self._check_format()'.
+
+2005-04-21  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/data.py (DataFactory.__init__): Implementována cache
+	pro datové objekty.
+	(DataFactory._data_object_cache): Nová statická metoda.
+
+2005-04-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/data/types_.py (DateTime._check_format): Nová metoda.
+	(DateTime._validate): Vyu¾ívej ji.  Namísto `is_anystring()'
+	rovnou porovnávej tøídu datového typu.
+
+2005-04-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* config/config.py: Odstranìn import * z `lib.util'.
+
+2005-04-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (EditForm._validate): Kontrolu zmìny provádìj
+	pomocí 'f.is_modified'.
+
+2005-04-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.last_select_condition_sql):
+	Nová metoda.
+
+	* lib/form/form.py (EditForm._validate): Pro 'insert' provádìj
+	validaci v¾dy.
+
+2005-04-14  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (Form.__init__): Pøedávej klíèové argumenty
+	'spec_args' do 'self._create_view_spec' a
+	'self._create_data_object'. 
+	(Form._init_attributes): Zru¹en assert a pøejímej pouze 'spec_args'.
+	(Form._create_view_spec): Pøedávej '**kwargs' resolveru.
+	(Form._create_data_object): Pøedávej '**kwargs' resolveru.
+
+2005-04-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/application.py (Application.run_form): Provádìj refresh
+	je¹tì pøed focusem.
+	(Application.new_record): Provádìj zde refresh horního formuláøe
+	aplikace.
+
+	* lib/form/list.py (BrowseForm._on_edit_record): Provádìj refresh
+	jen pokud je provìdìna u¾ivatelská proceduda `on_edit_record' z view.
+	(BrowseForm._on_new_record): Neprovádìj refresh.
+	
+
+2005-03-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/application.py (Application.run_procedure):
+	O¹etøení ztráty focusu.
+
+2005-03-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_export_csv): Provádìj export, jen kdy¾
+	jsou k tomu práva.
+
+	* lib/data/access.py: Nová konstanta 'Permission.EXPORT'.	
+
+2005-02-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (SideBrowseDualForm._do_selection):
+	Filtrování provádìj a¾ po nastavení prefillu.
+
+2005-02-22  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/xtypes.py (_Codebook.data_value): Pøi získávání
+	data_value pou¾ívej 'strict=True'.
+
+2005-02-21  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/xtypes.py (_Codebook._retrieve): Neprovádìj databázový
+	select, pokud není nastaveno 'strict'.
+
+	* lib/presentation/field.py (PresentedRow.field_changed): O¹etøi
+	výskyt 'key' v datovém øádku.
+
+	* lib/data/xtypes.py (_Codebook._export): Nepou¾ívej 'strict'.
+
+2005-02-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (PresentedRow.field_changed): Nová metoda.
+
+	* lib/form/spec.py (ViewSpec.__init__): Pøidán argument
+	'description'.
+	(ViewSpec.description): Nová metoda.
+
+	* lib/form/list.py (_create_form_parts): Zohledni argument
+	'description'.
+
+	* lib/form/form.py (Form.__init__): Oprava pøeklepu.
+	(TitledForm._create_title_bar): Doplnìn argument
+	'description'.
+	(EditForm._validate): Validuj jen zmìnìná políèka.
+
+2005-02-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (PresentedRow._init_row.genval):
+	O¹etøi pøedání instance 'Value' v 'prefill' pro Codebooky.
+
+	* lib/data/dbdata.py (DBData.table): Nová metoda.
+
+	* lib/form/dualform.py (SideBrowseDualForm._do_selection): Hodnotu
+	pro 'side_binding_column' ber z metody 'export'.
+
+2005-02-14  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_export_csv._process_table): Upraveno s
+	pou¾itím 'ProgressDialog'.	
+	(_filter): Zakomentováno nepou¾ívané roz¹íøení podmínky.
+	(_on_insert_line): Pøedávej do 'prefill' instance 'Value'.
+
+2005-02-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dialog.py (GenericDialog.focus): Doplnìna metoda 'focus'.
+
+	* lib/form/search.py (SFDialog._selected_condition):
+	Zohledni 'non-strict' validaci pro codebooky.
+
+2005-02-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (SideBrowseDualForm._do_selection):
+	Do 'prefill' pøedávej instanci 'Value' odpovídající typu
+	v 'SideForm'.
+
+2005-02-01  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (SideBrowseDualForm._do_selection): Do
+	'prefill' pøedávej instanci 'Value'.
+
+2005-01-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dialog.py (InputDialog._create_content) 
+	(InputDialog.__init__): Pøidán argument 'input_height'.
+	(InputDialog._create_content): Zohlednìno pøidání 'input_height'.
+
+2005-01-19  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (EditForm._pack_fields): Oprava zapomenutého style.
+
+2005-01-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py
+	(EditForm._create_group.create_handler._handler):
+	Pokud handler vrací 'True' zajisti refresh formuláøe.
+	(EditForm._create_button): Nová metoda.
+	(EditForm._create_group): 'Button' pøidávej do 'pack' a zpracuj
+	metodou '_pack_fields'.
+	(EditForm._pack_fields): Argument 'fields' pøejmenován na 'items'.
+	Zohledni 'field' a 'Button'.
+	(EditForm._create_button.create_handler._handler): Refresh
+	formuláøe provádìj v¾dy.
+
+2005-01-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/form.py (EditForm._create_group.create_handler): Nová funkce.
+	(EditForm._create_group): Vyu¾ívej ji.
+
+2005-01-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dialog.py (InputNumeric): Nová tøída.
+
+2005-01-14  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql):
+	Zohlednìna zmìna v pou¾ívání ValueCodeBookù.
+
+2005-01-10  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/screen.py (microsleep): Místo 'wx.Usleep' pou¾ívej 'wx.Microsleep'.
+
+	* lib/form/dualform.py (PostponedSelectionDualForm._on_idle):
+	Úprava microsleep.
+
+	* lib/form/list.py (_on_idle): Úprava microsleep.
+
+	* lib/form/search.py (SortingDialog._create_content): O¹etøi
+	pøípad tøídìní podle "neviditelného" sloupce.
+
+2004-12-23  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_select_cell): Oprava reakce na 'HOME' a 'END'.
+
+2005-01-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (_update_selection_colors): Nastavuj barvy
+	popøedí a pozadí pouze pokud nejsou None.
+	(ListForm.Show): Nový klíèový argument `refresh'.  Provádìj refresh jen
+	pokud je pravdivý.
+
+	* lib/form/dualform.py: Buï potomkem `PostponedSelectionDualForm'.
+	(DescriptiveDualForm._do_selection): Volej `ListForm.Show()' s
+	`refresh=False'.
+
+2004-12-21  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Pøed vyhledáním pøedvyplnìné hodnoty zvaliduj typy `value_columns'.
+
+2004-12-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/form.py (EditForm._validate): Provádìj `check()' jen
+	není-li None.
+
+2004-12-21  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (EditForm._validate): Oprava nepøedaného parametru.
+
+2004-12-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/form.py (EditForm._validate): Nejprve volej `check' z
+	`ViewSpec', teprve potom `PresentedRow.check()' kvùli doèasné zpìtné
+	kompatibilitì.
+
+	* lib/presentation/field.py (FieldSpec.__init__): V dokumentaci
+	oznaèen argument `check' jako potlaèený.
+	(FieldSpec.__init__): Loguj pou¾ití potlaèeného argumentu `check'.
+	(PresentedRow.check): Pøidáno TODO.
+
+	* lib/form/spec.py (ViewSpec.__init__): Nový argument `check'.
+	Kosmetické úpravy.
+	(ViewSpec.check): Nová metoda.
+	(DualSpec.__init__): Kosmetické úpravy.
+
+2004-12-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/form.py (EditForm._validate): Nepou¾ívaný argument
+	`omit_read_only' zru¹en.  Zkonstruuj data a¾ po volání `check()' a
+	to pøímo z row.
+
+2004-12-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Vyhledání øádku dìlej podle `internal_columns'.
+
+2004-12-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (IncrementalSearch.__init__): Kosmetická úprava.
+	(IncrementalSearch._exit): Nakonec, pokud byl výbìr potvrzen,
+	volej zde callback `CALL_SELECTION'.
+	(IncrementalSearch._search): Smazán zapomenutý print.
+
+2004-12-08  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_copy_cell): Pro zkopírování
+	do clipboardu vyu¾ívej i utilitu 'xclip'.
+	(_on_copy_cell): Pro zkopírování do clipboardu pou¾ij hack
+	s vyu¾itím metody wxTextCtrl.Copy().
+
+2004-12-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/dualform.py (ImmediateSelectionDualForm): Nová tøída.
+	(PostponedSelectionDualForm): Nech» je odvozena
+	`ImmediateSelectionDualForm'.
+	(SideBrowseDualForm): Nech» je odvozena
+	`ImmediateSelectionDualForm'.
+	(DescriptiveDualForm): Nech» je odvozena
+	`ImmediateSelectionDualForm'.
+
+	* lib/form/list.py (ListForm._ListTable.GetAttr): Nenastavuj
+	atributy, pokud se nepodaøí získat providera.
+	(IncrementalSearch._search): Volej nakonec `l.select_row()' pouze
+	v pøípadì nutnosti korekce vyplývající z posunutého `start_row'.
+	(ListForm._on_editor_shown): Nová metoda.
+	(ListForm._create_grid): O¹etøuj callback
+	`wx.grid.EVT_GRID_EDITOR_SHOWN' voláním `self._on_editor_shown()'.
+
+
+	* lib/form/dialog.py (ProgressDialog._run_dialog): Nech»
+	aktualizaèní funkce pøijímá i klíèový argument 'newmsg' pro
+	aktualizaci textu dialogu.
+	(ProgressDialog.__init__): Aktualizován docstring.
+	(ProgressDialog): Aktualizován docstring.
+	(RepeatedOperationDialog): Nová tøída.
+
+2004-12-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (ListForm._ListTable.GetAttr): Nastavuj
+	paramerty `attr' jen pokud `attr' není None.
+	(ListForm._SELECTION_CALLBACK_DALAY): Nová konstanta.
+	(ListForm._CELL_SELECTION_TICK): Zru¹eno.
+	(ListForm.__init__): Nevolej zde `select_row()' ani
+	`MakeCellVisible()', na to je `refresh()'...
+	(ListForm._init_attributes): Neinicializuj `self._changed',
+	`self._cached_position', `self._cell_to_select' a
+	`self._cell_selection_tick'.  Inicializuj
+	`self._selection_callback_candidate' a
+	`self._selection_callback_tick'.
+	(ListForm._recreate_grid): Pokud je nový poèet øádkù roven nule,
+	nastavuj `current_row' na -1.
+	(ListForm._recreate_grid): Nestarej se o `self._cached_position',
+	ani nepøenastavuj `self._position'.  Také nevolej
+	`self._select_cell()', která tu bylo z neznámých dùvodù...
+	Nevolej ani `self._update_selection_colors()'.
+	(ListForm._set_position): Metoda zru¹ena.
+	(ListForm._select_cell): Nevolej odsud `self.select_row()', ale
+	opaènì.  Kód výbìru øádku pøesunut pøímo sem a `select_row()'
+	nech» volá `self._selcect_cell(row=...)'.  To v¹e zejména kvùli
+	respektování `self._in_select_cell', zbyteènému vícenásobnému
+	volání `self._update_selection_colors()' apod.
+	(ListForm._update_selection_colors): Zru¹en argument `sideform'.
+	Fuj!!!  Pøekresluj selection jen pokud existuje.  K tomu v¹ak
+	nepou¾ívej `self.select_row()', ale `self._grid.SelectRow()'.
+	(ListForm._on_idle): Namísto zpo¾dìného volání `_select_cel()'
+	provádìj pouze zpo¾dìné volání callbacku `CALL_SELECTION'.
+	(ListForm._on_select_cell): Volej `self._select_cell()' rovnou.
+	(ListForm.show_position): Zru¹en argument `row'.  Pou¾ívej
+	`self._current_row()'.
+	(ListForm._select_cell_command): Zru¹eno.
+	(ListForm.on_command): Namísto `self._select_cell_command()'
+	pou¾ívej `self._select_cell()'. Pøíkazy `COMMAND_FIRST_COLUMN' a
+	`COMMAND_LAST_COLUMN' o¹etøuj pouze mimo editaci.
+	(ListForm._on_delete_line): Nevolej self._set_position().
+	(ListForm._on_line_commit): Nenastavuj `self._position'.
+	(ListForm.select_row): Zru¹eno pøebírání libovolných kwargs Fuj!!!
+	Zde pouze pøeveï argument na èíslo øádku a volej
+	`self._select_cell()'.
+	(ListForm._find_row_by_values): Nová metoda.
+	(ListForm.refresh): Nenastavuj `self._changed'.  Pøenastavení
+	pùvodního rádky pøepsáno.
+	(CodeBook._init_attributes): Neinicializuj `self._search_cols'.
+	(CodeBook.select_row): Zru¹eno.
+	(BrowseForm): Zru¹en neaktuální docstring.
+	(SideBrowseForm._update_selection_colors): Neovlivòuj metodu
+	pøedka vlastními argumenty, ale øe¹ problém zde.
+
+	* lib/form/dualform.py (DualForm._init_attributes): Inicializuj
+	`self._active_form'.
+	(DualForm._create_form): Namísto inicializace `self._active_form'
+	volej `self._select_form()'
+	(DualForm.on_command): Pøidán komentáø.
+	(BrowseDualForm.__init__): Zru¹eno.
+
+2004-12-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/data/access.py (AccessRights.permitted_groups): Nová metoda.
+
+	* lib/form/application.py (Application.on_ui_event): O¹etøuj
+	`UI_ALWAYS_DISABLED'.  Zru¹eno vyu¾ívání callable eventù.
+	Kosmetické úpravy.
+	(Application.UI_ALWAYS_DISABLED): Nová konstanta.
+
+2004-12-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/output/flibdata.py (P_NAME): Nová konstanta.
+
+	* lib/form/screen.py (MItem.__init__): Zohledni mo¾nost pøedání
+	funkce v 'uievent_id'.
+
+	* lib/form/application.py (Application.on_ui_event): O¹etøeno
+	pøedání funkce.	
+
+	* lib/data/data.py (DataFactory.access_rights): Nová metoda.
+
+2004-11-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/util/util.py (stack_info): Nová funkce.
+
+	* lib/form/screen.py (StatusBar.__init__): O¹etøen krajní pøípad
+	prázdného seznamu stavových políèek.
+
+	* lib/form/dialog.py: Importuj Pythonove `types'.
+	(GenericDialog.__init__, InputDialog.__init__)
+	(ColorSelector.__init__, FileDialog.__init__): Namísto
+	`is_any_string()' pou¾ívej rovnou `isinstance(x,
+	types.StringTypes)'
+	(GenericDialog._create_dialog): Nevracej ¾ádnou hodnotu.
+	(GenericDialog.run): Neoèenávaj návratovou hodnotu.
+	(InputDialog.__init__): Zru¹eno pøebírání libovolných klíèových
+	arguemntù pomocí `**kwargs'.  Nový klíèový argument `allow_empty'.
+	Inicializuj atributy `self._allow_empty', `self._mask', a
+	`self._autoformat'.
+	(InputDialog._create_content): Neoperuj se zru¹eným
+	`self._kwargs'.  Explicitnì pøedávej políèku argumenty
+	`emptyInvalid', `mask' a `autoformat'.
+	(InputDate.__init__): Metodu pøedka volej jako první.  Poté pouze
+	pøenastav `self._autoformat'.  
+	(ProgressDialog): Nová tøída.
+	(PBOperationDialog): Zru¹eno.
+
+	* lib/form/dualform.py (PostponedSelectionDualForm._on_idle):
+	Nastavuj hodnoty `self._selection_candidate' a
+	`self._selection_data' zde.  Pøedpokládej booleanovskou návratovou
+	hodnotu metody `_do_selection()' a pøedávej jí argument `row'.
+	(PostponedSelectionDualForm._on_main_selection): Do
+	`self._selection_candidate' ukládej kopii pøedaného øádku, nikoliv
+	také data.
+	(PostponedSelectionDualForm._do_selection): Nový argument `row'.
+	V této tøídì nedìlej vùbec nic, jen vracej `True'.
+	(SideBrowseDualForm._do_selection): Nový argument `row'.  Nevolej
+	metodu pøedka.  Data filtru pøebírej z pøedaného `row'.
+	(DescriptiveDualForm._do_selection): Nový argument `row'.  Nevolej
+	metodu pøedka.
+
+2004-11-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dialog.py (delete_record_question): Pøejmenováno z
+	'delete_record'. 
+
+	* lib/form/form.py (EditForm._edit_delete): 'delete_record'
+	pøejmenováno na 'delete_record_question'.	
+
+	* lib/form/list.py (_on_insert_line): Pro signalizace
+	needitovatelnosti pou¾ívej 'message'.
+	(_on_delete_line): O¹etøi pøístupová práva. Oprava refreshe.
+
+2004-11-25  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dialog.py (PBOperationDialog.__init__): Doplnìn
+	argument 'step'.
+
+	* lib/util/configuration.py
+	(Configuration._Option_cache_spec_onstart): Nová volba.
+
+	* lib/form/dialog.py (PBOperationDialog): Nová dialogová tøída.
+
+	* config/config.py: Pøegenerováno.
+
+2004-11-24  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (EditForm._init_attributes): Úprava komentáøe.	
+
+2004-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (show_context_menu): Nastav polo¾kám menu
+	klávesové zkratky, pokud je najde¹ v globální klívesové mapì.
+
+	* lib/form/screen.py (MItem.set_hotkey): Nová metoda.
+
+	* lib/form/spec.py (Button): Doplnìn docstring.
+	(Button.__init__): Doplnìn docstring.  Nový argument `width'.
+	(Button.width): Nová metoda.
+
+	* lib/form/dualform.py (DualForm._create_form): Nová metoda.
+	(DualForm.__init__): Pøesuò vytváøení formuláøù do metody
+	`self._create_form()' a nastavování atributù do
+	`self._init_attributes()'.
+	(DualForm._init_attributes): Inicializuj atribut
+	 `self._sash_ratio'.  Volej metodu pøedka.  Doplnìn docstring.
+
+	* lib/form/form.py (Form.__init__): Loguj èasy vytváøení formuláøe
+	a naèítání specifikací.
+	(EditForm._create_group): Nastavuj ¹íøku políèka, pokud
+	specifikace tlaèítka definuje parametr `width'.
+
+2004-11-24  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/form/screen.py (init_colors): Oprava pøeklepu.
+
+2004-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/screen.py (init_colors): Definuj v¹echny barvy jako
+	instance `WxColor'.
+
+	* lib/form/list.py (ListForm._ListTable._DisplayCache.__init__):
+	Výchozí velikost cache zvý¹ena na 100 øádek.
+	(ListForm._ListTable.__init__): Zru¹ena cache
+	`self._column_styles'.  Nová cache `self._attr_cache'.
+	(ListForm._ListTable._group): Namísto `self.row()' pou¾ívej
+	`self._cached_value()'.
+	(ListForm._ListTable._make_attr): Zru¹eny argumenty `row', `col' a
+	`_something'.  Vracej trojici (foregreound, background, font),
+	namísto instance `wx.CellAttr'
+	(ListForm._ListTable.close): Namísto `self._column_styles' nuluj
+	`self._attr_cache'.
+	(ListForm._ListTable._cached_value): Nová metoda.
+	(ListForm._ListTable.row): Necachuj instance `PresentedRow'.
+	(ListForm._ListTable.GetValue): Pokud nejde o editovaný øádej,
+	pou¾ívej `self._cached_value()'.
+	(ListForm._ListTable.GetAttr): Pou¾ívej `self._cached_value()'.
+	Cachuj také výsledky volání `self._make_attr()' v
+	`self._attr_cache'.  Pøevádìj výsledek volání `self._make_attr()'
+	na instanci `wx.CellAttr'.
+	(ListForm._CELL_SELECTION_TICK): Nová konstanta.
+	(ListForm._init_attributes): Inicializuj `self._cell_to_select' a
+	`self._cell_selection_tick'.
+	(ListForm._on_idle): Provádìj zpo¾dìný výbìr øádku, po uplynutí
+	"selection tick".
+	(ListForm._on_context_menu): Namísto `self.on_select_cell' volej
+	`self._select_cell()'.
+	(ListForm.on_command): O¹etøuj také pøíkaz
+	`ListForm.COMMAND_SET_GROUPING_COLUMN'.
+	(ListForm._run_form): Zru¹en nepou¾ívaný klíèový argument
+	`redirect_name'.  Nastavuj kwargs podle typu fromuláøe.
+
+2004-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/spec.py (Button): Nová tøída.
+	(GroupSpec.__init__): Povol mezi prvky také instance `Button'.
+	(LayoutSpec.__init__.find_fields): Ignoruj prvky typu `Button'.
+	(ViewSpec.__init__.recourse_group): Ignoruj prvky typu `Button'.
+	
+
+	* lib/form/form.py (EditForm._create_group): Vytváøej tlaèítko,
+	pokud najde¹ instanci 'Button' ve specifikaci.
+
+	* lib/form/list.py (SideBrowseForm._init_attributes): Oprava
+	metody sluèování podmínek.
+
+2004-11-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/dualform.py (DualForm._init_attributes): Nová metoda.
+	(DualForm.__init__): Konstruktoru hlavního formuláøe pøedávej jen
+	ty klíèové arguenty, které pro¹ly a¾ do
+	`DualForm._init_attributes()'.
+	(BrowseDualForm.__init__, BrowseDualForm._create_main_form)
+	(ShowDualForm.__init__, ShowDualForm._create_main_form)
+	(DescriptiveDualForm._create_main_form): Nestarej se o klíèové
+	argumenty a pøedávej je jak jsou (nech jejich zpracování na novém
+	mechanismu).
+	(ShowDualForm._on_idle): Odstranìn hack na nastavení øádku
+	hlavního formuláøe.
+	(DescriptiveDualForm.__init__): Metoda zru¹ena.
+	
+
+	* lib/form/form.py (Form.__init__): Zpracovávej také klíèový
+	argument `guardian'.  Doplnìna dokumentace nového zpùsobu
+	zpracování klíèvých argumentù a inicializace formuláøù.  Volej
+	`_init_attributes()' pro zpracování klíèových argumentù a
+	inicializaci atributù.
+	(Form._init, RecordForm._init, LookupForm._init): Zru¹eno.
+	(Form._init_attributes, RecordForm._init_attributes)
+	(LookupForm._init_attributes, EditForm._init_attributes)
+	(PopupEditForm._init_attributes, ShowForm._init_attributes): Nové
+	metody.
+	(EditForm.__init__): Provádìj pouze nezbytné akce, zbytek pøesunut
+	do `_init_attributes()'.  Argumenty pøedávej jen jako *args, **kwargs.
+	(PopupEditForm.__init__): Provádìj pouze nezbytné akce, zbytek pøesunut
+	do `_init_attributes()'.
+	(ShowForm.__init__): Zru¹eno.
+	
+
+	* lib/form/search.py (SFDialog.append_condition): Nastavuj správnì
+	konstantu logického operátoru pøi ukládání do `defaults'.
+
+	* lib/form/list.py (ListForm._select_cell): Nech» je argument
+	`row' také klíèový.  Pøi výchozí hodnotì `None' pou¾ij aktuální
+	øádek.
+	(ListForm._recreate_grid, ListForm._search_skip)
+	(ListForm._on_select_cell, ListForm._on_insert_line)
+	(ListForm._on_line_commit, ListForm._on_delete_line)
+	(ListForm._on_line_rollback, CodeBook._on_idle): Pou¾ívej v¾dy
+	identifikátory v¹ech klíèových argumentù pøi volání
+	`self._select_cell()'
+	(ListForm.on_command): O¹etøuj nové pøíkazy
+	`ListForm.COMMAND_FIRST_COLUMN' a `ListForm.COMMAND_LAST_COLUMN'.
+	(ListForm.__init__): Zru¹en argument `select_row'.  V¾dy vysvi»
+	první øádek a pøípadnou zmìnu pøenech na volání metody
+	`select_row()'.
+	(ListForm._init_attributes, CodeBook._init_attributes)
+	(FilteredBrowseForm._init_attributes)
+	(SideBrowseForm._init_attributes): Nové metody.
+	(SideBrowseForm._init, ListForm._init): Zru¹eno.
+	(ListForm._create_grid): self._orig_columns je nyní jen seznam id.
+	Mapuj jej tedy na specifikace sloupcù.
+	(CodeBook.__init__): Provádìj zde jen to, co nepatøí do
+	`_init_attributes()'.
+	(BrowseForm._run_form): Volej `run_form()' s arguentem
+	`select_row' namísto `key'.
+	(FilteredBrowseForm__init__): Argumenty pøedávej jen jako *args a
+	(SideBrowseForm.__init__): Zru¹eno.
+
+	**kwargs.
+
+	* lib/form/application.py (Application.OnInit): Pou¾ívej
+	DEFAULT_COMMAND_KEYS k pøednastavení klávesové mapy.
+	(Application._set_form_state): Nová metoda.
+	(Application.run_form): Odstraò stavové atributy z klíèových
+	argumentù konstruktoru a po vytvoøení nebo znovuvyta¾ení instance
+	ze zásobníku volej `_set_form_state()' s tìmito stavovými
+	atributy.
+
+	* lib/form/command.py: Nové pøíkazy
+	`ListForm.COMMAND_FIRST_COLUMN' a `ListForm.COMMAND_LAST_COLUMN'.
+	(DEFAULT_COMMAND_KEYS): Nová konstanta.
+
+2004-11-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (ListForm.__init__): Namísto volání
+	`self._create_context_menu()' jen nastavuj klávesové zkratky z
+	polo¾ek kontextového menu.  Neukládej vytvoøená kontextová menu
+	jako atributy.
+	(ListForm._create_grid): Nastavuj barvy pouze nejsou-li None.w
+	(ListForm._create_context_menu): Zru¹eno.
+	(ListForm.show_context_menu): Menu poka¾dé znovu vytváøej.
+	(ListForm.on_command): O¹etøi pøíkaz
+	`ListForm.COMMAND_FILTER_BY_CELL' voláním
+	`self._filter_by_cell()'.
+	(ListForm._on_filter): Nový argument `show_dialog' (pøedávej
+	nadøazené metodì).
+	(BrowseForm._context_menu): Zmìnìno poøadí polo¾ek a pøidána
+	polo¾ka pro pøíkaz `ListForm.COMMAND_FILTER_BY_CELL'.
+
+	* lib/form/command.py: Nový pøíkaz
+	`ListForm.COMMAND_FILTER_BY_CELL'.
+
+	* lib/form/form.py (LookupForm._on_filter): Nový argument
+	`show_filter'. Pokud je nepravdivý, nezobrazuj dialog, ale jen
+	pou¾ij jeho aktuální podmínku. 
+
+	* lib/form/search.py (SFDialog._save_values): Nová metoda.
+
+	* lib/presentation/field.py (PresentedRow._process_fieldspec):
+	Respektuj zmìnu argumentù pøi volání
+	`_Codebook.set_runtime_filter_provider()'.
+	(PresentedRow.format): Pro codebook s runtime-condition nastavuj
+	pøi exportu `strict' na `False'.
+	(PresentedRow.set_row): Doplnìn docstring.
+
+	* lib/data/xtypes.py (_Codebook.__init__): Namísto
+	`self._runtime_filter_row' initializuj `self._runtime_filter_args'
+	(_Codebook._export): Nový klíèový argument `strict'.  Pokud není
+	None, rozhoduj o striktní validaci podle nìj.
+	(_Codebook.set_runtime_filter_provider): Namísto argumentu `row'
+	pøijímej obecný argument `args'.  Ukádej jej do
+	`self._runtime_filter_args'.  Docstring aktualizován.
+	(_Codebook.validity_condition): Docstring aktualizován.  V
+	promìnné `self._runtime_filter_provider' oèekávej pøímo funkci, ne
+	`Computer'.  Pøedávej této funkci `self._runtime_filter_args'.
+	(SingleCodebook._export): Pøedávej v¹echny pozièní i klíèové
+	argumenty.
+
+2004-11-12  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (CodeBookSpec.__init__): Pøidán
+	argument 'begin_search'.	
+	(CodeBookSpec.begin_search): Nová metoda.
+
+	* lib/form/list.py (CodeBook.__init__): Upraven popis argumentu
+	'begin_search'. 
+	(CodeBook._on_idle): Zohledni pøímé pøedání id sloupce v
+	'begin_search'. 
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Zohlednìna mo¾nost pøejímání 'begin_search' ze specifikace
+	'CodeBookSpec'.
+
+2004-11-11  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (PresentedRow.set_row): Doplnìn
+	argument 'reset'.	
+
+	* lib/form/form.py (EditForm._edit_insert): Aktualizuj
+	stávající instanci PresentedRow a formuláø.
+	(EditForm._edit_update): Aktualizuj
+	stávající instanci PresentedRow a formuláø.
+
+	* lib/presentation/field.py (PresentedRow.__init__):
+	Upraven popis argumentu 'prefill'.
+	(PresentedRow._init_row.genval): 'prefill' mù¾e být i instance
+	'Value'.
+	(PresentedRow._init_row): Zohledni 'prefill' pro existující øádek.
+
+	* lib/form/spec.py (ViewSpec.__init__): Nový argument
+	'on_line_commit'. 
+	(ViewSpec.on_line_commit): Nová metoda.
+
+	* lib/form/list.py (_on_line_commit): Pøidána obsluha
+	user handleru `on_line_commit'.
+
+	* lib/form/application.py (Application.run_form):
+	Zru¹en hack se `set_row'.
+
+2004-11-05  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (current_row): Nová metoda.
+	(_on_handled_command): Vyu¾ij modul 'inspect' ke zji¹tìní
+	argumentù handleru a podle toho pøedej handleru i 'kwargs'.
+	Volej 'self.refresh()' jen pokud není pøedán klíèový argument
+	'norefresh'.
+
+	* lib/form/dualform.py (DualForm.on_command): Je-li volán
+	u¾ivatelský pøíkaz, pøedej handleru aktivního formuláøe
+	i klíèové argumenty 'mainform', 'sideform' a 'norefresh'.
+	Po zavolání 'refresh' nastav je¹tì zpátky fokus aktivnímu
+	formuláøi.
+
+2004-11-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (DualForm.__init__): Zaregistruj callback
+	pro `wx.EVT_SPLITTER_SASH_POS_CHANGED'. Nový atribut
+	`self._sash_ratio'. 
+	(DualForm._sash_position): Pou¾ívej `self._sash_ratio'.
+	(ShowDualForm._sash_position): Pou¾ívej `self._sash_ratio'.
+	(DescriptiveDualForm._sash_position): Pou¾ívej `self._sash_ratio'.
+	(DualForm.OnSashChanged): Nová metoda.
+
+2004-10-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/screen.py (CallbackHandler.get_callback): Nová metoda.
+
+	* lib/form/list.py (IncrementalSearch.__init__): Ulo¾
+	`ListForm.CALL_SELECTION' callback a nastav ho na `None'.
+	(IncrementalSearch._on_kill_focus): Obnov nastavení
+	`ListForm.CALL_SELECTION'.
+
+2004-10-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/spec.py (DualSpec.__init__): Pøidán argument
+	`append_condition'. 
+	(DualSpec.append_condition): Nová metoda.
+
+	* lib/form/list.py (_on_jump): Nová metoda.
+	(SideBrowseForm.__init__): Pøidán argument `append_condition'.
+
+	* lib/form/form.py (LookupForm._on_jump): Nová metoda.
+	(LookupForm.on_command): O¹etøi pøíkaz `LookupForm.COMMAND_JUMP'.
+	(BrowsableShowForm._on_jump): Nová metoda.
+
+	* lib/form/dualform.py (SideBrowseDualForm._create_side_form):
+	Pøidán argument `append_condition'.
+
+	* lib/form/command.py: `LookupForm.COMMAND_JUMP' - Nový pøíkaz.
+
+2004-10-22  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (PresentedRow.row): Pøed sestavením
+	datového øádku je¹tì aktualizuj hodnoty v¹ech `dirty' políèek.
+
+	* lib/form/list.py (ListForm._ListTable.EditInfo.__init__):
+	Ukládej ve tøídì i instanci PresentedRow.
+	(ListForm._ListTable.editing): Pøedej konstruktoru `EditInfo' i
+	instanci PresentedRow.
+	(_on_line_commit): Pou¾ívej ulo¾ený PresentedRow v instanci
+	`EditInfo'. Nevaliduj codebooky pøed ulo¾ením.
+	(BrowseForm._on_new_record): Pøi opu¹tìní volej `self.refresh'.
+	(BrowseForm._on_edit_record): Pøi opu¹tìní volej `self.refresh'.
+
+	* lib/data/xtypes.py (_Codebook.__init__): ValueCodebooky nastavuj
+	jako `strict'.
+	(_Codebook._value_retrieve): Metodì `_retrieve' pøedávej argument
+	`strict'. 
+	(_Codebook._retrieve): Pokud se `select' vrací více øádkù nahoï výjimku.
+	(_Codebook._validate): Pro získání values pøedávej `self._value_columns'.
+	(_Codebook._export): Pro získání `row' pøedávej `self._value_columns'.
+	(_Codebook._export): Pro mapování `subtypes' pøedávej
+	`self._value_columns_types'. 
+	(_Codebook.data_value): Pro získání `row' pøedávej `self._value_columns'.
+
+	* lib/data/dbdata.py (DBDataPostgreSQL._pg_value): Pro
+	`SingleCodebook' jednodu¹e proveï export.
+
+2004-10-20  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_line_commit): Zvaliduj `value codebooky'
+	pøed odesláním øádku a nastav focus na aktuální list.
+
+2004-10-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (PresentedRow._process_fieldspec):
+	Funkci `set_runtime_filter_provider' pøedávej funkci a instanci
+	PresentedRow. 
+	(PresentedRow._recompute_codebook_runtime_filter): Nenastavuj
+	znovu `runtime_filter_provider'.
+	(PresentedRow.keys): Oprava docstringu.
+
+	* lib/data/xtypes.py (_Codebook.__init__): Nový atribut
+	`self._runtime_filter_row'.
+	(_Codebook.set_runtime_filter_provider): Pøidán argument `row'.
+	(_Codebook.validity_condition): Zohledni pou¾ití
+	`self._runtime_filter_row'.
+
+2004-10-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_insert_line): Pøi kopii øádku nenastavuj
+	políèko s klíèem.
+	(BrowseForm._on_new_record): Pokud je návratovou hodnotu
+	PresentedRow, nastav na nìj pozici.
+
+	* lib/form/application.py (Application.new_record): Vracej
+	návratovou hodnotu formuláøe.
+
+2004-10-14  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py
+	(PresentedRow._recompute_codebook_runtime_filter):
+	Kosmetická úprava vytváøení seznamu `id'.
+	(PresentedRow._recompute_codebook_runtime_filter):
+	Poslat notifikaci o zmìnì funkce nestaèí, je tøeba funkci
+	opìtovnì nastavit pomocí `set_runtime_filter_provider'.
+
+2004-10-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/util/caching.py (_Cache.reset): Namísto `self.dict'
+	reinicializuj `self.data'.
+
+	* lib/util/_test.py (Module): Importuj `caching'.  Volej
+	`unittest.main()' bez argumentù.
+	(tests): Nech» je instancí `test.TestSuite'.
+	(Caching): Nová testovací tøída.
+
+	* lib/presentation/field.py (FieldSpec.__init__): Aktualizace
+	docstringu.
+	(PresentedRow._process_fieldspec.runtime_filter_provider): Zru¹eno.
+	(PresentedRow._process_fieldspec): Neinicializuj atributy pro
+	zapamatování stavu runtime filtru coodebookù.  Kosmetické úpravy v
+	definici runtime filter providera pro èíselníkový datový typ.
+	(PresentedRow._recompute_codebook_runtime_filter): Namísto
+	oznaèování podmínky jako dirty pouze notifikuj potenciální zmìnu
+	nadøazenému typu.
+	(_codebook_runtime_filter_provider): Metoda zru¹ena.
+
+	* lib/form/inputfield.py (RadioBoxField._create_controls):
+	Kosmetická úprava.
+
+	* lib/data/xtypes.py (_Codebook.__init__): Inicializuj atributy
+	`self._runtime_filter' a `self._runtime_filter_dirty'.
+	(_Codebook.notify_runtime_filter_change): Nová metoda.
+	(_Codebook.validity_condition): Zapamatuj si hodnotu runtime
+	filtru od providera a po¾aduj ji od nìho pouze pokud byla
+	oznámena zmìna.  Potom také v¾dy volej `self._update()'.
+
+2004-10-14  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (TextField): Doplnìno `DECIMAL_POINTS' a
+	`SIGNS'.
+
+	* config/config.py: Pøegenerována nová podoba.
+
+	* lib/util/configuration.py
+	(Configuration._Option_fetch_size.default): Zmìna hodnoty.
+	(Configuration._Option_initial_fetch_size.default): Zmìna hodnoty.
+
+	* lib/presentation/field.py (PresentedRow._compute_editability):
+	Pøedávej funkci i `key'.
+
+	* lib/data/types_.py (DateTime.__init__): Doplnìny argumenty
+	`mindate' a `maxdate'.
+	(DateTime._validate): Zohledni nové argumenty.
+
+2004-10-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (FieldSpec.__init__): Opravena
+	dokumentace k argumentùm.
+
+2004-10-12  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (BrowseDualForm._on_new_record): Oprava
+	chybné podmínky.
+
+	* lib/form/dialog.py (InputDate._customize_result): Pokud není
+	datum vlo¾en, vracuj lib.data.Value s hodnotou `None'.
+
+2004-10-08  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_insert_line): Pøi neúspìchu editace vracej
+	`False'.
+
+	* lib/form/dualform.py (BrowseDualForm._on_new_record): Testuj
+	úspìch v editaci `self._main_form' i na návratovou hodnotu `False'.
+
+2004-10-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (FieldSpec.__init__): Pokud je `width'
+	nula, nastav editovatelnost na `NEVER'.
+	
+	* lib/form/spec.py (ViewSpec.__init__): Nový argument `focus_field'.
+	(ViewSpec.focus_field): Nová metoda.
+
+	* lib/form/form.py (EditForm.__init__): 
+	(EditForm.init): Zohledni pøípadné
+	nastavení `focus_field' ve `ViewSpec'.
+
+	* lib/output/formatter.py (LoutFormatter._process):
+	Defaultním fontem je opìt "FIXED_FONT".
+
+2004-10-05  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (EnumerationField._set_value): Zru¹
+	testování nastavení hodnoty.
+
+	* config/config.py: Pøegenerována nová podoba.
+
+	* lib/util/configuration.py (Configuration._Option_cache_size):
+	Nová konfiguraèní volba.
+	(Configuration._Option_initial_fetch_size): Nová konfiguraèní volba.
+	(Configuration._Option_fetch_size): Nová konfiguraèní volba.
+
+	* lib/data/dbdata.py (DBDataPostgreSQL): Nastavení `cache' a
+	`fetch' je konfigurovatelné.	
+
+2004-10-04  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (on_key_down): Zru¹eno (ve
+	wxPythonu-2.5.2.8 u¾ to funguje správnì - hack není tøeba).
+
+	* lib/form/form.py (PopupEditForm._on_next): Pro nový formuláø
+	nastavuj øádek na None.
+
+2004-10-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/presentation/field.py
+	(PresentedRow._process_fieldspec.runtime_filter_provider): Nová
+	funkce.
+	(PresentedRow._process_fieldspec): Vyu¾ívej ji.
+	(PresentedRow._codebook_runtime_filter_provider): Odstranìn
+	zapomenutý print.
+
+2004-09-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/presentation/field.py (FieldSpec.__init__): Argument
+	`codebook_runtime_condition' pøejmenován na
+	`codebook_runtime_filter'.
+	(FieldSpec.codebook_runtime_condition): Pøejmenováno na
+	`codebook_runtime_filter'.
+	(PresentedRow._Column.__init__): Nový argument
+	`codebook_runtime_filter'.
+	(PresentedRow._recompute_dependencies): Nová metoda.
+	(PresentedRow.__init__, PresentedRow._codebook_dependent)
+	(PresentedRow.set_row): Pou¾ívej `_recompute_dependencies()'
+	namísto `_recompute_editability()'.
+	(PresentedRow._process_fieldspec): Inicializuj Vnitøní promìnné
+	potøebné pro výpoèet runtime filtrovací podmínky èíselníku.
+	Registruj run-time filtr metodou `set_runtime_filter_provider()'
+	pro èíselníkové sloupce s nastaveným `cedebook_runtime_filter'.
+	(PresentedRow._recompute_editability): Zru¹en klíèový argument
+	`invoke_callbacks', nebo» nebyl nikde vyu¾it.
+	(PresentedRow._recompute_codebook_runtime_filter): Nová metoda.
+	(PresentedRow._codebook_runtime_filter_provider): Nová metoda.
+
+	* lib/form/inputfield.py
+	(CodeBookField._validation_error_handler): Odstranìn hack s
+	nastavováním runtime filtrovací podmínky èíselníku.
+
+	* lib/data/xtypes.py (_Codebook.__init__): Zru¹
+	`self._appended_validity_condition'.  Inicializuj
+	`self._runtime_filter_provider'
+	(_Codebook.set_runtime_filter_provider): Nová metoda
+	(_Codebook.append_validity_condition): Zru¹eno.
+	(_Codebook.validity_condition): Namísto
+	`_appended_validity_condition' vyu¾ívej `_runtime_filter_provider'.
+
+2004-10-01  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/presentation/field.py (PresentedRow.data): Nová metoda.
+
+	* lib/form/spec.py (ViewSpec.__init__): Pøidány argumenty
+	`on_edit_record' a `on_delete_record'.
+	(ViewSpec.on_edit_record): Nová metoda.
+	(ViewSpec.on_delete_record): Nová metoda.
+
+	* lib/form/screen.py (MenuBar.add_menu): Pøedávej i argument `form'.
+	(MenuBar.add_menu): Pøi hledání shody menu porovnávej nejen
+	`title', ale i `activation'.
+	(MenuBar.activate): Úprava podmínky pro volání `self._replace_menu'
+
+	* lib/form/list.py (_create_grid): Zaregistruj `wx.EVT_MOUSEWHEEL'.
+	(_on_wheel): Nová metoda.
+	(_on_delete_line): Zohledni pøípadnou definici funkce `on_delete_record'.
+	(BrowseForm._on_edit_record): Nová metoda.
+	(BrowseForm.__init__): Pou¾ívej ji.
+
+	* lib/form/form.py (Form._add_menus): Pøedávej i instanci formuláøe.
+	(EditForm.ACT_EDITFORM): `EditForm' má vlastní aktivaci.
+	(EditForm._menus): `EditForm' má vlastní podobu menu `Pøíkazy'.
+
+	* lib/form/dialog.py (delete_record): Pøidán volitelný argument
+	`msg'.
+
+	* lib/form/application.py (Application.add_menu): Pøedávej i
+	argument `form'.
+	(add_menu): Pøedávej i argument `form'.
+
+	* lib/data/types_.py (String._validate): V¾dy vracej `unicode'.
+	(String._export): V¾dy vracej `unicode'.
+
+	* lib/data/dbdata.py (DBDataPostgreSQL): Pokusnì nastaveny vìt¹í
+	hodnoty pro `_PG_CACHE_SIZE' a `_PG_INITIAL_FETCH_SIZE'.
+
+2004-09-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL._pg_value): Kosmetická
+	úprava. 
+
+	* lib/form/form.py (EditForm._edit_update): Pro update pou¾ívej
+	zvalidovanou podobu `row'.
+
+2004-09-23  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dialog.py (InputDate._customize_result):
+	Není-li vstup validní vracej None.
+
+	* lib/form/application.py (Application.run_form):
+	Místo metody `set_row' volej `_set_row', aby se inicializoval
+	nový PresentedRow.
+
+2004-09-22  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_create_form_parts): O¹etøi inicializaci
+	`self._size'.
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	O¹etøi správné nastavení vysvíceného øádku.
+
+	* lib/data/xtypes.py (SingleCodebook.value_columns): Nová metoda.
+	(SingleCodebook._validate): Nová metoda.
+	(MultiCodebook.value_columns): Nová metoda.
+
+	* lib/data/dbdata.py
+	(DBDataPostgreSQL._pg_create_make_row_template):
+	Id sloupcù ber v¾dy z `value_columns'.
+	(DBDataPostgreSQL._pg_value): V èíselnících zohledni
+	`value_columns' pro vytvoøení exportované hodnoty.	
+
+2004-09-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/xtypes.py (_Codebook.__init__): Zji¹»uj typy sloupcù i
+	pro `value_columns'.
+	(_Codebook.__init__): Nenastavuj `strict' pro nastavené
+	`value_columns'.
+	(_Codebook._export): Zohledòuj nastavení `value_columns'.
+
+	* lib/data/dbdata.py
+	(DBDataPostgreSQL._pg_create_make_row_template):
+	Pøi zji¹»ování typù zohledòuj `value_columns'.
+
+2004-09-16  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_create_grid): Zohlednìní povolení editace
+	políèka pro editable jako instanci Computeru.
+	(_on_cell_commit): Oprava chybného odkazu na `g.SetGridCursor'
+	místo správného `self._grid.SetGridCursor'.
+	(refresh): Pokud nelze nastavit pozici na pozici pøedchozího
+	klíèe, zkus nastavit pozici na pøedchozí èíslo øádku gridu.	
+	(SetSize): I kdy¾ se velikost nezmìnila, proveï SetSize u gridu a
+	pøedka (aby se správnì zobrazovaly scrollbary u sideform).
+	(refresh): Oprava chybné podmínky pøi nastavování na pøedchozí
+	pozici gridu.
+	
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Oprava ¹patného pøedávání stavájící hodnoty políèka pro
+	`select_row'. 
+
+2004-09-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/output/markup.py (Euro): Nová tøída.
+	(Pound): Nová tøída.
+
+	* lib/output/formatter.py (LoutFormatter._MARK_PROCESSORS):
+	Pøidány znaèky pro `Euro' a `Pound'.
+	(LoutFormatter._format_euro): Nová metoda
+	(LoutFormatter._format_pound): Nová metoda.
+
+	* lib/form/dialog.py (InputDialog._create_content):
+	Nepou¾ívej defaultní masku 'X'*13.
+	(RunFormDialog.__init__): Roz¹íøení vstupního pole na 25 znakù.
+
+	* lib/form/list.py (ListForm._ListTable._retrieve_row.fetch):
+	Nepou¾ívej manévr se stahováním dat pro cache ve smìru `BACKWARD'.
+	(show_popup_menu): Nová metoda.
+
+	* lib/form/event.py (_is_user_event): Výbìr polo¾ky z menu
+	nepova¾uj za `user_event'.
+
+2004-09-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/xtypes.py (_Codebook.append_validity_condition):
+	Oprava assert s umo¾nìním podmínky `None'.
+
+	* lib/form/form.py (Form._menus):
+	Oprava chyby pro `Editovat záznam'.
+	Pøidáno volání náhledù na záznam.
+	(EditForm.__init__): Nastavení øádku pomocí `self._set_row'
+	pøesuò ze self.init() sem.
+
+	* lib/form/dialog.py (InputDialog.__init__)
+	(InputDialog._create_content): 
+	Upraveno s vyu¾itím `masked.TextCtrl'. Zaji¹tìn mechanismus
+	kontroly vstupního pole pøi ztrátì focusu.
+	(InputDialog._on_kill_control_focus): Nová metoda.
+	(InputDate): Nová tøída.
+
+	* lib/form/application.py (Application.run_form):
+	Pøidán hack pro mo¾nost volání metody `set_row' u vytvoøeného
+	formuláøe.
+
+2004-08-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/application.py (Application.restore): Na konci
+	nastav formuláøi fokus.
+
+	* lib/form/list.py (SetSize): Pokud nedo¹lo ke zmìnì
+	velikosti gridu, neprovádìj pøepoèítání ¹íøky sloupcù.
+
+	* lib/form/dialog.py (Login._create_content): Zaregistruj callback
+	pro stisk klávesy u `self._login' a `self._passwd'.	
+	(Login._on_key_down): Nová funkce.
+	(Login._navigate): Nová funkce.
+	(Calendar._create_content): Roz¹iø widget tak, aby se správnì
+	zobrazoval rok.
+
+2004-08-24  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/output.py (PostscriptViewer.DoDrawing): Nepøedávej
+	souøadnice jako tuple.
+
+2004-08-23  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (TextField._create_text_control):
+	Pøidávej k ¹íøce widgetu automaticky jeden znak.
+
+	* lib/form/form.py (PopupEditForm._create_buttons): Upraveno
+	poøadí tlaèítek.
+
+	* lib/form/dialog.py (Login.__init__): Pøedávej dialogu øetìzce
+	jako unicode.
+
+	* lib/form/dualform.py (PostponedSelectionDualForm):
+	`_SELECTION_TICK' nastaveno na 2.
+
+	* lib/form/inputfield.py (TextField._create_text_control)
+	(ColorSelectionField._create_button, CodeBookField._create_widget)
+	(Invocable._create_button, ListField._create_controls): 
+	Místo control.SetSize() pou¾ívej control.SetMinSize()
+	(viz Migration Guide wxPython-2.5.2.7).	
+
+	* lib/form/list.py (_create_form_parts): Do metody `sizer.ADD'
+	pøidej flag `wx.FIXED_MINSIZE' (viz Migration Guide pro
+	wxPython-2.5.2.7).
+
+2004-08-20  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_export_csv): Zohledòuj config.db_encoding.
+
+2004-08-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/types_.py (Float._export): Vracej exportovanou hodnotu
+	jako unicode.
+
+2004-08-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (CheckBoxField._create_controls):
+	Registruj self._on_key_down
+	(CheckBoxField.on_key_down): Nová metoda.
+
+2004-08-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/output/formatter.py (LoutFormatter._process):
+	Jako základní font pou¾ívej SANS_SERIF.
+	* lib/data/types_.py (Float._export): Vracej exportovanou hodnotu
+	jako unicode.
+
+2004-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (DateField._menu) 
+	(ColorSelectionField._menu, CodeBookField._menu) 
+	(ListField._menu): Nastavuj argument `originator' na `self' u
+	jako argument v¹ech pøíkazù v menu.
+	(ListField.on_command): Pokud je otevøen modální formuláø pøi
+	pøíkazu `COMMAND_INVOKE_BROWSE_FORM', nedìlej nic, jen zobraz
+	zprávu, ¾e to nejde...
+
+	* lib/form/application.py (Application.__init__): Inicializuj
+	slovník `self._window_menu_item'.
+	(Application._window_menu_item_title): Metoda zru¹ena.
+	(Application._add_window_menu_item): K za¹krtnutí menu pou¾ívej
+	radìji `self._check_window_menu_item()'.  Pøidej polo¾ku do
+	slvníku `self._window_menu_item'.
+	(Application._remove_window_menu_item): Namísti vyhledávání
+	polo¾ky v menu pomocí wx metod pou¾ívej slovník
+	`self._window_menu_item'.  Polo¾ku nakonec zniè voláním
+	`Destroy()'.
+	(Application._check_window_menu_item): Nejprve v¹echny polo¾ky
+	oznaè jako neaktivní.  Aktivní polo¾ku nehledej v menu pomocí wx
+	metod, ale pou¾ívej slovník `self._window_menu_item'.
+
+	* lib/form/list.py (__init__): Nestarej se zde o nastavování statusbaru.
+	(ListForm.show_position): Nová metoda.
+	(ListForm._select_cell_command, ListForm.focus): Vyu¾ívej ji.
+
+	* lib/form/form.py (LookupForm._lf_sf_dialog): Pøi vytváøení
+	`FilterDialog' pøedávej také filtrovací podmínku.
+	(EditForm.on_command): Je-li nastaven argument `originator' a ten
+	je jedním z políèek formuláøe, zpracuj událost tímto políèkem.
+
+	* lib/form/search.py (SFDialog._create_content): Oprava zaji¹tìní
+	rozestupu tlaèítek pøi pøidávání do sizeru.
+	(FilterDialog.__init__): Nový argument `filter'.
+	(FilterDialog._on_compute_aggregate): K filtrovací podmínce
+	pøidávej také podmínku z konstreuktoru.
+
+	* lib/form/screen.py (init_colors): Definuj, ¾e nastavované
+	konstanty jsou globální.
+	(RadioItem._wx_kind): Vracej `wx.ITEM_CHECK' namísto
+	`wx.ITEM_RADIO' (ten zpùsobuje segfaulty pøi pøidávání do menu).
+
+	* lib/form/dialog.py (Calendar._on_set_focus): První argument
+	nech» se jmenuje `event'.
+
+2004-08-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/util/configuration.py (Configuration._Option_filter_color):
+	Oprava docstringu.
+
+	* lib/form/list.py (ListForm._GROUPING_BACKGROUND_DOWNGRADE):
+	Lehce zvý¹eno ztmavení.
+ 
+	* lib/form/application.py (Application.run_dialog): Pokud má 
+	aplikace nìjaké modální okno, nech» je toto rodièem dialogu.
+	(Application.run_form): Kosmetické úpravy.
+	(Application.run_dialog): Nakonec vra» focus nejvy¹¹ímu oknu.
+
+	* lib/form/dialog.py (GenericDialog._on_set_focus): Nakonec v¾dy
+	proveï `event.Skip()'.
+	(GenericDialog._create_dialog): Volej `self._handle_keys()' pro
+	vytvoøený dialog.
+	(GenericDialog._finish_dialog): Nová metoda.
+	(GenericDialog._on_button, GenericDialog._close_dialog) 
+	(GenericDialog._commit_dialog, InputDialog._commit_dialog) 
+	(OperationDialog._on_show, Calendar._on_calendar) 
+	(BugReport._close_dialog, FileDialog.on_command): Vyu¾ívej
+	`self._end_modal()' namísto pøímého ukonèování dialogu.
+	(GenericDialog.rebuild): Nakonec dialogu nastav focus.
+	(Calendar._on_set_focus): Nakonec volej `event.Skip()'.
+	(BugReport._on_set_focus): Nakonec volej `event.Skip()'.
+
+	* lib/form/search.py (SFDialog._create_button)
+	(SFDialog._create_choice, SFDialog._create_text_ctrl): Nové
+	metody.
+	(SFDialog._FIELD_HEIGHT): Nová konstanta.
+	(SFDialog._create_content.condition): Nepøebírej lokální promìnné
+	jako klíèové argumenty.  Nevytváøej vstupní prvky pøímo, ale
+	vyu¾ívej nové metody `_create_*()'.
+	(SFDialog._create_content, FilterDialog._create_content)
+	(SortingDialog._create_content): Nevytváøej vstupní prvky pøímo,
+	ale vyu¾ívej nové metody `_create_*()'.
+	(SFSDialog): Nová tøída
+	(SFDialog._create_button, SFDialog._create_choice)
+	(SFDialog._create_text_ctrl): Metody pøesunuty do `SFSDialog'.
+	(SFDialog._FIELD_HEIGHT): Pøesunuto do `SFSDialog'.
+	(SortingDialog, SFSDialog): Buï potomkem `SFSDialog'.
+	(SortingDialog._customize_result_sorting): Vracej konstanty
+	`LookupForm.SORTING_ASCENDENT' a `LookupForm.SORTING_DESCENDANT'
+	namísto `lib.data.ASCENDENT' a `lib.data.DESCENDANT'.
+	(SFDialog._create_content): Nevytváøej atributy `_and_button_id' a
+	`_or_button_id' a namísto toho pou¾ívej `self._on_add()' a
+	`self._on_add_or_()'.  Kosmetické úpravy.  Nepou¾ívej
+	`wx.StaticText' pro vytvoøení mezery, ale specifikuj border v sizeru.
+	(SortingDialog._on_add): Nový nepovinný argument
+	logical_selection.  Nerozhoduj se posle id tlaèítka, ale podle
+	argumentu `logical_selection'.
+	(SFDialog._on_add_or_): Nová metoda.
+	(SFDialog._on_remove): V¹e dìlej pouze pokud je
+	`self._number_of_conditions' vìt¹í ne¾ 1.
+	(SFSDialog._create_button, SFSDialog._create_choice)
+	(SFSDialog._create_text_ctrl): Nový argument tip.  Pokud není
+	None, nastav vytváøenému widgetu tooplip.
+	(SFDialog._create_content.condition, SFDialog._create_content) 
+	(SortingDialog._create_content): Nastavuj v¹em vytváøeným
+	ovládacím prvkùum tooltip.
+	(SFDialog._LABEL): Pøejmenováno na `_TITLE'. 
+	(SFDialog.__init__): Konstruktoru pøedka pøedávej také argument default.
+	(SFDialog._COMMIT): Nová konstanta.
+	(SearchDialog._COMMIT): Nová konstanta.
+	(SearchDialog._LABEL): Pøejmenováno na `_TITLE'. 
+	(FilterDialog._COMMIT): Nová konstanta.
+	(FilterDialog._LABEL): Pøejmenováno na `_TITLE'. 
+	(SFDialog._commit_dialog): Nová metoda.
+	(SortingDialog._commit_dialog): Nová metoda.
+	(SortingDialog): Oprava docstringu.
+	(SortingDialog._create_content): Namísto tøídících konstant z
+	`lib.data' pou¾ívej konstanty `LookupForm'.
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection): S
+	`codebook_runtime_condition' pracuj pouze pokud není None...
+	(InputField.__init__): Inicializuj nový atribut
+	`self._unregistered_widgets'.
+	(InputField._skip_navigation_callback.cb): V callbacku kontroluj,
+	zda widget není v `self._unregistered_widgets' v kterém¾to pøípadì
+	proveï pouze Skip.
+	(InputField._register_skip_navigation_callback): Pokud je widget v
+	`self._unregistered_widgets', sma¾ je odtamtud.
+	(InputField._unregister_skip_navigation_callback): Pøidej widget
+	do `self._unregistered_widgets'.  Disconnect neprovádìj, stejnì to
+	nefunguje...
+
+2004-08-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Upraven výpoèet ¹íøky políèka.
+	(CodeBookField._on_invoke_selection): Pøidán rychlý hack pro
+	aktualizaci mno¾iny èíselníku podle `codebook_runtime_condition'.
+
+	* lib/presentation/field.py (FieldSpec.__init__): Nový argument
+	`codebook_runtime_condition'.
+	(FieldSpec.codebook_runtime_condition): Nová metoda.
+
+	* lib/data/xtypes.py (_Codebook.__init__): Inicializuj atribut
+	`self._appended_validity_condition'.
+	(_Codebook._retrieve): Pou¾ívej metodu `validity_condition()'
+	namísto atributu `_validity_condition'.
+	(_Codebook.append_validity_condition): Nová metoda.
+	(_Codebook.validity_condition): Zohlední také
+	`self._appended_validity_condition'
+
+	* lib/form/list.py (ListForm._create_grid): Vylep¹en vypoèet ¹íøky sloupcù.
+	(ListForm.SetSize): Vylep¹en vypoèet ¹íøky sloupcù.
+	(CodeBook.__init__): Vylep¹en docstring.  Kosmetické úpravy.
+
+	* lib/form/form.py (PopupEditForm.set_status): Pøevádìj zprávu na
+	unicode.
+
+	* lib/form/output.py (PrintForm._create_controls): Vzezøení
+	tlaèítkové li¹ty vylep¹eno.
+
+	* lib/output/formatter.py (LoutFormatter._lout): Pro streamování
+	nacachovaného loutového zdrojáku pou¾ívej StringIO namísto cStringIO.
+
+2004-08-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/output.py (PostscriptViewer.DoDrawing): Pøedávej metodì
+	`DrawBitmap()' souøadnice jako dvouprvkovou sekvenci.
+	(PrintForm._create_controls.make_widget): Nepou¾ívej `expand' pøi
+	pøidávání do ziseru.
+	(PrintForm._create_controls): Názvy tlaèítek zmìnìny s pou¾itím
+	¹ipek (znaky '<' a '>').
+
+	* lib/output/formatter.py (LoutFormatter._format): Pou¾ívej
+	`is_anystring()' namísto porovnání s type('').
+	(LoutFormatter._unit): Replace comma by a dot in the formatted
+	string (to avoid problems with locale dependent float formatting).
+	
+
+	* lib/form/list.py (ListForm._create_grid): Zmen¹i vý¹ku øádkù v
+	gridu.
+
+2004-08-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (_IncrementalSearch): Pøejmenováno na
+	`IncrementalSearch'.
+	(IncrementalSearch.TEXT_CONTROL_NAME): Nová konstanta.
+	(IncrementalSearch.__init__): Pou¾ívej ji k nastavení jména
+	vstupního textovìho políèka.
+	(_on_incremental_search): `_IncrementalSearch' -> `IncrementalSearch'.
+
+	* lib/form/inputfield.py (TextField._on_set_focus): Provádìj výbìr
+	textu pouze je-li políèko editovatelné.
+	(TextField._on_kill_focus): Výbìr textu neøe¹ vùbec...
+
+	* lib/form/form.py (EditForm._navigate): V needitovatelném
+	formuláøi nedìlej vùbec nic.
+	(BrowsableShowForm.on_command): Pouívej `super()' namísto `super_()'.
+	(BrowsableShowForm._set_row): Pouívej `super()' namísto `super_()'.
+
+	* lib/form/dualform.py (PostponedSelectionDualForm._on_idle):
+	Pokud je `self._side_form' None, nedìlej nic (vyèkej na dal¹í
+	idle).
+	(PostponedSelectionDualForm._on_main_selection): Nehleï na
+	existenci `self._side_form' (mìlo by být o¹etøeno úpravou vý¹e).
+	(SideBrowseDualForm._do_selection): Test na TextCtrl
+	inkrementálního vyhledávání roz¹íøen o test na název widgetu.
+	(ShowDualForm.__init__): Nevolej `self._side_form.refresh()'.
+	Inicializuj atribut `self._initialization_done' na False.
+	(ShowDualForm._on_idle): Nová metoda (o¹etøení prvotní
+	inicializace formuláøe).
+
+2004-08-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py: Namísto `grid' importuj `wx.grid'.  V¹ude
+	pou¾ívej Pythonové konstanty `True' a `False' namísto na¹ich
+	`TRUE' a `FALSE' a wx `wx.TRUE' a `wx.FALSE'.  V¹echna `wx.wx*'
+	jména nahraï jejich ekvivalenty v novém namespace (`wx.*').
+	Vyu¾ívej funkci `is_anystring()' namísto porovnávání s type('').
+	(_scrollbar_width): Zru¹eno.
+	(ListForm._ListTable._make_attr): Odvozuj velikost fontu od
+	v7choz9ho fontu.
+	(_update_selection_colors): Pokud je zkonfigurovaná barva pozadí
+	aktivního øádku None, pou¾ij systémovou barvu zvýraznìní.
+	(ListForm.label_font, ListForm.cell_font): Metody zru¹eny.
+	(ListForm.total_height): Novíá metoda.
+	(ListForm.SetSize): Vyu¾ívej `self.total_height()' k zji¹tìní, zda
+	zapoèítat scrollbar.  Pou¾ívej
+	`wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)' ke zji¹tìní ¹íøky
+	scrollbaru.
+	(CodeBook): `_WINDOW_HEIGHT' -> `_DEFAULT_WINDOW_HEIGHT'.
+	(CodeBook.__init__): Pokud je seznam kratt¹í ne¾
+	`_DEFAULT_WINDOW_HEIGHT', zmen¹i okno na vý¹ku seznamu.  Nastavuj
+	titulek okna.
+	(ListForm._create_context_menu): Nová metoda.
+	(ListForm._create_popup_menu): Pøejmenováno na `_context_menu'.
+	(ListForm._create_edit_popup_menu): Pøejmenováno na `_edit_menu'.
+	(BrowseForm._create_popup_menu): Pøejmenováno na `_context_menu'.
+	(CodeBook._create_popup_menu): Pøejmenováno na `_context_menu'.
+	(ListForm.show_popup_menu): Pøejmenováno na `show_context_menu'.
+	(ListForm.show_context_menu): `self._edit_popup_menu' -> `menu =
+	(ListForm._on_popup_menu): Pøejmenováno na `_on_context_menu'.
+	self._edit_menu_'.  `self._popup_menu' -> `self._context_menu_'
+	(ListForm.__init__): Pou¾ívej `ListForm._create_context_menu()' k
+	vytváøení kontextových menu.  Nová jména atributù:
+	`self._edit_popup_menu' -> `menu = self._edit_menu_'.
+	`self._popup_menu' -> `self._context_menu_'.
+	`self._on_popup_menu()' -> `self._on_context_menu()'
+
+	(BrowseForm._context_menu): `_create_popup_menu()' ->
+	`_context_menu'.
+
+	* lib/form/form.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').  Vyu¾ívej funkci `is_anystring()'
+	namísto porovnávání s type('').
+	(_class_name): Metoda zru¹ena.
+	(Form.__str__): Pou¾ívej `self.__class_.__name__' namísto
+	`self._class_name()'.
+	(Form.__repr__): Nová metoda.
+	(EditForm.on_command): O¹etøi pøíkaz
+	`EditForm.COMMAND_NAVIGATE_BACK' voláním `self._navigate()'.
+	(EditForm._navigate): Argument `dir' pøejmenován na `forward'.
+
+	* lib/form/dialog.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').  Vyu¾ívej funkci `is_anystring()'
+	namísto porovnávání s type('').  `wxPython.claendar' ->
+	`wx.calendar'.
+	(Message.__init__): Pøevádìj `message' do unicode.
+	(Calendar._customize_result): Pøed voláním `DT.DateTimeFrom()'
+	pøeveï argument na prostý øetìzec.
+	(BugReport._create_content): Velikost fontu odvozuj od výchozího
+	fontu.
+	(BugReport._create_content): Text do políèka vkládej po øádcích.
+	(BugReport._create_content): Nová (zatím zakázaná) mo¾nost
+	zobrazit traceback v HTML widgetu.
+	(BugReport._customize_result): Pokud `self._display' není
+	`wx.TextCtrl' vracej text tracebacku.
+	(BugReport._on_set_focus): `self._text' -> `self._display'.
+
+	* lib/form/inputfield.py: V¹ude pou¾ívej Pythonové konstanty
+	`True' a `False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').
+	(InputField._class_name): Metoda zru¹ena.
+	(InputField.__str__): Pou¾ívej `self.__class_.__name__' namísto
+	`self._class_name()'.
+	(TextField._set_value): Vyu¾ívej funkci `is_anystring()' namísto
+	porovnávání s type('').
+
+	* lib/form/spec.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.  Vyu¾ívej funkci
+	`is_anystring()' namísto porovnávání s type('').
+	(GroupSpec.__init__): Pøevádìj `label a `caption' pomocí
+	`gettext_()'.
+	(DualSpec.__init__): Pøevádìj `title' pomocí `gettext_()'.
+
+	* lib/form/screen.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').
+	(init_colors): Nová funkce.
+	(set_clipboard_text): Vyu¾ívej funkci `is_anystring()' namísto
+	porovnávání s type('').
+	(color_dictionary): `wxPython.lib' -> `wx.lib'.
+	(WxKey.is_event_of_key): Pøi porovnání wx tøíd pou¾ívej pøímo
+	název tøídy, nikoliv `*Ptr' tøídu.
+	(WxKey.event_key): Umo¾ni také kombinace Ctrl, Alt a Shift.
+	Písmena se shiftem pøevádìj na velká a pro ostatní klávesy
+	pøidávej `Shift-' prefix.  Zpracuj také Enter na numerické
+	klávesnici jako `Enter'.
+	(_WX_COLORS, _WX_COLORS_DATABASE): Inicializace pøesunuta do
+	`init_colors()'.
+	(Keymap.define_key): Klíèové argumenty pøíkazu pøebírej jako jeden
+	argument typu slovník, ne jako vlastní klíèové argumenty.
+	(Keymap.define_key): Aktualizován docstring.
+	(KeyHandler.on_key_down): Nové debug logovací hlá¹ky.
+	(Menu.__init__): Vyu¾ívej funkci `is_anystring()' namísto
+	porovnávání s type('').
+	(Menu.create): Klíèové argumenty pøíkazu pøedávej jako slovník, ne
+	jako klíèové argumenty volání `Keymap.define_key()'.
+	(MItem.__init__): Vyu¾ívej funkci `is_anystring()' namísto
+	porovnávání s type('').
+	(MItem.__init__): Pøevádìj `title' a `help' pomocí `gettext_()'.
+	(field_width): Poslední políèko zvìt¹uj o 22px kvùli rohovému
+	"dr¾átku" v nových wx.
+	(StatusBar.message): Text zprávy pøevádìj do unicode.
+	(KeyHandler.__init__): Initialize the attriburte
+	`self._temporary_keymap'.
+	(KeyHandler._init_commands): Removed processing of `Command.key'
+	attributte.
+	(KeyHandler._init_commands): Process the `self._temporary_keymap'.
+	(KeyHandler.define_key): New method.
+
+	* lib/form/search.py: V¹ude pou¾ívej Pythonové konstanty `True'
+	a `False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').
+
+	* lib/form/output.py: V¹ude pou¾ívej Pythonové konstanty `True'
+	a `False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').
+
+	* lib/form/grid.py: Module removed. 
+
+	* lib/form/dualform.py: V¹ude pou¾ívej Pythonové konstanty `True'
+	a `False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').
+
+	* lib/form/command.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+	(EditForm.COMMAND_NAVIGATE_BACK): Nový pøíkaz.
+	(Command.__init__): Vyu¾ívej funkci `is_anystring()' namísto
+	porovnávání s type('').
+
+	* lib/form/event.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v
+	novém namespace (`wx.*').  Pøi porovnání wx tøíd pou¾ívej pøímo
+	název tøídy, nikoliv `*Ptr' tøídu.
+	(_system_callback_pid): Pøejmenováno na
+	`_system_callback_thread_ident'.
+	(wx_callback.process_event.system_callback):
+	`_system_callback_pid' -> `_system_callback_thread_ident'.  `pid'
+	-> `ident'.  Namísto PID procesu rozli¹uj thready pomocí
+	`thread.get_ident()'.
+	(wx_callback.process_event): `_system_callback_pid' ->
+	`_system_callback_thread_ident'.
+	(yield_): Namísto PID procesu rozli¹uj thready pomocí
+	`thread.get_ident()'.
+	(interrupt_watcher.watcher): Namísto microsleep pou¾ívej
+	`time.sleep(0.1)'.
+	(interrupt_init): Namísto PID procesu rozli¹uj thready pomocí
+	`thread.get_ident()'.  `*pid*' -> '*thread_ident*'.
+	(_is_user_event): `grid' -> `wx.grid'.
+
+	* lib/form/application.py: V¹ude pou¾ívej Pythonové konstanty
+	`True' a `False' namísto na¹ich `TRUE' a `FALSE' a wx `wx.TRUE' a
+	`wx.FALSE'.  V¹echna `wx.wx*' jména nahraï jejich ekvivalenty v novém
+	namespace (`wx.*').
+	(Application.run_form): Po uzavøení modálního formuláøe nad
+	prázdným oknem aplikace nastav focus na `self._panel'.  Pøi
+	logování volej na formuláøe `str()'
+
+	* lib/form/wx.py: Module removed.
+
+	* lib/output/markup.py (PageNumber.__init__, Group.KWARGS):
+	Pou¾ívej Pythonové konstanty `True' a `False' namísto na¹ich
+	`TRUE' a `FALSE'.
+
+	* lib/output/formatter.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+
+	* lib/output/flibdata.py (data_table.table_row): Pou¾ívej
+	Pythonové konstanty `True' a `False' namísto na¹ich `TRUE' a
+	`FALSE'.
+
+	* lib/presentation/field.py: V¹ude pou¾ívej Pythonové konstanty
+	`True' a `False' namísto na¹ich `TRUE' a `FALSE'.  V¹ude vyu¾ívej
+	funkci `is_anystring()' namísto porovnávání s type('').
+	(RefSpec.__init__): Pøevádìj `name' pomocí `gettext_()'.
+	(FieldSpec.__init__): Pøevádìj `label' a `descr' pomocí
+	`gettext_()'.
+
+	* lib/remote/server.py: V¹ude pou¾ívej Pythonové konstanty `True'
+	a `False' namísto na¹ich `TRUE' a `FALSE'.
+
+	* lib/remote/data.py (_DataChangesWatcher._watcher): Pou¾ívej
+	Pythonové konstanty `True' a `False' namísto na¹ich `TRUE' a
+	`FALSE'.
+
+	* lib/util/_test.py (BooleanConstants): Zru¹eno.
+	(ListUtils.check_some): Pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+
+	* lib/util/configuration.py (Configuration.dump_config_template):
+	Vytváøej na zaèátku generovaného souboru také hlavièku Pythonového
+	kódování.
+
+	* lib/util/log.py (Module): V¹ude pou¾ívej Pythonové konstanty
+	`True' a `False' namísto na¹ich `TRUE' a `FALSE'.
+	(Logger.log): Vyu¾ívej funkci `is_anystring()' namísto porovnávání
+	s type('').
+
+	* lib/util/util.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+	(gettext_): Nová funkce.
+	(is_string, is_unicode, is_anystring): Nové funkce.
+
+	* lib/util/test.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+
+2004-08-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/data/_test.py:  V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+
+	* lib/data/dbdata.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.  V¹ude vyu¾ívej funkci
+	`is_anystring()' namísto porovnávání s type('').
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Øetìzcové hodnoty
+	pøevádìj do unicode.
+	(_pg_encoding): Nová metoda.
+	(_pypg_new_connection): Nastavuj `client_encoding' podle
+	konfigurace.
+	(DBDataPyPgSQL._pg_query): Konvertuj unicode øetìzce do
+	`client_encoding'.
+
+	* lib/data/data.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.  V¹ude vyu¾ívej funkci
+	`is_anystring()' namísto porovnávání s type('').
+
+	* lib/data/types_.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.  V¹ude vyu¾ívej funkci
+	`is_anystring()' namísto porovnávání s type('').
+
+	* lib/data/xtypes.py: V¹ude pou¾ívej Pythonové konstanty `True' a
+	`False' namísto na¹ich `TRUE' a `FALSE'.
+
+	* config/config.py: Pøegenerováno.
+
+	* lib/util/configuration.py: V¹ude pou¾ívej Pythonové konstanty
+	`True' a `False' namísto na¹ich `TRUE' a `FALSE'.
+	(Configuration._Option_db_encoding): Nová konfigruraèní volba.
+	(Configuration._Option_row_focus_bg_color.default): Vracej `None'.
+
+	* ebas: Pøidán hack s voláním `sys.setdefaultencoding()'.
+
+2004-08-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/*.py: Added Python source encoding tag to all files.
+
+2004-03-12  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/presentation/field.py (Color.WHITE): Nová barva LRED.
+
+	* lib/form/screen.py (_WX_COLORS): Nová barva LRED.
+
+2004-03-04  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (PopupEditForm.__init__):
+	Pøidáno o¹etøení klíèového argumentu `disable_new_button'.
+
+2004-02-19  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_get_type):
+	Oprava testu hodnoty `not_null'.
+
+2004-02-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/xtypes.py (_Codebook._validate_retrieve): Neprojde-li
+	nìjaké pole validací, vracej `None'.	
+
+	* lib/data/types_.py (Type._validating_provider): Kosmetická úprava.
+
+2004-02-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/types_.py (Type.__cmp__): Oprava chybnì zadané podmínky
+	`self._constraints == self._constraints'.
+	(Type._validating_provider): Provádìj `self._check_constraints' i
+	pro hodnoty ze `_SPECIAL_VALUES'.
+
+2004-02-11  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_on_delete_line): Neprovìøuj záznam
+	podle `self.editable'.
+
+2004-02-10  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (SideBrowseDualForm._create_side_form):
+	Pøedávej argument `hide_binding_column'.
+
+	* lib/form/list.py (SideBrowseForm.__init__): Doplnìn argument
+	`hide_binding_column'.
+	(SideBrowseForm._init): Vypus» vazební sloupec, pokud je
+	nastaveno `hide_binding_column'.
+
+2004-02-09  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/dualform.py (ShowDualForm._create_main_form):
+	Nenastavuj atribut `self._sash_position'.
+
+2004-01-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (BrowseForm._on_new_record): Namísto pøímého
+	spou¹tìní formuláøe volej novou funkci `new_record().
+
+	* lib/form/spec.py (ViewSpec.__init__): Nový argument
+	`on_new_record'.  Inicializuj `self._on_new_record'.
+	(ViewSpec.on_new_record): Nová metoda.
+
+	* lib/form/application.py (Application.run_procedure): Nová
+	metoda.
+	(Application.on_command): O¹etøuj pøíkaz
+	`Application.COMMAND_RUN_PROCEDURE'.
+	(run_procedure): Nová funkce.
+	(Application.new_record): Nov metoda.
+	(new_record): Nová funkce.
+	(Application.on_command): O¹etøuj pøíkaz
+	`Application.COMMAND_NEW_RECORD'.
+
+	* lib/form/command.py: Nový pøíkaz
+	`Application.COMMAND_RUN_PROCEDURE'.  Nový pøíkaz
+	`Application.COMMAND_NEW_RECORD'.
+	
+
+	* lib/form/dialog.py (RunFormDialog.__init__): Mapuj
+	`self._EDIT_FORM' na `PopupEditForm'.
+
+	* lib/form/form.py (EditForm._create_form): Zji¹»uj pøístupová
+	práva k políèkùm pro danou operaci a nastavuj argument
+	`accessible' pøi volání `InputField.create()'.
+
+	* lib/form/inputfield.py (InputField.__init__): Nový argument
+	`accessible'.  Nastavuj práva a ediovatelnost podle nìj.
+	(InputField.create): Nový argument `accessible'.  Pøedávej jej
+	konstruktoru.
+
+2004-01-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (InputField._on_change): Prozatím vyøazen
+	hack s resetem disabled políèek.
+
+2004-01-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (InputField.__init__): Pokud není
+	`self._enabled' volej nakonec také `self._disable()'.
+	(InputField._init_controls, InputField._init_controls): Nestarej
+	se zde o zakazování èi povolování controlù.
+	(InputField._on_idle): Pokud je nastaveno `self._call_on_idle',
+	zavolej danou funkci a atribut opìt nastav na None.
+	(InputField._on_change): V¹e provádìj pouze pokud je
+	`self._enabled'.  Jinak namísto toho provádìj `reset()'.
+	(InputField.disable): Nový argument `change_appearance'.  Pou¾ij
+	jej pøi volání `self._disable()'.  Update dokumentace.
+	(InputField._disable): Nový argument `change_appearance'.
+	(GenericField._disable): Nový argument `change_appearance'.
+	Zneaktivni políèko jen pokud je `change_appearance' pravda.
+	(TextField._create_text_control): Nevytváøej neaktivní políèko ani
+	kdy¾ není `self._accessible'.
+	(TextField._create_text_control): Validátor vytváøej v¾dy (by» jen
+	`wx.wxDefaultValidator') a pøiøaï jej do atributu
+	`self._validator'.
+	(TextField._enable): Nastavuj také pùvodní validátor.
+	(TextField._disable): Nový argument `change_appearance'.  Pokud je
+	pravdivý, nastav `self._call_on_idle' na funkci nastavující barvu
+	pozadí.  Zru¹ validátor (nastav na `wx.wxDefaultValidator').
+	(Invocable._create_widget): Vytváøej tlaèítko v¾dy (i pokud
+	políèko není aktivní).
+	(Invocable._disable): Nový argument `change_appearance'.  Pou¾ij
+	jej pøi volání `self._call_next_method()'.
+	(CodeBookField._DISPLAY_COLOR): Zru¹eno.
+	(CodeBookField._create_widget): Pou¾ij svìtlej¹í barvu pozadí pro
+	display.
+	(HiddenField._disable): Nový argument `change_appearance'.
+	(ListField._disable): Nový argument `change_appearance'.
+	(_TextValidator._on_char): O¹etøuj pøípad, kdy je `self._filter'
+	None.  Opravena chyba v podmínce zji¹tìní platné klávesy.
+	(TextField._create_text_control): Vytváøej `_TextValidator' i
+	pokud je `filter' None.
+	(TextField._filter): Nová metoda.
+	(TextField._disable): Vytváøej nový `_TextValidator' pro ka¾dý
+	control.
+
+	* lib/form/form.py (Form._menus): Vyu¾ívejvej
+	`RecordForm.UI_ACCESS_*'.
+	(RecordForm.UI_ACCESS_INSERT, RecordForm.UI_ACCESS_UPDATE)
+	(RecordForm.UI_ACCESS_DELETE): Nové konstanty.
+	(RecordForm.on_ui_event): Nová metoda.  O¹etøuj
+	`RecordForm.UI_ACCESS_*'.
+	(EditForm.init): Volání enable/disable na políèka provádìj i v
+	závislosti na editovatelnosti celého formuláøe.  Pro
+	needitovatelný formuláø pøedávej `change_appearance=TRUE' pøi
+	volání `field.disable()'.
+	(EditForm._create_form): Neøe¹ nic kolem
+	editovatelnisti/needitovatelnosti políèek/formuláøe.
+	(EditForm._commit_form): Proveï v¹e i pokud je formuláø nezmìnìn.
+
+	* lib/form/list.py (on_ui_event): Nakonec volej metodu pøedka.
+
+	* lib/util/configuration.py
+	(Configuration._Option_row_focus_bg_color.default): Vracej
+	systémovou barvy zvýraznìní výbìru.
+	(Configuration._Option_field_disabled_color)
+	(Configuration._Option_field_inaccessible_color): Nové
+	konfiguraèní volby.
+
+	* lib/presentation/field.py (PresentedRow.accessible): Nová
+	metoda, která v¹ak nakonec není zatím nikde vyu¾ita, tak¾e je
+	zatím zakomentována.
+
+2004-01-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/wx.py: Pøidán copyright 2004 a nastaveno kódování jako
+	pøíznak pro Pythonový parser.
+
+	* lib/util/configuration.py
+	(Configuration._Option_row_focus_bg_color.default): Pou¾ij
+	systémovou barvu (získamou pøes
+	`wxPython.misc2.wxSystemSettings_GetColour()'.
+	(Configuration._Option_grid_line_color.default): Nová volba.
+	(Configuration._Option_grid_line_color.default): Nová volba.
+
+	* lib/form/inputfield.py (InputField.__init__): Nastavuj
+	`self._accessible' a `self._editable' s ohledem na pøístupová
+	práva.  Pokud není accessible, volej nakonec
+	`self._register_skip_navigation_callback()'.
+	(InputField._init_controls): Pokud není `self._enabled' zaka¾ vstup.
+	(InputField.enable): V¹e provádìj jen pokud je accessible.
+	(InputField.disable): V¹e provádìj jen pokud je accessible.
+	(TextField._text_control_style): Pokud není accessible, nastavuj
+	také `wx.wxTE_READONLY'.
+
+	* lib/data/access.py: Pøidán copyright 2004.
+	(RestrictedData.accessible): `self._rights' ->
+	`self._access_rights'.  `self._acccess_groups' ->
+	`self.access_groups'.
+
+2004-01-19  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/types_.py (DateTime._validate): Zru¹ omezení na data,
+	která mají rok men¹í ne¾ 1000.	
+	(Time.SQL_FORMAT): Nová konstanta.
+	(Time._validate): Nastavuj "kwargs['local']" na FALSE.
+	(Time._export): Nastavuj "kwargs['local']" na FALSE.
+
+	* lib/form/application.py (Application.__init__): Konstruktor
+	'KeyHandler' volej pøed konstruktorem 'wx.wxApp'.
+
+2004-01-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/presentation/field.py: Pøidán copyright 2004.  Na zaèátku
+	souboru uvádìj kódování jako pøíznak pro Pythonový parser.
+	(PresentedRow._process_fieldspec): Inicializuj
+	`self._editability_dirty'.
+	(PresentedRow._compute_editability): Nová metoda.
+	(PresentedRow._recompute_editability): Pokud není tøeba volat
+	callbacky, pouze oznaè hodnotu jako "dirty".  Vyu¾ívej metodu
+	`_compute_editability()'.
+	(PresentedRow.editable): Pokud je editovatelnost políèka "dirty",
+	pøepoèítej ji.
+
+	* lib/presentation/_test.py: Run `unittest.main()' without
+	arguments.
+	(PresentedRow): All methods with `check_' prefix renemed to use
+	the `test_' prefix.  Why does `check_*' no longer work?
+	(PresentedRow.test_editable): New test.
+	(PresentedRow.test_editability_callbacks): New Test.
+
+	* lib/form/inputfield.py: Pøidán copyright 2004.  Na zaèátku
+	souboru uvádìj kódování jako pøíznak pro Pythonový parser.
+	
+	* lib/form/form.py: Pøidán copyright 2004.
+	(EditForm.init): Pokud je políèko editovatelné, volej `enable()'.
+
+	* lib/data/dbdata.py: Na zaèátku souboru uvádìj kódování jako
+	pøíznak pro Pythonový parser.  Pøidán copyright 2004.
+	(PostgreSQLStandardBindingHandler._pg_skip): O¹etøuj zmìnìný typ
+	návratové hodnoty `_pg_query' po pøechodu na PostgreSQL 7.4.
+
+2003-12-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (show_popup_menu): Pøepoèítávej pozici po
+	scrollování.
+
+	* lib/form/application.py (Application.run_form): Hack: pøejdi na
+	po¾adovaný øádek, pokud formuláø podporuje metodu `select_row()'.
+
+	* lib/form/dualform.py (DualForm.select_row): Nová metoda.
+	(SideBrowseDualForm.title): Oddìluj názvy øetìzcem ' :: ' namísto
+	lomítka, se kterým jsou problémy.
+	(DualForm.show_popup_menu): Nová metoda.
+
+2003-12-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (InputField.show_popup_menu): Nová metoda.
+	(InputField._on_popup_menu): Vyu¾ívej ji.
+
+	* lib/form/command.py: Nový pøíkaz
+	`Application.COMMAND_SHOW_POPUP_MENU'.
+
+	* config/config.py: Pøegenerován.
+
+	* lib/form/form.py: Na zaèátku souboru uvádìj kódování jako pøíznak pro
+	Pythonový parser.
+	(EditForm.__init__): Nastavuj `self._new' je¹tì pøed voláním
+	konstruktoru pøedka.
+	(EditForm._commit_form): Nový nepovinný argument `close'.  Pokud
+	je pravdivý, nezavírej okno formuláøe.
+	(PopupEditForm._on_next): Nová metoda.
+	(PopupEditForm._create_buttons): Pokud jde o formuláø pro
+	vytvoøení nového záznamu, vytváøej také tlaèítko pro vlo¾ení
+	dal¹ího záznamu.
+	(PopupEditForm._create_buttons): Nastav tlaèítkùm tooltipy.
+	(Form.show_popup_menu): Nová metoda.
+	(EditForm.show_popup_menu): Nová metoda.
+
+	* lib/form/application.py (Application.refresh): Nová metoda.
+	(refresh): Nová funkce.
+	(_application): Pøíkaz `Application.COMMAND_REFRESH' o¹etøuj
+	voláním self.refresh().
+	(Application.on_command): Zpracuj
+	`Application.COMMAND_SHOW_POPUP_MENU'.
+
+	* lib/form/list.py (ListForm._CELL_HIGHLIGHT_COLOR): Zru¹eno.
+	(ListForm._GRID_LINE_COLOR): Zru¹eno.
+	(ListForm._FILTER_COLOR): Zru¹eno.
+	(ListForm._create_grid): Namísto `self._CELL_HIGHLIGHT_COLOR' a
+	`self._GRID_LINE_COLOR' vyu¾ívej `config.cell_highlight_color' a
+	`config.grid_line_color'.
+	(ListForm._create_recreate_grid): Namísto `self._FILTER_COLOR'
+	vyu¾ívej `config.filter_color'.
+	(ListForm._on_export_csv): Neimportuj `config'.
+	(ListForm._FOCUS_COLORS, ListForm._NOFOCUS_COLORS)
+	(ListForm._EDIT_COLORS): Zru¹eno
+	(Module): Na zaèátku souboru uvádìj kódování jako pøíznak pro
+	Pythonový parser.
+	(ListForm._change_selection_colors): Pøejmenováno na
+	`_update_selection_colors'.  Argument `colors' zru¹en.  Vyu¾ívej
+	konfiguraèních voleb, namísto konstant.
+	(ListForm._on_select_cell, ListForm._on_edit)
+	(ListForm._on_insert_line, ListForm._on_line_rollback)
+	(ListForm._recreate_grid, ListForm.focus, ListForm.defocus):
+	Namísto metody `_change_selection_colors()' vyu¾ívej
+	`_update_selection_colors()'.
+	(ListForm._select_cell): Vracej nepravdu, pokud je políèko
+	needitovatelné, pravdu v ostatních pøípadech.
+	(ListForm._on_edit): Odejdi z editace pokud `self._edit_cell()'
+	vrátí nepravdu.
+	(ListForm.show_popup_menu): Nová metoda.
+	(ListForm._on_popup_menu): Vyu¾ívej ji.
+
+	* lib/util/configuration.py
+	(Configuration._Option_grid_line_color): Nová tøída.
+	(ConfigDB.__init__): Uzavírej po sobì select.
+	(Configuration._Option_filter_color): Nová tøída
+	(Configuration._read_configuration_file): Ignoruj None hodnoty ve
+	zdrojovém slovníku.
+	(Configuration._Option_row_nofocus_bg_color.default): Zmìna hodnoty.
+
+2003-12-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands):
+	Pro `declare cursors' doplnìno klíèové slovo `scroll' kvùli
+	kompatibilitì s Postgresql7.4.
+
+2003-12-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/dialog.py (Calendar): Oprava docstringu.
+	(Calendar._customize_result): Zru¹en neaktuální docstring.
+	(ColorSelector): Nová tøída.
+
+	* lib/data/types_.py (Color): Nová tøída.
+
+	* lib/presentation/_test.py (PresentedRow.check_keys): Nový test.
+
+	* lib/presentation/field.py (PresentedRow.keys): Nová metoda.
+
+	* lib/util/configuration.py:
+	(Configuration._Option_show_tooltips)
+	(Configuration._Option_show_splash)
+	(Configuration._Option_row_focus_fg_color) 
+	(Configuration._Option_row_focus_bg_color) 
+	(Configuration._Option_row_nofocus_fg_color) 
+	(Configuration._Option_row_nofocus_bg_color) 
+	(Configuration._Option_row_edit_fg_color) 
+	(Configuration._Option_row_edit_bg_color) 
+	(Configuration._Option_cell_highlight_color): Nové volby.
+	
+
+	* lib/form/inputfield.py (InputField._init_controls): Nastav
+	tooltip, pouze pokud to povoluje konfigurace.
+	(ColorSelectionField): Nová tøída.
+	(InputField.create): Pro datový typ `lib.data.Color' vytváøej pole
+	typu `ColorSelectionField'.
+
+	* lib/form/list.py (Module): Odstranìn zapomenutý print.
+	(_create_grid): Vyu¾ívej `config.cell_highlight_color'.
+	(ListForm._CELL_HIGHLIGHT_COLOR): Zru¹eno.
+
+2003-12-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/util/configuration.py (Configuration.merge): Nová metoda.
+	(ConfigDB): Nová tøída.
+
+	* lib/form/list.py (ListForm._TITLE_BACKGROUND_COLOR): Zru¹eno.
+
+2003-12-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/dualform.py (DualForm.__init__): Nenastavuj
+	`self._sash_position'.
+	(DualForm._sash_position): Nová metoda.
+	(DualForm._on_size_hook): Nová metoda.
+	(DualForm.OnSize): Namísto promìnné `self._sash_position' vyu¾ívej
+	stejnojmennou funkci.  Volej `self._on_size_hook()'.
+	(ShowDualForm._sash_position): Nová metoda.
+	(ShowDualForm._on_size_hook): Nová metoda.
+	(DescriptiveDualForm._create_side_form): Nenastavuj
+	`self._sash_position'.
+	(DescriptiveDualForm._sash_position): Nová metoda.
+	(DescriptiveDualForm._on_size_hook): Nová metoda.
+
+	* lib/form/screen.py (Window): Namísto `wx.wxPanel' buï
+	potomkem `wx.wxScrolledWindow'.
+	(Window.__init__): Respektuj to.
+
+	* lib/form/form.py (EditForm.set_scrollbars): Nová metoda.
+	(ShowForm.OnSize): Vyu¾ívej ji.
+
+	* lib/form/inputfield.py (InputField._init_controls): Nastav
+	tooltip, pokud je definov8no `descr' ve specifikaci'
+
+	* lib/presentation/field.py (FieldSpec.__init__): Nový argument
+	`descr'.
+	(FieldSpec.column_label): Nová metoda.
+
+2003-12-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (ListForm): Zmìny konstant barev.
+	(ListForm._GRID_LINE_COLOR): Nová konstanta.
+	(ListForm._CELL_HIGHLIGHT_COLOR): Nová konstanta.
+	(_create_grid): Vyu¾ívej nové konstanty k nastavení barev.
+
+	* lib/form/screen.py (MenuBar._create_menu): Nová metoda.
+	(MenuBar._append_menu): Nová metoda.
+	(MenuBar._replace_menu): Nová metoda.
+	(MenuBar._remove_menu): Nová metoda.
+	(MenuBar.add_menu): Pokud menu ji¾ existuje, nahraï jej.
+	(MenuBar.activate): Vykonej v¹e i pokud je nová aktivace stejná
+	jako pùvodní.  Vyu¾ívej `_append_menu()' a `_remove_menu'.
+	Dynamická menu vytváøej poka¾dé znovu.
+	(Menu.__init__): Inicializuj `self._dynamic'.
+	(Menu.dynamic): Nová metoda.
+
+	* lib/form/output.py (PrintForm._menus): Pøejmenováno menu `Tisk'
+	-> `Vytisknout'.
+
+	* lib/form/form.py (Form._menus): Definuj tiskové podmenu jako
+	hlavní menu.
+
+	* lib/form/spec.py (ViewSpec.__init__): Povol pro polo¾ky
+	`popup_menu' také `MSeparator' a `Menu'.
+
+	* lib/form/dualform.py (SideBrowseDualForm.title): Nová metoda.
+
+2003-12-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Vytváøej správný seznam `Values' pro `select_row' CodeBooku.
+
+2003-12-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Pøedávej konstruktoru `CodeBook' hodnotu `begin_search' pouze jako boolean.
+
+	* lib/form/list.py (ListForm._on_incremental_search): Akceptuj také sloupce
+	typu `Codebook'.
+	(CodeBook.__init__): Nech» je hodnotou argumentu `begin_search'
+	pouze boolean.
+	(CodeBook._on_idle): Urèi vyhledávací sloupeèek automaticky podle tøídìní.
+
+2003-11-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/list.py (_change_selection_colors): Kvùli zamezení
+	rekurze pou¾ij pro metodu select_row() èíslo aktuálního øádku.
+
+2003-09-23  Petr Malivanek  <malivanek@akont.cz>
+
+	* lib/presentation/field.py (TextFilter): Nová konstanta FLOAT.
+
+	* lib/form/inputfield.py (TextField): Nová konstanta FLOAT.
+	(TextField._filter_func): Doplnìno do slovníku mapping:
+	"TextFilter.FLOAT: self.FLOAT" 
+
+2003-12-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/list.py (CodeBook.__init__): Kosmetické úpravy zpùsobu
+	zpracování kwargs.  Nový argument `begin_search'.
+	(CodeBook._on_idle): Nová metoda.
+
+	* lib/form/inputfield.py (Invocable._create_widget): Pro o¹etøení
+	`EVT_BUTTON' volej `self._on_invoke_selection()' bez argumentù.
+	(Invocable._on_invoke_selection, DateField._on_invoke_selection)
+	(DateField._on_invoke_selection): Definuj argumenty obecnì jako
+	`**kwargs'.
+	(Invocable.on_command): O¹etøuj pøíkaz
+	`Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE'.
+	(CodeBookField._on_invoke_selection): Nový argument `alternate' a
+	implementace pøíkazu
+	`Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE' vyvoláním èíselníku
+	s nastartovaným inkrementálním vyhledáváním.
+	(CodeBookField._menu): Nová polo¾ka pro pøíkaz
+	`Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE'.
+
+	* lib/form/command.py (Module): Nový pøíkaz
+	`Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE'.
+
+2003-10-22  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/inputfield.py (ListField._menu): Opravena chyba pro
+	generování menu bez urèených `returned_columns'.
+
+2003-10-07  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/presentation/field.py (RefSpec.__init__): Nový parametr
+	`returned_columns'.
+	(RefSpec.returned_columns): Nová metoda.
+	(PresentedRow._process_fieldspec): Nový atribut `self._refvalues'.
+	(PresentedRow.refvalue): Nová metoda.
+	(PresentedRow.listfield_choose): Nová metoda. 
+
+	* lib/form/inputfield.py (ListField._create_controls): Nové
+	atributy `self._colspec', `self._get_item'.
+	(ListField._choose_returned_column): Nová metoda.
+	(ListField.get_item): Nová metoda.
+	(ListField._menu): Vytváøej `user_popup'.
+	(ListField.on_command): O¹etøi volání pøíkazu
+	`ListField.COMMAND_CHOOSE_KEY'.
+
+	* lib/form/form.py (EditForm.on_command): O¹etøi volání pøíkazu
+	`ListField.COMMAND_CHOOSE_KEY'.
+
+	* lib/form/command.py: Nový pøíkaz `ListField.COMMAND_CHOOSE_KEY'.
+
+2003-10-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/form/form.py (EditForm._on_field_enable): Volej `enable'
+	pouze na políèka, která jsou v layoutu.
+	(EditForm._on_field_disable): Volej `disable' pouze na políèka,
+	která jsou v layoutu.
+
+2003-09-23  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/inputfield.py (InputField._on_change): Pro volání
+	`self._post_process()' znepøístupni event handlery (aby
+	nedocházelo k rekurzi).
+	(TextField._post_process): Nová funkce.
+	(InlineMultiTextField._post_process): Nová funkce.
+
+2003-09-18  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Zohledòuj mo¾nost, ¾e v `returned_columns' nejsou pouze stringy.
+
+2003-08-22  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py (CodeBook.select_row): O¹etøi prázdné Codebooky
+	testem, zda `result > 0'.
+
+2003-08-22  Miroslav Macek  <macek@asellus.cz>
+
+	* ebas-server: Dokumentace je v iso-8859-2 (Python2.3)
+
+	* ebas: Dokumentace je v iso-8859-2 (Python2.3)
+
+2003-07-01  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/dualform.py (SideBrowseDualForm._do_selection):
+	Pokud je aktivován IncrementalSearch, neprovádìj aktualizaci
+	`side_form', aby nedo¹lo k likvidaci widgetu.
+
+2003-06-25  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py (ListForm._ListTable._EditedRow.__init__):
+	Importuj `lib.data'.
+
+2003-06-19  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/dualform.py (DescriptiveDualForm._on_side_selection):
+	Metodì `select_row' pøedávej instanci Row.
+
+	* lib/form/form.py (RecordForm.set_row): Revert pøedchozí úpravy
+	(tedy pøedávej instanci PresentedRow).
+
+2003-06-18  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/application.py: Zkou¹ej import `Pyro.util' jen, je-li k
+	dispozici `config.server'.
+
+2003-06-13  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/form.py (RecordForm.set_row): Pomocí volání metody
+	row.row() zajisti pøedání instance Row nikoli PresentedRow.
+	(BrowsableShowForm.__init__): Volej self._init_select() a nastav
+	status bar.
+	(BrowsableShowForm._set_row): Nastavuj status bar.
+	(BrowsableShowForm._set_status): Nová metoda.
+
+	* lib/form/dualform.py (DescriptiveDualForm._do_selection):
+	Metodì `self._side_form.set_row' pøedávej instanaci PresentedRow
+	nikoli instanci Row.
+
+2003-06-11  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/form.py (Form._create_data_object): O¹etøi import
+	`lib.data'.
+
+	* lib/form/list.py (ListForm._ListTable._EditedRow.__init__):
+	`lib.remote' importuj, jen kdy¾ existuje `server'.
+	
+	* lib/form/form.py (Form._create_data_object): `lib.remote'
+	importuj, jen kdy¾ existuje `server'.
+
+	* lib/data/dbdata.py
+	(PostgreSQLUserGroups._pgg_retrieve_access_groups): Pøi zji¹»ování
+	pøíslu¹nosti ke skupinám je tøeba místo `regepx.match' pou¾ít
+	`regexp.search'.
+
+2003-06-06  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py: `lib.remote' importuj jen pou¾ívá-li se proxy.
+
+2003-05-27  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/dualform.py (PostponedSelectionDualForm): Konstanta
+	`_SELECTION_TICK' nastavena na 1.
+
+2003-05-26  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/data/dbdata.py
+	(PostgreSQLUserGroups._pgg_retrieve_access_groups): Regulární
+	výraz pro u¾ivatele obsahuje uid, nikoli jméno.
+
+2003-05-07  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/form.py (EditForm._on_row_change): Políèko zji¹»uj sám
+	(ne pomocí self._field, kde Computery ztroskotají na assert).
+
+2003-04-25  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/output/formatter.py (LoutFormatter.printdirect): Nová metoda.
+
+2003-04-04  Miroslav Macek  <macek@asellus.cz>
+
+	* config/config_isas.py (): Pøidán parametr 'lc_numeric'.
+
+2003-04-04  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py (BrowseForm._formatter_parameters): Pøidán i
+	parametr `P_ROW'.
+
+2003-04-02  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py (BrowseForm._formatter_parameters): Pøidán i
+	parametr `P_KEY'.
+
+2003-04-01  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.last_select_condition):
+	Vra» poslední pou¾itou podmínku.
+
+2003-03-21  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py (_on_export_csv._process_table): Pøi exportu
+	víceøádkových textových políèek nahraï konce øádkù støedníkem.
+
+2003-03-20  Pavel Hanak  <hanak@brailcom.cz>
+
+	* config/config.py: Pøegenerován.
+
+	* lib/util/configuration.py
+	(Configuration._Option_export_encoding): Nová volba.
+
+	* lib/form/list.py (_on_export_csv): Pøi exportu float polo¾ek
+	nepou¾ívej `locale' formát. U textových polo¾ek zohledni
+	konfiguraèní parametr `export_encoding'. Wildcards roz¹iø o
+	`*.txt'.
+	(select_row): Metoda nyní akceptuje i `**kwargs'. Existuje-li
+	kwarg `_search_cols', zohledni ho pøi sestavování podmínky pro
+	nalezení øádku.
+	(CodeBook.__init__): Zohledni `_search_cols'.
+	(CodeBook.select_row): Pøedefinování metody zohledòuje to, ¾e
+	`_returned_columns' Codebooku nemusí být klíèovými sloupci.
+
+	* lib/form/inputfield.py (InputField.create): Pøi testování typu
+	pou¾ij místo `Codebook' pøedka `_Codebook'.
+	(EnumerationField._values): Pøi testování typu pou¾ij místo
+	`Codebook' pøedka `_Codebook'.
+	(MultiTextField._set_value): Místo testu `values' na prázdný
+	øetìzec, provádìj test na prázdnou sekvenci.
+	(CodeBookField._set_value): Pøedefinování metody - pøedkovi
+	pøedává jako argument v¾dy tuple.
+	(CodeBookField._on_invoke_selection): Pøi vytváøení instance
+	String u¾ nepou¾ívej `make'. Metodì `set_value' pøedávej tuple.
+
+	* lib/data/xtypes.py (SingleCodebook.internal_columns): Nová
+	metoda vrací interní sloupec i jako tuple.
+	(SingleCodebook._validate): Doplnìn keyword argument `strict'.
+	(SingleCodebook._export): Pøedefinovaná metoda u¾ nevrací tuple.
+	(Codebook): Je nyní SingleCodebook.
+
+	* lib/data/dbdata.py
+	(DBDataPostgreSQL._pg_create_make_row_template): Pøi testování
+	typu pou¾ij místo `Codebook' pøedka `_Codebook'.
+	(DBDataPostgreSQL._pg_create_make_row_template): Pro zji¹tìní
+	`internal_columns' u SingleCodebooku pou¾ij také metodu
+	`type.internal_columns()'.
+	(DBDataPostgreSQL._pg_value): Pøi zji¹»ování hodnoty `exported'
+	zohledni rozdíl mezi `SingleCodebook' a `MultiCodebook'.
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Pøi testování typu pou¾ij místo `Codebook' pøedka `_Codebook'.
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Pøi vytváøení `btype' zohledni rozdíl mezi `SingleCodebook' a
+	`MultiCodebook'.
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql.relop):
+	Pøi testování typu pou¾ij místo `Codebook' pøedka `_Codebook'.	
+
+2003-03-14  Miroslav Macek  <macek@asellus.cz>
+
+	* config/config_isas.py (date_time_format): Upraven.
+
+2003-03-11  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/util/configuration.py
+	(Configuration._Option_export_directory): Nová volba.
+
+	* lib/form/list.py (_on_export_csv): Exportní adresáø èti z configu.
+
+	* config/config.py: Pøegenerován.
+
+2003-03-10  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/util/configuration.py (Configuration._Option_lc_numeric):
+	Nová volba.
+
+	* lib/form/list.py (on_command): O¹etøi nový pøíkaz.
+	(_on_export_csv): Obslu¾ná rutina pro nový pøíkaz. 
+
+	* lib/form/form.py (Form._menus): Doplnìn pøíkaz
+	`ListForm.COMMAND_EXPORT_CSV'.
+
+	* lib/form/command.py: Nový pøíkaz `ListForm.COMMAND_EXPORT_CSV'.
+
+	* lib/data/types_.py (Float._validate): Získej value ze stringu
+	s vyu¾itím modulu `locale'.
+	(Float._export): Zohledòuj locales.
+
+	* lib/data/dbdata.py (DBDataPostgreSQL._pg_value): Je-li value
+	instancí Float, zohledòuj nastavení locales pro export.
+
+	* config/config.py: Pøegenerován.
+
+	* ebas (run_application): Zru¹eno nastavení LC_NUMERIC na `C',
+	místo toho se nastavuje podle konfigurace.
+
+2003-03-07  Miroslav Macek  <macek@asellus.cz>
+
+	* config/config_isas.py (): Pøidán printing_command.
+
+2003-03-06  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/inputfield.py (InputField._init_controls): Nenastavuj
+	EVT_NAVIGATION_KEY callback.
+	(InputField._register_skip_navigation_callback): Nová metoda.
+	(InputField._unregister_skip_navigation_callback): Nová metoda.
+	(InputField.enable): Volej `_unregister_skip_navigation_callback'.
+	(InputField.disable): Volej `_register_skip_navigation_callback'.
+	(_register_skip_navigation_callback): Testuj `control' na `None'.
+	(_unregister_skip_navigation_callback): Testuj `control' na `None'.
+
+2003-03-04  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/screen.py (color_dictionary): Nová funkce.
+	(_WX_COLORS_DATABASE): Nová konstanta.
+	(color2wx): Hledej barvu i ve _WX_COLORS_DATABASE.
+
+2003-02-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/_test.py (_TypeCheck._test_validity): V pøípadì
+	neúspìchu uveï i oèekávanou hodnotu.  Validaci po exportu volej
+	s kwargs.
+	(_test_instance): Konstruktoru pøidán argument `format'.
+	(DBDataDefaultClass.check_lock): None testuj operátorem `is'.
+	(DateTime.check_validation): Volej validaci s argumentem `local'.
+	(_TypeCheck._test_validity): Nový argument `ekwargs'.
+	(DateTime.check_export): Volej validace a exporty s argumenty
+	`format' a `local'.
+	(TutorialTest.check_it): Uzavøi select pøed dal¹ími operacemi.
+
+	* lib/data/dbdata.py (_pypg_query.do_query) 
+	(DBDataPostgreSQL.select, DBDataPostgreSQL.lock_row): Pøi chybì
+	nahazuj pùvodní výjimku, ne výjimku následné operace.
+	(DBDataPostgreSQL.row, DBDataPostgreSQL.search): Odstranìno
+	zapomenuté foo.
+
+2003-02-28  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/dualform.py (BrowseDualForm.__init__): Je-li k
+	dispozici klíèový argument `select_row', pøedávej ho do
+	`self._main_form.select_row(select_row)'.
+
+	* lib/form/form.py (EditForm._create_group):
+	Pro label nevytváøej instanci wxStaticText, proto¾e metoda
+	field.label() u¾ instanci wxStaticText vrací.
+
+2003-02-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/output/formatter.py (_INTRO): V @cell parametr `height'
+	pøejmenován na `width'.  V @hline za èárovaný objekt pøidáno ||.
+	U @page nové parametry @*Margin, @width, @height a @landscapeMode.
+	(LoutFormatter._process): Pøidány nové parametry pro _INTRO.
+	(LoutFormatter.__init__): Nový atribut _page_layout.
+	(PAGE_*): Nové konstanty.
+	(LoutFormatter._format_long_table): Opravena pozice separátoru
+	v header component.
+
+	* lib/form/form.py (EditForm._create_group): Je-li widget
+	kompaktního políèka None, nepokou¹ej se ho pøidat do sizeru.
+
+	* lib/form/list.py (_IncrementalSearch._search): Nech» pravý
+	argument WM je instance WMValue.
+
+	* lib/data/dbdata.py (DBDataPostgreSQL._pg_skip)
+	(PostgreSQLStandardBindingHandler._pg_skip): Nový argument
+	`exact_count'.
+	(DBDataPostgreSQL.fetchone.skip): Volej `_pg_skip'
+	s `exact_count'.
+	(DBDataPyPgSQL._pg_query): Pro pøíkazy klasifikované jako DDL vra»
+	result.cmdStatus.  Neprovádìj test výsledku MOVE.
+
+2003-02-27  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/list.py (BrowseForm._run_form):
+	Pokud není udáno `redirect_name', volej `self._redirected_name'.
+
+2003-02-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.fetchone): Pøepracováno,
+	odstranìna podpora pro FETCH BACKWARD, opraveno urèování velikosti
+	a skipy.
+	(DBDataPostgreSQL._PgBuffer.fetch): V logovací hlá¹ce vracej
+	zestringované `result'.
+	(DBDataPyPgSQL._pg_query): Vrací-li pøíkaz klasifikovaný jako DDL
+	`MOVE 0', zaloguj varování.
+
+2003-02-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/screen.py (Menu.create): Testuj, zda
+	`keyhandler.keymap' není None.
+
+2003-02-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/_test.py
+	(DBDataDefaultClass.check_select_fetch_direction): Pøidáno pár
+	informací o neúspìchu.
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.fetchone): Zabraò provádìní
+	FETCH BACKWARD, pro obejití dal¹ích kurzorových chyb PostgreSQL.
+	Zajisti, ¾e last_row_number není vìt¹í ne¾ _pg_number_of_rows.
+
+	* lib/util/util.py (UNDEFINED): Nová konstanta.
+	
+2003-02-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/application.py (Application.OnInit): Metodì
+	`Menu.create()' pøedávej `self' jako argument `keyhandler'.
+
+	* lib/form/inputfield.py (InputField._on_popup_menu): Metodì
+	`Menu.create()' pøedávej `self' jako argument `keyhandler'.
+
+	* lib/form/list.py (_on_label_right): Metodì `Menu.create()'
+	pøedávej `self' jako argument `keyhandler'.
+	(_on_popup_menu): Metodì `Menu.create()' pøedávej `self' jako
+	argument `keyhandler'.
+
+	* lib/form/screen.py (MenuBar.__init__): Nový argument
+	`keyhandler'.
+	(MenuBar.add_menu): Metodì `Menu.create()' pøedávej argument
+	`keyhandler'.
+	(Menu.create): Nový argument `keyhandler'.  Pøebírej horkou
+	klávesu polo¾ky z klávesové mapy instance `keyhandler', nebo pokud
+	je klávesa definována pro polo¾ku, definuj ji v klávesové mapì
+	instance `keyhandler'.
+	(Menu.create.hotkey_string): Funkce zru¹ena - namísto toho si
+	nadpisy pamatuj ve stejnojmenném slovníku.
+	(MItem.__init__): Nestarej se vùbec o klávesovou mapu, jen si
+	zapamatuj pøípadnou specifikaci horké klávesy.
+
+2003-02-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/types_.py (ValidationError): Buï potomkem Exception.
+
+2003-02-21  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.fetchone): Uprav poèet
+	stahovaných øádkù tak, aby nedo¹lo k pøekroèení hranic dat.
+
+	* lib/form/list.py (ListForm._create_grid.registration): Nový
+	atribut `_editors'.
+	(ListForm.Close): Volej `close' na editory.
+	(_InputFieldCellEditor.close): Nová metoda.
+
+2003-02-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/types_.py (ValidationError): Buï potomkem `object'.
+	(WMValue): Nová tøída.
+	(_Value): Nová tøída.
+	(Value): Buï potomkem _Value.
+	(Type.wm_validate): Nová metoda.
+	* lib/data/data.py (WM): Zmìna argumentù, jen dokumentaèní zmìna.
+	* lib/data/xtypes.py (_Codebook.WMVM_UNSUPPORTED): Nová validaèní
+	hlá¹ka.
+	(_Codebook.wm_validate): Nová metoda.
+	(_codebook_data): Nová funkce.
+	* lib/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql): Zohlednìna
+	zmìna operandu operátoru WM.
+
+	* lib/form/search.py (SFDialog._selected_condition): Opraven
+	wildcard match -- vyu¾ívej Type.wm_validate.
+
+2003-02-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/form/inputfield.py (Invocable._call_next_method): Nová metoda.
+	(Invocable._create_widget): Vyu¾ívej ji.  Odkaz na tlaèítko
+	uschovávej do atributu `self._invocation_button'.
+	(Invocable._disable): Nová metoda.
+	(Invocable._enable): Nová metoda.
+
+	* lib/form/form.py (EditForm.init): Na políèka, která nejsou
+	editovatelná volej 'disable()'.
+
+2003-02-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/form/search.py (SFDialog._selected_condition): Pøidána
+	podpora wildcards pro nìkteré èíselníky.
+
+	* lib/form/inputfield.py (CodeBookField._on_invoke_selection):
+	Pøedávej do CodeBook argument `ctype'.
+	(CodeBookField._on_change_hook): Zru¹eno u¾ívání demolièního
+	argumentu `column' metody Codebook.export.
+
+	* lib/form/list.py (CodeBook.__init__): Nový argument `ctype'.
+	Zohledòuj validity condition codebooku.
+
+	* lib/data/xtypes.py (_Codebook.__init__): Nové atributy `_strict'
+	a `_validity_column'.  Nové argumenty `validity_column' a
+	`strict'.
+	(_Codebook._export): Zru¹en argument `column'.  Pøidán nestriktní
+	export.
+	(_Codebook._validate, _Codebook._validate_retrieve)
+	(_Codebook._retrieve): Nový argument `strict'.
+	(_Codebook.validity_condition): Nová metoda.
+	(_Codebook.strict): Nová metoda.
+
+2003-02-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.row): Zru¹en argument
+	`_in_transaction'.
+	(DBDataPostgreSQL.update, DBDataPostgreSQL._pg_already_present):
+	Zohlednìna pøedchozí zmìna.
+	(DBDataPyPgSQL._pypg_get_connection): Není-li k dispozici ¾ádné
+	spojení v _pypg_connection, chovej se jako pøi
+	outside_transaction==TRUE.
+
+	* lib/form/application.py (Application.add_menu): Nová metoda.
+	(add_menu): Nová funkce.
+	* lib/form/screen.py (MenuBar.add_menu): Nová metoda.
+	(MenuBar.__init__): Vyu¾ívej ji.
+	* lib/form/output.py (PrintForm._menus): Nová metoda.
+	* lib/form/form.py (Form._add_menus): Nová metoda.
+	(Form._init): Volej ji.
+	(Form._menus): Nová metoda.
+	(LookupForm._find_row.find_row): Øádek vyhledávej pøímo pøes
+	`row', ne `search'.
+
+2003-02-17  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/form/form.py (Form.print_menu): Nová metoda.
+	(EditForm._on_field_enable, EditForm._on_field_disable):
+	Odstranìna zapomenutá print.
+
+	* lib/form/application.py (Application._activate): Nový argument
+	`form'.
+	(Application.run_form, Application.restore): Zohlednìna pøedchozí
+	zmìna.
+
+	* lib/form/screen.py (Menu.__init__): Nech» `items' smí obsahovat
+	i funkce (jen dokumentaèní zmìna).
+	(Menu.create): Zohlednìna pøedchozí zmìna.
+	(MenuBar.activate, Menu.create): Nový argument `form'.
+
+	* lib/form/list.py (BrowseForm._on_print_): Nový argument
+	`spec_path'.
+	(BrowseForm.on_command): Zohlednìna pøedchozí zmìna.
+
+2003-02-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/data/dbdata.py (DBDataPostgreSQL.select_aggregate): Opraven
+	pøeklep ve jménu promìnné.
+	(DBDataPostgreSQL.select_aggregate): Opraveno urèování typu.  Pøi
+	chybném typu sloupce vracej None.
+
+	* lib/form/search.py (FilterDialog._AGG_OPERATORS): Nový atribut.
+	(FilterDialog._create_content): Nová metoda.
+	(FilterDialog._on_compute_aggregate): Nová metoda.
+	(FilterDialog.__init__): Nová metoda.
+
+	* lib/form/form.py (LookupForm._filter): Volej _init_select.
+	(LookupForm._lf_sf_dialog): Jedná-li se o FilterDialog, pøedej mu
+	i self._data.
+
+	* lib/form/list.py (_IncrementalSearch.__init__): Nový atribut
+	`_exiting.  Nastavuj KILL_FOCUS callback pro widget.
+	(_IncrementalSearch._exit): Nastavuj `_exiting'.
+	(_IncrementalSearch._on_kill_focus): Nová metoda.
+	(BrowseForm._create_popup_menu): Titulky menu obaleny _().
+
+	* lib/form/event.py (top_level_exception): Místo zapomenuté
+	promìnné `einfo' do chybového dialogu pøedávej sys.exc_info().
+	(top_level_exception): Ukonèení aplikace provádìj natvrdo pøes
+	sys.exit.
+	(top_level_exception): Opraven odkaz na neexistující promìnnou
+	`tb'.
+
+2003-02-14  Pavel Hanak  <hanak@brailcom.cz>
+
+	* lib/form/form.py (EditForm._on_row_change): Na `None' testuj
+	nejen `field', ale i `self._row'.

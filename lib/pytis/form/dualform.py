@@ -1,0 +1,456 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Duální formuláøe.
+
+Duální formuláøe rozdìlují okno na dvì èásti, z nich¾ ka¾dá obsahuje jeden
+jednoduchý formuláø, pøièem¾ data horního a dolního formuláøe jsou nìjakým
+zpùsobem závislá.  Blí¾e viz dokumentace jednotlivých tøíd.
+
+"""
+
+import pytis.data
+import pytis.output
+from pytis.form import *
+import wx
+
+
+class DualForm(Form):
+    """Formuláø slo¾ený ze dvou spolupracujících formuláøù.
+
+    Duální formuláø je rozdìlen na dvì èásti umístìné nad sebou.  V horní èásti
+    je hlavní (øídící) formuláø, v dolní èásti je vedlej¹í (podøízený)
+    formuláø.  Kromì vzájemné spolupráce jsou formuláøe nezávislé, mají vlastní
+    aktivaèní kategorii a sadu tlaèítek.  Mezi formuláøi lze libovolnì
+    pøecházet.
+
+    Duální formuláø funguje jako celek, nerealizuje obecné dìlení okna aplikace
+    dvì samostatné èásti.  Pokud nìkterý podformuláøú duálního formuláøe vyvolá
+    nový formuláø, který má být vlo¾en do okna aplikace,  je tento nový
+    formuláø vlo¾en do stejného okna, ve kterém je ulo¾en duální formuláø.
+
+    Hlavní a vedlej¹í formuláøe o své pøítomnosti v duálním formuláøi ani o své
+    spolupráci neví.  Duální formuláø je z jejich pohledu zcela transparentní.
+
+    Tato tøída je základem v¹ech konfigurací dvojice formuláøù.  Pøedpokládá se
+    vyu¾ití následujících konfigurací:
+
+    - Hlavní formuláø je 'BrowseForm', vedlej¹í formuláø je 'EditForm'.
+      Pøíkladem této konfigurace je listování seznamem polo¾ek (hlavní
+      formuláø) s editací aktuálnì vybrané polo¾ky (vedlej¹í formuláø).
+
+    - Hlavní formuláø je 'EditForm', vedlej¹í formuláø je 'BrowseForm'.
+      Pøíkladem této konfigurace je editace faktury, kde celkové údaje
+      o faktuøe jsou v hlavním formuláøi, zatímco seznam fakturovaných polo¾ek
+      je ve vedlej¹ím formuláøi.
+
+    - Oba formuláøe jsou typu 'BrowseForm'.  Pøíkladem této konfigurace je
+      editace seznamu faktur (v hlavním formuláøi) kombinovaná s editací
+      polo¾ek (ve vedlej¹ím formuláøi) aktuálnì vybrané faktury.
+
+    Tyto konkrétní konfigurace jsou realizovány potomky této tøídy.
+
+    """
+    
+    def __init__(self, *args, **kwargs):
+        """Inicializuj duální formuláø.
+
+        Argumenty jsou stejné jako v pøedkovi, specifikují v¹ak hlavní formuláø
+        duálního formuláøe.
+        
+        """
+        super_(DualForm).__init__(self, *args, **kwargs)
+        wx_callback(wx.EVT_SET_FOCUS, self, self.OnSetFocus)
+
+    def _init_attributes(self, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        V¹echny klíèové argumenty jsou posléze pøedány konstruktoru hlavního
+        formuláøe.
+        
+        """
+        super_(DualForm)._init_attributes(self)
+        self._unprocessed_kwargs = kwargs
+        self._active_form = None
+        self._sash_ratio = None
+        
+    def _create_view_spec(self):
+        spec = self._resolver.get(self._name, 'dual_spec')
+        assert isinstance(spec, DualSpec) 
+        return spec
+
+    def _create_data_object(self):
+        # Hlavní i vedlej¹í formuláø mají svùj datový objekt.
+        return None
+
+    def _create_form(self):
+        # Vytvoø rozdìlené okno
+        self._splitter = splitter = wx.SplitterWindow(self._parent, -1)
+        wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter,
+                    splitter.GetId(), lambda e: True)
+        wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter,
+                    splitter.GetId(), self.OnSashChanged)
+        # Vytvoø formuláøe
+        main_form_kwargs = self._unprocessed_kwargs
+        self._main_form = self._create_main_form(splitter, **main_form_kwargs)
+        self._side_form = self._create_side_form(splitter)
+        splitter.SplitHorizontally(self._main_form, self._side_form)
+        self._select_form(self._main_form)
+    
+    def _create_main_form(self, parent, **kwargs):
+        return None
+
+    def _create_side_form(self, parent):
+        return None
+
+    def _other_form(self, form):
+        if form is self._main_form:
+            other_form = self._side_form
+        else:
+            other_form = self._main_form
+        return other_form
+
+    def _select_form(self, form, force=False):
+        if form is None or (form is self._active_form and not force):
+            return
+        form.focus()
+        self._active_form = form
+        
+    def title(self):
+        """Vra» název formuláøe jako øetìzec."""
+        return self._main_form.title()
+
+    def select_row(self, *args, **kwargs):
+        if hasattr(self._main_form, 'select_row'):
+            self._main_form.select_row(*args, **kwargs)
+        else:
+            log(EVENT, "Hlavní formuláø nepodporuje metodu `select_row()'!")
+        
+    def show_popup_menu(self):
+        self._active_form.show_popup_menu()
+
+    def on_command(self, command, **kwargs):
+        if command == DualForm.COMMAND_OTHER_FORM:
+            self._select_form(self._other_form(self._active_form))
+            return True
+        active = self._active_form
+        if command.handler() is not None:
+            kwargs['mainform'] = self._main_form
+            kwargs['sideform'] = self._side_form
+            kwargs['norefresh'] = True
+            # TODO: To je odporný hack!!!
+            result = active._on_handled_command(command, **kwargs)
+            self.refresh()
+            active.SetFocus()
+            return result
+        if isinstance(active, KeyHandler):
+            return active.on_command(command, **kwargs)
+        else:
+            return False
+
+    def on_ui_event(self, event, id):
+        return self._active_form.on_ui_event(event, id)
+
+    def show(self):
+        # Musíme volat show obou podformuláøù, proto¾e splitter je nevolá a
+        # pøitom v nich mohou být inicializaèní èi ukonèovací akce.
+        self._side_form.show()
+        self._main_form.show()
+        self._splitter.Enable(True)
+        self._splitter.Show(True)
+
+    def hide(self):
+        self._side_form.hide()
+        self._main_form.hide()
+        self._splitter.Show(False)
+        self._splitter.Enable(False)
+
+    def close(self):
+        self._main_form.close()
+        self._side_form.close()
+        self._main_form = None
+        self._side_form = None
+        self._active_form = None
+        self._splitter.Show(False)
+        self._splitter.Close()
+        self._splitter.Destroy()               
+        self.Close()
+        self.Destroy()               
+
+    def _sash_position(self, size):
+        ratio = self._sash_ratio or 0.5
+        return size.height * ratio
+            
+    def _on_size_hook(self, size):
+        pass
+
+    def OnSashChanged(self, event):
+        size = self._splitter.GetSize()
+        self._sash_ratio = event.GetSashPosition() / float(size.height)
+        
+    def OnSize(self, event):
+        size = event.GetSize()
+        self._splitter.SetSize(size)
+        self._splitter.SetSashPosition(self._sash_position(size))
+        self.SetSize(size)
+        self._on_size_hook(size)
+        
+    def OnSetFocus(self, event):
+        active = self._active_form
+        if active:
+            active.focus()
+
+    
+class ImmediateSelectionDualForm(DualForm):
+    """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
+    
+    def __init__(self, *args, **kwargs):
+        super_(ImmediateSelectionDualForm).__init__(self, *args, **kwargs)
+        self._selection_data = None
+
+    def _on_main_selection(self, row):
+        r = row.row()
+        if r != self._selection_data:
+            self._side_form.Show(False)
+            if self._do_selection(row):
+                self._selection_data = r
+
+    def _do_selection(self, row):
+        return True
+
+    
+class PostponedSelectionDualForm(ImmediateSelectionDualForm):
+    """Duální formuláø se zpo¾dìnou obnovou vedlej¹ího formuláøe."""
+    
+    _SELECTION_TICK = 2
+
+    def __init__(self, *args, **kwargs):
+        super_(PostponedSelectionDualForm).__init__(self, *args, **kwargs)
+        self._selection_candidate = None
+        wx_callback(wx.EVT_IDLE, self, self._on_idle)        
+
+    def _on_idle(self, event):
+        if self._side_form is None or self._selection_candidate is None:
+            pass
+        elif self._selection_tick > 0:
+            self._selection_tick = self._selection_tick - 1
+            microsleep(100)
+            event.RequestMore()
+        else:
+            row = self._selection_candidate
+            self._selection_candidate = None
+            if self._do_selection(row):
+                self._selection_data = row.row()
+            else:
+                self._selection_candidate = row
+                microsleep(100)
+                event.RequestMore()
+
+    def _on_main_selection(self, row):
+        if row.row() != self._selection_data:
+            self._side_form.Show(False)
+            self._selection_candidate = copy.copy(row)
+            self._selection_tick = self._SELECTION_TICK
+
+    
+class SideBrowseDualForm(PostponedSelectionDualForm):
+    """Duální formuláø s vedlej¹ím formuláøem 'SideBrowseForm'."""
+        
+    def title(self):
+        """Vra» název formuláøe jako øetìzec."""
+        return self._main_form.title() + " :: " + self._side_form.title()
+
+    def _create_side_form(self, parent):
+        view = self._view
+        f = SideBrowseForm(parent, self._resolver, view.side_name(),
+                           sibling_name=view.main_name(),
+                           sibling_row=lambda : self._selection_data,
+                           sibling_binding_column=view.binding_column(),
+                           binding_column=view.side_binding_column(),
+                           hide_binding_column=view.hide_binding_column(),
+                           append_condition=view.append_condition(),
+                           title=view.side_title(),
+                           columns=view.side_columns(),
+                           guardian=self)
+        if isinstance(self._main_form, Refreshable):
+            f.set_callback(ListForm.CALL_MODIFICATION,
+                           self._main_form.refresh)
+        f.set_callback(ListForm.CALL_USER_INTERACTION,
+                       lambda : self._select_form(self._side_form))
+        return f
+
+    def _do_selection(self, row):
+        focused = wx_focused_window()
+        if focused is None or (isinstance(focused, wx.TextCtrl) and \
+                               focused.GetName() == \
+                               ListForm.IncrementalSearch.TEXT_CONTROL_NAME):
+            # None to mù¾e být, není-li nic z aplikace zaostøeno.
+            # Druhá podmínka testuje, zda není focus ve widgetu inkrementálního
+            # vyhledávání.
+            #
+            # O¹etøovat to speciálním zpùsobem musíme proto, ¾e je tøeba
+            # za v¹ech okolností zabránit odskoèení z widgetu inkrementálního
+            # vyhledávání.  Ten zpùsob je trochu hloupý, proto¾e vedlej¹í
+            # formuláø se nezobrazí, dokud není aplikace opìt zaostøena, ale
+            # zná nìkdo lep¹í øe¹ení?
+            return False
+        try:
+            bindcol = self._view.binding_column()
+            side_bindcol = self._view.side_binding_column()
+            side_bindcol_spec = self._side_form._data.find_column(side_bindcol)
+            side_bindcol_type = side_bindcol_spec.type()
+            side_bindcol_val, err = side_bindcol_type.validate(row[bindcol].export())
+            self._side_form.set_prefill({side_bindcol: side_bindcol_val})
+            self._side_form.filter(data=row.row())
+            self._side_form.Show(True, refresh=False)
+            self._select_form(self._main_form, force=True)
+        finally:
+            focused.SetFocus()
+        return True
+
+    def close(self):
+        self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
+        super_(SideBrowseDualForm).close(self)
+
+
+class BrowseDualForm(SideBrowseDualForm, Refreshable):
+    """Duální formuláø s hlavním formuláøem 'BrowseForm'.
+    
+    Hlavním formuláøem je instance tøídy 'BrowseForm', vedlej¹ím formuláøem je
+    instance tøídy 'SideBrowseForm'.  Formuláøe jsou vzájemnì propojeny
+    prostøednictvím vazebních sloupcù daných specifikací `DualSpec'.
+    
+    """
+    def _create_main_form(self, parent, **kwargs):
+        dualform = self
+        class _MainBrowseForm(BrowseForm):
+            def title(self):
+                title = dualform._view.title()
+                if title is not None:
+                    return title
+                return super_(_MainBrowseForm).title(self)
+        f = _MainBrowseForm(parent, self._resolver, self._view.main_name(),
+                            guardian=self, **kwargs)
+        f.set_callback(ListForm.CALL_USER_INTERACTION,
+                       lambda : self._select_form(self._main_form))
+        f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
+        f.set_callback(ListForm.CALL_ACTIVATION, self._on_show_record)
+        f.set_callback(BrowseForm.CALL_NEW_RECORD, self._on_new_record)
+        return f
+
+    def _on_new_record(self, copy=False):
+        result = self._main_form._on_new_record(copy=copy)
+        if result:
+            self._main_form.select_row(result.row())
+            self._side_form.refresh(when=ListForm.DOIT_IMMEDIATELY)
+            self._select_form(self._side_form)
+            invoke_command(ListForm.COMMAND_NEW_LINE_AFTER)
+        return result
+    
+    def _on_show_record(self, key):
+        run_form(ShowDualForm, self._name, key=key)
+
+    def refresh(self):
+        self._main_form.refresh()
+        self._side_form.refresh()
+
+        
+class ShowDualForm(SideBrowseDualForm, Refreshable):
+    """Duální formuláø s hlavním formuláøem 'BrowsableShowForm'.
+
+    """
+    def __init__(self, *args, **kwargs):
+        super_(ShowDualForm).__init__(self, *args, **kwargs)
+        self._initialization_done = False
+
+    def _on_idle(self, event):
+        super(ShowDualForm, self)._on_idle(event)
+        if not self._initialization_done:
+            self._initialization_done = True
+            self._select_form(self._main_form, force=True)
+        
+    def _create_main_form(self, parent, **kwargs):
+        form_ = BrowsableShowForm(parent, self._resolver,
+                                  self._view.main_name(),
+                                  guardian=self, **kwargs)
+        form_.set_callback(BrowsableShowForm.CALL_SELECTION,
+                           self._on_main_selection)
+        return form_
+
+    def refresh(self):
+        self._side_form.refresh()
+
+    def _sash_position(self, size):
+        if self._sash_ratio:
+            return size.height * self._sash_ratio
+        else:    
+            return min(self._main_form.size().GetHeight(), size.height - 200)
+
+    def _on_size_hook(self, size):
+        self._main_form.set_scrollbars()
+
+        
+class DescriptiveDualForm(ImmediateSelectionDualForm, Refreshable):
+    """Duální formuláø s øádkovým seznamem nahoøe a formuláøem dole.
+
+    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a podrobnému
+    zobrazení aktuální polo¾ky.  Není urèen k editaci této polo¾ky.
+
+    """
+    
+    def _create_view_spec(self):
+        return None
+
+    def _create_main_form(self, parent, **kwargs):
+        form_ = BrowseForm(parent, self._resolver, self._name, guardian=self,
+                           **kwargs)
+        form_.set_callback(ListForm.CALL_USER_INTERACTION,
+                           lambda s=self: s._select_form(s._main_form))
+        form_.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
+        return form_
+
+    def _create_side_form(self, parent):
+        form_ = ShowForm(parent, self._resolver, self._name)
+        form_.set_callback(ShowForm.CALL_SELECTION,
+                           self._on_side_selection)
+        return form_
+    
+    def _do_selection(self, row):
+        if self._side_form is not None:
+            self._side_form.set_row(row)            
+            self._side_form.Show(True)
+            self._select_form(self._main_form, force=True)
+        return True
+
+    def _on_side_selection(self, row):
+        if self._main_form is not None:
+            self._main_form.select_row(row.row())
+
+    def _sash_position(self, size):
+        if self._sash_ratio:
+            return size.height * self._sash_ratio
+        else:    
+            return max(size.height - self._side_form.size().GetHeight(), 200)
+
+    def _on_size_hook(self, size):
+        self._side_form.set_scrollbars()
+        
+    def refresh(self):
+        self._main_form.refresh()
+
+        

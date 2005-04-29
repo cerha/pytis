@@ -1,0 +1,73 @@
+* PostgreSQL
+
+- Verze 7.1.2: Provede-li se pøi práci s kurzorem SQL pøíkaz =MOVE= jeho¾
+  parametr =count= je =0=, není poté mo¾no z kurzoru vytáhnout ¾ádná dal¹í
+  data.
+
+  Tento problém je nefatální, lze jej o¹etøit na úrovni databázového
+  rozhraní.  Aktuální implementace provádí pøed ka¾dým provedením MOVE test,
+  zda se nejedná o nulový posun.  Pokud by k nìmu mìlo jít, není proveden
+  (co¾ nevadí, proto¾e nulový posuvu nemá ¾ádný praktický význam).
+
+  Chyba byla oznámena, byla v¹ak za týden moderátorem pgsql-bugs odmítnuta
+  bez udání dùvodu.
+
+- Verze 7.1.2: Pokud v kurzoru vytvoøeném komplikovanìj¹ím SELECTem dojde
+  k pøekroèení hranic dat, kurzor pøestane vracet data.  Pøesnìj¹í definice
+  "komplikavanìj¹í" není známa, patrnì musí být pøítomna vazba mezi více
+  tabulkami a tøídìní (to je v pøípadì na¹eho rozhraní pøítomno v¾dy), není
+  to v¹ak jisté.
+
+  Chyba mù¾e zpùsobit na¹emu softwaru záva¾né problémy v pøípadì, ¾e vazby
+  mezi na¹imi tabulkami budou generovat "komplikovanìj¹í" SELECTy.  Nemyslím
+  si, ¾e je to pøíli¹ pravdìpodobné, ale zejména vzhledem k nejistému významu
+  "komplikovanìj¹í" to nelze vylouèit.
+
+  Chyba byla oznámena, odezva zatím ¾ádná.
+
+
+* Python
+
+- Verze 2.1 a star¹í, spolu s wxWindows 2.2.6.1: Pøi nastavených èeských
+  locales po importu wxWindows nefunguje práce s reálnými èísly a to tak ¾e
+  vùbec.  Napøíklad *parser* pøi naèítání modulu zprzní èíslo zapsané jako
+  =1.1= (obvykle je oøe¾e na celé èíslo).
+
+  Chyba nám zpùsobí významné potí¾e, jestli¾e budeme ve zdrojových textech
+  pou¾ívat zápisy reálných èísel, budeme-li naèítat reálná èísla z databáze a
+  v dal¹ích podobných pøípadech.  Obejít chybu lze nastavením =LC_NUMERIC= na
+  =C= na *úplném zaèátku* programu.  Je potom ov¹em potøeba dbát na to, aby
+  byla tato promìnná správnì nastavena pro u¾ivatelské vstupy.
+
+  Chyba je vývojáøùm Pythonu patrnì ji¾ známa, viz mail
+  <m14rr0x8vg.fsf@pavel.brailcom.cz> v devel@.
+
+
+* wxWindows
+
+- Verze 2.2.6.1: Jsou problémy s funkcí =wxWindow.Reparent=.  Za urèitých
+  okolností mù¾e dojít ke zhroucení aplikace (segmentation fault).  Nemìlo by
+  docházet ke zmìnì rodièe okna na jiného rodièe ne¾ byl ten, který byl
+  uveden pøi vytváøení okna, zejména pak nelze zmìnit rodièe okna, je¾
+  pùvodnì nemìlo vùbec ¾ádného rodièe.
+
+  Tento problém se zatím nezdá být fatální.  Souèasné pou¾ití =Reparent= se
+  podaøilo upravit zpùsobem, kdy dochází pouze k vypisování hlá¹ek o kritické
+  chybì Gtk na standardní chybový výstup.
+
+  Chyba vzhledem ke své malé záva¾nosti a komplikovanosti její kompletní
+  diagnózy nebyla oznámena.
+
+- Verze 2.2.9.2: Pøi otevøení vìt¹ího mno¾ství oken (napø. 8 a více) na frame
+  stacku a pøi pokusu o jejich sekvenèní zavírání dojde po jisté dobì k
+  spadnutí celé aplikace s hlá¹kou:
+
+    "Gdk-ERROR **: undefined font type
+
+    aborting...
+    neúspì¹nì ukonèen (SIGABRT)"
+
+  Cnyba se neprojevuje ve verzi 2.3.1. V této verzi je asi odstranìna, tak¾e
+  asi nemá význam se zabývat odstranìním této chyby v 2.2.9.2.
+
+  

@@ -1,0 +1,103 @@
+#title Pøeru¹ení zpracování událostí
+
+* Cíle a základní principy
+
+Nìkteré akce vyvolané u¾ivatelem mohou trvat pomìrnì dlouho.  Napøíklad ètení
+dat z databáze nebo formátování výstupu mù¾e zpùsobit nepøíjemné èekání.
+Mù¾eme rozli¹it dva druhy dlouhotrvajících akcí:
+
+1. Akce, které zásadnì trvají dlouho a u kterých se nepøedpokládá, ¾e po dobu
+   jejich provádìní budou zablokovány v¹echny akce u¾ivatele.
+
+2. Akce, které neblokují aplikaci dlouhodobì, av¹ak mohou potenciálnì trvat
+   natolik dlouho, ¾e je u¾ivatel bude chtít je¹tì pøed jejich ukonèením
+   pøeru¹it.
+
+Jak lze s dlouhotrvajícími akcemi ve wxPythonu nakládat docela pìknì shrnuje
+dokument [[http://wiki.wxpython.org/index.cgi/LongRunningTasks][Long Running Tasks]].  Jak z onoho dokumentu vyplývá, obecnì
+uspokojivé, tj. svým charakterem preemptivní, øe¹ení problému
+dlouhotrvajících úloh ve wxPythonu patrnì neexistuje.  V¾dy je nutná aktivní
+podpora v kódu, kde ke zdr¾ení dochází nebo mù¾e dojít.  Je tedy nutno najít
+nìjaký mechanismus, který nakládání s dlouhotrvajícími akcemi alespoò co
+nejvíce usnadòuje.
+
+** Pøedlouhé akce, neblokující
+
+Akce prvního druhu musí být zásadnì spou¹tìny jako samostatné vlákno nebo
+proces a umo¾nit pokraèování u¾ivatelské interakce bìhem svého provádìní.
+K tomu není celkem co dodat, snad jen stojí za pøipomenutí, ¾e:
+
+- I asynchronní akci musí být mo¾no nìjakým zpùsobem pøeru¹it, aby
+  nedocházelo ke zbyteènému hromadìní procesù a plýtvání strojového èasu,
+  dále zpomalující u¾ tak pomalé u¾ivatelské rozhraní.
+
+- Je zapotøebí zajistit, aby akce byla buï korektnì reentrantní, nebo aby
+  její paralelní spu¹tìní bìhem jejího provádìní bylo znemo¾nìno.
+
+** Krat¹í akce, blokující
+
+U akcí druhého druhu je situace slo¾itìj¹í, nebo» jimi vyvolávané akce
+povìt¹inou nejsou navr¾eny pro spou¹tìní v samostatném vláknì nebo procesu,
+èasto ani vytváøení samostatného vlákna do celkového zpracování nezapadá a
+pøedev¹ím je ¾ádoucí, aby akce byly skuteènì blokující.  Je jenom ¾ádána
+mo¾nost jejich pøeru¹ení.  Tento po¾adavek je netriviální, proto¾e wxWindows
+neumo¾òuje snadné pøijetí nové události bìhem zpracování jiné události, je
+nutná aktivní podpora v provádìném kódu.
+
+
+* Øe¹ení
+
+Ze tøí øe¹ení nabízených ve zmínìném dokumentu [[http://wiki.wxpython.org/index.cgi/LongRunningTasks][Long Running Tasks]] pøipadá
+v úvahu pouze vyu¾ití funkce =wxYield=.  Zpracování ve vláknì není
+v interakci s u¾ivatelským rozhraním pøíli¹ ¾ádoucí a rozdìlení zpracování do
+idle událostí je pro daný úèel zcela nevhodné.
+
+U =wxYield= je nutno uvá¾it, ¾e toto volání nesmí být provádìno ani pøíli¹
+èasto (je, zahrneme-li i pøíslu¹né zpracování, dost drahé) ani pøíli¹ zøídka
+(¹patná odezva na pøeru¹ující akci u¾ivatele).  Také nesmí být vázáno na
+explicitní podporu kódu, napøíklad kód databázového rozhraní, ve kterém se
+mù¾e zpracování události chvíli zdr¾et, nemù¾e volat =wxYield= sám o sobì.
+Pokud by explicitní podpora kódu byla vy¾adována, musely by opìt být kdejaké
+jinak triviální akce spou¹tìny ve vláknech (stejnì nepøeru¹itelných!).
+
+Proto pou¾ijeme následující, z hlediska výkonného kódu dobøe transparentní,
+øe¹ení:
+
+- =wxYield= bude opakovanì voláno v samostatném vláknì, bì¾ícím po celou dobu
+  práce u¾ivatelského rozhraní aplikace.  Dojde-li k vyvolání události bìhem
+  zpracování jiné události, vlákno se podívá, zda se jedná o pøeru¹ovací
+  pøíkaz.  Je-li tomu tak, nastaví indikátor pøeru¹ení, v opaèném pøípadì
+  událost zahodí [1].
+
+- Ve¹keré callbacky budou obaleny kódem, který o¹etøí nastavení pøíznaku
+  zpracovávané události a dal¹í vìci.  Obalení bude zaji¹tìno nahrazením wx
+  funkcí pro pøiøazení callbackù na¹ím univerzálním obalovaèem.
+
+- Do funkce =log= bude vlo¾en callback pro kontrolu indikátoru pøeru¹ení.
+  Tento callback v pøípadì nastaveného flagu pøeru¹ení vyvolá speciální, pro
+  tento úèel zavedenou výjimku =UserBreakException=.
+
+- Pøeru¹ovací výjimka bude odchytávána na nejvy¹¹í úrovni aplikace,
+  tj. nebude-li o¹etøena jinde, akce se jednodu¹e pøeru¹í bez dal¹ích efektù
+  (èi¹tìní, apod.).
+
+
+* Pou¾ití
+
+Na kód u¾ivatelského rozhraní jsou kladeny následující po¾adavky:
+
+- Místo funkcí =wx.EVT_*= pro pøiøazení callbackù u¾ivatelským akcím (stisk
+  klávesy, klik my¹i, ne v¹ak nutnì ji¾ zmìna velikosti, apod.) musí být
+  callbacky pøiøazovány zásadnì prostøednictvím funkce
+  =lib.form.wx_callback=.
+
+- Ve¹kerý kód musí dostateènì èasto logovat.  Pojem "dostateènì èasto" je
+  mínìn z hlediska èasového.  Pokud toto *jednodu¹e* zajistit nelze, jako
+  napøíklad u systémových potenciálnì blokujících volání, nedá se nic dìlat.
+
+- Pokud je potøeba v pøípadì pøeru¹ení provést nìjaké èistící akce, je nutno
+  odchytávat výjimku =UserBreakException= a odpovídajícím zpùsobem na ni
+  reagovat.
+
+
+[1] To mù¾e mít velmi pozitivní efekt na zpomalení autorepeatu :-).

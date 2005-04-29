@@ -1,0 +1,15 @@
+#title Standardy vývoje
+
+- [[management][Obecná organizaèní pravidla]]
+
+- [[cvs][Pravidla pro práci s CVS]]
+
+- [[design][Obecné principy návrhu systému a tvorby kódu]]
+
+- [[formatting][Pravidla pro psaní a formátování kódu]]
+
+- [[reliability][Testování kódu]]
+
+- [[tips][Tipy a triky]]
+
+- [[bugs][Chyby pou¾ívaného softwaru]]

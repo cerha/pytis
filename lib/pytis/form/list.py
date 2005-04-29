@@ -1,0 +1,2835 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Práce s formuláøi se seznamovým zobrazením.
+
+Modul jednak interpretuje specifikaci formuláøù (viz modul 'spec') pro
+seznamové zobrazení a jednak zaji¹»uje práci s ní prostøednictvím objektù
+wxWindows.
+
+"""
+
+
+# Terminologická poznámka: Promìnné s názvem `row' obvykle znaèí èíslo øádku
+# (èíslováno od 0).  Jedná-li se o obsah øádku, nazývá se pøíslu¹ná promìnná
+# obvykle `the_row'.  Matoucí jméno `row' bylo pøevzato z wxWindows.
+
+
+import copy
+import string
+import time
+import types
+
+import wx
+import wx.grid
+from pytis.form import *
+import pytis.data
+import pytis.output
+import pytis.presentation
+from pytis.presentation import PresentedRow
+import config
+
+
+class _InputFieldCellEditor(wx.grid.PyGridCellEditor):
+
+    def __init__(self, parent, table, guardian, field_spec, data,
+                 registration):
+        wx.grid.PyGridCellEditor.__init__(self)
+        self._parent = parent
+        self._table = table
+        self._guardian = guardian
+        self._field_spec = field_spec
+        self._data = data
+        self._registration = registration
+        self._field = None
+        self._callbacks = []
+
+    # Povinné metody
+
+    def Create(self, parent, id, evt_handler):
+        self._field = InputField.create(parent, self._field_spec, self._data,
+                                        guardian=self._guardian, inline=True)
+        for type,function in self._callbacks:
+            self._field.set_callback(type, function)
+        control = self._field.widget()
+        try:
+            control.SetInsertionPoint(0)
+        except AttributeError:
+            pass
+        self.SetControl(control)
+        return control
+
+    def BeginEdit(self, row, col, grid):
+        self._registration(self)
+        field = self._field
+        value = self._table.GetValue(row, col, inputfield=field)
+        field.init(value)
+        invalid_string = self._table.get_invalid_string(row, col)
+        if invalid_string is not None:
+            field.set_value(invalid_string)
+        field.widget().Enable(True)
+        field.set_focus()
+        try:
+            field.widget().SetInsertionPointEnd()
+        except AttributeError:
+            pass
+        
+    def EndEdit(self, row, col, grid):
+        field = self._field
+        field.widget().Enable(False)
+        self._parent.SetFocus()
+        if not field.is_modified():
+            self._table.set_invalid_string(row, col, None)
+            return False
+        value, error = field.validate(interactive=False)
+        if error:
+            self._table.set_invalid_string(row, col, field.get_value())
+            return True
+        else:
+            self._table.set_invalid_string(row, col, None)
+            self._table.SetValue(row, col, value)
+            return True
+
+    def Reset(self):
+        self._field.reset()
+        
+    def Clone(self):
+        return _InputFieldCellEditor()
+       
+    # Ostatní metody
+    
+    def field(self):
+        """Vra» svùj 'InputField'."""
+        return self._field
+        
+    def IsAcceptedKey(self, event):
+        # TODO/wx: Z neznámých dùvodù není voláno.
+        log(DEBUG, 'Neuvìøitelné -- voláno IsAcceptedKey')
+        return False
+    
+    def set_callback(self, type, function):
+        if self._field is not None:
+            self._field.set_callback(type, function)
+        else:
+            self._callbacks.append((type, function))
+
+    def close(self):
+        """Proveï ukonèovací akce.
+
+        Tuto metodu je nutno volat explicitnì, nebo» definování metod
+        `Close()' a `Destroy()' nemá ¾ádný úèinek.
+
+        """
+        self.SetControl(None)
+
+    
+
+### Formuláøe
+
+
+class ListForm(LookupForm, TitledForm, Refreshable):
+    """Spoleèná nadtøída pro formuláøe se seznamovým zobrazením.
+
+    Tyto formuláøe zobrazují seznam øádkù, rozdìlených do nìkolika sloupcù,
+    tedy v podstatì tabulku.  Tøída definuje spoleèné vlastnosti, jako mo¾nosti
+    navigace, vyhledávání, øazení apod.
+
+    Tøída je 'CallbackHandler' a jako argument callbackové funkce pøedává
+    slovník, jeho¾ klíèe jsou id sloupcù (stringy) a hodnoty jsou hodnoty
+    tìchto sloupcù (opìt stringy) øádku, jeho¾ se callback týká.
+
+    Tato tøída obvykle není pou¾ívána pøímo, nýbr¾ slou¾í jako základ pro
+    specializované tøídy.
+
+    """
+    # Konvence pro pojmenovávání nìkterých promìnných, zejména v roli argumentù
+    # metod:
+    # - "row", resp. "col", v¾dy znaèí *èíslo* øádku, resp. sloupce, poèínaje
+    #    od 0
+    # - øádek dat jako instance Row se pojmenovává "the_row"    
+
+    class _ListTable(wx.grid.PyGridTableBase):
+        # Tato tøída není a¾ tak triviální, jak bychom si mo¾ná pøáli.
+        # Po¾adavky na ni jsou následující:
+        # - základní práce s tabulkovými daty
+        # - mo¾nost pøítomnosti jednoho øádku navíc, nepøítomného v datech, na
+        #   nìjakém místì v tabulce
+        # - znalost pùvodních dat editovaného øádku
+        # - znalost aktuálních (zeditovaných) dat editovaného øádku
+        # - znalost a¾ tøí hodnot právì editovaného políèka: hodnota pùvodní
+        #   (z databáze), platná hodnota zeditovaná, odeslaná nezvalidovaná
+        #   hodnota urèená k opravné editaci u¾ivatelem
+        # - schopnost práce s poèítanými sloupci
+
+        # Uvnitø tøídy pracujeme zásadnì s vnitøními hodnotami, nikoliv
+        # hodnotami u¾ivatelskými.  *Jediné* metody, které pracují
+        # s u¾ivatelskou reprezentací, jsou `GetValue' a `SetValue'.
+
+        # Necachujeme ¾ádná data, udr¾ujeme pouze poslední øádek a data
+        # o editaci jednoho øádku; cachování vìt¹ího mno¾ství dat vzhledem ke
+        # zpùsobu pou¾ití tabulky nedává pøíli¹ velký smysl.
+
+        class _CurrentRow:
+            def __init__(self, row, the_row):
+                assert type(row) == type(0)
+                assert isinstance(the_row, PresentedRow)
+                self.row = row
+                self.the_row = the_row
+                
+        class _EditedRow(_CurrentRow):
+            def __init__(self, row, the_row, fieldspec, data, new=False,
+                         prefill=None):
+                if __debug__ and config.server:
+                    import pytis.remote
+                # TODO: nevím, pro není pytis.data.Row, i kdy¾ je nahoøe import
+                # pytis.data, tak to importneme tady.            
+                import pytis.data    
+                assert type(row) == type(0)
+                assert the_row is None or \
+                       isinstance(the_row, pytis.data.Row) or \
+                       isinstance(the_row, PresentedRow)
+                assert is_sequence(fieldspec)
+                assert isinstance(data, pytis.data.Data) or \
+                       isinstance (data, pytis.remote.RemoteData)
+                p_row = PresentedRow(fieldspec, data, the_row,
+                                     prefill=prefill, singleline=True, new=new)
+                ListForm._ListTable._CurrentRow.__init__(self, row, p_row)
+                self.orig_row = copy.copy(the_row)
+                self.invalid_col = None # èíslo sloupce
+                self.invalid_string = None
+            def update(self, colid, value):
+                self.the_row[colid] = value
+            
+        class _Column:
+            def __init__(self, id, wxtype, label, style):
+                self.id = id
+                self.wxtype = wxtype
+                self.label = label
+                self.style = style
+
+        class EditInfo:
+            def __init__(self, row, the_row, new, changed, valid, orig_content):
+                self.row = row
+                self.the_row = the_row
+                self.new = new
+                self.changed = changed
+                self.valid = valid
+                self.orig_content = orig_content
+
+        class _DisplayCache:
+            def __init__(self, size=1000):
+                self._size = size
+                self._start_row = 0
+                self._cache = self._allocate(size)
+            def _allocate(self, size):
+                return map(lambda __: None, range(size))
+            def __getitem__(self, row):
+                try:
+                    index = row-self._start_row
+                    if index >= 0:
+                        return self._cache[index]
+                    else:
+                        raise IndexError()
+                except IndexError:
+                    return None
+            def __setitem__(self, row, the_row):
+                start = self._start_row
+                try:
+                    index = row-start
+                    if index >= 0:
+                        self._cache[index] = the_row
+                    else:
+                        raise IndexError()
+                except IndexError:
+                    size = self._size
+                    end = start + size
+                    new_start = max(row - size/2, 0)
+                    new_end = new_start + size
+                    if end <= new_start or new_end <= start:
+                        cache = self._allocate(size)
+                    elif end < new_end:
+                        diff = new_end - end
+                        cache = self._cache[diff:] + self._allocate(diff)
+                    elif start > new_start:
+                        diff = start - new_start
+                        cache = self._allocate(diff) + self._cache[:-diff]
+                    else:
+                        raise ProgramError(start, end, new_start, new_end)
+                    assert len(cache) == self._size, len(cache)
+                    self._start_row = new_start
+                    cache[row-new_start] = the_row
+                    self._cache = cache
+                    
+        _TYPE_MAPPING = None
+        
+        def __init__(self, frame, data, fields, columns, row_count,
+                     sorting=(), grouping=None, inserted_row_number=None,
+                     inserted_row=None, prefill=None):
+            wx.grid.PyGridTableBase.__init__(self)
+            if self._TYPE_MAPPING is None:
+                # Musíme inicializovat a¾ zde kvùli neXovému serveru.
+                # Nepou¾íváme mapování pro Float, proto¾e to by nám zru¹ilo
+                # na¹e formátování èísel.
+                self.__class__._TYPE_MAPPING = \
+                  {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
+            self._frame = frame
+            self._data = data
+            self._fields = fields
+            self._row_count = row_count
+            self._sorting = sorting
+            self._grouping = grouping
+            self._prefill = prefill
+            self._current_row = None
+            # Zpracuj sloupce
+            self._columns = columns
+            self._column_count = len(filter (lambda c: c.column_width(),
+                                             columns))
+            self._column_info = column_info = []
+            for c in columns:
+                cid = c.id()
+                label = c.column_label() or ''
+                style = c.style()
+                assert isinstance(style, pytis.presentation.FieldStyle) \
+                       or callable(style), \
+                       ('Invalid field style', cid, style)
+                t = c.type(data)
+                try:
+                    wxtype = self._TYPE_MAPPING[t.__class__]
+                except KeyError:
+                    wxtype = wx.grid.GRID_VALUE_STRING
+                cc = self._Column(cid, wxtype, label, style)
+                column_info.append(cc)
+            # Vytvoø cache
+            self._cache = self._DisplayCache()
+            self._attr_cache = {}
+            self._font_cache = {}
+            self._group_cache = {0: False}
+            self._group_value_cache = {}
+            # Nastav øádek
+            self.rewind()
+            if inserted_row_number is None:
+                self._edited_row = None
+            else:
+                self._edited_row = self._EditedRow(inserted_row_number,
+                                                   inserted_row, fields, data,
+                                                   new=True, prefill=prefill)
+            self._presented_row = PresentedRow(fields, data, None,
+                                               singleline=True,
+                                               prefill=prefill)
+
+        # Pomocné metody
+        
+        def _panic(self):
+            log(DEBUG, 'Zpanikaøení gridové tabulky')
+            leave_form()
+
+        def _get_row(self, row, autoadjust=False):
+            """Vra» øádek èíslo 'row' z databáze jako instanci 'pytis.data.Row'.
+
+            Argumenty:
+
+              row -- poøadové èíslo øádku *v databázovém selectu*, poèínaje 0
+              autoadjust -- právì kdy¾ je pravdivé, je 'row' sní¾eno
+                o jednièku, nachází-li se za editovaným *novým* øádkem, a pokud
+                je shodno s èíslem editovaného øádku (a» u¾ nového èi pouze
+                modifikovaného), je vrácen editovaný øádek
+
+            """
+            edited = self._edited_row
+            if edited and row == edited.row:
+                return edited.the_row
+            elif edited and autoadjust and edited.the_row.new() and \
+                     row > edited.row:
+                row_ = row - 1
+            else:
+                row_ = row
+            success, result = db_operation(lambda: self._retrieve_row(row_))
+            if not success:
+                self._panic()
+            return result
+
+        def _retrieve_row(self, row):
+            def fetch(row, direction=pytis.data.FORWARD):
+                data = self._data
+                # Následující manévr vychází z pøedpokladu, ¾e zpìtný chod
+                # bude pokraèovat i nadále smìrem zpìt.  Proto se sna¾íme
+                # naznaèit cachi, ¾e má stáhnout data pøedchozí, ne
+                # následující.
+                #
+                # TODO: manévr nefunguje, pokud máme napø. 4 øádky v gridu                
+                # if row > 1 and direction == pytis.data.BACKWARD:
+                #     data.fetchone(direction=direction)
+                #     data.fetchone()
+                result = data.fetchone()
+                assert result, ('Missing row', row)
+                self._presented_row.set_row(result)
+                self._current_row = \
+                  self._CurrentRow(row, copy.copy(self._presented_row))
+            current = self._current_row
+            if not current:
+                data = self._data
+                data.rewind()
+                if row > 0:
+                    data.skip(row, direction=pytis.data.FORWARD)
+                fetch(row)
+            elif row != current.row:
+                data = self._data
+                skip = row - (data.last_row_number()+1)
+                if skip >= 0:
+                    direction = pytis.data.FORWARD
+                else:
+                    direction = pytis.data.BACKWARD
+                    skip = -skip
+                data.skip(skip, direction=direction)
+                fetch(row, direction)
+            return self._current_row.the_row
+
+        def _group(self, row):
+            # Return true, if given row belongs to a highlighted group
+            if self._grouping is None:
+                return False
+            try:
+                return self._group_cache[row]
+            except KeyError:
+                grouping_column = self._grouping
+                this_value = self._cached_value(row, grouping_column)
+                try:
+                    result = self._group_value_cache[this_value]
+                    self._group_cache[row] = result
+                    return result
+                except KeyError:
+                    cached = self._group_cache.keys()
+                    lower = filter(lambda k: k < row, cached)
+                    if len(lower) and (row < 100 or row - max(lower) < 80):
+                        prev_value = self._cached_value(row-1, grouping_column)
+                        prev_group = self._group(row-1)
+                        if this_value == prev_value:
+                            result = prev_group
+                        else:
+                            result = not prev_group
+                        self._group_value_cache[this_value] = result
+                        self._group_cache[row] = result
+                        return result
+                    higher = filter(lambda k: k > row, cached)
+                    if len(higher) and min(higher) - row < 80:
+                        next_value = self._cached_value(row+1, grouping_column)
+                        next_group = self._group(row+1)
+                        if this_value == next_value:
+                            result = next_group
+                        else:
+                            result = not next_group
+                        self._group_cache[row] = result
+                        return result
+                    # There is no cached group within nearest rows, so start
+                    # again with an empty cache.
+                    self._group_cache = {row: False}
+                    self._group_value_cache = {this_value: False}
+                    return False
+        
+        def _make_attr(self, style):
+            if style.slanted():
+                slant = wx.ITALIC
+            else:
+                slant = wx.NORMAL
+            if style.bold():
+                weight = wx.BOLD
+            else:
+                weight = wx.NORMAL
+            font_key = (slant, weight)
+            try:
+                font = self._font_cache[font_key]
+            except KeyError:
+                size = self._frame.GetFont().GetPointSize()
+                font = self._font_cache[font_key] = \
+                       font = wx.Font(size, wx.DEFAULT, slant, weight)
+            return (color2wx(style.foreground()), color2wx(style.background()),
+                    font)
+
+        # Na¹e veøejné metody
+        
+        def update(self, row_count, sorting, grouping, inserted_row_number,
+                   inserted_row, prefill):
+            self._row_count = row_count
+            self._sorting = sorting
+            self._grouping = grouping
+            self._prefill = prefill
+            # Sma¾ cache
+            self._group_cache = {0: False}
+            self._group_value_cache = {}
+            # Nastav øádek
+            self.rewind()
+            if inserted_row_number is None:
+                self._edited_row = None
+            else:
+                self._edited_row = self._EditedRow(inserted_row_number,
+                                                   inserted_row, self._fields,
+                                                   self._data,
+                                                   new=True, prefill=prefill)
+            self._presented_row = PresentedRow(self._fields, self._data,
+                                               None, singleline=True,
+                                               prefill=prefill)
+        
+        def close(self):
+            # Tato metoda je nutná kvùli jistému podivnému chování wxWindows,
+            # kdy wxWindows s tabulkou pracuje i po jejím zru¹ení.
+            self._data = None
+            # TODO: Následující (a mo¾ná i ta pøedcházející) operace jsou
+            # jsou v principu zbyteèné, ale proto¾e z neznámých dùvodù
+            # nedochází pøi uzavøení formuláøe k likvidaci nìjakých blí¾e
+            # neurèených dat, patrnì i z této tabulky, tak radìji významná
+            # data instance ma¾eme ruènì...
+            self._frame = None
+            self._fields = None
+            self._columns = None
+            self._column_info = None
+            self._cache = None
+            self._attr_cache = None
+            self._font_cache = None
+            self._group_cache = None
+            self._group_value_cache = None
+            self._edited_row = None
+            self._presented_row = None
+
+        def _cached_value(self, row, col_id, style=False):
+            # Return the cached value for given row and column id.
+            #
+            # The value returned is the formatted cell value by default or a
+            # computed style, when the keyword argument style is true.
+            # This is a little tricky, but the reason is to cache everithing 
+            # once we read the row value, because we can not ceche the rows
+            # inside the 'row()' method.
+            #
+            cached_things = self._cache[row]
+            if cached_things is None:
+                the_row = self.row(row)
+                style_dict = {}
+                value_dict = {}
+                # Cache the values and styles for all columns at once.
+                for c in self._column_info:
+                    cid = c.id
+                    s = c.style
+                    if callable(s):
+                        style_dict[cid] = s(cid, the_row)
+                    value_dict[cid] = the_row.format(cid)
+                self._cache[row] = cached_things = [value_dict, style_dict]
+            cached_row = cached_things[style and 1 or 0]
+            return cached_row[col_id]
+
+        def row(self, row):
+            """Vra» øádek èíslo 'row' jako instanci tøídy 'PresentedRow'.
+
+            Vrácený øádek zahrnuje zmìny provedené pøípadnou editací a
+            obsahuje pouze sloupce datového objektu (nepoèítané i poèítané),
+            tak¾e je mo¾né jej pøímo pou¾ít v databázových operacích.
+
+            Jestli¾e øádek daného èísla neexistuje, vra» 'None'.
+            
+            Argumenty:
+            
+              row -- nezáporný integer, první øádek má èíslo 0
+
+            """
+            if row < 0 or row >= self.GetNumberRows():
+                return None
+            data_row = self._get_row(row, autoadjust=True)
+            self._presented_row.set_row(data_row)
+            return self._presented_row
+
+        def edit_row(self, row):
+            """Zahaj editaci øádku èíslo 'row'.
+
+            Pokud ji¾ nìjaký øádek editován je, jeho editace je zru¹ena a obsah
+            vrácen do pùvodního stavu (ov¹em bez pøekreslení, to musí být
+            zaji¹tìno jinak!).
+
+            Argumenty:
+            
+              row -- nezáporný integer urèující èíslo editovaného øádku
+                poèínaje od 0, nebo 'None' znaèící ¾e nemá být editován ¾ádný
+                øádek
+
+            """
+            if row is None:
+                self._edited_row = None
+            else:
+                assert row >= 0 and row < self._row_count, \
+                       ('Invalid row number', row)
+                data_row = self._get_row(row)
+                self._edited_row = \
+                  self._EditedRow(row, data_row, self._fields, self._data,
+                                  prefill=self._prefill)
+
+        def editing(self):
+            """Vra» informaci o editovaném øádku nebo 'None'.
+
+            Pokud není editován ¾ádný øádek, vra» 'None'.  Jinak vra» instanci
+            tøídy 'EditInfo' s informacemi o èísle editovaného øádku, zda je
+            tento øádek nový, zda je jeho aktuální obsah rùzný od jeho
+            pùvodního obsahu, zda jsou v¹echny sloupce validní, pùvodní obsah
+            øádku (jako instanci 'pytis.data.Row') a aktuální obsah øádku (jako
+            instanci 'PresentedRow').
+
+            """
+            edited = self._edited_row
+            if edited:
+                the_row = edited.the_row
+                row = edited.row
+                new = the_row.new()
+                if new:
+                    the_orig = None
+                else:
+                    the_orig = edited.orig_row
+                valid = (edited.invalid_col == None)
+                changed = the_row.changed()
+                return self.EditInfo(row, the_row, new, changed, valid, the_orig)
+            else:
+                return None
+
+        def rewind(self, position=None):
+            """Pøesuò datové ukazovátko na zaèátek dat.
+
+            Jestli¾e 'position' není 'None', pøesuò ukazovátko na 'position'.
+
+            """
+            if self._current_row is None:
+                return
+            if position is None:
+                self._data.rewind()
+                self._cache = self._DisplayCache()
+                self._current_row = None
+            elif position < -1 or position >= self.GetNumberRows() - 1:
+                pass
+            else:
+                row = position
+                success, result = \
+                         db_operation(lambda : self._retrieve_row(row))
+                if not success:
+                    self._panic()
+                self._presented_row.set_row(result)
+                self._current_row = \
+                  self._CurrentRow(row, copy.copy(self._presented_row))
+
+        def current_row(self):
+            """Vra» èíslo aktuálního øádku datového objektu tabulky.
+
+            Øádky jsou èíslovány od 0.  Pokud èíslo aktuálního øádku není
+            známo, vra» 'None'.
+
+            """
+            current = self._current_row
+            return current and current.row
+
+        def set_invalid_string(self, row, col, string):
+            """Zapamatuj si nevalidní hodnotu buòky.
+
+            Tato metoda by mìla být volána, pokud byla u¾ivatelem vlo¾ena
+            nevalidní hodnota.  Nastavení metodou 'SetValue()' pøijímá
+            instanci 'pytis.data.Value', a tudí¾ pouze validní hodnoty.  Takto
+            dáváme gridové tabulce mo¾nost dozvìdìt se o nevalidním vstupu a
+            patøiènì na nìj reagovat.
+
+            Po úspì¹né validaci musí být zapamatovaný øetìzec vymazán voláním
+            této metody s argumentem 'string' rovným 'None'.
+
+            Souèasná implementace se omezuje na mo¾nost nastavení nevalidní
+            hodnoty pouze pro jeden sloupec právì editovaného øádku.
+
+            """
+            edited = self._edited_row
+            if edited and edited.row == row:
+                if string is None:
+                    edited.invalid_col = None
+                    edited.invalid_string = None
+                else:
+                    edited.invalid_col = col
+                    edited.invalid_string = string
+        
+        def get_invalid_string(self, row, col):
+            """Vra» nevalidní hodnotu buòky zadanou u¾ivatelem jako øetìzec.
+
+            Pokud nebyla do dané buòky vlo¾ena nevalidní hodnota, vra» 'None'.
+
+            Platí zde omezení popsané v 'set_invalid_string()'.
+            
+            """
+            edited = self._edited_row
+            if edited and edited.row == row and edited.invalid_col == col:
+                return edited.invalid_string
+            return None
+
+            
+        
+        # Povinné gridové metody
+
+        def GetNumberRows(self):
+            return self._row_count
+
+        def GetNumberCols(self):
+            return self._column_count
+
+        def IsEmptyCell(self, row, col):
+            return False
+
+        def GetValue(self, row, col, inputfield=False):
+            # `row' a `col' jsou èíslovány od 0.
+            # Je tabulka ji¾ uzavøena?
+            if not self._data:
+                return ''
+            col_id = self._column_info[col].id
+            if self._edited_row and row == self._edited_row.row:
+                the_row = self._edited_row.the_row
+                if the_row is None:
+                    return ''
+                value = the_row.format(col_id)
+            else:
+                value = self._cached_value(row, col_id)
+            # Vytáhni hodnotu sloupce
+            if not inputfield and \
+               self._column_info[col].wxtype == wx.grid.GRID_VALUE_BOOL and \
+               value == 'F':
+                # V této podobì gridu je 0 pova¾ována (z neznámých dùvodù,
+                # mo¾ná to souvisí s C++ pøijímajícím zde pouze strings) za
+                # pravdu.
+                value = ''
+            return value
+
+        def SetValue(self, row, col, value):
+            # Tato metoda neodpovídá specifikaci gridu, ale to nevadí, proto¾e
+            # políèka editujeme výhradnì pøes na¹e editory.
+            assert isinstance(value, pytis.data.Value), \
+                   ('Value not a value', value)
+            edited = self._edited_row
+            if edited == None:
+                # K této situaci dochází, kdy¾ se kliknutím my¹i opou¹tí
+                # rozeditované políèko øádku, jemu¾ je¹tì nebyla zmìnìna ¾ádná
+                # hodnota.  V takovém pøípadì na¹e metody editaci nakrásno
+                # ukonèí a wxWindows po provedené zmìnì øádku vesele zavolá
+                # SetValue ...
+                return
+            # Nastav hodnotu editovanému sloupci
+            cid = self._column_info[col].id
+            edited.update(cid, value)
+            log(EVENT, 'Nastavena hodnota editovaného políèka:',
+                (row, col, value))
+
+        # Nepovinné gridové metody
+
+        def GetColLabelValue(self, col):
+            info = self._column_info[col]
+            id, label = info.id, info.label
+            if id == self._grouping:
+                label = "*" + label + "*"
+            pos = position(id, self._sorting, key=lambda x: x[0])
+            if pos is not None:
+                n = pos + 1
+                if self._sorting[pos][1] == LookupForm.SORTING_ASCENDENT:
+                    label = " ".join(("<"*n, label, " "*n))
+                else:
+                    label = " ".join((" "*n, label, ">"*n))
+            return label
+
+        def GetTypeName(self, row, col):
+            return self._column_info[col].wxtype
+
+        def GetAttr(self, row, col, _something):
+            if row >= self.GetNumberRows(): # mù¾e se stát...
+                return None
+            column = self._column_info[col]
+            style = column.style
+            if callable(style):
+                style = self._cached_value(row, column.id, style=True)
+            try:
+                fg, bg, font = self._attr_cache[style]
+            except KeyError:
+                fg, bg, font = self._attr_cache[style] = self._make_attr(style)
+            if self._group(row):
+                rgb = map(lambda x: max(0, x[0] - x[1]),
+                          zip((bg.Red(), bg.Green(), bg.Blue()),
+                              ListForm._GROUPING_BACKGROUND_DOWNGRADE))
+                bg = wx.Colour(*rgb)
+            provider = self.GetAttrProvider()
+            if provider:
+                attr = provider.GetAttr(row, col, _something)
+                if attr:
+                    attr.SetTextColour(fg)
+                    attr.SetBackgroundColour(bg)
+                    attr.SetFont(font)
+                    return attr
+            return None
+
+
+    class IncrementalSearch:
+        TEXT_CONTROL_NAME = 'incremental-search-text-control'
+        def __init__(self, listform, full):
+            self._listform = listform
+            self._full = full
+            self._key = WxKey()
+            self._rows = []
+            self._last_direction = pytis.data.FORWARD
+            self._on_text_blocked = False
+            self._exiting = False
+            self._widget = w = wx.TextCtrl(listform.GetParent(), -1,
+                                           name=self.TEXT_CONTROL_NAME)
+            wx_callback(wx.EVT_KILL_FOCUS, w, self._on_kill_focus)
+            w.SetFocus()
+            wx_callback(wx.EVT_KEY_DOWN, w, self._on_key_down)
+            wx_callback(wx.EVT_TEXT, w, w.GetId(), self._on_text)
+            cb = self._listform.get_callback(ListForm.CALL_SELECTION)
+            self._selection_callback = cb
+            self._listform.set_callback(ListForm.CALL_SELECTION, None)
+            
+        def run(self):
+            self._widget.Show(True)
+            self._widget.Enable(True)
+
+        def _on_key_down(self, event):
+            key = self._key.event_key(event)
+            if key == 'Enter':
+                self._exit(False)
+            elif key == 'Backspace':
+                self._back()
+            elif key == 'Ctrl-s':
+                self._search(direction=pytis.data.FORWARD)
+            elif key == 'Ctrl-r':
+                self._search(direction=pytis.data.BACKWARD)
+            elif key == 'Ctrl-g' or key == 'Escape':
+                self._exit(True)
+            else:
+                event.Skip()
+    
+        def _on_text(self, event):
+            if self._on_text_blocked:
+                return
+            self._search(newtext=True)
+
+        def _on_kill_focus(self, event):
+            self._listform.set_callback(ListForm.CALL_SELECTION,
+                                        self._selection_callback)
+            if not self._exiting:
+                self._exit(True)
+            
+        def _exit(self, rollback):
+            self._exiting = True
+            if rollback and self._rows:
+                self._set_row(self._rows[0][0])
+            w = self._widget
+            w.Enable(False)
+            w.Show(False)
+            w.Destroy()
+            self._listform.focus()
+            if not rollback:
+                l = self._listform
+                the_row = l._table.row(l._table.current_row())
+                l._run_callback(l.CALL_SELECTION, (the_row,))
+
+        def _back(self):
+            if self._rows:
+                row, text = self._rows.pop()
+                try:
+                    self._on_text_blocked = True
+                    w = self._widget
+                    w.SetValue(text)
+                    w.SetInsertionPointEnd()
+                finally:
+                    self._on_text_blocked = False
+                self._set_row(row)
+            else:
+                beep()
+
+        def _search(self, direction=None, newtext=False):
+            if direction is None:
+                direction = self._last_direction
+            else:
+                self._last_direction = direction
+            text = self._widget.GetValue()
+            l = self._listform
+            row, col = l._current_cell()
+            if newtext:
+                oldtext = text[:-1]
+            else:
+                oldtext = text
+            self._rows.append((row, oldtext))
+            colid = l._columns[col].id()
+            stext = text + '*'
+            if self._full:
+                stext = '*' + stext
+            condition = pytis.data.WM(colid,
+                                    pytis.data.WMValue(pytis.data.String(),
+                                                     stext))
+            if newtext:
+                if direction == pytis.data.FORWARD:
+                    start_row = max(row-1, 0)
+                else:
+                    start_row = min(row+1, l._table.GetNumberRows())
+            else:
+                start_row = row
+            # TODO: Pøedhledání v aktuál~~ním selectu
+            found = l._search(condition, direction, row_number=start_row,
+                              report_failure=False)
+            if found is None:
+                message(_("Dal¹í záznam nenalezen"), beep_=True)
+            else:
+                if direction == pytis.data.FORWARD:
+                    new_row = start_row + found
+                else:    
+                    new_row = start_row - found
+                l._select_cell(row=new_row)
+
+        def _set_row(self, row):
+            current = self._listform._table.current_row()
+            self._listform.select_row(row)
+            self._widget.SetFocus()
+            return current
+
+
+    CALL_ACTIVATION = 'CALL_ACTIVATION'
+    """Konstanta callbacku aktivace øádku."""
+    CALL_ALTERNATE_ACTIVATION = 'CALL_ALTERNATE_ACTIVATION'
+    """Konstanta callbacku alternativní aktivace øádku."""
+    CALL_MODIFICATION = 'CALL_MODIFICATION'
+    """Konstanta callbacku modifikace øádku."""
+    CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
+    """Konstanta callbacku interakce u¾ivatele."""
+
+    UI_EDIT_CHANGE = 'UI_EDIT_CHANGE'
+    """UI test na editaci øádku."""
+    UI_EXISTS_CONDITION = 'UI_EXISTS_CONDITION'
+    """UI test na pøítomnost vyhledávací podmínky."""
+    UI_SORTING = 'UI_SORTING'
+    """UI test na zapnuté tøídìní."""
+    UI_GROUPING = 'UI_GROUPING'
+    """UI test na zapnuté vizuální seskupování."""
+    
+    _REFRESH_PERIOD = 60 # sekund
+    _SELECTION_CALLBACK_DALAY = 3 # desítky milisekund
+    _GROUPING_BACKGROUND_DOWNGRADE = (18, 16, 14) # sní¾ení slo¾ek jasu RGB
+    _TITLE_FOREGROUND_COLOR = WxColor(210, 210, 210)
+    
+    _STATUS_FIELDS = ['list-position']
+
+    # Inicializace a reinicializace
+
+    def __init__(self, *args, **kwargs):
+        super_(ListForm).__init__(self, *args, **kwargs)
+        # Nastav klávesové zkratky z kontextových menu.
+        for item in self._context_menu() + self._edit_menu():
+            if isinstance(item, MItem):
+                if item.hotkey() != (None,):
+                    self.define_key(item.hotkey(), item.command(), item.args())
+        # Závìreèné akce
+        self._data.add_callback_on_change(self.on_data_change)
+        wx_callback(wx.EVT_SIZE, self, self.OnSize)
+
+    def _init_attributes(self, columns=None, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+
+          columns -- pokud není None, bude formuláø pou¾ívat dané sloupce.
+            Jinak je pou¾it seznam sloupcù daný specifikací.  Hodnotou je
+            sekvence identifikátorù sloupcù obsa¾enýh ve specifikaci.
+          kwargs -- argumenty pøedané konstruktoru pøedka.
+
+        """
+        super_(ListForm)._init_attributes(self, **kwargs)
+        assert columns is None or is_sequence(columns)
+        self._orig_columns = columns or self._view.columns()
+        # Inicializace atributù
+        self._fields = self._view.fields()
+        self._enable_inline_insert = self._view.enable_inline_insert()
+        self._selection_callback_candidate = None
+        self._selection_callback_tick = None
+        self._in_select_cell = False
+        self._last_reshuffle_request = self._reshuffle_request = 0
+        self._size = None
+        self._current_editor = None
+        self._block_refresh = False
+        # Parametry zobrazení
+        self._initial_position = self._position = 0
+
+    def _default_grouping(self):
+        return self._view.grouping()
+
+    def _default_sorting(self):
+        view = self._view
+        sorting = view.sorting()
+        if sorting is None:
+            key = filter(lambda k: view.field(k.id()) is not None,
+                         self._data.key())
+            sorting = tuple(map(lambda k: (k.id(),
+                                           LookupForm.SORTING_DESCENDANT),
+                                key))
+        return sorting
+        
+    def _create_form_parts(self, sizer):
+        title = self.title()
+        if title is not None:
+            description = self._view.description()
+            self._title_bar = self._create_title_bar(title,
+                                                     description=description)
+            sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
+        else:
+            self._title_bar = None
+        self._grid = self._create_grid()
+        self._size = self._grid.GetSize()
+        sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
+
+    def _create_grid(self, data_init=True,
+                     inserted_row_number=None, inserted_row=None):
+        log(DEBUG, 'Vytváøení nového gridu',
+            (data_init, inserted_row_number, inserted_row))
+        # Inicializuj datový select
+        if data_init:
+            op = lambda : self._init_select()
+            success, row_count = db_operation(op)
+            if not success:
+                log(EVENT, 'Selhání databázové operace gridu')
+                throw('form-init-error')
+        else:
+            row_count = self._lf_select_count
+            self._data.rewind()
+        if inserted_row_number is not None:
+            row_count = row_count + 1
+        # Uprav sloupce
+        visible_columns = []
+        hidden_columns = []
+        for c in map(lambda id: self._view.field(id), self._orig_columns):
+            if c.column_width():
+                visible_columns.append(c)
+            else:
+                hidden_columns.append(c)
+        self._columns = columns = visible_columns + hidden_columns
+        # Vytvoø grid a tabulku
+        g = wx.grid.Grid(self, wx.NewId())
+        labelfont = g.GetLabelFont()
+        labelfont.SetWeight(wx.NORMAL)
+        g.SetLabelFont(labelfont)
+        if self._size:
+            g.SetSize(self._size)
+        self._table = table = \
+          self._ListTable(self._parent, self._data, self._fields, columns,
+                          row_count, sorting=self._lf_sorting,
+                          grouping=self._lf_grouping,
+                          inserted_row_number=inserted_row_number,
+                          inserted_row=inserted_row, prefill=self._prefill)
+        g.SetTable(table, True)
+        g.SetRowLabelSize(0)
+        g.SetColLabelSize(dlg2px(g, 0, 12).GetHeight())
+        g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
+        g.SetMargins(0,0)
+        g.DisableDragGridSize()
+        if config.cell_highlight_color is not None:
+            g.SetCellHighlightColour(config.cell_highlight_color)
+        if config.grid_line_color is not None:
+            g.SetGridLineColour(config.grid_line_color)
+        g.SetDefaultRowSize(dlg2px(g, 0, 10).GetHeight())
+        # (Re)inicializuj atributy instance a gridu
+        self._editors = []
+        def registration(editor):
+            self._current_editor = editor
+        editable = False
+        total_width = 0
+        for i in range(len(columns)):
+            c = columns[i]
+            # ¹íøka
+            if not c.width():
+                continue
+            column_width = c.column_width()
+            if len(c.column_label()) > column_width:
+                column_width = len(c.column_label())
+            w = dlg2px(g, 4*column_width+3)
+            g.SetColSize(i, w)
+            total_width += w
+            # typ sloupce
+            t = c.type(self._data)
+            # zarovnání
+            attr = wx.grid.GridCellAttr()
+            if isinstance(t, pytis.data.Number):
+                alignment = wx.ALIGN_RIGHT
+            else:
+                alignment = wx.ALIGN_LEFT
+            attr.SetAlignment(alignment, wx.CENTER)
+            # editor
+            editable = c.editable()
+            if editable or editable in (Editable.ALWAYS, Editable.ONCE):
+                editable = True
+                editor = _InputFieldCellEditor(self._parent, table, self,
+                                               c, self._data, registration)
+                editor.set_callback(InputField.CALL_LEAVE_FIELD,
+                                    self._on_cell_rollback)
+                editor.set_callback(InputField.CALL_COMMIT_FIELD, 
+                                    self._on_cell_commit)
+                self._editors.append(editor)
+                attr.SetEditor(editor)
+            else:
+                attr.SetReadOnly()
+            g.SetColAttr(i, attr)
+        self._total_width = total_width
+        self.editable = editable
+        # Event handlery
+        wx_callback(wx.grid.EVT_GRID_SELECT_CELL, g, self._on_select_cell)
+        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_select_cell)
+        wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_context_menu)
+        wx_callback(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, g, self._on_label_left)
+        wx_callback(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, g, self._on_label_right)
+        wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN, g, self._on_editor_shown)
+        wx_callback(wx.EVT_MOUSEWHEEL, g, self._on_wheel)
+        wx_callback(wx.EVT_IDLE, g, self._on_idle)
+        wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
+        # Spoleèná inicializace create a recreate
+        self._create_recreate_grid(g)
+        # Hotovo
+        log(DEBUG, 'Nový grid vytvoøen')
+        return g
+
+    def _on_editor_shown(self, event):
+        if self._table.editing():
+            event.Skip()
+        else:
+            event.Veto()
+            self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
+    
+    def _recreate_grid(self, data_init=True, inserted_row_number=None,
+                       inserted_row=None):
+        if self._size:
+            self.SetSize(self._size)
+        current_row = self._table.current_row()
+        # Inicializuj datový select
+        if data_init:
+            op = lambda : self._init_select()
+            success, row_count = db_operation(op)
+            if not success:
+                log(EVENT, 'Selhání databázové operace gridu')
+                throw('form-init-error')
+        else:
+            row_count = self._lf_select_count
+            self._data.rewind()
+        if inserted_row_number is not None:
+            row_count = row_count + 1
+        # Uprav velikost gridu
+        old_row_count = self._table.GetNumberRows()
+        new_row_count = row_count
+        t = self._table
+        t.update(row_count=row_count, sorting=self._lf_sorting,
+                 grouping=self._lf_grouping,
+                 inserted_row_number=inserted_row_number,
+                 inserted_row=inserted_row, prefill=self._prefill)
+        g = self._grid
+        g.BeginBatch()
+        ndiff = new_row_count - old_row_count
+        if new_row_count < old_row_count:
+            if new_row_count == 0:
+                current_row = 1
+            gmessage_id = wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED
+            ndiff = -ndiff
+            gmargs = (current_row, ndiff,)
+        elif new_row_count > old_row_count:
+            gmessage_id = wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED
+            gmargs = (ndiff,)
+        else:
+            gmessage_id = None
+        if gmessage_id is not None:
+            gmessage = wx.grid.GridTableMessage(t, gmessage_id, *gmargs)
+            g.ProcessTableMessage(gmessage) 
+        gmessage = wx.grid.GridTableMessage(
+            t, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+        g.ProcessTableMessage(gmessage) 
+        g.EndBatch()
+        self.select_row(self._position)
+        # Závìreèné úpravy
+        self._create_recreate_grid(g)
+        self.SetSize(self.GetSize())
+        g.SetFocus()
+
+    def _create_recreate_grid(self, grid):
+        color = self._lf_indicate_filter and config.filter_color or \
+                self._TITLE_FOREGROUND_COLOR
+        grid.SetLabelBackgroundColour(color)
+
+    def _context_menu(self):
+        """Vra» specifikaci \"kontextového\" popup menu vybrané buòky seznamu.
+
+        Vrací: Sekvenci instancí 'MItem'.
+
+        Tuto metodu nech» odvozené tøídy pøedefinují, pokud chtìjí zobrazovat
+        kontextové menu.
+        
+        """
+        return ()
+
+    def _edit_menu(self):
+        return (
+            MItem("Editovat buòku",
+                  command = ListForm.COMMAND_EDIT),
+            MItem("Ulo¾it záznam",
+                  command = ListForm.COMMAND_LINE_COMMIT),
+            MItem("Opustit editaci",
+                  command = ListForm.COMMAND_FINISH_EDITING),
+            MSeparator(),
+            MItem("Kopírovat obsah buòky",
+                  command = ListForm.COMMAND_COPY_CELL),
+            #MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
+            )
+
+    # Pomocné metody
+
+    def _current_cell(self):
+        """Vra» dvojici souøadnic (ROW, COL) aktuální buòky."""
+        g = self._grid
+        return g.GetGridCursorRow(), g.GetGridCursorCol()
+
+    def _current_row(self):
+        return self._current_cell()[0]
+
+    def _current_key(self):
+        row = self._current_row()
+        if row < 0 or row >= self._grid.GetNumberRows():
+            # Pøi prázdné tabulce má wxGrid nastaven øádek 0.
+            result = None
+        else:
+            kc = map(lambda c: c.id(), self._data.key())
+            try:
+                result = self._table.row(row).row().columns(kc)
+            except KeyError:
+                log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
+                run_dialog(Error, _("Chyba v definici dat"))
+                result = None
+        return result
+
+    def current_key(self):
+        """Vra» klíè aktuálnì vybraného øádku.
+
+        Není-li vybrán ¾ádný øádek, vra» 'None'.
+
+        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None'.
+
+        """
+        return self._current_key()
+
+    def current_row(self):
+        """Vra» instanci PresentedRow právì aktivního øádku.
+
+        Není-li vybrán ¾ádný øádek, vra» 'None'.
+        """
+
+        row = self._current_row()
+        if row < 0 or row >= self._grid.GetNumberRows():
+            # Pøi prázdné tabulce má wxGrid nastaven øádek 0.
+            return None
+        else:
+            return self._table.row(row)
+        
+    def _select_cell(self, row=None, col=None, invoke_callback=True):
+        if self._in_select_cell:
+            return
+        self._in_select_cell = True
+        log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
+        try:
+            g = self._grid
+            if row is not None:
+                assert isinstance(row, types.IntType)
+                self._table.rewind(position=row)
+                # Zkontroluj pøípadné opu¹tìní editace
+                if not self._finish_editing(row=row):
+                    log(EVENT, 'Zamítnuto opu¹tìní editace øádku')
+                else:
+                    if row < 0 or row >= g.GetNumberRows():
+                        if g.IsSelection():
+                            g.ClearSelection()
+                        row = 0
+                    else:
+                        if not g.IsInSelection(row, 0):
+                            col = max(0,g.GetGridCursorCol())
+                            g.SetGridCursor(row, col)
+                            g.MakeCellVisible(row, col)
+                            if invoke_callback:
+                                # Nevoláme callback ihned, staèí a¾ po
+                                # zastavení scrolování...
+                                self._selection_callback_candidate = row
+                                delay = self._SELECTION_CALLBACK_DALAY
+                                self._selection_callback_tick = delay
+                        self._update_selection_colors()
+                        if not g.IsSelection():
+                            g.SelectRow(row)
+                    self._position = row
+                    self.show_position()
+            if col is not None:
+                r = g.GetGridCursorRow()
+                g.SetGridCursor(r, col)
+                g.MakeCellVisible(r, col)
+            log(DEBUG, 'Výbìr buòky proveden:', (row, col))
+        finally:
+            self._in_select_cell = False
+
+    def _edit_cell(self):
+        """Spus» editor aktuálního políèka."""
+        row, col = self._current_cell()
+        table = self._table
+        cid = self._columns[col].id()
+        if not table.row(table.editing().row).editable(cid):
+            message(_("Políèko je needitovatelné"), kind=ACTION, beep_=True)
+            return False
+        self._grid.EnableCellEditControl()       
+        log(EVENT, 'Spu¹tìn editor políèka:', (row, col))
+        return True
+    
+    def _finish_editing(self, question=None, row=None):
+        # Vrací pravdu, právì kdy¾ nejsou akce blokovány editací øádku.
+        table = self._table
+        editing = table.editing()
+        if not editing:
+            return True
+        if editing.row == row:
+            return True
+        if not editing.changed:
+            log(DEBUG, 'Odchod z needitovaného øádku povolen')
+            self._on_line_rollback()
+            finish = True 
+        else:
+            log(EVENT, 'Pokus o odchod z rozeditovaného øádku seznamu')
+            if question == None:
+                question = _("Zru¹it zmìny záznamu?")
+            buttons = bcancel, bsave, bcontinue = \
+                      _("Zru¹it"), _("Ulo¾it"), _("Pokraèovat v editaci")
+            result = run_dialog(MultiQuestion, question, buttons=buttons,
+                                default=bsave)
+            finish = (result != bcontinue)
+            if result is None or result == bcancel:
+                log(EVENT, 'Odchod u¾ivatelem povolen')
+                self._on_line_rollback()
+                finish = True
+            elif result == bsave:
+                log(EVENT, 'Odchod s ulo¾ením øádku')
+                finish = self._on_line_commit()
+            elif result == bcontinue:
+                log(EVENT, 'Odchod u¾ivatelem zamítnut')
+                finish = False
+            else:
+                raise ProgramError('Unexpected dialog result', result)
+        return finish
+
+    def _update_selection_colors(self):
+        if focused_window() is self:
+            if self._table.editing():
+                foreground = config.row_edit_fg_color
+                background = config.row_edit_bg_color
+            else:
+                foreground = config.row_focus_fg_color
+                background = config.row_focus_bg_color
+                if background is None:
+                    c = wx.SYS_COLOUR_HIGHLIGHT
+                    background = wx.SystemSettings.GetColour(c)
+
+        else:
+            foreground = config.row_nofocus_fg_color
+            background = config.row_nofocus_bg_color
+        g = self._grid
+        if foreground is not None and foreground != g.GetSelectionForeground():
+            g.SetSelectionForeground(foreground)
+        if background is not None and background != g.GetSelectionBackground():
+            g.SetSelectionBackground(background)
+        # Musíme vynutit pøekreslení celé selection
+        if g.IsSelection():
+            g.ClearSelection()
+            g.SelectRow(g.GetGridCursorRow())
+        
+    def _is_editable_cell(self, row, col):
+        # Vra» pravdu, pokud je buòka daného øádku a sloupca editovatelná.
+        the_row = self._table.row(row)
+        id = self._columns[col].id()
+        return the_row.editable(id)
+    
+    def _find_next_editable_cell(self):
+        # Vra» pravdu, pokud bylo pohybem vpravo nalezeno editovatelné políèko.
+        row, col = self._current_cell()
+        while True:
+            if not self._grid.MoveCursorRight(False):
+                return False
+            col = col + 1
+            if self._is_editable_cell(row, col):
+                return True
+
+    def _search_adjust_data_position(self, row_number):
+        if row_number is None:
+            row_number = self._current_row()
+        self._table.rewind(position=row_number)
+
+    def _search_skip(self, skip, direction):
+        if direction == pytis.data.BACKWARD:
+            skip = -skip
+        row, col = self._current_cell()
+        new_row = row + skip
+        self._table.rewind(position=new_row)
+        self._select_cell(row=new_row)
+
+    def _filter(self, condition):
+        # TODO: Jak to bylo my¹leno?
+        # if self._lf_initial_condition:
+        #      xcondition = pytis.data.AND(condition, self._lf_initial_condition)
+        # else:
+        #      xcondition = condition
+        log(EVENT, 'U¾ivatelský filtr:', condition)
+        self.refresh(reset={'condition': condition,
+                            'filter_flag': condition},
+                     when=self.DOIT_IMMEDIATELY)
+
+    def _filter_by_cell(self, cancel=False):
+        row, col = self._current_cell()
+        id = self._columns[col].id()
+        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
+        sf_dialog.append_condition(id, self._table.row(row)[id])
+        self._on_filter(show_dialog=False)
+        
+    def _on_sort_column(self, col=None, direction=None, primary=False):
+        if not self._finish_editing():
+            return
+        if col is not None:
+             col = self._columns[col].id()
+             if not self._data.find_column(col):
+                 message(_("Podle tohoto sloupce nelze tøídit"),
+                         beep_=True)
+                 return
+        old_sorting = self._lf_sorting
+        sorting = super_(ListForm)._on_sort_column(self, col=col,
+                                                   direction=direction,
+                                                   primary=primary)
+        if sorting is not None and sorting != old_sorting:
+            self.refresh(reset={'condition':self._lf_condition,
+                                'sorting':sorting},
+                         when=self.DOIT_IMMEDIATELY)
+        return sorting
+        
+    # Callbacky
+
+    def on_data_change(self):
+        """Callback, který lze zavolat pøi zmìnì dat v datovém zdroji.
+
+        Metoda je urèena pro registraci pomocí metody
+        'pytis.data.Data.add_callback_on_change'.
+
+        Metoda naopak není urèena pro ¾ádost o okam¾itý update, proto¾e pouze
+        zadá po¾adavek na update, který je zpracován a¾ za blí¾e neurèenou
+        dobu.  K pøímým updatùm slou¾í metody 'reset()', 'reshuffle()' a
+        'refresh()'.
+
+        """
+        log(EVENT, 'Notifikace o zmìnì dat øádkového seznamu')
+        now = time.time()
+        maybe_future = self._last_reshuffle_request + self._REFRESH_PERIOD
+        self._reshuffle_request = max(now, maybe_future)
+
+    def _on_idle(self, event):
+        if self._selection_callback_candidate is not None:
+            if self._selection_callback_tick > 0:
+                self._selection_callback_tick -= 1
+                microsleep(100)
+                event.RequestMore()
+            else:
+                row = self._selection_callback_candidate
+                the_row = self._table.row(row)
+                self._run_callback(self.CALL_SELECTION, (the_row,))
+                self._selection_callback_candidate = None
+        # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
+        event.Skip()
+        return False
+
+    def _on_wheel(self, event):
+        g = self._grid
+        delta = event.GetWheelDelta()
+        linesPer = event.GetLinesPerAction()
+        pxx, pxy = g.GetScrollPixelsPerUnit()
+        rot = event.GetWheelRotation()
+        lines = rot / delta
+        if lines != 0:
+            vsx, vsy = g.GetViewStart()
+            lines = lines * linesPer
+            scrollTo = vsy - pxy / lines
+        g.Scroll(-1, scrollTo)    
+
+    def _on_jump(self):
+        row = super_(ListForm)._on_jump(self)
+        if row:
+            self.select_row(row-1)
+        else:
+            message(_("Neplatné èíslo záznamu"), beep_=True)                    
+
+
+    def _on_label_left(self, event):
+        col = event.GetCol()
+        self._run_callback(self.CALL_USER_INTERACTION)
+        invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
+                       direction=ListForm.SORTING_CYCLE_DIRECTION)
+        return True
+
+    def _on_select_cell(self, event):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
+        # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
+        # vùbec nìjaký úèinek, musíme zde zavolat originální handler, který
+        # po¾adované nastavení buòky zajistí.
+        event.Skip()
+
+    def _on_label_right(self, event):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        g = self._grid
+        col = event.GetCol()
+        # Menu musíme zkonstruovat a¾ zde, proto¾e argumentem pøíkazù je èíslo
+        # sloupce, které zjistím a¾ z eventu.
+        items = (Menu(_("Primární øazení"),
+                      (MItem(_("Øadit vzestupnì"),
+                             command = LookupForm.COMMAND_SORT_COLUMN,
+                             args = {'direction':LookupForm.SORTING_ASCENDENT,
+                               'col': col, 'primary': True}),
+                       MItem(_("Øadit sestupnì"),
+                             command = LookupForm.COMMAND_SORT_COLUMN,
+                             args = {'direction':
+                                     LookupForm.SORTING_DESCENDANT,
+                                     'col': col, 'primary': True}),)),
+                 Menu(_("Dodateèné øazení"),
+                      (MItem(_("Øadit vzestupnì"),
+                             command = LookupForm.COMMAND_SORT_COLUMN,
+                             args = {'direction':LookupForm.SORTING_ASCENDENT,
+                                     'col': col},
+                             uievent_id = self.UI_SORTING),
+                       MItem(_("Øadit sestupnì"),
+                             command = LookupForm.COMMAND_SORT_COLUMN,
+                             args = {'direction':
+                                     LookupForm.SORTING_DESCENDANT,
+                                     'col': col},
+                             uievent_id=self.UI_SORTING),
+                       )),
+                 MSeparator(),
+                 MItem(_("Neøadit podle tohoto sloupce"),
+                       command = LookupForm.COMMAND_SORT_COLUMN,
+                       args = {'direction': ListForm.SORTING_NONE,
+                               'col': col},
+                       uievent_id=self.UI_SORTING),
+                 MItem(_("Zru¹it øazení úplnì"),
+                       command = LookupForm.COMMAND_SORT_COLUMN,
+                       args = {'direction': ListForm.SORTING_NONE},
+                       uievent_id=self.UI_SORTING),
+                 MSeparator(),
+                 MItem(_("Seskupit podle tohoto sloupce"),
+                       command = ListForm.COMMAND_SET_GROUPING_COLUMN,
+                       args = {'column_id': self._columns[col].id()}),
+                 MItem(_("Zru¹it seskupování"),
+                       command = ListForm.COMMAND_SET_GROUPING_COLUMN,
+                       args = {'column_id': None},
+                       uievent_id=self.UI_GROUPING),
+                 )
+        menu = Menu('', items).create(g, self)
+        pos = event.GetPosition()
+        # Od wxWin 2.3 je vrácena pozice vèetnì vý¹ky záhlaví, co¾ je v
+        # pøípadì záhlaví ¹patnì, tek¾e musíme opìt pøepoèítávat...
+        pos.y = pos.y - g.GetColLabelSize()
+        g.PopupMenu(menu, pos)
+        menu.Destroy()
+        event.Skip()
+        return True
+
+    def _on_context_menu(self, event):
+        # Popup menu pro vybraný øádek gridu
+        row, col = event.GetRow(), event.GetCol()
+        self._select_cell(row=row, col=col)
+        self.show_context_menu(position=event.GetPosition())
+        event.Skip()
+        return True
+
+    def show_context_menu(self, position=None):
+        if self._table.editing():
+            menu = self._edit_menu()
+        else:
+            menu = self._context_menu()
+        if menu:
+            keymap = global_keymap()
+            for item in menu:
+                if isinstance(item, MItem):
+                    hotkey = keymap.lookup_command(item.command(), item.args())
+                    if hotkey is not None:
+                        item.set_hotkey(hotkey)
+            if position is None:
+                row, col = self._current_cell()
+                rect = self._grid.CellToRect(row, col)
+                d = self._grid.GetColLabelSize()
+                pos=(rect.GetX() + rect.GetWidth()/3 ,
+                          rect.GetY() + rect.GetHeight()/2 + d)
+                position = self._grid.CalcScrolledPosition(pos)
+            g = self._grid
+            menu = Menu('', menu).create(g, self)
+            g.PopupMenu(menu, position)
+            menu.Destroy()
+
+    def show_popup_menu(self):
+        self.show_context_menu()
+
+    def show_position(self):
+        row = self._current_row()
+        total = self._table.GetNumberRows()
+        set_status('list-position', "%d/%d" % (row + 1, total))
+
+    def on_key_down(self, event, dont_skip=True):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
+            return True
+        def evil_key(event):
+            # Tato vìc je tu kvùli eliminaci vstupu do editace políèka
+            # libovolnou klávesou.  Není mi znám jiný zpùsob, jak této
+            # eliminace dosáhnout.
+            # Nelze pou¾ít hasModifiers ani test MetaDown kvùli NumLocku.
+            if event.AltDown() or event.ControlDown():
+                return False
+            code = event.GetKeyCode()
+            return code not in(wx.WXK_PRIOR, wx.WXK_NEXT, wx.WXK_LEFT,
+                               wx.WXK_RIGHT, wx.WXK_DOWN, wx.WXK_UP,
+                               wx.WXK_HOME, wx.WXK_END, wx.WXK_TAB,
+                               wx.WXK_ESCAPE)
+        if evil_key(event) or \
+           (self._grid.IsCellEditControlEnabled() and
+            WxKey().is_event_of_key(event, '\t')):
+            return False
+        else:
+            event.Skip()
+            return False
+
+    def on_ui_event(self, event, id):
+        try:
+            if self._current_editor.field().on_ui_event(event, id):
+                return True
+        except:
+            pass
+        if id == self.UI_EDIT_CHANGE:
+            editing = self._table.editing()
+            if editing and editing.changed:
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True
+        elif id == self.UI_EXISTS_CONDITION:
+            if self._lf_condition:
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True    
+        elif id == self.UI_SORTING:
+            if self._lf_sorting:
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True    
+        elif id == self.UI_GROUPING:
+            if self._lf_grouping:
+                event.Enable(True)
+            else:
+                event.Enable(False)
+            return True    
+        else:
+            return super_(ListForm).on_ui_event(self, event, id)
+
+    def on_command(self, command, **kwargs):
+        # Univerzální pøíkazy
+        if command.handler() is not None:
+            return self._on_handled_command(command, **kwargs)
+        elif command == ListForm.COMMAND_COPY_CELL:
+            self._on_copy_cell()
+            return True
+        elif command == ListForm.COMMAND_FILTER_BY_CELL:
+            self._filter_by_cell()
+            return True
+        elif command == ListForm.COMMAND_EDIT:
+            self._on_edit()
+            return True
+        elif command == ListForm.COMMAND_EXPORT_CSV:
+            self._on_export_csv()
+            return True
+        elif command == LookupForm.COMMAND_SORT_COLUMN:
+            self._on_sort_column(**kwargs)
+            return True
+        elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
+            self.refresh(reset={'grouping': kwargs['column_id']})
+            return True
+        elif command == ListForm.COMMAND_SELECT_CELL:
+            self._select_cell(**kwargs)
+            return True
+        # Pøíkazy bìhem editace øádku
+        elif self._table.editing():
+            if command == ListForm.COMMAND_LINE_COMMIT:
+                return self._on_line_commit()
+            elif command == ListForm.COMMAND_LINE_ROLLBACK:
+                return self._on_line_rollback()
+            elif command == ListForm.COMMAND_LINE_SOFT_ROLLBACK:
+                return self._on_line_rollback(soft=True)
+            elif command == ListForm.COMMAND_FINISH_EDITING:
+                self._finish_editing()
+                return True
+            # Pøíkazy vztahující se pouze k editaci políèka
+            elif self._grid.IsCellEditControlEnabled():
+                if command == ListForm.COMMAND_CELL_COMMIT:
+                    return self._on_cell_commit()
+                elif command == ListForm.COMMAND_CELL_ROLLBACK:
+                    return self._on_cell_rollback()
+                else:
+                    try:
+                        field = self._current_editor.field()
+                        if field.on_command(command, **kwargs):
+                            return True
+                    except:
+                        pass
+        # Pøíkazy mimo editaci
+        else:
+            if command == ListForm.COMMAND_FIRST_COLUMN:
+                self._select_cell(col=0)
+            elif command == ListForm.COMMAND_LAST_COLUMN:
+                self._select_cell(col=len(self._columns)-1)
+            elif command == ListForm.COMMAND_ACTIVATE:
+                self._on_activation()
+            elif command == ListForm.COMMAND_ACTIVATE_ALTERNATE:
+                self._on_alternate_activation()
+            elif command == LookupForm.COMMAND_SEARCH:
+                self._on_search()
+            elif command == LookupForm.COMMAND_SEARCH_NEXT:
+                self._on_search(show_dialog=False, direction=pytis.data.FORWARD)
+            elif command == LookupForm.COMMAND_SEARCH_PREVIOUS:
+                self._on_search(show_dialog=False,
+                                direction=pytis.data.BACKWARD)
+            elif command == LookupForm.COMMAND_FILTER:
+                self._on_filter()
+            elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
+                self._on_incremental_search(full=False)
+            elif command == ListForm.COMMAND_FULL_INCREMENTAL_SEARCH:
+                self._on_incremental_search(full=True)
+            elif command == ListForm.COMMAND_NEW_LINE_AFTER:
+                self._on_insert_line()
+            elif command == ListForm.COMMAND_NEW_LINE_AFTER_COPY:
+                self._on_insert_line(copy=True)
+            elif command == ListForm.COMMAND_NEW_LINE_BEFORE:
+                self._on_insert_line(after=False)
+            elif command == ListForm.COMMAND_NEW_LINE_BEFORE_COPY:
+                self._on_insert_line(after=False, copy=True)
+            elif command == ListForm.COMMAND_LINE_DELETE:
+                self._on_delete_line()
+            else:
+                return super_(ListForm).on_command(self, command, **kwargs)
+            return True
+        return super_(ListForm).on_command(self, command, **kwargs)
+            
+    # Metody volané pøímo z callbackových metod
+
+    def _on_activation(self):
+        log(EVENT, 'Aktivace øádku øádkového seznamu')
+        key = self._current_key()
+        self._run_callback(self.CALL_ACTIVATION, (key,))
+
+    def _on_alternate_activation(self):
+        log(EVENT, 'Aktivace øádku øádkového seznamu')
+        key = self._current_key()
+        self._run_callback(self.CALL_ALTERNATE_ACTIVATION, (key,))
+
+    def _on_handled_command(self, command, **kwargs):
+        log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
+        handler = command.handler()
+        refresh = not kwargs.has_key('norefresh')
+        if not refresh:
+            del kwargs['norefresh']
+        # Zjistíme, zda má u¾ivatelský handler klíèové argumenty
+        import inspect
+        args, varargs, varkw, defaults = inspect.getargspec(handler)
+        if not varkw:
+            kwargs = {}
+        handler(self._data, self._table.row(self._current_row()), **kwargs)
+        if refresh:
+            self.refresh()
+        return True
+
+    def _on_incremental_search(self, full):
+        row, col = self._current_cell()
+        column = self._columns[col]
+        if not (isinstance(column.type(self._data), pytis.data.String) or \
+                isinstance(column.type(self._data), pytis.data.Codebook)):
+            message(_("V tomto sloupci nelze vyhledávat inkrementálnì"),
+                    beep_=True)
+            return
+        search_field = self.IncrementalSearch(self, full)
+        search_field.run()
+
+    def _on_filter(self, show_dialog=True):
+        row, col = self._current_cell()
+        super_(ListForm)._on_filter(self, row=self._table.row(row),
+                                    col=col, show_dialog=show_dialog)
+
+    def _on_copy_cell(self):
+        row, col = self._current_cell()
+        cid = self._columns[col].id()
+        clptext = self._table.row(row).format(cid)
+        # set_clipboard_text(clptext)
+        # TODO: wxClipboard nefunguje, jak má, tak to vyøe¹íme
+        #       hackem, kdy vyu¾ijeme toho, ¾e wxTextCtrl.Copy()
+        #       dìlá to, co má.
+        tc = wx.TextCtrl(self, -1, clptext)
+        tc.SetSelection(0,len(clptext))
+        tc.Copy()
+        tc.Destroy()
+
+    def _on_export_csv(self):
+        log(EVENT, 'Vyvolání CSV exportu')
+        table = self._table
+        data = self._data
+        # Kontrola poètu øádkù
+        number_rows = self._table.GetNumberRows()
+        if number_rows == 0:
+            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return
+        # Seznam sloupcù
+        column_list = []
+        for column in self._columns:
+            column_list.append((column.id(), column.type(data)))
+        allowed = True
+        # Kontrola práv        
+        for cid, ctype in column_list:
+            if not data.accessible(cid, pytis.data.Permission.EXPORT):
+                allowed = False
+                break
+        if not allowed:
+            msg = _("Nemáte právo exportu k této tabulce.\n")
+            msg = msg + _("Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return            
+        export_dir = config.export_directory
+        export_encoding = config.export_encoding
+        db_encoding = config.db_encoding
+        try:
+            u"test".encode(export_encoding)
+        except:
+            msg = _("Kódování %s není podporováno.\n" % export_encoding)
+            msg = msg + _("Export se provede bez pøekódování.")
+            export_encoding = None
+            run_dialog(Error, msg)
+        try:
+            u"test".encode(db_encoding)
+        except:
+            msg = _("Kódování %s není podporováno.\n" % db_encoding)
+            msg = msg + _("Export se neprovede.")
+            run_dialog(Error, msg)
+            return
+        filename = pytis.form.run_dialog(pytis.form.FileDialog,
+                                       title="Zadat exportní soubor",
+                                       dir=export_dir, file='export.txt',
+                                       mode='SAVE',
+                                       wildcards=("Soubory TXT (*.txt)",
+                                                  "*.txt",
+                                                  "Soubory CSV (*.csv)",
+                                                  "*.csv"))
+        if not filename:
+            return
+        try:       
+            export_file = open(filename,'w')
+        except:
+            msg = _("Nepodaøilo se otevøít soubor " + filename + \
+                    " pro zápis!\n")
+            run_dialog(Error, msg)
+            return
+        def _process_table(update):
+            # Export labelù
+            for column in self._columns:
+                export_file.write(column.label()+'\t')
+            export_file.write('\n')
+            for r in range(0,number_rows):
+                if not update(int(float(r)/number_rows*100)):
+                    break                
+                for cid, ctype in column_list:
+                    if isinstance(ctype, pytis.data.Float):
+                        s = self._table.row(r)[cid].export(locale_format=False)
+                    else:
+                        s = self._table.row(r)[cid].export()                        
+                    if export_encoding and export_encoding != db_encoding:
+                        if not is_unicode(s):
+                            s = unicode(s, db_encoding)
+                        s = s.encode(export_encoding)
+                    export_file.write(';'.join(s.split('\n'))+'\t')
+                export_file.write('\n')
+            export_file.close()
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
+        
+    def _on_edit(self):
+        if not self.editable:
+            log(EVENT, 'Pokus o editaci needitovatelné tabulky')
+            return False
+        table = self._table
+        if not table.editing():
+            row = self._current_row()
+            the_row = table.row(row).row()
+            key = the_row.columns(map(lambda c: c.id(), self._data.key()))
+            success, locked = db_operation(lambda : self._data.lock_row(key),
+                                           quiet=True)
+            if success and locked != None:
+                log(EVENT, 'Záznam je zamèen', locked)
+                run_dialog(Message, _("Záznam je zamèen: %s") % locked)
+                return False
+            table.edit_row(row)
+            self._update_selection_colors()
+        if not self._edit_cell():
+            self._on_line_rollback()
+        return True
+
+    def _on_insert_line(self, after=True, copy=False):
+        """Vlo¾ nový øádek do seznamu.
+
+        Argumenty:
+
+          after -- je-li pravda, nový øádek se vlo¾í za aktuální øádek, jinak
+            se vlo¾í pøed aktuální øádek
+          copy -- je-li pravda a seznam není prázdný, obsahem nového øádku bude
+            obsah aktuálního øádku, v opaèném pøípadì bude nový øádek prázdný
+
+        Vlo¾ení nového øádku do seznamu je mo¾né jen tehdy, pokud není zrovna
+        ¾ádný øádek editován, a» u¾ nový nebo stávající.  Pøi pokusu o vlo¾ení
+        nového øádku bìhem editace jiného øádku je chování metody nedefinováno.
+
+        Vlo¾ení nového øádku mù¾e být také zakázáno pro konkrétní formuláø v
+        jeho specifikaci (viz argument 'enable_inline_insert' konstruktoru
+        tøídy 'ViewSpec').
+        
+        Po vlo¾ení nového øádku seznam automaticky pøejde do re¾imu editace
+        tohoto øádku a spustí editaci první editovatelné buòky øádku.
+
+        """
+        row = self._current_row()
+        log(EVENT, 'Vlo¾ení nového øádku:', (row, after, copy))
+        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+            message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
+                    'tabulky!', beep_=True)
+            return False
+        if not self.editable:
+            message('Needitovatelná tabulka!', beep_=True)
+            return False
+        if not self._enable_inline_insert:
+            message('Není mo¾né vkládat øádky v in-line editaci. ' +
+                    'Pou¾ijte editaèní formuláø.', beep_=True)
+            return False
+        table = self._table
+        if table.editing():
+            log(EVENT, 'Pokus o vlo¾ení nového øádku bìhem editace')
+            return False
+        self._last_insert_copy = copy
+        oldg = self._grid
+        oldempty = (oldg.GetNumberRows() == 0)
+        if not copy or oldempty:
+            the_row = None
+        else:
+            the_row = table.row(row)
+            # TODO: mo¾ná pùjde vyøe¹it èistìji
+            # Jde o to vytvoøit kopii øádku, ale klíè nekopíro
+            prefill = {}
+            keys = [c.id() for c in the_row.data().key()]
+            for k in the_row.keys():
+                if k not in keys:
+#                    prefill[k] = the_row[k].value()
+                    prefill[k] = the_row[k]
+            fields = the_row.fields()
+            data = the_row.data()
+            the_row = PresentedRow(fields, data, None, prefill=prefill,
+                                   new=True)
+            for k in the_row.keys():
+                the_row[k]
+        if after and not oldempty:
+            row = row + 1
+        self._recreate_grid(data_init=False, inserted_row_number=row,
+                            inserted_row=the_row)
+        self._select_cell(row=row, col=0, invoke_callback=False)
+        if not self._is_editable_cell(row, 0) \
+               and not self._find_next_editable_cell():
+            log(EVENT, '®ádný sloupec není editovatelný')
+            return False
+        self._edit_cell()
+        self._update_selection_colors()
+        log(EVENT, 'Øádek vlo¾en')
+        return True
+
+    def _on_delete_line(self):
+        log(EVENT, 'Pokus o smazání øádku')
+        if not self._data.accessible(None, pytis.data.Permission.DELETE):
+            message('Nemáte pøístupová práva pro mazání záznamù v této ' + \
+                    'tabulce!', beep_=True)
+            return False
+        if not self.editable:
+            message('Needitovatelná tabulka!', beep_=True)
+            return False
+        self._block_refresh = True
+        on_delete_record = self._view.on_delete_record()
+        condition = None
+        try:
+            # O¹etøení u¾ivatelské funkce pro mazání
+            if on_delete_record is not None:
+                row = self._table.row(self._current_row())
+                condition = on_delete_record(row=row)
+                assert condition is None or \
+                       isinstance(condition, pytis.data.Operator)
+                if condition is None:
+                    self._block_refresh = False
+                    self.refresh()
+                    return True
+            elif not delete_record_question():
+                return True
+        finally:
+            self._block_refresh = False
+        self._table.edit_row(None)
+        # Proveï
+        key = None
+        if condition:
+            success, __ = db_operation(lambda : self._data.delete_many(condition))
+        else:
+            key = self._current_key()
+            success, __ = db_operation(lambda : self._data.delete(key))            
+        if success:
+           message('Øádek smazán:', ACTION, key or condition)
+           r = self._current_row()
+           n = self._table.GetNumberRows()
+           if r < n - 1:
+               self._select_cell(row=r+1)
+           elif r > 0:
+               self._select_cell(row=r-1)
+           self.refresh()
+        return True
+
+    def _on_line_commit(self):
+        # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _on_cell_commit.
+        log(EVENT, 'Pokus o ulo¾ení øádku seznamu do databáze')
+        # Vyta¾ení nových dat
+        table = self._table
+        editing = table.editing()
+        if not editing:
+            return False
+        data = self._data
+        row = editing.row
+        the_row = editing.the_row
+        failed_id = the_row.check()
+        if failed_id is not None:
+            for i in range(len(self._columns)):
+                if self._columns[i].id() == failed_id:
+                    self._select_cell(row=row, col=i, invoke_callback=False)
+                    self._edit_cell()
+                    break
+            return False
+        # Urèení operace a klíèe
+        kc = map(lambda c: c.id(), data.key())
+        if editing.new:
+            table = self._table
+            if row > 0:
+                after = table.row(row-1).row().columns(kc)
+                before = None
+            elif row < table.GetNumberRows() - 1:
+                after = None
+                before = table.row(row+1).row().columns(kc)
+            else:
+                after = before = None
+            rdata = []
+            for field in the_row.fields():
+                rdata.append((field.id(), the_row[field.id()]))
+            new_row = pytis.data.Row(rdata)
+            op = (data.insert, (new_row,), {'after': after, 'before': before})
+        else:
+            key = editing.orig_content.row().columns(kc)
+            op = (data.update, (key, the_row.row()))
+        # Provedení operace
+        success, result = db_operation(op)
+        if success and result[1]:
+            table.edit_row(None)
+            if data.locked_row():
+                data.unlock_row()
+                message('Øádek ulo¾en do databáze', ACTION)
+            self.refresh()
+            self._run_callback(self.CALL_MODIFICATION)
+            on_line_commit = self._view.on_line_commit()
+            if on_line_commit is not None:
+                on_line_commit(the_row)
+            self.focus()
+        elif success:
+            log(EVENT, 'Zamítnuto pro chybu klíèe')
+            if editing.new:
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "+\
+                            "sousedního øádku")
+            else:
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "+\
+                            "øádek ji¾ neexistuje")
+            run_dialog(Warning, msg)
+            return False
+        else:
+            log(EVENT, 'Chyba databázové operace')
+            return False
+        return True
+        
+    def _on_line_rollback(self, soft=False):
+        log(EVENT, 'Zru¹ení editace øádku')
+        editing = self._table.editing()
+        if not editing:
+            return False
+        if soft and editing.changed:
+            return True
+        if self._data.locked_row():
+            self._data.unlock_row()
+        row = editing.row
+        if editing.new:
+            self._recreate_grid(data_init=False)
+        else:
+            self._table.edit_row(None)
+            self._update_selection_colors()
+            # Tento SelectRow je zde nutný pro vynucení pøekreslení øádku se
+            # staronovými hodnotami.
+            self._grid.SelectRow(row)
+        self._select_cell(row=row, invoke_callback=False)
+        self.refresh()
+        return True
+
+    def _on_cell_commit(self):
+        row, col = self._current_cell()
+        log(EVENT, 'Odeslání obsahu políèka gridu', (row, col))
+        self._grid.DisableCellEditControl()
+        editing = self._table.editing()
+        if not editing:
+            return True
+        if editing.valid:
+            if not self._find_next_editable_cell():
+                if editing.new:
+                    q = _("Ulo¾it øádek?")
+                    if run_dialog(Question, q, True):
+                        log(EVENT, 'Kladná odpovìï na dotaz o ulo¾ení øádku')
+                        if self._on_line_commit():
+                            # TODO: voláním následující metody v tìle této
+                            # metody, která o¹etøuje pøíkaz, dojde k
+                            # zablokování zpracování pøíkazù v rámci jejího
+                            # zpracování.  Ne¾ bude následující volání opìt
+                            # odkomentováno, je tøeba zajistit neblokující
+                            # zpracování pøíkazù...
+                            # self._on_insert_line(copy=self._last_insert_copy)
+                            pass
+                        return True
+                    else:
+                        log(EVENT, 'Záporná odpovìï na dotaz o ulo¾ení øádku')
+                self._grid.SetGridCursor(row, 0)
+        if not editing.valid or editing.new:
+            log(EVENT, 'Návrat do editace políèka')
+            self._edit_cell()
+        return True
+        
+    def _on_cell_rollback(self):
+        log(EVENT, 'Opu¹tìní políèka gridu beze zmìny hodnoty')
+        self._current_editor.Reset()
+        self._grid.DisableCellEditControl()
+        self._current_editor = None
+        return True
+
+    # Veøejné metody
+
+    def is_edited(self):
+        """Vra» pravdu, právì kdy¾ je List ve stavu øádkové editace."""
+        return self._table.editing()
+
+    def exit_check(self):
+        """Proveï kontrolu ukonèení editace øádku pøed opu¹tìním seznamu.
+
+        Metoda nic nevrací, pouze sama provede, co je potøeba.
+
+        """
+        editing = self._table.editing()
+        if editing:
+            log(EVENT, 'Pokus o odchod z øádkového formuláøe bìhem editace')
+            if editing.changed and  \
+                   run_dialog(Question, _("Ulo¾it zeditovaný øádek?"), True):
+                log(EVENT, 'Vy¾ádáno ulo¾ení')
+                self._on_line_commit()
+            else:
+                log(EVENT, 'Ulo¾ení zamítnuto')
+                self._on_line_rollback()
+
+    def total_width(self):
+        """Vra» souèet ¹íøek v¹ech sloupeèkù v pixelech."""
+        return self._total_width
+
+    def total_height(self):
+        height = self._grid.GetNumberRows() * self._grid.GetRowSize(1) + \
+                 self._grid.GetColLabelSize()
+        if self._title_bar:
+            height = height + self._title_bar.GetSize().height
+        if self._total_width > self._size.width:
+            height = height + wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
+        return height
+
+    def _find_row_by_values(self, cols, values):
+        """Vra» èíslo øádku v gridu odpovídající daným hodnotám.
+
+        Arguemnty:
+
+          cols -- sekvence názvù sloupcù, které mají být prohledávány.
+          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
+            poøadí odpovídajícím 'cols'.
+
+        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
+        pøedány i pøímo, bez obalení do sekvenèního typu.
+
+        """
+        cols = xtuple(cols)
+        values = xtuple(values)
+        assert len(cols) == len(values)
+        condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
+        data = self._data
+        data.rewind()
+        success, result = db_operation(lambda: data.search(condition))
+        if not success:
+            row = None
+        elif result == 0:
+            row = 0
+        else:
+            row = result - 1
+        return row
+
+    
+    def select_row(self, position, _invoke_callback=True):
+        """Zvýrazni øádek dle 'position'.
+
+        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
+
+          None -- nebude vysvícen ¾ádný øádek.
+          Nezáporný integer -- bude vysvícen øádek pøíslu¹ného poøadí, pøièem¾
+            øádky jsou èíslovány od 0.
+          Datový klíè -- bude vysvícen øádek s tímto klíèem, kterým je tuple
+            instancí tøídy 'pytis.data.Value'.
+          Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
+            seznamu -- bude pøeveden na datový klíè.
+
+        Pokud 'position' neodpovídá ¾ádnému øádku, nebude ¾ádný øádek vysvícen.
+        Pokud je editován nìjaký øádek a 'position' není 'None', vysvi»
+        editovaný øádek bez ohledu na hodnotu 'position'.
+
+        Vrací: Èíslo vysvíceného øádku nebo 'None', pokud nebyl ¾ádný øádek
+        vysvícen.
+
+        """
+        # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
+        if position is not None and self._table.editing():
+            position = self._table.editing().row
+        if isinstance(position, pytis.data.Row):
+            position = self._data.row_key(position)
+        if type(position) == type(()):
+            cols = map(pytis.data.ColumnSpec.id, self._data.key())
+            position = self._find_row_by_values(cols, position)
+        if position is None:
+            position = -1
+        return self._select_cell(row=position, invoke_callback=_invoke_callback)
+
+    def refresh(self, reset=None, when=None):
+        """Aktualizuj data seznamu z datového zdroje.
+
+        Pøekresli celý seznam v okam¾iku daném argumentem 'when' se zachováním
+        parametrù dle argumentu 'reset'.
+
+        Argumenty:
+
+          reset -- urèuje, které parametry zobrazení mají být zachovány a které
+            zmìnìny.  Hodnotou je buï 'None', nebo dictionary.  Je-li hodnotou
+            'None', zùstane zachována filtrovací podmínka, tøídìní i vybraný
+            øádek (vzhledem k jeho obsahu, ne poøadí), je-li to mo¾né.  Je-li
+            hodnotou prázdné dictionary, jsou naopak v¹echny tyto parametry
+            resetovány na své poèáteèní hodnoty.  Jinak jsou resetovány právì
+            ty parametry, pro nì¾ v dictionary existuje klíè (jeden z øetìzcù
+            'sorting', 'grouping', 'condition', 'position' a 'filter_flag'),
+            a to na hodnotou z dictionary pro daný klíè.  Parametr
+            'filter_flag' udává, zda má být zobrazena indikace filtru.
+          when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
+            jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
+            'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
+
+        Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
+
+        """
+        if self._block_refresh:
+            return
+        assert when in (None,           # to je pouze interní hodnota
+                        self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT,
+                        self.DOIT_IFNEEDED), \
+                        ("Invalid argument 'when'", when)
+        assert reset is None or type(reset) == type({}), ('', reset)
+        if when is None:
+            if reset is None:
+                when = self.DOIT_AFTEREDIT
+            else:
+                when = self.DOIT_IMMEDIATELY
+        if reset == None:
+            reset = {}
+        elif reset == {}:
+            reset = {'sorting': self._lf_initial_sorting,
+                     'grouping': self._lf_initial_grouping,
+                     'condition': self._lf_initial_condition,
+                     'position': self._initial_position,
+                     'filter_flag': False}
+        # Jdeme na to
+        log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
+        if when is self.DOIT_IFNEEDED:
+            if self._reshuffle_request == self._last_reshuffle_request or \
+                   self._reshuffle_request > time.time():
+                log(DEBUG, 'Refresh není tøeba provádìt nyní')
+                return False
+        if when is self.DOIT_IMMEDIATELY:
+            QUESTION = _("Zru¹it zmìny záznamu a aktualizovat seznam?")
+            delay = not self._finish_editing(question=QUESTION)
+        else:
+            delay = (self._table.editing() is not None) # nechceme dr¾et info
+        if delay:
+            log(DEBUG, 'Refresh odlo¾en do ukonèení editace')
+            return False
+        # Refresh nyní bude skuteènì proveden
+        for k, v in reset.items():
+            if k == 'condition':
+                self._lf_condition = v
+            elif k == 'sorting':
+                self._lf_sorting = v
+            elif k == 'grouping':
+                self._lf_grouping = v
+            elif k == 'position':
+                self._position = v
+            elif k == 'filter_flag':
+                self._lf_indicate_filter = v
+            else:
+                raise ProgramError('Invalid refresh parameter', k)
+        key = self._current_key()
+        row = max(0, self._current_row())
+        self._last_reshuffle_request = self._reshuffle_request = time.time()        
+        self._recreate_grid()
+        if key is not None:
+            self.select_row(key)
+            # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
+            # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
+            if self._current_key() != key and \
+                   row < self._table.GetNumberRows() and row >= 0:
+                self.select_row(row)
+        else:
+            self.select_row(row)
+        return True
+
+    def status_fields(self):
+        # TODO: zatím je podoba statusbaru urèena specifikací, ale bylo by
+        # rozumné to celé pøedìlat, aby se statusbar dynamicky mìnil podle
+        # aktuálního formuláøe (s vyu¾itím této metody).
+        return (('list-position', 7),)
+
+    # wx metody
+
+    def OnSize(self, event):
+        self.SetSize(event.GetSize())
+        self.Layout()
+
+    def SetSize(self, size):
+        g = self._grid
+        oldsize = g.GetSize()
+        self._size = size
+        SPECIAL_WX_CORRECTION = 1
+        width = size.width - SPECIAL_WX_CORRECTION
+        height = size.height
+        if size.width == oldsize.width:
+            g.SetSize(size)
+            super_(ListForm).SetSize(self, size)
+            return
+        if height < self.total_height():
+            width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
+        if width > self._total_width:
+            coef = float(width) / self._total_width
+        else:
+            coef = 1
+        columns = self._columns
+        ncolumns = len(columns)
+        total = 0
+        # Pøenastav ¹íøky sloupcù
+        for i in range(ncolumns):
+            c = columns[i]
+            column_width = c.column_width()
+            if not column_width:
+                continue
+            if len(c.column_label()) > column_width:
+                column_width = len(c.column_label())
+            w = dlg2px(g, 4*column_width+3)
+            wc = int(w*coef)
+            g.SetColSize(i, wc)
+            total = total + wc
+            last = i
+        if coef != 1 and total != width:
+            g.SetColSize(last, wc + (width-total))
+        # Zmìn velikost gridu
+        g.SetSize(size)
+        super_(ListForm).SetSize(self, size)
+
+    def Close(self):
+        self._data.remove_callback_on_change(self.on_data_change)
+        try:
+            self._data.close()
+        except pytis.data.DBException:
+            pass
+        # Musíme ruènì zru¹it editory, jinak se doèkáme segmentation fault.
+        for e in self._editors:
+            e.close()
+        # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
+        # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
+        # v novém gridu.
+        self._table.close()    
+        return super_(ListForm).Close(self)
+
+    def Show(self, show, refresh=True):
+        # Zde implicitnì voláme refresh, proto¾e to u¹etøí spoustu potenciálních
+        # potí¾í s aktualizací.  Pokud toto není ¾ádoucí, lze vyu¾ít klíèový
+        # argument refresh, ale celé je to tak trochu hack...
+        if show:
+            if refresh:
+                self.refresh()
+        else:
+            self.exit_check()
+        return super_(ListForm).Show(self, show)
+    
+    # Ostatní veøejné metody
+
+    def focus(self):
+        super_(ListForm).focus(self)
+        self.refresh(when=self.DOIT_IFNEEDED)
+        self._update_selection_colors()
+        self._grid.SetFocus()
+        self.show_position()
+        
+    def defocus(self):
+        super_(ListForm).defocus(self)
+        self._update_selection_colors()
+
+
+
+class CodeBook(ListForm, PopupForm, KeyHandler):
+    """Formuláø pro zobrazení výbìrového seznamu (èíselníku).
+
+    Výbìrový seznam zobrazuje øádky dat, z nich¾ u¾ivatel nìkterý øádek
+    vybere.  U¾ivatel kromì výbìru a listování nemù¾e s øádky nijak
+    manipulovat.
+
+    Tøída se od svého pøedka li¹í následujícími vlastnostmi:
+
+    - Jsou zobrazeny pouze sloupce, jejich¾ identifikátory jsou v mno¾inì
+      'columns' pøedané jako argument konstruktoru (pokud není None).
+
+    - Formuláø je zobrazen jako modální okno pomocí metody 'run()', která
+      skonèí po výbìru polo¾ky a vrátí instanci PresentedRow pro vybraný
+      øádek. 
+      Pokud byl formuláø ukonèen jinak ne¾ výbìrem záznamu, je vrácena hodnota
+      'None'.
+
+    """
+
+    _DEFAULT_WINDOW_HEIGHT = 400
+
+    def __init__(self, parent, *args, **kwargs):
+        parent = self._popup_frame(parent, 'Èíselník')
+        super_(CodeBook).__init__(self, parent, *args, **kwargs)
+        self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
+        w = self.total_width() + wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
+        h = min(self._DEFAULT_WINDOW_HEIGHT, self.total_height() + 20)
+        parent.SetSize((w, h))
+        self._parent.SetTitle(self.title())
+
+    def _init_attributes(self, ctype=None, begin_search=False, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+
+          ctype -- instance tøídy 'pytis.data.Codebook', odpovídající typu
+            èíselníku, pro který je formuláø vyvolán
+          begin_search -- Pokud není None, bude po otevøení formuláøe
+            automaticky nastartováno inkrementální vyhledávání. Pokud
+            je hodnota øetìzec, je chápán jako identifikátor
+            sloupce, ve kterém se má provádìt vyhledávání. Není-li ho            
+            hodnota øetìzec, nebo neodpovídá-li ¾ádnému sloupci,
+            je vyhledávání provádìno automaticky nad sloupeèkem s
+            primárním tøídìním.
+            
+        """
+        super_(CodeBook)._init_attributes(self, **kwargs)
+        self._begin_search = begin_search
+        if ctype is not None:
+            condition = pytis.data.AND(self._lf_initial_condition,
+                                     ctype.validity_condition())
+            self._lf_initial_condition = condition
+          
+    def _on_idle(self, event):
+        ListForm._on_idle(self, event)
+        if not hasattr(self, '_focus_forced_to_grid'):
+            self._grid.SetFocus()
+            self._focus_forced_to_grid = True
+        if self._begin_search:
+            col = None            
+            if is_anystring(self._begin_search):
+                col = find(self._begin_search, self._columns,
+                           key=lambda c:c.id())
+            if col is None and self._lf_sorting is not None:
+                col = find(self._lf_sorting[0][0], self._columns,
+                           key=lambda c:c.id())
+            if col is not None:
+                self._select_cell(row=0, col=self._columns.index(col))
+                self._on_incremental_search(False)
+            else:
+                message(_("Nelze zaèít inkrementální vyhledávání. " + \
+                          "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
+                        beep_=True)
+            self._begin_search = None
+        
+    def _context_menu(self):
+        return (MItem(_("Vybrat"),
+                      command = ListForm.COMMAND_ACTIVATE),
+                )
+
+    def on_command(self, command, **kwargs):
+        if command == Application.COMMAND_LEAVE_FORM:
+            self._leave_form()
+            return True
+        return super_(CodeBook).on_command(self, command, **kwargs)
+
+    def _on_activation(self):
+        """Nastav návratovou hodnotu a ukonèi modální dialog."""
+        self._result = self.current_row()
+        self._parent.EndModal(1)
+        return True
+
+
+class BrowseForm(ListForm):
+    """Formuláø pro prohlí¾ení dat s mo¾ností editace.
+
+    Formuláø je CallbackHandler a argumenty callbackù jsou shodné, jako je
+    tomu pro tøídu 'List'.
+    
+    """
+
+    CALL_EDIT_RECORD = 'CALL_EDIT_RECORD'
+    """Voláno pøi po¾adavku na editaci akt. záznamu."""
+    CALL_NEW_RECORD = 'CALL_NEW_RECORD'
+    """Voláno pøi po¾adavku na vytvoøení nového záznamu.
+
+    Mù¾e mít jeden nepovinný argument.  Pokud je pravdivý, bude nový záznam
+    pøedvyplnìn zkopírováním dat aktuálního øádku.
+
+    """
+
+    class _PrintResolver (pytis.output.OutputResolver):
+        P_NAME = 'P_NAME'
+        class _Spec:
+            def body(self, resolver):
+                table_id = resolver.p(BrowseForm._PrintResolver.P_NAME)
+                result = pytis.output.data_table(resolver, table_id)
+                return result
+            def doc_header(self, resolver):
+                return None
+            def doc_footer(self, resolver):
+                return None
+            def coding(self, resolver):
+                if wx.Font_GetDefaultEncoding() == \
+                   wx.FONTENCODING_ISO8859_2:
+                    result = pytis.output.Coding.LATIN2
+                else:
+                    result = pytis.output.Coding.ASCII
+                return result
+        def _get_module(self, module_name):
+            try:
+                result = pytis.output.OutputResolver._get_module(self,
+                                                               module_name)
+            except ResolverModuleError:
+                result = self._Spec()
+            return result
+
+    def __init__(self, *args, **kwargs):
+        super_(BrowseForm).__init__(self, *args, **kwargs)
+        self.set_callback(self.CALL_NEW_RECORD,  self._on_new_record)
+        self.set_callback(self.CALL_EDIT_RECORD,
+                          lambda k: self._on_edit_record(k)),
+        self.set_callback(ListForm.CALL_ACTIVATION,
+                          lambda key: self._run_form(BrowsableShowForm, key))
+        self.set_callback(ListForm.CALL_ALTERNATE_ACTIVATION,
+                          lambda key: self._run_form(DescriptiveDualForm, key))
+        
+    def _run_form(self, form, key):
+        name = self._redirected_name(key)
+        if not name:
+            name = self._name
+        if issubclass(form, EditForm):
+            kwargs = {'key': key}
+        else:
+            kwargs = {'select_row': key}
+        run_form(form, name, condition=self._lf_condition,
+                 sorting=self._lf_sorting, **kwargs)
+
+    def _formatter_parameters(self):
+        name = self._name
+        return {(name+'/'+pytis.output.P_CONDITION):
+                pytis.data.AND(self._lf_initial_condition, self._lf_condition),
+                (name+'/'+pytis.output.P_SORTING):
+                self._lf_translated_sorting(),
+                (name+'/'+pytis.output.P_KEY):
+                self._current_key(),
+                (name+'/'+pytis.output.P_ROW):
+                copy.copy(self._table.row(self._current_row())),
+                (name+'/'+pytis.output.P_DATA):
+                copy.copy(self._data)
+                }
+
+        
+    def _context_menu(self):
+        # Sestav specifikaci popup menu
+        super_menu = super_(BrowseForm)._context_menu(self)
+        menu = (
+            MItem(_("Editovat buòku"),
+                  command = ListForm.COMMAND_EDIT),
+            MItem(_("Filtrovat podle buòky"),
+                  command = ListForm.COMMAND_FILTER_BY_CELL),
+            MItem(_("Zkopírovat obsah buòky"),
+                  command = ListForm.COMMAND_COPY_CELL),
+            MSeparator(),
+            MItem(_("Editovat záznam"),
+                  command = BrowseForm.COMMAND_RECORD_EDIT),
+            # TODO:uievent_id= neaktivní, kdy¾ u¾ jsem v DescriptiveDualFormu
+            MItem(_("Smazat záznam"),
+                  command = ListForm.COMMAND_LINE_DELETE),
+            MItem(_("Náhled"),
+                  command = ListForm.COMMAND_ACTIVATE),
+            MItem(_("Náhled v druhém formuláøi"),
+                  command = ListForm.COMMAND_ACTIVATE_ALTERNATE),
+            )
+        custom_menu = self._view.popup_menu()
+        custom_menu = custom_menu and (MSeparator(),) + custom_menu or ()
+        return super_menu + menu + custom_menu
+
+    def _redirected_name(self, key):
+        redirect = self._view.redirect()
+        if redirect is not None:
+            success, row = db_operation(lambda : self._data.row(key))
+            if not success:
+                raise ProgramError('Row read failure')
+            name = redirect(row)
+            if name is not None:
+                assert isinstance(name, types.StringType)
+                return name
+        return None
+            
+    def _on_new_record(self, copy=False):
+        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+            message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
+                    'tabulky.', beep_=True)
+            return False
+        if copy:
+            key = self.current_key()
+        else:
+            key = None
+        result = new_record(self._name, key=key, prefill=self.prefill())
+        if isinstance(result, PresentedRow):
+            self.select_row(result.row())
+
+    def _on_edit_record(self, key):
+        on_edit_record = self._view.on_edit_record()
+        if on_edit_record is not None:
+            row = self._table.row(self._current_row())
+            on_edit_record(row=row)
+            self.refresh()
+            # TODO: tento refresh je tu jen pro pøípad, ¾e byla u¾ivatelská
+            # procedura o¹etøena jinak ne¾ vyvoláním formuláøe.  Proto¾e to
+            # samo u¾ je hack, tak a» si radìji také tvùrce provádí refresh
+            # sám, proto¾e tady je volán ve v¹ech ostatních pøípadech zbyteènì
+            # a zdr¾uje.
+        else:
+            self._run_form(PopupEditForm, key)
+
+
+    def _on_print_(self, spec_path):
+        log(EVENT, 'Vyvolání tiskového formuláøe')
+        name = self._name
+        if not spec_path:
+            try:
+                spec_paths = self._resolver.get(name, 'print_spec')
+            except ResolverError:
+                spec_paths = None
+            if spec_paths:
+                spec_path = spec_paths[0][1]
+            else:
+                spec_path = os.path.join('output', name)
+        P = self._PrintResolver
+        parameters = self._formatter_parameters()
+        parameters.update({P.P_NAME: name})
+        print_resolver = P(self._resolver, parameters=parameters)
+        resolvers = (print_resolver,)
+        formatter = pytis.output.Formatter(resolvers, spec_path)
+        run_form(PrintForm, name, formatter=formatter)
+
+    def on_command(self, command, **kwargs):
+        if command == Form.COMMAND_PRINT:
+            self._on_print_(kwargs.get('print_spec_path'))
+        elif command == BrowseForm.COMMAND_NEW_RECORD:
+            self._run_callback(self.CALL_NEW_RECORD)
+        elif command == BrowseForm.COMMAND_NEW_RECORD_COPY:
+            self._run_callback(self.CALL_NEW_RECORD, (True,))
+        elif command == BrowseForm.COMMAND_RECORD_EDIT:
+            key = self.current_key()
+            if key is not None:
+                self._run_callback(self.CALL_EDIT_RECORD, (key,))
+        else:
+            return super_(BrowseForm).on_command(self, command, **kwargs)
+        return True
+
+
+class FilteredBrowseForm(BrowseForm):
+    """Prohlí¾ecí formuláø s filtrovaným obsahem.
+
+    Oproti obyèejnému prohlí¾ecímu formuláøi zobrazuje filtrovaný formuláø
+    pouze øádky splòující podmínku zadanou v konstruktoru, pøípadnì
+    kombinovanou se zadaným datovým klíèem.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super_(FilteredBrowseForm).__init__(self, *args, **kwargs)
+        self._init_filter()
+    
+    def _init_attributes(self, condition=None, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+        
+        Argumenty:
+
+          condition -- hodnotou je podmínkový výraz pro datové dotazy, tak jak
+            je definovaný v metodì 'pytis.data.Data.select()'.  Tento výraz mù¾e
+            být i funkcí jednoho argumentu vracející pøíslu¹ný podmínkový
+            výraz, pøedaným argumentem je dictionary id sloupcù (strings) a
+            jejich hodnot (instancí tøídy 'pytis.data.Value').
+
+        Má-li podmínka podobu statického operátoru, je filtrování provedeno
+        ihned a nelze je zmìnit.  Má-li naopak podmínka podobu funkce, jsou
+        zobrazena v¹echna data a¾ do prvního zavolání metody `filter()';
+        následnými voláními této funkce pak lze výbìr upravovat.
+
+        """
+        super_(FilteredBrowseForm)._init_attributes(self, **kwargs)
+        assert callable(condition) or isinstance(condition, pytis.data.Operator)
+        self._condition = condition
+
+    def _init_filter(self):
+        self.filter()
+
+    def filter(self, data=None):
+        """Filtruj data dle podmínky z konstruktoru a 'data'.
+
+        Argumenty:
+
+          data -- 'None' nebo dictionary, jeho¾ klíèe jsou ids sloupcù
+            (strings) a hodnoty jim pøíslu¹né hodnoty (instance tøídy
+            'pytis.data.Value').  Jestli¾e je dictionary prázdné, budou
+            odfiltrovány v¹echny záznamy; jestli¾e je 'None', budou naopak
+            v¹echny záznamy zobrazeny.  Tento volitelný argument není nutno
+            v zápisu volání funkce klíèovat.
+
+        Je-li podmínka zadaná v konstruktoru statickým operátorem, metoda pouze
+        zavolá 'refresh()' na obalený list.  Je-li naopak podmínka zadaná
+        v konstruktoru funkcí, je provedeno pøefiltrování v závislosti na
+        argumentu 'data' -- je-li 'None', tak jsou zobrazena v¹echna data bez
+        omezení výbìru, jinak jsou zobrazena data dle podmínky vrácené voláním
+        podmínkové funkce.
+
+        """
+        #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, data))
+        if data is None:
+            condition = None
+        elif data == {}:
+            condition = pytis.data.OR()
+            data = None
+        elif callable(self._condition):
+            condition = self._condition(data)
+        else:
+            condition = self._condition
+        self._lf_initial_condition = condition
+        self.refresh(reset={'condition': None})
+
+
+class SideBrowseForm(FilteredBrowseForm):
+    """Formuláø zobrazující podmno¾nu øádkù závislých na jiném øádku dat.
+
+    Data tohoto formuláøe jsou filtrována v závislosti na aktuálním øádku v
+    jiném formuláøi.
+    
+    Filtrovací podmínka je vytváøena automaticky jako ekvivalence hodnot
+    vazebních sloupcù v hlavním a vedlej¹ím formuláøi.  Identifikátory
+    pøíslu¹ných sloupcù jsou dány argumenty `binding_column' a
+    `sibling_binding_column'.
+
+    """
+
+    def _init_attributes(self, sibling_name, sibling_row,
+                         sibling_binding_column, binding_column,
+                         hide_binding_column, append_condition=None,
+                         title=None, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+        
+        Argumenty:
+
+          title -- ???
+          sibling_name -- jméno specifikace hlavního formuláøe; øetìzec
+          sibling_row -- funkce bez argumentù, která vrátí aktuální datový
+            øádek hlavního formuláøe.
+          sibling_binding_column -- identifikátor vazebního sloupce v hlavním
+            formuláøi; øetìzec
+          binding_column -- identifikátor vazebního sloupce ve vedlej¹ím
+            formuláøi; øetìzec
+          hide_binding_column -- pravdivá hodnota zpùsobí, ¾e vazební sloupec
+            nebude zobrazen.
+          append_condition -- None nebo funkce jednoho argumentu, kterým je
+            aktuální øádek hlavního formuláøe. V tomto pøípadì musí funkce
+            vrátit instanci Operator, která se pøipojí k implicitní
+            podmínce provazující vazební sloupce.
+
+        """
+        column_condition = lambda row: pytis.data.EQ(binding_column,
+                                                   row[sibling_binding_column])
+        if append_condition:
+            condition = lambda row: pytis.data.AND(column_condition(row),
+                                                 append_condition(row))
+        else:
+            condition = column_condition
+        super_(SideBrowseForm)._init_attributes(self, condition, **kwargs)
+        self._sibling_name = sibling_name
+        self._sibling_row = sibling_row
+        self._title = title
+        if hide_binding_column:
+            self._orig_columns = filter(lambda c: c != binding_column,
+                                        self._orig_columns)
+        
+    def _init_filter(self):
+        self.filter({})
+
+    def title(self):
+        if self._title is not None:
+            return self._title
+        return super_(SideBrowseForm).title(self)
+        
+    def _formatter_parameters(self):
+        parameters = FilteredBrowseForm._formatter_parameters(self)
+        extra_parameters = {self._sibling_name+'/'+pytis.output.P_ROW:
+                            self._sibling_row()}
+        parameters.update(extra_parameters)
+        return parameters
+
+    def _update_selection_colors(self):
+        g = self._grid
+        if focused_window() is not self:
+            g.ClearSelection()
+        else:
+            g.SelectRow(g.GetGridCursorRow())
+            super_(SideBrowseForm)._update_selection_colors(self)
+

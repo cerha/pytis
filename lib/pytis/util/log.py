@@ -1,0 +1,346 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Logování.
+
+Logování slou¾í k zaznamenávání následujících informací:
+
+- Informace pro administrátora o stavu systému.
+
+- Záznam u¾ivatelských akcí pro pøípadnou pozdìj¹í diagnostiku problémù.
+
+- Zmìny v¹ech dat.
+
+- Ladící informace potøebné pouze bìhem vývoje programu, které se nikdy
+  nelogují za ostrého bìhu aplikace.
+
+Modul umo¾òuje zaznamenávání tìchto informací prostøednictvím funkce 'log'.
+Ka¾dé volání této funkce je definováno svým typem, slovním popisem události a
+nepovinnì libovolným datovým objektem, který obsahuje data vztahující se k dané
+informaci.
+
+Co se druhù informací týèe, modul definuje konstantu pro ka¾dý typ informace
+z vý¹e uvedeného seznamu.
+
+Konfigurace modulu je dána promìnnou 'config'.
+
+Tento modul je doporuèeno importovat následujícím zpùsobem:
+
+  from pytis.util import *
+
+"""
+
+import getpass
+import gettext
+import inspect
+import os
+import socket
+import string
+import sys
+import syslog
+import time
+
+from util import *
+
+
+OPERATIONAL = 'OPR'
+"""Provozní hlá¹ka, související se stavem systému."""
+ACTION = 'ACT'
+"""Významná hlá¹ka týkající se zmìny u¾ivatelského rozhraní nebo dat."""
+EVENT = 'EVT'
+"""Ménì významná hlá¹ka týkající se u¾ivatelské akce nebo dat."""
+DEBUG = 'DBG'
+"""Interní hlá¹ka pro ladìní, neloguje se pøi ostrém spu¹tìní aplikace."""
+
+
+class Logger:
+    """Abstraktní tøída pro logování.
+
+    Tøída obsahuje jedinou veøejnou metodu 'log()', prostøednictvím které je
+    mo¾no logování kompletnì obslou¾it.
+
+    Tato tøída zaji¹»uje potøebnou logovací infrastrukturu, neposílá v¹ak
+    hlá¹ky na ¾ádný výstup.  Zasílání hlá¹ek do konkrétních cílù je zále¾itostí
+    potomkù tøídy.
+
+    Pro obecné logování je lépe nevyu¾ívat tuto tøídu nebo její potomky pøímo,
+    nýbr¾ pou¾ít funkci 'log.log()'.
+
+    """
+    def __init__(self):
+        """Inicializuj logger."""
+        import config
+        globals()['config'] = locals()['config']
+        try:
+            self._translator = gettext.translation('pytis', languages=('en',))
+        except IOError:
+            self._translator = None
+        self._host = socket.gethostname()
+        self._module_filter = config.log_module_filter
+        try:
+            class_ = list(config.log_class_filter)
+            for i in range(len(class_)):
+                c = class_[i]
+                if type(c) == type(''):
+                    pos = string.rfind(c, '.')
+                    if pos:
+                        mod, cls = c[:pos], c[pos+1:]
+                        imp = __import__(mod, None, None, [cls])
+                        class_[i] = imp.__dict__[cls]
+                    else:
+                        class_[i] = eval(c)
+            self._class_filter = class_
+        except:
+            self._class_filter = ()
+
+    def _retrieve_info(self):
+        module = class_name = id_ = '?'
+        class_ = None
+        frame = inspect.currentframe().f_back.f_back.f_back
+        if frame:
+            if __debug__ and False:
+                # TODO/Python: Zji¹»ování jména modulu je velmi pomalé (chyba
+                # modulu `inspect').
+                try:
+                    # TODO: Z neznámého dùvodu od jisté doby nefunguje zji¹tìní
+                    # modulu pro pytis.form.
+                    module = inspect.getmodule(frame).__name__
+                except:
+                    pass
+            l = frame.f_locals
+            if l.has_key('self'):
+                s = l['self']
+                try:
+                    class_ = s.__class__
+                    class_name = class_.__name__
+                except:
+                    pass
+                id_ = '%x' % id(s)
+        self._module = module
+        self._class_ = class_
+        self._class_name = class_name
+        self._id = id_
+        
+    def _is_accepted(self, kind, message, data):
+        if not __debug__ and kind == DEBUG:
+            return False
+        if kind in config.log_exclude:
+            return False
+        if kind == DEBUG:
+            if not starts_with(self._module, self._module_filter) or \
+               (self._class_filter and self._class_ and \
+                not some(lambda c, self=self: issubclass(self._class_, c),
+                         self._class_filter)):
+                return False
+        return True
+
+    def _translated(self, message):
+        translator = self._translator
+        if translator:
+            return self._translator.gettext(message)
+        else:
+            return message
+
+    def _prefix(self, kind, message, data):
+        datetime = time.strftime('%Y-%m-%d %H:%M:%S',
+                                 time.gmtime(time.time()))
+        host = self._host
+        user = getpass.getuser()
+        pid = os.getpid()
+        prefix = '%s %s@%s[%s] %s %s %s[%s]: ' % \
+                 (datetime, user, host, pid, kind, self._module,
+                  self._class_name, self._id)
+        return prefix
+        
+    def _formatted_message(self, message, data):
+        return message
+
+    def _formatted_data(self, prefix, fmessage, data):
+        if data is not None:
+            if type(data) == type(()):
+                repr = `tuple(map(str, data))`
+            elif type(data) == type(''):
+                repr = data
+            else:
+                repr = `data`
+            datalines = map(lambda l, prefix=prefix: '%s%s' % (prefix, l),
+                            string.split(repr, '\n'))
+            n = len(datalines)
+            if n <= 1:
+                if fmessage and fmessage[-1] == ':':
+                    import config
+                    if config.log_one_line_preferred:
+                        return '*%s%s %s' % (prefix, fmessage, repr)
+                data_string = '=%s%s' % (prefix, repr)
+            else:
+                datalines[0] = '<%s' % datalines[0]
+                datalines[n-1] = '>%s' % datalines[n-1]
+                datalines[1:n-1] = map(lambda l: ' %s' % l, datalines[1:n-1])
+                data_string = string.join(datalines, '\n')
+            formatted = '@%s%s\n%s' % (prefix, fmessage, data_string)
+        else:
+            formatted = '*%s%s' % (prefix, fmessage)
+        return formatted
+
+    def _formatted(self, kind, message, data):
+        prefix = self._prefix(kind, message, data)
+        fmessage = self._formatted_message(message, data)
+        formatted = self._formatted_data(prefix, fmessage, data)
+        return formatted
+
+    def _send(self, kind, formatted):
+        pass
+
+    def log(self, kind, message, data=None):
+        """Zaloguj 'message'.
+
+        Argumenty:
+
+          kind -- druh hlá¹ky, jedna z konstant modulu 'log'
+          message -- slovní hlá¹ka, string; jestli¾e tento string konèí
+            dvojteèkou, 'data' mají jednoøádkovou reprezentaci a konfiguraèní
+            volba 'one_line_preferred' je pravda, jsou data do logu zapsána na
+            stejný øádek jako 'message'
+          data -- libovolná data; tento argument není nutno klíèovat
+
+        """        
+        assert kind in (OPERATIONAL, ACTION, EVENT, DEBUG), \
+               ('invalid logging kind', kind)
+        assert is_anystring(message)
+        self._retrieve_info()
+        if not self._is_accepted(kind, message, data):
+            return
+        message = self._translated(message)
+        formatted = self._formatted(kind, message, data)
+        self._send(kind, formatted)
+
+
+class StreamLogger(Logger):
+    """Logger posílající hlá¹ení do streamu.
+
+    Cílový stream je tøídì pøedán v konstruktoru.  Tøída není zodpovìdná za
+    hlídání chyb streamu ani neprovádí ¾ádné akce v pøípadì, ¾e stream je vnì
+    tøídy uzavøen.
+
+    """
+    def __init__(self, stream):
+        """Inicializuj logování.
+
+        Argumenty:
+
+          stream -- otevøený file object, do kterého lze logovat
+          
+        """
+        StreamLogger.__bases__[0].__init__(self)
+        self._stream = stream
+        
+    def _send(self, kind, formatted):
+        self._stream.write(formatted)
+        self._stream.write('\n')
+        self._stream.flush()
+
+
+class SyslogLogger(Logger):
+    """Logger posílající hlá¹ení syslogu."""
+
+    _MAX_MESSAGE_LENGTH = 1020
+
+    def _prefix(self, kind, message, data):
+        pid = os.getpid()
+        prefix = '[%s] %s %s %s[%s]: ' % \
+                 (pid, kind, self._module, self._class_name, self._id)
+        return prefix
+        
+    def _send(self, kind, formatted):
+        if kind == OPERATIONAL:
+            priority = syslog.LOG_ERR
+        elif kind == ACTION:
+            priority = syslog.LOG_NOTICE
+        elif kind == EVENT:
+            priority = syslog.LOG_INFO
+        elif kind == DEBUG:
+            priority = syslog.LOG_DEBUG
+        else:
+            raise ProgramError('Unknown message kind', kind)
+        while formatted:
+            syslog.syslog(priority, formatted[:self._MAX_MESSAGE_LENGTH])
+            formatted = formatted[self._MAX_MESSAGE_LENGTH:]
+
+
+
+###
+
+
+class LoggingInterface:
+    """Rozhraní ke standardnímu logovacímu objektu.
+
+    Tato tøída není urèena k instanciaci mimo modul 'pytis.util.log'.
+    
+    """
+    def __init__(self):
+        self._logger = None # nelze inicializovat teï, kvùli závislostem modulù
+        self._hooks = []
+
+    def __call__(self, kind, message, data=None):
+        """Zaloguj 'message'.
+
+        Argumenty:
+
+          kind -- druh hlá¹ky, jedna z konstant modulu
+          message -- slovní hlá¹ka, string
+          data -- libovolná data, tento argument není nutno klíèovat
+
+        Pokud je '__debug__' nepravda a 'kind' je 'DEBUG', 'message' není
+        zalogováno.
+
+        """
+        if __debug__ or kind is not DEBUG: # optimalizaèní zále¾itost
+            logger = self._logger
+            if not logger:
+                import config
+                try:
+                    logspec = config.log_logger
+                except AttributeError:
+                    logspec = (StreamLogger, (sys.stderr,), {})
+                logger = self._logger = \
+                         apply(logspec[0], logspec[1], logspec[2])
+            logger.log(kind, message, data)
+        for hook in self._hooks:
+            hook()
+
+    def add_hook(self, hook):
+        """Pøidej 'hook' ke ka¾dému logování.
+
+        Argumenty:
+
+          hook -- funkce bez argumentù, která je zavolána pøi ka¾dém volání
+            metody '__call__()', bez ohledu na to, zda nìjaká zpráva byla
+            skuteènì zalogována
+
+        Logovací hooky lze vyu¾ít k opakovanému vykonání nìjaké èinnosti
+        v kterékoliv èásti kódu.  My¹lenka vychází z toho, ¾e ve¹kerý kód by
+        mìl na v¹ech dùle¾itých místech, a také dostateènì èasto èasovì,
+        logovat.  Navì¹ení volání nìèeho na logování je pak nenásilnou metodou,
+        jak zajistit opakované volání nìjakého kódu i v pøípadì, kdy je
+        z jakéhokoliv dùvodu nevhodné tak èinit ve vedlej¹ím threadu.
+
+        """
+        self._hooks.append(hook)
+
+
+log = LoggingInterface()

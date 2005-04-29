@@ -1,0 +1,920 @@
+# -*- coding: iso-8859-2 -*-
+
+# Prostøedky pro definici a zpracování konfigurace bìhu aplikace
+# 
+# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Prostøedky pro definici a zpracování konfigurace bìhu aplikace.
+
+Celá konfigurace je definována instancí tøídy 'Configuration', dokumentace
+v této tøídì poví více.
+
+"""
+
+import getopt
+import imp
+import os
+import stat
+import string
+import sys
+import time
+
+from pytis.util import *
+
+
+class Configuration:
+    """Definice konfigurace a její konkrétní parametry."""
+
+    class Option(object):
+        """Specifikace konfiguraèní volby (promìnné).
+
+        Definicí potomka této tøídy se jménem zaèínajícím prefixem '_Option_'
+        jako vnitøní tøídy tøídy 'Configuration' je automaticky definována nová
+        konfiguraèní volba aplikace.  Jméno volby je shodné s èástí jména
+        takové tøídy následující za prefixem '_Option_', její popis je
+        v docstringu tøídy.  Ostatní vlastnosti volby jsou definovány metodami
+        dané tøídy.  Konkrétní hodnota je pak udr¾ována v její instanci.
+
+        Docstring tøíd nepodléhá obvyklým formátovacím pravidlùm.  Mìl by mít
+        podobu, je¾ se dobøe vyjímá v komentáøi pythonového zdrojového souboru.
+
+        Standardní konfiguraèní volby jsou uvedeny pøímo zde.  Aplikace mù¾e ve
+        svém definièním souboru definovat dal¹í, své vlastní, konfiguraèní
+        volby pou¾itím potomka tøídy 'Configuration' a doplnìním dal¹ích
+        vnitøních tøíd v nìm roz¹íøit dostupné konfiguraèní volby.
+
+        Po zpracování konfiguraèních voleb je zbývající, nezpracovaná, èást
+        pøíkazové øádky pøiøazena do 'sys.argv'.
+
+        """
+        VISIBLE = 'VISIBLE'
+        """Konstanta pro dump, viz 'visible()'."""
+        HIDDEN = 'HIDDEN'
+        """Konstanta pro dump, viz 'visible()'."""
+        COMMENTED_OUT = 'COMMENTED_OUT'
+        """Konstanta pro dump, viz 'visible()'."""
+        
+        def __init__(self, configuration):
+            """Inicializuj instanci volby.
+
+            Argumenty:
+
+              configuration -- instance tøídy 'Configuration', ve které je
+                konfiguraèní volba pøítomna
+                
+            """
+            self._configuration = configuration
+            self._value = self._undefined = object()
+
+        def _compute_init_value(self, configuration):
+            value = self._undefined
+            long_option = self.long_option()
+            if long_option:
+                if long_option[-1] == '=':
+                    boolean = False
+                    long_option = long_option[:-1]
+                else:
+                    boolean = True
+                try:
+                    values = configuration.command_line_options[long_option]
+                    if boolean:
+                        value = True
+                    else:
+                        value = values[0]
+                except KeyError:
+                    pass
+            if value is self._undefined:
+                for var in self.environment():
+                    varval = os.getenv(var)
+                    if varval is not None:
+                        value = varval
+                        break
+            if value is self._undefined:
+                value = self._value
+            if value is self._undefined:
+                value = self.default()
+            return value
+
+        def init_value(self, force=False):
+            """Inicializuj hodnotu promìnné.
+
+            Argumenty:
+
+              force -- právì kdy¾ je nepravdivé, inicializuj hodnotu jen tehdy,
+                je-li je¹tì nedefinována
+
+            """
+            if force or self._value is self._undefined:
+                self._value = self._compute_init_value(self._configuration)
+
+        def value(self):
+            """Vra» aktuální hodnotu konfiguraèní volby."""
+            # Hodnotu nenastavujeme hned v konstruktoru, proto¾e v té dobì
+            # je¹tì nemusí být inicializovány jiné volby, na kterých tato volba
+            # pøípadnì závisí.
+            if self._value is self._undefined:
+                self.init_value()
+            return self._value
+
+        def set_value(self, value):
+            """Nastav hodnotu konfiguraèní volby na 'value'."""
+            self._value = value
+
+        def long_option(self):
+            """Vra» specifikaci dlouhé volby pro 'getopt' jako string.
+
+            Specifikace mù¾e mít napøíklad podobu 'debug' nebo 'datadir='.
+            Pokud konfiguraèní volba není spojena s ¾ádnou volbou pøíkazové
+            øádky, vra» 'None'.
+
+            """
+            return None
+
+        def environment(self):
+            """Vra» tuple jmen promìnných prostøedí obsahujících hodnotu volby.
+
+            Jména promìnných jsou strings.  Promìnné prostøedí jsou zkoumány
+            v uvedeném poøadí a platná je první z nich, která je v prostøedí
+            pøítomna (a to i kdy¾ je tøeba její hodnota prázdná).  Promìnné
+            prostøedí mají ni¾¹í prioritu ne¾ volba pøíkazové øádky nebo
+            hodnota v konfiguraèním souboru, av¹ak vy¹¹í prioritu ne¾ hodnota
+            vrácená metodou 'default'.
+            
+            """
+            return ()
+
+        def default(self):
+            """Vra» implicitní hodnotu konfiguraèní volby.
+            
+            Hodnota vrácená touto metodou je pou¾ita, pokud nebylo mo¾no
+            implicitní hodnotu volby zjistit jinak.
+
+            """
+            return None
+        
+        def default_string(self):
+            """Vra» implicitní hodnotu konfiguraèní volby pro dump.
+
+            Hodnota je vrácena jako øetìzec, který bude vlo¾en do vzorového
+            konfiguraèního souboru.  Tuto metodu je u¾iteèné pøedefinovat
+            v pøípadì, ¾e implicitní hodnota volby vrácená metodou 'default()'
+            je závislá na konkrétním prostøedí a/nebo nevystihuje zpùsob svého
+            získání.
+
+            """
+            return `self.default()`
+        
+        def visible(self):
+            """Vra» jednotu z konstant viditelnosti volby.
+
+            Vrácená hodnota urèuje, zda ve vzorovém konfiguraèním souboru má
+            být volba pøítomna a v jaké podobì, a mù¾e být jedna
+            z následujících konstant tøídy:
+
+              VISIBLE -- volba bude ve vzorovém konfiguraèním souboru uvedena
+              HIDDEN -- volba nebude ve vzorovém konfiguraèním souboru uvedena
+              COMMENTED_OUT -- volba bude ve vzorovém konfiguraèním souboru
+                uvedena, av¹ak zakomentovaná
+
+            """
+            return self.COMMENTED_OUT
+
+    class _FileOption(Option):
+        def _compute_init_value(self, *args, **kwargs):
+            value = super(Configuration._FileOption, self).\
+                    _compute_init_value(*args, **kwargs)
+            if not os.path.isabs(value):
+                value = os.path.join(os.getcwd(), value)
+            return value
+        
+    # Volba pro konfiguraci samu
+
+    class _Option_config_file(Option):
+        """Umístìní konfiguraèního souboru."""
+        def long_option(self):
+            return 'config='
+        def environment(self):
+            return ('EBASCONFIG',)
+        def default(self):
+            for filename in ('./config.py', '/etc/pytis/config.py'):
+                if os.access(filename, os.F_OK):
+                    result = filename
+                    break
+            else:
+                result = None
+            return result
+        def visible(self):
+            return self.HIDDEN
+
+    class _Option_user_config_file(Option):
+        """Umístìní doplòujícího konfiguraèního souboru u¾ivatele.
+        Tento soubor, pokud, existuje, je naèítán navíc ke standardní
+        konfiguraci a v nìm definované volby mají vy¹¹í prioritu ne¾ volby ve
+        standardním konfiguraèním souboru.
+        U¾iteèné pøevá¾nì pro ladìní.
+        """
+        def default(self):
+            config_file = self._configuration.config_file
+            if config_file:
+                dir, file = os.path.split(config_file)
+                result = os.path.join(dir, '_'+file)
+            else:
+                result = None 
+            return result
+        def visible(self):
+            return self.HIDDEN
+        
+    # Volby u¾iteèné hlavnì pro ladìní
+
+    class _Option_help(Option):
+        """Volba odpovídající --help na pøíkazové øádce."""
+        def long_option(self):
+            return 'help'
+        def default(self):
+            return False
+        def visible(self):
+            return self.HIDDEN
+        
+    class _Option_debug(Option):
+        """Pøíznak ladícího re¾imu.
+        Je-li zapnut, aplikace mù¾e bì¾et s více kontrolami a vypisovat
+        spoustu informací, obvykle v¹ak za cenu svého výrazného zpomalení.
+        """
+        def long_option(self):
+            return 'debug'
+        def default(self):
+            return False
+        def default_string(self):
+            return 'False'
+        
+    class _Option_debug_on_error(Option):
+        """Pøíznak vyvolání debuggeru pøi chybì.
+        Dojde-li k odchycení neoèekávané výjimky a tato volba je zapnuta, je
+        vyvolán interaktivní debugger.  Je-li zapnuta volba 'debug', je
+        implicitnì zapnuta i tato volba.  U¾iteèné pouze pro ladìní.
+        """
+        def long_option(self):
+            return 'debug-on-error'
+        def default(self):
+            return self._configuration.debug
+        def default_string(self):
+            return 'False'
+
+    class _Option_debug_memory(Option):
+        """Pøíznak výpisu ladících informací o pamìti.
+        Je-li zapnuta, aplikace vypisuje informativní hlá¹ky garbage collectoru
+        a jiné údaje o pamìti.
+        """
+        def long_option(self):
+            return 'debug-memory'
+        def default(self):
+            return False
+        def default_string(self):
+            return 'False'
+
+    class _Option_bug_report_address(Option):
+        """E-mailová adresa, na kterou mají být posílána oznámení o chybì."""
+        def default(self):
+            return ''
+
+    class _Option_bug_report_subject(Option):
+        """Subject mailu oznámení o chybì aplikace."""
+        def default(self):
+            return 'Bug report: Unexpected exception'
+
+    class _Option_profile(Option):
+        """Pøíznak profilování.
+        Je-li zapnut, aplikace se spustí v profilovacím re¾imu a ukládá
+        informace o trvání jednotlivých volání do souboru.  Zapnutí této volby
+        velmi výraznì zpomaluje bìh aplikace.
+        """
+        def long_option(self):
+            return 'profile'
+        def default(self):
+            return False
+        def default_string(self):
+            return 'False'        
+        
+    class _Option_auto_reload_defs(Option):
+        """Pøíznak automatického pøenaèítání zmìnìných definièních souborù.
+        Je-li zapnut, je zaruèeno pøenaètení definièních souborù aplikace
+        v pøípadì jejich zmìny.  Nìkdy to mù¾e zpomalovat bìh aplikace.
+        Implicitnì má tato volba stejnou hodnotu jako volba 'debug'.
+        """
+        def default(self):
+            return self._configuration.debug
+        def default_string(self):
+            return 'False'
+
+    class _Option_test_run_interactive(Option):
+        """Pøíznak urèující, zda mají být spou¹tìny i interaktivní testy.
+        Týká se pouze regresivního testování.
+        """
+        def visible(self):
+            return self.HIDDEN
+
+    class _Option_custom_debug(Option):
+        """Zvlá¹tní ladící funkce, napojená na pøíkaz 'COMMAND_CUSTOM_DEBUG'.
+        """
+        def default(self):
+            return (lambda: None)
+        def visible(self):
+            return self.HIDDEN
+
+    # Cesty a adresáøe
+
+    class _Option_def_dir(_FileOption):
+        """Adresáø obsahující definièní soubory.
+        Adresáø mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu
+        adresáøi.
+        """
+        def long_option(self):
+            return 'defdir='
+        def environment(self):
+            return ('EBASDEFDIR',)
+        def default(self):
+            return './defs'
+
+    class _Option_icon_dir(_FileOption):
+        """Adresáø s obrázkovými soubory.
+        Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu adresáøi.
+        """
+        def default(self):
+            return '../icons'
+
+    class _Option_tmp_dir(Option):
+        """Adresáø pro doèasné pomocné soubory.
+        """
+        def default(self):
+            dirs = ['/tmp', '/var/tmp', '/usr/tmp']
+            tmpdir = os.getenv('TMPDIR')
+            if tmpdir is not None:
+                dirs = [tmpdir] + dirs
+            for d in dirs:
+                if os.access(d, os.W_OK):
+                    result = d
+                    break
+            else:
+                result = '.'
+            return result
+        def default_string(self):
+            return "'/tmp'"
+
+    class _Option_server(Option):
+        """Jméno stroje, na kterém bì¾í Pyro server, jako string.
+        Mù¾e být té¾ 'None', pak se klient nepøipojuje na server a pou¾ívá
+        lokální konfiguraci.
+        """
+        def default(self):
+            return None
+        def long_option(self):
+            return 'server='
+
+    # Databáze
+    
+    class _Option_dbuser(Option):
+        """U¾ivatelské jméno (login) pro databázové spojení."""
+        def long_option(self):
+            return 'dbuser='
+        def default(self):
+            import getpass
+            return getpass.getuser()
+        def default_string(self):
+            return 'getpass.getuser()'
+        
+    class _Option_dbhost(Option):
+        """Jméno databázového serveru."""
+        def default(self):
+            return 'localhost'
+    
+    class _Option_dbname(Option):
+        """Jméno aplikaèní databáze."""
+        def default(self):
+            return 'pytis'
+
+    class _Option_dbconnection(Option):
+        """Instance specifikace spojení do databáze ('pytis.data.DBConnection').
+        Implicitnì se vytváøí z vý¹e uvedených databázových voleb.
+        """
+        def default(self):
+            import pytis.data
+            c = self._configuration
+            return pytis.data.DBConnection(user=c.dbuser, host=c.dbhost,
+                                         database=c.dbname)
+        def visible(self):
+            return self.HIDDEN
+
+    class _Option_dblogtable(Option):
+        """Jméno tabulky, do které mají být logovány DML SQL pøíkazy."""
+        def default(self):
+            return ''
+
+    class _Option_dblisten(Option):
+        """Flag urèující, zda má být spou¹tìn dohlí¾eè zmìn dat."""
+        def default(self):
+            return True
+        def default_string(self):
+            return 'True'
+
+    # Logovací volby
+
+    class _Option_log_logger(Option):
+        """Specifikace logovací tøídy.
+        Trojice (CLASS, ARGS, KWARGS), kde CLASS je logovací tøída a ARGS,
+        resp. KWARGS, jsou argumenty, resp. klíèované argumenty, jejího
+        konstruktoru.  Standardní dostupné tøídy jsou SyslogLogger a
+        StreamLogger.  Více o nich lze nalézt v jejich dokumentaci.
+        """
+        def default(self):
+            import log
+            return (log.StreamLogger, (sys.stderr,), {})
+        def default_string(self):
+            return '(SyslogLogger, (), {})'
+
+    class _Option_log_exclude(Option):
+        """Seznam typù logovacích hlá¹ek, které mají být odfiltrovány.
+        V seznamu lze pou¾ít konstanty OPERATIONAL, ACTION, EVENT a DEBUG.
+        """
+        def default(self):
+            if self._configuration.debug:
+                return []
+            else:
+                import log
+                return [log.DEBUG]
+        def default_string(self):
+            return '[DEBUG]'
+
+    class _Option_log_one_line_preferred(Option):
+        """Urèuje, zda je preferováno struèné nebo jednotné formátování.
+        Je-li tato volba nastavena na pravdu, jsou krátká data v logovacích
+        hlá¹kách doporuèujících struènost pøipojena ihned za hlá¹ku místo
+        vypsání na samostatný øádek.
+        """
+        def default(self):
+            return True
+        def default_string(self):
+            return 'True'
+
+    class _Option_log_module_filter(Option):
+        """Prefix jména modulu, jeho¾ debugovací hlá¹ky jsou propu¹tìny.
+        Debugovací logovací hlá¹ky modulù s jiným prefixem jsou odfiltrovány.
+        Není-li definováno, jsou propu¹tìny v¹echny hlá¹ky (nestanoví-li jiný
+        filtr jinak).
+        U¾iteèné pouze pro ladìní.
+        """
+        def default(self):
+            return ''
+        def default_string(self):
+            return "'pytis.data'"
+
+    class _Option_log_class_filter(Option):
+        """Sekvence jmen tøíd, jejich¾ debugovací hlá¹ky jsou propu¹tìny.
+        Debugovací logovací hlá¹ky ostatních tøíd jsou odfiltrovány.
+        Je-li 'None', jsou propu¹tìny v¹echny hlá¹ky (nestanoví-li jiný
+        filtr jinak).
+        U¾iteèné pouze pro ladìní.
+        """
+        def default(self):
+            return None
+        def default_string(self):
+            return "('pytis.data.DBDefaultClass',)"
+            
+    # Externí programy
+
+    class _Option_printing_command(Option):
+        """Shellový pøíkaz pro provedení tisku, vèetnì argumentù.
+        Pøíkaz musí být schopen pøevzít tisková data ze standardního vstupu.
+        """
+        def default(self):
+            return 'lpr'
+
+    class _Option_sendmail_command(Option):
+        """Shellový pøíkaz sendmail vèetnì celé cesty."""
+        def default(self):
+            return '/usr/lib/sendmail'
+        
+    # Ostatní konfiguraèní volby
+
+    class _Option_application_name(Option):
+        """Jméno aplikace.
+        Jméno mù¾e být libovolné, pou¾ívá se pouze ve vìcech jako titulky oken
+        nebo logování.
+        """
+        def default(self):
+            return 'EBAS'
+
+    class _Option_date_time_format(Option):
+        """Formát spoleènì uvedeného data a èasu.
+        Formát musí být string a musí být ve tvaru vy¾adovaném parametrem
+        `format' konstruktoru tøídy 'pytis.data.DateTime'.
+        """
+        def default(self):
+            import pytis.data
+            return pytis.data.DateTime.DEFAULT_FORMAT
+
+    class _Option_date_format(Option):
+        """Formát data.
+        Formát musí být string a musí být ve tvaru vy¾adovaném parametrem
+        `format' konstruktoru tøídy 'pytis.data.Date'.
+        """
+        def default(self):
+            import pytis.data
+            return pytis.data.Date.DEFAULT_FORMAT
+
+    class _Option_time_format(Option):
+        """Formát èasu.
+        Formát musí být string a musí být ve tvaru vy¾adovaném parametrem
+        `format' konstruktoru tøídy 'pytis.data.Time'.
+        """
+        def default(self):
+            import pytis.data
+            return pytis.data.Time.DEFAULT_FORMAT
+
+    class _Option_lc_numeric(Option):
+        """Numeric locale.
+        Hodnota musí být string reprezentující locale pro formátování èíselných
+        polo¾ek. 
+        """
+        def default(self):
+            return 'C'
+
+    class _Option_export_directory(Option):
+        """Adresáø pro export textových souborù.
+        Hodnota musí být øetìzec udávající cestu k adresáøi, kde se budou
+        ukládat textové CSV soubory. 
+        """
+        def default(self):
+            return '/tmp'
+
+    class _Option_export_encoding(Option):
+        """Kódování exportovaných øetìzcù
+        Hodnota musí být jedním z podporovaných kódování pro metodu
+        encode() unicodových øetìzcù v Pythonu. 
+        """
+        def default(self):
+            return 'iso8859-2'
+
+    class _Option_db_encoding(Option):
+        """Interní kódování databáze
+        Hodnota musí být jedním z podporovaných kódování pro metodu
+        encode() unicodových øetìzcù v Pythonu. 
+        """
+        def default(self):
+            return 'utf-8'
+
+    class _Option_cache_size(Option):
+        """Velikost cache pro øádky datového objektu. Velikost je integer,
+        který udává poèet øádkù cache.
+        """
+        def default(self):
+            return 20000
+
+    class _Option_initial_fetch_size(Option):
+        """Poèet øádkù, které se pøednaètou do cache pøi prvním selectu
+        z datového objektu.
+        """
+        def default(self):
+            return 100
+
+    class _Option_fetch_size(Option):
+        """Poèet øádkù, které se pøinaèítají do cache pøi dal¹ích selectech
+        z datového objektu.
+        """
+        def default(self):
+            return 100
+
+    # Volby pøizpùsobení u¾ivatelského rozhraní
+        
+    class _Option_show_tooltips(Option):
+        """Pøíznak zobrazování bublinové nápovìdy."""
+        def default(self):
+            return True
+        def default_string(self):
+            return 'True'
+        
+    class _Option_show_splash(Option):
+        """Pøíznak zobrazování úvodního uvítacího dialogu."""
+        def default(self):
+            return True
+        def default_string(self):
+            return 'True'
+        
+    class _Option_cache_spec_onstart(Option):
+        """Pøíznak cachování specifikací pøi startu aplikace."""
+        def default(self):
+            return True
+        def default_string(self):
+            return 'True'
+
+    class _Option_row_focus_fg_color(Option):
+        """Barva textu aktivního øádku tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#ffffff'
+        
+    class _Option_row_focus_bg_color(Option):
+        """Barva pozadí aktivního øádku tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        Pokud je None, bude pou¾ita systémová barva zvýraznìní.
+        """
+        def default(self):
+            return None
+            
+        
+    class _Option_row_nofocus_fg_color(Option):
+        """Barva textu neaktivního øádku tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#000000'
+        
+    class _Option_row_nofocus_bg_color(Option):
+        """Barva pozadí neaktivního øádku tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#b6b6b6'
+        
+    class _Option_row_edit_fg_color(Option):
+        """Barva textu editovaného øádku tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#ffffff'
+
+    class _Option_row_edit_bg_color(Option):
+        """Barva pozadí editovaného øádku.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#c80000'
+
+    class _Option_cell_highlight_color(Option):
+        """Barva zvýraznìní aktivní buòky tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#ffa000'
+
+    class _Option_grid_line_color(Option):
+        """Barva møí¾ky tabulkového formuláøe.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#6482be'
+
+    class _Option_field_disabled_color(Option):
+        """Barva pozadí needitovatelného vstupního políèka.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#c0c0c0'
+
+    class _Option_field_inaccessible_color(Option):
+        """Barva pozadí políèka needitovatelného kvùli pøístupovým právùm.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#e0e4f0'
+
+    class _Option_filter_color(Option):
+        """Barva záhlaví tabulkového formuláøe pøi zapnutém filtrování.
+        Barva je dána øetìzcem '#RRGGBB'.
+        """
+        def default(self):
+            return '#82c882'
+
+    # Metody
+
+    def __init__(self, command_line=None):
+        """Inicializuj konfiguraci.
+
+        Argumenty:
+
+          command_line -- volby pøíkazové øádky jako sekvence strings; mù¾e být
+            té¾ 'None', pak je pou¾ito 'sys.argv'
+
+        """
+        PREFIX = '_Option_'
+        options = {}
+        for k, v in self.__class__.__dict__.items():
+            if starts_with(k, PREFIX):
+                name = k[len(PREFIX):]
+                options[name] = v(self)
+        self.__dict__['_options'] = options
+        if command_line is None:
+            command_line = sys.argv
+        if command_line[0] == 'pytis':
+            command_line_options = \
+              self._parse_command_line_options(command_line)
+        else:
+            command_line_options = {}
+        self.__dict__['command_line_options'] = command_line_options
+        for o in ('config_file', 'user_config_file'):
+            opt = options[o]
+            opt.init_value()
+            self.__dict__['_' + o] = opt.value()
+        self._read_configuration()
+        for o in options.values():
+            o.init_value(force=True)
+
+    def _parse_command_line_options(self, command_line):
+        command_line_options = {}
+        long_options = filter(identity,
+                              map(lambda o: o.long_option(),
+                                  self._options.values()))
+        opts, args = getopt.getopt(command_line[1:], '', long_options)
+        sys.argv[1:] = args
+        for o, a in opts:
+            try:
+                arglist = command_line_options[o[2:]]
+            except KeyError:
+                arglist = []
+                command_line_options[o[2:]] = arglist
+            arglist.append(a)
+        return command_line_options
+
+    def _read_configuration(self):
+        conffile = self._config_file
+        if conffile is None:
+            return
+        self.__dict__['_config_mtime'] = \
+          self._read_configuration_file(conffile)
+        uconffile = self._user_config_file
+        if uconffile is None:
+            return
+        self.__dict__['_user_config_mtime'] = \
+          self._read_configuration_file(uconffile, force=False)
+
+    def _read_configuration_file(self, filename, force=True):
+        try:
+            filetime = os.stat(filename)[stat.ST_MTIME]
+        except:
+            if force:
+                raise Exception(_("Konfiguraèní soubor je nepøístupný"),
+                                filename)
+            else:
+                return 2**30
+        try:
+            f = open(filename)
+        except:
+            raise Exception(_("Nebylo lze otevøít konfiguraèní soubor"),
+                            filename)
+        try:
+            confmodule = imp.load_module('config', f, filename,
+                                         ('.py','r',imp.PY_SOURCE))
+        finally:
+            f.close()
+        options = self._options
+        cloptions = self.command_line_options
+        for o in dir(confmodule):
+            if options.has_key(o):
+                opt = options[o]
+                if not cloptions.has_key(opt.long_option()):
+                    value = confmodule.__dict__[o]
+                    opt.set_value(value)
+        return filetime
+
+    def __getattr__(self, name):
+        """Vra» konfiguraèní volbu 'name'.
+
+        'name' musí být string odpovídající jménu existující konfiguraèní
+        volby.  Pokud taková konfiguraèní volba neexistuje, vyvolej výjimku
+        'AttributeError'.
+
+        """
+        if __debug__ and self._config_file and \
+               name not in ('config_file', 'user_config_file'):
+            now = time.time()
+            if now > self._config_mtime or now > self._user_config_mtime:
+                t = os.stat(self._config_file)[stat.ST_MTIME]
+                try:
+                    ut = os.stat(self._user_config_file)[stat.ST_MTIME]
+                except:
+                    ut = 0
+                if t > self._config_mtime or ut > self._user_config_mtime:
+                    self._read_configuration()
+        try:
+            return self._options[name].value()
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        """Nastav atribut nebo konfiguraèní volbu 'name' na 'value'.
+
+        Pokud takový atribut ani konfiguraèní volba neexistuje, vyvolej výjimku
+        'AttributeError'.
+        
+        """
+        if self.__dict__['_options'].has_key(name):
+            self.__dict__['_options'][name].set_value(value)
+        elif hasattr(self, name):
+            self.__dict__[name] = name
+        else:
+            raise AttributeError(name)
+
+    def merge(self, dict, override_cmdline=False):
+        """Nastav aktuální konfiguraci z hodnot daného slovníku.
+
+        Argumenty:
+          dict -- slovník, ze kterého mají být pøevzaty nové hodnoty.
+            Pøevezmou se pouze hodnoty klíèù, jejich¾ názvy odpovídají
+            definovaným konfiguraèním volbám a to pouze v pøípadì, ¾e jsou
+            definovány (obsahují jinou hodnotu ne¾ None).  Ostatní budou
+            ignorovány.
+          override_cmdline -- implicitnì nejsou pøenastavovány hodnoty pøevzaté
+            z pøíkazové øádky.  Pravdivá hodnota tohoto argumentu zpùsobí, ¾e
+            budou pøenastaveny v¹echny nalezené konfiguraèní volby vèetnì tìch
+            z pøíkazového øádku.
+            
+        """
+        options = self._options
+        clopt = self.command_line_options
+        for o in dict.keys():
+            if options.has_key(o) and dict[o] != None:
+                opt = options[o]
+                if override_cmdline or not clopt.has_key(opt.long_option()):
+                    opt.set_value(dict[o])
+
+    def serial_number(self):
+        """Vra» sériové èíslo aktuální konfigurace.
+
+        Sériové èíslo je zvý¹eno pøi ka¾dé zmìnì konfigurace.  Èíslo mù¾e být
+        zvý¹eno o libovolný kladný pøírùstek.
+
+        Pomocí sériového èísla lze zji¹»ovat, zda do¹lo ke zmìnì konfigurace od
+        posledního ovìøení.
+        
+        """
+        return self._config_mtime
+    
+    def dump_config_template(self, stream):
+        """Zapi¹ vzorový konfiguraèní soubor do 'stream'.
+
+        'stream' musí být otevøený stream s mo¾ností zápisu.
+
+        """
+        stream.write('# -*- coding: iso-8859-2 -*-\n\n')
+        for name, option in self._options.items():
+            visibility = option.visible()
+            if visibility != self.Option.HIDDEN:
+                for line in string.split(option.__doc__, '\n'):
+                    stream.write('# %s\n' % string.strip(line))
+                if visibility == self.Option.COMMENTED_OUT:
+                    stream.write('#')
+                stream.write('%s = %s\n' % (name, option.default_string()))
+                stream.write('\n')
+
+    def print_options(self):
+        """Vypi¹ na standardní výstup v¹echny volby a jejich hodnoty."""
+        options = self._options
+        keys = options.keys()
+        keys.sort()
+        for k in keys:
+            sys.stdout.write('%s = %s\n' % (k, `options[k].value()`))
+
+class ConfigDB:
+    """Konfigurace ulo¾ená v datovém objektu s rozhraním slovníku."""
+
+    def __init__(self, resolver, name, *args, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          resolver -- resolver specifikací (instance 'pytis.util.Resolver').
+          name -- jméno specifikace datového objektu, ze kterého má být
+            konfigurace naètena.
+          args, kwargs -- argumenty pro vytvoøení datového objektu, které budou
+            pøedány metodì 'pytis.data.Data.create()'.
+
+        """
+        data_spec = resolver.get(name, 'data_spec')
+        self._data = data_spec.create(*args, **kwargs)
+        self._data.select()
+        self._row = self._data.fetchone()
+        self._data.close()
+
+    def __getitem__(self, key):
+        return self._row[key].value()
+
+    def __setitem__(self, key, value):
+        self._row[key] = value
+        self._data.update(self._row[self._data.key()[0].id()], self._row)
+
+    def keys(self):
+        return self._row.keys()

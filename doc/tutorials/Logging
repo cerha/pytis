@@ -1,0 +1,113 @@
+#title Logování
+
+* Cíle a základní principy
+
+U ka¾dého programu èasto potøebujeme vìdìt, co se dìje uvnitø.  Kdy¾ nìco
+vùbec nefunguje, funguje ¹patnì nebo je nutné zjistit historické události, je
+ka¾dá informace programu o sobì samém, o tom, co udìlal a proè to udìlal,
+velmi cenná.  Naopak program v podobì èerné skøíòky, která o sobì nenechá
+¾ádný záznam, v takových situacích zpùsobuje skøípìní zubù.  Proto je
+dùle¾ité definovat nìjaký mechanismus, který programu umo¾òuje snadno
+zaznamenávat informace o svém bìhu.  To je cílem *logování*.
+
+Logování tedy slou¾í k zaznamenávání dùle¾itých informací o událostech
+v systému, zejména:
+
+- Informace pro administrátora o stavu systému.  Pokud dojde k nìjakému
+  technickému problému, administrátor by mìl být schopen z logu zjistit,
+  o jaký problém jde nebo alespoò jak se pøesnì problém projevuje.
+
+- Záznam u¾ivatelských akcí pro pøípadnou pozdìj¹í diagnostiku problémù.
+  Pokud provozovatel systému oznámí chybné chování, mìli bychom být z logu
+  schopni zrekonstruovat postup, jakým se k chybì do¹lo.  To je v na¹em
+  pøípadì obzvlá¹» dùle¾ité, proto¾e nìjaké chyby se urèitì objeví a vzhledem
+  ke vzdálenosti zákazníka pùjde mnohdy o jedinou mo¾nost jak zjistit, co se
+  vlastnì *pøesnì* stalo.
+
+- Zmìny v¹ech dat.  Slou¾í ke stejnému úèelu jako záznam u¾ivatelských akcí.
+  Naopak to neslou¾í jako forma zálohy pro rekonstrukci dat -- to bude
+  zaji¹tìno jiným (spolehlivìj¹ím) zpùsobem[1].
+
+- Ladící informace potøebné pouze bìhem vývoje programu, které se nikdy
+  nelogují za ostrého bìhu aplikace.  Tyto slou¾í jako na¹e pomùcka pro
+  rychlej¹í odhalování chyb -- zaznamenávají redundantní informace o datech a
+  událostech v mezikrocích, které bychom jinak museli stejnì zji¹»ovat
+  analýzou kódu nebo v debuggeru.
+
+Logování musí dostateènì vyhovìt dvìma protichùdným po¾adavkùm:
+
+1. Zaznamenání co nejvíce informací o události.
+
+2. Snadnost pou¾ití pro vývojáøe.
+
+Kromì toho je je¹tì dùle¾itá mo¾nost rozumné práce s výstupem logování, ale
+tento problém lze obvykle zajistit vhodnou implementací rozhraní a netýká se
+pøímo definice rozhraní.
+
+Aby tyto po¾adavky byly splnìny, musí logování v¹e, co mù¾e zjistit samo,
+zaznamenat bez jakékoliv asistence vývojáøe, dále umo¾nit vývojáøi zaznamenat
+prakticky cokoliv a pøitom tak èinit co nejjednodu¹¹í formou (co nejménì
+funkcí s co nejménì argumenty).
+
+
+* Pou¾ití
+  
+Logování zaji¹»uje modul =lib.util.log=.  Vzhledem k charakteru tohoto modulu
+je explicitnì dovoleno jej importovat zpùsobem =from lib.util.log import *=.
+
+Základní pou¾ití modulu je velmi jednoduché.  Modul definuje funkci =log=,
+která je v podstatì jediným rozhraním k logování.  Tato funkce má tøi
+parametry: druh události, slovní popis události a libovolný pythonový objekt.
+Volání funkce =log= mù¾e vypadat napøíklad takto:
+
+<example>
+from lib.util.log import *
+...
+log(OPERATIONAL, 'Pád systému', exception)
+</example>
+
+První argument specifikuje, o jaký druh události jde.  S ohledem na na
+zaèátku deklarované úèely logování se mù¾e jednat o událost provozní,
+u¾ivatelskou nebo ladící.  Pro jednotlivé druhy událostí jsou v modulu
+definovány pøíslu¹né konstanty.  V uvedeném pøíkladu se jedná o událost
+provozní, oznaèenou konstantou =OPERATIONAL=.
+
+Druhý argument je v¾dy øetìzec ve formì èitelné pro lidi.
+
+Dal¹í informace obecnì není tøeba zaznamenávat, proto¾e logovací systém
+automaticky doplní celou øadu dal¹ích informací jako datum a èas, u¾ivatele,
+jméno modulu, apod.  Pokud je potøeba poskytnout je¹tì nìjakou specifickou
+doplòující informaci (data), vyu¾ije se tøetí argument funkce =log=, který je
+nepovinný a kterým mù¾e být libovolný pythonový objekt.  V na¹em pøíkladì je
+to odchycená výjimka pøedaná prostøednictvím promìnné =exception=.
+
+
+* Zásady psaní logovacích hlá¹ek
+
+Logovací hlá¹ky se pí¹í v èe¹tinì (v souladu s obecnými jazykovými pravidly
+na¹í aplikace) a *neobalují* se podtr¾ítkem, proto¾e pro nì platí jiná pravidla
+ne¾ pro ostatní hlá¹ky v systému (pøekládají se v¾dy do angliètiny, aby jim
+rozumìl administrátor systému i my), co¾ se zaji¹»uje uvnitø logovacího
+modulu.
+
+U logovacích hlá¹ek je dùle¾itá *struènost* a *srozumitelnost*.  Hlá¹ky nesmí
+svou délkou èinit log nepøehledný a ¹patnì èitelný.  Pøitom jim musí ètenáø
+rozumìt a musí být pokud mo¾no srozumitelné jak samostatnì, tak i v kontextu
+okolních hlá¹ek.
+
+"Formátovací" pravidla pro logovací hlá¹ky:
+
+- Hlá¹ka zaèíná velkým písmenem a neukonèuje se teèkou.
+
+- Pou¾ívá se trpný rod (je struènìj¹í).
+
+- Interpunkce se omezuje na minimum.
+
+- Do hlá¹ek se nevkládají *¾ádná* data, pro ty slou¾í volitelný argument funkce
+  =log=.
+
+
+Footnotes: 
+[1]  Denní zálohou serveru mimo pracovní dobu a ¹tosem papírù za ka¾dý den
+     práce.
+

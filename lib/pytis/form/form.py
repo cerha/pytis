@@ -1,0 +1,1701 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Interaktivní formuláøe pro práci s daty.
+
+Základem v¹ech formuláøù je tøída 'Form'.  Dále tento modul obsahuje její
+potomky pro konkrétní pou¾ití -- jednoduché editaèní formuláøe (pro zobrazení a
+editaci jednoho záznamu).  Jednoduché seznamové formuláøe a duální formuláøe
+jsou v oddìlených modulech 'list' a 'dualform'.  Blí¾e viz dokumentace
+jednotlivých tøíd.
+
+"""
+
+import time
+import pytis.data
+import pytis.output
+from pytis.presentation import PresentedRow
+from pytis.form import *
+import wx
+
+class Form(Window, KeyHandler, CallbackHandler):
+    """Spoleèná nadtøída formuláøù.
+
+    Formuláø si podle jména specifikace pøedaného konstruktoru vy¾ádá od
+    resolveru pøíslu¹nou datovou a prezentaèní specifikaci.  Z datové
+    specifikace vytvoøí datový objekt (instance tøídy odvozené z
+    'pytis.data.Data').  Datový objekt a prezentaèní specifikace jsou potom
+    ulo¾eny ve formì atributù instance formuláøe ('self._view' a 'self._data')
+
+    Instance tøíd odvozených z této tøídy jsou potom vytváøeny na základì
+    interpretace prezentaèní specifikace a pracují s daty s pomocí datového
+    objektu a jeho API (které je nezávislé na konkrétním zdroji dat).
+
+    Form je potomkem 'Window', díky èemu¾ je mo¾né jej ukládat na zásobník oken
+    aplikace a provádìt dal¹í operace, jako zaostøování, skrývání, zobrazování
+    apod.
+
+    Pou¾ívané specifikaèní funkce:
+
+      print_spec -- sekvence dvojic (POPIS, SOUBOR), kde POPIS je string se
+        struèným slovním popisem specifikace (vyu¾ívaným napøíklad jako titulek
+        polo¾ky menu) a SOUBOR je string udávající jméno souboru se
+        specifikací, relativní k adresáøi s definièními soubory, bez pøípony
+
+    """
+    ACT_FORM = 'ACT_FORM'
+    """Aktivaèní konstanta formuláøe."""
+    
+    ACTIVATIONS = Window.ACTIVATIONS + [ACT_FORM]
+    """Seznam aktivaèních kategorií pro tuto tøídu."""
+
+    _STATUS_FIELDS = ()
+    
+    def __init__(self, parent, resolver, name, guardian=None, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+        
+          parent -- instance 'wxFrame', do kterého formuláø patøí
+          resolver -- resolver jmenných odkazù, instance 'pytis.util.Resolver' 
+          name -- jméno specifikaèního souboru pro resolver; string
+          guardian -- formuláø (instance libovolné tøídy), ve kterém je
+            formuláø vlo¾en z hlediska struktury aplikace; není-li zadán, je
+            pou¾it 'parent'.  Tento parametr je vyu¾íván napøíklad pøi zasílání
+            klávesových událostí \"nahoru\".  Typicky je to formuláø, který
+            tuto instanci vytváøí.
+          kwargs -- viz ní¾e.
+
+        Resolver je pou¾it k získání datové a prezentaèní specifikace a
+        následnému vytvoøení datového objektu. Ten je potom spoleènì s
+        prezentaèní specifikací ulo¾en v podobì atributù vytváøené instance.
+
+        Odkaz na resolver samotný je také zapamatován pro pozdìj¹í pou¾ití
+        (vytváøení dal¹ích formuláøù).
+
+          
+        Inicializace je rozdìlena do nìkolika krokù.  Nejprve jsou zpracováný
+        v¹echny argumenty spoleèné v¹em formuáøovým tøídám.  Ty zpracovává
+        konstruktor bázové tøídy 'Form'.  Jejich zpracování by nemìlo být
+        pøedefinováváno v odvozených tøídách a ani ¾ádné dal¹í argumenty by
+        nemìly být pøidávány.  Konstruktor je mo¾no pøedefinovat a provádìt
+        nìjaké doplòující akce, ale argumenty by nemìly být mìnìny.
+
+        Po zpracování spoleèných argumwentù jsou naèteny specifikace a vytvoøen
+        datový objekt.
+
+        Poté jsou zpracovávány klíèové argumenty.  Ka¾dá odvozená tøída mù¾e
+        definovat své vlastní klíèové argumenty.  Ty potom zpracuje
+        pøedefinováním metody '_init_attributes()'.  Ta ji¾ mù¾e vyu¾ívat
+        inicializovaného datového objetu a specifikací a pøípadnì initializovat
+        dal¹í atributy tøídy.  Metoda '_init_attributes()' by mìla v¾dy
+        zpracovávat pouze klíèové argumenty, které jsou specifické pro danou
+        tøídu.  Zbylé pøedá metodì rodièovské tøídy konstrukcí **kwargs.  Takto
+        by mìlo být zaruèeno, ¾e dojde postupnì ke zpracování v¹ech argumentù.
+        Pokud nìjaké zbydou, vyvolá bázová tøída výjimku 'AssertionError'.
+
+        Teprve po zpravování argumentù konstruktoru a inicializaci atributù je
+        vytváøen vlastní obsah formuláøe (viz. '_create_form()').  Toto by mìlo
+        být dodr¾ováno i v odvozených tøídách.
+        
+        """
+        self._parent = parent
+        self._resolver = resolver
+        self._name = name
+        self._guardian = guardian or parent
+        Window.__init__(self, parent)
+        KeyHandler.__init__(self)
+        CallbackHandler.__init__(self)
+        start_time = time.time()
+        spec_args = kwargs.get('spec_args', {})
+        try:
+            self._view = self._create_view_spec(**spec_args)
+            self._data = self._create_data_object(**spec_args)
+        except ResolverError:
+            log(OPERATIONAL, 'Chyba z resolveru', format_traceback())
+            throw('form-init-error')
+        log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
+        self._init_attributes(**kwargs)
+        self._result = None
+        self._add_menus()
+        start_time = time.time()
+        self._create_form()
+        log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
+        wx_callback(wx.EVT_CLOSE, self._parent, self._on_parent_close)
+
+    def _init_attributes(self, spec_args={}):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+        
+        Argumenty:
+        
+          kwargs -- klíèové argumenty konstruktoru (viz dokumentace metody
+            '__init__()').
+
+        
+        Tato metoda je volána po základní inicializaci instance (pøedev¹ím
+        naètení specifikace a inicializaci datového objektu.  Metody
+        vytváøející konkrétní prvky u¾ivatelského rozhraní formuláøe (napøíklad
+        '_create_form()'), jsou v¹ak volány a¾ poté.  Zde by mìly být pøedev¹ím
+        zpracovány v¹echny klíèové argumenty konstruktoru (viz dokumentace
+        metody '__init__()' a inicializovány atributy instance.
+
+        """
+        pass
+
+    def _create_view_spec(self, **kwargs):
+        spec = self._resolver.get(self._name, 'view_spec', **kwargs)
+        assert isinstance(spec, ViewSpec)
+        return spec        
+
+    def _create_data_object(self, **kwargs):
+        name = self._name
+        data_spec = self._resolver.get(name, 'data_spec', **kwargs)
+        import config
+        if __debug__ and config.server:
+            import pytis.remote
+        else:    
+            import pytis.data    
+        assert isinstance(data_spec, pytis.data.DataFactory)
+        assert isinstance(data_spec, pytis.data.DataFactory) or \
+               isinstance(data_spec, pytis.remote.RemoteDataFactory)
+        op = lambda : data_spec.create(dbconnection_spec=config.dbconnection)
+        success, data_object = db_operation(op)
+        if not success:
+            throw('form-init-error')
+        return data_object
+    
+    def _add_menus(self):
+        for m in self._menus():
+            add_menu(m, self)
+
+    def _menus(self):
+        return (Menu(_("Pøíkazy"),
+                     (MItem(_("Zavøít okno"),
+                            command=Application.COMMAND_LEAVE_FORM),
+                      MSeparator(),
+                      MItem(_("Ulo¾it"),
+                            command=ListForm.COMMAND_LINE_COMMIT,
+                            uievent_id=ListForm.UI_EDIT_CHANGE),
+                      MItem(_("Zru¹it zmìny"),
+                            command=ListForm.COMMAND_LINE_ROLLBACK,
+                            uievent_id=ListForm.UI_EDIT_CHANGE),
+                      MSeparator(),
+                      MItem(_("Skok na záznam"),
+                            command=LookupForm.COMMAND_JUMP),
+                      MItem(_("Hledat"),
+                            command=LookupForm.COMMAND_SEARCH),
+                      MItem(_("Hledat dal¹í"),
+                            command=LookupForm.COMMAND_SEARCH_NEXT,
+                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                      MItem(_("Hledat pøedchozí"),
+                            command=LookupForm.COMMAND_SEARCH_PREVIOUS,
+                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                      MItem(_("Inkrementální hledání"),
+                            command=ListForm.COMMAND_INCREMENTAL_SEARCH),
+                      MItem(_("Inkrementální hledání - èást øetìzce"),
+                            command=ListForm.COMMAND_FULL_INCREMENTAL_SEARCH),
+                      MSeparator(),
+                      MItem(_("Tøídìní"),
+                            command=LookupForm.COMMAND_SORT_COLUMN),
+                      MItem(_("Filtrovat"),
+                            command=LookupForm.COMMAND_FILTER),
+                      MSeparator(),
+                      MItem(_("Nový záznam"),
+                            command=BrowseForm.COMMAND_NEW_RECORD,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Nový záznam - kopie"),
+                            command=BrowseForm.COMMAND_NEW_RECORD_COPY,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Editovat záznam"),
+                            command=BrowseForm.COMMAND_RECORD_EDIT,
+                            uievent_id=RecordForm.UI_ACCESS_UPDATE),
+                      MItem(_("Vlo¾it øádku nad"),
+                            command=ListForm.COMMAND_NEW_LINE_BEFORE,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Vlo¾it øádku pod"),
+                            command=ListForm.COMMAND_NEW_LINE_AFTER,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Kopírovat øádku nad"),
+                            command=ListForm.COMMAND_NEW_LINE_BEFORE_COPY,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Kopírovat øádku pod"),
+                            command=ListForm.COMMAND_NEW_LINE_AFTER_COPY,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Editace buòky"),
+                            command=ListForm.COMMAND_EDIT,
+                            uievent_id=RecordForm.UI_ACCESS_UPDATE),
+                      MItem(_("Smazat záznam"),
+                            command=ListForm.COMMAND_LINE_DELETE,
+                            uievent_id=RecordForm.UI_ACCESS_DELETE),
+                      MSeparator(),
+                      MItem(_("Export do textového souboru"),
+                            command=ListForm.COMMAND_EXPORT_CSV),
+                      MSeparator(),
+                      MItem(_("Zobrazit náhled na záznam"),
+                            command=ListForm.COMMAND_ACTIVATE),
+                      MItem(_("Zobrazit náhled na záznam v duálním formuláøi"),
+                            command=ListForm.COMMAND_ACTIVATE_ALTERNATE),
+                      ),
+                     activation=Form.ACT_FORM),
+                Menu(_("Tisk"), (Form.print_menu,),
+                     activation=Form.ACT_FORM),
+                )
+        
+    def _create_form(self):
+        # Build the form from parts
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self._create_form_parts(sizer)
+        self.SetAutoLayout(True)
+        self.SetSizer(sizer)
+        self.Layout()
+        sizer.Fit(self) # Set the size of window `self' to size of the sizer.
+        self._finish_top_level_sizer(sizer)
+
+    def _finish_top_level_sizer(self, sizer):
+        pass
+    
+    def _create_form_parts(self, sizer):
+        pass
+    
+    def _on_parent_close(self, event):
+        """Handler události uzavøení rodièovského okna formuláøe.
+
+        Tato metoda by mìla být pøedefinována, pokud chce daný typ formuláøe
+        reagovat na uzavøení rodièovského okna. Typické vyu¾ití je pro popup
+        formuláøe.
+
+        Pokud odvozená tøída pøedefinuje tuto metodu a ta za urèitých okolností
+        nezavolá 'event.Skip()', nebude zpracování události dokonèeno a
+        rodièovské okno tedy nebude uzavøeno.
+        """
+        log(DEBUG, "Voláno Form._on_parent_close()")
+        event.Skip()
+        return False
+
+    def __str__(self):
+        return '<%s for "%s">' % (self.__class__.__name__, self._name)
+
+    def __repr__(self):
+        return str(self)
+    
+    # Veøejné metody
+    
+    def name(self):
+        """Vra» název specifikace formuláøe."""
+        return self._name
+
+    def on_ui_event(self, event, id):
+        """Zpracuj UI událost 'event' s identifikátorem 'id'.
+
+        Argumenty:
+
+          event -- iniciující událost, instance 'wx.UpdateUIEvent'
+          id -- identifikátor události, string
+
+        Metoda musí událost buï sama o¹etøit, nebo ji vypropagovat do vnitøního
+        prvku formuláøe, pokud takový je a má metodu stejného názvu jako tato.
+
+        Vrací: Pravdu, právì kdy¾ metoda nebo jí volaná metoda událost
+        zpracovala.
+        
+        V této tøídì metoda nedìlá nic a vrací False.
+        
+        """
+        return False
+
+    def on_command(self, command, **kwargs):
+        """Zpracuj 'command'.
+
+        Argumenty:
+
+          command -- instance tøídy 'Command'
+
+        Metoda musí pøíkaz buï sama o¹etøit, nebo jek vypropagovat do vnitøního
+        prvku formuláøe, pokud takový je a má metodu stejného názvu jako tato.
+
+        Vrací: Pravdu, právì kdy¾ metoda nebo jí volaná metoda pøíkaz
+        zpracovala.
+        
+        V této tøídì metoda nedìlá nic a vrací False.
+        
+        """
+        return False
+
+    def descr(self):
+        """Vra» textový popis typu formuláøe jako øetìzec."""
+        return self.__class__.__name__
+        
+    def title(self):
+        """Vra» titulek ze specifikace formuláøe jako øetìzec."""
+        return self._view.title()
+
+    def guardian(self):
+        """Vra» guardian zadané v konstruktoru (nebo parent)."""
+        return self._guardian
+    
+    def set_status(self, field, message):
+        """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
+
+        Má-li formuláø stavovou øádku a v ní pole `id' zobraz v nìm danou
+        zprávu a vra» pravdu.  V opaèném pøípadì vra» nepravdu.
+
+        """
+        return False
+
+    def show_popup_menu(self):
+        """Zobraz kontextové menu právì aktivního prvku, pokud to umo¾òuje. """
+        pass
+        
+    def close(self):
+        for id in self._STATUS_FIELDS:
+            set_status(id, '')
+        return super_(Form).close(self)
+    
+    def save(self):
+        self._saved_state = map(lambda id: (id, get_status(id)),
+                                self._STATUS_FIELDS)
+
+    def restore(self):
+        for id, message in self._saved_state:
+            set_status(id, message, log_=False)
+
+    def print_menu(self):
+        """Vra» tuple polo¾ek tiskového menu."""
+        name = self._name
+        try:
+            spec_paths = self._resolver.get(name, 'print_spec')
+        except ResolverSpecError:
+            spec_paths = ((_("Implicitní"), os.path.join('output', name)),)
+        return [MItem(p[0], command=pytis.form.Form.COMMAND_PRINT,
+                      args={'print_spec_path': p[1]})
+                for p in spec_paths]
+
+
+class Refreshable:
+    """Tøída zaji¹»ující existenci metody 'refresh()' s daným významem.
+
+    Tuto tøídu by mìly dìdit v¹echny formuláøe, které mají být obnoveny pøi
+    zmìnì dat (typicky zpùsobené jiným formuláøem vý¹e na zásobníku rámcù).
+    
+    """
+
+    DOIT_IMMEDIATELY = 'DOIT_IMMEDIATELY'
+    """Konstanta pro 'refresh()' pro okam¾itý update.
+
+    Není-li seznam právì editován, je update proveden okam¾itì.  Jinak je
+    u¾ivatel dotázán, zda má být update proveden ihned; odpoví-li u¾ivatel
+    negativnì, je update proveden a¾ po ukonèení editace.
+
+    """
+    DOIT_AFTEREDIT = 'DOIT_AFTEREDIT'
+    """Konstanta pro 'refresh()' pro update po skonèení editace.
+
+    Není-li seznam právì editován, je update proveden okam¾itì.  Jinak je
+    proveden a¾ po ukonèení editace.
+    
+    """
+    DOIT_IFNEEDED = 'DOIT_IFNEEDED'
+    """Konstanta pro 'refresh()' pro podmínìný update.
+
+    Update je proveden pouze tehdy, je-li známo, ¾e do¹lo ke zmìnì dat.
+    V takovém pøípadì je proveden okam¾itì pouze tehdy, jestli¾e seznam není
+    práve editován a v poslední dobì nebyl proveden ¾ádný jiný update;
+    v opaèném pøípadì je update odlo¾en \"a¾ na vhodnìj¹í chvíli\" (nicménì
+    proveden bude).
+
+    """
+    
+    def refresh(self, when=None):
+        """Aktualizuj data formuláøe z datového zdroje.
+
+        Pøekresli data ve formuláøi v okam¾iku daném argumentem 'when'.
+
+        Argumenty:
+
+          when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
+            jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
+            'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
+
+        Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
+
+        V této tøídì metoda nedìlá nic, musí být v potomkovi pøedefinována.
+        
+        """
+        pass
+
+
+class PopupForm:
+    """Formuláø nacházející se v samostatném framu.
+
+    Tato tøída je urèena k vlo¾ení mezi pøedky tøídy, její¾ instance mají být
+    vytváøeny v samostatných framech.  Pro získání framu slou¾í metoda
+    '_popup_frame'.
+
+    """
+    def _popup_frame(self, parent, title=None):
+        """Vra» frame instance.
+
+        Pokud frame je¹tì neexistuje, vytvoø jej.
+
+        Argumenty:
+        
+          parent -- rodièovské okno, instance 'wx.Window'
+          title -- titulek framu, string
+
+        """
+        if title == None:
+            title = parent.GetTitle()
+        try:
+            frame = self._popup_frame_
+        except AttributeError:
+            frame = wx.Dialog(parent, -1, title,
+                                style=wx.DIALOG_MODAL|wx.STAY_ON_TOP)
+            self._popup_frame_ = frame
+        return frame    
+
+    def _leave_form(self):
+        self._popup_frame_.Close() # tím se autom. zavolá _on_parent_close()
+
+    def _on_parent_close(self, event):
+        if hasattr(self, 'exit_check') and not self.exit_check():
+            event.Veto()
+            return True
+        event.Skip()
+        self._parent.EndModal(0)
+        return False
+
+    def run(self):
+        """Zobraz formuláø jako modální dialog."""
+        unlock_callbacks()
+        self._parent.ShowModal()
+        return self._result
+
+
+class TitledForm:
+    """Pøimíchávací tøída pro formuláøe s titulkem.
+    
+    Lze vyu¾ít buïto pouze metodu '_create_caption()', která vytváøí samotný
+    text titulku, nebo metodu '_create_title_bar()', která pøidává 3d panel.
+
+    """    
+    _TITLE_BORDER_WIDTH = 3
+    
+    def _create_caption(self, parent, text, size=None):
+        # Create the title text as 'wxStaticText' instance.
+        caption = wx.StaticText(parent, -1, text,
+                                style=wx.ALIGN_CENTER)
+        if size is None: 
+            size = caption.GetFont().GetPointSize()
+        font = wx.Font(size, wx.DEFAULT, wx.NORMAL, wx.BOLD,
+                       encoding=wx.FONTENCODING_DEFAULT)
+        caption.SetFont(font)
+        width, height, d, e = self.GetFullTextExtent(text, font)
+        caption.SetSize(wx.Size(width, height))
+        return caption
+
+    def _create_title_bar(self, text, size=None, description=None):
+        """Vytvoø 3d panel s nadpisem formuláøe."""
+        panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
+        caption = self._create_caption(panel, text, size=size)
+        box = wx.BoxSizer()
+        box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
+        panel.SetSizer(box)
+        panel.SetAutoLayout(True)        
+        box.Fit(panel)
+        if description:
+            panel.SetToolTipString(description)
+        return panel
+
+
+class RecordForm(Form):
+    """Formuláø schopný nìjakým zpùsobem zobrazit aktuální záznam."""
+
+    CALL_SELECTION = 'CALL_SELECTION'
+    """Konstanta callbacku zmìny záznamu."""
+
+    UI_ACCESS_INSERT = 'UI_ACCESS_INSERT'
+    """UI test na právo vlo¾ení nového záznamu."""
+    UI_ACCESS_UPDATE = 'UI_ACCESS_UPDATE'
+    """UI test na právo aktualizaci záznamu."""
+    UI_ACCESS_DELETE = 'UI_ACCESS_DELETE'
+    """UI test na právo smazání záznamu."""
+
+    def _init_attributes(self, key=None, prefill=None, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+        
+          key -- sekvence klíèových sloupcù aktivovaného øádku jako instance
+            tøídy 'pytis.data.types_.Value'.  Není-li 'None', formuláø by se mìl
+            naplnit hodnotami získanými z datového objektu pro øádek dat
+            s daným klíèem.
+          prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
+            pøedvyplnìny pøi inicializaci formuláøe
+          kwargs -- argumenty pøedané volání pøedka
+
+        """
+        super_(RecordForm)._init_attributes(self, **kwargs)
+        assert prefill is None or is_dictionary(prefill)
+        self._prefill = prefill
+        self._key = key
+        self._row = None
+
+    def _set_row(self, row):
+        # Naplò formuláø daty z daného *datového* øádku
+        prow = PresentedRow(self._view.fields(), self._data, row,
+                            prefill=self._prefill, new=(not self._key),
+                            change_callback=self._on_row_change,
+                            enable_field_callback=self._on_field_enable,
+                            disable_field_callback=self._on_field_disable)
+        self.set_row(prow)
+
+    def _on_row_change(self, field_id):
+        # Signalizace zmìny políèka z _row
+        pass
+
+    def _on_field_enable(self, field_id):
+        # Callback pro povolení editovatelnosti políèka
+        pass
+        
+    def _on_field_disable(self, field_id):
+        # Callback pro zakázání editovatelnosti políèka
+        pass
+        
+    # Veøejné metody
+
+    def on_ui_event(self, event, id):
+        if id == self.UI_ACCESS_INSERT:
+            perm = pytis.data.Permission.INSERT
+        elif id == self.UI_ACCESS_UPDATE:
+            perm = pytis.data.Permission.UPDATE
+        elif id == self.UI_ACCESS_DELETE:
+            perm = pytis.data.Permission.DELETE
+        else:
+            return False
+        if self._data.accessible(None, perm):
+            event.Enable(True)
+        else:
+            event.Enable(False)
+
+    
+    def prefill(self):
+        """Vra» data pro pøedvyplnìní nového záznamu."""
+        return self._prefill
+    
+    def set_prefill(self, data):
+        """Nastav data pro pøedvyplnìní nového záznamu.
+
+        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
+        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
+        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
+        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
+
+        """
+        self._prefill = data
+    
+    def set_row(self, row):
+        """Naplò aktuální editaci záznamu formuláøe daty z 'row'.
+
+        Argumenty:
+
+          row -- instance 'PresentedRow'
+
+        """
+        self._row = row
+        self._run_callback(self.CALL_SELECTION, (row,))
+        
+
+class LookupForm(RecordForm):
+    """Formuláø s vyhledáváním a tøídìním."""
+    
+    SORTING_CYCLE_DIRECTION = 'SORTING_CYCLE_DIRECTION'
+    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    SORTING_NONE = 'SORTING_NONE'
+    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    SORTING_ASCENDENT = 'SORTING_ASCENDENT'
+    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    SORTING_DESCENDANT = 'SORTING_DESCENDANT'
+    """Konstanta pro argument direction metody '_on_sort_column()'."""
+
+    
+    def _init_attributes(self, sorting=None, grouping=None, condition=None,
+                         indicate_filter=False, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+
+          sorting -- specifikace poèáteèního tøídìní formuláøe, viz argument
+            'sort' metody 'pytis.data.Data.select()'
+          grouping -- ???
+          condition -- podmínka výbìru dat, viz argument 'condition' metody
+            'pytis.data.Data.select()'
+          indicate_filter -- ???
+          kwargs -- argumenty pøedané konstruktoru pøedka
+        
+        """
+        super_(LookupForm)._init_attributes(self, **kwargs)
+        self._lf_sorting = sorting or self._default_sorting()
+        self._lf_grouping = grouping or self._default_grouping()
+        self._lf_condition = condition
+        self._lf_indicate_filter = indicate_filter
+        self._lf_initial_sorting = self._lf_sorting
+        self._lf_initial_grouping = self._lf_grouping
+        self._lf_initial_condition = self._lf_condition
+        self._lf_search_dialog = None
+        self._lf_filter_dialog = None
+        self._lf_select_count = None
+        self._lf_filter = None
+
+    def _default_sorting(self):
+        return ()
+
+    def _default_grouping(self):
+        return None
+
+    def _init_select(self):
+        data = self._data
+        if self._lf_condition and self._lf_filter:
+            condition = pytis.data.AND(self._lf_condition, self._lf_filter)
+        else:
+            condition = self._lf_condition or self._lf_filter
+        if self._lf_initial_condition:
+            condition = pytis.data.AND(condition, self._lf_initial_condition)
+        sorting = self._lf_translated_sorting()
+        self._lf_select_count = data.select(condition=condition, sort=sorting,
+                                            reuse=False)
+        return self._lf_select_count
+
+    def _lf_translated_sorting(self):
+        def trans(x):
+            if x[1] == self.SORTING_ASCENDENT:
+                t = pytis.data.ASCENDENT
+            elif x[1] == self.SORTING_DESCENDANT:
+                t = pytis.data.DESCENDANT
+            else:
+                raise ProgramError('Invalid sorting spec', x[1])
+            return x[0], t
+        return tuple(map(trans, self._lf_sorting))
+
+    def _lf_sfs_columns(self):
+        columns = map(lambda id: self._view.field(id), self._view.columns())
+        return sfs_columns(columns, self._data,
+                           labelfunc=FieldSpec.column_label,
+                           widthfunc=FieldSpec.column_width)
+    
+    def _lf_sf_dialog(self, attr, class_):
+        dialog = getattr(self, attr)
+        if not dialog:
+            columns = self._lf_sfs_columns()
+            args = (self._parent, columns)
+            if issubclass(class_, FilterDialog):
+                args = args + (self._data, self._lf_initial_condition)
+            dialog = class_(*args)
+            setattr(self, attr, dialog)
+        return dialog
+        
+    def _find_row(self, key, any_row=False):
+        if key is None:
+            return None
+        def find_row(key):
+            data = self._data
+            result = self._data.row(key)
+            if result is None and any_row:
+                if self._lf_select_count is None:
+                    self._init_select()
+                else:
+                    data.rewind()
+                result = data.fetchone()
+            return result
+        success, row = db_operation(lambda : find_row(key))
+        if success and row:
+            return row
+        else:
+            run_dialog(Error, _("Záznam nenalezen"))
+            return None
+        
+    def _search(self, condition, direction, row_number=None,
+                report_failure=True):
+        self._search_adjust_data_position(row_number)
+        data = self._data
+        skip = data.search(condition, direction=direction)
+        if skip == 0:
+            log(EVENT, 'Záznam nenalezen')
+            if report_failure:
+                run_dialog(Warning, _("Záznam nenalezen"))
+            result = None
+        else:
+            result = skip
+            log(EVENT, 'Záznam nalezen:', skip)
+            self._search_skip(result, direction)
+        return result
+
+    def _search_adjust_data_position(self, row_number):
+        pass
+
+    def _search_skip(self, skip, direction):
+        data = self._data
+        data.skip(skip-1, direction=direction)
+        row = data.fetchone(direction=direction)
+        self._set_row(row)
+
+    def _on_jump(self):
+        if self._lf_select_count > 0:
+            prompt = u"Záznam èíslo (1-%s): " % (self._lf_select_count)
+            mask = "#" * len(str(self._lf_select_count))
+            returned = pytis.form.run_dialog(pytis.form.InputDialog,
+                                message=u"Skok na záznam",
+                                prompt=prompt,
+                                mask=mask,
+                                formatcodes='_,Fr'
+                                )
+            try:
+                row = int(str(returned.strip()))
+                if row > 0 and row <= self._lf_select_count:
+                    return row
+            except:
+                return None
+            return None
+        
+    def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
+        sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
+        if show_dialog:
+            self._block_refresh = True  # TODO: quick&dirty, see ListForm
+            try:
+                condition, direction = run_dialog(sf_dialog, self._row)
+            finally:
+                self._block_refresh = False
+        else:
+            condition = sf_dialog.condition()
+        if condition is not None:
+            self._search(condition, direction)
+
+    def _filter(self, condition):
+        self._init_select()
+        self._set_row(self._find_row(self._key, any_row=True))
+
+    def _on_filter(self, row=None, col=None, show_dialog=True):
+        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
+        if show_dialog:
+            if row is None:
+                row = self._row
+            perform, filter = run_dialog(sf_dialog, row, col=col)
+        else:
+            perform, filter = (True, sf_dialog.condition())
+        if perform and filter != self._lf_filter:
+            self._lf_filter = filter
+            self._filter(filter)
+
+    def _on_sort_column(self, col=None, direction=None, primary=False):
+        """Zmìò tøídìní.
+
+        Argumenty:
+
+          col -- id sloupce, podle kterého má být seznam setøídìn, nebo
+            'None' pro globální zmìny (napøíklad vypnutí ve¹kerého tøídìní)
+          direction -- smìr tøídìní (sestupnì/vzestupnì/vùbec/cyklicky).  Pokud
+            je hodnotou konstanta 'LookupForm.SORTING_CYCLE_DIRECTION', bude
+            tøídìní cyklicky pøepnuto na dal¹í z variant
+            (sestupnì/vzestupnì/vùbec).  Hodnota daná konstantou
+            'LookupForm.SORTING_NONE' znaèí explicitní po¾adavek na zru¹ení
+            tøídìní.  Jinak je oèekávána jedna z konstant
+            'LookupForm.SORTING_ASCENDENT' (pro sestupné tøídìní), nebo
+            'LookupForm.SORTING_DESCENDANT' (pro vzestupné tøídìní).
+          primary -- právì kdy¾ je pravdivé, bude daný sloupec zvolen jako
+            primární a *jediný* tøídící sloupec.  V opaèném pøípadì bude pouze
+            pøidán na konec stávajícího seznamu tøídících sloupcù.
+        
+        Pøi nejednoznaèné kombinaci argumentù 'col' a 'direction' je
+        automaticky vyvolán dialog pro výbìr tøídících kritérií.
+        
+        """
+        # TODO: Toto celé je bastl, nutno èasem proèistit.
+        sorting = xlist(self._lf_sorting)
+        if direction is None or \
+               col is None and direction != self.SORTING_NONE:
+            columns = self._lf_sfs_columns()
+            if col is None and self._lf_sorting:
+                col, __dir = self._lf_sorting[0]                
+            d = SortingDialog(self._parent, columns, self._lf_sorting,
+                              col=col, direction=direction)
+            sorting = run_dialog(d)
+            if sorting is None:
+                return None
+            elif sorting is ():
+                sorting = self._lf_initial_sorting
+        else:
+            if col is not None:
+                if not self._data.find_column(col):
+                    message(_("Podle tohoto sloupce nelze tøídit"),
+                            beep_=True)
+                    return
+            pos = position(col, sorting, key=lambda x: x[0])
+            if direction == self.SORTING_CYCLE_DIRECTION:
+                if pos is not None:
+                    current_direction = sorting[pos][1]
+                    if current_direction == self.SORTING_ASCENDENT:
+                        direction = self.SORTING_DESCENDANT
+                    elif current_direction == self.SORTING_DESCENDANT:
+                        direction = self.SORTING_NONE
+                    else:    
+                        direction = self.SORTING_ASCENDENT
+                else:    
+                    direction = self.SORTING_ASCENDENT
+            if direction == self.SORTING_NONE:
+                if pos is not None:
+                    del sorting[pos]
+                elif col is None:
+                    sorting = ()
+            else:
+                assert direction in (self.SORTING_ASCENDENT,
+                                     self.SORTING_DESCENDANT)
+                new_col_spec = (col, direction)
+                if primary:
+                    sorting = (new_col_spec,)
+                elif pos is None:
+                    sorting.append(new_col_spec)
+                else:
+                    sorting[pos] = new_col_spec
+            sorting = tuple(sorting)
+        if sorting is not None and sorting != self._lf_sorting:
+            self._lf_sorting = sorting
+            self._set_row(self._find_row(self._key, any_row=True))
+        return sorting
+
+    # wx metody
+
+    def Close(self):
+        super_(LookupForm).Close(self)
+        if self._lf_search_dialog:
+            self._lf_search_dialog = None
+        if self._lf_filter_dialog:
+            self._lf_filter_dialog = None
+    
+    # Veøejné metody
+
+    def condition(self):
+        """Vra» specifikaci aktuální podmínky výbìru dat.
+
+        Podmínka je vrácena v podobì po¾adované argumentem 'condition'
+        metody 'pytis.data.Data.select()'.
+
+        """
+        return self._lf_condition
+    
+    def sorting(self):
+        """Vra» specifikaci aktuálního tøídìní seznamu.
+
+        Podmínka je vrácena v podobì po¾adované argumentem 'sort'
+        metody 'pytis.data.Data.select()'.
+
+        """
+        return self._lf_sorting
+    
+    def on_command(self, command, **kwargs):
+        if command == LookupForm.COMMAND_JUMP:
+            self._on_jump()
+            return True
+        if command == LookupForm.COMMAND_SEARCH:
+            self._on_search()
+            return True
+        elif command == LookupForm.COMMAND_SEARCH_NEXT:
+            self._on_search(show_dialog=False, direction = pytis.data.FORWARD)
+            return True
+        elif command == LookupForm.COMMAND_SEARCH_PREVIOUS:
+            self._on_search(show_dialog=False, direction = pytis.data.BACKWARD)
+            return True
+        elif command == LookupForm.COMMAND_FILTER:
+            self._on_filter()
+            return True
+        elif command == LookupForm.COMMAND_SORT_COLUMN:
+            self._on_sort_column()
+            return True            
+        else:
+            return super_(LookupForm).on_command(self, command, **kwargs)
+
+
+
+### Editaèní formuláø
+
+
+class EditForm(LookupForm, TitledForm):
+    """Formuláø pro editaci v¹ech vlastností jednoho záznamu.
+
+    Formuláø je vytvoøen poskládáním jednotlivých vstupních políèek daných
+    specifikací do møí¾ky.  Pole mohou být rùznì seskupována a jejich rozlo¾ení
+    je urèeno specifikaèní tøídou 'LayoutSpec' resp. 'GroupSpec'.
+
+    Ka¾dé vstupní pole je reprezentováno objektem tøídy 'InputField'.  To se
+    stará o interakci s u¾ivatelem, validaci vstupních dat apod.
+
+    Formuláø mù¾e slou¾it jak k editaci stávajícího øádku dat, tak
+    i k vytvoøení øádku nového (viz argumenty konstruktoru 'key' a 'new').
+
+    """
+    ACT_EDITFORM = 'ACT_EDITFORM'
+    """Aktivaèní konstanta formuláøe."""
+    
+    ACTIVATIONS = Window.ACTIVATIONS + [ACT_EDITFORM]
+    """Seznam aktivaèních kategorií pro tuto tøídu."""
+
+    def __init__(self, *args, **kwargs):
+        super_(EditForm).__init__(self, *args, **kwargs)
+        self._size = self.GetSize() # Remember the original size.
+        if self._key: # editace stávajícího záznamu nebo kopie
+            self._set_row(self._find_row(self._key))
+        else: # nový prázdný záznam
+            self._set_row(None)
+        if isinstance(self._parent, wx.Dialog):
+            wx_callback(wx.EVT_INIT_DIALOG, self._parent, self.init)
+        else:
+            self.init()
+
+    def _init_attributes(self, focus_field=None, editable=True, new=False,
+                         **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+
+          focus_field -- id políèka, které má být vybráno jako aktivní pro
+            u¾ivatelský vstup, pøípadnì funkce jednoho argumentu, kterým je
+            aktuální PresentedRow, která vrací id políèka pro u¾ivatelský
+            vstup.
+          editable -- právì kdy¾ je pravdivé, lze formuláø editovat
+          new -- pøíznak, zda se jedná o nový záznam nebo editaci stávajícího;
+            je-li 'key' 'None', pova¾uje se záznam za nový v¾dy, bez ohledu na
+            hodnotu 'new'
+          kwargs -- argumenty pøedané konstruktoru prvního pøedka
+
+        """
+        super_(EditForm)._init_attributes(self, **kwargs)
+        self._focus_field = focus_field or self._view.focus_field()
+        self._editable = editable
+        # TODO: zde bychom nemìli sahat do argumentù pøedkù ('key')...
+        self._new = (not kwargs.get('key')) or new
+        # Other attributes
+        self._fields = []
+
+    def init(self, event=None):
+        """Inicalizuj dialog nastavením hodnot políèek."""
+        for f in self._fields:
+            if self._editable and self._row.editable(f.id()):
+                f.enable()
+            else:
+                f.disable(change_appearance=self._editable)
+        if self._focus_field:
+            if callable(self._focus_field):
+                focused = self._focus_field(self._row)
+            else:
+                focused = self._focus_field
+            if find(focused, self._fields, key=lambda f: f.id()):                
+                f = self._field(focused)
+        else:
+            f = find(True, self._fields, key=lambda f: f.enabled())
+            if f is None:
+                f = self._fields[0]
+        f.set_focus()
+
+    def _create_form(self):
+        for id in self._view.layout().order():
+            spec = self._view.field(id)
+            if id in map(lambda c: c.id(), self._data.columns()):
+                if self._new:
+                    permission = pytis.data.Permission.INSERT
+                else:
+                    permission = pytis.data.Permission.UPDATE
+                acc = self._data.accessible(id, permission)
+            else:
+                acc = True
+            f = InputField.create(self, spec, self._data, guardian=self,
+                                  accessible=acc)
+            f.set_callback(InputField.CALL_SKIP_NAVIGATION, self._navigate)
+            f.set_callback(InputField.CALL_FIELD_CHANGE, self._field_change)
+            f.set_callback(InputField.CALL_COMMIT_FIELD, self._navigate)
+            self._fields.append(f)
+        super_(EditForm)._create_form(self)
+
+    def _field(self, id):
+        f = find(id, self._fields, key=lambda f: f.id())
+        assert f is not None, (_("Unknown field:"), id)
+        return f
+        
+    def _create_form_parts(self, sizer):
+        # Create all parts and add them to top-level sizer.
+        layout = self._view.layout()
+        # Create the parts
+        caption = self._create_caption(self, self.title(), size=18)
+        group = self._create_group(layout.group())
+        # Add parts to the sizer.
+        sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
+        sizer.Add(group,   0, wx.ALIGN_CENTER|wx.ALL, 8)
+
+    def _create_button(self, item):
+        b = wx.Button(self, -1, item.label())
+        b.Enable(item.active_in_popup_form() \
+                 or not isinstance(self, PopupForm))
+        if item.width() is not None:
+            width = dlg2px(b, 4*item.width())
+            height = b.GetSize().GetHeight()
+            b.SetMinSize((width, height))
+        if item.tooltip() is not None:
+            b.SetToolTipString(item.tooltip())
+        def create_handler(handler):
+            def _handler(event):
+                refresh = handler(self._row)
+                busy_cursor(False)
+                self.set_row(self._row)
+            return _handler
+        wx_callback(wx.EVT_BUTTON, self, b.GetId(),
+                    create_handler(item.handler()))
+        return b
+        
+    def _create_group(self, group):
+        """Vytvoø skupinu vstupních políèek podle specifikace.
+
+        Argumenty:
+
+          group -- instance 'GroupSpec', která má být zpracována.
+
+        Ka¾dou posloupnost za sebou následujících políèek seskupí pod sebe
+        a pro ka¾dou vnoøenou skupinu políèek zavolá sebe sama rekurzivnì.
+        Výsledek potom poskládá do instance 'wx.BoxSizer', kterou vytvoøí.
+
+        Specifikace skupiny ovlivòuje zpùsob seskupení:
+        horizontální/vertikální, mezery mezi políèky, skupinami
+        atd. Viz. dokuewntace tøídy 'GroupSpec'
+
+        Vrací: 'wx.BoxSizer' naplnìný políèky a vnoøenými skupinami.
+
+        """
+        orientation = orientation2wx(group.orientation())
+        if group.label() is not None:
+            box = wx.StaticBox(self, -1, group.label())
+            sizer = wx.StaticBoxSizer(box, orientation)
+        else:
+            sizer = wx.BoxSizer(orientation)
+        # ka¾dý souvislý sled políèek ukládám do pole a teprve nakonec je
+        # poskládám metodou self._pack_fields() a vlo¾ím do sizeru této
+        # skupiny
+        pack = []
+        space = dlg2px(self, group.space())
+        gap = dlg2px(self, group.gap())
+        border = dlg2px(self, group.border())
+        border_style = border_style2wx(group.border_style())
+        for item in group.items():
+            if (is_anystring(item) and
+                not self._view.field(item).compact() or
+                isinstance(item, Button)):
+                # Field of this id will become a part of current pack
+                pack.append(item)
+                continue
+            if len(pack) != 0:
+                # pøidej poslední sled políèek (pokud nìjaký byl)
+                sizer.Add(self._pack_fields(pack, space, gap),
+                          0, wx.ALIGN_TOP|border_style, border)
+                pack = []
+            if isinstance(item, GroupSpec):
+                g = self._create_group(item)
+                sizer.Add(g, 0, wx.ALIGN_TOP|border_style, border)
+            else:
+                # This is a compact field (not a part of the pack)
+                field = self._field(item)
+                w = field.widget()
+                if w is not None:
+                    s = wx.BoxSizer(wx.VERTICAL)
+                    label = field.label()
+                    s.Add(label, 0, wx.ALIGN_LEFT)
+                    s.Add(w)
+                    sizer.Add(s, 0, wx.ALIGN_TOP|border_style, border)
+        if len(pack) != 0:
+            # pøidej zbylý sled políèek (pokud nìjaký byl)
+            sizer.Add(self._pack_fields(pack, space, gap),
+                      0, wx.ALIGN_TOP|border_style, border)
+        # pokud má skupina orámování, pøidáme ji je¹tì do sizeru s horním
+        # odsazením, jinak je horní odsazení pøíli¹ malé.
+        if group.label() is not None:
+            s = wx.BoxSizer(orientation)
+            s.Add(sizer, 0, wx.TOP, 3)
+            sizer = s
+        return sizer
+
+    def _pack_fields(self, items, space, gap):
+        """Sestav skupinu pod sebou umístìných políèek/tlaèítek do gridu.
+
+        Argumenty:
+
+          items -- sekvence identifikátorù políèek nebo instancí Button.
+          space -- mezera mezi ovládacím prvkem a labelem políèka v dlg units;
+            integer
+          gap -- mezera mezi jednotlivými políèky v dlg units; integer
+
+        Pro ka¾dý prvek skupiny vytvoøí tlaèítko nebo políèko 'inputfield.InputField'
+        a pøidá jeho label a widget do vytvoøené instance
+        'wx.FlexGridSizer'.
+
+        Vrací: instanci 'wx.FlexGridSizer' naplnìnou políèky a tlaèítky.
+
+        """
+        grid = wx.FlexGridSizer(len(items), 2,
+                                  dlg2px(self,gap), dlg2px(self,space))
+        for item in items:
+            if isinstance(item, Button):
+                button = self._create_button(item)
+                style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+                label = wx.StaticText(self, -1, "",
+                                      style=wx.ALIGN_RIGHT)
+                grid.Add(label, 0, style, 2)
+                grid.Add(button)                
+            else:    
+                field = self._field(item)
+                if field.height() > 1:
+                    style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
+                else:
+                    style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+                if not isinstance(field, HiddenField):
+                    grid.Add(field.label(), 0, style, 2)
+                    grid.Add(field.widget())
+        return grid
+
+    def _lock(self):
+        key = self._key
+        if not key:
+            return True
+        success, locked = db_operation(lambda : self._data.lock_row(key),
+                                       quiet=True)
+        if success and locked != None:
+            log(EVENT, 'Záznam je zamèen', locked)
+            run_dialog(Message, _("Záznam je zamèen: %s") % locked)
+            return False
+        else:
+            return True
+
+    def _unlock(self):
+        if self._data.locked_row():
+            db_operation(lambda : self._data.unlock_row(), quiet=True)
+
+    def _validate(self):
+        """Zvaliduj postupnì v¹echna políèka.
+        
+        Vrací: None v pøípadì chyby, jinak instanci 'pytis.data.Row', kterou je
+        mo¾no pou¾ít pro vlo¾ení/update datového zdroje.
+
+        """
+        for f in self._fields:
+            if self._new or f.is_modified():
+                value, error = f.validate()
+                if error:
+                    log(EVENT, 'Validace selhala:', (f.id(), f.get_value()))
+                    f.set_focus()
+                    return None
+                #self._signal_update() # TODO: Tohle tu bylo kdoví proè...
+        error = None
+        check = self._view.check()
+        if check is not None:
+            error = check(self._row)
+        if error is None:
+            error = self._row.check()
+        if error is not None:
+            if is_sequence(error):
+                field_id, msg = error
+                message(msg)
+            else:
+                field_id = error
+                log(EVENT, 'Kontrola integrity selhala:', field_id)
+                # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø 'check()'.
+                # Pokud ale ¾ádná zpráva nebyla nastavena, u¾ivatel netu¹í...
+                #message(_("Kontrola integrity selhala!"))
+            field = self._field(field_id)
+            field.set_focus()
+            return None
+        # Data sestavíme a¾ po check, proto¾e tam mohou být mìnìny honoty.
+        rdata = []
+        for f in self._fields:
+            value = self._row[f.id()]
+            # TODO: Tato kontrola by mìla být provádìna spí¹e v
+            # 'PresentedRow.__setitem__()'.
+            if not isinstance(f.type(), value.type().__class__):
+                msg = "Invalid value type set for %s in 'check()' function: %s"
+                raise ProgramError(msg % ((f.id(), (f.type(), value.type()))))
+            rdata.append((f.id(), value))
+        return pytis.data.Row(rdata)
+
+    def _edit_insert(self):
+        log(ACTION, 'Vlo¾ení øádku')
+        row = self._validate()
+        if not row:
+            return False
+        success, result = db_operation(lambda : self._data.insert(row))
+        if success and result[1]:
+            self._row.set_row(result[0], reset=True)
+            self.set_row(self._row)
+        else:
+            return False
+        self._signal_update()
+        log(ACTION, 'Øádek vlo¾en')
+        self._result = self._row
+        return True
+
+    def _edit_update(self):
+        log(ACTION, 'Update øádku')
+        key = self._key        
+        if key == None:
+            return False
+        row = self._validate()
+        if not row:
+            return False
+        success, result = db_operation(lambda : self._data.update(key, row))
+        if success and result[1]:
+            new_row = result[0]
+            if new_row is not None:
+                self._row.set_row(new_row, reset=True)
+                self.set_row(self._row)
+            else:
+                # TODO: Lze provést nìco chytøej¹ího?
+                pass
+        else:
+            run_dialog(Error, _("Ulo¾ení øádku se nezdaøilo"))
+            return False
+        # Políèka se tímto trikem budou tváøit nezmnìnìná s nynìj¹í hodnotou.
+        for field in self._fields:
+            field.init(field.get_value())
+        self._signal_update()
+        log(ACTION, 'Øádek updatován')
+        self._result = self._row
+        return True
+
+    def _edit_delete(self):
+        key = self._key
+        if key == None:
+            return False
+        if not delete_record_question():
+            return False
+        success, result = db_operation(lambda : self._data.delete(key))
+        if not success:
+            return False
+        self._signal_update()
+        log(ACTION, 'Øádek smazán')
+        return True
+
+    def _signal_update(self):
+        f = current_form()
+        if isinstance(f, Refreshable):
+            f.refresh()
+
+    def _commit_form(self, close=True):
+        if self._new:
+            result = self._edit_insert()
+        else:
+            result = self._edit_update()
+        cleanup = self._view.cleanup()
+        if cleanup is not None:
+            cleanup(self._row)
+        if result and close:
+            # tím je automaticky zavoláno _on_parent_close()
+            # TODO: to nebude fungovat v embeded verzi!!!!!!!!!!
+            self._parent.Close()
+        return result
+
+
+    def _menus(self):
+        return (Menu(_("Pøíkazy"),
+                     (MItem(_("Zavøít okno"),
+                            command=Application.COMMAND_LEAVE_FORM),
+                      MSeparator(),
+                      MItem(_("Hledat"),
+                            command=LookupForm.COMMAND_SEARCH),
+                      MItem(_("Hledat dal¹í"),
+                            command=LookupForm.COMMAND_SEARCH_NEXT,
+                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                      MItem(_("Hledat pøedchozí"),
+                            command=LookupForm.COMMAND_SEARCH_PREVIOUS,
+                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                      MItem(_("Tøídìní"),
+                            command=LookupForm.COMMAND_SORT_COLUMN),
+                      MItem(_("Filtrovat"),
+                            command=LookupForm.COMMAND_FILTER),
+                      MSeparator(),
+                      MItem(_("Nový záznam"),
+                            command=EditForm.COMMAND_RECORD_INSERT,
+                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                      MItem(_("Editovat záznam"),
+                            command=EditForm.COMMAND_RECORD_UPDATE,
+                            uievent_id=RecordForm.UI_ACCESS_UPDATE),
+                      MItem(_("Smazat záznam"),
+                            command=EditForm.COMMAND_RECORD_DELETE,
+                            uievent_id=RecordForm.UI_ACCESS_DELETE),
+                      ),
+                     activation=EditForm.ACT_EDITFORM),
+                Menu(_("Tisk"), (EditForm.print_menu,),
+                     activation=EditForm.ACT_EDITFORM),
+                )
+
+    def print_menu(self):
+        """Vra» tuple polo¾ek tiskového menu."""
+        name = self._name
+        try:
+            spec_paths = self._resolver.get(name, 'print_spec')
+        except ResolverSpecError:
+            spec_paths = ((_("Implicitní"), os.path.join('output', name)),)
+        return [MItem(p[0], command=pytis.form.Form.COMMAND_PRINT,
+                      args={'print_spec_path': p[1]})
+                for p in spec_paths]
+
+    def set_row(self, row):
+        """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
+        for f in self._fields:
+            f.init(row[f.id()].export())
+        super_(EditForm).set_row(self, row)
+
+    def title(self):
+        """Vra» název formuláøe jako øetìzec."""        
+        return self._view.layout().caption()
+
+    def size(self):
+        return self._size
+
+    def set_scrollbars(self):
+        step = 20
+        width, height = self.size()
+        self.SetScrollbars(step, step, width/step, height/step)
+    
+    def changed(self):
+        """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
+        field = find(True, self._fields, key=lambda f: f.is_modified())
+        return field is not None
+
+    def show_popup_menu(self):
+        field = InputField.focused()
+        if field is not None:
+            field.show_popup_menu()
+
+    def _on_row_change(self, id):
+        # Signalizace zmìny políèka z _row
+        field = find(id, self._fields, key=lambda f: f.id())        
+        if field is not None and self._row is not None:
+            value = self._row.format(id)
+            if field.initialized() and field.get_value() != value:
+                field.set_value(value)
+                
+    def _on_field_enable(self, id):
+        if id in self._view.layout().order():
+            self._field(id).enable()
+        
+    def _on_field_disable(self, id):
+        if id in self._view.layout().order():
+            self._field(id).disable()
+                
+    def _field_change(self, id, value):
+        # Vezmi na vìdomí, ¾e hodnota políèka 'id' byla zmìnìna na 'value'.
+        self._row[id] = value    
+
+    def _navigate(self, object=None, forward=True):
+        # Vygeneruj událost navigace mezi políèky.
+        if self._editable:
+            nav = wx.NavigationKeyEvent()
+            nav.SetDirection(forward)
+            if object:
+                nav.SetEventObject(object)
+                nav.SetCurrentFocus(object)
+            else:
+                nav.SetCurrentFocus(self)
+            self.GetEventHandler().ProcessEvent(nav)
+        return True
+
+    def exit_check(self):
+        """Proveï kontrolu formuláøe pøed uzavøením.
+
+        Vrací: Pravdu právì tehdy kdy¾ je mo¾no formuláø uzavøít.
+
+        """
+        if self.changed():
+            q = _("Data byla zmìnìna a nebyla ulo¾ena!") + "\n" + \
+                _("Opravdu chcete uzavøít formuláø?")
+            if not run_dialog(Question, q):
+                return False
+        return True
+
+    def on_ui_event(self, event, id):
+        field = InputField.focused()
+        if field is not None and field.on_ui_event(event, id):
+            return True
+
+    def on_command(self, command, **kwargs):
+        if kwargs.has_key('originator') \
+               and kwargs['originator'] in self._fields:
+            field = kwargs['originator']
+        else:
+            field = InputField.focused()
+        if field is not None and field.on_command(command, **kwargs):
+            # Pokud se volal výbìr polo¾ky seznamu z ListField,
+            # musíme zajistit nastavení _refvalues v PresentedRow.
+            if command == ListField.COMMAND_CHOOSE_KEY:
+                if kwargs.has_key('id'):
+                    id = kwargs['id']
+                    val = field.get_item()
+                    self._row.listfield_choose(id, val)
+            return True
+        if self._editable:
+            if command == EditForm.COMMAND_RECORD_INSERT:
+                self._edit_insert()
+                return True
+            elif command == EditForm.COMMAND_RECORD_UPDATE:
+                self._edit_update()
+                return True
+            elif command == EditForm.COMMAND_RECORD_DELETE:
+                self._edit_delete()
+                return True
+            elif command == EditForm.COMMAND_RECORD_COMMIT:
+                self._commit_form()
+                return True
+            
+        # Common commands
+        if command == EditForm.COMMAND_NAVIGATE:
+            return self._navigate()
+        elif command == EditForm.COMMAND_NAVIGATE_BACK:
+            return self._navigate(forward=False)
+        else:
+            return super_(EditForm).on_command(self, command, **kwargs)
+        return False
+
+    def select_row(self, key):
+        """Zobraz záznam s klíèem 'key'.
+
+        Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
+
+        Argumenty:
+
+          key -- klíè po¾adovaného øádku jako tuple nebo instance tøídy
+            'pytis.data.Row' kompatibilní s datovým objektem formuláøe
+        
+        """
+        if isinstance(key, pytis.data.Row):
+            key = self._data.row_key(key)
+        self._set_row(self._find_row(key))
+
+
+class PopupEditForm(PopupForm, EditForm):
+    """Stejné jako 'EditForm', av¹ak v popup podobì."""
+    
+    def __init__(self, parent, *args, **kwargs):
+        parent = self._popup_frame(parent)
+        EditForm.__init__(self, parent, *args, **kwargs)
+        p = parent
+        while not p.GetTitle() and p.GetParent():
+            p = p.GetParent()
+        parent.SetTitle('%s: %s' % (p.GetTitle(), self.title()))
+
+    def _init_attributes(self, disable_new_button=False, **kwargs):
+        EditForm._init_attributes(self, **kwargs)
+        self._disable_new_button = disable_new_button
+
+    def _finish_top_level_sizer(self, sizer):
+        self._parent.SetSize(sizer.GetSize())
+        #self._parent.SetSize((325, 285))#sizer.GetSize())
+        
+    def _create_form_parts(self, sizer):
+        # Create all parts and add them to top-level sizer.
+        layout = self._view.layout()
+        # Create the parts.
+        caption = self._create_caption(self, self.title(), size=18)
+        group = self._create_group(layout.group())
+        buttons = self._create_buttons()
+        status_bar = self._create_status_bar()
+        # Add parts to the sizer.
+        sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
+        sizer.Add(group, 0, wx.ALIGN_CENTER|wx.ALL, 6)
+        sizer.Add(buttons, 0, wx.ALIGN_CENTER)
+        sizer.Add(status_bar, 0, wx.EXPAND)            
+
+    def _create_status_bar(self):
+        # Our own statusbar implementation
+        status_bar = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
+        box = wx.BoxSizer()
+        status_bar.SetSizer(box)
+        status_bar.SetAutoLayout(True)
+        self._status = wx.StaticText(status_bar, -1, '',
+                                     style=wx.ALIGN_LEFT)
+        box.Add(self._status, 1, wx.EXPAND|wx.ALL, 2)
+        box.Fit(status_bar)
+        return status_bar
+
+    def _on_submit(self, event):
+        self._commit_form()
+        return True
+
+    def _on_next(self, event):
+        result = self._commit_form(close=False)
+        if result:
+            message(_("Záznam ulo¾en"))
+            refresh()
+            self._set_row(None)
+            self.init()
+        return False
+
+    def _on_cancel(self, event):
+        self._leave_form()
+        return True
+    
+    def _create_buttons(self):
+        ok, cancel = buttons = (wx.Button(self, wx.ID_OK, u"Ok"),
+                                wx.Button(self, wx.ID_CANCEL, u"Zavøít"))
+        wx_callback(wx.EVT_BUTTON, self, wx.ID_OK, self._on_submit)
+        wx_callback(wx.EVT_BUTTON, self, wx.ID_CANCEL, self._on_cancel)
+        ok.SetToolTipString(u"Ulo¾it záznam a uzavøít formuláø")
+        cancel.SetToolTipString(u"Uzavøít formuláø bez ulo¾ení dat")
+        if self._new and not self._disable_new_button:
+            next = wx.Button(self, wx.ID_FORWARD, u"Dal¹í")
+            wx_callback(wx.EVT_BUTTON, self, wx.ID_FORWARD, self._on_next)
+            next.SetToolTipString(u"Ulo¾it záznam a reinicializovat formuláø" +\
+                                  u" pro vlo¾ení dal¹ího záznamu")
+            buttons = (ok, cancel, next)
+        ok.SetDefault()
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        for b in buttons:
+            sizer.Add(b, 0, wx.ALL, 20)
+        return sizer
+    
+    def run(self):
+        if self._editable:
+            if not self._lock():
+                return None
+        try:
+            return PopupForm.run(self)
+        finally:
+            self._unlock()
+
+    def set_status(self, field, message):
+        if field == 'message':
+            if message is None:
+                message = ''
+            self._status.SetLabel(unicode(message))
+            return True
+        else:
+            return False
+       
+
+class ShowForm(EditForm):
+    """Formuláø pro zobrazení náhledu.
+
+    Layout je stejný jako u editaèního formuláøe (resp. 'EditForm'),
+    pouze titulek má stejný vzhled, jako titulek formuláøù typu 'ListForm'.
+    Urèen pro zobrazení v duálním formuláøi.
+
+    """
+
+    def _init_attributes(self, editable=False, **kwargs):
+        super_(ShowForm)._init_attributes(self, editable=editable, **kwargs)
+        
+    # TODO: Toto z neznámých dùvodù zmìní velikost rodièovského okna.
+    #def _finish_top_level_sizer(self, sizer):
+    #    sizer.SetSizeHints(self._parent) # Set min. size of parent window.
+    
+    def _create_form_parts(self, sizer):
+        # Create all parts and add them to top-level sizer.
+        title = self._create_title_bar(self.title())
+        group = self._create_group(self._view.layout().group())
+        # Add parts to the sizer.
+        sizer.Add(title, 0, wx.EXPAND)
+        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.BOTTOM, 8)
+        
+    def OnSize(self, event):
+        self.SetSize(event.GetSize())
+        self.set_scrollbars()
+
+class BrowsableShowForm(ShowForm):
+    """Listovací formuláø pro zobrazení náhledu.
+
+    Formuláø je needitovatelný, ale umo¾òuje pohyb po záznamech tabulky, nad
+    kterou je vytvoøen, vyhledávání atd.  Z u¾ivatelského hlediska jde v
+    podstatì o redukci prohlí¾ecích mo¾ností formuláøe typu 'BrowseForm' na
+    jeden záznam zobrazený v Layoutu editaèního formuláøe.
+    
+    """
+    def __init__(self, *args, **kwargs):
+        super_(BrowsableShowForm).__init__(self, *args, **kwargs)
+        self._init_select()
+        self._set_status()
+
+    def on_ui_event(self, event, id):
+        if id == ListForm.UI_EXISTS_CONDITION:
+            if self._lf_search_dialog and self._lf_search_dialog._condition:
+                event.Enable(True)
+            else:
+                return True    
+        return super_(BrowsableShowForm).on_ui_event(self, event, id)
+        
+    def _on_set_row(self, row_number):
+        # row_number zaèíná od 0
+        def get_it():
+            data = self._data
+            data.rewind()
+            data.skip(row_number)
+            return data.fetchone()
+        success, row = db_operation(get_it)
+        if not row:
+            beep()
+        if not success or not row:
+            return
+        self._set_row(row)       
+
+    def _on_jump(self):
+        row = super_(BrowsableShowForm)._on_jump(self)
+        if row:
+            self._on_set_row(row-1)
+        else:
+            message(_("Neplatné èíslo záznamu"), beep_=True)                    
+
+    def _on_next_record(self, direction=pytis.data.FORWARD):
+        op = lambda : self._data.fetchone(direction=direction)
+        success, row = db_operation(op)
+        if not row:
+            if direction == pytis.data.FORWARD:
+                message(_("Poslední záznam"), beep_=True)
+            else:
+                message(_("První záznam"), beep_=True)
+            # Pøesuneme ukazovátko zpìt na poslední záznam, to je chování
+            # oèekávané u¾ivateli.
+            antidirection = pytis.data.opposite_direction(direction)
+            db_operation(lambda:
+                         self._data.fetchone(direction=antidirection))
+        if not success or not row:
+            return
+        self._set_row(row)
+
+    def _set_row(self, row):
+        super(BrowsableShowForm, self)._set_row(row)
+        self._set_status()
+
+    def _set_status(self):
+        current, total = self._data.last_row_number(), self._lf_select_count
+        if total:
+            set_status('list-position', "%d/%d" % (current+1, total))        
+
+    def on_command(self, command, **kwargs):
+        if command == BrowsableShowForm.COMMAND_NEXT_RECORD:
+            self._on_next_record()
+            return True
+        elif command == BrowsableShowForm.COMMAND_PREVIOUS_RECORD:
+            self._on_next_record(direction=pytis.data.BACKWARD)
+            return True
+        elif command == BrowsableShowForm.COMMAND_FIRST_RECORD:
+            self._on_set_row(0)
+            return True
+        elif command == BrowsableShowForm.COMMAND_LAST_RECORD:
+            self._on_set_row(self._lf_select_count-1)
+            return True
+        else:
+            return super(BrowsableShowForm, self).on_command(command, **kwargs)
