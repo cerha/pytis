@@ -21,7 +21,7 @@ from pytis.extensions import *
 
 
 
-class CodebookNull(lib.data.Codebook):
+class CodebookNull(pytis.data.Codebook):
     """Codebook roz¹íøený o mo¾nost ponechat hodnotu None."""
 
     def __init__(self, *args, **kwargs):
@@ -29,7 +29,7 @@ class CodebookNull(lib.data.Codebook):
         super(CodebookNull, self).__init__(*args, **kwargs)
 
         
-class ValueColumnCodebook(lib.data.Codebook):
+class ValueColumnCodebook(pytis.data.Codebook):
     """Codebook umo¾òující specifikovat value_column"""
     
     def __init__(self, data_factory, value_columns, strict=True,
@@ -41,7 +41,7 @@ class ValueColumnCodebook(lib.data.Codebook):
                                                   value_column=value_columns[0],
                                                   not_null=not null_value)
 
-class ValidityColumnCodebook(lib.data.Codebook):
+class ValidityColumnCodebook(pytis.data.Codebook):
     """Codebook umo¾òující specifikovat validity_column"""
     
     def __init__(self, data_factory, validity_column, null_value=False):         
@@ -51,7 +51,7 @@ class ValidityColumnCodebook(lib.data.Codebook):
                                                      validity_column=validity_column,
                                                      not_null= not null_value)
         
-class Price(lib.data.Float):
+class Price(pytis.data.Float):
     def __init__(self, not_null=True):
         super(Price, self).__init__(precision=2, not_null=not_null)
     def default_value(self):
@@ -60,7 +60,7 @@ class Price(lib.data.Float):
             raise ProgramError("Can't validate default value")
         return value
         
-class StringNotNull(lib.data.String):
+class StringNotNull(pytis.data.String):
     def __init__(self, **kwargs):
         kwargs['not_null'] = True
         super(StringNotNull, self).__init__(**kwargs)

@@ -19,7 +19,7 @@
 """Tøídy pro zjednodu¹ení a zpøehlednìní tvorby specifikaèních souborù.""" 
 
 from pytis.extensions import *
-from lib.presentation import *
+from pytis.presentation import *
 
 
 class DataSpec(object):
@@ -33,7 +33,7 @@ class DataSpec(object):
     Podrobný popis rozhraní viz. konstruktor tøídy.
 
     Po vytvoøení instance této tøídy je mo¾né získat odpovídající instanci
-    'lib.data.DataFactory' voláním metody 'make()'.
+    'pytis.data.DataFactory' voláním metody 'make()'.
     
     """
     
@@ -48,19 +48,19 @@ class DataSpec(object):
             Jedná se v¾dy o sloupce z tabulky 'table'.
           key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
             identifikátorem musí být pøítomný v 'columns'.
-          access_rights -- práva jako instance 'lib.data.AccessRights'.
+          access_rights -- práva jako instance 'pytis.data.AccessRights'.
           ignore_enumerators -- pokud bude pøedána pravdivá hodnota, budou
             enumerátory v¹ech sloupcù ignorovány.
 
         Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
-        automaticky doplnìn sloupec 'oid' typu 'lib.data.Oid'.
+        automaticky doplnìn sloupec 'oid' typu 'pytis.data.Oid'.
 
         """
         assert isinstance(table, types.StringType)
         assert isinstance(columns, (types.ListType, types.TupleType))
         assert isinstance(key, types.StringType)
         assert isinstance(ignore_enumerators, types.BooleanType)
-        assert isinstance(access_rights, lib.data.AccessRights) \
+        assert isinstance(access_rights, pytis.data.AccessRights) \
                or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
         for c in columns:
@@ -72,7 +72,7 @@ class DataSpec(object):
         self._access_rights = access_rights
 
     def make(self):
-        """Vta» instanci 'lib.data.DataFactory' odpovídající specifikaci."""
+        """Vta» instanci 'pytis.data.DataFactory' odpovídající specifikaci."""
         t = self._table
         bindings = []
         for c in self._columns:
@@ -83,26 +83,26 @@ class DataSpec(object):
                 e = None
                 kwargs = {}
             if e:
-                enumerator = lib.form.resolver().get(e, 'data_spec')
+                enumerator = pytis.form.resolver().get(e, 'data_spec')
                 if not type:
                     kwargs['data_factory_kwargs'] = {'dbconnection_spec':
                                                      config.dbconnection}
-                    type = lib.data.Codebook(enumerator, **kwargs)
+                    type = pytis.data.Codebook(enumerator, **kwargs)
                 else:
-                    assert isinstance(type, lib.data.Codebook)
+                    assert isinstance(type, pytis.data.Codebook)
                     assert kwargs == {}
             else:
                 enumerator = None
                 assert kwargs == {}, \
                        "Argumenty jsou zatím podporovány jen pro enumerator."
-            bindings.append(lib.data.DBColumnBinding(c.id(), t, c.column(),
+            bindings.append(pytis.data.DBColumnBinding(c.id(), t, c.column(),
                                                      enumerator=enumerator,
                                                      type_=type))
         if not find('oid', bindings, key=lambda b: b.column()):
-            oid = lib.data.DBColumnBinding('oid', t, 'oid', type_=lib.data.Oid())
+            oid = pytis.data.DBColumnBinding('oid', t, 'oid', type_=pytis.data.Oid())
             bindings.append(oid)
         key = find(self._key, bindings, key=lambda b: b.column())
-        return lib.data.DataFactory(lib.data.DBDataDefault, bindings, key,
+        return pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, key,
                                     access_rights=self._access_rights)
     
 
@@ -120,9 +120,9 @@ class Column(object):
           enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
             této specifikace bude získán datový objekt a pou¾it jako èíselník.
             Typ bude v takovém pøípadì automaticky nastaven na
-            'lib.data.Codebook', pokud není urèen explicitnì (viz. ní¾e).
+            'pytis.data.Codebook', pokud není urèen explicitnì (viz. ní¾e).
           type -- explicitní urèení datového typu sloupce (instance
-            'lib.data.Type', nebo None).
+            'pytis.data.Type', nebo None).
           **kwargs -- pokud jsou uvedeny jakékoliv dal¹í klíèové argumenty,
             budou tyto pøedány konstruktoru datového typu sloupce.  Momentálnì
             jsou v¹ak klíèové argumenty podporovány pouze v pøípadì, ¾e je
@@ -134,8 +134,8 @@ class Column(object):
         assert isinstance(id, types.StringType)
         assert isinstance(column, types.StringType) or column is None
         assert isinstance(enumerator, types.StringType) or enumerator is None
-        assert isinstance(type, lib.data.Type) or type is None
-        if isinstance(type, lib.data.Codebook):
+        assert isinstance(type, pytis.data.Type) or type is None
+        if isinstance(type, pytis.data.Codebook):
             assert enumerator is not None
         self._id = id
         if column is None:
@@ -223,7 +223,7 @@ class ReusableSpec:
         """Vra» seznam specifikací sloupcù vyjmenovaných sloupcù.
 
         Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
-        v¹ech sloupcù.  Vrací sekvenci instancí 'lib.data.DBColumnBinding'.
+        v¹ech sloupcù.  Vrací sekvenci instancí 'pytis.data.DBColumnBinding'.
 
         """
         if len(args) == 0:
