@@ -20,14 +20,14 @@
 
 from pytis.extensions import *
 
-import lib.output
-import lib.form
-import lib.data
+import pytis.output
+import pytis.form
+import pytis.data
 
 # TODO: je to tu potøeba?  Pøíle¾itostnì smazat!
-from lib.presentation import *
-from lib.util import *
-from lib.form import *
+from pytis.presentation import *
+from pytis.util import *
+from pytis.form import *
 
 import config
 
@@ -53,16 +53,16 @@ def cfg_param(column, cfgspec='Nastaveni', value_column=None):
     except KeyError:
         pass
     if not data_object:    
-        resolver = lib.form.resolver()
+        resolver = pytis.form.resolver()
         cfg = resolver.get(cfgspec, 'data_spec')
         data_object = cfg.create(dbconnection_spec=config.dbconnection)
         cfg_objects[cfgspec] = data_object
     data_object.select()
     cfg_row = data_object.fetchone()
     if not cfg_row.has_key(column):
-        return lib.data.Value(None, None)
+        return pytis.data.Value(None, None)
     value = cfg_row[column]
-    if isinstance(value.type(), lib.data.Codebook):
+    if isinstance(value.type(), pytis.data.Codebook):
         return cb2colvalue(value, column=value_column)
     else:
         return value
@@ -103,17 +103,17 @@ def cb2colvalue(value, column=None):
 
     Argumenty:
 
-      value -- Instance `Value' typu `lib.data.Codebook'.
+      value -- Instance `Value' typu `pytis.data.Codebook'.
       column -- název jiného sloupce èíselníku; øetìzec. Viz
-        'lib.data.Codebook.data_value()'
+        'pytis.data.Codebook.data_value()'
         
     """
-    assert isinstance(value, lib.data.Value)
-    assert isinstance(value.type(), lib.data.Codebook)
+    assert isinstance(value, pytis.data.Value)
+    assert isinstance(value.type(), pytis.data.Codebook)
     v, e = value.type().validate(value.export())
     if not v:
         #TODO: Co to je?
-        return lib.data.Value(None, None)
+        return pytis.data.Value(None, None)
     elif column is None:
         return v
     else:
@@ -125,13 +125,13 @@ def cb2strvalue(value, column=None):
 
     Argumenty:
 
-      value -- Instance `lib.data.Value' typu `lib.data.Codebook'.
+      value -- Instance `pytis.data.Value' typu `pytis.data.Codebook'.
       column -- název jiného sloupce èíselníku; øetìzec.  Viz
         `Codebook.data_value()'.
 
     """
-    assert isinstance(value, lib.data.Value)
-    assert isinstance(value.type(), lib.data.Codebook) 
+    assert isinstance(value, pytis.data.Value)
+    assert isinstance(value.type(), pytis.data.Codebook) 
     if column is None:
         v = value.value()
     else:
@@ -140,7 +140,7 @@ def cb2strvalue(value, column=None):
             v = col_value.value()
         else:
             v = None
-    return lib.data.Value(lib.data.String(), v)
+    return pytis.data.Value(pytis.data.String(), v)
 
 
 def dbfunction(name, *args, **kwargs):
@@ -167,10 +167,10 @@ def dbfunction(name, *args, **kwargs):
             value = v.value()
             if value is None or value == '':
                 return None
-    op = lambda: lib.data.DBFunctionDefault(name, config.dbconnection)
-    success, function = lib.form.db_operation(op)
-    op = lambda: function.call(lib.data.Row(args))[0][0]
-    success, result = lib.form.db_operation(op)
+    op = lambda: pytis.data.DBFunctionDefault(name, config.dbconnection)
+    success, function = pytis.form.db_operation(op)
+    op = lambda: function.call(pytis.data.Row(args))[0][0]
+    success, result = pytis.form.db_operation(op)
     return result.value()
 
 
@@ -180,14 +180,14 @@ def dbselect(data_spec, *args, **kwargs):
     Argumenty:
 
       data_spec -- specifikace datového objektu nad kterým má být proveden
-        select; instance tøídy 'lib.data.DBDataDefault'
-      args, kwargs -- argumenty volání 'lib.data.select()'.
+        select; instance tøídy 'pytis.data.DBDataDefault'
+      args, kwargs -- argumenty volání 'pytis.data.select()'.
         
     Vrací v¹echny øádky vrácené z databáze jako list.
     
     """
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-    success, data = lib.form.db_operation(op)
+    success, data = pytis.form.db_operation(op)
     condition=None
     sort=()
     if kwargs.has_key('condition'):
@@ -217,16 +217,16 @@ def dbupdate_many(spec, condition=None, update_row=None):
     Vrací poèet updatovaných øádkù.
     
     """
-    resolver = lib.form.resolver()    
-    if condition is None or not isinstance(condition,lib.data.Operator):
+    resolver = pytis.form.resolver()    
+    if condition is None or not isinstance(condition,pytis.data.Operator):
         raise "Nebyla pøedána pro update_many"
-    elif update_row is None or not isinstance(update_row,lib.data.Row):
+    elif update_row is None or not isinstance(update_row,pytis.data.Row):
         raise "Nebyl pøedán øádek pro update"
     data_spec = resolver.get(spec, 'data_spec')
     if not data_spec:
         raise "Specifikace %s nebyla nalezena!" % (spec)
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-    success, data = lib.form.db_operation(op)
+    success, data = pytis.form.db_operation(op)
     if not success:
         raise "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
     result = data.update_many(condition, update_row) 
@@ -259,7 +259,7 @@ def end_date_value():
 
 def printdirect(resolver, spec, print_spec, row):
     """Tiskni specifikaci pomocí pøíkazu config.printing_command."""
-    class _PrintResolver (lib.output.OutputResolver):
+    class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
         class _Spec:
             def body(self, resolver):
@@ -271,13 +271,13 @@ def printdirect(resolver, spec, print_spec, row):
             def coding(self, resolver):
                 if wx.Font_GetDefaultEncoding() == \
                    wx.FONTENCODING_ISO8859_2:
-                    result = lib.output.Coding.LATIN2
+                    result = pytis.output.Coding.LATIN2
                 else:
-                    result = lib.output.Coding.ASCII
+                    result = pytis.output.Coding.ASCII
                 return result
         def _get_module(self, module_name):
             try:
-                result = lib.output.OutputResolver._get_module(self,
+                result = pytis.output.OutputResolver._get_module(self,
                                                                module_name)
             except ResolverModuleError:
                 result = self._Spec()
@@ -286,11 +286,11 @@ def printdirect(resolver, spec, print_spec, row):
     log(EVENT, 'Vyvolání tiskového formuláøe')
     spec_path = os.path.join('output', print_spec)
     P = _PrintResolver    
-    parameters = {(spec+'/'+lib.output.P_ROW): row}
+    parameters = {(spec+'/'+pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
     print_resolver = P(resolver, parameters=parameters)
     resolvers = (print_resolver,)
-    formatter = lib.output.Formatter(resolvers, spec_path)
+    formatter = pytis.output.Formatter(resolvers, spec_path)
     formatter.printdirect()
 
 
@@ -351,7 +351,7 @@ def run_cb(spec, begin_search=None, condition=None, columns=None,
     Vrací None (pokud není vybrán ¾ádný øádek) nebo instanci 'Value'
     pro sloupec 'returned_column'.
     """
-    resolver = lib.form.resolver()
+    resolver = pytis.form.resolver()
     cbspec = resolver.get(spec, 'cb_spec')
     if not columns:
         columns = cbspec.columns()
