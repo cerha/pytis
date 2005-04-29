@@ -1,3 +1,11 @@
+2005-04-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/types.py: `lib.*' nahrazeno `pytis.*'.
+
+	* lib/pytis/extensions/spec.py: `lib.*' nahrazeno `pytis.*'.
+
+	* lib/pytis/extensions/misc.py: `lib.*' nahrazeno `pytis.*'.
+
 2005-04-28  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (cb2colvalue): Pro validaci pou¾ij
