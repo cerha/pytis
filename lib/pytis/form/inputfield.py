@@ -1173,7 +1173,7 @@ class CodeBookField(Invocable, TextField):
         # Show the CodeBook form.
         cbspec = self.spec().codebook()
         returned_column = cbspec.returned_column()
-        begin_search = alternate and cbspec.begin_search() or None
+        begin_search = alternate or cbspec.begin_search() or None
         result = run_form(CodeBook, cbspec.name(), columns=cbspec.columns(),
                           begin_search=begin_search,
                           select_row=select_row, ctype=t)
