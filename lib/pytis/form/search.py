@@ -29,6 +29,7 @@ konkrétní pou¾ití.
 
 import pytis.data
 from pytis.form import *
+from pytis.presentation import *
 import wx
 
 
