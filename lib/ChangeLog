@@ -1,4 +1,10 @@
 2005-05-02  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (CodeBookField._on_invoke_selection):
+	`begin_search' condition fixed.
+
+	* pytis/form/list.py (CodeBook._on_idle): `begin_search' handling
+	simplified.  Report invalid `begin_search' argument.
+
 	* pytis/form/search.py: Import everything from `pytis.presentation'.
 
