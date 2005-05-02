@@ -2443,7 +2443,7 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
         parent.SetSize((w, h))
         self._parent.SetTitle(self.title())
 
-    def _init_attributes(self, ctype=None, begin_search=False, **kwargs):
+    def _init_attributes(self, ctype=None, begin_search=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
@@ -2472,21 +2472,21 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
             self._grid.SetFocus()
             self._focus_forced_to_grid = True
         if self._begin_search:
-            col = None            
-            if is_anystring(self._begin_search):
-                col = find(self._begin_search, self._columns,
-                           key=lambda c:c.id())
-            if col is None and self._lf_sorting is not None:
-                col = find(self._lf_sorting[0][0], self._columns,
-                           key=lambda c:c.id())
-            if col is not None:
-                self._select_cell(row=0, col=self._columns.index(col))
-                self._on_incremental_search(False)
+            begin_search = self._begin_search
+            self._begin_search = None
+            if isinstance(begin_search, types.StringType):
+                col_id = begin_search
+            elif self._lf_sorting is not None:
+                col_id = self._lf_sorting[0][0]
             else:
-                message(_("Nelze zaèít inkrementální vyhledávání. " + \
+                message(_("Nelze zaèít inkrementální vyhledávání. " +
                           "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
                         beep_=True)
-            self._begin_search = None
+            col = find(col_id, self._columns, key=lambda c:c.id())
+            assert col is not None, "Invalid column: %s" % col_id
+            self._select_cell(row=0, col=self._columns.index(col))
+            self._on_incremental_search(False)
+                
         
     def _context_menu(self):
         return (MItem(_("Vybrat"),
