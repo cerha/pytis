@@ -1,3 +1,12 @@
+2005-05-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (flatten_menus): Nová funkce.
+	(menu_report): Nová funkce.
+	(check_form): Nová funkce.
+	(check_defs): Nová funkce.
+	(check_all_defs): Nová funkce.
+	(check_menus_defs): Nová funkce.
+
 2005-04-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/types.py: `lib.*' nahrazeno `pytis.*'.

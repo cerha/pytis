@@ -382,3 +382,206 @@ def row_update(row, values=()):
     for col, val in values:
         updaterow[col] = val
     data.update(row[key.id()], updaterow)
+
+def flatten_menus():
+    """Vytvoøí jednoúrovòový seznam polo¾ek menu.
+
+       Vrací seznam odpovídajících slovníkových hodnot, pro ka¾dou polo¾ku
+       menu. Slou¾í jako pomocná funkce pro snadnìj¹í zpracování polo¾ek
+       v menu, napø. pøi sestavování pøehledu názvù pou¾itých polo¾ek a jejich
+       specifikací.
+    """    
+    TYPES = ('M', 'F', 'S', 'I')
+    RF = pytis.form.Application.COMMAND_RUN_FORM
+    resolver = pytis.form.resolver()
+    def flatten(flatten, queue, found, level=0):
+        if queue:
+            iappend = ()
+            head = queue[0]
+            tail = queue[1:]
+            if isinstance(head, pytis.form.Menu):
+                found.append({'type': 'M',
+                              'title': head.title(),
+                              'level': level})
+                result = flatten(flatten, head.items(),
+                                 found, level=level+1)
+            elif isinstance(head, pytis.form.MSeparator):
+                found.append({'type': 'S',
+                              'level': level})
+            elif isinstance(head, pytis.form.MItem):
+                title = head.title()
+                if head.command() == RF:
+                    spec = head.args()['name']
+                    form = str(head.args()['form_class'])
+                    form = form.split('.')[-1][:-2]
+                    found.append({'type': 'F',
+                                  'form': form,
+                                  'spec': spec,
+                                  'title': title,
+                                  'level': level})
+                else:
+                    found.append({'type': 'I',
+                                  'title': title,
+                                  'level': level})
+            result = flatten(flatten, tail, found, level=level)
+        else:
+            result = found                
+        return result
+    menus = resolver.get('application', 'menu')
+    menus = flatten(flatten, menus, [])
+    return menus
+
+def menu_report():
+    """Vytváøí pøehledný náhled na polo¾ky menu."""
+    DUALS = ('BrowseDualForm',)
+    MAX_WIDTH = 150
+    PRAVA = (pytis.data.Permission.VIEW,
+             pytis.data.Permission.INSERT,
+             pytis.data.Permission.UPDATE,
+             pytis.data.Permission.DELETE,
+             pytis.data.Permission.EXPORT
+             )
+    resolver = pytis.form.resolver()
+    menus = flatten_menus()
+    radky = []
+    data_specs = []
+    for m in menus:
+        if m['type'] in ('M', 'I'):
+            radek = "  "*m['level'] + m['title']        
+        elif m['type'] == 'F':
+            radek = "  "*m['level'] + m['title']
+            radek = radek + "  <%s:%s>" % (m['spec'], m['form'])
+            spec = m['spec']
+            if m['form'] in DUALS:
+                dual_spec = resolver.get(spec, 'dual_spec')
+                main = dual_spec.main_name()
+                side = dual_spec.side_name()
+                radek = radek + "  (Main: %s, Side: %s)" % (main, side)
+                data_specs.append(main)
+                data_specs.append(side)
+            else:
+                data_specs.append(spec)                
+        elif m['type'] == 'S':
+            radek = "  "*m['level'] + '__________'
+        radky.append(radek)
+    data_specs = remove_duplicates(data_specs)
+    data_specs.sort()
+    radky.append("\n\nPøehled práv pro jednotlivé specifikace:")    
+    radky.append("========================================\n")    
+    for s in data_specs:
+        radky.append(s)
+        try:
+            data = resolver.get(s, 'data_spec')
+            prava = data.access_rights()            
+            if prava:
+                for p in PRAVA:
+                    egroups = prava.permitted_groups(p, None)
+                    if egroups:
+                        radky.append("  %s práva: " % (p) + ', '.join(egroups))
+        except Exception, e:
+            radky.append("  Export práva: CHYBA! Specifikace nenalezena.")            
+    obsah = "\n".join(radky)    
+    width = min(max([len(x) for x in radky]), MAX_WIDTH)
+    pytis.form.run_dialog(pytis.form.InputDialog,
+                          message="Pøehled menu polo¾ek a názvù specifikací",
+                          value=obsah,
+                          input_width=width,
+                          input_height=50)
+
+def check_form():
+    """Zeptá se na název specifikace a zobrazí její report."""
+    resolver = pytis.form.resolver()
+    spec = pytis.form.run_dialog(pytis.form.InputDialog,
+                               message="Kontrola defsu",
+                               prompt="Specifikace",
+                               input_width=30)
+    if spec:
+        try:
+            data_spec = resolver.get(spec, 'data_spec')
+            view_spec = resolver.get(spec, 'view_spec')                
+        except ResolverError:
+            msg = 'Specifikace nenalezena.'
+            pytis.form.run_dialog(pytis.form.Warning, msg)
+            return
+        data = data_spec.create(dbconnection_spec=config.dbconnection)
+        # Políèka v bindings
+        cols = [c.id() for c in data.columns() if c.id()!='oid']
+        obsah = "Políèka v data_spec:\n"
+        obsah = obsah + "\n".join(cols)
+        # Název tabulky
+        table = data.table(cols[0])
+        obsah = obsah + "\n\nTabulka: %s" % (table)
+        # Políèka v bindings
+        fields = [f.id() for f in view_spec.fields()]
+        obsah = obsah + "\n\nPolíèka ve fields:\n"
+        obsah = obsah + "\n".join(fields)
+        # Title
+        title = view_spec.title()
+        obsah = obsah + "\n\n"
+        obsah = obsah + "Title: %s" % (title)
+        # Popup menu
+        popup_menu = view_spec.popup_menu()
+        if popup_menu:                
+            popup_items = [p.title() for p in popup_menu]
+            obsah = obsah + "\n\nPolo¾ky popup_menu:\n"
+            obsah = obsah + "\n".join(popup_items)
+        pytis.form.run_dialog(pytis.form.InputDialog,
+                            message="DEFS: %s" % (spec),
+                            value=obsah,
+                            input_width=100,
+                            input_height=50)
+
+def check_defs(seznam):
+    """Zkontroluje datové specifikace pro uvedený seznam.
+
+    Argumenty:
+      seznam -- seznam názvù specifikací
+
+    """
+    resolver = pytis.form.resolver()
+    errors = []
+    dbconn = dbconnection_spec=config.dbconnection
+    def check_spec(update, seznam):
+        total = len(seznam)
+        last_status = 0
+        step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
+        for n, s in enumerate(seznam):
+            status = int(float(n)/total*100/step)
+            if status != last_status:
+                last_status = status 
+                if not update(status*step):
+                    break
+            try:
+                data_spec = resolver.get(s, 'data_spec')
+                view_spec = resolver.get(s, 'view_spec')
+                try:
+                    data = data_spec.create(dbconnection_spec=dbconn)
+                except Exception, e:
+                    err = """Specifikace %s: %s""" % (s, str(e))
+                    errors.append(err)
+            except ResolverError, e:
+                err = """Specifikace %s: %s""" % (s, str(e))
+    msg = 'Kontroluji datové specifikace...'
+    pytis.form.run_dialog(pytis.form.ProgressDialog, check_spec, args=(seznam,),
+                        message=msg, elapsed_time=True, can_abort=False)
+    if errors:
+        obsah = "\n".join(errors)
+        pytis.form.run_dialog(pytis.form.InputDialog,
+                            message="Chyby ve specifikacích",
+                            value=obsah,
+                            input_width=100,
+                            input_height=50)
+
+def check_all_defs():
+    import re
+    files = [os.path.splitext(x)[0] for x in os.listdir(config.def_dir)
+             if not re.search('[#~_]', x) and x.endswith('.py')]
+    return check_defs(files)
+ 
+def check_menus_defs():        
+    menus = flatten_menus()
+    seznam = [m['spec'] for m in menus
+              if m.has_key('form')]
+    return check_defs(seznam)
+            
+            
