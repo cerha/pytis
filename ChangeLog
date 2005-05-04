@@ -1,3 +1,10 @@
+2005-05-04  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (constraints_email,
+	constraints_email_many): Kontroluje
+	string podle re výrazu. Pokud odpovídá nebo je None funkce vrací
+	None. Jinak vrací string s chybovou hlá¹kou. 
+
 2005-05-03  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (flatten_menus): Nová funkce.
