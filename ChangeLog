@@ -1,3 +1,8 @@
+2005-05-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (DataSpec.__init__): Nový argument `oid'.
+	(DataSpec.make): Pøidávej OID sloupce v závislosti na jeho hodnotì.
+
 2005-05-04  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (constraints_email,
