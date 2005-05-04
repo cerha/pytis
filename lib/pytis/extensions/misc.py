@@ -595,8 +595,9 @@ def constraints_email(email):
     return None
 
 def constraints_email_many(emails):
-    """Kontroluje string podle re výrazu. Pokud odpovídá nebo je None funkce
-    vrací None. Jinak vrací string s chybovou hlá¹kou"""
+    """Kontroluje string podle re výrazu pro ka¾dou jeho èást odìlenou èárkou.
+    Pokud odpovídá nebo je None funkce vrací None. Jinak vrací string s
+    chybovou hlá¹kou"""
     if emails is None:
         return None
     not_match=[]
