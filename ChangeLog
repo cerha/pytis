@@ -1,3 +1,8 @@
+2005-05-04  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (cache_spec): Cachování specifikací
+	pøi startu; provádí se podle specifikací v menu.
+
 2005-05-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (DataSpec.__init__): Nový argument `oid'.

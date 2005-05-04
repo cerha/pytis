@@ -383,6 +383,9 @@ def row_update(row, values=()):
         updaterow[col] = val
     data.update(row[key.id()], updaterow)
 
+
+# Application function
+
 def flatten_menus():
     """Vytvoøí jednoúrovòový seznam polo¾ek menu.
 
@@ -583,6 +586,39 @@ def check_menus_defs():
     seznam = [m['spec'] for m in menus
               if m.has_key('form')]
     return check_defs(seznam)
+
+def cache_spec():
+    resolver = pytis.form.resolver()
+    menus = flatten_menus()
+    specs = [m['spec'] for m in menus
+             if m.has_key('form')]
+    import re
+    files = [os.path.splitext(x)[0] for x in os.listdir(config.def_dir)
+             if not re.search('[#~_]', x) and x.endswith('.py')]
+    def do(update, specs):
+        total = len(specs)
+        last_status = 0
+        step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
+        for n, file in enumerate(specs):
+            status = int(float(n)/total*100/step)
+            if status != last_status:
+                last_status = status 
+                if not update(status*step):
+                    break
+            for spec in ('dual_spec', 'data_spec', 'view_spec',
+                         'cb_spec', 'proc_spec'):
+                try:
+                    resolver.get(file, spec)
+                except ResolverError:
+                    pass
+    msg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
+                     'Naèítání je mo¾no trvale vypnout pomocí dialogu',
+                     '"Nastavení u¾ivatelského rozhraní"'))
+    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(specs,),
+                          message=msg, elapsed_time=True, can_abort=True)
+
+
+# Additional constraints
             
 def constraints_email(email):
     """Kontroluje string podle re výrazu. Pokud odpovídá nebo je None funkce
