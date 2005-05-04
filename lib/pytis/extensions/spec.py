@@ -37,7 +37,7 @@ class DataSpec(object):
     
     """
     
-    def __init__(self, table, columns, key, access_rights=None,
+    def __init__(self, table, columns, key, oid=None, access_rights=None, 
                  ignore_enumerators=False):
         """Inicializuj specifikaci.
 
@@ -48,6 +48,11 @@ class DataSpec(object):
             Jedná se v¾dy o sloupce z tabulky 'table'.
           key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
             identifikátorem musí být pøítomný v 'columns'.
+          oid -- seznam názvù OID sloupcù (tuple).  Pokud je None (výchozí
+            hodnota), bude doplnìn jeden sloupec s názvem 'oid'.  Pro v¹echny
+            uvedené sloupce budou automaticky pøidány pøíslu¹né vazby.  Pokud
+            tabulka nemá ¾ádný mít ¾ádný oid sloupec, uvedeme prázdný seznam.
+            Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
           access_rights -- práva jako instance 'pytis.data.AccessRights'.
           ignore_enumerators -- pokud bude pøedána pravdivá hodnota, budou
             enumerátory v¹ech sloupcù ignorovány.
@@ -59,15 +64,24 @@ class DataSpec(object):
         assert isinstance(table, types.StringType)
         assert isinstance(columns, (types.ListType, types.TupleType))
         assert isinstance(key, types.StringType)
+        assert isinstance(key, (types.StringType, types.ListType,
+                                types.TupleType)) or oid is None
         assert isinstance(ignore_enumerators, types.BooleanType)
         assert isinstance(access_rights, pytis.data.AccessRights) \
                or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
         for c in columns:
             assert isinstance(c, Column)
+        if oid is None:
+            oid = ('oid',)
+        else:
+            oid = xtuple(oid)
+            for c in oid:
+                assert isinstance(c, types.StringType)
         self._table = table
         self._key = key
         self._columns = columns
+        self._oid = oid
         self._ignore_enumerators = ignore_enumerators
         self._access_rights = access_rights
 
@@ -75,7 +89,9 @@ class DataSpec(object):
         """Vta» instanci 'pytis.data.DataFactory' odpovídající specifikaci."""
         t = self._table
         bindings = []
-        for c in self._columns:
+        columns = self._columns + \
+                  tuple([Column(c, type=pytis.data.Oid()) for c in self._oid])
+        for c in columns:
             type = c.type()
             kwargs = c.kwargs()
             e = c.enumerator()
@@ -88,6 +104,7 @@ class DataSpec(object):
                     kwargs['data_factory_kwargs'] = {'dbconnection_spec':
                                                      config.dbconnection}
                     type = pytis.data.Codebook(enumerator, **kwargs)
+                    kwargs = {}
                 else:
                     assert isinstance(type, pytis.data.Codebook)
                     assert kwargs == {}
@@ -96,14 +113,11 @@ class DataSpec(object):
                 assert kwargs == {}, \
                        "Argumenty jsou zatím podporovány jen pro enumerator."
             bindings.append(pytis.data.DBColumnBinding(c.id(), t, c.column(),
-                                                     enumerator=enumerator,
-                                                     type_=type))
-        if not find('oid', bindings, key=lambda b: b.column()):
-            oid = pytis.data.DBColumnBinding('oid', t, 'oid', type_=pytis.data.Oid())
-            bindings.append(oid)
+                                                       enumerator=enumerator,
+                                                       type_=type, **kwargs))
         key = find(self._key, bindings, key=lambda b: b.column())
         return pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, key,
-                                    access_rights=self._access_rights)
+                                      access_rights=self._access_rights)
     
 
 class Column(object):
