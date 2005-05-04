@@ -23,7 +23,7 @@ from pytis.extensions import *
 import pytis.output
 import pytis.form
 import pytis.data
-
+import re
 # TODO: je to tu potøeba?  Pøíle¾itostnì smazat!
 from pytis.presentation import *
 from pytis.util import *
@@ -584,4 +584,28 @@ def check_menus_defs():
               if m.has_key('form')]
     return check_defs(seznam)
             
-            
+def constraints_email(email):
+    """Kontroluje string podle re výrazu. Pokud odpovídá nebo je None funkce
+    vrací None. Jinak vrací string s chybovou hlá¹kou"""
+    if email is None:
+        return None
+    mask=re.compile(r"^[A-Za-z\d]([\w\d\.-]?[A-Za-z\d])*\@[A-Za-z\d]([\w\d\.-]?[A-Za-z\d])*$")
+    if mask.match(email.strip()) is None:
+        return "©patný tvar emailu " + email.strip()  + " !"
+    return None
+
+def constraints_email_many(emails):
+    """Kontroluje string podle re výrazu. Pokud odpovídá nebo je None funkce
+    vrací None. Jinak vrací string s chybovou hlá¹kou"""
+    if emails is None:
+        return None
+    not_match=[]
+    for email in emails.split(','):
+        result = constraints_email(email)
+        if not result is None:
+            not_match.append(result)
+    if len(not_match) == 0:
+        return None
+    return '\n'.join(not_match)
+
+
