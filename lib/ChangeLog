@@ -1,3 +1,21 @@
+2005-05-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_get_table_type): Nový
+	argument `type_kwargs'.  Pøedávej jej volání
+	`self._pdbb_get_type()'
+	(PostgreSQLStandardBindingHandler._pdbb_get_type): Nový argument
+	`type_kwargs'.  Nech» je argument `ctype' nepovninný.
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Nepodporuj ji¾ specifikaci typu ani enumerátoru obsahující tuple.
+	Pøedávej klíèové argumenty z DBColumnBinding do volání
+	`self._pdbb_get_table_type()' a konstruktorùm typù.
+	(DBBinding.__init__): Pøidán assert na typ argumentu `id'.
+	(DBColumnBinding.__init__): Nový argument `**kwargs'.
+	Zdokumentovány zmìny v chápání argumentù `enumerator' a `type_'.
+	Pøidány asserty an datové typy v¹ech arguemntù.
+	(DBColumnBinding.kwargs): Nová metoda. 
+
 2005-05-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (CodeBookField._on_invoke_selection):
