@@ -645,7 +645,7 @@ class DBDataPostgreSQL(DBData):
         
     def _pg_rollback_transaction (self):
         self._pg_query ('rollback')
-        
+
     # Pomocné metody
 
     def _pg_create_make_row_template(self, columns):
@@ -1718,7 +1718,7 @@ class PostgreSQLStandardBindingHandler(object):
         #return 'coalesce(%s%s, %s%s)' % (value, cast, default, cast)
         return '%s%s' % (value, cast)
 
-    def _pdbb_get_table_type(self, table, column, ctype):
+    def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
         d = self._pg_query(
             ("select pg_type.typname, pg_attribute.atttypmod, "+\
              "pg_attribute.attnotnull "+\
@@ -1749,9 +1749,11 @@ class PostgreSQLStandardBindingHandler(object):
         except:
             default = ''
         serial = (default[:len('nextval')] == 'nextval')
-        return self._pdbb_get_type(type_, size_string, not_null, serial, ctype)
-        
-    def _pdbb_get_type(self, type_, size_string, not_null, serial, ctype):
+        return self._pdbb_get_type(type_, size_string, not_null, serial,
+                                   ctype=ctype, type_kwargs=type_kwargs)
+    
+    def _pdbb_get_type(self, type_, size_string, not_null, serial,
+                       ctype=None, type_kwargs=None):
         # Zde lze doplnit dal¹í pou¾ívané standardní typy z PostgreSQL
         TYPE_MAPPING = {'bool': Boolean,
                         'bpchar': String,
@@ -1774,10 +1776,10 @@ class PostgreSQLStandardBindingHandler(object):
         except KeyError:
             raise DBException('Unhandled database type', None, type_)
         if ctype is None:
-            if not_null in (1, 'T'):
-                type_args = {'not_null': True}
-            else:
-                type_args = {}
+            if type_kwargs is None:
+                type_kwargs = {}
+            if not_null in (1, 'T') and not type_kwargs.has_key('not_null'):
+                type_kwargs['not_null'] = True
             if type_class_ == String:
                 if type_ != 'text':
                     try:
@@ -1786,16 +1788,16 @@ class PostgreSQLStandardBindingHandler(object):
                         size = None
                     if size < 0:
                         size = None
-                    type_args['maxlen'] = size
+                    type_kwargs['maxlen'] = size
             elif type_class_ == Float:
                 spec = int(size_string)
                 precision = (spec & 0xFFFF) - 4
                 if precision < 0 or precision > 100:
                     precision = None
-                type_args['precision'] = precision
+                type_kwargs['precision'] = precision
             elif type_class_ == Integer and serial:
                 type_class_ = Serial
-            result = type_class_(**type_args)
+            result = type_class_(**type_kwargs)
         else:
             assert isinstance(ctype, type_class_), \
                    ("User type doesn't match DB type", ctype, type_class_)
@@ -1808,15 +1810,8 @@ class PostgreSQLStandardBindingHandler(object):
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            table, column, btype, enumerator = \
-                   b.table(), b.column(), b.type(), b.enumerator()
-            #TODO: Pryè s tím!!!
-            if type(btype) == type(()):
-                codebook_class_, data_spec = btype
-                cspec = self._pg_dbconnection_spec()
-                df_kwargs = {'dbconnection_spec': cspec}
-                btype = codebook_class_(data_spec,
-                                        data_factory_kwargs=df_kwargs)
+            table, column, btype, enumerator, kwargs = \
+                   b.table(), b.column(), b.type(), b.enumerator(), b.kwargs()
             # Jaký je typ odpovídajícího sloupce?
             if enumerator:
                 if btype:
@@ -1829,12 +1824,9 @@ class PostgreSQLStandardBindingHandler(object):
                     # constraints se momentálnì moc nevyu¾ívají.  Pokud to bude
                     # potøeba, je otázka, jak je zde pøedávat.
                     assert not atype.constraints()
-                    value_column = len(enumerator) > 1 and enumerator[1] or None
-
-                    btype = Codebook(enumerator[0],
-                                     data_factory_kwargs=df_kwargs,
-                                     value_column=value_column,
-                                     not_null=atype.not_null())
+                    kwargs['not_null'] = atype.not_null()
+                    btype = Codebook(enumerator, data_factory_kwargs=df_kwargs,
+                                     **kwargs)
             else:
                 if is_sequence(column):
                     related_to = b.related_to()
@@ -1842,9 +1834,10 @@ class PostgreSQLStandardBindingHandler(object):
                            'Lengths of columns and related don\'t match'
                     subtypes = [self._pdbb_get_table_type(table, c, btype)
                                 for c in column]
-                    btype = Sequence(tuple(subtypes))
+                    btype = Sequence(tuple(subtypes), **kwargs)
                 else:
-                    btype = self._pdbb_get_table_type(table, column, btype)
+                    btype = self._pdbb_get_table_type(table, column, btype,
+                                                      kwargs)
             colspec = ColumnSpec(b.id(), btype)
             columns.append(colspec)
             if b in self._key_binding:
@@ -2575,7 +2568,7 @@ class DBPyPgFunction(Function, DBDataDefaultClass):
                          "where oid = '%s'") % tnum
                 data = self._pg_query(query)
                 type_, size_string = data[0]
-                t = self._pdbb_get_type(type_, size_string, False, False, None)
+                t = self._pdbb_get_type(type_, size_string, False, False)
                 return t
             r_type_instance = type_instance(r_type)
             columns = [ColumnSpec('', r_type_instance)]
@@ -2710,6 +2703,7 @@ class DBBinding:
           id -- identifikátor napojení, libovolný string
           
         """
+        assert isinstance(id, types.StringType)
         self._id = id
 
     def id(self):
@@ -2728,7 +2722,7 @@ class DBColumnBinding(DBBinding):
     
     """
     def __init__(self, id, table, column, related_to=None, enumerator=None,
-                 type_=None):
+                 type_=None, **kwargs):
         """Definuj napojení.
 
         Argumenty:
@@ -2741,22 +2735,17 @@ class DBColumnBinding(DBBinding):
           related_to -- instance 'DBColumnBinding' specifikující, se kterým
             sloupcem jiné databázové tabulky je tento sloupec v relaci; pokud
             s ¾ádným, je hodnotou 'None'
-          enumerator -- 'None' nebo sekvence, jejím¾ prvním prvkem je instance
-            tøídy 'DataFactory' odpovídající nìjakému èíselníku a dal¹ími
-            prvky jsou prvky sekvence pro argument 'column_values' tøídy
-            'pytis.data.Codebook'; mù¾e být té¾ pøímo instance tøídy
-            'DataFactory', pak bude jako 'column_values' pøedán prázdný seznam
+          enumerator -- 'None' nebo instance tøídy 'DataFactory' odpovídající
+            navázanému èíselníku.
           type_ -- explicitnì specifikovaný typ sloupce jako instance tøídy
             'Type' nebo 'None'.  Je-li 'None', bude typ sloupce urèen
             automaticky dle informací získaných pøímo z databáze.  V opaèném
             pøípadì bude typem hodnota tohoto argumentu, která musí odpovídat
-            typu sloupce v databázi (být jeho specializací).  Jako speciální
-            pøípad mù¾e 'type_' být i dvojice (CODEBOOK_CLASS, DATA_FACTORY),
-            kde CODEBOOK_CLASS je tøída 'Codebook' nebo její podtøída a
-            DATA_FACTORY je instance tøídy 'DataFactory'; taková specifikace
-            urèuje odpovídající èíselníkový typ bez nutnosti vytváøet ihned
-            v okam¾iku jeho specifikace jeho instanci a pota¾mo datový objekt
-            daný DATA_FACTORY.
+            typu sloupce v databázi (být jeho specializací).
+          **kwargs -- explicitnì definované klíèové argumenty typu.  Pokud jsou
+            definovány libovolné klíèové argumenty, budou tyto pøedány
+            konstruktoru implicitního datového typu.  Typ v takovém pøípadì
+            nesmí být explicitnì urèen argumentem 'type_'.
 
         Napojení mù¾e být *skryté*, co¾ znamená, ¾e pøímo neodpovídá ¾ádnému
         sloupci datové tabulky.  To se mù¾e stát napøíklad v pøípadì, ¾e
@@ -2781,13 +2770,18 @@ class DBColumnBinding(DBBinding):
           
         """
         DBBinding.__init__(self, id)
+        assert isinstance(table, types.StringType), table
+        assert isinstance(column, types.StringType), column
+        assert isinstance(enumerator, DataFactory) or enumerator is None, \
+               enumerator
+        assert isinstance(type_, Type) or type_ is None, type_
+        assert kwargs == {} or type_ is None, (type_, kwargs)
         self._table = table
         self._column = column
         self._related_to = related_to
-        if enumerator is not None and not is_sequence(enumerator):
-            enumerator = (enumerator,)
         self._enumerator = enumerator
         self._type = type_
+        self._kwargs = kwargs
         self._is_hidden = not id
 
     def table(self):
@@ -2809,6 +2803,10 @@ class DBColumnBinding(DBBinding):
     def type(self):
         """Vra» instanci typu sloupce z konstruktoru nebo 'None'."""
         return self._type
+    
+    def kwargs(self):
+        """Vra» slovník klíèových argumentù konstruktoru dat. typu sloupce."""
+        return self._kwargs
     
     def is_hidden(self):
         """Vra» pravdu, právì kdy¾ sloupec není pøítomen v datové tabulce."""
