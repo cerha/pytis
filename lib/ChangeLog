@@ -1,5 +1,8 @@
 2005-05-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/xtypes.py (Codebook.validity_condition): Povol None,
+	jako hodnotu vrácenou providerem.
+
 	* pytis/data/dbdata.py
 	(PostgreSQLStandardBindingHandler._pdbb_get_table_type): Nový
 	argument `type_kwargs'.  Pøedávej jej volání
