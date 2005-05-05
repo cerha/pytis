@@ -211,8 +211,8 @@ class Codebook(MutableType, Enumeration):
         f = self._runtime_filter_provider
         if f is not None:
             if self._runtime_filter_dirty:
-                self._runtime_filter = apply(f, self._runtime_filter_args)
-                assert isinstance(self._runtime_filter, Operator)
+                self._runtime_filter = flt = apply(f, self._runtime_filter_args)
+                assert isinstance(flt, Operator) or flt is None
                 self._runtime_filter_dirty = False
                 self._update(force=True)
             condition = self._runtime_filter
