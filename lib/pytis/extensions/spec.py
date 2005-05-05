@@ -98,20 +98,7 @@ class DataSpec(object):
             if self._ignore_enumerators:
                 e = None
                 kwargs = {}
-            if e:
-                enumerator = pytis.form.resolver().get(e, 'data_spec')
-                if not type:
-                    kwargs['data_factory_kwargs'] = {'dbconnection_spec':
-                                                     config.dbconnection}
-                    type = pytis.data.Codebook(enumerator, **kwargs)
-                    kwargs = {}
-                else:
-                    assert isinstance(type, pytis.data.Codebook)
-                    assert kwargs == {}
-            else:
-                enumerator = None
-                assert kwargs == {}, \
-                       "Argumenty jsou zatím podporovány jen pro enumerator."
+            enumerator = e and pytis.form.resolver().get(e, 'data_spec') or None
             bindings.append(pytis.data.DBColumnBinding(c.id(), t, c.column(),
                                                        enumerator=enumerator,
                                                        type_=type, **kwargs))
@@ -133,24 +120,33 @@ class Column(object):
             shoduje s identifikátorem, není jej tøeba definovat.
           enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
             této specifikace bude získán datový objekt a pou¾it jako èíselník.
-            Typ bude v takovém pøípadì automaticky nastaven na
+            V takovém pøípadì bude typ tohoto sloupeèku automaticky 
             'pytis.data.Codebook', pokud není urèen explicitnì (viz. ní¾e).
           type -- explicitní urèení datového typu sloupce (instance
-            'pytis.data.Type', nebo None).
+            'pytis.data.Type', nebo None).  Tento argument by mìl být pou¾it
+            pouze pokud chceme urèit vlastní (odvozený) datový typ, nikoliv
+            pokud chceme mìnit parametry standardních typù.  Ty je mo¾no
+            nastavit pøedáním klíèovách argumentù (viz ní¾e).
           **kwargs -- pokud jsou uvedeny jakékoliv dal¹í klíèové argumenty,
-            budou tyto pøedány konstruktoru datového typu sloupce.  Momentálnì
-            jsou v¹ak klíèové argumenty podporovány pouze v pøípadì, ¾e je
-            specifikován enumerator.  Potom je vytvoøen 'Codebook' s danými
-            argumenty.  Pokud je tøeba pøedat argumenty jinému typu, je
-            prozatím nutno pou¾ít argument 'type'.
+            budou tyto pøedány konstruktoru datového typu sloupce.  Tento
+            postup by mìl být preferován pøed explicitní definicí instance typu
+            argumentem 'type', pokud je to mo¾né.
 
         """
-        assert isinstance(id, types.StringType)
-        assert isinstance(column, types.StringType) or column is None
-        assert isinstance(enumerator, types.StringType) or enumerator is None
-        assert isinstance(type, pytis.data.Type) or type is None
-        if isinstance(type, pytis.data.Codebook):
-            assert enumerator is not None
+        assert isinstance(id, types.StringType), \
+               "Invalid value for argument 'id': %s" % id
+        assert isinstance(column, types.StringType) or column is None, \
+               "Invalid value for argument 'column': %s" % column
+        assert isinstance(enumerator, types.StringType) or enumerator is None, \
+               "Invalid value for argument 'enumerator': %s" % enumerator
+        assert isinstance(type, pytis.data.Type) or type is None, \
+               "Invalid value for argument 'type': %s" % type
+        assert enumerator is None or type is None \
+               or isinstance(type, pytis.data.Codebook), \
+               "Invalid codebook type: %s" % type
+        assert type is None or kwargs == {}, \
+               "When the 'type' is defined explicitly, " + \
+               "using kwargs makes no sense: %s" % kwargs
         self._id = id
         if column is None:
             column = id
