@@ -1,3 +1,20 @@
+2005-05-05  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (dbselect): Doplnìna mo¾nost zadat
+	název specifikace (pøedtím jen instanci 'DataFactory').
+	(flatten_menus.flatten): Do slovníku ukládej pro 'form' pøímo
+	'form_class'. 
+	(get_menu_defs): Nová funkce.
+	(menu_report): Testuj duální formuláøe podle pøedané 'form_class'.
+	(check_form): Doplnìno '*args' a '**kwargs'.
+	(check_defs): Doplnìno '*args' a '**kwargs'.
+	(check_defs.check_spec): Pøepsáno. Testuje se i vytváøení
+	'PresentedRow'. Upraven vzhled ProgressBaru.
+	(check_all_defs): Odstranìno.
+	(check_menus_defs): Vyu¾ívej 'get_menu_defs'.
+	(cache_spec): Doplnìno '*args' a '**kwargs'.
+	(cache_spec.do): Cachuj i defsy získané z VARIANTS.
+
 2005-05-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (DataSpec.make): Pøenech vytváøení

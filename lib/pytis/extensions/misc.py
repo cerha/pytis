@@ -179,13 +179,15 @@ def dbselect(data_spec, *args, **kwargs):
 
     Argumenty:
 
-      data_spec -- specifikace datového objektu nad kterým má být proveden
-        select; instance tøídy 'pytis.data.DBDataDefault'
+      data_spec -- název specifikace datového objektu nad kterým má být proveden
+        select nebo pøímo instance tøídy 'pytis.data.DataFactory'
       args, kwargs -- argumenty volání 'pytis.data.select()'.
         
     Vrací v¹echny øádky vrácené z databáze jako list.
     
-    """
+    """    
+    if isinstance(data_spec, types.StringType):
+        data_spec = pytis.form.resolver().get(data_spec, 'data_spec')
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
     condition=None
@@ -415,8 +417,7 @@ def flatten_menus():
                 title = head.title()
                 if head.command() == RF:
                     spec = head.args()['name']
-                    form = str(head.args()['form_class'])
-                    form = form.split('.')[-1][:-2]
+                    form = head.args()['form_class']
                     found.append({'type': 'F',
                                   'form': form,
                                   'spec': spec,
@@ -434,9 +435,40 @@ def flatten_menus():
     menus = flatten(flatten, menus, [])
     return menus
 
-def menu_report():
+def get_menu_defs(without_duals=False, *args, **kwargs):   
+    resolver = pytis.form.resolver()
+    menus = flatten_menus()
+    duals = [m for m in menus
+             if m.has_key('form')
+             and issubclass(m['form'], DualForm)
+             and not issubclass(m['form'], DescriptiveDualForm)
+             ]
+    notduals = [m for m in menus
+                if m.has_key('form')
+                and m not in duals]
+    subduals = []
+    for d in duals:        
+        dual_spec = resolver.get(d['spec'], 'dual_spec')
+        subduals.append(dual_spec.main_name())
+        subduals.append(dual_spec.side_name())
+    specs = [m['spec'] for m in notduals] + subduals
+    if not without_duals:
+        specs = specs + [m['spec'] for m in duals]
+    specs = remove_duplicates(specs)
+    # Zjistíme i varianty podle konstanty VARIANTS
+    variants = []
+    for m in specs:
+        try:
+            vlist = resolver.get_object(m, 'VARIANTS')
+            vlist = ['%s:%s' % (m, v) for v in vlist
+                     if isinstance(v, types.StringType)]
+            variants = variants + list(vlist)
+        except Exception, e:
+            pass
+    return remove_duplicates(specs + variants)
+
+def menu_report(*args, **kwargs):
     """Vytváøí pøehledný náhled na polo¾ky menu."""
-    DUALS = ('BrowseDualForm',)
     MAX_WIDTH = 150
     PRAVA = (pytis.data.Permission.VIEW,
              pytis.data.Permission.INSERT,
@@ -453,9 +485,12 @@ def menu_report():
             radek = "  "*m['level'] + m['title']        
         elif m['type'] == 'F':
             radek = "  "*m['level'] + m['title']
-            radek = radek + "  <%s:%s>" % (m['spec'], m['form'])
+            formname = str(m['form'])
+            formname = formname.split('.')[-1][:-2]
+            radek = radek + "  <%s:%s>" % (m['spec'], formname)
             spec = m['spec']
-            if m['form'] in DUALS:
+            if issubclass(m['form'], DualForm) \
+               and not issubclass(m['form'], DescriptiveDualForm):
                 dual_spec = resolver.get(spec, 'dual_spec')
                 main = dual_spec.main_name()
                 side = dual_spec.side_name()
@@ -491,7 +526,7 @@ def menu_report():
                           input_width=width,
                           input_height=50)
 
-def check_form():
+def check_form(*args, **kwargs):
     """Zeptá se na název specifikace a zobrazí její report."""
     resolver = pytis.form.resolver()
     spec = pytis.form.run_dialog(pytis.form.InputDialog,
@@ -534,8 +569,8 @@ def check_form():
                             input_width=100,
                             input_height=50)
 
-def check_defs(seznam):
-    """Zkontroluje datové specifikace pro uvedený seznam.
+def check_defs(seznam, *args, **kwargs):
+    """Zkontroluje specifikace pro uvedený seznam.
 
     Argumenty:
       seznam -- seznam názvù specifikací
@@ -546,27 +581,49 @@ def check_defs(seznam):
     dbconn = dbconnection_spec=config.dbconnection
     def check_spec(update, seznam):
         total = len(seznam)
-        last_status = 0
-        step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
+        last_error = ''
+        step = 1 # aktualizujeme jen po ka¾dých 'step' procentech...
         for n, s in enumerate(seznam):
+            newmsg = """Kontroluji datové specifikace...
+Specifikace: %s
+Poslední chyba v: %s""" % (s, last_error)
             status = int(float(n)/total*100/step)
-            if status != last_status:
-                last_status = status 
-                if not update(status*step):
-                    break
+            if not update(status*step, newmsg=newmsg):
+                break
             try:
                 data_spec = resolver.get(s, 'data_spec')
-                view_spec = resolver.get(s, 'view_spec')
                 try:
-                    data = data_spec.create(dbconnection_spec=dbconn)
+                    op = lambda: data_spec.create(dbconnection_spec=dbconn)
+                    success, data = pytis.form.db_operation(op)
+                    if not success:
+                        err = "Specifikace %s: Nepodaøilo se vytvoøit datový objekt." % (s)
+                        errors.append()
+                        last_error = "%s\n(Nepodaøilo se vytvoøit datový objekt)" % s
+                        continue
+                    data.select()
+                    row = data.fetchone()
+                    if row:
+                        try:
+                            view_spec = resolver.get(s, 'view_spec')
+                            fields = view_spec.fields()
+                            prow = PresentedRow(fields, data, row)
+                        except Exception, e:
+                            err = """Specifikace %s: %s""" % (s, str(e))
+                            errors.append(err)
+                            last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
                 except Exception, e:
                     err = """Specifikace %s: %s""" % (s, str(e))
                     errors.append(err)
+                    last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
             except ResolverError, e:
                 err = """Specifikace %s: %s""" % (s, str(e))
-    msg = 'Kontroluji datové specifikace...'
+                errors.append(err)                
+                last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
+    sirka = max([len(s) for s in seznam]) + len('Poslední chyba v: ') + 6
+    msg = 'Kontroluji datové specifikace...'.ljust(sirka)
+    msg = msg + '\n\n\n\n'
     pytis.form.run_dialog(pytis.form.ProgressDialog, check_spec, args=(seznam,),
-                        message=msg, elapsed_time=True, can_abort=False)
+                        message=msg, elapsed_time=True, can_abort=True)
     if errors:
         obsah = "\n".join(errors)
         pytis.form.run_dialog(pytis.form.InputDialog,
@@ -574,30 +631,26 @@ def check_defs(seznam):
                             value=obsah,
                             input_width=100,
                             input_height=50)
-
-def check_all_defs():
-    import re
-    files = [os.path.splitext(x)[0] for x in os.listdir(config.def_dir)
-             if not re.search('[#~_]', x) and x.endswith('.py')]
-    return check_defs(files)
  
-def check_menus_defs():        
-    menus = flatten_menus()
-    seznam = [m['spec'] for m in menus
-              if m.has_key('form')]
+def check_menus_defs(*args, **kwargs):        
+    seznam = get_menu_defs(without_duals=True)
     return check_defs(seznam)
 
-def cache_spec():
+def cache_spec(*args, **kwargs):
     resolver = pytis.form.resolver()
     menus = flatten_menus()
-    specs = [m['spec'] for m in menus
+    menu_specs = [m['spec'] for m in menus
              if m.has_key('form')]
-    import re
-    files = [os.path.splitext(x)[0] for x in os.listdir(config.def_dir)
-             if not re.search('[#~_]', x) and x.endswith('.py')]
-    def do(update, specs):
-        total = len(specs)
+    def do(update, menu_specs):
+        update(2)
+        # Zjistíme i varianty
+        specs = get_menu_defs()
+        total = len(specs)        
         last_status = 0
+        newmsg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
+                         'Naèítání je mo¾no trvale vypnout pomocí dialogu',
+                         '"Nastavení u¾ivatelského rozhraní"'))
+        update(4, newmsg=newmsg)
         step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
         for n, file in enumerate(specs):
             status = int(float(n)/total*100/step)
@@ -611,10 +664,8 @@ def cache_spec():
                     resolver.get(file, spec)
                 except ResolverError:
                     pass
-    msg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
-                     'Naèítání je mo¾no trvale vypnout pomocí dialogu',
-                     '"Nastavení u¾ivatelského rozhraní"'))
-    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(specs,),
+    msg = _('Sestavuji seznam specifikací (pøeru¹te pomocí Esc).\n\n\n')
+    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(menu_specs,),
                           message=msg, elapsed_time=True, can_abort=True)
 
 
