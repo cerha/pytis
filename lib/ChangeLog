@@ -1,3 +1,10 @@
+2005-05-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/dbdata.py
+	(DBDataPostgreSQL._pg_create_make_row_template): Doplò o testování
+	instance 'Time'.
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): O¹etøi typ 'Time'.
+
 2005-05-06  Petr Malivanek  <malivanek@asellus.cz>
 
 	* pytis/presentation/spec.py, pytis/form/screen.py (init_colors):

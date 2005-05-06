@@ -666,8 +666,11 @@ class DBDataPostgreSQL(DBData):
             elif isinstance(type, Sequence):
                 typid = 2
                 icount = len(type)
-            elif isinstance(type, DateTime):
+            elif isinstance(type, Time):
                 typid = 3
+                icount = 1
+            elif isinstance(type, DateTime):
+                typid = 4
                 icount = 1
             else:
                 typid = 99
@@ -707,7 +710,12 @@ class DBDataPostgreSQL(DBData):
                 val, err = type.validate(tuple(data_0[i:new_i]), strict=False)
                 assert err is None, (str(err), type, data_0[i:new_i])
                 i = new_i
-            elif typid == 3:            # date-time
+            elif typid == 3:            # time
+                val, err = type.validate(data_0[i], strict=False,
+                                         format=type.SQL_FORMAT, local=False)
+                assert err is None
+                i += 1                
+            elif typid == 4:            # date-time
                 val, err = type.validate(data_0[i], strict=False,
                                          format=type.SQL_FORMAT, local=False)
                 assert err is None
@@ -1706,6 +1714,9 @@ class PostgreSQLStandardBindingHandler(object):
         elif isinstance(ctype, Number):
             default = '0'
             cast = ''
+        elif isinstance(ctype, Time):
+            default = "'00:00:01'"
+            cast = '::time'
         elif isinstance(ctype, DateTime):
             default = "'0000-01-01'"
             cast = '::date'
