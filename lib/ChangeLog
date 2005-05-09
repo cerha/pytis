@@ -1,3 +1,10 @@
+2005-05-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (HtmlWindow, InfoWindow): Nové tøídy.
+
+	* pytis/form/application.py (Application.wx_frame): Nová metoda.
+	(wx_frame): Nová funkce.
+
 2005-05-06  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/dbdata.py
