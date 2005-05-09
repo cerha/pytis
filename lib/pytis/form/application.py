@@ -575,6 +575,10 @@ class Application(wx.App, KeyHandler):
         """Vra» resolver instancí podle jména; instance 'pytis.util.Resolver'."""
         return self._resolver
 
+    def wx_frame(self):
+        """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
+        return self._frame
+
     def save(self):
         """Ulo¾ stav aplikace."""
         form = self._windows.active()
@@ -803,6 +807,10 @@ def current_form():
 def resolver():
     """Vra» resolver aplikace získaný pøes 'Application.resolver()'."""
     return _application.resolver()
+
+def wx_frame():
+    """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
+    return _application.wx_frame()
 
 
 def add_menu(menu, form=None):
