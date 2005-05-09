@@ -1,3 +1,16 @@
+2005-05-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (flatten_menus): Nevracej slovníky,
+	pouze linearizuj polo¾ky.
+	(get_menu_defs): Pracuj pøímo s polo¾kami menu vrácenými funkcí
+	`flatten_menu()'.
+	(menu_report): Nepou¾ívej `flatten_menus()'.  Vytváøej
+	hierarchický seznam v HTML.  Prolinkuj defsy s informacemi o
+	právech.  Pou¾ívej `HtmlWindow'.
+	(check_form): Pou¾ivej `InfoWindow' namísto `InputDialog'.
+	(check_defs): Pou¾ivej `InfoWindow' namísto `InputDialog'.
+	(cache_spec): Seznam vytváøej pøedem pomocí `get_menu_defs()'.
+
 2005-05-05  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (dbselect): Doplnìna mo¾nost zadat
