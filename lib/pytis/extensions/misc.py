@@ -389,71 +389,39 @@ def row_update(row, values=()):
 # Application function
 
 def flatten_menus():
-    """Vytvoøí jednoúrovòový seznam polo¾ek menu.
-
-       Vrací seznam odpovídajících slovníkových hodnot, pro ka¾dou polo¾ku
-       menu. Slou¾í jako pomocná funkce pro snadnìj¹í zpracování polo¾ek
-       v menu, napø. pøi sestavování pøehledu názvù pou¾itých polo¾ek a jejich
-       specifikací.
-    """    
-    TYPES = ('M', 'F', 'S', 'I')
-    RF = pytis.form.Application.COMMAND_RUN_FORM
-    resolver = pytis.form.resolver()
-    def flatten(flatten, queue, found, level=0):
+    """Vra» linearizovaný seznam v¹ech polo¾ek menu."""
+    def flatten(queue, found, level=0):
         if queue:
-            iappend = ()
-            head = queue[0]
-            tail = queue[1:]
+            head, tail = queue[0], queue[1:]
+            found.append(head)
             if isinstance(head, pytis.form.Menu):
-                found.append({'type': 'M',
-                              'title': head.title(),
-                              'level': level})
-                result = flatten(flatten, head.items(),
-                                 found, level=level+1)
-            elif isinstance(head, pytis.form.MSeparator):
-                found.append({'type': 'S',
-                              'level': level})
-            elif isinstance(head, pytis.form.MItem):
-                title = head.title()
-                if head.command() == RF:
-                    spec = head.args()['name']
-                    form = head.args()['form_class']
-                    found.append({'type': 'F',
-                                  'form': form,
-                                  'spec': spec,
-                                  'title': title,
-                                  'level': level})
-                else:
-                    found.append({'type': 'I',
-                                  'title': title,
-                                  'level': level})
-            result = flatten(flatten, tail, found, level=level)
+                flatten(head.items(), found, level=level+1)
+            result = flatten(tail, found, level=level)
         else:
             result = found                
         return result
-    menus = resolver.get('application', 'menu')
-    menus = flatten(flatten, menus, [])
-    return menus
-
-def get_menu_defs(without_duals=False, *args, **kwargs):   
     resolver = pytis.form.resolver()
-    menus = flatten_menus()
-    duals = [m for m in menus
-             if m.has_key('form')
-             and issubclass(m['form'], DualForm)
-             and not issubclass(m['form'], DescriptiveDualForm)
-             ]
-    notduals = [m for m in menus
-                if m.has_key('form')
-                and m not in duals]
+    menus = resolver.get('application', 'menu')
+    return flatten(menus, [])
+
+
+def get_menu_defs(without_duals=False):
+    resolver = pytis.form.resolver()
+    RF = pytis.form.Application.COMMAND_RUN_FORM
+    items = [item for item in flatten_menus()
+             if isinstance(item, pytis.form.MItem) and item.command() == RF]
+    duals = [item for item in items
+             if issubclass(item.args()['form_class'], DualForm) \
+             and not issubclass(item.args()['form_class'], DescriptiveDualForm)]
+    notduals = [item for item in items if item not in duals]
     subduals = []
-    for d in duals:        
-        dual_spec = resolver.get(d['spec'], 'dual_spec')
+    for item in duals:
+        dual_spec = resolver.get(item.args()['name'], 'dual_spec')
         subduals.append(dual_spec.main_name())
         subduals.append(dual_spec.side_name())
-    specs = [m['spec'] for m in notduals] + subduals
+    specs = [item.args()['name'] for item in notduals] + subduals
     if not without_duals:
-        specs = specs + [m['spec'] for m in duals]
+        specs = specs + [item.args()['name'] for m in duals]
     specs = remove_duplicates(specs)
     # Zjistíme i varianty podle konstanty VARIANTS
     variants = []
@@ -469,63 +437,66 @@ def get_menu_defs(without_duals=False, *args, **kwargs):
 
 def menu_report(*args, **kwargs):
     """Vytváøí pøehledný náhled na polo¾ky menu."""
-    MAX_WIDTH = 150
+    resolver = pytis.form.resolver()
+    data_specs = []
+    COMMAND_RUN_FORM = pytis.form.Application.COMMAND_RUN_FORM
+    def spec(name):
+        return '<a href="#%s">%s</a>' % (name, name)
+    def make_list(menu):
+        items = []
+        for item in menu:
+            if isinstance(item, MSeparator):
+                x = '------'
+            elif isinstance(item, Menu):
+                x = item.title() + make_list(item.items())
+            elif isinstance(item, MItem) and item.command() == COMMAND_RUN_FORM:
+                args = item.args()
+                form = args['form_class']
+                spec_name = args['name']
+                spec_link = spec(spec_name)
+                data_specs.append(spec_name)
+                if issubclass(form, DualForm) and \
+                       not issubclass(form, DescriptiveDualForm):
+                    dual_spec = resolver.get(spec_name, 'dual_spec')
+                    main = dual_spec.main_name()
+                    side = dual_spec.side_name()
+                    spec_link += "(%s,%s)" % (spec(main), spec(side))
+                    data_specs.extend((main, side))
+                x = "%s: %s, %s" % (item.title(), spec_link, form.__name__)
+            else:
+                x = item.title()
+            items.append(x)
+        list_items = ["<li>%s</li>" % i for i in items]
+        return "\n".join(("<ul>",) + tuple(list_items) + ("</ul>",))
+    content = "<h3>Pøehled polo¾ek menu a názvù specifikací</h3>"
+    content += make_list(resolver.get('application', 'menu'))
+    data_specs = remove_duplicates(data_specs)
+    data_specs.sort()
     PRAVA = (pytis.data.Permission.VIEW,
              pytis.data.Permission.INSERT,
              pytis.data.Permission.UPDATE,
              pytis.data.Permission.DELETE,
-             pytis.data.Permission.EXPORT
-             )
-    resolver = pytis.form.resolver()
-    menus = flatten_menus()
-    radky = []
-    data_specs = []
-    for m in menus:
-        if m['type'] in ('M', 'I'):
-            radek = "  "*m['level'] + m['title']        
-        elif m['type'] == 'F':
-            radek = "  "*m['level'] + m['title']
-            formname = str(m['form'])
-            formname = formname.split('.')[-1][:-2]
-            radek = radek + "  <%s:%s>" % (m['spec'], formname)
-            spec = m['spec']
-            if issubclass(m['form'], DualForm) \
-               and not issubclass(m['form'], DescriptiveDualForm):
-                dual_spec = resolver.get(spec, 'dual_spec')
-                main = dual_spec.main_name()
-                side = dual_spec.side_name()
-                radek = radek + "  (Main: %s, Side: %s)" % (main, side)
-                data_specs.append(main)
-                data_specs.append(side)
-            else:
-                data_specs.append(spec)                
-        elif m['type'] == 'S':
-            radek = "  "*m['level'] + '__________'
-        radky.append(radek)
-    data_specs = remove_duplicates(data_specs)
-    data_specs.sort()
-    radky.append("\n\nPøehled práv pro jednotlivé specifikace:")    
-    radky.append("========================================\n")    
-    for s in data_specs:
-        radky.append(s)
+             pytis.data.Permission.EXPORT)
+    content += '<h1>Pøehled práv pro jednotlivé specifikace</h1>\n'
+    for spec_name in data_specs:
+        content += '<a name="%s"></a>\n<h5>%s</h5>\n' % (spec_name, spec_name)
         try:
-            data = resolver.get(s, 'data_spec')
-            prava = data.access_rights()            
-            if prava:
-                for p in PRAVA:
-                    egroups = prava.permitted_groups(p, None)
-                    if egroups:
-                        radky.append("  %s práva: " % (p) + ', '.join(egroups))
+            data_spec = resolver.get(spec_name, 'data_spec')
         except Exception, e:
-            radky.append("  Export práva: CHYBA! Specifikace nenalezena.")            
-    obsah = "\n".join(radky)    
-    width = min(max([len(x) for x in radky]), MAX_WIDTH)
-    pytis.form.run_dialog(pytis.form.InputDialog,
-                          message="Pøehled menu polo¾ek a názvù specifikací",
-                          value=obsah,
-                          input_width=width,
-                          input_height=50)
+            content += "<p><b>Chyba</b>: Specifikace nenalezena.</p>"
+            continue
+        prava = data_spec.access_rights()
+        if prava:
+            all = ['<tr><td valign="top"><b>%s</b></td><td>%s</td></tr>' %
+                   (p, ', '.join(prava.permitted_groups(p, None)))
+                   for p in PRAVA]
+            content += "<table>" + "\n".join(all) + "</table>"
+    pytis.form.HtmlWindow("Pøehled polo¾ek menu a názvù specifikací", content)
 
+
+
+
+    
 def check_form(*args, **kwargs):
     """Zeptá se na název specifikace a zobrazí její report."""
     resolver = pytis.form.resolver()
@@ -563,13 +534,9 @@ def check_form(*args, **kwargs):
             popup_items = [p.title() for p in popup_menu]
             obsah = obsah + "\n\nPolo¾ky popup_menu:\n"
             obsah = obsah + "\n".join(popup_items)
-        pytis.form.run_dialog(pytis.form.InputDialog,
-                            message="DEFS: %s" % (spec),
-                            value=obsah,
-                            input_width=100,
-                            input_height=50)
+        pytis.form.InfoWindow("DEFS: %s" % spec, obsah)
 
-def check_defs(seznam, *args, **kwargs):
+def check_defs(seznam):
     """Zkontroluje specifikace pro uvedený seznam.
 
     Argumenty:
@@ -584,9 +551,9 @@ def check_defs(seznam, *args, **kwargs):
         last_error = ''
         step = 1 # aktualizujeme jen po ka¾dých 'step' procentech...
         for n, s in enumerate(seznam):
-            newmsg = """Kontroluji datové specifikace...
-Specifikace: %s
-Poslední chyba v: %s""" % (s, last_error)
+            newmsg = "\n".join(("Kontroluji datové specifikace...",
+                                "Specifikace: " + s,
+                                "Poslední chyba v: " + last_error))
             status = int(float(n)/total*100/step)
             if not update(status*step, newmsg=newmsg):
                 break
@@ -623,34 +590,19 @@ Poslední chyba v: %s""" % (s, last_error)
     msg = 'Kontroluji datové specifikace...'.ljust(sirka)
     msg = msg + '\n\n\n\n'
     pytis.form.run_dialog(pytis.form.ProgressDialog, check_spec, args=(seznam,),
-                        message=msg, elapsed_time=True, can_abort=True)
+                          message=msg, elapsed_time=True, can_abort=True)
     if errors:
         obsah = "\n".join(errors)
-        pytis.form.run_dialog(pytis.form.InputDialog,
-                            message="Chyby ve specifikacích",
-                            value=obsah,
-                            input_width=100,
-                            input_height=50)
+        pytis.form.InfoWindow("Chyby ve specifikacích", obsah)
  
 def check_menus_defs(*args, **kwargs):        
-    seznam = get_menu_defs(without_duals=True)
-    return check_defs(seznam)
+    return check_defs(get_menu_defs(without_duals=True))
 
 def cache_spec(*args, **kwargs):
     resolver = pytis.form.resolver()
-    menus = flatten_menus()
-    menu_specs = [m['spec'] for m in menus
-             if m.has_key('form')]
-    def do(update, menu_specs):
-        update(2)
-        # Zjistíme i varianty
-        specs = get_menu_defs()
+    def do(update, specs):
         total = len(specs)        
         last_status = 0
-        newmsg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
-                         'Naèítání je mo¾no trvale vypnout pomocí dialogu',
-                         '"Nastavení u¾ivatelského rozhraní"'))
-        update(4, newmsg=newmsg)
         step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
         for n, file in enumerate(specs):
             status = int(float(n)/total*100/step)
@@ -664,8 +616,11 @@ def cache_spec(*args, **kwargs):
                     resolver.get(file, spec)
                 except ResolverError:
                     pass
-    msg = _('Sestavuji seznam specifikací (pøeru¹te pomocí Esc).\n\n\n')
-    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(menu_specs,),
+    msg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
+                     'Naèítání je mo¾no trvale vypnout pomocí dialogu',
+                     '"Nastavení u¾ivatelského rozhraní"'))
+    specs = get_menu_defs()
+    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(specs,),
                           message=msg, elapsed_time=True, can_abort=True)
 
 
