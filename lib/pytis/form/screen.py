@@ -1577,6 +1577,48 @@ class StatusBar(wx.StatusBar):
             return None
       
 
+class InfoWindow(object):
+    """Nemodální okno pro zobrazení textových informací."""
+    
+    def __init__(self, title, text, _name='info'):
+        """Zobraz nemodální okno nezávislé na hlavním oknì aplikace.
+        
+        Argumenty:
+        
+          text -- prostý text, který bude zobrazen v oknì.  Øádkování i ve¹keré
+            dal¹í formátování zùstane nedotèeno (je ponecháno na volající
+            stranì).
+          title -- titulek okna jako øetìzec.
+
+        """
+        import wx
+        frame = wx.Frame(wx_frame(), title=title, name=_name)
+        self._create_content(frame, title, text)
+        frame.Show(True)
+
+    def _create_content(self, frame, title, text):
+        style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
+        ctrl = wx.TextCtrl(frame, -1, style=style)
+        ctrl.SetValue(text)
+
+        
+class HtmlWindow(InfoWindow):
+    """Nemodální okno pro zobrazení textových informací v HTML.
+
+    Argument 'text' konstruktoru je zde text s HTML zanèkováním.  Text v¹ak
+    není sám o sobì platným HTML dokumentem.  Neobsahuje hlavièku, ani znaèky
+    <html> a <body>.  Jde jen o zformátovaný text, který bude vsazen do tìla
+    automaticky vytvoøeného dokumentu.
+
+    """
+    def _create_content(self, frame, title, text):
+        import wx.html
+        w = wx.html.HtmlWindow(frame)
+        #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
+        w.SetPage('<html><head><title>' + title + '</title></head>' +
+                  '<body><font size="-2">' + text + '</font></body></html>')
+        
+        
 ### Help
 
 
