@@ -262,6 +262,10 @@ class SyslogLogger(Logger):
 
     _MAX_MESSAGE_LENGTH = 1020
 
+    def __init__(self, facility=None):
+        super(SyslogLogger, self).__init__()
+        self._facility = facility
+        
     def _prefix(self, kind, message, data):
         pid = os.getpid()
         user = getpass.getuser()
@@ -280,6 +284,8 @@ class SyslogLogger(Logger):
             priority = syslog.LOG_DEBUG
         else:
             raise ProgramError('Unknown message kind', kind)
+        if self._facility is not None:
+            priority = priority | self._facility
         while formatted:
             syslog.syslog(priority, formatted[:self._MAX_MESSAGE_LENGTH])
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]
