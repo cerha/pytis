@@ -50,7 +50,7 @@ class _DataChangesWatcher:
         thread.start_new_thread(self._watcher, ())
         
     def _watcher(self):
-        log(DEBUG, 'Spu¹tìn callback watcher pro remote data')
+        if __debug__: log(DEBUG, 'Spu¹tìn callback watcher pro remote data')
         while True:
             time.sleep(self._PAUSE_SECONDS)
             self._lock.acquire()
@@ -67,13 +67,15 @@ class _DataChangesWatcher:
                         self._stamps[data] = new_stamp
                         try:
                             callbacks = self._callbacks[data]
-                            log(DEBUG, 'Volám datové callbacks',
-                                (data, callbacks))
+                            if __debug__:
+                                log(DEBUG, 'Volám datové callbacks',
+                                    (data, callbacks))
                             for c in callbacks:
                                 c()
                         except Exception, e:
-                            log(DEBUG, 'Chyba pøi volání datových callbacks',
-                                e)
+                            if __debug__:
+                                log(DEBUG, 'Chyba pøi volání datových callbacks',
+                                    e)
             finally:
                 self._lock.release()
 
@@ -84,7 +86,7 @@ class _DataChangesWatcher:
         self._clones[data] = data_clone
         
     def register_callback(self, data, callback):
-        log(DEBUG, 'Registrace callbacku', (data, callback))
+        if __debug__: log(DEBUG, 'Registrace callbacku', (data, callback))
         self._lock.acquire()
         try:
             if self._stamps.has_key(data):
@@ -104,7 +106,7 @@ class _DataChangesWatcher:
             self._lock.release()
 
     def unregister_callback(self, data, callback):
-        log(DEBUG, 'Odregistrace callbacku', (data, callback))
+        if __debug__: log(DEBUG, 'Odregistrace callbacku', (data, callback))
         self._lock.acquire()
         try:
             try:
