@@ -119,15 +119,15 @@ class Application(wx.App, KeyHandler):
         self._resolver = resolver
         wx.App.__init__(self)
         self._window_menu_item = {}
-        # Tento panel slou¾í pouze pro odchytávání klávesových událostí,
-        # proto¾e na frame se nedá navìsit EVT_KEY_DOWN.
     
     def OnInit(self):
         init_colors()
         frame = self._frame = wx.Frame(None, -1, 
-                                       self._spec('title', 'Application'),
+                                       config.application_name,
                                        pos=(0,0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
+        # Tento panel slou¾í pouze pro odchytávání klávesových událostí,
+        # proto¾e na frame se nedá navìsit EVT_KEY_DOWN.
         self._panel = wx.Panel(self._frame, -1)
         KeyHandler.__init__(self, self._panel)
         self._logo = None
@@ -139,7 +139,7 @@ class Application(wx.App, KeyHandler):
                                                logo.ConvertToBitmap())
                 self._logo.Show(False)
             else:
-                log(DEBUG, "Logo file is not accessible:", logo_file)
+                log(DEBUG, "Unable to read logo:", logo_file)
         global _application
         _application = self
         keymap = self.keymap = Keymap()
