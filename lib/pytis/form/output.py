@@ -70,7 +70,7 @@ class _Ghostscript(Tmpdir):
             pass
 
     def _start_gs(self, stream, zoom):
-        log(DEBUG, 'Start Ghostscriptu:', zoom)
+        if __debug__: log(DEBUG, 'Start Ghostscriptu:', zoom)
         zoom = 100 * zoom
         gs_command = ('gs -dNOPAUSE -dQUIET -dSAFER -sDEVICE=bmpmono ' + \
                       '-r%dx%d -sOutputFile=%s -') % \
@@ -79,31 +79,34 @@ class _Ghostscript(Tmpdir):
         process = self._process = Popen(gs_command, to_child=stream,
                                         from_child=dev_null_stream('w'))
         self._stream = process.to_child()
-        log(DEBUG, 'Ghostscript nastartován:', zoom)
+        if __debug__: log(DEBUG, 'Ghostscript nastartován:', zoom)
 
     def page_image(self, number):
-        log(DEBUG, 'Stránka od Ghostscriptu:', number)
+        if __debug__: log(DEBUG, 'Stránka od Ghostscriptu:', number)
         try:
             file_name = self._file_pattern % number
             next_file_name = self._file_pattern % (number+1)
             if not os.access(file_name, os.R_OK):
-                log(DEBUG, 'Stránka není k dispozici:', number)
+                if __debug__: log(DEBUG, 'Stránka není k dispozici:', number)
                 return None
             if not self.finished() and \
                    not os.access(next_file_name, os.R_OK):
                 if number == 1:
-                    log(DEBUG, 'Èekám na vygenerování první stránky')
+                    if __debug__:
+                        log(DEBUG, 'Èekám na vygenerování první stránky')
                     while not self.finished() and \
                           not os.access(next_file_name, os.R_OK):
                         pass
-                    log(DEBUG, 'Èekání ukonèeno')
+                    if __debug__: log(DEBUG, 'Èekání ukonèeno')
                     if not os.access(file_name, os.R_OK):
-                        log(DEBUG, 'První stránka není k dispozici')
+                        if __debug__:
+                            log(DEBUG, 'První stránka není k dispozici')
                         return None
                 else:
-                    log(DEBUG, 'Stránka není k dispozici:', number)
+                    if __debug__:
+                        log(DEBUG, 'Stránka není k dispozici:', number)
                     return None
-            log(DEBUG, 'Vracím stránku:', number)
+            if __debug__: log(DEBUG, 'Vracím stránku:', number)
             return wx.Image(file_name)
         except:
             # wxImage nahazuje chybové okno bez ohledu na o¹etøení výjimky zde
@@ -151,7 +154,7 @@ class PostscriptViewer(wx.ScrolledWindow):
             zmen¹ení, vìt¹í hodnoty znamenají zvìt¹ení
                     
         """
-        log(DEBUG, 'Startuji PostScriptovou prohlí¾eèku:', zoom)
+        if __debug__: log(DEBUG, 'Startuji PostScriptovou prohlí¾eèku:', zoom)
         # Náhled nelze zoomovat "za bìhu", proto¾e jednou nastavené scrollbary
         # ve wxScrolledWindow nelze zmìnit, museli bychom si udìlat
         # scrollování vlastní.
@@ -170,10 +173,10 @@ class PostscriptViewer(wx.ScrolledWindow):
         self._gs = gs = _Ghostscript(stream, self._zoom)
         
     def _wait_for_gs(self):
-        log(DEBUG, 'Èekání na dokonèení bìhu Ghostscriptu')
+        if __debug__: log(DEBUG, 'Èekání na dokonèení bìhu Ghostscriptu')
         while not self._gs.finished():
             time.sleep(1)
-        log(DEBUG, 'Bìh Ghostscriptu je dokonèen')
+        if __debug__: log(DEBUG, 'Bìh Ghostscriptu je dokonèen')
 
     def current_page(self):
         """Vra» èíslo aktuálnì zobrazené stránky, poèínaje od 1."""
@@ -204,20 +207,20 @@ class PostscriptViewer(wx.ScrolledWindow):
         Vrací: Èíslo skuteènì zobrazené stránky.
 
         """
-        log(DEBUG, 'Zobrazení stránky:', page_number)
+        if __debug__: log(DEBUG, 'Zobrazení stránky:', page_number)
         while True:
             npages, final = self.number_of_pages(current=True)
             if final or npages >= 1:
-                log(DEBUG, 'Nìjaké stránky u¾ jsou na skladì')
+                if __debug__: log(DEBUG, 'Nìjaké stránky u¾ jsou na skladì')
                 break
-            log(DEBUG, 'mikrospánek')
+            if __debug__: log(DEBUG, 'mikrospánek')
             microsleep()
         if npages < 1:
-            log(DEBUG, 'Výstup nemá ¾ádnou stránku')
+            if __debug__: log(DEBUG, 'Výstup nemá ¾ádnou stránku')
             return 0
         gs = self._gs
         if page_number < 1:
-            log(DEBUG, 'Vynucené zobrazení první stránky')
+            if __debug__: log(DEBUG, 'Vynucené zobrazení první stránky')
             page_number = 1
         elif page_number > npages:
             npages, final = self.number_of_pages()
@@ -228,18 +231,18 @@ class PostscriptViewer(wx.ScrolledWindow):
                     gs = self._gs_old
                 else:
                     page_number = npages
-            log(DEBUG, 'Vynucené zobrazení poslední stránky')
+            if __debug__: log(DEBUG, 'Vynucené zobrazení poslední stránky')
         if page_number != self._current_page or self._restarted:
             if gs is self._gs:
                 self._restarted = False
             self._current_page = page_number
             image = self._gs.page_image(page_number)
             if image is None:
-                log(DEBUG, 'Stránka nenaètena')
+                if __debug__: log(DEBUG, 'Stránka nenaètena')
                 return 0
             self._current_page_bitmap = image.ConvertToBitmap()
             # Scrollbars
-            log(DEBUG, 'Nastavuji scrollbars')
+            if __debug__: log(DEBUG, 'Nastavuji scrollbars')
             image = self._gs.page_image(1)
             hsteps = vsteps = 100
             if image is None:
@@ -249,7 +252,7 @@ class PostscriptViewer(wx.ScrolledWindow):
             hs, vs = width/hsteps, height/vsteps
             self.SetScrollbars(hs, vs, width/hs + 1, height/vs + 1)
             self.Refresh()
-        log(DEBUG, 'Zobrazena stránka:', page_number)
+        if __debug__: log(DEBUG, 'Zobrazena stránka:', page_number)
         return page_number
 
     def current_zoom(self):
@@ -331,14 +334,14 @@ class PrintForm(Form):
                      activation=PrintForm.ACT_PRINT_FORM),)
                 
     def _run_formatter(self, stream):
-        log(DEBUG, 'Spou¹tím formátovaè')
+        if __debug__: log(DEBUG, 'Spou¹tím formátovaè')
         try:
             self._formatter_running = True
             self._formatter.printout(stream)
             self._number_of_runs = self._number_of_runs + 1
             self._formatter_running = False
         finally:
-            log(DEBUG, 'Konec formátování')
+            if __debug__: log(DEBUG, 'Konec formátování')
 
     def _start_postscript_viewer(self, zoom, new=True):
         if new:
@@ -352,7 +355,7 @@ class PrintForm(Form):
     def _create_controls(self):
         self._start_postscript_viewer(1.0)
         preview = self._preview
-        log(DEBUG, 'Zobrazuji první stránku')
+        if __debug__: log(DEBUG, 'Zobrazuji první stránku')
         preview.show_page(1)
         # Control widgets
         control_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -431,7 +434,7 @@ class PrintForm(Form):
             event.Skip()
 
     def _show_page(self, page_number):
-        log(DEBUG, 'Po¾adavek na zobrazení stránky:', page_number)
+        if __debug__: log(DEBUG, 'Po¾adavek na zobrazení stránky:', page_number)
         preview = self._preview
         current_page = preview.current_page()
         real_page_number = preview.show_page(page_number)
@@ -470,7 +473,7 @@ class PrintForm(Form):
         self._show_page(self._preview.current_page() + 1)
 
     def _zoom(self, zoom):
-        log(DEBUG, 'Po¾adavek na zoom:', zoom)
+        if __debug__: log(DEBUG, 'Po¾adavek na zoom:', zoom)
         if zoom < 10:
             zoom = 10
         elif zoom > 300:                # víc u¾ dává poèítaèi pøíli¹ zahulit
@@ -486,13 +489,13 @@ class PrintForm(Form):
         except IOError:
             pass
         # Nový náhled
-        log(DEBUG, 'Restart náhledu')
+        if __debug__: log(DEBUG, 'Restart náhledu')
         self._start_postscript_viewer(zoom/100.0)
         self._preview.show_page(1)
         sizer.Prepend(self._preview, 1, wx.EXPAND)
         self.SetSize(self.GetSize())
         self._show_page(page)
-        log(DEBUG, 'Náhled restartován')
+        if __debug__: log(DEBUG, 'Náhled restartován')
         
     def _on_zoom(self, event):
         zoom_string = self._zoom_ctrl.GetValue()
