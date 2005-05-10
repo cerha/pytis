@@ -1,17 +1,60 @@
 2005-05-10  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (Module): V¹echna volání `log(DEBUG, ...)'
+	uvozena podmínkou `if __debug__: ...'.
+
+	* pytis/form/list.py (Module): V¹echna volání `log(DEBUG, ...)'
+	uvozena podmínkou `if __debug__: ...'.
+
+	* pytis/form/screen.py (Module): V¹echna volání `log(DEBUG, ...)'
+	uvozena podmínkou `if __debug__: ...'.
+
+	* pytis/form/output.py (Module): V¹echna volání `log(DEBUG, ...)'
+	uvozena podmínkou `if __debug__: ...'.
+
+	* pytis/remote/data.py (_DataChangesWatcher._watcher)
+	(_DataChangesWatcher.register_callback)
+	(_DataChangesWatcher.unregister_callback): Volání 
+	`log(DEBUG, ...)'  uvozeno podmínkou `if __debug__: ...'.
+
+	* pytis/util/util.py (copy_stream): Volání
+	`log(DEBUG, ...)'  uvozeno podmínkou `if __debug__: ...'.
+
+	* pytis/util/resolver.py (FileResolver._get_module): Odstranìna
+	debug hlá¹ka.
+
+	* pytis/output/formatter.py (LoutFormatter._resolve)
+	(LoutFormatter._lout, LoutFormatter._lout, LoutFormatter._lout):
+	Volání `log(DEBUG, ...)'  uvozeno podmínkou `if __debug__: ...'.
+
+	* pytis/form/form.py (Form._on_parent_close): Volání
+	`log(DEBUG, ...)'  uvozeno podmínkou `if __debug__: ...'.
+
+	* pytis/form/event.py (wx_callback.process_event): Volání
+	`log(DEBUG, ...)'  uvozeno podmínkou `if __debug__: ...'.
+
+	* pytis/data/dbdata.py (Module): V¹echna volání `log(DEBUG, ...)'
+	uvozena podmínkou `if __debug__: ...'.
+
 	* pytis/util/configuration.py
 	(Configuration._Option_application_name.default): Vracej `Pytis'.
+	(Configuration._Option_log_logger.default_string): Vracej hodnotu
+	korespondující s `default' hodnotou.
 
 	* pytis/form/application.py (Application.OnInit): titulek aplikace
 	získávej pøímo z konfiguraèní volby `application_name', nikoliv ze
 	specifikace.
-	
+	(set_status): Volání `log(DEBUG, ...)'  uvozeno podmínkou 
+	`if __debug__: ...'.
+	(Application.OnInit, Application.run_dialog): Zmìnìna logovací
+	priorita.
 
 	* pytis/util/log.py (StreamLogger): Buï potomkem `object'.
 	(StreamLogger.__init__): Pou¾ívej `super()'.
 	(SyslogLogger._prefix): Loguj také jméno u¾ivatele.
 	(LoggingInterface.__call__): Kosmetické úpravy.
+	(SyslogLogger.__init__): Nová metoda.
+	(SyslogLogger._send): Zakóduj pøedanou `facility' do `priority'.
 
 2005-05-09  Tomas Cerha  <cerha@brailcom.org>
 
