@@ -1109,7 +1109,7 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
             import log
             DEBUG = log.DEBUG
             log = log.log
-            log(DEBUG, 'Kopíruji stream:', (input, output))
+            if __debug__: log(DEBUG, 'Kopíruji stream:', (input, output))
             while True:
                 data = input.read(4096)
                 if not data:
@@ -1120,7 +1120,7 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
                 except AttributeError:
                     pass
                 output.write(data)
-            log(DEBUG, 'Stream zkopírován:', (input, output))
+            if __debug__: log(DEBUG, 'Stream zkopírován:', (input, output))
         except:
             if not _catch:
                 raise
