@@ -283,7 +283,7 @@ class Form(Window, KeyHandler, CallbackHandler):
         nezavolá 'event.Skip()', nebude zpracování události dokonèeno a
         rodièovské okno tedy nebude uzavøeno.
         """
-        log(DEBUG, "Voláno Form._on_parent_close()")
+        if __debug__: log(DEBUG, "Voláno Form._on_parent_close()")
         event.Skip()
         return False
 
