@@ -534,7 +534,7 @@ class LoutFormatter(Tmpdir):
         try:
             result = resolver.get(template_id, element)
         except ResolverSpecError, e:
-            log(DEBUG, 'Specifikace nenalezena:', e.args)
+            if __debug__: log(DEBUG, 'Specifikace nenalezena:', e.args)
             result = default
         return result
 
@@ -1022,7 +1022,7 @@ class LoutFormatter(Tmpdir):
                         except:
                             pass
                     in_stream = Pipe(cc=cc)
-                    log(DEBUG, 'Start zpracování specifikace')
+                    if __debug__: log(DEBUG, 'Start zpracování specifikace')
                     try:
                         self._process(in_stream)
                         in_stream.close()
@@ -1031,9 +1031,9 @@ class LoutFormatter(Tmpdir):
                         log(EVENT, ('Zpracování specifikace pøeru¹eno '
                                     'uzavøením streamu'))
                         in_stream.close()
-                    log(DEBUG, 'Konec zpracování specifikace')
+                    if __debug__: log(DEBUG, 'Konec zpracování specifikace')
                 else:
-                    log(DEBUG, 'Zdroják Lout je nacachován')
+                    if __debug__: log(DEBUG, 'Zdroják Lout je nacachován')
                     import StringIO
                     # Zde by mìlo být pou¾ito cStringIO, ale z nìjakého
                     # záhadného dùvodu to s ním nefunguje.  Vypadá to na
