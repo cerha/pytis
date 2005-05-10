@@ -121,10 +121,10 @@ class DBData(Data):
         assert not filter(lambda b: not isinstance(b, DBBinding),
                           bindings), \
                ('Invalid binding type', bindings)
-        log(DEBUG, 'Bindings databázové instance', self._bindings)
+        if __debug__: log(DEBUG, 'Bindings databázové instance', self._bindings)
         columns, key = self._db_bindings_to_column_spec(self._bindings)
-        log(DEBUG, 'Sloupce databázové instance:', columns)
-        log(DEBUG, 'Klíè databázové instance:', key)
+        if __debug__: log(DEBUG, 'Sloupce databázové instance:', columns)
+        if __debug__: log(DEBUG, 'Klíè databázové instance:', key)
         Data.__init__(self, columns, key, ordering)
 
     def _db_bindings_to_column_spec(self, bindings):
@@ -190,14 +190,14 @@ class DBData(Data):
         opìt uvolnit zdroje, je nutno tuto metodu zavolat znovu.
 
         """
-        log(DEBUG, 'Uspání')
+        if __debug__: log(DEBUG, 'Uspání')
         self.close()
 
 
 class _DBConnectionPool:
 
     def __init__(self, connection_creator):
-        log(DEBUG, 'Vytváøím nový pool')
+        if __debug__: log(DEBUG, 'Vytváøím nový pool')
         self._lock = thread.allocate_lock()
         self._pool = {}
         self._connection_creator = connection_creator
@@ -228,14 +228,14 @@ class _DBConnectionPool:
             except KeyError:
                 pool[spec_id] = connections = []
             if connections:
-                log(DEBUG, 'Spojení k dispozici', connections)
+                if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
                 c = connections.pop()
             else:
                 c = self._connection_creator(connection_spec, data)
-                log(DEBUG, 'Vytvoøeno nové spojení:', c)
+                if __debug__: log(DEBUG, 'Vytvoøeno nové spojení:', c)
         finally:
             lock.release()
-        log(DEBUG, 'Pøedávám spojení:', c)
+        if __debug__: log(DEBUG, 'Pøedávám spojení:', c)
         return c
 
     def put_back(self, connection_spec, connection):
@@ -251,7 +251,7 @@ class _DBConnectionPool:
             connections.append(connection)
         finally:
             lock.release()        
-        log(DEBUG, 'Do poolu vráceno spojení:', connection)
+        if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
 
 
 
@@ -334,12 +334,12 @@ class DBDataPostgreSQL(DBData):
         # Døíve to býval buffer, nyní se pøemìòuje na "buffer-cache".
 
         def __init__(self):
-            log(DEBUG, 'Nový buffer')
+            if __debug__: log(DEBUG, 'Nový buffer')
             self.reset()
             
         def reset(self):
             """Kompletnì resetuj buffer."""
-            log(DEBUG, 'Resetuji buffer')
+            if __debug__: log(DEBUG, 'Resetuji buffer')
             self._buffer = []
             # _dbpointer ... pozice ukazovátka kursoru v databázi, na který
             #   prvek kursoru poèínaje od 0 ukazuje
@@ -383,7 +383,7 @@ class DBDataPostgreSQL(DBData):
             else:
                 raise ProgramError('Invalid direction', direction)
             if pointer < 0 or pointer >= len(buffer):
-                log(DEBUG, 'Buffer miss:', pointer)
+                if __debug__: log(DEBUG, 'Buffer miss:', pointer)
                 pos = self._dbposition + pointer
                 # Interní ukazovátko po obyèejném minutí neupdatujeme, proto¾e
                 # pøijde fill a pokus o znovuvyta¾ení hodnoty, s novým updatem
@@ -397,7 +397,7 @@ class DBDataPostgreSQL(DBData):
                 return None
             self._pointer = pointer
             result = buffer[pointer]
-            log(DEBUG, 'Buffer hit:', str(result))
+            if __debug__: log(DEBUG, 'Buffer hit:', str(result))
             return result
 
         def correction(self, direction, number_of_rows):
@@ -409,7 +409,7 @@ class DBDataPostgreSQL(DBData):
             Databázové ukazovátko je updatováno jako kdyby SKIP byl proveden.
 
             """
-            log(DEBUG, '®ádost o korekci:',
+            if __debug__: log(DEBUG, '®ádost o korekci:',
                 (self._dbpointer, self._dbposition, self._pointer, direction))
             pointer = self._pointer
             pos = self._dbposition + pointer
@@ -435,7 +435,7 @@ class DBDataPostgreSQL(DBData):
             else:
                 # Jsme uvnitø bufferu, ¾ádný DB skip se nekoná.
                 correction = 0
-            log(DEBUG, 'Urèená korekce:', correction)
+            if __debug__: log(DEBUG, 'Urèená korekce:', correction)
             return correction
 
         def goto(self, position):
@@ -486,7 +486,7 @@ class DBDataPostgreSQL(DBData):
             # k pøekroèení hranic dat je¹tì pøed získáním po¾adovaného poètu
             # øádkù, musí být dbpointer pøesunut je¹tì o jednu pozici dál (mimo
             # data).
-            log(DEBUG, 'Plním buffer:', direction)            
+            if __debug__: log(DEBUG, 'Plním buffer:', direction)            
             n = len(rows)
             buffer = self._buffer
             buflen = len(buffer)
@@ -573,7 +573,7 @@ class DBDataPostgreSQL(DBData):
           ordering -- stejné jako v pøedkovi
         
         """
-        log(DEBUG, 'Vytváøím databázovou tabulku')
+        if __debug__: log(DEBUG, 'Vytváøím databázovou tabulku')
         import config
         self._cache_size = config.cache_size
         if isinstance(dbconnection_spec, DBConnection):
@@ -765,13 +765,13 @@ class DBDataPostgreSQL(DBData):
         return result
 
     def _pg_key_condition(self, key):
-        log(DEBUG, 'Vytváøím podmínku z klíèe:', key)
+        if __debug__: log(DEBUG, 'Vytváøím podmínku z klíèe:', key)
         key = xtuple(key)
         keycols = map(lambda b: b.id(), self._key_binding)
         assert len(keycols) == len(key), ('Invalid key length', key, keycols)
         ands = map(EQ, keycols, key)
         condition = apply(AND, ands)
-        log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
+        if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
         return condition
 
     # Veøejné metody a jimi pøímo volané abstraktní metody
@@ -796,7 +796,7 @@ class DBDataPostgreSQL(DBData):
         return None
         
     def select(self, condition=None, sort=(), reuse=False):
-        log(DEBUG, 'Zahájení selectu:', condition)
+        if __debug__: log(DEBUG, 'Zahájení selectu:', condition)
         if reuse and not self._pg_changed and self._pg_number_of_rows and \
                condition == self._pg_last_select_condition and \
                sort == self._pg_last_select_sorting:
@@ -884,7 +884,8 @@ class DBDataPostgreSQL(DBData):
         prostøednictvím metody 'add_callback_on_change()'.
 
         """
-        log(DEBUG, 'Vyta¾ení øádku ze selectu ve smìru:', direction)
+        if __debug__:
+            log(DEBUG, 'Vyta¾ení øádku ze selectu ve smìru:', direction)
         assert direction in(FORWARD, BACKWARD), \
                ('Invalid direction', direction)
         if not self._pg_is_in_select:
@@ -974,7 +975,7 @@ class DBDataPostgreSQL(DBData):
             else:
                 result = None
         self._pg_last_fetch_row = result
-        log(DEBUG, 'Vrácený øádek', str(result))
+        if __debug__: log(DEBUG, 'Vrácený øádek', str(result))
         return result
 
     def _pg_fetchmany (self, count, direction):
@@ -992,7 +993,7 @@ class DBDataPostgreSQL(DBData):
         return self._pdbb_condition2sql(self._pg_last_select_condition)
 
     def skip(self, count, direction=FORWARD):
-        log(DEBUG, 'Pøeskoèení øádkù:', (direction, count))
+        if __debug__: log(DEBUG, 'Pøeskoèení øádkù:', (direction, count))
         assert type(count) == type(0) and count >= 0, \
                ('Invalid count', count)
         assert direction in (FORWARD, BACKWARD), \
@@ -1001,7 +1002,7 @@ class DBDataPostgreSQL(DBData):
                                       self._pg_number_of_rows)
         if count > 0:
             self._pg_last_fetch_row = None
-        log(DEBUG, 'Pøeskoèeno øádkù:', result)
+        if __debug__: log(DEBUG, 'Pøeskoèeno øádkù:', result)
         return result
 
     def _pg_skip(self, count, direction, exact_count=False):
@@ -1018,7 +1019,7 @@ class DBDataPostgreSQL(DBData):
             self.skip(pos+1, BACKWARD)
         
     def search(self, condition, direction=FORWARD):
-        log(DEBUG, 'Hledání øádku:', (condition, direction))
+        if __debug__: log(DEBUG, 'Hledání øádku:', (condition, direction))
         assert direction in (FORWARD, BACKWARD), \
                ('Invalid direction', direction)
         if not self._pg_is_in_select:
@@ -1040,7 +1041,7 @@ class DBDataPostgreSQL(DBData):
                     pass
                 self._pg_is_in_select = False
                 raise e
-        log(DEBUG, 'Výsledek hledání:', result)
+        if __debug__: log(DEBUG, 'Výsledek hledání:', result)
         return result
 
     def _pg_search(self, row, condition, direction):
@@ -1054,7 +1055,7 @@ class DBDataPostgreSQL(DBData):
         return None
 
     def close(self):
-        log(DEBUG, 'Explicitní ukonèení selectu')
+        if __debug__: log(DEBUG, 'Explicitní ukonèení selectu')
         if self._pg_is_in_select:
             self._pg_commit_transaction()
             self._pg_is_in_select = False
@@ -1288,7 +1289,7 @@ class DBDataPostgreSQL(DBData):
         log(EVENT, 'Øádek odemèen')
 
     def _pg_locking_process(self, locked_row, update_commands):
-        log(DEBUG, 'Nastartován zamykací proces')
+        if __debug__: log(DEBUG, 'Nastartován zamykací proces')
         while True:
             time.sleep(self._PG_LOCK_TIMEOUT)
             if self._locked_row != locked_row:
@@ -1297,8 +1298,9 @@ class DBDataPostgreSQL(DBData):
                 try:
                     self._pg_query(command, outside_transaction=True)
                 except DBException, e:
-                    log(DEBUG, 'Chyba pøíkazu obnovy øádku', (e, command))
-            log(DEBUG, 'Zámek updatován')
+                    if __debug__:
+                        log(DEBUG, 'Chyba pøíkazu obnovy øádku', (e, command))
+            if __debug__: log(DEBUG, 'Zámek updatován')
 
 
 def _pg_escape(string_):
@@ -1347,7 +1349,7 @@ def _pypg_new_connection(spec, data):
     # Toto musí být funkce, proto¾e nesmí být vázána na konkrétní instanci.
     if not isinstance(spec, DBConnection):
         spec = spec()
-    log(DEBUG, 'Vytváøím nové DB spojení', spec)
+    if __debug__: log(DEBUG, 'Vytváøím nové DB spojení', spec)
     # Sestav connection string
     connection_string = ''
     for option, accessor in (('user', DBConnection.user),
@@ -1360,7 +1362,7 @@ def _pypg_new_connection(spec, data):
             connection_string = "%s %s='%s'" % \
                                 (connection_string, option, _pg_escape(value))
     # Otevøi spojení
-    log(DEBUG, 'Pøipojovací øetìzec:', connection_string)
+    if __debug__: log(DEBUG, 'Pøipojovací øetìzec:', connection_string)
     try:
         connection = libpq.PQconnectdb(connection_string)
         try:
@@ -1386,7 +1388,7 @@ def _pypg_new_connection(spec, data):
         except:
             pass
         raise DBSystemException(None, e)
-    log(DEBUG, 'Spojení otevøeno')
+    if __debug__: log(DEBUG, 'Spojení otevøeno')
     if data is not None:
         data.update_access_groups(spec)
     # Vra» spojení
@@ -1413,7 +1415,7 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
         # Jsou tu dva zámky -- pozor na uváznutí!
 
         def __init__(self, connection_pool, connection_spec):
-            log(DEBUG, 'Vytvoøení')
+            if __debug__: log(DEBUG, 'Vytvoøení')
             self._data_lock = thread.allocate_lock()
             self._data_objects = weakref.WeakKeyDictionary()
             self._connection_lock = thread.allocate_lock()
@@ -1424,7 +1426,7 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
         def _register(self, notification):
             # Zamykáme zde kvùli mo¾nosti souèasného vyvolání této metody
             # z `register' i naslouchacího threadu.
-            log(DEBUG, 'Registruji notifikaci:', notification)
+            if __debug__: log(DEBUG, 'Registruji notifikaci:', notification)
             connection = self._connection
             lock = self._connection_lock
             if connection:
@@ -1441,17 +1443,17 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
                             _("Databázová chyba listen"), e)
                 finally:
                     lock.release()
-            log(DEBUG, 'Notifikace zaregistrována:', notification)
+            if __debug__: log(DEBUG, 'Notifikace zaregistrována:', notification)
 
         def _listen(self, pool, spec):
-            log(DEBUG, 'Nový listener')
+            if __debug__: log(DEBUG, 'Nový listener')
             error_pause = 1
             while True:
-                log(DEBUG, 'Napichuji se na nové spojení')
+                if __debug__: log(DEBUG, 'Napichuji se na nové spojení')
                 connection = self._connection = pool.get(spec)
                 notiflist = reduce(lambda x, y: x + y,
                                    self._data_objects.values(), [])
-                log(DEBUG, 'Notifikace k registraci:', notiflist)
+                if __debug__: log(DEBUG, 'Notifikace k registraci:', notiflist)
                 try:
                     # connection do poolu nikdy nevracíme, tak¾e na nìj mù¾eme
                     # navìsit, co je nám libo.
@@ -1462,13 +1464,13 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
                     error_pause = error_pause * 2
                     continue
                 while True:
-                    log(DEBUG, 'Hlídám vstup', connection)
+                    if __debug__: log(DEBUG, 'Hlídám vstup', connection)
                     try:
                         select.select([connection.socket], [], [], None)
                     except Exception, e:
-                        log(DEBUG, 'Chyba na socketu', e.args)
+                        if __debug__: log(DEBUG, 'Chyba na socketu', e.args)
                         break
-                    log(DEBUG, 'Pøi¹el vstup')
+                    if __debug__: log(DEBUG, 'Pøi¹el vstup')
                     lock = self._connection_lock
                     lock.acquire()
                     try:
@@ -1476,23 +1478,24 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
                             connection.consumeInput()
                             notice = connection.notifies()
                         except Exception, e:
-                            log(DEBUG, 'Databázová chyba', e.args)
+                            if __debug__: log(DEBUG, 'Databázová chyba', e.args)
                             break
                         notifications = []
                         if notice:
                             self._pg_changed = True
-                            log(DEBUG, 'Zaregistrována zmìna dat')
+                            if __debug__: log(DEBUG, 'Zaregistrována zmìna dat')
                         while notice:
                             n = string.lower(notice.relname)
                             notifications.append(n)
                             notice = connection.notifies()
                     finally:
                         lock.release()
-                    log(DEBUG, 'Naèteny notifikace:', notifications)
+                    if __debug__:
+                        log(DEBUG, 'Naèteny notifikace:', notifications)
                     self._invoke_callbacks(notifications)
 
         def _invoke_callbacks(self, notifications):
-            log(DEBUG, 'Volám callbacky')
+            if __debug__: log(DEBUG, 'Volám callbacky')
             lock = self._data_lock
             lock.acquire()
             try:
@@ -1502,12 +1505,13 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
             for d, ns in data_objects.items():
                 for n in ns:
                     if n in notifications:
-                        log(DEBUG, 'Volám callbacky datového objektu:', d)
+                        if __debug__:
+                            log(DEBUG, 'Volám callbacky datového objektu:', d)
                         d._call_on_change_callbacks()
                         break
 
         def register(self, data, notification):
-            log(DEBUG, 'Registruji notifikaci:', notification)
+            if __debug__: log(DEBUG, 'Registruji notifikaci:', notification)
             lock = self._data_lock
             lock.acquire()
             try:
@@ -1520,7 +1524,7 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
             finally:
                 lock.release()
             self._register(notification)
-            log(DEBUG, 'Notifikace zaregistrována')
+            if __debug__: log(DEBUG, 'Notifikace zaregistrována')
 
     # Metody hlavní tøídy
 
@@ -1549,8 +1553,9 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
     def _pypg_allocate_connection(self):
         if __debug__:
             if len(self._pypg_connection) >= 3:
-                log(DEBUG, 'Podezøele velká hloubka spojení:',
-                    len(self._pypg_connection))
+                if __debug__:
+                    log(DEBUG, 'Podezøele velká hloubka spojení:',
+                        len(self._pypg_connection))
         connection = self._pypg_get_connection(self, outside_transaction=True)
         self._pypg_connection.append(connection)
         
@@ -1592,7 +1597,7 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
         # Získej DB spojení
         connection = self._pypg_get_connection(data_arg, outside_transaction)
         # Proveï query
-        log(DEBUG, 'SQL dotaz', query)
+        if __debug__: log(DEBUG, 'SQL dotaz', query)
         try:
             result, connection = \
                     _pypg_query(connection, query, data=data_arg,
@@ -1649,7 +1654,7 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
                                 value)
                     row_data.append(value)
                 data.append(row_data)
-        log(DEBUG, 'Výsledek SQL dotazu', data)
+        if __debug__: log(DEBUG, 'Výsledek SQL dotazu', data)
         return data
 
         
@@ -2408,7 +2413,7 @@ class PostgreSQLUserGroups:
     _pgg_connection_key = staticmethod(_pgg_connection_key)
     
     def _pgg_retrieve_access_groups(data):
-        log(DEBUG, 'Updatuji seznam skupin u¾ivatelù')
+        if __debug__: log(DEBUG, 'Updatuji seznam skupin u¾ivatelù')
         d = data._pg_query("select groname, grolist from pg_group",
                            outside_transaction=True)
         regexp = None
@@ -2430,7 +2435,7 @@ class PostgreSQLUserGroups:
             else:
                 if uid_string is not None and regexp.search(uid_string):
                     groups.append(group)
-        log(DEBUG, 'Seznam skupin u¾ivatelù updatován')
+        if __debug__: log(DEBUG, 'Seznam skupin u¾ivatelù updatován')
         return groups
     _pgg_retrieve_access_groups = staticmethod(_pgg_retrieve_access_groups)
 
