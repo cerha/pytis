@@ -227,7 +227,8 @@ def wx_callback(evt_function, *args):
         if is_user:
             message('')
         if not isinstance(event, (wx.IdleEvent, wx.UpdateUIEvent)):
-            log(DEBUG, 'Zpracování události:', (event, event.__class__))
+            if __debug__:
+                log(DEBUG, 'Zpracování události:', (event, event.__class__))
         try:
             if thread.get_ident() == _watcher_thread_ident or _current_event:
                 # Událost bìhem události
