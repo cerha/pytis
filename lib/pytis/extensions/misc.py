@@ -631,7 +631,7 @@ def constraints_email(email):
     vrací None. Jinak vrací string s chybovou hlá¹kou"""
     if email is None:
         return None
-    mask=re.compile(r"^[A-Za-z\d]([\w\d\.-]?[A-Za-z\d])*\@[A-Za-z\d]([\w\d\.-]?[A-Za-z\d])*$")
+    mask=re.compile(r"^[A-Za-z0-9\d]([\w\d\.-]?[A-Za-z0-9_-\d])*\@[A-Za-z0-9\d]([\w\d\.-]?[A-Za-z0-9_-\d])*$")
     if mask.match(email.strip()) is None:
         return "©patný tvar emailu " + email.strip()  + " !"
     return None
