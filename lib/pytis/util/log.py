@@ -54,6 +54,8 @@ import string
 import sys
 import syslog
 import time
+import logging
+import logging.handlers
 
 from util import *
 
@@ -68,7 +70,7 @@ DEBUG = 'DBG'
 """Interní hlá¹ka pro ladìní, neloguje se pøi ostrém spu¹tìní aplikace."""
 
 
-class Logger:
+class Logger(object):
     """Abstraktní tøída pro logování.
 
     Tøída obsahuje jedinou veøejnou metodu 'log()', prostøednictvím které je
@@ -246,7 +248,7 @@ class StreamLogger(Logger):
           stream -- otevøený file object, do kterého lze logovat
           
         """
-        StreamLogger.__bases__[0].__init__(self)
+        super(StreamLogger, self).__init__()
         self._stream = stream
         
     def _send(self, kind, formatted):
@@ -262,8 +264,9 @@ class SyslogLogger(Logger):
 
     def _prefix(self, kind, message, data):
         pid = os.getpid()
-        prefix = '[%s] %s %s %s[%s]: ' % \
-                 (pid, kind, self._module, self._class_name, self._id)
+        user = getpass.getuser()
+        prefix = '[%s] %s %s %s %s[%s]: ' % \
+                 (pid, user, kind, self._module, self._class_name, self._id)
         return prefix
         
     def _send(self, kind, formatted):
@@ -314,11 +317,10 @@ class LoggingInterface:
             if not logger:
                 import config
                 try:
-                    logspec = config.log_logger
+                    cls, args, kwargs = config.log_logger
                 except AttributeError:
-                    logspec = (StreamLogger, (sys.stderr,), {})
-                logger = self._logger = \
-                         apply(logspec[0], logspec[1], logspec[2])
+                    cls, args, kwargs = (StreamLogger, (sys.stderr,), {})
+                logger = self._logger = cls(*args, **kwargs)
             logger.log(kind, message, data)
         for hook in self._hooks:
             hook()
