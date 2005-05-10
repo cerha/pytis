@@ -443,7 +443,7 @@ class Configuration:
             import log
             return (log.StreamLogger, (sys.stderr,), {})
         def default_string(self):
-            return '(SyslogLogger, (), {})'
+            return '(log.StreamLogger, (sys.stderr,), {})'
 
     class _Option_log_exclude(Option):
         """Seznam typù logovacích hlá¹ek, které mají být odfiltrovány.
