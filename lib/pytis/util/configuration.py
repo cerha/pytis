@@ -515,7 +515,7 @@ class Configuration:
         nebo logování.
         """
         def default(self):
-            return 'EBAS'
+            return 'Pytis'
 
     class _Option_date_time_format(Option):
         """Formát spoleènì uvedeného data a èasu.
