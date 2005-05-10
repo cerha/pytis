@@ -119,7 +119,7 @@ class _InputFieldCellEditor(wx.grid.PyGridCellEditor):
         
     def IsAcceptedKey(self, event):
         # TODO/wx: Z neznámých dùvodù není voláno.
-        log(DEBUG, 'Neuvìøitelné -- voláno IsAcceptedKey')
+        if __debug__: log(DEBUG, 'Neuvìøitelné -- voláno IsAcceptedKey')
         return False
     
     def set_callback(self, type, function):
@@ -335,7 +335,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Pomocné metody
         
         def _panic(self):
-            log(DEBUG, 'Zpanikaøení gridové tabulky')
+            if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
             leave_form()
 
         def _get_row(self, row, autoadjust=False):
@@ -991,7 +991,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _create_grid(self, data_init=True,
                      inserted_row_number=None, inserted_row=None):
-        log(DEBUG, 'Vytváøení nového gridu',
+        if __debug__: log(DEBUG, 'Vytváøení nového gridu',
             (data_init, inserted_row_number, inserted_row))
         # Inicializuj datový select
         if data_init:
@@ -1094,7 +1094,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Spoleèná inicializace create a recreate
         self._create_recreate_grid(g)
         # Hotovo
-        log(DEBUG, 'Nový grid vytvoøen')
+        if __debug__: log(DEBUG, 'Nový grid vytvoøen')
         return g
 
     def _on_editor_shown(self, event):
@@ -1238,7 +1238,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if self._in_select_cell:
             return
         self._in_select_cell = True
-        log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
+        if __debug__: log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
         try:
             g = self._grid
             if row is not None:
@@ -1272,7 +1272,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 r = g.GetGridCursorRow()
                 g.SetGridCursor(r, col)
                 g.MakeCellVisible(r, col)
-            log(DEBUG, 'Výbìr buòky proveden:', (row, col))
+            if __debug__: log(DEBUG, 'Výbìr buòky proveden:', (row, col))
         finally:
             self._in_select_cell = False
 
@@ -1297,7 +1297,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if editing.row == row:
             return True
         if not editing.changed:
-            log(DEBUG, 'Odchod z needitovaného øádku povolen')
+            if __debug__: log(DEBUG, 'Odchod z needitovaného øádku povolen')
             self._on_line_rollback()
             finish = True 
         else:
@@ -2277,11 +2277,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                      'position': self._initial_position,
                      'filter_flag': False}
         # Jdeme na to
-        log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
+        if __debug__: log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
         if when is self.DOIT_IFNEEDED:
             if self._reshuffle_request == self._last_reshuffle_request or \
                    self._reshuffle_request > time.time():
-                log(DEBUG, 'Refresh není tøeba provádìt nyní')
+                if __debug__: log(DEBUG, 'Refresh není tøeba provádìt nyní')
                 return False
         if when is self.DOIT_IMMEDIATELY:
             QUESTION = _("Zru¹it zmìny záznamu a aktualizovat seznam?")
@@ -2289,7 +2289,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             delay = (self._table.editing() is not None) # nechceme dr¾et info
         if delay:
-            log(DEBUG, 'Refresh odlo¾en do ukonèení editace')
+            if __debug__: log(DEBUG, 'Refresh odlo¾en do ukonèení editace')
             return False
         # Refresh nyní bude skuteènì proveden
         for k, v in reset.items():

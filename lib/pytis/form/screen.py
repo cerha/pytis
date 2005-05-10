@@ -638,15 +638,16 @@ class KeyHandler:
                 self._init_commands()
             if command in self._commands and \
                    invoke_command(command, **kwargs):
-                log(DEBUG, 'Nalezen pøíkaz klávesy', (command, kwargs))
+                if __debug__:
+                    log(DEBUG, 'Nalezen pøíkaz klávesy', (command, kwargs))
                 return True
         else:
             guardian = self._key_guardian
             if guardian is None:
-                log(DEBUG, '®ádný dal¹í poruèník')
+                if __debug__: log(DEBUG, '®ádný dal¹í poruèník')
                 return False
             else:
-                log(DEBUG, 'Pøedání poruèníkovi:', guardian)
+                if __debug__: log(DEBUG, 'Pøedání poruèníkovi:', guardian)
                 return guardian._maybe_invoke_command(key_commands)
 
     def _get_keymap(self):
@@ -657,7 +658,8 @@ class KeyHandler:
             else:
                 gkeymap = guardian._get_keymap()
             self.keymap = Keymap(gkeymap)
-            log(DEBUG, 'Vytvoøena klávesová mapa', (self, self.keymap))
+            if __debug__:
+                log(DEBUG, 'Vytvoøena klávesová mapa', (self, self.keymap))
         return self.keymap
 
     def define_key(self, key, command, args):
@@ -696,23 +698,24 @@ class KeyHandler:
         Vrací: Pravdu, právì kdy¾ událost byla úspì¹nì pøevedena na pøíkaz.
 
         """
-        log(DEBUG, 'Stisk klávesy:', event)
+        if __debug__: log(DEBUG, 'Stisk klávesy:', event)
         wk = self._wx_key
         if not wk.is_true_key(event):
             return
         message(None)
-        log(DEBUG, 'Událost zpracovává:', str(self))
+        if __debug__: log(DEBUG, 'Událost zpracovává:', str(self))
         guardian = self._key_guardian
         if self._commands is None:
             self._init_commands()
         if self._current_keymap is None or \
            not isinstance(last_user_event(), wx.KeyEvent):
             self._current_keymap = self._get_keymap()
-        log(DEBUG, 'Aktuální klávesová mapa:', str(self._current_keymap))
+        if __debug__:
+            log(DEBUG, 'Aktuální klávesová mapa:', str(self._current_keymap))
         key = wk.event_key(event)
         keydef = self._current_keymap.lookup_key(key)
         if isinstance(keydef, Keymap):
-            log(DEBUG, 'Prefixová klávesa', keydef)
+            if __debug__: log(DEBUG, 'Prefixová klávesa', keydef)
             self._prefix_key_sequence.append(key)
             message('Prefixová klávesa: %s (%s)' % \
                     (' '.join(self._prefix_key_sequence),
@@ -728,12 +731,12 @@ class KeyHandler:
                 if result:
                     return result
             if guardian:
-                log(DEBUG, 'Klávesa pøedána vý¹e')
+                if __debug__: log(DEBUG, 'Klávesa pøedána vý¹e')
                 return guardian.on_key_down(event, dont_skip)
             if dont_skip:
-                log(DEBUG, 'Klávesa ignorována')
+                if __debug__: log(DEBUG, 'Klávesa ignorována')
             else:
-                log(DEBUG, 'Klávesová událost pøeskoèena')
+                if __debug__: log(DEBUG, 'Klávesová událost pøeskoèena')
                 event.Skip()
         return False
 
@@ -798,7 +801,8 @@ class CallbackHandler:
                ('Invalid callback kind', kind)
         assert function is None or callable(function), \
                ('Callback function not callable', function)
-        log(DEBUG, 'Nastaven callback øádkového seznamu:', (kind, function))
+        if __debug__:
+            log(DEBUG, 'Nastaven callback øádkového seznamu:', (kind, function))
         self._callbacks[kind] = function
 
 
@@ -827,7 +831,7 @@ class CallbackHandler:
         except KeyError:
             return False
         if callback:
-            log(DEBUG, 'Bude volán callback:', (kind, callback))
+            if __debug__: log(DEBUG, 'Bude volán callback:', (kind, callback))
             apply(callback, args)
             return True
             
@@ -958,7 +962,7 @@ class MenuBar(wx.MenuBar, Restorable):
             není-li aktivace spojena s ¾ádným formuláøem, tak 'None'
 
         """
-        log(DEBUG, 'Aktivace menu:', activations)
+        if __debug__: log(DEBUG, 'Aktivace menu:', activations)
         activations = list(copy.copy(activations))
         activations.sort()
         #if activations == self._activations:

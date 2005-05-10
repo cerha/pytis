@@ -569,7 +569,8 @@ class InputField(object, KeyHandler, CallbackHandler):
         metodu '_set_value()'.
 
         """
-        log(DEBUG, 'Nastavení hodnoty políèka:', (self.id(), value))
+        if __debug__:
+            log(DEBUG, 'Nastavení hodnoty políèka:', (self.id(), value))
         if value is not None:
             return self._set_value(value)
         else:
@@ -596,7 +597,7 @@ class InputField(object, KeyHandler, CallbackHandler):
         metody nespecifikováno.
         
         """
-        log(DEBUG, 'Reset hodnoty políèka', self.id())
+        if __debug__: log(DEBUG, 'Reset hodnoty políèka', self.id())
         self._set_value(self._initial_value)
 
     def _alive(self):
