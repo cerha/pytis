@@ -235,7 +235,6 @@ class FileResolver(Resolver):
                 module = imp.load_module(name, file, pathname, descr)
             except ImportError, e:
                 raise ResolverFileError(name, self._path, e)
-            log(DEBUG, "Specification module loaded succesfully:", name)
         finally:
             if file is not None:
                 file.close()
