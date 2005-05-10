@@ -139,7 +139,7 @@ class Application(wx.App, KeyHandler):
                                                logo.ConvertToBitmap())
                 self._logo.Show(False)
             else:
-                log(DEBUG, "Unable to read logo:", logo_file)
+                log(OPERATIONAL, "Unable to read logo:", logo_file)
         global _application
         _application = self
         keymap = self.keymap = Keymap()
@@ -438,7 +438,7 @@ class Application(wx.App, KeyHandler):
         else:
             self._panel.SetFocus()
         top = self
-        log(DEBUG, "Dialog ukonèen:", (dialog, result))
+        log(ACTION, "Dialog ukonèen:", (dialog, result))
         return result
 
     def leave_form(self):
@@ -753,8 +753,8 @@ def set_status(id, message, log_=True):
     metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
 
     """
-    if log_:
-        log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
+    if __debug__:
+        if log_: log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
     return _application.set_status(id, message)
 
 
