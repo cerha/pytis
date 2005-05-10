@@ -1,3 +1,8 @@
+2005-05-10  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (constraints_email): Doplnìn re
+	výraz. Povoluje výskyt èíslic a znakù "-", "_" v emailu.
+
 2005-05-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/misc.py (flatten_menus): Nevracej slovníky,
