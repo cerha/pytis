@@ -1300,13 +1300,14 @@ class EditForm(LookupForm, TitledForm):
             result = self._edit_insert()
         else:
             result = self._edit_update()
-        cleanup = self._view.cleanup()
-        if cleanup is not None:
-            cleanup(self._row)
-        if result and close:
-            # tím je automaticky zavoláno _on_parent_close()
-            # TODO: to nebude fungovat v embeded verzi!!!!!!!!!!
-            self._parent.Close()
+        if result:
+            cleanup = self._view.cleanup()
+            if cleanup is not None:
+                cleanup(self._row)
+            if close:    
+                # tím je automaticky zavoláno _on_parent_close()
+                # TODO: to nebude fungovat v embeded verzi!!!!!!!!!!
+                self._parent.Close()
         return result
 
 
