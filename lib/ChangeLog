@@ -1,3 +1,13 @@
+2005-05-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/log.py (SyslogLogger.FACILITY_LOCAL0) 
+	(SyslogLogger.FACILITY_LOCAL1, SyslogLogger.FACILITY_LOCAL2)
+	(SyslogLogger.FACILITY_LOCAL3, SyslogLogger.FACILITY_LOCAL4)
+	(SyslogLogger.FACILITY_LOCAL5, SyslogLogger.FACILITY_LOCAL6)
+	(SyslogLogger.FACILITY_LOCAL7): Nové konstanty.
+	(SyslogLogger.__init__): Pøidán assert na hodnotu `facility'.
+	
+
 2005-05-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (Module): V¹echna volání `log(DEBUG, ...)'
