@@ -1,5 +1,19 @@
 2005-05-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (wx_text_view): Nová funkce.
+	(InfoWindow._create_content): Vyu¾ívej ji.
+	(wx_html_view): Nová funkce.
+	(HtmlWindow._create_content): Vyu¾ívej ji.
+	(InfoWindow.__init__): Nepøedáven argument `title' volání
+	`_create_content()'.
+
+	* pytis/form/dialog.py (GenericDialog.__init__): Nové arguemnty
+	`report' a `html'.
+	(GenericDialog._create_dialog): Pokud byl specifikován `report',
+	pøidej do dialogu pøíslu¹ná prvek.
+	(Message.__init__, MultiQuestion.__init__, Question.__init__):
+	Nové arguemnty `report' a `html'.
+
 	* pytis/util/log.py (SyslogLogger.FACILITY_LOCAL0) 
 	(SyslogLogger.FACILITY_LOCAL1, SyslogLogger.FACILITY_LOCAL2)
 	(SyslogLogger.FACILITY_LOCAL3, SyslogLogger.FACILITY_LOCAL4)
