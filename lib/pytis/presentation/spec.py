@@ -712,6 +712,13 @@ class Color:
     LIGHTSALMON = 'LIGHTSALMON'
 
 
+class TextFormat:
+    """Konstanty pro definici vstupního formátu textu."""
+    PLAIN = 'PLAIN'
+    HTML = 'HTML'
+    WIKI = 'WIKI'
+
+    
 class FieldStyle:
     """Specifikaèní tøída definující podobu vnitøku políèka s hodnotou."""
 
