@@ -1584,37 +1584,30 @@ class StatusBar(wx.StatusBar):
 class InfoWindow(object):
     """Nemodální okno pro zobrazení textových informací."""
     
-    def __init__(self, title, text, _name='info'):
+    def __init__(self, title, text, format=TextFormat.PLAIN, _name='info'):
         """Zobraz nemodální okno nezávislé na hlavním oknì aplikace.
         
         Argumenty:
         
-          text -- prostý text, který bude zobrazen v oknì.  Øádkování i ve¹keré
-            dal¹í formátování zùstane nedotèeno (je ponecháno na volající
-            stranì).
           title -- titulek okna jako øetìzec.
+          text -- text, který bude zobrazen v oknì.  Zpùsob zpravování je urèen
+            argumentem 'format'.
+          format -- vstupní formát textu, jako konstanta 'TextFormat'.  V
+            pøípadì prostého textu ('TextFormat.PLAIN') zùstane øádkování i
+            ve¹keré dal¹í formátování nedotèeno (je ponecháno na volající
+            stranì).  V pøípadì formátu 'TextFormat.HTML' je vstupní text
+            pova¾ován pøímo za text s HTML zanèkováním.  Text v¹ak není sám o
+            sobì platným HTML dokumentem.  Neobsahuje hlavièku, ani znaèky
+            <html> a <body>.  Jde jen o zformátovaný text, který bude vsazen do
+            tìla automaticky vytvoøeného dokumentu.
 
         """
-        import wx
+        assert isinstance(title, types.StringTypes)
+        assert isinstance(text, types.StringTypes)
+        assert format in public_attributes(TextFormat)
         frame = wx.Frame(wx_frame(), title=title, name=_name)
-        self._create_content(frame, text)
+        view = wx_text_view(frame, text, format)
         frame.Show(True)
-
-    def _create_content(self, frame, text):
-        return wx_text_view(frame, text)
-
-        
-class HtmlWindow(InfoWindow):
-    """Nemodální okno pro zobrazení textových informací v HTML.
-
-    Argument 'text' konstruktoru je zde text s HTML zanèkováním.  Text v¹ak
-    není sám o sobì platným HTML dokumentem.  Neobsahuje hlavièku, ani znaèky
-    <html> a <body>.  Jde jen o zformátovaný text, který bude vsazen do tìla
-    automaticky vytvoøeného dokumentu.
-
-    """
-    def _create_content(self, frame, text):
-        return wx_html_view(frame, text)
         
         
 ### Help
@@ -1744,29 +1737,27 @@ def wx_focused_window():
     return wx.Window_FindFocus()
 
 
-def wx_html_view(parent, content):
-    """Vra» instanci wx widgetu se zobrazeným HTML obsahem.
-
-    Argumenty:
-
-      parent -- rodièovský wx prvek.
-      title -- titulek HTML dokumentu.
-      
-
-    """
-    import wx.html
-    w = wx.html.HtmlWindow(parent, size=(400,200))
-    #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
-    w.SetPage('<html><head><title></title></head>' +
-              '<body><font size="-2">' + content + '</font></body></html>')
+def wx_text_view(parent, content, format=TextFormat.PLAIN):
+    import wx
+    if format == TextFormat.PLAIN:
+        style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
+        w = wx.TextCtrl(parent, style=style)
+        lines = content.splitlines()
+        width = min(max([len(l) for l in lines]), 80)
+        height = min(len(lines), 15)
+        w.SetBestFittingSize(char2px(w, width, height))
+        w.SetValue(content)
+    else:
+        if format == TextFormat.WIKI:
+            import lcg
+            p = lcg.wiki.Parser()
+            content = p.parse(content)
+        else:
+            content = '<html><head><title></title></head>' + \
+                      '<body><font size="-2">' + content + '</font></body></html>'
+        import wx.html
+        w = wx.html.HtmlWindow(parent, size=(400,200))
+        #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
+        w.SetPage(content)
     return w
 
-def wx_text_view(parent, content):
-    style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
-    ctrl = wx.TextCtrl(parent, style=style)
-    lines = content.splitlines()
-    width = min(max([len(l) for l in lines]), 80)
-    height = min(len(lines), 15)
-    ctrl.SetBestFittingSize(char2px(ctrl, width, height))
-    ctrl.SetValue(content)
-    return ctrl
