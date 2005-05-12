@@ -1597,13 +1597,11 @@ class InfoWindow(object):
         """
         import wx
         frame = wx.Frame(wx_frame(), title=title, name=_name)
-        self._create_content(frame, title, text)
+        self._create_content(frame, text)
         frame.Show(True)
 
-    def _create_content(self, frame, title, text):
-        style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
-        ctrl = wx.TextCtrl(frame, -1, style=style)
-        ctrl.SetValue(text)
+    def _create_content(self, frame, text):
+        return wx_text_view(frame, text)
 
         
 class HtmlWindow(InfoWindow):
@@ -1615,12 +1613,8 @@ class HtmlWindow(InfoWindow):
     automaticky vytvoøeného dokumentu.
 
     """
-    def _create_content(self, frame, title, text):
-        import wx.html
-        w = wx.html.HtmlWindow(frame)
-        #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
-        w.SetPage('<html><head><title>' + title + '</title></head>' +
-                  '<body><font size="-2">' + text + '</font></body></html>')
+    def _create_content(self, frame, text):
+        return wx_html_view(frame, text)
         
         
 ### Help
@@ -1748,3 +1742,31 @@ def border_style2wx(style):
 def wx_focused_window():
     """Vra» aktuálnì zaostøené wx okno, jako instanci 'wx.Window'."""
     return wx.Window_FindFocus()
+
+
+def wx_html_view(parent, content):
+    """Vra» instanci wx widgetu se zobrazeným HTML obsahem.
+
+    Argumenty:
+
+      parent -- rodièovský wx prvek.
+      title -- titulek HTML dokumentu.
+      
+
+    """
+    import wx.html
+    w = wx.html.HtmlWindow(parent, size=(400,200))
+    #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
+    w.SetPage('<html><head><title></title></head>' +
+              '<body><font size="-2">' + content + '</font></body></html>')
+    return w
+
+def wx_text_view(parent, content):
+    style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
+    ctrl = wx.TextCtrl(parent, style=style)
+    lines = content.splitlines()
+    width = min(max([len(l) for l in lines]), 80)
+    height = min(len(lines), 15)
+    ctrl.SetBestFittingSize(char2px(ctrl, width, height))
+    ctrl.SetValue(content)
+    return ctrl
