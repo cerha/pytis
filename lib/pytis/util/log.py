@@ -258,12 +258,26 @@ class StreamLogger(Logger):
 
 
 class SyslogLogger(Logger):
+
     """Logger posílající hlá¹ení syslogu."""
 
     _MAX_MESSAGE_LENGTH = 1020
 
+    FACILITY_LOCAL0 = syslog.LOG_LOCAL0
+    FACILITY_LOCAL1 = syslog.LOG_LOCAL1
+    FACILITY_LOCAL2 = syslog.LOG_LOCAL2
+    FACILITY_LOCAL3 = syslog.LOG_LOCAL3
+    FACILITY_LOCAL4 = syslog.LOG_LOCAL4
+    FACILITY_LOCAL5 = syslog.LOG_LOCAL5
+    FACILITY_LOCAL6 = syslog.LOG_LOCAL6
+    FACILITY_LOCAL7 = syslog.LOG_LOCAL7
+    
     def __init__(self, facility=None):
         super(SyslogLogger, self).__init__()
+        if __debug__:
+            facilities = [getattr(SyslogLogger, "FACILITY_LOCAL%d" % i)
+                          for i in range(8)]
+            assert facility is None or facility in facilities
         self._facility = facility
         
     def _prefix(self, kind, message, data):
