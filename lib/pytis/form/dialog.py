@@ -73,7 +73,7 @@ class GenericDialog(Dialog):
     
     """    
     def __init__(self, parent, title, buttons, default=None, report=None,
-                 html=False):
+                 report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
 
         Argumenty:
@@ -85,24 +85,26 @@ class GenericDialog(Dialog):
             nebo 'None')
           report -- Text reportu, který má být zobrazen v oknì dialogu.  Jedná
             se o del¹í text, který bude automaticky scrollovatelný.  Je mo¾né
-            zobrazit také komplexní text s HTML formátováním.  V takovém
-            pøípadì je nutné toto indikovat argumentem 'html'.
-          html -- boolean pøíznak, zda má být text reportu zobrazen jako prostý
-            text, èi jako HTML.  V pøípadì, ¾e není ¾ádný report specifikován,
-            je tento argument itrelevantní.
+            zobrazit také komplexní text s HTML èi Wiki formátováním.  V
+            takovém pøípadì je nutné toto indikovat argumentem 'report_format'.
+            Pro vstupní formát platí stejná pravidla, jako v pøípadì tøídy
+            'InfoWindow'.
+          report_format -- konstanta tøídy 'TextFormat' urèující jak má být
+            nakládáno se vstupním textem argumentu 'report'.  V pøípadì, ¾e
+            není ¾ádný report specifikován, je tento argument itrelevantní.
             
         """
         assert is_sequence(buttons)
         assert isinstance(title, types.StringTypes)
         assert default is None or default in buttons
         assert report is None or isinstance(report, types.StringTypes)
-        assert isinstance(html, types.BooleanType)
+        assert report_format in public_attributes(TextFormat)
         super_(GenericDialog).__init__(self, parent)
         self._title = unicode(title)
         self._buttons = buttons
         self._default = default
         self._report = report
-        self._html = html
+        self._report_format = report_format
         self._default_button = None
         self._shown = False
         
@@ -149,14 +151,12 @@ class GenericDialog(Dialog):
         # poskládej obsah a tlaèítka do top-level sizeru (nad sebe)
         sizer = wx.BoxSizer(wx.VERTICAL)
         if self._report is not None:
-            if self._html:
-                report = wx_html_view(dialog, self._report)
-            else:
-                report = wx_text_view(dialog, self._report)
+            report = wx_text_view(dialog, self._report,
+                                  format=self._report_format)
             sizer.Add(report, 1, wx.EXPAND|wx.ALL, 5)
         for part in content:
-            sizer.Add(part, 0, wx.ALL|wx.CENTER|wx.FIXED_MINSIZE, 5)
-        sizer.Add(button_sizer, 0, wx.CENTER|wx.FIXED_MINSIZE)
+            sizer.Add(part, 0, wx.ALL|wx.CENTER, 5)
+        sizer.Add(button_sizer, 0, wx.CENTER)
         sizer.SetSizeHints(dialog)
         # dokonèi ...
         wx_callback(wx.EVT_SET_FOCUS, dialog, self._on_set_focus)
@@ -333,7 +333,7 @@ class Message(GenericDialog):
     
     def __init__(self, parent, message, icon=ICON_INFO, title=_('Zpráva'),
                  buttons=(BUTTON_OK,), default=_(BUTTON_OK), report=None,
-                 html=False):
+                 report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
 
         Argumenty:
@@ -344,7 +344,7 @@ class Message(GenericDialog):
           
         """
         super_(Message).__init__(self, parent, title, buttons,
-                                 default=default, report=report, html=html)
+                                 default=default, report=report, report_format=report_format)
         assert icon in self._icons + (None,)
         if message:
             self._message = unicode(message)
@@ -419,10 +419,10 @@ class MultiQuestion(Message):
     """
     def __init__(self, parent, message, buttons, default=None,
                  title=_("Otázka"), icon=Message.ICON_QUESTION,
-                 report=None, html=False):
+                 report=None, report_format=TextFormat.PLAIN):
         super_(MultiQuestion).__init__(self, parent, message, title=title,
                                        buttons=buttons, default=default,
-                                       icon=icon, report=report, html=html)
+                                       icon=icon, report=report, report_format=report_format)
     
 
 class Question(MultiQuestion):
@@ -434,7 +434,7 @@ class Question(MultiQuestion):
     """
     def __init__(self, parent, message, default=True,
                  title=_("Otázka"), icon=Message.ICON_QUESTION,
-                 report=None, html=False):
+                 report=None, report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
         
         Argumenty:
@@ -461,7 +461,7 @@ class Question(MultiQuestion):
                                   buttons=(Message.BUTTON_YES,
                                            Message.BUTTON_NO),
                                   default=default, icon=icon,
-                                  report=report, html=html)
+                                  report=report, report_format=report_format)
         
     def _customize_result(self, result):
         if self._button_label(result) == Message.BUTTON_YES:
