@@ -2,6 +2,7 @@
 
 	* pytis/form/screen.py (wx_text_view): Pou¾ívej `lcg.WikiNode', ne
 	pøímo `lcg.wiki.Parser'.
+	(wx_text_view): Výstup Wiki parseru také obaluj HTML kódem.
 
 	* pytis/form/dialog.py (GenericDialog._create_dialog_elements):
 	Vkládej report do sizeru bez okrajù.
