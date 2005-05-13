@@ -153,7 +153,7 @@ class GenericDialog(Dialog):
         if self._report is not None:
             report = wx_text_view(dialog, self._report,
                                   format=self._report_format)
-            sizer.Add(report, 1, wx.EXPAND|wx.ALL, 5)
+            sizer.Add(report, 1, wx.EXPAND)
         for part in content:
             sizer.Add(part, 0, wx.ALL|wx.CENTER, 5)
         sizer.Add(button_sizer, 0, wx.CENTER)
