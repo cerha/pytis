@@ -36,6 +36,10 @@
 	(SyslogLogger.FACILITY_LOCAL7): Nové konstanty.
 	(SyslogLogger.__init__): Pøidán assert na hodnotu `facility'.
 	
+2005-05-11  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (EditForm._commit_form): Cleanup provádìj
+	pouze pokud projde 'check'.
 
 2005-05-10  Tomas Cerha  <cerha@brailcom.org>
 
