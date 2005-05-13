@@ -1752,12 +1752,10 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
             import lcg
             n = lcg.WikiNode(content, title='')
             content = n.content().export()
-        else:
-            content = '<html><head><title></title></head>' + \
-                      '<body><font size="-2">' + content + '</font></body></html>'
         import wx.html
         w = wx.html.HtmlWindow(parent, size=(400,200))
         #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
-        w.SetPage(content)
+        w.SetPage('<html><head><title></title></head>' + \
+                  '<body><font size="-2">' + content + '</font></body></html>')
     return w
 
