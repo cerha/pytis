@@ -1,3 +1,11 @@
+2005-05-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (wx_text_view): Pou¾ívej `lcg.WikiNode', ne
+	pøímo `lcg.wiki.Parser'.
+
+	* pytis/form/dialog.py (GenericDialog._create_dialog_elements):
+	Vkládej report do sizeru bez okrajù.
+
 2005-05-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (TextFormat.PLAIN): Nová tøída.
