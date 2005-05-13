@@ -1750,8 +1750,8 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
     else:
         if format == TextFormat.WIKI:
             import lcg
-            p = lcg.wiki.Parser()
-            content = p.parse(content)
+            n = lcg.WikiNode(content, title='')
+            content = n.content().export()
         else:
             content = '<html><head><title></title></head>' + \
                       '<body><font size="-2">' + content + '</font></body></html>'
