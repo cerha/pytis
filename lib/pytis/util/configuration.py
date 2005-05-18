@@ -349,6 +349,18 @@ class Configuration:
         def default(self):
             return './defs'
 
+    class _Option_doc_dir(_FileOption):
+        """Adresáø obsahující dokumentaèní soubory.
+        Adresáø mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu
+        adresáøi.
+        """
+        def long_option(self):
+            return 'docdir='
+        def environment(self):
+            return ('EBASDOCDIR',)
+        def default(self):
+            return './docs'
+
     class _Option_icon_dir(_FileOption):
         """Adresáø s obrázkovými soubory.
         Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu adresáøi.
