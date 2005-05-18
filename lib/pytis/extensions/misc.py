@@ -469,6 +469,7 @@ def menu_report(*args, **kwargs):
         list_items = ["<li>%s</li>" % i for i in items]
         return "\n".join(("<ul>",) + tuple(list_items) + ("</ul>",))
     content = "<h3>Pøehled polo¾ek menu a názvù specifikací</h3>"
+    content += '<a name="menu"></a>'
     content += make_list(resolver.get('application', 'menu'))
     data_specs = remove_duplicates(data_specs)
     data_specs.sort()
@@ -491,10 +492,9 @@ def menu_report(*args, **kwargs):
                    (p, ', '.join(prava.permitted_groups(p, None)))
                    for p in PRAVA]
             content += "<table>" + "\n".join(all) + "</table>"
-    pytis.form.HtmlWindow("Pøehled polo¾ek menu a názvù specifikací", content)
-
-
-
+        content += "<a href=#menu>Zpìt na menu</a>"    
+    pytis.form.run_dialog(pytis.form.Message, "Pøehled polo¾ek menu a názvù specifikací",
+                          report=content, report_format=TextFormat.HTML)
 
     
 def check_form(*args, **kwargs):

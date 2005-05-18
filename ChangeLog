@@ -1,3 +1,8 @@
+2005-05-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (menu_report): Upraveno pro
+	'report' a 'report_format'. Doplnìn odskok zpìt na menu.
+
 2005-05-10  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (constraints_email): Doplnìn re
