@@ -2,6 +2,9 @@
 
 	* lib/pytis/extensions/misc.py (menu_report): Upraveno pro
 	'report' a 'report_format'. Doplnìn odskok zpìt na menu.
+	(check_form): Upraveno pro 'report' a 'report_format'.
+	(check_defs): Upraveno pro 'report' a 'report_format'.
+	(help_window): Nová funkce.
 
 2005-05-10  Petr Malivanek  <malivanek@asellus.cz>
 

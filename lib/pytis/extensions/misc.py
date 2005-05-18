@@ -534,7 +534,9 @@ def check_form(*args, **kwargs):
             popup_items = [p.title() for p in popup_menu]
             obsah = obsah + "\n\nPolo¾ky popup_menu:\n"
             obsah = obsah + "\n".join(popup_items)
-        pytis.form.InfoWindow("DEFS: %s" % spec, obsah)
+        pytis.form.run_dialog(pytis.form.Message,
+                              "DEFS: %s" % spec,
+                              report=obsah)
 
 def check_defs(seznam):
     """Zkontroluje specifikace pro uvedený seznam.
@@ -593,7 +595,9 @@ def check_defs(seznam):
                           message=msg, elapsed_time=True, can_abort=True)
     if errors:
         obsah = "\n".join(errors)
-        pytis.form.InfoWindow("Chyby ve specifikacích", obsah)
+        pytis.form.run_dialog(pytis.form.Message,
+                              "Chyby ve specifikacích",
+                              report=obsah)
  
 def check_menus_defs(*args, **kwargs):        
     return check_defs(get_menu_defs(without_duals=True))
@@ -622,6 +626,27 @@ def cache_spec(*args, **kwargs):
     specs = get_menu_defs()
     pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(specs,),
                           message=msg, elapsed_time=True, can_abort=True)
+
+def help_window(inputfile=None, format=TextFormat.PLAIN):
+    if inputfile is None:
+        pytis.form.run_dialog(pytis.form.Warning,
+                              _("Textový soubor nenalezen"))
+    else:    
+        path = config.doc_dir
+        if not path.endswith('/'):
+            path += '/' 
+        path = path + inputfile
+        try:
+            f = open(path, 'r')
+        except:
+            pytis.form.run_dialog(pytis.form.Warning,
+                                  _("Textový soubor nenalezen"))
+        text = f.read()
+        f.close()
+        pytis.form.run_dialog(pytis.form.Message,
+                              "Nápovìda",
+                              report=text,
+                              report_format=format)        
 
 
 # Additional constraints
