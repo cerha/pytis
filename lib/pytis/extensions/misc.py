@@ -62,7 +62,7 @@ def cfg_param(column, cfgspec='Nastaveni', value_column=None):
     if not cfg_row.has_key(column):
         return pytis.data.Value(None, None)
     value = cfg_row[column]
-    if isinstance(value.type(), pytis.data.Codebook):
+    if value.type().enumerator():
         return cb2colvalue(value, column=value_column)
     else:
         return value
@@ -96,29 +96,32 @@ def cb_computer(codebook, column, default=None):
 
 
 def cb2colvalue(value, column=None):
-    """Pøeveï instanci 'Value' typu 'Codebook' na 'Value' uvedeného sloupce.
+    """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
     
-    Pokud sloupec není uveden, vrátí instanci 'Value' sloupce odpovídajícího
-    klíèovému sloupci.
-
     Argumenty:
 
       value -- Instance `Value' typu `pytis.data.Codebook'.
       column -- název jiného sloupce èíselníku; øetìzec. Viz
         'pytis.data.Codebook.data_value()'
+
+    Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
+    stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
+    'None'.  Takováto hodnota nemusí být validní hodnotou typu, ale
+    zjednodu¹uje se tím práce s výsledkem.  Pokud je zapotøebí korektnìj¹ího
+    chování, je doporuèeno pou¾ít pøímo metodu 'DataEnumerator.get()'
+    (napøíklad voláním 'value.type().enumerator().get(value.value(), column))'.
         
     """
     assert isinstance(value, pytis.data.Value)
-    assert isinstance(value.type(), pytis.data.Codebook)
-    v, e = value.type().validate(value.export())
-    if not v:
-        #TODO: Co to je?
-        return pytis.data.Value(None, None)
-    elif column is None:
-        return v
+    assert value.type().enumerator() is not None
+    if column is None:
+        return value
     else:
-        return v.type().data_value(v.value(), column=column)
-
+        v = value.type().enumerator().get(value.value(), column=column)
+        if v is None:
+            return pytis.data.Value(value.type(), None)
+        else:
+            return v
     
 def cb2strvalue(value, column=None):
     """Pøeveï instanci 'Value' typu 'Codebook' na 'Value' typu 'String'.
