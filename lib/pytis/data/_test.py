@@ -251,15 +251,14 @@ class Boolean(_TypeCheck):
     def test_values(self):
         l = list(self._test_instance.values())
         l.sort()
-        assert l == ['F', 'T'], ('values not working', l)
+        assert l == [False, True], ('values() not working', l)
     def test_noncmp(self):
-        assert self._test_instance != pytis.data.Enumeration(()), \
+        assert self._test_instance != pytis.data.String(), \
                'invalid comparison'
 tests.add(Boolean)
 
 
-class Codebook(_TypeCheck):
-    # Vesmìs testováno vedlej¹ím efektem v rámci jiných testù.
+class Enumerator(unittest.TestCase):
     def setUp(self):
         C = pytis.data.ColumnSpec
         S = pytis.data.String()
@@ -268,41 +267,39 @@ class Codebook(_TypeCheck):
         data = [pytis.data.Row((('x', V(S, x)), ('y', V(S, y)), ('z', V(B, z))))
                 for x,y,z in (('1','a',True), ('2','b',True), ('3','c',False))]
         d = pytis.data.DataFactory(pytis.data.MemData,
-                                 (C('x', S), C('y', S), C('z', B)), data=data)
-        self.cb1 = pytis.data.Codebook(d, value_column='y', use_key=True)
-        self.cb2 = pytis.data.Codebook(d, not_null=False)
-        self.cb3 = pytis.data.Codebook(d, validity_column='z')
-    def _test_validate(self, cb, value, expected):
-        value, error = cb.validate(value)
-        assert error is None, error
-        assert value.value() == expected
+                                   (C('x', S), C('y', S), C('z', B)),
+                                   data=data)
+        e1 = pytis.data.DataEnumerator(d)
+        e2 = pytis.data.DataEnumerator(d, value_column='y')
+        e3 = pytis.data.DataEnumerator(d, validity_column='z')
+        self.cb1 = pytis.data.String(enumerator=e1)
+        self.cb2 = pytis.data.String(enumerator=e2, not_null=True)
+        self.cb3 = pytis.data.String(enumerator=e3)
+    def _test_validate(self, cb, value, expected=None, invalid=False):
+        v, e = cb.validate(value)
+        if invalid:
+            assert e is not None
+        else:
+            assert e is None, e
+            assert v.value() == expected
+    def _test_export(self, cb, value, expected):
+        result = self.cb1.export(value)
+        assert result == expected, ('Invalid exported value:', result)
     def test_validate(self):
-        self._test_validate(self.cb1, 'b', '2')
-        self._test_validate(self.cb2, '1', '1')
-        self._test_validate(self.cb2, '', None)
-    def test_validate_invalid(self):
-        v1,e1 = self.cb1.validate('')
-        v2,e2 = self.cb1.validate('8')
-        assert e1 is not None
-        assert e2 is not None
-    def test_validity_column(self):
-        v1,e1 = self.cb3.validate('1')
-        assert e1 is None
-        v2,e2 = self.cb3.validate('3')
-        assert e2 is not None
+        self._test_validate(self.cb1, '1', '1')
+        self._test_validate(self.cb1, '',  None)
+        self._test_validate(self.cb1, '8', None, invalid=True)
+        self._test_validate(self.cb2, 'b', 'b')
+        self._test_validate(self.cb2, '',  None, invalid=True)
+        self._test_validate(self.cb2, 'd', None, invalid=True)
+        self._test_validate(self.cb3, '1', '1')
+        self._test_validate(self.cb3, '3', None, invalid=True)
     def test_export(self):
-        result = self.cb1.export('2')
-        assert result == 'b', ('Invalid value', result)
-        assert self.cb1.export('8') == ''
-        assert self.cb2.export('8') == '8'
-        assert self.cb2.export('') == ''
-        assert self.cb2.export(None) == ''
-    def test_export_column(self):
-        result = self.cb1.export('2', column='x')
-        assert result == '2', ('Invalid value', result)
-    def test_cmp(self):
-        pass
-tests.add(Codebook)
+        self._test_export(self.cb1, '2', '2')
+        self._test_export(self.cb2, '8', '8')
+        self._test_export(self.cb2, '', '')
+        self._test_export(self.cb2, None, '')
+tests.add(Enumerator)
         
 
 class Sequence(_TypeCheck):
