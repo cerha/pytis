@@ -380,6 +380,8 @@ class Form(Window, KeyHandler, CallbackHandler):
         try:
             spec_paths = self._resolver.get(name, 'print_spec')
         except ResolverSpecError:
+            spec_paths = None
+        if not spec_paths:
             spec_paths = ((_("Implicitní"), os.path.join('output', name)),)
         return [MItem(p[0], command=pytis.form.Form.COMMAND_PRINT,
                       args={'print_spec_path': p[1]})

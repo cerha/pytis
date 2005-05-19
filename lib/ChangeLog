@@ -1,3 +1,8 @@
+2005-05-19  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (Form.print_menu): Zohledni vrácení 'None' z
+	'print_spec'. 
+
 2005-05-18  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/util/configuration.py (Configuration._Option_doc_dir):
