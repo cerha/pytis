@@ -1,3 +1,8 @@
+2005-05-19  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (help_window): Pou¾ij 'InfoWindow'.
+	(menu_report): Pou¾ij 'InfoWindow'.
+
 2005-05-18  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (menu_report): Upraveno pro

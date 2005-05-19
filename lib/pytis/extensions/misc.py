@@ -493,8 +493,8 @@ def menu_report(*args, **kwargs):
                    for p in PRAVA]
             content += "<table>" + "\n".join(all) + "</table>"
         content += "<a href=#menu>Zpìt na menu</a>"    
-    pytis.form.run_dialog(pytis.form.Message, "Pøehled polo¾ek menu a názvù specifikací",
-                          report=content, report_format=TextFormat.HTML)
+    pytis.form.InfoWindow("Pøehled polo¾ek menu a názvù specifikací",
+                          text=content, format=TextFormat.HTML)
 
     
 def check_form(*args, **kwargs):
@@ -643,10 +643,7 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
                                   _("Textový soubor nenalezen"))
         text = f.read()
         f.close()
-        pytis.form.run_dialog(pytis.form.Message,
-                              "Nápovìda",
-                              report=text,
-                              report_format=format)        
+        pytis.form.InfoWindow("Nápovìda", text=text, format=format)        
 
 
 # Additional constraints
