@@ -328,8 +328,6 @@ class DBDataPostgreSQL(DBData):
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
     _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
 
-    _pg_codebook_cache = None
-
     class _PgBuffer:
         # Døíve to býval buffer, nyní se pøemìòuje na "buffer-cache".
 
@@ -592,9 +590,6 @@ class DBDataPostgreSQL(DBData):
         self._pg_initial_select = False
         self._pg_make_row_template = \
           self._pg_create_make_row_template(self._columns)
-        if DBDataPostgreSQL._pg_codebook_cache is None:
-            DBDataPostgreSQL._pg_codebook_cache = \
-              LimitedCache(DBDataPostgreSQL._pg_validate_codebook)        
         
     # Abstraktní metody pro potomky
     
@@ -655,36 +650,12 @@ class DBDataPostgreSQL(DBData):
             type = c.type()
             if isinstance(type, String):
                 typid = 0
-                icount = 1
-            elif isinstance(type, pytis.data.xtypes.Codebook):
-                typid = 1
-                icount = 1
-                vc_id = type.value_column()
-                vc = find(vc_id, type.columns(), key=lambda c: c.id())
-                assert vc is not None, ('Invalid codebook column id', vc_id)
-                type = (type, vc.type())
-            elif isinstance(type, Sequence):
+            elif isinstance(type, (Time, DateTime)):
                 typid = 2
-                icount = len(type)
-            elif isinstance(type, Time):
-                typid = 3
-                icount = 1
-            elif isinstance(type, DateTime):
-                typid = 4
-                icount = 1
             else:
                 typid = 99
-                icount = 1
-            template.append((id, typid, type, icount))
+            template.append((id, typid, type))
         return template
-    
-    def _pg_validate_codebook(cache_key):
-        type, data = cache_key
-        t, subtype = type
-        v, e = subtype.validate(data, strict=False)
-        assert e is None, (str(e), subtype, data)
-        return Value(t, v.value())
-    _pg_validate_codebook = staticmethod(_pg_validate_codebook)
     
     def _pg_make_row_from_raw_data(self, data_):
         if not data_:
@@ -692,39 +663,24 @@ class DBDataPostgreSQL(DBData):
         row_data = []
         data_0 = data_[0]
         i = 0
-        for id, typid, type, icount in self._pg_make_row_template:
+        for id, typid, type in self._pg_make_row_template:
+            dbvalue = data_0[i]
+            i += 1                
             if typid == 0:              # string
-                if data_0[i] is None:
+                if dbvalue is None:
                     v = None
                 else:
                     import config
-                    v = unicode(data_0[i], config.db_encoding)
-                val = Value(type, v)
-                i += 1
-            elif typid == 1:            # codebook
-                key = (type, data_0[i])
-                val = self.__class__._pg_codebook_cache[key]
-                i += 1
-            elif typid == 2:            # sequence
-                new_i = i + icount
-                val, err = type.validate(tuple(data_0[i:new_i]), strict=False)
-                assert err is None, (str(err), type, data_0[i:new_i])
-                i = new_i
-            elif typid == 3:            # time
-                val, err = type.validate(data_0[i], strict=False,
-                                         format=type.SQL_FORMAT, local=False)
+                    v = unicode(dbvalue, config.db_encoding)
+                value = Value(type, v)
+            elif typid == 2:            # time
+                value, err = type.validate(dbvalue, strict=False,
+                                           format=type.SQL_FORMAT, local=False)
                 assert err is None
-                i += 1                
-            elif typid == 4:            # date-time
-                val, err = type.validate(data_0[i], strict=False,
-                                         format=type.SQL_FORMAT, local=False)
-                assert err is None
-                i += 1                
             else:
-                val, err = type.validate(data_0[i], strict=False)
+                value, err = type.validate(dbvalue, strict=False)
                 assert err is None
-                i += 1
-            row_data.append((id, val))            
+            row_data.append((id, value))
         return Row(row_data)
 
     def _pg_already_present(self, row):
@@ -747,7 +703,7 @@ class DBDataPostgreSQL(DBData):
         v = value.value()
         if v == None:
             result = 'NULL'
-        elif isinstance(value.type(), Enumeration):
+        elif isinstance(value.type(), Boolean):
             result = "'%s'" % value.type().export(v)
         elif is_anystring(v):
             result = "'%s'" % _pg_escape(v)
@@ -1826,35 +1782,21 @@ class PostgreSQLStandardBindingHandler(object):
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            table, column, btype, enumerator, kwargs = \
-                   b.table(), b.column(), b.type(), b.enumerator(), b.kwargs()
-            # Jaký je typ odpovídajícího sloupce?
+            enumerator, kwargs = b.enumerator(), copy.copy(b.kwargs())
             if enumerator:
-                if btype:
-                    assert isinstance(btype, pytis.data.xtypes.Codebook), \
-                           ('Invalid codebook type', btype)
-                else:
-                    df_kwargs = {'dbconnection_spec':
-                                 self._pg_dbconnection_spec()}
-                    atype = self._pdbb_get_table_type(table, column, None)
-                    # constraints se momentálnì moc nevyu¾ívají.  Pokud to bude
-                    # potøeba, je otázka, jak je zde pøedávat.
-                    assert not atype.constraints()
-                    kwargs['not_null'] = atype.not_null()
-                    btype = Codebook(enumerator, data_factory_kwargs=df_kwargs,
-                                     **kwargs)
-            else:
-                if is_sequence(column):
-                    related_to = b.related_to()
-                    assert not related_to or len(related_to) == len(column), \
-                           'Lengths of columns and related don\'t match'
-                    subtypes = [self._pdbb_get_table_type(table, c, btype)
-                                for c in column]
-                    btype = Sequence(tuple(subtypes), **kwargs)
-                else:
-                    btype = self._pdbb_get_table_type(table, column, btype,
-                                                      kwargs)
-            colspec = ColumnSpec(b.id(), btype)
+                df_kwargs = {'dbconnection_spec': self._pg_dbconnection_spec()}
+                e_kwargs = {'data_factory_kwargs': df_kwargs}
+                for a in ('value_column', 'validity_column'):
+                    if kwargs.has_key(a):
+                        e_kwargs[a] = kwargs[a]
+                        del kwargs[a]
+                kwargs['enumerator'] = DataEnumerator(enumerator, **e_kwargs)
+                #TODO: Toto je hack kvùli zpìtné kompatibilitì...
+                if not kwargs.has_key('not_null'):
+                    kwargs['not_null'] = True
+            t = self._pdbb_get_table_type(b.table(), b.column(), b.type(),
+                                          type_kwargs=kwargs)
+            colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
                 key.append(colspec)
@@ -2015,9 +1957,7 @@ class PostgreSQLStandardBindingHandler(object):
             assert col, ('Invalid column name', colid)
             case_insensitive = kwargs.has_key('ignore_case') and \
                                kwargs['ignore_case'] and \
-                               (isinstance(value.type(), String) or \
-                                isinstance(value.type(),
-                                           pytis.data.xtypes.Codebook))
+                               isinstance(value.type(), String)
             t = self.find_column(colid).type()
             btabcols = self._pdbb_btabcol(col)
             val = xtuple(self._pg_value(value))
