@@ -310,6 +310,7 @@ class Application(wx.App, KeyHandler):
                     finally:
                         self._modals.pop()
                         form.close()
+                        busy_cursor(False)
                     top = self.top_window()
                     if top is not None:
                         if isinstance(top, Refreshable):
@@ -432,6 +433,7 @@ class Application(wx.App, KeyHandler):
             result = dialog.run(*args, **kwargs)
         finally:
             self._modals.pop()
+            busy_cursor(False)
         top = self.top_window()
         if top is not None:
             top.focus()
