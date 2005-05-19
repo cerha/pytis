@@ -2,7 +2,6 @@
 
 	* pytis/data/__init__.py: Neimportuj `xtypes'.  Aktualizuj jmenný
 	prostor modulu `types_'.
-	
 
 	* pytis/data/_test.py (Boolean.test_values): Oèekávej vnitøní
 	hodnoty, nikoli u¾ivatelské. 
@@ -29,7 +28,8 @@
 	(Sequence): Tøída zru¹ena.
 	(_Value.__cmp__): Pokud dojde na porovnávání hodnot, pou¾ij
 	`cmp()', ne `compare_objects()'.
-	
+	(Boolean.__init__): Pøedávej argument `not_null'.
+
 	* pytis/data/dbdata.py (DBDataPostgreSQL._pg_codebook_cache):
 	Zru¹eno.
 	(DBDataPostgreSQL._pg_query): Nevytváøej `_pg_codebook_cache'.
