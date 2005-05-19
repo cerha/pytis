@@ -1742,7 +1742,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
     if format in (TextFormat.PLAIN, TextFormat.WIKI):
         lines = content.splitlines()
         width = min(max([len(l) for l in lines]), 80)
-        height = min(len(lines), 15)
+        height = min(len(lines), 20)
         size = (width, height)
     else:
         size = None
@@ -1757,7 +1757,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
             n = lcg.WikiNode(content, title='')
             html = n.content().export()
         import wx.html
-        size = size and char2px(parent, *size) or (400, 200)
+        size = size and char2px(parent, *[1.3 * x for x in size]) or (400, 300)
         w = wx.html.HtmlWindow(parent, size=size)
         #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
         w.SetPage('<html><head><title></title></head>' + \
