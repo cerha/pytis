@@ -45,9 +45,7 @@ from mx import DateTime as DT
 
 from pytis.data import *
 
-
 
-
 class _MType(type):
 
     def __call__ (self, *args, **kwargs):
@@ -111,7 +109,10 @@ class Type(object):
     _remote_type_table_cache = {}
 
     VM_NULL_VALUE = 'VM_NULL_VALUE'
-    _VALIDATION_MESSAGES = {VM_NULL_VALUE: _("Prázdná hodnota")}
+    VM_INVALID_VALUE =  'VM_INVALID_VALUE'
+    _VALIDATION_MESSAGES = {VM_NULL_VALUE: _("Prázdná hodnota"),
+                            VM_INVALID_VALUE: _("Nesprávná hodnota")}
+    
     _SPECIAL_VALUES = ()
 
     def _make(class_, *args, **kwargs):
@@ -129,7 +130,8 @@ class Type(object):
         return class_._make(class_, *args, **kwargs)
     make = classmethod(make)
 
-    def __init__(self, not_null=False, constraints=(), validation_messages={}):
+    def __init__(self, not_null=False, enumerator=None, constraints=(),
+                 validation_messages=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -139,38 +141,43 @@ class Type(object):
             libovolná jiná hodnota na None mapovaná (viz. konstanta
             _SPECIAL_VALUES).  Pokud tento argument pravdivý, neprojde prázdná
             hodnota validací.
-          constraints -- sekvence validaèních funkcí.  Ka¾dá z tìchto funkcí je
-            funkcí jednoho argumentu, kterým je vnitøní hodnota typu.  Funkce
-            pro tuto hodnotu musí vrátit buï 'None', je-li hodnota správná,
-            nebo chybovou hlá¹ku jako string v opaèném pøípadì.
+          enumerator -- specifikace enumerátoru, jako instance `Enumerator',
+            nebo None.  Slou¾í k realizaci integritních omezení výètového
+            typu.  Více viz dokumentace tøídy `Enumerator'.
+          constraints -- sekvence validaèních funkcí slou¾ících k realizaci
+            libovolných integritních omezení.  Ka¾dá z tìchto funkcí je funkcí
+            jednoho argumentu, kterým je vnitøní hodnota typu.  Funkce pro tuto
+            hodnotu musí vrátit buï 'None', je-li hodnota správná, nebo
+            chybovou hlá¹ku jako string v opaèném pøípadì.
           validation_messages -- dictionary identifikátorù a validaèních
             hlá¹ek.  Klíèe jsou identifikátory validaèních hlá¹ek definované
             konstantami tøídy s názvy zaèínajícími prefixem 'VM_' a hodnoty
             jsou hlá¹ky coby stringy.  Hlá¹ky z tohoto argumentu, jsou-li pro
             daný identifikátor definovány, mají pøednost pøed implicitními
             hlá¹kami definovanými typem.
-          
+
+
         """
         super(Type, self).__init__()
-        assert isinstance(not_null, types.BooleanType) 
+        assert isinstance(not_null, types.BooleanType)
+        assert enumerator is None or isinstance(enumerator, Enumerator)
+        assert isinstance(constraints, (types.ListType, types.TupleType))
+        assert validation_messages is None or \
+               isinstance(validation_messages, types.DictType) 
         self._not_null = not_null
+        self._enumerator = enumerator
         self._constraints = xtuple(constraints)
         self._validation_messages = copy.copy(self._VALIDATION_MESSAGES)
-        self._validation_messages.update(validation_messages)
+        if validation_messages is not None:
+            self._validation_messages.update(validation_messages)
         self._fetched = True
         # Cachujeme na úrovni instancí, proto¾e ty jsou stejnì sdílené, viz
         # `__new__'.
-        self._validation_cache = LimitedCache(self._validating_provider)
+        self._validation_cache = cache = LimitedCache(self._validating_provider)
+        if isinstance(enumerator, MutableEnumerator):
+            # TODO: Jak se to bude chovat po smrti instance typu?
+            enumerator.add_hook_on_update(lambda : cache.reset())
 
-    def _complete(self):
-        """Dokonèi v¹echny odlo¾ené inicializace instance.
-
-        Po zavolání této metody musí být instance typu plnì kompletní, vèetnì
-        v¹ech líných inicializací.
-
-        """
-        pass
-        
     def type_table(class_):
         """Vra» tabulku typù jako instanci '_TypeTable'.
 
@@ -189,7 +196,8 @@ class Type(object):
         elif self._id == other._id:
             result = 0
         elif self._constraints == other._constraints \
-                 and self._not_null == other._not_null:
+                 and self._not_null == other._not_null \
+                 and cmp(self._enumeration, other._enumeration) == 0:
             result = 0
         else:
             result = compare_objects(self, other)
@@ -233,7 +241,6 @@ class Type(object):
                 raise Exception('Invalid type class', id, class_module,
                                 class_name_, self.__class__.__name__)
             t = self.__class__(*args, **kwargs)
-            t._complete()
             cache[id] = t
         self.__dict__.update(t.__dict__)
         self._id = id
@@ -242,7 +249,7 @@ class Type(object):
             return self.__dict__[name]
         except KeyError:
             raise AttributeError(name)
-        
+
     def validate(self, object, strict=True, **kwargs):
         """Zvaliduj 'object' a vra» instanci tøídy 'Value' a popis chyby.
 
@@ -341,21 +348,26 @@ class Type(object):
         return ValidationError(message)
         
     def _check_constraints(self, value):
-        if self._not_null and value is None:
-            raise self._validation_error(self.VM_NULL_VALUE)
+        if value is None:
+            if self._not_null:
+                raise self._validation_error(self.VM_NULL_VALUE)
+            else:
+                return True
+        if self._enumerator is not None and not self._enumerator.check(value):
+            raise self._validation_error(self.VM_INVALID_VALUE)
         for c in self._constraints:
             cresult = c(value)
             if cresult is not None:
                 raise ValidationError(cresult)
 
-    def constraints(self):
-        """Vra» constraints zadaná v konstruktoru."""
-        return self._constraints
-
     def not_null(self):
         """Vra» pravdu, pokud hodnoty tohoto typu smí být prázdné."""
         return self._not_null
 
+    def enumerator(self):
+        """Vra» enumerátor svázaný s tímto typem."""
+        return self._enumerator
+            
     def export(self, value, *args, **kwargs):
         """Vra» stringovou reprezentaci 'value' schopnou validace.
 
@@ -393,41 +405,7 @@ class Type(object):
 
         """
         return Value(self, None)
-
-
-class MutableType(object):
-    """Abstraktní typová tøída, kterou povinnì dìdí v¹echny mutable typy.
-
-    Mutable typ je takový, jeho¾ validaèní a exportní metody mohou pro tuté¾
-    instanci dávat v èase rozdílné výsledky.
-
-    """
-    __metaclass__ = _MType
-    
-    def _update(self, force=False):
-        """Updatuj data typu.
-
-        Bezprostøednì po zavolání této metody by mìla validace a exporty
-        pracovat s aktuálními daty.
-
-        Argumenty:
-
-          force -- právì kdy¾ je pravda, je update vynucený, jinak mù¾e a
-            nemusí být proveden, vìt¹inou v závislosti na nároènosti operace
-
-        Vrací: Pravdu, právì kdy¾ update dat byl skuteènì proveden.
-
-        """
-        return True
-
-    def _with_update(self, function, args=(), kwargs={}):
-        updated = self._update()
-        value, ok = apply(function, args, kwargs)
-        if not ok and not updated:
-            self._update(force=True)
-            value, __ = apply(function, args, kwargs)
-        return value
-        
+  
 
 class Number(Type):
     """Abstraktní typová tøída, která je základem v¹ech numerických typù.
@@ -437,6 +415,7 @@ class Number(Type):
 
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+
     
 class Integer(Number):
     """Libovolný integer."""
@@ -593,6 +572,7 @@ class Float(Number):
         else:
             return unicode(self._format_string % value)
 
+        
 class String(Type):
     """Libovolný string.
 
@@ -680,7 +660,8 @@ class Color(String):
         if error is None and self._VALIDATION_REGEX.match(string) is None:
             value, error = None, self._validation_error(self.VM_COLOR_FORMAT)
         return value, error
-            
+
+    
 class DateTime(Type):
     """Èasový okam¾ik reprezentovaný instancí tøídy 'DateTime.DateTime'.
 
@@ -919,123 +900,21 @@ class Time(DateTime):
         return super(Time, self)._export(*args, **kwargs)
 
 
-class Enumeration(Type):
-    """Výètový typ.
-
-    Hodnoty tohoto typu jsou dány fixním nebo v èase variabilním výètem.
-
-    """
-
-    VM_INVALID_VALUE =  'VM_INVALID_VALUE'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update({VM_INVALID_VALUE: _("Nesprávná hodnota")})
-
-    def values(self):
-        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu.
-
-        V této tøídì metoda vyvolá výjimku 'ProgramError', pøedpokládá se její
-        pøedefinování v potomcích.
-        
-        """
-        raise ProgramError('Not implemented', 'Enumeration.values')
-    
-    
-class FixedEnumeration(Enumeration):
-    """Výètový typ.
-
-    Hodnoty tohoto typu mohou být pouze prvky pevnì stanovené mno¾iny zadané
-    jako parametr konstruktoru této tøídy.  Blí¾e viz metoda '__init__'.
-    
-    """
-    
-    def __init__(self, enumeration, **kwargs):
-        """Inicializuje výètový typ dle specifikace 'enumeration'.
-
-        Argumenty:
-        
-          enumeration -- specifikace výètových hodnot
-          
-        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
-
-        Specifikace má podobu sekvence dvouprvkových sekvencí.  První prvek
-        ka¾dé dvouprvkové sekvence je objekt (ne nutnì string) odpovídající
-        reprezentaci hodnoty v u¾ivatelském rozhraní (\"u¾ivatelská hodnota\")
-        a druhý prvek je libovolný objekt reprezentující hodnotu internì
-        (\"interní hodnota\").
-
-        Korespondence mezi u¾ivatelskými a interními hodnotami by mìla být 1:1.
-        Je-li tato korespondence 1:N, tøída nemusí pracovat správnì.  Naproti
-        tomu korespondence N:1 je legální, je v¹ak tøeba si uvìdomit, ¾e
-        v¹echny u¾ivatelské hodnoty pak mohou být nabízeny u¾ivateli pro výbìr
-        v u¾ivatelském rozhraní, co¾ není v¾dy ¾ádoucí.
-
-        Typ zachovává konvenci, ¾e prázdný string odpovídá nedefinované
-        hodnotì.
-
-        Pøíklad specifikace:
-          (('Èe¹tina', 'cs'), ('Angliètina', 'en'), ('Nìmèina', 'de'))
-        
-        """
-        super(FixedEnumeration, self).__init__(**kwargs)
-        self._enumeration = enumeration
-
-    def __cmp__(self, other):
-        """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.
-
-        'self' a 'other' jsou shodné, právì kdy¾ jsou té¾e tøídy a jejich
-        enumerations se rovnají.
-        
-        """
-        result = super(FixedEnumeration, self).__cmp__(other)
-        if not result:
-            result = cmp(self._enumeration, other._enumeration)
-        return result
-        
-    def values(self):
-        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu."""
-        return map(lambda x: x[0], self._enumeration)
-    
-    def _validate(self, object):
-        """Vra» instanci tøídy 'Value' s hodnotou definovanou pro 'object'.
-
-        'object' je správný právì tehdy, je-li jednou z u¾ivatelských hodnot
-        definovaných v metodì '__init__'.  Blí¾e o mapování objektù na hodnoty
-        viz metoda '__init__'.
-
-        """
-        for s, v in self._enumeration:
-            if s == object:
-                value = v
-                break
-        else:
-            return None, self._validation_error(self.VM_INVALID_VALUE)
-        return Value(self, value), None
-
-    def _export(self, value):
-        for s, v in self._enumeration:
-            if v == value:
-                return s
-        else:
-            raise ProgramError('Invalid internal value', value)
-        
-    def default_value(self):
-        if self._enumeration:
-            return Value(self, self._enumeration[0][1])
-        else:
-            return super(FixedEnumeration, self).default_value()
-
-
-class Boolean(FixedEnumeration):
+class Boolean(Type):
     """Jednoduchý výètový typ implementující hodnoty \"pravda\" a \"nepravda\".
-
+    
     Za pravdu je pova¾ován string 'T', za nepravdu string 'F'; tyto stringy
     jsou u¾ivatelskými hodnotami výètu.  Odpovídající vnitøní hodnoty jsou
     blí¾e nespecifikované pythonové objekty s pythonovu sémantikou pravdy a
     nepravdy.
     
     """
-    def __init__(self, **kwargs):
-        super(Boolean, self).__init__((('F', False), ('T', True)), **kwargs)
+
+    _SPECIAL_VALUES = ((True, 'T'), (False, 'F'))
+    
+    def __init__(self):
+        e = FixedEnumerator((True, False))
+        super(Boolean, self).__init__(enumerator=e, not_null=True)
 
     def _validate(self, object, extended=False):
         """Vra» instanci tøídy 'Value' s hodnotou definovanou pro 'object'.
@@ -1054,78 +933,316 @@ class Boolean(FixedEnumeration):
             elif object in ('', 'f', '0'):
                 object = 'F'
         return super(Boolean, self)._validate(object)
-
-
-class Sequence(Type):
-    """Typ, jeho¾ hodnotou je tuple hodnot, instancí tøídy 'Value'.
-
-    Typ je charakterizován tuplem instancí tøídy 'Type' definujícím typy
-    v tuple hodnot.  Hodnoty musí typové specifikaci odpovídat.  Mezi
-    jednotlivými typy v tuple typù nesmí být typ 'Sequence'.
-
-    """
     
-    VM_NONTUPLE = 'VM_NONTUPLE'
-    VM_ARG_NUMBER = 'VM_ARG_NUMBER'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update({VM_NONTUPLE: _("Objekt není tuple"),
-                                 VM_ARG_NUMBER: _("Chybný poèet argumentù")})
-    
-    def __init__(self, subtypes, **kwargs):
-        """Vytvoø typ slo¾ený ze 'subtypes'.
-
-        Argumenty:
-
-          subtypes -- seznam instancí tøídy 'Type', který definuje typy prvkù
-            hodnoty typu.
-            
-        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
-
-        """
-        assert not filter(lambda t: isinstance(t, Sequence), subtypes), \
-               'Sequence type within subtypes'
-        super(Sequence, self).__init__(**kwargs)
-        self._subtypes = subtypes
-
-    def __cmp__(self, other):
-        """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.
-
-        'self' a 'other' jsou shodné, právì kdy¾ jsou té¾e tøídy a jejich
-        tuples typù polo¾ek se rovnají.
-        
-        """
-        result = super(Sequence, self).__cmp__(other)
-        if not result:
-            result = (self._subtypes == other._subtypes)
-        return result
-
-    def __len__(self):
-        """Vra» poèet prvkù tuple typové specifikace."""
-        return len(self._subtypes)
-        
-    def _validate(self, object):
-        if type(object) != type(()):
-            return None, self._validation_error(self.VM_NONTUPLE)
-        subtypes = self._subtypes
-        if len(object) != len(subtypes):
-            return None, ValidationError(VM_ARG_NUMBER)
-        vlist = []
-        for t, o in zip(subtypes, object):
-            v, e = t.validate(o)
-            if e:
-                return None, e
-            vlist.append(v)
-        return Value(self, tuple(vlist)), None
-
-    def _export(self, value):
-        """Vra» tuple stringù odpovídajících exportùm hodnot 'value'."""
-        assert type(value) == type(()), ('value not a tuple', value)
-        vlist = map(lambda v: v.type().export(v.value()), value)
-        return tuple(vlist)
-
+    def default_value(self):
+        return Value(self, False)
 
 
 # Pomocné tøídy
+
+class Enumerator(object):
+    """Realizace výètu hodnot pou¾itelného pro integritní omezení datového typu.
+
+    Enumerátor je pøedev¹ím poskytovatelem validace pro ovìøení, zda je nìjaká
+    hodnota pøítomna v urèité mno¾inì hodnot.  Zpùsob ovìøení a urèení mno¾iny
+    hodnot je pøedmìtem implementace rùzných tøíd enumerátorù.  Ovìøovaná
+    hodnota je v¾dy vnitøní (Pythonovou) hodnotou typu, ve kterém je enumerátor
+    pou¾it.
+
+    Instanci enumerátoru je potom mo¾no pøedat konstruktoru datového typu a
+    uvalit tak na daný typ pøíslu¹né integritní omezení.  Více informací také
+    viz 'Type.__init__()'.
+    
+    Tato tøída pouze definuje povinné rozhraní enumerátorù.  Kromì zde
+    definovaných povinných metod mohou konkrétní tøídy enumerátorù nabízet
+    je¹tì dal¹í slu¾by.
+    
+    """
+    def check(self, value):
+        """Vra» pravdu, pokud 'value' je prvkem mno¾iny enumerátoru.
+
+        Argumenty:
+        
+          value -- vnitøní (Pythonová) hodnota datového typu, pro který je
+            enumerátor pou¾it.
+        
+        """
+        raise ProgramError('Not implemented', 'Enumerator.check()')
+
+
+
+class FixedEnumerator(Enumerator):
+    """Enumerátor pracující s fixní mno¾inou hodnot."""
+    
+    def __init__(self, enumeration):
+        """Inicializuj instanci.
+        
+        Argumenty:
+        
+          enumeration -- sekvence hodnot kompatibilních s vnitøními
+            (Pythonovými) hodnotami typu, pro který má být enumerátor pou¾it.
+          
+        """
+        super(FixedEnumerator, self).__init__()
+        self._enumeration = tuple(enumeration)
+
+    # Standard Enumerator interface.
+        
+    def check(self, value):
+        for v in self._enumeration:
+            if v == value:
+                return True
+        return False
+
+    # Extended interface.
+
+    def values(self):
+        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu.
+
+        V této tøídì metoda vyvolá výjimku 'ProgramError', pøedpokládá se její
+        pøedefinování v potomcích.
+        
+        """
+        return self._enumeration
+        
+        
+class MutableEnumerator(Enumerator):
+    """Abstraktní tøída, kterou povinnì dìdí v¹echny mutable enumerátory.
+
+    Mutable enumerátor takový, jeho¾ mno¾ina hodnot se mù¾e v èase mìnit.
+
+    """
+    def __init__(self):
+        self._hooks = []
+    
+    def _update(self, force=False):
+        """Aktualizuj data enumerátoru.
+
+        Bezprostøednì po zavolání této metody by mìl enumerátor pracovat
+        s aktuálními daty.
+
+        Argumenty:
+
+          force -- právì kdy¾ je pravda, je update vynucený, jinak mù¾e a
+            nemusí být proveden, vìt¹inou v závislosti na nároènosti operace
+
+        Vrací: Pravdu, právì kdy¾ byl update skuteènì proveden.
+
+        """
+        for hook in self._hooks: hook()
+        return True
+
+    def add_hook_on_update(self, hook):
+        self._hooks.append(hook)
+        
+
+class DataEnumerator(MutableEnumerator):
+    """Enumerátor získávající své hodnoty z datového objektu.
+
+    Hodnoty výètu jsou pythonové hodnoty urèitého sloupce datového objektu.
+    Typicky je to klíèový sloupec ale pomocí argumentù konstruktoru je mo¾no
+    zvolit libovolný jiný sloupec.
+
+    """
+        
+    def __init__(self, data_factory, data_factory_kwargs={},
+                 value_column=None, validity_column=None):
+        """Inicializuj instanci.
+        
+        Argumenty:
+        
+          data_factory -- instance tøídy 'DataFactory' slou¾ící k vytvoøení
+            datového objektu pou¾itého k získání výètových hodnot.
+          data_factory_kwargs -- dictionary klíèovaných argumentù pro metodu
+            'DataFactory.create()'.
+          value_column -- id sloupce datového objektu poskytujícího hodnoty
+            enumerátoru.  Je-li None, bude pou¾it klíèový sloupec.
+          validity_column -- id sloupce, urèujícího platnost øádkù datového
+            zdroje.  Pokud je urèen (není None), budou za hodnoty výètu
+            pova¾ovány pouze ty øádky, v nich¾ daný sloupec nabývá pravdivé
+            hodnoty (musí jít o Boolean sloupec).
+          
+        """
+        super(DataEnumerator, self).__init__()
+        assert isinstance(data_factory, DataFactory), data_factory
+        assert isinstance(data_factory_kwargs,
+                          (types.DictType, types.TupleType))
+        assert value_column is None or \
+               isinstance(value_column, types.StringType)
+        assert validity_column is None or \
+               isinstance(validity_column, types.StringType) 
+        # Store the arguments.
+        self._data_factory = data_factory
+        if type(data_factory_kwargs) == type(()):
+            data_factory_kwargs = dict(data_factory_kwargs)
+        self._data_factory_kwargs = data_factory_kwargs
+        self._value_column_ = value_column
+        self._validity_column = validity_column
+        if validity_column is None:
+            validity_condition = None
+        else:
+            validity_condition = EQ(validity_column, Value(Boolean(), True))
+        self._validity_condition = validity_condition
+        # Initialize the runtime filter.
+        self._runtime_filter = None
+        self._runtime_filter_dirty = True
+        self._runtime_filter_provider = None
+        self._runtime_filter_args = None
+
+    def __getattr__(self, name):
+        if name in ('_data', '_value_column'):
+            self._complete()
+            return self.__dict__[name]
+        else:
+            return super(DataEnumerator, self).__getattr__(name)
+        
+    def _complete(self):
+        # Dokonèi instanci vytvoøením datového objektu.
+        kwargs = self._data_factory_kwargs
+        self._data = data = self._data_factory.create(**kwargs)
+        self._data_changed = False
+        def on_data_change():
+            self._data_changed = True
+        self._data.add_callback_on_change(on_data_change)
+        if self._value_column_ is None:
+            key = data.key()
+            assert len(key) == 1, \
+                   "Only single-column key is supported by DataEnumerator."
+            self._value_column = key[0].id()
+        else:
+            self._value_column = self._value_column_
+        c = data.find_column(self._value_column)
+        assert c, ('Non-existent value column', self._value_column)
+        self._value_column_type = c.type()
+        if self._validity_column is not None:
+            c = data.find_column(self._validity_column)
+            assert c, ('Non-existent validity column', self._validity_column)
+            assert isinstance(c.type(), Boolean), \
+                   ('Invalid validity column type', c)
+
+    def _retrieve(self, value):
+        data = self._data
+        v = Value(self._value_column_type, value)
+        condition = EQ(self._value_column, v)
+        validity_condition = self.validity_condition()
+        if validity_condition is not None:
+            condition = AND(condition, validity_condition)
+        count = data.select(condition)
+        if count > 1:
+            raise ProgramError('Insufficient runtime filter for DataEnumerator',
+                               condition)
+        row = data.fetchone()
+        data.close()
+        return row
+
+    def _update(self, force=False):
+        if force or self._data_changed:
+            self._data_changed = False
+            result = super(DataEnumerator, self)._update(force=force)
+        else:
+            result = False
+        return result
+
+    # Enumerator interface
+    
+    def check(self, value):
+        row = self._retrieve(value)
+        if row is None:
+            result = False
+        else:
+            result = True
+        return result
+
+    # Extended interface.
+
+    def value_column(self):
+        return self._value_column
+    
+    def get(self, value, column=None):
+        """Získej z dat hodnotu daného sloupce z øádku odpovídajícímu 'value'.
+
+        Argumenty:
+        
+           value -- vnitøní (Pythonová) hodnota sloupce 'value_column' z
+             datového objektu.  Podle této hodnoty bude vyhledán pøíslu¹ný
+             øádek.
+           column -- identifikátor sloupce datového objektu, jeho¾ hodnota má
+             být vrácena.
+
+        Vrací instanci 'Value', nebo None, pokud daný øádek nebyl nalezen.
+
+        """
+        row = self._retrieve(value)
+        if row is None:
+            result = None
+        else:
+            if column is None:
+                column = self._value_column
+            result = row[column]
+        return result
+    
+    # Run-time filter interface.
+
+    def set_runtime_filter_provider(self, provider, args):
+        """Nastav poskytovatele run-time podmínky filtrující øádky enumerátoru.
+
+        Argumenty:
+        
+          provider -- None, nebo funkce, která vrací instanci tøídy 'Operator'.
+            Tato funkce bude volána v¾dy, kdy¾ je tøeba zjistit dodateènou
+            filtrovací podmínku.
+          args -- seznam argumentù (tuple), které mají být pøedány této funkci.
+
+        Run-time podmínka umo¾òuje mìnit mno¾inu platných øádkù enumerátoru za
+        bìhu.  Po externí zmìnì podmínky je tøeba toto oznámit voláním
+        'notify_runtime_filter_change()'.  Tím je zaji¹tìno, ¾e pøi v¹ech
+        následných operacích s enumerátorem bude podmínka automaticky
+        pøepoèítána a mno¾ina platných hodnot enumerátoru bude aktualizována.
+
+        """
+        assert callable(provider) or provider is None
+        self._runtime_filter_provider = provider
+        self._runtime_filter_args = args
+
+    def notify_runtime_filter_change(self):
+        """Ohlas zmìnu run-time filtrovací podmínky.
+
+        Tato metoda by mìla být volána v¾dy, kdy¾ dojde k externí zmìnì
+        run-time filtrovací podmínky.  Enumerátor se tak dozví, ¾e si má v
+        pøípadì potøeby zjistit novou hodnotu podmínky (viz metoda
+        'set_runtime_filter_provider()').
+        
+        """
+        self._runtime_filter_dirty = True
+        self._update(force=True)
+        
+    
+    def validity_condition(self):
+        """Vra» podmínku urèující platné øádky enumerátoru.
+
+        Podmínka zahrnuje jak statické omezení øádkù enumerátoru, tak aktuální
+        hodnotu run-time podmínky
+
+        Vrací: Instanci tøídy 'pytis.data.Operator'.
+
+        """
+        f = self._runtime_filter_provider
+        if f is not None:
+            if self._runtime_filter_dirty:
+                self._runtime_filter = flt = apply(f, self._runtime_filter_args)
+                assert isinstance(flt, Operator) or flt is None
+                self._runtime_filter_dirty = False
+                self._update(force=True)
+            condition = self._runtime_filter
+        else:
+            condition = None
+        if self._validity_condition:
+            if condition:
+                return AND(condition, self._validity_condition)
+            else:
+                return self._validity_condition
+        else:
+            return condition
 
 
 class ValidationError(Exception):
@@ -1206,7 +1323,8 @@ class _Value(object):
             if res:
                 return res
             else:
-                return compare_objects(self.value(), other.value())
+                #return compare_objects(self.value(), other.value())
+                return cmp(self.value(), other.value())
         else:
             return compare_objects(self, other)
 
