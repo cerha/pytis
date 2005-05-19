@@ -2442,14 +2442,16 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
         h = min(self._DEFAULT_WINDOW_HEIGHT, self.total_height() + 20)
         parent.SetSize((w, h))
         self._parent.SetTitle(self.title())
+        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
+                    lambda e: self._on_activation())
 
-    def _init_attributes(self, ctype=None, begin_search=None, **kwargs):
+    def _init_attributes(self, condition=None, begin_search=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
 
-          ctype -- instance tøídy 'pytis.data.Codebook', odpovídající typu
-            èíselníku, pro který je formuláø vyvolán
+          condition -- podmínka filtrující øádky èíselníku jako instance
+            'pytis.data.Operator'.
           begin_search -- Pokud není None, bude po otevøení formuláøe
             automaticky nastartováno inkrementální vyhledávání. Pokud
             je hodnota øetìzec, je chápán jako identifikátor
@@ -2461,9 +2463,8 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
         """
         super_(CodeBook)._init_attributes(self, **kwargs)
         self._begin_search = begin_search
-        if ctype is not None:
-            condition = pytis.data.AND(self._lf_initial_condition,
-                                     ctype.validity_condition())
+        if condition is not None:
+            condition = pytis.data.AND(self._lf_initial_condition, condition)
             self._lf_initial_condition = condition
           
     def _on_idle(self, event):
@@ -2505,7 +2506,7 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
         self._parent.EndModal(1)
         return True
 
-
+    
 class BrowseForm(ListForm):
     """Formuláø pro prohlí¾ení dat s mo¾ností editace.
 
@@ -2591,21 +2592,21 @@ class BrowseForm(ListForm):
         super_menu = super_(BrowseForm)._context_menu(self)
         menu = (
             MItem(_("Editovat buòku"),
-                  command = ListForm.COMMAND_EDIT),
+                  command=ListForm.COMMAND_EDIT),
             MItem(_("Filtrovat podle buòky"),
-                  command = ListForm.COMMAND_FILTER_BY_CELL),
+                  command=ListForm.COMMAND_FILTER_BY_CELL),
             MItem(_("Zkopírovat obsah buòky"),
-                  command = ListForm.COMMAND_COPY_CELL),
+                  command=ListForm.COMMAND_COPY_CELL),
             MSeparator(),
             MItem(_("Editovat záznam"),
-                  command = BrowseForm.COMMAND_RECORD_EDIT),
-            # TODO:uievent_id= neaktivní, kdy¾ u¾ jsem v DescriptiveDualFormu
+                  command=BrowseForm.COMMAND_RECORD_EDIT),
+                  # TODO:uievent_id= neaktivní v DescriptiveDualFormu
             MItem(_("Smazat záznam"),
-                  command = ListForm.COMMAND_LINE_DELETE),
+                  command=ListForm.COMMAND_LINE_DELETE),
             MItem(_("Náhled"),
-                  command = ListForm.COMMAND_ACTIVATE),
+                  command=ListForm.COMMAND_ACTIVATE),
             MItem(_("Náhled v druhém formuláøi"),
-                  command = ListForm.COMMAND_ACTIVATE_ALTERNATE),
+                  command=ListForm.COMMAND_ACTIVATE_ALTERNATE),
             )
         custom_menu = self._view.popup_menu()
         custom_menu = custom_menu and (MSeparator(),) + custom_menu or ()
