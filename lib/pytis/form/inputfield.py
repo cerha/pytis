@@ -128,18 +128,21 @@ class InputField(object, KeyHandler, CallbackHandler):
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
         elif isinstance(type, pytis.data.String):
-            field = StringField
+            if type.enumerator():
+                if fspec.codebook():
+                    field = CodeBookField
+                else:
+                    field = ChoiceField # default
+                    if not inline:
+                        selection_type = fspec.selection_type()
+                        if selection_type == SelectionType.LIST_BOX:
+                            field = ListBoxField
+                        elif selection_type == spec.SelectionType.RADIO_BOX:
+                            field = RadioBoxField
+            else:
+                field = StringField
         elif isinstance(type, pytis.data.Number):
             field = NumericField
-        elif isinstance(type, pytis.data.xtypes.Codebook):
-            selection_type = fspec.selection_type()
-            if fspec.codebook() != None:
-                field = CodeBookField
-            elif not inline and selection_type == SelectionType.LIST_BOX:
-                field = ListBoxField
-            elif not inline and selection_type == spec.SelectionType.RADIO_BOX:
-                field = RadioBoxField
-            else: field = ChoiceField
         return field(parent, fspec, data, guardian=guardian, inline=inline,
                      accessible=accessible)
 
@@ -882,26 +885,14 @@ class EnumerationField(InputField):
     
     """
     def _values(self):
-        """Vra» list v¹ech hodnot daných datovým typem."""
-        assert isinstance(self._type, pytis.data.xtypes.Codebook)
-        return map(lambda v: v[0], self._type.values())
+        # Return a sequence of string representations of all type's values.
+        t = self._type
+        return [t.export(v) for v in t._enumerator().values()]
 
     def get_value(self):
-        """Vra» hodnotu políèka jako jednoprvkový tuple obsahující string."""
         return self._ctrl.GetStringSelection()
 
     def _set_value(self, value):
-        """Nastav hodnotu políèka na 'value'.
-
-        Argumenty:
-
-            value -- hodnota políèka, jednoprvkový tuple obsahující string nebo
-              pøímo string
-
-        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
-        v opaèném pøípadì.
-
-        """
         assert isinstance(value, types.StringTypes), ('Invalid value', value)
         self._ctrl.SetStringSelection(value)
         # TODO: Tento test nefunguje pro políèka, která vzniknou z Codebookù
@@ -962,8 +953,7 @@ class ListBoxField(EnumerationField):
 
     def _create_ctrl(self):
         """Vra» instanci 'wx.ListBox' podle specifikace."""
-        choices = self._values()
-        control = wx.ListBox(self._parent, -1, choices=choices,
+        control = wx.ListBox(self._parent, choices=self._values(),
                              style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
         return control
@@ -1155,47 +1145,37 @@ class CodeBookField(Invocable, TextField):
 
     def _on_change_hook(self):
         if hasattr(self, '_display_column'):
-            v, e = self.validate(quiet=True)
-            if e is None:
-                d = v.export(self._display_column)
-            else:
-                d = ''
+            v = self.get_value()
+            dv = self._type.enumerator().get(v, self._display_column)
+            d = dv and dv.export() or ''
             self._display.SetValue(d)
 
     def _on_invoke_selection(self, alternate=False, **kwargs):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
-        t = self.type()
-        value, error = t.validate(self.get_value())
-        if not error:
-            icol = find(t.internal_column(), t.columns(), key=lambda c: c.id())
-            select_row = (pytis.data.Value(icol.type(), value.value()),)
-        else:
-            select_row = None
-        # Show the CodeBook form.
         cbspec = self.spec().codebook()
-        returned_column = cbspec.returned_column()
+        value, error = self.validate(quiet=True)
+        enumerator = self._type.enumerator()
+        # Show the CodeBook form.
         begin_search = alternate or cbspec.begin_search() or None
-        result = run_form(CodeBook, cbspec.name(), columns=cbspec.columns(),
+        result = run_form(CodeBook, cbspec.name(),
+                          columns=cbspec.columns(),
                           begin_search=begin_search,
-                          select_row=select_row, ctype=t)
+                          select_row=value,
+                          condition=enumerator.validity_condition())
         if result != None:
-            self.set_value(result.format(returned_column))
+            self.set_value(result.format(enumerator.value_column()))
         self.set_focus()
         return True
 
     def _validation_error_handler(self):
         cbspec = self.spec().codebook()
-        if not cbspec.insert_unknown_values():
-            return False
-        value = self.get_value()
-        icol = find(t.internal_column(), t.columns(), key=lambda c: c.id())
-        value, error = icol.type().validate(value)
-        if error:
+        value, error = self._type.validate(self.get_value(), strict=False)
+        if error or not cbspec.insert_unknown_values():
             return False
         msg = _("Èíselník neobsahuje hodnotu %s") % value +"\n"+ \
               _("Chcete do èíselníku pøidat nový záznam?")
         if (run_dialog(Question, msg)):
-            prefill = {cbspec.returned_column(): value}
+            prefill = {self._type.enumerator().value_column(): value}
             result = run_form(PopupEditForm, cbspec.name(), prefill=prefill)
             #TODO: Update datového objektu èíselníku?
             self._on_change_hook()
