@@ -1,3 +1,89 @@
+2005-05-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/__init__.py: Neimportuj `xtypes'.  Aktualizuj jmenný
+	prostor modulu `types_'.
+	
+
+	* pytis/data/_test.py (Boolean.test_values): Oèekávej vnitøní
+	hodnoty, nikoli u¾ivatelské. 
+	(Boolean.test_noncmp): Porovnávej s typem `String', ne `Enumeration'.
+	(Codebook): Zru¹eno.
+	(Enumerator): Nový test.
+
+	* pytis/data/types_.py (Type.VM_NULL_VALUE): Nová konstanta.
+	(Type._VALIDATION_MESSAGES): Pøidána zpráva pro `VM_NULL_VALUE'.
+	(Type.__init__): Nový argument `enumerator'.
+	(Type._complete): Zru¹eno.
+	(Type.__cmp__): Porovnávej také enumerátory.
+	(Type.__getattr__): Nevolej `self._complete()'.
+	(Type._check_constraints): Pokud je value None a typ není "NOT
+	NULL", vracej True bez dal¹ích kontrol.  Pokud je definován
+	enumerátor, kontroluj hodnotu jeho prostøednictvím.
+	(Type.enumerator): Nová metoda.
+	(Type.constraints): Zru¹eno.
+	(MutableType): Tøída zru¹ena.
+	(Enumeration): Tøída zru¹ena.
+	(Boolean): Buï rovnou potomkem `Type' s vyu¾itím `enumerator'.
+	(FixedEnumeration): Tøída zru¹ena.
+	(Enumerator, FixedEnumerator, MutableEnumerator, DataEnumerator): Nové tøídy.
+	(Sequence): Tøída zru¹ena.
+	(_Value.__cmp__): Pokud dojde na porovnávání hodnot, pou¾ij
+	`cmp()', ne `compare_objects()'.
+	
+	* pytis/data/dbdata.py (DBDataPostgreSQL._pg_codebook_cache):
+	Zru¹eno.
+	(DBDataPostgreSQL._pg_query): Nevytváøej `_pg_codebook_cache'.
+	(DBDataPostgreSQL._pg_create_make_row_template): Odstranìno
+	zpracování typù `Codebook' a `Sequence'.  `DateTime' a `Time'
+	zpracovávej spoleènì.  Neøe¹ `icount', je nyní v¾dy 1.
+	(DBDataPostgreSQL._pg_validate_codebook): Metoda zru¹ena.
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Neoèekávej `icount'
+	v `self._pg_make_row_template'.  Zapomeò na typy typy `Codebook' a
+	`Sequence'.  `DateTime' a `Time' zpracovávej spoleènì.
+	(DBDataPostgreSQL._pg_value): Namísto `Enumeration' pracuj s `Boolean'.
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Zru¹eny v¹echny hacky se zpracováním `Codebook' a `Sequence'.
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql.relop):
+	Zapomeò na typy typ `Codebook'.
+
+	* pytis/presentation/field.py (PresentedRow._process_fieldspec):
+	Pracuj s enumerátorem, ne pøímo s typem.
+	(PresentedRow.__str__): Volej metodu pøedka, pokud je¹tì
+	neexistuje `self._row'.
+	(PresentedRow._recompute_codebook_runtime_filter): Pracuj s
+	enumerátorem, ne pøímo s typem.
+
+	* pytis/form/inputfield.py (InputField.create): Èíselníková
+	políèka rozpoznávej podle enumerátoru, ne podle typu.
+	(EnumerationField._values): Pracuj s enumerátorem.
+	(EnumerationField._set_value, EnumerationField.get_value): Zru¹en
+	neaktuální docstring.
+	(ListBoxField._create_ctrl): Kosmetické úpravy.
+	(CodeBookField._on_change_hook):
+	(CodeBookField._on_invoke_selection): Zru¹en hack s validací podle
+	typu sloupce èíselníku.  Pracuj s enumerátorem.  Nepou¾ívej
+	`returned_column'.
+	(CodeBookField._validation_error_handler): Validuj typ pøímo, ne
+	pøes sloupce èíselníku.
+	(CodeBookField._validation_error_handler): Nepou¾ívej
+	`returned_column'.
+
+	* pytis/form/list.py (CodeBook.__init__): O¹etøuj Double-click
+	voláním `_on_activation()'.
+	(CodeBook._init_attributes, CodeBook._init_attributes): Argument
+	`ctype' nahrazen argumentem `condition'.
+	(BrowseForm._context_menu): Kosmetické úpravy.
+
+	* pytis/form/application.py (Application.run_form): Po uzavøení
+	formuláøe volej `busy_cursor(False)'.
+	(Application.run_dialog): Po uzavøení dialogu volej
+	`busy_cursor(False)'.
+
+	* pytis/data/xtypes.py: Removed.
+
+	* pytis/data/data.py (MemData.select): `cond' není nikdy None.
+	Vracej poèet nalezených øádek.
+
 2005-05-19  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (Form.print_menu): Zohledni vrácení 'None' z
