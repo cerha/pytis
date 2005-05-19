@@ -891,8 +891,9 @@ class MemData(Data):
         self._mem_select = data = []
         cond = self._condition2pyfunc(condition)
         for row in self._mem_data:
-            if cond is None or cond(row):
+            if cond(row):
                 data.append(row)
+        return len(data)
 
     def close(self):
         self._mem_select = []
