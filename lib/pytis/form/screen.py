@@ -1739,23 +1739,28 @@ def wx_focused_window():
 
 def wx_text_view(parent, content, format=TextFormat.PLAIN):
     import wx
-    if format == TextFormat.PLAIN:
-        style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
-        w = wx.TextCtrl(parent, style=style)
+    if format in (TextFormat.PLAIN, TextFormat.WIKI):
         lines = content.splitlines()
         width = min(max([len(l) for l in lines]), 80)
         height = min(len(lines), 15)
-        w.SetBestFittingSize(char2px(w, width, height))
+        size = (width, height)
+    else:
+        size = None
+    if format == TextFormat.PLAIN:
+        style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
+        w = wx.TextCtrl(parent, style=style)
+        w.SetBestFittingSize(char2px(w, *size))
         w.SetValue(content)
     else:
         if format == TextFormat.WIKI:
             import lcg
             n = lcg.WikiNode(content, title='')
-            content = n.content().export()
+            html = n.content().export()
         import wx.html
-        w = wx.html.HtmlWindow(parent, size=(400,200))
+        size = size and char2px(parent, *size) or (400, 200)
+        w = wx.html.HtmlWindow(parent, size=size)
         #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
         w.SetPage('<html><head><title></title></head>' + \
-                  '<body><font size="-2">' + content + '</font></body></html>')
+                  '<body><font size="-2">' + html + '</font></body></html>')
     return w
 
