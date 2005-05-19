@@ -170,7 +170,8 @@ class PresentedRow:
                     else:
                         self._codebook_runtime_filter_dependent[dep] = [key]
                 provider = c.codebook_runtime_filter.function()
-                c.type.set_runtime_filter_provider(provider, (self,))
+                e = c.type.enumerator()
+                e.set_runtime_filter_provider(provider, (self,))
                         
     def _init_row(self, row, prefill=None):
         self._cache = {}
@@ -179,11 +180,10 @@ class PresentedRow:
                 id = c.id()
                 if prefill is not None and prefill.has_key(id):
                     value = prefill[id]
+                    # Pro Codebooky radìji taky vytvoøíme novou instanci
                     if not isinstance(value, pytis.data.Value):
                         value = pytis.data.Value(c.type(), value)
                     else:
-                        # Pro Codebooky radìji taky vytvoøíme novou
-                        # instanci
                         value = pytis.data.Value(c.type(), value.value())
                     if self._dirty.has_key(id):
                         self._dirty[id] = False
@@ -243,10 +243,13 @@ class PresentedRow:
             self._recompute_dependencies(key)
                 
     def __str__(self):
-        items = []
-        for spec in self._fieldspec:
-            items.append(spec.id() + '=' + str(self[spec.id()]))
-        return '<PresentedRow: %s>' % string.join(items, ', ')
+        if hasattr(self, '_row'):
+            items = []
+            for spec in self._fieldspec:
+                items.append(spec.id() + '=' + str(self[spec.id()]))
+            return '<PresentedRow: %s>' % string.join(items, ', ')
+        else:
+            return super(PresentedRow, self).__str__()
 
     def _mark_dependent_dirty(self, key):
         # Rekurzivnì oznaè závislá políèka.
@@ -319,7 +322,7 @@ class PresentedRow:
             return
         for id in ids:
             c = self._columns[id]
-            c.type.notify_runtime_filter_change()
+            c.type.enumerator().notify_runtime_filter_change()
  
 
     def row(self):
