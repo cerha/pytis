@@ -34,6 +34,7 @@ from pytis.util import *
 
 from types_ import *
 from data import *
-from xtypes import *
 from access import *
 from dbdata import *
+
+types_.__dict__.update(globals())
