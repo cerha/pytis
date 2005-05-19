@@ -1,3 +1,11 @@
+2005-05-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (cfg_param, cb2colvalue): Namísto
+	typu `Codebook' pracuj s enumerátorem.
+
+	* lib/pytis/extensions/types.py (CodebookNull) 
+	(ValueColumnCodebook, ValidityColumnCodebook): Zru¹eno.
+
 2005-05-19  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (help_window): Pou¾ij 'InfoWindow'.
