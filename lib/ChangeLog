@@ -1,5 +1,8 @@
 2005-05-19  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (wx_text_view): Odhaduj velikost okna i pro
+	WIKI formát ze zdrojového textu.
+
 	* pytis/data/__init__.py: Neimportuj `xtypes'.  Aktualizuj jmenný
 	prostor modulu `types_'.
 
