@@ -19,38 +19,7 @@
 
 from pytis.extensions import *
 
-
-
-class CodebookNull(pytis.data.Codebook):
-    """Codebook roz¹íøený o mo¾nost ponechat hodnotu None."""
-
-    def __init__(self, *args, **kwargs):
-        kwargs['not_null'] = False
-        super(CodebookNull, self).__init__(*args, **kwargs)
-
-        
-class ValueColumnCodebook(pytis.data.Codebook):
-    """Codebook umo¾òující specifikovat value_column"""
-    
-    def __init__(self, data_factory, value_columns, strict=True,
-                 null_value=False):
-        assert is_sequence(value_columns) and len(value_columns) == 1
-        df_kwargs = {'dbconnection_spec': config.dbconnection}
-        super(ValueColumnCodebook, self).__init__(data_factory,
-                                                  data_factory_kwargs=df_kwargs,
-                                                  value_column=value_columns[0],
-                                                  not_null=not null_value)
-
-class ValidityColumnCodebook(pytis.data.Codebook):
-    """Codebook umo¾òující specifikovat validity_column"""
-    
-    def __init__(self, data_factory, validity_column, null_value=False):         
-        df_kwargs = {'dbconnection_spec': config.dbconnection}
-        super(ValidityColumnCodebook, self).__init__(data_factory,
-                                                     data_factory_kwargs=df_kwargs,
-                                                     validity_column=validity_column,
-                                                     not_null= not null_value)
-        
+       
 class Price(pytis.data.Float):
     def __init__(self, not_null=True):
         super(Price, self).__init__(precision=2, not_null=not_null)
