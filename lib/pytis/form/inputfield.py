@@ -96,7 +96,7 @@ class InputField(object, KeyHandler, CallbackHandler):
     """Voláno, pokud má být nìjaký ui prvek pøeskoèen pøi navigaci.
 
     To je vhodné napøíklad pro tlaèítka políèek typu 'Invocable', nebo display
-    u 'CodeBookField'.  Navigaci v¹ak zaji¹»uje nadøízený formuláø.
+    u 'CodebookField'.  Navigaci v¹ak zaji¹»uje nadøízený formuláø.
 
     Argumenty:
 
@@ -130,7 +130,7 @@ class InputField(object, KeyHandler, CallbackHandler):
         elif isinstance(type, pytis.data.String):
             if type.enumerator():
                 if fspec.codebook():
-                    field = CodeBookField
+                    field = CodebookField
                 else:
                     field = ChoiceField # default
                     if not inline:
@@ -215,16 +215,16 @@ class InputField(object, KeyHandler, CallbackHandler):
         return cb
     
     def _init_ctrl(self):
-        control = self._ctrl
-        KeyHandler.__init__(self, control)
-        wx_callback(wx.EVT_IDLE, control, self._on_idle)
-        wx_callback(wx.EVT_KILL_FOCUS, control, self._on_kill_focus)
-        wx_callback(wx.EVT_SET_FOCUS, control, self._on_set_focus)
-        wx_callback(wx.EVT_COMMAND_RIGHT_CLICK, control, control.GetId(),
-                    self._on_popup_menu) # or wxMSW
-        wx_callback(wx.EVT_RIGHT_UP, control, self._on_popup_menu) # for wxGTK
+        c = self._ctrl
+        KeyHandler.__init__(self, c)
+        wx_callback(wx.EVT_IDLE,       c, self._on_idle)
+        wx_callback(wx.EVT_KILL_FOCUS, c, self._on_kill_focus)
+        wx_callback(wx.EVT_SET_FOCUS,  c, self._on_set_focus)
+        wx_callback(wx.EVT_RIGHT_UP,   c, self._on_popup_menu)
+        wx_callback(wx.EVT_COMMAND_RIGHT_CLICK, c, c.GetId(),
+                    self._on_popup_menu)
         if self._spec.descr() is not None and config.show_tooltips:
-            control.SetToolTipString(self._spec.descr())
+            c.SetToolTipString(self._spec.descr())
             
     def _create_label(self):
         # Return field label as 'wx.StaticText' instance.
@@ -872,13 +872,8 @@ class EnumerationField(InputField):
     """Abstrakce vstupního pole pro výètový typ.
     
     Tento typ vstupního pole je reprezentován pomocí výbìru z pevnì dané
-    mno¾iny hodnot. Mno¾inu hodnot urèuje datový typ samotný (viz metoda
-    'pytis.data.Codebook.values()').
-
-    Proto¾e pracujeme s datovým typem 'pytis.data.Codebook', jsou vstupními a
-    výstupními hodnotami metod 'get_value()' a '_set_value()' sekvence, nebo»
-    datový typ mù¾e potenciálnì pracovat i se sloupeèky s vícenásobnou vazbou,
-    tak¾e pro jistotu pou¾ívá sekvence v¾dy - i pokud jsou jednoprvkové.
+    mno¾iny hodnot.  Mno¾inu hodnot urèuje enumerátor datového typu (viz metoda
+    'pytis.data.FixedEnumerator.values()').
 
     Tato tøída není urèena k pøímému pou¾ití. Je to rodièivská tøída pro
     vstupní pole nad výètovým typem dat.
@@ -960,19 +955,16 @@ class ListBoxField(EnumerationField):
     
 
 class Invocable:
-    """Podìdìním této tøídy lze pøidat vlastnost vyvolání výbìru.
+    """Mix-in tøída pro políèka s mo¾ností vyvolání výbìru.
 
     Abstraktní tøída pro políèka, která umo¾òují vyvolat pro výbìr hodnoty
     nìjakou akci (vìt¹inou v podobì modálního popup okna).
 
-    Tøída, která dìdí z této tøídy musí být zárovìò potomkem jiné tøídy, která
-    definuje metodu '_create_widget()' (nebo ji definovat sama). Tato metoda
-    bude pou¾ita k vytvoøení ovládacího prvku a navíc bude k tomuto ovládacímu
-    prvku pøibaleno tlaèítko pro vyvolání výbìru.
+    Vstupní políèko (vytvoøené metodou '_create_widget()' základní tøídy) bude
+    doplnìno o tlaèítko pro vyvolání výbìru.
 
     Výbìr lze vyvolat také klávesou pøíkazu
-    'Invocable.COMMAND_INVOKE_SELECTION', pokud základní tøída vytváøející
-    ovládací prvek pou¾ije metodu '_add_key_handler()' (co¾ by mìla v¾dy).
+    'Invocable.COMMAND_INVOKE_SELECTION'.
 
     """
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat hodnotu")
@@ -1090,24 +1082,21 @@ class ColorSelectionField(Invocable, TextField):
         self._invocation_button.SetForegroundColour(value)
 
 
-class CodeBookField(Invocable, TextField):
+class CodebookField(Invocable, TextField):
     """Vstupní pole pro data navázaná na èíselník.
 
-    Bude pou¾ito v pøípadì, ¾e datový sloupeèek je typu 'pytis.data.Codebook' a
-    prezentaèní specifikace políèka definuje navázaný èíselník
-    (viz. 'FieldSpec.codebook()').
+    Bude pou¾ito v pøípadì, ¾e datový typ definuje enumerátor typu
+    'pytis.data.DataEnumerator' a prezentaèní specifikace políèka definuje
+    navázaný èíselník (viz. argument 'codebook' konstruktoru 'FieldSpec').
 
-    Tento typ vstupního pole pracuje s vícehodnotovými políèky, tak¾e hodnoty
-    jsou sekvencemi (viz. 'MultiTextField') a to i v pøípadì, ¾e jsou tyto
-    sekvence jednoprvkové.
-       
-    Jako akci pro vyvolání výbìru definuje zobrazení formuláøe 'list.CodeBook'.
-    Název specifikace èíselníku a dal¹í vlastnosti jsou dány specifikátorem
-    'codebook' ve specifikaci políèka (instance 'CodeBookSpec').
+    Jako akci pro vyvolání výbìru definuje zobrazení formuláøe
+    'pytis.form.CodebookForm'.  Název specifikace èíselníku je dán vý¹e
+    zmínìným specifikátorem 'codebook'.  Dal¹í vlastnosti èíselníkového
+    formuláøe jsou dány jednak specifikací 'cb_spec' v odkazované specifikaci a
+    jednak pøímo specifikací 'view_spec' tamté¾.
 
-    K políèku mù¾e být volitelnì pøidru¾en displej, který je urèen k zobrazení
-    popisu z èíselníku k vybrané hodnotì.  Specifikace displeje je také
-    souèástí 'CodeBookSpec'.
+    K políèku mù¾e být volitelnì pøidru¾en displej, který slou¾í k zobrazení
+    popisu vybrané (aktuální) hodnoty èíselníku. 
 
     """
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z èíselníku")
@@ -1115,13 +1104,23 @@ class CodeBookField(Invocable, TextField):
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
         widget = Invocable._create_widget(self)
-        cbspec = self.spec().codebook()
-        if self._inline or cbspec.display() is None:
+        cb_name = self.spec().codebook()
+        if isinstance(cb_name, CodeBookSpec):
+            cb_spec = cb_name
+            cb_name = cb_spec.name()
+        else:
+            try:
+                cb_spec = resolver().get(cb_name, 'cb_spec')
+            except ResolverError:
+                cb_spec = CodebookSpec()
+        self._cb_name = cb_name
+        self._cb_spec = cb_spec
+        if self._inline or cb_spec.display() is None:
             return widget
-        self._display_column = cbspec.display()
-        display = wx.TextCtrl(self._parent, -1, '',
-                              style=wx.TE_READONLY)
-        size = char2px(display, cbspec.display_size(), 1)
+        self._display_column = cb_spec.display()
+        display_size = self.spec().display_size() or cb_spec.display_size()
+        display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
+        size = char2px(display, display_size, 1)
         size.SetHeight(self._ctrl.GetSize().GetHeight())
         display.SetMinSize(size)
         display.SetBackgroundColour(wx.Colour(213, 213, 213))
@@ -1152,13 +1151,11 @@ class CodeBookField(Invocable, TextField):
 
     def _on_invoke_selection(self, alternate=False, **kwargs):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
-        cbspec = self.spec().codebook()
         value, error = self.validate(quiet=True)
         enumerator = self._type.enumerator()
-        # Show the CodeBook form.
-        begin_search = alternate or cbspec.begin_search() or None
-        result = run_form(CodeBook, cbspec.name(),
-                          columns=cbspec.columns(),
+        begin_search = alternate or self._cb_spec.begin_search() or None
+        result = run_form(CodebookForm, self._cb_name,
+                          columns=self._cb_spec.columns(),
                           begin_search=begin_search,
                           select_row=value,
                           condition=enumerator.validity_condition())
@@ -1168,15 +1165,15 @@ class CodeBookField(Invocable, TextField):
         return True
 
     def _validation_error_handler(self):
-        cbspec = self.spec().codebook()
         value, error = self._type.validate(self.get_value(), strict=False)
-        if error or not cbspec.insert_unknown_values():
+        if error or not self._cb_spec.insert_unknown_values():
             return False
         msg = _("Èíselník neobsahuje hodnotu %s") % value +"\n"+ \
               _("Chcete do èíselníku pøidat nový záznam?")
         if (run_dialog(Question, msg)):
             prefill = {self._type.enumerator().value_column(): value}
-            result = run_form(PopupEditForm, cbspec.name(), prefill=prefill)
+            result = run_form(PopupEditForm, self._cb_name,
+                              prefill=prefill)
             #TODO: Update datového objektu èíselníku?
             self._on_change_hook()
             return result is not None
