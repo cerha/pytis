@@ -1142,7 +1142,8 @@ class FieldSpec:
         assert type_ is None or isinstance(type_, pytis.data.Type)
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
-        assert codebook is None or isinstance(codebook, CodeBookSpec)
+        assert codebook is None or isinstance(codebook, types.StringType) \
+               or isinstance(codebook, CodeBookSpec)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert width is None or isinstance(width, types.IntType)
         assert codebook_runtime_filter is None or \
