@@ -440,7 +440,6 @@ class Application(wx.App, KeyHandler):
         else:
             self._panel.SetFocus()
         top = self
-        log(ACTION, "Dialog ukonèen:", (dialog, result))
         return result
 
     def leave_form(self):
