@@ -836,13 +836,13 @@ class Computer:
         return self._depends
 
 
-class CodeBookSpec:
+class CodebookSpec(object):
     """Specifikace èíselníkového políèka.
 
     Specifikace pro argument 'codebook' konstruktoru tøídy 'FieldSpec'
 
     """
-    def __init__(self, name, returned_column, columns=None, display=None,
+    def __init__(self, columns=None, display=None,
                  display_size=20, insert_unknown_values=False,
                  begin_search=None):
         
@@ -850,15 +850,12 @@ class CodeBookSpec:
 
         Argumenty:
         
-          name -- název specifikace pro resolver (øetìzec)
-          returned_column -- identifikátor sloupce ze specifikace, jeho¾
-            hodnota má být èíselníkem vrácena a doplnìna jako hodnota políèka.
           columns -- sekvence identifikátorù sloupcù, které mají být zobrazeny
-            v èíselníkovém formuláøi (tøída 'CodeBook').  Pokud je 'None',
+            v èíselníkovém formuláøi (tøída 'CodebookForm').  Pokud je 'None',
             bude èíselník zobrazovat v¹echny sloupce ze specifikace dané
             tabulky.
           display -- pokud není 'None', bude èíselníkové políèko vybaveno
-            displejem, (viz 'CodeBookField').  Hodnotou je identifikátor
+            displejem, (viz 'CodebookField').  Hodnotou je identifikátor
             sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
             musí být obsa¾en v datové specifikaci èíselníku).
           display_size -- ¹íøka políèka displeje ve znacích
@@ -871,31 +868,17 @@ class CodeBookSpec:
             spustit automatické inkrementální vyhledávání.
           
         """
-        assert isinstance(name, types.StringType)
-        assert isinstance(returned_column, types.StringType)
         assert columns is None or is_sequence(columns)
         assert display is None or isinstance(display, types.StringType)
-        assert type(display_size) == type(0)
-        self._name = name
-        self._returned_column = returned_column
+        assert display_size is None or isinstance(display_size, types.IntType)
+        assert isinstance(insert_unknown_values, types.BoolType)
+        assert begin_search is None or isinstance(begin_search,types.StringType)
         self._columns = columns
         self._display = display
         self._display_size = display_size
         self._insert_unknown_values = insert_unknown_values
         self._begin_search = begin_search
 
-    def name(self):
-        """Vra» název specifikace èíselníku."""
-        return self._name
-        
-    def returned_column(self):
-        """Vra» seznam identifikátorù sloupcù, tvoøících návratovou hodnotu."""
-        return self._returned_column
-        
-    def returned_columns(self):
-        """Pouze pro zpìtnou kompatibilitu.  Nepou¾ívat!."""
-        return (self._returned_column,)
-        
     def columns(self):
         """Vra» seznam id sloupcù, zobrazených ve výbìrovém formuláøi."""
         return self._columns
@@ -915,8 +898,17 @@ class CodeBookSpec:
     def begin_search(self):
         """Vra» identifikátor sloupce pro inkrementální vyhledávání."""
         return self._begin_search
-        
     
+class CodeBookSpec(CodebookSpec):
+    def __init__(self, name, returned_column, **kwargs):
+        super(CodeBookSpec, self).__init__(**kwargs)
+        self._name = name
+        
+    def name(self):
+        """Vra» název specifikace èíselníku."""
+        return self._name
+        
+        
 class RefSpec:
     """Specifikace seznamu závislých záznamù pro vstupní políèko 'ListField'.
 
@@ -994,10 +986,11 @@ class FieldSpec:
                  editable=None, compact=False, type_=None, 
                  default=None, computer=None,
                  separator=':', line_separator='; ',
-                 codebook=None, references=None,
+                 codebook=None, display_size=None, 
                  codebook_runtime_filter=None, 
                  selection_type=SelectionType.CHOICE,
                  orientation=Orientation.VERTICAL,
+                 references=None,
                  post_process=None, filter=None, filter_list=None,
                  check=None, style=FIELD_STYLE_DEFAULT):
         """Inicializace a doplnìní výchozích hodnot atributù.
@@ -1049,8 +1042,11 @@ class FieldSpec:
           line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
-          codebook -- specifikace èíselníku, pokud je políèko na nìjaký vázáno;
-            instance 'CodeBookSpec'.
+          codebook -- název specifikace èíselníku (øetìzec), pokud je políèko
+            na nìjaký vázáno.
+          display_size -- velikost displeje èíselníku ve znacích.  Relevantní
+            jen pokud je definován 'codebook'.  Pokud je None, bude pou¾ita
+            hodnota z 'cb_spec' ve specifikaci èíselníku.
           codebook_runtime_filter -- dopoèítávaè run-time filtrovací
             podmínky èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit
             mno¾inu hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací
@@ -1069,8 +1065,8 @@ class FieldSpec:
             samostatný formuláø pro zobrazená data.  Blí¾e viz dokumentace
             'pytis.form.ListField'.
           selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
-            tøídy 'SelectionType'; relevantní jen pro vstupní pole dat
-            výètových typù.
+            tøídy 'SelectionType'; relevantní jen pro vstupní pole výètových
+            typù.
           orientation -- orientace políèka, jedna z konstant tøídy
             'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
             napø. 'inputfield.RadioBoxInputField'.
@@ -1147,6 +1143,7 @@ class FieldSpec:
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, CodeBookSpec)
+        assert display_size is None or isinstance(display_size, types.IntType)
         assert width is None or isinstance(width, types.IntType)
         assert codebook_runtime_filter is None or \
                isinstance(codebook_runtime_filter, Computer)
@@ -1181,6 +1178,7 @@ class FieldSpec:
             default = lambda: None
         self._compact = compact
         self._default = default
+        self._display_size = display_size
         self._computer = computer
         self._height = height
         self._editable = editable
@@ -1321,6 +1319,10 @@ class FieldSpec:
         """Vra» specifikaci navázaného èíselníku."""
         return self._codebook
 
+    def display_size(self):
+        """Vra» velikost displeje èíselníku (poèet znakù)."""
+        return self._display_size
+    
     def codebook_runtime_filter(self):
         """Vra» specifikaci computeru run-time podmínky pro èíselník."""
         return self._codebook_runtime_filter
