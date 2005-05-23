@@ -1,3 +1,35 @@
+2005-05-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (CodebookSpec): Nová tøída.
+	(CodeBookSpec): Buï potomkem `CodebookSpec'.
+	(FieldSpec.__init__): Aktualizace docstringu.
+	(FieldSpec.__init__): Nový argument `display_size'.
+	(FieldSpec.display_size): Nová metoda.
+
+	* pytis/form/dialog.py (RunFormDialog._CODEBOOK_FORM) 
+	(RunFormDialog.__init__): `CodeBook' -> `CodebookForm'.
+
+	* pytis/form/list.py (_on_incremental_search): Zapomeò na typ
+	`pytis.data.Codebook'.
+	(CodeBook): Pøejmenováno na `CodebookForm'.
+	(CodebookForm.__init__, CodebookForm._init_attributes) 
+	(CodebookForm.on_command): `CodeBook' -> `CodebookForm'.
+
+	* pytis/form/inputfield.py (CodeBookField): Pøejmenováno na
+	`CodebookField'.
+	(InputField.create): `CodeBookField' ->	`CodebookField'.
+	(InputField._init_ctrl): Kosmetické úpravy.
+	(EnumerationField): Aktualizace docstringu.
+	(Invocable): Aktualizace docstringu.
+	(CodebookField): Aktualizace docstringu.
+	(CodebookField._create_widget): Specifikaci èíselníku získávej
+	pøes resolver zde, pokud je self.spec().codebook() øetìzec.  Ulo¾
+	ji do `self._cb_spec' a název do `self._cb_name'.
+	(CodebookField._on_invoke_selection): Pou¾ívej `self._cb_spec'.
+	(CodebookField._validation_error_handler): Pou¾ívej
+	`self._cb_spec' a `self._cb_name'.
+	(CodebookField._on_invoke_selection): `CodeBook' -> `CodebookForm'.
+
 2005-05-23  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (EditForm.print_menu): Odstranìno.
