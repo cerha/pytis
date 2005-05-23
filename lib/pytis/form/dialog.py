@@ -799,7 +799,7 @@ class RunFormDialog(InputDialog):
     _BROWSE_FORM = "BrowseForm"
     _EDIT_FORM = "EditForm"
     _BROWSE_DUAL_FORM = "BrowseDualForm"
-    _CODEBOOK_FORM = "CodeBook"
+    _CODEBOOK_FORM = "CodebookForm"
 
     def __init__(self, parent, title=_("Zobrazit formuláø")):
         """Inicializuj dialog.
@@ -817,7 +817,7 @@ class RunFormDialog(InputDialog):
             self._BROWSE_DUAL_FORM: pytis.form.BrowseDualForm,
             self._BROWSE_FORM: BrowseForm,
             self._EDIT_FORM: PopupEditForm,
-            self._CODEBOOK_FORM: CodeBook,
+            self._CODEBOOK_FORM: CodebookForm,
         }
 
 
