@@ -1758,8 +1758,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_incremental_search(self, full):
         row, col = self._current_cell()
         column = self._columns[col]
-        if not (isinstance(column.type(self._data), pytis.data.String) or \
-                isinstance(column.type(self._data), pytis.data.Codebook)):
+        if not isinstance(column.type(self._data), pytis.data.String):
             message(_("V tomto sloupci nelze vyhledávat inkrementálnì"),
                     beep_=True)
             return
@@ -2412,7 +2411,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
 
 
-class CodeBook(ListForm, PopupForm, KeyHandler):
+class CodebookForm(ListForm, PopupForm, KeyHandler):
     """Formuláø pro zobrazení výbìrového seznamu (èíselníku).
 
     Výbìrový seznam zobrazuje øádky dat, z nich¾ u¾ivatel nìkterý øádek
@@ -2436,7 +2435,7 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent, 'Èíselník')
-        super_(CodeBook).__init__(self, parent, *args, **kwargs)
+        super_(CodebookForm).__init__(self, parent, *args, **kwargs)
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
         w = self.total_width() + wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
         h = min(self._DEFAULT_WINDOW_HEIGHT, self.total_height() + 20)
@@ -2461,7 +2460,7 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
             primárním tøídìním.
             
         """
-        super_(CodeBook)._init_attributes(self, **kwargs)
+        super_(CodebookForm)._init_attributes(self, **kwargs)
         self._begin_search = begin_search
         if condition is not None:
             condition = pytis.data.AND(self._lf_initial_condition, condition)
@@ -2498,7 +2497,7 @@ class CodeBook(ListForm, PopupForm, KeyHandler):
         if command == Application.COMMAND_LEAVE_FORM:
             self._leave_form()
             return True
-        return super_(CodeBook).on_command(self, command, **kwargs)
+        return super_(CodebookForm).on_command(self, command, **kwargs)
 
     def _on_activation(self):
         """Nastav návratovou hodnotu a ukonèi modální dialog."""
