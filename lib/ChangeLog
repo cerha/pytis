@@ -5,6 +5,7 @@
 	(FieldSpec.__init__): Aktualizace docstringu.
 	(FieldSpec.__init__): Nový argument `display_size'.
 	(FieldSpec.display_size): Nová metoda.
+	(FieldSpec.__init__): Povol také øetìzec jako argument `codebook'.
 
 	* pytis/form/dialog.py (RunFormDialog._CODEBOOK_FORM) 
 	(RunFormDialog.__init__): `CodeBook' -> `CodebookForm'.
