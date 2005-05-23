@@ -1,3 +1,7 @@
+2005-05-23  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (EditForm.print_menu): Odstranìno.
+
 2005-05-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (wx_text_view): Drobná oprava.

@@ -1346,17 +1346,6 @@ class EditForm(LookupForm, TitledForm):
                      activation=EditForm.ACT_EDITFORM),
                 )
 
-    def print_menu(self):
-        """Vra» tuple polo¾ek tiskového menu."""
-        name = self._name
-        try:
-            spec_paths = self._resolver.get(name, 'print_spec')
-        except ResolverSpecError:
-            spec_paths = ((_("Implicitní"), os.path.join('output', name)),)
-        return [MItem(p[0], command=pytis.form.Form.COMMAND_PRINT,
-                      args={'print_spec_path': p[1]})
-                for p in spec_paths]
-
     def set_row(self, row):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
         for f in self._fields:
