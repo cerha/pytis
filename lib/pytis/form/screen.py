@@ -1756,6 +1756,8 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
             import lcg
             n = lcg.WikiNode(content, title='')
             html = n.content().export()
+        else:
+            html = content
         import wx.html
         size = size and char2px(parent, *[1.3 * x for x in size]) or (400, 300)
         w = wx.html.HtmlWindow(parent, size=size)
