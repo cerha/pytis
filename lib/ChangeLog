@@ -4,6 +4,9 @@
 
 2005-05-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application.leave_form): Neloguj
+	ukonèení dialogu.
+
 	* pytis/form/screen.py (wx_text_view): Drobná oprava.
 
 2005-05-19  Tomas Cerha  <cerha@brailcom.org>
