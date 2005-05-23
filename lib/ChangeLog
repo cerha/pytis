@@ -1,3 +1,7 @@
+2005-05-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (wx_text_view): Drobná oprava.
+
 2005-05-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (wx_text_view): Odhaduj velikost okna i pro
