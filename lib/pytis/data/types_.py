@@ -653,7 +653,7 @@ class Color(String):
     _VALIDATION_MESSAGES.update(
         {VM_COLOR_FORMAT: _("Formát barvy neodpovídá masce '#RRGGBB'.")})
     
-    _VALIDATION_REGEX = re.compile('^\#[0-9a-hA-H]{6,6}$')
+    _VALIDATION_REGEX = re.compile('^\#[0-9a-fA-F]{6,6}$')
 
     def _validate(self, string, *args, **kwargs):
         value, error = super(Color, self)._validate(string, *args, **kwargs)
