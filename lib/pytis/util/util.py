@@ -869,22 +869,17 @@ def direct_public_members(obj):
     jejich¾ název nezaèíná podtr¾ítkem.
 
     """
-    if type(obj) == pytypes.ClassType:
-        cls = obj
-    else:
+    if isinstance(obj, pytypes.ClassType):
         cls = obj.__class__
+    else:
+        cls = obj
     def public_members(cls):
-        members = inspect.getmembers(cls)
-        return filter(lambda x: x[0] and x[0][0] != '_', members)
-    members = public_members(cls)
-    super_members = map(lambda x: x[1],
-                        reduce(operator.add,
-                               map(public_members, cls.__bases__),
-                               []))
-    result = []
-    for name, value in members:
-        if find(value, super_members) is None:
-            result.append(name)
+        return [(name, value) for name, value in inspect.getmembers(cls)
+                if name and not name.startswith('_')]
+    super_members = reduce(operator.add, [public_members(b)
+                                          for b in cls.__bases__], [])
+    result = [name for name, value in public_members(cls)
+              if find(value, [x[1] for x in super_members]) is None]
     return tuple(result)
 
 
