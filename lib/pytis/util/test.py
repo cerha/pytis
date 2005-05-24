@@ -53,14 +53,11 @@ class TestSuite(unittest.TestSuite):
         Testy jsou pøidány jako samostatná test suite.
         
         """
-        def prefix_test(prefix, starts_with=starts_with):
-            return (lambda x, prefix=prefix, s=starts_with: s(x, prefix))
-        tests = filter(prefix_test('check_'), direct_public_members(class_))
+        tests = [x for x in direct_public_members(class_)
+                 if x.startswith('test_')]
         import config
         if not config.test_run_interactive:
-            tests = filter(lambda t, f=prefix_test('check_interactive_'): \
-                           not f(t),
-                           tests)
+            tests = [x for x in tests if not x.startswith('test_interactive_')]
         methods = map(class_, tests)
         self.addTest(unittest.TestSuite(methods))
 
