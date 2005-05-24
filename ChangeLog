@@ -1,3 +1,10 @@
+2005-05-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (cb_computer): Aktualizace docstringu.
+	(cb2colvalue): Aktualizace docstringu.
+	(cb2strvalue): V assertu testuj `enumerator', ne typ.
+	(run_cb): `CodeBook' -> `CodebookForm'.
+
 2005-05-23  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (help_window): Opraveno zpracování
