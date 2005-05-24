@@ -75,8 +75,8 @@ def cb_computer(codebook, column, default=None):
     èíselníku.  Computer automaticky závisí na daném èíselníkovém políèku.
 
     Argumenty:
-      'codebook' -- id èíselníkového políèka, z jeho¾ datového objektu má být
-        hodnota vyzvednuta.
+      'codebook' -- id èíselníkového políèka, z jeho¾ enumerátoru má být
+        hodnota zji¹tìna.
       'column' -- id sloupce v datovém objektu èíselníku, jeho¾ hodnota má být
         dopoèítávací funkcí vrácena.
       'default' -- implicitní hodnota, která bude dopoèítávací funkcí
@@ -100,9 +100,10 @@ def cb2colvalue(value, column=None):
     
     Argumenty:
 
-      value -- Instance `Value' typu `pytis.data.Codebook'.
-      column -- název jiného sloupce èíselníku; øetìzec. Viz
-        'pytis.data.Codebook.data_value()'
+      value -- Instance `Value', její¾ typ má definován enumerátor typu
+        'pytis.data.DataEnumerator'.
+      column -- název jiného sloupce èíselníku; øetìzec.  Viz
+        'pytis.data.DataEnumerator.get()'
 
     Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
     stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
@@ -134,7 +135,7 @@ def cb2strvalue(value, column=None):
 
     """
     assert isinstance(value, pytis.data.Value)
-    assert isinstance(value.type(), pytis.data.Codebook) 
+    assert value.type().enumerator() is not None
     if column is None:
         v = value.value()
     else:
@@ -362,10 +363,10 @@ def run_cb(spec, begin_search=None, condition=None, columns=None,
         columns = cbspec.columns()
     if not returned_column:    
         returned_column = cbspec.returned_column()
-    result = run_form(CodeBook, cbspec.name(), columns=columns,
-                     begin_search=begin_search,
-                     condition=condition, 
-                     select_row=select_row)
+    result = run_form(CodebookForm, cbspec.name(), columns=columns,
+                      begin_search=begin_search,
+                      condition=condition, 
+                      select_row=select_row)
     if result:
         return result[returned_column]
 
