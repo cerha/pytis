@@ -152,11 +152,11 @@ class Application(wx.App, KeyHandler):
         self._windows = XStack()
         self._modals = Stack()
         wm = Menu(self._WINDOW_MENU_TITLE,
-                  (MItem(_("Pøepnout na následující"),
-                         command=Application.COMMAND_NEXT_FORM,
-                         uievent_id=Application.UI_OPENED_MORE_WINDOWS),
-                   MItem(_("Pøepnout na pøedchozí"),
+                  (MItem(_("Pøepnout na pøedchozí"),
                          command=Application.COMMAND_PREV_FORM,
+                         uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                   MItem(_("Pøepnout na následující"),
+                         command=Application.COMMAND_NEXT_FORM,
                          uievent_id=Application.UI_OPENED_MORE_WINDOWS),
                    MItem(_("Zavøít aktuální"),
                          command=Application.COMMAND_LEAVE_FORM,
@@ -192,32 +192,29 @@ class Application(wx.App, KeyHandler):
         mb = self._menubar
         return mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
 
-    def _add_window_menu_item(self, form):
+    def _update_window_menu(self, recreate=True):
         menu = self._window_menu()
-        if menu is not None:
-            item = RadioItem("%s (%s)" % (form.title(), form.descr()),
-                             help=_('Vyzvednout okno formuláøe "%s" %s') % \
-                                   (form.title(), str(form)),
-                             command=Application.COMMAND_RAISE_FORM,
-                             args={'form': form}).create(self._frame, menu)
-            self._window_menu_item[form] = item
-            menu.AppendItem(item)
-            self._check_window_menu_item(form)
+        if menu is None:
+            return
+        if recreate:
+            for form, item in self._window_menu_item.items():
+                menu.Remove(item.GetId())
+                item.Destroy()
+                del self._window_menu_item[form]
+            for form in self._windows.items():
+                item = RadioItem("%s (%s)" % (form.title(), form.descr()),
+                                 help=_('Vyzvednout okno formuláøe "%s" %s') % \
+                                 (form.title(), str(form)),
+                                 command=Application.COMMAND_RAISE_FORM,
+                                 args={'form': form}).create(self._frame, menu)
+                self._window_menu_item[form] = item
+                menu.AppendItem(item)
+        for item in menu.GetMenuItems():
+            if item.IsCheckable():
+                item.Check(False)
+        if not self._windows.empty():
+            self._window_menu_item[self._windows.active()].Check(True)
 
-
-    def _remove_window_menu_item(self, form):
-        menu = self._window_menu()
-        item = self._window_menu_item[form]
-        menu.Remove(item.GetId())
-        item.Destroy()
-        del self._window_menu_item[form]
-
-    def _check_window_menu_item(self, form):
-        for i in self._window_menu().GetMenuItems():
-            if i.IsCheckable():
-                i.Check(False)
-        self._window_menu_item[form].Check(True)
-        
     def _raise_form(self, form):
         if form is not None:
             if form not in self._frame.GetChildren():
@@ -327,7 +324,7 @@ class Application(wx.App, KeyHandler):
                     message('', root=True)
                     form.show()
                     self._activate(form.ACTIVATIONS, form)
-                    self._add_window_menu_item(form)
+                    self._update_window_menu()
         except UserBreakException:
             pass
         except:
@@ -452,8 +449,8 @@ class Application(wx.App, KeyHandler):
         if form:
             log(EVENT, "Zavírám okno nemodálního formuláøe:", form)
             form.defocus()
-            self._remove_window_menu_item(form)
             self._windows.remove(form)
+            self._update_window_menu()
             form.close()
             self.restore()
         else:
@@ -595,7 +592,7 @@ class Application(wx.App, KeyHandler):
             form.restore()
             self._activate(form.ACTIVATIONS, form)
             if Window.ACT_WINDOW in form.ACTIVATIONS:
-                self._check_window_menu_item(form)
+                self._update_window_menu(recreate=False)
             form.SetFocus()    
         else:
             self._activate((), None)
@@ -697,7 +694,7 @@ class Application(wx.App, KeyHandler):
         if id == Application.UI_ALWAYS_DISABLED:
             event.Enable(False)
         elif id == Application.UI_OPENED_WINDOW:
-            event.Enable(self._windows.empty())
+            event.Enable(not self._windows.empty())
         elif id == Application.UI_OPENED_MORE_WINDOWS:
             event.Enable(len(self._windows.items()) > 1)
         else:
