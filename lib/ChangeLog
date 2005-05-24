@@ -1,5 +1,23 @@
 2005-05-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/command.py (DEFAULT_COMMAND_KEYS): Pøehozeny klávesy
+	pøíkazù `Application.COMMAND_NEXT_FORM' a
+	`Application.COMMAND_PREV_FORM'.
+
+	* pytis/form/application.py (Application.OnInit): Pøehozeno poøadí
+	pøíkazù v menu oken.
+	(Application._add_window_menu_item)
+	(Application._remove_window_menu_item)
+	(Application._check_window_menu_item): Metody zru¹eny.
+	(Application._update_window_menu): Nová metoda.
+	(Application.run_form): Namísto `self._add_window_menu_item()'
+	pou¾ívej `self._update_window_menu()'.
+	(Application.leave_form): Namísto `self._remove_window_menu_item()'
+	pou¾ívej `self._update_window_menu()'.
+	(Application.restore): Namísto `self._check_window_menu_item()'
+	pou¾ívej `self._update_window_menu()'.
+	(Application.on_ui_event): Opravena podmínka pro `UI_OPENED_WINDOW'.
+
 	* pytis/output/resolver.py (OutputResolver.output_parameter):
 	Pøebírej klíèové argumenty a pøedávej je metodì `get()'.
 
@@ -24,6 +42,11 @@
 	* pytis/util/util.py (direct_public_members): Testuj tøídu pomocí
 	`isinstance()' Pou¾ívej "list comprehension" namísto `map()' a
 	`filter()'.
+	(XStack.__init__): Vyu¾ívej `super()' k volání pøedka.
+	(XStack.push): Pøidávej prvek za právì aktivní prvek, ne na konec.
+	(XStack.pop): Vyu¾ívej `super()' k volání pøedka.
+	(XStack.remove): Aktivuj následující, resp. pøedchozí prvek, ne
+	vrcholový prvek.
 
 	* pytis/util/test.py (prefix_test): Pou¾ívej "list comprehension"
 	namísto `map()' a `filter()'.
