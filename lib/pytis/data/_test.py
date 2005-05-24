@@ -190,6 +190,8 @@ class Color(_TypeCheck):
     _test_instance = pytis.data.Color()
     def test_validation(self):
         self._test_validity(None, '#0030ab', '#0030ab')
+        self._test_validity(None, '0030ab', None)
+        self._test_validity(None, '#h030ab', None)
         v, e = self._test_validity(None, '', None, check_value=False)
         assert v.value() == None, ('invalid value', v)
     def test_cmp(self):
