@@ -29,7 +29,11 @@ import pytis.data
 
 tests = TestSuite()
 
-
+import sys
+# O¹klivý hack kvùli o¹etøení defaultního kódování
+# proto¾e site.py ma¾e ze 'sys' metodu setdefaultencoding
+reload(sys)
+sys.setdefaultencoding('iso-8859-2')
 
 
 
@@ -182,6 +186,18 @@ class String(_TypeCheck):
                'invalid comparison'
 tests.add(String)
 
+class Color(_TypeCheck):
+    _test_instance = pytis.data.Color()
+    def test_validation(self):
+        self._test_validity(None, '#0030ab', '#0030ab')
+        v, e = self._test_validity(None, '', None, check_value=False)
+        assert v.value() == None, ('invalid value', v)
+    def test_cmp(self):
+        _TypeCheck.test_cmp(self)
+        t = pytis.data.Color()
+        assert t != pytis.data.String(), 'comparison failed'
+        assert t == self._test_instance, 'invalid comparison'
+tests.add(Color)
 
 class DateTime(_TypeCheck):
     _test_instance = pytis.data.DateTime(format='%Y-%m-%d %H:%M:%S')
