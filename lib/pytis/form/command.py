@@ -302,8 +302,8 @@ Dialog.COMMAND_COMMIT_DIALOG = Command('dialog.commit-dialog')
 DEFAULT_COMMAND_KEYS = (
     (Application.COMMAND_BREAK,                   'Ctrl-g'),
     (Application.COMMAND_LEAVE_FORM,              'Escape'),
-    (Application.COMMAND_NEXT_FORM,               'Ctrl-Up'),
-    (Application.COMMAND_PREV_FORM,               'Ctrl-Down'),
+    (Application.COMMAND_NEXT_FORM,               'Ctrl-Down'),
+    (Application.COMMAND_PREV_FORM,               'Ctrl-Up'),
     (Application.COMMAND_REFRESH,                 'Ctrl-l'),
     (Application.COMMAND_SHOW_POPUP_MENU,         'Ctrl-M'),
     (Form.COMMAND_PRINT,                         ('Ctrl-x', 'p')),
