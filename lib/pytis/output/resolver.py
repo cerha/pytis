@@ -66,7 +66,7 @@ class OutputResolver(ProxyResolver):
             result = super(OutputResolver, self)._get_module(module_name)
         return result
 
-    def output_parameter(self, name):
+    def output_parameter(self, name, **kwargs):
         """Vra» hodnotu parametru výstupu 'name'.
 
         Argumenty:
@@ -77,6 +77,6 @@ class OutputResolver(ProxyResolver):
         """
         if is_sequence(name):
             name = string.join(name, '/')
-        return self.get(self.OUTPUT_PARAMETERS, name)
+        return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
 
     p = output_parameter
