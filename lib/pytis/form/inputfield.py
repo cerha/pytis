@@ -1157,7 +1157,7 @@ class CodebookField(Invocable, TextField):
         result = run_form(CodebookForm, self._cb_name,
                           columns=self._cb_spec.columns(),
                           begin_search=begin_search,
-                          select_row=value,
+                          select_row=(value,),
                           condition=enumerator.validity_condition())
         if result != None:
             self.set_value(result.format(enumerator.value_column()))
