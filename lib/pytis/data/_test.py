@@ -245,19 +245,13 @@ class Date(_TypeCheck):
         self._test_validity(None, '2001-02-28', DT.Date(2001,2,28))
         self._test_validity(None, '2999-12-31', DT.Date(2999,12,31))
         self._test_validity(None, '  1999-01-01    ', DT.Date(1999,1,1))
-        self._test_validity(None, '99-01-01', DT.Date(1999,1,1))
+        self._test_validity(None, '1999-01-01', DT.Date(1999,1,1))
         self._test_validity(None, '1999-01-01 23:59', None)
         self._test_validity(None, '1999-01-01 23:59:00', None)
         self._test_validity(None, '01-02-29', None)
         self._test_validity(None, '2000-13-01', None)
         self._test_validity(None, '2001-02-29', None)
 tests.add(Date)
-
-
-class Enumeration(_TypeCheck):
-    # Netestováno, nebo» tøída není pou¾ívána pøímo, staèí testovat potomky
-    pass
-
 
 class Boolean(_TypeCheck):
     _test_instance = pytis.data.Boolean()
@@ -268,17 +262,17 @@ class Boolean(_TypeCheck):
         assert not v.value(), 'F not mapped to false'
         self._test_validity(None, 't', None)
         self._test_validity(None, '0', None)
-    def test_values(self):
-        l = list(self._test_instance.values())
-        l.sort()
-        assert l == [False, True], ('values() not working', l)
     def test_noncmp(self):
         assert self._test_instance != pytis.data.String(), \
                'invalid comparison'
 tests.add(Boolean)
 
 
-class Enumerator(unittest.TestCase):
+class Enumerator(_TypeCheck):
+    # Netestováno, nebo» tøída není pou¾ívána pøímo, staèí testovat potomky
+    pass
+
+class DataEnumerator(unittest.TestCase):
     def setUp(self):
         C = pytis.data.ColumnSpec
         S = pytis.data.String()
@@ -319,30 +313,27 @@ class Enumerator(unittest.TestCase):
         self._test_export(self.cb2, '8', '8')
         self._test_export(self.cb2, '', '')
         self._test_export(self.cb2, None, '')
-tests.add(Enumerator)
+    def test_get(self):
+        e = self.cb1.enumerator()
+        b = e.get('2', 'y')
+        assert b.value() == 'b', ('Unexpected value', b)
+tests.add(DataEnumerator)
         
-
-class Sequence(_TypeCheck):
-    def setUp(self):
-        super_(Sequence).setUp(self)
-        self._seq_subtypes = (pytis.data.Integer(),
-                              pytis.data.String())
-        self._seq_type = pytis.data.Sequence(self._seq_subtypes)
-    def test_validation(self):
-        t1, t2 = self._seq_subtypes
-        t = self._seq_type
-        extvalue = ('1', 'foo')
-        v, e = t.validate(extvalue)
-        assert e == None, ('validation error', e)
-        values = v.value()
-        assert values == (t1.validate('1')[0], t2.validate('foo')[0]), \
-               ('invalid value', (str(values[0]), str(values[1])))
-        assert t.export(values) == extvalue
-    def test_len(self):
-        result = len(self._seq_type)
-        assert result == 2, ('__len__ failed', result)
-
-
+class FixedEnumerator(unittest.TestCase):
+    _values = (1,3,5,7,9)
+    _enumerator = pytis.data.FixedEnumerator(_values)
+    def test_check(self):
+        e = self._enumerator
+        for i in range (100):
+            if i in self._values:
+                assert e.check(i)
+            else:
+                assert not e.check(i)
+        assert not e.check('1')
+    def test_values(self):
+        assert self._enumerator.values() == self._values
+tests.add(FixedEnumerator)
+        
 
 ###########
 # data.py #
