@@ -197,7 +197,7 @@ class Type(object):
             result = 0
         elif self._constraints == other._constraints \
                  and self._not_null == other._not_null \
-                 and cmp(self._enumeration, other._enumeration) == 0:
+                 and cmp(self._enumerator, other._enumerator) == 0:
             result = 0
         else:
             result = compare_objects(self, other)
