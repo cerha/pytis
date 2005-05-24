@@ -447,19 +447,26 @@ class XStack(Stack):
 
     V zásobníku nesmí být pøítomen jeden objekt souèasnì vícekrát.  V takovém
     pøípadì není chování zásobníku definováno.
+
+    Vkládání je automaticky provádìno za právì aktivní prvek, nikoliv na
+    poslední místo, jako v pøedkovi.
       
     """
     def __init__(self):
         self._active = None
-        Stack.__init__(self)
+        super(XStack, self).__init__()
         
     def push(self, item):
-        """Pøidej prvek na vrchol zásobníku.
+        """Pøidej prvek za právì aktivní prvek.
 
         Pøidaný prvek se automaticky stává aktivním.
 
         """
-        Stack.push(self, item)
+        if self.empty():
+            super(XStack, self).push(item)
+            
+        else:
+            self._list.insert(self._list.index(self.active()), item)
         self.activate(item)
 
     def pop(self):
@@ -470,21 +477,24 @@ class XStack(Stack):
         
         """
         item = self.top()
-        Stack.pop(self)
+        super(XStack, self).pop()
         if item is self._active:
             self.activate(self.top())
 
     def remove(self, item):
         """Vyjmi daný prvek ze zásobníku.
 
-        Pokud byl vyjmutý prvek aktivním prvkem, je aktivován pøedcházející
-        prvek.
+        Pokud byl vyjmutý prvek aktivním prvkem, je aktivován následující prvek
+        (pokud neexistuje, tak pøedcházející).
         
         """
-        prev = self.prev()
+        if item is self.top():
+            to_activate = self.prev()
+        else:
+            to_activate = self.next()
         del self._list[self._list.index(item)]
         if item is self._active:
-            self.activate(prev)
+            self.activate(to_activate)
 
     def items(self):
         """Vra» seznam v¹ech prvkù jako tuple.
