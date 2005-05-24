@@ -1,5 +1,33 @@
 2005-05-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/output/resolver.py (OutputResolver.output_parameter):
+	Pøebírej klíèové argumenty a pøedávej je metodì `get()'.
+
+	* pytis/form/inputfield.py (CodebookField._on_invoke_selection):
+	Hodnotu argumentu `select_row' pøedávej jako tuple.
+
+	* pytis/data/_test.py (Module): Nastav implicitní kódování na
+	'iso-8859-2' voláním `sys.setdefaultencoding()'.
+	(Color): Nový test.
+	(Enumeration): Zru¹eno.
+	(Enumerator): Pøejmenováno na `DataEnumerator'.
+	(DataEnumerator.test_get): Nový test.
+	(FixedEnumerator): Nový test.
+	(Sequence): Zru¹eno.
+	(Date.test_validation): Netestuj dvouciferný rok jako validní hodnotu.
+	(Boolean.test_values): Zru¹eno.
+
+	* pytis/data/types_.py (Type.__cmp__): Porovnávej
+	`self._enumerator', nikoliv `self._enumeration'.
+	(Color._VALIDATION_REGEX): Oprava.
+
+	* pytis/util/util.py (direct_public_members): Testuj tøídu pomocí
+	`isinstance()' Pou¾ívej "list comprehension" namísto `map()' a
+	`filter()'.
+
+	* pytis/util/test.py (prefix_test): Pou¾ívej "list comprehension"
+	namísto `map()' a `filter()'.
+
 	* pytis/presentation/spec.py (CodebookSpec.__init__): Oprava chyby.
 
 2005-05-23  Tomas Cerha  <cerha@brailcom.org>
