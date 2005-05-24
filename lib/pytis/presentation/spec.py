@@ -871,7 +871,7 @@ class CodebookSpec(object):
         assert columns is None or is_sequence(columns)
         assert display is None or isinstance(display, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
-        assert isinstance(insert_unknown_values, types.BoolType)
+        assert isinstance(insert_unknown_values, types.BooleanType)
         assert begin_search is None or isinstance(begin_search,types.StringType)
         self._columns = columns
         self._display = display
