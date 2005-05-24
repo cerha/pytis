@@ -30,6 +30,8 @@ import pytis.data
 tests = TestSuite()
 
 
+
+
 
 #############
 # types_.py #
@@ -172,7 +174,7 @@ class String(_TypeCheck):
         assert self._test_validity(t, 'abcdefghi', 'abcdefghi')
     def test_cmp(self):
         MAXLEN = 1
-        _TypeCheck.check_cmp(self)
+        _TypeCheck.test_cmp(self)
         t = pytis.data.String(maxlen=MAXLEN)
         assert t == pytis.data.String(maxlen=MAXLEN), 'comparison failed'
         assert t != self._test_instance, 'invalid comparison'
@@ -1468,7 +1470,8 @@ def get_tests():
 
 
 def go():
-    unittest.main(defaultTest='get_tests', argv=pytis.util.test.transform_args())
+    unittest.main(defaultTest='get_tests',
+                  argv=pytis.util.test.transform_args())
 
 if __name__ == '__main__':
     go()
