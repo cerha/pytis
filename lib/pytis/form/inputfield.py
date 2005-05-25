@@ -127,20 +127,20 @@ class InputField(object, KeyHandler, CallbackHandler):
             field = CheckBoxField
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
-        elif isinstance(type, pytis.data.String):
-            if type.enumerator():
-                if fspec.codebook():
-                    field = CodebookField
-                else:
-                    field = ChoiceField # default
-                    if not inline:
-                        selection_type = fspec.selection_type()
-                        if selection_type == SelectionType.LIST_BOX:
-                            field = ListBoxField
-                        elif selection_type == spec.SelectionType.RADIO_BOX:
-                            field = RadioBoxField
+        elif isinstance(type, (pytis.data.Number, pytis.data.String)) \
+                 and type.enumerator():
+            if fspec.codebook():
+                field = CodebookField
             else:
-                field = StringField
+                field = ChoiceField # default
+                if not inline:
+                    selection_type = fspec.selection_type()
+                    if selection_type == SelectionType.LIST_BOX:
+                        field = ListBoxField
+                    elif selection_type == spec.SelectionType.RADIO_BOX:
+                        field = RadioBoxField
+        elif isinstance(type, pytis.data.String):
+            field = StringField
         elif isinstance(type, pytis.data.Number):
             field = NumericField
         return field(parent, fspec, data, guardian=guardian, inline=inline,
@@ -1140,7 +1140,10 @@ class CodebookField(Invocable, TextField):
                       args={'originator': self}),)
 
     def _maxlen(self):
-        return self._type.maxlen()
+        try:
+            return self._type.maxlen()
+        except AttributeError:
+            return None
 
     def _on_change_hook(self):
         if hasattr(self, '_display_column'):
