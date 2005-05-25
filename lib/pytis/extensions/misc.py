@@ -380,7 +380,8 @@ def row_update(row, values=()):
         key = key[0]
     for col, val in values:
         updaterow[col] = val
-    data.update(row[key.id()], updaterow)
+    op = lambda: data.update(row[key.id()], updaterow)
+    return pytis.form.db_operation(op)
 
 
 # Application function
