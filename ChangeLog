@@ -2,6 +2,7 @@
 
 	* lib/pytis/extensions/misc.py (run_cb): Update docsrtringu.
 	Nezískávej resolver, který nepotøebuje¹.
+	(row_update): Obal batabázovou operaci voláním `db_operation'.
 
 2005-05-25  Pavel Hanak  <hanak@asellus.cz>
 
