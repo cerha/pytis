@@ -1,8 +1,24 @@
 2005-05-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow._Column.__init__):
+	Zru¹en argument separator.
+	(PresentedRow._process_fieldspec): Nepøedávej `separator'.
+	(PresentedRow.__setitem__): Pøidán zatím zakomentovaný assert na
+	typ nastavované hodnoty.
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Kosmetická úprava.
+	(FieldSpec.__init__): Zru¹en argument `separator'.
+	(FieldSpec.separator): Metoda zru¹ena.
+	(CodeBookSpec): Tøída zru¹ena.
+	(FieldSpec.__init__): Povol pouze øetìzec jako argument `codebook'.
+
 	* pytis/form/inputfield.py (InputField.create): Enumerátor zkoumej
 	jak pro typ `String', tak `Number'.
 	(CodebookField._maxlen): Pokud dojde k `AttributeError', vracej None.
+	(CodebookField._create_widget): Zru¹eny hacky kvùli kompatibilitì
+	se starou definicí `codebook'.
+	(CodebookField._on_invoke_selection)
+	(CodebookField._validation_error_handler): Respektuj to.
 
 	* pytis/form/list.py (ListForm._ListTable.GetColLabelValue):
 	Zru¹eno.
@@ -13,6 +29,12 @@
 	`self._on_column_header_paint()'.
 	(ListForm._ListTable.column_id): Nová metoda.
 	(ListForm._ListTable.column_label): Nová metoda.
+	(ListForm._SELECTION_CALLBACK_DALAY): Pøejmenováno na
+	`_SELECTION_CALLBACK_DELAY'.
+	(ListForm._select_cell): `_SELECTION_CALLBACK_DALAY' ->
+	`_SELECTION_CALLBACK_DELAY'
+	(ListForm._post_selection_hook): Nová metoda.
+	(ListForm._on_idle): Volej ji.
 
 2005-05-24  Tomas Cerha  <cerha@brailcom.org>
 
