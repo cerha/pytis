@@ -43,12 +43,11 @@ class PresentedRow:
 
     """
     class _Column:
-        def __init__(self, id_, type_, computer, separator, line_separator,
+        def __init__(self, id_, type_, computer, line_separator,
                      default, editable, check, codebook_runtime_filter):
             self.id = id_
             self.type = type_
             self.computer = computer
-            self.separator = separator
             self.line_separator = line_separator
             self.default = default
             self.editable = editable
@@ -144,7 +143,7 @@ class PresentedRow:
         self._refvalues = {}
         for f in self._fieldspec:
             key = f.id()
-            c = self._Column(key, f.type(data), f.computer(), f.separator(),
+            c = self._Column(key, f.type(data), f.computer(),
                              f.line_separator(), f.default(), f.editable(),
                              f.check(), f.codebook_runtime_filter())
             self._columns[key] = c
@@ -234,6 +233,10 @@ class PresentedRow:
 
     def __setitem__(self, key, value):
         assert isinstance(value, pytis.data.Value)
+        #column = self._columns[key]
+        #assert value.type() == column.type, \
+        #       "Invalid type for '%s': %s (expected %s)" % \
+        #       (key, value.type(), column.type)
         self._cache = {}
         # Pokus o nastavení virtuálních políèek ti¹e ignorujeme...
         if self._row.has_key(key) and self._row[key] != value:
