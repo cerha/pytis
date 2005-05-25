@@ -1104,16 +1104,12 @@ class CodebookField(Invocable, TextField):
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
         widget = Invocable._create_widget(self)
-        cb_name = self.spec().codebook()
-        if isinstance(cb_name, CodeBookSpec):
-            cb_spec = cb_name
-            cb_name = cb_spec.name()
-        else:
-            try:
-                cb_spec = resolver().get(cb_name, 'cb_spec')
-            except ResolverError:
-                cb_spec = CodebookSpec()
-        self._cb_name = cb_name
+        try:
+            cb_spec = resolver().get(self.spec().codebook(), 'cb_spec')
+        except ResolverError:
+            cb_spec = CodebookSpec()
+        except AttributeError:
+            cb_spec = CodebookSpec()
         self._cb_spec = cb_spec
         if self._inline or cb_spec.display() is None:
             return widget
@@ -1157,7 +1153,7 @@ class CodebookField(Invocable, TextField):
         value, error = self.validate(quiet=True)
         enumerator = self._type.enumerator()
         begin_search = alternate or self._cb_spec.begin_search() or None
-        result = run_form(CodebookForm, self._cb_name,
+        result = run_form(CodebookForm, self.spec().codebook(),
                           columns=self._cb_spec.columns(),
                           begin_search=begin_search,
                           select_row=value and (value,),
@@ -1175,7 +1171,7 @@ class CodebookField(Invocable, TextField):
               _("Chcete do èíselníku pøidat nový záznam?")
         if (run_dialog(Question, msg)):
             prefill = {self._type.enumerator().value_column(): value}
-            result = run_form(PopupEditForm, self._cb_name,
+            result = run_form(PopupEditForm, self.spec().codebook(),
                               prefill=prefill)
             #TODO: Update datového objektu èíselníku?
             self._on_change_hook()
