@@ -907,7 +907,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     """UI test na zapnuté vizuální seskupování."""
     
     _REFRESH_PERIOD = 60 # sekund
-    _SELECTION_CALLBACK_DALAY = 3 # desítky milisekund
+    _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
     _GROUPING_BACKGROUND_DOWNGRADE = (18, 16, 14) # sní¾ení slo¾ek jasu RGB
     _TITLE_FOREGROUND_COLOR = WxColor(210, 210, 210)
     
@@ -1256,13 +1256,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                 # Nevoláme callback ihned, staèí a¾ po
                                 # zastavení scrolování...
                                 self._selection_callback_candidate = row
-                                delay = self._SELECTION_CALLBACK_DALAY
+                                delay = self._SELECTION_CALLBACK_DELAY
                                 self._selection_callback_tick = delay
                         self._update_selection_colors()
                         if not g.IsSelection():
                             g.SelectRow(row)
                     self._position = row
                     self.show_position()
+                    
             if col is not None:
                 r = g.GetGridCursorRow()
                 g.SetGridCursor(r, col)
@@ -1436,13 +1437,33 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 event.RequestMore()
             else:
                 row = self._selection_callback_candidate
+                self._selection_callback_candidate = None
                 the_row = self._table.row(row)
                 self._run_callback(self.CALL_SELECTION, (the_row,))
-                self._selection_callback_candidate = None
+                self._post_selection_hook(the_row)
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
         event.Skip()
         return False
 
+    def _post_selection_hook(self, the_row):
+        # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
+        column = self._columns[self._current_cell()[1]]
+        value = the_row[column.id()]
+        enumerator = value.type().enumerator()
+        display_value = ''
+        if enumerator and column.codebook():
+            try:
+                cb_spec = resolver().get(column.codebook(), 'cb_spec')
+            except ResolverError:
+                cb_spec = None
+            except AttributeError:
+                cb_spec = None
+            if cb_spec and cb_spec.display():
+                v = enumerator.get(value.value(), cb_spec.display())
+                if v:
+                    display_value = v.export()
+        message(display_value)
+    
     def _on_wheel(self, event):
         g = self._grid
         delta = event.GetWheelDelta()
