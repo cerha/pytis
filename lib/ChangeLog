@@ -1,3 +1,19 @@
+2005-05-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField.create): Enumerátor zkoumej
+	jak pro typ `String', tak `Number'.
+	(CodebookField._maxlen): Pokud dojde k `AttributeError', vracej None.
+
+	* pytis/form/list.py (ListForm._ListTable.GetColLabelValue):
+	Zru¹eno.
+	(ListForm._on_column_header_paint.triangle): Nová metoda.
+	(_InputFieldCellEditor.BeginEdit): Nezkou¹ej
+	`control.SetInsertionPoint()'
+	(ListForm._create_grid): Nastav callback `wx.EVT_PAINT' na
+	`self._on_column_header_paint()'.
+	(ListForm._ListTable.column_id): Nová metoda.
+	(ListForm._ListTable.column_label): Nová metoda.
+
 2005-05-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/command.py (DEFAULT_COMMAND_KEYS): Pøehozeny klávesy
