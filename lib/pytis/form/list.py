@@ -67,10 +67,6 @@ class _InputFieldCellEditor(wx.grid.PyGridCellEditor):
         for type,function in self._callbacks:
             self._field.set_callback(type, function)
         control = self._field.widget()
-        try:
-            control.SetInsertionPoint(0)
-        except AttributeError:
-            pass
         self.SetControl(control)
         return control
 
@@ -600,6 +596,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             else:
                 return None
 
+        def column_id(self, col):
+            return self._column_info[col].id
+        
+        def column_label(self, col):
+            return self._column_info[col].label
+
         def rewind(self, position=None):
             """Pøesuò datové ukazovátko na zaèátek dat.
 
@@ -729,19 +731,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
         # Nepovinné gridové metody
 
-        def GetColLabelValue(self, col):
-            info = self._column_info[col]
-            id, label = info.id, info.label
-            if id == self._grouping:
-                label = "*" + label + "*"
-            pos = position(id, self._sorting, key=lambda x: x[0])
-            if pos is not None:
-                n = pos + 1
-                if self._sorting[pos][1] == LookupForm.SORTING_ASCENDENT:
-                    label = " ".join(("<"*n, label, " "*n))
-                else:
-                    label = " ".join((" "*n, label, ">"*n))
-            return label
+        #def GetColLabelValue(self, col):
+        # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
 
         def GetTypeName(self, row, col):
             return self._column_info[col].wxtype
@@ -1091,6 +1082,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_MOUSEWHEEL, g, self._on_wheel)
         wx_callback(wx.EVT_IDLE, g, self._on_idle)
         wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
+        wx_callback(wx.EVT_PAINT, g.GetGridColLabelWindow(),
+                    self._on_column_header_paint)
+
+
         # Spoleèná inicializace create a recreate
         self._create_recreate_grid(g)
         # Hotovo
@@ -1484,6 +1479,44 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # po¾adované nastavení buòky zajistí.
         event.Skip()
 
+    def _on_column_header_paint(self, event):
+        def triangle (x, y, reversed=True):
+            if reversed:
+                return ((x, y), (x+6, y), (x+3, y+4))
+            else:
+                return ((x+3, y), (x+6, y+4), (x, y+4))
+        g = self._grid
+        t = self._table
+        dc = wx.PaintDC(g.GetGridColLabelWindow())
+        x = - g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
+        y = 0
+        height = g.GetColLabelSize()
+        for col in range(g.GetNumberCols()):
+            id = t.column_id(col)
+            width = g.GetColSize(col)
+            # Draw the rectangle around.
+            dc.SetBrush(wx.Brush("GRAY", wx.TRANSPARENT))
+            dc.SetTextForeground(wx.BLACK)
+            d = col == 0 and 0 or 1
+            dc.DrawRectangle(x-d, y, width+d, height)
+            # Draw the sorting sign.
+            pos = position(id, self._lf_sorting, key=lambda x: x[0])
+            if pos is not None:
+                left = x+width-10
+                top = y+3
+                a = self._lf_sorting[pos][1] == LookupForm.SORTING_ASCENDENT
+                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
+                for i in range(pos):
+                    dc.DrawLine(left, top+2*i, left+7, top+2*i)
+                dc.DrawPolygon(triangle(left, top+pos*2, reversed=a))
+            # Draw the grouping sign.
+            if self._lf_grouping == id:
+                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
+                dc.DrawCircle(x+5, y+5, 2)
+            dc.DrawLabel(t.column_label(col), (x,y,width,height),
+                         wx.ALIGN_CENTER|wx.CENTER)
+            x += width
+        
     def _on_label_right(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         g = self._grid
