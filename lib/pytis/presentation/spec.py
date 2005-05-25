@@ -459,7 +459,8 @@ class ViewSpec:
         if popup_menu is not None:
             assert is_sequence(popup_menu)
             for item in popup_menu:
-                assert isinstance(item, (pytis.form.MItem, pytis.form.MSeparator,
+                assert isinstance(item, (pytis.form.MItem,
+                                         pytis.form.MSeparator,
                                          pytis.form.Menu))
         if sorting is not None:
             assert is_sequence(sorting)
@@ -899,15 +900,6 @@ class CodebookSpec(object):
         """Vra» identifikátor sloupce pro inkrementální vyhledávání."""
         return self._begin_search
     
-class CodeBookSpec(CodebookSpec):
-    def __init__(self, name, returned_column, **kwargs):
-        super(CodeBookSpec, self).__init__(**kwargs)
-        self._name = name
-        
-    def name(self):
-        """Vra» název specifikace èíselníku."""
-        return self._name
-        
         
 class RefSpec:
     """Specifikace seznamu závislých záznamù pro vstupní políèko 'ListField'.
@@ -985,7 +977,7 @@ class FieldSpec:
                  width=None, column_width=None, height=None, 
                  editable=None, compact=False, type_=None, 
                  default=None, computer=None,
-                 separator=':', line_separator='; ',
+                 line_separator='; ',
                  codebook=None, display_size=None, 
                  codebook_runtime_filter=None, 
                  selection_type=SelectionType.CHOICE,
@@ -1035,10 +1027,6 @@ class FieldSpec:
             odpovídajícího datového typu (viz argument 'type_').
           computer -- 'None' nebo instance tøídy 'Computer', specifikuje
             dopoèítávané políèko (viz. také ní¾e).  
-          separator -- oddìlovaè jednotlivých hodnot vícehodnotového
-            sloupeèku. string.  Relevantní pouze pokud má navázaný datový
-            sloupeèek vícenásobnou vazbu na zdroj dat, data jsou pak spojena
-            tímto oddìlovaèem do jediného stringu.
           line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
@@ -1142,8 +1130,7 @@ class FieldSpec:
         assert type_ is None or isinstance(type_, pytis.data.Type)
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
-        assert codebook is None or isinstance(codebook, types.StringType) \
-               or isinstance(codebook, CodeBookSpec)
+        assert codebook is None or isinstance(codebook, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert width is None or isinstance(width, types.IntType)
         assert codebook_runtime_filter is None or \
@@ -1183,7 +1170,6 @@ class FieldSpec:
         self._computer = computer
         self._height = height
         self._editable = editable
-        self._separator = separator
         self._line_separator = line_separator
         self._codebook = codebook
         self._codebook_runtime_filter = codebook_runtime_filter
@@ -1307,10 +1293,6 @@ class FieldSpec:
     def computer(self):
         """Vra» instanci 'Computer' pro dopoèítávání hodnoty."""
         return self._computer
-
-    def separator(self):
-        """Vra» oddìlovaè jednotlivých hodnot vícehodnotového sloupeèku."""
-        return self._separator
 
     def line_separator(self):
         """Vra» odddìlovaè øádkù zadaný v konstruktoru."""
