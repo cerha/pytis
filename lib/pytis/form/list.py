@@ -983,7 +983,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _create_grid(self, data_init=True,
                      inserted_row_number=None, inserted_row=None):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu',
-            (data_init, inserted_row_number, inserted_row))
+                          (data_init, inserted_row_number, inserted_row))
         # Inicializuj datový select
         if data_init:
             op = lambda : self._init_select()
@@ -1084,8 +1084,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
         wx_callback(wx.EVT_PAINT, g.GetGridColLabelWindow(),
                     self._on_column_header_paint)
-
-
         # Spoleèná inicializace create a recreate
         self._create_recreate_grid(g)
         # Hotovo
@@ -1446,23 +1444,24 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return False
 
     def _post_selection_hook(self, the_row):
-        # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
-        column = self._columns[self._current_cell()[1]]
-        value = the_row[column.id()]
-        enumerator = value.type().enumerator()
-        display_value = ''
-        if enumerator and column.codebook():
-            try:
-                cb_spec = resolver().get(column.codebook(), 'cb_spec')
-            except ResolverError:
-                cb_spec = None
-            except AttributeError:
-                cb_spec = None
-            if cb_spec and cb_spec.display():
-                v = enumerator.get(value.value(), cb_spec.display())
-                if v:
-                    display_value = v.export()
-        message(display_value)
+        if focused_window() is self:
+            # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
+            column = self._columns[self._current_cell()[1]]
+            value = the_row[column.id()]
+            enumerator = value.type().enumerator()
+            display_value = ''
+            if enumerator and column.codebook():
+                try:
+                    cb_spec = resolver().get(column.codebook(), 'cb_spec')
+                except ResolverError:
+                    cb_spec = None
+                except AttributeError:
+                    cb_spec = None
+                if cb_spec and cb_spec.display():
+                    v = enumerator.get(value.value(), cb_spec.display())
+                    if v:
+                        display_value = v.export()
+            message(display_value)
     
     def _on_wheel(self, event):
         g = self._grid
