@@ -978,7 +978,8 @@ class FieldSpec:
                  editable=None, compact=False, type_=None, 
                  default=None, computer=None,
                  line_separator='; ',
-                 codebook=None, display_size=None, 
+                 codebook=None, display_size=None,
+                 allow_codebook_insert=False, codebook_insert_spec=None,
                  codebook_runtime_filter=None, 
                  selection_type=SelectionType.CHOICE,
                  orientation=Orientation.VERTICAL,
@@ -1035,6 +1036,13 @@ class FieldSpec:
           display_size -- velikost displeje èíselníku ve znacích.  Relevantní
             jen pokud je definován 'codebook'.  Pokud je None, bude pou¾ita
             hodnota z 'cb_spec' ve specifikaci èíselníku.
+          allow_codebook_insert -- .  Povol zobrazení tlaèítka pro pøidání nové
+            hodnoty do èíselníku.  Relevantní jen pokud je definován
+            'codebook'.
+          codebook_insert_spec -- Název specifikace, která má být pou¾ita pro
+            vkládání nových záznamù (viz 'allow_codebook_insert').  Pokud je
+            None, bude pou¾ita specifikace z 'codebook'.  Relevantní jen pokud
+            je definován 'codebook' a 'allow_codebook_insert' je pravdivé.
           codebook_runtime_filter -- dopoèítávaè run-time filtrovací
             podmínky èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit
             mno¾inu hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací
@@ -1132,6 +1140,9 @@ class FieldSpec:
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
+        assert isinstance(allow_codebook_insert, types.BooleanType)
+        assert codebook_insert_spec is None or \
+               isinstance(codebook_insert_spec, types.StringType)
         assert width is None or isinstance(width, types.IntType)
         assert codebook_runtime_filter is None or \
                isinstance(codebook_runtime_filter, Computer)
@@ -1160,18 +1171,16 @@ class FieldSpec:
         self._column_width = column_width
         self._column_label = column_label
         self._type = type_
-        # We don't want the first enumeration value for codebook fields
-        # as default value.  This is a hack.  TODO: better solution?
-        if codebook is not None and default is None and selection_type is None:
-            default = lambda: None
         self._compact = compact
         self._default = default
-        self._display_size = display_size
         self._computer = computer
         self._height = height
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
+        self._display_size = display_size
+        self._allow_codebook_insert = allow_codebook_insert
+        self._codebook_insert_spec = codebook_insert_spec
         self._codebook_runtime_filter = codebook_runtime_filter
         self._references = references
         self._orientation = orientation
@@ -1305,6 +1314,14 @@ class FieldSpec:
     def display_size(self):
         """Vra» velikost displeje èíselníku (poèet znakù)."""
         return self._display_size
+    
+    def allow_codebook_insert(self):
+        """Vra» pravdu, má-li být  zobrazeno tlaèítko pøidání do èíselníku."""
+        return self._allow_codebook_insert
+    
+    def codebook_insert_spec(self):
+        """Vra» název specifikace pro vkládání do èíselníku, nebo None."""
+        return self._codebook_insert_spec
     
     def codebook_runtime_filter(self):
         """Vra» specifikaci computeru run-time podmínky pro èíselník."""
