@@ -301,20 +301,6 @@ class InputField(object, KeyHandler, CallbackHandler):
         self.show_popup_menu(position=(event.GetX(), event.GetY()))
         event.Skip()
 
-    def _validation_error_handler(self):
-        # O¹etøi validaèní chybu.
-        
-        # Tato metoda je volána, pokud u¾ivatel opou¹tí políèko, ve kterém
-        # zmìnil hodnotu, ale nová hodnota není validní.  Vrací pravdu pokud
-        # byla situace nìjak o¹etøena, nebo nepravdu, pokud má být situace
-        # o¹etøena standardním zpùsobem (zobrazením chybové zprávy ve stavovém
-        # øádku).
-        
-        # V této tøídì nedìlá nic, ale odvozená tøída mù¾e pøedefinováním
-        # vyvolat napøíklad nìjakou interaktivní akci apod.
-
-        return False
-        
     def _on_idle(self, event):
         if self._is_changed:
             # Pokud je hodnota validní, dej o zmìnì vìdìt formuláøi.
@@ -460,19 +446,14 @@ class InputField(object, KeyHandler, CallbackHandler):
         zadanou v políèku.
 
         """
-
         value, error = self._type.validate(self.get_value())
         if error and not quiet:
-            if not self._validation_error_handler():
-                if interactive:
-                    msg = _('Chyba validace políèka!\n\n%s: %s') % \
-                          (self.spec().label(), error.message())
-                    run_dialog(Error, msg, title=_("Chyba validace"))
-                else:
-                    message(error.message(), beep_=True)
+            if interactive:
+                msg = _('Chyba validace políèka!\n\n%s: %s') % \
+                      (self.spec().label(), error.message())
+                run_dialog(Error, msg, title=_("Chyba validace"))
             else:
-                # Revalidate after succesful handler invocation.
-                value, error = self._type.validate(self.get_value())
+                message(error.message(), beep_=True)
         return value, error
 
     def enabled(self):
@@ -670,8 +651,9 @@ class TextField(InputField):
         control = wx.TextCtrl(self._parent, -1, '', style=self._style())
         if not self._inline:
             width, height = self.width(), self.height()
-            size = dlg2px(control, 4*(width+1)+2, 8*height+4)
+            size = dlg2px(control, 4*(width+1)+2, 8*height+4.5)
             control.SetMinSize(size)
+            control.SetSize(size)
         maxlen = self._maxlen()
         if maxlen is not None:
             control.SetMaxLength(maxlen)
@@ -987,11 +969,12 @@ class Invocable:
         widget = self._call_next_method('_create_widget')
         if self._inline:
             return widget
-        button_height = self._ctrl.GetSize().GetHeight()
-        self._invocation_button = button = self._create_button(button_height)
+        height = self._ctrl.GetSize().GetHeight()
+        self._invocation_button = button = self._create_button(height)
+        button.SetToolTipString(self._INVOKE_SELECTION_MENU_TITLE)
         sizer = wx.BoxSizer()
-        sizer.Add(widget, 0, wx.RIGHT, 4)
-        sizer.Add(button)
+        sizer.Add(widget, 0, wx.FIXED_MINSIZE)
+        sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                     lambda e: self._on_invoke_selection())
         wx_callback(wx.EVT_NAVIGATION_KEY, button,
@@ -1000,7 +983,7 @@ class Invocable:
 
     def _create_button(self, height):
         button = wx.Button(self._parent, -1, "...")
-        button.SetMinSize((dlg2px(button, 12), height))
+        button.SetSize((dlg2px(button, 12), height))
         return button
 
     def _disable(self, change_appearance):
@@ -1072,10 +1055,19 @@ class ColorSelectionField(Invocable, TextField):
         return True
 
     def _create_button(self, height):
-        button = wx.Button(self._parent, -1, "")
-        button.SetMinSize((height, height))
+        button = wx.Button(self._parent)
+        button.SetSize((height, height))
+        #wx_callback(wx.EVT_PAINT, button, self._on_button_paint)
         return button
 
+    #def _on_button_paint(self, event):
+    #    print "======="
+    #    b = self._invocation_button
+    #    dc = wx.PaintDC(b)
+    #    size = GetClientSize(b)
+    #    dc.SetBrush(wx.Brush(self.get_value(), wx.SOLID))
+    #    dc.DrawRect(0, 0, 10, 10) #size.GetWidth(), size.GetHeight()
+    
     def _set_value(self, value):
         super(ColorSelectionField, self)._set_value(value)
         self._invocation_button.SetBackgroundColour(value)
@@ -1104,26 +1096,37 @@ class CodebookField(Invocable, TextField):
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
         widget = Invocable._create_widget(self)
+        spec = self.spec()
         try:
-            cb_spec = resolver().get(self.spec().codebook(), 'cb_spec')
+            cb_spec = resolver().get(spec.codebook(), 'cb_spec')
         except ResolverError:
             cb_spec = CodebookSpec()
         except AttributeError:
             cb_spec = CodebookSpec()
         self._cb_spec = cb_spec
-        if self._inline or cb_spec.display() is None:
+        if self._inline or cb_spec.display() is None and \
+               not spec.allow_codebook_insert():
             return widget
-        self._display_column = cb_spec.display()
-        display_size = self.spec().display_size() or cb_spec.display_size()
-        display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
-        size = char2px(display, display_size, 1)
-        size.SetHeight(self._ctrl.GetSize().GetHeight())
-        display.SetMinSize(size)
-        display.SetBackgroundColour(wx.Colour(213, 213, 213))
         sizer = wx.BoxSizer()
-        sizer.Add(widget, 0, wx.RIGHT, 4)
-        sizer.Add(display)
-        self._display = display
+        sizer.Add(widget, 0, wx.FIXED_MINSIZE)
+        height = self._ctrl.GetSize().GetHeight()
+        if cb_spec.display():
+            self._display_column = cb_spec.display()
+            display_size = spec.display_size() or cb_spec.display_size()
+            display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
+            size = char2px(display, display_size, 1)
+            size.SetHeight(height)
+            display.SetSize(size)
+            display.SetBackgroundColour(wx.Colour(213, 213, 213))
+            sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
+            self._display = display
+        if spec.allow_codebook_insert():
+            button = wx.Button(self._parent, -1, "+")
+            button.SetSize((dlg2px(button, 10), height))
+            button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
+            wx_callback(wx.EVT_BUTTON, button, button.GetId(),
+                        self._on_codebook_insert)
+            sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
         wx_callback(wx.EVT_NAVIGATION_KEY, display,
                     self._skip_navigation_callback(display))
         return sizer
@@ -1163,20 +1166,18 @@ class CodebookField(Invocable, TextField):
         self.set_focus()
         return True
 
-    def _validation_error_handler(self):
-        value, error = self._type.validate(self.get_value(), strict=False)
-        if error or not self._cb_spec.insert_unknown_values():
-            return False
-        msg = _("Èíselník neobsahuje hodnotu %s") % value +"\n"+ \
-              _("Chcete do èíselníku pøidat nový záznam?")
-        if (run_dialog(Question, msg)):
-            prefill = {self._type.enumerator().value_column(): value}
-            result = run_form(PopupEditForm, self.spec().codebook(),
-                              prefill=prefill)
-            #TODO: Update datového objektu èíselníku?
-            self._on_change_hook()
-            return result is not None
-        return False
+    def _on_codebook_insert(self, event):
+        value_column = self._type.enumerator().value_column()
+        value, error = self.validate(quiet=True)
+        if error:
+            prefill = {value_column: self.get_value()}
+        else:
+            prefill = {}
+        spec = self.spec().codebook_insert_spec() or self.spec().codebook()
+        result = run_form(PopupEditForm, spec, prefill=prefill)
+        if result and result.has_key(value_column):
+            self.set_value(result[value_column].export())
+        return True
     
     
 class ListField(InputField):
