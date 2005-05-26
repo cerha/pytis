@@ -1,3 +1,30 @@
+2005-05-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Nové argumenty
+	`allow_codebook_insert', `codebook_insert_spec'.
+	(FieldSpec.allow_codebook_insert) 
+	(FieldSpec.allow_codebook_insert): Nové metody.
+
+	* pytis/form/inputfield.py (InputField._validation_error_handler):
+	Zru¹eno.
+	(InputField.validate): Zapomeò na `_validation_error_handler'.
+	(TextField._create_ctrl): Vý¹ka políèka lehce zvìt¹ena.  Volej
+	také `self.SetSize()'.
+	(Invocable._create_widget): Nastavuj tlaèítku tooltip.
+	(Invocable._create_widget): Mezeru v sizeru vytváøej zleva.
+	Nastavuj `wx.FIXED_MINSIZE' pøi vkládání do sizeru.
+	(Invocable._create_button): Namísto `SetSize()' pou¾ij
+	`SetMinSize()'.
+	(CodebookField._create_widget): Pokud bylo ve specifikaci povoleno
+	`allow_codebook_insert', vytvoø také pøidávací tlaèítko.  Nastavuj
+	`wx.FIXED_MINSIZE' pøi vkládání do sizeru.
+	(CodebookField._validation_error_handler): Zru¹eno.
+	(CodebookField._on_codebook_insert): Nová metoda.
+	
+
+	* pytis/form/list.py (_post_selection_hook): Pokud nejsi
+	zaostøeným oknem, nic neprovádìj.
+
 2005-05-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py (PresentedRow._Column.__init__):
