@@ -1118,17 +1118,19 @@ class CodebookField(Invocable, TextField):
             size.SetHeight(height)
             display.SetSize(size)
             display.SetBackgroundColour(wx.Colour(213, 213, 213))
-            sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
             self._display = display
+            wx_callback(wx.EVT_NAVIGATION_KEY, display,
+                        self._skip_navigation_callback(display))
+            sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
         if spec.allow_codebook_insert():
             button = wx.Button(self._parent, -1, "+")
             button.SetSize((dlg2px(button, 10), height))
             button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                         self._on_codebook_insert)
+            wx_callback(wx.EVT_NAVIGATION_KEY, button,
+                        self._skip_navigation_callback(button))
             sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
-        wx_callback(wx.EVT_NAVIGATION_KEY, display,
-                    self._skip_navigation_callback(display))
         return sizer
 
     def _menu(self):
