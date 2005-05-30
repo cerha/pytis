@@ -66,6 +66,7 @@ class DualForm(Form):
     Tyto konkrétní konfigurace jsou realizovány potomky této tøídy.
 
     """
+    _DESCR = _("duální formuláø")
     
     def __init__(self, *args, **kwargs):
         """Inicializuj duální formuláø.
@@ -412,6 +413,7 @@ class DescriptiveDualForm(ImmediateSelectionDualForm, Refreshable):
     zobrazení aktuální polo¾ky.  Není urèen k editaci této polo¾ky.
 
     """
+    _DESCR = _("duální náhled")
     
     def _create_view_spec(self):
         return None
