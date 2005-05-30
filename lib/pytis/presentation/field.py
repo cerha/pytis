@@ -233,10 +233,10 @@ class PresentedRow:
 
     def __setitem__(self, key, value):
         assert isinstance(value, pytis.data.Value)
-        #column = self._columns[key]
-        #assert value.type() == column.type, \
-        #       "Invalid type for '%s': %s (expected %s)" % \
-        #       (key, value.type(), column.type)
+        column = self._columns[key]
+        assert value.type() == column.type, \
+               "Invalid type for '%s': %s (expected %s)" % \
+               (key, value.type(), column.type)
         self._cache = {}
         # Pokus o nastavení virtuálních políèek ti¹e ignorujeme...
         if self._row.has_key(key) and self._row[key] != value:
