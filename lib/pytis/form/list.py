@@ -1458,9 +1458,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 except AttributeError:
                     cb_spec = None
                 if cb_spec and cb_spec.display():
-                    v = enumerator.get(value.value(), cb_spec.display())
-                    if v:
-                        display_value = v.export()
+                    try:
+                        v = enumerator.get(value.value(), cb_spec.display())
+                        if v:
+                            display_value = v.export()
+                    except DataAccessException:
+                        pass
             message(display_value)
     
     def _on_wheel(self, event):
