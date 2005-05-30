@@ -95,7 +95,7 @@ class Application(wx.App, KeyHandler):
     """
     _menubar_forms = {}
 
-    _WINDOW_MENU_TITLE = _("Okna")
+    _WINDOW_MENU_TITLE = _("Okn&a")
 
     UI_ALWAYS_DISABLED = 'UI_ALWAYS_DISABLED'
     """UI event pro staticky zakázané prvky."""
@@ -151,19 +151,7 @@ class Application(wx.App, KeyHandler):
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
         self._windows = XStack()
         self._modals = Stack()
-        wm = Menu(self._WINDOW_MENU_TITLE,
-                  (MItem(_("Pøepnout na pøedchozí"),
-                         command=Application.COMMAND_PREV_FORM,
-                         uievent_id=Application.UI_OPENED_MORE_WINDOWS),
-                   MItem(_("Pøepnout na následující"),
-                         command=Application.COMMAND_NEXT_FORM,
-                         uievent_id=Application.UI_OPENED_MORE_WINDOWS),
-                   MItem(_("Zavøít aktuální"),
-                         command=Application.COMMAND_LEAVE_FORM,
-                         uievent_id=Application.UI_OPENED_WINDOW),
-                   MSeparator()),
-                  activation=(Window.ACT_WINDOW))
-        
+        wm = Menu(self._WINDOW_MENU_TITLE, (), activation=(Window.ACT_WINDOW))
         menus = self._spec('menu') + (wm,)
         self._menubar = mb = MenuBar(self._frame, menus, self)
 
@@ -188,12 +176,9 @@ class Application(wx.App, KeyHandler):
 
     # Ostatní metody
 
-    def _window_menu(self):
-        mb = self._menubar
-        return mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
-
     def _update_window_menu(self, recreate=True):
-        menu = self._window_menu()
+        mb = self._menubar
+        menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         if menu is None:
             return
         if recreate:
@@ -201,8 +186,11 @@ class Application(wx.App, KeyHandler):
                 menu.Remove(item.GetId())
                 item.Destroy()
                 del self._window_menu_item[form]
-            for form in self._windows.items():
-                item = RadioItem("%s (%s)" % (form.title(), form.descr()),
+            for i, form in enumerate(self._windows.items()):
+                title = "&%d. %s" % (i+1, form.title())
+                if form.__class__ != BrowseForm:
+                    title += " (%s)" % form.descr()
+                item = RadioItem(title,
                                  help=_('Vyzvednout okno formuláøe "%s" %s') % \
                                  (form.title(), str(form)),
                                  command=Application.COMMAND_RAISE_FORM,
