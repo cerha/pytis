@@ -1,5 +1,31 @@
 2005-05-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py
+	(Application._WINDOW_MENU_TITLE): Pou¾ij `&' pro klávesovou
+	zkratku.
+	(Application.OnInit): Vynech v menu oken pøíkazy pro manipulaci s
+	okny.
+	(Application._window_menu): Zru¹eno.
+	(Application._update_window_menu): Nepou¾ívej
+	`self._window_menu()'.  Pøidávej do titulku èíslo formuláøe,
+	fungující také jako klávesová zkratka.  Popis formuláøe uvádìj
+	pouze pokud nejde o BrowseForm.
+
+	* pytis/form/dualform.py (DualForm._DESCR,
+	DescriptiveDualForm._DESCR): Nové konstanty.
+
+	* pytis/form/form.py (Form._menus, EditForm._menus): Pøidány pøíkazy pro
+	manipulaci s okny.
+	(Form.descr): Pokud `self._DESCR' není None, vracej jeho hodnotu.
+	(EditForm._validate): Neprovádìj kontrolu datového typu hodnot v
+	row zde.
+	(ShowForm): Nová konstanta.
+
+2005-05-30  Tomas Cerha  <cerha@brailcom.orWg>
+
+	* pytis/form/dualform.py (DualForm._DESCR) 
+	(DescriptiveDualForm._DESCR): Nové konstanty.
+
 	* pytis/form/list.py (_post_selection_hook): O¹etøuj
 	`DataAccessException' pøi zji¹»ování hodnoty displeje.
 
