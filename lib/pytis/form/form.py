@@ -65,6 +65,7 @@ class Form(Window, KeyHandler, CallbackHandler):
     """Seznam aktivaèních kategorií pro tuto tøídu."""
 
     _STATUS_FIELDS = ()
+    _DESCR = None
     
     def __init__(self, parent, resolver, name, guardian=None, **kwargs):
         """Inicializuj instanci.
@@ -185,8 +186,15 @@ class Form(Window, KeyHandler, CallbackHandler):
 
     def _menus(self):
         return (Menu(_("Pøíkazy"),
-                     (MItem(_("Zavøít okno"),
-                            command=Application.COMMAND_LEAVE_FORM),
+                     (MItem(_("Pøepnout na pøedchozí okno"),
+                            command=Application.COMMAND_PREV_FORM,
+                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                      MItem(_("Pøepnout na následující okno"),
+                            command=Application.COMMAND_NEXT_FORM,
+                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                      MItem(_("Zavøít aktuální okno"),
+                            command=Application.COMMAND_LEAVE_FORM,
+                            uievent_id=Application.UI_OPENED_WINDOW),
                       MSeparator(),
                       MItem(_("Ulo¾it"),
                             command=ListForm.COMMAND_LINE_COMMIT,
@@ -338,7 +346,10 @@ class Form(Window, KeyHandler, CallbackHandler):
 
     def descr(self):
         """Vra» textový popis typu formuláøe jako øetìzec."""
-        return self.__class__.__name__
+        if self._DESCR is not None:
+            return self._DESCR
+        else:
+            return self.__class__.__name__
         
     def title(self):
         """Vra» titulek ze specifikace formuláøe jako øetìzec."""
@@ -1224,15 +1235,7 @@ class EditForm(LookupForm, TitledForm):
             field.set_focus()
             return None
         # Data sestavíme a¾ po check, proto¾e tam mohou být mìnìny honoty.
-        rdata = []
-        for f in self._fields:
-            value = self._row[f.id()]
-            # TODO: Tato kontrola by mìla být provádìna spí¹e v
-            # 'PresentedRow.__setitem__()'.
-            if not isinstance(f.type(), value.type().__class__):
-                msg = "Invalid value type set for %s in 'check()' function: %s"
-                raise ProgramError(msg % ((f.id(), (f.type(), value.type()))))
-            rdata.append((f.id(), value))
+        rdata = [(f.id(), self._row[f.id()]) for f in self._fields]
         return pytis.data.Row(rdata)
 
     def _edit_insert(self):
@@ -1312,11 +1315,17 @@ class EditForm(LookupForm, TitledForm):
                 self._parent.Close()
         return result
 
-
     def _menus(self):
         return (Menu(_("Pøíkazy"),
-                     (MItem(_("Zavøít okno"),
-                            command=Application.COMMAND_LEAVE_FORM),
+                     (MItem(_("Pøepnout na pøedchozí okno"),
+                            command=Application.COMMAND_PREV_FORM,
+                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                      MItem(_("Pøepnout na následující okno"),
+                            command=Application.COMMAND_NEXT_FORM,
+                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                      MItem(_("Zavøít aktuální okno"),
+                            command=Application.COMMAND_LEAVE_FORM,
+                            uievent_id=Application.UI_OPENED_WINDOW),
                       MSeparator(),
                       MItem(_("Hledat"),
                             command=LookupForm.COMMAND_SEARCH),
@@ -1588,6 +1597,8 @@ class ShowForm(EditForm):
 
     """
 
+    _DESCR = _("náhled")
+
     def _init_attributes(self, editable=False, **kwargs):
         super_(ShowForm)._init_attributes(self, editable=editable, **kwargs)
         
@@ -1616,6 +1627,7 @@ class BrowsableShowForm(ShowForm):
     jeden záznam zobrazený v Layoutu editaèního formuláøe.
     
     """
+    
     def __init__(self, *args, **kwargs):
         super_(BrowsableShowForm).__init__(self, *args, **kwargs)
         self._init_select()
