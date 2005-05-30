@@ -1,3 +1,8 @@
+2005-05-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (_post_selection_hook): O¹etøuj
+	`DataAccessException' pøi zji¹»ování hodnoty displeje.
+
 2005-05-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): Nové argumenty
@@ -20,7 +25,8 @@
 	`wx.FIXED_MINSIZE' pøi vkládání do sizeru.
 	(CodebookField._validation_error_handler): Zru¹eno.
 	(CodebookField._on_codebook_insert): Nová metoda.
-	
+	(CodebookField._create_widget): Nech» je tlaèítko pro pøidávání
+	záznamù pøeskakováno pøi prùchodu formuláøem.
 
 	* pytis/form/list.py (_post_selection_hook): Pokud nejsi
 	zaostøeným oknem, nic neprovádìj.
