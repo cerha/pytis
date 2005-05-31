@@ -1,4 +1,15 @@
+2005-05-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (CodebookField._on_invoke_selection):
+	Pøedávej øádek jako slovník s value_column jako klíè.
+
+	* pytis/form/list.py (select_row): Umo¾ni pøedat øádek také jako
+	slovník.
+
 2005-05-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow.__setitem__):
+	Kontroluj typ nastavované hodnoty.
 
 	* pytis/form/application.py
 	(Application._WINDOW_MENU_TITLE): Pou¾ij `&' pro klávesovou
