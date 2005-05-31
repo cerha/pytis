@@ -2263,6 +2263,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             øádky jsou èíslovány od 0.
           Datový klíè -- bude vysvícen øádek s tímto klíèem, kterým je tuple
             instancí tøídy 'pytis.data.Value'.
+          Slovník hodnot -- bude vysvícen první nalezený øádek obsahující
+            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
+            klíèi slovníku.
           Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
             seznamu -- bude pøeveden na datový klíè.
 
@@ -2279,9 +2282,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             position = self._table.editing().row
         if isinstance(position, pytis.data.Row):
             position = self._data.row_key(position)
-        if type(position) == type(()):
+        if isinstance(position, types.TupleType):
             cols = map(pytis.data.ColumnSpec.id, self._data.key())
             position = self._find_row_by_values(cols, position)
+        if isinstance(position, types.DictType):
+            position = self._find_row_by_values(position.keys(),
+                                                position.values())
         if position is None:
             position = -1
         return self._select_cell(row=position, invoke_callback=_invoke_callback)
