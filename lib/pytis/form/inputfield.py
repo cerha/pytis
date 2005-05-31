@@ -1158,10 +1158,11 @@ class CodebookField(Invocable, TextField):
         value, error = self.validate(quiet=True)
         enumerator = self._type.enumerator()
         begin_search = alternate or self._cb_spec.begin_search() or None
+        select_row = value and {enumerator.value_column(): value} or None
         result = run_form(CodebookForm, self.spec().codebook(),
                           columns=self._cb_spec.columns(),
                           begin_search=begin_search,
-                          select_row=value and (value,),
+                          select_row=select_row,
                           condition=enumerator.validity_condition())
         if result != None:
             self.set_value(result.format(enumerator.value_column()))
