@@ -572,21 +572,16 @@ class RecordForm(Form):
         # Naplò formuláø daty z daného *datového* øádku
         prow = PresentedRow(self._view.fields(), self._data, row,
                             prefill=self._prefill, new=(not self._key),
-                            change_callback=self._on_row_change,
-                            enable_field_callback=self._on_field_enable,
-                            disable_field_callback=self._on_field_disable)
+                            change_callback=self._on_field_change,
+                        editability_change_callback=self._on_editability_change)
         self.set_row(prow)
 
-    def _on_row_change(self, field_id):
-        # Signalizace zmìny políèka z _row
+    def _on_field_change(self, field_id, value=None):
+        # Signalizace zmìny hodnoty políèka z _row
         pass
 
-    def _on_field_enable(self, field_id):
-        # Callback pro povolení editovatelnosti políèka
-        pass
-        
-    def _on_field_disable(self, field_id):
-        # Callback pro zakázání editovatelnosti políèka
+    def _on_editability_change(self, field_id):
+        # Callback zmìny editovatelnosti políèka
         pass
         
     # Veøejné metody
@@ -604,7 +599,6 @@ class RecordForm(Form):
             event.Enable(True)
         else:
             event.Enable(False)
-
     
     def prefill(self):
         """Vra» data pro pøedvyplnìní nového záznamu."""
@@ -1383,21 +1377,20 @@ class EditForm(LookupForm, TitledForm):
         if field is not None:
             field.show_popup_menu()
 
-    def _on_row_change(self, id):
+    def _on_field_change(self, id):
         # Signalizace zmìny políèka z _row
         field = find(id, self._fields, key=lambda f: f.id())        
         if field is not None and self._row is not None:
             value = self._row.format(id)
             if field.initialized() and field.get_value() != value:
                 field.set_value(value)
-                
-    def _on_field_enable(self, id):
+
+    def _on_editability_change(self, id, enable):
         if id in self._view.layout().order():
-            self._field(id).enable()
-        
-    def _on_field_disable(self, id):
-        if id in self._view.layout().order():
-            self._field(id).disable()
+            if enable:
+                self._field(id).enable()
+            else:                
+                self._field(id).disable()
                 
     def _field_change(self, id, value):
         # Vezmi na vìdomí, ¾e hodnota políèka 'id' byla zmìnìna na 'value'.
