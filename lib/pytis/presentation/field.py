@@ -55,8 +55,8 @@ class PresentedRow:
             self.codebook_runtime_filter = codebook_runtime_filter
             
     def __init__(self, fieldspec, data, row, prefill=None, singleline=False,
-                 change_callback=None, enable_field_callback=None,
-                 disable_field_callback=None, new=False):
+                 change_callback=None, editability_change_callback=None,
+                 new=False):
         """Inicializuj prezentaci øádku.
         
         Argumenty:
@@ -79,14 +79,12 @@ class PresentedRow:
             nepøímé zmìnì políèka (tj. pøi pøepoèítávání hodnot), která
             oznamuje \"neèekané\" zmìny políèek v prezentovaném row; je-li
             'None', není ¾ádná taková funkce volána
-          enable_field_callback -- funkce jednoho argumentu (id políèka) volaná
-            pøi nepøímé zmìnì editovatelnosti políèka.  Tato funkce oznamuje,
-            ¾e v dùsledku zmìny v políèkách, na kterých editovatelnost daného
-            políèka závisí se dané políèko stalo editovatelným; je-li 'None',
-            není ¾ádná taková funkce volána
-          disable_field_callback -- funkce jednoho argumentu (id políèka)
-            volaná, kdy¾ se políèko stává needitovatelným - obdoba
-            'enable_field_callback'
+          editability_change_callback -- funkce dvou argumentù (id políèka,
+            pøíznak editovatelnosti) volaná pøi nepøímé zmìnì editovatelnosti
+            políèka.  Voláním této funkce øádek oznamuje, ¾e v dùsledku zmìny v
+            jiných políèkách se dané políèko stalo editovatelným (druhý
+            argument je pravdivý), èi naopak (druhý argument je nepravdivý);
+            je-li 'None', není zmìna editovatelnosti oznamována.
           new -- flag urèující, zda se jedná o novì vytváøený záznam (nikoliv
             editaci záznamu ji¾ existujícího)
 
@@ -108,21 +106,27 @@ class PresentedRow:
         # TODO: pytis.remote vy¾aduje inicializaci Pyro, co¾ není v¾dy to pravé
         # oøechové.  `data' by stejnì mìlo být jednotného typu, je tøeba to
         # nìjak promyslet.
-#         assert isinstance(data, pytis.data.Data) or \
-#                isinstance(data, pytis.remote.RemoteData)
+        #assert isinstance(data, pytis.data.Data) or \
+        #       isinstance(data, pytis.remote.RemoteData)
+        assert row is None or isinstance(row, (PresentedRow, pytis.data.Row))
+        assert change_callback is None or callable(change_callback)
+        assert editability_change_callback is None or \
+               callable(editability_change_callback)
+        assert prefill is None or isinstance(prefill, types.DictType)
+        assert isinstance(singleline, types.BooleanType)
+        assert isinstance(new, types.BooleanType)
         self._fieldspec = fieldspec
         self._data = data
         self._singleline = singleline
         self._change_callback = change_callback
-        self._enable_field_callback = enable_field_callback
-        self._disable_field_callback = disable_field_callback
+        self._editability_change_callback = editability_change_callback
         self._process_fieldspec()
+        self._virtual = {}
         self._row = self._init_row(row, prefill=prefill)
         self._original_row = copy.copy(self._row)
         self._new = new
         self._cache = {}
-        self._invoke_callbacks()
-        self._recompute_dependencies()
+        self._finalize()
 
     def _process_fieldspec(self):
         data = self._data
@@ -176,32 +180,32 @@ class PresentedRow:
         self._cache = {}
         if row is None:
             def genval(c):
-                id = c.id()
-                if prefill is not None and prefill.has_key(id):
-                    value = prefill[id]
+                key = c.id()
+                if prefill is not None and prefill.has_key(key):
+                    value = prefill[key]
                     # Pro Codebooky radìji taky vytvoøíme novou instanci
                     if not isinstance(value, pytis.data.Value):
                         value = pytis.data.Value(c.type(), value)
                     else:
                         value = pytis.data.Value(c.type(), value.value())
-                    if self._dirty.has_key(id):
-                        self._dirty[id] = False
+                    if self._dirty.has_key(key):
+                        self._dirty[key] = False
                 else:
-                    if self._columns.has_key(id):
-                        field = self._columns[id]
+                    if self._columns.has_key(key):
+                        field = self._columns[key]
                         default = field.default
                         t = field.type
                         if default is None:
                             value = t.default_value()
                         else:
                             value = pytis.data.Value(t, default())
-                            if self._dirty.has_key(id):
-                                self._dirty[id] = False
+                            if self._dirty.has_key(key):
+                                self._dirty[key] = False
                     else:
                         value = c.type().default_value()
-                return id, value
-            for id in self._dirty.keys():
-                self._dirty[id] = True
+                return key, value
+            for key in self._dirty.keys():
+                self._dirty[key] = True
             row_data = map(genval, self._data.columns())
             row = pytis.data.Row(row_data)
         else:
@@ -213,8 +217,8 @@ class PresentedRow:
                 raise Exception('Invalid argument row:', row)
             if prefill is not None:
                 row.update(prefill)
-            for id in self._dirty.keys():
-                self._dirty[id] = not row.has_key(id)
+            for key in self._dirty.keys():
+                self._dirty[key] = not row.has_key(key)
         return row
 
     def __getitem__(self, key):
@@ -224,11 +228,23 @@ class PresentedRow:
         je chování metody nedefinováno.
         
         """
-        column = self._columns[key]
-        if column.computer and self._needs_recomputation(column.id):
-            value = pytis.data.Value(column.type, self._compute(column))
+        if self._row.has_key(key):
+            value = self._row[key]
         else:
-            value = self._row[column.id]
+            value = self._virtual.get(key)
+        if value is None or self._dirty.has_key(key) and self._dirty[key]:
+            column = self._columns[key]
+            func = column.computer.function()
+            new_value = pytis.data.Value(column.type, func(self))
+            self._dirty[key] = False
+            if value is None or new_value.value() != value.value():
+                value = new_value
+                if self._row.has_key(key):
+                    self._row[key] = value
+                else:
+                    self._virtual[key] = value
+                if self._change_callback is not None:
+                    self._change_callback(key)
         return value
 
     def __setitem__(self, key, value):
@@ -241,9 +257,8 @@ class PresentedRow:
         # Pokus o nastavení virtuálních políèek ti¹e ignorujeme...
         if self._row.has_key(key) and self._row[key] != value:
             self._row[key] = value
-            if self._mark_dependent_dirty(key):
-                self._invoke_callbacks()
-            self._recompute_dependencies(key)
+            marked = self._mark_dependent_dirty(key)
+            self._finalize(key, invoke_callbacks=marked)
                 
     def __str__(self):
         if hasattr(self, '_row'):
@@ -258,76 +273,62 @@ class PresentedRow:
         # Rekurzivnì oznaè závislá políèka.
         # Vra» pravdu, pokud k oznaèení nìjakých políèek do¹lo.
         if self._dependent.has_key(key):
-            for id in self._dependent[key]:
-                self._dirty[id] = True
-                self._mark_dependent_dirty(id)
+            for k in self._dependent[key]:
+                self._dirty[k] = True
+                self._mark_dependent_dirty(k)
             return True
         else:
             return False
     
-    def _invoke_callbacks(self):
-        # Zavolej `chage_callback' pro v¹echna ``dirty'' políèka.
-        if self._change_callback is not None:
-            keys = filter(lambda key: self._dirty[key], self._dirty.keys())
-            for key in keys:
-                self._change_callback(key)
-
-    def _needs_recomputation(self, id):
-        # Vra» pravdu, pokud jde o poèítané políèko, které je tøeba vypoèítat.
-        return not self._row.has_key(id) or self._dirty[id]
-
-    def _compute(self, column):
-        # Vypoèti a vra» aktuální hodnotu políèka (jako Pythonovou hodnotu).
-        id = column.id
-        value = column.computer.function()(self)
-        self._dirty[id] = False
-        if self._row.has_key(id):
-            self._row[id] = pytis.data.Value(column.type, value)
-        return value
-
-    def _recompute_dependencies(self, key=None):
-        # recompute dependencies for all fields when key is None or recompute
+    def _finalize(self, key=None, invoke_callbacks=True):
+        # Recompute dependencies for all fields when key is None or recompute
         # just fields depending on a field specified by key (after its change).
+        # TODO: Musí se to dìlat v¾dy?  Napø. i pøi set_row z BrowseFormu?
         self._recompute_editability(key)
         self._recompute_codebook_runtime_filter(key)
+        if invoke_callbacks and self._change_callback is not None:
+            # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
+            # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
+            # pøepoèítána a callback byl zavolán nebo zùstala "dirty".  
+            dirty = [k for k in self._dirty.keys() if self._dirty[k]]
+            for k in dirty:
+                self._change_callback(k)
     
     def _recompute_editability(self, key=None):
         if key is None:
-            ids = self._editable.keys()
+            keys = self._editable.keys()
         elif self._editability_dependent.has_key(key):
-            ids = self._editability_dependent[key]
+            keys = self._editability_dependent[key]
         else:
             return
-        for id in ids:
-            if self._enable_field_callback or self._disable_field_callback:
-                old = self._editable[id]
-                self._editable[id] = new = self._compute_editability(id)
-                self._editability_dirty[id] = False
-                if not old and new and self._enable_field_callback:
-                    self._enable_field_callback(id)
-                if old and not new and self._disable_field_callback:
-                    self._disable_field_callback(id)
+        for k in keys:
+            if self._editability_change_callback:
+                old = self._editable[k]
+                new = self._compute_editability(k)
+                if old != new:
+                    self._editability_change_callback(k, new)
             else:
-                self._editability_dirty[id] = True
+                self._editability_dirty[k] = True
 
     def _compute_editability(self, key):
         # Vypoèti editovatelnost políèka a vra» výsledek (jako boolean).
         func = self._columns[key].editable.function()
-        return func(self, key)
+        self._editable[key] = result = func(self, key)
+        self._editability_dirty[key] = False
+        return result
     
     def _recompute_codebook_runtime_filter(self, key=None):
         if key is None:
-            ids = [id for id in self._columns.keys()
-                   if self._columns[id].codebook_runtime_filter is not None]
+            columns = [c for c in self._columns.values()
+                       if c.codebook_runtime_filter is not None]
         elif self._codebook_runtime_filter_dependent.has_key(key):
-            ids = self._codebook_runtime_filter_dependent[key]
+            columns = [self._columns[k]
+                       for k in self._codebook_runtime_filter_dependent[key]]
         else:
             return
-        for id in ids:
-            c = self._columns[id]
+        for c in columns:
             c.type.enumerator().notify_runtime_filter_change()
  
-
     def row(self):
         """Vra» aktuální datový øádek, jako instanci 'pytis.data.Row'.
 
@@ -337,18 +338,14 @@ class PresentedRow:
         """
         data = self._data
         row_data = []
-        for id, value in self._row.items():
-            c = data.find_column(id)
-            if c is None:
-                ok_value = value
-            elif self._dirty.has_key(id) and self._dirty[id]:
-                ok_value = pytis.data.Value(c.type(),
-                                          self._compute(self._columns[id]))
-            else:
-                ok_value = pytis.data.Value(c.type(), value.value())
-            row_data.append((id, ok_value))
-        result = pytis.data.Row(row_data)
-        return result
+        for key, value in self._row.items():
+            c = data.find_column(key)
+            if c is not None:
+                if self._dirty.has_key(key) and self._dirty[key]:
+                    value = self[key]
+                value = pytis.data.Value(c.type(), value.value())
+            row_data.append((key, value))
+        return pytis.data.Row(row_data)
 
     def data(self):
         """Vra» odpovídající datový objekt øádku."""
@@ -362,37 +359,25 @@ class PresentedRow:
           'key' -- id políèka (øetìzec) identifikující existující políèko,
             jinak je chování metody nedefinováno.
           'kwargs' -- klíèové argumenty které budou pou¾ity pøi volání metody
-            'export()' pro získáné øetìzcové reprezentace hodnoty.
+            'export()' pro získání øetìzcové reprezentace hodnoty.
         
         """
         try:
             return self._cache[key]
         except KeyError:
             pass
-        column = self._columns[key]
-        if column.computer and self._needs_recomputation(column.id):
-            value = self._compute(column)
-            try:
-                svalue = column.type.export(value, **kwargs)
-            except Exception, e:
-                raise ProgramError("Computer returned an incopatible value:",
-                                   key, column.computer.function(),
-                                   value, type(value))
-        else:
-            try:
-                value = self._row[column.id]
-            except KeyError:
-                # Mù¾e nastat napøíklad v pøípadì, kdy k danému sloupci nejsou
-                # pøístupová práva.
-                svalue = None
-            else:
-                svalue = value.export(**kwargs)
-        if svalue is None:
+        try:
+            value = self[key]
+        except KeyError:
+            # Mù¾e nastat napøíklad v pøípadì, kdy k danému sloupci nejsou
+            # pøístupová práva.
             svalue = ''
+        else:
+            svalue = value.export(**kwargs)
+        column = self._columns[key]
         if self._singleline and column.line_separator is not None:
             svalue = string.join(svalue.splitlines(), column.line_separator)
         self._cache[key] = svalue
-        assert not is_sequence(svalue)
         return svalue
 
     def set_row(self, row, reset=False):
@@ -412,8 +397,7 @@ class PresentedRow:
         self._row = self._init_row(row)
         if reset:
             self._original_row = copy.copy(self._row)
-        self._invoke_callbacks()
-        self._recompute_dependencies()
+        self._finalize()
 
     def fields(self):
         """Vra» seznam v¹ech políèek."""
@@ -453,9 +437,8 @@ class PresentedRow:
         """Vra» pravdu, právì kdy¾ bylo políèko dané 'key' zmìnìno.
 
         """
-        if not self._row.has_key(key):
-            return False
-        return self._row[key] != self._original_row[key]
+        return self._row.has_key(key) and \
+               self._row[key] != self._original_row[key]
 
     def new(self):
         """Vra» pravdu, právì kdy¾ se jedná o nový záznam."""
@@ -467,13 +450,13 @@ class PresentedRow:
         Význam argumentu 'key' je stejný jako v metodì '__getitem__'.
 
         """
-        editable = self._columns[key].editable
         if self._editable.has_key(key):
             if self._editability_dirty[key]:
-                self._editable[key] = self._compute_editability(key)
-                self._editability_dirty[key] = False
-            return self._editable[key]
+                return self._compute_editability(key)
+            else:
+                return self._editable[key]
         else:
+            editable = self._columns[key].editable
             return editable == Editable.ALWAYS or \
                    (editable == Editable.ONCE and self._new)
 
@@ -526,8 +509,7 @@ class PresentedRow:
 
         self._refvalues[key] = value
         self._dirty[key] = True
-        if self._mark_dependent_dirty(key):
-            self._invoke_callbacks()
+        self._finalize()
         
     def refvalue(self, key):
         """Vrátí vybranou hodnotu z ListField.
