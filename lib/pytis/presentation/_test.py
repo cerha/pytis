@@ -18,10 +18,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import unittest
-import pytis.util.test
-import pytis.data
 
-import field
+import pytis
+from pytis.form import * 
 
 tests = pytis.util.test.TestSuite()
 
@@ -29,14 +28,14 @@ tests = pytis.util.test.TestSuite()
 # field.py #
 ############
 
-class PresentedRow(unittest.TestCase):
+class PresentedRow_(unittest.TestCase):
     def setUp(self):
-        key = pytis.data.ColumnSpec('a', pytis.data.String.make())
+        key = pytis.data.ColumnSpec('a', pytis.data.Integer())
         columns = (
             key,
-            pytis.data.ColumnSpec('b', pytis.data.Integer.make()),
-            pytis.data.ColumnSpec('c', pytis.data.Integer.make()),
-            pytis.data.ColumnSpec('d', pytis.data.Integer.make()))
+            pytis.data.ColumnSpec('b', pytis.data.Integer()),
+            pytis.data.ColumnSpec('c', pytis.data.Integer()),
+            pytis.data.ColumnSpec('d', pytis.data.Integer()))
         self._data = pytis.data.Data(columns, key)
         def twice(row):
             return row['c'].value() * 2
@@ -44,57 +43,55 @@ class PresentedRow(unittest.TestCase):
             return row['b'].value() + row['c'].value()
         def inc(row):
             return row['sum'].value() + 1
-        def gt5(row):
+        def gt5(row, key):
             return row['a'].value() > 5
-        Field = field.FieldSpec
-        Comp = field.Computer
-        self._fields = (Field('a'),
-                        Field('b'),
-                        Field('c', default=lambda : 5),
-                        Field('d', 
-                              computer=Comp(twice, depends=('c',)),
-                              editable=Comp(gt5, depends=('a',))),
-                        Field('sum', type_=pytis.data.Integer.make(),
-                              computer=Comp(sum, depends=('b','c'))),
-                        Field('inc', type_=pytis.data.Integer.make(),
-                              computer=Comp(inc, depends=('sum',))))
+        self._fields = (FieldSpec('a'),
+                        FieldSpec('b'),
+                        FieldSpec('c', default=lambda : 5),
+                        FieldSpec('d', 
+                                  computer=Computer(twice, depends=('c',)),
+                                  editable=Computer(gt5, depends=('a',))),
+                        FieldSpec('sum', type_=pytis.data.Integer(),
+                                  computer=Computer(sum, depends=('b','c'))),
+                        FieldSpec('inc', type_=pytis.data.Integer(),
+                                  computer=Computer(inc, depends=('sum',))))
     def test_init(self):
-        row = field.PresentedRow(self._fields, self._data, None)
+        row = PresentedRow(self._fields, self._data, None)
         assert row['a'].value() == None
         assert row['b'].value() == None
         assert row['c'].value() == 5
         assert row['d'].value() == 10
         data_row = pytis.data.Row((
-            ('a', pytis.data.Value(pytis.data.Integer.make(), 'xx')),
-            ('b', pytis.data.Value(pytis.data.Integer.make(), 100)),
-            ('c', pytis.data.Value(pytis.data.Integer.make(), 77)),
-            ('d', pytis.data.Value(pytis.data.Integer.make(), 18))))
-        row = field.PresentedRow(self._fields, self._data, data_row)
+            ('a', pytis.data.Value(pytis.data.Integer(), 'xx')),
+            ('b', pytis.data.Value(pytis.data.Integer(), 100)),
+            ('c', pytis.data.Value(pytis.data.Integer(), 77)),
+            ('d', pytis.data.Value(pytis.data.Integer(), 18))))
+        row = PresentedRow(self._fields, self._data, data_row)
         assert row['a'].value() == 'xx'
         assert row['b'].value() == 100
         assert row['c'].value() == 77
         assert row['d'].value() == 18
-        row['c'] = pytis.data.Value(pytis.data.Integer.make(), 88)
-        row2 = field.PresentedRow(self._fields, self._data, row)
+        row['c'] = pytis.data.Value(pytis.data.Integer(), 88)
+        row2 = PresentedRow(self._fields, self._data, row)
         assert row['a'].value() == 'xx'
         assert row['b'].value() == 100
         assert row['c'].value() == 88
         assert row['d'].value() == 176
         # TODO: dodìlat
     def test_prefill(self):
-        row = field.PresentedRow(self._fields, self._data, None,
-                                 prefill={'a': 'xx', 'b': 3, 'c': 99, 'd': 77})
+        row = PresentedRow(self._fields, self._data, None,
+                           prefill={'a': 'xx', 'b': 3, 'c': 99, 'd': 77})
         assert row['a'].value() == 'xx'
         assert row['b'].value() == 3
         assert row['c'].value() == 99
         assert row['d'].value() == 77
     def test_computer(self):
-        row = field.PresentedRow(self._fields, self._data, None,
+        row = PresentedRow(self._fields, self._data, None,
                                  prefill={'b': 3})
         assert row['d'].value() == 10
         assert row['sum'].value() == 8
         assert row['inc'].value() == 9
-        row['c'] = pytis.data.Value(pytis.data.Integer.make(), 100)
+        row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
         assert row['d'].value() == 200
         assert row['sum'].value() == 103
         assert row['inc'].value() == 104
@@ -102,59 +99,56 @@ class PresentedRow(unittest.TestCase):
         changed = []
         def cb(id):
             changed.append(id)
-        row = field.PresentedRow(self._fields, self._data, None,
-                                 prefill={'b': 3}, change_callback=cb)
+        row = PresentedRow(self._fields, self._data, None,
+                           prefill={'b': 3}, change_callback=cb)
         assert row['d'].value() == 10
         assert row['sum'].value() == 8
         assert row['inc'].value() == 9
         assert 'd' in changed and 'sum' in changed and 'inc' in changed
         del changed[0:len(changed)]
-        row['c'] = pytis.data.Value(pytis.data.Integer.make(), 100)
+        row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
         assert row['d'].value() == 200
         assert row['sum'].value() == 103
         assert row['inc'].value() == 104
         assert 'd' in changed and 'sum' in changed and 'inc' in changed
     def test_editable(self):
-        row = field.PresentedRow(self._fields, self._data, None,
+        row = PresentedRow(self._fields, self._data, None,
                                  prefill={'a': 3, 'b': 3})
         assert row.editable('a')
         assert not row.editable('d')
-        row['a'] = pytis.data.Value(pytis.data.Integer.make(), 8)
-        row['a'] = pytis.data.Value(pytis.data.Integer.make(), 10)
+        row['a'] = pytis.data.Value(pytis.data.Integer(), 8)
+        row['a'] = pytis.data.Value(pytis.data.Integer(), 10)
         assert row.editable('d')
     def test_editability_callbacks(self):
         enabled = ['--'] # we need a mutable object...
-        def enable(id):
-            enabled[0] = 'yes'
-        def disable(id):
-            enabled[0] = 'no'
-        row = field.PresentedRow(self._fields, self._data, None,
+        def editability_change(id, editable):
+            enabled[0] = editable and 'yes' or 'no'
+        row = PresentedRow(self._fields, self._data, None,
                                  prefill={'a': 6},
-                                 enable_field_callback=enable,
-                                 disable_field_callback=disable)
+                                 editability_change_callback=editability_change)
         assert enabled[0] == '--'
-        row['a'] = pytis.data.Value(pytis.data.Integer.make(), 7)
+        row['a'] = pytis.data.Value(pytis.data.Integer(), 7)
         assert enabled[0] == '--'
-        row['a'] = pytis.data.Value(pytis.data.Integer.make(), 3)
+        row['a'] = pytis.data.Value(pytis.data.Integer(), 3)
         assert enabled[0] == 'no'
-        row['a'] = pytis.data.Value(pytis.data.Integer.make(), 8)
+        row['a'] = pytis.data.Value(pytis.data.Integer(), 8)
         assert enabled[0] == 'yes'
         
     def test_has_key(self):
-        row = field.PresentedRow(self._fields, self._data, None)
+        row = PresentedRow(self._fields, self._data, None)
         assert row.has_key('a')
         assert row.has_key('inc')
         assert not row.has_key('blabla')
     def test_changed(self):
-        row = field.PresentedRow(self._fields, self._data, None)
+        row = PresentedRow(self._fields, self._data, None)
         assert not row.changed()
-        row['b'] = pytis.data.Value(pytis.data.Integer.make(), 333)
+        row['b'] = pytis.data.Value(pytis.data.Integer(), 333)
         assert row.changed()
     def test_keys(self):
-        row = field.PresentedRow(self._fields, self._data, None)
+        row = PresentedRow(self._fields, self._data, None)
         assert row.keys().sort() == map(lambda f: f.id(), self._fields).sort()
         
-tests.add(PresentedRow)
+tests.add(PresentedRow_)
 
 def get_tests():
     return tests
