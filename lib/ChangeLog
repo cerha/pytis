@@ -1,5 +1,8 @@
 2005-06-01  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/_test.py: Opraveny importy.  Instance
+	 datových typù nezískávej pøes `.make()'.
+
 	* pytis/presentation/field.py (PresentedRow.__init__): Argumenty
 	`enable_field_callback' a `disable_field_callback' nahrazeny
 	jediným `editability_change_callback'.
