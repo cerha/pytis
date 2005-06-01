@@ -1,3 +1,47 @@
+2005-06-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow.__init__): Argumenty
+	`enable_field_callback' a `disable_field_callback' nahrazeny
+	jediným `editability_change_callback'.
+	(PresentedRow.__init__): Pøidány v¹emo¾né asserty na argumenty.
+	Inicializuj cache vypoètených virtuálních hodnot `self._virtual'.
+	Vyu¾ívej `_finalize()'.
+	(PresentedRow._init_row.genval): Promìnná `id' pøejmenována na
+	`key'.
+	(PresentedRow.__getitem__): Dopoèítávej dopoèítávané hodnoty pøímo
+	zde.  Cachuj vypoèené hodnoty virtuálních sloupcù.  Pokud dojde ke
+	zmìnì hodnoty, volej change_callback ihned po dopoèítání nové
+	hodnoty.
+	(_invoke_callbacks, _needs_recomputation, _compute)
+	(_recompute_dependencies): Zru¹eno.
+	(PresentedRow._finalize): Nová metoda.
+	(PresentedRow._recompute_editability): Namísto `id' pou¾ívej
+	promìnnou `key'.
+	(PresentedRow._compute_editability): Ukládej vypoøtenou hodnotu do
+	`self._editable' a nuluj "dirty" pøíznak.
+	(PresentedRow._recompute_codebook_runtime_filter): Kosmetické
+	úpravy.
+	(PresentedRow.row): Nesna¾ se zde øe¹it, co sem nepatøí.  Hodnotu
+	získávej pøes pøístup ke slovníku /__getitem__/.
+	(PresentedRow.format): Nesna¾ se zde øe¹it, co sem nepatøí.
+	Hodnotu získávej pøes pøístup ke slovníku /__getitem__/.
+	(PresentedRow.field_changed): Kosmetická úprava.
+	(PresentedRow.editable): Neøe¹ zde co je nyní v
+	`_compute_editability'.
+	(PresentedRow.listfield_choose): Vyu¾ívej `_finalize()'.
+	(PresentedRow.__setitem__): Vyu¾ívej `_finalize()'.
+	(PresentedRow.set_row): Vyu¾ívej `_finalize()'.
+
+	* pytis/form/form.py (RecordForm._set_row): Respektuj zmìnu
+	argumentù `PresentedRow'.
+	(RecordForm._on_row_change, EditForm._on_row_change):
+	Pøejmenováno na `_on_field_change'.
+	(RecordForm._on_field_enable, RecordForm._on_field_disable)
+	(EditForm._on_field_enable, EditForm._on_field_disable): Zru¹eno.
+	(RecordForm._on_editability_change)
+	(EditForm._on_editability_change): Nové metody.
+	():
+
 2005-05-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (CodebookField._on_invoke_selection):
