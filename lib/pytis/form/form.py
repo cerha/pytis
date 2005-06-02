@@ -1377,14 +1377,18 @@ class EditForm(LookupForm, TitledForm):
         if field is not None:
             field.show_popup_menu()
 
+    def _field_change(self, id, value):
+        # Signalizace zmìny políèka z InputField
+        self._row[id] = value    
+
     def _on_field_change(self, id):
-        # Signalizace zmìny políèka z _row
+        # Signalizace zmìny políèka z PresentedRow
         field = find(id, self._fields, key=lambda f: f.id())        
         if field is not None and self._row is not None:
             value = self._row.format(id)
             if field.initialized() and field.get_value() != value:
                 field.set_value(value)
-
+            
     def _on_editability_change(self, id, enable):
         if id in self._view.layout().order():
             if enable:
@@ -1392,10 +1396,6 @@ class EditForm(LookupForm, TitledForm):
             else:                
                 self._field(id).disable()
                 
-    def _field_change(self, id, value):
-        # Vezmi na vìdomí, ¾e hodnota políèka 'id' byla zmìnìna na 'value'.
-        self._row[id] = value    
-
     def _navigate(self, object=None, forward=True):
         # Vygeneruj událost navigace mezi políèky.
         if self._editable:
