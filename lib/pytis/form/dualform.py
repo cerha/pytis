@@ -278,16 +278,19 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
 
     def _create_side_form(self, parent):
         view = self._view
+        self._binding_column = bcol = view.binding_column()
+        self._side_binding_column = sbcol = view.side_binding_column()
         f = SideBrowseForm(parent, self._resolver, view.side_name(),
                            sibling_name=view.main_name(),
                            sibling_row=lambda : self._selection_data,
-                           sibling_binding_column=view.binding_column(),
-                           binding_column=view.side_binding_column(),
+                           sibling_binding_column=bcol,
+                           binding_column=sbcol,
                            hide_binding_column=view.hide_binding_column(),
                            append_condition=view.append_condition(),
                            title=view.side_title(),
                            columns=view.side_columns(),
                            guardian=self)
+        self._sbcol_type = f._data.find_column(sbcol).type()
         if isinstance(self._main_form, Refreshable):
             f.set_callback(ListForm.CALL_MODIFICATION,
                            self._main_form.refresh)
@@ -311,14 +314,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             # zná nìkdo lep¹í øe¹ení?
             return False
         try:
-            bindcol = self._view.binding_column()
-            side_bindcol = self._view.side_binding_column()
-            side_bindcol_spec = self._side_form._data.find_column(side_bindcol)
-            side_bindcol_type = side_bindcol_spec.type()
-            side_bindcol_val, err = side_bindcol_type.validate(row[bindcol].export())
-            self._side_form.set_prefill({side_bindcol: side_bindcol_val})
-            self._side_form.filter(data=row.row())
-            self._side_form.Show(True, refresh=False)
+            v, e = self._sbcol_type.validate(row[self._binding_column].export())
+            f = self._side_form
+            f.set_prefill({self._side_binding_column: v})
+            f.filter(data=row.row())
+            f.Show(True, refresh=False)
             self._select_form(self._main_form, force=True)
         finally:
             focused.SetFocus()
