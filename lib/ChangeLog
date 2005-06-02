@@ -1,5 +1,14 @@
 2005-06-02  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (EditForm._field_change): 
+	Pøejmenováno na `_on_field_edit()'.
+	(EditForm._create_form): `_field_change()' -> `_on_field_edit()'.
+
+	* pytis/form/dualform.py (SideBrowseDualForm._create_side_form):
+	Ukládej vazební sloupce do atributù.  Zapamatuj si typ vazebního
+	sloupce v side_formu.
+	(SideBrowseDualForm._do_selection): Vyu¾ívej tìchto atributù.
+
 	* pytis/presentation/field.py (_finalize): Pøejmenováno na
 	`_resolve_dependencies()'.  Zru¹en argument `invoke_callbacks'.
 	Oznaèování dirty políèek provádìj zde.
@@ -14,6 +23,8 @@
 	(PresentedRow.set_row, PresentedRow.listfield_choose)
 	(PresentedRow.__init__): : `_finalize()' ->
 	`_resolve_dependencies()'.
+	(PresentedRow._resolve_dependencies): Oznam zmìnu runtime
+	codebookù je¹tì pøed pøepoèítáváním editovatelnosti.
 
 2005-06-01  Tomas Cerha  <cerha@brailcom.org>
 

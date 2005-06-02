@@ -877,7 +877,6 @@ class EnumerationField(InputField):
         #     raise ProgramError("Setting field value failed!",
         #                        self.id(), value[0])
         return True
-        
 
 
 class ChoiceField(EnumerationField):
