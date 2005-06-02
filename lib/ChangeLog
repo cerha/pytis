@@ -1,3 +1,20 @@
+2005-06-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (_finalize): Pøejmenováno na
+	`_resolve_dependencies()'.  Zru¹en argument `invoke_callbacks'.
+	Oznaèování dirty políèek provádìj zde.
+	(PresentedRow.__setitem__): Namísto `_finalize()' pou¾ívej
+	`_resolve_dependencies()' a pøenech mu také oznaèování dirty
+	políèek.
+	(PresentedRow._recompute_editability): Kosmetické úpravy.
+	(PresentedRow._recompute_codebook_runtime_filter): Pøejmenováno na
+	`_notify_runtime_filter_change()'.
+	(PresentedRow.__setitem__): `_recompute_codebook_runtime_filter'
+	-> `_notify_runtime_filter_change()'.
+	(PresentedRow.set_row, PresentedRow.listfield_choose)
+	(PresentedRow.__init__): : `_finalize()' ->
+	`_resolve_dependencies()'.
+
 2005-06-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/_test.py: Opraveny importy.  Instance
