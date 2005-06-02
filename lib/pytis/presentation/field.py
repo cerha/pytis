@@ -286,8 +286,8 @@ class PresentedRow:
         invoke_callbacks = False
         if key:
             invoke_callbacks = self._mark_dependent_dirty(key)
-        self._recompute_editability(key)
         self._notify_runtime_filter_change(key)
+        self._recompute_editability(key)
         if invoke_callbacks and self._change_callback is not None:
             # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
             # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
