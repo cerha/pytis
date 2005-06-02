@@ -126,7 +126,7 @@ class PresentedRow:
         self._original_row = copy.copy(self._row)
         self._new = new
         self._cache = {}
-        self._finalize()
+        self._resolve_dependencies()
 
     def _process_fieldspec(self):
         data = self._data
@@ -257,8 +257,7 @@ class PresentedRow:
         # Pokus o nastavení virtuálních políèek ti¹e ignorujeme...
         if self._row.has_key(key) and self._row[key] != value:
             self._row[key] = value
-            marked = self._mark_dependent_dirty(key)
-            self._finalize(key, invoke_callbacks=marked)
+            self._resolve_dependencies(key)
                 
     def __str__(self):
         if hasattr(self, '_row'):
@@ -280,16 +279,21 @@ class PresentedRow:
         else:
             return False
     
-    def _finalize(self, key=None, invoke_callbacks=True):
+    def _resolve_dependencies(self, key=None):
         # Recompute dependencies for all fields when key is None or recompute
         # just fields depending on a field specified by key (after its change).
         # TODO: Musí se to dìlat v¾dy?  Napø. i pøi set_row z BrowseFormu?
+        invoke_callbacks = False
+        if key:
+            invoke_callbacks = self._mark_dependent_dirty(key)
         self._recompute_editability(key)
-        self._recompute_codebook_runtime_filter(key)
+        self._notify_runtime_filter_change(key)
         if invoke_callbacks and self._change_callback is not None:
             # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
             # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
-            # pøepoèítána a callback byl zavolán nebo zùstala "dirty".  
+            # pøepoèítána a callback byl zavolán bìhem pøepoèítávání
+            # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a musíme
+            # tedy jejich callback zavolat teï.
             dirty = [k for k in self._dirty.keys() if self._dirty[k]]
             for k in dirty:
                 self._change_callback(k)
@@ -301,13 +305,14 @@ class PresentedRow:
             keys = self._editability_dependent[key]
         else:
             return
-        for k in keys:
-            if self._editability_change_callback:
+        if self._editability_change_callback:
+            for k in keys:
                 old = self._editable[k]
                 new = self._compute_editability(k)
                 if old != new:
                     self._editability_change_callback(k, new)
-            else:
+        else:
+            for k in keys:
                 self._editability_dirty[k] = True
 
     def _compute_editability(self, key):
@@ -317,7 +322,7 @@ class PresentedRow:
         self._editability_dirty[key] = False
         return result
     
-    def _recompute_codebook_runtime_filter(self, key=None):
+    def _notify_runtime_filter_change(self, key=None):
         if key is None:
             columns = [c for c in self._columns.values()
                        if c.codebook_runtime_filter is not None]
@@ -397,7 +402,7 @@ class PresentedRow:
         self._row = self._init_row(row)
         if reset:
             self._original_row = copy.copy(self._row)
-        self._finalize()
+        self._resolve_dependencies()
 
     def fields(self):
         """Vra» seznam v¹ech políèek."""
@@ -509,7 +514,7 @@ class PresentedRow:
 
         self._refvalues[key] = value
         self._dirty[key] = True
-        self._finalize()
+        self._resolve_dependencies()
         
     def refvalue(self, key):
         """Vrátí vybranou hodnotu z ListField.
