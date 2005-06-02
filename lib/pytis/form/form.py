@@ -1030,7 +1030,7 @@ class EditForm(LookupForm, TitledForm):
             f = InputField.create(self, spec, self._data, guardian=self,
                                   accessible=acc)
             f.set_callback(InputField.CALL_SKIP_NAVIGATION, self._navigate)
-            f.set_callback(InputField.CALL_FIELD_CHANGE, self._field_change)
+            f.set_callback(InputField.CALL_FIELD_CHANGE, self._on_field_edit)
             f.set_callback(InputField.CALL_COMMIT_FIELD, self._navigate)
             self._fields.append(f)
         super_(EditForm)._create_form(self)
@@ -1377,13 +1377,13 @@ class EditForm(LookupForm, TitledForm):
         if field is not None:
             field.show_popup_menu()
 
-    def _field_change(self, id, value):
+    def _on_field_edit(self, id, value):
         # Signalizace zmìny políèka z InputField
-        self._row[id] = value    
+        self._row[id] = value
 
     def _on_field_change(self, id):
         # Signalizace zmìny políèka z PresentedRow
-        field = find(id, self._fields, key=lambda f: f.id())        
+        field = find(id, self._fields, key=lambda f: f.id())
         if field is not None and self._row is not None:
             value = self._row.format(id)
             if field.initialized() and field.get_value() != value:
