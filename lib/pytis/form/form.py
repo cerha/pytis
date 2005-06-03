@@ -580,7 +580,7 @@ class RecordForm(Form):
         # Signalizace zmìny hodnoty políèka z _row
         pass
 
-    def _on_editability_change(self, field_id):
+    def _on_editability_change(self, field_id, editable):
         # Callback zmìny editovatelnosti políèka
         pass
         
@@ -1389,9 +1389,9 @@ class EditForm(LookupForm, TitledForm):
             if field.initialized() and field.get_value() != value:
                 field.set_value(value)
             
-    def _on_editability_change(self, id, enable):
+    def _on_editability_change(self, id, editable):
         if id in self._view.layout().order():
-            if enable:
+            if editable:
                 self._field(id).enable()
             else:                
                 self._field(id).disable()
