@@ -304,8 +304,8 @@ class InputField(object, KeyHandler, CallbackHandler):
     def _on_idle(self, event):
         if self._is_changed:
             # Pokud je hodnota validní, dej o zmìnì vìdìt formuláøi.
-            value, error = self.validate(quiet=True)
-            if not error:
+            value = self._value()
+            if value:
                 self._run_callback(self.CALL_FIELD_CHANGE, (self.id(), value))
             self._is_changed = False
         if self._want_focus and not self.has_focus():
@@ -429,24 +429,26 @@ class InputField(object, KeyHandler, CallbackHandler):
         """Vra» nadpis políèka jako 'wx.StaticText'."""
         return self._label
 
-    def validate(self, quiet=False, interactive=True):
+    def validate(self, quiet=False, interactive=True, **kwargs):
         """Zvaliduj hodnotu políèka a vra» instanci 'Value' a popis chyby.
 
         Argumenty:
         
           quiet -- v pøípadì pravdivé hodnoty je výsledek validace metodou
             pouze vrácen a chyba není nijak ohla¹ována.  V opaèném pøípadì je
-            chyba ohlá¹ena zpÙsobem, který závísí na argumentu `interactive'.
+            chyba ohlá¹ena zpùsobem, který závísí na argumentu `interactive'.
           interactive -- pokud je pravdivý, dojde k ohlá¹ení chyby vyskoèiv¹ím
             dialogem s popisem chyby.  V opaèném pøípadì je pouze zobrazena
             zpráva ve stavové øádce.
+          **kwargs -- klíèové argumenty, které mají být pøedány metodì
+            'pytis.data.Type.validate()'.
 
         Vrací: Tuple (value, error), tak, jak ho vrátí
         'pytis.data.Type.validate()' pøíslu¹ného datového typu pro hodnotu
         zadanou v políèku.
 
         """
-        value, error = self._type.validate(self.get_value())
+        value, error = self._type.validate(self.get_value(), **kwargs)
         if error and not quiet:
             if interactive:
                 msg = _('Chyba validace políèka!\n\n%s: %s') % \
@@ -456,6 +458,14 @@ class InputField(object, KeyHandler, CallbackHandler):
                 message(error.message(), beep_=True)
         return value, error
 
+    def _value(self, **kwargs):
+        value, error = self.validate(quiet=True, **kwargs)
+        return value
+    
+    def _is_valid(self, **kwargs):
+        value, error = self.validate(quiet=True, **kwargs)
+        return error is None
+    
     def enabled(self):
         """Vra» pravdu, pokud je políèko editovatelné."""
         return self._enabled
@@ -1028,15 +1038,14 @@ class DateField(Invocable, TextField):
     
     def _on_invoke_selection(self, **kwargs):
         """Zobraz kalendáø a po jeho skonèení nastav hodnotu políèka."""
-        d = pytis.data.Date.make()
-        result, error = d.validate(self.get_value())
-        if result is not None:
-            date = result.value()
+        value = self._value()
+        if value is not None:
+            d = value.value()
         else:
-            date = None
-        date = run_dialog(Calendar, date)
+            d = None
+        date = run_dialog(Calendar, d)
         if date != None:
-            self.set_value(d.export(date))
+            self.set_value(self._type.export(date))
         return True
 
 
@@ -1146,15 +1155,15 @@ class CodebookField(Invocable, TextField):
             return None
 
     def _on_change_hook(self):
-        if hasattr(self, '_display_column'):
-            v = self.get_value()
-            dv = self._type.enumerator().get(v, self._display_column)
-            d = dv and dv.export() or ''
-            self._display.SetValue(d)
+        if not hasattr(self, '_display_column'):
+            return
+        v = self._value()
+        dv = v and self._type.enumerator().get(v.value(), self._display_column)
+        self._display.SetValue(dv and dv.export() or '')
 
     def _on_invoke_selection(self, alternate=False, **kwargs):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
-        value, error = self.validate(quiet=True)
+        value = self._value()
         enumerator = self._type.enumerator()
         begin_search = alternate or self._cb_spec.begin_search() or None
         select_row = value and {enumerator.value_column(): value} or None
@@ -1170,8 +1179,7 @@ class CodebookField(Invocable, TextField):
 
     def _on_codebook_insert(self, event):
         value_column = self._type.enumerator().value_column()
-        value, error = self.validate(quiet=True)
-        if error:
+        if not self._is_valid():
             prefill = {value_column: self.get_value()}
         else:
             prefill = {}
