@@ -1,3 +1,22 @@
+2005-06-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField.validate): Pøejímej
+	(InputField._value): Nová metoda.
+	(InputField._is_valid): Nová metoda.
+	(DateField._on_invoke_selection): Pou¾ívej `self._value()'.
+	Pou¾ívej pøímo metody `value' a `self._type' a ne oklikou pøes
+	vytváøení nové instance typu `Date'.
+	(CodebookField._on_change_hook): Vyu¾ívej `self._value()'.
+	Pødávej metodì `get()' enumerátoru Pythonovou hodnotu, ne stringovou.
+	(CodebookField._on_invoke_selection): Vyu¾ívej `self._value()'.
+	(CodebookField._on_codebook_insert): Vyu¾ívej `self._is_valid()'.
+
+	**kwargs a pøedávej je metodì `validate()' datového typu.
+
+	* pytis/form/form.py (RecordForm._on_editability_change): Nech»
+	metoda pøijímá dva arguemnty.
+	(EditForm._on_editability_change): Pøejmenován argument.
+
 2005-06-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (EditForm._field_change): 
