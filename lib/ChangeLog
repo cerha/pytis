@@ -1,3 +1,13 @@
+2005-06-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (_select_cell): Eliminuj násobná volání
+	`SetGridCursor()', `GetGridCursorCol()' a `GetGridCursorRow()'.
+	(BrowseForm._PrintResolver._Spec.body) 
+	(BrowseForm._PrintResolver._Spec.doc_header) 
+	(BrowseForm._PrintResolver._Spec.doc_footer) 
+	(BrowseForm._PrintResolver._Spec.coding): Akcepruj klíèový
+	argument `variant'.
+
 2005-06-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField.validate): Pøejímej
