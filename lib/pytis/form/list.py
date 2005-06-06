@@ -507,7 +507,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # The value returned is the formatted cell value by default or a
             # computed style, when the keyword argument style is true.
             # This is a little tricky, but the reason is to cache everithing 
-            # once we read the row value, because we can not ceche the rows
+            # once we read the row value, because we can not cache the rows
             # inside the 'row()' method.
             #
             cached_things = self._cache[row]
@@ -749,9 +749,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             except KeyError:
                 fg, bg, font = self._attr_cache[style] = self._make_attr(style)
             if self._group(row):
-                rgb = map(lambda x: max(0, x[0] - x[1]),
-                          zip((bg.Red(), bg.Green(), bg.Blue()),
-                              ListForm._GROUPING_BACKGROUND_DOWNGRADE))
+                rgb = [max(0, x - y)
+                       for x, y in zip((bg.Red(), bg.Green(), bg.Blue()),
+                                       ListForm._GROUPING_BACKGROUND_DOWNGRADE)]
                 bg = wx.Colour(*rgb)
             provider = self.GetAttrProvider()
             if provider:
@@ -1234,6 +1234,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if __debug__: log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
         try:
             g = self._grid
+            current_row = g.GetGridCursorRow()
+            current_col = g.GetGridCursorCol()
+
+            
             if row is not None:
                 assert isinstance(row, types.IntType)
                 self._table.rewind(position=row)
@@ -1247,7 +1251,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         row = 0
                     else:
                         if not g.IsInSelection(row, 0):
-                            col = max(0,g.GetGridCursorCol())
+                            col = max(0, current_col)
                             g.SetGridCursor(row, col)
                             g.MakeCellVisible(row, col)
                             if invoke_callback:
@@ -1261,11 +1265,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                             g.SelectRow(row)
                     self._position = row
                     self.show_position()
-                    
-            if col is not None:
-                r = g.GetGridCursorRow()
-                g.SetGridCursor(r, col)
-                g.MakeCellVisible(r, col)
+            if col is not None and col != current_col:
+                g.SetGridCursor(current_row, col)
+                g.MakeCellVisible(current_row, col)
             if __debug__: log(DEBUG, 'Výbìr buòky proveden:', (row, col))
         finally:
             self._in_select_cell = False
@@ -2589,15 +2591,15 @@ class BrowseForm(ListForm):
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
         class _Spec:
-            def body(self, resolver):
+            def body(self, resolver, variant=None):
                 table_id = resolver.p(BrowseForm._PrintResolver.P_NAME)
                 result = pytis.output.data_table(resolver, table_id)
                 return result
-            def doc_header(self, resolver):
+            def doc_header(self, resolver, variant=None):
                 return None
-            def doc_footer(self, resolver):
+            def doc_footer(self, resolver, variant=None):
                 return None
-            def coding(self, resolver):
+            def coding(self, resolver, variant=None):
                 if wx.Font_GetDefaultEncoding() == \
                    wx.FONTENCODING_ISO8859_2:
                     result = pytis.output.Coding.LATIN2
@@ -2607,7 +2609,7 @@ class BrowseForm(ListForm):
         def _get_module(self, module_name):
             try:
                 result = pytis.output.OutputResolver._get_module(self,
-                                                               module_name)
+                                                                 module_name)
             except ResolverModuleError:
                 result = self._Spec()
             return result
