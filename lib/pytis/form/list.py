@@ -2686,11 +2686,104 @@ class BrowseForm(ListForm):
                 assert isinstance(name, types.StringType)
                 return name
         return None
-            
+
+    def _on_import_interactive(self):
+        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
+            message(msg, beep_=True)
+            return False
+        msg = _("Nejprve vyberte soubor obsahující importovaná data. "
+                "Poté budete moci zkontrolovat a potvrdit ka¾dý záznam.\n\n"
+                "*Formát vstupního souboru:*\n\n"
+                "Ka¾dý øádek obsahuje seznam hodnot oddìlených zvoleným "
+                "znakem, nebo skupinou znakù (vyplòte ní¾e). "
+                "Tabelátor zapi¹te jako ='\\t'=.\n\n"
+                "První øádek obsahuje identifikátory sloupcù a urèuje tedy "
+                "význam a poøadí hodnot v následujících (datových) øádcích.\n\n"
+                "Identifikátory jednotlivých sloupcù jsou následující:\n\n" + \
+                "\n".join(["|*%s*|=%s=|" % \
+                           (c.column_label(), c.id().replace('_', '!_'))
+                           for c in self._columns]))
+        separator = run_dialog(InputDialog, 
+                               title=_("Hromadné vkládání dat"),
+                               report=msg, report_format=TextFormat.WIKI,
+                               prompt="Oddìlovaè", value='|')
+        if not separator:
+            if separator is not None:
+                message(_("Nebyl zadán oddìlovaè."), beep_=True)
+            return False
+        separator.replace('\\t', '\t')
+        while 1:
+            filename = run_dialog(FileDialog)
+            if filename is None:
+                message(_("Nebyl zadán soubor.  Proces ukonèen."), beep_=True)
+                return False
+            try:
+                f = open(filename)
+            except IOError, e:
+                msg = _("Nebylo mo¾no otevøít soubor '%s': %s")
+                run_dialog(Error, msg % (filename, str(e)))
+                continue
+            break
+        try:
+            columns = []
+            for key in f.readline().split(separator):
+                col = find(key.strip(), self._columns, key=lambda c: c.id())
+                if col:
+                    columns.append(col)
+                else:
+                    msg = _("Chybný identifikátor sloupce: %s")
+                    run_dialog(Error, msg % key.strip())
+                    return False
+            i = 1 # aktuální èíslo øádku (jeden u¾ byl pøeèten)
+            n = 0 # poèet skuteènì vlo¾ených záznamù
+            prefill = self.prefill()
+            for line in f:
+                i += 1
+                values = line.split(separator)
+                if len(values) != len(columns):
+                    msg = _("Chyba na øádku %d: "
+                            "Poèet hodnot neodpovídá poètu sloupcù.\n"
+                            "Chcete pøesto pokraèovat (dal¹ím záznamem)?")
+                    if run_dialog(Question, msg % i,
+                                  title=_("Chyba vstupních dat"),
+                                  icon=Question.ICON_ERROR):
+                        continue
+                    else:
+                        break
+                data = prefill and copy.copy(prefill) or {}
+                for col, val in zip(columns, values):
+                    print "* %s: '%s'" % (col.id(), val)
+                    type = col.type(self._data)
+                    value, error = type.validate(val.strip())
+                    if error:
+                        msg = _("Chybná hodnota sloupce '%s' na øádku %d: %s\n"
+                                "Chcete pøesto záznam vlo¾it?")
+                        msg = msg % (col.id(), i, error.message())
+                        if not run_dialog(Question, msg,
+                                          title=_("Chyba vstupních dat"),
+                                          icon=Question.ICON_ERROR):
+                            break
+                    data[col.id()] = value
+                else:
+                    result = new_record(self._name, prefill=data)
+                    if result:
+                        n += 1
+                    else:
+                        msg = _("Je¹tì nebyly zpracovány v¹echny øádky "
+                                "vstupních dat.\n"
+                                "Chcete pokraèovat ve vkládání?")
+                        if not run_dialog(Question, msg):
+                            break
+        finally:
+            f.close()
+        run_dialog(Message, _("%d/%d záznamù bylo vlo¾eno.") % (n, i),
+                   title=_("Hromadné vkládání dat dokonèeno"))
+    
     def _on_new_record(self, copy=False):
         if not self._data.accessible(None, pytis.data.Permission.INSERT):
-            message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
-                    'tabulky.', beep_=True)
+            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
+            message(msg, beep_=True)
             return False
         if copy:
             key = self.current_key()
@@ -2738,6 +2831,8 @@ class BrowseForm(ListForm):
     def on_command(self, command, **kwargs):
         if command == Form.COMMAND_PRINT:
             self._on_print_(kwargs.get('print_spec_path'))
+        elif command == BrowseForm.COMMAND_IMPORT_INTERACTIVE:
+            self._on_import_interactive()
         elif command == BrowseForm.COMMAND_NEW_RECORD:
             self._run_callback(self.CALL_NEW_RECORD)
         elif command == BrowseForm.COMMAND_NEW_RECORD_COPY:
