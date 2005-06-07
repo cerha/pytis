@@ -924,7 +924,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     self.define_key(item.hotkey(), item.command(), item.args())
         # Závìreèné akce
         self._data.add_callback_on_change(self.on_data_change)
-        wx_callback(wx.EVT_SIZE, self, self.OnSize)
+        wx_callback(wx.EVT_SIZE, self, self._on_size)
 
     def _init_attributes(self, columns=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -2285,7 +2285,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if isinstance(position, pytis.data.Row):
             position = self._data.row_key(position)
         if isinstance(position, types.TupleType):
-            cols = map(pytis.data.ColumnSpec.id, self._data.key())
+            cols = [c.id() for c in self._data.key()]
             position = self._find_row_by_values(cols, position)
         if isinstance(position, types.DictType):
             position = self._find_row_by_values(position.keys(),
@@ -2391,11 +2391,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     # wx metody
 
-    def OnSize(self, event):
-        self.SetSize(event.GetSize())
-        self.Layout()
-
-    def SetSize(self, size):
+    def _on_size(self, event):
+        size = event.GetSize()
         g = self._grid
         oldsize = g.GetSize()
         self._size = size
@@ -2430,9 +2427,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             last = i
         if coef != 1 and total != width:
             g.SetColSize(last, wc + (width-total))
-        # Zmìn velikost gridu
-        g.SetSize(size)
-        super_(ListForm).SetSize(self, size)
+        event.Skip()
 
     def Close(self):
         self._data.remove_callback_on_change(self.on_data_change)
