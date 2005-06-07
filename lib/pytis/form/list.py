@@ -2740,7 +2740,7 @@ class BrowseForm(ListForm):
             prefill = self.prefill()
             for line in f:
                 i += 1
-                values = line.split(separator)
+                values = line.rstrip('\r\n').split(separator)
                 if len(values) != len(columns):
                     msg = _("Chyba na øádku %d: "
                             "Poèet hodnot neodpovídá poètu sloupcù.\n"
@@ -2753,9 +2753,8 @@ class BrowseForm(ListForm):
                         break
                 data = prefill and copy.copy(prefill) or {}
                 for col, val in zip(columns, values):
-                    print "* %s: '%s'" % (col.id(), val)
                     type = col.type(self._data)
-                    value, error = type.validate(val.strip())
+                    value, error = type.validate(val)
                     if error:
                         msg = _("Chybná hodnota sloupce '%s' na øádku %d: %s\n"
                                 "Chcete pøesto záznam vlo¾it?")
