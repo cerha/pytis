@@ -34,7 +34,7 @@ sys.setdefaultencoding('iso-8859-2')
 if os.environ.has_key('WXVER'):
     WXVER = os.environ["WXVER"]
     import wxversion
-    if wx.version.checkInstalled(WXVER):
+    if wxversion.checkInstalled(WXVER):
         wxversion.select(WXVER)        
     
 
