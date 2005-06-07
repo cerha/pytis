@@ -1,3 +1,7 @@
+2005-06-07  Pavel Hanak  <hanak@asellus.cz>
+
+	* bin/pytis: Doplnìno o mo¾nost pou¾ítí rùzných verzí wxPython.
+
 2004-10-26  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlView._make_tables): O¹etøi výskyt `None'.	
