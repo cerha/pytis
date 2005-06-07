@@ -481,6 +481,7 @@ class InputDialog(Message):
     """
     def __init__(self, parent, message=None, value=None, prompt=None,
                  title=_("Zadejte hodnotu"), icon=None, passwd=False,
+                 report=None, report_format=TextFormat.PLAIN,
                  input_width=None, input_height=1, allow_empty=True):
         """Inicializuj dialog.
 
@@ -511,7 +512,8 @@ class InputDialog(Message):
         super_(InputDialog).__init__(self, parent, message, title=title,
                                      buttons=(Message.BUTTON_OK,
                                               Message.BUTTON_CANCEL),
-                                     default=None, icon=icon)
+                                     default=None, icon=icon,
+                                     report=report, report_format=report_format)
         assert value is None or isinstance(value, types.StringTypes)
         assert prompt is None or isinstance(prompt, types.StringTypes)
         assert isinstance(allow_empty, types.BooleanType)
@@ -1225,7 +1227,8 @@ class FileDialog(Dialog):
     _last_directory = {}
 
     def __init__(self, parent, title=None, dir=None, file=None, mode=OPEN,
-                 wildcards=(), multi=False, overwrite_prompt=True):
+                 wildcards=(_("V¹echny soubory")+" (*.*)|*.*",),
+                 multi=False, overwrite_prompt=True):
         """Inicializuj dialog.
 
         Argumenty:
