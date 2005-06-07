@@ -1360,12 +1360,19 @@ class EditForm(LookupForm, TitledForm):
         return self._view.layout().caption()
 
     def size(self):
+        """Vra» skuteènou velikost formuláøe (bez ohledu na aktuální velikost).
+
+        Vrácená hodnota reprezentuje minimální velikost formuláøe, tak aby byly
+        v¹echny jeho prvky viditelné.  Skuteèná velikost mù¾e být men¹í, nebo
+        vìt¹í v závoslosti na velikost okna, ve kterém je formuláø zobrazen.
+        
+        """
         return self._size
 
     def set_scrollbars(self):
         step = 20
-        width, height = self.size()
-        self.SetScrollbars(step, step, width/step, height/step)
+        size = self.GetSize()
+        self.SetScrollbars(step, step, size.width/step, size.height/step)
     
     def changed(self):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
@@ -1464,21 +1471,59 @@ class EditForm(LookupForm, TitledForm):
         else:
             return super_(EditForm).on_command(self, command, **kwargs)
         return False
+        
+    def _find_row_by_values(self, cols, values):
+        """Vra» datový øádek odpovídající daným hodnotám.
 
-    def select_row(self, key):
-        """Zobraz záznam s klíèem 'key'.
+        Arguemnty:
 
+          cols -- sekvence názvù sloupcù, které mají být prohledávány.
+          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
+            poøadí odpovídajícím 'cols'.
+
+        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
+        pøedány i pøímo, bez obalení do sekvenèního typu.
+
+        """
+        cols = xtuple(cols)
+        values = xtuple(values)
+        assert len(cols) == len(values)
+        condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
+        data = self._data
+        def find_row(condition):
+            n = data.select(condition)
+            return data.fetchone()
+        success, result = db_operation((find_row, (condition,)))
+        return result
+    
+    def select_row(self, position):
+        """Vyber øádek dle 'position'.
+
+        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
+        
+          None -- nebude zobrazen ¾ádný øádek.
+          Datový klíè -- bude zobrazen øádek s tímto klíèem, kterým je tuple
+            instancí tøídy 'pytis.data.Value'.
+          Slovník hodnot -- bude zobrazen první nalezený øádek obsahující
+            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
+            klíèi slovníku.
+          Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
+            seznamu -- bude zobrazen øádek odpovídajícího klíèe.
+        
         Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
-
-        Argumenty:
-
-          key -- klíè po¾adovaného øádku jako tuple nebo instance tøídy
-            'pytis.data.Row' kompatibilní s datovým objektem formuláøe
         
         """
-        if isinstance(key, pytis.data.Row):
-            key = self._data.row_key(key)
-        self._set_row(self._find_row(key))
+        if isinstance(position, pytis.data.Row):
+            row = position
+        elif isinstance(position, types.TupleType):
+            cols = [c.id() for c in self._data.key()]
+            row = self._find_row_by_values(cols, position)
+        elif isinstance(position, types.DictType):
+            row = self._find_row_by_values(position.keys(),
+                                           position.values())
+        else:
+            ProgramError("Invalid 'position':", position)
+        self._set_row(row)
 
 
 class PopupEditForm(PopupForm, EditForm):
@@ -1594,11 +1639,8 @@ class ShowForm(EditForm):
 
     def _init_attributes(self, editable=False, **kwargs):
         super_(ShowForm)._init_attributes(self, editable=editable, **kwargs)
+        wx_callback(wx.EVT_SIZE, self, self._on_size)
         
-    # TODO: Toto z neznámých dùvodù zmìní velikost rodièovského okna.
-    #def _finish_top_level_sizer(self, sizer):
-    #    sizer.SetSizeHints(self._parent) # Set min. size of parent window.
-    
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
         title = self._create_title_bar(self.title())
@@ -1607,9 +1649,9 @@ class ShowForm(EditForm):
         sizer.Add(title, 0, wx.EXPAND)
         sizer.Add(group, 1, wx.ALIGN_CENTER|wx.BOTTOM, 8)
         
-    def OnSize(self, event):
-        self.SetSize(event.GetSize())
+    def _on_size(self, event):
         self.set_scrollbars()
+        event.Skip()
 
 class BrowsableShowForm(ShowForm):
     """Listovací formuláø pro zobrazení náhledu.
