@@ -1,3 +1,60 @@
+2005-06-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (Window.resize): Namísto `OnSize(event)'
+	volej prostì `SetSize(size)'.
+
+	* pytis/form/dualform.py (DualForm.__init__): Wx callback
+	`EVT_SIZE' o¹etøuj pomocí `self._on_size' a `EVT_SET_FOCUS' pomocí
+	`self._on_focus'.
+	(DualForm._on_size): Nová metoda.
+	(DualForm..OnSize): Zru¹eno.
+	(DualForm._init_attributes): `self._sash_ratio' nastav na 0.5.
+	(DualForm._create_form): `OnSashChanged' -> `_on_sash_changed'.
+	(DualForm._sash_position): Neoèekávej None v `self._sash_ratio'.
+	(DualForm._on_size_hook): Zru¹eno.
+	(DualForm.OnSashChanged): Pøejmenováno na `_on_sash_changed'.
+	(DualForm.OnSize): Pøejmenováno na `_on_size'.  V¾dy nakonec volej
+	'Skip()'.
+	(ShowDualForm._sash_position): Nepou¾ívej nikdy `self._sash_ratio'.
+	(ShowDualForm._on_size_hook): Zru¹eno.
+	(ExtInfoDualForm): Nová tøída.
+	(DescriptiveDualForm): Buï jejím potomkem.
+	(DescriptiveDualForm._sash_position)
+	(DescriptiveDualForm._on_size_hook, DescriptiveDualForm.refresh)
+	(DescriptiveDualForm._create_main_form): Zru¹eno.
+
+	* pytis/form/form.py
+	(EditForm._find_row_by_values): Nová metoda.
+	(EditForm.size): Doplnìn docstring.
+	(EditForm.set_scrollbars):  Kosmetické úpravy.
+	(select_row): Argument `key' pøejmenován na `position'.  Umo¾nìno
+	pou¾ití slovníku hodnot jako `position'.
+	(EditForm._find_row_by_values): Nová metoda.
+	(ShowForm._init_attributes): Wx callback
+	`EVT_SIZE' o¹etøuj pomocí `self._on_size'.
+	(ShowForm._on_size): Nová metoda.
+	(ShowForm.OnSize): Zru¹eno.
+
+	* pytis/form/dialog.py (InputDialog.__init__): Pøijímej klíèové
+	argumenty 'report' a 'report_format'.
+	(FileDialog.__init__): Výchozí hodnota argumentu `wildcards'
+	nastavena tak, aby byly zobrazeny v¹echny soubory.
+
+	* pytis/form/command.py (BrowseForm.COMMAND_IMPORT_INTERACTIVE):
+	Nový pøíkaz. 
+	(DEFAULT_COMMAND_KEYS): Pøiøaï mu klávesu.
+
+	* pytis/form/list.py (BrowseForm.on_command): O¹etøuj
+	`COMMAND_IMPORT_INTERACTIVE' voláním
+	`self._on_import_interactive()'.
+	(BrowseForm._on_import_interactive): Nová metoda.
+	(BrowseForm._on_new_record): Upravena chybová hlá¹ka.
+	(ListForm.__init__): Wx callback `EVT_SIZE' o¹etøuj pomocí
+	`self._on_size'.
+	(ListForm.OnSize): Zru¹eno.
+	(ListForm.SetSize): Pøejmenováno na `_on_size()'.  Transformováno
+	na event handler.  Na konci volej `event.Skip().
+
 2005-06-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (_select_cell): Eliminuj násobná volání
