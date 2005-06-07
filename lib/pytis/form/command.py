@@ -245,6 +245,8 @@ BrowseForm.COMMAND_NEW_RECORD_COPY = Command('browse-form.new-record-copy')
 """Formuláøová editace nového záznamu jako kopie aktuálního záznamu."""
 BrowseForm.COMMAND_RECORD_EDIT = Command('browse-form.edit-record')
 """Editace aktuálního záznamu v popup formuláøi."""
+BrowseForm.COMMAND_IMPORT_INTERACTIVE = Command('browse-form.import-interactive')
+"""Import CSV dat."""
 
 EditForm.COMMAND_RECORD_DELETE = Command('edit-form.record-delete')
 """Vymazání editovaného záznamu z databáze."""
@@ -334,6 +336,7 @@ DEFAULT_COMMAND_KEYS = (
     (ListForm.COMMAND_NEW_LINE_BEFORE_COPY,       'Ctrl-F7'),
     (BrowseForm.COMMAND_NEW_RECORD,               'F6'),
     (BrowseForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
+    (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
     (BrowseForm.COMMAND_RECORD_EDIT,              'F5'),
     (EditForm.COMMAND_RECORD_DELETE,              'F8'),
     (EditForm.COMMAND_RECORD_INSERT,              'F7'),
