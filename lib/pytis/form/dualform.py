@@ -76,7 +76,8 @@ class DualForm(Form):
         
         """
         super_(DualForm).__init__(self, *args, **kwargs)
-        wx_callback(wx.EVT_SET_FOCUS, self, self.OnSetFocus)
+        wx_callback(wx.EVT_SET_FOCUS, self, self._on_focus)
+        wx_callback(wx.EVT_SIZE, self, self._on_size)
 
     def _init_attributes(self, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -88,7 +89,7 @@ class DualForm(Form):
         super_(DualForm)._init_attributes(self)
         self._unprocessed_kwargs = kwargs
         self._active_form = None
-        self._sash_ratio = None
+        self._sash_ratio = 0.5
         
     def _create_view_spec(self):
         spec = self._resolver.get(self._name, 'dual_spec')
@@ -105,7 +106,7 @@ class DualForm(Form):
         wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter,
                     splitter.GetId(), lambda e: True)
         wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter,
-                    splitter.GetId(), self.OnSashChanged)
+                    splitter.GetId(), self._on_sash_changed)
         # Vytvoø formuláøe
         main_form_kwargs = self._unprocessed_kwargs
         self._main_form = self._create_main_form(splitter, **main_form_kwargs)
@@ -194,24 +195,20 @@ class DualForm(Form):
         self.Destroy()               
 
     def _sash_position(self, size):
-        ratio = self._sash_ratio or 0.5
-        return size.height * ratio
+        return size.height * self._sash_ratio
             
-    def _on_size_hook(self, size):
-        pass
-
-    def OnSashChanged(self, event):
+    def _on_sash_changed(self, event):
         size = self._splitter.GetSize()
         self._sash_ratio = event.GetSashPosition() / float(size.height)
         
-    def OnSize(self, event):
+    def _on_size(self, event):
         size = event.GetSize()
         self._splitter.SetSize(size)
         self._splitter.SetSashPosition(self._sash_position(size))
-        self.SetSize(size)
-        self._on_size_hook(size)
+        #self._on_size_hook(size)
+        event.Skip()
         
-    def OnSetFocus(self, event):
+    def _on_focus(self, event):
         active = self._active_form
         if active:
             active.focus()
@@ -397,27 +394,20 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
         self._side_form.refresh()
 
     def _sash_position(self, size):
-        if self._sash_ratio:
-            return size.height * self._sash_ratio
-        else:    
-            return min(self._main_form.size().GetHeight(), size.height - 200)
+        return min(self._main_form.size().height, size.height - 200)
 
-    def _on_size_hook(self, size):
-        self._main_form.set_scrollbars()
 
-        
-class DescriptiveDualForm(ImmediateSelectionDualForm, Refreshable):
-    """Duální formuláø s øádkovým seznamem nahoøe a formuláøem dole.
+class ExtInfoDualForm(ImmediateSelectionDualForm, Refreshable):
+    """Duální formuláø s øádkovým seznamem nahoøe a náhledem dole.
 
-    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a podrobnému
-    zobrazení aktuální polo¾ky.  Není urèen k editaci této polo¾ky.
+    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a formuláøe s
+    roz¹iøujícími informacemi.  Podle specifikace vazby a dolního formuláøe
+    mù¾e jít jak o detaily k aktuálnímu záznamu, tak o souhrnné informace
+    (napø. výsledky agregací nad daty horního formuláøe atd.).
 
     """
-    _DESCR = _("duální náhled")
+    _DESCR = _("roz¹íøené informace")
     
-    def _create_view_spec(self):
-        return None
-
     def _create_main_form(self, parent, **kwargs):
         form_ = BrowseForm(parent, self._resolver, self._name, guardian=self,
                            **kwargs)
@@ -427,10 +417,43 @@ class DescriptiveDualForm(ImmediateSelectionDualForm, Refreshable):
         return form_
 
     def _create_side_form(self, parent):
-        form_ = ShowForm(parent, self._resolver, self._name)
-        form_.set_callback(ShowForm.CALL_SELECTION,
-                           self._on_side_selection)
-        return form_
+        name = self._view.side_name()
+        return ShowForm(parent, self._resolver, name, editable=True)
+
+    def _do_selection(self, row):
+        if self._side_form is not None:
+            view = self._view
+            bcol, sbcol = (view.binding_column(), view.side_binding_column())
+            self._side_form.select_row({sbcol: row[bcol]})
+            self._side_form.Show(True)
+            self._select_form(self._main_form, force=True)
+        return True
+    
+    def _sash_position(self, size):
+        return max(size.height - self._side_form.size().height, 200)
+    
+    def refresh(self):
+        self._main_form.refresh()
+
+        
+class DescriptiveDualForm(ExtInfoDualForm):
+    """Duální formuláø s øádkovým seznamem nahoøe a náhledem dole.
+
+    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a podrobnému
+    zobrazení aktuální polo¾ky.  Náhled není urèen k editaci této polo¾ky.  Jde
+    vlastnì o speciální pøípad formuláøe rodièovské øídy, kdy náhled v dolním
+    formuláøi je dán stejnou specifikací, jako horní formuláø.
+
+    """
+    _DESCR = _("duální náhled")
+    
+    def _create_view_spec(self):
+        return None
+
+    def _create_side_form(self, parent):
+        f = ShowForm(parent, self._resolver, self._name)
+        f.set_callback(ShowForm.CALL_SELECTION, self._on_side_selection)
+        return f
     
     def _do_selection(self, row):
         if self._side_form is not None:
@@ -442,17 +465,3 @@ class DescriptiveDualForm(ImmediateSelectionDualForm, Refreshable):
     def _on_side_selection(self, row):
         if self._main_form is not None:
             self._main_form.select_row(row.row())
-
-    def _sash_position(self, size):
-        if self._sash_ratio:
-            return size.height * self._sash_ratio
-        else:    
-            return max(size.height - self._side_form.size().GetHeight(), 200)
-
-    def _on_size_hook(self, size):
-        self._side_form.set_scrollbars()
-        
-    def refresh(self):
-        self._main_form.refresh()
-
-        
