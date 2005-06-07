@@ -215,8 +215,7 @@ class Window(wx.ScrolledWindow, Restorable):
         """
         if size is None:
             size = self._parent.GetClientSize()
-        event = wx.SizeEvent(size)
-        self.OnSize(event)
+        self.SetSize(size)
         
     def show(self):
         """Zobraz (vykresli) toto okno a uèiò jej aktivním."""
