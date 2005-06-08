@@ -397,7 +397,7 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
         return min(self._main_form.size().height, size.height - 200)
 
 
-class ExtInfoDualForm(ImmediateSelectionDualForm, Refreshable):
+class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
     """Duální formuláø s øádkovým seznamem nahoøe a náhledem dole.
 
     Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a formuláøe s
@@ -406,7 +406,7 @@ class ExtInfoDualForm(ImmediateSelectionDualForm, Refreshable):
     (napø. výsledky agregací nad daty horního formuláøe atd.).
 
     """
-    _DESCR = _("roz¹íøené informace")
+    _DESCR = _("duální náhled")
     
     def _create_main_form(self, parent, **kwargs):
         form_ = BrowseForm(parent, self._resolver, self._name, guardian=self,
@@ -436,7 +436,7 @@ class ExtInfoDualForm(ImmediateSelectionDualForm, Refreshable):
         self._main_form.refresh()
 
         
-class DescriptiveDualForm(ExtInfoDualForm):
+class DescriptiveDualForm(BrowseShowDualForm):
     """Duální formuláø s øádkovým seznamem nahoøe a náhledem dole.
 
     Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a podrobnému
@@ -445,7 +445,6 @@ class DescriptiveDualForm(ExtInfoDualForm):
     formuláøi je dán stejnou specifikací, jako horní formuláø.
 
     """
-    _DESCR = _("duální náhled")
     
     def _create_view_spec(self):
         return None
