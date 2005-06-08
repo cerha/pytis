@@ -1,3 +1,7 @@
+2005-06-07  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (dbselect): Oprava malé chybky.
+
 2005-05-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/misc.py (run_cb): Update docsrtringu.

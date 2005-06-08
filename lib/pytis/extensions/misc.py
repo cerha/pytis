@@ -199,7 +199,7 @@ def dbselect(data_spec, *args, **kwargs):
     if kwargs.has_key('condition'):
         condition=kwargs['condition']
     if kwargs.has_key('sort'):
-        condition=kwargs['sort']
+        sort=kwargs['sort']
     data.select(condition=condition, sort=sort)
     result = []
     while True:
