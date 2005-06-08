@@ -676,15 +676,15 @@ class Editable(object):
 
     
 class SelectionType(object):
-    """Výètová tøída definující konstanty pro zpùsob výbìru z mno¾iny hodnot.
-    """
+    """Výètová tøída definující konstanty zpùsobu výbìru z mno¾iny hodnot."""
+    CODEBOOK = 'CODEBOOK'
+    """Je mo¾ný pøímý zápis hodnoty nebo vyvolání èíselníkového formuláøe."""
     CHOICE = 'CHOICE'
-    """Výbìr, kdy je viditelná jen právì vybraná hodnota."""
+    """Výbìr z menu.  Viditelná je jen právì vybraná hodnota."""
     RADIO_BOX = 'RADIO_BOX'
-    """Pro ka¾dou hodnotu vytvoø za¹krtávací políèko."""
+    """Pro ka¾dou hodnotu je zobrazeno za¹krtávací políèko."""
     LIST_BOX = 'LIST_BOX'
     """Viditelná je vybraná hodnota a \"nìkolik\" kolem."""
-
 
 
 class Color(object):
@@ -1079,9 +1079,9 @@ class FieldSpec(object):
           filter -- specifikace jednoho z pøednastavených filtrù znakù
             propou¹tìných do textového políèka z u¾ivatelského vstupu.  Jedna
             z konstant tøídy 'TextFilter'.
-          filter_list -- seznam povolených, nebo zakázaných znakù, pokud je
-            hodnotou atributu 'filter' konstanta 'INCLUDE_LIST' nebo
-            'EXCLUDE_LIST'.  Jedná se o sekvenci znakù.
+          filter_list -- sekvence povolených, nebo zakázaných znakù.
+            Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
+            'EXCLUDE_LIST'.
           check -- funkce pro ovìøení integrity dat formuláøe.  Jedná se o
             funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
             reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
