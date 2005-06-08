@@ -239,8 +239,7 @@ class Data(object):
 
     def row_key(self, row):
         """Vra» hodnoty klíèe z 'row' jako tuple instancí 'Value'."""
-        keys = map(ColumnSpec.id, self.key())
-        return row.columns(keys)
+        return row.columns([c.id() for c in self.key()])
         
     def row(self, key):
         """Vra» øádek identifikovaný 'key' jako instanci 'Row'.
