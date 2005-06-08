@@ -36,7 +36,7 @@ from pytis.util import *
 from pytis.presentation import *
 
 
-class BorderStyle:
+class BorderStyle(object):
     """Výètová tøída definující konstanty pro styl orámování."""
     ALL    = 'ALL'
     """Mezera je kolem dokola."""
@@ -49,7 +49,7 @@ class BorderStyle:
     RIGHT  = 'RIGHT'
     """Mezera je jen vlevo."""
     
-class Orientation:
+class Orientation(object):
     """Výètová tøída definující konstanty pro smìrovou orientaci."""
     HORIZONTAL = 'HORIZONTAL'
     """Horizontální orientace."""
@@ -58,7 +58,7 @@ class Orientation:
 
 
     
-class Button:
+class Button(object):
     """Specifikace tlaèítka navázaného na proceduru pro pou¾ití ve formuláøích.
 
     Takto lze do formuláøe umístit tlaèítka, jejich¾ stisk vyvolá libovolnou
@@ -121,7 +121,7 @@ class Button:
     def active_in_popup_form(self):
         return self._active_in_popup_form
 
-class GroupSpec:
+class GroupSpec(object):
     """Definice skupiny vstupních polí editaèního formuláøe.
 
     Tato specifikace se nestará o vzhled jednotlivých vstupních polí, pouze
@@ -223,7 +223,7 @@ class GroupSpec:
         return self._border_style
 
 
-class LayoutSpec:
+class LayoutSpec(object):
     """Specifikace rozmístìní vstupních polí editaèního formuláøe.
 
     Editaèní formuláø pro jeden záznam tabulky (na úrovni u¾ivatelského
@@ -303,7 +303,7 @@ class LayoutSpec:
         return self._order
 
 
-class ViewSpec:    
+class ViewSpec(object):
     """Kompletující specifikace prezentaèních vlastnoostí pro formuláøe.
 
     Instance této tøídy zná ve¹keré prezentaèní vlasnosti urèité entity
@@ -566,7 +566,7 @@ class ViewSpec:
         return self._description
 
     
-class DualSpec:
+class DualSpec(object):
     """Specifikace duálního formuláøe.
 
 
@@ -665,7 +665,7 @@ class DualSpec:
         return self._side_title
 
 
-class Editable:
+class Editable(object):
     """Výètová tøída definující konstanty urèující editovatelnost políèka."""
     ALWAYS = 'ALWAYS'
     """Políèko je editovatelné v¾dy."""
@@ -675,7 +675,7 @@ class Editable:
     """Políèko není editovatelné nikdy."""
 
     
-class SelectionType:
+class SelectionType(object):
     """Výètová tøída definující konstanty pro zpùsob výbìru z mno¾iny hodnot.
     """
     CHOICE = 'CHOICE'
@@ -687,7 +687,7 @@ class SelectionType:
 
 
 
-class Color:
+class Color(object):
     """Na GUI toolkitu nezávislé konstanty pro nìkteré barvy."""
     WHITE = 'WHITE'
     BLACK = 'BLACK'
@@ -713,14 +713,14 @@ class Color:
     LIGHTSALMON = 'LIGHTSALMON'
 
 
-class TextFormat:
+class TextFormat(object):
     """Konstanty pro definici vstupního formátu textu."""
     PLAIN = 'PLAIN'
     HTML = 'HTML'
     WIKI = 'WIKI'
 
     
-class FieldStyle:
+class FieldStyle(object):
     """Specifikaèní tøída definující podobu vnitøku políèka s hodnotou."""
 
     def __init__(self, foreground=Color.BLACK, background=Color.WHITE,
@@ -762,7 +762,7 @@ FIELD_STYLE_EMPHASIS = FieldStyle(bold=True)
 FIELD_STYLE_WARNING = FieldStyle(foreground=Color.RED)
 
     
-class PostProcess:
+class PostProcess(object):
     "Výètová tøída definující konstanty pro zpùsob zpracování u¾iv. vstupu."
     UPPER = 'UPPER'
     """Pøeveï ve¹kerá písmena na velká."""
@@ -770,7 +770,7 @@ class PostProcess:
     """Pøeveï ve¹kerá písmena na malá."""
 
     
-class TextFilter:
+class TextFilter(object):
     """Výètová tøída definující konstanty pro zpùsob filtrování u¾iv. vstupu.
     """
     ASCII = 'ASCII'
@@ -797,7 +797,7 @@ class TextFilter:
     """
 
 
-class Computer:
+class Computer(object):
     """Specifikace funkce pro dopoèítání hodnoty sloupce."""
     
     def __init__(self, function, depends=None):
@@ -901,7 +901,7 @@ class CodebookSpec(object):
         return self._begin_search
     
         
-class RefSpec:
+class RefSpec(object):
     """Specifikace seznamu závislých záznamù pro vstupní políèko 'ListField'.
 
     Tato specifikace je urèena pro pou¾ití jako argument 'references'
@@ -959,7 +959,7 @@ class RefSpec:
         """Vra» seznam specifikací pro vracené sloupce."""
         return self._returned_columns
 
-class FieldSpec:
+class FieldSpec(object):
     """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
 
     Tato specifikace je pou¾itelná pro v¹echny druhy práce s políèky
@@ -1359,38 +1359,3 @@ class FieldSpec:
     def style(self):
         """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
         return self._style
-
-
-class Spec(object):
-    """Odkaz na specifikaci.
-
-    Specifikaèní funkce èasto pou¾ívají klíèové argumenty k rozli¹ení
-    jednotlivých variant specifikací vycházejících ze stejného základu.
-    Kombinace názvu specifikace a argumentù specifikaèní funkce urèují ka¾dou
-    takovou variantu.  Tato tøída zabaluje tyto parametry to jediné instance
-    vhodné pro odkazování se na konkrétní variantu specifikace.
-
-    """
-    def __init__(self, name, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          name -- jméno specifikaèního souboru jako øetìzec.
-          **kwargs -- argumenty, které budou pøedány specifikaèní funkci pøi
-            získávání specifikací z daného souboru.
-
-
-        """
-        assert isinstance(name, types.StringType)
-        self._name = name
-        self._kwargs = kwargs
-
-        
-    def name(self):
-        """Vra» název specifikaèního modulu jako øetìzec."""
-        return self._name
-
-    def kwargs(self):
-        """Vra» klíèové argumenty specifikaèní funkce jako slovník."""
-        return self._kwargs
