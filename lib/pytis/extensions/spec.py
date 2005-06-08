@@ -22,7 +22,7 @@ from pytis.extensions import *
 from pytis.presentation import *
 
 
-class DataSpec(object):
+class DataSpec(pytis.data.DataFactory):
     """Tøída zjednodu¹ující tvorbu datové specifikace.
 
     Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává
@@ -37,8 +37,9 @@ class DataSpec(object):
     
     """
     
-    def __init__(self, table, columns, key, oid=None, access_rights=None, 
-                 ignore_enumerators=False):
+    def __init__(self, table, columns, key, oid=None, access_rights=None,
+                 ignore_enumerators=False,
+                 data_class_=pytis.data.DBDataDefault):
         """Inicializuj specifikaci.
 
         Argumenty:
@@ -53,10 +54,12 @@ class DataSpec(object):
             uvedené sloupce budou automaticky pøidány pøíslu¹né vazby.  Pokud
             tabulka nemá ¾ádný mít ¾ádný oid sloupec, uvedeme prázdný seznam.
             Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
-          access_rights -- práva jako instance 'pytis.data.AccessRights'.
+          access_rights -- práva jako instance 'pytis.data.AccessRights' nebo
+            None, pokud mají být práva neomezená.
           ignore_enumerators -- pokud bude pøedána pravdivá hodnota, budou
             enumerátory v¹ech sloupcù ignorovány.
-
+          data_class_ -- tøída datového objektu, odvozená od `Data'.
+            
         Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
         automaticky doplnìn sloupec 'oid' typu 'pytis.data.Oid'.
 
@@ -78,35 +81,33 @@ class DataSpec(object):
             oid = xtuple(oid)
             for c in oid:
                 assert isinstance(c, types.StringType)
-        self._table = table
-        self._key = key
-        self._columns = columns
-        self._oid = oid
-        self._ignore_enumerators = ignore_enumerators
-        self._access_rights = access_rights
-
-    def make(self):
-        """Vta» instanci 'pytis.data.DataFactory' odpovídající specifikaci."""
-        t = self._table
+        if access_rights is None:
+            perm = pytis.data.Permission.ALL
+            access_rights = pytis.data.AccessRights((None, (None, perm)))
         bindings = []
-        columns = self._columns + \
-                  tuple([Column(c, type=pytis.data.Oid()) for c in self._oid])
+        columns += tuple([Column(c, type=pytis.data.Oid()) for c in oid])
         for c in columns:
             type = c.type()
             kwargs = c.kwargs()
             e = c.enumerator()
-            if self._ignore_enumerators:
+            if ignore_enumerators:
                 e = None
                 kwargs = {}
             enumerator = e and pytis.form.resolver().get(e, 'data_spec') or None
-            bindings.append(pytis.data.DBColumnBinding(c.id(), t, c.column(),
+            bindings.append(pytis.data.DBColumnBinding(c.id(), table,
+                                                       c.column(),
                                                        enumerator=enumerator,
                                                        type_=type, **kwargs))
-        key = find(self._key, bindings, key=lambda b: b.column())
-        return pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, key,
-                                      access_rights=self._access_rights)
-    
+        key = find(key, bindings, key=lambda b: b.column())
+        super(DataSpec, self).__init__(data_class_, bindings, key,
+                                       access_rights=access_rights)
+        
+    def make(self):
+        """Vta» instanci 'pytis.data.DataFactory' odpovídající specifikaci."""
+        # TODO: Èasem smazat.  Nyní staèí pøedávat pøímo instanci.
+        return self
 
+    
 class Column(object):
     def __init__(self, id, column=None, enumerator=None, type=None, **kwargs):
         """Inicializuj specifikaci enumerátoru.
@@ -173,33 +174,47 @@ class Column(object):
 
 Field = FieldSpec
 
+ASC = LookupForm.SORTING_ASCENDENT
+DESC = LookupForm.SORTING_DESCENDANT
+
+UPCASE = PostProcess.UPPER
+LOWER = PostProcess.LOWER
+
+ALPHA = TextFilter.ALPHA
+NUMERIC = TextFilter.NUMERIC
+ALPHANUMERIC = TextFilter.ALPHANUMERIC
+ASCII = TextFilter.ASCII
+FLOAT = TextFilter.FLOAT
+
+ALWAYS = Editable.ALWAYS
+ONCE = Editable.ONCE
+NEVER = Editable.NEVER
+
 # Odvozené specializované tøídy
 
 class HGroup(GroupSpec):
     """Horizontální seskupení políèek."""
     def __init__(self, *items, **kwargs):
         kwargs['orientation'] = Orientation.HORIZONTAL
-        GroupSpec.__init__(self, items, **kwargs)
+        super(HGroup, self).__init__(items, **kwargs)
 
 class VGroup(GroupSpec):
     """Vertikální seskupení políèek."""
     def __init__(self, *items, **kwargs):
         kwargs['orientation'] = Orientation.VERTICAL
-        GroupSpec.__init__(self, items, **kwargs)
+        super(VGroup, self).__init__(items, **kwargs)
         
-class LHGroup(GroupSpec):
+class LHGroup(HGroup):
     """Horizontální seskupení políèek s labelem a orámováním."""
     def __init__(self, label, *items, **kwargs):
-        kwargs['orientation'] = Orientation.HORIZONTAL
         kwargs['label'] = label
-        GroupSpec.__init__(self, items, **kwargs)
+        super(LHGroup, self).__init__(*items, **kwargs)
 
-class LVGroup(GroupSpec):
+class LVGroup(VGroup):
     """Vertikální seskupení políèek s labelem a orámováním."""
     def __init__(self, label, *items, **kwargs):
-        kwargs['orientation'] = Orientation.VERTICAL
         kwargs['label'] = label
-        GroupSpec.__init__(self, items, **kwargs)
+        super(LVGroup, self).__init__(*items, **kwargs)
         
 
 class ReusableSpec:
