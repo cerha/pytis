@@ -2218,10 +2218,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return self._total_width
 
     def total_height(self):
-        height = self._grid.GetNumberRows() * self._grid.GetRowSize(1) + \
-                 self._grid.GetColLabelSize()
+        g = self._grid
+        height = g.GetColLabelSize()
+        rows = self._grid.GetNumberRows()
+        if rows:
+            height += rows * g.GetRowSize(1)
         if self._title_bar:
-            height = height + self._title_bar.GetSize().height
+            height += self._title_bar.GetSize().height
         if self._total_width > self._size.width:
             height = height + wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
         return height
