@@ -1,3 +1,27 @@
+2005-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/data.py (Data.row_key): Pou¾ívej "list comprehension"
+	namísto 'map()'.
+
+	* pytis/form/application.py (Application.OnInit): V debug re¾imu
+	vypisuj verzi wxWidgets.
+
+	* pytis/form/dualform.py (ExtInfoDualForm): Pøejmenováno na
+	`BrowseShowDualForm'.
+	(DescriptiveDualForm): `ExtInfoDualForm' -> `BrowseShowDualForm'.
+
+	* pytis/form/list.py (total_height): Zji»uj vý¹ku øádku jen pokud
+	je zobrazen alespoò jeden øádek.
+
+	* pytis/presentation/spec.py (BorderStyle, Orientation, Button) 
+	(GroupSpec, LayoutSpec, ViewSpec, DualSpec, Editable) 
+	(SelectionType, Color, TextFormat, FieldStyle, PostProcess) 
+	(TextFilter, Computer, RefSpec, FieldSpec): Buï potomkem `object'.
+	(Spec): Tøída zru¹ena.
+	(SelectionType): Upraveny docstringy.
+	(SelectionType.CODEBOOK): Nová konstanta.
+	(FieldSpec.__init__): Upraven docstring.
+
 2005-06-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (Window.resize): Namísto `OnSize(event)'
