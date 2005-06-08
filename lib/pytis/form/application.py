@@ -122,8 +122,11 @@ class Application(wx.App, KeyHandler):
     
     def OnInit(self):
         init_colors()
-        frame = self._frame = wx.Frame(None, -1, 
-                                       config.application_name,
+        title = config.application_name
+        if __debug__:
+            title += ' (wxWidgets %d.%d.%d)' % \
+                     (wx.MAJOR_VERSION, wx.MINOR_VERSION, wx.RELEASE_NUMBER)
+        frame = self._frame = wx.Frame(None, -1, title, 
                                        pos=(0,0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
         # Tento panel slou¾í pouze pro odchytávání klávesových událostí,
@@ -136,7 +139,7 @@ class Application(wx.App, KeyHandler):
             if os.access(logo_file, os.R_OK):
                 logo = wx.Image(logo_file, type=wx.BITMAP_TYPE_BMP)
                 self._logo = wx.StaticBitmap(self._frame, -1,
-                                               logo.ConvertToBitmap())
+                                             logo.ConvertToBitmap())
                 self._logo.Show(False)
             else:
                 log(OPERATIONAL, "Unable to read logo:", logo_file)
