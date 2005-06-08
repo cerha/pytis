@@ -1,3 +1,8 @@
+2005-06-08  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (run_cb): Zru¹en 'returned_column',
+	vrací se celý øádek.
+
 2005-06-07  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (dbselect): Oprava malé chybky.

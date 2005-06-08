@@ -338,14 +338,13 @@ def smssend(tel, message):
 	return msg
     return None
         
-def run_cb(spec, returned_column, begin_search=None, condition=None,
+def run_cb(spec, begin_search=None, condition=None,
            columns=None, select_row=0):
     """Vyvolá èíselník urèený specifikací.
 
     Argumenty:
 
       spec -- název specifikace èíselníku.
-      returned_column -- název sloupce, jeho¾ hodnota se má vrátit
       begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
         inkrementální vyhledávání.
       condition -- podmínka pro filtrování záznamù.
@@ -353,15 +352,12 @@ def run_cb(spec, returned_column, begin_search=None, condition=None,
         ve specifikaci.
       select_row -- øádek, na který se má nastavit kurzor.
         
-    Vrací None (pokud není vybrán ¾ádný øádek) nebo instanci 'Value'
-    pro sloupec 'returned_column'.
+    Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek.
     """
-    result = run_form(CodebookForm, spec, columns=columns,
-                      begin_search=begin_search,
-                      condition=condition,
-                      select_row=select_row)
-    if result:
-        return result[returned_column]
+    return run_form(CodebookForm, spec, columns=columns,
+                    begin_search=begin_search,
+                    condition=condition,
+                    select_row=select_row)
 
 def row_update(row, values=()):
     """Provede update nad pøedaným øádkem.
@@ -372,7 +368,7 @@ def row_update(row, values=()):
       values -- sekvence dvouprvkových sekvencí ('id', value) ,
         kde 'id' je øetìzcový identifikátor políèka a value je
         instance, kterou se bude políèko aktualizovat.
-    """        
+    """
     data = row.data()
     updaterow = row.row()
     key = data.key()
