@@ -272,11 +272,7 @@ class Form(Window, KeyHandler, CallbackHandler):
         self.SetSizer(sizer)
         self.Layout()
         sizer.Fit(self) # Set the size of window `self' to size of the sizer.
-        self._finish_top_level_sizer(sizer)
 
-    def _finish_top_level_sizer(self, sizer):
-        pass
-    
     def _create_form_parts(self, sizer):
         pass
     
@@ -460,7 +456,7 @@ class PopupForm:
     '_popup_frame'.
 
     """
-    def _popup_frame(self, parent, title=None):
+    def _popup_frame(self, parent):
         """Vra» frame instance.
 
         Pokud frame je¹tì neexistuje, vytvoø jej.
@@ -468,16 +464,13 @@ class PopupForm:
         Argumenty:
         
           parent -- rodièovské okno, instance 'wx.Window'
-          title -- titulek framu, string
 
         """
-        if title == None:
-            title = parent.GetTitle()
         try:
             frame = self._popup_frame_
         except AttributeError:
-            frame = wx.Dialog(parent, -1, title,
-                                style=wx.DIALOG_MODAL|wx.STAY_ON_TOP)
+            style = wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE
+            frame = wx.Dialog(parent, style=style)
             self._popup_frame_ = frame
         return frame    
 
@@ -495,6 +488,8 @@ class PopupForm:
     def run(self):
         """Zobraz formuláø jako modální dialog."""
         unlock_callbacks()
+        self._parent.SetTitle(self.title())
+        self._parent.SetClientSize(self.GetSize())
         self._parent.ShowModal()
         return self._result
 
@@ -1540,10 +1535,6 @@ class PopupEditForm(PopupForm, EditForm):
     def _init_attributes(self, disable_new_button=False, **kwargs):
         EditForm._init_attributes(self, **kwargs)
         self._disable_new_button = disable_new_button
-
-    def _finish_top_level_sizer(self, sizer):
-        self._parent.SetSize(sizer.GetSize())
-        #self._parent.SetSize((325, 285))#sizer.GetSize())
         
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
