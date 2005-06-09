@@ -400,6 +400,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                             col_ = col or max(0, current_col)
                             g.SetGridCursor(row, col_)
                             g.MakeCellVisible(row, col_)
+                            # Z neznámých dùvodù jedno volání nestaèí.  Øádek
+                            # je vidìt jen napùl...  Podruhé u¾ je to lep¹í :-)
+                            g.MakeCellVisible(row, col_)
                             if invoke_callback:
                                 # Nevoláme callback ihned, staèí a¾ po
                                 # zastavení scrolování...
