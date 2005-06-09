@@ -947,7 +947,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._selection_callback_tick = None
         self._in_select_cell = False
         self._last_reshuffle_request = self._reshuffle_request = 0
-        self._size = None
         self._current_editor = None
         self._block_refresh = False
         # Parametry zobrazení
@@ -977,7 +976,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             self._title_bar = None
         self._grid = self._create_grid()
-        self._size = self._grid.GetSize()
         sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
     def _create_grid(self, data_init=True,
@@ -1010,8 +1008,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         labelfont = g.GetLabelFont()
         labelfont.SetWeight(wx.NORMAL)
         g.SetLabelFont(labelfont)
-        if self._size:
-            g.SetSize(self._size)
         self._table = table = \
           self._ListTable(self._parent, self._data, self._fields, columns,
                           row_count, sorting=self._lf_sorting,
@@ -1099,8 +1095,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _recreate_grid(self, data_init=True, inserted_row_number=None,
                        inserted_row=None):
-        if self._size:
-            self.SetSize(self._size)
         current_row = self._table.current_row()
         # Inicializuj datový select
         if data_init:
@@ -1146,7 +1140,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self.select_row(self._position)
         # Závìreèné úpravy
         self._create_recreate_grid(g)
-        self.SetSize(self.GetSize())
         g.SetFocus()
 
     def _create_recreate_grid(self, grid):
@@ -2213,11 +2206,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 log(EVENT, 'Ulo¾ení zamítnuto')
                 self._on_line_rollback()
 
-    def total_width(self):
-        """Vra» souèet ¹íøek v¹ech sloupeèkù v pixelech."""
-        return self._total_width
-
-    def total_height(self):
+    def _total_height(self):
         g = self._grid
         height = g.GetColLabelSize()
         rows = self._grid.GetNumberRows()
@@ -2225,8 +2214,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             height += rows * g.GetRowSize(1)
         if self._title_bar:
             height += self._title_bar.GetSize().height
-        if self._total_width > self._size.width:
-            height = height + wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
         return height
 
     def _find_row_by_values(self, cols, values):
@@ -2398,38 +2385,30 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         size = event.GetSize()
         g = self._grid
         oldsize = g.GetSize()
-        self._size = size
-        SPECIAL_WX_CORRECTION = 1
-        width = size.width - SPECIAL_WX_CORRECTION
+        #self._grid_size = size
+        width = size.width
         height = size.height
-        if size.width == oldsize.width:
-            g.SetSize(size)
-            super_(ListForm).SetSize(self, size)
-            return
-        if height < self.total_height():
+        if height < self._total_height():
             width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
+        if width == oldsize.width:
+            event.Skip()
+            return False
         if width > self._total_width:
             coef = float(width) / self._total_width
         else:
             coef = 1
-        columns = self._columns
-        ncolumns = len(columns)
         total = 0
         # Pøenastav ¹íøky sloupcù
-        for i in range(ncolumns):
-            c = columns[i]
-            column_width = c.column_width()
-            if not column_width:
+        for i, c in enumerate(self._columns):
+            if not c.column_width():
                 continue
-            if len(c.column_label()) > column_width:
-                column_width = len(c.column_label())
-            w = dlg2px(g, 4*column_width+3)
-            wc = int(w*coef)
-            g.SetColSize(i, wc)
-            total = total + wc
+            column_width = max(c.column_width(), len(c.column_label()))
+            w = int(dlg2px(g, 4*column_width+8)*coef)
+            g.SetColSize(i, w)
+            total += w
             last = i
         if coef != 1 and total != width:
-            g.SetColSize(last, wc + (width-total))
+            g.SetColSize(last, w + (width - total))
         event.Skip()
 
     def Close(self):
@@ -2493,16 +2472,14 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
 
     """
 
-    _DEFAULT_WINDOW_HEIGHT = 400
+    _DEFAULT_WINDOW_HEIGHT = 500
 
     def __init__(self, parent, *args, **kwargs):
-        parent = self._popup_frame(parent, 'Èíselník')
+        parent = self._popup_frame(parent)
         super_(CodebookForm).__init__(self, parent, *args, **kwargs)
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
-        w = self.total_width() + wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
-        h = min(self._DEFAULT_WINDOW_HEIGHT, self.total_height() + 20)
-        parent.SetSize((w, h))
-        self._parent.SetTitle(self.title())
+        h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
+        self.SetSize((self._total_width+30, h))
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
                     lambda e: self._on_activation())
 
