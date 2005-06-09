@@ -41,12 +41,13 @@ from dualform import *
 from output import *
 from application import *
 from command import *
+import _grid
 
 list_ = list
 list = _list
 
 # Øe¹ení cyklických závislostí souborù
 for file in (event, application, command, dialog, form, dualform,
-             inputfield, list_, output, screen, search):
+             inputfield, list_, output, screen, search, _grid):
     file.__dict__.update(globals())
 
