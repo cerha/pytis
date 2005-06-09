@@ -315,7 +315,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             f = self._side_form
             f.set_prefill({self._side_binding_column: v})
             f.filter(data=row.row())
-            f.Show(True, refresh=False)
+            f.Show(True)
             self._select_form(self._main_form, force=True)
         finally:
             focused.SetFocus()
