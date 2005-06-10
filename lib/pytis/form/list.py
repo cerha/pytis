@@ -156,10 +156,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
         # Inicializuj datový select
-        success, row_count = db_operation(self._init_select)
-        if not success:
-            log(EVENT, 'Selhání databázové operace gridu')
-            throw('form-init-error')
+        row_count = self._init_select()
         # Uprav sloupce
         visible_columns = []
         hidden_columns = []
@@ -244,9 +241,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
         wx_callback(wx.EVT_PAINT, g.GetGridColLabelWindow(),
                     self._on_column_header_paint)
-        # Spoleèná inicializace create a recreate
-        self._create_recreate_grid(g)
-        # Hotovo
+        self._update_label_colors(g)
         if __debug__: log(DEBUG, 'Nový grid vytvoøen')
         return g
 
@@ -257,7 +252,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Veto()
             self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
     
-    def _recreate_grid(self, inserted_row_number=None, inserted_row=None):
+    def _update_grid(self, inserted_row_number=None, inserted_row=None):
         current_row = self._table.current_row()
         row_count = self._lf_select_count
         self._data.rewind()
@@ -290,14 +285,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             g.ProcessTableMessage(gmessage) 
         gmessage = wx.grid.GridTableMessage(
             t, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-        g.ProcessTableMessage(gmessage) 
+        g.ProcessTableMessage(gmessage)
         g.EndBatch()
-        self.select_row(self._position)
         # Závìreèné úpravy
-        self._create_recreate_grid(g)
+        self.select_row(self._position)
+        self._update_label_colors(g)
         g.SetFocus()
 
-    def _create_recreate_grid(self, grid):
+    def _update_label_colors(self, grid):
         color = self._lf_indicate_filter and config.filter_color or \
                 self._TITLE_FOREGROUND_COLOR
         grid.SetLabelBackgroundColour(color)
@@ -1153,8 +1148,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 the_row[k]
         if after and not oldempty:
             row = row + 1
-        self._recreate_grid(data_init=False, inserted_row_number=row,
-                            inserted_row=the_row)
+        self._update_grid(inserted_row_number=row, inserted_row=the_row)
         self._select_cell(row=row, col=0, invoke_callback=False)
         if not self._is_editable_cell(row, 0) \
                and not self._find_next_editable_cell():
@@ -1289,7 +1283,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._data.unlock_row()
         row = editing.row
         if editing.new:
-            self._recreate_grid(data_init=False)
+            self._update_grid()
         else:
             self._table.edit_row(None)
             self._update_selection_colors()
@@ -1517,14 +1511,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         row = max(0, self._current_row())
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         
-        success, row_count = db_operation(self._init_select)
-        if not success:
-            log(EVENT, 'Selhání databázové operace gridu')
-            throw('form-init-error')
-        else:
-            self._lf_select_count = row_count
-            
-        self._recreate_grid()
+        row_count = self._init_select()
+        #if row_count != self._table.GetNumberRows():
+        self._update_grid()
+        
         if key is not None:
             self.select_row(key)
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
