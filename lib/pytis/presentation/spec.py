@@ -48,6 +48,7 @@ class BorderStyle(object):
     """Mezera je jen vpravo."""
     RIGHT  = 'RIGHT'
     """Mezera je jen vlevo."""
+
     
 class Orientation(object):
     """Výètová tøída definující konstanty pro smìrovou orientaci."""
@@ -55,7 +56,6 @@ class Orientation(object):
     """Horizontální orientace."""
     VERTICAL = 'VERTICAL'
     """Vertikální orientace."""
-
 
     
 class Button(object):
@@ -121,6 +121,7 @@ class Button(object):
     def active_in_popup_form(self):
         return self._active_in_popup_form
 
+    
 class GroupSpec(object):
     """Definice skupiny vstupních polí editaèního formuláøe.
 
@@ -146,8 +147,7 @@ class GroupSpec(object):
     umístìním do samstatných vnoøených podskupin (jednoprvkových).
     
     """
-    def __init__(self, items, orientation=Orientation.HORIZONTAL,
-                 box=False, label=None,
+    def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
         """Inicializace a doplnìní výchozích hodnot atributù.
 
@@ -172,7 +172,6 @@ class GroupSpec(object):
 
         'label' je v¾dy pova¾ován za jazykovì závislý text a tudí¾ automaticky
         podléhá jazykové konverzi.
-            
 
         """
         assert is_sequence(items)
