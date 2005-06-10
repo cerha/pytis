@@ -1,3 +1,20 @@
+2005-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (DataSpec): Buï potomkem
+	`pytis.data.DataFactory'.
+	(DataSpec.__init__): Pokud jsou `access_rights' None, doplòuj
+	neomezená `AccessRights'.  Nový argument `data_class_'.
+	Transformuj v¹echny argumenty zde a volej konstruktor pøedka.
+	(DataSpec.make): Zde nedìlej nic, pouze vracej sebe sama.
+	(ASC, ASC, LOWER, UPCASE, ALPHA, NUMERIC, ALPHANUMERIC, ASCII)
+	(FLOAT, ALWAYS, ONCE, NEVER): Nové konstanty.
+	(LHGroup): Buï potomkem HGroup.
+	(LVGroup): Buï potomkem VGroup.
+	(LHGroup.__init__, LVGroup.__init__): Nenastavuj `orientation' a
+	volej konstruktor pøedka pøes `super()'.
+	(HGroup.__init__, VGroup.__init__): Volej konstruktor pøedka pøes
+	`super()'.
+
 2005-06-08  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (run_cb): Zru¹en 'returned_column',
