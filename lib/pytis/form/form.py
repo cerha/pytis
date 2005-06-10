@@ -678,8 +678,12 @@ class LookupForm(RecordForm):
         if self._lf_initial_condition:
             condition = pytis.data.AND(condition, self._lf_initial_condition)
         sorting = self._lf_translated_sorting()
-        self._lf_select_count = data.select(condition=condition, sort=sorting,
-                                            reuse=False)
+        op = lambda : data.select(condition=condition, sort=sorting,
+                                  reuse=False)
+        success, self._lf_select_count = db_operation(op)
+        if not success:
+            log(EVENT, 'Selhání databázové operace gridu')
+            throw('form-init-error')
         return self._lf_select_count
 
     def _lf_translated_sorting(self):
