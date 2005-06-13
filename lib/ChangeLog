@@ -1,3 +1,12 @@
+2005-06-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/dualform.py (DualForm._init_attributes): Nastavuj
+	'sash_ratio' podle specifikace.
+
+	* pytis/presentation/spec.py (DualSpec.__init__):
+	Nový argument 'sash_ratio'.
+	(DualSpec.sash_ratio): Nová metoda.
+
 2005-06-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/data.py (Data.row_key): Pou¾ívej "list comprehension"
