@@ -682,7 +682,7 @@ class LookupForm(RecordForm):
                                   reuse=False)
         success, self._lf_select_count = db_operation(op)
         if not success:
-            log(EVENT, 'Selhání databázové operace gridu')
+            log(EVENT, 'Selhání databázové operace')
             throw('form-init-error')
         return self._lf_select_count
 
