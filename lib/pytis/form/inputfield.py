@@ -792,16 +792,6 @@ class TextField(InputField):
             self._call_on_idle = call_on_idle
             
     def _set_value(self, value):
-        """Nastav hodnotu políèka na 'value'.
-
-        Argumenty:
-
-            value -- hodnota políèka, string
-
-        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
-        v opaèném pøípadì.
-
-        """
         assert isinstance(value, types.StringTypes), \
                ('String or Unicode expected', value)
         self._ctrl.SetValue(value)
@@ -874,19 +864,14 @@ class EnumerationField(InputField):
     def _values(self):
         # Return a sequence of string representations of all type's values.
         t = self._type
-        return [t.export(v) for v in t._enumerator().values()]
+        return [t.export(v) for v in t.enumerator().values()]
 
     def get_value(self):
         return self._ctrl.GetStringSelection()
 
     def _set_value(self, value):
         assert isinstance(value, types.StringTypes), ('Invalid value', value)
-        self._ctrl.SetStringSelection(value)
-        # TODO: Tento test nefunguje pro políèka, která vzniknou z Codebookù
-        # if self._ctrl.GetStringSelection() != value:
-        #     raise ProgramError("Setting field value failed!",
-        #                        self.id(), value[0])
-        return True
+        return self._ctrl.SetStringSelection(value)
 
 
 class ChoiceField(EnumerationField):
@@ -894,8 +879,7 @@ class ChoiceField(EnumerationField):
 
     def _create_ctrl(self):
         """Vra» instanci 'wx.Choice' podle specifikace."""
-        control = wx.Choice(self._parent, -1, (-1,-1), (-1,-1),
-                            choices=self._values())
+        control = wx.Choice(self._parent, choices=self._values())
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
 
@@ -1077,9 +1061,9 @@ class ColorSelectionField(Invocable, TextField):
     #    dc.DrawRect(0, 0, 10, 10) #size.GetWidth(), size.GetHeight()
     
     def _set_value(self, value):
-        super(ColorSelectionField, self)._set_value(value)
         self._invocation_button.SetBackgroundColour(value)
         self._invocation_button.SetForegroundColour(value)
+        return super(ColorSelectionField, self)._set_value(value)
 
 
 class CodebookField(Invocable, TextField):
@@ -1316,7 +1300,6 @@ class ListField(InputField):
             for i in range(1, len(columns)):
                 list.SetStringItem(n, i, row[columns[i]].export())
             n = n + 1
-
         return True
 
     def _selected_item_key(self):
