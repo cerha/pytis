@@ -297,9 +297,10 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
 
     def _do_selection(self, row):
         focused = wx_focused_window()
+        import _grid
         if focused is None or (isinstance(focused, wx.TextCtrl) and \
                                focused.GetName() == \
-                               ListForm.IncrementalSearch.TEXT_CONTROL_NAME):
+                               _grid.IncrementalSearch.TEXT_CONTROL_NAME):
             # None to mù¾e být, není-li nic z aplikace zaostøeno.
             # Druhá podmínka testuje, zda není focus ve widgetu inkrementálního
             # vyhledávání.
