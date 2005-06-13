@@ -1,3 +1,108 @@
+2005-06-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow): Buï potomkem `object'.
+
+	* pytis/form/dualform.py (SideBrowseDualForm._do_selection):
+	importuj `_grid'.  `ListForm.IncrementalSearch' ->
+	`_grid.IncrementalSearch'.
+	
+
+	* pytis/form/form.py (LookupForm._init_select): Upravena logovací
+	hlá¹ka.
+
+	* pytis/form/inputfield.py: Zru¹en docstring.
+	(EnumerationField._values): Oprava pøeklepu.
+	(EnumerationField._set_value): Vracej výsledek volání
+	`SetStringSelection()'.
+	(ChoiceField._create_ctrl): Nepøedávej konstruktoru zbyteèné
+	argumenty.
+	(ColorSelectionField._set_value): Vracej výsledek volání metody
+	pøedka.
+
+	* pytis/form/list.py (ListForm._create_grid): Kosmetické úpravy.
+	Hack o¹etøující vyøazený buffer pøi zpìtném naèítání øádkù gridu.
+	(ListForm._update_grid, ListForm._update_grid): Nový/vrácený argument
+	`data_init'.  Popkud je True, inicializuj datový select, jinak
+	volej `rewind()'.
+	(ListForm.refresh): Neinicializuj select zde, ale nastavuj
+	`data_init' pøi volání `_update_grid()'.
+	(ListForm.focus): Neprovádìj refresh.
+
+	* pytis/form/application.py (Application.restore): Pokud je
+	aktivní formuláø `Refreshable', volej `refresh()'.
+
+2005-06-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm._init_select): Obaluj databázovou
+	operaci do `db_operation'.
+
+	* pytis/form/list.py (ListForm._create_grid): Neobaluj volání
+	`_init_select()' do `db_operation'.
+	(ListForm._create_recreate_grid): Pøejmenováno na
+	`_update_label_colors()'.
+	(ListForm._recreate_grid): Pøejmenováno na `_update_grid()'.
+	(ListForm._create_grid, ListForm._update_grid):
+	`_create_recreate_grid' -> `_update_label_colors()'.
+	(ListForm._on_insert_line, ListForm._on_line_rollback):
+	`_recreate_grid()' -> `_update_grid()'.  Nepøedávej zru¹ený
+	argument `data_init'.
+	(ListForm.refresh): Neobaluj volání `_init_select()' do
+	`db_operation'.  `_create_recreate_grid' ->
+	`_update_label_colors()'.
+
+	* pytis/presentation/spec.py (GroupSpec.__init__): Odstranìn
+	zapomenutý argument `box'.
+
+2005-06-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (SideBrowseDualForm._do_selection): Volej
+	`Show()' formuláøe bez arguemntu `refresh'.
+
+	* pytis/form/__init__.py: Importuj `_grid' a aktualizuj jeho
+	jmenný prostor. 
+
+	* pytis/form/form.py (PopupForm._popup_frame): Zru¹en argument
+	`title'.
+	(PopupForm._popup_frame): Ke stylu dialogu pøidej také
+	`wx.DEFAULT_DIALOG_STYLE'.
+	(PopupForm.run): Volej na `frame' `SetTitle()' a `SetClientSize()'.
+	(_finish_top_level_sizer): Zru¹eno.
+	(Form._create_form): Nevolej `_finish_top_level_sizer()'.
+	(Form._finish_top_level_sizer): Zru¹eno.
+	(PopupEditForm._finish_top_level_sizer): Zru¹eno.
+
+	* pytis/form/list.py (ListForm._init_attributes): Atribut
+	`self._size' zru¹en.
+	(ListForm._create_form_parts): Neukládej `self._size'.
+	(ListForm._create_grid, ListForm._on_size): Nepou¾ívej
+	`self._size'.
+	(ListForm._on_size): Zru¹eno `SPECIAL_WX_CORRECTION'.  Zpøehlednìn
+	a zjednodu¹en cyklus pøepoèítávání sloupcù.  I pøi pøedèasném
+	opu¹tìní volej `Skip()'.  Nenastavuj velikost gridu explicitnì.
+	Nepøipoèítávaj velikosti scrollbarù.
+	(ListForm._recreate_grid): Neprovádìj
+	`self.SetSize(self.GetSize())'.
+	(ListForm.total_width): Zru¹eno
+	(ListForm.total_height): Pøejmenováno na `_total_height()'.
+	(CodebookForm_DEFAULT_WINDOW_HEIGHT): Zvý¹eno na 500.
+	(CodebookForm.__init__): Nepøedávej `title' volání
+	`_popup_frame()'.  Nastavuj velikost formuláøe, ne rodièovského
+	okna/framu.
+	(_InputFieldCellEditor, _ListTable, IncrementalSearch.__init__):
+	Pøesunuto do nového modulu `_grid'.
+	(_create_grid): Zru¹eny nepou¾ité argumenty `data_init',
+	`inserted_row_number' a `inserted_row'.
+	(ListForm._create_grid): `self._ListTable' -> `_grid.ListTable'.
+	`_InputFieldCellEditor' -> `_grid.InputFieldCellEditor'.
+	(ListForm._recreate_grid): Zru¹en arguemnt `data_init'.
+	Neprovádìj zde inicializaci dat.
+	(ListForm._select_cell): Nepøepisuj si `col'.
+	(ListForm.on_data_change): Update docstringu.
+	(ListForm._on_incremental_search): `self.IncrementalSearch' -> `_grid.IncrementalSearch'.
+	(ListForm.refresh): Inicializuj sde datový select.
+	(ListForm.Show): Nevolej refresh().
+	(ListForm._select_cell): Volej `MakeCellVisible()' dvakrát...
+
 2005-06-13  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/dualform.py (DualForm._init_attributes): Nastavuj
