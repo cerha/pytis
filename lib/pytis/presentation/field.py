@@ -33,7 +33,7 @@ from pytis.presentation import *
 from pytis.util import *
 
 
-class PresentedRow:
+class PresentedRow(object):
     """Øádek prezentovaných dat.
 
     Tøída je mezièlánkem mezi datovým øádkem a jeho finální prezentací.  Na
