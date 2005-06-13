@@ -573,7 +573,8 @@ class DualSpec(object):
     def __init__(self, main_name, side_name, binding_column,
                  side_binding_column=None, side_columns=None,
                  hide_binding_column=True, append_condition=None,
-                 title=None, side_title=None, description=None):
+                 title=None, side_title=None, description=None,
+                 sash_ratio=0.5):
         """Inicializuj instanci.
 
         Argumenty:
@@ -626,6 +627,7 @@ class DualSpec(object):
         self._append_condition = append_condition
         self._title = title
         self._side_title = side_title
+        self._sash_ratio = sash_ratio
 
     def main_name(self):
         """Vra» název specifikace hlavního formuláøe jako øetìzec."""
@@ -663,6 +665,8 @@ class DualSpec(object):
         """Vra» titulek vedlej¹ího formuláøe jako øetìzec."""
         return self._side_title
 
+    def sash_ratio(self):
+        return self._sash_ratio
 
 class Editable(object):
     """Výètová tøída definující konstanty urèující editovatelnost políèka."""
