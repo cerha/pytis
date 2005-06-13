@@ -155,12 +155,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
-        # Inicializuj datový select
-        row_count = self._init_select()
         # Uprav sloupce
         visible_columns = []
         hidden_columns = []
-        for c in map(lambda id: self._view.field(id), self._orig_columns):
+        for c in [self._view.field(id) for id in self._orig_columns]:
             if c.column_width():
                 visible_columns.append(c)
             else:
@@ -168,9 +166,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._columns = columns = visible_columns + hidden_columns
         # Vytvoø grid a tabulku
         g = wx.grid.Grid(self, wx.NewId())
-        labelfont = g.GetLabelFont()
-        labelfont.SetWeight(wx.NORMAL)
-        g.SetLabelFont(labelfont)
+        # Inicializuj datový select
+        row_count = self._init_select()
+        # Tento fetch je tu kvùli obejití problému s opaèným poøadím naèítání
+        # øádkù gridu, které v dùsledku vyøazuje DB buffer.
+        # Nutno vyøe¹it jinak...
+        self._data.fetchone()
         self._table = table = \
           _grid.ListTable(self._parent, self._data, self._fields, columns,
                           row_count, sorting=self._lf_sorting,
@@ -181,6 +182,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
         g.SetMargins(0,0)
         g.DisableDragGridSize()
+        labelfont = g.GetLabelFont()
+        labelfont.SetWeight(wx.NORMAL)
+        g.SetLabelFont(labelfont)
         if config.cell_highlight_color is not None:
             g.SetCellHighlightColour(config.cell_highlight_color)
         if config.grid_line_color is not None:
@@ -252,10 +256,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Veto()
             self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
     
-    def _update_grid(self, inserted_row_number=None, inserted_row=None):
+    def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row=None):
         current_row = self._table.current_row()
-        row_count = self._lf_select_count
-        self._data.rewind()
+        if data_init:
+            row_count = self._init_select()
+        else:
+            row_count = self._lf_select_count
+            self._data.rewind()
         if inserted_row_number is not None:
             row_count = row_count + 1
         # Uprav velikost gridu
@@ -1511,9 +1518,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         row = max(0, self._current_row())
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         
-        row_count = self._init_select()
-        #if row_count != self._table.GetNumberRows():
-        self._update_grid()
+        self._update_grid(data_init=True)
         
         if key is not None:
             self.select_row(key)
@@ -1588,10 +1593,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def focus(self):
         super_(ListForm).focus(self)
-        self.refresh(when=self.DOIT_IFNEEDED)
+        self.show_position()
         self._update_selection_colors()
         self._grid.SetFocus()
-        self.show_position()
         
     def defocus(self):
         super_(ListForm).defocus(self)
