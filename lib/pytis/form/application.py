@@ -579,12 +579,14 @@ class Application(wx.App, KeyHandler):
         form = self._windows.active()
         if form is not None:
             form.resize()
+            if isinstance(form, Refreshable):
+                form.refresh()
             form.show()
             form.restore()
             self._activate(form.ACTIVATIONS, form)
             if Window.ACT_WINDOW in form.ACTIVATIONS:
                 self._update_window_menu(recreate=False)
-            form.SetFocus()    
+            form.focus()    
         else:
             self._activate((), None)
             self._panel.SetFocus()
