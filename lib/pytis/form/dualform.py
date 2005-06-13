@@ -88,8 +88,8 @@ class DualForm(Form):
         """
         super_(DualForm)._init_attributes(self)
         self._unprocessed_kwargs = kwargs
-        self._active_form = None
-        self._sash_ratio = 0.5
+        self._active_form = None        
+        self._sash_ratio = self._view.sash_ratio()
         
     def _create_view_spec(self):
         spec = self._resolver.get(self._name, 'dual_spec')
