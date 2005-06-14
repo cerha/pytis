@@ -387,9 +387,6 @@ class Type(object):
         if special:
             return special[1]
         exported = apply(self._export, (value,)+args, kwargs)
-        nullsub = assoc(None, self._SPECIAL_VALUES)
-        if nullsub is not None and is_sequence(exported):
-            return tuple(map(lambda v, n=nullsub[1]: v or n, exported))
         return exported
 
     def _export(self, value):
@@ -969,6 +966,9 @@ class Enumerator(object):
         """
         raise ProgramError('Not implemented', 'Enumerator.check()')
 
+    def values(self):
+        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu."""
+        raise ProgramError('Not implemented', 'Enumerator.values()')
 
 
 class FixedEnumerator(Enumerator):
@@ -986,23 +986,13 @@ class FixedEnumerator(Enumerator):
         super(FixedEnumerator, self).__init__()
         self._enumeration = tuple(enumeration)
 
-    # Standard Enumerator interface.
-        
     def check(self, value):
         for v in self._enumeration:
             if v == value:
                 return True
         return False
 
-    # Extended interface.
-
     def values(self):
-        """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu.
-
-        V této tøídì metoda vyvolá výjimku 'ProgramError', pøedpokládá se její
-        pøedefinování v potomcích.
-        
-        """
         return self._enumeration
         
         
@@ -1152,6 +1142,13 @@ class DataEnumerator(MutableEnumerator):
         else:
             result = True
         return result
+
+    def values(self):
+        data = self._data
+        result = data.select_map(lambda r: r[self._value_column].value(),
+                                 condition=self.validity_condition())
+        return tuple(result)
+        
 
     # Extended interface.
 
@@ -1359,7 +1356,7 @@ class Value(_Value):
           value -- hodnota samotná, libovolný objekt
          
         """
-        super(Value, self).__init__(type, value)
+        _Value.__init__(self, type, value)
         self._init()
 
     def _init(self):
