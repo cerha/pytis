@@ -1,3 +1,53 @@
+2005-06-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (DualForm._initial_sash_ratio) 
+	(DescriptiveDualForm._initial_sash_ratio): Nová metoda.
+	(DualForm._init_attributes): Vyu¾ívej ji.
+
+	* pytis/data/_test.py (DataEnumerator.test_values): Nová metoda.
+	(DBDataDefaultClass._test_lock): Test odstaven pro momentální
+	nefunkènost.
+	(DBDataFetchBuffer.setUp): Pou¾ívej konfiguraèní volby namísto
+	zru¹ených konstant.
+	(DBDataFetchBuffer.setUp): Vytváøej je¹tì duhou tabulku s malým
+	poètem øádkù.
+	(_check_skip_fetch): Pøijímej datový objekt jako argument.
+	(DBDataFetchBuffer.test_skip_fetch): Pøidány nové testy pracující
+	s malou tabulkou.
+
+	* pytis/data/types_.py (Type.export, Type.default_value):
+	Odstranìny hrátky pøekladem hodnot sekvence podle `_SPECIAL_VALUES'.
+	(Enumerator.values): Nová metoda.
+	(DataEnumerator.values): Nová metoda.
+	(Value.__init__): Pou¾ívej `super()' k volání metody pøedka.
+
+	* pytis/data/dbdata.py (DBDataPostgreSQL._PgBuffer.fetch):
+	Kosmetické úpravy.
+	(DBDataPostgreSQL._PgBuffer.fetch): Loguj jen èíslo øádku, ne
+	data.
+	(DBDataPostgreSQL._PgBuffer.correction): Kosmetické úpravy.
+	Pøidán komentáø.
+	(DBDataPostgreSQL.__init__): Zru¹en nepou¾itý atribut
+	`_cache_size'.  Pøidány nové atributy zrcadlící konfiguraèní
+	promìnné (výkonnostní mikro-optimalizace, leè dle profileru
+	pomìrnì úèinná).
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Pou¾ívej
+	`self._db_encoding', namísto `config.db_encoding'.
+	(DBDataPostgreSQL.fetchone): Pou¾ívej
+	`self._pg_initial_fetch_size' namísto `config.initial_fetch_size'
+	a `self._pg_fetch_size' namísto `config.fetch_size'.
+	Odstranìna prazvlá¹tní korekce '-2' pøi urèování poètu
+	pøeskoèených øádek pøi zpìtném chodu.
+	(PostgreSQLStandardBindingHandler._pdbb_get_type): Postgresový typ
+	`float8' mapuj na `Float'.
+
+	* pytis/form/_grid.py (ListTable._retrieve_row): Vypoèti skip tak,
+	aby mohl být fetch proveden skuteènì ve smìru pohybu, ne v¾dy
+	dopøedu.
+	Pøed prvním fetchem provádìj je¹tì fetch prvního øádku dopøedu,
+	aby byl naplnìn buffer.
+	(ListTable._retrieve_row.fetch): Provádìj fetch ve smìru `direction'.
+
 2005-06-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py (PresentedRow): Buï potomkem `object'.
