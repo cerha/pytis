@@ -315,15 +315,6 @@ class DBDataPostgreSQL(DBData):
     # pøedefinovat metodu '_pg_query'.  Dále je nutno dodefinovat metodu
     # '_db_bindings_to_column_spec' a metody oznaèené komentáøem '#redefine'.
 
-    # NASTAVENÍ CACHE
-    # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
-    # velikost pamìti atd.), je vhodné rùzné nastavení cache,
-    # budeme parametry nastavovat z konfiguraèního souboru.
-
-    #_PG_CACHE_SIZE = 20000
-    #_PG_INITIAL_FETCH_SIZE = 1000
-    #_PG_FETCH_SIZE = 200
-    
     _PG_LOCK_TABLE = '_rowlocks'
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
     _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
@@ -375,9 +366,9 @@ class DBDataPostgreSQL(DBData):
             buffer = self._buffer
             pointer = self._pointer
             if direction == FORWARD:
-                pointer = pointer + 1
+                pointer += 1
             elif direction == BACKWARD:
-                pointer = pointer - 1
+                pointer -= 1
             else:
                 raise ProgramError('Invalid direction', direction)
             if pointer < 0 or pointer >= len(buffer):
@@ -395,7 +386,7 @@ class DBDataPostgreSQL(DBData):
                 return None
             self._pointer = pointer
             result = buffer[pointer]
-            if __debug__: log(DEBUG, 'Buffer hit:', str(result))
+            if __debug__: log(DEBUG, 'Buffer hit:', pointer) #, str(result))
             return result
 
         def correction(self, direction, number_of_rows):
@@ -410,10 +401,14 @@ class DBDataPostgreSQL(DBData):
             if __debug__: log(DEBUG, '®ádost o korekci:',
                 (self._dbpointer, self._dbposition, self._pointer, direction))
             pointer = self._pointer
-            pos = self._dbposition + pointer
             buflen = len(self._buffer)
-            if pointer > buflen or -1 > pointer:
+            pos = self._dbposition + pointer
+            if pointer > buflen or pointer < -1:
                 # Dostali jsme se daleko za buffer, je nutno provést DB skip.
+                # TODO: zde by mohlo být dobré nastavit pozici tak, aby byla
+                # naètena je¹tì nìjaká data proti smìru bufferu.  Jak to ale
+                # udìlat èistì?
+                #print "  *", self._dbpointer, self._dbposition, pointer, pos
                 if pos >= 0:
                     pos = min(pos, number_of_rows)
                 else:
@@ -477,7 +472,7 @@ class DBDataPostgreSQL(DBData):
                 result = -result
             self._pointer = pointer
             return result
-
+        
         def fill(self, rows, direction, extra_move=False):
             """Naplò se daty 'rows' a updatuj ukazovátka."""
             # extra_move je tu kvùli tomu, ¾e pokud dojde ve fetchmany
@@ -573,7 +568,6 @@ class DBDataPostgreSQL(DBData):
         """
         if __debug__: log(DEBUG, 'Vytváøím databázovou tabulku')
         import config
-        self._cache_size = config.cache_size
         if isinstance(dbconnection_spec, DBConnection):
             self._pg_dbconnection_spec = lambda s=dbconnection_spec: s
         else:
@@ -589,7 +583,18 @@ class DBDataPostgreSQL(DBData):
         self._pg_changed = False
         self._pg_initial_select = False
         self._pg_make_row_template = \
-          self._pg_create_make_row_template(self._columns)
+            self._pg_create_make_row_template(self._columns)
+        # NASTAVENÍ CACHE
+        # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
+        # velikost pamìti atd.), je vhodné rùzné nastavení cache,
+        # budeme parametry nastavovat z konfiguraèního souboru.
+        # Pozor, config.cache_size je vyu¾íváno pøímo v _PgBuffer.
+        # Zde tyto hodnoty zapamatujeme jako atributy objektu, proto¾e jsou
+        # potøeba v kritických èástech kódu a ètení konfigurace pøeci jen trvá.
+        self._pg_initial_fetch_size = config.initial_fetch_size
+        self._pg_fetch_size = config.fetch_size
+        self._db_encoding = config.db_encoding
+        
         
     # Abstraktní metody pro potomky
     
@@ -663,15 +668,15 @@ class DBDataPostgreSQL(DBData):
         row_data = []
         data_0 = data_[0]
         i = 0
-        for id, typid, type in self._pg_make_row_template:
+        for id, typid, type in self._pg_make_row_template:            
             dbvalue = data_0[i]
-            i += 1                
+            i += 1
             if typid == 0:              # string
                 if dbvalue is None:
                     v = None
                 else:
                     import config
-                    v = unicode(dbvalue, config.db_encoding)
+                    v = unicode(dbvalue, self._db_encoding)
                 value = Value(type, v)
             elif typid == 2:            # time
                 value, err = type.validate(dbvalue, strict=False,
@@ -877,8 +882,8 @@ class DBDataPostgreSQL(DBData):
                     skip_direction = FORWARD
                 if xcount > 0:
                     try:
-                        result = self._pg_skip (xcount, skip_direction,
-                                                exact_count=True)
+                        result = self._pg_skip(xcount, skip_direction,
+                                               exact_count=True)
                     except Exception, e:
                         try:
                             self._pg_rollback_transaction()
@@ -890,9 +895,9 @@ class DBDataPostgreSQL(DBData):
             import config
             if self._pg_initial_select:
                 self._pg_initial_select = False
-                std_size = config.initial_fetch_size
+                std_size = self._pg_initial_fetch_size
             else:
-                std_size = config.fetch_size
+                std_size = self._pg_fetch_size
             current_row_number = buffer.current()[1]
             last_row_number = min(current_row_number + 1,
                                   self._pg_number_of_rows)
@@ -906,12 +911,12 @@ class DBDataPostgreSQL(DBData):
                         assert skipped == 1, skipped
                         skip()
                     return None
-                size = min(self._pg_number_of_rows-2, std_size)
+                size = min(self._pg_number_of_rows, std_size)
             assert size >= 0 and size <= self._pg_number_of_rows
             if direction == FORWARD:
                 xskip = None
             else:
-                xskip = buffer.skip(size-2, BACKWARD, self._pg_number_of_rows)
+                xskip = buffer.skip(size, BACKWARD, self._pg_number_of_rows)
                 skip()
             try:
                 data_ = self._pg_fetchmany(size, FORWARD)
@@ -1737,6 +1742,7 @@ class PostgreSQLStandardBindingHandler(object):
                         'int4': Integer,
                         'int8': Integer,
                         'numeric': Float,
+                        'float8': Float,
                         'oid': Oid,
                         'name': String,
                         'text': String,
