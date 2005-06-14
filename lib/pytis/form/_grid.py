@@ -209,8 +209,8 @@ class ListTable(wx.grid.PyGridTableBase):
     # Pomocné metody
         
     def _panic(self):
-            if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
-            leave_form()
+        if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
+        leave_form()
 
     def _get_row(self, row, autoadjust=False):
         """Vra» øádek èíslo 'row' z databáze jako instanci 'pytis.data.Row'.
@@ -218,7 +218,7 @@ class ListTable(wx.grid.PyGridTableBase):
         Argumenty:
         
         row -- poøadové èíslo øádku *v databázovém selectu*, poèínaje 0
-          autoadjust -- právì kdy¾ je pravdivé, je 'row' sní¾eno
+        autoadjust -- právì kdy¾ je pravdivé, je 'row' sní¾eno
           o jednièku, nachází-li se za editovaným *novým* øádkem, a pokud
           je shodno s èíslem editovaného øádku (a» u¾ nového èi pouze
           modifikovaného), je vrácen editovaný øádek
@@ -244,7 +244,6 @@ class ListTable(wx.grid.PyGridTableBase):
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
             self._current_row = self._CurrentRow(row, the_row)
-            
         current = self._current_row
         if not current:
             data = self._data
@@ -260,13 +259,19 @@ class ListTable(wx.grid.PyGridTableBase):
             fetch(row)
         elif row != current.row:
             data = self._data
-            skip = row - data.last_row_number() + 1
-            direction = pytis.data.FORWARD
-            if skip < 0:
-                skip = -skip
+            last = data.last_row_number()
+            if row > last:
+                skip = row - last - 1
+                direction = pytis.data.FORWARD
+            elif row == last:
+                data.skip(1, BACKWARD)
+                skip = 0
+                direction = pytis.data.FORWARD
+            else:
+                skip = last - row - 1
                 direction = pytis.data.BACKWARD
             data.skip(skip, direction=direction)
-            fetch(row, pytis.data.BACKWARD)
+            fetch(row, direction)
         return self._current_row.the_row
 
     def _group(self, row):
