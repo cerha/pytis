@@ -239,38 +239,34 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _retrieve_row(self, row):
         def fetch(row, direction=pytis.data.FORWARD):
-            data = self._data
-            # Následující manévr vychází z pøedpokladu, ¾e zpìtný chod
-            # bude pokraèovat i nadále smìrem zpìt.  Proto se sna¾íme
-            # naznaèit cachi, ¾e má stáhnout data pøedchozí, ne
-            # následující.
-            #
-            # TODO: manévr nefunguje, pokud máme napø. 4 øádky v gridu                
-            # if row > 1 and direction == pytis.data.BACKWARD:
-            #     data.fetchone(direction=direction)
-            #     data.fetchone()
-            result = data.fetchone()
+            result = self._data.fetchone(direction=direction)
             assert result, ('Missing row', row)
             self._presented_row.set_row(result)
-            self._current_row = \
-                           self._CurrentRow(row, copy.copy(self._presented_row))
+            the_row = copy.copy(self._presented_row)
+            self._current_row = self._CurrentRow(row, the_row)
+            
         current = self._current_row
         if not current:
             data = self._data
             data.rewind()
             if row > 0:
-                data.skip(row, direction=pytis.data.FORWARD)
+                # Tento fetch pouze zabezpeèí pøednaètení bufferu v dopøedném
+                # smìru od zaèátku dat.  To je potøeba, proto¾e grid 
+                # naèítá øádky od konce a bez tohoto hacku by buffer obsahoval
+                # pouze zobrazené øádky.  Lépe by to v¹ak bylo o¹etøit lep¹í
+                # strategií plnìní bufferu v dbdata.py ...
+                fetch(0)
+                data.skip(row-1, direction=pytis.data.FORWARD)
             fetch(row)
         elif row != current.row:
             data = self._data
-            skip = row - (data.last_row_number()+1)
-            if skip >= 0:
-                direction = pytis.data.FORWARD
-            else:
-                direction = pytis.data.BACKWARD
+            skip = row - data.last_row_number() + 1
+            direction = pytis.data.FORWARD
+            if skip < 0:
                 skip = -skip
+                direction = pytis.data.BACKWARD
             data.skip(skip, direction=direction)
-            fetch(row, direction)
+            fetch(row, pytis.data.BACKWARD)
         return self._current_row.the_row
 
     def _group(self, row):
