@@ -89,7 +89,10 @@ class DualForm(Form):
         super_(DualForm)._init_attributes(self)
         self._unprocessed_kwargs = kwargs
         self._active_form = None        
-        self._sash_ratio = self._view.sash_ratio()
+        self._sash_ratio = self._initial_sash_ratio()
+
+    def _initial_sash_ratio(self):
+        return self._view.sash_ratio()
         
     def _create_view_spec(self):
         spec = self._resolver.get(self._name, 'dual_spec')
@@ -449,6 +452,9 @@ class DescriptiveDualForm(BrowseShowDualForm):
     
     def _create_view_spec(self):
         return None
+
+    def _initial_sash_ratio(self):
+        return None # V této tøídì se nepou¾ívá
 
     def _create_side_form(self, parent):
         f = ShowForm(parent, self._resolver, self._name)
