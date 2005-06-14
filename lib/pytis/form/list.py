@@ -100,6 +100,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Závìreèné akce
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
+        self.select_row(self._position)
 
     def _init_attributes(self, columns=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -168,10 +169,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g = wx.grid.Grid(self, wx.NewId())
         # Inicializuj datový select
         row_count = self._init_select()
-        # Tento fetch je tu kvùli obejití problému s opaèným poøadím naèítání
-        # øádkù gridu, které v dùsledku vyøazuje DB buffer.
-        # Nutno vyøe¹it jinak...
-        self._data.fetchone()
         self._table = table = \
           _grid.ListTable(self._parent, self._data, self._fields, columns,
                           row_count, sorting=self._lf_sorting,
@@ -388,7 +385,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             current_col = g.GetGridCursorCol()
             if row is not None:
                 assert isinstance(row, types.IntType)
-                self._table.rewind(position=row)
                 # Zkontroluj pøípadné opu¹tìní editace
                 if not self._finish_editing(row=row):
                     log(EVENT, 'Zamítnuto opu¹tìní editace øádku')
