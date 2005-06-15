@@ -116,6 +116,8 @@ class DualForm(Form):
         self._side_form = self._create_side_form(splitter)
         splitter.SplitHorizontally(self._main_form, self._side_form)
         self._select_form(self._main_form)
+        self._set_main_form_callbacks()
+        self._set_side_form_callbacks()
     
     def _create_main_form(self, parent, **kwargs):
         return None
@@ -123,6 +125,12 @@ class DualForm(Form):
     def _create_side_form(self, parent):
         return None
 
+    def _set_main_form_callbacks(self):
+        pass
+    
+    def _set_side_form_callbacks(self):
+        pass
+    
     def _other_form(self, form):
         if form is self._main_form:
             other_form = self._side_form
@@ -208,7 +216,6 @@ class DualForm(Form):
         size = event.GetSize()
         self._splitter.SetSize(size)
         self._splitter.SetSashPosition(self._sash_position(size))
-        #self._on_size_hook(size)
         event.Skip()
         
     def _on_focus(self, event):
@@ -291,12 +298,15 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
                            columns=view.side_columns(),
                            guardian=self)
         self._sbcol_type = f._data.find_column(sbcol).type()
+        return f
+
+    def _set_side_form_callbacks(self):
+        f = self._side_form
         if isinstance(self._main_form, Refreshable):
             f.set_callback(ListForm.CALL_MODIFICATION,
                            self._main_form.refresh)
         f.set_callback(ListForm.CALL_USER_INTERACTION,
                        lambda : self._select_form(self._side_form))
-        return f
 
     def _do_selection(self, row):
         focused = wx_focused_window()
@@ -346,15 +356,18 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
                 if title is not None:
                     return title
                 return super_(_MainBrowseForm).title(self)
-        f = _MainBrowseForm(parent, self._resolver, self._view.main_name(),
-                            guardian=self, **kwargs)
+        return _MainBrowseForm(parent, self._resolver, self._view.main_name(),
+                               guardian=self, **kwargs)
+
+
+    def _set_main_form_callbacks(self):
+        f = self._main_form
         f.set_callback(ListForm.CALL_USER_INTERACTION,
                        lambda : self._select_form(self._main_form))
         f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
         f.set_callback(ListForm.CALL_ACTIVATION, self._on_show_record)
         f.set_callback(BrowseForm.CALL_NEW_RECORD, self._on_new_record)
-        return f
-
+    
     def _on_new_record(self, copy=False):
         result = self._main_form._on_new_record(copy=copy)
         if result:
@@ -387,12 +400,14 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
             self._select_form(self._main_form, force=True)
         
     def _create_main_form(self, parent, **kwargs):
-        form_ = BrowsableShowForm(parent, self._resolver,
-                                  self._view.main_name(),
-                                  guardian=self, **kwargs)
-        form_.set_callback(BrowsableShowForm.CALL_SELECTION,
-                           self._on_main_selection)
-        return form_
+        return BrowsableShowForm(parent, self._resolver,
+                                 self._view.main_name(),
+                                 guardian=self, **kwargs)
+
+        
+    def _set_main_form_callbacks(self):
+        self._main_form.set_callback(BrowsableShowForm.CALL_SELECTION,
+                                     self._on_main_selection)
 
     def refresh(self):
         self._side_form.refresh()
@@ -413,12 +428,14 @@ class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
     _DESCR = _("duální náhled")
     
     def _create_main_form(self, parent, **kwargs):
-        form_ = BrowseForm(parent, self._resolver, self._name, guardian=self,
-                           **kwargs)
-        form_.set_callback(ListForm.CALL_USER_INTERACTION,
-                           lambda s=self: s._select_form(s._main_form))
-        form_.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
-        return form_
+        return BrowseForm(parent, self._resolver, self._name, guardian=self,
+                          **kwargs)
+
+    def _set_main_form_callbacks(self):
+        f = self._main_form
+        f.set_callback(ListForm.CALL_USER_INTERACTION,
+                       lambda : self._select_form(self._main_form))
+        f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
 
     def _create_side_form(self, parent):
         name = self._view.side_name()
@@ -457,9 +474,11 @@ class DescriptiveDualForm(BrowseShowDualForm):
         return None # V této tøídì se nepou¾ívá
 
     def _create_side_form(self, parent):
-        f = ShowForm(parent, self._resolver, self._name)
-        f.set_callback(ShowForm.CALL_SELECTION, self._on_side_selection)
-        return f
+        return ShowForm(parent, self._resolver, self._name)
+
+    def _set_side_form_callbacks(self):
+        self._side_form.set_callback(ShowForm.CALL_SELECTION,
+                                     self._on_side_selection)
     
     def _do_selection(self, row):
         if self._side_form is not None:
