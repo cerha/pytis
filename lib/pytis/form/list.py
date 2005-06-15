@@ -1542,7 +1542,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         size = event.GetSize()
         g = self._grid
         oldsize = g.GetSize()
-        #self._grid_size = size
         width = size.width
         height = size.height
         if width == oldsize.width:
@@ -1555,16 +1554,20 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             coef = 1
         total = 0
+        last = None
         # Pøenastav ¹íøky sloupcù
         for i, c in enumerate(self._columns):
             if not c.column_width():
                 continue
-            column_width = max(c.column_width(), len(c.column_label()))
-            w = int(dlg2px(g, 4*column_width+8)*coef)
-            g.SetColSize(i, w)
+            if c.fixed():
+                w = g.GetColSize(i)
+            else:
+                column_width = max(c.column_width(), len(c.column_label()))
+                w = int(dlg2px(g, 4*column_width+8)*coef)
+                g.SetColSize(i, w)
+                last = i
             total += w
-            last = i
-        if coef != 1 and total != width:
+        if coef != 1 and total != width and last is not None:
             g.SetColSize(last, w + (width - total))
         event.Skip()
 
