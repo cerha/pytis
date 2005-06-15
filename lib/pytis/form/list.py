@@ -1542,11 +1542,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         #self._grid_size = size
         width = size.width
         height = size.height
-        if height < self._total_height():
-            width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
         if width == oldsize.width:
             event.Skip()
             return False
+        if height < self._total_height():
+            width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
         if width > self._total_width:
             coef = float(width) / self._total_width
         else:
