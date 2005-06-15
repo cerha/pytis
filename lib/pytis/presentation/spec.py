@@ -977,7 +977,7 @@ class FieldSpec(object):
 
     """
     def __init__(self, id, label='', column_label=None, descr=None,
-                 width=None, column_width=None, height=None, 
+                 width=None, column_width=None, fixed=False, height=None, 
                  editable=None, compact=False, type_=None, 
                  default=None, computer=None,
                  line_separator='; ',
@@ -1005,6 +1005,12 @@ class FieldSpec(object):
           height -- vý¹ka pole ve znacích, kladné reálné èíslo.
           column_width -- ¹íøka sloupce v tabulce ve znacích, kladné celé
             èíslo.  Je-li 'None', je pou¾ita hodnota 'width'.
+          fixed -- pokud bude pøadána pravdivá hodnota, nebude ¹íøka sloupce
+            automaticky pøepoèítávána pøi zmìnì valikosti tabulkového
+            formuláøe.  Implicitnì jsou sloupce automaticky
+            roztahovány/zu¾ovány tak, aby byla rovnomìrnì vyu¾ita plocha
+            formuláøe.  Hodnota 'width/column_width' tak slou¾í pouze jako
+            výchozí hodnota.  Pro 'fixed' sloupce v¹ak bude v¾dy dodr¾ována.
           editable -- instance Computer nebo jedna z konstant tøídy 'Editable',
             urèující za jakých okolností je políèko editovatelné.  Je-li 'None',
             bude pou¾ita implicitní hodnota, kterou je obvykle
@@ -1139,6 +1145,7 @@ class FieldSpec(object):
         assert label is None or is_anystring(label)
         assert descr is None or is_anystring(descr)
         assert type_ is None or isinstance(type_, pytis.data.Type)
+        assert isinstance(fixed, types.BooleanType)
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, types.StringType)
@@ -1173,6 +1180,7 @@ class FieldSpec(object):
             column_width = width
         self._column_width = column_width
         self._column_label = column_label
+        self._fixed = fixed
         self._type = type_
         self._compact = compact
         self._default = default
@@ -1255,6 +1263,10 @@ class FieldSpec(object):
         else:
             return self._column_width
 
+    def fixed(self):
+        """Vra» pravdu, pokud jde o sloupec s fixní ¹íøkou."""
+        return self._fixed
+        
     def height(self, default=1):
         """Vra» vý¹ku políèka ve znacích
 
