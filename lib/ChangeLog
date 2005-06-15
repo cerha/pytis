@@ -1,4 +1,12 @@
+2005-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._on_size): Korekci ¹íøky kvùli
+	scrollbarùm provádìj a¾ po kontrole shody nové a pùvodní velikosti.
+
 2005-06-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._select_cell): Neprovádìj zde rewind.
+	(ListForm._create_grid): Zru¹en hack s initiálním fetchem.
 
 	* pytis/form/dualform.py (DualForm._initial_sash_ratio) 
 	(DescriptiveDualForm._initial_sash_ratio): Nová metoda.
@@ -47,6 +55,8 @@
 	Pøed prvním fetchem provádìj je¹tì fetch prvního øádku dopøedu,
 	aby byl naplnìn buffer.
 	(ListTable._retrieve_row.fetch): Provádìj fetch ve smìru `direction'.
+	(ListTable._retrieve_row): Provádìj také fetch ve smìru pohybu.
+	(ListTable._panic): Opravena indentace.
 
 2005-06-13  Tomas Cerha  <cerha@brailcom.org>
 
