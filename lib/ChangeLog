@@ -1,9 +1,30 @@
 2005-06-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (DualForm._create_form): Na konci volej
+	`_set_main_form_callbacks()' a `_set_side_form_callbacks()'. 
+	(DualForm._set_main_form_callbacks) 
+	(DualForm._set_main_form_callbacks) 
+	(SideBrowseDualForm._create_side_form) 
+	(BrowseDualForm._set_main_form_callbacks) 
+	(ShowDualForm._set_main_form_callbacks) 
+	(BrowseShowDualForm._set_main_form_callbacks) 
+	(DescriptiveDualForm._set_side_form_callbacks): Nové metody.
+	(SideBrowseDualForm._create_side_form) 
+	(BrowseDualForm._create_main_form) 
+	(ShowDualForm._create_main_form) 
+	(BrowseShowDualForm._create_main_form) 
+	(DescriptiveDualForm._create_side_form): Nastavovvování callbackù
+	pøenech novám metodám.
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Nový argumert
+	`fixed'.
+	(FieldSpec.fixed): Nová metoda.
+
 	* pytis/form/list.py (ListForm._on_size): Korekci ¹íøky kvùli
 	scrollbarùm provádìj a¾ po kontrole shody nové a pùvodní velikosti.
 	(ListForm._on_column_header_paint): Dedopus», aby label pøesahoval
 	¹íøku sloupce.
+	(ListForm._on_size): Ponech velikost fixních sloupcù nezmìnìnou.
 
 2005-06-14  Tomas Cerha  <cerha@brailcom.org>
 
