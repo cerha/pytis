@@ -684,8 +684,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if self._lf_grouping == id:
                 dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
                 dc.DrawCircle(x+5, y+5, 2)
-            dc.DrawLabel(t.column_label(col), (x,y,width,height),
-                         wx.ALIGN_CENTER|wx.CENTER)
+            # Draw the label itself.
+            label = t.column_label(col)
+            while dc.GetTextExtent(label)[0] > width and len(label):
+                label = label[:-1] # Don't allow the label to extend the width.
+            dc.DrawLabel(label, (x,y,width,height), wx.ALIGN_CENTER|wx.CENTER)
             x += width
         
     def _on_label_right(self, event):
