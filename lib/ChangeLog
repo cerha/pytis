@@ -2,6 +2,8 @@
 
 	* pytis/form/list.py (ListForm._on_size): Korekci ¹íøky kvùli
 	scrollbarùm provádìj a¾ po kontrole shody nové a pùvodní velikosti.
+	(ListForm._on_column_header_paint): Dedopus», aby label pøesahoval
+	¹íøku sloupce.
 
 2005-06-14  Tomas Cerha  <cerha@brailcom.org>
 
