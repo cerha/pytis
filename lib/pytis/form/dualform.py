@@ -467,6 +467,10 @@ class DescriptiveDualForm(BrowseShowDualForm):
 
     """
     
+    def _init_attributes(self, **kwargs):
+        self._in_mainform_selection = False
+        super_(DescriptiveDualForm)._init_attributes(self, **kwargs)
+        
     def _create_view_spec(self):
         return None
 
@@ -482,11 +486,13 @@ class DescriptiveDualForm(BrowseShowDualForm):
     
     def _do_selection(self, row):
         if self._side_form is not None:
+            self._in_mainform_selection = True
             self._side_form.set_row(row)            
             self._side_form.Show(True)
             self._select_form(self._main_form, force=True)
+            self._in_mainform_selection = False
         return True
 
     def _on_side_selection(self, row):
-        if self._main_form is not None:
+        if self._main_form is not None and not self._in_mainform_selection:
             self._main_form.select_row(row.row())
