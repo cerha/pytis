@@ -74,11 +74,6 @@ class InputField(object, KeyHandler, CallbackHandler):
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
 
-    UI_IS_MODIFIED = 'UI_IS_MODIFIED'
-    """Povolení události, pouze pokud je obsah políèka zmìnìn."""
-    UI_IS_ENABLED =  'UI_IS_ENABLED'
-    """Povolení události, pouze pokud je políèko editovatelné."""
-
     CALL_LEAVE_FIELD = 'CALL_LEAVE_FIELD'
     """Callback volaný pøi po¾adavku na opu¹tìní políèka. Bez argumentù."""
     CALL_COMMIT_FIELD = 'CALL_COMMIT_FIELD'
@@ -247,29 +242,12 @@ class InputField(object, KeyHandler, CallbackHandler):
     def _menu(self):
         # Return the tuple of popup menu items ('MItem' instances).
         return (MItem("Vrátit pùvodní hodnotu",
-                      command = InputField.COMMAND_RESET_FIELD,
-                      uievent_id = self.UI_IS_MODIFIED),
+                      command = InputField.COMMAND_RESET_FIELD),
                 )
 
     def guardian(self):
         return self._guardian
     
-    def on_ui_event(self, event, id):
-        if id == self.UI_IS_MODIFIED:
-            if self.is_modified():
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True
-        elif id == self.UI_IS_ENABLED:
-            if self._enabled:
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True
-        else:
-            return False
-
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_RESET_FIELD:
             self.reset()
@@ -583,6 +561,9 @@ class InputField(object, KeyHandler, CallbackHandler):
         """
         return self._initial_value != self.get_value()
 
+    def is_enabled(self):
+        return self._enabled
+    
     def reset(self):
         """Nastav hodnotu políèka na pùvodní hodnotu.
 
@@ -996,7 +977,6 @@ class Invocable:
                (MSeparator(),
                 MItem(self._INVOKE_SELECTION_MENU_TITLE,
                       command=self.COMMAND_INVOKE_SELECTION,
-                      uievent_id=self.UI_IS_ENABLED,
                       args={'originator': self}))
     
     def on_command(self, command, **kwargs):
@@ -1129,7 +1109,6 @@ class CodebookField(Invocable, TextField):
         return Invocable._menu(self) + \
                (MItem("Vyhledávat v èíselníku",
                       command=self.COMMAND_INVOKE_SELECTION_ALTERNATE,
-                      uievent_id=self.UI_IS_ENABLED,
                       args={'originator': self}),)
 
     def _maxlen(self):
@@ -1189,8 +1168,6 @@ class ListField(InputField):
     """
     _DEFAULT_WIDTH = 30
     _DEFAULT_HEIGHT = 6
-
-    UI_LIST_ITEM_SELECTED = 'UI_LIST_ITEM_SELECTED'
 
     def _create_ctrl(self):
         self._ref_spec = refspec = self.spec().references()
@@ -1309,11 +1286,9 @@ class ListField(InputField):
     def _menu(self):
         menu = (MItem("Editovat",
                       command=self.COMMAND_INVOKE_EDIT_FORM,
-                      uievent_id=self.UI_LIST_ITEM_SELECTED,
                       args={'originator': self}),
                 MItem("Celá tabulka",
                       command=self.COMMAND_INVOKE_BROWSE_FORM,
-                      uievent_id=self.UI_LIST_ITEM_SELECTED,
                       args={'originator': self})
                 )
         if self._ref_spec.returned_columns():
@@ -1321,21 +1296,13 @@ class ListField(InputField):
                                 command=self.COMMAND_CHOOSE_KEY,
                                 args={'id': self.id(),
                                       'returned_key': k,
-                                      'originator': self},
-                                uievent_id=self.UI_LIST_ITEM_SELECTED)
+                                      'originator': self})
                           for m, k in self._ref_spec.returned_columns()]
             menu = menu + tuple(user_popup)
         return menu   
 
-    def on_ui_event(self, event, id):
-        if id == self.UI_LIST_ITEM_SELECTED:
-            if self._selected_item() is not None:
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True
-        else:
-            return InputField.on_ui_event(self, event, id)
+    def has_selection(self):
+        return self._selected_item() is not None
 
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_INVOKE_EDIT_FORM:
