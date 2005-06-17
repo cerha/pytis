@@ -1,20 +1,109 @@
+2005-06-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm.UI_EDIT_CHANGE)
+	(ListForm.UI_EXISTS_CONDITION, ListForm.UI_SORTING)
+	(ListForm.UI_GROUPING): Konstanty zru¹eny.
+	(ListForm.can_sort_column): Nová metoda.
+	(ListForm._on_label_left): `ListForm.SORTING_CYCLE_DIRECTION' ->
+	`LookupForm.SORTING_CYCLE_DIRECTION'.  Nepou¾ívej argument
+	`uievent_id' konstruktoru `MItem'.
+	(on_ui_event): Metoda zru¹ena.
+	(ListForm.is_changed): Nová metoda.
+	(ListForm.can_set_grouping): Nová metoda.
+
+	* pytis/form/form.py (Form._menus): Nepou¾ívej argument `uievent_id' konstruktoru
+	`MItem'.
+	(Form.on_ui_event): Metoda zru¹ena.
+	(Form.guardian): Nová metoda.
+	(RecordForm.UI_ACCESS_INSERT, RecordForm.UI_ACCESS_UPDATE)
+	(RecordForm.UI_ACCESS_DELETE): Konstanty zru¹eny.
+	(RecordForm.on_ui_event): Metoda zru¹ena.
+	(LookupForm.can_sort_column): Nová metoda.
+	(LookupForm.sorting, LookupForm.can_sort): Nová metoda.
+	(EditForm._menus): Nepou¾ívej argument `uievent_id' konstruktoru
+	`MItem'.
+	(EditForm.on_ui_event, BrowsableShowForm.on_ui_event): Zru¹eno.
+
+	* pytis/form/dualform.py (on_ui_event): Zru¹eno.
+	(DualForm.active_form): Nová metoda.
+
+	* pytis/form/application.py (Application.UI_ALWAYS_DISABLED)
+	(Application.UI_OPENED_WINDOW,
+	Application.UI_OPENED_MORE_WINDOWS): Konstanty zru¹eny.
+	(Application.new_record): Pou¾ívej `self._current_form()' namísto
+	`current_form()'.
+	(on_ui_event): Metoda zru¹ena.
+	(Application.window_count): Nová metoda.
+	(Application.current_form): Nová metoda.
+	(get_status): Upraven docstring.
+	(current_form): Pouze volej `_application.current_form()'.
+	(exit): Upraven docstring.
+
+	* pytis/form/command.py (Command.__init__): Nové arguemnty
+	`enabled' a `static'.
+	(Command.__init__): Pøidány asserty na `handler' a
+	`access_groups'.  Zjisti pøítomnost v access groups ji¾ zde a
+	zapamatuj.
+	(access_groups): Metoda zru¹ena
+	(Command.enabled): Nová metoda.
+	(invoke_command): Vyvolej pøíkaz pouze pokud je `enabled'.
+	(_check_perm, _can_run_form, _can_insert, _can_insert) 
+	(_can_insert, _current_form_can_update, _current_form_can_update) 
+	(_current_form_can_delete, _current_form_changed) 
+	(_current_form_changed, _current_field_modified): Nové funkce.
+	Vyu¾ívej tyto funkce v definicích pøíkazù.
+
+	* pytis/form/screen.py (Keymap._define_key): V assertové zprávì
+	vypisuj také pøíkaz a jeho argumenty.
+	(MenuBar._create_menu): Neinicializuj `self._access_groups'.
+	(MenuBar.activate): Neinicializuj `self._access_groups'.
+	(Menu.create): Nezji¹»uj zde `access_groups' pøíkazu, radìji
+	ponech uøèení na `Command.enabled()'.
+	(MItem.__init__): Zru¹en arguemnt `uievent_id'.
+	(MItem._on_ui_event): Nová metoda.
+	(MItem.create): Namísto volání `Application.on_ui_event()' o¹etøuj
+	`wx.EVT_UPDATE_UI' pomocí `self._on_ui_event()'.
+	(MItem.uievent_id): Metoda zru¹ena.
+
+	* pytis/form/inputfield.py (InputField.UI_IS_MODIFIED)
+	(InputField.UI_IS_ENABLED, ListField.UI_LIST_ITEM_SELECTED):
+	Konstanty zru¹eny.
+	(InputField.on_ui_event): Metoda zru¹ena.
+	(InputField._menu): Nepou¾ívej argument `uievent_id' konstruktoru
+	`MItem'.
+	(InputField.is_enabled): Nová mentoda.
+	(Invocable._menu, CodebookField._menu, ListField._menu):
+	Nepou¾ívej argument `uievent_id' konstruktoru `MItem'.
+	(ListField.on_ui_event): Metoda zru¹ena.
+	(ListField.has_selection): Nová mentoda.
+
+
+2005-06-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py (DEFAULT_COMMAND_KEYS): 
+
 2005-06-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (DualForm._create_form): Na konci volej
-	`_set_main_form_callbacks()' a `_set_side_form_callbacks()'. 
-	(DualForm._set_main_form_callbacks) 
-	(DualForm._set_main_form_callbacks) 
-	(SideBrowseDualForm._create_side_form) 
-	(BrowseDualForm._set_main_form_callbacks) 
-	(ShowDualForm._set_main_form_callbacks) 
-	(BrowseShowDualForm._set_main_form_callbacks) 
+	`_set_main_form_callbacks()' a `_set_side_form_callbacks()'.
+	(DualForm._set_main_form_callbacks)
+	(DualForm._set_main_form_callbacks)
+	(SideBrowseDualForm._create_side_form)
+	(BrowseDualForm._set_main_form_callbacks)
+	(ShowDualForm._set_main_form_callbacks)
+	(BrowseShowDualForm._set_main_form_callbacks)
 	(DescriptiveDualForm._set_side_form_callbacks): Nové metody.
-	(SideBrowseDualForm._create_side_form) 
-	(BrowseDualForm._create_main_form) 
-	(ShowDualForm._create_main_form) 
-	(BrowseShowDualForm._create_main_form) 
+	(SideBrowseDualForm._create_side_form)
+	(BrowseDualForm._create_main_form)
+	(ShowDualForm._create_main_form)
+	(BrowseShowDualForm._create_main_form)
 	(DescriptiveDualForm._create_side_form): Nastavovvování callbackù
 	pøenech novám metodám.
+	(DescriptiveDualForm._init_attributes): Nová metoda.
+	(DescriptiveDualForm._do_selection): Nastavuj
+	`self._in_mainform_selection'.
+	(DescriptiveDualForm._on_side_selection): Nedìlej nic, pokud je
+	nastaveno `self._in_mainform_selection'.
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): Nový argumert
 	`fixed'.
