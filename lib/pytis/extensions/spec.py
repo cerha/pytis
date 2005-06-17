@@ -241,6 +241,11 @@ def new_record_mitem(title, name, hotkey=None):
     help = _('Otevøít vstupní formuláø "%s"') % title
     return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
+def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
+    return MItem(title, hotkey=hotkey,
+                 command=user_cmd('help-window', help_window),
+                 args={'inputfile': inputfile, 'format': format})	
+
 def user_cmd(name, handler, **kwargs):
     return Command('user-command.' + name, handler=handler, **kwargs)
 
@@ -248,6 +253,16 @@ def run_any_form(*args, **kwargs):
     result = pytis.form.run_dialog(pytis.form.RunFormDialog)
     if result is not None:
         pytis.form.run_form(*result)
+
+nr = new_record_mitem
+rp = run_procedure_mitem
+def bf(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey)
+def df(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
+def ddf(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.DescriptiveDualForm,
+                          hotkey)
 
 class ReusableSpec:
     def __init__(self, resolver):
