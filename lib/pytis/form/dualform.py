@@ -176,8 +176,8 @@ class DualForm(Form):
         else:
             return False
 
-    def on_ui_event(self, event, id):
-        return self._active_form.on_ui_event(event, id)
+    def active_form(self):
+        return self._active_form
 
     def show(self):
         # Musíme volat show obou podformuláøù, proto¾e splitter je nevolá a
