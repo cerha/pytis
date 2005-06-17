@@ -62,7 +62,7 @@ class Command:
 
     """
     def __init__(self, id, key=None, handler=None, log_=True,
-                 access_groups=None):
+                 enabled=True, access_groups=None, static=False):
         """Definuj pøíkaz.
 
         Argumenty:
@@ -78,21 +78,45 @@ class Command:
             pøíkaz vyvolat; mù¾e být té¾ 'None', v kterém¾to pøípadì pøíkaz
             mohou vyvolat v¹echny skupiny.  Toto oprávnìní je formální,
             zohlednìné jen v u¾ivatelském rozhraní, nemá faktickou bezpeènostní
-            roli.
+            roli.  Pøítomnost u¾ivatele ve skupinách je zji¹»ována pouze jednou
+            pøi inicializaci instance pøíkazu, co¾ je vìt¹inou pøi startu
+            aplikace.
+          enabled -- buïto pøímo boolean hodnota urèující, zda je pøíkaz
+            aktivní, nebo odkaz na funkci, která toto zjistí (a vrátí
+            odpovídající boolean hodnotu).  Jde o funkci tøí argumentù (APPL,
+            COMMAND, ARGS), kde APPL je instance aplikace (tøídy
+            'Application'), COMMAND je instance pøíkazu a ARGS je slovník
+            arguemntù s jakými bude pøíkaz volán.
+          static -- pokud je pøedána pravdivá hodnota, bude hodnota vrácená
+            funkcí `enabled' pova¾ována za nemìnnou a výsledek tedy bude
+            cachován.  V opaèném pøípadì (výchozí hodnota) bude funkce volána
+            pøi ka¾dém po¾adavku na zji¹tìní hodnoty enabled.
     
         """
         assert is_anystring(id)
+        assert handler is None or callable(handler)
         assert key is None or is_string(key) or is_sequence(key)
+        assert callable(enabled) or isinstance(enabled, types.BooleanType)
+        assert isinstance(static, types.BooleanType)
+        assert access_groups is None or \
+               isinstance(access_groups,
+                          (types.StringType, types.TupleType, types.ListType))
         self._id = id
         if key is not None:
             log(OPERATIONAL,
                 "Pou¾it potlaèený argument `key' tøídy `Command':", (key, id))
-            self.key = xtuple(key)
         self._handler = handler
         self._log = log_
+        self._has_access = True
         if access_groups is not None:
             access_groups = xtuple(access_groups)
-        self._access_groups = access_groups
+            dbconnection = config.dbconnection
+            groups = pytis.data.DBDataDefault.class_access_groups(dbconnection)
+            if groups is not None:
+                self._has_access = some(lambda g: g in groups, access_groups)
+        self._enabled = enabled
+        self._static = static
+        self._cache = {}
     
     def id(self):
         """Vra» identifikátor zadaný v konstruktoru."""
@@ -102,14 +126,22 @@ class Command:
         """Vra» rutinu pro zpracování pøíkazu."""
         return self._handler
 
-    def access_groups(self):
-        """Vra» tuple jmen skupin (strings) s právem pøístupu nebo 'None'.
-
-        Vrácená hodnota odpovídá argumentu `access_groups' konstruktoru.
-
-        """
-        return self._access_groups
-
+    def enabled(self, application, args):
+        if not self._has_access:
+            return False
+        enabled = self._enabled
+        if not isinstance(enabled, types.BooleanType):
+            if self._static:
+                cache_key = tuple(args.items())
+                try:
+                    enabled = self._cache[cache_key]
+                except KeyError:
+                    enabled = bool(enabled(application, self, args))
+                    self._cache[cache_key] = enabled
+            else:
+                enabled = bool(enabled(application, self, args))
+        return enabled
+    
     def log_kind(self):
         """Vra» druh logovací hlá¹ky, pod kterým má být pøíkaz logován."""
         if self._log:
@@ -150,29 +182,121 @@ def invoke_command(command, **kwargs):
       kwargs -- parametry pøíkazu
 
     """
-    return pytis.form.application._application.on_command(command, **kwargs)
+    appl = pytis.form.application._application
+    if command.enabled(appl, kwargs):
+        return appl.on_command(command, **kwargs)
+    else:
+        return False
 
+
+# Funkce zji¹»ující dostupnost konkrétních pøíkazù (definovaných ní¾e).
+
+def _check_perm(perm, name):
+    try:
+        data_spec = resolver().get(name, 'data_spec')
+    except ResolverError:
+        return True
+    rights = data_spec.access_rights()
+    if not rights:
+        return True
+    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
+    return rights.permitted(perm, groups)
+
+def _can_run_form(appl, cmd, args):
+    perm = pytis.data.Permission.VIEW
+    if issubclass(args['form_class'], pytis.form.DualForm):
+        try:
+            dual_spec = resolver().get(args['name'], 'dual_spec')
+        except ResolverError:
+            return True
+        return _check_perm(perm, dual_spec.main_name()) and \
+               _check_perm(perm, dual_spec.side_name())
+    else:
+        return _check_perm(perm, args['name'])
+
+def _can_insert(appl, cmd, args):
+    return _check_perm(pytis.data.Permission.INSERT, args['name'])
+
+# TODO: Asi by bylo vhodnìj¹í pro tyto funkce vymyslet nìjaký mechanismus,
+# kterým by se napø. automaticky volala metoda urèitého jména a nebylo
+# by tak zde tøeba definovat celou øadu velice podobných funkcí.
+
+def _current_form_can_insert(appl, cmd, args):
+    f = appl.current_form()
+    return f and f.check_permission(pytis.data.Permission.INSERT)
+
+def _current_form_can_update(appl, cmd, args):
+    f = appl.current_form()
+    # TODO:uievent_id= neaktivní v DescriptiveDualFormu
+    return f and f.check_permission(pytis.data.Permission.UPDATE)
+
+def _current_form_can_delete(appl, cmd, args):
+    f = appl.current_form()
+    return f and f.check_permission(pytis.data.Permission.DELETE)
+
+def _current_form_searching(appl, cmd, args):
+    f = appl.current_form()
+    return f and isinstance(f, LookupForm) and f.is_searching()
+
+def _current_form_changed(appl, cmd, args):
+    f = appl.current_form()
+    return f and isinstance(f, ListForm) and f.is_changed()
+       
+# InputField properties
+
+def _current_field_enabled(appl, cmd, args):
+    f = InputField.focused()
+    return f and f.is_enabled()
+    
+def _current_field_modified(appl, cmd, args):
+    f = InputField.focused()
+    return f and f.is_modified()
+    
+def _current_field_has_selection(appl, cmd, args):
+    f = InputField.focused()
+    return f and isinstance(f, ListField) and f.has_selection()
+    
+# Vlastní definice pøíkazù   
 
 Application.COMMAND_EXIT = Command('application.exit')
 """Ukonèení aplikace."""
-Application.COMMAND_RUN_FORM = Command('application.run-form')
-"""Spu¹tìní formuláøe."""
-Application.COMMAND_RUN_PROCEDURE = Command('application.run-procedure')
-"""Spu¹tìní procedury."""
-Application.COMMAND_NEW_RECORD = Command('application.new-record')
-"""Vlo¾ení nového záznamu."""
-Application.COMMAND_LEAVE_FORM = Command('application.leave-form')
-"""Odstranìní aktivního okna formuláøe z aplikace."""
-Application.COMMAND_RAISE_FORM = Command('application.raise-form')
-"""Vyzvednutí okna formuláøe v oknì aplikace (argument je instance `Form')."""
-Application.COMMAND_PREV_FORM = Command('application.prev-form')
-"""Vyzvednutí okna formuláøe pøedcházejícího aktivní okno."""
-Application.COMMAND_NEXT_FORM = Command('application.next-form')
-"""Vyzvednutí okna formuláøe následujícího za aktivním oknem."""
+
 Application.COMMAND_BREAK = Command('application.break')
 """Pøeru¹ení aktuálnì provádìné operace."""
+
 Application.COMMAND_REFRESH = Command('application.refresh')
 """Vy¾ádání obnovení obsahu aktivního formuláøe."""
+
+Application.COMMAND_NEW_RECORD = Command('application.new-record',
+                                         enabled=_can_insert, static=True)
+"""Vlo¾ení nového záznamu."""
+
+Application.COMMAND_RUN_FORM = Command('application.run-form',
+                                       enabled=_can_run_form, static=True)
+"""Spu¹tìní formuláøe."""
+
+Application.COMMAND_RUN_PROCEDURE = Command('application.run-procedure')
+"""Spu¹tìní procedury."""
+
+Application.COMMAND_LEAVE_FORM = \
+    Command('application.leave-form',
+            enabled=lambda appl, cmd, args: appl.window_count())
+"""Odstranìní aktivního okna formuláøe z aplikace."""
+
+Application.COMMAND_RAISE_FORM = Command('application.raise-form')
+"""Vyzvednutí okna formuláøe v oknì aplikace (argument je instance `Form')."""
+
+Application.COMMAND_PREV_FORM = \
+    Command('application.prev-form',
+            enabled=lambda appl, cmd, args: appl.window_count() > 1)
+"""Vyzvednutí okna pøedchozího formuláøe."""
+
+Application.COMMAND_NEXT_FORM = \
+    Command('application.next-form',
+            enabled=lambda appl, cmd, args: appl.window_count() > 1)
+"""Vyzvednutí okna formuláøe následujícího za aktivním oknem."""
+
+
 Application.COMMAND_SHOW_POPUP_MENU = Command('application.show-popup-menu')
 """Zobraz kontextové menu aktivního prvku, pokud to pro daný prvek lze."""
 
@@ -181,92 +305,150 @@ Form.COMMAND_PRINT = Command('form.print')
 
 LookupForm.COMMAND_FILTER = Command('lookup-form.filter')
 """Filtrování záznamù."""
+
 LookupForm.COMMAND_JUMP = Command('lookup-form.jump')
 """Skok na záznam."""
+
 LookupForm.COMMAND_SEARCH = Command('lookup-form.search')
 """Hledání záznamu."""
-LookupForm.COMMAND_SEARCH_PREVIOUS = Command('lookup-form.search')
+
+LookupForm.COMMAND_SEARCH_PREVIOUS = Command('lookup-form.search',
+                                             enabled=_current_form_searching)
 """Hledání Pøedchozího záznamu bez dialogu."""
-LookupForm.COMMAND_SEARCH_NEXT = Command('lookup-form.search')
+
+LookupForm.COMMAND_SEARCH_NEXT = Command('lookup-form.search',
+                                         enabled=_current_form_searching)
 """Hledání dal¹ího záznamu bez dialogu."""
-LookupForm.COMMAND_SORT_COLUMN = Command('lookup-form.sort-column')
+
+LookupForm.COMMAND_SORT_COLUMN = Command('lookup-form.sort-column',
+                                         enabled=LookupForm.can_sort)
 """Setøídìní podle sloupce."""
 
 ListForm.COMMAND_ACTIVATE = Command('list-form.activate')
 """Vyvolání aktivaèní funkce pro øádek øádkového formuláøe."""
+
 ListForm.COMMAND_ACTIVATE_ALTERNATE = Command('list-form.activate-alternate')
 """Vyvolání alternativní aktivaèní funkce pro øádek øádkového formuláøe."""
+
 ListForm.COMMAND_SELECT_CELL = Command('list-form.select-cell', log_=False)
 """Výbìr buòky seznamu."""
+
 ListForm.COMMAND_FIRST_COLUMN = Command('list-form.first-column', log_=False)
 """Pøechod na první sloupec tabulky."""
+
 ListForm.COMMAND_LAST_COLUMN = Command('list-form.last-column', log_=False)
 """Pøechod na poslední sloupec tabulky."""
+
 ListForm.COMMAND_INCREMENTAL_SEARCH = Command('list-form.incremental-search')
 """Prefixové inkrementální hledání záznamu."""
+
 ListForm.COMMAND_FULL_INCREMENTAL_SEARCH = Command('list-form.full-incremental-search')
 """Plné inkrementální hledání záznamu."""
-ListForm.COMMAND_EDIT = Command('list-form.edit')
+
+ListForm.COMMAND_EDIT = Command('list-form.edit',
+                                enabled=_current_form_can_update)
 """Vyvolání inline editace aktuální buòky."""
+
 ListForm.COMMAND_COPY_CELL = Command('list-form.copy-cell')
 """Zkopírování obsahu aktuální buòky do clipboardu."""
+
 ListForm.COMMAND_FILTER_BY_CELL = Command('list-form.filter-by-cell')
 """Vyfiltrování formuláøe podle hodnoty aktuální buòky."""
+
 ListForm.COMMAND_EXPORT_CSV = Command('list-form.export-csv')
 """Export øádkového formuláøe do csv souboru."""
-ListForm.COMMAND_LINE_COMMIT = Command('list-form.line-commit')
+
+ListForm.COMMAND_LINE_COMMIT = Command('list-form.line-commit',
+                                       enabled=_current_form_changed)
 """Dokonèení editace záznamu (ulo¾ení)."""
-ListForm.COMMAND_LINE_ROLLBACK = Command('list-form.line-rollback')
+
+ListForm.COMMAND_LINE_ROLLBACK = Command('list-form.line-rollback',
+                                         enabled=_current_form_changed)
 """Kompletní zru¹ení editace záznamu."""
+
 ListForm.COMMAND_LINE_SOFT_ROLLBACK = Command('list-form.line-soft-rollback')
 """Kompletní zru¹ení editace zatím nezmìnìného záznamu."""
+
 ListForm.COMMAND_FINISH_EDITING = Command('list-form.finish-editing')
 """Opu¹tìní editace øádku."""
-ListForm.COMMAND_LINE_DELETE = Command('list-form.line-delete')
+
+ListForm.COMMAND_LINE_DELETE = Command('list-form.line-delete',
+                                       enabled=_current_form_can_delete)
 """Smazání aktuálního záznamu."""
+
 ListForm.COMMAND_CELL_COMMIT = Command('list-form.cell-commit')
 """Ukonèení editace políèka s novou hodnotou."""
+
 ListForm.COMMAND_CELL_ROLLBACK = Command('list-form.cell-rollback')
 """Ukonèení editace políèka s vrácením pùvodní hodnoty."""
-ListForm.COMMAND_NEW_LINE_AFTER = Command('list-form.new-line-after')
+
+ListForm.COMMAND_NEW_LINE_AFTER = Command('list-form.new-line-after',
+                                          enabled=_current_form_can_insert)
 """Inline vlo¾ení nového záznamu za aktuální øádek."""
-ListForm.COMMAND_NEW_LINE_AFTER_COPY = Command('list-form.new-line-after-copy')
+
+ListForm.COMMAND_NEW_LINE_AFTER_COPY = Command('list-form.new-line-after-copy',
+                                               enabled=_current_form_can_insert)
 """Inline vlo¾ení nového záznamu za aktuální øádek jako jeho kopie."""
-ListForm.COMMAND_NEW_LINE_BEFORE = Command('list-form.new-line-before')
+
+ListForm.COMMAND_NEW_LINE_BEFORE = Command('list-form.new-line-before',
+                                          enabled=_current_form_can_insert)
 """Inline vlo¾ení nového záznamu pøed aktuální øádek."""
-ListForm.COMMAND_NEW_LINE_BEFORE_COPY = Command('list-form.new-line-before-copy')
+
+ListForm.COMMAND_NEW_LINE_BEFORE_COPY =Command('list-form.new-line-before-copy',
+                                               enabled=_current_form_can_insert)
 """Inline vlo¾ení nového záznamu pøed aktuální øádek jako jeho kopie."""
-ListForm.COMMAND_SET_GROUPING_COLUMN = Command('list-form.set-grouping-column')
+
+ListForm.COMMAND_SET_GROUPING_COLUMN = \
+    Command('list-form.set-grouping-column',
+            enabled=ListForm.can_set_grouping)
 """Zmìna sloupce vizuáního seskupování (vy¾aduje argument 'column_id')."""
 
-BrowseForm.COMMAND_NEW_RECORD = Command('browse-form.new-record')
+BrowseForm.COMMAND_NEW_RECORD = Command('browse-form.new-record',
+                                         enabled=_current_form_can_insert)
 """Formuláøová editace nového záznamu v øádkovém formuláøi."""
-BrowseForm.COMMAND_NEW_RECORD_COPY = Command('browse-form.new-record-copy')
-"""Formuláøová editace nového záznamu jako kopie aktuálního záznamu."""
-BrowseForm.COMMAND_RECORD_EDIT = Command('browse-form.edit-record')
-"""Editace aktuálního záznamu v popup formuláøi."""
-BrowseForm.COMMAND_IMPORT_INTERACTIVE = Command('browse-form.import-interactive')
-"""Import CSV dat."""
 
-EditForm.COMMAND_RECORD_DELETE = Command('edit-form.record-delete')
-"""Vymazání editovaného záznamu z databáze."""
-EditForm.COMMAND_RECORD_INSERT = Command('edit-form.record-insert')
+BrowseForm.COMMAND_NEW_RECORD_COPY = Command('browse-form.new-record-copy',
+                                             enabled=_current_form_can_insert)
+"""Formuláøová editace nového záznamu jako kopie aktuálního záznamu."""
+
+BrowseForm.COMMAND_RECORD_EDIT = Command('browse-form.edit-record',
+                                         enabled=_current_form_can_update)
+"""Editace aktuálního záznamu v popup formuláøi."""
+
+BrowseForm.COMMAND_IMPORT_INTERACTIVE =Command('browse-form.import-interactive',
+                                               enabled=_current_form_can_insert)
+"""Import CSV dat s potvrzením a mo¾ností editace ka¾dého záznamu."""
+
+EditForm.COMMAND_RECORD_INSERT = Command('edit-form.record-insert',
+                                         enabled=_current_form_can_insert)
 """Vlo¾ení nového záznamu z editaèního formuláøe."""
-EditForm.COMMAND_RECORD_UPDATE = Command('edit-form.record-update')
+
+EditForm.COMMAND_RECORD_UPDATE = Command('edit-form.record-update',
+                                         enabled=_current_form_can_update)
 """Ulo¾ení editovaného záznamu v editaèním formuláøi."""
+
+EditForm.COMMAND_RECORD_DELETE = Command('edit-form.record-delete',
+                                         enabled=_current_form_can_delete)
+"""Vymazání editovaného záznamu z databáze."""
+
 EditForm.COMMAND_RECORD_COMMIT = Command('edit-form.record-commit')
 """Ukonèení editaèního formuláøe s ulo¾ením zmìn."""
+
 EditForm.COMMAND_NAVIGATE = Command('edit-form.navigate')
 """Navigace mezi políèky editaèního formuláøe."""
+
 EditForm.COMMAND_NAVIGATE_BACK = Command('edit-form.navigate-back')
 """Zpìtná navigace mezi políèky editaèního formuláøe."""
 
 BrowsableShowForm.COMMAND_NEXT_RECORD = Command('edit-form.next-record')
 """Pøechod na dal¹í záznam."""
+
 BrowsableShowForm.COMMAND_PREVIOUS_RECORD= Command('edit-form.previous-record')
 """Pøechod na pøedchozí záznam."""
+
 BrowsableShowForm.COMMAND_FIRST_RECORD = Command('edit-form.first-record')
 """Pøechod na první záznam."""
+
 BrowsableShowForm.COMMAND_LAST_RECORD = Command('edit-form.last-record')
 """Pøechod na poslední záznam."""
 
@@ -275,31 +457,49 @@ DualForm.COMMAND_OTHER_FORM = Command('dual-form.other-form')
 
 PrintForm.COMMAND_NEXT_PAGE = Command('print-form.next-page')
 """Pøechod na dal¹í stránku tiskového náhledu."""
+
 PrintForm.COMMAND_PREVIOUS_PAGE = Command('print-form.previous-page')
 """Pøechod na pøedchozí stránku tiskového náhledu."""
 
-InputField.COMMAND_RESET_FIELD = Command('input-field.command-reset-field')
+InputField.COMMAND_RESET_FIELD = Command('input-field.command-reset-field',
+                                         enabled=_current_field_modified)
 """Vrácení pùvodní hodnoty vstupního políèka."""
+
 InputField.COMMAND_COMMIT_FIELD = Command('input-field.command-commit-field')
 """Úspì¹né ukonèení editace vstupního políèka."""
+
 InputField.COMMAND_LEAVE_FIELD = Command('input-field.command-leave-field')
 """Odchod z editace vstupního políèka."""
-Invocable.COMMAND_INVOKE_SELECTION = Command('invocable.invoke-selection')
+
+Invocable.COMMAND_INVOKE_SELECTION = Command('invocable.invoke-selection',
+                                             enabled=_current_field_enabled)
 """Vyvolání výbìru hodnoty vstupního políèka."""
+
 Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE = \
-    Command('invocable.invoke-selection-alternate')
+    Command('invocable.invoke-selection-alternate',
+            enabled=_current_field_enabled)
 """Vyvolání alternativního zpùsobu výbìru hodnoty vstupního políèka."""
-ListField.COMMAND_INVOKE_EDIT_FORM = Command('list-field.invoke-edit-form')
+
+ListField.COMMAND_INVOKE_EDIT_FORM = \
+    Command('list-field.invoke-edit-form',
+            enabled=_current_field_has_selection)
 """Vyvolání editaèního formuláøe nad aktuálním záznamem 'ListField'."""
-ListField.COMMAND_INVOKE_BROWSE_FORM = Command('list-field.invoke-browse-form')
+
+ListField.COMMAND_INVOKE_BROWSE_FORM = \
+    Command('list-field.invoke-browse-form',
+            enabled=_current_field_has_selection)
 """Zobrazení aktuálního záznamu 'ListField' ve formuláøi 'BrowseForm'."""
-ListField.COMMAND_CHOOSE_KEY = Command('list-field.choose-key')
+
+ListField.COMMAND_CHOOSE_KEY = Command('list-field.choose-key',
+                                       enabled=_current_field_has_selection)
 """Výbìr návratového sloupce a hodnoty pro 'ListField'."""
 
 Dialog.COMMAND_CLOSE_DIALOG = Command('dialog.close-dialog')
 """Opu¹tìní dialogu bez potvrzení."""
+
 Dialog.COMMAND_COMMIT_DIALOG = Command('dialog.commit-dialog')
 """Odeslání dialogu stejnì jako stiskem výchozího tlaèítka."""
+
 
 DEFAULT_COMMAND_KEYS = (
     (Application.COMMAND_BREAK,                   'Ctrl-g'),
