@@ -171,7 +171,8 @@ class Column(object):
     def kwargs(self):
         return self._kwargs
 
-
+# Zkratky na èasto pou¾ívané identifikátory.
+    
 Field = FieldSpec
 
 ASC = LookupForm.SORTING_ASCENDENT
@@ -215,7 +216,38 @@ class LVGroup(VGroup):
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LVGroup, self).__init__(*items, **kwargs)
-        
+
+def run_procedure_mitem(title, name, proc_name, hotkey=None):
+    return MItem(title, command=pytis.form.Application.COMMAND_RUN_PROCEDURE,
+                 args=dict(spec_name=name, proc_name=proc_name),
+                 hotkey=hotkey, help='Spustit proceduru "%s"' % title)
+
+def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
+    cmd = pytis.form.Application.COMMAND_RUN_FORM
+    args = dict(form_class=form_class, name=name, **kwargs)
+    descr = {
+        pytis.form.BrowseForm:          "øádkový formuláø",
+        pytis.form.PopupEditForm:       "editaèní formuláø",
+        pytis.form.Form:                "duální øádkový formuláø",
+        pytis.form.CodebookForm:        "èíselníkový formuláø",
+        pytis.form.DescriptiveDualForm: "duální náhledový formuláø",
+        }.get(form_class, "formuláø")
+    help = _('Otevøít %s "%s"') % (descr, title)
+    return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
+
+def new_record_mitem(title, name, hotkey=None):
+    cmd = pytis.form.Application.COMMAND_NEW_RECORD
+    args = dict(name=name)
+    help = _('Otevøít vstupní formuláø "%s"') % title
+    return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
+
+def user_cmd(name, handler, **kwargs):
+    return Command('user-command.' + name, handler=handler, **kwargs)
+
+def run_any_form(*args, **kwargs):
+    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
+    if result is not None:
+        pytis.form.run_form(*result)
 
 class ReusableSpec:
     def __init__(self, resolver):
