@@ -97,13 +97,6 @@ class Application(wx.App, KeyHandler):
 
     _WINDOW_MENU_TITLE = _("Okn&a")
 
-    UI_ALWAYS_DISABLED = 'UI_ALWAYS_DISABLED'
-    """UI event pro staticky zakázané prvky."""
-    UI_OPENED_WINDOW = 'UI_OPENED_WINDOW'
-    """UI test na pøítomnost otevøeného okna v aplikaci."""
-    UI_OPENED_MORE_WINDOWS = 'UI_OPENED_MORE_WINDOWS'
-    """UI test na pøítomnost více ne¾ jednoho otevøeného okna v aplikaci."""
-    
     def __init__(self, resolver):
         """Inicializuj aplikaci.
 
@@ -375,7 +368,7 @@ class Application(wx.App, KeyHandler):
         on_new_record = view.on_new_record()
         if on_new_record is not None:
             result = on_new_record(key=key, prefill=prefill)
-            top = current_form()
+            top = self.current_form()
             if isinstance(top, Refreshable):
                 top.refresh()
         else:
@@ -673,29 +666,27 @@ class Application(wx.App, KeyHandler):
         except:
             top_level_exception()
 
-    def on_ui_event(self, event, id):
-        """Zpracuj UI událost 'event' s identifikátorem 'id'.
+    def window_count(self):
+        """Vra» poèet právì otevøených oken na zásobníku."""
+        return len(self._windows.items())
 
-        Argumenty:
-
-          event -- iniciující událost, instance 'wx.UpdateUIEvent'
-          id -- identifikátor události, string
-
-        Metoda událost propaguje do aktuálního formuláøe, je-li jaký.
+    def current_form(self):
+        """Vra» právì aktivní formuláø aplikace, pokud existuje.
+        
+        Pokud není otevøen ¾ádný formuláø, nebo aktivním oknem není formuláø,
+        vrací None.  Pokud je otevøeným formuláøem duální formuláø, bude vrácen
+        jeho právì aktivní podformuláø.
         
         """
-        if id == Application.UI_ALWAYS_DISABLED:
-            event.Enable(False)
-        elif id == Application.UI_OPENED_WINDOW:
-            event.Enable(not self._windows.empty())
-        elif id == Application.UI_OPENED_MORE_WINDOWS:
-            event.Enable(len(self._windows.items()) > 1)
+        top = self.top_window()
+        if isinstance(top, Form):
+            if isinstance(top, DualForm):
+                return top.active_form()
+            else:
+                return top
         else:
-            top = self.top_window()
-            if isinstance(top, Form):
-                top.on_ui_event(event, id)
-
-
+            return None
+                
 
 # Funkce
 
@@ -730,7 +721,6 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
         _application.set_status('message', message, timeout=timeout,
                                 root=root)
 
-
 def set_status(id, message, log_=True):
     """Nastav pole 'id' stavové øádky na 'message'.
 
@@ -748,22 +738,13 @@ def set_status(id, message, log_=True):
         if log_: log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
     return _application.set_status(id, message)
 
-
 def get_status(id):
-    """Vra» text pole 'id' stavové øádky.
-
-    Argumenty:
-
-      id -- identifikátor pole stavové øádky.
-
-    """
+    """Vra» text pole 'id' stavové øádky. (viz 'Application.get_status()')"""
     return _application.get_status(id)
-
 
 def run_dialog(*args, **kwargs):
     """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
     return _application.run_dialog(*args, **kwargs)
-
 
 def run_form(*args, **kwargs):
     """Zobraz formuláø v oknì aplikace (viz 'Application.run_form()')."""
@@ -781,19 +762,9 @@ def leave_form():
     """Odstraò aktuální okno formuláøe z aplikace."""
     return _application.leave_form()
 
-
 def current_form():
-    """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje.
-
-    Pokud není otevøena ¾ádná aplikace, nebo souèasná aplikace nemá jako
-    aktivní okno instanci 'Form', vrací None.
-
-    """
-    f = _application.top_window()
-    if isinstance(f, Form):
-        return f
-    else:
-        return None
+    """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje."""
+    return _application.current_form()
 
 def resolver():
     """Vra» resolver aplikace získaný pøes 'Application.resolver()'."""
@@ -803,22 +774,13 @@ def wx_frame():
     """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
 
-
 def add_menu(menu, form=None):
     """Zavolej 'Application.add_menu()' aktuální aplikace."""
     return _application.add_menu(menu, form=form)
 
-
 def exit(**kwargs):
-    """Ukonèi u¾ivatelské rozhraní aplikace.
-
-    Argumenty:
-
-      kwargs -- pøedáno metodì 'Application.exit()'
-
-    """
+    """Zavolej 'Application.exit() aktuální aplikace a pøedej argumenty."""
     return _application.exit(**kwargs)
-
 
 def global_keymap():
     """Vra» klávesovou mapu aplikace jako instanci tøídy 'Keymap'."""
@@ -826,7 +788,6 @@ def global_keymap():
         return _application.keymap
     except AttributeError:
         return Keymap()
-
 
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontì.
