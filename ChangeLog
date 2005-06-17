@@ -1,3 +1,9 @@
+2005-06-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py: 
+	(run_procedure_mitem, run_form_mitem, new_record_mitem, user_cmd) 
+	(run_any_form): Nové funkce.
+
 2005-06-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (DataSpec): Buï potomkem
