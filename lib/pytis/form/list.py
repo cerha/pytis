@@ -73,15 +73,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
     """Konstanta callbacku interakce u¾ivatele."""
 
-    UI_EDIT_CHANGE = 'UI_EDIT_CHANGE'
-    """UI test na editaci øádku."""
-    UI_EXISTS_CONDITION = 'UI_EXISTS_CONDITION'
-    """UI test na pøítomnost vyhledávací podmínky."""
-    UI_SORTING = 'UI_SORTING'
-    """UI test na zapnuté tøídìní."""
-    UI_GROUPING = 'UI_GROUPING'
-    """UI test na zapnuté vizuální seskupování."""
-    
     _REFRESH_PERIOD = 60 # sekund
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
     _GROUPING_BACKGROUND_DOWNGRADE = (18, 16, 14) # sní¾ení slo¾ek jasu RGB
@@ -542,11 +533,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not self._finish_editing():
             return
         if col is not None:
-             col = self._columns[col].id()
-             if not self._data.find_column(col):
-                 message(_("Podle tohoto sloupce nelze tøídit"),
-                         beep_=True)
-                 return
+            col = self._columns[col].id()
+            if not self._data.find_column(col):
+                message(_("Podle tohoto sloupce nelze tøídit"),
+                        beep_=True)
+                return
         old_sorting = self._lf_sorting
         sorting = super_(ListForm)._on_sort_column(self, col=col,
                                                    direction=direction,
@@ -556,7 +547,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                 'sorting':sorting},
                          when=self.DOIT_IMMEDIATELY)
         return sorting
-        
+
+    def can_sort_column(self, **kwargs):
+        col = kwargs.get('col')
+        if col is not None:
+            kwargs['col'] = self._columns[col].id()
+        return super(ListForm, self).can_sort_column(**kwargs)
+            
+
+    
     # Callbacky
 
     def on_data_change(self):
@@ -634,12 +633,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             message(_("Neplatné èíslo záznamu"), beep_=True)                    
 
-
     def _on_label_left(self, event):
         col = event.GetCol()
         self._run_callback(self.CALL_USER_INTERACTION)
         invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
-                       direction=ListForm.SORTING_CYCLE_DIRECTION)
+                       direction=LookupForm.SORTING_CYCLE_DIRECTION)
         return True
 
     def _on_select_cell(self, event):
@@ -711,33 +709,28 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                       (MItem(_("Øadit vzestupnì"),
                              command = LookupForm.COMMAND_SORT_COLUMN,
                              args = {'direction':LookupForm.SORTING_ASCENDENT,
-                                     'col': col},
-                             uievent_id = self.UI_SORTING),
+                                     'col': col}),
                        MItem(_("Øadit sestupnì"),
                              command = LookupForm.COMMAND_SORT_COLUMN,
                              args = {'direction':
                                      LookupForm.SORTING_DESCENDANT,
-                                     'col': col},
-                             uievent_id=self.UI_SORTING),
+                                     'col': col}),
                        )),
                  MSeparator(),
                  MItem(_("Neøadit podle tohoto sloupce"),
                        command = LookupForm.COMMAND_SORT_COLUMN,
-                       args = {'direction': ListForm.SORTING_NONE,
-                               'col': col},
-                       uievent_id=self.UI_SORTING),
+                       args = {'direction': LookupForm.SORTING_NONE,
+                               'col': col}),
                  MItem(_("Zru¹it øazení úplnì"),
                        command = LookupForm.COMMAND_SORT_COLUMN,
-                       args = {'direction': ListForm.SORTING_NONE},
-                       uievent_id=self.UI_SORTING),
+                       args = {'direction': LookupForm.SORTING_NONE}),
                  MSeparator(),
                  MItem(_("Seskupit podle tohoto sloupce"),
                        command = ListForm.COMMAND_SET_GROUPING_COLUMN,
                        args = {'column_id': self._columns[col].id()}),
                  MItem(_("Zru¹it seskupování"),
                        command = ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args = {'column_id': None},
-                       uievent_id=self.UI_GROUPING),
+                       args = {'column_id': None}),
                  )
         menu = Menu('', items).create(g, self)
         pos = event.GetPosition()
@@ -813,39 +806,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Skip()
             return False
 
-    def on_ui_event(self, event, id):
-        try:
-            if self._current_editor.field().on_ui_event(event, id):
-                return True
-        except:
-            pass
-        if id == self.UI_EDIT_CHANGE:
-            editing = self._table.editing()
-            if editing and editing.changed:
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True
-        elif id == self.UI_EXISTS_CONDITION:
-            if self._lf_condition:
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True    
-        elif id == self.UI_SORTING:
-            if self._lf_sorting:
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True    
-        elif id == self.UI_GROUPING:
-            if self._lf_grouping:
-                event.Enable(True)
-            else:
-                event.Enable(False)
-            return True    
-        else:
-            return super_(ListForm).on_ui_event(self, event, id)
+    def is_changed(self):
+        editing = self._table.editing()
+        return editing and editing.changed
 
     def on_command(self, command, **kwargs):
         # Univerzální pøíkazy
@@ -934,8 +897,19 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return True
         return super_(ListForm).on_command(self, command, **kwargs)
             
-    # Metody volané pøímo z callbackových metod
+    def can_set_grouping(cls, appl, cmd, args):
+        f = appl.current_form()
+        cid = args.get('column_id')
+        if f and isinstance(f, LookupForm):
+            grp = f._lf_grouping
+            print "---", cid, grp
+            return (cid and cid != grp or grp and not cid)
+        else:
+            return False
+    can_set_grouping = classmethod(can_set_grouping)
 
+    # Metody volané pøímo z callbackových metod
+                                   
     def _on_activation(self):
         log(EVENT, 'Aktivace øádku øádkového seznamu')
         key = self._current_key()
@@ -1791,7 +1765,6 @@ class BrowseForm(ListForm):
             MSeparator(),
             MItem(_("Editovat záznam"),
                   command=BrowseForm.COMMAND_RECORD_EDIT),
-                  # TODO:uievent_id= neaktivní v DescriptiveDualFormu
             MItem(_("Smazat záznam"),
                   command=ListForm.COMMAND_LINE_DELETE),
             MItem(_("Náhled"),
