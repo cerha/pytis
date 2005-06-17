@@ -187,32 +187,25 @@ class Form(Window, KeyHandler, CallbackHandler):
     def _menus(self):
         return (Menu(_("Pøíkazy"),
                      (MItem(_("Pøepnout na pøedchozí okno"),
-                            command=Application.COMMAND_PREV_FORM,
-                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                            command=Application.COMMAND_PREV_FORM),
                       MItem(_("Pøepnout na následující okno"),
-                            command=Application.COMMAND_NEXT_FORM,
-                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                            command=Application.COMMAND_NEXT_FORM),
                       MItem(_("Zavøít aktuální okno"),
-                            command=Application.COMMAND_LEAVE_FORM,
-                            uievent_id=Application.UI_OPENED_WINDOW),
+                            command=Application.COMMAND_LEAVE_FORM),
                       MSeparator(),
                       MItem(_("Ulo¾it"),
-                            command=ListForm.COMMAND_LINE_COMMIT,
-                            uievent_id=ListForm.UI_EDIT_CHANGE),
+                            command=ListForm.COMMAND_LINE_COMMIT),
                       MItem(_("Zru¹it zmìny"),
-                            command=ListForm.COMMAND_LINE_ROLLBACK,
-                            uievent_id=ListForm.UI_EDIT_CHANGE),
+                            command=ListForm.COMMAND_LINE_ROLLBACK),
                       MSeparator(),
                       MItem(_("Skok na záznam"),
                             command=LookupForm.COMMAND_JUMP),
                       MItem(_("Hledat"),
                             command=LookupForm.COMMAND_SEARCH),
                       MItem(_("Hledat dal¹í"),
-                            command=LookupForm.COMMAND_SEARCH_NEXT,
-                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                            command=LookupForm.COMMAND_SEARCH_NEXT),
                       MItem(_("Hledat pøedchozí"),
-                            command=LookupForm.COMMAND_SEARCH_PREVIOUS,
-                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                            command=LookupForm.COMMAND_SEARCH_PREVIOUS),
                       MItem(_("Inkrementální hledání"),
                             command=ListForm.COMMAND_INCREMENTAL_SEARCH),
                       MItem(_("Inkrementální hledání - èást øetìzce"),
@@ -223,33 +216,25 @@ class Form(Window, KeyHandler, CallbackHandler):
                       MItem(_("Filtrovat"),
                             command=LookupForm.COMMAND_FILTER),
                       MSeparator(),
+                      # TODO: V¹echny INSERT pøíkazy slouèit v jeden s args.
                       MItem(_("Nový záznam"),
-                            command=BrowseForm.COMMAND_NEW_RECORD,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=BrowseForm.COMMAND_NEW_RECORD),
                       MItem(_("Nový záznam - kopie"),
-                            command=BrowseForm.COMMAND_NEW_RECORD_COPY,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=BrowseForm.COMMAND_NEW_RECORD_COPY),
                       MItem(_("Editovat záznam"),
-                            command=BrowseForm.COMMAND_RECORD_EDIT,
-                            uievent_id=RecordForm.UI_ACCESS_UPDATE),
+                            command=BrowseForm.COMMAND_RECORD_EDIT),
                       MItem(_("Vlo¾it øádku nad"),
-                            command=ListForm.COMMAND_NEW_LINE_BEFORE,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=ListForm.COMMAND_NEW_LINE_BEFORE),
                       MItem(_("Vlo¾it øádku pod"),
-                            command=ListForm.COMMAND_NEW_LINE_AFTER,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=ListForm.COMMAND_NEW_LINE_AFTER),
                       MItem(_("Kopírovat øádku nad"),
-                            command=ListForm.COMMAND_NEW_LINE_BEFORE_COPY,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=ListForm.COMMAND_NEW_LINE_BEFORE_COPY),
                       MItem(_("Kopírovat øádku pod"),
-                            command=ListForm.COMMAND_NEW_LINE_AFTER_COPY,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=ListForm.COMMAND_NEW_LINE_AFTER_COPY),
                       MItem(_("Editace buòky"),
-                            command=ListForm.COMMAND_EDIT,
-                            uievent_id=RecordForm.UI_ACCESS_UPDATE),
+                            command=ListForm.COMMAND_EDIT),
                       MItem(_("Smazat záznam"),
-                            command=ListForm.COMMAND_LINE_DELETE,
-                            uievent_id=RecordForm.UI_ACCESS_DELETE),
+                            command=ListForm.COMMAND_LINE_DELETE),
                       MSeparator(),
                       MItem(_("Export do textového souboru"),
                             command=ListForm.COMMAND_EXPORT_CSV),
@@ -303,25 +288,6 @@ class Form(Window, KeyHandler, CallbackHandler):
         """Vra» název specifikace formuláøe."""
         return self._name
 
-    def on_ui_event(self, event, id):
-        """Zpracuj UI událost 'event' s identifikátorem 'id'.
-
-        Argumenty:
-
-          event -- iniciující událost, instance 'wx.UpdateUIEvent'
-          id -- identifikátor události, string
-
-        Metoda musí událost buï sama o¹etøit, nebo ji vypropagovat do vnitøního
-        prvku formuláøe, pokud takový je a má metodu stejného názvu jako tato.
-
-        Vrací: Pravdu, právì kdy¾ metoda nebo jí volaná metoda událost
-        zpracovala.
-        
-        V této tøídì metoda nedìlá nic a vrací False.
-        
-        """
-        return False
-
     def on_command(self, command, **kwargs):
         """Zpracuj 'command'.
 
@@ -354,6 +320,14 @@ class Form(Window, KeyHandler, CallbackHandler):
     def guardian(self):
         """Vra» guardian zadané v konstruktoru (nebo parent)."""
         return self._guardian
+
+    def check_permission(self, perm):
+        """Vra» pravdu, pokud má u¾ivatel daná práva k datovému objektu.
+
+        Argumentem je konstanta  tøídy 'pytis.data.Permission'.
+
+        """
+        return self._data.accessible(None, perm)
     
     def set_status(self, field, message):
         """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
@@ -536,13 +510,6 @@ class RecordForm(Form):
     CALL_SELECTION = 'CALL_SELECTION'
     """Konstanta callbacku zmìny záznamu."""
 
-    UI_ACCESS_INSERT = 'UI_ACCESS_INSERT'
-    """UI test na právo vlo¾ení nového záznamu."""
-    UI_ACCESS_UPDATE = 'UI_ACCESS_UPDATE'
-    """UI test na právo aktualizaci záznamu."""
-    UI_ACCESS_DELETE = 'UI_ACCESS_DELETE'
-    """UI test na právo smazání záznamu."""
-
     def _init_attributes(self, key=None, prefill=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
@@ -581,20 +548,6 @@ class RecordForm(Form):
         
     # Veøejné metody
 
-    def on_ui_event(self, event, id):
-        if id == self.UI_ACCESS_INSERT:
-            perm = pytis.data.Permission.INSERT
-        elif id == self.UI_ACCESS_UPDATE:
-            perm = pytis.data.Permission.UPDATE
-        elif id == self.UI_ACCESS_DELETE:
-            perm = pytis.data.Permission.DELETE
-        else:
-            return False
-        if self._data.accessible(None, perm):
-            event.Enable(True)
-        else:
-            event.Enable(False)
-    
     def prefill(self):
         """Vra» data pro pøedvyplnìní nového záznamu."""
         return self._prefill
@@ -881,7 +834,20 @@ class LookupForm(RecordForm):
             self._lf_sorting = sorting
             self._set_row(self._find_row(self._key, any_row=True))
         return sorting
-
+    
+    def can_sort_column(self, col=None, direction=None, primary=False):
+        sorting = xtuple(self._lf_sorting)
+        sortcols = [c for c,d in sorting]
+        if direction == self.SORTING_NONE:
+            return sorting and (col is None or col in sortcols)
+        elif direction is not None and col is not None:
+            if primary:
+                return not sorting or col != sorting[0][0]
+            else:
+                return sorting and col not in sortcols
+        else:
+            return True
+        
     # wx metody
 
     def Close(self):
@@ -910,6 +876,11 @@ class LookupForm(RecordForm):
 
         """
         return self._lf_sorting
+
+    def is_searching(self):
+        """Vra» pravdu, je-li definována vyhledávací podmínka."""
+        sd = self._lf_search_dialog
+        return bool(sd and sd._condition)
     
     def on_command(self, command, **kwargs):
         if command == LookupForm.COMMAND_JUMP:
@@ -933,7 +904,12 @@ class LookupForm(RecordForm):
         else:
             return super_(LookupForm).on_command(self, command, **kwargs)
 
-
+    def can_sort(cls, appl, cmd, args):
+        f = appl.current_form()
+        return f and isinstance(f, LookupForm) and f.can_sort_column(**args)
+    can_sort = classmethod(can_sort)
+    
+        
 
 ### Editaèní formuláø
 
@@ -1311,37 +1287,29 @@ class EditForm(LookupForm, TitledForm):
     def _menus(self):
         return (Menu(_("Pøíkazy"),
                      (MItem(_("Pøepnout na pøedchozí okno"),
-                            command=Application.COMMAND_PREV_FORM,
-                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                            command=Application.COMMAND_PREV_FORM),
                       MItem(_("Pøepnout na následující okno"),
-                            command=Application.COMMAND_NEXT_FORM,
-                            uievent_id=Application.UI_OPENED_MORE_WINDOWS),
+                            command=Application.COMMAND_NEXT_FORM),
                       MItem(_("Zavøít aktuální okno"),
-                            command=Application.COMMAND_LEAVE_FORM,
-                            uievent_id=Application.UI_OPENED_WINDOW),
+                            command=Application.COMMAND_LEAVE_FORM),
                       MSeparator(),
                       MItem(_("Hledat"),
                             command=LookupForm.COMMAND_SEARCH),
                       MItem(_("Hledat dal¹í"),
-                            command=LookupForm.COMMAND_SEARCH_NEXT,
-                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                            command=LookupForm.COMMAND_SEARCH_NEXT),
                       MItem(_("Hledat pøedchozí"),
-                            command=LookupForm.COMMAND_SEARCH_PREVIOUS,
-                            uievent_id=ListForm.UI_EXISTS_CONDITION),
+                            command=LookupForm.COMMAND_SEARCH_PREVIOUS),
                       MItem(_("Tøídìní"),
                             command=LookupForm.COMMAND_SORT_COLUMN),
                       MItem(_("Filtrovat"),
                             command=LookupForm.COMMAND_FILTER),
                       MSeparator(),
                       MItem(_("Nový záznam"),
-                            command=EditForm.COMMAND_RECORD_INSERT,
-                            uievent_id=RecordForm.UI_ACCESS_INSERT),
+                            command=EditForm.COMMAND_RECORD_INSERT),
                       MItem(_("Editovat záznam"),
-                            command=EditForm.COMMAND_RECORD_UPDATE,
-                            uievent_id=RecordForm.UI_ACCESS_UPDATE),
+                            command=EditForm.COMMAND_RECORD_UPDATE),
                       MItem(_("Smazat záznam"),
-                            command=EditForm.COMMAND_RECORD_DELETE,
-                            uievent_id=RecordForm.UI_ACCESS_DELETE),
+                            command=EditForm.COMMAND_RECORD_DELETE),
                       ),
                      activation=EditForm.ACT_EDITFORM),
                 Menu(_("Tisk"), (EditForm.print_menu,),
@@ -1427,11 +1395,6 @@ class EditForm(LookupForm, TitledForm):
             if not run_dialog(Question, q):
                 return False
         return True
-
-    def on_ui_event(self, event, id):
-        field = InputField.focused()
-        if field is not None and field.on_ui_event(event, id):
-            return True
 
     def on_command(self, command, **kwargs):
         if kwargs.has_key('originator') \
@@ -1663,14 +1626,6 @@ class BrowsableShowForm(ShowForm):
         self._init_select()
         self._set_status()
 
-    def on_ui_event(self, event, id):
-        if id == ListForm.UI_EXISTS_CONDITION:
-            if self._lf_search_dialog and self._lf_search_dialog._condition:
-                event.Enable(True)
-            else:
-                return True    
-        return super_(BrowsableShowForm).on_ui_event(self, event, id)
-        
     def _on_set_row(self, row_number):
         # row_number zaèíná od 0
         def get_it():
