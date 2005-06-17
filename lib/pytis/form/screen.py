@@ -468,7 +468,8 @@ class Keymap:
         if type(keydef) == type([]):
             keydef[0:0] = [(command, args)]
         else:
-            assert rest, ("Key is already defined as a prefix key:", prefix)
+            assert rest, ("Key is already defined as a prefix key:",
+                          (str(command), args))
             keydef._define_key(rest, command, args)
 
     def define_key(self, key, command, args={}):
@@ -896,8 +897,6 @@ class MenuBar(wx.MenuBar, Restorable):
             self.add_menu(menu)
         self._activations = []
         parent.SetMenuBar(self)        
-        self._access_groups = \
-           pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
 
     def _create_menu(self, menu, form):
         return menu.create(self._parent, self._keyhandler, form=form)
@@ -968,12 +967,7 @@ class MenuBar(wx.MenuBar, Restorable):
         #   return
         old = self._activations
         self._activations = activations
-        if self._access_groups is None:
-            self._access_groups = \
-             pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
-            update_access = True
-        else:
-            update_access = False
+        update_access = False
         for menu in self._menus:
             act = menu.activation()
             removep = (update_access and
@@ -1087,9 +1081,8 @@ class Menu:
             není-li aktivace spojena s ¾ádným formuláøem, tak 'None'
         
         """
+        appl = pytis.form.application._application
         menu = wx.Menu()
-        dbconnection = config.dbconnection
-        groups = pytis.data.DBDataDefault.class_access_groups(dbconnection)
         # At first, compute the maximal width of hotkey string in this menu.
         max_hotkey_width = 0
         hotkey_string = {}
@@ -1119,10 +1112,9 @@ class Menu:
             if isinstance(i, MItem):
                 item = i.create(parent, menu)
                 menu.AppendItem(item)
-                command_groups = i.command().access_groups()
-                active = groups is None or command_groups is None or \
-                         some(lambda g: g in groups, command_groups)
-                menu.Enable(item.GetId(), active)
+                # Toto je zde zejména kvùli nake¹ování vypoètenách hodnot
+                # uvnitø 'Command.enabled()'.
+                menu.Enable(item.GetId(), i.command().enabled(appl, i.args()))
                 width = parent.GetTextExtent(i.title())[0]
                 if hotkey_string.has_key(i):
                     hotkey_items.append((i, item, width))
@@ -1166,8 +1158,7 @@ class MItem:
     """
     _used_titles = {}
     
-    def __init__(self, title, command, args={}, help='', hotkey=None,
-                 uievent_id=None):
+    def __init__(self, title, command, args={}, help='', hotkey=None):
         """Uschovej parametry.
 
         Argumenty:
@@ -1180,9 +1171,7 @@ class MItem:
             ve stavovém øádku pøi prùchodu pøes polo¾ku; mù¾e být prázdný
           hotkey -- horká klávesa pro okam¾itý výbìr polo¾ky menu, string nebo
             sekvence stringù dle specifikace v modulu 'command'
-          uievent_id -- string identifikující u¾ivatelskou událost generovanou
-            pøed zobrazením polo¾ky menu nebo 'None'
-
+            
         Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
         'command' automaticky nastavena tato klávesa.
           
@@ -1196,18 +1185,19 @@ class MItem:
         assert help is None or is_anystring(help)
         assert hotkey is None or is_anystring(hotkey) or \
                is_sequence(hotkey)
-        assert uievent_id is None or is_string(uievent_id) or \
-               callable(uievent_id)
         self._title = gettext_(title)
         self._hotkey = xtuple(hotkey)
         self._command = command
         self._args = args
         self._help = gettext_(help)
-        self._uievent_id = uievent_id
 
     def _wx_kind(self):
         return wx.ITEM_NORMAL
 
+    def _on_ui_event(self, event):
+        appl = pytis.form.application._application
+        if appl:
+            event.Enable(self._command.enabled(appl, self._args))
 
     def set_hotkey(self, hotkey):
         """Nastav dodateènì klávesovou zkratku polo¾ky menu."""
@@ -1224,10 +1214,7 @@ class MItem:
         item = wx.MenuItem(parent_menu, id, self.title(), self._help,
                            kind=self._wx_kind())
         wx_callback(wx.EVT_MENU, parent, id, callback(self))
-        uiid = self.uievent_id()
-        if uiid is not None:
-            wx_callback(wx.EVT_UPDATE_UI, parent, id,
-                        lambda e: appl and appl.on_ui_event(e, uiid))
+        wx_callback(wx.EVT_UPDATE_UI, parent, id, self._on_ui_event)
         return item
         
     def title(self):
@@ -1249,10 +1236,6 @@ class MItem:
 
         """
         return self._hotkey
-
-    def uievent_id(self):
-        """Vra» identifikátor u¾ivatelské události zadaný v konstruktoru."""
-        return self._uievent_id
 
 
 class RadioItem(MItem):
