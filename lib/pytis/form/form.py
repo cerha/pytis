@@ -842,14 +842,13 @@ class LookupForm(RecordForm):
     
     def can_sort_column(self, col=None, direction=None, primary=False):
         sorting = xtuple(self._lf_sorting)
-        sortcols = [c for c,d in sorting]
         if direction == self.SORTING_NONE:
-            return sorting and (col is None or col in sortcols)
-        elif direction is not None and col is not None:
+            return sorting and (col is None or col in [c for c,d in sorting])
+        elif direction is not None and col is not None and sorting:
             if primary:
-                return not sorting or col != sorting[0][0]
+                return (col, direction) != sorting[0]
             else:
-                return sorting and col not in sortcols
+                return (col, direction) not in sorting and col != sorting[0][0]
         else:
             return True
         
@@ -911,7 +910,7 @@ class LookupForm(RecordForm):
 
     def can_sort(cls, appl, cmd, args):
         f = appl.current_form()
-        return f and isinstance(f, LookupForm) and f.can_sort_column(**args)
+        return f and isinstance(f, LookupForm) and f.can_sort_colum(n**args)
     can_sort = classmethod(can_sort)
     
         
