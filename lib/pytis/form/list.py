@@ -386,12 +386,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         row = 0
                     else:
                         if not g.IsInSelection(row, 0):
-                            col_ = col or max(0, current_col)
-                            g.SetGridCursor(row, col_)
-                            g.MakeCellVisible(row, col_)
+                            if col is None:
+                                col = max(0, current_col)
+                            g.SetGridCursor(row, col)
+                            g.MakeCellVisible(row, col)
                             # Z neznámých dùvodù jedno volání nestaèí.  Øádek
                             # je vidìt jen napùl...  Podruhé u¾ je to lep¹í :-)
-                            g.MakeCellVisible(row, col_)
+                            g.MakeCellVisible(row, col)
                             if invoke_callback:
                                 # Nevoláme callback ihned, staèí a¾ po
                                 # zastavení scrolování...
@@ -403,7 +404,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                             g.SelectRow(row)
                     self._position = row
                     self.show_position()
-            if col is not None and col != g.GetGridCursorCol():
+            elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
             if __debug__: log(DEBUG, 'Výbìr buòky proveden:', (row, col))
@@ -926,12 +927,20 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         refresh = not kwargs.has_key('norefresh')
         if not refresh:
             del kwargs['norefresh']
-        # Zjistíme, zda má u¾ivatelský handler klíèové argumenty
+        # Zjistíme, jaké má u¾ivatelský handler argumenty.
         import inspect
-        args, varargs, varkw, defaults = inspect.getargspec(handler)
+        allargs, varargs, varkw, defaults = inspect.getargspec(handler)
+        posargs = len(allargs) - len(defaults)
+        row = self.current_row()
+        if posargs == 0:
+            args = ()
+        if posargs == 1:
+            args = (row,)
+        else:
+            args = (self._data, row)
         if not varkw:
             kwargs = {}
-        handler(self._data, self._table.row(self._current_row()), **kwargs)
+        handler(*args, **kwargs)
         if refresh:
             self.refresh()
         return True
