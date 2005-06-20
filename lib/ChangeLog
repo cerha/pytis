@@ -1,3 +1,9 @@
+2005-06-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (Form.check_permission): Vracej pravdu pokud
+	je dané právo alespoò k jednomu sloupeèku datového objektu.  Pouze
+	pro delete vracej globální právo.
+
 2005-06-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm.UI_EDIT_CHANGE)
