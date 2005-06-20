@@ -324,13 +324,13 @@ class Form(Window, KeyHandler, CallbackHandler):
     def check_permission(self, perm):
         """Vra» pravdu, pokud má u¾ivatel daná práva k datovému objektu.
 
-        Argumentem je konstanta  tøídy 'pytis.data.Permission'.
+        Argumentem je konstanta  tøídy 'pytis.data.Permission::'.
 
         """
-        if perm == Permission.DELETE:
+        if perm == pytis.data.Permission.DELETE:
             return self._data.accessible(None, perm)
-        for id in self._data.columns():
-            if self._data.accessible(id, perm):
+        for col in self._data.columns():
+            if self._data.accessible(col.id(), perm):
                 return True
         return False
     
