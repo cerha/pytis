@@ -930,7 +930,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Zjistíme, jaké má u¾ivatelský handler argumenty.
         import inspect
         allargs, varargs, varkw, defaults = inspect.getargspec(handler)
-        posargs = len(allargs) - len(defaults)
+        if allargs:
+            if defaults:
+                posargs = len(allargs) - len(defaults)
+            else:
+                posargs = len(allargs)
+        else:
+            posargs = 0
         row = self.current_row()
         if posargs == 0:
             args = ()
