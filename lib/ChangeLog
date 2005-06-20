@@ -3,6 +3,7 @@
 	* pytis/form/form.py (Form.check_permission): Vracej pravdu pokud
 	je dané právo alespoò k jednomu sloupeèku datového objektu.  Pouze
 	pro delete vracej globální právo.
+	(LookupForm.can_sort_column): Oprava sémantiky.
 
 2005-06-17  Tomas Cerha  <cerha@brailcom.org>
 
