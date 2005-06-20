@@ -883,36 +883,20 @@ class _GsqlView(_GsqlSpec):
                 raise GensqlError("Non-matching column length", c)
         return complex_len
 
-
-    def _make_complex_tables(self):
-        complex_tables = []
-        for i in range(self._complex_len):
-            icomplex_tables = []
-            for c in self._complex_columns:
-                if is_sequence(c.name) and c.name[i]:                    
-                    tname = _gsql_column_table_column(c.name[i])[0]
-                    if tname and tname not in icomplex_tables:
-                        icomplex_tables.append(tname)
-            complex_tables.append(icomplex_tables)            
-        return complex_tables
-
-       
+      
     def _make_tables(self):
         """Vytvoøí seznam tabulek pro klauzuli from
-           a seznam jmen pou¾itých tabulek."""
-        
+           a seznam jmen pou¾itých tabulek."""       
         column_tables = []
         if self._complexp:
-            simple_tables = [self._column_table(t)
-                             for t in self._simple_columns
-                             if self._column_table(t) is not None]
-            complex_tables = self._make_complex_tables()
             for i in range(self._complex_len):
-                ti = complex_tables[i]
-                for t in simple_tables:
-                    if t not in ti:
-                        ti.append(t)
-                column_tables.append(ti)
+                icomplex_tables = []
+                for c in self._complex_columns:
+                    if is_sequence(c.name) and c.name[i]:                    
+                        tname = _gsql_column_table_column(c.name[i])[0]
+                        if tname and tname not in icomplex_tables:
+                            icomplex_tables.append(tname)
+                column_tables.append(icomplex_tables)            
         else:
             simple_tables = [self._column_table(t)
                              for t in self._columns
@@ -944,8 +928,6 @@ class _GsqlView(_GsqlSpec):
                         else:
                             ctables_from.append(t)
                             ctables.append(t)
-                        remove_duplicates(ctables)    
-                        remove_duplicates(ctables_from)
                     tables_from.append(ctables_from)
                     tables.append(ctables)
             else:
@@ -957,13 +939,14 @@ class _GsqlView(_GsqlSpec):
                     if t in table_alias_aliases and t not in aliases:
                         aliases.append(t)
                         t = rassoc(t, self._table_alias)
-                        tables_from.append(' '.join(t))
-                        tables.append(t[0])
+                        table_from = ' '.join(t)
+                        table = t[0]
                     else:
-                        tables_from.append(t)
-                        tables.append(t)
-                    remove_duplicates(tables)
-                    remove_duplicates(tables_from)
+                        table_from = table = t
+                    if table_from not in tables_from:
+                        tables_from.append(table_from)
+                    if table not in tables:
+                        tables.append(table)
         else:
             tables_from = tables = column_tables
         return tables_from, tables
@@ -1032,7 +1015,7 @@ class _GsqlView(_GsqlSpec):
         table_columns = {}
         table_column_names = {}
         if not self._complexp:
-            for t in remove_duplicates(self._tables):
+            for t in self._tables:
                 table_alias = assoc(t, self._table_alias or ())
                 table_alias = table_alias and table_alias[1] or t
                 cols = []
@@ -1044,64 +1027,66 @@ class _GsqlView(_GsqlSpec):
                         if tname == table_alias and cname != 'oid':
                             cols.append(c)
                             colnames.append(c.name)
-                if cols:
-                    table_columns[t] = cols
-                    table_column_names[t] = colnames
+                table_columns[t] = cols
+                table_column_names[t] = colnames
         if kind is self._INSERT:
             command = 'INSERT'
             suffix = 'ins'
-            body = [];
-            for t in table_column_names.keys():
-                column_names = [self._column_column(c)
-                                for c in table_columns[t]
-                                if c.insert]
-                column_values = [c.insert == '' and
-                          'new.%s' % (c.alias) or
-                          c.insert                                
-                          for c in table_columns[t]
-                          if c.insert]                
-                columns = ',\n      '.join(column_names)
-                values = ',\n      '.join(column_values)
-                if column_names:
-                    body.append('INSERT INTO %s (\n      %s)\n     VALUES (\n      %s)' % \
-                                (t, columns, values))
+            body = []
+            if not self._complexp:
+                for t in self._tables:
+                    column_names = [self._column_column(c)
+                                    for c in table_columns[t]
+                                    if c.insert]
+                    column_values = [c.insert == '' and
+                              'new.%s' % (c.alias) or
+                              c.insert                                
+                              for c in table_columns[t]
+                              if c.insert]                
+                    columns = ',\n      '.join(column_names)
+                    values = ',\n      '.join(column_values)
+                    if column_names:
+                        body.append('INSERT INTO %s (\n      %s)\n     VALUES (\n      %s)' % \
+                                    (t, columns, values))
             action = self._insert
             body = string.join(body, ';\n    ')
         elif kind is self._UPDATE:
             command = 'UPDATE'
             suffix = 'upd'
             body = []
-            for t in table_column_names.keys():
-                column_names = [self._column_column(c)
-                                for c in table_columns[t]
-                                if c.update]                
-                values = [c.update == '' and
-                          'new.%s' % (c.alias) or
-                          c.update                                
-                          for c in table_columns[t]
-                          if c.update]                
-                settings = ',\n      '.join(['%s = %s' % (c, v)
-                                             for c, v in zip(column_names,
-                                                             values)])
-                rels = ['%s = old.%s' % (c, _gsql_column_table_column(c)[1])
-                        for c in self._key_columns
-                        if _gsql_column_table_column(c)[0] == t]
-                condition = string.join(rels, ' AND ')
-                if column_names:
-                    body.append('UPDATE %s SET\n      %s \n    WHERE %s' % \
-                                (t, settings, condition))
+            if not self._complexp:
+                for t in self._tables:
+                    column_names = [self._column_column(c)
+                                    for c in table_columns[t]
+                                    if c.update]                
+                    values = [c.update == '' and
+                              'new.%s' % (c.alias) or
+                              c.update                                
+                              for c in table_columns[t]
+                              if c.update]                
+                    settings = ',\n      '.join(['%s = %s' % (c, v)
+                                                 for c, v in zip(column_names,
+                                                                 values)])
+                    rels = ['%s = old.%s' % (c, _gsql_column_table_column(c)[1])
+                            for c in self._key_columns
+                            if _gsql_column_table_column(c)[0] == t]
+                    condition = string.join(rels, ' AND ')
+                    if column_names:
+                        body.append('UPDATE %s SET\n      %s \n    WHERE %s' % \
+                                    (t, settings, condition))
             action = self._update
             body = string.join(body, ';\n    ')
         elif kind is self._DELETE:
             command = 'DELETE'
             suffix = 'del'
             body = []
-            for t in table_column_names.keys():
-                rels = ['%s = old.%s' % (c, _gsql_column_table_column(c)[1])
-                        for c in self._key_columns
-                        if _gsql_column_table_column(c)[0] == t]
-                condition = string.join(rels, ' AND ')
-                body.append('DELETE FROM %s \n    WHERE %s' % (t, condition))
+            if not self._complexp:
+                for t in self._tables:
+                    rels = ['%s = old.%s' % (c, _gsql_column_table_column(c)[1])
+                            for c in self._key_columns
+                            if _gsql_column_table_column(c)[0] == t]
+                    condition = string.join(rels, ' AND ')
+                    body.append('DELETE FROM %s \n    WHERE %s' % (t, condition))
             action = self._delete
             body = string.join(body, ';\n    ')            
         else:
