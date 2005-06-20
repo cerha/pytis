@@ -327,7 +327,12 @@ class Form(Window, KeyHandler, CallbackHandler):
         Argumentem je konstanta  tøídy 'pytis.data.Permission'.
 
         """
-        return self._data.accessible(None, perm)
+        if perm == Permission.DELETE:
+            return self._data.accessible(None, perm)
+        for id in self._data.columns():
+            if self._data.accessible(id, perm):
+                return True
+        return False
     
     def set_status(self, field, message):
         """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
