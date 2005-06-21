@@ -1,8 +1,19 @@
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_grid.py (IncrementalSearch._on_kill_focus): Nastavuj
+	callback pouze pokud listform stále existuje.
+
 	* pytis/form/form.py (LookupForm.can_sort): Oprava pøeklepu.
 
 2005-06-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._select_cell): Pøechod na sloupeèek
+	provádìj pouze pokud nebyl proveden pøechod na øádek /pøi nìm¾ je
+	provádìn i pøechod na sloupeèek/.  Úprava výpoètu sloupeèku.
+	(ListForm._on_handled_command): Pokud má handler ménì ne¾ dva
+	pozièní arguemnty, pøedávej pouze `row', nebo vùbec nic.
+	(ListForm._on_handled_command): Zohledòuj `None' ve výsledku
+	volání `inspect.getargspec()'.
 
 	* pytis/form/form.py (Form.check_permission): Vracej pravdu pokud
 	je dané právo alespoò k jednomu sloupeèku datového objektu.  Pouze
