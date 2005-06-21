@@ -39,6 +39,8 @@
 	`BrowseForm.COMMAND_EDIT_RECORD'.
 	(ListForm._on_select_cell): Callback volej jen pokud nejsme uvnitø
 	`_select_cell()'.
+	(ListForm._on_context_menu): Volej callback
+	`CALL_USER_INTERACTION'.
 
 	* pytis/presentation/field.py (PresentedRow.__init__): Namísto
 	koncových akcí volej `self._set_row()'.
