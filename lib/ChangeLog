@@ -28,7 +28,7 @@
 	`ListForm.COMMAND_SHOW_CELL_CODEBOOK' voláním
 	`self._on_show_cell_codebook()'.
 	(ListForm.can_set_grouping): Zru¹en zapomenutý print.
-	(ListForm._on_show_cell_codebook) 
+	(ListForm._on_show_cell_codebook)
 	(ListForm.can_show_cell_codebook): Nové metody.
 	(BrowseForm._context_menu): Pøidána polo¾ka pro pøíkaz
 	`ListForm.COMMAND_SHOW_CELL_CODEBOOK'.  Kosmetické úpravy.
@@ -37,6 +37,8 @@
 	`BrowseForm.COMMAND_EDIT_RECORD'.
 	(BrowseForm.on_command): `BrowseForm.COMMAND_RECORD_EDIT' ->
 	`BrowseForm.COMMAND_EDIT_RECORD'.
+	(ListForm._on_select_cell): Callback volej jen pokud nejsme uvnitø
+	`_select_cell()'.
 
 	* pytis/presentation/field.py (PresentedRow.__init__): Namísto
 	koncových akcí volej `self._set_row()'.
