@@ -330,6 +330,11 @@ ListForm.COMMAND_ACTIVATE = Command('list-form.activate')
 ListForm.COMMAND_ACTIVATE_ALTERNATE = Command('list-form.activate-alternate')
 """Vyvolání alternativní aktivaèní funkce pro øádek øádkového formuláøe."""
 
+ListForm.COMMAND_SHOW_CELL_CODEBOOK = \
+    Command('list-form.show-cell-codebook',
+            enabled=ListForm.can_show_cell_codebook)
+"""Vyvolání èíselníku aktivní buòky øádkového formuláøe."""
+
 ListForm.COMMAND_SELECT_CELL = Command('list-form.select-cell', log_=False)
 """Výbìr buòky seznamu."""
 
