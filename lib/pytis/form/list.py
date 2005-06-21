@@ -757,6 +757,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             menu = self._edit_menu()
         else:
             menu = self._context_menu()
+        g = self._grid
         if menu:
             keymap = global_keymap()
             for item in menu:
@@ -766,12 +767,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         item.set_hotkey(hotkey)
             if position is None:
                 row, col = self._current_cell()
-                rect = self._grid.CellToRect(row, col)
-                d = self._grid.GetColLabelSize()
-                pos=(rect.GetX() + rect.GetWidth()/3 ,
-                          rect.GetY() + rect.GetHeight()/2 + d)
+                rect = g.CellToRect(row, col)
+                pos = (rect.GetX() + rect.GetWidth()/3 ,
+                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
                 position = self._grid.CalcScrolledPosition(pos)
-            g = self._grid
             menu = Menu('', menu).create(g, self)
             g.PopupMenu(menu, position)
             menu.Destroy()
@@ -871,6 +870,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._on_activation()
             elif command == ListForm.COMMAND_ACTIVATE_ALTERNATE:
                 self._on_alternate_activation()
+            elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
+                self._on_show_cell_codebook()
             elif command == LookupForm.COMMAND_SEARCH:
                 self._on_search()
             elif command == LookupForm.COMMAND_SEARCH_NEXT:
@@ -904,7 +905,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         cid = args.get('column_id')
         if f and isinstance(f, LookupForm):
             grp = f._lf_grouping
-            print "---", cid, grp
             return (cid and cid != grp or grp and not cid)
         else:
             return False
@@ -921,6 +921,23 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         log(EVENT, 'Aktivace øádku øádkového seznamu')
         key = self._current_key()
         self._run_callback(self.CALL_ALTERNATE_ACTIVATION, (key,))
+
+    def _on_show_cell_codebook(self):
+        column = self._columns[self._current_cell()[1]]
+        cb_name = column.codebook()
+        if cb_name:
+            the_row = self._table.row(self._current_row())
+            v = the_row[column.id()]
+            e = v.type().enumerator()
+            run_form(BrowseForm, cb_name, select_row={e.value_column(): v})
+
+    def can_show_cell_codebook(cls, appl, cmd, args):
+        f = appl.current_form()
+        if f and isinstance(f, ListForm):
+            column = f._columns[f._current_cell()[1]]
+            return column.codebook() is not None
+        return False
+    can_show_cell_codebook = classmethod(can_show_cell_codebook)
 
     def _on_handled_command(self, command, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
@@ -1769,9 +1786,8 @@ class BrowseForm(ListForm):
 
         
     def _context_menu(self):
-        # Sestav specifikaci popup menu
-        super_menu = super_(BrowseForm)._context_menu(self)
-        menu = (
+        # Sestav specifikaci kontextového menu
+        menu = super_(BrowseForm)._context_menu(self) + (
             MItem(_("Editovat buòku"),
                   command=ListForm.COMMAND_EDIT),
             MItem(_("Filtrovat podle buòky"),
@@ -1787,10 +1803,13 @@ class BrowseForm(ListForm):
                   command=ListForm.COMMAND_ACTIVATE),
             MItem(_("Náhled v druhém formuláøi"),
                   command=ListForm.COMMAND_ACTIVATE_ALTERNATE),
+            MItem(_("Zobrazit související èíselník"),
+                  command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
             )
         custom_menu = self._view.popup_menu()
-        custom_menu = custom_menu and (MSeparator(),) + custom_menu or ()
-        return super_menu + menu + custom_menu
+        if custom_menu:
+            menu += (MSeparator(),) + custom_menu
+        return menu
 
     def _redirected_name(self, key):
         redirect = self._view.redirect()
