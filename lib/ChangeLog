@@ -1,5 +1,13 @@
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application.run_form): Pokud je
+	`name' callable, pova¾uj za `name' výsledek jeho volání.
+
+	* pytis/form/command.py (_can_run_form): Pokud je `name' callable,
+	pova¾uj za `name' výsledek jeho volání.
+	(_can_run_form): Pøedchozí úprava zru¹ena.
+	(ListForm.COMMAND_SHOW_CELL_CODEBOOK): Nový pøíkaz.
+
 	* pytis/form/inputfield.py (CodebookField._on_codebook_insert):
 	Prefill vyplòuj pouze pokud je v políèku zeditovaná hodnota.
 
@@ -10,6 +18,17 @@
 	(ListForm._on_idle): Pokud je nastaveno
 	`self._selection_candidate', nastav výbìr, jeho barvy a zviditelni
 	buòku.
+	(ListForm.show_context_menu): Kosmetické úpravy.
+	(BrowseForm._context_menu, ListForm.show_context_menu): Kosmetické
+	úpravy.
+	(ListForm.on_command): O¹etøuj
+	`ListForm.COMMAND_SHOW_CELL_CODEBOOK' voláním
+	`self._on_show_cell_codebook()'.
+	(ListForm.can_set_grouping): Zru¹en zapomenutý print.
+	(ListForm._on_show_cell_codebook) 
+	(ListForm.can_show_cell_codebook): Nové metody.
+	(BrowseForm._context_menu): Pøidána polo¾ka pro pøíkaz
+	`ListForm.COMMAND_SHOW_CELL_CODEBOOK'.  Kosmetické úpravy.
 
 	* pytis/presentation/field.py (PresentedRow.__init__): Namísto
 	koncových akcí volej `self._set_row()'.
