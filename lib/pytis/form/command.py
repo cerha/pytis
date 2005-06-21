@@ -416,7 +416,7 @@ BrowseForm.COMMAND_NEW_RECORD_COPY = Command('browse-form.new-record-copy',
                                              enabled=_current_form_can_insert)
 """Formuláøová editace nového záznamu jako kopie aktuálního záznamu."""
 
-BrowseForm.COMMAND_RECORD_EDIT = Command('browse-form.edit-record',
+BrowseForm.COMMAND_EDIT_RECORD = Command('browse-form.edit-record',
                                          enabled=_current_form_can_update)
 """Editace aktuálního záznamu v popup formuláøi."""
 
@@ -542,7 +542,7 @@ DEFAULT_COMMAND_KEYS = (
     (BrowseForm.COMMAND_NEW_RECORD,               'F6'),
     (BrowseForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
     (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
-    (BrowseForm.COMMAND_RECORD_EDIT,              'F5'),
+    (BrowseForm.COMMAND_EDIT_RECORD,              'F5'),
     (EditForm.COMMAND_RECORD_DELETE,              'F8'),
     (EditForm.COMMAND_RECORD_INSERT,              'F7'),
     (EditForm.COMMAND_RECORD_UPDATE,              'F12'),
