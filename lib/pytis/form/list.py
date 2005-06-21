@@ -747,6 +747,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _on_context_menu(self, event):
         # Popup menu pro vybraný øádek gridu
+        self._run_callback(self.CALL_USER_INTERACTION)
         row, col = event.GetRow(), event.GetCol()
         self._select_cell(row=row, col=col)
         self.show_context_menu(position=event.GetPosition())
