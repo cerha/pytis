@@ -1,5 +1,10 @@
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow.__init__): Namísto
+	koncových akcí volej `self._set_row()'.
+	(PresentedRow._set_row): Nová metoda.
+	(PresentedRow.set_row): Vyu¾ívej `self._set_row()'.
+
 	* pytis/form/_grid.py (IncrementalSearch._on_kill_focus): Nastavuj
 	callback pouze pokud listform stále existuje.
 
