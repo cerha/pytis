@@ -122,12 +122,16 @@ class PresentedRow(object):
         self._editability_change_callback = editability_change_callback
         self._process_fieldspec()
         self._virtual = {}
-        self._row = self._init_row(row, prefill=prefill)
-        self._original_row = copy.copy(self._row)
         self._new = new
         self._cache = {}
-        self._resolve_dependencies()
+        self._set_row(row, prefill=prefill)
 
+    def _set_row(self, row, reset=True, prefill=None):
+        self._row = self._init_row(row, prefill=prefill)
+        if reset:
+            self._original_row = copy.copy(self._row)
+        self._resolve_dependencies()
+        
     def _process_fieldspec(self):
         data = self._data
         # Pro ka¾dé políèko si zapamatuji seznam poèítaných políèek, která na
@@ -399,10 +403,7 @@ class PresentedRow(object):
         specifikací uvnitø této tøídy.
         
         """
-        self._row = self._init_row(row)
-        if reset:
-            self._original_row = copy.copy(self._row)
-        self._resolve_dependencies()
+        self._set_row(row, reset=reset)
 
     def fields(self):
         """Vra» seznam v¹ech políèek."""
@@ -424,7 +425,7 @@ class PresentedRow(object):
 
         Pozor, pokud byl øádek pøedaný konstruktoru `None', metoda sice vrátí
         inicializovaný prázdný øádek, ale hodnoty poèítaných políèek v nìm
-        nebudou být vypoèteny.
+        nebudou vypoèteny.
         
         """
         return self._original_row
