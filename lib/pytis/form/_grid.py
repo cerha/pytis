@@ -774,8 +774,9 @@ class IncrementalSearch:
         self._search(newtext=True)
 
     def _on_kill_focus(self, event):
-        self._listform.set_callback(ListForm.CALL_SELECTION,
-                                    self._selection_callback)
+        if self._listform:
+            self._listform.set_callback(ListForm.CALL_SELECTION,
+                                        self._selection_callback)
         if not self._exiting:
             self._exit(True)
             
