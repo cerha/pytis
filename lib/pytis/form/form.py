@@ -222,7 +222,7 @@ class Form(Window, KeyHandler, CallbackHandler):
                       MItem(_("Nový záznam - kopie"),
                             command=BrowseForm.COMMAND_NEW_RECORD_COPY),
                       MItem(_("Editovat záznam"),
-                            command=BrowseForm.COMMAND_RECORD_EDIT),
+                            command=BrowseForm.COMMAND_EDIT_RECORD),
                       MItem(_("Vlo¾it øádku nad"),
                             command=ListForm.COMMAND_NEW_LINE_BEFORE),
                       MItem(_("Vlo¾it øádku pod"),
