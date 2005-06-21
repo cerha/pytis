@@ -1142,7 +1142,7 @@ class CodebookField(Invocable, TextField):
 
     def _on_codebook_insert(self, event):
         value_column = self._type.enumerator().value_column()
-        if not self._is_valid():
+        if not self._is_valid() and self.is_modified():
             prefill = {value_column: self.get_value()}
         else:
             prefill = {}
