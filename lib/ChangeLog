@@ -1,3 +1,7 @@
+2005-06-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm.can_sort): Oprava pøeklepu.
+
 2005-06-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (Form.check_permission): Vracej pravdu pokud
