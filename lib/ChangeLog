@@ -7,6 +7,8 @@
 	pova¾uj za `name' výsledek jeho volání.
 	(_can_run_form): Pøedchozí úprava zru¹ena.
 	(ListForm.COMMAND_SHOW_CELL_CODEBOOK): Nový pøíkaz.
+	(BrowseForm.COMMAND_RECORD_EDIT): Pøejmenováno na
+	`BrowseForm.COMMAND_EDIT_RECORD'.
 
 	* pytis/form/inputfield.py (CodebookField._on_codebook_insert):
 	Prefill vyplòuj pouze pokud je v políèku zeditovaná hodnota.
@@ -29,6 +31,11 @@
 	(ListForm.can_show_cell_codebook): Nové metody.
 	(BrowseForm._context_menu): Pøidána polo¾ka pro pøíkaz
 	`ListForm.COMMAND_SHOW_CELL_CODEBOOK'.  Kosmetické úpravy.
+	(ListForm._on_line_commit): Kosmetické úpravy.
+	(BrowseForm._context_menu): `BrowseForm.COMMAND_RECORD_EDIT' ->
+	`BrowseForm.COMMAND_EDIT_RECORD'.
+	(BrowseForm.on_command): `BrowseForm.COMMAND_RECORD_EDIT' ->
+	`BrowseForm.COMMAND_EDIT_RECORD'.
 
 	* pytis/presentation/field.py (PresentedRow.__init__): Namísto
 	koncových akcí volej `self._set_row()'.
@@ -39,6 +46,8 @@
 	callback pouze pokud listform stále existuje.
 
 	* pytis/form/form.py (LookupForm.can_sort): Oprava pøeklepu.
+	(Form._menus): `BrowseForm.COMMAND_RECORD_EDIT' ->
+	`BrowseForm.COMMAND_EDIT_RECORD'.
 
 2005-06-20  Tomas Cerha  <cerha@brailcom.org>
 
