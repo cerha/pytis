@@ -212,7 +212,8 @@ def _can_run_form(appl, cmd, args):
         result = _check_perm(perm, dual_spec.main_name()) and \
                  _check_perm(perm, dual_spec.side_name())
     else:
-        return _check_perm(perm, args['name'])
+        result = _check_perm(perm, args['name'])
+    return result
 
 def _can_insert(appl, cmd, args):
     return _check_perm(pytis.data.Permission.INSERT, args['name'])
