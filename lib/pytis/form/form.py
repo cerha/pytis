@@ -910,7 +910,7 @@ class LookupForm(RecordForm):
 
     def can_sort(cls, appl, cmd, args):
         f = appl.current_form()
-        return f and isinstance(f, LookupForm) and f.can_sort_colum(n**args)
+        return f and isinstance(f, LookupForm) and f.can_sort_column(n**args)
     can_sort = classmethod(can_sort)
     
         
