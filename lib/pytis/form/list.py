@@ -643,7 +643,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return True
 
     def _on_select_cell(self, event):
-        self._run_callback(self.CALL_USER_INTERACTION)
+        if not self._in_select_cell:
+            self._run_callback(self.CALL_USER_INTERACTION)
         self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
         # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
         # vùbec nìjaký úèinek, musíme zde zavolat originální handler, který
