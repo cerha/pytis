@@ -1231,14 +1231,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         the_row = editing.the_row
         failed_id = the_row.check()
         if failed_id is not None:
-            for i in range(len(self._columns)):
-                if self._columns[i].id() == failed_id:
-                    self._select_cell(row=row, col=i, invoke_callback=False)
-                    self._edit_cell()
-                    break
+            col = find(failed_id, self._columns, key=lambda c: c.id())
+            if col is not None:
+                i = self._columns.index(col)
+                self._select_cell(row=row, col=i, invoke_callback=False)
+                self._edit_cell()
             return False
         # Urèení operace a klíèe
-        kc = map(lambda c: c.id(), data.key())
+        kc = [c.id() for c in data.key()]
         if editing.new:
             table = self._table
             if row > 0:
@@ -1796,7 +1796,7 @@ class BrowseForm(ListForm):
                   command=ListForm.COMMAND_COPY_CELL),
             MSeparator(),
             MItem(_("Editovat záznam"),
-                  command=BrowseForm.COMMAND_RECORD_EDIT),
+                  command=BrowseForm.COMMAND_EDIT_RECORD),
             MItem(_("Smazat záznam"),
                   command=ListForm.COMMAND_LINE_DELETE),
             MItem(_("Náhled"),
@@ -1972,7 +1972,7 @@ class BrowseForm(ListForm):
             self._run_callback(self.CALL_NEW_RECORD)
         elif command == BrowseForm.COMMAND_NEW_RECORD_COPY:
             self._run_callback(self.CALL_NEW_RECORD, (True,))
-        elif command == BrowseForm.COMMAND_RECORD_EDIT:
+        elif command == BrowseForm.COMMAND_EDIT_RECORD:
             key = self.current_key()
             if key is not None:
                 self._run_callback(self.CALL_EDIT_RECORD, (key,))
