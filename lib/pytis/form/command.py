@@ -204,15 +204,20 @@ def _check_perm(perm, name):
 
 def _can_run_form(appl, cmd, args):
     perm = pytis.data.Permission.VIEW
+    name = args['name']
+    if callable(name):
+        name = name()
+        if name is None:
+            return False
     if issubclass(args['form_class'], pytis.form.DualForm):
         try:
-            dual_spec = resolver().get(args['name'], 'dual_spec')
+            dual_spec = resolver().get(name, 'dual_spec')
         except ResolverError:
             return True
         return _check_perm(perm, dual_spec.main_name()) and \
                _check_perm(perm, dual_spec.side_name())
     else:
-        return _check_perm(perm, args['name'])
+        return _check_perm(perm, name)
 
 def _can_insert(appl, cmd, args):
     return _check_perm(pytis.data.Permission.INSERT, args['name'])
