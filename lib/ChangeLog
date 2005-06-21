@@ -9,6 +9,7 @@
 	(ListForm.COMMAND_SHOW_CELL_CODEBOOK): Nový pøíkaz.
 	(BrowseForm.COMMAND_RECORD_EDIT): Pøejmenováno na
 	`BrowseForm.COMMAND_EDIT_RECORD'.
+	(_can_run_form): Oprava chyby z minulého commitu.
 
 	* pytis/form/inputfield.py (CodebookField._on_codebook_insert):
 	Prefill vyplòuj pouze pokud je v políèku zeditovaná hodnota.
