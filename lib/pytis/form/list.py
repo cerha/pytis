@@ -110,6 +110,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Inicializace atributù
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
+        self._selection_candidate = None
         self._selection_callback_candidate = None
         self._selection_callback_tick = None
         self._in_select_cell = False
@@ -385,23 +386,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                             g.ClearSelection()
                         row = 0
                     else:
-                        if not g.IsInSelection(row, 0):
-                            if col is None:
-                                col = max(0, current_col)
-                            g.SetGridCursor(row, col)
-                            g.MakeCellVisible(row, col)
-                            # Z neznámých dùvodù jedno volání nestaèí.  Øádek
-                            # je vidìt jen napùl...  Podruhé u¾ je to lep¹í :-)
-                            g.MakeCellVisible(row, col)
-                            if invoke_callback:
-                                # Nevoláme callback ihned, staèí a¾ po
-                                # zastavení scrolování...
-                                self._selection_callback_candidate = row
-                                delay = self._SELECTION_CALLBACK_DELAY
-                                self._selection_callback_tick = delay
-                        self._update_selection_colors()
-                        if not g.IsSelection():
-                            g.SelectRow(row)
+                        if col is None:
+                            col = max(0, current_col)
+                        g.SetGridCursor(row, col)
+                        g.MakeCellVisible(row, col)
+                        self._selection_candidate = (row, col)
+                        if invoke_callback:
+                            # Nevoláme callback ihned, staèí a¾ po
+                            # zastavení scrolování...
+                            self._selection_callback_candidate = row
+                            delay = self._SELECTION_CALLBACK_DELAY
+                            self._selection_callback_tick = delay
                     self._position = row
                     self.show_position()
             elif col is not None and col != current_col:
@@ -576,6 +571,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._reshuffle_request = max(now, maybe_future)
 
     def _on_idle(self, event):
+        if self._selection_candidate is not None:
+            row, col = self._selection_candidate
+            self._selection_candidate = None
+            self._grid.SelectRow(row)
+            self._update_selection_colors()
+            self._grid.MakeCellVisible(row, col)
         if self._selection_callback_candidate is not None:
             if self._selection_callback_tick > 0:
                 self._selection_callback_tick -= 1
