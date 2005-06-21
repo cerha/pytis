@@ -1,5 +1,8 @@
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (CodebookField._on_codebook_insert):
+	Prefill vyplòuj pouze pokud je v políèku zeditovaná hodnota.
+
 	* pytis/form/list.py (ListForm._init_attributes): Inicializuj
 	`self._selection_candidate'.
 	(ListForm._select_cell): Nenastavuj výbìr zde, pouze nastav
