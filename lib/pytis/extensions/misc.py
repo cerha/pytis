@@ -467,11 +467,6 @@ def menu_report(*args, **kwargs):
     content += make_list(resolver.get('application', 'menu'))
     data_specs = remove_duplicates(data_specs)
     data_specs.sort()
-    PRAVA = (pytis.data.Permission.VIEW,
-             pytis.data.Permission.INSERT,
-             pytis.data.Permission.UPDATE,
-             pytis.data.Permission.DELETE,
-             pytis.data.Permission.EXPORT)
     content += '<h1>Pøehled práv pro jednotlivé specifikace</h1>\n'
     for spec_name in data_specs:
         content += '<a name="%s"></a>\n<h5>%s</h5>\n' % (spec_name, spec_name)
@@ -480,13 +475,20 @@ def menu_report(*args, **kwargs):
         except Exception, e:
             content += "<p><b>Chyba</b>: Specifikace nenalezena.</p>"
             continue
-        prava = data_spec.access_rights()
-        if prava:
-            all = ['<tr><td valign="top"><b>%s</b></td><td>%s</td></tr>' %
-                   (p, ', '.join(prava.permitted_groups(p, None)))
-                   for p in PRAVA]
-            content += "<table>" + "\n".join(all) + "</table>"
-        content += "<a href=#menu>Zpìt na menu</a>"    
+        rights = data_spec.access_rights()
+        if rights:
+            perms = (pytis.data.Permission.VIEW,
+                     pytis.data.Permission.INSERT,
+                     pytis.data.Permission.UPDATE,
+                     pytis.data.Permission.DELETE,
+                     pytis.data.Permission.EXPORT)
+            content += "<table>"
+            for perm in perms:
+                groups = rights.permitted_groups(perm, None)
+                content += '<tr><td valign="top">%s</td><td>%s</td></tr>' % \
+                           ('<b>'+perm+'</b>', ', '.join(map(str, groups)))
+            content += "</table>"
+        content += "<a href=#menu>Zpìt na menu</a>"
     pytis.form.InfoWindow("Pøehled polo¾ek menu a názvù specifikací",
                           text=content, format=TextFormat.HTML)
 
