@@ -910,7 +910,7 @@ class LookupForm(RecordForm):
 
     def can_sort(cls, appl, cmd, args):
         f = appl.current_form()
-        return f and isinstance(f, LookupForm) and f.can_sort_column(n**args)
+        return f and isinstance(f, LookupForm) and f.can_sort_column(**args)
     can_sort = classmethod(can_sort)
     
         
@@ -930,7 +930,7 @@ class EditForm(LookupForm, TitledForm):
 
     Formuláø mù¾e slou¾it jak k editaci stávajícího øádku dat, tak
     i k vytvoøení øádku nového (viz argumenty konstruktoru 'key' a 'new').
-
+ 
     """
     ACT_EDITFORM = 'ACT_EDITFORM'
     """Aktivaèní konstanta formuláøe."""
