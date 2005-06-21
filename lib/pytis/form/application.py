@@ -250,6 +250,10 @@ class Application(wx.App, KeyHandler):
                 state_kwargs[arg] = kwargs[arg]
                 del kwargs[arg]
         try:
+            if callable(name):
+                name = name()
+                if name is None:
+                    return None
             log(ACTION, 'Vytváøím nový formuláø:',
                 (form_class, name, args, kwargs))
             message(_("Spou¹tím formuláø..."), root=True)
