@@ -1,3 +1,8 @@
+2005-06-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (menu_report): Toleruj `None' ve
+	výsledku volání `permitted_groups()'.
+
 2005-06-17  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (help_mitem): Nová funkce.
