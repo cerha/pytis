@@ -1,5 +1,13 @@
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._init_attributes): Inicializuj
+	`self._selection_candidate'.
+	(ListForm._select_cell): Nenastavuj výbìr zde, pouze nastav
+	`self._selection_candidate'.
+	(ListForm._on_idle): Pokud je nastaveno
+	`self._selection_candidate', nastav výbìr, jeho barvy a zviditelni
+	buòku.
+
 	* pytis/presentation/field.py (PresentedRow.__init__): Namísto
 	koncových akcí volej `self._set_row()'.
 	(PresentedRow._set_row): Nová metoda.
