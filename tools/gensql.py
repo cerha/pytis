@@ -395,7 +395,8 @@ class _GsqlTable(_GsqlSpec):
     
     def __init__(self, name, columns, inherits=None, view=None, sql=None,
                  on_insert=None, on_update=None, on_delete=None,
-                 init_values=(), init_columns=(), **kwargs):
+                 init_values=(), init_columns=(),
+                 upd_log_trigger=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -429,6 +430,8 @@ class _GsqlTable(_GsqlSpec):
           init_columns -- sekvence jmen sloupcù nebo instancí tøídy 'Column',
             pro nì¾ jsou definovány 'init_values'; je-li prázdnou sekvencí,
             jsou to v¹echny sloupce tabulky
+          upd_log_trigger -- název trigger funkce, která bude logovat zmìny v
+            záznamech, nebo None, pokud se nemá logovat.
           kwargs -- argumenty pøedané konstruktoru pøedka
 
         """
@@ -441,6 +444,7 @@ class _GsqlTable(_GsqlSpec):
         self._on_insert, self._on_update, self._on_delete = \
           on_insert, on_update, on_delete
         self._init_values = init_values
+        self._upd_log_trigger = upd_log_trigger
         if not init_columns:
             init_columns = columns
         self._init_columns = [isinstance(c, str) and c
@@ -586,6 +590,14 @@ class _GsqlTable(_GsqlSpec):
             result = result + self._format_rule(action)
         if not _re and _all:
             result = result + self._format_init_values(self._init_values)
+        if self._upd_log_trigger:
+            keys = ','.join([_gsql_column_table_column(k)[1]
+                             for k in self.key_columns()])
+            result = result + ('CREATE TRIGGER %s_upd_log AFTER UPDATE ON '
+                               '%s FOR EACH ROW EXECUTE PROCEDURE '
+                               '%s("%s");\n'
+                               ) % (self._name, self._name,
+                                    self._upd_log_trigger, keys)
         return result
 
     def outputall(self):

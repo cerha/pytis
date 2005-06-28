@@ -1,3 +1,17 @@
+2005-06-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable.__init__): Nový argument
+	'upd_log_trigger'. 
+	(_GsqlTable.output): Pou¾ívej ho.
+
+2005-06-20  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_make_complex_tables): Odstranìno.
+	(_GsqlView._make_tables): Nepou¾ívej '_make_complex_tables'.
+	Nepou¾ívej 'remove_duplicates'.
+	(_GsqlView._format_rule): Procházej cyklus pøes 'self._tables'
+	(kvùli zachování poøadí v generování rules).
+
 2005-06-07  Pavel Hanak  <hanak@asellus.cz>
 
 	* bin/pytis: Doplnìno o mo¾nost pou¾ítí rùzných verzí wxPython.
