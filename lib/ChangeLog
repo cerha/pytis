@@ -1,3 +1,9 @@
+2005-06-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py (Application.COMMAND_LEAVE_FORM): Upravena
+	`enabled' funkce aby brala v potaz i formuláøe, které nejsou na
+	stacku.
+	
 2005-06-28  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/list.py (ListForm._on_line_commit): Spou¹tìj i check funkci
