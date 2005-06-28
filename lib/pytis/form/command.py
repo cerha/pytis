@@ -281,7 +281,7 @@ Application.COMMAND_RUN_PROCEDURE = Command('application.run-procedure')
 
 Application.COMMAND_LEAVE_FORM = \
     Command('application.leave-form',
-            enabled=lambda appl, cmd, args: appl.window_count())
+            enabled=lambda appl, cmd, args: appl.current_form() is not None)
 """Odstranìní aktivního okna formuláøe z aplikace."""
 
 Application.COMMAND_RAISE_FORM = Command('application.raise-form')
