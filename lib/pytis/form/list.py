@@ -1233,14 +1233,25 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         data = self._data
         row = editing.row
         the_row = editing.the_row
-        failed_id = the_row.check()
-        if failed_id is not None:
+        error = None
+        check = self._view.check()
+        if check is not None:
+            error = check(the_row)
+        if error is None:
+            error = the_row.check()
+        if error is not None:        
+            if is_sequence(error):
+                failed_id, msg = error                
+                message(msg)
+            else:
+                failed_id = error
+            log(EVENT, 'Kontrola integrity selhala:', failed_id)
             col = find(failed_id, self._columns, key=lambda c: c.id())
             if col is not None:
                 i = self._columns.index(col)
                 self._select_cell(row=row, col=i, invoke_callback=False)
                 self._edit_cell()
-            return False
+            return True
         # Urèení operace a klíèe
         kc = [c.id() for c in data.key()]
         if editing.new:
