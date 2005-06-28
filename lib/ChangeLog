@@ -1,3 +1,8 @@
+2005-06-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._create_grid): Neo¹etøuj
+	`EVT_GRID_CELL_LEFT_CLICK'.
+
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.run_form): Pokud je
