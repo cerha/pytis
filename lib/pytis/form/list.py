@@ -224,7 +224,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self.editable = editable
         # Event handlery
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL, g, self._on_select_cell)
-        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_select_cell)
+        # CLICK automaticky vovolá SELECT_CELL, tak¾e by následující øádka
+        # nemìla být tøeba.  Odkomentováním bude metoda volána dokonce tøikrát.
+        #wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_context_menu)
         wx_callback(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, g, self._on_label_left)
         wx_callback(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, g, self._on_label_right)
