@@ -1,3 +1,8 @@
+2005-06-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._column_width): Nová metoda.
+	(ListForm._create_grid, ListForm._on_size): Vyu¾ívej ji.
+
 2005-06-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/command.py (Application.COMMAND_LEAVE_FORM): Upravena
