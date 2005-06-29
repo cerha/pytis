@@ -146,6 +146,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._grid = self._create_grid()
         sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
+    def _column_width(self, grid, column):
+        column_width = max(column.column_width(), len(column.column_label()))
+        return dlg2px(grid, 4*column_width+8)
+        
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
         # Uprav sloupce
@@ -190,10 +194,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # ¹íøka
             if not c.width():
                 continue
-            column_width = c.column_width()
-            if len(c.column_label()) > column_width:
-                column_width = len(c.column_label())
-            w = dlg2px(g, 4*column_width+3)
+            w = self._column_width(g, c)
             g.SetColSize(i, w)
             total_width += w
             # typ sloupce
@@ -1584,13 +1585,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if c.fixed():
                 w = g.GetColSize(i)
             else:
-                column_width = max(c.column_width(), len(c.column_label()))
-                w = int(dlg2px(g, 4*column_width+8)*coef)
+                w = int(self._column_width(g, c)*coef)
                 g.SetColSize(i, w)
                 last = i
             total += w
         if coef != 1 and total != width and last is not None:
-            g.SetColSize(last, w + (width - total))
+            g.SetColSize(last, g.GetColSize(last) + (width - total))
         event.Skip()
 
     def Close(self):
