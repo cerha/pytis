@@ -1,5 +1,11 @@
 2005-06-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/configuration.py
+	(Configuration._Option_startup_forms.long_option): Nová volba.
+
+	* pytis/form/application.py (Application.OnInit): Otevøi v¹echny
+	formuláøe z `config.startup_forms'.
+
 	* pytis/form/list.py (ListForm._column_width): Nová metoda.
 	(ListForm._create_grid, ListForm._on_size): Vyu¾ívej ji.
 
