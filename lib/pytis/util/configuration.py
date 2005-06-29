@@ -632,6 +632,13 @@ class Configuration:
         def default_string(self):
             return 'True'
 
+    class _Option_startup_forms(Option):
+        """Seznam formuláøù, které mají být otevøeny po spu¹tìní aplikace."""
+        def long_option(self):
+            return 'startup-forms'
+        def default(self):
+            return None
+
     class _Option_row_focus_fg_color(Option):
         """Barva textu aktivního øádku tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
