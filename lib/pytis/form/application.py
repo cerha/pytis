@@ -110,8 +110,8 @@ class Application(wx.App, KeyHandler):
 
         """
         self._resolver = resolver
-        wx.App.__init__(self)
         self._window_menu_item = {}
+        wx.App.__init__(self)
     
     def OnInit(self):
         init_colors()
