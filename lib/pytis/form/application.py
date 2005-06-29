@@ -159,6 +159,23 @@ class Application(wx.App, KeyHandler):
         self._frame.Show(True)
         self._spec('init')
         self._panel.SetFocus()
+        if config.startup_forms:
+            for spec in config.startup_forms.split(','):
+                separator_position = spec.find('/')
+                if separator_position != -1:
+                    cls_name = spec[:separator_position].strip()
+                    spec = spec[separator_position+1:]
+                    try:
+                        form_cls = getattr(pytis.form, cls_name)
+                        if not issubclass(form_cls, Form):
+                            raise AttributeError
+                    except AttributeError:
+                        msg = _("Neplatná formuláøová tøída v 'startup_forms':")
+                        self.run_dialog(Error, msg +' '+ cls_name)
+                        continue
+                else:
+                    form_cls = BrowseForm
+                self.run_form(form_cls, spec.strip())
         return True
 
 
