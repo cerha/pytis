@@ -635,7 +635,7 @@ class Configuration:
     class _Option_startup_forms(Option):
         """Seznam formuláøù, které mají být otevøeny po spu¹tìní aplikace."""
         def long_option(self):
-            return 'startup-forms'
+            return 'startup-forms='
         def default(self):
             return None
 
