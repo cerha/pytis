@@ -5,6 +5,8 @@
 
 	* pytis/form/application.py (Application.OnInit): Otevøi v¹echny
 	formuláøe z `config.startup_forms'.
+	(Application.__init__): Inicializuj `self._window_menu_item' pøed
+	voláním konstruktoru pøedka.
 
 	* pytis/form/list.py (ListForm._column_width): Nová metoda.
 	(ListForm._create_grid, ListForm._on_size): Vyu¾ívej ji.
