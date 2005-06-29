@@ -263,6 +263,8 @@ def df(title, name, hotkey=None):
 def ddf(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.DescriptiveDualForm,
                           hotkey)
+def ef(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey)
 
 class ReusableSpec:
     def __init__(self, resolver):

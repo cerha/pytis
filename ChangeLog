@@ -1,3 +1,7 @@
+2005-06-29  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/spec.py (ef): Nová zkratka.
+
 2005-06-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/misc.py (menu_report): Toleruj `None' ve
