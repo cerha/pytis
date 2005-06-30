@@ -1,3 +1,9 @@
+2005-06-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py: Opraveny identifikátory pøíkazù
+	`LookupForm.COMMAND_SEARCH_NEXT' a
+	`LookupForm.COMMAND_SEARCH_PREVIOUS'.
+
 2005-06-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py
