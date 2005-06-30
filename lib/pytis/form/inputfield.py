@@ -257,6 +257,9 @@ class InputField(object, KeyHandler, CallbackHandler):
         elif command == self.COMMAND_LEAVE_FIELD:
             return self._run_callback(self.CALL_LEAVE_FIELD, ())
         return False
+
+    def can_reset_field(self):
+        return self.is_modified()
     
     def show_popup_menu(self, position=None):
         """Zobraz kontextové menu vstupního políèka.
@@ -987,7 +990,13 @@ class Invocable:
                 return self._on_invoke_selection(alternate=True)
         return InputField.on_command(self, command, **kwargs)
 
+    def can_invoke_selection(self, **kwargs):
+        return self.is_enabled()
 
+    def can_invoke_selection_alternate(self, **kwargs):
+        return self.is_enabled()
+
+    
 class DateField(Invocable, TextField):
     """Vstupní pole pro datový typ 'pytis.data.Date'.
 
@@ -1301,8 +1310,6 @@ class ListField(InputField):
             menu = menu + tuple(user_popup)
         return menu   
 
-    def has_selection(self):
-        return self._selected_item() is not None
 
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_INVOKE_EDIT_FORM:
@@ -1323,6 +1330,15 @@ class ListField(InputField):
             return True
         else:            
             return InputField.on_command(self, command, **kwargs)
+    
+    def can_invoke_browse_form(self, **kwargs):
+        return self._selected_item() is not None
+
+    def can_invoke_edit_form(self, **kwargs):
+        return self._selected_item() is not None
+
+    def can_choose_key(self, **kwargs):
+        return self._selected_item() is not None
 
 
 class HiddenField(InputField):
@@ -1367,3 +1383,4 @@ class HiddenField(InputField):
         self._value = value
         return True
 
+    
