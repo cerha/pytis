@@ -328,41 +328,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g = self._grid
         return g.GetGridCursorRow(), g.GetGridCursorCol()
 
-    def _current_row(self):
-        return self._current_cell()[0]
-
-    def _current_key(self):
-        row = self._current_row()
-        if row < 0 or row >= self._grid.GetNumberRows():
-            # Pøi prázdné tabulce má wxGrid nastaven øádek 0.
-            result = None
-        else:
-            kc = map(lambda c: c.id(), self._data.key())
-            try:
-                result = self._table.row(row).row().columns(kc)
-            except KeyError:
-                log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
-                run_dialog(Error, _("Chyba v definici dat"))
-                result = None
-        return result
-
-    def current_key(self):
-        """Vra» klíè aktuálnì vybraného øádku.
-
-        Není-li vybrán ¾ádný øádek, vra» 'None'.
-
-        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None'.
-
-        """
-        return self._current_key()
-
     def current_row(self):
-        """Vra» instanci PresentedRow právì aktivního øádku.
-
-        Není-li vybrán ¾ádný øádek, vra» 'None'.
-        """
-
-        row = self._current_row()
+        row = self._current_cell()[0]
         if row < 0 or row >= self._grid.GetNumberRows():
             # Pøi prázdné tabulce má wxGrid nastaven øádek 0.
             return None
@@ -499,7 +466,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _search_adjust_data_position(self, row_number):
         if row_number is None:
-            row_number = self._current_row()
+            row_number = self._current_cell()[0]
         self._table.rewind(position=row_number)
 
     def _search_skip(self, skip, direction):
@@ -784,7 +751,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self.show_context_menu()
 
     def show_position(self):
-        row = self._current_row()
+        row = self._current_cell()[0]
         total = self._table.GetNumberRows()
         set_status('list-position', "%d/%d" % (row + 1, total))
 
@@ -812,10 +779,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Skip()
             return False
 
-    def is_changed(self):
+    def _is_changed(self):
         editing = self._table.editing()
         return editing and editing.changed
 
+    def can_line_commit(self):
+        return self._is_changed()
+
+    def can_line_rollback(self):
+        return self._is_changed()
+            
     def on_command(self, command, **kwargs):
         # Univerzální pøíkazy
         if command.handler() is not None:
@@ -898,8 +871,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._on_insert_line(after=False)
             elif command == ListForm.COMMAND_NEW_LINE_BEFORE_COPY:
                 self._on_insert_line(after=False, copy=True)
-            elif command == ListForm.COMMAND_LINE_DELETE:
-                self._on_delete_line()
             else:
                 return super_(ListForm).on_command(self, command, **kwargs)
             return True
@@ -931,18 +902,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         column = self._columns[self._current_cell()[1]]
         cb_name = column.codebook()
         if cb_name:
-            the_row = self._table.row(self._current_row())
+            the_row = self._table.row(self._current_cell()[0])
             v = the_row[column.id()]
             e = v.type().enumerator()
             run_form(BrowseForm, cb_name, select_row={e.value_column(): v})
 
-    def can_show_cell_codebook(cls, appl, cmd, args):
-        f = appl.current_form()
-        if f and isinstance(f, ListForm):
-            column = f._columns[f._current_cell()[1]]
-            return column.codebook() is not None
-        return False
-    can_show_cell_codebook = classmethod(can_show_cell_codebook)
+    def can_show_cell_codebook(self):
+        column = self._columns[self._current_cell()[1]]
+        return column.codebook() is not None
 
     def _on_handled_command(self, command, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
@@ -960,13 +927,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 posargs = len(allargs)
         else:
             posargs = 0
-        row = self.current_row()
+        the_row = self.current_row()
         if posargs == 0:
             args = ()
         if posargs == 1:
-            args = (row,)
+            args = (the_row,)
         else:
-            args = (self._data, row)
+            args = (self._data, the_row)
         if not varkw:
             kwargs = {}
         handler(*args, **kwargs)
@@ -1089,7 +1056,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         table = self._table
         if not table.editing():
-            row = self._current_row()
+            row = self._current_cell()[0]
             the_row = table.row(row).row()
             key = the_row.columns(map(lambda c: c.id(), self._data.key()))
             success, locked = db_operation(lambda : self._data.lock_row(key),
@@ -1126,7 +1093,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         tohoto øádku a spustí editaci první editovatelné buòky øádku.
 
         """
-        row = self._current_row()
+        row = self._current_cell()[0]
         log(EVENT, 'Vlo¾ení nového øádku:', (row, after, copy))
         if not self._data.accessible(None, pytis.data.Permission.INSERT):
             message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
@@ -1177,51 +1144,25 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         log(EVENT, 'Øádek vlo¾en')
         return True
 
-    def _on_delete_line(self):
-        log(EVENT, 'Pokus o smazání øádku')
-        if not self._data.accessible(None, pytis.data.Permission.DELETE):
-            message('Nemáte pøístupová práva pro mazání záznamù v této ' + \
-                    'tabulce!', beep_=True)
-            return False
+    def _on_delete_record(self, key):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
             return False
         self._block_refresh = True
-        on_delete_record = self._view.on_delete_record()
-        condition = None
         try:
-            # O¹etøení u¾ivatelské funkce pro mazání
-            if on_delete_record is not None:
-                row = self._table.row(self._current_row())
-                condition = on_delete_record(row=row)
-                assert condition is None or \
-                       isinstance(condition, pytis.data.Operator)
-                if condition is None:
-                    self._block_refresh = False
-                    self.refresh()
-                    return True
-            elif not delete_record_question():
-                return True
+            key = self._current_key()
+            deleted = super(ListForm, self)._on_delete_record(key)
+            self._table.edit_row(None)
         finally:
             self._block_refresh = False
-        self._table.edit_row(None)
-        # Proveï
-        key = None
-        if condition:
-            success, __ = db_operation(lambda : self._data.delete_many(condition))
-        else:
-            key = self._current_key()
-            success, __ = db_operation(lambda : self._data.delete(key))            
-        if success:
-           message('Øádek smazán:', ACTION, key or condition)
-           r = self._current_row()
-           n = self._table.GetNumberRows()
-           if r < n - 1:
-               self._select_cell(row=r+1)
-           elif r > 0:
-               self._select_cell(row=r-1)
-           self.refresh()
-        return True
+        if deleted:
+            r = self._current_cell()[0]
+            n = self._table.GetNumberRows()
+            if r < n - 1:
+                self._select_cell(row=r+1)
+            elif r > 0:
+                self._select_cell(row=r-1)
+            self.refresh()
 
     def _on_line_commit(self):
         # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _on_cell_commit.
@@ -1537,7 +1478,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             else:
                 raise ProgramError('Invalid refresh parameter', k)
         key = self._current_key()
-        row = max(0, self._current_row())
+        row = max(0, self._current_cell()[0])
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         
         self._update_grid(data_init=True)
@@ -1794,12 +1735,11 @@ class BrowseForm(ListForm):
                 (name+'/'+pytis.output.P_KEY):
                 self._current_key(),
                 (name+'/'+pytis.output.P_ROW):
-                copy.copy(self._table.row(self._current_row())),
+                copy.copy(self._table.row(self._current_cell()[0])),
                 (name+'/'+pytis.output.P_DATA):
                 copy.copy(self._data)
                 }
 
-        
     def _context_menu(self):
         # Sestav specifikaci kontextového menu
         menu = super_(BrowseForm)._context_menu(self) + (
@@ -1813,7 +1753,7 @@ class BrowseForm(ListForm):
             MItem(_("Editovat záznam"),
                   command=BrowseForm.COMMAND_EDIT_RECORD),
             MItem(_("Smazat záznam"),
-                  command=ListForm.COMMAND_LINE_DELETE),
+                  command=RecordForm.COMMAND_DELETE_RECORD),
             MItem(_("Náhled"),
                   command=ListForm.COMMAND_ACTIVATE),
             MItem(_("Náhled v druhém formuláøi"),
@@ -1946,7 +1886,7 @@ class BrowseForm(ListForm):
     def _on_edit_record(self, key):
         on_edit_record = self._view.on_edit_record()
         if on_edit_record is not None:
-            row = self._table.row(self._current_row())
+            row = self._table.row(self._current_cell()[0])
             on_edit_record(row=row)
             self.refresh()
             # TODO: tento refresh je tu jen pro pøípad, ¾e byla u¾ivatelská
