@@ -17,6 +17,16 @@
 	(ListForm._on_delete_record): Nová metoda.
 	(BrowseForm._context_menu): `ListForm.COMMAND_LINE_DELETE' nahraï
 	`RecordForm.COMMAND_DELETE_RECORD'.
+	(BrowseForm): Callbacky CALL_EDIT_RECORD a CALL_NEW_RECORD
+	pøesunuty do `RecordForm'.
+	(BrowseForm.__init__): Nenastavuj zru¹ené callbacky.
+	(BrowseForm._run_form, BrowseForm._redirected_name)
+	(BrowseForm._on_new_record, BrowseForm._on_edit_record): Pøesunuto
+	do `RecordForm'.
+	(BrowseForm.on_command): Neo¹etøuj pøíkazy `COMMAND_NEW_RECORD',
+	`COMMAND_NEW_RECORD_COPY' a `COMMAND_EDIT_RECORD'.
+	(ListForm._on_activation, ListForm._on_alternate_activation):
+	Volej callback jen pokud je vybrán nìjaký øádek.
 
 	* pytis/form/inputfield.py (InputField.can_reset_field): Nová
 	metoda.
@@ -49,6 +59,19 @@
 	`EditForm.COMMAND_RECORD_UPDATE',
 	`EditForm.COMMAND_RECORD_DELETE'.
 	`EditForm.COMMAND_RECORD_COMMIT' ->`EditForm.COMMAND_COMMIT_RECORD'.
+	(RecordForm.CALL_EDIT_RECORD, RecordForm.CALL_NEW_RECORD): Nové callbacky.
+	(RecordForm.__init__): Nová metoda.
+	(RecordForm.select_row): Nová metoda /pøesunuto z EditForm/.
+	(RecordForm._find_row_by_values): Nová metoda /pøesunuto z EditForm/.
+	(RecordForm._redirected_name, RecordForm._run_form) 
+	(RecordForm._new_form_kwargs, LookupForm._new_form_kwargs) 
+	(RecordForm._on_new_record, RecordForm._on_edit_record): Nové metody.
+	(RecordForm.on_command): O¹etøuj pøíkazy
+	`RecordForm.COMMAND_NEW_RECORD',
+	`RecordForm.COMMAND_NEW_RECORD_COPY' a `COMMAND_EDIT_RECORD'.
+	(EditForm._find_row_by_values): Zru¹eno.
+	(EditForm.select_row): Zru¹eno.
+	
 
 	* pytis/form/command.py: Buï potomkem `object'.
 	(_check_perm, _can_run_form, _can_insert)
@@ -58,7 +81,11 @@
 	(_current_field_modified, _current_field_has_selection): Zru¹eno.
 	(FORM_COMMAND_MENU): Nová konstanta.
 	(define_cmd): Nová dunkce.  V¹echny pøíkazy nyní definovány s její
-	pomocí.
+	pomocí.  Pøíkazy `EditForm.COMMAND_NEW_RECORD',
+	`EditForm.COMMAND_NEW_RECORD_COPY' a
+	`EditForm.COMMAND_EDIT_RECORD' pøesunuty do tøídy `RecordForm'.
+	`EditForm.COMMAND_RECORD_COMMIT'
+	->`EditForm.COMMAND_COMMIT_RECORD'.
 
 	* pytis/form/application.py (Application.OnInit): Pøidávej také
 	menu pøíkazù.  Pøejmenována lokální promìnná `spec' -> `name'.
