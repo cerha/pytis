@@ -2081,4 +2081,3 @@ class SideBrowseForm(FilteredBrowseForm):
         else:
             g.SelectRow(g.GetGridCursorRow())
             super_(SideBrowseForm)._update_selection_colors(self)
-
