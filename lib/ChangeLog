@@ -1,5 +1,9 @@
 2005-06-30  Pavel Hanak  <hanak@asellus.cz>
 
+	* pytis/form/dialog.py (RunFormDialog._create_content):
+	Po vytvoøení 'wx.Choice' zavolej je¹tì 'SetSelection' pro
+	nastavení implicitní volby.	
+
 	* pytis/form/form.py (LookupForm._on_jump): Pro získání èísla
 	øádku pou¾ívej 'InputNumeric'.
 

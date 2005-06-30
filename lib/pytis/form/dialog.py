@@ -831,6 +831,7 @@ class RunFormDialog(InputDialog):
         ch = [self._BROWSE_FORM, self._EDIT_FORM, self._BROWSE_DUAL_FORM,
               self._CODEBOOK_FORM]
         control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=ch)
+        control.SetSelection(0)
         self._form_class_choice = control
         sizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
         self._handle_keys(control)
@@ -838,6 +839,7 @@ class RunFormDialog(InputDialog):
 
     def _customize_result(self, result):
         if self._button_label(result) == Message.BUTTON_OK:
+            selection = self._form_class_choice.GetStringSelection()
             selection = self._form_class_choice.GetStringSelection()
             return (self._FORM_CLASS_MAPPING[selection],
                     self._control.GetValue())
