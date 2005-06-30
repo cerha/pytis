@@ -1,5 +1,8 @@
 2005-06-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._total_height): Zji¹»uj vý¹ku
+	nultého øádku, ne prvního. 
+
 	* pytis/form/screen.py (Menu.create): Vylep¹en komentáø.
 
 	* pytis/form/command.py: Opraveny identifikátory pøíkazù
