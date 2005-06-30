@@ -1389,7 +1389,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         height = g.GetColLabelSize()
         rows = self._grid.GetNumberRows()
         if rows:
-            height += rows * g.GetRowSize(1)
+            height += rows * g.GetRowSize(0)
         if self._title_bar:
             height += self._title_bar.GetSize().height
         return height
