@@ -133,7 +133,8 @@ class Form(Window, KeyHandler, CallbackHandler):
         log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
         self._init_attributes(**kwargs)
         self._result = None
-        self._add_menus()
+        add_menu(Menu(_("Tisk"), (Form._print_menu,),
+                      activation=Form.ACT_FORM), form=self)
         start_time = time.time()
         self._create_form()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
@@ -180,75 +181,6 @@ class Form(Window, KeyHandler, CallbackHandler):
             throw('form-init-error')
         return data_object
     
-    def _add_menus(self):
-        for m in self._menus():
-            add_menu(m, self)
-
-    def _menus(self):
-        return (Menu(_("Pøíkazy"),
-                     (MItem(_("Pøepnout na pøedchozí okno"),
-                            command=Application.COMMAND_PREV_FORM),
-                      MItem(_("Pøepnout na následující okno"),
-                            command=Application.COMMAND_NEXT_FORM),
-                      MItem(_("Zavøít aktuální okno"),
-                            command=Application.COMMAND_LEAVE_FORM),
-                      MSeparator(),
-                      MItem(_("Ulo¾it"),
-                            command=ListForm.COMMAND_LINE_COMMIT),
-                      MItem(_("Zru¹it zmìny"),
-                            command=ListForm.COMMAND_LINE_ROLLBACK),
-                      MSeparator(),
-                      MItem(_("Skok na záznam"),
-                            command=LookupForm.COMMAND_JUMP),
-                      MItem(_("Hledat"),
-                            command=LookupForm.COMMAND_SEARCH),
-                      MItem(_("Hledat dal¹í"),
-                            command=LookupForm.COMMAND_SEARCH_NEXT),
-                      MItem(_("Hledat pøedchozí"),
-                            command=LookupForm.COMMAND_SEARCH_PREVIOUS),
-                      MItem(_("Inkrementální hledání"),
-                            command=ListForm.COMMAND_INCREMENTAL_SEARCH),
-                      MItem(_("Inkrementální hledání - èást øetìzce"),
-                            command=ListForm.COMMAND_FULL_INCREMENTAL_SEARCH),
-                      MSeparator(),
-                      MItem(_("Tøídìní"),
-                            command=LookupForm.COMMAND_SORT_COLUMN),
-                      MItem(_("Filtrovat"),
-                            command=LookupForm.COMMAND_FILTER),
-                      MSeparator(),
-                      # TODO: V¹echny INSERT pøíkazy slouèit v jeden s args.
-                      MItem(_("Nový záznam"),
-                            command=BrowseForm.COMMAND_NEW_RECORD),
-                      MItem(_("Nový záznam - kopie"),
-                            command=BrowseForm.COMMAND_NEW_RECORD_COPY),
-                      MItem(_("Editovat záznam"),
-                            command=BrowseForm.COMMAND_EDIT_RECORD),
-                      MItem(_("Vlo¾it øádku nad"),
-                            command=ListForm.COMMAND_NEW_LINE_BEFORE),
-                      MItem(_("Vlo¾it øádku pod"),
-                            command=ListForm.COMMAND_NEW_LINE_AFTER),
-                      MItem(_("Kopírovat øádku nad"),
-                            command=ListForm.COMMAND_NEW_LINE_BEFORE_COPY),
-                      MItem(_("Kopírovat øádku pod"),
-                            command=ListForm.COMMAND_NEW_LINE_AFTER_COPY),
-                      MItem(_("Editace buòky"),
-                            command=ListForm.COMMAND_EDIT),
-                      MItem(_("Smazat záznam"),
-                            command=ListForm.COMMAND_LINE_DELETE),
-                      MSeparator(),
-                      MItem(_("Export do textového souboru"),
-                            command=ListForm.COMMAND_EXPORT_CSV),
-                      MSeparator(),
-                      MItem(_("Zobrazit náhled na záznam"),
-                            command=ListForm.COMMAND_ACTIVATE),
-                      MItem(_("Zobrazit náhled na záznam v duálním formuláøi"),
-                            command=ListForm.COMMAND_ACTIVATE_ALTERNATE),
-                      ),
-                     activation=Form.ACT_FORM),
-                Menu(_("Tisk"), (Form.print_menu,),
-                     activation=Form.ACT_FORM),
-                )
-        
     def _create_form(self):
         # Build the form from parts
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -275,6 +207,19 @@ class Form(Window, KeyHandler, CallbackHandler):
         if __debug__: log(DEBUG, "Voláno Form._on_parent_close()")
         event.Skip()
         return False
+
+    def _print_menu(self):
+        # Vra» tuple polo¾ek tiskového menu.
+        name = self._name
+        try:
+            print_spec = self._resolver.get(name, 'print_spec')
+        except ResolverSpecError:
+            print_spec = None
+        if not print_spec:
+            print_spec = ((_("Implicitní"), os.path.join('output', name)),)
+        return [MItem(title, command=pytis.form.Form.COMMAND_PRINT,
+                      args={'print_spec_path': path})
+                for title, path in print_spec]
 
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
@@ -321,18 +266,36 @@ class Form(Window, KeyHandler, CallbackHandler):
         """Vra» guardian zadané v konstruktoru (nebo parent)."""
         return self._guardian
 
-    def check_permission(self, perm):
+    def check_permission(self, perm, quiet=True):
         """Vra» pravdu, pokud má u¾ivatel daná práva k datovému objektu.
 
         Argumentem je konstanta  tøídy 'pytis.data.Permission::'.
 
         """
-        if perm == pytis.data.Permission.DELETE:
-            return self._data.accessible(None, perm)
-        for col in self._data.columns():
-            if self._data.accessible(col.id(), perm):
-                return True
-        return False
+        VIEW   = pytis.data.Permission.VIEW
+        INSERT = pytis.data.Permission.INSERT
+        UPDATE = pytis.data.Permission.UPDATE
+        DELETE = pytis.data.Permission.DELETE
+        EXPORT = pytis.data.Permission.EXPORT
+        if perm == DELETE:
+            result = self._data.accessible(None, perm)
+        else:
+            for col in self._data.columns():
+                if self._data.accessible(col.id(), perm):
+                    result = True
+                    break
+            else:
+                result = False
+        if not result and not quiet:
+            msg = {
+                VIEW:   "Nemáte právo k zobrazení formuláøe.",
+                INSERT: "Nemáte právo vlo¾it nový záznam.",
+                UPDATE: "Nemáte právo zmìnit existující záznam.",
+                DELETE: "Nemáte právo smazat existující záznam.",
+                EXPORT: "Nemáte právo k exportu do CSV.",
+                }[perm]
+            message(msg, beep_=True)
+        return result
     
     def set_status(self, field, message):
         """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
@@ -359,19 +322,6 @@ class Form(Window, KeyHandler, CallbackHandler):
     def restore(self):
         for id, message in self._saved_state:
             set_status(id, message, log_=False)
-
-    def print_menu(self):
-        """Vra» tuple polo¾ek tiskového menu."""
-        name = self._name
-        try:
-            spec_paths = self._resolver.get(name, 'print_spec')
-        except ResolverSpecError:
-            spec_paths = None
-        if not spec_paths:
-            spec_paths = ((_("Implicitní"), os.path.join('output', name)),)
-        return [MItem(p[0], command=pytis.form.Form.COMMAND_PRINT,
-                      args={'print_spec_path': p[1]})
-                for p in spec_paths]
 
 
 class Refreshable:
@@ -520,13 +470,13 @@ class RecordForm(Form):
 
         Argumenty:
         
-          key -- sekvence klíèových sloupcù aktivovaného øádku jako instance
-            tøídy 'pytis.data.types_.Value'.  Není-li 'None', formuláø by se mìl
-            naplnit hodnotami získanými z datového objektu pro øádek dat
-            s daným klíèem.
+          key -- sekvence hodnot klíèových sloupcù aktivovaného øádku jako
+            instance tøídy 'pytis.data.types_.Value'.  Není-li 'None', formuláø
+            by se mìl naplnit hodnotami získanými z datového objektu pro øádek
+            dat s daným klíèem.
           prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
             pøedvyplnìny pøi inicializaci formuláøe
-          kwargs -- argumenty pøedané volání pøedka
+          kwargs -- argumenty pøedané pøedkovi
 
         """
         super_(RecordForm)._init_attributes(self, **kwargs)
@@ -549,6 +499,9 @@ class RecordForm(Form):
 
     def _on_editability_change(self, field_id, editable):
         # Callback zmìny editovatelnosti políèka
+        pass
+
+    def _signal_update(self):
         pass
         
     # Veøejné metody
@@ -579,7 +532,75 @@ class RecordForm(Form):
         self._row = row
         self._run_callback(self.CALL_SELECTION, (row,))
         
+    def current_row(self):
+        """Vra» instanci PresentedRow právì aktivního øádku.
 
+        Není-li vybrán ¾ádný øádek, vra» 'None'.
+
+        """
+        return self._row
+
+    def _current_key(self):
+        the_row = self.current_row()
+        if the_row is not None:
+            kc = [c.id() for c in self._data.key()]
+            try:
+                return the_row.row().columns(kc)
+            except KeyError:
+                log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
+                run_dialog(Error, _("Chyba v definici dat"))
+        return None
+
+    def current_key(self):
+        """Vra» klíè aktuálnì vybraného øádku.
+
+        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None', pokud
+        není vybrán ¾ádný øádek.
+
+        """
+        return self._current_key()
+
+    
+    def _on_delete_record(self, key):
+        log(EVENT, 'Pokus o smazání záznamu:', key)
+        if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
+            return False
+        # Implicitní akce pro mazání 
+        op = lambda : self._data.delete(key)
+        # O¹etøení u¾ivatelské funkce pro mazání
+        on_delete_record = self._view.on_delete_record()
+        if on_delete_record is not None:
+            condition = on_delete_record(row=row)
+            if condition is None:
+                return True
+            assert isinstance(condition, pytis.data.Operator)
+            op = lambda : self._data.delete_many(condition)
+        else:
+            msg = _("Opravdu chcete záznam zcela vymazat?")        
+            if not run_dialog(Question, msg):
+                log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
+                return False
+            log(EVENT, 'Mazání øádku u¾ivatelem potvrzeno.')
+        success, result = db_operation(op)
+        if success:
+            self._signal_update()
+            log(ACTION, 'Øádek smazán')
+            return True
+        else:
+            return False
+
+    def can_delete_record(self):
+        return self.check_permission(pytis.data.Permission.DELETE)
+        
+    def on_command(self, command, **kwargs):
+        if command == RecordForm.COMMAND_DELETE_RECORD:
+            key = self._current_key()
+            self._on_delete_record(key)
+            return True
+        else:
+            return super(RecordForm, self).on_command(command, **kwargs)
+
+        
 class LookupForm(RecordForm):
     """Formuláø s vyhledáváním a tøídìním."""
     
@@ -742,6 +763,16 @@ class LookupForm(RecordForm):
         if condition is not None:
             self._search(condition, direction)
 
+    def _is_searching(self):
+        sd = self._lf_search_dialog
+        return bool(sd and sd._condition)
+            
+    def can_search_next(self, **kwargs):
+        return self._is_searching()
+
+    def can_search_previous(self, **kwargs):
+        return self._is_searching()
+            
     def _filter(self, condition):
         self._init_select()
         self._set_row(self._find_row(self._key, any_row=True))
@@ -875,11 +906,6 @@ class LookupForm(RecordForm):
         """
         return self._lf_sorting
 
-    def is_searching(self):
-        """Vra» pravdu, je-li definována vyhledávací podmínka."""
-        sd = self._lf_search_dialog
-        return bool(sd and sd._condition)
-    
     def on_command(self, command, **kwargs):
         if command == LookupForm.COMMAND_JUMP:
             self._on_jump()
@@ -902,10 +928,7 @@ class LookupForm(RecordForm):
         else:
             return super_(LookupForm).on_command(self, command, **kwargs)
 
-    def can_sort(cls, appl, cmd, args):
-        f = appl.current_form()
-        return f and isinstance(f, LookupForm) and f.can_sort_column(**args)
-    can_sort = classmethod(can_sort)
+    
     
         
 
@@ -926,12 +949,7 @@ class EditForm(LookupForm, TitledForm):
     i k vytvoøení øádku nového (viz argumenty konstruktoru 'key' a 'new').
  
     """
-    ACT_EDITFORM = 'ACT_EDITFORM'
-    """Aktivaèní konstanta formuláøe."""
     
-    ACTIVATIONS = Window.ACTIVATIONS + [ACT_EDITFORM]
-    """Seznam aktivaèních kategorií pro tuto tøídu."""
-
     def __init__(self, *args, **kwargs):
         super_(EditForm).__init__(self, *args, **kwargs)
         self._size = self.GetSize() # Remember the original size.
@@ -1249,19 +1267,6 @@ class EditForm(LookupForm, TitledForm):
         self._result = self._row
         return True
 
-    def _edit_delete(self):
-        key = self._key
-        if key == None:
-            return False
-        if not delete_record_question():
-            return False
-        success, result = db_operation(lambda : self._data.delete(key))
-        if not success:
-            return False
-        self._signal_update()
-        log(ACTION, 'Øádek smazán')
-        return True
-
     def _signal_update(self):
         f = current_form()
         if isinstance(f, Refreshable):
@@ -1282,37 +1287,6 @@ class EditForm(LookupForm, TitledForm):
                 self._parent.Close()
         return result
 
-    def _menus(self):
-        return (Menu(_("Pøíkazy"),
-                     (MItem(_("Pøepnout na pøedchozí okno"),
-                            command=Application.COMMAND_PREV_FORM),
-                      MItem(_("Pøepnout na následující okno"),
-                            command=Application.COMMAND_NEXT_FORM),
-                      MItem(_("Zavøít aktuální okno"),
-                            command=Application.COMMAND_LEAVE_FORM),
-                      MSeparator(),
-                      MItem(_("Hledat"),
-                            command=LookupForm.COMMAND_SEARCH),
-                      MItem(_("Hledat dal¹í"),
-                            command=LookupForm.COMMAND_SEARCH_NEXT),
-                      MItem(_("Hledat pøedchozí"),
-                            command=LookupForm.COMMAND_SEARCH_PREVIOUS),
-                      MItem(_("Tøídìní"),
-                            command=LookupForm.COMMAND_SORT_COLUMN),
-                      MItem(_("Filtrovat"),
-                            command=LookupForm.COMMAND_FILTER),
-                      MSeparator(),
-                      MItem(_("Nový záznam"),
-                            command=EditForm.COMMAND_RECORD_INSERT),
-                      MItem(_("Editovat záznam"),
-                            command=EditForm.COMMAND_RECORD_UPDATE),
-                      MItem(_("Smazat záznam"),
-                            command=EditForm.COMMAND_RECORD_DELETE),
-                      ),
-                     activation=EditForm.ACT_EDITFORM),
-                Menu(_("Tisk"), (EditForm.print_menu,),
-                     activation=EditForm.ACT_EDITFORM),
-                )
 
     def set_row(self, row):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
@@ -1410,16 +1384,7 @@ class EditForm(LookupForm, TitledForm):
                     self._row.listfield_choose(id, val)
             return True
         if self._editable:
-            if command == EditForm.COMMAND_RECORD_INSERT:
-                self._edit_insert()
-                return True
-            elif command == EditForm.COMMAND_RECORD_UPDATE:
-                self._edit_update()
-                return True
-            elif command == EditForm.COMMAND_RECORD_DELETE:
-                self._edit_delete()
-                return True
-            elif command == EditForm.COMMAND_RECORD_COMMIT:
+            if command == EditForm.COMMAND_COMMIT_RECORD:
                 self._commit_form()
                 return True
             
