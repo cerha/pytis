@@ -313,11 +313,11 @@ LookupForm.COMMAND_JUMP = Command('lookup-form.jump')
 LookupForm.COMMAND_SEARCH = Command('lookup-form.search')
 """Hledání záznamu."""
 
-LookupForm.COMMAND_SEARCH_PREVIOUS = Command('lookup-form.search',
+LookupForm.COMMAND_SEARCH_PREVIOUS = Command('lookup-form.search-previous',
                                              enabled=_current_form_searching)
 """Hledání Pøedchozího záznamu bez dialogu."""
 
-LookupForm.COMMAND_SEARCH_NEXT = Command('lookup-form.search',
+LookupForm.COMMAND_SEARCH_NEXT = Command('lookup-form.search-next',
                                          enabled=_current_form_searching)
 """Hledání dal¹ího záznamu bez dialogu."""
 
