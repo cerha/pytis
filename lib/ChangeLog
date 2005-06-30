@@ -1,3 +1,74 @@
+2005-06-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._current_row): Zru¹eno.
+	(_current_key, current_key): Pøesunuto do `Form'.
+	(ListForm.current_row, ListForm._search_adjust_data_position)
+	(ListForm.show_position, ListForm._on_edit)
+	(ListForm._on_insert_line, ListForm.refresh)
+	(BrowseForm._formatter_parameters, BrowseForm._on_edit_record):
+	Namísto `_current_row()' pou¾ívej `_current_cell()'.
+	(ListForm.is_changed): Pøejmenováno na `_is_changed'.
+	(ListForm.can_line_commit, ListForm.can_line_commit): Nové metody.
+	(ListForm.on_command): Neo¹etøuj zru¹ený pøíkaz
+	`ListForm.COMMAND_LINE_DELETE'.
+	(can_show_cell_codebook): Buï metodou instance, nikoli tøídy.
+	(ListForm._on_handled_command): `row' -> `the_row'.
+	(_on_delete_line): Zru¹eno.
+	(ListForm._on_delete_record): Nová metoda.
+	(BrowseForm._context_menu): `ListForm.COMMAND_LINE_DELETE' nahraï
+	`RecordForm.COMMAND_DELETE_RECORD'.
+
+	* pytis/form/inputfield.py (InputField.can_reset_field): Nová
+	metoda.
+	(Invocable.can_invoke_selection, Invocable.can_invoke_selection)
+	(ListField.can_invoke_edit_form)
+	(ListField.can_invoke_browse_form, ListField.can_choose_key): Nové metody.
+
+	* pytis/form/form.py (Form.__init__): Namísto volání
+	`_add_menus()' pøidávej tiskové menu pøímo zde.
+	(Form._add_menus): Zru¹eno.
+	(Form._menus): Zru¹eno.
+	(Form._print_menu): Nová metoda.
+	(Form.check_permission): Nový nepovinný argument `quiet'.
+	(print_menu): Zru¹eno.
+	(RecordForm._init_attributes): Aktualizace docstringu.
+	(RecordForm._signal_update): Nová metoda.
+	(RecordForm.current_row): Nová metoda.
+	(RecordForm._current_key): Nová metoda.
+	(RecordForm.current_key): Nová metoda.
+	(RecordForm._on_delete_record): Nová metoda.
+	(RecordForm.can_delete_record): Nová metoda.
+	(RecordForm.on_command): Nová metoda.
+	(LookupForm.is_searching): Pøejmenováno na `_is_searching'.
+	(LookupForm._is_searching, LookupForm._is_searching): Nové metody.
+	(LookupForm.can_sort): Zru¹eno.
+	(EditForm.ACT_EDITFORM, EditForm.ACTIVATIONS): Zru¹eno.
+	(EditForm._edit_delete): Zru¹eno.
+	(EditForm._menus): Zru¹eno.
+	(EditForm.on_command): Neo¹etøuj `EditForm.COMMAND_RECORD_INSERT',
+	`EditForm.COMMAND_RECORD_UPDATE',
+	`EditForm.COMMAND_RECORD_DELETE'.
+	`EditForm.COMMAND_RECORD_COMMIT' ->`EditForm.COMMAND_COMMIT_RECORD'.
+
+	* pytis/form/command.py: Buï potomkem `object'.
+	(_check_perm, _can_run_form, _can_insert)
+	(_current_form_can_insert, _current_form_can_update)
+	(_current_form_can_delete, _current_form_searching)
+	(_current_form_changed, _current_field_enabled)
+	(_current_field_modified, _current_field_has_selection): Zru¹eno.
+	(FORM_COMMAND_MENU): Nová konstanta.
+	(define_cmd): Nová dunkce.  V¹echny pøíkazy nyní definovány s její
+	pomocí.
+
+	* pytis/form/application.py (Application.OnInit): Pøidávej také
+	menu pøíkazù.  Pøejmenována lokální promìnná `spec' -> `name'.
+	(Application._check_perm): Nová metoda.
+	(Application.can_run_form): Nová metoda.
+	(Application.can_new_record): Nová metoda.
+	(window_count): Zru¹eno.
+	(Application.can_next_form, Application.can_prev_form) 
+	(Application.can_leave_form): Nové metody.
+
 2005-06-30  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/dialog.py (RunFormDialog._create_content):
