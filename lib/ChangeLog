@@ -1,5 +1,7 @@
 2005-06-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (Menu.create): Vylep¹en komentáø.
+
 	* pytis/form/command.py: Opraveny identifikátory pøíkazù
 	`LookupForm.COMMAND_SEARCH_NEXT' a
 	`LookupForm.COMMAND_SEARCH_PREVIOUS'.
