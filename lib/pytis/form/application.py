@@ -147,8 +147,15 @@ class Application(wx.App, KeyHandler):
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
         self._windows = XStack()
         self._modals = Stack()
-        wm = Menu(self._WINDOW_MENU_TITLE, (), activation=(Window.ACT_WINDOW))
-        menus = self._spec('menu') + (wm,)
+        command_menu_items = []
+        for group in FORM_COMMAND_MENU:
+            if command_menu_items:
+                command_menu_items.append(MSeparator())
+            for title, cmd in group:
+                command_menu_items.append(MItem(title, command=cmd))
+        menus = self._spec('menu') + (
+            Menu(self._WINDOW_MENU_TITLE, (), activation=(Window.ACT_WINDOW)),
+            Menu(_("Pøíkazy"), command_menu_items, activation=Form.ACT_FORM))
         self._menubar = mb = MenuBar(self._frame, menus, self)
 
         default_font_encoding = self._spec('default_font_encoding')
@@ -160,11 +167,11 @@ class Application(wx.App, KeyHandler):
         self._spec('init')
         self._panel.SetFocus()
         if config.startup_forms:
-            for spec in config.startup_forms.split(','):
-                separator_position = spec.find('/')
+            for name in config.startup_forms.split(','):
+                separator_position = name.find('/')
                 if separator_position != -1:
-                    cls_name = spec[:separator_position].strip()
-                    spec = spec[separator_position+1:]
+                    cls_name = name[:separator_position].strip()
+                    name = name[separator_position+1:]
                     try:
                         form_cls = getattr(pytis.form, cls_name)
                         if not issubclass(form_cls, Form):
@@ -175,9 +182,8 @@ class Application(wx.App, KeyHandler):
                         continue
                 else:
                     form_cls = BrowseForm
-                self.run_form(form_cls, spec.strip())
+                self.run_form(form_cls, name.strip())
         return True
-
 
     def _spec(self, name, default_value=None):
         try:
@@ -189,6 +195,21 @@ class Application(wx.App, KeyHandler):
 
     # Ostatní metody
 
+    def _check_perm(self, perm, name):
+        if perm == pytis.data.Permission.INSERT:
+            return False
+        try:
+            data_spec = self._resolver.get(name, 'data_spec')
+        except ResolverError:
+            return True
+        rights = data_spec.access_rights()
+        if not rights:
+            return True
+        connection = config.dbconnection
+        groups = pytis.data.DBDataDefault.class_access_groups(connection)
+        result = rights.permitted(perm, groups)
+        return result
+        
     def _update_window_menu(self, recreate=True):
         mb = self._menubar
         menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
@@ -336,6 +357,19 @@ class Application(wx.App, KeyHandler):
             top_level_exception()
         return result
 
+    def can_run_form(self, form_class, name, *args, **kwargs):
+        perm = pytis.data.Permission.VIEW
+        if issubclass(form_class, pytis.form.DualForm):
+            try:
+                dual_spec = resolver().get(name, 'dual_spec')
+            except ResolverError:
+                return True
+            result = self._check_perm(perm, dual_spec.main_name()) and \
+                     self._check_perm(perm, dual_spec.side_name())
+        else:
+            result = self._check_perm(perm, name)
+        return result
+
     def run_procedure(self, spec_name, proc_name, **kwargs):
         """Spus» proceduru.
 
@@ -395,8 +429,11 @@ class Application(wx.App, KeyHandler):
         else:
             result = run_form(PopupEditForm, name, select_row=key, new=True,
                               prefill=prefill)
-        return result    
-            
+        return result
+
+    def can_new_record(self, name, key=None, prefill=None):
+        return self._check_perm(pytis.data.Permission.INSERT, name)
+    
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Zobraz dialog urèené tøídy s hlavním oknem aplikace jako rodièem.
 
@@ -535,6 +572,23 @@ class Application(wx.App, KeyHandler):
         else:
             return self._windows.active()
 
+    def current_form(self):
+        """Vra» právì aktivní formuláø aplikace, pokud existuje.
+        
+        Pokud není otevøen ¾ádný formuláø, nebo aktivním oknem není formuláø,
+        vrací None.  Pokud je otevøeným formuláøem duální formuláø, bude vrácen
+        jeho právì aktivní podformuláø.
+        
+        """
+        top = self.top_window()
+        if isinstance(top, Form):
+            if isinstance(top, DualForm):
+                return top.active_form()
+            else:
+                return top
+        else:
+            return None
+        
     def refresh(self):
         """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
         for stack in (self._modals, self._windows):
@@ -687,27 +741,15 @@ class Application(wx.App, KeyHandler):
         except:
             top_level_exception()
 
-    def window_count(self):
-        """Vra» poèet právì otevøených oken na zásobníku."""
-        return len(self._windows.items())
+    def can_next_form(self):
+        return len(self._windows.items()) > 1
 
-    def current_form(self):
-        """Vra» právì aktivní formuláø aplikace, pokud existuje.
-        
-        Pokud není otevøen ¾ádný formuláø, nebo aktivním oknem není formuláø,
-        vrací None.  Pokud je otevøeným formuláøem duální formuláø, bude vrácen
-        jeho právì aktivní podformuláø.
-        
-        """
-        top = self.top_window()
-        if isinstance(top, Form):
-            if isinstance(top, DualForm):
-                return top.active_form()
-            else:
-                return top
-        else:
-            return None
-                
+    def can_prev_form(self):
+        return len(self._windows.items()) > 1
+
+    def can_leave_form(self):
+        return self.current_form() is not None
+
 
 # Funkce
 
