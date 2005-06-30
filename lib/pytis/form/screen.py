@@ -1113,7 +1113,7 @@ class Menu:
                 item = i.create(parent, menu)
                 menu.AppendItem(item)
                 # Toto je zde zejména kvùli nake¹ování vypoètenách hodnot
-                # uvnitø 'Command.enabled()'.
+                # uvnitø 'Command.enabled()' pøi startu aplikace.
                 menu.Enable(item.GetId(), i.command().enabled(appl, i.args()))
                 width = parent.GetTextExtent(i.title())[0]
                 if hotkey_string.has_key(i):
