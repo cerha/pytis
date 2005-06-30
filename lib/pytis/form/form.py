@@ -464,6 +464,21 @@ class RecordForm(Form):
 
     CALL_SELECTION = 'CALL_SELECTION'
     """Konstanta callbacku zmìny záznamu."""
+    CALL_EDIT_RECORD = 'CALL_EDIT_RECORD'
+    """Voláno pøi po¾adavku na editaci akt. záznamu."""
+    CALL_NEW_RECORD = 'CALL_NEW_RECORD'
+    """Voláno pøi po¾adavku na vytvoøení nového záznamu.
+
+    Mù¾e mít jeden nepovinný argument.  Pokud je pravdivý, bude nový záznam
+    pøedvyplnìn zkopírováním dat aktuálního øádku.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super_(RecordForm).__init__(self, *args, **kwargs)
+        self.set_callback(self.CALL_NEW_RECORD,  self._on_new_record)
+        self.set_callback(self.CALL_EDIT_RECORD,
+                          lambda k: self._on_edit_record(k)),
 
     def _init_attributes(self, key=None, prefill=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -485,14 +500,6 @@ class RecordForm(Form):
         self._key = key
         self._row = None
 
-    def _set_row(self, row):
-        # Naplò formuláø daty z daného *datového* øádku
-        prow = PresentedRow(self._view.fields(), self._data, row,
-                            prefill=self._prefill, new=(not self._key),
-                            change_callback=self._on_field_change,
-                        editability_change_callback=self._on_editability_change)
-        self.set_row(prow)
-
     def _on_field_change(self, field_id, value=None):
         # Signalizace zmìny hodnoty políèka z _row
         pass
@@ -503,24 +510,70 @@ class RecordForm(Form):
 
     def _signal_update(self):
         pass
-        
-    # Veøejné metody
 
-    def prefill(self):
-        """Vra» data pro pøedvyplnìní nového záznamu."""
-        return self._prefill
-    
-    def set_prefill(self, data):
-        """Nastav data pro pøedvyplnìní nového záznamu.
+    def _find_row_by_values(self, cols, values):
+        """Vra» datový øádek odpovídající daným hodnotám.
 
-        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
-        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
-        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
-        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
+        Arguemnty:
+
+          cols -- sekvence názvù sloupcù, které mají být prohledávány.
+          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
+            poøadí odpovídajícím 'cols'.
+
+        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
+        pøedány i pøímo, bez obalení do sekvenèního typu.
 
         """
-        self._prefill = data
+        cols = xtuple(cols)
+        values = xtuple(values)
+        assert len(cols) == len(values)
+        condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
+        data = self._data
+        def find_row(condition):
+            n = data.select(condition)
+            return data.fetchone()
+        success, result = db_operation((find_row, (condition,)))
+        return result
+
+    def _set_row(self, row):
+        # Naplò formuláø daty z daného *datového* øádku
+        prow = PresentedRow(self._view.fields(), self._data, row,
+                            prefill=self._prefill, new=(not self._key),
+                            change_callback=self._on_field_change,
+                        editability_change_callback=self._on_editability_change)
+        self.set_row(prow)
+
+    # Veøejné metody
     
+    def select_row(self, position):
+        """Vyber øádek dle 'position'.
+
+        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
+        
+          None -- nebude zobrazen ¾ádný øádek.
+          Datový klíè -- bude zobrazen øádek s tímto klíèem, kterým je tuple
+            instancí tøídy 'pytis.data.Value'.
+          Slovník hodnot -- bude zobrazen první nalezený øádek obsahující
+            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
+            klíèi slovníku.
+          Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
+            seznamu -- bude zobrazen øádek odpovídajícího klíèe.
+        
+        Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
+        
+        """
+        if isinstance(position, pytis.data.Row):
+            row = position
+        elif isinstance(position, types.TupleType):
+            cols = [c.id() for c in self._data.key()]
+            row = self._find_row_by_values(cols, position)
+        elif isinstance(position, types.DictType):
+            row = self._find_row_by_values(position.keys(),
+                                           position.values())
+        else:
+            ProgramError("Invalid 'position':", position)
+        self._set_row(row)
+
     def set_row(self, row):
         """Naplò aktuální editaci záznamu formuláøe daty z 'row'.
 
@@ -560,7 +613,71 @@ class RecordForm(Form):
         """
         return self._current_key()
 
+    def prefill(self):
+        """Vra» data pro pøedvyplnìní nového záznamu."""
+        return self._prefill
     
+    def set_prefill(self, data):
+        """Nastav data pro pøedvyplnìní nového záznamu.
+
+        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
+        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
+        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
+        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
+
+        """
+        self._prefill = data
+
+    def _redirected_name(self, key):
+        redirect = self._view.redirect()
+        if redirect is not None:
+            success, row = db_operation(lambda : self._data.row(key))
+            if not success:
+                raise ProgramError('Row read failure')
+            name = redirect(row)
+            if name is not None:
+                assert isinstance(name, types.StringType)
+                return name
+        return None
+    
+    def _run_form(self, form, key):
+        name = self._redirected_name(key) or self._name
+        kwargs = self._new_form_kwargs()
+        if issubclass(form, EditForm):
+            kwargs['key'] = key
+        else:
+            kwargs['select_row'] = key
+        run_form(form, name,  **kwargs)
+
+    def _new_form_kwargs(self):
+        return {}
+        
+    def _on_new_record(self, copy=False):
+        if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
+            return False
+        if copy:
+            key = self._current_key()
+        else:
+            key = None
+        result = new_record(self._name, key=key, prefill=self.prefill())
+        if result is not None:
+            self.select_row(result.row())
+    
+    def _on_edit_record(self, key):
+        if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
+            return False
+        on_edit_record = self._view.on_edit_record()
+        if on_edit_record is not None:
+            on_edit_record(row=self.current_row())
+            # TODO: _signal_update vyvolá refresh.  To je tu jen pro pøípad, ¾e
+            # byla u¾ivatelská procedura o¹etøena jinak ne¾ vyvoláním
+            # formuláøe.  Proto¾e to samo u¾ je hack, tak a» si radìji také
+            # tvùrce provádí refresh sám, proto¾e tady je volán ve v¹ech
+            # ostatních pøípadech zbyteènì a zdr¾uje.
+            self._signal_update()
+        else:
+            self._run_form(PopupEditForm, key)
+
     def _on_delete_record(self, key):
         log(EVENT, 'Pokus o smazání záznamu:', key)
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
@@ -596,9 +713,17 @@ class RecordForm(Form):
         if command == RecordForm.COMMAND_DELETE_RECORD:
             key = self._current_key()
             self._on_delete_record(key)
-            return True
+        elif command == RecordForm.COMMAND_NEW_RECORD:
+            self._run_callback(self.CALL_NEW_RECORD)
+        elif command == RecordForm.COMMAND_NEW_RECORD_COPY:
+            self._run_callback(self.CALL_NEW_RECORD, (True,))
+        elif command == RecordForm.COMMAND_EDIT_RECORD:
+            key = self.current_key()
+            if key is not None:
+                self._run_callback(self.CALL_EDIT_RECORD, (key,))
         else:
             return super(RecordForm, self).on_command(command, **kwargs)
+        return True
 
         
 class LookupForm(RecordForm):
@@ -642,6 +767,9 @@ class LookupForm(RecordForm):
         self._lf_select_count = None
         self._lf_filter = None
 
+    def _new_form_kwargs(self):
+        return dict(condition=self._lf_condition, sorting=self._lf_sorting)
+    
     def _default_sorting(self):
         return ()
 
@@ -1396,61 +1524,8 @@ class EditForm(LookupForm, TitledForm):
         else:
             return super_(EditForm).on_command(self, command, **kwargs)
         return False
-        
-    def _find_row_by_values(self, cols, values):
-        """Vra» datový øádek odpovídající daným hodnotám.
 
-        Arguemnty:
-
-          cols -- sekvence názvù sloupcù, které mají být prohledávány.
-          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
-            poøadí odpovídajícím 'cols'.
-
-        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
-        pøedány i pøímo, bez obalení do sekvenèního typu.
-
-        """
-        cols = xtuple(cols)
-        values = xtuple(values)
-        assert len(cols) == len(values)
-        condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
-        data = self._data
-        def find_row(condition):
-            n = data.select(condition)
-            return data.fetchone()
-        success, result = db_operation((find_row, (condition,)))
-        return result
     
-    def select_row(self, position):
-        """Vyber øádek dle 'position'.
-
-        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
-        
-          None -- nebude zobrazen ¾ádný øádek.
-          Datový klíè -- bude zobrazen øádek s tímto klíèem, kterým je tuple
-            instancí tøídy 'pytis.data.Value'.
-          Slovník hodnot -- bude zobrazen první nalezený øádek obsahující
-            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
-            klíèi slovníku.
-          Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
-            seznamu -- bude zobrazen øádek odpovídajícího klíèe.
-        
-        Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
-        
-        """
-        if isinstance(position, pytis.data.Row):
-            row = position
-        elif isinstance(position, types.TupleType):
-            cols = [c.id() for c in self._data.key()]
-            row = self._find_row_by_values(cols, position)
-        elif isinstance(position, types.DictType):
-            row = self._find_row_by_values(position.keys(),
-                                           position.values())
-        else:
-            ProgramError("Invalid 'position':", position)
-        self._set_row(row)
-
-
 class PopupEditForm(PopupForm, EditForm):
     """Stejné jako 'EditForm', av¹ak v popup podobì."""
     
