@@ -891,12 +891,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_activation(self):
         log(EVENT, 'Aktivace øádku øádkového seznamu')
         key = self._current_key()
-        self._run_callback(self.CALL_ACTIVATION, (key,))
+        if key:
+            self._run_callback(self.CALL_ACTIVATION, (key,))
 
     def _on_alternate_activation(self):
         log(EVENT, 'Aktivace øádku øádkového seznamu')
         key = self._current_key()
-        self._run_callback(self.CALL_ALTERNATE_ACTIVATION, (key,))
+        if key:
+            self._run_callback(self.CALL_ALTERNATE_ACTIVATION, (key,))
 
     def _on_show_cell_codebook(self):
         column = self._columns[self._current_cell()[1]]
@@ -1144,26 +1146,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         log(EVENT, 'Øádek vlo¾en')
         return True
 
-    def _on_delete_record(self, key):
-        if not self.editable:
-            message('Needitovatelná tabulka!', beep_=True)
-            return False
-        self._block_refresh = True
-        try:
-            key = self._current_key()
-            deleted = super(ListForm, self)._on_delete_record(key)
-            self._table.edit_row(None)
-        finally:
-            self._block_refresh = False
-        if deleted:
-            r = self._current_cell()[0]
-            n = self._table.GetNumberRows()
-            if r < n - 1:
-                self._select_cell(row=r+1)
-            elif r > 0:
-                self._select_cell(row=r-1)
-            self.refresh()
-
     def _on_line_commit(self):
         # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _on_cell_commit.
         log(EVENT, 'Pokus o ulo¾ení øádku seznamu do databáze')
@@ -1301,6 +1283,26 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._grid.DisableCellEditControl()
         self._current_editor = None
         return True
+
+    def _on_delete_record(self, key):
+        if not self.editable:
+            message('Needitovatelná tabulka!', beep_=True)
+            return False
+        self._block_refresh = True
+        try:
+            key = self._current_key()
+            deleted = super(ListForm, self)._on_delete_record(key)
+            self._table.edit_row(None)
+        finally:
+            self._block_refresh = False
+        if deleted:
+            r = self._current_cell()[0]
+            n = self._table.GetNumberRows()
+            if r < n - 1:
+                self._select_cell(row=r+1)
+            elif r > 0:
+                self._select_cell(row=r-1)
+            self.refresh()
 
     # Veøejné metody
 
@@ -1662,22 +1664,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
 
     
 class BrowseForm(ListForm):
-    """Formuláø pro prohlí¾ení dat s mo¾ností editace.
-
-    Formuláø je CallbackHandler a argumenty callbackù jsou shodné, jako je
-    tomu pro tøídu 'List'.
-    
-    """
-
-    CALL_EDIT_RECORD = 'CALL_EDIT_RECORD'
-    """Voláno pøi po¾adavku na editaci akt. záznamu."""
-    CALL_NEW_RECORD = 'CALL_NEW_RECORD'
-    """Voláno pøi po¾adavku na vytvoøení nového záznamu.
-
-    Mù¾e mít jeden nepovinný argument.  Pokud je pravdivý, bude nový záznam
-    pøedvyplnìn zkopírováním dat aktuálního øádku.
-
-    """
+    """Formuláø pro prohlí¾ení dat s mo¾ností editace."""
 
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
@@ -1707,25 +1694,11 @@ class BrowseForm(ListForm):
 
     def __init__(self, *args, **kwargs):
         super_(BrowseForm).__init__(self, *args, **kwargs)
-        self.set_callback(self.CALL_NEW_RECORD,  self._on_new_record)
-        self.set_callback(self.CALL_EDIT_RECORD,
-                          lambda k: self._on_edit_record(k)),
         self.set_callback(ListForm.CALL_ACTIVATION,
                           lambda key: self._run_form(BrowsableShowForm, key))
         self.set_callback(ListForm.CALL_ALTERNATE_ACTIVATION,
                           lambda key: self._run_form(DescriptiveDualForm, key))
         
-    def _run_form(self, form, key):
-        name = self._redirected_name(key)
-        if not name:
-            name = self._name
-        if issubclass(form, EditForm):
-            kwargs = {'key': key}
-        else:
-            kwargs = {'select_row': key}
-        run_form(form, name, condition=self._lf_condition,
-                 sorting=self._lf_sorting, **kwargs)
-
     def _formatter_parameters(self):
         name = self._name
         return {(name+'/'+pytis.output.P_CONDITION):
@@ -1765,18 +1738,6 @@ class BrowseForm(ListForm):
         if custom_menu:
             menu += (MSeparator(),) + custom_menu
         return menu
-
-    def _redirected_name(self, key):
-        redirect = self._view.redirect()
-        if redirect is not None:
-            success, row = db_operation(lambda : self._data.row(key))
-            if not success:
-                raise ProgramError('Row read failure')
-            name = redirect(row)
-            if name is not None:
-                assert isinstance(name, types.StringType)
-                return name
-        return None
 
     def _on_import_interactive(self):
         if not self._data.accessible(None, pytis.data.Permission.INSERT):
@@ -1869,34 +1830,6 @@ class BrowseForm(ListForm):
             f.close()
         run_dialog(Message, _("%d/%d záznamù bylo vlo¾eno.") % (n, i),
                    title=_("Hromadné vkládání dat dokonèeno"))
-    
-    def _on_new_record(self, copy=False):
-        if not self._data.accessible(None, pytis.data.Permission.INSERT):
-            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
-            message(msg, beep_=True)
-            return False
-        if copy:
-            key = self.current_key()
-        else:
-            key = None
-        result = new_record(self._name, key=key, prefill=self.prefill())
-        if isinstance(result, PresentedRow):
-            self.select_row(result.row())
-
-    def _on_edit_record(self, key):
-        on_edit_record = self._view.on_edit_record()
-        if on_edit_record is not None:
-            row = self._table.row(self._current_cell()[0])
-            on_edit_record(row=row)
-            self.refresh()
-            # TODO: tento refresh je tu jen pro pøípad, ¾e byla u¾ivatelská
-            # procedura o¹etøena jinak ne¾ vyvoláním formuláøe.  Proto¾e to
-            # samo u¾ je hack, tak a» si radìji také tvùrce provádí refresh
-            # sám, proto¾e tady je volán ve v¹ech ostatních pøípadech zbyteènì
-            # a zdr¾uje.
-        else:
-            self._run_form(PopupEditForm, key)
-
 
     def _on_print_(self, spec_path):
         log(EVENT, 'Vyvolání tiskového formuláøe')
@@ -1923,14 +1856,6 @@ class BrowseForm(ListForm):
             self._on_print_(kwargs.get('print_spec_path'))
         elif command == BrowseForm.COMMAND_IMPORT_INTERACTIVE:
             self._on_import_interactive()
-        elif command == BrowseForm.COMMAND_NEW_RECORD:
-            self._run_callback(self.CALL_NEW_RECORD)
-        elif command == BrowseForm.COMMAND_NEW_RECORD_COPY:
-            self._run_callback(self.CALL_NEW_RECORD, (True,))
-        elif command == BrowseForm.COMMAND_EDIT_RECORD:
-            key = self.current_key()
-            if key is not None:
-                self._run_callback(self.CALL_EDIT_RECORD, (key,))
         else:
             return super_(BrowseForm).on_command(self, command, **kwargs)
         return True
