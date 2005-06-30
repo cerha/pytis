@@ -239,8 +239,10 @@ define_cmd(Application, 'NEXT_FORM',
            "Vyzvednutí okna formuláøe následujícího za aktivním oknem.")
 define_cmd(Application, 'SHOW_POPUP_MENU',
            "Zobraz kontextové menu aktivního prvku, pokud to lze.")
+
 define_cmd(Form, 'PRINT',
            "Tisk aktuálního obsahu formuláøe.")
+
 define_cmd(LookupForm, 'FILTER',
            "Filtrování záznamù.")
 define_cmd(LookupForm, 'JUMP',
@@ -253,9 +255,20 @@ define_cmd(LookupForm, 'SEARCH_NEXT',
            "Hledání dal¹ího záznamu bez dialogu.")
 define_cmd(LookupForm, 'SORT_COLUMN',
            "Setøídìní podle sloupce.")
+
+define_cmd(RecordForm, 'NEW_RECORD',
+           #enabled=_current_form_can_insert)
+           "Otevøení editaèního formuláøe pro vlo¾ení nového záznamu.")
+define_cmd(RecordForm, 'NEW_RECORD_COPY',
+           #enabled=_current_form_can_insert)
+           "Otevøení editaèního formuláøe pro nový záznam kopií aktuálního.")
+define_cmd(RecordForm, 'EDIT_RECORD',
+           #enabled=_current_form_can_update)
+           "Editace aktuálního záznamu v editaèním formuláøi.")
 define_cmd(RecordForm, 'DELETE_RECORD',
            #enabled=_current_form_can_delete)
            "Vymazání editovaného záznamu z databáze.")
+
 define_cmd(ListForm, 'ACTIVATE',
            "Vyvolání aktivaèní funkce pro aktuální øádek formuláøe.")
 define_cmd(ListForm, 'ACTIVATE_ALTERNATE',
@@ -308,24 +321,18 @@ define_cmd(ListForm, 'NEW_LINE_BEFORE_COPY',
 define_cmd(ListForm, 'SET_GROUPING_COLUMN',
            #enabled=ListForm.can_set_grouping)
            "Zmìna sloupce vizuáního seskupování.")
-define_cmd(BrowseForm, 'NEW_RECORD',
-           #enabled=_current_form_can_insert)
-           "Otevøení editaèního formuláøe pro vlo¾ení nového záznamu.")
-define_cmd(BrowseForm, 'NEW_RECORD_COPY',
-           #enabled=_current_form_can_insert)
-           "Otevøení editaèního formuláøe pro nový záznam kopií aktuálního.")
-define_cmd(BrowseForm, 'EDIT_RECORD',
-           #enabled=_current_form_can_update)
-           "Editace aktuálního záznamu v editaèním formuláøi.")
+
 define_cmd(BrowseForm, 'IMPORT_INTERACTIVE',
            #enabled=_current_form_can_insert)
            "Import CSV dat s potvrzením a mo¾ností editace ka¾dého záznamu.")
+
 define_cmd(EditForm, 'COMMIT_RECORD',
            "Ukonèení editaèního formuláøe s ulo¾ením zmìn.")
 define_cmd(EditForm, 'NAVIGATE',
            "Navigace mezi políèky editaèního formuláøe.")
 define_cmd(EditForm, 'NAVIGATE_BACK',
            "Zpìtná navigace mezi políèky editaèního formuláøe.")
+
 define_cmd(BrowsableShowForm, 'NEXT_RECORD',
            "Pøechod na dal¹í záznam.")
 define_cmd(BrowsableShowForm, 'PREVIOUS_RECORD',
@@ -370,6 +377,9 @@ DEFAULT_COMMAND_KEYS = (
     (Application.COMMAND_REFRESH,                 'Ctrl-l'),
     (Application.COMMAND_SHOW_POPUP_MENU,         'Ctrl-M'),
     (Form.COMMAND_PRINT,                         ('Ctrl-x', 'p')),
+    (RecordForm.COMMAND_NEW_RECORD,               'F6'),
+    (RecordForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
+    (RecordForm.COMMAND_EDIT_RECORD,              'F5'),
     (RecordForm.COMMAND_DELETE_RECORD,            'F8'),
     (LookupForm.COMMAND_SORT_COLUMN,              'F4'),
     (LookupForm.COMMAND_FILTER,                   'Ctrl-F4'),
@@ -395,10 +405,7 @@ DEFAULT_COMMAND_KEYS = (
     (ListForm.COMMAND_NEW_LINE_AFTER_COPY,        'F7'),
     (ListForm.COMMAND_NEW_LINE_BEFORE,            'Ctrl-Insert'),
     (ListForm.COMMAND_NEW_LINE_BEFORE_COPY,       'Ctrl-F7'),
-    (BrowseForm.COMMAND_NEW_RECORD,               'F6'),
-    (BrowseForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
     (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
-    (BrowseForm.COMMAND_EDIT_RECORD,              'F5'),
     (EditForm.COMMAND_COMMIT_RECORD,              'Ctrl-Enter'),
     (EditForm.COMMAND_NAVIGATE,                   'Tab'),
     (EditForm.COMMAND_NAVIGATE_BACK,              'Shift-Tab'),        
