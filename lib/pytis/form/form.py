@@ -721,19 +721,13 @@ class LookupForm(RecordForm):
         if self._lf_select_count > 0:
             prompt = u"Záznam èíslo (1-%s): " % (self._lf_select_count)
             mask = "#" * len(str(self._lf_select_count))
-            returned = pytis.form.run_dialog(pytis.form.InputDialog,
-                                message=u"Skok na záznam",
-                                prompt=prompt,
-                                mask=mask,
-                                formatcodes='_,Fr'
-                                )
-            try:
-                row = int(str(returned.strip()))
-                if row > 0 and row <= self._lf_select_count:
-                    return row
-            except:
-                return None
-            return None
+            returned = pytis.form.run_dialog(pytis.form.InputNumeric,
+                                             message=u"Skok na záznam",
+                                             prompt=prompt,
+                                             min_value=1,
+                                             max_value=self._lf_select_count
+                                             )
+            return returned.value()
         
     def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)

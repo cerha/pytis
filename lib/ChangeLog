@@ -1,3 +1,8 @@
+2005-06-30  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (LookupForm._on_jump): Pro získání èísla
+	øádku pou¾ívej 'InputNumeric'.
+
 2005-06-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._total_height): Zji¹»uj vý¹ku
