@@ -724,22 +724,6 @@ class DateTime(Type):
             except:
                 raise ProgramError('Bad value for maxdate', maxdate)                
         super(DateTime, self).__init__(**kwargs)
-
-    def _check_format(self, format, string):
-        try:
-            matcher = self._check_matcher[format]
-        except KeyError:
-            special = {'%Y': r'\d\d\d\d', ' ': '\s+'}
-            def subst(match):
-                m = match.group(1)
-                try:
-                    return special[m]
-                except KeyError:
-                    return m.startswith('%') and '\d?\d' or re.escape(m)
-            regexp = re.sub('(\%[a-zA-Z]|.|\s+)', subst, format)
-            self._check_matcher[format] = matcher = re.compile(regexp)
-        if not matcher.match(string):
-            raise ValidationError(self.VM_DT_FORMAT)
         
     def _check_format(self, format, string):
         try:

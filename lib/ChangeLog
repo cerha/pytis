@@ -1,3 +1,8 @@
+2005-07-01  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/types_.py (_check_format): Vypu¹tìn omylem zdvojený
+	kód. 
+
 2005-06-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._current_row): Zru¹eno.
