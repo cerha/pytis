@@ -196,8 +196,6 @@ class Application(wx.App, KeyHandler):
     # Ostatní metody
 
     def _check_perm(self, perm, name):
-        if perm == pytis.data.Permission.INSERT:
-            return False
         try:
             data_spec = self._resolver.get(name, 'data_spec')
         except ResolverError:
