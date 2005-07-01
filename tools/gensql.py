@@ -596,7 +596,12 @@ class _GsqlTable(_GsqlSpec):
             result = result + ('CREATE TRIGGER %s_upd_log AFTER UPDATE ON '
                                '%s FOR EACH ROW EXECUTE PROCEDURE '
                                '%s("%s");\n'
+                               'CREATE TRIGGER %s_del_log AFTER DELETE ON '
+                               '%s FOR EACH ROW EXECUTE PROCEDURE '
+                               '%s("%s");\n'
                                ) % (self._name, self._name,
+                                    self._upd_log_trigger, keys,
+                                    self._name, self._name,
                                     self._upd_log_trigger, keys)
         return result
 

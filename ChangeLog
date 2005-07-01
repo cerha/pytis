@@ -1,3 +1,8 @@
+2005-07-01  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable.output): Doplnìn trigger pro
+	logování 'delete'.
+
 2005-06-28  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlTable.__init__): Nový argument
