@@ -73,7 +73,7 @@ PAGE_TOP_MARGIN = 'top_margin'
 PAGE_BOTTOM_MARGIN = 'bottom_margin'
 """Velikost dolního okraje stránky, instance tøídy 'Unit'."""
 PAGE_LEFT_MARGIN = 'left_margin'
-"""Velikost levého okraje stránky, instance tøídy 'Unit'."""
+"""Velikot levého okraje stránky, instance tøídy 'Unit'."""
 PAGE_RIGHT_MARGIN = 'right_margin'
 """Velikost pravého okraje stránky, instance tøídy 'Unit'."""
 PAGE_LANDSCAPE_MODE = 'landscape_mode'
@@ -310,14 +310,18 @@ def @page
     @pageFooter
   }
 
-  @pageSet
-  { @landscapeMode @Case { yes @Yield @height else @Yield @width } } @Wide
-  { @landscapeMode @Case { yes @Yield @width else @Yield @height } } @High
+  def @body
   { //@topMargin ||@leftMargin
-    { // || @pageBackground } @Background
-    @HExpand { // @VExpand @pageContents }
-    ||@rightMargin //@bottomMargin
+   { // || @pageBackground } @Background
+   @HExpand { // @VExpand @pageContents }
+   ||@rightMargin //@bottomMargin
   }
+
+  @pageSet
+  { @landscapeMode @Case { yes @Yield { @height @Wide @width @High @body }
+                          else @Yield { @width @Wide @height @High @body }
+                         }
+  } 
 }
 
 export @pageNumber
@@ -1027,6 +1031,9 @@ class LoutFormatter(Tmpdir):
                         self._process(in_stream)
                         in_stream.close()
                         self._formatted_document = in_stream.read()
+                        loutfile = open('/tmp/pokus.lout','w')
+                        loutfile.write(self._formatted_document)
+                        loutfile.close()
                     except ValueError:  # zápis do uzavøeného streamu
                         log(EVENT, ('Zpracování specifikace pøeru¹eno '
                                     'uzavøením streamu'))
