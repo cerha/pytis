@@ -1,3 +1,7 @@
+2005-07-07  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/output/formatter.py (_INTRO): O¹etøení 'landscape' módu.
+
 2005-07-01  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/application.py (Application._check_perm): Vypu¹tìno
