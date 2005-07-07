@@ -1,5 +1,8 @@
 2005-07-07  Pavel Hanak  <hanak@asellus.cz>
 
+	* pytis/form/form.py (RecordForm._on_delete_record): Oprava chyby
+	v pøedání øádku do 'on_delete_record'.
+
 	* pytis/output/formatter.py (_INTRO): O¹etøení 'landscape' módu.
 
 2005-07-01  Pavel Hanak  <hanak@asellus.cz>

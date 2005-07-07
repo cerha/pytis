@@ -687,7 +687,7 @@ class RecordForm(Form):
         # O¹etøení u¾ivatelské funkce pro mazání
         on_delete_record = self._view.on_delete_record()
         if on_delete_record is not None:
-            condition = on_delete_record(row=row)
+            condition = on_delete_record(row=self.current_row())
             if condition is None:
                 return True
             assert isinstance(condition, pytis.data.Operator)
