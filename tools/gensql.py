@@ -1238,10 +1238,11 @@ class _GsqlFunction(_GsqlSpec):
                 skip = 1
                 if f.__doc__ is not None:
                     skip = skip + len(string.split(f.__doc__, '\n'))
-                lines = filter(identity, lines)
+                lines = [l for l in lines if l.strip() != '']
                 return _gsql_escape(string.join(lines[skip:], ''))
             source_list = map(get_source, tuple(self._use_functions)+(body,))
-            source_text = string.join(source_list, '\n')
+            # plpython nemá rád prázdné øádky
+            source_text = string.join(source_list, '')
             result = "'%s' LANGUAGE plpython" % source_text
         return result
         

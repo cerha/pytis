@@ -1,3 +1,8 @@
+2005-07-11  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlFunction._format_body): Vynechávej prázdné
+	øádky ve funkcích (plpython je nemá rád).
+
 2005-07-01  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlTable.output): Doplnìn trigger pro
