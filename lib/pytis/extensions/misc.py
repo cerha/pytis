@@ -379,6 +379,17 @@ def row_update(row, values=()):
     op = lambda: data.update(row[key.id()], updaterow)
     return pytis.form.db_operation(op)
 
+def is_in_groups(groups):
+    if isinstance(groups, types.StringType):
+        groups = xtuple(groups)
+    from sets import Set
+    conn = config.dbconnection
+    dbgroups=pytis.data.PostgreSQLUserGroups.class_access_groups(conn)
+    if Set(groups) & Set(dbgroups) == Set([]):
+        return False
+    else:
+        return True
+
 
 # Application function
 
