@@ -1077,6 +1077,7 @@ class CodebookField(Invocable, TextField):
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
         widget = Invocable._create_widget(self)
+        self._insert_button = None
         spec = self.spec()
         try:
             cb_spec = resolver().get(spec.codebook(), 'cb_spec')
@@ -1104,7 +1105,7 @@ class CodebookField(Invocable, TextField):
                         self._skip_navigation_callback(display))
             sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
         if spec.allow_codebook_insert():
-            button = wx.Button(self._parent, -1, "+")
+            self._insert_button = button = wx.Button(self._parent, -1, "+")
             button.SetSize((dlg2px(button, 10), height))
             button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(),
@@ -1125,6 +1126,16 @@ class CodebookField(Invocable, TextField):
             return self._type.maxlen()
         except AttributeError:
             return None
+
+    def _disable(self, change_appearance):
+        if self._insert_button:
+            self._insert_button.Enable(False)
+        super_(CodebookField)._disable(self, change_appearance)        
+    
+    def _enable(self):
+        if self._insert_button:
+            self._insert_button.Enable(True)
+        super_(CodebookField)._enable(self)        
 
     def _on_change_hook(self):
         if not hasattr(self, '_display_column'):

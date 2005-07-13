@@ -1,3 +1,12 @@
+2005-07-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/inputfield.py (CodebookField._create_widget):
+	Nový atribut 'self._insert_button'.
+	(CodebookField._disable): Pøedefinovaná metoda - pøidáno
+	znepøístupnìní 'self._insert_button'.	
+	(CodebookField._enable): Pøedefinovaná metoda - pøidáno
+	zpøístupnìní 'self._insert_button'.
+	
 2005-07-07  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (RecordForm._on_delete_record): Oprava chyby
