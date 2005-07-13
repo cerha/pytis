@@ -593,13 +593,18 @@ class _GsqlTable(_GsqlSpec):
         if self._upd_log_trigger:
             keys = ','.join([_gsql_column_table_column(k)[1]
                              for k in self.key_columns()])
-            result = result + ('CREATE TRIGGER %s_upd_log AFTER UPDATE ON '
+            result = result + ('CREATE TRIGGER %s_ins_log AFTER INSERT ON '
                                '%s FOR EACH ROW EXECUTE PROCEDURE '
                                '%s("%s");\n'
+                               'CREATE TRIGGER %s_upd_log AFTER UPDATE ON '
+                               '%s FOR EACH ROW EXECUTE PROCEDURE '
+                               '%s("%s");\n'                               
                                'CREATE TRIGGER %s_del_log AFTER DELETE ON '
                                '%s FOR EACH ROW EXECUTE PROCEDURE '
                                '%s("%s");\n'
                                ) % (self._name, self._name,
+                                    self._upd_log_trigger, keys,
+                                    self._name, self._name,
                                     self._upd_log_trigger, keys,
                                     self._name, self._name,
                                     self._upd_log_trigger, keys)

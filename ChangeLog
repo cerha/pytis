@@ -1,3 +1,7 @@
+2005-07-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable.output): Doplnìny triggery pro insert.
+
 2005-07-11  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlFunction._format_body): Vynechávej prázdné
