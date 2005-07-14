@@ -83,11 +83,22 @@ def top_level_exception():
                                   "Je nutno nastavit konfiguraèní volbu "
                                   "`bug_report_address'."))
         else:
-            address = ''
-            while address == '':
+            import commands
+            status, domain = commands.getstatusoutput('hostname -f')
+            username = config.dbconnection.user()
+            if status:
+                address = username
+            else:    
+                address = '%s@%s' % (username, domain)
+            while True:
                 address = run_dialog(InputDialog,
                                      prompt=_("Va¹e e-mailová adresa: "),
+                                     value = address,
                                      input_width=30)
+                if not address or address.strip() == '':
+                    continue
+                else:
+                    break
             if address is not None:
                 try:
                     s = os.popen('%s %s' % (config.sendmail_command, to), 'w')

@@ -1,3 +1,11 @@
+2005-07-14  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/event.py (top_level_exception): Pøednastavuj adresu
+	'from'.
+
+	* pytis/output/formatter.py (LoutFormatter._lout): Smazáno
+	zapomenuté vypisování do 'lout' souboru.
+
 2005-07-13  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/inputfield.py (CodebookField._create_widget):
