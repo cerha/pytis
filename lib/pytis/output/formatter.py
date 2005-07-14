@@ -1031,9 +1031,6 @@ class LoutFormatter(Tmpdir):
                         self._process(in_stream)
                         in_stream.close()
                         self._formatted_document = in_stream.read()
-                        loutfile = open('/tmp/pokus.lout','w')
-                        loutfile.write(self._formatted_document)
-                        loutfile.close()
                     except ValueError:  # zápis do uzavøeného streamu
                         log(EVENT, ('Zpracování specifikace pøeru¹eno '
                                     'uzavøením streamu'))
