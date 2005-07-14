@@ -1,3 +1,7 @@
+2005-07-14  Peter Herich  <herich@asellus.cz>
+
+	* doc/napoveda.wiki: Doplnena vseobecna napoveda.
+
 2005-07-13  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (is_in_groups): Nová funkce.
