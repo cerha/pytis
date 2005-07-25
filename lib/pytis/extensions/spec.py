@@ -76,7 +76,10 @@ class DataSpec(pytis.data.DataFactory):
         for c in columns:
             assert isinstance(c, Column)
         if oid is None:
-            oid = ('oid',)
+            if find('oid', columns, key=lambda c: c.id()):
+                oid = ()
+            else:    
+                oid = ('oid',)
         else:
             oid = xtuple(oid)
             for c in oid:

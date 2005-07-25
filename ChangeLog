@@ -1,3 +1,8 @@
+2005-07-25  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/spec.py (DataSpec.__init__): Pøidávej
+	sloupec 'oid', jen pokud je¹tì není v seznamu sloupcù.
+
 2005-07-14  Peter Herich  <herich@asellus.cz>
 
 	* doc/napoveda.wiki: Doplnena vseobecna napoveda.
