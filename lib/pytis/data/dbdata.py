@@ -2147,17 +2147,23 @@ class PostgreSQLStandardBindingHandler(object):
                 if cid in processed:
                     continue
                 eqs = map(lambda c: EQ(c, row[c]), processed)
-                if (forwards and dir == ASCENDENT) or \
+                if row[cid].value() is None:
+                    relop = NE
+                elif (forwards and dir == ASCENDENT) or \
                    (not forwards and dir == DESCENDANT):
                     relop = GT
                 else:
                     relop = LT
                 neq = relop(cid, row[cid], ignore_case=False)
-                processed.append(cid)
+                if relop != NE:
+                    nullval = pytis.data.Value(row[cid].type(),
+                                           None)
+                    neq = OR(neq, EQ(cid, nullval))
                 conditions.append(apply(AND, eqs + [neq]))
+                processed.append(cid)
             if mayeq:
-                eqs = map(lambda c: EQ(c, row[c], ignore_case=False),
-                          processed)
+                eqs = [EQ(c, row[c], ignore_case=False)
+                       for c in processed]
                 conditions.append(apply(AND, eqs))
             return apply(OR, conditions)
         select_cond = self._pg_last_select_condition

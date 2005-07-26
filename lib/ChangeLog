@@ -1,3 +1,10 @@
+2005-07-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pg_search.sorting_condition):
+	O¹etøení podmínky pro zji¹tìní vzdálenosti nalezeného øádku tak,
+	aby respektovala mo¾ná výskyt NULL hodnot v 'sorting' sloupcích.	
+
 2005-07-14  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/event.py (top_level_exception): Pøednastavuj adresu
