@@ -240,7 +240,7 @@ class ImmediateSelectionDualForm(DualForm):
 
     def _do_selection(self, row):
         return True
-
+    
     
 class PostponedSelectionDualForm(ImmediateSelectionDualForm):
     """Duální formuláø se zpo¾dìnou obnovou vedlej¹ího formuláøe."""
@@ -268,7 +268,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
                 self._selection_candidate = row
                 microsleep(100)
                 event.RequestMore()
-
+                
     def _on_main_selection(self, row):
         if row.row() != self._selection_data:
             self._side_form.Show(False)
@@ -311,13 +311,8 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
     def _do_selection(self, row):
         focused = wx_focused_window()
         import _grid
-        if focused is None or (isinstance(focused, wx.TextCtrl) and \
-                               focused.GetName() == \
-                               _grid.IncrementalSearch.TEXT_CONTROL_NAME):
-            # None to mù¾e být, není-li nic z aplikace zaostøeno.
-            # Druhá podmínka testuje, zda není focus ve widgetu inkrementálního
-            # vyhledávání.
-            #
+        if isinstance(focused, wx.TextCtrl) and \
+           focused.GetName() == _grid.IncrementalSearch.TEXT_CONTROL_NAME:
             # O¹etøovat to speciálním zpùsobem musíme proto, ¾e je tøeba
             # za v¹ech okolností zabránit odskoèení z widgetu inkrementálního
             # vyhledávání.  Ten zpùsob je trochu hloupý, proto¾e vedlej¹í
@@ -332,7 +327,8 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             f.Show(True)
             self._select_form(self._main_form, force=True)
         finally:
-            focused.SetFocus()
+            if focused:
+                focused.SetFocus()
         return True
 
     def close(self):
