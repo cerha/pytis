@@ -1780,7 +1780,7 @@ class BrowseForm(ListForm):
         try:
             columns = []
             for key in f.readline().split(separator):
-                col = find(key.strip(), self._columns, key=lambda c: c.id())
+                col = find(key.strip(), self._fields, key=lambda c: c.id())
                 if col:
                     columns.append(col)
                 else:
