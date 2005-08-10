@@ -1,3 +1,12 @@
+2005-08-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (SideBrowseDualForm._do_selection): Pokud
+	není zaostøeno ¾ádné okno, nic si z toho nedìlej a pokraèuj normálnì.
+	
+
+	* pytis/form/list.py (BrowseForm._on_import_interactive): Vkládané
+	sloupce kontroluj oproti `self._fields', nikoli `self._columns'.
+
 2005-07-26  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/dbdata.py
