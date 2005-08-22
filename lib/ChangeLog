@@ -1,3 +1,9 @@
+2005-08-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (BrowseDualForm.refresh): Refreshuj pouze
+	hlavní formuláø.  Vedlej¹í je tím refreshován díky své závislosti...
+	(ShowDualForm._on_idle): Nevolej po pøefiltrování `_select_form()'.
+
 2005-08-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (SideBrowseDualForm._do_selection): Pokud
