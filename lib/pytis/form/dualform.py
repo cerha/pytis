@@ -223,7 +223,7 @@ class DualForm(Form):
         if active:
             active.focus()
 
-    
+
 class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
     
@@ -312,7 +312,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         focused = wx_focused_window()
         import _grid
         if isinstance(focused, wx.TextCtrl) and \
-           focused.GetName() == _grid.IncrementalSearch.TEXT_CONTROL_NAME:
+               focused.GetName() == _grid.IncrementalSearch.TEXT_CONTROL_NAME:
             # O¹etøovat to speciálním zpùsobem musíme proto, ¾e je tøeba
             # za v¹ech okolností zabránit odskoèení z widgetu inkrementálního
             # vyhledávání.  Ten zpùsob je trochu hloupý, proto¾e vedlej¹í
@@ -325,7 +325,13 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             f.set_prefill({self._side_binding_column: v})
             f.filter(data=row.row())
             f.Show(True)
-            self._select_form(self._main_form, force=True)
+            # Tento _select_form zde byl neznámo proè.  Proto¾e se tak necht2n2
+            # pøesune focus na horní formuláø napø. po editaci dolního
+            # formuláøe, bylo nutné øádek zakomentovat.  Pokud to mìlo nìjaký
+            # význam, bude tøeba najít jiné øe¹ení, respektující oba problémy.
+            # Pokud se po nìjakou dobu na ¾ádný problém nepøijde, je mo¾né to
+            # smazat vèetnì tohoto komentáøe...  TC, 22.8.2005
+            #self._select_form(self._main_form, force=True)
         finally:
             if focused:
                 focused.SetFocus()
@@ -378,7 +384,6 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
 
     def refresh(self):
         self._main_form.refresh()
-        self._side_form.refresh()
 
         
 class ShowDualForm(SideBrowseDualForm, Refreshable):
@@ -400,7 +405,6 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
                                  self._view.main_name(),
                                  guardian=self, **kwargs)
 
-        
     def _set_main_form_callbacks(self):
         self._main_form.set_callback(BrowsableShowForm.CALL_SELECTION,
                                      self._on_main_selection)
