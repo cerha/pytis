@@ -1,3 +1,33 @@
+2005-08-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._select_cell): Vracej pravdu, pokud
+	má být událost dokonèena.
+	(ListForm._finish_editing): Pokud je result None /mapø. opu¹tìní dialogu
+	klávesou Esc/, pokraèuj v editaci.
+	(ListForm._find_next_editable_cell): Spus» editaci nalezené buòky.
+	(ListForm._on_select_cell): Pøedávej událost k dal¹ímu zpracování
+	pouze pokud `_select_cell' vrátí pravdu.  Jinak událost vetuj a
+	obnov výbìr.
+	(ListForm._on_edit): Vyu¾ívej `RecordForm._lock_record'.
+	(ListForm._on_line_commit): Vyu¾ívej `RecordForm._check_record',
+	`RecordForm._record_data' a `RecordForm._unlock_record'
+	(ListForm._on_line_rollback): Vyu¾ívej `RecordForm._unlock_record'
+
+	* pytis/form/form.py (Form._print_menu): Neodkazuj se na
+	identifikátory z `lib.form' zbyteènì celým názvem.
+	(RecordForm._lock_record, RecordForm._unlock_record)
+	(RecordForm._check_record, RecordForm._record_data): Nové metody.
+	(LookupForm._on_jump): Neodkazuj se na identifikátory z `lib.form'
+	zbyteènì celým názvem.  Obaluj øetìzce voláním gettext.
+	(EditForm._lock, EditForm._unlock, EditForm._validate): Metody zru¹eny.
+	(EditForm._validate_fields): Nová metoda.
+	(EditForm._edit_insert, EditForm._edit_update): Metody zru¹eny.
+	(EditForm._commit_form): Vyu¾ívej metod z `RecordForm'.
+	Nevyu¾ívej `_edit_insert' a `_edit_update'.  
+	(PopupEditForm._create_buttons): Obaluj øetìzce voláním gettext.
+	(PopupEditForm.run): Vyu¾ívej `_lock_record'.
+	(PopupEditForm.run): Vyu¾ívej `_unlock_record'.
+
 2005-08-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (BrowseDualForm.refresh): Refreshuj pouze
