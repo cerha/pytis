@@ -337,8 +337,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return self._table.row(row)
         
     def _select_cell(self, row=None, col=None, invoke_callback=True):
+        # Vrací pravdu, pokud mù¾e být událost provedena (viz _on_select_cell).
         if self._in_select_cell:
-            return
+            return True
         self._in_select_cell = True
         if __debug__: log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
         try:
@@ -350,6 +351,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 # Zkontroluj pøípadné opu¹tìní editace
                 if not self._finish_editing(row=row):
                     log(EVENT, 'Zamítnuto opu¹tìní editace øádku')
+                    return False
                 else:
                     if row < 0 or row >= g.GetNumberRows():
                         if g.IsSelection():
@@ -373,6 +375,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
             if __debug__: log(DEBUG, 'Výbìr buòky proveden:', (row, col))
+            return True
         finally:
             self._in_select_cell = False
 
@@ -409,14 +412,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             result = run_dialog(MultiQuestion, question, buttons=buttons,
                                 default=bsave)
             finish = (result != bcontinue)
-            if result is None or result == bcancel:
+            if result == bcancel:
                 log(EVENT, 'Odchod u¾ivatelem povolen')
                 self._on_line_rollback()
                 finish = True
             elif result == bsave:
                 log(EVENT, 'Odchod s ulo¾ením øádku')
                 finish = self._on_line_commit()
-            elif result == bcontinue:
+            elif result is None or result == bcontinue:
                 log(EVENT, 'Odchod u¾ivatelem zamítnut')
                 finish = False
             else:
@@ -462,6 +465,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 return False
             col = col + 1
             if self._is_editable_cell(row, col):
+                self._edit_cell()
                 return True
 
     def _search_adjust_data_position(self, row_number):
@@ -615,11 +619,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_select_cell(self, event):
         if not self._in_select_cell:
             self._run_callback(self.CALL_USER_INTERACTION)
-        self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
-        # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
-        # vùbec nìjaký úèinek, musíme zde zavolat originální handler, který
-        # po¾adované nastavení buòky zajistí.
-        event.Skip()
+        if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
+            # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
+            # vùbec nìjaký úèinek, musíme zde zavolat originální handler, který
+            # po¾adované nastavení buòky zajistí.
+            event.Skip()
+        else:
+            event.Veto()
+            self._grid.SelectRow(self._grid.GetGridCursorRow())
+
 
     def _on_column_header_paint(self, event):
         def triangle (x, y, reversed=True):
@@ -1058,16 +1066,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         table = self._table
         if not table.editing():
-            row = self._current_cell()[0]
-            the_row = table.row(row).row()
-            key = the_row.columns(map(lambda c: c.id(), self._data.key()))
-            success, locked = db_operation(lambda : self._data.lock_row(key),
-                                           quiet=True)
-            if success and locked != None:
-                log(EVENT, 'Záznam je zamèen', locked)
-                run_dialog(Message, _("Záznam je zamèen: %s") % locked)
+            if not self._lock_record(self._current_key()):
                 return False
-            table.edit_row(row)
+            table.edit_row(self._current_cell()[0])
             self._update_selection_colors()
         if not self._edit_cell():
             self._on_line_rollback()
@@ -1154,22 +1155,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         editing = table.editing()
         if not editing:
             return False
-        data = self._data
         row = editing.row
         the_row = editing.the_row
-        error = None
-        check = self._view.check()
-        if check is not None:
-            error = check(the_row)
-        if error is None:
-            error = the_row.check()
-        if error is not None:        
-            if is_sequence(error):
-                failed_id, msg = error                
-                message(msg)
-            else:
-                failed_id = error
-            log(EVENT, 'Kontrola integrity selhala:', failed_id)
+        # Ovìøení integrity záznamu (funkce check).
+        failed_id = self._check_record(the_row)
+        if failed_id:
             col = find(failed_id, self._columns, key=lambda c: c.id())
             if col is not None:
                 i = self._columns.index(col)
@@ -1177,9 +1167,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._edit_cell()
             return True
         # Urèení operace a klíèe
-        kc = [c.id() for c in data.key()]
+        rdata = self._record_data(the_row)
+        kc = [c.id() for c in self._data.key()]
         if editing.new:
-            table = self._table
             if row > 0:
                 after = table.row(row-1).row().columns(kc)
                 before = None
@@ -1188,21 +1178,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 before = table.row(row+1).row().columns(kc)
             else:
                 after = before = None
-            rdata = []
-            for field in the_row.fields():
-                rdata.append((field.id(), the_row[field.id()]))
-            new_row = pytis.data.Row(rdata)
-            op = (data.insert, (new_row,), {'after': after, 'before': before})
+            op = (self._data.insert, (rdata,), dict(after=after, before=before))
         else:
             key = editing.orig_content.row().columns(kc)
-            op = (data.update, (key, the_row.row()))
+            op = (self._data.update, (key, rdata))
         # Provedení operace
         success, result = db_operation(op)
         if success and result[1]:
             table.edit_row(None)
-            if data.locked_row():
-                data.unlock_row()
-                message('Øádek ulo¾en do databáze', ACTION)
+            self._unlock_record()
+            message('Øádek ulo¾en do databáze', ACTION)
             self.refresh()
             self._run_callback(self.CALL_MODIFICATION)
             on_line_commit = self._view.on_line_commit()
@@ -1212,18 +1197,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         elif success:
             log(EVENT, 'Zamítnuto pro chybu klíèe')
             if editing.new:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "+\
-                            "sousedního øádku")
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
+                        "sousedního øádku")
             else:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "+\
-                            "øádek ji¾ neexistuje")
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "
+                        "øádek ji¾ neexistuje")
             run_dialog(Warning, msg)
             return False
         else:
             log(EVENT, 'Chyba databázové operace')
             return False
         return True
-        
+
     def _on_line_rollback(self, soft=False):
         log(EVENT, 'Zru¹ení editace øádku')
         editing = self._table.editing()
@@ -1231,8 +1216,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         if soft and editing.changed:
             return True
-        if self._data.locked_row():
-            self._data.unlock_row()
+        self._unlock_record()
         row = editing.row
         if editing.new:
             self._update_grid()
@@ -1254,6 +1238,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not editing:
             return True
         if editing.valid:
+            
             if not self._find_next_editable_cell():
                 if editing.new:
                     q = _("Ulo¾it øádek?")
