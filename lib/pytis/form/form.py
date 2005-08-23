@@ -689,7 +689,8 @@ class RecordForm(Form):
             return None
 
     def _record_data(self, row):
-        rdata = [(f.id(), row[f.id()]) for f in row.fields()]
+        rdata = [(f.id(), row[f.id()]) for f in row.fields()
+                 if self._data.find_column(f.id()) is not None]
         return pytis.data.Row(rdata)
 
     def _on_new_record(self, copy=False):
