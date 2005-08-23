@@ -217,7 +217,7 @@ class Form(Window, KeyHandler, CallbackHandler):
             print_spec = None
         if not print_spec:
             print_spec = ((_("Implicitní"), os.path.join('output', name)),)
-        return [MItem(title, command=pytis.form.Form.COMMAND_PRINT,
+        return [MItem(title, command=Form.COMMAND_PRINT,
                       args={'print_spec_path': path})
                 for title, path in print_spec]
 
@@ -651,7 +651,47 @@ class RecordForm(Form):
 
     def _new_form_kwargs(self):
         return {}
-        
+
+    def _lock_record(self, key):
+        success, locked = db_operation(lambda : self._data.lock_row(key),
+                                       quiet=True)
+        if success and locked != None:
+            log(EVENT, 'Záznam je zamèen', locked)
+            run_dialog(Message, _("Záznam je zamèen: %s") % locked)
+            return False
+        else:
+            return True
+
+    def _unlock_record(self):
+        if self._data.locked_row():
+            db_operation(lambda : self._data.unlock_row(), quiet=True)
+
+    def _check_record(self, row):
+        # Proveï kontrolu integrity dané instance PresentedRow.
+        error = None
+        check = self._view.check()
+        if check is not None:
+            error = check(row)
+        if error is None:
+            error = row.check()
+        if error is not None:
+            if is_sequence(error):
+                field_id, msg = error
+                message(msg)
+            else:
+                field_id = error
+                # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø 'check()'.
+                # Pokud ale ¾ádná zpráva nebyla nastavena, u¾ivatel netu¹í...
+                #message(_("Kontrola integrity selhala!"))
+            log(EVENT, 'Kontrola integrity selhala:', field_id)
+            return failed_id
+        else:
+            return None
+
+    def _record_data(self, row):
+        rdata = [(f.id(), row[f.id()]) for f in row.fields()]
+        return pytis.data.Row(rdata)
+
     def _on_new_record(self, copy=False):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
@@ -868,14 +908,11 @@ class LookupForm(RecordForm):
 
     def _on_jump(self):
         if self._lf_select_count > 0:
-            prompt = u"Záznam èíslo (1-%s): " % (self._lf_select_count)
+            prompt = _("Záznam èíslo (1-%s):") % (self._lf_select_count)
             mask = "#" * len(str(self._lf_select_count))
-            returned = pytis.form.run_dialog(pytis.form.InputNumeric,
-                                             message=u"Skok na záznam",
-                                             prompt=prompt,
-                                             min_value=1,
-                                             max_value=self._lf_select_count
-                                             )
+            returned = run_dialog(InputNumeric, message=_("Skok na záznam"),
+                                  prompt=prompt,
+                                  min_value=1, max_value=self._lf_select_count)
             return returned.value()
         
     def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
@@ -1296,86 +1333,41 @@ class EditForm(LookupForm, TitledForm):
                     grid.Add(field.widget())
         return grid
 
-    def _lock(self):
-        key = self._key
-        if not key:
-            return True
-        success, locked = db_operation(lambda : self._data.lock_row(key),
-                                       quiet=True)
-        if success and locked != None:
-            log(EVENT, 'Záznam je zamèen', locked)
-            run_dialog(Message, _("Záznam je zamèen: %s") % locked)
-            return False
-        else:
-            return True
+    def _signal_update(self):
+        f = current_form()
+        if isinstance(f, Refreshable):
+            f.refresh()
 
-    def _unlock(self):
-        if self._data.locked_row():
-            db_operation(lambda : self._data.unlock_row(), quiet=True)
-
-    def _validate(self):
-        """Zvaliduj postupnì v¹echna políèka.
-        
-        Vrací: None v pøípadì chyby, jinak instanci 'pytis.data.Row', kterou je
-        mo¾no pou¾ít pro vlo¾ení/update datového zdroje.
-
-        """
+    def _validate_fields(self):
+        # Postupná validace v¹ech políèek.
         for f in self._fields:
             if self._new or f.is_modified():
                 value, error = f.validate()
                 if error:
                     log(EVENT, 'Validace selhala:', (f.id(), f.get_value()))
                     f.set_focus()
-                    return None
-                #self._signal_update() # TODO: Tohle tu bylo kdoví proè...
-        error = None
-        check = self._view.check()
-        if check is not None:
-            error = check(self._row)
-        if error is None:
-            error = self._row.check()
-        if error is not None:
-            if is_sequence(error):
-                field_id, msg = error
-                message(msg)
-            else:
-                field_id = error
-                log(EVENT, 'Kontrola integrity selhala:', field_id)
-                # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø 'check()'.
-                # Pokud ale ¾ádná zpráva nebyla nastavena, u¾ivatel netu¹í...
-                #message(_("Kontrola integrity selhala!"))
-            field = self._field(field_id)
-            field.set_focus()
-            return None
-        # Data sestavíme a¾ po check, proto¾e tam mohou být mìnìny honoty.
-        rdata = [(f.id(), self._row[f.id()]) for f in self._fields]
-        return pytis.data.Row(rdata)
-
-    def _edit_insert(self):
-        log(ACTION, 'Vlo¾ení øádku')
-        row = self._validate()
-        if not row:
-            return False
-        success, result = db_operation(lambda : self._data.insert(row))
-        if success and result[1]:
-            self._row.set_row(result[0], reset=True)
-            self.set_row(self._row)
-        else:
-            return False
-        self._signal_update()
-        log(ACTION, 'Øádek vlo¾en')
-        self._result = self._row
+                    return False
         return True
-
-    def _edit_update(self):
-        log(ACTION, 'Update øádku')
-        key = self._key        
-        if key == None:
+            
+    def _commit_form(self, close=True):
+        # Validace v¹ech políèek.
+        if not self._validate_fields():
             return False
-        row = self._validate()
-        if not row:
+        # Ovìøení integrity záznamu (funkce check).
+        failed_id = self._check_record(self._row)
+        if failed_id:
+            self._field(field_id).set_focus()
             return False
-        success, result = db_operation(lambda : self._data.update(key, row))
+        # Vytvoøení datového øádku.
+        rdata = self._record_data(self._row)
+        if self._new:
+            log(ACTION, 'Vlo¾ení øádku')
+            op = (self._data.insert, (rdata,))
+        else:
+            log(ACTION, 'Update øádku')
+            op = (self._data.update, (self._key, rdata))
+        # Provedení operace
+        success, result = db_operation(op)
         if success and result[1]:
             new_row = result[0]
             if new_row is not None:
@@ -1384,37 +1376,26 @@ class EditForm(LookupForm, TitledForm):
             else:
                 # TODO: Lze provést nìco chytøej¹ího?
                 pass
-        else:
-            run_dialog(Error, _("Ulo¾ení øádku se nezdaøilo"))
-            return False
-        # Políèka se tímto trikem budou tváøit nezmnìnìná s nynìj¹í hodnotou.
-        for field in self._fields:
-            field.init(field.get_value())
-        self._signal_update()
-        log(ACTION, 'Øádek updatován')
-        self._result = self._row
-        return True
-
-    def _signal_update(self):
-        f = current_form()
-        if isinstance(f, Refreshable):
-            f.refresh()
-
-    def _commit_form(self, close=True):
-        if self._new:
-            result = self._edit_insert()
-        else:
-            result = self._edit_update()
-        if result:
+            self._signal_update()
+            if self._new:
+                log(ACTION, 'Záznam vlo¾en')
+            else:
+                log(ACTION, 'Záznam updatován')
+                # Políèka se tímto trikem budou tváøit nezmnìnìná.
+                for field in self._fields:
+                    field.init(field.get_value())
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row)
             if close:    
+                self._result = self._row
                 # tím je automaticky zavoláno _on_parent_close()
-                # TODO: to nebude fungovat v embeded verzi!!!!!!!!!!
+                # TODO: to asi nebude fungovat v embeded verzi!!!!!!!!!!
                 self._parent.Close()
-        return result
-
+            return True
+        else:
+            run_dialog(Error, _("Ulo¾ení záznamu se nezdaøilo"))
+            return False
 
     def set_row(self, row):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
@@ -1483,6 +1464,8 @@ class EditForm(LookupForm, TitledForm):
             self.GetEventHandler().ProcessEvent(nav)
         return True
 
+   
+    
     def exit_check(self):
         """Proveï kontrolu formuláøe pøed uzavøením.
 
@@ -1585,17 +1568,17 @@ class PopupEditForm(PopupForm, EditForm):
         return True
     
     def _create_buttons(self):
-        ok, cancel = buttons = (wx.Button(self, wx.ID_OK, u"Ok"),
-                                wx.Button(self, wx.ID_CANCEL, u"Zavøít"))
+        ok, cancel = buttons = (wx.Button(self, wx.ID_OK, _("Ok")),
+                                wx.Button(self, wx.ID_CANCEL, _("Zavøít")))
         wx_callback(wx.EVT_BUTTON, self, wx.ID_OK, self._on_submit)
         wx_callback(wx.EVT_BUTTON, self, wx.ID_CANCEL, self._on_cancel)
-        ok.SetToolTipString(u"Ulo¾it záznam a uzavøít formuláø")
-        cancel.SetToolTipString(u"Uzavøít formuláø bez ulo¾ení dat")
+        ok.SetToolTipString(_("Ulo¾it záznam a uzavøít formuláø"))
+        cancel.SetToolTipString(_("Uzavøít formuláø bez ulo¾ení dat"))
         if self._new and not self._disable_new_button:
-            next = wx.Button(self, wx.ID_FORWARD, u"Dal¹í")
+            next = wx.Button(self, wx.ID_FORWARD, _("Dal¹í"))
             wx_callback(wx.EVT_BUTTON, self, wx.ID_FORWARD, self._on_next)
-            next.SetToolTipString(u"Ulo¾it záznam a reinicializovat formuláø" +\
-                                  u" pro vlo¾ení dal¹ího záznamu")
+            next.SetToolTipString(_("Ulo¾it záznam a reinicializovat formuláø"
+                                    " pro vlo¾ení dal¹ího záznamu"))
             buttons = (ok, cancel, next)
         ok.SetDefault()
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -1604,13 +1587,12 @@ class PopupEditForm(PopupForm, EditForm):
         return sizer
     
     def run(self):
-        if self._editable:
-            if not self._lock():
-                return None
+        if self._editable and self._key and not self._lock_record(self._key):
+            return None
         try:
             return PopupForm.run(self)
         finally:
-            self._unlock()
+            self._unlock_record()
 
     def set_status(self, field, message):
         if field == 'message':
