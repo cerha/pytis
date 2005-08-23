@@ -27,6 +27,8 @@
 	(PopupEditForm._create_buttons): Obaluj øetìzce voláním gettext.
 	(PopupEditForm.run): Vyu¾ívej `_lock_record'.
 	(PopupEditForm.run): Vyu¾ívej `_unlock_record'.
+	(RecordForm._record_data): Zahrnuj do øádku pouze sloupce obsa¾ené
+	v datovém objektu formuláøe.
 
 2005-08-22  Tomas Cerha  <cerha@brailcom.org>
 
