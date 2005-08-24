@@ -337,6 +337,27 @@ def smssend(tel, message):
 	msg = "SMS se nepodaøilo odeslat!\n\n" + msg
 	return msg
     return None
+
+def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
+    """Ode¹le email"""
+
+    import os
+    try:
+        s = os.popen('%s %s' % (sendmail_command, to), 'w')
+        s.write('From: %s\n' % address)
+        s.write('To: %s\n' % to)
+        s.write('Bcc: %s\n' % address)
+        s.write('Subject: %s\n' % subject)
+        if content_type:
+            s.write('Content-Type: %s\n' % content_type)
+        s.write('\n')
+        s.write(msg)
+        s.close()
+        return 0
+    except:
+        print 'ERROR: e-mail se nepodaøilo odeslat'
+        return 1
+    
         
 def run_cb(spec, begin_search=None, condition=None,
            columns=None, select_row=0):
