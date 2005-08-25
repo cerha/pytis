@@ -1,3 +1,9 @@
+2005-08-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._create_grid): V cyklu pro
+	nastavení parametrù sloupcù vyu¾ívej `enumerate()' a jdi pouze
+	pøes `visible_columns'.
+
 2005-08-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._select_cell): Vracej pravdu, pokud
