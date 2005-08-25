@@ -81,7 +81,7 @@ class _Ghostscript(Tmpdir):
         self._stream = process.to_child()
         if __debug__: log(DEBUG, 'Ghostscript nastartován:', zoom)
 
-    def page_image(self, number):
+    def page_image(self, number):        
         if __debug__: log(DEBUG, 'Stránka od Ghostscriptu:', number)
         try:
             file_name = self._file_pattern % number
@@ -399,10 +399,10 @@ class PrintForm(Form):
         make_widget(wx.StaticText, ' ', size=8)
         make_button('Vytisknout', self._on_print_)
         # Sizers
-        wx_callback(wx.EVT_SIZE, self, self.OnSize)
+        wx_callback(wx.EVT_SIZE, self, self._on_size)
         sizer = self._sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(preview, 1, wx.EXPAND)
-        sizer.Add(control_sizer, 0, wx.EXPAND)
+        sizer.Add(control_sizer, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         self.SetSizer(sizer)
         sizer.Fit(self)
         # Klávesy
@@ -492,7 +492,7 @@ class PrintForm(Form):
         if __debug__: log(DEBUG, 'Restart náhledu')
         self._start_postscript_viewer(zoom/100.0)
         self._preview.show_page(1)
-        sizer.Prepend(self._preview, 1, wx.EXPAND)
+        sizer.Prepend(self._preview, 1, wx.EXPAND|wx.FIXED_MINSIZE)
         self.SetSize(self.GetSize())
         self._show_page(page)
         if __debug__: log(DEBUG, 'Náhled restartován')
@@ -523,6 +523,11 @@ class PrintForm(Form):
         thread.start_new_thread(self._run_formatter, (stream,))
         message(_("Spu¹tìn tisk"))
 
+    def _on_size(self, event):
+        size = event.GetSize()
+        self.SetSize(event.GetSize())
+        event.Skip()
+        
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_PRINT:
             self._on_print_()
@@ -547,6 +552,3 @@ class PrintForm(Form):
             except IOError:
                 pass
     
-    def OnSize(self, event):
-        self.SetSize(event.GetSize())
-        self.Layout()

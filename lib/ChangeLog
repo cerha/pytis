@@ -1,3 +1,15 @@
+2005-08-25  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (RecordForm._on_new_record): Doèasnì pøidán
+	refresh. 
+	(RecordForm._on_edit_record): Doèasnì pøidán
+	refresh. 
+
+	* pytis/form/output.py (PrintForm._create_controls):
+	Pro EVT_SIZE zaregistruj `self._on_size'.
+	(PrintForm._on_size): Nová metoda.
+	(OnSize): Metoda zru¹ena.
+
 2005-08-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._create_grid): V cyklu pro

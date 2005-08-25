@@ -703,6 +703,9 @@ class RecordForm(Form):
         result = new_record(self._name, key=key, prefill=self.prefill())
         if result is not None:
             self.select_row(result.row())
+            # TODO: Pøidáno jako doèasné øe¹ení, dokud nebude správnì fungovat
+            #       refresh sideformu po pøidání záznamu.
+            self.refresh()
     
     def _on_edit_record(self, key):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
@@ -718,6 +721,9 @@ class RecordForm(Form):
             self._signal_update()
         else:
             self._run_form(PopupEditForm, key)
+            # TODO: Pøidáno jako doèasné øe¹ení, dokud nebude správnì fungovat
+            #       refresh sideformu po pøidání záznamu.
+            self.refresh()
 
     def _on_delete_record(self, key):
         log(EVENT, 'Pokus o smazání záznamu:', key)
