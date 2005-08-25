@@ -189,11 +189,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._current_editor = editor
         editable = False
         total_width = 0
-        for i in range(len(columns)):
-            c = columns[i]
-            # ¹íøka
-            if not c.width():
-                continue
+        for i, c in enumerate(visible_columns):
             w = self._column_width(g, c)
             g.SetColSize(i, w)
             total_width += w
