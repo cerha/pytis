@@ -1,3 +1,8 @@
+2005-08-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (RecordForm._check_record): Oprava
+	'failed_id' na 'field_id'.
+
 2005-08-25  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (RecordForm._on_new_record): Doèasnì pøidán

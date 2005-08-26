@@ -684,7 +684,7 @@ class RecordForm(Form):
                 # Pokud ale ¾ádná zpráva nebyla nastavena, u¾ivatel netu¹í...
                 #message(_("Kontrola integrity selhala!"))
             log(EVENT, 'Kontrola integrity selhala:', field_id)
-            return failed_id
+            return field_id
         else:
             return None
 
