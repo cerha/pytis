@@ -676,15 +676,15 @@ class RecordForm(Form):
             error = row.check()
         if error is not None:
             if is_sequence(error):
-                field_id, msg = error
+                failed_id, msg = error
                 message(msg)
             else:
-                field_id = error
+                failed_id = error
                 # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø 'check()'.
                 # Pokud ale ¾ádná zpráva nebyla nastavena, u¾ivatel netu¹í...
                 #message(_("Kontrola integrity selhala!"))
-            log(EVENT, 'Kontrola integrity selhala:', field_id)
-            return field_id
+            log(EVENT, 'Kontrola integrity selhala:', failed_id)
+            return failed_id
         else:
             return None
 
@@ -1363,7 +1363,7 @@ class EditForm(LookupForm, TitledForm):
         # Ovìøení integrity záznamu (funkce check).
         failed_id = self._check_record(self._row)
         if failed_id:
-            self._field(field_id).set_focus()
+            self._field(failed_id).set_focus()
             return False
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row)

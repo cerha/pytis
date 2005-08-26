@@ -2,6 +2,10 @@
 
 	* pytis/form/form.py (RecordForm._check_record): Oprava
 	'failed_id' na 'field_id'.
+	(RecordForm._check_record): Pro chybové políèko pou¾ívej radìji
+	v¹ude 'failed_id'. 
+	(EditForm._commit_form): Pro chybové políèko pou¾ívej radìji
+	v¹ude 'failed_id'. 
 
 2005-08-25  Pavel Hanak  <hanak@asellus.cz>
 
