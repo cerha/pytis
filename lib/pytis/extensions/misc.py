@@ -655,29 +655,19 @@ def cache_spec(*args, **kwargs):
     pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(specs,),
                           message=msg, elapsed_time=True, can_abort=True)
 
-def help_window(*args, **kwargs):
-    if not kwargs.has_key('inputfile') or kwargs['inputfile'] is None:
-        pytis.form.run_dialog(pytis.form.Warning,
-                              _("Textový soubor nenalezen"))
+def help_window(inputfile=None, format=TextFormat.PLAIN):
+    if not inputfile:
+        pytis.form.run_dialog(pytis.form.Warning, _("Textový soubor nenalezen"))
         return
-    inputfile = kwargs['inputfile']
-    if not kwargs.has_key('format') or kwargs['format'] is None:
-        format = TextFormat.PLAIN
-    else:
-        format = kwargs['format']
-    path = config.doc_dir
-    if not path.endswith('/'):
-        path += '/' 
-    path = path + inputfile
     try:
-        f = open(path, 'r')
-    except:
-        pytis.form.run_dialog(pytis.form.Warning,
-                              _("Textový soubor nenalezen"))
-    text = f.read()
-    f.close()
-    pytis.form.InfoWindow("Nápovìda", text=text, format=format)        
-
+        f = open(os.path.join(config.doc_dir, inputfile), 'r')
+    except IOError, e:
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nemohu otevøít soubor nápovìdy: %s") % e)
+    else:
+        text = f.read()
+        f.close()
+        pytis.form.InfoWindow("Nápovìda", text=text, format=format)
 
 # Additional constraints
             
