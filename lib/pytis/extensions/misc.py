@@ -31,7 +31,6 @@ from pytis.form import *
 
 import config
 
-
 def cfg_param(column, cfgspec='Nastaveni', value_column=None):
     """Vrací instanci Value pro konfiguraèní parametr.
 
@@ -461,7 +460,7 @@ def get_menu_defs(without_duals=False):
             pass
     return remove_duplicates(specs + variants)
 
-def menu_report(*args, **kwargs):
+def menu_report():
     """Vytváøí pøehledný náhled na polo¾ky menu."""
     resolver = pytis.form.resolver()
     data_specs = []
@@ -524,6 +523,7 @@ def menu_report(*args, **kwargs):
     pytis.form.InfoWindow("Pøehled polo¾ek menu a názvù specifikací",
                           text=content, format=TextFormat.HTML)
 
+cmd_menu_report = Command(Application, 'MENU_REPORT', handler=menu_report)
     
 def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
@@ -566,7 +566,7 @@ def check_form():
                               "DEFS: %s" % spec,
                               report=obsah)
 
-cmd_check_form = Command(Application, 'CHECK_FORM', check_form)
+cmd_check_form = Command(Application, 'CHECK_FORM', handler=check_form)
         
 
 def check_defs(seznam):
@@ -633,7 +633,8 @@ def check_defs(seznam):
 def check_menus_defs():
     return check_defs(get_menu_defs(without_duals=True))
 
-cmd_check_menus_defs = Command(Application, 'CHECK_MENUS_DEFS',check_menus_defs)
+cmd_check_menus_defs = Command(Application, 'CHECK_MENUS_DEFS',
+                               handler=check_menus_defs)
 
 def cache_spec(*args, **kwargs):
     resolver = pytis.form.resolver()
@@ -664,8 +665,16 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
     if not inputfile:
         pytis.form.run_dialog(pytis.form.Warning, _("Textový soubor nenalezen"))
         return
+    path = os.path.join(config.doc_dir, inputfile)
+    if not os.path.exists(path):
+        dir, xx = os.path.split(os.path.realpath(pytis.extensions.__file__))
+        p = os.path.normpath(os.path.join(dir, '../../../doc', inputfile))
+        if os.path.exists(p):
+            path = p
+        else:
+            log(OPERATIONAL, "Soubor nenalezen:", p)
     try:
-        f = open(os.path.join(config.doc_dir, inputfile), 'r')
+        f = open(path, 'r')
     except IOError, e:
         pytis.form.run_dialog(pytis.form.Error,
                               _("Nemohu otevøít soubor nápovìdy: %s") % e)
@@ -681,7 +690,7 @@ def run_any_form():
     if result is not None:
         pytis.form.run_form(*result)
                                       
-cmd_run_any_form = Command(Application, 'RUN_ANY_FORM', run_any_form)
+cmd_run_any_form = Command(Application, 'RUN_ANY_FORM', handler=run_any_form)
 
 # Additional constraints
             
