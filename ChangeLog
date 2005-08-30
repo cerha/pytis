@@ -1,3 +1,26 @@
+2005-08-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (run_any_form): Funkce zru¹ena.
+	(help_mitem): Pou¾ívej `cmd_help_window'.
+	(user_cmd): Pøidán kód pro pou¾ití s novou verzí `command.py'
+	/zatím zakomentováno/.
+
+	* lib/pytis/extensions/misc.py (check_form): Nepøijímej ¾ádné
+	arguemnty.
+	(cmd_check_form): Nový pøíkaz.
+	(check_menus_defs): Nepøijímej ¾ádné arguemnty.
+	(cmd_check_menus_defs): Nový pøíkaz.
+	(cmd_help_window): Nový pøíkaz.
+	(run_any_form): Nová funkce.
+	(cmd_run_any_form): Nový pøíkaz.
+
+2005-08-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (help_window): Definuj klíèové
+	argumenty pøímo a nevytahuj je slo¾itì z `**kwargs'.  Pou¾ívej
+	`os.path.join()'.  Vypisuj chybové hlá¹ení z výjimky do chybového
+	dialogu.
+
 2005-08-24  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (emailsend): Ode¹le email.
