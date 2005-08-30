@@ -93,6 +93,8 @@ class Command(object):
             pøi ka¾dém po¾adavku na zji¹tìní hodnoty enabled.
     
         """
+        if not is_anystring(id):
+            id = key
         assert is_anystring(id)
         assert handler is None or callable(handler)
         assert key is None or is_string(key) or is_sequence(key)
