@@ -1,5 +1,8 @@
 2005-08-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._on_handled_command): Oprava
+	podmínky pro pøedávání argumentù.
+
 	* pytis/form/command.py (Command.__init__): Doèasnì pøijímej i
 	argumenty podle budoucí verze.
 
