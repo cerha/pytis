@@ -1,5 +1,7 @@
 2005-08-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* doc/napoveda.wiki: Drobné opravy, zalamování øádkù.
+
 	* lib/pytis/extensions/spec.py (run_any_form): Funkce zru¹ena.
 	(help_mitem): Pou¾ívej `cmd_help_window'.
 	(user_cmd): Pøidán kód pro pou¾ití s novou verzí `command.py'
@@ -13,6 +15,12 @@
 	(cmd_help_window): Nový pøíkaz.
 	(run_any_form): Nová funkce.
 	(cmd_run_any_form): Nový pøíkaz.
+	(menu_report): Nepøijímej ¾ádné argumenty.
+	(cmd_menu_report): Definuj 'handler', jako klíèový argument.
+	(cmd_check_form): Definuj 'handler', jako klíèový argument.
+	(cmd_check_menus_defs): Definuj 'handler', jako klíèový argument.
+	(help_window): Hledej soubor také v adresáøi 'doc' instalace pytisu.
+	(cmd_run_any_form): Definuj 'handler', jako klíèový argument.
 
 2005-08-29  Tomas Cerha  <cerha@brailcom.org>
 
