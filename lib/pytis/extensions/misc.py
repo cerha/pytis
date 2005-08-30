@@ -525,13 +525,13 @@ def menu_report(*args, **kwargs):
                           text=content, format=TextFormat.HTML)
 
     
-def check_form(*args, **kwargs):
+def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
     resolver = pytis.form.resolver()
     spec = pytis.form.run_dialog(pytis.form.InputDialog,
-                               message="Kontrola defsu",
-                               prompt="Specifikace",
-                               input_width=30)
+                                 message="Kontrola defsu",
+                                 prompt="Specifikace",
+                                 input_width=30)
     if spec:
         try:
             data_spec = resolver.get(spec, 'data_spec')
@@ -565,6 +565,9 @@ def check_form(*args, **kwargs):
         pytis.form.run_dialog(pytis.form.Message,
                               "DEFS: %s" % spec,
                               report=obsah)
+
+cmd_check_form = Command(Application, 'CHECK_FORM', check_form)
+        
 
 def check_defs(seznam):
     """Zkontroluje specifikace pro uvedený seznam.
@@ -627,8 +630,10 @@ def check_defs(seznam):
                               "Chyby ve specifikacích",
                               report=obsah)
  
-def check_menus_defs(*args, **kwargs):        
+def check_menus_defs():
     return check_defs(get_menu_defs(without_duals=True))
+
+cmd_check_menus_defs = Command(Application, 'CHECK_MENUS_DEFS',check_menus_defs)
 
 def cache_spec(*args, **kwargs):
     resolver = pytis.form.resolver()
@@ -668,6 +673,15 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
         text = f.read()
         f.close()
         pytis.form.InfoWindow("Nápovìda", text=text, format=format)
+        
+cmd_help_window = Command(Application, 'HELP_WINDOW', handler=help_window)
+
+def run_any_form():
+    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
+    if result is not None:
+        pytis.form.run_form(*result)
+                                      
+cmd_run_any_form = Command(Application, 'RUN_ANY_FORM', run_any_form)
 
 # Additional constraints
             
