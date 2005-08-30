@@ -4,13 +4,20 @@
 
 == Øádkový formuláø {browse form} ==
 
-Klasický jednoduchý tabulkový náhled, který umo¾òuje sledovat na jedné obrazovce desítky záznamù. Je vhodný k pøehlednému získávání informací nebo pro rychlé vkládání dat pomocí tzv. inline editace. Ve formuláøi se lze pohybovat pomocí ¹ipek, PageDown, PageUp, Home (nebo Ctrl-¹ipka vlevo), End (nebo Ctrl-¹ipka vpravo), Ctrl-Home, Ctrl-End. Záznamy je mo¾né vyhledávat, tøídit, filtrovat nebo seskupovat (viz ní¾e).
+Klasický jednoduchý tabulkový náhled, který umo¾òuje sledovat na jedné
+obrazovce desítky záznamù.  Je vhodný k pøehlednému získávání informací nebo
+pro rychlé vkládání dat pomocí tzv. inline editace.  Ve formuláøi se lze
+pohybovat pomocí ¹ipek, PageDown, PageUp, Home (nebo Ctrl-¹ipka vlevo), End
+(nebo Ctrl-¹ipka vpravo), Ctrl-Home, Ctrl-End. Záznamy je mo¾né vyhledávat,
+tøídit, filtrovat nebo seskupovat (viz ní¾e).
 
 [#menu|index]
 
 == Duální formuláø {dual form} ==
 
-Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou, pøièem¾ v dolním  formuláøi se zobrazují záznamy provázané s aktuálním* záznamem v horním formuláøi. Pøepínání mezi formuláøi je pomocí klávesy Ctrl-Tab.
+Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou,
+pøièem¾ v dolním formuláøi se zobrazují záznamy provázané s aktuálním* záznamem
+v horním formuláøi.  Pøepínání mezi formuláøi je pomocí klávesy Ctrl-Tab.
 
 * aktuální záznam - záznam, na kterém je focus* (viz ní¾e).
 
@@ -18,86 +25,161 @@ Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou, pøièem¾
 
 == Editaèní formuláø {edit form} ==
 
-Formuláø urèený k u¾ivatelsky pohodlnému vkládání dat.  Nejèastìji se vyvolá pomocí klávesy F5 nebo F6. Na tomto formuláøi se mohou nacházet nìkteré dal¹í prvky jako políèka, tlaèítka. Ve formuláøi se lze pohybovat pomocí klávesy Tab nebo Enter. Pohyb je povolen jen v buòkách, které mù¾e daný u¾ivatel editovat. Editaèní formuláø lze potvrdit (tlaèítko OK), pak se zmìny aplikují, nebo zru¹it (tlaèítko Zru¹it) a pak k ¾ádným zmìnám v databázi nedojde. 
+Formuláø urèený k u¾ivatelsky pohodlnému vkládání dat.  Nejèastìji se vyvolá
+pomocí klávesy F5 nebo F6. Na tomto formuláøi se mohou nacházet nìkteré dal¹í
+prvky jako políèka, tlaèítka.  Ve formuláøi se lze pohybovat pomocí klávesy Tab
+nebo Enter.  Pohyb je povolen jen v buòkách, které mù¾e daný u¾ivatel editovat.
+Editaèní formuláø lze potvrdit (tlaèítko OK), pak se zmìny aplikují, nebo
+zru¹it (tlaèítko Zru¹it) a pak k ¾ádným zmìnám v databázi nedojde.
 
 [#menu|index]
 
 == Náhledový formuláø {show form} ==
 
-Je vlastnì formuláø editaèní, do kterého nelze vkládat data a slou¾í pro odli¹né (detailní)zobrazení dat prezentovaných øádkovým formuláøem. Dostanete se do nìj z øádkového formuláøe stisknutím klávesy Enter nebo Mezera. 
-Prohledávací formuláø {lookup form} 
+Je vlastnì formuláø editaèní, do kterého nelze vkládat data a slou¾í pro
+odli¹né (detailní)zobrazení dat prezentovaných øádkovým formuláøem. Dostanete
+se do nìj z øádkového formuláøe stisknutím klávesy Enter nebo Mezera.
 
-Malý pomocný formuláø vyvolaný napøíklad pøi po¾adavku na øazení, hledání, nebo seskupování záznamù. 
+Prohledávací formuláø {lookup form}
+
+Malý pomocný formuláø vyvolaný napøíklad pøi po¾adavku na øazení, hledání, nebo
+seskupování záznamù.
 
 [#menu|index]
 
 == Tisková sestava {print form} ==
 
-Zobrazuje data naformátovaná a pøipravená pro tisk. Nelze zde vkládat, mazat, ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem. Nad ka¾dým øádkovým formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí Ctrl-x p. Pokud tato není explicitnì pøedefinována, pou¾ije se implicitní tisková sestava, která se pokusí zobrazovaný formuláø pøipravit pro tisk. POZOR - pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy k nekorektnímu zobrazení tisknutých dat, proto je nutné pro tyhle záznamy pøedefinovat tiskovou sestavu v spolupráci s vývojáøi. 
+Zobrazuje data naformátovaná a pøipravená pro tisk.  Nelze zde vkládat, mazat,
+ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem.  Nad ka¾dým øádkovým
+formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí
+Ctrl-x p. Pokud tato není explicitnì pøedefinována, pou¾ije se implicitní
+tisková sestava, která se pokusí zobrazovaný formuláø pøipravit pro tisk. POZOR
+- pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy k nekorektnímu
+zobrazení tisknutých dat, proto je nutné pro tyto záznamy pøedefinovat
+tiskovou sestavu ve spolupráci s vývojáøi.
 
 == Dialogové okno {dialog} ==
 
-Informaèní okénko, které umo¾òuje vìt¹inou pouze potvrzení, nebo zru¹ení akce. 
+Informaèní okénko, které umo¾òuje vìt¹inou pouze potvrzení, nebo zru¹ení akce.
 
 [#menu|index]
 
 == Políèko {field}  ==
 
-V øádkovém formuláøi takté¾ známo pod názvem buòka. Jedná se o elementární prvek. Z hlediska informaèního systému je dùle¾ité to, ¾e data umístìná v buòce jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk! Lze omezovat rozsah hodnot platných pro políèko (vybrané znaky, celá èísla, ano/ne) z èeho¾ vyplyne i jeho podoba a rozmìry. Na editaèním formuláøi se vyskytují napøíklad tyto typy políèek: klasické vstupní, za¹krtávací, èíselníkové, výbìrové. Za¹edlá políèka jsou needitovatelná a mají pouze informativní charakter. Pokud se jedná o políèko navázané na èíselník a toto je aktivní, lze pomocný èíselník vyvolat klávesovou zkratkou F2. 
-FOCUS
+V øádkovém formuláøi takté¾ známo pod názvem buòka.  Jedná se o elementární
+prvek. Z hlediska informaèního systému je dùle¾ité to, ¾e data umístìná v buòce
+jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk!  Lze omezovat
+rozsah hodnot platných pro políèko (vybrané znaky, celá èísla, ano/ne) z èeho¾
+vyplyne i jeho podoba a rozmìry. Na editaèním formuláøi se vyskytují napøíklad
+tyto typy políèek: klasické vstupní, za¹krtávací, èíselníkové, výbìrové.
+Za¹edlá políèka jsou needitovatelná a mají pouze informativní charakter.  Pokud
+se jedná o políèko navázané na èíselník a toto je aktivní, lze pomocný èíselník
+vyvolat klávesovou zkratkou F2.  FOCUS
 
-Barevné zvýraznìní u¾ivatelem vybraného záznamu (tmavé podbarvení øádku a svìtlé orámování buòky).
+Barevné zvýraznìní u¾ivatelem vybraného záznamu (tmavé podbarvení øádku a
+svìtlé orámování buòky).
 
 [#menu|index]
 
 == HLEDÁNÍ  (F3,Ctrl-r,Ctrl-s) ==
 
-Slou¾í k rychlému nalezení záznamu v rozsáhlém øádkovém formuláøi. Funkce "Hledání" se spou¹tí pøes klávesu F3, kterou se vyvolá formuláø pro zadání podmínek hledání. Následnì mù¾e u¾ivatel vyhledávat záznamy smìrem dopøedu (Dal¹í Ctrl-r) nebo dozadu (Pøedchozí Ctrl-s).
+Slou¾í k rychlému nalezení záznamu v rozsáhlém øádkovém formuláøi. Funkce
+"Hledání" se spou¹tí pøes klávesu F3, kterou se vyvolá formuláø pro zadání
+podmínek hledání. Následnì mù¾e u¾ivatel vyhledávat záznamy smìrem dopøedu
+(Dal¹í Ctrl-s) nebo dozadu (Pøedchozí Ctrl-r).
 
 [#menu|index]
 
-== INKREMENTÁLNÍ HLEDÁNÍ (Ctrl-F3,Ctrl-u Ctrl-F3) ==
+== INKREMENTÁLNÍ HLEDÁNÍ (Ctrl-F3, Ctrl-u Ctrl-F3) ==
 
-Funkce "Inkrementální hledání" se spou¹tí pøes klávesu Ctrl-F3 . Pøed vyvoláním funkce musí být focus na sloupci (buòce v sloupci), v kterém u¾ivatel záznam hledá. Je vhodné záznamy taky setøídit podle tohoto sloupce. Po stisku klávesy  Ctrl-F3 se objeví vlevo nahoøe nad prvním sloupcem editaèní buòka, do které u¾ivatel postupnì zadává znaky hledaného øetìzce. Po ka¾dém zadaní dal¹ího znaku funkce posouvá focus na první záznam, který vyhovuje zadané podmínce. Opìt je mo¾né, tak jako u klasického hledání, pohybovat se na dal¹í (Ctrl-r) nebo pøedchozí (Ctrl-s) záznamy, které odpovídají zadané podmínce. POZOR - po najetí (pøesunu focusu) na hledaný záznam je NUTNÉ potvrdit zadanou podmínku klávesou ENTER! V opaèném pøípade se focus vrátí na pùvodní pozici pøed spu¹tìním inkrementálního hledání. Funkci je kdykoliv mo¾né ukonèit klávesou Escape. Po zadaní ¹patného znaku do podmínky není nutné ukonèovat funkci. Staèí znak smazat a zadat správný.
+Funkce "Inkrementální hledání" se spou¹tí pøes klávesu Ctrl-F3. Pøed vyvoláním
+funkce musí být focus na sloupci (buòce v sloupci), v kterém u¾ivatel záznam
+hledá.  Je vhodné záznamy také setøídit podle tohoto sloupce.  Po stisku
+klávesy Ctrl-F3 se objeví vlevo nahoøe nad prvním sloupcem editaèní buòka, do
+které u¾ivatel postupnì zadává znaky hledaného øetìzce.  Po ka¾dém zadaní
+dal¹ího znaku funkce posouvá focus na první záznam, který vyhovuje zadané
+podmínce. Opìt je mo¾né, tak jako u klasického hledání, pohybovat se na dal¹í
+(Ctrl-r) nebo pøedchozí (Ctrl-s) záznamy, které odpovídají zadané
+podmínce. POZOR - po najetí (pøesunu focusu) na hledaný záznam je NUTNÉ
+potvrdit zadanou podmínku klávesou ENTER! V opaèném pøípade se focus vrátí na
+pùvodní pozici pøed spu¹tìním inkrementálního hledání. Funkci je kdykoliv mo¾né
+ukonèit klávesou Escape. Po zadaní ¹patného znaku do podmínky není nutné
+ukonèovat funkci. Staèí znak smazat a zadat správný.
 
-Nìkdy si u¾ivatel pamatuje jenom èást hledaného záznamu (napø. druhé slovo z tøíslovního názvu firmy). V takovém pøípadì je potøebné pou¾ít inkrementální hledání èásti øetìzce. Tahle funkce se spou¹tí pøes klávesu Ctrl-u Ctrl-F3.
+Nìkdy si u¾ivatel pamatuje jenom èást hledaného záznamu (napø. druhé slovo z
+tøíslovního názvu firmy). V takovém pøípadì je potøebné pou¾ít inkrementální
+hledání èásti øetìzce.  Tato funkce se spou¹tí pøes klávesu Ctrl-u Ctrl-F3.
 
 [#menu|index]
 
 == SKOK NA ZÁZNAM (Ctrl-j) ==
 
-V øádkovém formuláøi, který obsahuje velké mno¾ství záznamù, mù¾e u¾ivatel vyu¾it funkci "Skok na záznam", která se spou¹tí  pøes klávesu Ctrl-j. Po vyvolání funkce se objeví výzva na zadání èísla øádku, na který chce u¾ivatel skoèit.
+V øádkovém formuláøi, který obsahuje velké mno¾ství záznamù, mù¾e u¾ivatel
+vyu¾it funkci "Skok na záznam", která se spou¹tí pøes klávesu Ctrl-j.  Po
+vyvolání funkce se objeví výzva na zadání èísla øádku, na který chce u¾ivatel
+skoèit.
 
 [#menu|index]
 
 == TØÍDÌNÍ (F4) ==
 
-Nebo také sortování záznamù. V øádkovém formuláøi mù¾e u¾ivatel vzestupnì nebo sestupnì tøídit záznamy podle jednotlivých sloupcù. Smìr a prioritu øazení dat urèí buï my¹í (levým nebo pravým), nebo klávesou F4. Nejpøehlednìj¹í je zpùsob pøes pravé tlaèítko my¹i.  Aktuální øazení je signalizováno grafickými symboly v záhlaví sloupce (smìr trojúhelníku urèuje smìr a poèet èárek prioritu øazení.).
+Nebo také sortování záznamù.  V øádkovém formuláøi mù¾e u¾ivatel vzestupnì nebo
+sestupnì tøídit záznamy podle jednotlivých sloupcù.  Smìr a prioritu øazení dat
+urèí buï my¹í (levým nebo pravým), nebo klávesou F4. Nejpøehlednìj¹í je zpùsob
+pøes pravé tlaèítko my¹i.  Aktuální øazení je signalizováno grafickými symboly
+v záhlaví sloupce (smìr trojúhelníku urèuje smìr a poèet èárek prioritu
+øazení -- èím více èárek, tím men¹í priorita).
 
 [#menu|index]
 
 == FILTROVÁNÍ (Ctrl-F4) ==
 
-Funkce omezí výpis záznamù øádkového formuláøe podle u¾ivatelem nadefinovaných pravidel. Filtrování se spou¹tí pøes klávesu Ctrl-F4, která vyvolá editaèní formuláø pro zadaní filtrovacích podmínek. U¾ivatel mù¾e zkombinovat i více podmínek, pøièem¾ se vy¾aduje základní znalost matematické logiky "a zároveò" - "nebo" (AND OR). K dispozici jsou i agregaèní funkce, které umo¾òují zji¹»ovat na vyfiltrovanými záznamy rùzné hodnoty (poèet, minimum, maximum, souèet, prùmìr) v jednotlivých sloupcích.
+Funkce omezí výpis záznamù øádkového formuláøe podle u¾ivatelem nadefinovaných
+pravidel. Filtrování se spou¹tí pøes klávesu Ctrl-F4, která vyvolá editaèní
+formuláø pro zadaní filtrovacích podmínek. U¾ivatel mù¾e zkombinovat i více
+podmínek, pøièem¾ se vy¾aduje základní znalost matematické logiky "a zároveò" -
+"nebo" (AND OR). K dispozici jsou i agregaèní funkce, které umo¾òují zji¹»ovat
+na vyfiltrovanými záznamy rùzné hodnoty (poèet, minimum, maximum, souèet,
+prùmìr) v jednotlivých sloupcích.
 
-Funkce "Filtrování" umo¾òuje vytváøet nové náhledy na data bez nutnosti zásahu vývojáøe. Pro velmi èasto u¾ivatelem definované filtry je v¹ak efektivnìj¹í po¾ádat vývojáøe o statickou implementaci formou nového formuláøe. 
+Funkce "Filtrování" umo¾òuje vytváøet nové náhledy na data bez nutnosti zásahu
+vývojáøe. Pro velmi èasto u¾ivatelem definované filtry je v¹ak efektivnìj¹í
+po¾ádat vývojáøe o statickou implementaci formou nového formuláøe.
 
 [#menu|index]
 
 == SESKUPOVANÍ ==
 
-Funkce slou¾í k seskupení záznamù podle vybraného sloupce. Funkce obarvuje pozadí záznamù podle pravidla "zmìna hodnoty buòky = zmìna podbarvení øádku daného záznamu". K získání pøehledného náhledu je potøebné sloupec (podle kterého se seskupuje) nejprve setøídit (seøadit). Pøíklad: Kdyby jsme mìli náhled èíselník zemí se sloupci: kód zemì, název zemì, kontinent. Pou¾ijeme setøídìní a seskupení záznamù podle sloupce kontinent. Náhled zaèíná zemìmi prvního kontinentu podbarvené stejnou barvou, pøi prvním zázname zemì z dal¹ího kontinentu nastala v sloupci kontinent zmìna, co znamená ¾e se zmìní i podbarvení záznamù zemí z druhého kontinentu. Cyklicky se mìní podbarvení v¾dy pøi zmìnì kontinentu. V tomhle pøípade je nutná názorní uká¾ka :)
+Funkce slou¾í k seskupení záznamù podle vybraného sloupce.  Funkce obarvuje
+pozadí záznamù podle pravidla "zmìna hodnoty buòky = zmìna podbarvení øádku
+daného záznamu".  K získání pøehledného náhledu je potøebné sloupec (podle
+kterého se seskupuje) nejprve setøídit (seøadit).  Pøíklad: Kdybychom mìli
+náhled èíselník zemí se sloupci: kód zemì, název zemì, kontinent. Pou¾ijeme
+setøídìní a seskupení záznamù podle sloupce kontinent.  Náhled zaèíná zemìmi
+prvního kontinentu podbarvené stejnou barvou, pøi prvním záznamu zemì z dal¹ího
+kontinentu nastala v sloupci kontinent zmìna, co¾ znamená ¾e se zmìní i
+podbarvení záznamù zemí z druhého kontinentu.  Cyklicky se mìní podbarvení v¾dy
+pøi zmìnì kontinentu.  V tomto pøípade je nutná názorní uká¾ka :)
 
 [#menu|index]
 
 == VKLÁDÁNÍ SPECIÁLNÍCH ZNAKÙ ==
 
-Speciální znaky (@#$%^&*) se vkládají pomocí klávesy pravý Alt-pøíslu¹ná klávesa.
+Speciální znaky (@#$%^&*) se vkládají pomocí klávesy pravý Alt-pøíslu¹ná
+klávesa.
 
 [#menu|index]
 
 == PROCHÁZENÍ V ZÁSOBNÍKU OKEN ==
 
-Okna, které si u¾ivatel postupnì otevírá, se øadí do zásobníku oken (polo¾ka menu "Okna" obsahuje názvy v¹ech otevøených oken). Mezi otevøenými okny se mù¾e u¾ivatel pohybovat pomocí kláves Ctrl-¹ipka nahoru nebo Ctrl-¹ipka dolù, pøièem¾ se cyklicky posouvá v zásobníku oken jedním nebo druhým smìrem. Jestli¾e u¾ivatel nechce procházet v¹emi otevøenými okny uvedeným zpùsobem, má mo¾nost pomocí klávesy Alt-a vyvolat zásobník oken a ¹ipkou nahoru nebo dolù vybrat název po¾adovaného okna. Výbìr lze udìlat i levým tlaèítkem my¹i, ale naè sahat na my¹, kdy¾ ovládání pomocí klávesnice je mnohem rychlej¹í.
+Okna, která si u¾ivatel postupnì otevírá, se øadí do zásobníku oken (polo¾ka
+menu "Okna" obsahuje názvy v¹ech otevøených oken).  Mezi otevøenými okny se
+mù¾e u¾ivatel pohybovat pomocí kláves Ctrl-¹ipka nahoru nebo Ctrl-¹ipka dolù,
+pøièem¾ se cyklicky posouvá v zásobníku oken jedním nebo druhým
+smìrem.  Jestli¾e u¾ivatel nechce procházet v¹emi otevøenými okny uvedeným
+zpùsobem, má mo¾nost pomocí klávesy Alt-a vyvolat zásobník oken a ¹ipkou nahoru
+nebo dolù vybrat název po¾adovaného okna. Výbìr lze udìlat i levým tlaèítkem
+my¹i, ale naè sahat na my¹, kdy¾ ovládání pomocí klávesnice je mnohem
+rychlej¹í.
 
 [#menu|index]
