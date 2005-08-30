@@ -936,7 +936,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         the_row = self.current_row()
         if posargs == 0:
             args = ()
-        if posargs == 1:
+        elif posargs == 1:
             args = (the_row,)
         else:
             args = (self._data, the_row)
