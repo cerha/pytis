@@ -1,3 +1,8 @@
+2005-08-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py (Command.__init__): Doèasnì pøijímej i
+	argumenty podle budoucí verze.
+
 2005-08-26  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (RecordForm._check_record): Oprava
