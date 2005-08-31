@@ -36,7 +36,7 @@ import config
 from wx import calendar
 from wx.lib import masked     
 
-class Dialog(KeyHandler):
+class Dialog(KeyHandler, CommandHandler):
     """Abstraktní tøída, která je základem v¹ech dialogù.
 
     V¹echny dialogy musí být potomky této tøídy.  Vytvoøení instance dialogu
@@ -49,6 +49,10 @@ class Dialog(KeyHandler):
     Tato tøída pouze definuje abstraktní metodu 'run()'.
     
     """
+    def get_command_handler_instance(cls, application):
+        return application.top_window()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+    
     def __init__(self, parent):
         self._parent = parent
         KeyHandler.__init__(self)
@@ -72,6 +76,7 @@ class GenericDialog(Dialog):
     nìkterých metod.
     
     """    
+        
     def __init__(self, parent, title, buttons, default=None, report=None,
                  report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
@@ -160,6 +165,8 @@ class GenericDialog(Dialog):
         sizer.SetSizeHints(dialog)
         # dokonèi ...
         wx_callback(wx.EVT_SET_FOCUS, dialog, self._on_set_focus)
+        if self._default_button:
+            dialog.SetDefaultItem(self._default_button)
         dialog.SetAutoLayout(True)
         dialog.SetSizer(sizer)
         sizer.Fit(dialog)
