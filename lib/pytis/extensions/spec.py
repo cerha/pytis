@@ -259,10 +259,10 @@ def user_cmd(name, handler, **kwargs):
         if caller_[1:] == caller[1:]:
             return cmd
         elif caller_[1] != caller[1]:
-            log(OPERATIONAL, "Duplicitní název pøíkazu:", name)
+            # log(OPERATIONAL, "Duplicitní název pøíkazu:", name)
             caller_file = os.path.split(caller_[1])[-1]
             name += "_"+ os.path.splitext(caller_file)[0].upper()
-            log(OPERATIONAL, "Pøíkaz pøejmenován:", name)
+            # log(OPERATIONAL, "Pøíkaz pøejmenován:", name)
             return user_cmd(name, handler=handler, **kwargs)
     cmd = Command(BrowseForm, name, handler=handler, **kwargs)
     _user_cmd_cache[name] = (cmd, caller)
