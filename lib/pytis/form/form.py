@@ -33,7 +33,7 @@ from pytis.presentation import PresentedRow
 from pytis.form import *
 import wx
 
-class Form(Window, KeyHandler, CallbackHandler):
+class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Spoleèná nadtøída formuláøù.
 
     Formuláø si podle jména specifikace pøedaného konstruktoru vy¾ádá od
@@ -66,7 +66,11 @@ class Form(Window, KeyHandler, CallbackHandler):
 
     _STATUS_FIELDS = ()
     _DESCR = None
-    
+
+    def get_command_handler_instance(cls, application):
+        return application.current_form()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+
     def __init__(self, parent, resolver, name, guardian=None, **kwargs):
         """Inicializuj instanci.
 
