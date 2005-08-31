@@ -1,0 +1,274 @@
+# -*- coding: iso-8859-2 -*-
+
+# Definice u¾ivatelských pøíkazù
+# 
+# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Definice u¾ivatelských pøíkazù.
+
+V¹echny pøíkazy jsou centrálnì definovány zde z dùvodu konzistence a
+pøehlednosti, zejména z pohledu tvùrcù definic aplikací.  Pro v¹echny
+definované pøíkazy jsou automaticky vytvoøeny konstanty ve tøídì, které je
+pøíkaz urèen; názvy tìchto konstant zaèínají prefixem 'COMMAND_' (tuto konvenci
+je nutno dodr¾ovat).
+
+Napøíklad definice Command(Application, 'EXIT', 'Ukonèení aplikace.')  vytvoøí
+konstantu Application.COMMAND_EXIT a pod tímto názvem je mo¾né s instancí
+pøíkazu dále pracovat.
+
+Pøiøazení kláves pøíkazùm:
+
+V aplikaci nikde nepou¾íváme pøímý zápis kláves, nýbr¾ pouze jim odpovídající
+pøíkazy.  To nám umo¾òuje nestarat se v aplikaèním kódu o pøiøazení kláves.  To
+definujeme na jediném místì v tomto modulu.
+
+"""
+
+from pytis.form import *
+    
+Command(Application, 'EXIT',
+        "Ukonèení aplikace.")
+Command(Application, 'BREAK',
+        "Pøeru¹ení aktuálnì provádìné operace.")
+Command(Application, 'REFRESH',
+        "Vy¾ádání obnovení obsahu aktivního formuláøe.")
+Command(Application, 'NEW_RECORD',
+        "Vlo¾ení nového záznamu.")
+Command(Application, 'RUN_FORM',
+        "Spu¹tìní formuláøe.")
+Command(Application, 'RUN_PROCEDURE',
+        "Spu¹tìní procedury.")
+Command(Application, 'LEAVE_FORM',
+        "Odstranìní aktivního okna formuláøe z aplikace.")
+Command(Application, 'RAISE_FORM',
+        "Vyzvednutí okna formuláøe v oknì aplikace.")
+Command(Application, 'PREV_FORM',
+        "Vyzvednutí okna pøedchozího formuláøe.")
+Command(Application, 'NEXT_FORM',
+        "Vyzvednutí okna následujícího formuláøe.")
+Command(Application, 'SHOW_POPUP_MENU',
+        "Zobraz kontextové menu aktivního prvku.")
+Command(Form, 'PRINT',
+        "Tisk aktuálního obsahu formuláøe.")
+Command(LookupForm, 'FILTER',
+        "Filtrování záznamù.")
+Command(LookupForm, 'JUMP',
+        "Skok na záznam.")
+Command(LookupForm, 'SEARCH',
+        "Hledání záznamu.")
+Command(LookupForm, 'SEARCH_PREVIOUS',
+        "Hledání Pøedchozího záznamu bez dialogu.")
+Command(LookupForm, 'SEARCH_NEXT',
+        "Hledání dal¹ího záznamu bez dialogu.")
+Command(LookupForm, 'SORT_COLUMN',
+        "Setøídìní podle sloupce.")
+Command(RecordForm, 'NEW_RECORD',
+        "Vlo¾ení nového záznamu pomocí editaèního formuláøe.")
+Command(RecordForm, 'NEW_RECORD_COPY',
+        "Vlo¾ení kopie záznamu pomocí editaèního formuláøe.")
+Command(RecordForm, 'EDIT_RECORD',
+        "Editace aktuálního záznamu v editaèním formuláøi.")
+Command(RecordForm, 'DELETE_RECORD',
+        "Vymazání editovaného záznamu z databáze.")
+Command(ListForm, 'ACTIVATE',
+        "Aktivaèní funkce pro aktuální øádek formuláøe.")
+Command(ListForm, 'ACTIVATE_ALTERNATE',
+        "Alternativní aktivaèní funkce pro aktuální øádek.")
+Command(ListForm, 'SHOW_CELL_CODEBOOK',
+        "Vyvolání èíselníku aktivní buòky øádkového formuláøe.")
+Command(ListForm, 'SELECT_CELL',
+        "Výbìr buòky seznamu.")
+Command(ListForm, 'FIRST_COLUMN',
+        "Pøechod na první sloupec tabulky.")
+Command(ListForm, 'LAST_COLUMN',
+        "Pøechod na poslední sloupec tabulky.")
+Command(ListForm, 'INCREMENTAL_SEARCH',
+        "Prefixové inkrementální hledání záznamu.")
+Command(ListForm, 'FULL_INCREMENTAL_SEARCH',
+        "Plné inkrementální hledání záznamu.")
+Command(ListForm, 'EDIT',
+        "Vyvolání inline editace aktuální buòky.")
+Command(ListForm, 'COPY_CELL',
+        "Zkopírování obsahu aktuální buòky do clipboardu.")
+Command(ListForm, 'FILTER_BY_CELL',
+        "Vyfiltrování formuláøe podle hodnoty aktuální buòky.")
+Command(ListForm, 'EXPORT_CSV',
+        "Export øádkového formuláøe do csv souboru.")
+Command(ListForm, 'LINE_COMMIT',
+        "Dokonèení editace záznamu (ulo¾ení).")
+Command(ListForm, 'LINE_ROLLBACK',
+        "Kompletní zru¹ení editace záznamu.")
+Command(ListForm, 'LINE_SOFT_ROLLBACK',
+        "Kompletní zru¹ení editace zatím nezmìnìného záznamu.")
+Command(ListForm, 'FINISH_EDITING',
+        "Opu¹tìní editace øádku.")
+Command(ListForm, 'CELL_COMMIT',
+        "Ukonèení editace políèka s novou hodnotou.")
+Command(ListForm, 'CELL_ROLLBACK',
+        "Ukonèení editace políèka s vrácením pùvodní hodnoty.")
+Command(ListForm, 'NEW_LINE_AFTER',
+        "Vlo¾ení nového záznamu za aktuální øádek.")
+Command(ListForm, 'NEW_LINE_AFTER_COPY',
+        "Vlo¾ení záznamu za aktuální øádek jako jeho kopie.")
+Command(ListForm, 'NEW_LINE_BEFORE',
+        "Vlo¾ení nového záznamu pøed aktuální øádek.")
+Command(ListForm, 'NEW_LINE_BEFORE_COPY',
+        "Vlo¾ení záznamu pøed aktuální øádek jako jeho kopie.")
+Command(ListForm, 'SET_GROUPING_COLUMN',
+        "Zmìna sloupce vizuáního seskupování.")
+Command(BrowseForm, 'IMPORT_INTERACTIVE',
+        "Interaktivní import dat z CSV souboru.")
+Command(EditForm, 'COMMIT_RECORD',
+        "Ukonèení editaèního formuláøe s ulo¾ením zmìn.")
+Command(EditForm, 'NAVIGATE',
+        "Navigace mezi políèky editaèního formuláøe.")
+Command(EditForm, 'NAVIGATE_BACK',
+        "Zpìtná navigace mezi políèky editaèního formuláøe.")
+Command(BrowsableShowForm, 'NEXT_RECORD',
+        "Pøechod na dal¹í záznam.")
+Command(BrowsableShowForm, 'PREVIOUS_RECORD',
+        "Pøechod na pøedchozí záznam.")
+Command(BrowsableShowForm, 'FIRST_RECORD',
+        "Pøechod na první záznam.")
+Command(BrowsableShowForm, 'LAST_RECORD',
+        "Pøechod na poslední záznam.")
+Command(DualForm, 'OTHER_FORM',
+        "Pøechod mezi podformuláøi duálního formuláøe.")
+Command(PrintForm, 'NEXT_PAGE',
+        "Pøechod na dal¹í stránku tiskového náhledu.")
+Command(PrintForm, 'PREVIOUS_PAGE',
+        "Pøechod na pøedchozí stránku tiskového náhledu.")
+Command(InputField, 'RESET_FIELD',
+        "Vrácení pùvodní hodnoty vstupního políèka.")
+Command(InputField, 'COMMIT_FIELD',
+        "Úspì¹né ukonèení editace vstupního políèka.")
+Command(InputField, 'LEAVE_FIELD',
+        "Odchod z editace vstupního políèka.")
+Command(Invocable, 'INVOKE_SELECTION',
+        "Vyvolání výbìru hodnoty vstupního políèka.")
+Command(Invocable, 'INVOKE_SELECTION_ALTERNATE',
+        "Vyvolání alternativního výbìru hodnoty políèka.")
+Command(ListField, 'INVOKE_EDIT_FORM',
+        "Vyvolání editaèního formuláøe nad akt. záznamem.")
+Command(ListField, 'INVOKE_BROWSE_FORM',
+        "Zobrazení aktuálního záznamu v novém formuláøi.")
+Command(ListField, 'CHOOSE_KEY',
+        "Výbìr návratového sloupce a hodnoty.")
+Command(Dialog, 'CLOSE_DIALOG',
+        "Opu¹tìní dialogu bez potvrzení.")
+Command(Dialog, 'COMMIT_DIALOG',
+        "Potvrzení dialogu.")
+
+
+DEFAULT_COMMAND_KEYS = (
+    (Application.COMMAND_BREAK,                   'Ctrl-g'),
+    (Application.COMMAND_LEAVE_FORM,              'Escape'),
+    (Application.COMMAND_NEXT_FORM,               'Ctrl-Down'),
+    (Application.COMMAND_PREV_FORM,               'Ctrl-Up'),
+    (Application.COMMAND_REFRESH,                 'Ctrl-l'),
+    (Application.COMMAND_SHOW_POPUP_MENU,         'Ctrl-M'),
+    (Form.COMMAND_PRINT,                         ('Ctrl-x', 'p')),
+    (RecordForm.COMMAND_NEW_RECORD,               'F6'),
+    (RecordForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
+    (RecordForm.COMMAND_EDIT_RECORD,              'F5'),
+    (RecordForm.COMMAND_DELETE_RECORD,            'F8'),
+    (LookupForm.COMMAND_SORT_COLUMN,              'F4'),
+    (LookupForm.COMMAND_FILTER,                   'Ctrl-F4'),
+    (LookupForm.COMMAND_SEARCH_NEXT,              'Ctrl-s'),
+    (LookupForm.COMMAND_SEARCH_PREVIOUS,          'Ctrl-r'),
+    (LookupForm.COMMAND_SEARCH,                   'F3'),
+    (LookupForm.COMMAND_JUMP,                     'Ctrl-j'),
+    (ListForm.COMMAND_INCREMENTAL_SEARCH,         'Ctrl-F3'),
+    (ListForm.COMMAND_FULL_INCREMENTAL_SEARCH,   ('Ctrl-u', 'Ctrl-F3')),
+    (ListForm.COMMAND_ACTIVATE,                   'Enter'),
+    (ListForm.COMMAND_ACTIVATE_ALTERNATE,         ' '),
+    (ListForm.COMMAND_COPY_CELL,                  'Ctrl-c'),
+    (ListForm.COMMAND_FIRST_COLUMN,               'Home'),
+    (ListForm.COMMAND_LAST_COLUMN,                'End'),
+    (ListForm.COMMAND_EXPORT_CSV,                 'Ctrl-e'),
+    (ListForm.COMMAND_EDIT,                       'F2'),
+    (ListForm.COMMAND_EDIT,                       'F9'), # backw. compatibility
+    (ListForm.COMMAND_LINE_ROLLBACK,              'Ctrl-F12'),
+    (ListForm.COMMAND_FINISH_EDITING,             'Escape'),
+    (ListForm.COMMAND_LINE_COMMIT,                'F12'),
+    (ListForm.COMMAND_CELL_COMMIT,                'Enter'),
+    (ListForm.COMMAND_CELL_ROLLBACK,              'Escape'),
+    (ListForm.COMMAND_NEW_LINE_AFTER,             'Insert'),
+    (ListForm.COMMAND_NEW_LINE_AFTER_COPY,        'F7'),
+    (ListForm.COMMAND_NEW_LINE_BEFORE,            'Ctrl-Insert'),
+    (ListForm.COMMAND_NEW_LINE_BEFORE_COPY,       'Ctrl-F7'),
+    (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
+    (EditForm.COMMAND_COMMIT_RECORD,              'Ctrl-Enter'),
+    (EditForm.COMMAND_NAVIGATE,                   'Tab'),
+    (EditForm.COMMAND_NAVIGATE_BACK,              'Shift-Tab'),        
+    (BrowsableShowForm.COMMAND_NEXT_RECORD,       'Next'),
+    (BrowsableShowForm.COMMAND_PREVIOUS_RECORD,   'Prior'),
+    (BrowsableShowForm.COMMAND_FIRST_RECORD,      'Home'),
+    (BrowsableShowForm.COMMAND_LAST_RECORD,       'End'),
+    (DualForm.COMMAND_OTHER_FORM,                 'Ctrl-Tab'),
+    (PrintForm.COMMAND_NEXT_PAGE,                 'Next'),
+    (PrintForm.COMMAND_PREVIOUS_PAGE,             'Prior'),
+    (InputField.COMMAND_COMMIT_FIELD,             'Enter'),
+    (InputField.COMMAND_LEAVE_FIELD,              'Escape'),
+    (Invocable.COMMAND_INVOKE_SELECTION,          'F2'),
+    (Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE,'Ctrl-F2'),
+    (Dialog.COMMAND_CLOSE_DIALOG,                 'Escape'),
+    (Dialog.COMMAND_COMMIT_DIALOG,                'Ctrl-Enter'))
+
+
+
+if __debug__:
+    Command(Application, 'CUSTOM_DEBUG',
+            "Pomocný pøíkaz pro vyvolání pomocné ladící funkce.")
+    DEFAULT_COMMAND_KEYS += \
+        ((Application.COMMAND_CUSTOM_DEBUG, 'Ctrl-Backspace'),)
+
+
+FORM_COMMAND_MENU = ((
+    (_("Pøedchozí okno"),             Application.COMMAND_PREV_FORM),
+    (_("Následující okno"),           Application.COMMAND_NEXT_FORM),
+    (_("Zavøít aktuální okno"),       Application.COMMAND_LEAVE_FORM),
+    ),(#---------------
+    (_("Skok na záznam"),             LookupForm.COMMAND_JUMP),
+    (_("Hledat"),                     LookupForm.COMMAND_SEARCH),
+    (_("Hledat dal¹í"),               LookupForm.COMMAND_SEARCH_NEXT),
+    (_("Hledat pøedchozí"),           LookupForm.COMMAND_SEARCH_PREVIOUS),
+    (_("Inkrementální hledání"),      ListForm.COMMAND_INCREMENTAL_SEARCH),
+    (_("Inkrementální hledání podøetìzce"),
+                                      ListForm.COMMAND_FULL_INCREMENTAL_SEARCH),
+    ),(#---------------
+    (_("Tøídìní"),                    LookupForm.COMMAND_SORT_COLUMN),
+    (_("Filtrování"),                 LookupForm.COMMAND_FILTER),
+    ),(#---------------
+    (_("Nový záznam"),                BrowseForm.COMMAND_NEW_RECORD),
+    (_("Nový záznam - kopie"),        BrowseForm.COMMAND_NEW_RECORD_COPY),
+    (_("Editovat záznam"),            BrowseForm.COMMAND_EDIT_RECORD),
+    (_("Vlo¾it øádku nad"),           ListForm.COMMAND_NEW_LINE_BEFORE),
+    (_("Vlo¾it øádku pod"),           ListForm.COMMAND_NEW_LINE_AFTER),
+    (_("Kopírovat øádku nad"),        ListForm.COMMAND_NEW_LINE_BEFORE_COPY),
+    (_("Kopírovat øádku pod"),        ListForm.COMMAND_NEW_LINE_AFTER_COPY),
+    (_("Editace buòky"),              ListForm.COMMAND_EDIT),
+    (_("Smazat záznam"),              RecordForm.COMMAND_DELETE_RECORD),
+    ),(#---------------
+    (_("Ulo¾it"),                     ListForm.COMMAND_LINE_COMMIT),
+    (_("Zru¹it zmìny"),               ListForm.COMMAND_LINE_ROLLBACK),
+    ),(#---------------
+    (_("Export do textového souboru"),ListForm.COMMAND_EXPORT_CSV),
+    ),(#---------------
+    (_("Zobrazit náhled záznamu"),    ListForm.COMMAND_ACTIVATE),
+    (_("Náhled v duálním formuláøi"), ListForm.COMMAND_ACTIVATE_ALTERNATE),
+    ))
