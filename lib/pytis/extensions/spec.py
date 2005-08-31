@@ -250,9 +250,19 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
                  args={'inputfile': inputfile, 'format': format})
 
 def user_cmd(name, handler, **kwargs):
-    #name = name.upper().replace('-', '_')
-    #return Command(BrowseForm, name, handler=handler, **kwargs)
-    return Command('user-command.' + name, handler=handler, **kwargs)
+    name = name.upper().replace('-', '_')
+    if hasattr(BrowseForm, 'COMMAND_'+name):
+        cmd = getattr(BrowseForm, 'COMMAND_'+name)
+        if cmd.handler() == handler:
+            return cmd
+        else:
+            log(OPERATIONAL, "Duplicitní název pøíkazu:", name)
+            import inspect
+            caller_path = inspect.stack()[1][1]
+            caller_file = os.path.split(caller_path)[-1]
+            name += "_"+ os.path.splitext(caller_file)[0].upper()
+            log(OPERATIONAL, "Pøíkaz pøejmenován:", name)
+    return Command(BrowseForm, name, handler=handler, **kwargs)
 
 
 nr = new_record_mitem
