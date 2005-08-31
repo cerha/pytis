@@ -54,7 +54,7 @@ class _TextValidator(wx.PyValidator):
             return True
 
         
-class InputField(object, KeyHandler, CallbackHandler):
+class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     """Abstraktní tøída vstupního pole.
 
     Vstupní políèko není samo o sobì wx prvkem. Odpovídající prvky
@@ -143,6 +143,10 @@ class InputField(object, KeyHandler, CallbackHandler):
 
     create = classmethod(create)
 
+    def get_command_handler_instance(cls, application):
+        return InputField.focused()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+    
     def __init__(self, parent, fspec, data, guardian=None, inline=False,
                  accessible=True):
         """Vytvoø vstupní políèko, podle specifikace a typu dat.
@@ -913,7 +917,7 @@ class ListBoxField(EnumerationField):
         return control
     
 
-class Invocable:
+class Invocable(CommandHandler):
     """Mix-in tøída pro políèka s mo¾ností vyvolání výbìru.
 
     Abstraktní tøída pro políèka, která umo¾òují vyvolat pro výbìr hodnoty
