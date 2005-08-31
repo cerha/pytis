@@ -1,3 +1,8 @@
+2005-08-31  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/inputfield.py
+	(Invocable.get_command_handler_instance): Nová metoda.
+
 2005-08-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/_test.py (DataEnumerator.test_values): Nová metoda.

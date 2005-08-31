@@ -986,6 +986,10 @@ class Invocable(CommandHandler):
                       command=self.COMMAND_INVOKE_SELECTION,
                       args={'originator': self}))
     
+    def get_command_handler_instance(cls, application):
+        return InputField.focused()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+
     def on_command(self, command, **kwargs):
         if self._enabled:
             if command == Invocable.COMMAND_INVOKE_SELECTION:
