@@ -1,5 +1,22 @@
 2005-08-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/_test.py (DataEnumerator.test_values): Nová metoda.
+	(DBDataDefaultClass.setUp): Zru¹eny zakomentované èásti testující
+	multi-codebooky.
+	(DBDataDefaultClass.test_lock): -> '_test_lock'.
+	(DBDataFetchBuffer.setUp): Pou¾ívej konfiguraèní promìnné namísto
+	konstang tøídy `DBDataPostgreSQL'.
+	(DBDataFetchBuffer.setUp): Vytvoø tabulku `small' a pøíslu¹né
+	vazby..
+	(DBDataFetchBuffer.tearDown): Dropni tabulku `small'.
+	(DBDataFetchBuffer.test_skip_fetch): Pøijímej datový objekt jako
+	argument.  Pødáno nìkolik fetchù pro testování nìkterých záludností.
+	(DBDataReuse.test_it): Pou¾ívej konfiguraèní promìnné namísto
+	konstang tøídy `DBDataPostgreSQL'.
+	(TutorialTest.test_it): Pøedávej arguemnty konstruktoru podle
+	nových pravidel.
+	(TutorialTest.test_it): Zakomentovány problematické testy (doèasnì).
+
 	* pytis/form/__init__.py (_list): Load `command' sooner.  Load
 	`commands' at the end.
 
