@@ -1,3 +1,45 @@
+2005-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/__init__.py (_list): Load `command' sooner.  Load
+	`commands' at the end.
+
+	* pytis/form/inputfield.py (InputField, Invocable): Buï potomkem
+	`CommandHandler'.
+	(InputField.get_command_handler_instance): Nová metoda.
+
+	* pytis/form/form.py (Form): Buï potomkem
+	`CommandHandler'.
+	(Form.get_command_handler_instance): Nová metoda.
+
+	* pytis/form/dualform.py (DualForm.get_command_handler_instance):
+	Nová metoda.
+
+	* pytis/form/dialog.py (Dialog): Buï potomkem `CommandHandler'.
+	(Dialog.get_command_handler_instance): Nová metoda.
+	(GenericDialog._create_dialog_elements): Nastavuj výchozí tlaèítko
+	pomocí `SetDefaultItem'.
+
+	* pytis/form/application.py (Application): Buï potomkem
+	`CommandHandler'.
+	(Application.get_command_handler_instance): Nová metoda.
+
+	* pytis/form/command.py: Pøepis dokumentace.
+	(CommandHandler): Nová tøída.
+	(Command): Aktualizace docstringu.
+	(Command.__init__): Nový povinný argument `cls'.  `id' nahrazeno
+	`name'.  Poøadí klíèových arguemntù zmìnìno.  Pøidáno doèasné
+	o¹etøení starého zpùsobu pøedání arguemntù s logováním.  Vyvolej
+	výjimku, pokud stejný pøíkaz ji¾ byl definován.  Vytváøej
+	automaticky konstantu `COMMAND_<name>' tøídy `cls'.
+	(Command.enabled): Testuj také, zda aktivní prvek aplikace umí
+	zpracovat pøíkaz a zda jeho metoda 'can_<name>' vrací pravdu.
+	(define_cmd): Zru¹eno.
+	V¹echny definice pøíkazù a pøiøazení kláves pøesunuty z tohoto
+	modulu do nového modulu `commands'.
+	(FORM_COMMAND_MENU): Také pøesunuto do `commands'.
+
+	* pytis/form/commands.py: Nový modul.
+
 2005-08-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._on_handled_command): Oprava
