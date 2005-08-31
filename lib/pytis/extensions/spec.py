@@ -249,20 +249,24 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
                  command=cmd_help_window,
                  args={'inputfile': inputfile, 'format': format})
 
+_user_cmd_cache = {}
 def user_cmd(name, handler, **kwargs):
+    import inspect
     name = name.upper().replace('-', '_')
-    if hasattr(BrowseForm, 'COMMAND_'+name):
-        cmd = getattr(BrowseForm, 'COMMAND_'+name)
-        if cmd.handler() == handler:
+    caller = inspect.stack()[1]
+    if _user_cmd_cache.has_key(name):
+        cmd, caller_ = _user_cmd_cache[name]
+        if caller_[1:] == caller[1:]:
             return cmd
-        else:
+        elif caller_[1] != caller[1]:
             log(OPERATIONAL, "Duplicitní název pøíkazu:", name)
-            import inspect
-            caller_path = inspect.stack()[1][1]
-            caller_file = os.path.split(caller_path)[-1]
+            caller_file = os.path.split(caller_[1])[-1]
             name += "_"+ os.path.splitext(caller_file)[0].upper()
             log(OPERATIONAL, "Pøíkaz pøejmenován:", name)
-    return Command(BrowseForm, name, handler=handler, **kwargs)
+            return user_cmd(name, handler=handler, **kwargs)
+    cmd = Command(BrowseForm, name, handler=handler, **kwargs)
+    _user_cmd_cache[name] = (cmd, caller)
+    return cmd
 
 
 nr = new_record_mitem
