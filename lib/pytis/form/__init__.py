@@ -31,6 +31,7 @@ from pytis.presentation import *
 _list = list
 
 from event import *
+from command import *
 from screen import *
 from dialog import *
 from search import *
@@ -40,7 +41,7 @@ from list import *
 from dualform import *
 from output import *
 from application import *
-from command import *
+from commands import *
 import _grid
 
 list_ = list
