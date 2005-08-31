@@ -38,9 +38,7 @@ if config.server:
 from pytis.form import *
 import wx
 
-
 _application = None
-
 
 def run_application(resolver=None):
     """Vytvoø instanci tøídy 'defs.application.Application'.
@@ -59,7 +57,7 @@ def run_application(resolver=None):
     Application(resolver).run()
 
 
-class Application(wx.App, KeyHandler):
+class Application(wx.App, KeyHandler, CommandHandler):
     """Hlavní okno aplikace.
 
     Aplikaèní okno sestává jednak ze statických prvkù a jednak z vymìnitelného
@@ -97,6 +95,10 @@ class Application(wx.App, KeyHandler):
 
     _WINDOW_MENU_TITLE = _("Okn&a")
 
+    def get_command_handler_instance(cls, application):
+        return application
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+    
     def __init__(self, resolver):
         """Inicializuj aplikaci.
 
@@ -193,6 +195,7 @@ class Application(wx.App, KeyHandler):
             result = default_value
         return result
 
+    
     # Ostatní metody
 
     def _check_perm(self, perm, name):
