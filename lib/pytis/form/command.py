@@ -18,62 +18,72 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Definice u¾ivatelských pøíkazù.
+"""Tøídy slou¾ící k definici pøíkazù.
 
-Tento soubor obsahuje jednak tøídu 'Command', slou¾ící k definici v¹ech
-podporovaných pøíkazù, a jednak definice pøíkazù.
-
-V¹echny pøíkazy jsou centrálnì definovány zde, z dùvodu konzistence a
-pøehlednosti, zejména z pohledu tvùrcù definic aplikací.  V¹echny definované
-pøíkazy jsou konstantami nìkteré z tøíd modulu 'pytis.form'; názvy tìchto
-konstant zaèínají prefixem 'COMMAND_' (tuto konvenci je nutno dodr¾ovat).
-
-Pøiøazení kláves pøíkazùm:
-
-V aplikaci mimo modul 'defs' nepou¾íváme pøímý zápis kláves, nýbr¾ pouze jim
-odpovídající pøíkazy.  To nám umo¾òuje nestarat se v aplikaèním kódu
-o pøiøazení kláves, ta definujeme na jediném místì v tomto modulu.
+Tento modul definuje tøídy slou¾ící k definici pøíkazù.  Vlastní definice v¹ech
+pøíkazù aplikace je potom soustøedìna centrálnì v modulu 'commands'.
 
 """
-
 
 from pytis.form import *
 
 
-class Command(object):
-    """Reprezentace pøíkazu u¾ivatelského rozhraní.
-
-    Klávesa, která pøíkaz vyvolává, je dostupná ve formì veøejného atributu
-    `key' a její hodnotu lze v definièních souborech konkrétní aplikace
-    prostøednictvím tohoto atributu zmìnit.
-
-    Pøi definici u¾ivatelských pøíkazù lze definovat vlastní obslu¾né rutiny
-    pro jejich zpracování.  U¾ivatelským pøíkazem je my¹len pøíkaz, který není
-    standardnì o¹etøován ¾ádnou tøídou u¾ivatelského rozhraní (formuláøem).
-    Pokud v¹ak formuláø podporuje u¾ivatelské pøíkazy, vyvolá funkci
-    specifikovanou argumentem konstruktoru 'handler' s parametry, které závisí
-    na typu dané tøídy u¾ivatelského rozhraní. Tøída BrowseForm tak napøíklad
-    jako argument pøedá data aktuálního øádku seznamu apod. Více v dokumentaci
-    jednotlivých formuláøových tøíd.
+class CommandHandler:
+    """Mix-in tøída, kterou musí dìdit tøídy definující vlastní pøíkazy."""
     
-    Identifikátor pøíkazu je v tuto chvíli významný pouze pro logování.
-    Pøíkazy jsou rozpoznávány dle konkrétních instancí, ne podle svého
-    identifikátoru.
+    def get_command_handler_instance(cls, application):
+        """Najdi v aplikaci aktivní prvek, který je schopen zpracovat pøíkaz."""
+        raise ProgramError("This method must be overriden in derived class.")
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+                           
+    
+class Command(object):
+    """Reprezentace obecného pøíkazu u¾ivatelského rozhraní.
 
+    Ka¾dý pøíkaz je vázán na urèitý typ prvku u¾ivatelského rozhraní aplikace
+    (formuláø, dialog, vstupní políèko), nad jeho¾ instancí mù¾e být vyvolán.
+    Tøída ka¾dého takového prvku u¾ivatelského rozhraní, která chce vlastní
+    pøíkazy definovat, musí být odvozena od tøídy 'CommandHandler'.
+
+    Metoda 'enabled()' ka¾dého pøíkazu potom nejprve zjistí, zda je aktivní
+    prvek aplikace (instance 'CommandHandler') kompatibilní s daným pøíkazem
+    (pøíkaz byl definován pro jeho tøídu).  Pokud ne, metoda vrací v¾dy false
+    bez testování hodnoty, dané arguemntem 'enabled' konstruktoru.  Tím jsou v
+    dùsledku automaticky zneaktivnìny i pøíslu¹né polo¾ky menu atd.
+
+    Obslu¾ná tøída (resp. její instance) ka¾dý pøíkaz zpracuje buïto sama
+    (pøíkazy definované pøímo Pytisem), nebo jde o tzv. `u¾ivatelský pøíkaz' s
+    vlastní obslu¾nou rutinou (definovanou u¾ivatelem/tvùrcem aplikace).
+
+    O¹etøení u¾ivatelských pøíkazù je provedeno vyvoláním obslu¾né rutiny,
+    specifikované argumentem konstruktoru 'handler'.  Parametry, se kterými
+    bude obslu¾ná rutina zavolána závisí na typu tøídy 'CommandHandler'.  Tøída
+    'BrowseForm' tak napøíklad jako argument pøedá data aktuálního øádku
+    seznamu apod.  Více v dokumentaci jednotlivých tøíd.
+
+    Terminologická poznámka: Název arguemntu konstruktoru 'handler' (obslu¾ná
+    rutina pøíkazu) nelze zamìòovat s pou¾itím oznaèení handler pro prvek
+    u¾ivatelského rozhraní, který se o zpracování pøíkazu postará
+    ('CommandHandler').  Shodné oznaèení je pou¾ito z historických dùvodù a je
+    tøeba mít rozli¹ení na pamìti.
+    
     """
-    def __init__(self, id, key=None, handler=None, log_=True,
-                 enabled=True, access_groups=None, static=False):
+    def __init__(self, cls, name=None, doc=None, key=None, handler=None,
+                 enabled=True, access_groups=None, static=False, log_=True):
         """Definuj pøíkaz.
 
         Argumenty:
 
-          id -- identifikátor pøíkazu, libovolný neprázdný øetìzec mezi
-            identifikátory pøíkazu unikátní
-          handler -- funkce volaná pøi zpracování pøíkazu.  Má význam pøi
-            definici u¾ivatelských pøíkazù.  Blí¾e viz dokumentace tøídy.
+          cls -- Tøída prvku u¾ivatelského rozhraní, který pøíkaz zpracovává.
+            Tøída musí být potomkem tøídy 'CommandHandler'.  Více také
+            viz. vý¹e (dokumentace tøídy 'Command').
+          name -- název pøíkazu.  Neprázdný øetìzec, pou¾itelný jako Pythonový
+            identifikáítor, mezi názvy pøíkazù unikátní.  Název je pou¾it pro
+            vytvoøení konstanty (viz. ní¾e), tak¾e dal¹ím po¾adavkem je, aby
+            ve¹kerá písmena byla velká.
+          handler -- obslu¾ná funkce volaná pøi zpracování pøíkazu.  Má význam
+            pøi definici u¾ivatelských pøíkazù.  Blí¾e viz dokumentace tøídy.
             Hodnotou je callable object, nebo None.
-          log_ -- právì kdy¾ je pravdivé, je vyvolání pøíkazu logováno jako
-            EVENT, jinak je logováno pouze jako DEBUG
           access_groups -- sekvence jmen skupin (strings), které mají právo
             pøíkaz vyvolat; mù¾e být té¾ 'None', v kterém¾to pøípadì pøíkaz
             mohou vyvolat v¹echny skupiny.  Toto oprávnìní je formální,
@@ -91,19 +101,38 @@ class Command(object):
             funkcí `enabled' pova¾ována za nemìnnou a výsledek tedy bude
             cachován.  V opaèném pøípadì (výchozí hodnota) bude funkce volána
             pøi ka¾dém po¾adavku na zji¹tìní hodnoty enabled.
-    
+          log_ -- právì kdy¾ je pravdivé, je vyvolání pøíkazu logováno jako
+            EVENT, jinak je logováno pouze jako DEBUG
+
+        Po definici pøíkazu je ka¾dý pøíkaz automaticky dostupný jako veøejná
+        konstanta své obslu¾né tøídy (dané argumentem 'cls').  Název této
+        konstanty je v¾dy COMMAND_ + 'name' ('name' je název pøíkazu zadaný v
+        konstruktoru).  Naøíklad tedy 'Application.COMMAND_LEAVE_FORM', nebo
+        'LookupForm.COMMAND_SORT_COLUMN'.
+
         """
-        if not is_anystring(id):
-            id = key
-        assert is_anystring(id)
+        if isinstance(cls, types.StringType):
+            # TODO: A¾ se to bude ru¹it, je tøeba také udìlat argument `name'
+            # pozièním (povinným) argumentem.
+            assert name is None
+            name = cls.replace('user-command.', '').upper().replace('-', '_')
+            cls = BrowseForm
+            log(OPERATIONAL, "Konstruktor Command volán se starými argumenty!",
+                stack_info(depth=2).splitlines()[0])
+        assert issubclass(cls, CommandHandler), \
+               "Not a CommandHandler subclass: %s" % cls
+        assert isinstance(name, types.StringType) and name == name.upper()
         assert handler is None or callable(handler)
+        assert doc is None or isinstance(doc, types.StringTypes)
         assert key is None or is_string(key) or is_sequence(key)
         assert callable(enabled) or isinstance(enabled, types.BooleanType)
         assert isinstance(static, types.BooleanType)
         assert access_groups is None or \
                isinstance(access_groups,
                           (types.StringType, types.TupleType, types.ListType))
-        self._id = id
+        self._cls = cls
+        self._name = name
+        self._id = id = '.'.join((cls.__name__, name.lower().replace('_', '-')))
         if key is not None:
             log(OPERATIONAL,
                 "Pou¾it potlaèený argument `key' tøídy `Command':", (key, id))
@@ -119,18 +148,46 @@ class Command(object):
         self._enabled = enabled
         self._static = static
         self._cache = {}
-    
+        assert not hasattr(cls, 'COMMAND_' + name), \
+               "Command '%s' already defined for %s" % (name, cls.__name__)
+        setattr(cls, 'COMMAND_' + name, self)
+        
     def id(self):
-        """Vra» identifikátor zadaný v konstruktoru."""
+        """Vra» identifikátor pøíkazu jako øetìzec.
+
+        Identifikátor je vhodný napø. pro logování.  Pøíkazy jsou rozpoznávány
+        dle konkrétních instancí, ne podle svého identifikátoru.
+    
+        """
         return self._id
 
     def handler(self):
-        """Vra» rutinu pro zpracování pøíkazu."""
+        """Vra» rutinu pro zpracování pøíkazu zadanou v konstruktoru."""
         return self._handler
 
     def enabled(self, application, args):
+        """Vra» pravdu, pokud je pøíkaz aktivní (smí být vyvolán).
+
+        Pokud u¾ivatel nemá pøístupová práva k danému pøíkazu, je automaticky
+        vráceno False.  Pøíkazy, které nejsou kompatibilní s aktivním prvkem
+        aplikace (instancí 'CommandHandler') jsou rovnì¾ automaticky neaktivní.
+        Také pøíkazy, pro nì¾ aktivní prvek aplikace definuje metodu
+        'can_<command_name>' a ta vrátí False, jsou neaktivní.  A¾ nakonec je
+        testována hodnota (nebo výsledek volání funkce) argumentu 'enabled'
+        konstruktoru.
+        
+        """
         if not self._has_access:
             return False
+        handler = self._cls.get_command_handler_instance(application)
+        if handler is None or not hasattr(handler, 'COMMAND_'+self._name) \
+               or not getattr(handler, 'COMMAND_'+self._name) == self:
+            return False
+        can_method_name = 'can_' + self._name.lower()
+        if hasattr(handler, can_method_name):
+            can = getattr(handler, can_method_name)
+            if not can(**args):
+                return False
         enabled = self._enabled
         if not isinstance(enabled, types.BooleanType):
             if self._static:
@@ -164,7 +221,7 @@ class Command(object):
             return compare_objects(self, other)
         
     def __str__(self):
-        return '<Command: %s>' % (self._id,)
+        return '<Command: %s>' % self._id
 
     def __setattr__(self, name, value):
         # TODO: Èasem zru¹it.
@@ -174,7 +231,7 @@ class Command(object):
                 (value, self._id))
         self.__dict__[name] = value
             
-
+        
 def invoke_command(command, **kwargs):
     """Vyvolej globální zpracování pøíkazu 'command'.
 
@@ -185,290 +242,13 @@ def invoke_command(command, **kwargs):
 
     """
     appl = pytis.form.application._application
+    # TODO: Zde vyvoláme on_command aplikace a ta je zodpovìdna za pøedání
+    # pøíkazu formuláøi, pokud to není její pøíkaz.  Formuláø zase pøedává
+    # pøíkazy políèkùm.  To odpovídá pùvodnímu návrhu.  Nyní v¹ak máme
+    # CommandHandler a metodu get_command_handler_instance(), tak¾e bychom
+    # pøíkazy mohli pøedávat rovnou instanci, které pøíkaz nále¾í.  Pozor,
+    # mo¾ná to také nìjak souvisí s metodou KeyHandler._maybe_invoke_command().
     if command.enabled(appl, kwargs):
         return appl.on_command(command, **kwargs)
     else:
         return False
-
-    
-def define_cmd(cls, name, doc):
-    id = cls.__name__ +'.'+ name.lower().replace('_', '-')
-    name = 'COMMAND_' + name
-    if issubclass(cls, Form):
-        get_handler = lambda appl: appl.current_form()
-    elif issubclass(cls, (InputField, Invocable)):
-        get_handler = lambda appl: InputField.focused()
-    elif issubclass(cls, Application):
-        get_handler = lambda appl: appl
-    elif issubclass(cls, Dialog):
-        get_handler = lambda appl: appl.top_window()
-    else:
-        raise ProgramError("Unknown command handler class:", cls)
-    def _enabled(appl, cmd, args):
-        # TODO: Asi by bylo vhodnìj¹í toto pøesunout nìkam do kódu vlastního
-        # handleru.
-        handler = get_handler(appl)
-        if handler is not None and hasattr(handler, name) \
-               and getattr(handler, name) == cmd:
-            try:
-                f = getattr(handler, 'can_' + name[8:].lower())
-            except AttributeError:
-                return True
-            return f(**args)
-        else:
-            return False
-    setattr(cls, name, Command(id, enabled=_enabled))
-    
-define_cmd(Application, 'EXIT',
-           "Ukonèení aplikace.")
-define_cmd(Application, 'BREAK',
-           "Pøeru¹ení aktuálnì provádìné operace.")
-define_cmd(Application, 'REFRESH',
-           "Vy¾ádání obnovení obsahu aktivního formuláøe.")
-define_cmd(Application, 'NEW_RECORD',
-           "Vlo¾ení nového záznamu.")
-define_cmd(Application, 'RUN_FORM',
-           "Spu¹tìní formuláøe.")
-define_cmd(Application, 'RUN_PROCEDURE',
-           "Spu¹tìní procedury.")
-define_cmd(Application, 'LEAVE_FORM',
-           "Odstranìní aktivního okna formuláøe z aplikace.")
-define_cmd(Application, 'RAISE_FORM',
-           "Vyzvednutí okna formuláøe v oknì aplikace.")
-define_cmd(Application, 'PREV_FORM',
-           "Vyzvednutí okna pøedchozího formuláøe.")
-define_cmd(Application, 'NEXT_FORM',
-           "Vyzvednutí okna formuláøe následujícího za aktivním oknem.")
-define_cmd(Application, 'SHOW_POPUP_MENU',
-           "Zobraz kontextové menu aktivního prvku, pokud to lze.")
-
-define_cmd(Form, 'PRINT',
-           "Tisk aktuálního obsahu formuláøe.")
-
-define_cmd(LookupForm, 'FILTER',
-           "Filtrování záznamù.")
-define_cmd(LookupForm, 'JUMP',
-           "Skok na záznam.")
-define_cmd(LookupForm, 'SEARCH',
-           "Hledání záznamu.")
-define_cmd(LookupForm, 'SEARCH_PREVIOUS',
-           "Hledání Pøedchozího záznamu bez dialogu.")
-define_cmd(LookupForm, 'SEARCH_NEXT',
-           "Hledání dal¹ího záznamu bez dialogu.")
-define_cmd(LookupForm, 'SORT_COLUMN',
-           "Setøídìní podle sloupce.")
-
-define_cmd(RecordForm, 'NEW_RECORD',
-           #enabled=_current_form_can_insert)
-           "Otevøení editaèního formuláøe pro vlo¾ení nového záznamu.")
-define_cmd(RecordForm, 'NEW_RECORD_COPY',
-           #enabled=_current_form_can_insert)
-           "Otevøení editaèního formuláøe pro nový záznam kopií aktuálního.")
-define_cmd(RecordForm, 'EDIT_RECORD',
-           #enabled=_current_form_can_update)
-           "Editace aktuálního záznamu v editaèním formuláøi.")
-define_cmd(RecordForm, 'DELETE_RECORD',
-           #enabled=_current_form_can_delete)
-           "Vymazání editovaného záznamu z databáze.")
-
-define_cmd(ListForm, 'ACTIVATE',
-           "Vyvolání aktivaèní funkce pro aktuální øádek formuláøe.")
-define_cmd(ListForm, 'ACTIVATE_ALTERNATE',
-           "Vyvolání alternativní aktivaèní funkce pro aktuální øádek.")
-define_cmd(ListForm, 'SHOW_CELL_CODEBOOK',
-           "Vyvolání èíselníku aktivní buòky øádkového formuláøe.")
-define_cmd(ListForm, 'SELECT_CELL',
-           "Výbìr buòky seznamu.")
-define_cmd(ListForm, 'FIRST_COLUMN',
-           "Pøechod na první sloupec tabulky.")
-define_cmd(ListForm, 'LAST_COLUMN',
-           "Pøechod na poslední sloupec tabulky.")
-define_cmd(ListForm, 'INCREMENTAL_SEARCH',
-           "Prefixové inkrementální hledání záznamu.")
-define_cmd(ListForm, 'FULL_INCREMENTAL_SEARCH',
-           "Plné inkrementální hledání záznamu.")
-define_cmd(ListForm, 'EDIT',
-           #enabled=_current_form_can_update)
-           "Vyvolání inline editace aktuální buòky.")
-define_cmd(ListForm, 'COPY_CELL',
-           "Zkopírování obsahu aktuální buòky do clipboardu.")
-define_cmd(ListForm, 'FILTER_BY_CELL',
-           "Vyfiltrování formuláøe podle hodnoty aktuální buòky.")
-define_cmd(ListForm, 'EXPORT_CSV',
-           "Export øádkového formuláøe do csv souboru.")
-define_cmd(ListForm, 'LINE_COMMIT',
-           "Dokonèení editace záznamu (ulo¾ení).")
-define_cmd(ListForm, 'LINE_ROLLBACK',
-           "Kompletní zru¹ení editace záznamu.")
-define_cmd(ListForm, 'LINE_SOFT_ROLLBACK',
-           "Kompletní zru¹ení editace zatím nezmìnìného záznamu.")
-define_cmd(ListForm, 'FINISH_EDITING',
-           "Opu¹tìní editace øádku.")
-define_cmd(ListForm, 'CELL_COMMIT',
-           "Ukonèení editace políèka s novou hodnotou.")
-define_cmd(ListForm, 'CELL_ROLLBACK',
-           "Ukonèení editace políèka s vrácením pùvodní hodnoty.")
-define_cmd(ListForm, 'NEW_LINE_AFTER',
-           #enabled=_current_form_can_insert)
-           "Vlo¾ení nového záznamu za aktuální øádek.")
-define_cmd(ListForm, 'NEW_LINE_AFTER_COPY',
-           #enabled=_current_form_can_insert)
-           "Vlo¾ení nového záznamu za aktuální øádek jako jeho kopie.")
-define_cmd(ListForm, 'NEW_LINE_BEFORE',
-           #enabled=_current_form_can_insert)
-           "Vlo¾ení nového záznamu pøed aktuální øádek.")
-define_cmd(ListForm, 'NEW_LINE_BEFORE_COPY',
-           #enabled=_current_form_can_insert)
-           "Vlo¾ení nového záznamu pøed aktuální øádek jako jeho kopie.")
-define_cmd(ListForm, 'SET_GROUPING_COLUMN',
-           #enabled=ListForm.can_set_grouping)
-           "Zmìna sloupce vizuáního seskupování.")
-
-define_cmd(BrowseForm, 'IMPORT_INTERACTIVE',
-           #enabled=_current_form_can_insert)
-           "Import CSV dat s potvrzením a mo¾ností editace ka¾dého záznamu.")
-
-define_cmd(EditForm, 'COMMIT_RECORD',
-           "Ukonèení editaèního formuláøe s ulo¾ením zmìn.")
-define_cmd(EditForm, 'NAVIGATE',
-           "Navigace mezi políèky editaèního formuláøe.")
-define_cmd(EditForm, 'NAVIGATE_BACK',
-           "Zpìtná navigace mezi políèky editaèního formuláøe.")
-
-define_cmd(BrowsableShowForm, 'NEXT_RECORD',
-           "Pøechod na dal¹í záznam.")
-define_cmd(BrowsableShowForm, 'PREVIOUS_RECORD',
-           "Pøechod na pøedchozí záznam.")
-define_cmd(BrowsableShowForm, 'FIRST_RECORD',
-           "Pøechod na první záznam.")
-define_cmd(BrowsableShowForm, 'LAST_RECORD',
-           "Pøechod na poslední záznam.")
-define_cmd(DualForm, 'OTHER_FORM',
-           "Pøechod mezi podformuláøi duálního formuláøe.")
-define_cmd(PrintForm, 'NEXT_PAGE',
-           "Pøechod na dal¹í stránku tiskového náhledu.")
-define_cmd(PrintForm, 'PREVIOUS_PAGE',
-           "Pøechod na pøedchozí stránku tiskového náhledu.")
-define_cmd(InputField, 'RESET_FIELD',
-           "Vrácení pùvodní hodnoty vstupního políèka.")
-define_cmd(InputField, 'COMMIT_FIELD',
-           "Úspì¹né ukonèení editace vstupního políèka.")
-define_cmd(InputField, 'LEAVE_FIELD',
-           "Odchod z editace vstupního políèka.")
-define_cmd(Invocable, 'INVOKE_SELECTION',
-           "Vyvolání výbìru hodnoty vstupního políèka.")
-define_cmd(Invocable, 'INVOKE_SELECTION_ALTERNATE',
-           "Vyvolání alternativního zpùsobu výbìru hodnoty vstupního políèka.")
-define_cmd(ListField, 'INVOKE_EDIT_FORM',
-           "Vyvolání editaèního formuláøe nad aktuálním záznamem 'ListField'.")
-define_cmd(ListField, 'INVOKE_BROWSE_FORM',
-           "Zobrazení aktuálního záznamu 'ListField' v novém formuláøi.")
-define_cmd(ListField, 'CHOOSE_KEY',
-           "Výbìr návratového sloupce a hodnoty pro 'ListField'.")
-define_cmd(Dialog, 'CLOSE_DIALOG',
-           "Opu¹tìní dialogu bez potvrzení.")
-define_cmd(Dialog, 'COMMIT_DIALOG',
-           "Odeslání dialogu stejnì jako stiskem výchozího tlaèítka.")
-
-
-DEFAULT_COMMAND_KEYS = (
-    (Application.COMMAND_BREAK,                   'Ctrl-g'),
-    (Application.COMMAND_LEAVE_FORM,              'Escape'),
-    (Application.COMMAND_NEXT_FORM,               'Ctrl-Down'),
-    (Application.COMMAND_PREV_FORM,               'Ctrl-Up'),
-    (Application.COMMAND_REFRESH,                 'Ctrl-l'),
-    (Application.COMMAND_SHOW_POPUP_MENU,         'Ctrl-M'),
-    (Form.COMMAND_PRINT,                         ('Ctrl-x', 'p')),
-    (RecordForm.COMMAND_NEW_RECORD,               'F6'),
-    (RecordForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
-    (RecordForm.COMMAND_EDIT_RECORD,              'F5'),
-    (RecordForm.COMMAND_DELETE_RECORD,            'F8'),
-    (LookupForm.COMMAND_SORT_COLUMN,              'F4'),
-    (LookupForm.COMMAND_FILTER,                   'Ctrl-F4'),
-    (LookupForm.COMMAND_SEARCH_NEXT,              'Ctrl-s'),
-    (LookupForm.COMMAND_SEARCH_PREVIOUS,          'Ctrl-r'),
-    (LookupForm.COMMAND_SEARCH,                   'F3'),
-    (LookupForm.COMMAND_JUMP,                     'Ctrl-j'),
-    (ListForm.COMMAND_INCREMENTAL_SEARCH,         'Ctrl-F3'),
-    (ListForm.COMMAND_FULL_INCREMENTAL_SEARCH,   ('Ctrl-u', 'Ctrl-F3')),
-    (ListForm.COMMAND_ACTIVATE,                   'Enter'),
-    (ListForm.COMMAND_ACTIVATE_ALTERNATE,         ' '),
-    (ListForm.COMMAND_COPY_CELL,                  'Ctrl-c'),
-    (ListForm.COMMAND_FIRST_COLUMN,               'Home'),
-    (ListForm.COMMAND_LAST_COLUMN,                'End'),
-    (ListForm.COMMAND_EXPORT_CSV,                 'Ctrl-e'),
-    (ListForm.COMMAND_EDIT,                       'F9'),
-    (ListForm.COMMAND_LINE_ROLLBACK,              'Ctrl-F12'),
-    (ListForm.COMMAND_FINISH_EDITING,             'Escape'),
-    (ListForm.COMMAND_LINE_COMMIT,                'F12'),
-    (ListForm.COMMAND_CELL_COMMIT,                'Enter'),
-    (ListForm.COMMAND_CELL_ROLLBACK,              'Escape'),
-    (ListForm.COMMAND_NEW_LINE_AFTER,             'Insert'),
-    (ListForm.COMMAND_NEW_LINE_AFTER_COPY,        'F7'),
-    (ListForm.COMMAND_NEW_LINE_BEFORE,            'Ctrl-Insert'),
-    (ListForm.COMMAND_NEW_LINE_BEFORE_COPY,       'Ctrl-F7'),
-    (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
-    (EditForm.COMMAND_COMMIT_RECORD,              'Ctrl-Enter'),
-    (EditForm.COMMAND_NAVIGATE,                   'Tab'),
-    (EditForm.COMMAND_NAVIGATE_BACK,              'Shift-Tab'),        
-    (BrowsableShowForm.COMMAND_NEXT_RECORD,       'Next'),
-    (BrowsableShowForm.COMMAND_PREVIOUS_RECORD,   'Prior'),
-    (BrowsableShowForm.COMMAND_FIRST_RECORD,      'Home'),
-    (BrowsableShowForm.COMMAND_LAST_RECORD,       'End'),
-    (DualForm.COMMAND_OTHER_FORM,                 'Ctrl-Tab'),
-    (PrintForm.COMMAND_NEXT_PAGE,                 'Next'),
-    (PrintForm.COMMAND_PREVIOUS_PAGE,             'Prior'),
-    (InputField.COMMAND_COMMIT_FIELD,             'Enter'),
-    (InputField.COMMAND_LEAVE_FIELD,              'Escape'),
-    (Invocable.COMMAND_INVOKE_SELECTION,          'F2'),
-    (Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE,'Ctrl-F2'),
-    (Dialog.COMMAND_CLOSE_DIALOG,                 'Escape'),
-    (Dialog.COMMAND_COMMIT_DIALOG,                'Ctrl-Enter'))
-
-
-
-if __debug__:
-    Application.COMMAND_CUSTOM_DEBUG = Command('application.custom-debug')
-    """Pomocný pøíkaz pro vyvolání pomocné ladící funkce.
-
-    Vyvolaná funkce je 'config.custom_debug'.
-
-    """
-    DEFAULT_COMMAND_KEYS += \
-        ((Application.COMMAND_CUSTOM_DEBUG, 'Ctrl-Backspace'),)
-
-
-FORM_COMMAND_MENU = ((
-    (_("Pøedchozí okno"),             Application.COMMAND_PREV_FORM),
-    (_("Následující okno"),           Application.COMMAND_NEXT_FORM),
-    (_("Zavøít aktuální okno"),       Application.COMMAND_LEAVE_FORM),
-    ),(
-    (_("Skok na záznam"),             LookupForm.COMMAND_JUMP),
-    (_("Hledat"),                     LookupForm.COMMAND_SEARCH),
-    (_("Hledat dal¹í"),               LookupForm.COMMAND_SEARCH_NEXT),
-    (_("Hledat pøedchozí"),           LookupForm.COMMAND_SEARCH_PREVIOUS),
-    (_("Inkrementální hledání"),      ListForm.COMMAND_INCREMENTAL_SEARCH),
-    (_("Inkrementální hledání podøetìzce"),
-                                      ListForm.COMMAND_FULL_INCREMENTAL_SEARCH),
-    ),(
-    (_("Tøídìní"),                    LookupForm.COMMAND_SORT_COLUMN),
-    (_("Filtrování"),                 LookupForm.COMMAND_FILTER),
-    ),(
-    (_("Nový záznam"),                BrowseForm.COMMAND_NEW_RECORD),
-    (_("Nový záznam - kopie"),        BrowseForm.COMMAND_NEW_RECORD_COPY),
-    (_("Editovat záznam"),            BrowseForm.COMMAND_EDIT_RECORD),
-    (_("Vlo¾it øádku nad"),           ListForm.COMMAND_NEW_LINE_BEFORE),
-    (_("Vlo¾it øádku pod"),           ListForm.COMMAND_NEW_LINE_AFTER),
-    (_("Kopírovat øádku nad"),        ListForm.COMMAND_NEW_LINE_BEFORE_COPY),
-    (_("Kopírovat øádku pod"),        ListForm.COMMAND_NEW_LINE_AFTER_COPY),
-    (_("Editace buòky"),              ListForm.COMMAND_EDIT),
-    (_("Smazat záznam"),              RecordForm.COMMAND_DELETE_RECORD),
-    ),(
-    (_("Ulo¾it"),                     ListForm.COMMAND_LINE_COMMIT),
-    (_("Zru¹it zmìny"),               ListForm.COMMAND_LINE_ROLLBACK),
-    ),(
-    (_("Export do textového souboru"),ListForm.COMMAND_EXPORT_CSV),
-    ),(
-    (_("Zobrazit náhled záznamu"),    ListForm.COMMAND_ACTIVATE),
-    (_("Náhled v duálním formuláøi"), ListForm.COMMAND_ACTIVATE_ALTERNATE),
-    ))
