@@ -249,24 +249,17 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
                  command=cmd_help_window,
                  args={'inputfile': inputfile, 'format': format})
 
-_user_cmd_cache = {}
+_user_cmd_caller = {}
 def user_cmd(name, handler, **kwargs):
-    import inspect
     name = name.upper().replace('-', '_')
-    caller = inspect.stack()[1]
-    if _user_cmd_cache.has_key(name):
-        cmd, caller_ = _user_cmd_cache[name]
-        if caller_[1:] == caller[1:]:
-            return cmd
-        elif caller_[1] != caller[1]:
-            # log(OPERATIONAL, "Duplicitní název pøíkazu:", name)
-            caller_file = os.path.split(caller_[1])[-1]
-            name += "_"+ os.path.splitext(caller_file)[0].upper()
-            # log(OPERATIONAL, "Pøíkaz pøejmenován:", name)
-            return user_cmd(name, handler=handler, **kwargs)
-    cmd = Command(BrowseForm, name, handler=handler, **kwargs)
-    _user_cmd_cache[name] = (cmd, caller)
-    return cmd
+    if hasattr(BrowseForm, 'COMMAND_'+name):
+        cmd = getattr(BrowseForm, 'COMMAND_'+name)
+        caller = _user_cmd_caller[name]
+        if caller != stack_info(depth=2).splitlines()[0]:
+            raise ProgramError("Command '%s' already defined:" % name, caller)
+        return cmd
+    _user_cmd_caller[name] = stack_info(depth=2).splitlines()[0]
+    return Command(BrowseForm, name, handler=handler, **kwargs)
 
 
 nr = new_record_mitem
