@@ -54,6 +54,7 @@
 	V¹echny definice pøíkazù a pøiøazení kláves pøesunuty z tohoto
 	modulu do nového modulu `commands'.
 	(FORM_COMMAND_MENU): Také pøesunuto do `commands'.
+	(Command.name): Nová metoda.
 
 	* pytis/form/commands.py: Nový modul.
 
