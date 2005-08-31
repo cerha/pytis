@@ -1,3 +1,10 @@
+2005-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (user_cmd): Pou¾ívej nové argumenty
+	konstruktoru tøídy Command.  Pøejmenovávej duplicitní pøíkazy.
+	Pøi redefinici stejného pøíkazu vracej existující instanci, pokud
+	se handler shoduje.
+
 2005-08-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* doc/napoveda.wiki: Drobné opravy, zalamování øádkù.
