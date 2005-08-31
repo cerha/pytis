@@ -68,6 +68,10 @@ class DualForm(Form):
     """
     _DESCR = _("duální formuláø")
     
+    def get_command_handler_instance(cls, application):
+        return application.top_window()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+    
     def __init__(self, *args, **kwargs):
         """Inicializuj duální formuláø.
 
