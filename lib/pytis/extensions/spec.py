@@ -250,7 +250,9 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
                  args={'inputfile': inputfile, 'format': format})
 
 _user_cmd_caller = {}
-def user_cmd(name, handler, **kwargs):
+def user_cmd(name, handler, spec=None, **kwargs):
+    if spec:
+        name = name + "_" + spec.upper()
     name = name.upper().replace('-', '_')
     if hasattr(BrowseForm, 'COMMAND_'+name):
         cmd = getattr(BrowseForm, 'COMMAND_'+name)
