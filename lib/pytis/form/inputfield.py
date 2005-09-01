@@ -103,6 +103,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _focused_field = None
     _last_focused_field = None
     
+    def get_command_handler_instance(cls, application):
+        return InputField.focused()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+    
     def create(cls, parent, fspec, data, guardian=None, inline=False,
                accessible=True):
         """Vra» instanci políèka odpovídajícího typu.
@@ -143,10 +147,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     create = classmethod(create)
 
-    def get_command_handler_instance(cls, application):
-        return InputField.focused()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
-    
     def __init__(self, parent, fspec, data, guardian=None, inline=False,
                  accessible=True):
         """Vytvoø vstupní políèko, podle specifikace a typu dat.
@@ -932,6 +932,10 @@ class Invocable(CommandHandler):
     """
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat hodnotu")
     
+    def get_command_handler_instance(cls, application):
+        return InputField.focused()
+    get_command_handler_instance = classmethod(get_command_handler_instance)
+    
     def _call_next_method(self, name, *args, **kwargs):
         # Will not work in derived classes!
         for base in self.__class__.__bases__:
@@ -986,10 +990,6 @@ class Invocable(CommandHandler):
                       command=self.COMMAND_INVOKE_SELECTION,
                       args={'originator': self}))
     
-    def get_command_handler_instance(cls, application):
-        return InputField.focused()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
-
     def on_command(self, command, **kwargs):
         if self._enabled:
             if command == Invocable.COMMAND_INVOKE_SELECTION:
