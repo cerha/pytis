@@ -1,3 +1,7 @@
+2005-09-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py: Kosmetické úpravy.
+
 2005-08-31  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/inputfield.py
