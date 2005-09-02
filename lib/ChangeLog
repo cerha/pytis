@@ -1,5 +1,13 @@
 2005-09-02  Pavel Hanak  <hanak@asellus.cz>
 
+	* pytis/form/__init__.py: Zohledni nahrazení 'commands.py' modulem
+	'_commands.py'.	
+
+	* pytis/form/_commands.py: Nový modul (nahrazuje commands.py).
+
+	* pytis/form/commands.py: Zru¹en (tluèe se s pythonovským modulem
+	commands).
+
 	* pytis/form/search.py (SFSDialog._create_choice):
 	Po vytvoøení 'wx.Choice' zavolej je¹tì 'SetSelection' pro
 	nastavení implicitní volby.		
