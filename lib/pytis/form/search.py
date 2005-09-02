@@ -79,6 +79,7 @@ class SFSDialog(GenericDialog):
         
     def _create_choice(self, choices, tip=None, enlarge=True):
         ch = wx.Choice(self._dialog, -1, choices=choices)
+        ch.SetSelection(0)
         correction = enlarge and 22 or 0 # longer texts may not fit...
         ch.SetSize((ch.GetSize().width+correction, self._FIELD_HEIGHT))
         if tip is not None and config.show_tooltips:

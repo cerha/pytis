@@ -1,3 +1,9 @@
+2005-09-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/search.py (SFSDialog._create_choice):
+	Po vytvoøení 'wx.Choice' zavolej je¹tì 'SetSelection' pro
+	nastavení implicitní volby.		
+
 2005-09-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py: Kosmetické úpravy.
