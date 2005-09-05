@@ -1,3 +1,7 @@
+2005-09-05  Peter Herich  <herich@asellus.cz>
+
+	* doc/Pytis.wiki: Updatovana vseobecna napoveda.
+
 2005-09-01  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (user_cmd): Pøidán klíèový argument
