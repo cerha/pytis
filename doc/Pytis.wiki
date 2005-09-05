@@ -10,9 +10,9 @@ Klasický jednoduchý tabulkový náhled, který umo¾òuje sledovat na jedné obrazovce
 
 == Duální formuláø {dual form} ==
 
-Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou, pøièem¾ v dolním  formuláøi se zobrazují záznamy provázané s aktuálním* záznamem v horním formuláøi. Pøepínání mezi formuláøi je pomocí klávesy Ctrl-Tab. V dolním náhledu se filtrují øádky podle aktivního øádku v horním náhledu.
+Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou, pøièem¾ v dolním  formuláøi se zobrazují záznamy provázané s aktuálním záznamem v horním formuláøi. Pøepínání mezi formuláøi je pomocí klávesy Ctrl-Tab. V dolním náhledu se filtrují øádky podle aktivního øádku v horním náhledu.
 
-* aktuální záznam - záznam, na kterém je focus* (viz ní¾e).
+ * /aktuální záznam - záznam, na kterém je focus (viz ní¾e)/.
 
 [#menu|index]
 
@@ -25,15 +25,21 @@ Formuláø urèený k u¾ivatelsky pohodlnému vkládání dat. Nejèastìji se vyvolá pomo
 == Náhledový formuláø {show form} ==
 
 Slou¾í pro odli¹né (detailní) zobrazení dat prezentovaných øádkovým formuláøem. Dostanete se do nìj z øádkového formuláøe stisknutím klávesy Mezera
-nebo Enter. Prvním zùpsobem se naète duální náhled, detailné informace jsou zobrazeny v dolní èásti. Enterem zobrazíme detailní informace na celou plochu, pøièem¾ pohybovaní po jednotlivých záznamech je mo¾né pomocí PageUp a PageDown.
+nebo Enter. Prvním zpùsobem se naète duální náhled, detailní informace jsou zobrazeny v dolní èásti. Enterem zobrazíme detailní informace na celou plochu, pøièem¾ pohybovaní po jednotlivých záznamech je mo¾né pomocí PageUp a PageDown.
 
 [#menu|index]
 
 == Tisková sestava {print form} ==
 
-Zobrazuje data naformátovaná a pøipravená pro tisk. Nelze zde vkládat, mazat, ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem. Nad ka¾dým øádkovým formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí Ctrl-x p. Pokud tato není explicitnì pøedefinována, pou¾ije se implicitní tisková sestava, která se pokusí zobrazovaný formuláø pøipravit pro tisk. POZOR
-- pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy k nekorektnímu zobrazení tisknutých dat, proto je nutné pro tyhle záznamy pøedefinovat tiskovou sestavu v spolupráci s vývojáøi. Ve vytvoøené tiskové sestavì je mo¾né
-listovat po jednotlivých stránkách, pøípadnì zvìt¹ovat a zmìn¹ovat náhled.
+Zobrazuje data naformátovaná a pøipravená pro tisk. Nelze zde vkládat, mazat,
+ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem. Nad ka¾dým øádkovým
+formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí
+Ctrl-x p. Pokud tato není explicitnì pøedefinována, pou¾ije se implicitní
+tisková sestava, která se pokusí zobrazovaný formuláø pøipravit pro
+tisk. POZOR: pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy
+k nekorektnímu zobrazení tisknutých dat, proto je nutné pro tyhle záznamy
+pøedefinovat tiskovou sestavu v spolupráci s vývojáøi. Ve vytvoøené tiskové
+sestavì je mo¾né listovat po jednotlivých stránkách, pøípadnì zvìt¹ovat a zmen¹ovat náhled.
 
 == Dialogové okno {dialog} ==
 
@@ -45,23 +51,45 @@ Informaèní okénko, které umo¾òuje vìt¹inou pouze potvrzení, nebo zru¹ení akce.
 
 V øádkovém formuláøi takté¾ známo pod názvem *buòka*. Jedná se o elementární
 prvek. Z hlediska informaèního systému je dùle¾ité to, ¾e data umístìná v buòce
-jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk! Lze omezovat
-rozsah hodnot platných pro políèko (vybrané znaky, celá èísla, ano/ne) z èeho¾
-vyplyne i jeho podoba a rozmìry. Na editaèním formuláøi se vyskytují napøíklad
-tyto typy políèek: klasické vstupní, za¹krtávací, èíselníkové,
-výbìrové. Za¹edlá políèka jsou needitovatelná a mají pouze informativní
-charakter. Pokud se jedná o políèko navázané na èíselník a toto je aktivní, lze
-pomocný èíselník vyvolat klávesovou zkratkou F2. Pomocí klávesové zkratky *Ctrl
-F2* je mo¾né vyvolat èíselník s automaticky zapnutým inkremetálním vyhledáváním.
------------------------
-BUDE AKTUALIZOVANO 
-dopoèítávaná políèka
-Tlaèítko "+"
-Check
-Dynamicka editace
-Validace
-Filter ALPHA
-----------------------
+jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk. Lze omezovat
+rozsah hodnot platných pro políèko (vybrané znaky, èíselné hodnoty, ...). Tohle
+omezení vstupných hodnot øe¹í filtr tzv. *Filter ALPHA*.
+
+V nìkterých pøípadech musí hodnota splnit dal¹í podmínky, jako napøíklad datum
+musí být reálný, èíselníkové políèko musí obsahovat hodnotu z èíselníku,
+políèko musí být vyplnìno, atd. Správné vyplnìní u¾ivatelem v daných pøípadech
+kontroluje tzv. *Validace*, která u¾ivatelovi oznámí pøípadné ¹patné zadání
+hodnoty v dialogovém øádku.
+
+Po odeslání formuláøe tlaèítkem OK (nebo Dal¹í) se kontrolují zadané hodnoty
+kontrolními funkcemi tzv. "*checkmi*". Check mù¾e vypsat varování o nesprávnì
+zadané hodnotì.
+
+V editaèním formuláøi se vyskytují napøíklad tyto typy políèek:
+ * klasické vstupní
+ * za¹krtávací
+ * èíselníkové
+
+*Za¹edlá políèka jsou needitovatelná* a mají pouze informativní charakter.
+
+Pokud se jedná o políèko navázané na èíselník a toto je aktivní, lze
+pomocný *èíselník* vyvolat klávesovou zkratkou *F2*. Pomocí klávesové zkratky
+*Ctrl F2* je mo¾né vyvolat èíselník s automaticky zapnutým inkrementálním
+vyhledáváním.
+
+Obsah nìkterých políèek mù¾e být automaticky zmìnìn na základe
+zadané hodnoty v jiném políèku daného formuláøe. To jsou tzv. *dopoèítávána
+políèka*. Jejich hodnotu lze dodateènì zmìnit. Na základì zadané hodnoty v
+jedním políèku se mù¾e zmìnit i mo¾nost editace jiných políèek (buï se umo¾ní
+nebo znemo¾ní jejich editace). Tahle funkce se nazývá *Dynamická editace*.
+
+V urèitých pøípadech mù¾e u¾ivatel bìhem editace zjistit, ¾e potøebuje do
+políèka zadat èíselníkovou hodnotu, kterou daný èíselník je¹tì neobsahuje. Pro
+úspì¹né zadání dané hodnoty je nutné èíselník doplnit o tuto hodnotu. Aby
+u¾ivatel nemusel zavøít právì otevøený editaèní formuláø, je mo¾né vyvolat
+zadání hodnoty do èíselníku pomocí tlaèítka "*+*". Po obnovení èíselníku mù¾e
+u¾ivatel pokraèovat v zadávání hodnot editaèního formuláøe. Tlaèítko "*+*" se
+vkládá do vybraných editaèních formuláøù na ¾ádost u¾ivatelù.
 
 [#menu|index]
 
@@ -123,13 +151,44 @@ Okna, které si u¾ivatel postupnì otevírá, se øadí do zásobníku oken (polo¾ka men
 
 [#menu|index]
 
----------------------
-BUDE AKTUALIZOVANO
-bublinkova napoveda
-barvy policek
-nastaveni
-odesilani chyb
-logovani
-status
--------------------
+== BUBLINKOVÁ NÁPOVÌDA ==
 
+V záhlaví øádkového formuláøe se mù¾e objevovat *bublinková nápovìda* - struèný
+opis k èemu je daný náhled urèen. Zobrazování bublinkové nápovìdy je mo¾né
+zapnout èi vypnout v Systém -> U¾ivatelská nastavení -> Nastavení u¾ivatelského rozhraní.
+
+== BARVA PÍSMA ==
+
+V náhledech je mo¾né po konzultaci s vývojáøi nastavit rùznou barvu písma u
+záznamù, které se li¹í od jiných záznamù urèitým parametrem. Napøíklad: kladné
+hodnoty èerným písmem, záporné hodnoty èerveným písmem, atd. Pozor v¹ak na
+nastavení u¾ivatelského rozhraní, které se nachází v Systém -> U¾ivatelská
+nastavení -> Nastavení u¾ivatelského rozhraní. Doporuèujeme pou¾ívat Defaultní hodnoty.
+
+== ODESÍLÁNÍ CHYBOVÝCH HLÁ©ENÍ (BUG REPORT) ==
+
+Pøi rychlém vývoji nových funkcionalit informaèního systému se nìkdy objevují
+chyby aplikace. V takovém pøípadì se u¾ivatelovi objeví informaèní okno, ve
+kterém má mo¾nost odeslat chybové hlá¹ení vývojovém týmu. Je to velice dùle¾ité
+pro odhalení a opravení chybného kódu aplikace. Do chybového hlá¹ení se
+automaticky nadefinuje emailová adresa u¾ivatele, aby mohl být pøípadnì
+kontaktován telefonicky vývojovým týmem.
+
+== LOGOVÁNÍ U®IVATELSKÝCH ZÁSAHÙ ==
+
+Ka¾dé vlo¾ení, editování èi mazání dat u¾ivatelem je zaznamenáno, a tudí¾
+zpìtnì je mo¾né dohledat kdo kdy zmìnil urèitý záznam. Je dùle¾ité, aby se
+u¾ivatelé *v¾dy pøihla¹ovali do informaèního systému svým pøihla¹ovacím
+jménem*! A nesdìlovali svoje heslo svým kolegùm.
+
+/Big Brother is watching you./
+
+== INFORMAÈNÍ ØÁDEK (STATUS LINE) ==
+
+Ka¾dý øádkový formuláø obsahuje v dolní èástí informaèní øádek tzv. *status
+line*, který je rozdìlen do ètyø èástí.
+
+ # V pøípadì, ¾e focus je na èíselníkovém políèku, zobrazuje první èást informaèního øádku popis dané èíselníkové hodnoty.
+ # Druhá èást zobrazuje dva èíselné údaje: první je poøadí záznamu, na kterém je focus, druhý údaj je informace o celkovém poètu záznamù v daném náhledu. 
+ # Tøetí èást zobrazuje jméno pøihlá¹eného u¾ivatele.
+ # Ètvrtá èást zobrazuje aktuální datum.
