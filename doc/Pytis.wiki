@@ -62,7 +62,7 @@ kontroluje tzv. *Validace*, která u¾ivatelovi oznámí pøípadné ¹patné zadání
 hodnoty v dialogovém øádku.
 
 Po odeslání formuláøe tlaèítkem OK (nebo Dal¹í) se kontrolují zadané hodnoty
-kontrolními funkcemi tzv. "*checkmi*". Check mù¾e vypsat varování o nesprávnì
+kontrolními funkcemi tzv. "*Checky*". Check mù¾e vypsat varování o nesprávnì
 zadané hodnotì.
 
 V editaèním formuláøi se vyskytují napøíklad tyto typy políèek:
@@ -127,7 +127,14 @@ Nebo také sortování záznamù. V øádkovém formuláøi mù¾e u¾ivatel vzestupnì nebo s
 
 == FILTROVÁNÍ (Ctrl-F4) ==
 
-Funkce omezí výpis záznamù øádkového formuláøe podle u¾ivatelem nadefinovaných pravidel. Filtrování se spou¹tí pøes klávesu Ctrl-F4, která vyvolá editaèní formuláø pro zadaní filtrovacích podmínek. U¾ivatel mù¾e zkombinovat i více podmínek, pøièem¾ se vy¾aduje základní znalost matematické logiky "a zároveò" - "nebo" (AND OR). K dispozici jsou i agregaèní funkce, které umo¾òují zji¹»ovat na vyfiltrovanými záznamy rùzné hodnoty (poèet, minimum, maximum, souèet, prùmìr) v jednotlivých sloupcích.
+Funkce omezí výpis záznamù øádkového formuláøe podle u¾ivatelem nadefinovaných
+pravidel. Filtrování se spou¹tí pøes klávesu *Ctrl-F4*, která vyvolá editaèní
+formuláø pro zadaní filtrovacích podmínek. U¾ivatel mù¾e zkombinovat i více
+podmínek, pøièem¾ se vy¾aduje základní znalost matematické logiky "a zároveò"
+- "nebo" (AND OR). V øetezci filtrovací podmínky mù¾e u¾ivatel pou¾ít znak
+"*!**" jako zástupní znak pro jeden nebo nìkolik znakù.
+
+K dispozici jsou i agregaèní funkce, které umo¾òují zji¹»ovat na vyfiltrovanými záznamy rùzné hodnoty (poèet, minimum, maximum, souèet, prùmìr) v jednotlivých sloupcích.
 
 Funkce "Filtrování" umo¾òuje vytváøet nové náhledy na data bez nutnosti zásahu vývojáøe. Pro velmi èasto u¾ivatelem definované filtry je v¹ak efektivnìj¹í po¾ádat vývojáøe o statickou implementaci formou nového formuláøe. 
 
@@ -145,6 +152,19 @@ Speciální znaky (@#$%^&*) se vkládají pomocí klávesy pravý Alt-pøíslu¹ná klávesa
 
 [#menu|index]
 
+== FUNKCE NA PRAVÉ TLAÈÍTKO MY©I ==
+
+Pomocí pravého tlaèítka my¹i mù¾e u¾ivatel vyvolat nad jakýmkoliv záznamem
+nabídku pøedefinovaných a defaultních funkcí. Mezi defaultní funkce patøí:
+
+ * *Filtrovat podle buòky* - funkce vyvolá filtrování náhledu s automaticky
+   zadanou filtraèní podmínkou, která se "nasaje" z buòky na které byl focus
+   pøi vyvolání funkce '_filtrovat podle bunky_'
+
+ * *Zobrazit související èíselník* - funkce zobrazí èíselník, který souvisí s
+    hodnotou v buòke, na které byl focus pøi vyvolání funkce. Pøi buòkách,
+    které neobsahují èíselníkové hodnoty je tato funkce neaktivní.
+   
 == PROCHÁZENÍ V ZÁSOBNÍKU OKEN ==
 
 Okna, které si u¾ivatel postupnì otevírá, se øadí do zásobníku oken (polo¾ka menu "Okna" obsahuje názvy v¹ech otevøených oken). Mezi otevøenými okny se mù¾e u¾ivatel pohybovat pomocí kláves Ctrl-¹ipka nahoru nebo Ctrl-¹ipka dolù, pøièem¾ se cyklicky posouvá v zásobníku oken jedním nebo druhým smìrem. Jestli¾e u¾ivatel nechce procházet v¹emi otevøenými okny uvedeným zpùsobem, má mo¾nost pomocí klávesy Alt-a vyvolat zásobník oken a ¹ipkou nahoru nebo dolù vybrat název po¾adovaného okna. Výbìr lze udìlat i levým tlaèítkem my¹i, ale naè sahat na my¹, kdy¾ ovládání pomocí klávesnice je mnohem rychlej¹í.
@@ -188,7 +208,7 @@ jménem*! A nesdìlovali svoje heslo svým kolegùm.
 Ka¾dý øádkový formuláø obsahuje v dolní èástí informaèní øádek tzv. *status
 line*, který je rozdìlen do ètyø èástí.
 
- # V pøípadì, ¾e focus je na èíselníkovém políèku, zobrazuje první èást informaèního øádku popis dané èíselníkové hodnoty.
- # Druhá èást zobrazuje dva èíselné údaje: první je poøadí záznamu, na kterém je focus, druhý údaj je informace o celkovém poètu záznamù v daném náhledu. 
- # Tøetí èást zobrazuje jméno pøihlá¹eného u¾ivatele.
- # Ètvrtá èást zobrazuje aktuální datum.
+ * V pøípadì, ¾e focus je na èíselníkovém políèku, zobrazuje první èást informaèního øádku popis dané èíselníkové hodnoty.
+ * Druhá èást zobrazuje dva èíselné údaje: první je poøadí záznamu, na kterém je focus, druhý údaj je informace o celkovém poètu záznamù v daném náhledu. 
+ * Tøetí èást zobrazuje jméno pøihlá¹eného u¾ivatele.
+ * Ètvrtá èást zobrazuje aktuální datum.
