@@ -34,12 +34,15 @@ nebo Enter. Prvním zpùsobem se naète duální náhled, detailní informace jsou zobr
 Zobrazuje data naformátovaná a pøipravená pro tisk. Nelze zde vkládat, mazat,
 ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem. Nad ka¾dým øádkovým
 formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí
-Ctrl-x p. Pokud tato není explicitnì pøedefinována, pou¾ije se implicitní
-tisková sestava, která se pokusí zobrazovaný formuláø pøipravit pro
-tisk. POZOR: pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy
+*Ctrl-x p* nebo z menu volbou *Tisk*. V menu je vidìt seznam v¹ech
+zadefinovaných tiskových sestav nad daným náhledem. Vìt¹ina náhledù nemá
+explicitnì pøedefinovanú tiskovú sestavu, proto se pou¾ije implicitní
+sestava, která se pokusí zobrazovaný formuláø pøipravit pro
+tisk. *POZOR*: pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy
 k nekorektnímu zobrazení tisknutých dat, proto je nutné pro tyhle záznamy
 pøedefinovat tiskovou sestavu v spolupráci s vývojáøi. Ve vytvoøené tiskové
-sestavì je mo¾né listovat po jednotlivých stránkách, pøípadnì zvìt¹ovat a zmen¹ovat náhled.
+sestavì je mo¾né listovat po jednotlivých stránkách, pøípadnì zvìt¹ovat
+a zmen¹ovat náhled.
 
 == Dialogové okno {dialog} ==
 
@@ -51,9 +54,15 @@ Informaèní okénko, které umo¾òuje vìt¹inou pouze potvrzení, nebo zru¹ení akce.
 
 V øádkovém formuláøi takté¾ známo pod názvem *buòka*. Jedná se o elementární
 prvek. Z hlediska informaèního systému je dùle¾ité to, ¾e data umístìná v buòce
-jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk. Lze omezovat
-rozsah hodnot platných pro políèko (vybrané znaky, èíselné hodnoty, ...). Tohle
-omezení vstupných hodnot øe¹í filtr.
+jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk.
+
+V editaèním formuláøi se vyskytují napøíklad tyto typy políèek:
+ * klasické vstupní
+ * za¹krtávací
+ * èíselníkové
+
+Lze omezovat rozsah hodnot platných pro políèko (vybrané znaky, èíselné
+hodnoty, ...). Tohle omezení vstupných hodnot øe¹í filtr.
 
 V nìkterých pøípadech musí hodnota splnit dal¹í podmínky, jako napøíklad:
  * datum musí být reálný,
@@ -62,11 +71,6 @@ V nìkterých pøípadech musí hodnota splnit dal¹í podmínky, jako napøíklad:
 
 Správné vyplnìní u¾ivatelem v daných pøípadech kontroluje tzv. *Validace*,
 která u¾ivatelovi oznámí pøípadné ¹patné zadání hodnoty v dialogovém øádku.
-
-V editaèním formuláøi se vyskytují napøíklad tyto typy políèek:
- * klasické vstupní
- * za¹krtávací
- * èíselníkové
 
 *Za¹edlá políèka jsou needitovatelná* a mají pouze informativní charakter.
 
