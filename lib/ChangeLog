@@ -1,5 +1,8 @@
 2005-09-06  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (BrowseDualForm.refresh): Volej také refresh
+	sideformu.
+
 	* pytis/form/list.py (ListForm._update_grid): Obejití chyby
 	wxWidgets: po zmìnì poètu øádkù gridu vyvolej SizeEvent, aby byly
 	pøípadnì skryty, èi zobrazeny scrollbary.
