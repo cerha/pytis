@@ -388,6 +388,7 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
 
     def refresh(self):
         self._main_form.refresh()
+        self._side_form.refresh()
 
         
 class ShowDualForm(SideBrowseDualForm, Refreshable):
