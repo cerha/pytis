@@ -388,6 +388,13 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
 
     def refresh(self):
         self._main_form.refresh()
+        # Refresh sideformu by zde teoreticky být nemusel.  Ten by mìl být
+        # proveden automaticky po refreshi mainformu.  Nìkdy k tomu v¹ak z
+        # neznámých dùvodù nedojde, tak¾e jej zde pro jistotu pøidáme
+        # natvrdo... :-(  Problém je pravdìpodobnì nìkde ve zpracování idle
+        # eventù ve wx.  Projevuje se to dokonce i tak, ¾e to napø. v jednom
+        # formuláøi funguje a v jiném ne, nebo dokonce stejný formuláø na
+        # jednom poèítaèi funguje a na jiném ne...
         self._side_form.refresh()
 
         
