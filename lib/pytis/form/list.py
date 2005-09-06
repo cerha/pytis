@@ -277,12 +277,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             gmessage_id = None
         if gmessage_id is not None:
             gmessage = wx.grid.GridTableMessage(t, gmessage_id, *gmargs)
-            g.ProcessTableMessage(gmessage) 
+            g.ProcessTableMessage(gmessage)
         gmessage = wx.grid.GridTableMessage(
             t, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         g.ProcessTableMessage(gmessage)
         g.EndBatch()
         # Závìreèné úpravy
+        if new_row_count != old_row_count:
+            # This is a workaround of a wxWidgets bug.  The scrollbars are not
+            # shown or hidden properly, until a size event is received by the
+            # grid.  Thus we generate one artificially...
+            g.SetSize(g.GetSize())
         self.select_row(self._position)
         self._update_label_colors(g)
         g.SetFocus()
