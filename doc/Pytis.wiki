@@ -263,3 +263,22 @@ line*, který je rozdìlen do ètyø èástí.
  * Druhá èást zobrazuje dva èíselné údaje: první je poøadí záznamu, na kterém je focus, druhý údaj je informace o celkovém poètu záznamù v daném náhledu. 
  * Tøetí èást zobrazuje jméno pøihlá¹eného u¾ivatele.
  * Ètvrtá èást zobrazuje aktuální datum.
+
+== Práva ==
+
+Ka¾dá spoleènost má svoji organizaènou strukturu, která definuje skupiny
+pracovníkù. V¹em skupinám je mo¾né zadefinovat zdali mají oprávnìní vidìt,
+vkládat, editovat èi mazat záznamy v jednotlivých náhledech, nebo zdali mají
+oprávnìní vykonávat uøèité specifické èinnosti jako napøíklad: zalohování
+databáze, synchronizace dat, export dat, spu¹tìní uzávìrky dne a pod. Zalo¾ení
+skupin, zalo¾ení u¾ivatelù a jejich pøirazení do jednotlivých skupin realizuje
+vývojový tým na ¾ádost u¾ivatele, který patrøí k vedení firmy.
+
+== Export ==
+
+U¾ivatelé mohou z jednotlivých náhledù exportovat data do formátu TXT nebo CSV
+(v pøípadì, ¾e daný u¾ivatel patøí do skupiny, která mù¾e exportovat; a daný
+náhled má zadefinované právo exportu). Výsledný soubor se ulo¾í do adresáøe,
+který je nastavený v profile daného u¾ivatele /Systém -> U¾ivatelská nastavení
+-> Základní nastavení: Pøedvolený adresáø pro export/. Daný soubor je mo¾né
+naimportovat do aplikace Open Office Calc nebo MS Excel, a dále s ním pracovat. 
