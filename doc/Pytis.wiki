@@ -12,7 +12,7 @@ Klasický jednoduchý tabulkový náhled, který umo¾òuje sledovat na jedné obrazovce
 
 Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou, pøièem¾ v dolním  formuláøi se zobrazují záznamy provázané s aktuálním záznamem v horním formuláøi. Pøepínání mezi formuláøi je pomocí klávesy Ctrl-Tab. V dolním náhledu se filtrují øádky podle aktivního øádku v horním náhledu.
 
- * /aktuální záznam - záznam, na kterém je focus (viz ní¾e)/.
+ * /aktuální záznam - záznam, na kterém je fokus (viz ní¾e)/.
 
 [#menu|index]
 
@@ -36,7 +36,7 @@ ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem. Nad ka¾dým øádkovým
 formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí
 *Ctrl-x p* nebo z menu volbou *Tisk*. V menu je vidìt seznam v¹ech
 zadefinovaných tiskových sestav nad daným náhledem. Vìt¹ina náhledù nemá
-explicitnì pøedefinovanú tiskovú sestavu, proto se pou¾ije implicitní
+explicitnì pøedefinovanou tiskovou sestavu, proto se pou¾ije implicitní
 sestava, která se pokusí zobrazovaný formuláø pøipravit pro
 tisk. *POZOR*: pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy
 k nekorektnímu zobrazení tisknutých dat, proto je nutné pro tyhle záznamy
@@ -101,7 +101,7 @@ zadané hodnotì.
 
 [#menu|index]
 
-== Focus ==
+== Fokus ==
 
 Barevné zvýraznìní u¾ivatelem vybraného záznamu (tmavé podbarvení øádku a svìtlé orámování buòky).
 
@@ -112,24 +112,24 @@ Barevné zvýraznìní u¾ivatelem vybraného záznamu (tmavé podbarvení øádku a svìtlé
 Slou¾í k rychlému nalezení záznamu v rozsáhlém øádkovém formuláøi. Funkce
 "Hledání" se spou¹tí pøes klávesu F3, kterou se vyvolá formuláø pro zadání
 podmínek hledání. Do podmínky hledání je mo¾né zadat znak "*!**", který slou¾í
-ako zástupní znak pro jeden nebo více znakù hledaného øetezce. U¾ivatel mù¾e
+jako zástupní znak pro jeden nebo více znakù hledaného øetìzce. U¾ivatel mù¾e
 vyhledávat záznamy smìrem dopøedu (Dal¹í Ctrl-r) nebo dozadu (Pøedchozí Ctrl-s).
 [#menu|index]
 
 == Inkrementální hledání (Ctrl-F3,Ctrl-u Ctrl-F3) ==
 
 Funkce "Inkrementální hledání" se spou¹tí pøes klávesu Ctrl-F3 . Pøed vyvoláním
-funkce musí být focus na sloupci (buòce v sloupci), v kterém u¾ivatel záznam
+funkce musí být fokus na sloupci (buòce v sloupci), v kterém u¾ivatel záznam
 hledá. Je vhodné záznamy taky setøídit podle tohoto sloupce. Po stisku klávesy
 Ctrl-F3 se objeví vlevo nahoøe nad prvním sloupcem editaèní buòka, do které
 u¾ivatel postupnì zadává znaky hledaného øetìzce. Po ka¾dém zadaní dal¹ího
-znaku funkce posouvá focus na první záznam, který vyhovuje zadané podmínce. Do
-podmínky hledání je mo¾né zadat znak "*!**", který slou¾í ako zástupní znak pro jeden nebo více znakù hledaného øetezce.
+znaku funkce posouvá fokus na první záznam, který vyhovuje zadané podmínce. Do
+podmínky hledání je mo¾né zadat znak "*!**", který slou¾í jako zástupní znak pro jeden nebo více znakù hledaného øetìzce.
 Opìt je mo¾né, tak jako u klasického hledání, pohybovat se na dal¹í (Ctrl-r)
 nebo pøedchozí (Ctrl-s) záznamy, které odpovídají zadané podmínce.
 
-*POZOR* - po najetí (pøesunu focusu) na hledaný záznam je *NUTNÉ* potvrdit
-zadanou podmínku klávesou *ENTER*! V opaèném pøípade se focus vrátí na pùvodní
+*POZOR* - po najetí (pøesunu fokusu) na hledaný záznam je *NUTNÉ* potvrdit
+zadanou podmínku klávesou *ENTER*! V opaèném pøípade se fokus vrátí na pùvodní
 pozici pøed spu¹tìním inkrementálního hledání. Funkci je kdykoliv mo¾né
 ukonèit klávesou Escape. Po zadaní ¹patného znaku do podmínky není nutné
 ukonèovat funkci. Staèí znak smazat a zadat správný.
@@ -153,7 +153,7 @@ Nebo také sortování záznamù. V øádkovém formuláøi mù¾e u¾ivatel vzestupnì
 nebo sestupnì tøídit záznamy podle jednotlivých sloupcù. Smìr a prioritu
 øazení dat urèí buï my¹í po kliknutí na záhlaví (levým nebo pravým tlaèítkem),
 nebo klávesou F4. Nejpøehlednìj¹í je zpùsob pøes pravé tlaèítko my¹i po
-kliknutí na zahláví sloupce. Aktuální øazení je signalizováno grafickými
+kliknutí na záhlaví sloupce. Aktuální øazení je signalizováno grafickými
 symboly v záhlaví sloupce (smìr trojúhelníku urèuje smìr øazení záznamù
 a poèet èárek urèuje prioritu øazení.).
 
@@ -165,7 +165,7 @@ Funkce omezí výpis záznamù øádkového formuláøe podle u¾ivatelem nadefinovaných
 pravidel. Filtrování se spou¹tí pøes klávesu *Ctrl-F4*, která vyvolá editaèní
 formuláø pro zadaní filtrovacích podmínek. U¾ivatel mù¾e zkombinovat i více
 podmínek, pøièem¾ se vy¾aduje základní znalost matematické logiky "a zároveò"
-- "nebo" (AND OR). V øetezci filtrovací podmínky mù¾e u¾ivatel pou¾ít znak
+- "nebo" (AND OR). V øetìzci filtrovací podmínky mù¾e u¾ivatel pou¾ít znak
 "*!**" jako zástupní znak pro jeden nebo nìkolik znakù.
 
 K dispozici jsou i *agregaèní funkce*, které umo¾òují zji¹»ovat
@@ -209,11 +209,11 @@ Pomocí pravého tlaèítka my¹i mù¾e u¾ivatel vyvolat nad jakýmkoliv záznamem
 nabídku pøedefinovaných a defaultních funkcí. Mezi defaultní funkce patøí:
 
  * *Filtrovat podle buòky* - funkce vyvolá filtrování náhledu s automaticky
-   zadanou filtraèní podmínkou, která se "nasaje" z buòky na které byl focus
-   pøi vyvolání funkce '_filtrovat podle bunky_'
+   zadanou filtraèní podmínkou, která se "nasaje" z buòky na které byl fokus
+   pøi vyvolání funkce '_filtrovat podle buòky_'
 
  * *Zobrazit související èíselník* - funkce zobrazí èíselník, který souvisí s
-    hodnotou v buòke, na které byl focus pøi vyvolání funkce. Pøi buòkách,
+    hodnotou v buòce, na které byl fokus pøi vyvolání funkce. Pøi buòkách,
     které neobsahují èíselníkové hodnoty je tato funkce neaktivní.
    
 == Procházení v zásobníku oken ==
@@ -252,27 +252,28 @@ zpìtnì je mo¾né dohledat kdo kdy zmìnil urèitý záznam. Je dùle¾ité, aby se
 u¾ivatelé *v¾dy pøihla¹ovali do informaèního systému svým pøihla¹ovacím
 jménem*! A nesdìlovali svoje heslo svým kolegùm.
 
-/Big Brother is watching you./
 
 == Informaèní øádek (status line) ==
 
 Ka¾dý øádkový formuláø obsahuje v dolní èástí informaèní øádek tzv. *status
 line*, který je rozdìlen do ètyø èástí.
 
- * V pøípadì, ¾e focus je na èíselníkovém políèku, zobrazuje první èást informaèního øádku popis dané èíselníkové hodnoty.
- * Druhá èást zobrazuje dva èíselné údaje: první je poøadí záznamu, na kterém je focus, druhý údaj je informace o celkovém poètu záznamù v daném náhledu. 
+ * V pøípadì, ¾e fokus je na èíselníkovém políèku, zobrazuje první èást
+ informaèního øádku popis dané èíselníkové hodnoty.
+ * Druhá èást zobrazuje dva èíselné údaje: první je poøadí záznamu, na kterém
+ je fokus, druhý údaj je informace o celkovém poètu záznamù v daném náhledu. 
  * Tøetí èást zobrazuje jméno pøihlá¹eného u¾ivatele.
  * Ètvrtá èást zobrazuje aktuální datum.
 
 == Práva ==
 
-Ka¾dá spoleènost má svoji organizaènou strukturu, která definuje skupiny
+Ka¾dá spoleènost má svoji organizaèní strukturu, která definuje skupiny
 pracovníkù. V¹em skupinám je mo¾né zadefinovat zdali mají oprávnìní vidìt,
 vkládat, editovat èi mazat záznamy v jednotlivých náhledech, nebo zdali mají
-oprávnìní vykonávat uøèité specifické èinnosti jako napøíklad: zalohování
+oprávnìní vykonávat urèité specifické èinnosti jako napøíklad: zálohování
 databáze, synchronizace dat, export dat, spu¹tìní uzávìrky dne a pod. Zalo¾ení
-skupin, zalo¾ení u¾ivatelù a jejich pøirazení do jednotlivých skupin realizuje
-vývojový tým na ¾ádost u¾ivatele, který patrøí k vedení firmy.
+skupin, zalo¾ení u¾ivatelù a jejich pøira¾ení do jednotlivých skupin realizuje
+vývojový tým na ¾ádost u¾ivatele, který patøí k vedení firmy.
 
 == Export ==
 
