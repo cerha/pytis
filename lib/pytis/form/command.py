@@ -152,6 +152,11 @@ class Command(object):
                "Command '%s' already defined for %s" % (name, cls.__name__)
         setattr(cls, 'COMMAND_' + name, self)
         
+
+    def cls(self):
+        """Vra» tøídu u¾ivatelsk0ho rozhraní, která tento pøíkaz zpracovává."""
+        return self._cls
+
     def name(self):
         """Vra» název pøíkazu zadaný v konstruktoru."""
         return self._name
