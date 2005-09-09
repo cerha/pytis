@@ -1,3 +1,11 @@
+2005-09-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.on_command): Pokud jde o
+	u¾ivatelský pøíkaz tøídy `Application', o¹etøuj jej v¾dy zde
+	voláním u¾ivatelského handleru.
+
+	* pytis/form/command.py (Command.__init__): Nová metoda.
+
 2005-09-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (RecordForm._on_edit_record) 
