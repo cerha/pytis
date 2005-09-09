@@ -26,6 +26,8 @@
 	konstruktoru tøídy Command.  Pøejmenovávej duplicitní pøíkazy.
 	Pøi redefinici stejného pøíkazu vracej existující instanci, pokud
 	se handler shoduje.
+	(user_cmd): Vyvolej vıjimku pøi redefinici stejného pøíkazu z
+	jiného místa v defsech.
 
 2005-08-30  Tomas Cerha  <cerha@brailcom.org>
 
