@@ -698,7 +698,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             try:
                 busy_cursor(True)
-                if command == Application.COMMAND_SHOW_POPUP_MENU:
+                if issubclass(command.cls(), Application) \
+                       and command.handler() is not None:
+                    command.handler()(**kwargs)
+                elif command == Application.COMMAND_SHOW_POPUP_MENU:
                     top = self.top_window()
                     if hasattr(top, 'show_popup_menu'):
                         top.show_popup_menu()
@@ -729,9 +732,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     top = self._windows.active()
                     if top is not None and top.on_command(command, **kwargs):
-                        return True
-                    if command.handler() is not None:
-                        command.handler()(**kwargs)
                         return True
                     return False
             finally:
