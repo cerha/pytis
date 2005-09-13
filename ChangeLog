@@ -1,3 +1,7 @@
+2005-09-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (dbinsert): Nová funkce.
+
 2005-09-07  Peter Herich  <herich@asellus.cz>
 
 	* doc/Pytis.wiki (Pøíklad): Updatovana vseobecna napoveda.

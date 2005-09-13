@@ -237,6 +237,41 @@ def dbupdate_many(spec, condition=None, update_row=None):
     result = data.update_many(condition, update_row) 
     return result
 
+def dbinsert(spec, row=()):
+    """Provede update nad tabulkou danou specifikací.
+
+    Argumenty:
+
+      spec -- specifikace datového objektu nad kterým má být proveden
+        select; string'
+      condition -- podmínka updatovaní.
+      update_row -- øádek kterým se provede update, 
+        
+    Vrací poèet updatovaných øádkù.
+    
+    """
+    resolver = pytis.form.resolver()
+    # Kontroly
+    if not is_sequence(row):
+        raise _("Argument must be a sequence")
+    for item in row:
+        if not is_sequence(item) or len(item) != 2:
+            raise 'Column definition must be (ID, VALUE) pair'
+        k, v = item
+        if not is_string(k):
+            raise 'Invalid column id %s' % k
+        if not isinstance(v, pytis.data.Value):
+            raise 'Invalid column value %s' % v
+    data_spec = resolver.get(spec, 'data_spec')
+    if not data_spec:
+        raise "Specifikace %s nebyla nalezena!" % (spec)
+    op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
+    success, data = pytis.form.db_operation(op)
+    if not success:
+        raise "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
+    op = lambda: data.insert(pytis.data.Row(data=row))
+    success, result = pytis.form.db_operation(op)
+    return result
 
 def session_date(*args):
     """Vra» vnitøní hodnotu nastaveného pracovního datumu."""
