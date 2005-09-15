@@ -371,7 +371,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                             delay = self._SELECTION_CALLBACK_DELAY
                             self._selection_callback_tick = delay
                     self._position = row
-                    self.show_position()
+                    # TODO: tady to zpùsobuje ¹patné zobrazování pozice v
+                    #       dualform. Nahrazeno voláním show_position v
+                    #       _post_selection_hook.
+                    #       Jiné øe¹ení?
+                    # self.show_position()
             elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
@@ -569,6 +573,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _post_selection_hook(self, the_row):
         if focused_window() is self:
+            # TODO: viz poznámka v _select_cell.
+            self.show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
             column = self._columns[self._current_cell()[1]]
             value = the_row[column.id()]

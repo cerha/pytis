@@ -1,3 +1,9 @@
+2005-09-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/list.py (ListForm._select_cell): Nevoláme
+	'self.show_position'. 
+	(ListForm._post_selection_hook): Voláme 'self.show_position'.
+
 2005-09-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.on_command): Pokud jde o
