@@ -788,11 +788,15 @@ class IncrementalSearch:
         w.Enable(False)
         w.Show(False)
         w.Destroy()
-        self._listform.focus()
-        if not rollback:
-            l = self._listform
-            the_row = l._table.row(l._table.current_row())
-            l._run_callback(l.CALL_SELECTION, (the_row,))
+        # Musíme poèítat s mo¾ností, ¾e nìkdo zavøel listform
+        # pøed opu¹tìním inkrementálního vyhledávání
+        # (napø. kliknutím my¹i u codebooku s vyhledáváním)
+        if self._listform:
+            self._listform.focus()
+            if not rollback:
+                l = self._listform
+                the_row = l._table.row(l._table.current_row())
+                l._run_callback(l.CALL_SELECTION, (the_row,))
 
     def _back(self):
         if self._rows:
