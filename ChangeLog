@@ -1,3 +1,8 @@
+2005-09-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (send_mail):
+	Nová funkce.
+
 2005-09-13  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (dbinsert): Nová funkce.

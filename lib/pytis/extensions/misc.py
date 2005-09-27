@@ -392,7 +392,77 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
         print 'ERROR: e-mail se nepodaøilo odeslat'
         return 1
     
-        
+
+def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
+              content_type=None, key=None, gpg_options=('--always-trust',)):
+    """Ode¹le jeden email s mo¾ností kryptování pomocí gpg/pgp klíèe."""
+   
+    def setup_gpg_options(gpg, options=()):
+        gpg.options.armor = 1
+        gpg.options.meta_interactive = 0
+        gpg.options.extra_args.append('--no-secmem-warning')
+        for o in options:            
+            gpg.options.extra_args.append(o)
+
+    def gpg_create_keyring(gpg, key, keyring):
+        proc = gpg.run(['--import'], create_fhs=['stdin', 'stderr'])
+        proc.handles['stdin'].write(key)
+        proc.handles['stdin'].close()
+        out = proc.handles['stderr'].read()
+        proc.handles['stderr'].close()
+        proc.wait()
+        return keyring
+
+    def gpg_encrypt_string(gpg, string, to):
+        if isinstance(to, types.StringType):
+            to = (to,)        
+        gpg.options.recipients = to   # a list!        
+        proc = gpg.run(['--encrypt'], create_fhs=['stdin', 'stdout'])        
+        proc.handles['stdin'].write(string)       
+        proc.handles['stdin'].close()
+        output = proc.handles['stdout'].read()
+        proc.handles['stdout'].close()        
+        proc.wait()
+        return output
+
+    import os, tempfile, types, GnuPGInterface
+    if key:
+        try:
+            import tempfile
+            keyring = tempfile.mkstemp()[1]
+            gpg = GnuPGInterface.GnuPG()        
+            gpg_options = ('--always-trust', '--no-default-keyring',
+                           '--keyring=%s' % keyring)
+            setup_gpg_options(gpg, gpg_options)
+            gpg_create_keyring(gpg, key, keyring)
+            msg = gpg_encrypt_string(gpg, msg, to)
+            if not  isinstance(msg, types.StringType):
+                print "What GnuPG gave back is not a string!"
+                return 1
+            try:
+                os.remove(keyring)
+            except:
+                pass
+        except:
+            print "Couldn't encrypt message for %s" % to
+            return 1
+    try:
+        s = os.popen('%s %s' % (sendmail_command, to), 'w')
+        s.write('From: %s\n' % address)
+        s.write('To: %s\n' % to)
+        # s.write('Bcc: %s\n' % address)
+        s.write('Subject: %s\n' % subject)
+        if content_type:
+            s.write('Content-Type: %s\n' % content_type)
+        s.write('\n')
+        s.write(msg)
+        s.close()
+        return 0
+    except:
+        print "Couldn't send message for %s" % to
+        return 1
+
+       
 def run_cb(spec, begin_search=None, condition=None,
            columns=None, select_row=0):
     """Vyvolá èíselník urèený specifikací.
