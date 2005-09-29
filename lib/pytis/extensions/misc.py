@@ -426,6 +426,13 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
         return output
 
     import os
+    assert isinstance(to, types.StringType)
+    assert isinstance(address, types.StringType)
+    assert isinstance(subject, types.StringType)
+    assert isinstance(msg, types.StringType)
+    # O¹etøení pøípadného pou¾ití UNICODE
+    to = str(to)
+    address = str(address)    
     if key:
         try:
             import tempfile, GnuPGInterface
