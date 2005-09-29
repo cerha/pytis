@@ -426,10 +426,10 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
         return output
 
     import os
-    assert isinstance(to, types.StringType)
-    assert isinstance(address, types.StringType)
-    assert isinstance(subject, types.StringType)
-    assert isinstance(msg, types.StringType)
+    assert isinstance(to, types.StringTypes)
+    assert isinstance(address, types.StringTypes)
+    assert isinstance(subject, types.StringTypes)
+    assert isinstance(msg, types.StringTypes)
     # O¹etøení pøípadného pou¾ití UNICODE
     to = str(to)
     address = str(address)    
