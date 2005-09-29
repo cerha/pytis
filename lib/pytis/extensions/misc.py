@@ -425,10 +425,10 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
         proc.wait()
         return output
 
-    import os, tempfile, types, GnuPGInterface
+    import os
     if key:
         try:
-            import tempfile
+            import tempfile, GnuPGInterface
             keyring = tempfile.mkstemp()[1]
             gpg = GnuPGInterface.GnuPG()        
             gpg_options = ('--always-trust', '--no-default-keyring',

@@ -1,3 +1,8 @@
+2005-09-29  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (send_mail): GnuPGInterface
+	importuj jen pokud máme klíè.
+
 2005-09-27  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (send_mail):
