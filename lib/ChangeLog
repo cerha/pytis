@@ -1,3 +1,11 @@
+2005-10-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/_grid.py (ListTable._retrieve_row): Pøidána
+	zapomenutá specifikace modulu.
+
+	* pytis/form/list.py (ListForm._on_delete_record): Proveï refresh
+	celého formuláøe na vrcholu zásobníku oken.
+
 2005-09-21  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/_grid.py (IncrementalSearch._exit): O¹etøi uzavøení

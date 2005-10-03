@@ -264,7 +264,7 @@ class ListTable(wx.grid.PyGridTableBase):
                 skip = row - last - 1
                 direction = pytis.data.FORWARD
             elif row == last:
-                data.skip(1, BACKWARD)
+                data.skip(1, pytis.data.BACKWARD)
                 skip = 0
                 direction = pytis.data.FORWARD
             else:

@@ -1294,7 +1294,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._select_cell(row=r+1)
             elif r > 0:
                 self._select_cell(row=r-1)
-            self.refresh()
+            # TODO: Pavel Hanák 03.10.2005
+            #       Udìláme radìji refresh celého formuláøe na vrcholu
+            #       zásobníku, proto¾e jinak se nerefreshne horní formuláø
+            #       po vymazání záznamu ze sideformu.        
+            # self.refresh()
+            refresh()
 
     # Veøejné metody
 
