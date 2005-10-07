@@ -236,6 +236,28 @@ hodnoty èerným písmem, záporné hodnoty èerveným písmem, atd. Pozor v¹ak na
 nastavení u¾ivatelského rozhraní, které se nachází v Systém -> U¾ivatelská
 nastavení -> Nastavení u¾ivatelského rozhraní. Doporuèujeme pou¾ívat Defaultní hodnoty.
 
+== Menu ==
+
+HLAVNÍ MENU: Za¹edlá (neaktivní) polo¾ka v tomto náhledu znamená, ¾e k
+náhledu nemá daný u¾ivatel práva pro zobrazení. Proto na polo¾ku menu
+není mo¾no kliknout a vyvolat spu¹tìní náhledu.
+
+Pokud pro svoji práci daný náhled potøebujete obra»te se na urèenou
+osobu s ¾ádostí o zmìnu nastavení práv pro daný náhled.
+
+MENU NA PRAVÉ TLAÈÍTKO (popup_menu):
+
+a) Nemáte dostateèná práva pro spu¹tìní pøíkazu.
+
+b) Spu¹tìní pøíkazu na daném øádku nemá smysl.
+   
+ISAS Pøíklad: Chci v náhledu na "spoleènosti x jednatelé" pou¾ít pøíkaz
+"Zobraz jednatele jednatele" pro jednatele - fyzickou osobu,
+který ale ¾ádné vlastní jednatele nemá.
+Daná polo¾ka pak bude v popup_menu za¹edlá, proto¾e by spou¹tìt danou
+funkci nemìlo ¾ádný smysl. (Zaktivní se a¾ na øádku jednatele typ P -
+právnická osoba)
+
 == Odesílání chybových hlá¹ení (bug report) ==
 
 Pøi rychlém vývoji nových funkcionalit informaèního systému se nìkdy objevují
