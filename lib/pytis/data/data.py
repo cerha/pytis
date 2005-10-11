@@ -542,7 +542,8 @@ class Data(object):
         kde ROW je skuteèný nový øádek tabulky, který na základì vlo¾ení 'row'
         vzniknul.  Pokud nemù¾e být obsah nového øádku zji¹tìn, vra» dvojici
         ('None', 'True').  Pokud øádek nebyl do tabulky úspì¹nì vlo¾en, vra»
-        dvojici ('None', 'False').
+        dvojici ('None', 'False') v pøípadì, ¾e popis chyby není definován,
+        pøíp. dvojici (text, 'False'), kde text je popis pøíèiny neúspìchu.
 
         V této tøídì metoda v¾dy pouze vrací ('None', 'False').
         
@@ -583,7 +584,8 @@ class Data(object):
         vzniknul.  Pokud takový øádek nelze zjistit, vra» ('None', 'True').
         V opaèném pøípadì (tj. pokud øádek s 'key' neexistuje nebo pokud je
         problematický klíè 'row', jak je uvedeno vý¹e) vra» dvojici
-        ('None', 'False').
+        ('None', 'False') v pøípadì, ¾e popis chyby není definován,
+        pøíp. dvojici (text, 'False'), kde text je popis pøíèiny neúspìchu.
         
         V této tøídì metoda v¾dy pouze vrací dvojici ('None', 'False').
         

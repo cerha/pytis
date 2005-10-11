@@ -1033,8 +1033,9 @@ class DBDataPostgreSQL(DBData):
                 (self._ordering[0] not in map(lambda c: c.id(), self.key()))
                 ) and \
                self._pg_already_present(row):
-                result = None, False
-                log(ACTION, 'Øádek s tímto klíèem ji¾ existuje')
+                msg = 'Øádek s tímto klíèem ji¾ existuje'
+                result = msg, False
+                log(ACTION, msg)
             else:
                 positioned = after or before
                 if after:
@@ -1042,9 +1043,10 @@ class DBDataPostgreSQL(DBData):
                 elif before:
                     neighbor = before = self.row(before)
                 if positioned and (not neighbor):
-                    log(ACTION, 'Zadaný sousední øádek nenalezen',
+                    msg = 'Zadaný sousední øádek nenalezen'
+                    log(ACTION, msg,
                         (after, before))
-                    result = None, False
+                    result = msg, False
                 else:
                     r = self._pg_insert (row, after=after, before=before)
                     result = r, True
@@ -1091,8 +1093,9 @@ class DBDataPostgreSQL(DBData):
                     new_key.append(v)
                 new_key = tuple(new_key)
                 if new_key != key and self._pg_already_present(row):
-                    result = None, False
-                    log(ACTION, 'Øádek s tímto klíèem ji¾ existuje', key)
+                    msg = 'Øádek s tímto klíèem ji¾ existuje'
+                    result = msg, False
+                    log(ACTION, msg, key)
                 else:
                     n = self._pg_update(self._pg_key_condition(key), row)
                     if n == 0:
@@ -1101,8 +1104,9 @@ class DBDataPostgreSQL(DBData):
                         new_row = self.row(new_key)
                         result = new_row, True
             else: # not origrow
-                result = None, False
-                log(ACTION, 'Øádek s daným klíèem neexistuje', key)
+                msg = 'Øádek s daným klíèem neexistuje'
+                result = msg, False
+                log(ACTION, msg, key)
         except Exception, e:
             try:
                 self._pg_rollback_transaction()

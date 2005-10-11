@@ -1399,7 +1399,11 @@ class EditForm(LookupForm, TitledForm):
                 self._parent.Close()
             return True
         else:
-            run_dialog(Error, _("Ulo¾ení záznamu se nezdaøilo"))
+            msg = _("Ulo¾ení záznamu se nezdaøilo")
+            if type(result) == type(()) and \
+               isinstance(result[0], types.StringTypes):
+                msg = "%s\n\n%s" % (result[0], msg)
+            run_dialog(Error, msg)
             return False
 
     def set_row(self, row):
