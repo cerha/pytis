@@ -1,3 +1,8 @@
+2005-10-12  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (send_mail): Nový parametr html -
+	urèuje jestli se PGP mail po¹le jako multipart GPG message.
+
 2005-10-07  Peter Herich  <herich@asellus.cz>
 
 	* doc/Pytis.wiki: Update nápovìdy.
