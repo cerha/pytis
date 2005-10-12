@@ -394,7 +394,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
     
 
 def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
-              content_type=None, key=None, gpg_options=('--always-trust',)):
+              html=False, key=None, gpg_options=('--always-trust',)):
     """Ode¹le jeden email s mo¾ností kryptování pomocí gpg/pgp klíèe."""
    
     def setup_gpg_options(gpg, options=()):
@@ -432,7 +432,10 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
     assert isinstance(msg, types.StringTypes)
     # O¹etøení pøípadného pou¾ití UNICODE
     to = str(to)
-    address = str(address)    
+    address = str(address)
+    if html:
+        msg = ("Content-Type: text/html;charset=ISO-8859-2\n"
+               "Content-Transfer-Encoding: 8bit\n\n") + msg
     if key:
         try:
             import tempfile, GnuPGInterface
@@ -453,21 +456,53 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
         except:
             print "Couldn't encrypt message for %s" % to
             return 1
+    if key and html:
+        import email.Message
+        import email.Utils
+            
+        # Main header
+        mainMsg=email.Message.Message()
+        mainMsg["To"]=to
+        mainMsg["From"]=address
+        mainMsg["Subject"]=subject
+        mainMsg["Date"]=email.Utils.formatdate(localtime=1)
+        mainMsg["Mime-version"]="1.0"
+        mainMsg["Content-type"]="Multipart/encrypted"
+        mainMsg["Content-transfer-encoding"]="8bit"
+        mainMsg.preamble="This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)"
+        # Part 1
+        firstSubMsg=email.Message.Message()
+        firstSubMsg["Content-Type"]="application/pgp-encrypted"
+        firstSubMsg["Content-Description"]="PGP/MIME version identification"
+        firstSubMsg.set_payload("Version: 1\n")
+        # Part 2
+        secondSubMsg=email.Message.Message()
+        secondSubMsg.add_header("Content-Type", "application/octet-stream",
+                                name="encrypted.html.pgp")
+        secondSubMsg.add_header("Content-Description",
+                                "OpenPGP encrypted message")
+        secondSubMsg.add_header("Content-Disposition", "inline",
+                                filename="encrypted.html.pgp")
+        secondSubMsg.set_payload(msg)
+        # Pøidání èástí do main
+        mainMsg.attach(firstSubMsg)
+        mainMsg.attach(secondSubMsg)
+        msg = mainMsg.as_string()
+    else:
+        header = 'From: %s\n' % address
+        header += 'To: %s\n' % to
+        header += 'Subject: %s\n' % subject
+        if html:
+            header += 'Content-Type: text/html; charset=iso-8859-2\n'
+        msg = header + '\n' + msg
     try:
-        s = os.popen('%s %s' % (sendmail_command, to), 'w')
-        s.write('From: %s\n' % address)
-        s.write('To: %s\n' % to)
-        # s.write('Bcc: %s\n' % address)
-        s.write('Subject: %s\n' % subject)
-        if content_type:
-            s.write('Content-Type: %s\n' % content_type)
-        s.write('\n')
+        s = os.popen('%s %s' % (sendmail_command, to),'w')
         s.write(msg)
         s.close()
-        return 0
-    except:
+    except:        
         print "Couldn't send message for %s" % to
         return 1
+        return 0
 
        
 def run_cb(spec, begin_search=None, condition=None,
