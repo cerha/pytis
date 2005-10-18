@@ -502,7 +502,7 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
     except:        
         print "Couldn't send message for %s" % to
         return 1
-        return 0
+    return 0
 
        
 def run_cb(spec, begin_search=None, condition=None,

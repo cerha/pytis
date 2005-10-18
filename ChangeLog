@@ -1,3 +1,7 @@
+2005-10-18  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (send_mail): Kosmetická úprava.
+
 2005-10-12  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (send_mail): Nový parametr html -
