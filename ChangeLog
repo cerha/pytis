@@ -1,3 +1,7 @@
+2005-10-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* doc/todo: Nový dokument.
+
 2005-07-13  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlTable.output): Doplnìny triggery pro insert.
