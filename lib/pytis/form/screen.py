@@ -1089,7 +1089,12 @@ class Menu:
         for i in self._items:
             if isinstance(i, (MItem, RadioItem)):
                 hotkey, command, args = i.hotkey(), i.command(), i.args()
-                if hotkey == (None,) and keyhandler.keymap is not None:
+                # Pokud k pøíkazu nejsou pøístupová práva, pou¾ij na místì hotkey
+                # øetìzec (N/A)
+                if not command.has_access():
+                    hotkey = "(N/A)"
+                    hotkey = xtuple(hotkey)                    
+                elif hotkey == (None,) and keyhandler.keymap is not None:
                     hotkey = keyhandler.keymap.lookup_command(command, args)
                     hotkey = xtuple(hotkey)
                 elif keyhandler.keymap is not None:

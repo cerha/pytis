@@ -1,3 +1,10 @@
+2005-10-19  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/screen.py (Menu.create): Pokud k pøíkazu nejsou
+	pøístupová práva, pou¾ij jako hotkey "(N/A)".
+
+	* pytis/form/command.py (Command.has_access): Nová veøejná metoda.
+
 2005-10-11  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (EditForm._commit_form): Pokud je odeslání

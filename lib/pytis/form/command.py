@@ -218,6 +218,9 @@ class Command(object):
             kind = DEBUG
         return kind
 
+    def has_access(self):
+        return self._has_access
+
     def __cmp__(self, other):
         if sameclass(self, other):
             if self._id == other._id:
