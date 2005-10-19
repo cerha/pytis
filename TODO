@@ -28,7 +28,10 @@ BUGS:
 
 * Duální formuláøe - Pokud po pøefiltrování je nahoøe jeden øádek, není
   proveden refresh dolního formuláøe.
-  
+
+* Stisknutí mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na jiný
+  záznam (Pavel Hanák)
+   
 
 FEATURES:
 
