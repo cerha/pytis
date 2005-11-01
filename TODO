@@ -1,5 +1,11 @@
 BUGS:
 
+* Pokud v dualformu neexistuje v dolním náhledu záznam pro danou polo¾ku
+  horního náhledu, pak se pøi pøechodu klávesou na jinou polo¾ku pøepne
+  vysvícení do dolního náhledu. Pøi pou¾ití pravého tlaèítka my¹i (za úèelem
+  vyvolání nabídky popupmenu) se vyvolá chybová hlá¹ka. Viz náhled Výkaz práce
+  - snímaè v systému Archibas.
+
 * Nadefinovaná polo¾ka menu Tisk (print_spec) se v duálním náhledu neprojeví.
   V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
   kláves. zkratky Ctrl-x p. 
