@@ -10,35 +10,31 @@ BUGS:
   V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
   kláves. zkratky Ctrl-x p. 
 
-* Výbìr z èíselníku pøes pravé tl. my¹i
-   Funguje to jen jednou, po druhém výbìru pøez tl. se nic nestane. Platí to i
-   pro pou¾ití F2.
-
+* Ve widgetu Calendar je posunuta pozice pøi kliknutí my¹í.
+   
+* Nefunguje vyvolání èíselníku v inline editaci.
+   
 * Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
    tøídìní (F4) nastane chyba.
    
 * Reakce dialogù na enter. (defultní tlaèítko napø. na Ctrl+Enter)
 
-* A-k b a - pøi vyvolání DescriptiveDualForm (SPC) traceback.
+* Nefunguje nastavení hide_binding_column na False (stejnì se nezobrazí).
 
-* Nefunguje hide_binding_column (napø A-c u p p).
+* Editable.ONCE nefunguje v inline editaci (pøi vkládání záznamu pomocí Ctrl-Ins nebo
+   Ins).
 
-* Editable.ONCE nefunguje v inline editaci (nejde zapsat ani poprvé).
-
-* Vyskakování druhého dialogu v inline editaci pøi zadání hodnoty, která není
-  v èíselníku.
-
-* Klávesové zkratky v popup menu.
-
-* Popup menu InputFieldu v in-line editaci nevyvolá pøíkaz.
-
-* Duální formuláøe - Pokud po pøefiltrování je nahoøe jeden øádek, není
-  proveden refresh dolního formuláøe.
-
-* Stisknutí mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na jiný
-  záznam (Pavel Hanák)
+* Stisk mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na jiný
+  záznam pokud jsem na záznamu s NULL hodnotou ve sloupci, podle kterého je tøídìno.
    
+* Filtr nad vedlej¹ím formuláøem dualformu si "pamatuje" výsledky agregaèních
+   funkcí a i po zmìnì øádku v hlavním formuláøi (a tedy i vyfiltrovaných
+   øádkù) vrací poøád stejné hodnoty.
 
+* Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
+   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
+  
+   
 FEATURES:
 
 * Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky)
