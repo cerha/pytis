@@ -1,3 +1,4 @@
+
 BUGS:
 
 * Pokud v dualformu neexistuje v dolním náhledu záznam pro danou polo¾ku
@@ -15,14 +16,17 @@ BUGS:
 * Nefunguje vyvolání èíselníku v inline editaci.
    
 * Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
-   tøídìní (F4) nastane chyba.
+  tøídìní (F4) nastane chyba.
    
 * Reakce dialogù na enter. (defultní tlaèítko napø. na Ctrl+Enter)
 
 * Nefunguje nastavení hide_binding_column na False (stejnì se nezobrazí).
 
 * Editable.ONCE nefunguje v inline editaci (pøi vkládání záznamu pomocí Ctrl-Ins nebo
-   Ins).
+  Ins).
+
+* Solas - Recepce, Avíza, Odeslat mimoøádné avízo.  Nefunguje pøíkaz z
+  refspec.
 
 * Stisk mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na jiný
   záznam pokud jsem na záznamu s NULL hodnotou ve sloupci, podle kterého je tøídìno.
@@ -44,7 +48,6 @@ FEATURES:
 * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
 
 * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
-
    
 * Pøíkaz run_procedure
 
