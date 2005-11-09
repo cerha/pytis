@@ -2137,6 +2137,12 @@ class PostgreSQLStandardBindingHandler(object):
         else:
             raise ProgramError('Invalid direction', direction)
         def sorting_condition(sorting, forwards, row, mayeq):
+            # - forwards je True:
+            #   pak je row øádek, na kterém stojíme a hledáme v¹echny øádky
+            #   v smìru pohybu vyhledávání
+            # - forwards je False:
+            #   pak je row øádek vyhledávaný øádek a hledáme v¹echny øádky,
+            #   které jsou v protismìru pohybu vyhledávání.
             if row is None:
                 return None
             sdirection = ecase(direction,
@@ -2150,24 +2156,26 @@ class PostgreSQLStandardBindingHandler(object):
             for cid, dir in sorting:
                 if cid in processed:
                     continue
-                eqs = map(lambda c: EQ(c, row[c]), processed)
-                if row[cid].value() is None:
-                    relop = NE
-                elif (forwards and dir == ASCENDENT) or \
-                   (not forwards and dir == DESCENDANT):
+                conds = [EQ(c, row[c]) for c in processed]
+                if (forwards and dir == ASCENDENT) or \
+                       (not forwards and dir == DESCENDANT):
                     relop = GT
                 else:
                     relop = LT
-                neq = relop(cid, row[cid], ignore_case=False)
-                if relop != NE:
-                    nullval = pytis.data.Value(row[cid].type(),
-                                           None)
-                    neq = OR(neq, EQ(cid, nullval))
-                conditions.append(apply(AND, eqs + [neq]))
+                if row[cid].value() is None:
+                    if relop is LT:
+                        conds.append(NE(cid, row[cid]))
+                else:
+                    neq = relop(cid, row[cid], ignore_case=False)
+                    if relop is GT:
+                        nullval = pytis.data.Value(row[cid].type(), None)
+                        neq = OR(neq, EQ(cid, nullval))
+                    conds.append(neq)
+                if conds:
+                    conditions.append(apply(AND, conds))
                 processed.append(cid)
             if mayeq:
-                eqs = [EQ(c, row[c], ignore_case=False)
-                       for c in processed]
+                eqs = [EQ(c, row[c], ignore_case=False) for c in processed]
                 conditions.append(apply(AND, eqs))
             return apply(OR, conditions)
         select_cond = self._pg_last_select_condition
@@ -2831,8 +2839,7 @@ class DBException(Exception):
         """
         if message == None:
             message = _("Databázová chyba")
-        apply(super_(DBException).__init__,
-              (self, message, exception) + args)
+        super_(DBException).__init__(self, message, exception, *args)
         log(OPERATIONAL, 'Databázová výjimka', (message,) + args)
         if exception:
             log(OPERATIONAL, 'Obalená databázová výjimka',
