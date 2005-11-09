@@ -1,3 +1,11 @@
+2005-11-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pg_search.sorting_condition):
+	Pøi sestavování podmínky o¹etøuj dùkladnìji mo¾nost výskytu NULL
+	hodnot v tøídících sloupcích.
+	
+
 2005-10-19  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/screen.py (Menu.create): Pokud k pøíkazu nejsou
