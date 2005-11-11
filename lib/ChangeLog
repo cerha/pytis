@@ -1,3 +1,32 @@
+2005-11-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (RecordForm._find_row_by_number): Nová
+	meotda.
+	(RecordForm._get_row_number): Nová metoda.
+	(RecordForm.select_row): Pøijímej na vstupu také integer, jako
+	èíslo øádku.  K vlastnímu nastavení pou¾ívej `self._select_row()'
+	(LookupForm._select_row): Nová metoda.
+	(LookupForm._on_jump): Namísto vracení hodnoty rovnou proveï jump.
+	(LookupForm._on_sort_column, EditForm.__init__)
+	(EditForm.__init__, PopupEditForm._on_next)
+	(BrowsableShowForm._on_next_record)
+	(BrowsableShowForm._select_row, LookupForm._filter): Namísto
+	`self._set_row()' pou¾ívej `self._select_row()'.
+	(BrowsableShowForm.on_command): Namísto
+	`self._on_set_row()' pou¾ívej `self.select_row()'.
+	(BrowsableShowForm._on_next_record): Kosmetické úpravy.
+	(BrowsableShowForm._on_set_row): Metoda zru¹ena.
+
+	* pytis/form/list.py (ListForm.__init__, ListForm._update_grid)
+	(ListForm.refresh): Namísto `self.select_row()' pou¾ívej
+	`self._select_cell()'.
+	(_on_jump): Metoda zru¹ena.
+	(_find_row_by_values): Vracej instanci `Row', ne èíslo øádku.
+	(ListForm._find_row_by_number): Nová metoda.
+	(ListForm.select_row): O¹etøi pouze speciální pøílady a jinak
+	volej metodu pøedka.
+	(ListForm._select_row): Nová metoda.
+
 2005-11-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/dbdata.py
