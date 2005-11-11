@@ -91,7 +91,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Závìreèné akce
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
-        self.select_row(self._position)
+        self._select_cell(row=self._position)
 
     def _init_attributes(self, columns=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -288,7 +288,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # shown or hidden properly, until a size event is received by the
             # grid.  Thus we generate one artificially...
             g.SetSize(g.GetSize())
-        self.select_row(self._position)
+        self._select_cell(row=self._position)
         self._update_label_colors(g)
         g.SetFocus()
 
@@ -608,13 +608,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             lines = lines * linesPer
             scrollTo = vsy - pxy / lines
         g.Scroll(-1, scrollTo)    
-
-    def _on_jump(self):
-        row = super_(ListForm)._on_jump(self)
-        if row:
-            self.select_row(row-1)
-        else:
-            message(_("Neplatné èíslo záznamu"), beep_=True)                    
 
     def _on_label_left(self, event):
         col = event.GetCol()
@@ -1334,19 +1327,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             height += self._title_bar.GetSize().height
         return height
 
+    def _find_row_by_number(self, row_number):
+        # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
+        # Krom toho je toto rychlej¹í...
+        return self._table.row(row_number).row()
+
     def _find_row_by_values(self, cols, values):
-        """Vra» èíslo øádku v gridu odpovídající daným hodnotám.
-
-        Arguemnty:
-
-          cols -- sekvence názvù sloupcù, které mají být prohledávány.
-          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
-            poøadí odpovídajícím 'cols'.
-
-        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
-        pøedány i pøímo, bez obalení do sekvenèního typu.
-
-        """
+        # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
         cols = xtuple(cols)
         values = xtuple(values)
         assert len(cols) == len(values)
@@ -1360,48 +1347,29 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             row = 0
         else:
             row = result - 1
-        return row
+        return self._table.row(row).row()
 
-    
-    def select_row(self, position, _invoke_callback=True):
-        """Zvýrazni øádek dle 'position'.
-
-        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
-
-          None -- nebude vysvícen ¾ádný øádek.
-          Nezáporný integer -- bude vysvícen øádek pøíslu¹ného poøadí, pøièem¾
-            øádky jsou èíslovány od 0.
-          Datový klíè -- bude vysvícen øádek s tímto klíèem, kterým je tuple
-            instancí tøídy 'pytis.data.Value'.
-          Slovník hodnot -- bude vysvícen první nalezený øádek obsahující
-            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
-            klíèi slovníku.
-          Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
-            seznamu -- bude pøeveden na datový klíè.
-
-        Pokud 'position' neodpovídá ¾ádnému øádku, nebude ¾ádný øádek vysvícen.
-        Pokud je editován nìjaký øádek a 'position' není 'None', vysvi»
-        editovaný øádek bez ohledu na hodnotu 'position'.
-
-        Vrací: Èíslo vysvíceného øádku nebo 'None', pokud nebyl ¾ádný øádek
-        vysvícen.
-
-        """
+    def select_row(self, position):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
-        if isinstance(position, pytis.data.Row):
-            position = self._data.row_key(position)
-        if isinstance(position, types.TupleType):
-            cols = [c.id() for c in self._data.key()]
-            position = self._find_row_by_values(cols, position)
-        if isinstance(position, types.DictType):
-            position = self._find_row_by_values(position.keys(),
-                                                position.values())
-        if position is None:
-            position = -1
-        return self._select_cell(row=position, invoke_callback=_invoke_callback)
+        if isinstance(position, types.IntType):
+            # Pro èíslo voláme rovnou _select_cell a nezdr¾ujeme se pøevodem na
+            # row a zpìt, který probíhá v rodièovské metodì...
+            self._select_cell(row=position)
+        else:
+            super(ListForm, self).select_row(position)
+    
+    def _select_row(self, row):
+        if row is None:
+            row_number = -1
+        else:
+            row_number = self._get_row_number(row)
+        self._select_cell(row=row_number)
 
+
+    # Veøejné metody
+        
     def refresh(self, reset=None, when=None):
         """Aktualizuj data seznamu z datového zdroje.
 
@@ -1488,9 +1456,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
             if self._current_key() != key and \
                    row < self._table.GetNumberRows() and row >= 0:
-                self.select_row(row)
+                self._select_cell(row=row)
         else:
-            self.select_row(row)
+            self._select_cell(row=row)
         return True
 
     def status_fields(self):
