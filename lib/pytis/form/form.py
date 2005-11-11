@@ -494,7 +494,7 @@ class RecordForm(Form):
             by se mìl naplnit hodnotami získanými z datového objektu pro øádek
             dat s daným klíèem.
           prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
-            pøedvyplnìny pøi inicializaci formuláøe
+            pøedvyplnìny pøi inicializaci formuláøe.
           kwargs -- argumenty pøedané pøedkovi
 
         """
@@ -515,6 +515,19 @@ class RecordForm(Form):
     def _signal_update(self):
         pass
 
+    def _find_row_by_number(self, row_number):
+        # row_number zaèíná od 0
+        def get_it():
+            data = self._data
+            data.rewind()
+            data.skip(row_number)
+            return data.fetchone()
+        success, row = db_operation(get_it)
+        if not success or not row:
+            return None
+        else:
+            return row
+    
     def _find_row_by_values(self, cols, values):
         """Vra» datový øádek odpovídající daným hodnotám.
 
@@ -539,63 +552,28 @@ class RecordForm(Form):
         success, result = db_operation((find_row, (condition,)))
         return result
 
-    def _set_row(self, row):
+    def _get_row_number(self, row):
+        """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'."""
+        eqs = [pytis.data.EQ(c.id(), row[c.id()]) for c in self._data.key()]
+        condition = pytis.data.AND(*eqs)
+        data = self._data
+        data.rewind()
+        success, result = db_operation(lambda: data.search(condition))
+        if not success:
+            return None
+        elif result == 0:
+            return 0
+        else:
+            return result - 1
+        
+    def _select_row(self, row):
         # Naplò formuláø daty z daného *datového* øádku
+        # TODO: Tato implementace patøí spí¹e do nìjaké odvozené tøídy...
         prow = PresentedRow(self._view.fields(), self._data, row,
                             prefill=self._prefill, new=(not self._key),
                             change_callback=self._on_field_change,
                         editability_change_callback=self._on_editability_change)
         self.set_row(prow)
-
-    # Veøejné metody
-    
-    def select_row(self, position):
-        """Vyber øádek dle 'position'.
-
-        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
-        
-          None -- nebude zobrazen ¾ádný øádek.
-          Datový klíè -- bude zobrazen øádek s tímto klíèem, kterým je tuple
-            instancí tøídy 'pytis.data.Value'.
-          Slovník hodnot -- bude zobrazen první nalezený øádek obsahující
-            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
-            klíèi slovníku.
-          Instance tøídy 'pytis.data.Row', kompatibilní s datovým objektem
-            seznamu -- bude zobrazen øádek odpovídajícího klíèe.
-        
-        Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
-        
-        """
-        if isinstance(position, pytis.data.Row):
-            row = position
-        elif isinstance(position, types.TupleType):
-            cols = [c.id() for c in self._data.key()]
-            row = self._find_row_by_values(cols, position)
-        elif isinstance(position, types.DictType):
-            row = self._find_row_by_values(position.keys(),
-                                           position.values())
-        else:
-            ProgramError("Invalid 'position':", position)
-        self._set_row(row)
-
-    def set_row(self, row):
-        """Naplò aktuální editaci záznamu formuláøe daty z 'row'.
-
-        Argumenty:
-
-          row -- instance 'PresentedRow'
-
-        """
-        self._row = row
-        self._run_callback(self.CALL_SELECTION, (row,))
-        
-    def current_row(self):
-        """Vra» instanci PresentedRow právì aktivního øádku.
-
-        Není-li vybrán ¾ádný øádek, vra» 'None'.
-
-        """
-        return self._row
 
     def _current_key(self):
         the_row = self.current_row()
@@ -607,30 +585,6 @@ class RecordForm(Form):
                 log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
                 run_dialog(Error, _("Chyba v definici dat"))
         return None
-
-    def current_key(self):
-        """Vra» klíè aktuálnì vybraného øádku.
-
-        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None', pokud
-        není vybrán ¾ádný øádek.
-
-        """
-        return self._current_key()
-
-    def prefill(self):
-        """Vra» data pro pøedvyplnìní nového záznamu."""
-        return self._prefill
-    
-    def set_prefill(self, data):
-        """Nastav data pro pøedvyplnìní nového záznamu.
-
-        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
-        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
-        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
-        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
-
-        """
-        self._prefill = data
 
     def _redirected_name(self, key):
         redirect = self._view.redirect()
@@ -750,6 +704,83 @@ class RecordForm(Form):
             return True
         else:
             return False
+
+    # Veøejné metody
+    
+    def select_row(self, position):
+        """Vyber øádek dle 'position'.
+
+        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
+        
+          None -- nebude vybrán ¾ádný øádek.
+          Nezáporný integer -- bude vybrán øádek pøíslu¹ného poøadí, pøièem¾
+            øádky jsou èíslovány od 0.
+          Datový klíè -- bude vybrán øádek s tímto klíèem, kterým je tuple
+            instancí tøídy 'pytis.data.Value'.
+          Slovník hodnot -- bude vybrán první nalezený øádek obsahující
+            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
+            klíèi slovníku.
+          Instance tøídy 'pytis.data.Row' -- bude pøeveden na datový klíè a
+            zobrazen odpovídající øádek.  Instance musí být kompatibilní
+            s datovým objektem formuláøe.
+        
+        Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
+
+        Výbìrem je my¹lena akce relevantní pro daný typ formuláøe (odvozené
+        tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
+        náhledovém formuláøi apod.
+        
+        """
+        if isinstance(position, pytis.data.Row):
+            row = position
+        elif isinstance(position, types.IntType):
+            row = self._find_row_by_number(position)
+        elif isinstance(position, types.TupleType):
+            cols = [c.id() for c in self._data.key()]
+            row = self._find_row_by_values(cols, position)
+        elif isinstance(position, types.DictType):
+            row = self._find_row_by_values(position.keys(), position.values())
+        else:
+            ProgramError("Invalid 'position':", position)
+        self._select_row(row)
+            
+
+    def set_row(self, row):
+        """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
+        self._row = row
+        self._run_callback(self.CALL_SELECTION, (row,))
+        
+    def current_row(self):
+        """Vra» instanci PresentedRow právì aktivního øádku.
+
+        Není-li vybrán ¾ádný øádek, vra» 'None'.
+
+        """
+        return self._row
+
+    def current_key(self):
+        """Vra» klíè aktuálnì vybraného øádku.
+
+        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None', pokud
+        není vybrán ¾ádný øádek.
+
+        """
+        return self._current_key()
+
+    def prefill(self):
+        """Vra» data pro pøedvyplnìní nového záznamu."""
+        return self._prefill
+    
+    def set_prefill(self, data):
+        """Nastav data pro pøedvyplnìní nového záznamu.
+
+        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
+        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
+        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
+        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
+
+        """
+        self._prefill = data
 
     def can_delete_record(self):
         return self.check_permission(pytis.data.Permission.DELETE)
@@ -909,16 +940,18 @@ class LookupForm(RecordForm):
         data = self._data
         data.skip(skip-1, direction=direction)
         row = data.fetchone(direction=direction)
-        self._set_row(row)
+        self._select_row(row)
 
     def _on_jump(self):
         if self._lf_select_count > 0:
             prompt = _("Záznam èíslo (1-%s):") % (self._lf_select_count)
-            mask = "#" * len(str(self._lf_select_count))
-            returned = run_dialog(InputNumeric, message=_("Skok na záznam"),
-                                  prompt=prompt,
-                                  min_value=1, max_value=self._lf_select_count)
-            return returned.value()
+            number = run_dialog(InputNumeric, message=_("Skok na záznam"),
+                                prompt=prompt, min_value=1,
+                                max_value=self._lf_select_count)
+            if number:
+                self.select_row(number.value()-1)
+            #else:
+            #    message(_("Neplatné èíslo záznamu"), beep_=True)
         
     def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
@@ -945,7 +978,7 @@ class LookupForm(RecordForm):
             
     def _filter(self, condition):
         self._init_select()
-        self._set_row(self._find_row(self._key, any_row=True))
+        self._select_row(self._find_row(self._key, any_row=True))
 
     def _on_filter(self, row=None, col=None, show_dialog=True):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
@@ -1032,7 +1065,7 @@ class LookupForm(RecordForm):
             sorting = tuple(sorting)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
-            self._set_row(self._find_row(self._key, any_row=True))
+            self._select_row(self._find_row(self._key, any_row=True))
         return sorting
     
     def can_sort_column(self, col=None, direction=None, primary=False):
@@ -1124,9 +1157,9 @@ class EditForm(LookupForm, TitledForm):
         super_(EditForm).__init__(self, *args, **kwargs)
         self._size = self.GetSize() # Remember the original size.
         if self._key: # editace stávajícího záznamu nebo kopie
-            self._set_row(self._find_row(self._key))
+            self._select_row(self._find_row(self._key))
         else: # nový prázdný záznam
-            self._set_row(None)
+            self._select_row(None)
         if isinstance(self._parent, wx.Dialog):
             wx_callback(wx.EVT_INIT_DIALOG, self._parent, self.init)
         else:
@@ -1568,7 +1601,7 @@ class PopupEditForm(PopupForm, EditForm):
         if result:
             message(_("Záznam ulo¾en"))
             refresh()
-            self._set_row(None)
+            self._select_row(None)
             self.init()
         return False
 
@@ -1655,27 +1688,6 @@ class BrowsableShowForm(ShowForm):
         self._init_select()
         self._set_status()
 
-    def _on_set_row(self, row_number):
-        # row_number zaèíná od 0
-        def get_it():
-            data = self._data
-            data.rewind()
-            data.skip(row_number)
-            return data.fetchone()
-        success, row = db_operation(get_it)
-        if not row:
-            beep()
-        if not success or not row:
-            return
-        self._set_row(row)       
-
-    def _on_jump(self):
-        row = super_(BrowsableShowForm)._on_jump(self)
-        if row:
-            self._on_set_row(row-1)
-        else:
-            message(_("Neplatné èíslo záznamu"), beep_=True)                    
-
     def _on_next_record(self, direction=pytis.data.FORWARD):
         op = lambda : self._data.fetchone(direction=direction)
         success, row = db_operation(op)
@@ -1686,15 +1698,14 @@ class BrowsableShowForm(ShowForm):
                 message(_("První záznam"), beep_=True)
             # Pøesuneme ukazovátko zpìt na poslední záznam, to je chování
             # oèekávané u¾ivateli.
-            antidirection = pytis.data.opposite_direction(direction)
-            db_operation(lambda:
-                         self._data.fetchone(direction=antidirection))
+            antidir = pytis.data.opposite_direction(direction)
+            db_operation(lambda: self._data.fetchone(direction=antidir))
         if not success or not row:
             return
-        self._set_row(row)
+        self._select_row(row)
 
-    def _set_row(self, row):
-        super(BrowsableShowForm, self)._set_row(row)
+    def _select_row(self, row):
+        super(BrowsableShowForm, self)._select_row(row)
         self._set_status()
 
     def _set_status(self):
@@ -1710,10 +1721,10 @@ class BrowsableShowForm(ShowForm):
             self._on_next_record(direction=pytis.data.BACKWARD)
             return True
         elif command == BrowsableShowForm.COMMAND_FIRST_RECORD:
-            self._on_set_row(0)
+            self.select_row(0)
             return True
         elif command == BrowsableShowForm.COMMAND_LAST_RECORD:
-            self._on_set_row(self._lf_select_count-1)
+            self.select_row(self._lf_select_count-1)
             return True
         else:
             return super(BrowsableShowForm, self).on_command(command, **kwargs)
