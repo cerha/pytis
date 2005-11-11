@@ -16,6 +16,12 @@
 	`self._on_set_row()' pou¾ívej `self.select_row()'.
 	(BrowsableShowForm._on_next_record): Kosmetické úpravy.
 	(BrowsableShowForm._on_set_row): Metoda zru¹ena.
+	(RecordForm._find_row_by_key): Nová metoda.
+	(RecordForm.select_row): Pou¾ívej ji.
+	(_find_row): Metoda zru¹ena.
+	(LookupForm._filter, LookupForm._on_sort_column) 
+	(EditForm.__init__): Namísto kombinace `self._find_row()' a
+	`self._select_row()' pou¾ívej `self.select_row()'.
 
 	* pytis/form/list.py (ListForm.__init__, ListForm._update_grid)
 	(ListForm.refresh): Namísto `self.select_row()' pou¾ívej
