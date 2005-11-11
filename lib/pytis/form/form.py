@@ -552,6 +552,18 @@ class RecordForm(Form):
         success, result = db_operation((find_row, (condition,)))
         return result
 
+    def _find_row_by_key(self, key):
+        """Vra» datový øádek odpovídající danému datovému klíèi."""
+        if key is None:
+            return None
+        success, row = db_operation(lambda : self._data.row(key))
+        if success and row:
+            return row
+        else:
+            run_dialog(Error, _("Záznam nenalezen"))
+            return None
+
+    
     def _get_row_number(self, row):
         """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'."""
         eqs = [pytis.data.EQ(c.id(), row[c.id()]) for c in self._data.key()]
@@ -736,14 +748,12 @@ class RecordForm(Form):
         elif isinstance(position, types.IntType):
             row = self._find_row_by_number(position)
         elif isinstance(position, types.TupleType):
-            cols = [c.id() for c in self._data.key()]
-            row = self._find_row_by_values(cols, position)
+            row = self._find_row_by_key(position)
         elif isinstance(position, types.DictType):
             row = self._find_row_by_values(position.keys(), position.values())
         else:
             ProgramError("Invalid 'position':", position)
         self._select_row(row)
-            
 
     def set_row(self, row):
         """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
@@ -897,26 +907,6 @@ class LookupForm(RecordForm):
             setattr(self, attr, dialog)
         return dialog
         
-    def _find_row(self, key, any_row=False):
-        if key is None:
-            return None
-        def find_row(key):
-            data = self._data
-            result = self._data.row(key)
-            if result is None and any_row:
-                if self._lf_select_count is None:
-                    self._init_select()
-                else:
-                    data.rewind()
-                result = data.fetchone()
-            return result
-        success, row = db_operation(lambda : find_row(key))
-        if success and row:
-            return row
-        else:
-            run_dialog(Error, _("Záznam nenalezen"))
-            return None
-        
     def _search(self, condition, direction, row_number=None,
                 report_failure=True):
         self._search_adjust_data_position(row_number)
@@ -978,7 +968,7 @@ class LookupForm(RecordForm):
             
     def _filter(self, condition):
         self._init_select()
-        self._select_row(self._find_row(self._key, any_row=True))
+        self.select_row(self._key)
 
     def _on_filter(self, row=None, col=None, show_dialog=True):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
@@ -1065,7 +1055,7 @@ class LookupForm(RecordForm):
             sorting = tuple(sorting)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
-            self._select_row(self._find_row(self._key, any_row=True))
+            self.select_row(self._key)
         return sorting
     
     def can_sort_column(self, col=None, direction=None, primary=False):
@@ -1157,7 +1147,7 @@ class EditForm(LookupForm, TitledForm):
         super_(EditForm).__init__(self, *args, **kwargs)
         self._size = self.GetSize() # Remember the original size.
         if self._key: # editace stávajícího záznamu nebo kopie
-            self._select_row(self._find_row(self._key))
+            self.select_row(self._key)
         else: # nový prázdný záznam
             self._select_row(None)
         if isinstance(self._parent, wx.Dialog):
