@@ -1,3 +1,53 @@
+2005-11-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.run_form): Pøidáno
+	o¹etøení zru¹ených argumentù `key' a `new' a jejich pøevedení na
+	nové `select_row' a `mode'.
+
+	* pytis/form/dualform.py (BrowseShowDualForm._create_side_form)
+	(BrowseDualForm._on_show_record): Pøedávej funkci `run_form'
+	argument `select_row' nikoliv `key'.
+	(BrowseShowDualForm._create_side_form): Nepøedávaj konstruktoru
+	`ShowForm' argument `editable=True'.
+
+	* pytis/form/inputfield.py (ListField.on_command): Pøedávej funkci
+	`run_form' argument `select_row' nikoliv `key'.
+	
+
+	* pytis/form/form.py (RecordForm._init_attributes): Zru¹en
+	argument `key'.  Nenastavuj `self._key'.
+	(RecordForm._select_row): Argument `new' konstruktoru
+	`PresentedRow' nastavuj podle `self._new', nikoliv `self._key'.
+	(RecordForm._run_form): Pøi vytváøení formuláøe v¾dy nastavuj
+	argument `select_row', ne `key'.
+	(LookupForm._filter, LookupForm._on_sort_column): Jako argument
+	pro `select_row()' pou¾ívej aktuální datový øádek, ne `self._key'.
+	(EditForm): Aktualizace docstringu.
+	(EditForm.MODE_INSERT, EditForm.MODE_EDIT, EditForm.MODE_VIEW)
+	(EditForm.__init__): Nevolej `self.select_row()', pouze v re¾imu
+	vkládání záznamù inicializuj formuláø prázdným øádkem.
+	(EditForm.init): Pøejmenováno na `_init_fields'.
+	(EditForm.__init__, PopupEditForm._on_next): `init' ->
+	`_init_fields'.
+	(EditForm._init_fields): Neber v potaz editovatelnost políèka v
+	PresentedRow, nastavuj editovatelnost pouze podle módu formuláøe.
+	(EditForm._create_form): Pou¾ívej `self._mode' k urèení typu
+	pøístupových práv.  Urèi typ práv pouze jednou na zaèátku cyklu.
+	(EditForm._commit_form): Jako argument pro `data.update()'
+	pou¾ívej `self._current_key()', ne `self._key'.  Pou¾ívej
+	`self._mode' k zji¾dìní typu operace.
+	(PopupEditForm.run): Klíè zjisti pøes `self._current_key()', ne
+	`self._key'.  Zamykej pouze v editaèním re¾imu.
+	(RecordForm._select_row): Zde pouze vyvolej výjimku --
+	implementace pøesunuta do `EditForm'.
+	(EditForm._select_row): Nová metoda.
+	(EditForm._navigate): Pou¾ívej `self._mode' namísto
+	`self._editable'.
+	(PopupEditForm._create_buttons): Pou¾ívej `self._mode' namísto
+	`self._new.
+	(ShowForm._init_attributes): Namísto `editable' pøedávej `mode'.
+	
+
 2005-11-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (RecordForm._find_row_by_number): Nová
