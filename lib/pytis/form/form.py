@@ -484,24 +484,20 @@ class RecordForm(Form):
         self.set_callback(self.CALL_EDIT_RECORD,
                           lambda k: self._on_edit_record(k)),
 
-    def _init_attributes(self, key=None, prefill=None, **kwargs):
+    def _init_attributes(self, prefill=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
-        
-          key -- sekvence hodnot klíèových sloupcù aktivovaného øádku jako
-            instance tøídy 'pytis.data.types_.Value'.  Není-li 'None', formuláø
-            by se mìl naplnit hodnotami získanými z datového objektu pro øádek
-            dat s daným klíèem.
+
           prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
             pøedvyplnìny pøi inicializaci formuláøe.
+            
           kwargs -- argumenty pøedané pøedkovi
 
         """
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or is_dictionary(prefill)
         self._prefill = prefill
-        self._key = key
         self._row = None
 
     def _on_field_change(self, field_id, value=None):
@@ -580,12 +576,7 @@ class RecordForm(Form):
         
     def _select_row(self, row):
         # Naplò formuláø daty z daného *datového* øádku
-        # TODO: Tato implementace patøí spí¹e do nìjaké odvozené tøídy...
-        prow = PresentedRow(self._view.fields(), self._data, row,
-                            prefill=self._prefill, new=(not self._key),
-                            change_callback=self._on_field_change,
-                        editability_change_callback=self._on_editability_change)
-        self.set_row(prow)
+        raise ProgrammError("This method must be overridden.")
 
     def _current_key(self):
         the_row = self.current_row()
@@ -613,11 +604,7 @@ class RecordForm(Form):
     def _run_form(self, form, key):
         name = self._redirected_name(key) or self._name
         kwargs = self._new_form_kwargs()
-        if issubclass(form, EditForm):
-            kwargs['key'] = key
-        else:
-            kwargs['select_row'] = key
-        run_form(form, name,  **kwargs)
+        run_form(form, name, select_row=key, **kwargs)
 
     def _new_form_kwargs(self):
         return {}
@@ -968,7 +955,7 @@ class LookupForm(RecordForm):
             
     def _filter(self, condition):
         self._init_select()
-        self.select_row(self._key)
+        self.select_row(self._row.row())
 
     def _on_filter(self, row=None, col=None, show_dialog=True):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
@@ -1055,7 +1042,7 @@ class LookupForm(RecordForm):
             sorting = tuple(sorting)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
-            self.select_row(self._key)
+            self.select_row(self._row.row())
         return sorting
     
     def can_sort_column(self, col=None, direction=None, primary=False):
@@ -1121,8 +1108,6 @@ class LookupForm(RecordForm):
         else:
             return super_(LookupForm).on_command(self, command, **kwargs)
 
-    
-    
         
 
 ### Editaèní formuláø
@@ -1138,55 +1123,61 @@ class EditForm(LookupForm, TitledForm):
     Ka¾dé vstupní pole je reprezentováno objektem tøídy 'InputField'.  To se
     stará o interakci s u¾ivatelem, validaci vstupních dat apod.
 
-    Formuláø mù¾e slou¾it jak k editaci stávajícího øádku dat, tak
-    i k vytvoøení øádku nového (viz argumenty konstruktoru 'key' a 'new').
+    Formuláø mù¾e slou¾it jak k prohlí¾ení èi editaci stávajících dat, tak
+    i k vytváøení nových záznamù (viz argument konstruktoru 'mode').
  
     """
+
+    MODE_INSERT = 'MODE_INSERT'
+    """Mód formuláøe pro vkládání nových záznamù."""
+    MODE_EDIT = 'MODE_EDIT'
+    """Mód formuláøe pro editaci stávajících záznamù."""
+    MODE_VIEW = 'MODE_VIEW'
+    """Mód formuláøe pro zobrazení záznamù bez mo¾nosti editace."""
     
     def __init__(self, *args, **kwargs):
         super_(EditForm).__init__(self, *args, **kwargs)
         self._size = self.GetSize() # Remember the original size.
-        if self._key: # editace stávajícího záznamu nebo kopie
-            self.select_row(self._key)
-        else: # nový prázdný záznam
+        if self._mode == self.MODE_INSERT:
             self._select_row(None)
         if isinstance(self._parent, wx.Dialog):
-            wx_callback(wx.EVT_INIT_DIALOG, self._parent, self.init)
+            wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._init_fields)
         else:
-            self.init()
+            self._init_fields()
+            
 
-    def _init_attributes(self, focus_field=None, editable=True, new=False,
-                         **kwargs):
+    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
+
+          mode -- jedna z 'MODE_*' konstant tøídy.  Urèuje, zda formuláø slou¾í
+            k prohlí¾ení, editaci èi vytváøení záznamù.
 
           focus_field -- id políèka, které má být vybráno jako aktivní pro
             u¾ivatelský vstup, pøípadnì funkce jednoho argumentu, kterým je
             aktuální PresentedRow, která vrací id políèka pro u¾ivatelský
             vstup.
-          editable -- právì kdy¾ je pravdivé, lze formuláø editovat
-          new -- pøíznak, zda se jedná o nový záznam nebo editaci stávajícího;
-            je-li 'key' 'None', pova¾uje se záznam za nový v¾dy, bez ohledu na
-            hodnotu 'new'
+
+          
           kwargs -- argumenty pøedané konstruktoru prvního pøedka
 
         """
         super_(EditForm)._init_attributes(self, **kwargs)
+        assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
+        #assert focus_field in [f.id() for f in self._view.fields()]
+        self._mode = mode
         self._focus_field = focus_field or self._view.focus_field()
-        self._editable = editable
-        # TODO: zde bychom nemìli sahat do argumentù pøedkù ('key')...
-        self._new = (not kwargs.get('key')) or new
         # Other attributes
         self._fields = []
 
-    def init(self, event=None):
+    def _init_fields(self, event=None):
         """Inicalizuj dialog nastavením hodnot políèek."""
         for f in self._fields:
-            if self._editable and self._row.editable(f.id()):
-                f.enable()
+            if self._mode == self.MODE_VIEW:
+                f.disable(change_appearance=False)
             else:
-                f.disable(change_appearance=self._editable)
+                f.enable()
         if self._focus_field:
             if callable(self._focus_field):
                 focused = self._focus_field(self._row)
@@ -1201,13 +1192,16 @@ class EditForm(LookupForm, TitledForm):
         f.set_focus()
 
     def _create_form(self):
+        if self._mode == self.MODE_INSERT:
+            permission = pytis.data.Permission.INSERT
+        elif self._mode == self.MODE_EDIT:
+            permission = pytis.data.Permission.UPDATE
+        else:
+            permission = pytis.data.Permission.VIEW
+        data_columns = [c.id() for c in self._data.columns()]
         for id in self._view.layout().order():
             spec = self._view.field(id)
-            if id in map(lambda c: c.id(), self._data.columns()):
-                if self._new:
-                    permission = pytis.data.Permission.INSERT
-                else:
-                    permission = pytis.data.Permission.UPDATE
+            if id in data_columns:
                 acc = self._data.accessible(id, permission)
             else:
                 acc = True
@@ -1369,7 +1363,7 @@ class EditForm(LookupForm, TitledForm):
     def _validate_fields(self):
         # Postupná validace v¹ech políèek.
         for f in self._fields:
-            if self._new or f.is_modified():
+            if self._mode == self.MODE_INSERT or f.is_modified():
                 value, error = f.validate()
                 if error:
                     log(EVENT, 'Validace selhala:', (f.id(), f.get_value()))
@@ -1388,12 +1382,14 @@ class EditForm(LookupForm, TitledForm):
             return False
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row)
-        if self._new:
+        if self._mode == self.MODE_INSERT:
             log(ACTION, 'Vlo¾ení øádku')
             op = (self._data.insert, (rdata,))
-        else:
+        elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            op = (self._data.update, (self._key, rdata))
+            op = (self._data.update, (self._current_key(), rdata))
+        else:
+            raise ProgramError("Can't commit in this mode.")
         # Provedení operace
         success, result = db_operation(op)
         if success and result[1]:
@@ -1405,7 +1401,7 @@ class EditForm(LookupForm, TitledForm):
                 # TODO: Lze provést nìco chytøej¹ího?
                 pass
             self._signal_update()
-            if self._new:
+            if self._mode == self.MODE_INSERT:
                 log(ACTION, 'Záznam vlo¾en')
             else:
                 log(ACTION, 'Záznam updatován')
@@ -1429,12 +1425,21 @@ class EditForm(LookupForm, TitledForm):
             run_dialog(Error, msg)
             return False
 
+    def _select_row(self, row):
+        # TODO: Tato implementace patøí spí¹e do odvozené tøídy (EditForm)...
+        prow = PresentedRow(self._view.fields(), self._data, row,
+                            prefill=self._prefill,
+                            new=self._mode == self.MODE_INSERT,
+                            change_callback=self._on_field_change,
+                        editability_change_callback=self._on_editability_change)
+        self.set_row(prow)
+
     def set_row(self, row):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
         for f in self._fields:
             f.init(row[f.id()].export())
         super_(EditForm).set_row(self, row)
-
+        
     def title(self):
         """Vra» název formuláøe jako øetìzec."""        
         return self._view.layout().caption()
@@ -1485,7 +1490,7 @@ class EditForm(LookupForm, TitledForm):
                 
     def _navigate(self, object=None, forward=True):
         # Vygeneruj událost navigace mezi políèky.
-        if self._editable:
+        if self._mode != self.MODE_VIEW:
             nav = wx.NavigationKeyEvent()
             nav.SetDirection(forward)
             if object:
@@ -1526,7 +1531,7 @@ class EditForm(LookupForm, TitledForm):
                     val = field.get_item()
                     self._row.listfield_choose(id, val)
             return True
-        if self._editable:
+        if self._mode != self.MODE_VIEW:
             if command == EditForm.COMMAND_COMMIT_RECORD:
                 self._commit_form()
                 return True
@@ -1592,7 +1597,7 @@ class PopupEditForm(PopupForm, EditForm):
             message(_("Záznam ulo¾en"))
             refresh()
             self._select_row(None)
-            self.init()
+            self._init_fields()
         return False
 
     def _on_cancel(self, event):
@@ -1606,7 +1611,7 @@ class PopupEditForm(PopupForm, EditForm):
         wx_callback(wx.EVT_BUTTON, self, wx.ID_CANCEL, self._on_cancel)
         ok.SetToolTipString(_("Ulo¾it záznam a uzavøít formuláø"))
         cancel.SetToolTipString(_("Uzavøít formuláø bez ulo¾ení dat"))
-        if self._new and not self._disable_new_button:
+        if self._mode == self.MODE_INSERT and not self._disable_new_button:
             next = wx.Button(self, wx.ID_FORWARD, _("Dal¹í"))
             wx_callback(wx.EVT_BUTTON, self, wx.ID_FORWARD, self._on_next)
             next.SetToolTipString(_("Ulo¾it záznam a reinicializovat formuláø"
@@ -1619,7 +1624,8 @@ class PopupEditForm(PopupForm, EditForm):
         return sizer
     
     def run(self):
-        if self._editable and self._key and not self._lock_record(self._key):
+        key = self._current_key()
+        if self._mode == self.MODE_EDIT and key and not self._lock_record(key):
             return None
         try:
             return PopupForm.run(self)
@@ -1647,8 +1653,8 @@ class ShowForm(EditForm):
 
     _DESCR = _("náhled")
 
-    def _init_attributes(self, editable=False, **kwargs):
-        super_(ShowForm)._init_attributes(self, editable=editable, **kwargs)
+    def _init_attributes(self, mode=EditForm.MODE_VIEW, **kwargs):
+        super_(ShowForm)._init_attributes(self, mode=mode, **kwargs)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         
     def _create_form_parts(self, sizer):
