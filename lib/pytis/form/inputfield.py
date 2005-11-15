@@ -1333,15 +1333,15 @@ class ListField(InputField):
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_INVOKE_EDIT_FORM:
             run_form(PopupEditForm, self._ref_spec.name(),
-                     key=self._selected_item_key())
+                     select_row=self._selected_item_key())
             return True
         elif command == self.COMMAND_INVOKE_BROWSE_FORM:
             if isinstance(current_form(), PopupForm):
-                run_dialog(Warning, _("Celou tabulku nemù¾ete zobrazit, " + \
-                                   "pokud je otevøeno modální okno formuláøe!"))
+                run_dialog(Warning, _("Celou tabulku nemù¾ete zobrazit, pokud "
+                                      "je otevøeno modální okno formuláøe!"))
                 return True
             run_form(BrowseForm, self._ref_spec.name(),
-                          select_row=self._selected_item_key())
+                     select_row=self._selected_item_key())
             return True
         elif command == self.COMMAND_CHOOSE_KEY:
             if kwargs.has_key('returned_key'):
