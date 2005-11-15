@@ -384,7 +384,7 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
         return result
     
     def _on_show_record(self, key):
-        run_form(ShowDualForm, self._name, key=key)
+        run_form(ShowDualForm, self._name, select_row=key)
 
     def refresh(self):
         self._main_form.refresh()
@@ -451,7 +451,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
 
     def _create_side_form(self, parent):
         name = self._view.side_name()
-        return ShowForm(parent, self._resolver, name, editable=True)
+        return ShowForm(parent, self._resolver, name)
 
     def _do_selection(self, row):
         if self._side_form is not None:
