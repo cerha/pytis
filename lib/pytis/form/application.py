@@ -284,7 +284,20 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """
         result = None
         state_kwargs = {}
-        for arg in ('select_row',):
+        # TODO: Toto je jen kvùli zpìtné kompatibilitì.  Argument 'key' je
+        # tøeba ve v¹ech projektech pøejmenovat na 'select_row' a následující
+        # øádky èasem zru¹it.
+        if kwargs.has_key('key'):
+            kwargs['select_row'] = kwargs['key']
+            del kwargs['key']
+        if issubclass(form_class, EditForm):
+            if not kwargs.has_key('select_row') or not kwargs['select_row'] \
+                   or kwargs.has_key('new') and kwargs['new']:
+                kwargs['mode'] = EditForm.MODE_INSERT
+            if kwargs.has_key('new'):
+                del kwargs['new']
+        # konec doèasného hacku    
+        for arg in ('select_row', ):
             if kwargs.has_key(arg):
                 state_kwargs[arg] = kwargs[arg]
                 del kwargs[arg]
