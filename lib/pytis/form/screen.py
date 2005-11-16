@@ -581,8 +581,6 @@ class KeyHandler:
 
     """
 
-    _prefix_key_sequence = []
-    
     def __init__(self, widgets=None):
         """Inicializuj instanci.
 
@@ -597,6 +595,7 @@ class KeyHandler:
             widgets = isinstance(self, wx.Window) and (self,) or ()
         self._handle_keys(*xtuple(widgets))
         self._wx_key = WxKey()
+        self._prefix_key_sequence = []
         self._commands = None
         self._temporary_keymap = []
         if not hasattr(self, 'keymap'):
