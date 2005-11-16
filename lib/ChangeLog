@@ -1,3 +1,8 @@
+2005-11-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (KeyHandler.__init__): Inicializuj
+	`_prefix_key_sequence' zde, nikoliv jako atribut tøídy.
+
 2005-11-15  Tomas Cerha  <cerha@brailcom.org>
 
 	*  (Module): 
