@@ -1,5 +1,7 @@
 2005-11-15  Tomas Cerha  <cerha@brailcom.org>
 
+	*  (Module): 
+
 	* pytis/form/application.py (Application.run_form): Pøidáno
 	o¹etøení zru¹ených argumentù `key' a `new' a jejich pøevedení na
 	nové `select_row' a `mode'.
