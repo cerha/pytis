@@ -467,10 +467,11 @@ class Keymap:
         self._keymap[prefix] = keydef
         if type(keydef) == type([]):
             keydef[0:0] = [(command, args)]
-        else:
-            assert rest, ("Key is already defined as a prefix key:",
-                          (str(command), args))
+        elif rest:
             keydef._define_key(rest, command, args)
+        else:
+            raise ProgramError("Key is already defined as a prefix key:",
+                               prefix, str(command))
 
     def define_key(self, key, command, args={}):
         """Pøiøaï klávese 'key' pøíkaz 'command' s argumenty '**kwargs'.
