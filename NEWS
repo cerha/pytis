@@ -1,0 +1,24 @@
+** NEW FEATURES **
+
+
+
+	
+
+** FIXED BUGS **
+
+2005-11-09  Tomas Cerha  <cerha@brailcom.org>
+
+	Stisk mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na
+	jiný záznam pokud jsem na záznamu s NULL hodnotou ve sloupci,
+	podle kterého je tøídìno.
+
+2005-11-15  Tomas Cerha  <cerha@brailcom.org>
+
+	Nechtìné nalíznutí sekvencí pøi otevírání formuláøù odvozených z
+	EditForm (nadbyteèná inicializace prázdného záznamu).
+   
+2005-11-16  Tomas Cerha  <cerha@brailcom.org>
+
+	Chybné skládání klávesových zkratek a následé padání pøi zobrazení
+	popup-menu.
+
