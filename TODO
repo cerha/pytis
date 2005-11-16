@@ -1,74 +1,73 @@
 
 BUGS:
 
-* Pokud v dualformu neexistuje v dolním náhledu záznam pro danou polo¾ku
-  horního náhledu, pak se pøi pøechodu klávesou na jinou polo¾ku pøepne
-  vysvícení do dolního náhledu. Pøi pou¾ití pravého tlaèítka my¹i (za úèelem
-  vyvolání nabídky popupmenu) se vyvolá chybová hlá¹ka. Viz náhled Výkaz práce
-  - snímaè v systému Archibas.
-
-* Nadefinovaná polo¾ka menu Tisk (print_spec) se v duálním náhledu neprojeví.
-  V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
-  kláves. zkratky Ctrl-x p. 
-
-* Ve widgetu Calendar je posunuta pozice pøi kliknutí my¹í.
-   
-* Nefunguje vyvolání èíselníku v inline editaci.
-   
-* Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
-  tøídìní (F4) nastane chyba.
-   
-* Reakce dialogù na enter. (defultní tlaèítko napø. na Ctrl+Enter)
-
-* Nefunguje nastavení hide_binding_column na False (stejnì se nezobrazí).
-
-* Editable.ONCE nefunguje v inline editaci (pøi vkládání záznamu pomocí Ctrl-Ins nebo
-  Ins).
-
-* Solas - Recepce, Avíza, Odeslat mimoøádné avízo.  Nefunguje pøíkaz z
-  refspec.
-
-* Stisk mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na jiný
-  záznam pokud jsem na záznamu s NULL hodnotou ve sloupci, podle kterého je tøídìno.
-   
-* Filtr nad vedlej¹ím formuláøem dualformu si "pamatuje" výsledky agregaèních
+ * Pokud v dualformu neexistuje v dolním náhledu záznam pro danou polo¾ku
+   horního náhledu, pak se pøi pøechodu klávesou na jinou polo¾ku pøepne
+   vysvícení do dolního náhledu. Pøi pou¾ití pravého tlaèítka my¹i (za úèelem
+   vyvolání nabídky popupmenu) se vyvolá chybová hlá¹ka. Viz náhled Výkaz práce
+   - snímaè v systému Archibas.
+ 
+ * Nadefinovaná polo¾ka menu Tisk (print_spec) se v duálním náhledu neprojeví.
+   V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
+   kláves. zkratky Ctrl-x p. 
+ 
+ * Ve widgetu Calendar je posunuta pozice pøi kliknutí my¹í.
+    
+ * Nefunguje vyvolání èíselníku v inline editaci.
+    
+ * Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
+   tøídìní (F4) nastane chyba.
+    
+ * Reakce dialogù na enter. (defultní tlaèítko napø. na Ctrl+Enter)
+ 
+ * Nefunguje nastavení hide_binding_column na False (stejnì se nezobrazí).
+ 
+ * Editable.ONCE nefunguje v inline editaci (pøi vkládání záznamu pomocí
+   Ctrl-Ins nebo Ins).
+ 
+ * Solas - Recepce, Avíza, Odeslat mimoøádné avízo.  Nefunguje pøíkaz z
+   refspec.
+ 
+ * Filtr nad vedlej¹ím formuláøem dualformu si "pamatuje" výsledky agregaèních
    funkcí a i po zmìnì øádku v hlavním formuláøi (a tedy i vyfiltrovaných
    øádkù) vrací poøád stejné hodnoty.
-
-* Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
+   
+ * Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
    dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
   
+ * ShowForm po vyvolání pøes Enter nemá fokus. Procházení záznamù v
+   ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje èíslo záznamu
+   ve stavové øádce. Pozor - úèetní deník fokus má, seznam bì¾ných
+   bankovních úètù ne (Základní tabulky -> Banka úèty -> V¹echny úèty ->
+   Bì¾ný úèet). Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
+
    
 FEATURES:
 
-* Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky)
-
-* Zarovnávání a atributy v InputFieldu.
-
-* Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
-
-* Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
+ * U¾ivatelsky pøizpùsobitelné poøadí a poèet sloupcù libovolného BrowseFromu.
    
-* Pøíkaz run_procedure
+ * Ulo¾ené filtrovací podmínky.
 
-* Formuláøový dialog.
+ * Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky).
+ 
+ * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
+ 
+ * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
+    
+ * Formuláøový dialog.
+ 
+ * Vyvolat EditForm ze ShowFormu.
 
-* v BrowseDualForm umo¾nit v konstruktoru vybrat øádek.
+ * Zarovnávání a atributy v InputFieldu.
+    
 
-* Pøepracování stavového øádku.
+DESIGN GOALS:
 
-* Runtime parametrizace mno¾iny èíselníku pøi vyvolání (a validaci).
-
-* Úpravy související se zavedením SingleCodeBook
-
--------------------------------------------------------------------------------
-
-ShowForm:
-
-* ShowForm po vyvolání pøes Enter nemá fokus. Procházení záznamù v
-  ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje èíslo záznamu
-  ve stavové øádce. Pozor - úèetní deník fokus má, seznam bì¾ných
-  bankovních úètù ne (Základní tabulky -> Banka úèty -> V¹echny úèty ->
-  Bì¾ný úèet). Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
-
-* Vyvolat EditForm ze ShowFormu.
+ * Oddìlit ve¹kerý kód týkající se práce s aktuálním selectem, získáváním dat
+   podle èísla øádkù (práce s kurzorem) a cachování øádkù, který je nyní
+   pøedev¹ím v ListTable do speciální tøídy (nadstavba datového rozhraní).
+   Podobné vìci se dìlají i v netabulkových formuláøích a je tøeba je mít na
+   dsfdf jednom místì.
+   
+ * Pøepracování stavového øádku?
+ 
