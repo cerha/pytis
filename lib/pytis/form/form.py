@@ -1047,7 +1047,7 @@ class LookupForm(RecordForm):
             sorting = tuple(sorting)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
-            self.select_row(self._row.row())
+            self.select_row(self.current_key())
         return sorting
     
     def can_sort_column(self, col=None, direction=None, primary=False):

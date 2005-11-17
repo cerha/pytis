@@ -2,6 +2,8 @@
 
 	* pytis/form/form.py (RecordForm.select_row): Doèasnì o¹etøi
 	pøípad, kdy se pøedá jako position instance Value.
+	(LookupForm._on_sort_column): Jako argument self.select_row()
+	pou¾ij self.current_key().
 
 2005-11-16  Tomas Cerha  <cerha@brailcom.org>
 
