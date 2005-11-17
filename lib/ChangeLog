@@ -1,3 +1,8 @@
+2005-11-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (RecordForm.select_row): Doèasnì o¹etøi
+	pøípad, kdy se pøedá jako position instance Value.
+
 2005-11-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (KeyHandler.__init__): Inicializuj

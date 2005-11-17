@@ -734,12 +734,17 @@ class RecordForm(Form):
             row = position
         elif isinstance(position, types.IntType):
             row = self._find_row_by_number(position)
+        # TODO:
+        #    v duálním formuláøi pro FakturyVydane se pøi
+        #    editaci hledá instance Value. Pøedáme zatím jako tuple
+        elif isinstance(position, pytis.data.Value):
+            row = self._find_row_by_key((position,))
         elif isinstance(position, types.TupleType):
             row = self._find_row_by_key(position)
         elif isinstance(position, types.DictType):
             row = self._find_row_by_values(position.keys(), position.values())
-        else:
-            ProgramError("Invalid 'position':", position)
+        else:            
+            raise ProgramError("Invalid 'position':", position)
         self._select_row(row)
 
     def set_row(self, row):
