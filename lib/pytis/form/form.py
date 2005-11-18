@@ -1143,12 +1143,17 @@ class EditForm(LookupForm, TitledForm):
     def __init__(self, *args, **kwargs):
         super_(EditForm).__init__(self, *args, **kwargs)
         self._size = self.GetSize() # Remember the original size.
+        for f in self._fields:
+            if self._mode == self.MODE_VIEW:
+                f.disable(change_appearance=False)
+            else:
+                f.enable()
         if self._mode == self.MODE_INSERT:
             self._select_row(None)
         if isinstance(self._parent, wx.Dialog):
-            wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._init_fields)
+            wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
-            self._init_fields()
+            self._set_focus_field()
             
 
     def _init_attributes(self, mode=MODE_EDIT, focus_field=None, **kwargs):
@@ -1176,13 +1181,8 @@ class EditForm(LookupForm, TitledForm):
         # Other attributes
         self._fields = []
 
-    def _init_fields(self, event=None):
+    def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políèek."""
-        for f in self._fields:
-            if self._mode == self.MODE_VIEW:
-                f.disable(change_appearance=False)
-            else:
-                f.enable()
         if self._focus_field:
             if callable(self._focus_field):
                 focused = self._focus_field(self._row)
@@ -1607,7 +1607,6 @@ class PopupEditForm(PopupForm, EditForm):
             message(_("Záznam ulo¾en"))
             refresh()
             self._select_row(None)
-            self._init_fields()
         return False
 
     def _on_cancel(self, event):
