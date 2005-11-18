@@ -1349,7 +1349,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             row = result - 1
         return self._table.row(row).row()
 
-    def select_row(self, position):
+    def select_row(self, position, quiet=False):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
@@ -1358,7 +1358,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # row a zpìt, který probíhá v rodièovské metodì...
             self._select_cell(row=position)
         else:
-            super(ListForm, self).select_row(position)
+            super(ListForm, self).select_row(position, quiet=quiet)
     
     def _select_row(self, row):
         if row is None:
@@ -1451,7 +1451,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_grid(data_init=True)
         
         if key is not None:
-            self.select_row(key)
+            self.select_row(key, quiet=True)
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
             # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
             if self._current_key() != key and \
