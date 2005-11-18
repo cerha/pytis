@@ -1101,19 +1101,20 @@ class CodebookField(Invocable, TextField):
         sizer.Add(widget, 0, wx.FIXED_MINSIZE)
         height = self._ctrl.GetSize().GetHeight()
         if cb_spec.display():
-            self._display_column = cb_spec.display()
             display_size = spec.display_size()
             if display_size is None:
                 display_size = cb_spec.display_size()
-            display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
-            size = char2px(display, display_size, 1)
-            size.SetHeight(height)
-            display.SetSize(size)
-            display.SetBackgroundColour(wx.Colour(213, 213, 213))
-            self._display = display
-            wx_callback(wx.EVT_NAVIGATION_KEY, display,
-                        self._skip_navigation_callback(display))
-            sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
+            if display_size:
+                self._display_column = cb_spec.display()
+                display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
+                size = char2px(display, display_size, 1)
+                size.SetHeight(height)
+                display.SetSize(size)
+                display.SetBackgroundColour(wx.Colour(213, 213, 213))
+                self._display = display
+                wx_callback(wx.EVT_NAVIGATION_KEY, display,
+                            self._skip_navigation_callback(display))
+                sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
         if spec.allow_codebook_insert():
             self._insert_button = button = wx.Button(self._parent, -1, "+")
             button.SetSize((dlg2px(button, 10), height))
