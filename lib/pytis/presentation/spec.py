@@ -872,7 +872,8 @@ class CodebookSpec(object):
         assert display is None or isinstance(display, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert begin_search is None or isinstance(begin_search,types.StringType)
-        log(EVENT, "Pou¾it potlaèený argument 'insert_unknown_values'!")
+        if insert_unknown_values:
+            log(EVENT, "Pou¾it potlaèený argument 'insert_unknown_values'!")
         self._columns = columns
         self._display = display
         self._display_size = display_size
