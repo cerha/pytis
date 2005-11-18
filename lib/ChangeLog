@@ -1,3 +1,14 @@
+2005-11-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (CodebookField._create_widget):
+	Pøebírej `display_size' z `cb_spec' jen pokud je None (ne pøi
+	jakékoliv nepravdivé hodnotì).
+
+	* pytis/presentation/spec.py (CodebookSpec.__init__): Úprava
+	docstringu.  Loguj pou¾ití potlaèeného argumentu
+	`insert_unknown_values'.
+	(CodebookSpec.insert_unknown_values): Metoda zru¹ena.
+
 2005-11-17  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (RecordForm.select_row): Doèasnì o¹etøi
