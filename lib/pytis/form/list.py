@@ -1342,7 +1342,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         data.rewind()
         success, result = db_operation(lambda: data.search(condition))
         if not success:
-            row = None
+            return None
         elif result == 0:
             row = 0
         else:
