@@ -1,5 +1,8 @@
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm.select_row): Pøedávej argument `quiet'.
+	(ListForm.refresh): Volej `select_row' s nastaveným `quiet=True'.
+
 	* pytis/form/form.py (EditForm.set_row): Nastavuj také
 	editovatelnost políèek.
 	(EditForm.__init__): Inicializuj editovatelnost políèek zde.
@@ -10,6 +13,16 @@
 	`self._set_focus_field()'.
 	(ShowForm._create_form_parts): Pøidávej titulek do sizeru s
 	nastaveným `wx.FIXED_MINSIZE'.
+	(RecordForm.select_row): Instanci Value pova¾uj za klíè.
+	(RecordForm._find_row_by_key): Umo¾ni tak pøedat jako `key' také
+	pøímo instanci `Value' a pøedádìj ji automaticky na tuple.
+	(RecordForm.select_row): Nový argument `quiet'.  Zobraz chybový
+	dialog, pokud øádek nebyl nalezen a `quiet' není nastaveno.
+	(LookupForm._on_sort_column, RecordForm.on_command): Pou¾ívej
+	`self._current_key()' namísto `self.current_key()'.
+	(LookupForm._filter): Pou¾ívej `self._current_key()', ne
+	`self._row.row()', jako argument `select_row'.
+
 
 	* pytis/form/inputfield.py (CodebookField._create_widget):
 	Pøebírej `display_size' z `cb_spec' jen pokud je None (ne pøi
