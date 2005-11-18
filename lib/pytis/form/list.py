@@ -1342,12 +1342,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         data.rewind()
         success, result = db_operation(lambda: data.search(condition))
         if not success:
-            return None
+            row = 0
         elif result == 0:
             row = 0
         else:
             row = result - 1
-        return self._table.row(row).row()
+        prow = self._table.row(row)
+        if prow:
+            return prow.row()
+        else:
+            return None
 
     def select_row(self, position, quiet=False):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
