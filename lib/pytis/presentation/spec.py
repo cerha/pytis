@@ -863,11 +863,7 @@ class CodebookSpec(object):
             sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
             musí být obsa¾en v datové specifikaci èíselníku).
           display_size -- ¹íøka políèka displeje ve znacích
-          insert_unknown_values -- pokud má pravdivou hodnotu, umo¾ni vkládání
-            neznámých hodnot do èíselníku pøímo pøi jejich vyplnìní do
-            èíselníkového políèka.  V takovém pøípadì je u¾ivateli nabídnuta
-            mo¾nost vlo¾it nový záznam do èíselníku, pokud vyplní (jinak
-            validní) hodnotu, která není v èíselníku pøítomna.
+          insert_unknown_values -- Potlaèený argument.  Èasem bude zru¹en.
           begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
             spustit automatické inkrementální vyhledávání.
           
@@ -875,12 +871,11 @@ class CodebookSpec(object):
         assert columns is None or is_sequence(columns)
         assert display is None or isinstance(display, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
-        assert isinstance(insert_unknown_values, types.BooleanType)
         assert begin_search is None or isinstance(begin_search,types.StringType)
+        log(EVENT, "Pou¾it potlaèený argument 'insert_unknown_values'!")
         self._columns = columns
         self._display = display
         self._display_size = display_size
-        self._insert_unknown_values = insert_unknown_values
         self._begin_search = begin_search
 
     def columns(self):
@@ -895,10 +890,6 @@ class CodebookSpec(object):
         """Vra» velikost displeje (poèet znakù)."""
         return self._display_size
         
-    def insert_unknown_values(self):
-        """Vra» pravdu, pokud mají být do èíselníku vkládány neznámé hodnoty."""
-        return self._insert_unknown_values
-
     def begin_search(self):
         """Vra» identifikátor sloupce pro inkrementální vyhledávání."""
         return self._begin_search
