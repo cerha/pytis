@@ -49,7 +49,7 @@ _profile = 0 # FALSE
 
 def _usage(optexception=None):
     _USAGE = _("""
-u¾ití: ebas [OPTION ...]
+Pou¾ití: pytis [OPTION ...]
 
 Volby:
 
@@ -137,7 +137,7 @@ def run_application():
         locale.setlocale(locale.LC_NUMERIC, 'C')
     server = config.server
     if not server:
-        pytis.form.run_application()        
+        pytis.form.run_application()
     else:
         import pytis.data, pytis.util
         class ClientResolver(pytis.util.FileResolver):
