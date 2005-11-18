@@ -552,11 +552,10 @@ class RecordForm(Form):
         """Vra» datový øádek odpovídající danému datovému klíèi."""
         if key is None:
             return None
-        success, row = db_operation(lambda : self._data.row(key))
+        success, row = db_operation(lambda : self._data.row(xtuple(key)))
         if success and row:
             return row
         else:
-            run_dialog(Error, _("Záznam nenalezen"))
             return None
 
     
@@ -706,7 +705,7 @@ class RecordForm(Form):
 
     # Veøejné metody
     
-    def select_row(self, position):
+    def select_row(self, position, quiet=False):
         """Vyber øádek dle 'position'.
 
         Argument 'position' mù¾e mít nìkterou z následujících hodnot:
@@ -714,8 +713,8 @@ class RecordForm(Form):
           None -- nebude vybrán ¾ádný øádek.
           Nezáporný integer -- bude vybrán øádek pøíslu¹ného poøadí, pøièem¾
             øádky jsou èíslovány od 0.
-          Datový klíè -- bude vybrán øádek s tímto klíèem, kterým je tuple
-            instancí tøídy 'pytis.data.Value'.
+          Datový klíè -- bude vybrán øádek s tímto klíèem, kterým je instance
+            tøídy 'pytis.data.Value' nebo jejich tuple.
           Slovník hodnot -- bude vybrán první nalezený øádek obsahující
             hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
             klíèi slovníku.
@@ -724,6 +723,8 @@ class RecordForm(Form):
             s datovým objektem formuláøe.
         
         Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
+        Argumentem 'quiet' lze zobrazení chybového dialogu potlaèit, tak¾e
+        nenalezení øádku je ti¹e ignorováno. 
 
         Výbìrem je my¹lena akce relevantní pro daný typ formuláøe (odvozené
         tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
@@ -734,17 +735,14 @@ class RecordForm(Form):
             row = position
         elif isinstance(position, types.IntType):
             row = self._find_row_by_number(position)
-        # TODO:
-        #    v duálním formuláøi pro FakturyVydane se pøi
-        #    editaci hledá instance Value. Pøedáme zatím jako tuple
-        elif isinstance(position, pytis.data.Value):
-            row = self._find_row_by_key((position,))
-        elif isinstance(position, types.TupleType):
+        elif isinstance(position, (types.TupleType, pytis.data.Value)):
             row = self._find_row_by_key(position)
         elif isinstance(position, types.DictType):
             row = self._find_row_by_values(position.keys(), position.values())
         else:            
             raise ProgramError("Invalid 'position':", position)
+        if not quiet and position is not None and row is None:
+            run_dialog(Warning, _("Záznam nenalezen"))
         self._select_row(row)
 
     def set_row(self, row):
@@ -796,7 +794,7 @@ class RecordForm(Form):
         elif command == RecordForm.COMMAND_NEW_RECORD_COPY:
             self._run_callback(self.CALL_NEW_RECORD, (True,))
         elif command == RecordForm.COMMAND_EDIT_RECORD:
-            key = self.current_key()
+            key = self._current_key()
             if key is not None:
                 self._run_callback(self.CALL_EDIT_RECORD, (key,))
         else:
@@ -932,8 +930,6 @@ class LookupForm(RecordForm):
                                 max_value=self._lf_select_count)
             if number:
                 self.select_row(number.value()-1)
-            #else:
-            #    message(_("Neplatné èíslo záznamu"), beep_=True)
         
     def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
@@ -960,7 +956,7 @@ class LookupForm(RecordForm):
             
     def _filter(self, condition):
         self._init_select()
-        self.select_row(self._row.row())
+        self.select_row(self._current_key())
 
     def _on_filter(self, row=None, col=None, show_dialog=True):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
@@ -1047,7 +1043,7 @@ class LookupForm(RecordForm):
             sorting = tuple(sorting)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
-            self.select_row(self.current_key())
+            self.select_row(self._current_key())
         return sorting
     
     def can_sort_column(self, col=None, direction=None, primary=False):
