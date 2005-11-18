@@ -1671,9 +1671,9 @@ class ShowForm(EditForm):
         title = self._create_title_bar(self.title())
         group = self._create_group(self._view.layout().group())
         # Add parts to the sizer.
-        sizer.Add(title, 0, wx.EXPAND)
+        sizer.Add(title, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(group, 1, wx.ALIGN_CENTER|wx.BOTTOM, 8)
-        
+
     def _on_size(self, event):
         self.set_scrollbars()
         event.Skip()
