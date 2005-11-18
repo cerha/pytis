@@ -1,0 +1,29 @@
+-*- mode: change-log -*-
+; Tento dokument obsahuje chronologický seznam opravených chyb.
+
+2005-11-18  Tomas Cerha  <cerha@brailcom.org>
+
+ 	Nefunkèní nastavení editovatelnosti políèek.
+
+	Nezobrazuj chybový dialog, kdy¾ nelze nalézt pùvodní záznam po
+	vyvolání funkce kontextového menu v BrowseFromu.
+
+	Displej se nyní nezobrazí, pokud má nastavenu nulovou ¹íøku.
+
+	
+	
+2005-11-16  Tomas Cerha  <cerha@brailcom.org>
+
+	Chybné skládání klávesových zkratek a následé padání pøi zobrazení
+	popup-menu.
+
+2005-11-15  Tomas Cerha  <cerha@brailcom.org>
+
+	Nechtìné nalíznutí sekvencí pøi otevírání formuláøù odvozených z
+	EditForm (nadbyteèná inicializace prázdného záznamu).
+   
+2005-11-09  Tomas Cerha  <cerha@brailcom.org>
+
+	Stisk mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na
+	jiný záznam pokud jsem na záznamu s NULL hodnotou ve sloupci,
+	podle kterého je tøídìno.
