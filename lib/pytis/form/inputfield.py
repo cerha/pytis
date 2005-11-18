@@ -1102,7 +1102,9 @@ class CodebookField(Invocable, TextField):
         height = self._ctrl.GetSize().GetHeight()
         if cb_spec.display():
             self._display_column = cb_spec.display()
-            display_size = spec.display_size() or cb_spec.display_size()
+            display_size = spec.display_size()
+            if display_size is None:
+                display_size = cb_spec.display_size()
             display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
             size = char2px(display, display_size, 1)
             size.SetHeight(height)
