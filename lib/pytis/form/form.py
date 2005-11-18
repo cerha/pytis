@@ -1443,6 +1443,11 @@ class EditForm(LookupForm, TitledForm):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
         for f in self._fields:
             f.init(row[f.id()].export())
+            if self._mode != self.MODE_VIEW:
+                if row.editable(f.id()):
+                    f.enable()
+                else:
+                    f.disable()
         super_(EditForm).set_row(self, row)
         
     def title(self):
