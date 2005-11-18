@@ -8,6 +8,8 @@
 	(PopupEditForm._on_next): Nevolej zde `self._init_fields()'.
 	(EditForm.__init__): `self._init_fields()' ->
 	`self._set_focus_field()'.
+	(ShowForm._create_form_parts): Pøidávej titulek do sizeru s
+	nastaveným `wx.FIXED_MINSIZE'.
 
 	* pytis/form/inputfield.py (CodebookField._create_widget):
 	Pøebírej `display_size' z `cb_spec' jen pokud je None (ne pøi
