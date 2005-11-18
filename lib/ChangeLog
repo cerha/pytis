@@ -3,6 +3,8 @@
 	* pytis/form/inputfield.py (CodebookField._create_widget):
 	Pøebírej `display_size' z `cb_spec' jen pokud je None (ne pøi
 	jakékoliv nepravdivé hodnotì).
+	(CodebookField._create_widget): Vytváøej display jen pokud je
+	¹íøka nenulová.
 
 	* pytis/presentation/spec.py (CodebookSpec.__init__): Úprava
 	docstringu.  Loguj pou¾ití potlaèeného argumentu
