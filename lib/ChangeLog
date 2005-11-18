@@ -1,5 +1,14 @@
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (EditForm.set_row): Nastavuj také
+	editovatelnost políèek.
+	(EditForm.__init__): Inicializuj editovatelnost políèek zde.
+	(EditForm._init_fields): Pøejmenováno na `_set_focus_field'.
+	Nestarej se zde o editovatelnost políèek, pouze nastav focus.
+	(PopupEditForm._on_next): Nevolej zde `self._init_fields()'.
+	(EditForm.__init__): `self._init_fields()' ->
+	`self._set_focus_field()'.
+
 	* pytis/form/inputfield.py (CodebookField._create_widget):
 	Pøebírej `display_size' z `cb_spec' jen pokud je None (ne pøi
 	jakékoliv nepravdivé hodnotì).
