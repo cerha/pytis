@@ -1529,13 +1529,6 @@ class EditForm(LookupForm, TitledForm):
         else:
             field = InputField.focused()
         if field is not None and field.on_command(command, **kwargs):
-            # Pokud se volal výbìr polo¾ky seznamu z ListField,
-            # musíme zajistit nastavení _refvalues v PresentedRow.
-            if command == ListField.COMMAND_CHOOSE_KEY:
-                if kwargs.has_key('id'):
-                    id = kwargs['id']
-                    val = field.get_item()
-                    self._row.listfield_choose(id, val)
             return True
         if self._mode != self.MODE_VIEW:
             if command == EditForm.COMMAND_COMMIT_RECORD:
