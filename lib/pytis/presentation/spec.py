@@ -894,65 +894,13 @@ class CodebookSpec(object):
     def begin_search(self):
         """Vra» identifikátor sloupce pro inkrementální vyhledávání."""
         return self._begin_search
-    
-        
+
+
 class RefSpec(object):
-    """Specifikace seznamu závislých záznamù pro vstupní políèko 'ListField'.
-
-    Tato specifikace je urèena pro pou¾ití jako argument 'references'
-    specifikace vstupního pole (tøída 'FieldSpec').
-
-    """
+    """Zachováno pouze pro zpìtnou kompatibilitu."""
     def __init__(self, name, key, columns, sorting=(), returned_columns=None):
-        """Inicializuj specifikaci.
+        pass
 
-        Argumenty:
-
-          name -- název specifikace závislé tabulky pro resolver.  Data pro
-            zobrazený seznam, jako¾to i prezentaèní vlastnosti sloupcù jsou
-            urèena touto specifikací získanou pomocí resolveru.
-          key -- id sloupce v závislé tabulce, jeho¾ hodnota se musí shodovat s
-            vnitøní hodnotou políèka (urèenou pøes 'computer'), aby byl
-            odpovídající záznam v sezamu zobrazen.
-          columns -- tuple identifikátorù sloupcù ze závislé tabulky, které
-            mají být v seznamu viditelné.
-          sorting -- urèuje zpùsob øazení záznamù ve formátu argumentu 'sort'
-            metody 'pytis.data.Data.select()'.
-          returned_columns -- seznam dvojic ('menutext', 'id_sloupce'), kde
-            menutext se zobrazí v popup_menu a id_sloupce se pou¾ije pro
-            nastavení hodnoty get_value(). Pokud je None, pak se vrací
-            implicitní hodnota (tedy self._value) a popup_menu se nevytváøí.  
-
-        """
-        assert isinstance(name, types.StringType)
-        assert isinstance(key, types.StringType)
-        assert is_sequence(columns)
-        assert sorting is None or is_sequence(sorting)
-        self._name = name
-        self._key = key
-        self._columns = columns
-        self._sorting = sorting
-        self._returned_columns = returned_columns
-        
-    def name(self):
-        """Vra» jméno specifikace závislé tabulky pro resolver."""
-        return self._name
-
-    def key(self):
-        """Vra» id sloupce, pøes který jsou vybírány závislé záznamy."""
-        return self._key
-
-    def columns(self):
-        """Vra» seznam id sloupcù, které mají být zobrazeny."""
-        return self._columns
-
-    def sorting(self):
-        """Vra» specifikaci tøídìní."""
-        return self._sorting
-
-    def returned_columns(self):
-        """Vra» seznam specifikací pro vracené sloupce."""
-        return self._returned_columns
 
 class FieldSpec(object):
     """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
@@ -1051,16 +999,6 @@ class FieldSpec(object):
             'PresentedRow' a vrací filtrovací podmínku typu
             'pytis.data.Operator'.  Èíselník bude po zmìnì závislých políèek
             aktualizován tak, aby obsahoval pouze øádku vyhovující dané podmínce.
-          references -- specifikace vazby na jinou tabulku, pro políèko
-            zobrazující seznam závislých záznamù.  Pokud není None, jedná se o
-            instanci tøídy 'RefSpec'.  V takovém pøípadì musí být nutnì urèen
-            také 'computer', proto¾e seznamové políèko je svou podstatou
-            virtuální -- jedná se o výpis závislých záznamù z jiné tabulky -- a
-            jeho vnitøní hodnota, urèená pomocí computeru, slou¾í jako klíè do
-            této závislé tabulky.  Toto políèko není samostatnì nijak
-            editovatelné, pouze zobrazuje data.  Umo¾òuje v¹ak vyvolat
-            samostatný formuláø pro zobrazená data.  Blí¾e viz dokumentace
-            'pytis.form.ListField'.
           selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
             tøídy 'SelectionType'; relevantní jen pro vstupní pole výètových
             typù.
@@ -1160,10 +1098,11 @@ class FieldSpec(object):
             else: editable = Editable.ALWAYS
         assert editable in public_attributes(Editable) or \
                isinstance(editable, Computer)
-        assert references is None or isinstance(references, RefSpec)
         assert check is None or callable(check)
         if check is not None:
             log(EVENT, "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
+        if references is not None:
+            log(EVENT, "Pou¾it potlaèený argument 'references' tøídy 'FieldSpec'!")
         self._id = id
         self._label = gettext_(label)
         self._descr = gettext_(descr)
@@ -1185,7 +1124,6 @@ class FieldSpec(object):
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_runtime_filter = codebook_runtime_filter
-        self._references = references
         self._orientation = orientation
         self._selection_type = selection_type
         self._post_process = post_process
@@ -1333,10 +1271,6 @@ class FieldSpec(object):
     def codebook_runtime_filter(self):
         """Vra» specifikaci computeru run-time podmínky pro èíselník."""
         return self._codebook_runtime_filter
-
-    def references(self):
-        """Vra» specifikaci seznamu závislých záznamù."""
-        return self._references
 
     def selection_type(self):
         """Vra» zpùsob výbìru z mno¾iny hodnot jako konstantu 'SelectionType'.
