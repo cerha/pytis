@@ -162,12 +162,12 @@ Command(Invocable, 'INVOKE_SELECTION',
         "Vyvolání výbìru hodnoty vstupního políèka.")
 Command(Invocable, 'INVOKE_SELECTION_ALTERNATE',
         "Vyvolání alternativního výbìru hodnoty políèka.")
+Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
+        "Vyvolání alternativního výbìru hodnoty políèka.")
 Command(ListField, 'INVOKE_EDIT_FORM',
         "Vyvolání editaèního formuláøe nad akt. záznamem.")
 Command(ListField, 'INVOKE_BROWSE_FORM',
         "Zobrazení aktuálního záznamu v novém formuláøi.")
-Command(ListField, 'CHOOSE_KEY',
-        "Výbìr návratového sloupce a hodnoty.")
 Command(Dialog, 'CLOSE_DIALOG',
         "Opu¹tìní dialogu bez potvrzení.")
 Command(Dialog, 'COMMIT_DIALOG',
