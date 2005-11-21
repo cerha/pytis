@@ -1,3 +1,48 @@
+2005-11-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField.create): Zprùhlednìno
+	mapování typu pøes 'selection_type'.
+	(InputField._set_disabled_color): Nová metoda.
+	(InputField._set_value): Pøijímej argument 'value'.
+	(TextField._set_value): Namísto nastavování barvy pozadí zde
+	pou¾ívej `self._set_disabled_color()'.
+	(Invokable): Podìï také `object'.
+	(Invocable.on_command): Pøedka volej pomocí `super()'.
+	(GenericCodebookField): Nová tøída.
+	(CodebookField): Podìï také `GenericCodebookField'.
+	(CodebookField._create_widget): Vyu¾ívej `_read_cb_spec()' z `GenericCodebookField'.
+	(CodebookField._on_invoke_selection): Vyu¾ívej `_run_codebook_form()' z `GenericCodebookField'.
+	(ListField): Kompletnì pøepsáno.  Zru¹eny v¹echny hacky s
+	`refvalue', `choose_key' apod.
+
+	* pytis/presentation/field.py (PresentedRow._process_fieldspec):
+	Neinicializuj `self._refvalues'.
+	(PresentedRow.listfield_choose): Metoda zru¹ena.
+	(PresentedRow.refvalue): Pou¾ití této potlaèené metody loguj a
+	vracej v¾dy None.
+
+	* pytis/form/form.py (EditForm.on_command): Nestarej se zde o
+	`ListField.COMMAND_CHOOSE_KEY'.
+
+	* pytis/form/command.py: Úprava docstringu.
+
+	* pytis/form/_commands.py: Nový pøíkaz
+	`GenericCodebookField.INVOKE_CODEBOOK_FORM'.  Zru¹en pøíkaz
+	`ListField.CHOOSE_KEY'.
+	
+	* pytis/data/types_.py (DataEnumerator.values): Kosmetická úprava.
+	(DataEnumerator.iter): Nová metoda.
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Loguj pou¾ití
+	potlaèeného argumentu `references'.
+	(FieldSpec.references): Metoda zru¹ena.
+	(RefSpec): V¹e zru¹eno, ponechán jen konstruktor pro zpìtnou
+	kompatibilitu.
+	(SelectionType.LIST): Nová konstanta.
+	(FieldSpec.__init__): Nastavuj výchozí hodnotu `selection_type'
+	podle pøítomnosti `codebook'.  Aktualizován docstring.  Pøidán
+	assert na kombinaci 'selection_type' a 'codebook'.
+
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm.select_row): Pøedávej argument `quiet'.
@@ -22,7 +67,6 @@
 	`self._current_key()' namísto `self.current_key()'.
 	(LookupForm._filter): Pou¾ívej `self._current_key()', ne
 	`self._row.row()', jako argument `select_row'.
-
 
 	* pytis/form/inputfield.py (CodebookField._create_widget):
 	Pøebírej `display_size' z `cb_spec' jen pokud je None (ne pøi
