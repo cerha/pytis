@@ -1128,14 +1128,22 @@ class DataEnumerator(MutableEnumerator):
         return result
 
     def values(self):
-        data = self._data
-        result = data.select_map(lambda r: r[self._value_column].value(),
-                                 condition=self.validity_condition())
+        result = self._data.select_map(lambda r: r[self._value_column].value(),
+                                       condition=self.validity_condition())
         return tuple(result)
         
 
     # Extended interface.
 
+    def iter(self):
+        self._data.select(self.validity_condition())
+        def fetchone():
+            row = self._data.fetchone()
+            if row is None:
+                self._data.close()
+            return row
+        return iter(fetchone, None)
+    
     def value_column(self):
         return self._value_column
     
@@ -1200,7 +1208,7 @@ class DataEnumerator(MutableEnumerator):
     
     def validity_condition(self):
         """Vra» podmínku urèující platné øádky enumerátoru.
-
+        
         Podmínka zahrnuje jak statické omezení øádkù enumerátoru, tak aktuální
         hodnotu run-time podmínky
 
