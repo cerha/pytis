@@ -148,7 +148,6 @@ class PresentedRow(object):
         self._editability_dirty = {}
         self._editable = {}
         self._columns = {}
-        self._refvalues = {}
         for f in self._fieldspec:
             key = f.id()
             c = self._Column(key, f.type(data), f.computer(),
@@ -510,20 +509,13 @@ class PresentedRow(object):
                 return c.id
         return None
 
-    def listfield_choose(self, key, value):
-        """O¹etøi výbìr polo¾ky u ListField políèka."""
-
-        self._refvalues[key] = value
-        self._dirty[key] = True
-        self._resolve_dependencies()
         
     def refvalue(self, key):
-        """Vrátí vybranou hodnotu z ListField.
+        """Metoda existuje jen kvùli zpìtné kompatibilitì, ale vrací v¾dy None.
 
-        Typickým pou¾itím je zji¹tìní vybrané hodnoty v computerech,
-        které jsou závislé na ListFieldu.
-        """
+        Brzy bude zru¹ena, tak¾e je tøeba v¹echna její pou¾ití odstranit.
         
-        if self._refvalues.has_key(key):
-            return self._refvalues[key]
+        """
+        log(EVENT, "Pou¾ita potlaèená metoda 'PresentedRow.refvalue()'!")
+        # TODO: Zru¹it!!!
         return None
