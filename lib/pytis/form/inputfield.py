@@ -118,8 +118,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         type = fspec.type(data)
         if fspec.width() == 0: 
             field = HiddenField
-        elif fspec.references() is not None: 
-            field = ListField
         elif isinstance(type, pytis.data.Date):
             field = DateField
         elif isinstance(type, pytis.data.Boolean):
@@ -128,16 +126,20 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = ColorSelectionField
         elif isinstance(type, (pytis.data.Number, pytis.data.String)) \
                  and type.enumerator():
-            if fspec.codebook():
-                field = CodebookField
+            if inline:
+                if fspec.codebook():
+                    field = CodebookField
+                else:
+                    field = ChoiceField 
             else:
-                field = ChoiceField # default
-                if not inline:
-                    selection_type = fspec.selection_type()
-                    if selection_type == SelectionType.LIST_BOX:
-                        field = ListBoxField
-                    elif selection_type == spec.SelectionType.RADIO_BOX:
-                        field = RadioBoxField
+                mapping = {
+                    SelectionType.CODEBOOK:  CodebookField,
+                    SelectionType.LIST:      ListField,
+                    SelectionType.CHOICE:    ChoiceField,
+                    SelectionType.LIST_BOX:  ListBoxField,
+                    SelectionType.RADIO_BOX: RadioBoxField,
+                    }
+                field = mapping[fspec.selection_type()]
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
@@ -491,6 +493,14 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             # effectively.
             pass
 
+    def _set_disabled_color(self):
+        if self._accessible:
+            color = config.field_disabled_color 
+        else:
+            color = config.field_inaccessible_color
+        self._ctrl.SetBackgroundColour(color)
+        self._ctrl.Refresh()
+            
     def set_focus(self):
         """Uèiò toto políèko aktivním pro vstup z klávesnice."""
         self._want_focus = True
@@ -555,7 +565,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         else:
             return False
 
-    def _set_value(self):
+    def _set_value(self, value):
         raise ProgramError("This method must be overriden!")
 
     def is_modified(self):
@@ -769,16 +779,9 @@ class TextField(InputField):
         self._ctrl.SetEditable(False)
         self._ctrl.SetValidator(wx.DefaultValidator)
         if change_appearance:
-            if self._accessible:
-                color = config.field_disabled_color 
-            else:
-                color = config.field_inaccessible_color
-            def call_on_idle():
-                self._ctrl.SetBackgroundColour(color)
-                self._ctrl.Refresh()
             # Pokud to udìlám pøímo, u nìkterých políèek se zmìna neprojeví!
-            self._call_on_idle = call_on_idle
-            
+            self._call_on_idle = self._set_disabled_color
+
     def _set_value(self, value):
         assert isinstance(value, types.StringTypes), \
                ('String or Unicode expected', value)
@@ -917,7 +920,7 @@ class ListBoxField(EnumerationField):
         return control
     
 
-class Invocable(CommandHandler):
+class Invocable(object, CommandHandler):
     """Mix-in tøída pro políèka s mo¾ností vyvolání výbìru.
 
     Abstraktní tøída pro políèka, která umo¾òují vyvolat pro výbìr hodnoty
@@ -996,7 +999,7 @@ class Invocable(CommandHandler):
                 return self._on_invoke_selection()
             if command == Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE:
                 return self._on_invoke_selection(alternate=True)
-        return InputField.on_command(self, command, **kwargs)
+        return super(Invocable, self).on_command(command, **kwargs)
 
     def can_invoke_selection(self, **kwargs):
         return self.is_enabled()
@@ -1062,8 +1065,54 @@ class ColorSelectionField(Invocable, TextField):
         self._invocation_button.SetForegroundColour(value)
         return super(ColorSelectionField, self)._set_value(value)
 
+class GenericCodebookField(InputField):
+    """Spoleèná nadtøída èíselníkových políèek."""
 
-class CodebookField(Invocable, TextField):
+    def __init__(self, *args, **kwargs):
+        super(GenericCodebookField, self).__init__(*args, **kwargs)
+        self._type.enumerator().add_hook_on_update(self._on_enumerator_change)
+    
+    def _read_cb_spec(self):
+        try:
+            cb_spec = resolver().get(self.spec().codebook(), 'cb_spec')
+        except ResolverError:
+            cb_spec = CodebookSpec()
+        except AttributeError:
+            cb_spec = CodebookSpec()
+        self._cb_spec = cb_spec
+        return cb_spec
+
+    def _select_row_arg(self):
+        """Return the value for RecordForm 'select_row' arguemnt."""
+        value = self._value()
+        if value:
+            return {self._type.enumerator().value_column(): value}
+        else:
+            return None
+    
+    def _run_codebook_form(self, begin_search=None):
+        """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
+        enumerator = self._type.enumerator()
+        result = run_form(CodebookForm, self.spec().codebook(),
+                          columns=self._cb_spec.columns(),
+                          begin_search=begin_search,
+                          select_row=self._select_row_arg(),
+                          condition=enumerator.validity_condition())
+        if result != None:
+            self.set_value(result.format(enumerator.value_column()))
+        self.set_focus()
+
+    def _on_enumerator_change(self):
+        pass
+
+    def on_command(self, command, **kwargs):
+        if self._enabled and command == self.COMMAND_INVOKE_CODEBOOK_FORM:
+            self._run_codebook_form()
+            return True
+        return super(GenericCodebookField, self).on_command(command, **kwargs)
+    
+
+class CodebookField(Invocable, GenericCodebookField, TextField):
     """Vstupní pole pro data navázaná na èíselník.
 
     Bude pou¾ito v pøípadì, ¾e datový typ definuje enumerátor typu
@@ -1087,13 +1136,7 @@ class CodebookField(Invocable, TextField):
         widget = Invocable._create_widget(self)
         self._insert_button = None
         spec = self.spec()
-        try:
-            cb_spec = resolver().get(spec.codebook(), 'cb_spec')
-        except ResolverError:
-            cb_spec = CodebookSpec()
-        except AttributeError:
-            cb_spec = CodebookSpec()
-        self._cb_spec = cb_spec
+        cb_spec = self._read_cb_spec()
         if self._inline or cb_spec.display() is None and \
                not spec.allow_codebook_insert():
             return widget
@@ -1156,19 +1199,8 @@ class CodebookField(Invocable, TextField):
         self._display.SetValue(dv and dv.export() or '')
 
     def _on_invoke_selection(self, alternate=False, **kwargs):
-        """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
-        value = self._value()
-        enumerator = self._type.enumerator()
         begin_search = alternate or self._cb_spec.begin_search() or None
-        select_row = value and {enumerator.value_column(): value} or None
-        result = run_form(CodebookForm, self.spec().codebook(),
-                          columns=self._cb_spec.columns(),
-                          begin_search=begin_search,
-                          select_row=select_row,
-                          condition=enumerator.validity_condition())
-        if result != None:
-            self.set_value(result.format(enumerator.value_column()))
-        self.set_focus()
+        self._run_codebook_form(begin_search=begin_search)
         return True
 
     def _on_codebook_insert(self, event):
@@ -1184,55 +1216,34 @@ class CodebookField(Invocable, TextField):
         return True
     
     
-class ListField(InputField):
-    """Seznamové políèko pro zobrazení záznamù ze závislé tabulky
+class ListField(GenericCodebookField):
+    """Èíselníkové políèko zobrazující data èíselníku jako souèást formuláøe.
 
-    Políèko slou¾í k zobrazení mno¾niny záznamù z jiné tabulky (datového
-    objektu) vztahujících se k nastavené vnitøní hodnotì políèka (viz také
-    metoda '_set_value()').  Typické vyu¾ití je pøi vazbì pøes cyzí klíè v
-    relaèní databázi.
-
-    Vzhled a chování je urèeno specifikátorem 'references' ve specifikaci
-    políèka (viz. 'pytis.form.FieldSpec').  Datový objekt navázané tabulky je
-    získán pomocí resolveru podle jména urèeného specifikací. 
+    Pokud je 'selection_type' èíselníkového políèka ve specifikaci urèen jako
+    'LIST_FIELD', bude ve formuláøi pou¾it tento typ vstupního pole.
 
     """
     _DEFAULT_WIDTH = 30
     _DEFAULT_HEIGHT = 6
 
     def _create_ctrl(self):
-        self._ref_spec = refspec = self.spec().references()
         # Naètu specifikace.
-        resolver = pytis.form.application._application.resolver()
-        data_spec = resolver.get(refspec.name(), 'data_spec')
-        view_spec = resolver.get(refspec.name(), 'view_spec')
-        assert isinstance(data_spec, pytis.data.DataFactory)
-        assert isinstance(view_spec, ViewSpec)
-        self._list_data = \
-            data_spec.create(dbconnection_spec=config.dbconnection)
+        cb_spec = self._read_cb_spec()
+        view_spec = resolver().get(self.spec().codebook(), 'view_spec')
+        self._columns = columns = cb_spec.columns() or view_spec.columns()
         # Vytvoøím vlastní seznamový widget.
         style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL
         list = wx.ListCtrl(self._parent, -1, style=style)
-        # Specifikace sloupcù ulo¾ím do dictionary.
-        colspec = {}
-        for id in view_spec.columns():
-            colspec[id] = view_spec.field(id)
-        self._colspec = colspec
         # Nastavím záhlaví sloupcù.
         total_width = 0
-        columns = refspec.columns()
-        for i in range(len(columns)):
-            col = colspec[columns[i]]
+        for i, id in enumerate(columns):
+            col = view_spec.field(id)
             list.InsertColumn(i, col.label())
             width = col.column_width()
             if width < len(col.label()):
                 width = len(col.label())
             list.SetColumnWidth(i, dlg2px(list, 4*(width+1)))
             total_width = total_width + width
-        # Spoèítám celkovou vý¹ku.
-        #list.InsertStringItem(0, 'XXX')
-        #rect = list.GetItemRect(0) # to vrací (0,0,0,0)  :-(
-        #list.DeleteAllItems()
         # TODO/wx: Nìjak spoèítat skuteènou vý¹ku záhlaví a øádku.
         # Tohle jsou "empirické" vzorce!!!
         header_height = char2px(list, 1, float(9)/4).GetHeight()
@@ -1240,128 +1251,98 @@ class ListField(InputField):
         height = header_height + row_height * self.height()
         self._DEFAULT_WIDTH = total_width + 3
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
-        #list.SetMargins(0,0)
         self._list =  list
-        self._get_item = None
+        self._load_list_data()
+        wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, list.GetId(), self._on_change)
+        #list.SetMargins(0,0)
         return list
 
-    def _selected_item(self):
-        item = self._list.GetNextItem(-1, wx.LIST_NEXT_ALL,
-                                      wx.LIST_STATE_SELECTED)
-        if item == -1:
-            return None
-        return item
+    def _load_list_data(self):
+        list = self._list
+        enumerator = self.type().enumerator()
+        list.DeleteAllItems()
+        self._list_data = []
+        for i, row in enumerate(enumerator.iter()):
+            list.InsertStringItem(i, "")
+            self._list_data.append(row[enumerator.value_column()])
+            for j, id in enumerate(self._columns):
+                list.SetStringItem(i, j, row[id].export())
 
-    def _choose_returned_column(self, column):
-        """Vra» hodnotu vybraného sloupce."""        
-        i = self._selected_item()
-        columns = self._ref_spec.columns()
-        self._get_item = None
-        for j in range(len(columns)):
-            if columns[j] == column:
-                ctype = self._colspec[column].type(self._list_data)
-                itemtext = self._list.GetItem(i,j).GetText()
-                val, error = ctype._validate(itemtext)
-                if not error:
-                    self._get_item = val
-                else:
-                    self._get_item = None
-                break            
-        
-    def _enable(self):
-        pass # ListControl se stejnì nedá nijak editovat
-    
+    def _on_change(self, event):
+        self._is_changed = True
+        event.Skip()
+                    
     def _disable(self, change_appearance):
-        pass # ListControl se stejnì nedá nijak editovat
-
-    def get_item(self):
-        """Vra» aktuální hodnotu vybraného políèka."""
-        return self._get_item
-
-    def get_value(self):
-        """Vra» aktuální vnitøní hodnotu políèka."""
-        return self._value
+        self._list.Enable(False)
+        if change_appearance:
+            self._set_disabled_color()
+        
+    def _selected_item(self):
+        i = self._list.GetNextItem(-1, wx.LIST_NEXT_ALL,
+                                   wx.LIST_STATE_SELECTED)
+        if i == -1:
+            return None
+        else:
+            return i
 
     def _set_value(self, value):
-        """Nastav vnitøní hodnotu políèka a pøenaèti seznam závislých záznamù.
-        
-        Ka¾dé nastavení hodnotu vyvolá výbìr z navázaného datového objektu.
-        Výbìr vyfiltruje z navázané tabulky ty záznamy jejich¾ sloupeèek urèený
-        specifikací 'references' (instance 'RefSpec') jako 'key' se svou
-        hodnotou shoduje s hodnotou pøedanou argumentem 'value'.
-        
-        """
-        self._value = value
-        list = self._list
-        list.DeleteAllItems()
-        v = pytis.data.Value(self.type(), value)
-        self._list_data.select(pytis.data.EQ(self._ref_spec.key(), v),
-                               sort=self._ref_spec.sorting())
-        n = 0
-        self._list_rows = []
-        while 1:
-            row = self._list_data.fetchone()
-            if row is None: break
-            self._list_rows.append(row)
-            columns = self._ref_spec.columns()
-            list.InsertStringItem(n, row[columns[0]].export())
-            for i in range(1, len(columns)):
-                list.SetStringItem(n, i, row[columns[i]].export())
-            n = n + 1
+        if value:
+            for i, v in enumerate(self._list_data):
+                if v.export() == value:
+                    self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
+                                            wx.LIST_STATE_SELECTED)
+                    self._list.EnsureVisible(i)
+                    return True
+            else:
+                return False
+        else:
+            i = self._selected_item()
+            if i is not None:
+                self._list.SetItemState(i, 0)
         return True
-
-    def _selected_item_key(self):
+        
+        
+    def get_value(self):
+        """Vra» aktuální vnitøní hodnotu políèka."""
         i = self._selected_item()
-        return self._list_data.row_key(self._list_rows[i])
+        if i is not None:
+            return self._list_data[i].export()
+        else:
+            return None
+
+    def _on_enumerator_change(self):
+        self._load_list_data()
 
     def _menu(self):
-        menu = (MItem("Editovat",
+        menu = (MItem("Zobrazit èíselník",
+                      command=self.COMMAND_INVOKE_CODEBOOK_FORM,
+                      args={'originator': self}),
+                MItem("Editovat vybraný záznam",
                       command=self.COMMAND_INVOKE_EDIT_FORM,
                       args={'originator': self}),
-                MItem("Celá tabulka",
+                MItem("Zobrazit celou tabulku",
                       command=self.COMMAND_INVOKE_BROWSE_FORM,
                       args={'originator': self})
                 )
-        if self._ref_spec.returned_columns():
-            user_popup = [MItem("Vybrat " + m,
-                                command=self.COMMAND_CHOOSE_KEY,
-                                args={'id': self.id(),
-                                      'returned_key': k,
-                                      'originator': self})
-                          for m, k in self._ref_spec.returned_columns()]
-            menu = menu + tuple(user_popup)
         return menu   
-
 
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_INVOKE_EDIT_FORM:
-            run_form(PopupEditForm, self._ref_spec.name(),
-                     select_row=self._selected_item_key())
+            run_form(PopupEditForm, self.spec().codebook(),
+                     select_row=self._select_row_arg())
             return True
         elif command == self.COMMAND_INVOKE_BROWSE_FORM:
-            if isinstance(current_form(), PopupForm):
-                run_dialog(Warning, _("Celou tabulku nemù¾ete zobrazit, pokud "
-                                      "je otevøeno modální okno formuláøe!"))
-                return True
-            run_form(BrowseForm, self._ref_spec.name(),
-                     select_row=self._selected_item_key())
-            return True
-        elif command == self.COMMAND_CHOOSE_KEY:
-            if kwargs.has_key('returned_key'):
-                self._choose_returned_column(kwargs['returned_key'])
+            run_form(BrowseForm, self.spec().codebook(),
+                     select_row=self._select_row_arg())
             return True
         else:            
-            return InputField.on_command(self, command, **kwargs)
+            return super(ListField, self).on_command(command, **kwargs)
     
-    def can_invoke_browse_form(self, **kwargs):
-        return self._selected_item() is not None
-
     def can_invoke_edit_form(self, **kwargs):
         return self._selected_item() is not None
 
-    def can_choose_key(self, **kwargs):
-        return self._selected_item() is not None
-
+    def can_invoke_browse_form(self, **kwargs):
+        return not isinstance(current_form(), PopupForm)
 
 class HiddenField(InputField):
     """Skryté (virtuální) políèko. Políèko pouze dr¾í nastavenou hodnotu."""
