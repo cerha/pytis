@@ -680,15 +680,16 @@ class Editable(object):
     
 class SelectionType(object):
     """Výètová tøída definující konstanty zpùsobu výbìru z mno¾iny hodnot."""
-    CODEBOOK = 'CODEBOOK'
-    """Je mo¾ný pøímý zápis hodnoty nebo vyvolání èíselníkového formuláøe."""
     CHOICE = 'CHOICE'
     """Výbìr z menu.  Viditelná je jen právì vybraná hodnota."""
     RADIO_BOX = 'RADIO_BOX'
     """Pro ka¾dou hodnotu je zobrazeno za¹krtávací políèko."""
     LIST_BOX = 'LIST_BOX'
     """Viditelná je vybraná hodnota a \"nìkolik\" kolem."""
-
+    CODEBOOK = 'CODEBOOK'
+    """Je mo¾ný pøímý zápis hodnoty nebo vyvolání èíselníkového formuláøe."""
+    LIST = 'LIST'
+    """Vícesloupcové/víceøádkové výbìrové políèko pro èíselníky."""
 
 class Color(object):
     """Na GUI toolkitu nezávislé konstanty pro nìkteré barvy."""
@@ -924,7 +925,7 @@ class FieldSpec(object):
                  codebook=None, display_size=None,
                  allow_codebook_insert=False, codebook_insert_spec=None,
                  codebook_runtime_filter=None, 
-                 selection_type=SelectionType.CHOICE,
+                 selection_type=None,
                  orientation=Orientation.VERTICAL,
                  references=None,
                  post_process=None, filter=None, filter_list=None,
@@ -1000,8 +1001,10 @@ class FieldSpec(object):
             'pytis.data.Operator'.  Èíselník bude po zmìnì závislých políèek
             aktualizován tak, aby obsahoval pouze øádku vyhovující dané podmínce.
           selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
-            tøídy 'SelectionType'; relevantní jen pro vstupní pole výètových
-            typù.
+            tøídy 'SelectionType'.  Relevantní jen pro vstupní pole výètových
+            typù.  Pokud je urèen èíselník argumentem 'codebook', je výchozí
+            hodnotou 'SelectionType.CODEBOOK'.  Jinak je to
+            'SelectionType.CHOICE'.
           orientation -- orientace políèka, jedna z konstant tøídy
             'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
             napø. 'inputfield.RadioBoxInputField'.
@@ -1125,6 +1128,15 @@ class FieldSpec(object):
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_runtime_filter = codebook_runtime_filter
         self._orientation = orientation
+        if selection_type is None:
+            if codebook is not None:
+                selection_type = SelectionType.CODEBOOK
+            else:
+                selection_type = SelectionType.CHOICE
+ 
+        cbtypes = (SelectionType.CODEBOOK, SelectionType.LIST)
+        assert selection_type not in cbtypes or codebook is not None, \
+               "SelectionType.%s vy¾aduje argument 'codebook'!" % selection_type
         self._selection_type = selection_type
         self._post_process = post_process
         self._filter = filter
