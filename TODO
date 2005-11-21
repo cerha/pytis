@@ -68,6 +68,21 @@ DESIGN GOALS:
    pøedev¹ím v ListTable do speciální tøídy (nadstavba datového rozhraní).
    Podobné vìci se dìlají i v netabulkových formuláøích a je tøeba je mít na
    dsfdf jednom místì.
+
+ * InputField.get_value(), InputField.set_value() nech» pracijí s instancemi
+   Value, ne se stringy.
    
  * Pøepracování stavového øádku?
  
+
+CLEAN-UP:
+
+ * Zru¹it tøídu 'RefSpec', argument 'references' konstruktoru FieldSpec a
+   metodu 'PresentedRow.refvalue' (a v¹echna její pou¾ití v defsech).
+
+ * Zru¹it argument 'check' konstruktoru FieldSpec.
+
+ * Zru¹it argument 'insert_unknown_values' konstruktoru 'CodebookSpec'.
+
+ * Zru¹it pou¾ití atributu 'key' tøídy 'Command', stejnojmenného argumentu
+   konstruktoru a metodu 'Command.__setattr__()'.
