@@ -1,3 +1,11 @@
+2005-11-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (DataEnumerator._retrieve): Pøedávej
+	konstruktoru výjimky øetìzcovou reprezentaci filtrovací podmínky.
+
+	* pytis/form/form.py (RecordForm.select_row): Akceptuj také
+	'position' 'None'.
+
 2005-11-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField.create): Zprùhlednìno
