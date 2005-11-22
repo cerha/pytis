@@ -1,3 +1,25 @@
 ; -*- mode: change-log -*-
 ; Tento dokument obsahuje chronologický seznam nových u¾ivatelských vlastností.
 
+2005-11-21  Tomas Cerha  <cerha@brailcom.org>
+
+	Nový typ èíselníkového políèka urèený pomocí `SelectionType.LIST'.
+	Toto políèko nahrazuje pùvodní seznamové políèko urèené pomocí
+	'RefSpec' a argumentu 'references'.  Argument 'references' je nyní
+	nefunkèní a jeho pou¾ití je pouze logováno.  Bude tøeba ho v¹ude
+	odstranit a nahradit èíselníkem s vý¹e zmínìným 'selection_type'.
+	Tato nová implementace umo¾òuje daleko sna¾¹í práci se seznamem,
+	mo¾nost pøímého získání vybrané hodnoty (napø. v computerech),
+	získání hodnoty libovolného sloupce vybraného øádku a dal¹í
+	mo¾nosti *sdandardnì* podporované èíselníkovými políèky.
+	Odstraòuje také nìkolik velice nepøíjemných hackù, které byly
+	nutné kvùli døívìj¹í implementaci a pomìrnì neprùhledné a zcela
+	nestandardní chování.  Kromì nového typu 'selection_type' nejsou
+	na stranì specifikace nyní pou¾ity ¾ádné speciality.  K filtrování
+	záznamù v seznamu podle aktuálních dat formuláøe je mo¾né pou¾ít
+	'codebook_runtime_filter'.  V¹e je tak plnì v souladu se za¾itou
+	koncepcí systému.
+
+	Zprùhlednìní zpracování arguemntu 'selection_type' ve 'FieldSpec'
+	a pøiøazení výchozích hodnot.  Pøidány asserty upozoròující na
+	nesprávnou kombinaci 'selection_type' a 'codebook' ve specifikaci.

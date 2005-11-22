@@ -1,6 +1,11 @@
 -*- mode: change-log -*-
 ; Tento dokument obsahuje chronologický seznam opravených chyb.
 
+
+2005-11-22  Tomas Cerha  <cerha@brailcom.org>
+
+	None nech» je platným argumentem 'select_row()'.
+	
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
  	Nefunkèní nastavení editovatelnosti políèek.
