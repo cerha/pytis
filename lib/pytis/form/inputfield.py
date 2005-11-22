@@ -199,7 +199,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._init_ctrl()
         if not self._enabled:
             self._disable(True)
-            self._register_skip_navigation_callback()            
+            self._register_skip_navigation_callback()
 
     def __str__(self):
         return "<%s id='%s'>" % (self.__class__.__name__, self.id())
@@ -1252,11 +1252,19 @@ class ListField(GenericCodebookField):
         self._DEFAULT_WIDTH = total_width + 3
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
         self._list =  list
-        self._load_list_data()
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, list.GetId(), self._on_change)
         #list.SetMargins(0,0)
         return list
 
+    def __getattr__(self, name):
+        if name == '_list_data':
+            # Nemù¾eme data naèíst hned v konstruktoru, proto¾e 
+            # tou dobou je¹tì nemusí být inicializován runtime_filter.
+            self._load_list_data()
+            return self.__dict__[name]
+        else:
+            return super(ListField, self).__getattr__(name)
+        
     def _load_list_data(self):
         list = self._list
         enumerator = self.type().enumerator()
@@ -1311,7 +1319,9 @@ class ListField(GenericCodebookField):
             return None
 
     def _on_enumerator_change(self):
-        self._load_list_data()
+        # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
+        if self._list:
+            self._load_list_data()
 
     def _menu(self):
         menu = (MItem("Zobrazit èíselník",
