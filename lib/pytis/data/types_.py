@@ -988,6 +988,7 @@ class MutableEnumerator(Enumerator):
     """
     def __init__(self):
         self._hooks = []
+        self._running_hooks = False
     
     def _update(self, force=False):
         """Aktualizuj data enumerátoru.
@@ -1003,7 +1004,13 @@ class MutableEnumerator(Enumerator):
         Vrací: Pravdu, právì kdy¾ byl update skuteènì proveden.
 
         """
-        for hook in self._hooks: hook()
+        if self._running_hooks:
+            return True
+        self._running_hooks = True
+        try:
+            for hook in self._hooks: hook()
+        finally:
+            self._running_hooks = False
         return True
 
     def add_hook_on_update(self, hook):
