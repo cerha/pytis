@@ -5,6 +5,8 @@
 2005-11-22  Tomas Cerha  <cerha@brailcom.org>
 
 	None nech» je platným argumentem 'select_row()'.
+
+	Vnoøené volání hookù pøi zmìnì runtime filteru enumerátoru.
 	
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
@@ -14,8 +16,6 @@
 	vyvolání funkce kontextového menu v BrowseFromu.
 
 	Displej se nyní nezobrazí, pokud má nastavenu nulovou ¹íøku.
-
-	
 	
 2005-11-16  Tomas Cerha  <cerha@brailcom.org>
 
@@ -29,6 +29,6 @@
    
 2005-11-09  Tomas Cerha  <cerha@brailcom.org>
 
-	Stisk mezerníku (vyvolání DescriptiveDualForm) zpùsobí odskok na
-	jiný záznam pokud jsem na záznamu s NULL hodnotou ve sloupci,
-	podle kterého je tøídìno.
+        Nekorektní chování metody `Data.search()' v tabulce s NULL
+	hodnotami ve sloupci, podle kterého je tøídìno.
+	
