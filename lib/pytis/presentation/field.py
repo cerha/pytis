@@ -237,8 +237,12 @@ class PresentedRow(object):
             value = self._virtual.get(key)
         if value is None or self._dirty.has_key(key) and self._dirty[key]:
             column = self._columns[key]
-            func = column.computer.function()
-            new_value = pytis.data.Value(column.type, func(self))
+            if column.computer:
+                func = column.computer.function()
+                v = func(self)
+            else:
+                v = None
+            new_value = pytis.data.Value(column.type, v)
             self._dirty[key] = False
             if value is None or new_value.value() != value.value():
                 value = new_value
@@ -257,10 +261,13 @@ class PresentedRow(object):
                "Invalid type for '%s': %s (expected %s)" % \
                (key, value.type(), column.type)
         self._cache = {}
-        # Pokus o nastavení virtuálních políèek ti¹e ignorujeme...
         if self._row.has_key(key) and self._row[key] != value:
             self._row[key] = value
-            self._resolve_dependencies(key)
+        elif self._virtual.has_key(key) and self._virtual[key] != value:
+            self._virtual[key] = value
+        else:
+            return
+        self._resolve_dependencies(key)
                 
     def __str__(self):
         if hasattr(self, '_row'):
