@@ -1097,7 +1097,7 @@ class FieldSpec(object):
         assert filter not in ('INCLUDE_LIST','EXCLUDE_LIST') or \
                is_sequence(filter_list)
         if editable is None:
-            if width == 0 or computer: editable = editable = Editable.NEVER
+            if width == 0 or computer: editable = Editable.NEVER
             else: editable = Editable.ALWAYS
         assert editable in public_attributes(Editable) or \
                isinstance(editable, Computer)
