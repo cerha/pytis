@@ -1,11 +1,6 @@
 ; -*- mode: change-log -*-
 ; Tento dokument obsahuje chronologický seznam nových u¾ivatelských vlastností.
 
-2005-11-22  Tomas Cerha  <cerha@brailcom.org>
-
-	PresentedRow nyní správnì øe¹í ve¹keré závislosti a pøepoèítávání
-	i pro virtuální políèka.
-
 2005-11-21  Tomas Cerha  <cerha@brailcom.org>
 
 	Nový typ èíselníkového políèka urèený pomocí `SelectionType.LIST'.
@@ -28,3 +23,11 @@
 	Zprùhlednìní zpracování arguemntu 'selection_type' ve 'FieldSpec'
 	a pøiøazení výchozích hodnot.  Pøidány asserty upozoròující na
 	nesprávnou kombinaci 'selection_type' a 'codebook' ve specifikaci.
+	
+2005-11-22  Tomas Cerha  <cerha@brailcom.org>
+
+	PresentedRow nyní správnì øe¹í ve¹keré závislosti a pøepoèítávání
+	i pro virtuální políèka.
+
+
+	
