@@ -7,6 +7,10 @@
 	None nech» je platným argumentem 'select_row()'.
 
 	Vnoøené volání hookù pøi zmìnì runtime filteru enumerátoru.
+
+	PresentedRow nyní správnì øe¹í ve¹keré závislosti a pøepoèítávání
+	i pro virtuální políèka.
+
 	
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
