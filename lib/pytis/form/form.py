@@ -731,7 +731,7 @@ class RecordForm(Form):
         náhledovém formuláøi apod.
         
         """
-        if isinstance(position, pytis.data.Row):
+        if position is None or isinstance(position, pytis.data.Row):
             row = position
         elif isinstance(position, types.IntType):
             row = self._find_row_by_number(position)
