@@ -569,7 +569,7 @@ class DBDataPostgreSQL(DBData):
         if __debug__: log(DEBUG, 'Vytváøím databázovou tabulku')
         import config
         if isinstance(dbconnection_spec, DBConnection):
-            self._pg_dbconnection_spec = lambda s=dbconnection_spec: s
+            self._pg_dbconnection_spec = lambda : dbconnection_spec
         else:
             self._pg_dbconnection_spec = dbconnection_spec
         if is_sequence(key):
