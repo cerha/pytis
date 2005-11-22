@@ -1104,7 +1104,7 @@ class DataEnumerator(MutableEnumerator):
         count = data.select(condition)
         if count > 1:
             raise ProgramError('Insufficient runtime filter for DataEnumerator',
-                               condition)
+                               str(condition))
         row = data.fetchone()
         data.close()
         return row
