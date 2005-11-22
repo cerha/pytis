@@ -1,5 +1,11 @@
 2005-11-22  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (ListField.__getattr__): Nevolej zde
+	`_load_list_data()'.
+	(ListField.__getattr__): Nová metoda.
+	(ListField._on_enumerator_change): Nedìlej nic, pokud je list ji¾
+	po smrti.
+
 	* pytis/data/dbdata.py (DBDataPostgreSQL.__init__): Kosmetická
 	úprava (nepøedávej lokální promìnné do lambda funkce pøes klíèové
 	arguemnty).
@@ -13,6 +19,8 @@
 
 	* pytis/data/types_.py (DataEnumerator._retrieve): Pøedávej
 	konstruktoru výjimky øetìzcovou reprezentaci filtrovací podmínky.
+	(MutableEnumerator.__init__): Inicializuj atribut `_running_hooks'.
+	(MutableEnumerator._update): Blokuj vnoøená volání.
 
 	* pytis/form/form.py (RecordForm.select_row): Akceptuj také
 	'position' 'None'.
