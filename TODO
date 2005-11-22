@@ -86,3 +86,5 @@ CLEAN-UP:
 
  * Zru¹it pou¾ití atributu 'key' tøídy 'Command', stejnojmenného argumentu
    konstruktoru a metodu 'Command.__setattr__()'.
+
+ * Zru¹it argument 'ignore_enumerators' tøídy DataSpec a metodu 'make'.

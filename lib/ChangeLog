@@ -1,5 +1,16 @@
 2005-11-22  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/dbdata.py (DBDataPostgreSQL.__init__): Kosmetická
+	úprava (nepøedávej lokální promìnné do lambda funkce pøes klíèové
+	arguemnty).
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Kosmetická úprava.
+
+	* pytis/presentation/field.py (PresentedRow.__getitem__): Pro
+	virtuální políèko, které je¹tì nebylo nastaveno a nemá computer
+	dosazuj automaticky hodnotu None.
+	(PresentedRow.__setitem__): Nastavuj správnì i virtuální políèka.
+
 	* pytis/data/types_.py (DataEnumerator._retrieve): Pøedávej
 	konstruktoru výjimky øetìzcovou reprezentaci filtrovací podmínky.
 
