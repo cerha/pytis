@@ -1274,7 +1274,7 @@ class ListField(GenericCodebookField):
             list.InsertStringItem(i, "")
             self._list_data.append(row[enumerator.value_column()])
             for j, id in enumerate(self._columns):
-                list.SetStringItem(i, j, row[id].export())
+                list.SetStringItem(i, j, row[id].export().replace("\n", ";"))
 
     def _on_change(self, event):
         self._is_changed = True
