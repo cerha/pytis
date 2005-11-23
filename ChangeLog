@@ -1,3 +1,7 @@
+2005-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (enum): Nová funkce.
+
 2005-10-18  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (send_mail): Kosmetická úprava.
