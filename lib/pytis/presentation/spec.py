@@ -847,7 +847,7 @@ class CodebookSpec(object):
     Specifikace pro argument 'codebook' konstruktoru tøídy 'FieldSpec'
 
     """
-    def __init__(self, columns=None, display=None,
+    def __init__(self, columns=None, sorting=None, display=None,
                  display_size=20, insert_unknown_values=False,
                  begin_search=None):
         
@@ -859,6 +859,9 @@ class CodebookSpec(object):
             v èíselníkovém formuláøi (tøída 'CodebookForm').  Pokud je 'None',
             bude èíselník zobrazovat v¹echny sloupce ze specifikace dané
             tabulky.
+          sorting -- sekvence identifikátorù sloupcù, podle kterých mají být
+            záznamy èíselníkového formuláøe setøídìny.  Pokud je 'None',
+            bude pou¾ito tøídìní z ViewSpec.
           display -- pokud není 'None', bude èíselníkové políèko vybaveno
             displejem, (viz 'CodebookField').  Hodnotou je identifikátor
             sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
@@ -870,12 +873,14 @@ class CodebookSpec(object):
           
         """
         assert columns is None or is_sequence(columns)
+        assert sorting is None or is_sequence(sorting)
         assert display is None or isinstance(display, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert begin_search is None or isinstance(begin_search,types.StringType)
         if insert_unknown_values:
             log(EVENT, "Pou¾it potlaèený argument 'insert_unknown_values'!")
         self._columns = columns
+        self._sorting = sorting
         self._display = display
         self._display_size = display_size
         self._begin_search = begin_search
@@ -883,6 +888,10 @@ class CodebookSpec(object):
     def columns(self):
         """Vra» seznam id sloupcù, zobrazených ve výbìrovém formuláøi."""
         return self._columns
+        
+    def sorting(self):
+        """Vra» seznam id sloupcù, podle kterých má být èíselník setøídìn."""
+        return self._sorting
         
     def display(self):
         """Vra» id sloupce zobrazovaného v displeji."""
