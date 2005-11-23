@@ -1,3 +1,12 @@
+2005-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (CodebookSpec.__init__): Nový
+	arguemnt `sorting'.
+	(CodebookSpec.sorting): Nová metoda.
+
+	* pytis/form/inputfield.py (ListField._load_list_data): Spojuj
+	víceøádkové hodnoty.
+
 2005-11-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (ListField.__getattr__): Nevolej zde
