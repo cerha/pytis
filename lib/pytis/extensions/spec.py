@@ -284,7 +284,7 @@ def enum(name):
     specifikace, ze které bude získán datový objekt enumerátoru.
     
     """
-    data_spec = resolver().get(name, 'data_spec')
+    data_spec = pytis.form.resolver().get(name, 'data_spec')
     kwargs = dict(dbconnection_spec=config.dbconnection)
     return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
 
