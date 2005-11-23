@@ -271,10 +271,23 @@ def bf(title, name, hotkey=None):
 def df(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
 def ddf(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.DescriptiveDualForm,
-                          hotkey)
+    return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
 def ef(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey)
+
+
+def enum(name):
+    """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
+
+    Takto vytvoøený enumerátor lze pou¾ít jako argument 'enumerator'
+    konstruktoru datového typu.  Argument 'name' je øetìzec urèující název
+    specifikace, ze které bude získán datový objekt enumerátoru.
+    
+    """
+    data_spec = resolver().get(name, 'data_spec')
+    kwargs = dict(dbconnection_spec=config.dbconnection)
+    return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
+
 
 class ReusableSpec:
     def __init__(self, resolver):
