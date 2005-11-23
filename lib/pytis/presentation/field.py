@@ -195,15 +195,25 @@ class PresentedRow(object):
                         self._dirty[key] = False
                 else:
                     if self._columns.has_key(key):
-                        field = self._columns[key]
-                        default = field.default
-                        t = field.type
-                        if default is None:
-                            value = t.default_value()
-                        else:
+                        col = self._columns[key]
+                        default = col.default
+                        t = col.type
+                        if self._new and default is not None:
                             value = pytis.data.Value(t, default())
                             if self._dirty.has_key(key):
                                 self._dirty[key] = False
+                        else:
+                            # TODO: Toto je HACK JAKO PRASE!!!
+                            # Je to tu jen proto, ¾e v defsech jsou nyní v¹ude
+                            # po¾ívány computery s depends=() namísto
+                            # 'default', proto¾e default døíve nefungovalo
+                            # korektnì.  A¾ se to ve v¹ech defsech opraví zpìt
+                            # na pou¾ití 'default', je NUTNÉ následující
+                            # podmínku zru¹it!
+                            if not self._new and col.computer is not None \
+                                   and col.computer.depends() == ():
+                                self._dirty[key] = False
+                            value = t.default_value()
                     else:
                         value = c.type().default_value()
                 return key, value
