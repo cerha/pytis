@@ -1266,15 +1266,21 @@ class ListField(GenericCodebookField):
             return super(ListField, self).__getattr__(name)
         
     def _load_list_data(self):
+        current = self.get_value()
         list = self._list
         enumerator = self.type().enumerator()
         list.DeleteAllItems()
         self._list_data = []
+        select_item = 0
         for i, row in enumerate(enumerator.iter()):
             list.InsertStringItem(i, "")
-            self._list_data.append(row[enumerator.value_column()])
+            v = row[enumerator.value_column()]
+            self._list_data.append(v)
+            if v.export() == current:
+                select_item = i
             for j, id in enumerate(self._columns):
                 list.SetStringItem(i, j, row[id].export().replace("\n", ";"))
+        self._set_selection(select_item)
 
     def _on_change(self, event):
         self._is_changed = True
@@ -1293,13 +1299,17 @@ class ListField(GenericCodebookField):
         else:
             return i
 
+    def _set_selection(self, i):
+        self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
+                                wx.LIST_STATE_SELECTED)
+        self._list.EnsureVisible(i)
+        
+
     def _set_value(self, value):
         if value:
             for i, v in enumerate(self._list_data):
                 if v.export() == value:
-                    self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
-                                            wx.LIST_STATE_SELECTED)
-                    self._list.EnsureVisible(i)
+                    self._set_selection(i)
                     return True
             else:
                 return False
