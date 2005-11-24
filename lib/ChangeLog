@@ -1,5 +1,10 @@
 2005-11-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (EditForm.__init__): Volej
+	`self._select_row()' opìt jen pøi inicializaci novéhho záznamu.
+	Problém neinicializovaných runtime filtrù byl vyøe¹en dne¹ní
+	opravou `DescriptiveDualForm._do_selection'.
+
 	* pytis/form/dualform.py (DescriptiveDualForm._do_selection):
 	Nepøedávej pøímo PresentedRow -- namísto `set_row()' volej radìji
 	`select_row()' a datovým øádkem jako argumentem.
