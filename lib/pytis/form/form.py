@@ -1144,10 +1144,9 @@ class EditForm(LookupForm, TitledForm):
                 f.disable(change_appearance=False)
             else:
                 f.enable()
-        # Tento _select_row je zde potøeba, aby byla vytvoøena instance
-        # PresentedRow.  V jejím konstruktoru toti¾ dochází také k inicializaci
-        # runtime codebookù.
-        self._select_row(None)
+        if self._mode == self.MODE_INSERT:
+            # Inicializuji prázdný záznam.
+            self._select_row(None)
         if isinstance(self._parent, wx.Dialog):
             wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
