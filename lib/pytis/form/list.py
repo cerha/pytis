@@ -1613,6 +1613,12 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             self._select_cell(row=0, col=self._columns.index(col))
             self._on_incremental_search(False)
                 
+    def _default_sorting(self):
+        sorting = resolver().get(self.name(), 'cb_spec').sorting()
+        if sorting is not None:
+            return sorting
+        else:
+            return super(CodebookForm, self)._default_sorting()
         
     def _context_menu(self):
         return (MItem(_("Vybrat"),
