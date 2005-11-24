@@ -1,4 +1,21 @@
+2005-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (DescriptiveDualForm._do_selection):
+	Nepøedávej pøímo PresentedRow -- namísto `set_row()' volej radìji
+	`select_row()' a datovým øádkem jako argumentem.
+
 2005-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow._init_row.genval):
+	Inicializuj hodnotu voláním 'default' funkce pouze pokud jde o
+	nový øádek.  Pøidán HACK, který doèasnì pova¾uje computery s
+	prázdným depends za default funkce a volá je tedy také jen pøi
+	inicializaci nového záznamu.
+
+	* pytis/form/form.py (EditForm.__init__): Volej
+	`self._select_row()' v¾dy kvùli inicializaci PresentedRow a
+	pota¾mo runtime filtrù.
+	(EditForm._select_row): Odstranìn neaktuální komentáø.
 
 	* pytis/presentation/spec.py (CodebookSpec.__init__): Nový
 	arguemnt `sorting'.
