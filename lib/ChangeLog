@@ -1,5 +1,7 @@
 2005-11-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (CodebookForm._default_sorting): Nová metoda.
+
 	* pytis/form/form.py (EditForm.__init__): Volej
 	`self._select_row()' opìt jen pøi inicializaci novéhho záznamu.
 	Problém neinicializovaných runtime filtrù byl vyøe¹en dne¹ní
