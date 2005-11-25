@@ -1284,7 +1284,7 @@ class ListField(GenericCodebookField):
             if v.export() == current:
                 select_item = i
             for j, id in enumerate(self._columns):
-                list.SetStringItem(i, j, row[id].export().replace("\n",";"))
+                list.SetStringItem(i, j, row[id].export().replace("\n", ";"))
         self._set_selection(select_item)
         self._data_dirty = False
 
@@ -1302,9 +1302,11 @@ class ListField(GenericCodebookField):
             return i
 
     def _set_selection(self, i):
+        self._disable_event_handlers()
         self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
                                 wx.LIST_STATE_SELECTED)
         self._list.EnsureVisible(i)
+        self._enable_event_handlers()
         
 
     def _set_value(self, value):
@@ -1315,7 +1317,9 @@ class ListField(GenericCodebookField):
                     return True
         i = self._selected_item()
         if i is not None:
+            self._disable_event_handlers()
             self._list.SetItemState(i, 0, 0)
+            self._enable_event_handlers()
         if value:
             return False
         else:
