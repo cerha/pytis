@@ -1,9 +1,11 @@
-
-BUGS:
-
- * Problém s runtime_filter
+CHYBY:
 
  * Problém s tøídìním v náhledu s 0 øádky.
+
+ * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
+
+   Popisovaný problém se projevuje napøíklad v zakázkách, kdy¾ vyhledávám podle
+   kódu zakázky.  V jiných náhledech se to chová správnì.
 
  * Pøeskakování focusu pøi prázdném sideformu v dualformu.
 
@@ -18,11 +20,13 @@ BUGS:
    Nadefinovaná polo¾ka menu Tisk (print_spec) se v duálním náhledu neprojeví.
    V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
    kláves. zkratky Ctrl-x p.
- 
+
  * Ve widgetu Calendar je posunuta pozice pøi kliknutí my¹í.
     
  * Nefunkèní vyvolání èíselníku v inline editaci.
-    
+
+ * Needitovatelný ListField nelze scrollovat.
+
  * Nefunkèní tøídìní pokud chybí klíèový sloupec.
    
    Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
@@ -63,28 +67,88 @@ BUGS:
    uvedením závislosti na v¹ech políèkách, na kterých je závislé ono
    dopoèítávané políèko (a také se tak v defsech dìje), ale není to
    systematické (problémy s údr¾bou).
+
+ * Zkopírovat obsah buòky nefunguje s èe¹tinou.
+
    
-FEATURES:
+NOVÉ VLASTNOSTI:
+
+2) U¾ivatelské rozhraní
+
+ * Scrollování ListField z klávesnice bez zmìny vybrané hodnoty.
+
+   Bylo by dobré aby se kurzor mohl pohybovat nezávisle a výbìr byl proveden a¾
+   na Enter, doubleclick, èi výbìr z menu.
 
  * U¾ivatelsky pøizpùsobitelné poøadí a poèet sloupcù libovolného BrowseFromu.
    
  * Ulo¾ené filtrovací podmínky.
 
+   K tomu bude nejprve tøeba nìjak zpøehlednit v¹e, co se týká práce s rùznými
+   typy filtrovacích podmínej uplatnìných v rùzných formuláøích.
+
+   Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
+   by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
+
  * Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky).
  
  * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
  
- * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
-    
- * Formuláøový dialog.
- 
  * Vyvolat EditForm ze ShowFormu.
+
+ * Klávesové zkratky pro roz¹íøení/zù¾ení sloupce.
+
+ * Roz¹íøit øádek po dobu inline editace víceøádkového textu.
+ 
+ * Detailnìj¹í kontrola nad rozli¹ením práv pøi UPDATE/INSERT
+
+   Pokud není na políèko právo UPDATE, zakázat jej i pøi INSERTU, ale umo¾nit
+   nìkterá políèka explicitnì povolit (pouze pro INSERT).  Nebo také povolit
+   úplnì v¹e, nehledì na práva pro UPDATE.
+
+ * Automatický filter èíselníku pøi vyplnìní wildcard hodnoty.
+
+   Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
+   pøi vyvolání èíselníku.
+
+ * Pravé tlaèítko nad prázdným BrowseFormem.
+
+ * Filtr distinct hodnot (v kontextovém menu záhlaví sloupce).
+
+ * Filtrovat aktuální hodnoty (v kontextovém menu buòky).
+
+ * Pou¾ití externího PS prohlí¾eèe.
+
+ * Správa pøístupových práv pøes databázi a formuláø, nikoly pøes specifikace.
+
+ * Menu na pravé tlaèítko ve vstupních políèkách versus gtk menu.
 
  * Zarovnávání a atributy v InputFieldu.
 
- 
 
-DESIGN GOALS:
+2) Specifikace
+
+ * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
+
+ * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
+
+   Definovat pøíslu¹né funkce v pytis-extensions.  Zejména jde o otevírání
+   souvisejícího formuláøe.
+
+ * Automaticky doplnit 'codebook' pro fieldspec políèka s enumerátorem.
+
+ * Práva view na jednotlivé sloupce.
+
+ * V tiskovém menu umo¾nit definovat separátor a klávesové zkratky.
+
+ * Formuláøový dialog.
+
+ * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
+
+ * Masky políèek.
+
+
+INTERNÍ ZÁLE®ITOSTI:
 
  * Mezivrstva pro práci s aktuálním selectem, kurzory apod.
 
@@ -94,7 +158,7 @@ DESIGN GOALS:
    rozhraní).  Podobné vìci se dìlají i v netabulkových formuláøích a je tøeba
    je mít na jednom místì.
 
- * Instance Value va rozhraní InputField.
+ * Instance Value na rozhraní InputField.
 
    InputField.get_value(), InputField.set_value() nech» pracijí s instancemi
    Value, ne se stringy.
@@ -102,7 +166,7 @@ DESIGN GOALS:
  * Pøepracování stavového øádku?
  
 
-CLEAN-UP:
+ÈI©TÌNÍ:
 
  * Zru¹it tøídu 'RefSpec' & spol.
 

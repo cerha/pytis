@@ -4,6 +4,35 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-11-25
+
+	Odstranìn doèasný hack v PresentedRow._init_row.genval()
+	umo¾òující pou¾ití computeru namísto funkce `default'.  Nyní je
+	tedy nutné ve specifikacích v¾dy rozli¹ovat.  Default je pro
+	výpoèet hodnoty pøi inicializaci nového záznamu, computer pro
+	prùbì¾né dopoèítávání a výpoèet hodnot virtuálních políèek.
+
+	* BUGFIX: Vyøe¹en problém sdílení Enumerátorù projevující se
+	výrazným zpomalením pøi pou¾ití ListField v DescriptiveDualFormu.
+	
+2005-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	Argument 'sorting' v CodebookSpec se nyní skuteènì projeví pøi
+	zobrazení èíselníku.
+      	
+	* BUGFIX: V DescriptiveDualForm byl pøi výbìru pøedáván do
+	vedlej¹ího formuláøe celý PresentedRow, tak¾e nedocházelo správnì
+	k aktualizaci RuntimeFilterù a dal¹ích závislostí.  Opraveno
+	nastavováním pouze pøes datový øádek.
+
+	* BUGFIX: Vèerej¹í bugfix zpùsobil problémy s computery pøi
+	inicializaci prázdného PresentedRow v EditFormu.  Dne¹ní oprava v
+	DescriptiveDualFormu v¹ak øe¹í i problém s neinicializovanými
+	filtry, tak¾e vèerej¹í úprava mohla být zase zru¹ena.
+
+	* BUGFIX: ListField nyní zachovává nastavenou hodnotu i po
+	pøenaètení dat (zmìna runtime-filteru).
+
 2005-11-23  Tomas Cerha  <cerha@brailcom.org>
 
         V CodebookSpec lze nyní pøedefinovat také tøídìní argumentem
@@ -18,9 +47,9 @@
 	* BUGFIX: V ListField jsou nyní správnì zobrazovány i víceøádkové
 	polo¾ky.
 
-	* BUGFIX: Odstranìn problém s "Insufficient runtime filter", který
-	byl zpùsoben neinicializovanými filtry ve formuláøích, které
-	nevytváøeli PresentedRow v konstruktoru.
+	* BUGFIX: Odstranìn problém s "Insufficient runtime filter"
+	zpùsobený neinicializovanými filtry ve formuláøích, které
+	nevytváøely PresentedRow v konstruktoru.
 
 	* BUGFIX: Opraveno chování specifikátoru 'default'.  Nyní je
 	funkce volána pouze pøi vytváøení nového øádku.
