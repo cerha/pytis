@@ -1,5 +1,8 @@
 2005-11-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow._init_row.genval):
+	Odstranìn hack umo¾òující pou¾ití computer namísto default.
+
 	* pytis/form/inputfield.py (__getattr__): Zru¹eno.
 	(_on_enumerator_change): Nepøenaèítej data hned, pouze nastav
 	pøíznak.
