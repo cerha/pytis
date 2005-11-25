@@ -1,4 +1,21 @@
+2005-11-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (__getattr__): Zru¹eno.
+	(_on_enumerator_change): Nepøenaèítej data hned, pouze nastav
+	pøíznak.
+	(ListField._set_value): Pøedávej v¹echny potøebné argumenty metodì
+	`ListCtrl.SetItemState()'.  Zru¹ výbìr i v pøípadì nenalezení
+	po¾adované hodnoty.
+	(ListField._create_ctrl): Nastavuj pøíznak `self._data_dirty'.
+	(ListField._on_idle): Nová metoda.
+	(ListField._load_list_data): Nuluj pøíznak `self._data_dirty'.
+	(ListField._set_selection, ListField._set_value): Pøi nastavování
+	výbìru zaka¾ zpracování událostí listu.
+
 2005-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (ListField._load_list_data): Zachovávej
+	aktuální hodnotu i po pøenaètení dat.
 
 	* pytis/form/list.py (CodebookForm._default_sorting): Nová metoda.
 
