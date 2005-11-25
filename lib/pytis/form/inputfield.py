@@ -1252,19 +1252,24 @@ class ListField(GenericCodebookField):
         self._DEFAULT_WIDTH = total_width + 3
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
         self._list =  list
+        self._data_dirty = True
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, list.GetId(), self._on_change)
         #list.SetMargins(0,0)
         return list
 
-    def __getattr__(self, name):
-        if name == '_list_data':
-            # Nemù¾eme data naèíst hned v konstruktoru, proto¾e 
-            # tou dobou je¹tì nemusí být inicializován runtime_filter.
+    def _on_change(self, event):
+        self._is_changed = True
+        event.Skip()
+                    
+    def _on_enumerator_change(self):
+        # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
+        self._data_dirty = True
+
+    def _on_idle(self, event):
+        if self._data_dirty:
             self._load_list_data()
-            return self.__dict__[name]
-        else:
-            return super(ListField, self).__getattr__(name)
-        
+        return super(ListField, self)._on_idle(event)
+
     def _load_list_data(self):
         current = self.get_value()
         list = self._list
@@ -1279,13 +1284,10 @@ class ListField(GenericCodebookField):
             if v.export() == current:
                 select_item = i
             for j, id in enumerate(self._columns):
-                list.SetStringItem(i, j, row[id].export().replace("\n", ";"))
+                list.SetStringItem(i, j, row[id].export().replace("\n",";"))
         self._set_selection(select_item)
+        self._data_dirty = False
 
-    def _on_change(self, event):
-        self._is_changed = True
-        event.Skip()
-                    
     def _disable(self, change_appearance):
         self._list.Enable(False)
         if change_appearance:
@@ -1311,13 +1313,13 @@ class ListField(GenericCodebookField):
                 if v.export() == value:
                     self._set_selection(i)
                     return True
-            else:
-                return False
+        i = self._selected_item()
+        if i is not None:
+            self._list.SetItemState(i, 0, 0)
+        if value:
+            return False
         else:
-            i = self._selected_item()
-            if i is not None:
-                self._list.SetItemState(i, 0)
-        return True
+            return True
         
         
     def get_value(self):
@@ -1327,11 +1329,6 @@ class ListField(GenericCodebookField):
             return self._list_data[i].export()
         else:
             return None
-
-    def _on_enumerator_change(self):
-        # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
-        if self._list:
-            self._load_list_data()
 
     def _menu(self):
         menu = (MItem("Zobrazit èíselník",
