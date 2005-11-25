@@ -203,16 +203,6 @@ class PresentedRow(object):
                             if self._dirty.has_key(key):
                                 self._dirty[key] = False
                         else:
-                            # TODO: Toto je HACK JAKO PRASE!!!
-                            # Je to tu jen proto, ¾e v defsech jsou nyní v¹ude
-                            # po¾ívány computery s depends=() namísto
-                            # 'default', proto¾e default døíve nefungovalo
-                            # korektnì.  A¾ se to ve v¹ech defsech opraví zpìt
-                            # na pou¾ití 'default', je NUTNÉ následující
-                            # podmínku zru¹it!
-                            if not self._new and col.computer is not None \
-                                   and col.computer.depends() == ():
-                                self._dirty[key] = False
                             value = t.default_value()
                     else:
                         value = c.type().default_value()
