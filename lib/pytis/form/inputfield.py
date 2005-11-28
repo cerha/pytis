@@ -1072,18 +1072,14 @@ class GenericCodebookField(InputField):
     """Spoleèná nadtøída èíselníkových políèek."""
 
     def __init__(self, *args, **kwargs):
+        try:
+            self._cb_spec = resolver().get(self.spec().codebook(), 'cb_spec')
+        except ResolverError:
+            self._cb_spec = CodebookSpec()
+        except AttributeError:
+            self._cb_spec = CodebookSpec()
         super(GenericCodebookField, self).__init__(*args, **kwargs)
         self._type.enumerator().add_hook_on_update(self._on_enumerator_change)
-    
-    def _read_cb_spec(self):
-        try:
-            cb_spec = resolver().get(self.spec().codebook(), 'cb_spec')
-        except ResolverError:
-            cb_spec = CodebookSpec()
-        except AttributeError:
-            cb_spec = CodebookSpec()
-        self._cb_spec = cb_spec
-        return cb_spec
 
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' arguemnt."""
@@ -1139,7 +1135,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         widget = Invocable._create_widget(self)
         self._insert_button = None
         spec = self.spec()
-        cb_spec = self._read_cb_spec()
+        cb_spec = self._cb_spec
         if self._inline or cb_spec.display() is None and \
                not spec.allow_codebook_insert():
             return widget
@@ -1231,9 +1227,8 @@ class ListField(GenericCodebookField):
 
     def _create_ctrl(self):
         # Naètu specifikace.
-        cb_spec = self._read_cb_spec()
         view_spec = resolver().get(self.spec().codebook(), 'view_spec')
-        self._columns = columns = cb_spec.columns() or view_spec.columns()
+        self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         # Vytvoøím vlastní seznamový widget.
         style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL
         list = wx.ListCtrl(self._parent, -1, style=style)
