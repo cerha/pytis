@@ -4,7 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2005-11-25
+2005-11-28  Tomas Cerha  <cerha@brailcom.org>
+
+	ListField nyní reaguje na koleèko my¹i.  
+
+	* BUGFIX: Pøi vyvolání prázdného èíselníku nezobrazuj chybovou
+	hlá¹ku "Záznam nenalezen".
+	
+2005-11-25  Tomas Cerha  <cerha@brailcom.org>
 
 	Odstranìn doèasný hack v PresentedRow._init_row.genval()
 	umo¾òující pou¾ití computeru namísto funkce `default'.  Nyní je

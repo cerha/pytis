@@ -1,3 +1,13 @@
+2005-11-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (ListField._set_selection): Pøidán
+	komentáø.
+	(ListField._create_ctrl): O¹etøuj události koleèka my¹i.
+	(GenericCodebookField._select_row_arg): Vracej None, pokud je
+	Pythonová hodnota instance Value nepravdivá.
+	(InputField.CALL_FIELD_CHANGE, InputField.CALL_SKIP_NAVIGATION):
+	Aktualizace docstringu.
+
 2005-11-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py (PresentedRow._init_row.genval):
