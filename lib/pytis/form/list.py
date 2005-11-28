@@ -840,12 +840,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 elif command == ListForm.COMMAND_CELL_ROLLBACK:
                     return self._on_cell_rollback()
                 else:
-                    try:
-                        field = self._current_editor.field()
-                        if field.on_command(command, **kwargs):
-                            return True
-                    except:
-                        pass
+                    field = self._current_editor.field()
+                    if field.on_command(command, **kwargs):
+                        return True
         # Pøíkazy mimo editaci
         else:
             if command == ListForm.COMMAND_FIRST_COLUMN:
