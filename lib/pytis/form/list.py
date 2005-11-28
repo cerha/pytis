@@ -592,7 +592,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         v = enumerator.get(value.value(), cb_spec.display())
                         if v:
                             display_value = v.export()
-                    except DataAccessException:
+                    except pytis.data.DataAccessException:
                         pass
             message(display_value)
     
