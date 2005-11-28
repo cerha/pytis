@@ -1,5 +1,8 @@
 2005-11-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._post_selection_hook): Na
+	`DataAccessException' se odkazuj celým jménem.
+
 	* pytis/form/inputfield.py (ListField._set_selection): Pøidán
 	komentáø.
 	(ListField._create_ctrl): O¹etøuj události koleèka my¹i.
@@ -7,6 +10,13 @@
 	Pythonová hodnota instance Value nepravdivá.
 	(InputField.CALL_FIELD_CHANGE, InputField.CALL_SKIP_NAVIGATION):
 	Aktualizace docstringu.
+	(ListField._on_change): Pøejmenováno na `_on_select'.  Pokud je
+	pole needitovatelné, vra» výbìr na pøedchozí vybranou polo¾ku.
+	(ListField._create_ctrl): O¹etøuj wx událost výbìru volámím
+	`_on_select' a zru¹ení výbìru volámím `_on_deselect'.
+	(ListField._disable): Nenastavuj widget nako needitovatelný, pouze
+	zmìò barvu.
+	(ListField._set_selection): Nový argument `make_visible'.
 
 2005-11-25  Tomas Cerha  <cerha@brailcom.org>
 
