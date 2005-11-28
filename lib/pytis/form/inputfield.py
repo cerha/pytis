@@ -85,18 +85,21 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
       fid -- id políèka, string.
       value -- nová hodnota políèka, instance 'pytis.data.Value'.
+
+    Callback je volán pouze pøi interaktivní (u¾ivatelem vyvolané) zmìnì
+    hodnoty.  Programové nastavování hodnoty callback nevyvolává.
     
     """
     CALL_SKIP_NAVIGATION = 'CALL_SKIP_NAVIGATION'
     """Voláno, pokud má být nìjaký ui prvek pøeskoèen pøi navigaci.
 
-    To je vhodné napøíklad pro tlaèítka políèek typu 'Invocable', nebo display
-    u 'CodebookField'.  Navigaci v¹ak zaji¹»uje nadøízený formuláø.
-
     Argumenty:
 
       object -- ui prvek který má být pøeskoèen.
       dir -- smìr pohybu, boolean, pravda pøi pohybu vpøed.
+
+    To je vhodné napøíklad pro tlaèítka políèek typu 'Invocable', nebo display
+    u 'CodebookField'.  Navigaci v¹ak zaji¹»uje nadøízený formuláø.
 
     """
 
@@ -1085,7 +1088,7 @@ class GenericCodebookField(InputField):
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' arguemnt."""
         value = self._value()
-        if value:
+        if value and value.value():
             return {self._type.enumerator().value_column(): value}
         else:
             return None
@@ -1254,6 +1257,7 @@ class ListField(GenericCodebookField):
         self._list =  list
         self._data_dirty = True
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, list.GetId(), self._on_change)
+        wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
         #list.SetMargins(0,0)
         return list
 
@@ -1302,6 +1306,8 @@ class ListField(GenericCodebookField):
             return i
 
     def _set_selection(self, i):
+        # Nechceme aby set_value vyvolávalo callbacky.
+        # Ty oznamují jen interaktivní u¾ivatelskou zmìnu hodnoty.
         self._disable_event_handlers()
         self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
                                 wx.LIST_STATE_SELECTED)
