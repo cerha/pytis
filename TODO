@@ -6,14 +6,6 @@ CHYBY:
 
    Popisovaný problém se projevuje napøíklad v zakázkách, kdy¾ vyhledávám podle
    kódu zakázky.  V jiných náhledech se to chová správnì.
-
- * Pøeskakování focusu pøi prázdném sideformu v dualformu.
-
-   Pokud v dualformu neexistuje v dolním náhledu záznam pro danou polo¾ku
-   horního náhledu, pak se pøi pøechodu klávesou na jinou polo¾ku pøepne
-   vysvícení do dolního náhledu. Pøi pou¾ití pravého tlaèítka my¹i (za úèelem
-   vyvolání nabídky popupmenu) se vyvolá chybová hlá¹ka. Viz náhled "Výkaz
-   práce - snímaè" v systému Archibas.
  
  * Ignorované tiskové menu v duálním náhledu.
    
