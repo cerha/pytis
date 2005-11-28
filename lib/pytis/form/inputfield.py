@@ -1256,14 +1256,23 @@ class ListField(GenericCodebookField):
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
         self._list =  list
         self._data_dirty = True
-        wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, list.GetId(), self._on_change)
+        wxid = list.GetId()
+        wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, wxid, self._on_select)
+        wx_callback(wx.EVT_LIST_ITEM_DESELECTED, list, wxid, self._on_deselect)
         wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
+        self._last_deselected_item = None
         #list.SetMargins(0,0)
         return list
 
-    def _on_change(self, event):
-        self._is_changed = True
+    def _on_deselect(self, event):
+        self._last_deselected_item = event.GetIndex()
+        
+    def _on_select(self, event):
         event.Skip()
+        if self._enabled:
+            self._is_changed = True
+        else:
+            self._set_selection(self._last_deselected_item, make_visible=False)
                     
     def _on_enumerator_change(self):
         # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
@@ -1293,7 +1302,6 @@ class ListField(GenericCodebookField):
         self._data_dirty = False
 
     def _disable(self, change_appearance):
-        self._list.Enable(False)
         if change_appearance:
             self._set_disabled_color()
         
@@ -1305,13 +1313,14 @@ class ListField(GenericCodebookField):
         else:
             return i
 
-    def _set_selection(self, i):
+    def _set_selection(self, i, make_visible=True):
         # Nechceme aby set_value vyvolávalo callbacky.
         # Ty oznamují jen interaktivní u¾ivatelskou zmìnu hodnoty.
         self._disable_event_handlers()
         self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
                                 wx.LIST_STATE_SELECTED)
-        self._list.EnsureVisible(i)
+        if make_visible:
+            self._list.EnsureVisible(i)
         self._enable_event_handlers()
         
 
@@ -1321,6 +1330,7 @@ class ListField(GenericCodebookField):
                 if v.export() == value:
                     self._set_selection(i)
                     return True
+        # Empty value or not in list.
         i = self._selected_item()
         if i is not None:
             self._disable_event_handlers()
