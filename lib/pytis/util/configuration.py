@@ -410,8 +410,17 @@ class Configuration:
         
     class _Option_dbhost(Option):
         """Jméno databázového serveru."""
+        def long_option(self):
+            return 'dbhost='
         def default(self):
             return 'localhost'
+    
+    class _Option_dbport(Option):
+        """Port databázového serveru."""
+        def long_option(self):
+            return 'dbport='
+        def default(self):
+            return None
     
     class _Option_dbname(Option):
         """Jméno aplikaèní databáze."""
@@ -426,7 +435,7 @@ class Configuration:
             import pytis.data
             c = self._configuration
             return pytis.data.DBConnection(user=c.dbuser, host=c.dbhost,
-                                         database=c.dbname)
+                                           database=c.dbname, port=c.dbport)
         def visible(self):
             return self.HIDDEN
 
