@@ -1,5 +1,8 @@
 2005-11-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (CodebookForm._default_sorting): O¹etøi
+	výjimku resolveru.
+
 	* pytis/form/inputfield.py (GenericCodebookField.__init__):
 	Nespoléhej na `self.spec()' pøed voláním rodièovského
 	konstruktoru.  Radìji vyber odkaz na FieldSpec pøímo z argumentù.
