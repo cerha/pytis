@@ -6,10 +6,23 @@
 
 2005-11-28  Tomas Cerha  <cerha@brailcom.org>
 
-	ListField nyní reaguje na koleèko my¹i.  
+	Nová konfiguraèní volba `dbport' (a argument pøíkazové øádky)
+	umo¾òuje nastavit port databázového spojení.  `dbhost' nyní
+	funguje i jako argument pøíkazové øádky.
+ 	
+	ListField nyní reaguje na koleèko my¹i.
 
 	* BUGFIX: Pøi vyvolání prázdného èíselníku nezobrazuj chybovou
 	hlá¹ku "Záznam nenalezen".
+
+	* BUGFIX: Needitovatelný ListField lze nyní scrollovat (my¹í).
+
+	* BUGFIX: Focus ji¾ v duálním formuláøi nepøeskakuje pøi pøechodu
+	na záznam, ke kterému v dolním formuláøi nejsou ¾ádné polo¾ky.
+	Tato chyba byla pravdìpodobnì odstranìna nìkterou pøedchozí
+	úpravou.  Dnes bylo správné chování pouze zji¹tìno.
+
+	* BUGFIX: Vyvolání èíselníku v inline editaci.
 	
 2005-11-25  Tomas Cerha  <cerha@brailcom.org>
 
