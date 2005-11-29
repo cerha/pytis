@@ -1,5 +1,8 @@
 2005-11-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py (Calendar._create_content): Upravuj
+	velikost pouze pokud je verze wxWidgets men¹í ne¾ 2.6.
+
 	* pytis/form/list.py (CodebookForm._default_sorting): O¹etøi
 	výjimku resolveru.
 
