@@ -1611,7 +1611,10 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             self._on_incremental_search(False)
                 
     def _default_sorting(self):
-        sorting = resolver().get(self.name(), 'cb_spec').sorting()
+        try:
+            sorting = resolver().get(self.name(), 'cb_spec').sorting()
+        except ResolverError:
+            sorting None
         if sorting is not None:
             return sorting
         else:
