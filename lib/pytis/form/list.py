@@ -1614,7 +1614,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
         try:
             sorting = resolver().get(self.name(), 'cb_spec').sorting()
         except ResolverError:
-            sorting None
+            sorting = None
         if sorting is not None:
             return sorting
         else:
