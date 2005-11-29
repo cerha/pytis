@@ -20,7 +20,7 @@
 
 Dialogová okna slou¾í jako nepøehlédnutelná upozornìní nebo otázky pro
 u¾ivatele.  U¾ivateli je znemo¾nìno pokraèovat práci a¾ do doby, ne¾ potvrdí
-zaslané hlá¹ení nebo odpoví na otázku.
+zobrazené hlá¹ení nebo odpoví na otázku.
 
 V¹echny dialogy vychází z abstraktní tøídy 'Dialog'.
 
@@ -71,9 +71,8 @@ class Dialog(KeyHandler, CommandHandler):
 class GenericDialog(Dialog):
     """Obecný dialog s tlaèítky.
 
-    Tato tøída se sna¾í zabezpeèit univerzální dialogovou tøídu, od které je
-    mo¾no odvodit specializované tøídy konkrétních dialogù pomocí pøedefinování
-    nìkterých metod.
+    Univerzální dialogová tøída, od které je mo¾no odvodit specializované tøídy
+    konkrétních dialogù pomocí pøedefinování nìkterých metod.
     
     """    
         
@@ -1039,7 +1038,8 @@ class Calendar(GenericDialog):
                                   buttons=(Message.BUTTON_OK,
                                            Message.BUTTON_CANCEL))
         # vytvoø kalendáø
-        style = calendar.CAL_SHOW_HOLIDAYS|wx.DIALOG_MODAL| \
+        style = wx.DIALOG_MODAL| \
+                calendar.CAL_SHOW_HOLIDAYS| \
                 calendar.CAL_SHOW_SURROUNDING_WEEKS 
         if not enable_year:  style = style | calendar.CAL_NO_YEAR_CHANGE
         if not enable_month: style = style | calendar.CAL_NO_MONTH_CHANGE
@@ -1055,8 +1055,9 @@ class Calendar(GenericDialog):
         
     def _create_content(self):
         cal = calendar.CalendarCtrl(self._dialog, -1, style=self._style)
-        size = cal.GetSize()
-        cal.SetMinSize((size.GetWidth()+150, size.GetHeight()))
+        if wx.MAJOR_VERSION == 2 and wx.MINOR_VERSION < 6:
+            size = cal.GetSize()
+            cal.SetMinSize((size.GetWidth()+150, size.GetHeight()))
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date.date)) is None:
             wx_date = wx.DateTime_Today()
