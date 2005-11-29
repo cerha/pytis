@@ -1071,14 +1071,15 @@ class ColorSelectionField(Invocable, TextField):
 class GenericCodebookField(InputField):
     """Spoleèná nadtøída èíselníkových políèek."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent, fspec, *args, **kwargs):
         try:
-            self._cb_spec = resolver().get(self.spec().codebook(), 'cb_spec')
+            self._cb_spec = resolver().get(fspec.codebook(), 'cb_spec')
         except ResolverError:
             self._cb_spec = CodebookSpec()
         except AttributeError:
             self._cb_spec = CodebookSpec()
-        super(GenericCodebookField, self).__init__(*args, **kwargs)
+        super(GenericCodebookField, self).__init__(parent, fspec, *args,
+                                                   **kwargs)
         self._type.enumerator().add_hook_on_update(self._on_enumerator_change)
 
     def _select_row_arg(self):
