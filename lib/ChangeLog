@@ -1,3 +1,9 @@
+2005-11-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (GenericCodebookField.__init__):
+	Nespoléhej na `self.spec()' pøed voláním rodièovského
+	konstruktoru.  Radìji vyber odkaz na FieldSpec pøímo z argumentù.
+
 2005-11-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py
