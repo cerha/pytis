@@ -1,7 +1,15 @@
 2005-11-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/configuration.py
+	(Configuration._Option_dbhost.long_option): Nová metoda.
+	(Configuration._Option_dbport): Nová konfiguraèní volba.
+	(Configuration._Option_dbconnection.default): Pou¾ívej novou volbu
+	`dbport'.
+
 	* pytis/form/list.py (ListForm._post_selection_hook): Na
 	`DataAccessException' se odkazuj celým jménem.
+	(ListForm.on_command): Neignoruj výjimky pøi volání metody
+	on_command aktivního vstupního políèka.
 
 	* pytis/form/inputfield.py (ListField._set_selection): Pøidán
 	komentáø.
@@ -17,6 +25,10 @@
 	(ListField._disable): Nenastavuj widget nako needitovatelný, pouze
 	zmìò barvu.
 	(ListField._set_selection): Nový argument `make_visible'.
+	(GenericCodebookField._read_cb_spec): Metoda zru¹ena.
+	(GenericCodebookField.__init__): Naèítej `CodebookSpec' zde.
+	(CodebookField._create_widget, ListField._create_ctrl): Nevolej
+	`self._read_cb_spec()'.
 
 2005-11-25  Tomas Cerha  <cerha@brailcom.org>
 
