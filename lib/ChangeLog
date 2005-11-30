@@ -1,5 +1,43 @@
 2005-11-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_commands.py (DEFAULT_COMMAND_KEYS): Nastav
+	`Dialog.COMMAND_COMMIT_DIALOG' na `Enter', ne `Ctrl+Enter'.
+
+	* pytis/form/dialog.py (GenericDialog.__init__): Neinicializuj
+	atribut `self._default_button'.  Inicializuj `self._want_focus'.
+	(GenericDialog._create_buttons): Namísto `self._default_button'
+	nastavuj `self._want_focus'.  Namísto `wx.EVT_SET_FOCUS' o¹etøuj
+	`wx.EVT_IDLE'.  Nevolej `dialog.SetDefaultItem()'.
+	(GenericDialog._create_icon): Namísto jména souboru ber jako
+	argument wx identifikátor ikony.  Získávej ikonu pøes
+	`wx.ArtProvider'.
+	(GenericDialog._finish_dialog): Metoda zru¹ena
+	(GenericDialog._can_commit): Nová metoda.
+	(GenericDialog._end_modal): Nevolej `_finish_dialog'.
+	(GenericDialog._on_set_focus): Metoda zru¹ena.
+	(GenericDialog._on_idle): Nová metoda.
+	(GenericDialog._navigate): Nová metoda.
+	(GenericDialog._commit_dialog): Zji¹»uj zda aktivní widget mù¾e
+	ukonèit dialog pomocí `self._can_commit()'.  Pokud ne, vyvolej
+	navigaèní událost.
+	(Message.ICON_INFO, Message.ICON_QUESTION, Message.ICON_WARNING)
+	(Message.ICON_ERROR, Message.ICON_TIP): Pøiøaï konstantám hodnoty
+	wx identifikátorù ikon.
+	(Login._create_content): Neo¹etøuj `wx.EVT_KEY_DOWN' na vstupních
+	políèkách.  Pou¾ívej `self._want_focus' namísto pøímého
+	nastavování focusu.
+	(Login._on_key_down): Metoda zru¹ena.
+	(Login._navigate): Metoda zru¹ena.
+	(Login._on_show): Zru¹eno.
+	(OperationDialog._on_show): Volej `wx_yield_()'.
+	(Calendar._create_content): Nastavuj `self._want_focus'.
+	(Calendar._on_set_focus): Metoda zru¹ena.
+	(Calendar._can_commit): Nová metoda.
+	(RunFormDialog._customize_result): O¹etøuj také pøípad odeslaného
+	dialogu na widgetu kalendáøe.
+	(BugReport._create_content): Nastavuj `self._want_focus'.
+	(_on_set_focus): Metoda zru¹ena.
+
 	* pytis/form/_grid.py (ListTable._get_row): Update docstringu.
 	(ListTable.row): Pokud je øádek vrácený z `_get_row()' instancí
 	PresentedRow, vra» jej pøímo.
