@@ -1,3 +1,11 @@
+2005-11-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (ListTable._get_row): Update docstringu.
+	(ListTable.row): Pokud je øádek vrácený z `_get_row()' instancí
+	PresentedRow, vra» jej pøímo.
+
+	* pytis/form/list.py (ListForm._is_editable_cell): Update komentáøe.
+
 2005-11-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dialog.py (Calendar._create_content): Upravuj
