@@ -1118,7 +1118,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             the_row = table.row(row)
             # TODO: mo¾ná pùjde vyøe¹it èistìji
-            # Jde o to vytvoøit kopii øádku, ale klíè nekopíro
+            # Jde o to vytvoøit kopii øádku, ale klíè nekopírovat.
             prefill = {}
             keys = [c.id() for c in the_row.data().key()]
             for k in the_row.keys():
