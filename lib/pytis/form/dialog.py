@@ -36,7 +36,7 @@ import config
 from wx import calendar
 from wx.lib import masked     
 
-class Dialog(KeyHandler, CommandHandler):
+class Dialog(KeyHandler, CommandHandler, object):
     """Abstraktní tøída, která je základem v¹ech dialogù.
 
     V¹echny dialogy musí být potomky této tøídy.  Vytvoøení instance dialogu
@@ -63,7 +63,7 @@ class Dialog(KeyHandler, CommandHandler):
 
         Vrací: Hodnotu závislou na typu dialogu.
 
-        V této tøídì metoda nedìlá nic a v¾dy vrací pravdu. 
+        V této tøídì metoda nedìlá nic a v¾dy vrací pravdu.
 
         """
         return True
@@ -109,7 +109,7 @@ class GenericDialog(Dialog):
         self._default = default
         self._report = report
         self._report_format = report_format
-        self._default_button = None
+        self._want_focus = None
         self._shown = False
         
     def _create_dialog(self):
@@ -130,6 +130,7 @@ class GenericDialog(Dialog):
                                           style=style)
         self._create_dialog_elements(dialog)
         self._handle_keys(dialog)
+        
 
     def _create_dialog_elements(self, dialog):
         """Vlo¾ do dialogu jeho vnitøní prvky.
@@ -161,11 +162,9 @@ class GenericDialog(Dialog):
         for part in content:
             sizer.Add(part, 0, wx.ALL|wx.CENTER, 5)
         sizer.Add(button_sizer, 0, wx.CENTER)
-        sizer.SetSizeHints(dialog)
+        wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
         # dokonèi ...
-        wx_callback(wx.EVT_SET_FOCUS, dialog, self._on_set_focus)
-        if self._default_button:
-            dialog.SetDefaultItem(self._default_button)
+        sizer.SetSizeHints(dialog)
         dialog.SetAutoLayout(True)
         dialog.SetSizer(sizer)
         sizer.Fit(dialog)
@@ -189,41 +188,40 @@ class GenericDialog(Dialog):
             buttons.append(button)
             if self._default == label:
                 button.SetDefault()
-                self._default_button = button
+                self._want_focus = button
         return tuple(buttons)
 
-    def _create_icon(self, filename):
-        path = os.path.join(config.icon_dir, filename)
-        bitmap = wx.Bitmap(name=path, type=wx.BITMAP_TYPE_XPM)
+    def _create_icon(self, artid):
+        bitmap = wx.ArtProvider_GetBitmap(artid, wx.ART_MESSAGE_BOX, (48,48))
         if bitmap.Ok():
             return wx.StaticBitmap(self._dialog, -1, bitmap)
         else:
-            log(OPERATIONAL, "Icon file not found:", path)
             return None
 
-    def _finish_dialog(self):
-        pass
+    def _can_commit(self, widget):
+        return widget.GetId() in self._button_labels.keys()
 
-    def _end_modal(self, result):
-        self._finish_dialog()
-        self._dialog.EndModal(result)
-        return True
-    
-    def _on_set_focus(self, event):
-        if self._default_button is not None:
-            self._default_button.SetFocus()
+    def _on_idle(self, event):
+        event.Skip()
+        if self._want_focus is not None:
+            self._want_focus.SetFocus()
+            self._want_focus = None
         if not self._shown and self._dialog.IsShown():
             self._shown = True
-            wx_yield_(full=True)
             self._on_show()
-        event.Skip()
 
-    def focus(self):
-        self._dialog.SetFocus()
-        
     def _on_show(self):
-        # Called when dialog is shown.  To be overridden in derived classes.
         pass
+    
+    def _navigate(self):
+        nav = wx.NavigationKeyEvent()
+        nav.SetDirection(True)        
+        nav.SetCurrentFocus(self._dialog)
+        self._dialog.GetEventHandler().ProcessEvent(nav)
+
+    def _end_modal(self, result):
+        self._dialog.EndModal(result)
+        return True
     
     def _on_button(self, event):
         return self._end_modal(event.GetId())
@@ -258,10 +256,12 @@ class GenericDialog(Dialog):
         return self._end_modal(wx.ID_CANCEL)
         
     def _commit_dialog(self):
-        if self._default_button is not None:
-            return self._end_modal(self._default_button.GetId())
+        focused = wx_focused_window()
+        if focused and self._can_commit(focused):
+            self._end_modal(focused.GetId())
         else:
-            return False
+            self._navigate()
+        return True
         
     def on_command(self, command, **kwargs):
         if command == Dialog.COMMAND_CLOSE_DIALOG:
@@ -315,15 +315,15 @@ class Message(GenericDialog):
     tlaèítkem).
 
     """
-    ICON_INFO = 'info.xpm'
+    ICON_INFO = wx.ART_INFORMATION
     "Ikona pro informativní zprávy (¾árovka)"
-    ICON_QUESTION = 'question.xpm'
+    ICON_QUESTION =  wx.ART_QUESTION
     "Ikona s otazníkem."
-    ICON_WARNING = 'warning.xpm'
+    ICON_WARNING = wx.ART_WARNING
     "Ikona s vykøièníkem."
-    ICON_ERROR = 'error.xpm'
+    ICON_ERROR = wx.ART_ERROR
     "Ikona pro chybové zprávy."
-    ICON_TIP = 'tip.xpm'
+    ICON_TIP = wx.ART_TIP
     "Ikona pro tipy, rady apod."
 
     BUTTON_OK = _('Ok')
@@ -550,23 +550,19 @@ class InputDialog(Message):
             control.SetValue(self._value)
         self._control = control
         wx_callback(wx.EVT_KILL_FOCUS, self._control,
-                        self._on_kill_control_focus)        
+                    self._on_kill_control_focus)        
         sizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
         self._handle_keys(control)
         if self._message is not None:
             result = Message._create_content(self), sizer
         else:
             result = sizer
-        control.SetFocus()
         return result
 
     def _on_kill_control_focus(self, e):
         if not self._control.IsValid(self._control.GetValue()):
             self._control.SetFocus()
         e.Skip()
-
-    def _commit_dialog(self):
-        self._end_modal(self._button_id(Message.BUTTON_OK))
 
     def _customize_result(self, result):
         if self._button_label(result) == Message.BUTTON_OK:
@@ -619,15 +615,10 @@ class Login(InputDialog):
     def _create_content(self):
         grid = wx.FlexGridSizer(2, 2, 2, 5)
         login_label  = wx.StaticText(self._dialog, -1, self._login_prompt)
-        passwd_label = wx.StaticText(self._dialog, -1,
-                                       self._passwd_prompt)
+        passwd_label = wx.StaticText(self._dialog, -1, self._passwd_prompt)
         self._login  = wx.TextCtrl(self._dialog, -1, self._value)
         self._passwd = wx.TextCtrl(self._dialog, -1,
-                                     style=wx.TE_PASSWORD)
-        wx_callback(wx.EVT_KEY_DOWN, self._login,
-                        lambda e: self._on_key_down(e, self._dialog))
-        wx_callback(wx.EVT_KEY_DOWN, self._passwd,
-                        lambda e: self._on_key_down(e, self._dialog))
+                                   style=wx.TE_PASSWORD)
         style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
         grid.Add(login_label, 0, style, 2)
         grid.Add(self._login)
@@ -635,39 +626,17 @@ class Login(InputDialog):
         grid.Add(self._passwd)
         self._handle_keys(self._login, self._passwd)
         if self._value != '':
-            self._passwd.SetFocus() # TODO: toto nefunguje...
+            self._want_focus = self._passwd
         if self._message is not None:
             return (Message._create_content(self), grid)
         else:
             return grid
 
-        
     def _customize_result(self, result):
         if self._button_label(result) == Message.BUTTON_OK:
             return (self._login.GetValue(), self._passwd.GetValue())
         else:
             return None
-
-    def _on_key_down(self, event, dialog):
-        if event.GetKeyCode() == wx.WXK_RETURN:
-            self._navigate(dialog)
-            return True
-        else:
-            # Other keys are processed in a standard way.
-            event.Skip()
-            return True
-
-    def _navigate(self, dialog):
-        # Vygeneruj událost navigace mezi políèky.
-        nav = wx.NavigationKeyEvent()
-        nav.SetDirection(True)        
-        nav.SetCurrentFocus(dialog)
-        dialog.GetEventHandler().ProcessEvent(nav)
-        return True
-
-    def _on_show(self):
-        if self._login != '':
-            self._passwd.SetFocus()
 
 
 class InputDate(InputDialog):
@@ -726,7 +695,6 @@ class InputNumeric(InputDialog):
         self._signed_colour = signed_colour
         self._value = value
         self._integer_width = integer_width
-        
         # Zji¹tìní desetinného oddìlovaèe a oddìlovaèe tísícù
         import locale
         self._decimal_point = locale.localeconv()['decimal_point']
@@ -759,14 +727,13 @@ class InputNumeric(InputDialog):
             control.SetLimited(True)            
         self._control = control
         wx_callback(wx.EVT_KILL_FOCUS, self._control,
-                        self._on_kill_control_focus)        
+                    self._on_kill_control_focus)        
         sizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
         self._handle_keys(control)
         if self._message is not None:
             result = Message._create_content(self), sizer
         else:
             result = sizer
-        control.SetFocus()
         return result
         
     def _on_kill_control_focus(self, e):
@@ -883,14 +850,13 @@ class OperationDialog(Message):
         self._function = function
         self._args = args
         self._kwargs = kwargs
-        
-    def _on_show(self):
-        self._result = apply(self._function, self._args, self._kwargs)
-        self._end_modal(1)
 
+    def _on_show(self):
+        self._result = self._function(*self._args, **self._kwargs)
+        wx_yield_(full=True)
+        self._end_modal(wx.ID_OK)
+        
     def _customize_result(self, result):
-        assert hasattr(self, '_result'), \
-               "OperationDialog._on_show() was not called!!"
         return self._result
 
 
@@ -1065,14 +1031,15 @@ class Calendar(GenericDialog):
         self._handle_keys(cal)
         cal.SetDate(wx_date)
         self._cal = cal
+        self._want_focus = cal
         return cal
 
-    def _on_set_focus(self, event):
-        self._cal.SetFocus()
-        event.Skip()
+    def _can_commit(self, widget):
+        return super(Calendar, self)._can_commit(widget) or widget == self._cal
     
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_OK:
+        if result == self._cal.GetId() \
+               or self._button_label(result) == Message.BUTTON_OK:
             from mx import DateTime as DT
             return DT.DateTimeFrom(str(self._cal.GetDate().FormatISODate()))
         return None
@@ -1198,12 +1165,9 @@ class BugReport(GenericDialog):
             display.SetFont(font)
         sizer.Add(display, 0, wx.EXPAND|wx.CENTER)
         self._display = display
+        self._want_focus = display
         return sizer
 
-    def _on_set_focus(self, event):
-        self._display.SetFocus()
-        event.Skip()
-        
     def _customize_result(self, result):
         label = self._button_label(result)
         if label == self._EXIT_LABEL:
