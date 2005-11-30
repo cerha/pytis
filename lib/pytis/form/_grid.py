@@ -70,8 +70,8 @@ class ListTable(wx.grid.PyGridTableBase):
                      prefill=None):
             if __debug__ and config.server:
                 import pytis.remote
-            # TODO: nevím, pro není pytis.data.Row, i kdy¾ je nahoøe import
-            # pytis.data, tak to importneme tady.            
+            # TODO: Proè tu není pytis.data, i kdy¾ je nahoøe import pytis.data?
+            # Tak to importneme tady...
             import pytis.data    
             assert type(row) == type(0)
             assert the_row is None or \
@@ -222,6 +222,9 @@ class ListTable(wx.grid.PyGridTableBase):
           o jednièku, nachází-li se za editovaným *novým* øádkem, a pokud
           je shodno s èíslem editovaného øádku (a» u¾ nového èi pouze
           modifikovaného), je vrácen editovaný øádek
+
+        Pozor: Pokud je po¾adovaný øádek právì editovaným øádkem, je vrácen
+        jako instance 'PresentedRow'.
 
         """
         edited = self._edited_row
@@ -420,9 +423,12 @@ class ListTable(wx.grid.PyGridTableBase):
         """
         if row < 0 or row >= self.GetNumberRows():
             return None
-        data_row = self._get_row(row, autoadjust=True)
-        self._presented_row.set_row(data_row)
-        return self._presented_row
+        r = self._get_row(row, autoadjust=True)
+        if isinstance(r, PresentedRow):
+            return r
+        else:
+            self._presented_row.set_row(r)
+            return self._presented_row
 
     def edit_row(self, row):
         """Zahaj editaci øádku èíslo 'row'.
