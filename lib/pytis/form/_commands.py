@@ -227,7 +227,7 @@ DEFAULT_COMMAND_KEYS = (
     (Invocable.COMMAND_INVOKE_SELECTION,          'F2'),
     (Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE,'Ctrl-F2'),
     (Dialog.COMMAND_CLOSE_DIALOG,                 'Escape'),
-    (Dialog.COMMAND_COMMIT_DIALOG,                'Ctrl-Enter'))
+    (Dialog.COMMAND_COMMIT_DIALOG,                'Enter'))
 
 
 
