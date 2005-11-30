@@ -404,7 +404,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             message(_("Spou¹tím proceduru..."), root=True, timeout=2)
             # Kvùli wx.SafeYield() se ztrácí focus, tak¾e
             # si ho ulo¾íme a pak zase obnovíme.
-            focused = wx_focused_window()            
+            focused = wx_focused_window()
             wx_yield_()
             spec = self._resolver.get(spec_name, 'proc_spec')
             assert is_dictionary(spec), \
