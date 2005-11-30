@@ -4,6 +4,19 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2005-11-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Editable.ONCE nyní funguje správnì i v inline editaci.
+	
+2005-11-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Kalendáøový dialog by ji¾ mìl správnì reagovat ve v¹ech
+	verzích wxWidgets.
+	
+	* BUGFIX: O¹etøeny výjimky resloveru pøi zji¹»ování výchozího
+	tøídìní èíselníku.
+
 2005-11-28  Tomas Cerha  <cerha@brailcom.org>
 
 	Nová konfiguraèní volba `dbport' (a argument pøíkazové øádky)

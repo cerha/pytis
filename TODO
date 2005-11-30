@@ -1,38 +1,23 @@
 CHYBY:
 
- * Problém s tøídìním v náhledu s 0 øádky.
+ * Reakce dialogù na enter.
 
- * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
-
-   Popisovaný problém se projevuje napøíklad v zakázkách, kdy¾ vyhledávám podle
-   kódu zakázky.  V jiných náhledech se to chová správnì.
- 
+   Defultní tlaèítko napø. na Ctrl+Enter.
+    
  * Ignorované tiskové menu v duálním náhledu.
    
    Nadefinovaná polo¾ka menu Tisk (print_spec) se v duálním náhledu neprojeví.
    V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
    kláves. zkratky Ctrl-x p.
 
- * Ve widgetu Calendar je posunuta pozice pøi kliknutí my¹í.
-    
- * Nefunkèní vyvolání èíselníku v inline editaci.
-
- * Needitovatelný ListField nelze scrollovat.
-
  * Nefunkèní tøídìní pokud chybí klíèový sloupec.
    
    Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
    tøídìní (F4) nastane chyba.
     
- * Reakce dialogù na enter.
+ * Pokus o setøídìní prázdné tabulky vyvolá výjimku.
 
-   Defultní tlaèítko napø. na Ctrl+Enter.
- 
  * Nefunguje nastavení hide_binding_column na False (stejnì se nezobrazí).
- 
- * Editable.ONCE nefunguje v inline editaci.
-
-   (pøi vkládání záznamu pomocí Ctrl-Ins nebo Ins)
  
  * Nefunkèní agregaèní funkce ve vedlej¹ím formuláøi dualformu.
 
@@ -40,17 +25,23 @@ CHYBY:
    funkcí a i po zmìnì øádku v hlavním formuláøi (a tedy i vyfiltrovaných
    øádkù) vrací poøád stejné hodnoty.
    
- * Posun po zamítnutí mazání øádku.
-
-   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
-   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
-  
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
    èíslo záznamu ve stavové øádce. Pozor - úèetní deník fokus má, seznam
    bì¾ných bankovních úètù ne (Základní tabulky -> Banka úèty -> V¹echny úèty
    -> Bì¾ný úèet). Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
+
+ * Posun po zamítnutí mazání øádku.
+
+   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
+   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
+  
+ * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
+
+   Popisovaný problém se bì¾nì neprojevuje.  Napøíklad v zakázkách pøi
+   vyhledávání podle kódu zakázky v¹ak bylo toto chování hlá¹eno, ale po
+   restartu aplikace ne¹lo zreprodukovat.
 
  * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
 
@@ -120,6 +111,11 @@ NOVÉ VLASTNOSTI:
 
 2) Specifikace
 
+ * Funkce run_cb() v extensions nyní ignoruje cb_spec.
+
+   Bylo by dobré, aby se specifikace èíselníku naèítala a¾ v konstruktoru
+   formuláøe.
+
  * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
 
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
@@ -152,8 +148,9 @@ INTERNÍ ZÁLE®ITOSTI:
 
  * Instance Value na rozhraní InputField.
 
-   InputField.get_value(), InputField.set_value() nech» pracijí s instancemi
-   Value, ne se stringy.
+   InputField.get_value(), InputField.set_value() nech» pracují s instancemi
+   Value, ne se stringy.  Také by bylo vhodné, kdyby políèko mìlo pøístup pøímo
+   k PresentedRow.
    
  * Pøepracování stavového øádku?
  
