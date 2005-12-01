@@ -1,3 +1,19 @@
+2005-12-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* icons/warning.xpm: Soubor odstranìn.
+
+	* icons/tip.xpm: Soubor odstranìn.
+
+	* icons/question.xpm: Soubor odstranìn.
+
+	* icons/info.xpm: Soubor odstranìn.
+
+	* icons/error.xpm: Soubor odstranìn.
+
+	* NEWS: Aktualizováno.
+
+	* TODO: Aktualizováno.
+
 2005-11-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* NEWS: Aktualizováno.

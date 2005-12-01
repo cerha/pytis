@@ -13,6 +13,7 @@
 	(Form._print_menu): Metoda zru¹ena.
 	(Form._on_print_menu): Nová metoda. 
 	(TitledForm._create_title_bar): Pøidej tlaèítko tisku.
+	(Form._on_print_menu): Zobrazuj menu uprostøed tlaèítka.
 
 	* pytis/form/application.py (Application.add_menu, add_menu): Zru¹eno.
 
