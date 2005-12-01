@@ -148,6 +148,7 @@ class DualForm(Form):
         form.focus()
         self._active_form = form
         
+
     def title(self):
         """Vra» název formuláøe jako øetìzec."""
         return self._main_form.title()
@@ -165,18 +166,22 @@ class DualForm(Form):
         if command == DualForm.COMMAND_OTHER_FORM:
             self._select_form(self._other_form(self._active_form))
             return True
-        active = self._active_form
+        elif command == Form.COMMAND_PRINT and \
+                 kwargs['form'] in (self._main_form, self._side_form):
+            target = kwargs['form']
+        else:
+            target = self._active_form
         if command.handler() is not None:
             kwargs['mainform'] = self._main_form
             kwargs['sideform'] = self._side_form
             kwargs['norefresh'] = True
             # TODO: To je odporný hack!!!
-            result = active._on_handled_command(command, **kwargs)
+            result = target._on_handled_command(command, **kwargs)
             self.refresh()
-            active.SetFocus()
+            target.SetFocus()
             return result
-        if isinstance(active, KeyHandler):
-            return active.on_command(command, **kwargs)
+        if isinstance(target, KeyHandler):
+            return target.on_command(command, **kwargs)
         else:
             return False
 
