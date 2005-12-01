@@ -137,10 +137,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
         self._init_attributes(**kwargs)
         self._result = None
-        add_menu(Menu(_("Tisk"), (Form._print_menu,),
-                      activation=Form.ACT_FORM), form=self)
         start_time = time.time()
         self._create_form()
+        self._create_print_menu()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
         wx_callback(wx.EVT_CLOSE, self._parent, self._on_parent_close)
 
@@ -196,6 +195,21 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _create_form_parts(self, sizer):
         pass
+
+    def _create_print_menu(self):
+        print "***", self
+        # Vra» tuple polo¾ek tiskového menu.
+        name = self._name
+        try:
+            print_spec = self._resolver.get(name, 'print_spec')
+        except ResolverSpecError:
+            print_spec = None
+        if not print_spec:
+            print_spec = ((_("Implicitní"), os.path.join('output', name)),)
+        self._print_menu = [MItem(title, command=Form.COMMAND_PRINT,
+                                  args=dict(print_spec_path=path, form=self))
+                            for title, path in print_spec]
+
     
     def _on_parent_close(self, event):
         """Handler události uzavøení rodièovského okna formuláøe.
@@ -212,24 +226,19 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         event.Skip()
         return False
 
-    def _print_menu(self):
-        # Vra» tuple polo¾ek tiskového menu.
-        name = self._name
-        try:
-            print_spec = self._resolver.get(name, 'print_spec')
-        except ResolverSpecError:
-            print_spec = None
-        if not print_spec:
-            print_spec = ((_("Implicitní"), os.path.join('output', name)),)
-        return [MItem(title, command=Form.COMMAND_PRINT,
-                      args={'print_spec_path': path})
-                for title, path in print_spec]
-
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
 
     def __repr__(self):
         return str(self)
+
+    def _on_print_menu(self, event):
+        print "***", self
+        button = event.GetEventObject()
+        menu = Menu('', self._print_menu).create(button, self)
+        button.PopupMenu(menu, (0,0))
+        menu.Destroy()
+        
     
     # Veøejné metody
     
@@ -453,8 +462,12 @@ class TitledForm:
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel, text, size=size)
+        bmp = wx.ArtProvider_GetBitmap(wx.ART_PRINT, wx.ART_TOOLBAR, (16,16))
+        button = wx.BitmapButton(panel, -1, bmp)
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(), self._on_print_menu)
         box = wx.BoxSizer()
         box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
+        box.Add(button)
         panel.SetSizer(box)
         panel.SetAutoLayout(True)        
         box.Fit(panel)
@@ -1219,7 +1232,7 @@ class EditForm(LookupForm, TitledForm):
         f = find(id, self._fields, key=lambda f: f.id())
         assert f is not None, (_("Unknown field:"), id)
         return f
-        
+    
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
         layout = self._view.layout()
