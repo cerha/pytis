@@ -7,6 +7,13 @@
 
 2005-11-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: Opraven nefunkèní `OperationDialog'.
+
+	* BUGFIX: Nastavení výchozího tlaèítka dialogu by ji¾ mìlo
+	fungovat.
+	
+	* BUGFIX: Klávesy v dialozích by se ji¾ mìly chovat pøirozenìji.
+	
 	* BUGFIX: Editable.ONCE nyní funguje správnì i v inline editaci.
 	
 2005-11-29  Tomas Cerha  <cerha@brailcom.org>
