@@ -673,10 +673,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._activate((), None)
             self._panel.SetFocus()
 
-    def add_menu(self, menu, form=None):
-        """Volá stejnojmennou metodu instance tøídy 'MenuBar' v aplikaci."""
-        self._menubar.add_menu(menu, form=form)
-        
     # Callbacky
 
     def _on_frame_size(self, event):
@@ -850,10 +846,6 @@ def resolver():
 def wx_frame():
     """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
-
-def add_menu(menu, form=None):
-    """Zavolej 'Application.add_menu()' aktuální aplikace."""
-    return _application.add_menu(menu, form=form)
 
 def exit(**kwargs):
     """Zavolej 'Application.exit() aktuální aplikace a pøedej argumenty."""
