@@ -1,3 +1,28 @@
+2005-12-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dialog.py (GenericDialog._on_idle): Focus nastavuj
+	pouze pokud je dialog ji¾ zobrazen.
+
+	* pytis/form/dualform.py (DualForm.on_command): Pøíkaz
+	`COMMAND_PRINT' nepøedávej aktivnímu formuláøi, ale pou¾ij jeho
+	argument `form'.
+
+	* pytis/form/form.py (Form.__init__): Nevytváøej tiskové menu v
+	menubaru aplikace.  Vytvoø jej jen jako PopupMenu.
+	(Form._create_print_menu): Nová metoda.
+	(Form._print_menu): Metoda zru¹ena.
+	(Form._on_print_menu): Nová metoda. 
+	(TitledForm._create_title_bar): Pøidej tlaèítko tisku.
+
+	* pytis/form/application.py (Application.add_menu, add_menu): Zru¹eno.
+
+	* pytis/form/list.py (BrowseForm.on_command): O¹etøuj
+	`COMMAND_PRINT' pouze pokud je argument `form' tohoto pøíkazu
+	roven `self'.
+
+	* pytis/form/screen.py (MenuBar.add_menu): Zru¹en argument
+	`form'.  Nepøedávej jej volání `_replace_menu'.
+
 2005-11-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_commands.py (DEFAULT_COMMAND_KEYS): Nastav
