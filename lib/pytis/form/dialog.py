@@ -203,12 +203,14 @@ class GenericDialog(Dialog):
 
     def _on_idle(self, event):
         event.Skip()
-        if self._want_focus is not None:
-            self._want_focus.SetFocus()
-            self._want_focus = None
-        if not self._shown and self._dialog.IsShown():
-            self._shown = True
-            self._on_show()
+        if self._dialog.IsShown():
+            if self._want_focus is not None:
+                self._want_focus.SetFocus()
+                self._want_focus.SetFocusFromKbd()
+                self._want_focus = None
+            if not self._shown:
+                self._shown = True
+                self._on_show()
 
     def _on_show(self):
         pass
