@@ -918,7 +918,7 @@ class MenuBar(wx.MenuBar, Restorable):
         else:
             raise ProgramError('Menu not found')
             
-    def add_menu(self, menu, form=None):
+    def add_menu(self, menu):
         """Pøidej nebo nahraï v menubaru 'menu'.
 
         Pokud v menubaru ji¾ existuje menu se stejným titulkem a se stejnou
@@ -940,7 +940,7 @@ class MenuBar(wx.MenuBar, Restorable):
                     found = m
                     break
         if found is not None:
-            self._replace_menu(menu, form=form, panic_if_not_found=False)
+            self._replace_menu(menu, panic_if_not_found=False)
         elif position is not None:
             self._menus.insert(position+1, menu)
         else:
@@ -1117,7 +1117,7 @@ class Menu:
             if isinstance(i, MItem):
                 item = i.create(parent, menu)
                 menu.AppendItem(item)
-                # Toto je zde zejména kvùli nake¹ování vypoètenách hodnot
+                # Toto je zde zejména kvùli nake¹ování vypoètených hodnot
                 # uvnitø 'Command.enabled()' pøi startu aplikace.
                 menu.Enable(item.GetId(), i.command().enabled(appl, i.args()))
                 width = parent.GetTextExtent(i.title())[0]
