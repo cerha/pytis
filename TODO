@@ -1,30 +1,25 @@
 CHYBY:
 
- * Reakce dialogù na enter.
-
-   Defultní tlaèítko napø. na Ctrl+Enter.
-    
- * Ignorované tiskové menu v duálním náhledu.
-   
-   Nadefinovaná polo¾ka menu Tisk (print_spec) se v duálním náhledu neprojeví.
-   V jednoduchém náhledu se projevuje správnì. Pomù¾e pouze pou¾ití
-   kláves. zkratky Ctrl-x p.
-
- * Nefunkèní tøídìní pokud chybí klíèový sloupec.
-   
-   Pokud v columns neuvedu klíèový sloupec (key) a potom chci vyvolat dialog
-   tøídìní (F4) nastane chyba.
-    
- * Pokus o setøídìní prázdné tabulky vyvolá výjimku.
-
- * Nefunguje nastavení hide_binding_column na False (stejnì se nezobrazí).
- 
  * Nefunkèní agregaèní funkce ve vedlej¹ím formuláøi dualformu.
 
    Filtr nad vedlej¹ím formuláøem dualformu si "pamatuje" výsledky agregaèních
    funkcí a i po zmìnì øádku v hlavním formuláøi (a tedy i vyfiltrovaných
    øádkù) vrací poøád stejné hodnoty.
+
+ * Focus pøi otevøení duálního formuláøe (BrowseDualForm) je dole.
+
+ * Pøi pou¾ití filtrovacího dialogu se pøestane zvýrazòovat aktivní øádek.
+
+   Øádek sice má focus, ale je ¹edivý.  Navíc se nezobrazují èísla øádkù ve
+   stavové øádce.  Projevuje se asi jen v duálním formuláøi.
    
+ * Øazení klikáním na záhlaví sloupce nefunguje na primárnì øazeném sloupci.
+
+ * Nevalidní hodnota ve filtrovacím dialogu vyhodí traceback.
+
+   Filtraèní hodnota je validována pomocí typu pøíslu¹ného sloupce.  Pøípadné
+   nevalidní hodnoty by mìly být nìjak o¹etøeny.
+
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
@@ -68,7 +63,7 @@ NOVÉ VLASTNOSTI:
  * Ulo¾ené filtrovací podmínky.
 
    K tomu bude nejprve tøeba nìjak zpøehlednit v¹e, co se týká práce s rùznými
-   typy filtrovacích podmínej uplatnìných v rùzných formuláøích.
+   typy filtrovacích podmínek uplatnìných v rùzných formuláøích.
 
    Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
    by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.

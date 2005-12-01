@@ -4,8 +4,18 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-01  Tomas Cerha  <cerha@brailcom.org>
+
+	Tiskové menu se nyní nevytváøí v menubaru aplikace, ale ka¾dý
+	formuláø má tlaèítko, kterým lze menu vyvolat.  Je tím vyøe¹en
+	problém tiskového menu v duálním formuláøi.
 
 2005-11-29  Tomas Cerha  <cerha@brailcom.org>
+
+	Dialogy nyní pou¾ívají systémové ikony, tak¾e jednak není nutné
+	distribuovat ikony spoleènì s Pytisem (a nastavovat cesty atd.) a
+	jednak ikony odpovídají zvolenému systémovému tématu (jsou
+	vìt¹inou mnohem hezèí, ne¾ ty, které jsme mìli).
 
 	* BUGFIX: Opraven nefunkèní `OperationDialog'.
 
