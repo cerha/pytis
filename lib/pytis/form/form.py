@@ -233,10 +233,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return str(self)
 
     def _on_print_menu(self, event):
-        print "***", self
         button = event.GetEventObject()
         menu = Menu('', self._print_menu).create(button, self)
-        button.PopupMenu(menu, (0,0))
+        size = button.GetSize()
+        button.PopupMenu(menu, (size.x/2, size.y/2))
         menu.Destroy()
         
     
