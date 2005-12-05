@@ -235,8 +235,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _on_print_menu(self, event):
         button = event.GetEventObject()
         menu = Menu('', self._print_menu).create(button, self)
-        size = button.GetSize()
-        button.PopupMenu(menu, (size.x/2, size.y/2))
+        button.PopupMenu(menu, (0, button.GetSize().y))
         menu.Destroy()
         
     
