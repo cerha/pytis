@@ -1389,6 +1389,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             'sorting', 'grouping', 'condition', 'position' a 'filter_flag'),
             a to na hodnotou z dictionary pro daný klíè.  Parametr
             'filter_flag' udává, zda má být zobrazena indikace filtru.
+
           when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
             jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
             'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
@@ -1577,7 +1578,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
           begin_search -- Pokud není None, bude po otevøení formuláøe
             automaticky nastartováno inkrementální vyhledávání. Pokud
             je hodnota øetìzec, je chápán jako identifikátor
-            sloupce, ve kterém se má provádìt vyhledávání. Není-li ho            
+            sloupce, ve kterém se má provádìt vyhledávání. Není-li ho
             hodnota øetìzec, nebo neodpovídá-li ¾ádnému sloupci,
             je vyhledávání provádìno automaticky nad sloupeèkem s
             primárním tøídìním.

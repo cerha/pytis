@@ -1,6 +1,15 @@
 2005-12-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFSDialog._create_choice) 
+	(SFSDialog._create_button, SFSDialog._create_text_ctrl): Pou¾ívej
+	`SetMinSize' nam9sto `SetSize'.
+
+	* pytis/form/form.py (Form._on_print_menu): Zobrazuj menu pod
+	tlaèítkem.
+
 	* pytis/form/dialog.py (GenericDialog.focus): Nová metoda.
+	(GenericDialog._finish_dialog): (Staro)nová metoda.
+	(GenericDialog._end_modal): Volej `self._finish_dialog()'
 
 	* pytis/form/dualform.py (DualForm.on_command): Nevy¾aduj argument
 	`form' u pøíkazu COMMAND_PRINT.
