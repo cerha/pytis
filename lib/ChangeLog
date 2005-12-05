@@ -1,11 +1,18 @@
 2005-12-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (block_refresh): Nová funkce.
+
 	* pytis/form/search.py (SFSDialog._create_choice) 
 	(SFSDialog._create_button, SFSDialog._create_text_ctrl): Pou¾ívej
 	`SetMinSize' nam9sto `SetSize'.
 
 	* pytis/form/form.py (Form._on_print_menu): Zobrazuj menu pod
 	tlaèítkem.
+	(Refreshable._block_refresh): Nová konstanta.
+	(Refreshable.block_refresh): Nová metoda tøídy.
+	(Refreshable.refresh): Volej `self._refresh', pokud není refresh
+	blokován.
+	(Refreshable._refresh): Nová metoda.
 
 	* pytis/form/dialog.py (GenericDialog.focus): Nová metoda.
 	(GenericDialog._finish_dialog): (Staro)nová metoda.
@@ -13,9 +20,19 @@
 
 	* pytis/form/dualform.py (DualForm.on_command): Nevy¾aduj argument
 	`form' u pøíkazu COMMAND_PRINT.
+	(ShowDualForm.refresh, BrowseShowDualForm.refresh)
+	(BrowseDualForm.refresh): Pøejmenováno na `_refresh'.
+
 
 	* pytis/form/list.py (BrowseForm.on_command): Proveï pøíkaz
 	COMMAND_PRINT i pokud pokud není nastaven argument `form'.
+	(ListForm._on_handled_command): Definuj argument `norefresh' pøímo
+	a nevybírej jej z kwargs.
+	(ListForm.refresh): Pøejmenováno na `_refresh'.
+	(FilteredBrowseForm.filter, ListForm._filter)
+	(ListForm._on_sort_column, ListForm.on_command): Pou¾ívej
+	`self._refresh', ne `self.refresh
+	
 
 2005-12-01  Tomas Cerha  <cerha@brailcom.org>
 
