@@ -391,7 +391,7 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
     def _on_show_record(self, key):
         run_form(ShowDualForm, self._name, select_row=key)
 
-    def refresh(self):
+    def _refresh(self):
         self._main_form.refresh()
         # Refresh sideformu by zde teoreticky být nemusel.  Ten by mìl být
         # proveden automaticky po refreshi mainformu.  Nìkdy k tomu v¹ak z
@@ -426,7 +426,7 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
         self._main_form.set_callback(BrowsableShowForm.CALL_SELECTION,
                                      self._on_main_selection)
 
-    def refresh(self):
+    def _refresh(self):
         self._side_form.refresh()
 
     def _sash_position(self, size):
@@ -470,7 +470,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
     def _sash_position(self, size):
         return max(size.height - self._side_form.size().height, 200)
     
-    def refresh(self):
+    def _refresh(self):
         self._main_form.refresh()
 
         
