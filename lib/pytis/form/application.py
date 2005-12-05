@@ -876,3 +876,11 @@ def refresh():
     """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
     _application.refresh()
 
+
+def block_refresh(function):
+    """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
+    
+    Vrací: výsledek vrácený volanou funkcí.
+    
+    """
+    return Refreshable.block_refresh(function)
