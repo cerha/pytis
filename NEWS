@@ -4,6 +4,24 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-05  Tomas Cerha  <cerha@brailcom.org>
+
+	Nová funkce `block_refresh' umo¾òuje zablokovat refresh po dobu
+	vykonávání bloku kódu.  To je vhodné zejména pøi definici procedur
+	v defsech, kde automatické refreshe èasto zdr¾ují a pøitom postaèí
+	jeden refresh a¾ na konci série operací.
+
+	* BUGFIX: Opravena drobná chybka znemo¾òující tisk pomocí
+	klávesové zkratky.
+
+	* BUGFIX: Opraveno havarování pøi zobrazení více dialogù.
+	
+	* BUGFIX: Filtrovací dialog si nyní opìt správnì zapamatuje
+	podmínku.
+
+	* BUGFIX: Nastavování velikostí prvkù filtrovacích dialogù
+	upraveno pro nové verze wx.
+
 2005-12-01  Tomas Cerha  <cerha@brailcom.org>
 
 	Tiskové menu se nyní nevytváøí v menubaru aplikace, ale ka¾dý
