@@ -493,9 +493,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # else:
         #      xcondition = condition
         log(EVENT, 'U¾ivatelský filtr:', condition)
-        self.refresh(reset={'condition': condition,
-                            'filter_flag': condition},
-                     when=self.DOIT_IMMEDIATELY)
+        self._refresh(reset={'condition': condition,
+                             'filter_flag': condition},
+                      when=self.DOIT_IMMEDIATELY)
 
     def _filter_by_cell(self, cancel=False):
         row, col = self._current_cell()
@@ -518,9 +518,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                                    direction=direction,
                                                    primary=primary)
         if sorting is not None and sorting != old_sorting:
-            self.refresh(reset={'condition':self._lf_condition,
-                                'sorting':sorting},
-                         when=self.DOIT_IMMEDIATELY)
+            self._refresh(reset={'condition':self._lf_condition,
+                                 'sorting':sorting},
+                          when=self.DOIT_IMMEDIATELY)
         return sorting
 
     def can_sort_column(self, **kwargs):
@@ -817,7 +817,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._on_sort_column(**kwargs)
             return True
         elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
-            self.refresh(reset={'grouping': kwargs['column_id']})
+            self._refresh(reset={'grouping': kwargs['column_id']})
             return True
         elif command == ListForm.COMMAND_SELECT_CELL:
             self._select_cell(**kwargs)
@@ -918,12 +918,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         column = self._columns[self._current_cell()[1]]
         return column.codebook() is not None
 
-    def _on_handled_command(self, command, **kwargs):
+    def _on_handled_command(self, command, norefresh=False, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
         handler = command.handler()
-        refresh = not kwargs.has_key('norefresh')
-        if not refresh:
-            del kwargs['norefresh']
         # Zjistíme, jaké má u¾ivatelský handler argumenty.
         import inspect
         allargs, varargs, varkw, defaults = inspect.getargspec(handler)
@@ -944,7 +941,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not varkw:
             kwargs = {}
         handler(*args, **kwargs)
-        if refresh:
+        if not norefresh:
             self.refresh()
         return True
 
@@ -1371,7 +1368,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     # Veøejné metody
         
-    def refresh(self, reset=None, when=None):
+    def _refresh(self, reset=None, when=None):
         """Aktualizuj data seznamu z datového zdroje.
 
         Pøekresli celý seznam v okam¾iku daném argumentem 'when' se zachováním
@@ -1906,7 +1903,7 @@ class FilteredBrowseForm(BrowseForm):
         else:
             condition = self._condition
         self._lf_initial_condition = condition
-        self.refresh(reset={'condition': None})
+        self._refresh(reset={'condition': None})
 
 
 class SideBrowseForm(FilteredBrowseForm):
