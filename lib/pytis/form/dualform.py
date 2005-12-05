@@ -167,7 +167,7 @@ class DualForm(Form):
             self._select_form(self._other_form(self._active_form))
             return True
         elif command == Form.COMMAND_PRINT and \
-                 kwargs['form'] in (self._main_form, self._side_form):
+                 kwargs.get('form') in (self._main_form, self._side_form):
             target = kwargs['form']
         else:
             target = self._active_form
