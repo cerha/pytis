@@ -306,7 +306,9 @@ class GenericDialog(Dialog):
         self._create_dialog_elements(dialog)
         dialog.SetFocus()
 
-
+    def focus(self):
+        self._dialog.SetFocus()
+        
 class Message(GenericDialog):
     """Dialog zobrazující zprávu a vracející odpovìï.
 
