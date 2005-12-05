@@ -22,7 +22,8 @@
 	`form' u pøíkazu COMMAND_PRINT.
 	(ShowDualForm.refresh, BrowseShowDualForm.refresh)
 	(BrowseDualForm.refresh): Pøejmenováno na `_refresh'.
-
+	(ShowDualForm._refresh, BrowseShowDualForm._refresh)
+	(BrowseDualForm._refresh): Pøedávej argument `when'.
 
 	* pytis/form/list.py (BrowseForm.on_command): Proveï pøíkaz
 	COMMAND_PRINT i pokud pokud není nastaven argument `form'.
