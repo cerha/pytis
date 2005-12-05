@@ -1,5 +1,7 @@
 2005-12-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py (GenericDialog.focus): Nová metoda.
+
 	* pytis/form/dualform.py (DualForm.on_command): Nevy¾aduj argument
 	`form' u pøíkazu COMMAND_PRINT.
 
