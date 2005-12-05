@@ -1827,8 +1827,8 @@ class BrowseForm(ListForm):
         run_form(PrintForm, name, formatter=formatter)
 
     def on_command(self, command, **kwargs):
-        if command == Form.COMMAND_PRINT and not kwargs.has_key('form') \
-               or kwargs['form'] is self:
+        if command == Form.COMMAND_PRINT and \
+               (not kwargs.has_key('form') or kwargs['form'] is self):
             self._on_print_(kwargs.get('print_spec_path'))
         elif command == BrowseForm.COMMAND_IMPORT_INTERACTIVE:
             self._on_import_interactive()
