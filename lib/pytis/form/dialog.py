@@ -221,7 +221,12 @@ class GenericDialog(Dialog):
         nav.SetCurrentFocus(self._dialog)
         self._dialog.GetEventHandler().ProcessEvent(nav)
 
+    def _finish_dialog(self):
+        # Vyu¾íváno v 'search.py'
+        pass
+    
     def _end_modal(self, result):
+        self._finish_dialog()
         self._dialog.EndModal(result)
         return True
     
