@@ -369,6 +369,21 @@ class Refreshable:
     proveden bude).
 
     """
+    _block_refresh = False
+
+    def block_refresh(cls, function):
+        """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
+
+        Vrací: výsledek vrácený volanou funkcí.
+        
+        """
+        cls._block_refresh = True
+        try:
+            result = function()
+        finally:
+            cls._block_refresh = False
+        return result
+    block_refresh = classmethod(block_refresh)
     
     def refresh(self, when=None):
         """Aktualizuj data formuláøe z datového zdroje.
@@ -383,8 +398,16 @@ class Refreshable:
 
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
-        V této tøídì metoda nedìlá nic, musí být v potomkovi pøedefinována.
-        
+        """
+        if not Refreshable._block_refresh:
+            self._refresh(when=when)
+
+
+    def _refresh(self, when=None):
+        """Proveï vlastní refresh.
+
+        Tuto metodu nech» pøedefinují odvozené tøídy.
+
         """
         pass
 
