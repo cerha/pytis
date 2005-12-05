@@ -1,3 +1,11 @@
+2005-12-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (DualForm.on_command): Nevy¾aduj argument
+	`form' u pøíkazu COMMAND_PRINT.
+
+	* pytis/form/list.py (BrowseForm.on_command): Proveï pøíkaz
+	COMMAND_PRINT i pokud pokud není nastaven argument `form'.
+
 2005-12-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dialog.py (GenericDialog._on_idle): Focus nastavuj
