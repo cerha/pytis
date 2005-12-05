@@ -71,7 +71,7 @@ class SFSDialog(GenericDialog):
 
     def _create_button(self, label, callback, tip=None):
         b = wx.Button(self._dialog, -1, unicode(label))
-        b.SetSize((b.GetSize().width, self._FIELD_HEIGHT))
+        b.SetMinSize((b.GetSize().width, self._FIELD_HEIGHT))
         wx_callback(wx.EVT_BUTTON, self._dialog, b.GetId(), callback)
         if tip is not None and config.show_tooltips:
             b.SetToolTipString(unicode(tip))
@@ -81,7 +81,7 @@ class SFSDialog(GenericDialog):
         ch = wx.Choice(self._dialog, -1, choices=choices)
         ch.SetSelection(0)
         correction = enlarge and 22 or 0 # longer texts may not fit...
-        ch.SetSize((ch.GetSize().width+correction, self._FIELD_HEIGHT))
+        ch.SetMinSize((ch.GetSize().width+correction, self._FIELD_HEIGHT))
         if tip is not None and config.show_tooltips:
             ch.SetToolTipString(unicode(tip))
         return ch
@@ -89,7 +89,7 @@ class SFSDialog(GenericDialog):
     def _create_text_ctrl(self, size, value=None, tip=None, readonly=False):
         style = readonly and wx.TE_READONLY or 0
         t = wx.TextCtrl(self._dialog, -1, style=style)
-        t.SetSize((dlg2px(t, 4*size), self._FIELD_HEIGHT))
+        t.SetMinSize((dlg2px(t, 4*size), self._FIELD_HEIGHT))
         if value is not None:
             t.SetValue(value)
         if tip is not None and config.show_tooltips:
