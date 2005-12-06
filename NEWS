@@ -4,6 +4,22 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-06  Tomas Cerha  <cerha@brailcom.org>
+
+	Èíselníkové políèko typu ListField nyní umo¾òuje nezávislý pohyb
+	kurzoru a výbìr.  Døíve výbìr v¾dy následoval kurzor, co¾
+	znemo¾òovalo napøíklad scrollovat hodnoty pomocí klávesnice.
+
+	Blokování refreshe nyní funguje i pøi jeho vnoøeném pou¾ití a je
+	mo¾né pøedat argumenty volané funkce.  Byly také odstranìny
+	nìkteré døívìj¹í hacky, které øe¹ily blockování refreshe po svém.
+	
+	* BUGFIX: O¹etøena ztráta focusu pøi uzavøení filtrovacího diaogu
+	nad duálním formuláøem, kvùli které pøestávalo fungovat
+	zobrazování aktivního øádku ve stavové øádce.
+
+	* BUGFIX: Focus je nyní pøi otevøení duálního formuláøe nahoøe.
+	
 2005-12-05  Tomas Cerha  <cerha@brailcom.org>
 
 	Nová funkce `block_refresh' umo¾òuje zablokovat refresh po dobu

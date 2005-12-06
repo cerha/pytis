@@ -6,13 +6,6 @@ CHYBY:
    funkcí a i po zmìnì øádku v hlavním formuláøi (a tedy i vyfiltrovaných
    øádkù) vrací poøád stejné hodnoty.
 
- * Focus pøi otevøení duálního formuláøe (BrowseDualForm) je dole.
-
- * Pøi pou¾ití filtrovacího dialogu se pøestane zvýrazòovat aktivní øádek.
-
-   Øádek sice má focus, ale je ¹edivý.  Navíc se nezobrazují èísla øádkù ve
-   stavové øádce.  Projevuje se asi jen v duálním formuláøi.
-   
  * Øazení klikáním na záhlaví sloupce nefunguje na primárnì øazeném sloupci.
 
  * Nevalidní hodnota ve filtrovacím dialogu vyhodí traceback.
@@ -52,11 +45,6 @@ CHYBY:
 NOVÉ VLASTNOSTI:
 
 2) U¾ivatelské rozhraní
-
- * Scrollování ListField z klávesnice bez zmìny vybrané hodnoty.
-
-   Bylo by dobré aby se kurzor mohl pohybovat nezávisle a výbìr byl proveden a¾
-   na Enter, doubleclick, èi výbìr z menu.
 
  * U¾ivatelsky pøizpùsobitelné poøadí a poèet sloupcù libovolného BrowseFromu.
    
