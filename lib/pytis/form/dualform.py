@@ -80,7 +80,7 @@ class DualForm(Form):
         
         """
         super_(DualForm).__init__(self, *args, **kwargs)
-        wx_callback(wx.EVT_SET_FOCUS, self, self._on_focus)
+        wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
 
     def _init_attributes(self, **kwargs):
@@ -212,8 +212,13 @@ class DualForm(Form):
         self._splitter.Close()
         self._splitter.Destroy()               
         self.Close()
-        self.Destroy()               
-
+        self.Destroy()
+        
+    def focus(self):
+        active = self._active_form
+        if active:
+            active.focus()
+        
     def _sash_position(self, size):
         return size.height * self._sash_ratio
             
@@ -226,13 +231,8 @@ class DualForm(Form):
         self._splitter.SetSize(size)
         self._splitter.SetSashPosition(self._sash_position(size))
         event.Skip()
+
         
-    def _on_focus(self, event):
-        active = self._active_form
-        if active:
-            active.focus()
-
-
 class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
     
