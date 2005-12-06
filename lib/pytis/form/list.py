@@ -290,7 +290,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             g.SetSize(g.GetSize())
         self._select_cell(row=self._position)
         self._update_label_colors(g)
-        g.SetFocus()
+        #g.SetFocus()
 
     def _update_label_colors(self, grid):
         color = self._lf_indicate_filter and config.filter_color or \
@@ -617,7 +617,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return True
 
     def _on_select_cell(self, event):
-        if not self._in_select_cell and wx_focused_window() is self:
+        if not self._in_select_cell and self._grid.GetBatchCount() == 0:
+            # GetBatchCount zji¹»ujeme proto, aby nedhocházelo k volání
+            # callbacku pøi zmìnách v rámci _update_grid(), které nejsou
+            # interaktivní.
             self._run_callback(self.CALL_USER_INTERACTION)
         if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
             # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
@@ -1523,6 +1526,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     # Ostatní veøejné metody
 
     def focus(self):
+        print "***", self
+        print stack_info()
         super_(ListForm).focus(self)
         self.show_position()
         self._update_selection_colors()
