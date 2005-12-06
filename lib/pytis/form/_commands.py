@@ -164,6 +164,10 @@ Command(Invocable, 'INVOKE_SELECTION_ALTERNATE',
         "Vyvolání alternativního výbìru hodnoty políèka.")
 Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
         "Vyvolání alternativního výbìru hodnoty políèka.")
+Command(ListField, 'SELECT',
+        "Výbìr aktuálního záznamu.")
+Command(ListField, 'SHOW_SELECTED',
+        "Výbìr aktuálního záznamu.")
 Command(ListField, 'INVOKE_EDIT_FORM',
         "Vyvolání editaèního formuláøe nad akt. záznamem.")
 Command(ListField, 'INVOKE_BROWSE_FORM',
@@ -226,6 +230,7 @@ DEFAULT_COMMAND_KEYS = (
     (InputField.COMMAND_LEAVE_FIELD,              'Escape'),
     (Invocable.COMMAND_INVOKE_SELECTION,          'F2'),
     (Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE,'Ctrl-F2'),
+    (ListField.COMMAND_SHOW_SELECTED,             'Backspace'),  
     (Dialog.COMMAND_CLOSE_DIALOG,                 'Escape'),
     (Dialog.COMMAND_COMMIT_DIALOG,                'Enter'))
 
