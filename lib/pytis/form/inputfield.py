@@ -1254,22 +1254,21 @@ class ListField(GenericCodebookField):
         self._data_dirty = True
         wxid = list.GetId()
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, wxid, self._on_select)
-        wx_callback(wx.EVT_LIST_ITEM_DESELECTED, list, wxid, self._on_deselect)
+        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, wxid, self._on_activation)
         wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
-        self._last_deselected_item = None
-        #list.SetMargins(0,0)
+        self._selected_item = None
         return list
 
-    def _on_deselect(self, event):
-        self._last_deselected_item = event.GetIndex()
-        
     def _on_select(self, event):
+        self._list.SetItemState(event.GetIndex(), 0, wx.LIST_STATE_SELECTED)
+
+    def _on_activation(self, event):
         event.Skip()
-        if self._enabled:
+        i = event.GetIndex()
+        if self._enabled and i != self._selected_item:
+            self._set_selection(i)
             self._is_changed = True
-        else:
-            self._set_selection(self._last_deselected_item, make_visible=False)
-                    
+            
     def _on_enumerator_change(self):
         # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
         self._data_dirty = True
@@ -1279,13 +1278,19 @@ class ListField(GenericCodebookField):
             self._load_list_data()
         return super(ListField, self)._on_idle(event)
 
+    #def _on_kill_focus(self, event):
+    #    if self._selected_item is not None:
+    #        self._list.EnsureVisible(self._selected_item)
+    #    super(ListField, self)._on_kill_focus(event)
+        
+        
     def _load_list_data(self):
         current = self.get_value()
         list = self._list
         enumerator = self.type().enumerator()
         list.DeleteAllItems()
         self._list_data = []
-        select_item = 0
+        select_item = None
         for i, row in enumerate(enumerator.iter()):
             list.InsertStringItem(i, "")
             v = row[enumerator.value_column()]
@@ -1301,46 +1306,44 @@ class ListField(GenericCodebookField):
         if change_appearance:
             self._set_disabled_color()
         
-    def _selected_item(self):
-        i = self._list.GetNextItem(-1, wx.LIST_NEXT_ALL,
-                                   wx.LIST_STATE_SELECTED)
-        if i == -1:
-            return None
-        else:
-            return i
-
-    def _set_selection(self, i, make_visible=True):
-        # Nechceme aby set_value vyvolávalo callbacky.
-        # Ty oznamují jen interaktivní u¾ivatelskou zmìnu hodnoty.
-        self._disable_event_handlers()
-        self._list.SetItemState(i, wx.LIST_STATE_SELECTED,
-                                wx.LIST_STATE_SELECTED)
-        if make_visible:
-            self._list.EnsureVisible(i)
-        self._enable_event_handlers()
+    def _set_selection(self, i):
+        list = self._list
+        if self._selected_item is not None:
+            # Deselect tho old item.
+            list.SetItemBackgroundColour(self._selected_item, None)
+        self._selected_item = i
+        if i is not None:
+            bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            # TODO: This doesn't work correctly.  Only the later call has an
+            # effect (regardless which one it is).  Probably a wx problem...
+            # If solved, the text color should be also restored above.
+            # list.SetItemTextColour(i, wx.WHITE)
+            list.SetItemBackgroundColour(i, bgcolor)
+            list.SetItemState(i, wx.LIST_STATE_FOCUSED, wx.LIST_STATE_FOCUSED)
+            list.EnsureVisible(i)
         
 
     def _set_value(self, value):
+        if self._data_dirty:
+            self._load_list_data()
         if value:
             for i, v in enumerate(self._list_data):
                 if v.export() == value:
                     self._set_selection(i)
                     return True
-        # Empty value or not in list.
-        i = self._selected_item()
-        if i is not None:
-            self._disable_event_handlers()
-            self._list.SetItemState(i, 0, 0)
-            self._enable_event_handlers()
-        if value:
-            return False
+            else:
+                # Not in list.
+                self._set_selection(None)
+                return False
         else:
+            # Empty value.
+            self._set_selection(None)
             return True
         
         
     def get_value(self):
         """Vra» aktuální vnitøní hodnotu políèka."""
-        i = self._selected_item()
+        i = self._selected_item
         if i is not None:
             return self._list_data[i].export()
         else:
@@ -1372,7 +1375,7 @@ class ListField(GenericCodebookField):
             return super(ListField, self).on_command(command, **kwargs)
     
     def can_invoke_edit_form(self, **kwargs):
-        return self._selected_item() is not None
+        return self._selected_item is not None
 
     def can_invoke_browse_form(self, **kwargs):
         return not isinstance(current_form(), PopupForm)
