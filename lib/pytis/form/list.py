@@ -116,7 +116,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._in_select_cell = False
         self._last_reshuffle_request = self._reshuffle_request = 0
         self._current_editor = None
-        self._block_refresh = False
         # Parametry zobrazení
         self._initial_position = self._position = 0
 
@@ -1270,13 +1269,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
             return False
-        self._block_refresh = True
-        try:
+        def blocked_code():
             key = self._current_key()
             deleted = super(ListForm, self)._on_delete_record(key)
             self._table.edit_row(None)
-        finally:
-            self._block_refresh = False
+        block_refresh(blocked_code)
         if deleted:
             r = self._current_cell()[0]
             n = self._table.GetNumberRows()
@@ -1397,8 +1394,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
         """
-        if self._block_refresh:
-            return
         assert when in (None,           # to je pouze interní hodnota
                         self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT,
                         self.DOIT_IFNEEDED), \
