@@ -1,3 +1,10 @@
+2005-12-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (DualForm.focus): Nová metoda.
+	(DualForm._on_focus): Metoda zru¹ena.
+	(DualForm.__init__): Pøi události `EVT_SET_FOCUS' volej
+	`self.focus()'.
+
 2005-12-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (block_refresh): Nová funkce.
