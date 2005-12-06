@@ -1,5 +1,11 @@
 2005-12-06  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (Refreshable.block_refresh): Atribut
+	`_block_refresh' pøejmenován na `_block_refresh_'.  Nastavuj jej
+	v¾dy tøídì `Refreshable', ne tøídì, pro kterou je metoda volána.
+	(Refreshable.refresh): `_block_refresh' -> `_block_refresh_'.
+	(Form._create_print_menu): Odstranìn zapomenutý print.
+
 	* pytis/form/list.py (ListForm._on_select_cell): Volej callback
 	`CALL_USER_INTERACTION' pouze pokud není grid uvnitø
 	BeginBatch/EndBatch, co¾ jsou zmìny provádìné v rámci
