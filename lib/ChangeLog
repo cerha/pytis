@@ -1,5 +1,8 @@
 2005-12-06  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_commands.py: Nové pøíkazy `ListField.COMMAND_SELECT' a
+	`ListField.COMMAND_SHOW_SELECTED'.
+
 	* pytis/form/application.py (Application.run_procedure): Nový
 	argument `block_refresh'.
 	(block_refresh): Pøedávej v¹echny argumenty.
@@ -24,6 +27,10 @@
 	Zpøehlednìno.
 	(ListField.get_value, ListField.can_invoke_edit_form): Namísto
 	metody `self._selected_item' pou¾ívej stejnojmenný atribut.
+	(ListField._menu): Pøidej nové pøíkazy `COMMAND_SELECT' a
+	`COMMAND_SHOW_SELECTED'.
+	(ListField.on_command): O¹etøuj nové pøíkazy `COMMAND_SELECT' a
+	`COMMAND_SHOW_SELECTED'.
 
 	* pytis/form/form.py (Refreshable._block_refresh): Nech» je èíslo
 	urèující úroveò vnoøení blokace.
