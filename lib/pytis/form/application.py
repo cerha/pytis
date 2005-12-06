@@ -384,7 +384,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             result = self._check_perm(perm, name)
         return result
 
-    def run_procedure(self, spec_name, proc_name, **kwargs):
+    def run_procedure(self, spec_name, proc_name, block_refresh=False,
+                      **kwargs):
         """Spus» proceduru.
 
         Argumenty:
@@ -412,7 +413,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             assert spec.has_key(proc_name), \
                   _("Specifikace procedur neobsahuje definici '%s'") % proc_name
             proc = spec[proc_name]
-            result = proc(**kwargs)
+            if block_refresh:
+                result = block_refresh(proc, **kwargs)
+            else:
+                result = proc(**kwargs)
             log(ACTION, "Návratová hodnota procedury:", result)
             if focused:
                 focused.SetFocus()
@@ -877,10 +881,10 @@ def refresh():
     _application.refresh()
 
 
-def block_refresh(function):
+def block_refresh(function, *args, **kwargs):
     """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
     
     Vrací: výsledek vrácený volanou funkcí.
     
     """
-    return Refreshable.block_refresh(function)
+    return Refreshable.block_refresh(function, *args, **kwargs)
