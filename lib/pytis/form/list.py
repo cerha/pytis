@@ -617,7 +617,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return True
 
     def _on_select_cell(self, event):
-        if not self._in_select_cell:
+        if not self._in_select_cell and wx_focused_window() is self:
             self._run_callback(self.CALL_USER_INTERACTION)
         if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
             # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
