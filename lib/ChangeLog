@@ -1,15 +1,53 @@
 2005-12-06  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/form.py (Refreshable.block_refresh): Atribut
-	`_block_refresh' pøejmenován na `_block_refresh_'.  Nastavuj jej
+	* pytis/form/application.py (Application.run_procedure): Nový
+	argument `block_refresh'.
+	(block_refresh): Pøedávej v¹echny argumenty.
+
+	* pytis/form/inputfield.py (ListField._create_ctrl): Neu¹etøuj
+	událost zru¹ení výbìru.  O¹etøuj aktivaci polo¾ky.  Nenastavuj
+	`self._last_deselected_item'.
+	(ListField._on_deselect): Zru¹eno.
+	(ListField._on_select): Výbìr hned zase zru¹.
+	(ListField._on_activation): Nová metoda.  Zde provádìj výbìr
+	aktivivané polo¾ky.
+	(ListField._load_list_data): Pokud v nových datech není minulá
+	polo¾ka, nevybírej nic.
+	(ListField._selected_item): Metoda zru¹ena.  Nyní vystaèíme se
+	stejnojmenným atributem.
+	(ListField._set_selection): Namísto nastavování výbìru prostøedky
+	ListCtrl pouze zmìò barvu pozadí vybraného políèka zapamatuj si
+	jeho index v `self._selected_item' a nastav mu focus.  Tím
+	umo¾níme nezávislost aktuální buòky (na které je focus) a
+	vybrané/zvýraznìné buòky.
+	(ListField._set_value): Pokud jsou data dirty, pøenaèti je.
+	Zpøehlednìno.
+	(ListField.get_value, ListField.can_invoke_edit_form): Namísto
+	metody `self._selected_item' pou¾ívej stejnojmenný atribut.
+
+	* pytis/form/form.py (Refreshable._block_refresh): Nech» je èíslo
+	urèující úroveò vnoøení blokace.
+	(Refreshable.block_refresh): Nastavuj atribut `_block_refresh'
 	v¾dy tøídì `Refreshable', ne tøídì, pro kterou je metoda volána.
-	(Refreshable.refresh): `_block_refresh' -> `_block_refresh_'.
+	(Refreshable.refresh): Vyvolej výjimku, pokud se `_block_refresh'
+	dostane do záporné hodnoty.
+	(LookupForm._on_search): Pou¾ij `block_refresh' namísto ruèního
+	blokování refreshe zde.
+
 	(Form._create_print_menu): Odstranìn zapomenutý print.
+	(Refreshable.block_refresh): Pøedávej volané funkci v¹echny
+	argumenty. Pøi ka¾dém volání hodnotu atributu `_block_refresh'
+	inkrementuj a nakonec zase dekrementuj.
 
 	* pytis/form/list.py (ListForm._on_select_cell): Volej callback
 	`CALL_USER_INTERACTION' pouze pokud není grid uvnitø
 	BeginBatch/EndBatch, co¾ jsou zmìny provádìné v rámci
 	`_update_grid()' a ty nejsou interaktivní.
+	(ListForm._init_attributes): Neinicializuj atribut
+	`_block_refresh'.
+	(ListForm._on_delete_record): Pou¾ij `block_refresh' namísto
+	ruèního blokování refreshe zde.
+	(ListForm._refresh): Netestuj blokování refreshe zde.
 
 	* pytis/form/dualform.py (DualForm.focus): Nová metoda.
 	(DualForm._on_focus): Metoda zru¹ena.
