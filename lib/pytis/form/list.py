@@ -1526,8 +1526,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     # Ostatní veøejné metody
 
     def focus(self):
-        print "***", self
-        print stack_info()
         super_(ListForm).focus(self)
         self.show_position()
         self._update_selection_colors()
