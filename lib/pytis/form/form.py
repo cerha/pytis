@@ -368,7 +368,7 @@ class Refreshable:
     proveden bude).
 
     """
-    _block_refresh = False
+    _block_refresh_ = False
 
     def block_refresh(cls, function):
         """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
