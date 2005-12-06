@@ -197,7 +197,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         pass
 
     def _create_print_menu(self):
-        print "***", self
         # Vra» tuple polo¾ek tiskového menu.
         name = self._name
         try:
@@ -377,11 +376,11 @@ class Refreshable:
         Vrací: výsledek vrácený volanou funkcí.
         
         """
-        cls._block_refresh = True
+        Refreshable._block_refresh_ = True
         try:
             result = function()
         finally:
-            cls._block_refresh = False
+            Refreshable._block_refresh_ = False
         return result
     block_refresh = classmethod(block_refresh)
     
@@ -399,7 +398,7 @@ class Refreshable:
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
         """
-        if not Refreshable._block_refresh:
+        if not Refreshable._block_refresh_:
             self._refresh(when=when)
 
 
