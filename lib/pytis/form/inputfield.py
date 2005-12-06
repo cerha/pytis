@@ -1350,7 +1350,14 @@ class ListField(GenericCodebookField):
             return None
 
     def _menu(self):
-        menu = (MItem("Zobrazit èíselník",
+        menu = (MItem("Vybrat",
+                      command=self.COMMAND_SELECT,
+                      args={'originator': self}),
+                MItem("Najít vybranou polo¾ku",
+                      command=self.COMMAND_SHOW_SELECTED,
+                      args={'originator': self}),
+                MSeparator(),
+                MItem("Zobrazit èíselník",
                       command=self.COMMAND_INVOKE_CODEBOOK_FORM,
                       args={'originator': self}),
                 MItem("Editovat vybraný záznam",
@@ -1358,12 +1365,19 @@ class ListField(GenericCodebookField):
                       args={'originator': self}),
                 MItem("Zobrazit celou tabulku",
                       command=self.COMMAND_INVOKE_BROWSE_FORM,
-                      args={'originator': self})
+                      args={'originator': self}),
                 )
         return menu   
 
     def on_command(self, command, **kwargs):
-        if command == self.COMMAND_INVOKE_EDIT_FORM:
+        if command == self.COMMAND_SELECT:
+            i = self._list.GetNextItem(0 , state=wx.LIST_STATE_FOCUSED)
+            self._set_selection(i)
+            return True
+        elif command == self.COMMAND_SHOW_SELECTED:
+            self._set_selection(self._selected_item)
+            return True
+        elif command == self.COMMAND_INVOKE_EDIT_FORM:
             run_form(PopupEditForm, self.spec().codebook(),
                      select_row=self._select_row_arg())
             return True
