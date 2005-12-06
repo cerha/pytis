@@ -368,19 +368,23 @@ class Refreshable:
     proveden bude).
 
     """
-    _block_refresh_ = False
+    _block_refresh = 0
 
-    def block_refresh(cls, function):
+    def block_refresh(cls, function, *args, **kwargs):
         """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
 
+        V¹echny argumenty jsou pøedány volané funkci.
+        
         Vrací: výsledek vrácený volanou funkcí.
+
+        Refresh je zablokován globálnì, pro v¹echny existující formuláøe.
         
         """
-        Refreshable._block_refresh_ = True
+        Refreshable._block_refresh += 1
         try:
-            result = function()
+            result = function(*args, **kwargs)
         finally:
-            Refreshable._block_refresh_ = False
+            Refreshable._block_refresh -= 1
         return result
     block_refresh = classmethod(block_refresh)
     
@@ -398,9 +402,13 @@ class Refreshable:
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
         """
-        if not Refreshable._block_refresh_:
+        level = Refreshable._block_refresh
+        if level == 0:
             self._refresh(when=when)
-
+        elif level > 0:
+            log(OPERATIONAL, "Refresh neproveden kvùli blokaci:", level)
+        else:
+            raise ProgramError("Nepøípustná hodnota _block_refresh:", level)
 
     def _refresh(self, when=None):
         """Proveï vlastní refresh.
@@ -968,11 +976,8 @@ class LookupForm(RecordForm):
     def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
         if show_dialog:
-            self._block_refresh = True  # TODO: quick&dirty, see ListForm
-            try:
-                condition, direction = run_dialog(sf_dialog, self._row)
-            finally:
-                self._block_refresh = False
+            condition, direction = \
+                       block_refresh(lambda: run_dialog(sf_dialog, self._row))
         else:
             condition = sf_dialog.condition()
         if condition is not None:
