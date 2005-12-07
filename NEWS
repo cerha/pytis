@@ -6,6 +6,13 @@
 
 2005-12-07  Tomas Cerha  <cerha@brailcom.org>
 
+	Specifikace èíselníku se nyní naèítá a¾ v konstruktoru formuláøe.
+	V dùsledku se napø. pøi pou¾ití `run_cb()' (pytis-extensions)
+	automaticky pou¾ijí sloupce definované v `cb_spec()'
+
+        Klávesové zkratky 'Alt-Right' a 'Alt-Left' (levá a pravá ¹ipka)
+	nyní umo¾òují interaktivnì mìnit ¹íøku aktuálního sloupce.
+	
         Funkce `run_procedure()' a `user_cmd()' (pytis-extensions) nyní
 	pøijímají argument `block_refresh_' a pokud je pravdivý, tak
 	obalují proceduru, resp. handler pøíkazu funkcí `block_refresh()',

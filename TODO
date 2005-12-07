@@ -57,8 +57,6 @@ NOVÉ VLASTNOSTI:
  
  * Vyvolat EditForm ze ShowFormu.
 
- * Klávesové zkratky pro roz¹íøení/zù¾ení sloupce.
-
  * Roz¹íøit øádek po dobu inline editace víceøádkového textu.
  
  * Detailnìj¹í kontrola nad rozli¹ením práv pøi UPDATE/INSERT
@@ -88,11 +86,6 @@ NOVÉ VLASTNOSTI:
 
 
 2) Specifikace
-
- * Funkce run_cb() v extensions nyní ignoruje cb_spec.
-
-   Bylo by dobré, aby se specifikace èíselníku naèítala a¾ v konstruktoru
-   formuláøe.
 
  * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
 
@@ -151,3 +144,27 @@ INTERNÍ ZÁLE®ITOSTI:
    mo¾né zru¹it také metodu 'Command.__setattr__()'.
 
  * Zru¹it argument 'ignore_enumerators' tøídy DataSpec a metodu 'make'.
+
+ * Zru¹it `allow_codebook_insert'???
+
+   Vlo¾ení nové hodnoty do èíselníku by mohlo být provádìno pøes pøíkaz z popup
+   menu èíselníkového políèka (pøes pravé tlaèítko my¹i).  To by mohlo být
+   povoleno pro v¹echny èíselníky a tlaèítko "+" ve formuláøi by tak bylo
+   zbyteèné.
+
+ * Handlery pøíkazù.
+
+   Pøíkazy jsou obsluhovány tak, ¾e vyvoláme on_command aplikace a ta je
+   zodpovìdna za pøedání pøíkazu formuláøi, pokud to není její pøíkaz.
+   Formuláø zase pøedává pøíkazy políèkùm.  To odpovídá pùvodnímu návrhu.  Nyní
+   v¹ak máme CommandHandler a metodu get_command_handler_instance(), tak¾e
+   bychom pøíkazy mohli pøedávat rovnou instanci, které pøíkaz nále¾í.
+
+   Pozor, mo¾ná to také nìjak souvisí s metodou
+   KeyHandler._maybe_invoke_command().
+
+   Dále by bylo mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu
+   a neprokousávat se tak sérií if/elif v on_command.  To by mohlo zùstat jako
+   fallback handler, kdy¾ není nalezena metoda odpovídajícího názvu.
+
+   
