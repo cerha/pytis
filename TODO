@@ -1,16 +1,11 @@
 CHYBY:
 
- * Nevalidní hodnota ve filtrovacím dialogu vyhodí traceback.
-
-   Filtraèní hodnota je validována pomocí typu pøíslu¹ného sloupce.  Pøípadné
-   nevalidní hodnoty by mìly být nìjak o¹etøeny.
-
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
-   èíslo záznamu ve stavové øádce. Pozor - úèetní deník fokus má, seznam
+   èíslo záznamu ve stavové øádce.  Pozor - úèetní deník fokus má, seznam
    bì¾ných bankovních úètù ne (Základní tabulky -> Banka úèty -> V¹echny úèty
-   -> Bì¾ný úèet). Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
+   -> Bì¾ný úèet).  Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
 
  * Posun po zamítnutí mazání øádku.
 
@@ -30,6 +25,14 @@ CHYBY:
    uvedením závislosti na v¹ech políèkách, na kterých je závislé ono
    dopoèítávané políèko (a také se tak v defsech dìje), ale není to
    systematické (problémy s údr¾bou).
+
+ * Validace ve filtrovacím dialogu.
+
+   Hodnoty jsou validovány (podle typu pøíslu¹ného sloupce) ve chvíli
+   filtrace.  Pøi nevalidní hodnotì je zobrazena zpráva, ale filtraèní fialog
+   je i pøesto uzavøen.  Patrnì by bylo lep¹í aby zùstal otevøen, dokud není
+   zadána pou¾itelná hodnota.  Navíc by asi nemìly pøi validaci být brány v
+   úvahu constrainty.
 
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
