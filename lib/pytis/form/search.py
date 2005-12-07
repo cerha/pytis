@@ -452,11 +452,6 @@ class FilterDialog(SFDialog):
                       (_("Prùmìr"), pytis.data.Data.AGG_AVG))
     _TITLE = _("Filtrování")
 
-    def __init__(self, parent, columns, data, filter=None):
-        self._data = data
-        self._data_filter = filter
-        super_(FilterDialog).__init__(self, parent, columns)
-        
     def _create_content(self, **kwargs):
         content = super_(FilterDialog)._create_content(self, **kwargs)
         column_choices = map(SFSColumn.label, self._columns)
@@ -506,11 +501,18 @@ class FilterDialog(SFDialog):
         result = self._perform, self._condition
         return result
 
-    def run(self, current_row, col=None):
+    def run(self, data, filter, current_row, col):
         """Zobraz formuláø a po jeho ukonèení vra» parametry filtrování.
         
         Argumenty:
-                  current_row -- aktuální øádek formuláøe jako instance tøídy
+
+          data -- datový objekt nad ním¾ budou provádìny pøípadné agregaèní
+            funkce.
+          filter -- pøípadná doplòující podmínka filtrující data datového
+            objektu pøi výpoètu agregaèních funkcí.  Tato podmínka bude
+            uplatnìja souèasnì s aktuální podmínkou nastavenou v dialogu.
+            Instance pytis.data.Operator, nebo None.
+          current_row -- aktuální øádek formuláøe jako instance tøídy
             'pytis.data.Row'; pokud ve formuláøi není zvolen ¾ádný øádek, tak
             'None'
           col -- èíslo aktuálního sloupce, poèínaje od 0; je-li 'None', bude
@@ -522,6 +524,8 @@ class FilterDialog(SFDialog):
         dialog u¾ivatelem zru¹en bez po¾adavku na nové filtrování.
 
         """
+        self._data = data
+        self._data_filter = filter
         self._perform = False
         if col is None:
             col = 0
