@@ -261,7 +261,7 @@ def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
             raise ProgramError("Command '%s' already defined:" % name, caller)
         return cmd
     if block_refresh_:
-        handler = lambda *a, **aa: block_refresh_(handler, *a, **aa)
+        handler = lambda *a, **aa: block_refresh(handler, *a, **aa)
     _user_cmd_caller[name] = stack_info(depth=2).splitlines()[0]
     return Command(BrowseForm, name, handler=handler, **kwargs)
 
