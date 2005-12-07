@@ -130,6 +130,10 @@ Command(ListForm, 'NEW_LINE_BEFORE_COPY',
         "Vlo¾ení záznamu pøed aktuální øádek jako jeho kopie.")
 Command(ListForm, 'SET_GROUPING_COLUMN',
         "Zmìna sloupce vizuáního seskupování.")
+Command(ListForm, 'ENLARGE_COLUMN',
+        "Roz¹íøení sloupce.")
+Command(ListForm, 'CONTRACT_COLUMN',
+        "Zù¾ení sloupce.")
 Command(BrowseForm, 'IMPORT_INTERACTIVE',
         "Interaktivní import dat z CSV souboru.")
 Command(EditForm, 'COMMIT_RECORD',
@@ -215,6 +219,8 @@ DEFAULT_COMMAND_KEYS = (
     (ListForm.COMMAND_NEW_LINE_AFTER_COPY,        'F7'),
     (ListForm.COMMAND_NEW_LINE_BEFORE,            'Ctrl-Insert'),
     (ListForm.COMMAND_NEW_LINE_BEFORE_COPY,       'Ctrl-F7'),
+    (ListForm.COMMAND_ENLARGE_COLUMN,             'Alt-Right'),
+    (ListForm.COMMAND_CONTRACT_COLUMN,            'Alt-Left'),
     (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
     (EditForm.COMMAND_COMMIT_RECORD,              'Ctrl-Enter'),
     (EditForm.COMMAND_NAVIGATE,                   'Tab'),
