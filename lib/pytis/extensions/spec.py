@@ -250,7 +250,7 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
                  args={'inputfile': inputfile, 'format': format})
 
 _user_cmd_caller = {}
-def user_cmd(name, handler, spec=None, **kwargs):
+def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
     if spec:
         name = name + "_" + spec.upper()
     name = name.upper().replace('-', '_')
@@ -260,6 +260,8 @@ def user_cmd(name, handler, spec=None, **kwargs):
         if caller != stack_info(depth=2).splitlines()[0]:
             raise ProgramError("Command '%s' already defined:" % name, caller)
         return cmd
+    if block_refresh_:
+        handler = lambda *a, **aa: block_refresh_(handler, *a, **aa)
     _user_cmd_caller[name] = stack_info(depth=2).splitlines()[0]
     return Command(BrowseForm, name, handler=handler, **kwargs)
 
