@@ -384,7 +384,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             result = self._check_perm(perm, name)
         return result
 
-    def run_procedure(self, spec_name, proc_name, block_refresh=False,
+    def run_procedure(self, spec_name, proc_name, block_refresh_=False,
                       **kwargs):
         """Spus» proceduru.
 
@@ -413,7 +413,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             assert spec.has_key(proc_name), \
                   _("Specifikace procedur neobsahuje definici '%s'") % proc_name
             proc = spec[proc_name]
-            if block_refresh:
+            if block_refresh_:
                 result = block_refresh(proc, **kwargs)
             else:
                 result = proc(**kwargs)
