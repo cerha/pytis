@@ -931,11 +931,7 @@ class LookupForm(RecordForm):
     def _lf_sf_dialog(self, attr, class_):
         dialog = getattr(self, attr)
         if not dialog:
-            columns = self._lf_sfs_columns()
-            args = (self._parent, columns)
-            if issubclass(class_, FilterDialog):
-                args = args + (self._data, self._lf_initial_condition)
-            dialog = class_(*args)
+            dialog = class_(self._parent, self._lf_sfs_columns())
             setattr(self, attr, dialog)
         return dialog
         
@@ -1002,7 +998,8 @@ class LookupForm(RecordForm):
         if show_dialog:
             if row is None:
                 row = self._row
-            perform, filter = run_dialog(sf_dialog, row, col=col)
+            perform, filter = run_dialog(sf_dialog, self._data,
+                                         self._lf_initial_condition, row, col)
         else:
             perform, filter = (True, sf_dialog.condition())
         if perform and filter != self._lf_filter:
