@@ -1,8 +1,20 @@
 2005-12-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py
+	(GenericCodebookField._run_codebook_form): Nepøedávej formuláøi
+	argument 'columns'.
+	(GenericCodebookField.__init__): Neo¹etøuj `AttributeError' pøi
+	získávání specifikace èíselníku.
+
 	* pytis/form/list.py (ListForm._modify_column_width): Nová metoda.
 	(ListForm.on_command): O¹¹etøuj pøíkazy `COMMAND_ENLARGE_COLUMN' a
 	`COMMAND_CONTRACT_COLUMN'.
+	(ListForm._default_columns): Nová metoda.
+	(ListForm._init_attributes): Pou¾ívej ji.
+	(CodebookForm._init_attributes): Naèítej specifikaci
+	`CodebookSpec' a ukládej ji do atributu `_cb_spec'.
+	(CodebookForm._default_columns): Nová metoda.
+	(CodebookForm._default_sorting): Vyu¾ívej `self._cb_spec'.
 
 	* pytis/form/_commands.py: Nové pøíkazy `COMMAND_ENLARGE_COLUMN' a
 	`COMMAND_CONTRACT_COLUMN'.
