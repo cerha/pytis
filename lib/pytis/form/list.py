@@ -106,7 +106,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         """
         super_(ListForm)._init_attributes(self, **kwargs)
         assert columns is None or is_sequence(columns)
-        self._orig_columns = columns or self._view.columns()
+        self._orig_columns = columns or self._default_columns()
         # Inicializace atributù
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
@@ -119,6 +119,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Parametry zobrazení
         self._initial_position = self._position = 0
 
+    def _default_columns(self):
+        return self._view.columns()
+        
     def _default_grouping(self):
         return self._view.grouping()
 
@@ -1591,6 +1594,10 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             primárním tøídìním.
             
         """
+        try:
+            self._cb_spec = self._resolver.get(self._name, 'cb_spec')
+        except ResolverError:
+            self._cb_spec = CodebookSpec()
         super_(CodebookForm)._init_attributes(self, **kwargs)
         self._begin_search = begin_search
         if condition is not None:
@@ -1610,19 +1617,20 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             elif self._lf_sorting is not None:
                 col_id = self._lf_sorting[0][0]
             else:
-                message(_("Nelze zaèít inkrementální vyhledávání. " +
+                message(_("Nelze zaèít inkrementální vyhledávání. "
                           "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
                         beep_=True)
             col = find(col_id, self._columns, key=lambda c:c.id())
             assert col is not None, "Invalid column: %s" % col_id
             self._select_cell(row=0, col=self._columns.index(col))
             self._on_incremental_search(False)
-                
+
+    def _default_columns(self):
+        return self._cb_spec.columns() \
+               or super(CodebookForm, self)._default_columns()
+
     def _default_sorting(self):
-        try:
-            sorting = resolver().get(self.name(), 'cb_spec').sorting()
-        except ResolverError:
-            sorting = None
+        sorting = self._cb_spec.sorting()
         if sorting is not None:
             return sorting
         else:
