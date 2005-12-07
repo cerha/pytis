@@ -1,3 +1,11 @@
+2005-12-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm.can_sort_column): Pro cyklické
+	pøepínání smìru tøídìní vracej v¾dy pravdu.
+
+	* pytis/form/application.py (Application.run_procedure): Argumett
+	`block_refresh' pøejmenován na `block_refresh_'.
+
 2005-12-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_commands.py: Nové pøíkazy `ListField.COMMAND_SELECT' a
