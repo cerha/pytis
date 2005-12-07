@@ -1087,7 +1087,9 @@ class LookupForm(RecordForm):
     
     def can_sort_column(self, col=None, direction=None, primary=False):
         sorting = xtuple(self._lf_sorting)
-        if direction == self.SORTING_NONE:
+        if direction == self.SORTING_CYCLE_DIRECTION:
+            return True
+        elif direction == self.SORTING_NONE:
             return sorting and (col is None or col in [c for c,d in sorting])
         elif direction is not None and col is not None and sorting:
             if primary:
