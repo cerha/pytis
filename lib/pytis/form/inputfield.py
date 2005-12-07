@@ -1076,8 +1076,6 @@ class GenericCodebookField(InputField):
             self._cb_spec = resolver().get(fspec.codebook(), 'cb_spec')
         except ResolverError:
             self._cb_spec = CodebookSpec()
-        except AttributeError:
-            self._cb_spec = CodebookSpec()
         super(GenericCodebookField, self).__init__(parent, fspec, *args,
                                                    **kwargs)
         self._type.enumerator().add_hook_on_update(self._on_enumerator_change)
@@ -1094,7 +1092,6 @@ class GenericCodebookField(InputField):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
         enumerator = self._type.enumerator()
         result = run_form(CodebookForm, self.spec().codebook(),
-                          columns=self._cb_spec.columns(),
                           begin_search=begin_search,
                           select_row=self._select_row_arg(),
                           condition=enumerator.validity_condition())
