@@ -1,13 +1,5 @@
 CHYBY:
 
- * Nefunkèní agregaèní funkce ve vedlej¹ím formuláøi dualformu.
-
-   Filtr nad vedlej¹ím formuláøem dualformu si "pamatuje" výsledky agregaèních
-   funkcí a i po zmìnì øádku v hlavním formuláøi (a tedy i vyfiltrovaných
-   øádkù) vrací poøád stejné hodnoty.
-
- * Øazení klikáním na záhlaví sloupce nefunguje na primárnì øazeném sloupci.
-
  * Nevalidní hodnota ve filtrovacím dialogu vyhodí traceback.
 
    Filtraèní hodnota je validována pomocí typu pøíslu¹ného sloupce.  Pøípadné
@@ -44,7 +36,7 @@ CHYBY:
    
 NOVÉ VLASTNOSTI:
 
-2) U¾ivatelské rozhraní
+1) U¾ivatelské rozhraní
 
  * U¾ivatelsky pøizpùsobitelné poøadí a poèet sloupcù libovolného BrowseFromu.
    

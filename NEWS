@@ -4,6 +4,25 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-07  Tomas Cerha  <cerha@brailcom.org>
+
+        Funkce `run_procedure()' a `user_cmd()' (pytis-extensions) nyní
+	pøijímají argument `block_refresh_' a pokud je pravdivý, tak
+	obalují proceduru, resp. handler pøíkazu funkcí `block_refresh()',
+	tak¾e po dobu jejich provádìní se neprovádí ¾ádné refreshe.  Pokud
+	je to tøeba, je nutno pøípadný refresh nakonec zavolat ruènì.
+	
+	* BUGFIX: Øazení klikáním na záhlaví sloupce ji¾ funguje i na
+	primárnì øazeném sloupci.
+
+	* BUGFIX: Opraveny nefunkèní agregaèní funkce ve vedlej¹ím
+	formuláøi dualformu.  Døíve docházelo k tomu, ¾e filtraèní dialog
+	(ve kterém se agregaèní funkce poèítají) byl inicializován pouze
+	pøi prvním spu¹tìní aktuální datovou podmínkou platnou pro aktivní
+	øádek hlavního formuláøe.  Pøi pøechodu na jiný øádek se data
+	dolního formuláøe zmìnila, ale agregaèní funkce pracovaly poøád se
+	stejnými daty.
+	
 2005-12-06  Tomas Cerha  <cerha@brailcom.org>
 
 	Èíselníkové políèko typu ListField nyní umo¾òuje nezávislý pohyb
