@@ -502,6 +502,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
         sf_dialog.append_condition(id, self._table.row(row)[id])
         self._on_filter(show_dialog=False)
+
+    def _modify_column_width(self, col, d):
+        g = self._grid
+        w = g.GetColSize(col)
+        g.SetColSize(col, w + d)
+        g.Refresh()
         
     def _on_sort_column(self, col=None, direction=None, primary=False):
         if not self._finish_editing():
@@ -823,6 +829,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return True
         elif command == ListForm.COMMAND_SELECT_CELL:
             self._select_cell(**kwargs)
+            return True
+        elif command == ListForm.COMMAND_ENLARGE_COLUMN:
+            self._modify_column_width(self._current_cell()[1], +5)
+            return True
+        elif command == ListForm.COMMAND_CONTRACT_COLUMN:
+            self._modify_column_width(self._current_cell()[1], -5)
             return True
         # Pøíkazy bìhem editace øádku
         elif self._table.editing():
