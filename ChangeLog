@@ -1,3 +1,8 @@
+2005-12-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (user_cmd): Nový argument
+	`block_refresh_'.
+
 2005-11-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (enum): Nová funkce.
