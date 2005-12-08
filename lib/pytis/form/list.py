@@ -1288,8 +1288,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             key = self._current_key()
             deleted = super(ListForm, self)._on_delete_record(key)
             self._table.edit_row(None)
-        block_refresh(blocked_code)
-        if deleted:
+            return deleted
+        if block_refresh(blocked_code):
             r = self._current_cell()[0]
             n = self._table.GetNumberRows()
             if r < n - 1:

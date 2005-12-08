@@ -1,3 +1,9 @@
+2005-12-08  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/list.py (ListForm._on_delete_record): Pøedávej
+	výsledek 'on_delete_record' pøes návratovou hodnotu funkce
+	'blocked_code'.
+
 2005-12-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py
@@ -372,6 +378,11 @@
 	(FieldSpec.__init__): Nastavuj výchozí hodnotu `selection_type'
 	podle pøítomnosti `codebook'.  Aktualizován docstring.  Pøidán
 	assert na kombinaci 'selection_type' a 'codebook'.
+
+2005-11-18  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/list.py (ListForm._find_row_by_values): Není-li k
+	dispozici ¾ádný øádek, vracej None.	
 
 2005-11-18  Tomas Cerha  <cerha@brailcom.org>
 
