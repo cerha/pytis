@@ -6,6 +6,11 @@
 
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: V rámci kódu pøepoèítávací funkce cmputeru je nyní
+	mo¾né zjistit pùvodní hodnotu sebe sama bez rizika rekurze.  Tím
+	je mo¾né napø. za urèitých podmínek ponechat hodnotu políèka
+	nezmìnìnou (vrátit pøedchozí hodnotu).
+	
 	* BUGFIX: Pøi zmìnì ¹írky sloupce z klávesnice se nyní aktualizují
 	i scrollbary.
 	

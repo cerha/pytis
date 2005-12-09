@@ -1,11 +1,18 @@
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow.__getitem__): Nastav
+	dirty na False je¹tì pøed voláním pøepoèítávací funkce a umo¾ni
+	tak zji¹tìní pùvodní hodnoty (pøed pøepoèítáním) v jejím prùbìhu.
+
 	* pytis/form/list.py (ListForm._modify_column_width): Aktualizuj
 	také velikost celého gridu a tím i scrollbary.  Pokud je vypoètná
 	nová ¹íøka záporná, nedìlej nic.
+	(ListForm._filter_by_cell): Filtruj pouze pokud se zdaøí pøidání
+	podmínky do dialogu.  Pokud ne, zobraz chybovou zprávu.
+	
 
-	* pytis/form/search.py (SFDialog.append_condition): Zobraz
-	chybovou zprávu, pokud sloupec není v sfs_columns.
+	* pytis/form/search.py (SFDialog.append_condition): Pokud sloupec
+	není v sfs_columns, vra» False, jinak vracej True.
 
 2005-12-08  Pavel Hanak  <hanak@asellus.cz>
 
