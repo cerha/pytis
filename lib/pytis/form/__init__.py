@@ -41,7 +41,7 @@ from list import *
 from dualform import *
 from output import *
 from application import *
-from _commands import *
+from commands_ import *
 import _grid
 
 list_ = list
