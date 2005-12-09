@@ -6,6 +6,20 @@
 
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
+	Nová tøída `CheckItem' umo¾òuje definovat polo¾ku menu, které se v
+	konstruktoru pøedá funkce `state', která za bìhu zjistí stav
+	polo¾ky.
+
+	Menu oken pøepsáno s pou¾itím této nové vlastnosti, kterou dìdí i
+	`RadioItem'.
+	
+	* BUGFIX: Spojovací operátory ("a zároveò" / "a nebo") by ji¾ mìly
+	bát správnì pøi vytváøení podmínky pomocí "Filtrovat podle buòky".
+	
+	* BUGFIX: O¹etøen pøípad, kdy v hlavním formuláøi dualformu není
+	vybrán ¾ádný øádek.  To se nìkdy stávalo po úpravì dat horního
+	formuláøe a zpùsobovalo to traceback.
+
 	* BUGFIX: V rámci kódu pøepoèítávací funkce cmputeru je nyní
 	mo¾né zjistit pùvodní hodnotu sebe sama bez rizika rekurze.  Tím
 	je mo¾né napø. za urèitých podmínek ponechat hodnotu políèka

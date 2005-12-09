@@ -36,6 +36,10 @@
 
 	* pytis/form/search.py (SFDialog.append_condition): Pokud sloupec
 	není v sfs_columns, vra» False, jinak vracej True.
+	(SFDialog.append_condition): Testuj pøítomnost v sfs_columns hned
+	na zaèátku.  Nastavuj správnì hodnoty urèující typ spojovacího
+	operátoru pøi konstrukci widgetù.
+	
 
 2005-12-08  Pavel Hanak  <hanak@asellus.cz>
 

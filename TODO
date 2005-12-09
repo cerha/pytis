@@ -1,13 +1,5 @@
 CHYBY:
 
- * Rekurze pøi zji¹tìní pùvodní hodnoty políèka v computeru.
-
-   Pokud se v computeru pokou¹ím zjistit pùvodní hodnotu políèka, dojde k
-   rekurzi. To je nepøíjemné, proto¾e èasto se za nìjakých podmínek chci
-   rozhodnout, ¾e hodntu nepøepoèítím -> tedy vrátím pùvodní.  Jiná mo¾nost by
-   byla nìjak umo¾nit v rámci návratové hodnoty computeru indikovat, ¾e se nic
-   mìnit nemá.
-
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
@@ -34,14 +26,6 @@ CHYBY:
    dopoèítávané políèko (a také se tak v defsech dìje), ale není to
    systematické (problémy s údr¾bou).
 
- * Validace ve filtrovacím dialogu.
-
-   Hodnoty jsou validovány (podle typu pøíslu¹ného sloupce) ve chvíli
-   filtrace.  Pøi nevalidní hodnotì je zobrazena zpráva, ale filtraèní fialog
-   je i pøesto uzavøen.  Patrnì by bylo lep¹í aby zùstal otevøen, dokud není
-   zadána pou¾itelná hodnota.  Navíc by asi nemìly pøi validaci být brány v
-   úvahu constrainty.
-
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
    
@@ -60,6 +44,14 @@ NOVÉ VLASTNOSTI:
 
    Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
    by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
+
+ * Validace ve filtrovacím dialogu.
+
+   Hodnoty jsou validovány (podle typu pøíslu¹ného sloupce) ve chvíli
+   filtrace.  Pøi nevalidní hodnotì je zobrazena zpráva, ale filtraèní fialog
+   je i pøesto uzavøen.  Patrnì by bylo lep¹í aby zùstal otevøen, dokud není
+   zadána pou¾itelná hodnota.  Navíc by asi nemìly pøi validaci být brány v
+   úvahu constrainty.
 
  * Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky).
  
