@@ -112,7 +112,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
         """
         self._resolver = resolver
-        self._window_menu_item = {}
         wx.App.__init__(self)
     
     def OnInit(self):
@@ -212,32 +211,28 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
         
     def _update_window_menu(self, recreate=True):
+        def wmitem(title, form):
+            return RadioItem(title,
+                             help=_('Vyzvednout okno formuláøe "%s" %s') % \
+                             (form.title(), str(form)),
+                             command=Application.COMMAND_RAISE_FORM,
+                             state=lambda a: a.top_window() is form,
+                             args={'form': form})
         mb = self._menubar
         menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         if menu is None:
-            return
+            return 
         if recreate:
-            for form, item in self._window_menu_item.items():
+            for item in menu.GetMenuItems():
                 menu.Remove(item.GetId())
                 item.Destroy()
-                del self._window_menu_item[form]
             for i, form in enumerate(self._windows.items()):
                 title = "&%d. %s" % (i+1, form.title())
                 if form.__class__ != BrowseForm:
                     title += " (%s)" % form.descr()
-                item = RadioItem(title,
-                                 help=_('Vyzvednout okno formuláøe "%s" %s') % \
-                                 (form.title(), str(form)),
-                                 command=Application.COMMAND_RAISE_FORM,
-                                 args={'form': form}).create(self._frame, menu)
-                self._window_menu_item[form] = item
-                menu.AppendItem(item)
-        for item in menu.GetMenuItems():
-            if item.IsCheckable():
-                item.Check(False)
-        if not self._windows.empty():
-            self._window_menu_item[self._windows.active()].Check(True)
+                menu.AppendItem(wmitem(title, form).create(self._frame, menu))
 
+        
     def _raise_form(self, form):
         if form is not None:
             if form not in self._frame.GetChildren():
