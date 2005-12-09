@@ -1,5 +1,28 @@
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application.__init__): Neinicializuj
+	atribut `self._window_menu_item'.
+	(Application._update_window_menu): Neukládej polo¾ky menu do 
+	`self._window_menu_item' a vyu¾ívej funkce `state' pøedané
+	konstruktoru `RadioItem'.
+
+	* pytis/form/screen.py (MItem): Buï potomkem `object'.
+	(MItem._WX_KIND): Nová konstanta.
+	(MItem._wx_kind): Metoda zru¹ena
+	(MItem.create): Pou¾ívej `_WX_KIND' namísto `_wx_kind()'.
+	(RadioItem): Buï potomkem CheckItem.
+	(CheckItem): Nová tøída.
+
+	* pytis/form/command.py: Update docstringu.
+
+	* pytis/form/__init__.py: `_commands' -> `commands_'.
+
+	* pytis/form/_commands.py: Pøejmenováno na `commands_.py'.
+
+	* pytis/form/dualform.py
+	(PostponedSelectionDualForm._on_main_selection): O¹etøuj také
+	pøíkpad, kdy `row' je None.
+
 	* pytis/presentation/field.py (PresentedRow.__getitem__): Nastav
 	dirty na False je¹tì pøed voláním pøepoèítávací funkce a umo¾ni
 	tak zji¹tìní pùvodní hodnoty (pøed pøepoèítáním) v jejím prùbìhu.
