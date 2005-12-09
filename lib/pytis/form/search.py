@@ -356,7 +356,9 @@ class SFDialog(SFSDialog):
         # Proto¾e celý zpùsob ukládání defaults je dost èuòárna (vázaný na
         # widgety), tak i toto je èuòárna...
         cols = filter(lambda c: c.id() == col_id, self._columns)
-        assert len(cols) == 1, 'Column not found: %s' % col_id
+        if len(cols) != 1:
+            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
+            return
         col = self._columns.index(cols[0])
         defaults = (col, 0, value.export(), and_ and 1 or 0)
         if self._number_of_conditions != 1 or len(self._defaults.keys()) != 0:
