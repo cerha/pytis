@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi zmìnì ¹írky sloupce z klávesnice se nyní aktualizují
+	i scrollbary.
+	
+	* BUGFIX: "Filtrovat podle buòky" se ji¾ nehroutí na virtuálním
+	sloupci.  Zobrazí se jen zpráva, ¾e to nelze.
+	
 2005-12-07  Tomas Cerha  <cerha@brailcom.org>
 
 	Specifikace èíselníku se nyní naèítá a¾ v konstruktoru formuláøe.

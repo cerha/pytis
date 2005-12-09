@@ -1,11 +1,5 @@
 CHYBY:
 
- * FILTER_BY_CELL nad virtuálním políèkem vyvolá výjimku.
-
-   Bude nutné, pokud se sloupeèek nanachází v sfs_columns, zobrazit pouze
-   zprávu, ¾e podle tohoto sloupce nelze filtrovat, a nijak se z toho
-   nehroutit.
-
  * Rekurze pøi zji¹tìní pùvodní hodnoty políèka v computeru.
 
    Pokud se v computeru pokou¹ím zjistit pùvodní hodnotu políèka, dojde k
@@ -14,10 +8,6 @@ CHYBY:
    byla nìjak umo¾nit v rámci návratové hodnoty computeru indikovat, ¾e se nic
    mìnit nemá.
 
- * Pøi roz¹iøování sloupce z klávesnice se nemìní velikost formuláøe.
-
-   Bude asi potøeba vyvolat nìjaký SizeEvent ruènì...
-   
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje

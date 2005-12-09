@@ -1,5 +1,9 @@
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._modify_column_width): Aktualizuj
+	také velikost celého gridu a tím i scrollbary.  Pokud je vypoètná
+	nová ¹íøka záporná, nedìlej nic.
+
 	* pytis/form/search.py (SFDialog.append_condition): Zobraz
 	chybovou zprávu, pokud sloupec není v sfs_columns.
 
