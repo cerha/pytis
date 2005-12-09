@@ -133,7 +133,7 @@ class SFDialog(SFSDialog):
         # Ostatní atributy
         self._selectors = {}
         self._logical_selectors = {}
-        self._default_item = (-1, 0, '', True)
+        self._default_item = (-1, 0, '', 0)
         self._defaults = {}
         self._condition = None
         self._number_of_conditions = 1
@@ -346,6 +346,10 @@ class SFDialog(SFSDialog):
         jiném pou¾ití je chování nedefinováno.
         
         """
+        c = find(col_id, self._columns, key=lambda c: c.id())
+        if c is None:
+            return False
+        col = self._columns.index(c)
         logop = and_ and pytis.data.AND or pytis.data.OR
         op = pytis.data.EQ
         condition = op(col_id, value)
@@ -355,11 +359,7 @@ class SFDialog(SFSDialog):
             self._condition = logop(self._condition, condition)
         # Proto¾e celý zpùsob ukládání defaults je dost èuòárna (vázaný na
         # widgety), tak i toto je èuòárna...
-        cols = filter(lambda c: c.id() == col_id, self._columns)
-        if len(cols) != 1:
-            return False
-        col = self._columns.index(cols[0])
-        defaults = (col, 0, value.export(), and_ and 1 or 0)
+        defaults = (col, 0, value.export(), and_ and 0 or 1)
         if self._number_of_conditions != 1 or len(self._defaults.keys()) != 0:
             self._number_of_conditions += 1
         self._defaults[self._number_of_conditions-1] = defaults
