@@ -1154,13 +1154,14 @@ class MSeparator:
     
     """
     
-class MItem:
+class MItem(object):
     """Specifikace polo¾ky menu.
 
     Tøída nic nevytváøí, pouze si pamatuje parametry a pøedává je tøídì Menu,
     která provádí tvorbu menu.
     
     """
+    _WX_KIND = wx.ITEM_NORMAL
     _used_titles = {}
     
     def __init__(self, title, command, args={}, help='', hotkey=None):
@@ -1196,9 +1197,6 @@ class MItem:
         self._args = args
         self._help = gettext_(help)
 
-    def _wx_kind(self):
-        return wx.ITEM_NORMAL
-
     def _on_ui_event(self, event):
         appl = pytis.form.application._application
         if appl:
@@ -1217,7 +1215,7 @@ class MItem:
             return lambda e: apply(c, (item.command(),), item.args())
         id = wx.NewId()
         item = wx.MenuItem(parent_menu, id, self.title(), self._help,
-                           kind=self._wx_kind())
+                           kind=self._WX_KIND)
         wx_callback(wx.EVT_MENU, parent, id, callback(self))
         wx_callback(wx.EVT_UPDATE_UI, parent, id, self._on_ui_event)
         return item
@@ -1243,12 +1241,41 @@ class MItem:
         return self._hotkey
 
 
-class RadioItem(MItem):
+class CheckItem(MItem):
+    """Polo¾ka menu, která mù¾e být ve stavu ON/OFF."""
+    _WX_KIND = wx.ITEM_CHECK
+    
+    def __init__(self, title, command, state=None, **kwargs):
+        """Inicializuj instanci.
+
+        Arguemnty:
+
+          state -- funkce jednoho argumentu (instance 'Application' právì
+            bì¾ící aplikace), která vrací True/False podle toho, zda je stav této
+            polo¾ky 'zapnuto', nebo 'vypnuto'.
+
+          V¹echny ostatní arguemnty jsou sthodné jako v konstruktoru pøedka.
+
+        """
+        assert callable(state)
+        self._state = state
+        super(CheckItem, self).__init__(title, command, **kwargs)
+
+    def _on_ui_event(self, event):
+        appl = pytis.form.application._application
+        if appl:
+            event.Check(self._state(appl))
+        super(CheckItem, self)._on_ui_event(event)
+
+        
+class RadioItem(CheckItem):
     """Polo¾ka menu tvoøící pøepínatelnou skupinu."""
-    def _wx_kind(self):
-        return wx.ITEM_CHECK
-    
-    
+    # wx.ITEM_RADIO zpùsobuje SEGFAULT.  CheckItem se v¹ak, zdá se, chová úplnì
+    # stejnì, tak¾e to vlastnì vùbec nevadí...
+    #_WX_KIND = wx.ITEM_RADIO
+    pass
+   
+            
 ### Button bar
 
 
