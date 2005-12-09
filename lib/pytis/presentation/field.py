@@ -237,13 +237,16 @@ class PresentedRow(object):
             value = self._virtual.get(key)
         if value is None or self._dirty.has_key(key) and self._dirty[key]:
             column = self._columns[key]
+            # Nastavením dirty na False u¾ zde zamezíme rekurzi v pøípadì, ¾e
+            # se kód computeru ptá na vlastní hodnotu a umo¾níme mu tak zjistit
+            # pùvodní hodnotu (pøed pøepoèítáním).
+            self._dirty[key] = False
             if column.computer:
                 func = column.computer.function()
                 v = func(self)
             else:
                 v = None
             new_value = pytis.data.Value(column.type, v)
-            self._dirty[key] = False
             if value is None or new_value.value() != value.value():
                 value = new_value
                 if self._row.has_key(key):
