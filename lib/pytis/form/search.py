@@ -359,10 +359,14 @@ class SFDialog(SFSDialog):
             self._condition = logop(self._condition, condition)
         # Proto¾e celý zpùsob ukládání defaults je dost èuòárna (vázaný na
         # widgety), tak i toto je èuòárna...
-        defaults = (col, 0, value.export(), and_ and 0 or 1)
+        defaults = (col, 0, value.export(), 0)
         if self._number_of_conditions != 1 or len(self._defaults.keys()) != 0:
             self._number_of_conditions += 1
         self._defaults[self._number_of_conditions-1] = defaults
+        if self._number_of_conditions > 1:
+            d = self._defaults[self._number_of_conditions-2]
+            d = d[:3] + (0,)
+            self._defaults[self._number_of_conditions-2] = d
         return True
             
     def _finish_dialog(self):
