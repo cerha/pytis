@@ -279,7 +279,8 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
                 event.RequestMore()
                 
     def _on_main_selection(self, row):
-        if row.row() != self._selection_data:
+        if row.row() != self._selection_data \
+               or row is None and self._selection_data is not None:
             self._side_form.Show(False)
             self._selection_candidate = copy.copy(row)
             self._selection_tick = self._SELECTION_TICK
