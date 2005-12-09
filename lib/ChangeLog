@@ -38,7 +38,7 @@
 	není v sfs_columns, vra» False, jinak vracej True.
 	(SFDialog.append_condition): Testuj pøítomnost v sfs_columns hned
 	na zaèátku.  Nastavuj správnì hodnoty urèující typ spojovacího
-	operátoru pøi konstrukci widgetù.
+	operátoru pøi konstrukci widgetù.  Zru¹en argument `and_'.
 	
 
 2005-12-08  Pavel Hanak  <hanak@asellus.cz>
