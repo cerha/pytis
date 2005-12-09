@@ -21,7 +21,7 @@
 """Tøídy slou¾ící k definici pøíkazù.
 
 Tento modul definuje tøídy slou¾ící k definici pøíkazù.  Vlastní definice v¹ech
-pøíkazù aplikace je potom soustøedìna centrálnì v modulu '_commands'.
+pøíkazù aplikace je potom soustøedìna centrálnì v modulu 'commands_'.
 
 """
 
