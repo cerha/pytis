@@ -334,13 +334,12 @@ class SFDialog(SFSDialog):
                         wval.GetValue(), logsel)
             self._defaults[k] = defaults
             
-    def append_condition(self, col_id, value, and_=True):
+    def append_condition(self, col_id, value):
         """Pøidej filtrovací podmínku neinteraktivnì.
 
         Metoda neinteraktivnì pøidá do dialogu podmínku rovnosti sloupce
-        'col_id' na hodnotu 'value'.  Pokud je argument 'and_' pravdivý, bude
-        podmínka pøidána v konjunkci se stávajícími podmínkami, jinak v
-        disjunkci.
+        'col_id' na hodnotu 'value'.  Podmínka je pøidána v¾dy v konjunkci se
+        stávajícími podmínkami.
 
         Metoda je urèena k pou¾ití ve chvíli, kdy není zobrazen dialog.  Pøi
         jiném pou¾ití je chování nedefinováno.
@@ -349,17 +348,14 @@ class SFDialog(SFSDialog):
         c = find(col_id, self._columns, key=lambda c: c.id())
         if c is None:
             return False
-        col = self._columns.index(c)
-        logop = and_ and pytis.data.AND or pytis.data.OR
-        op = pytis.data.EQ
-        condition = op(col_id, value)
+        condition = pytis.data.EQ(col_id, value)
         if self._condition is None:
             self._condition = condition
         else:
-            self._condition = logop(self._condition, condition)
+            self._condition = pytis.data.AND(self._condition, condition)
         # Proto¾e celý zpùsob ukládání defaults je dost èuòárna (vázaný na
         # widgety), tak i toto je èuòárna...
-        defaults = (col, 0, value.export(), 0)
+        defaults = (self._columns.index(c), 0, value.export(), 0)
         if self._number_of_conditions != 1 or len(self._defaults.keys()) != 0:
             self._number_of_conditions += 1
         self._defaults[self._number_of_conditions-1] = defaults
