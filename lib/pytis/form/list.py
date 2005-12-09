@@ -503,8 +503,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         row, col = self._current_cell()
         id = self._columns[col].id()
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
-        sf_dialog.append_condition(id, self._table.row(row)[id])
-        self._on_filter(show_dialog=False)
+        if sf_dialog.append_condition(id, self._table.row(row)[id]):
+            self._on_filter(show_dialog=False)
+        else:
+            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
 
     def _modify_column_width(self, col, d):
         g = self._grid
