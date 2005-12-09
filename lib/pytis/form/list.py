@@ -508,9 +508,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _modify_column_width(self, col, d):
         g = self._grid
-        w = g.GetColSize(col)
-        g.SetColSize(col, w + d)
-        g.Refresh()
+        newsize = g.GetColSize(col) + d
+        if newsize > 0:
+            g.SetColSize(col, newsize)
+            g.SetSize(g.GetSize())
+            g.Refresh()
         
     def _on_sort_column(self, col=None, direction=None, primary=False):
         if not self._finish_editing():
