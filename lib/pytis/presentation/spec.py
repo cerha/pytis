@@ -1111,6 +1111,8 @@ class FieldSpec(object):
         assert editable in public_attributes(Editable) or \
                isinstance(editable, Computer)
         assert check is None or callable(check)
+        assert isinstance(style, FieldStyle) or callable(style), \
+               ('Invalid field style', id, style)
         if check is not None:
             log(EVENT, "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
         if references is not None:
