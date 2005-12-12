@@ -1,5 +1,12 @@
 2005-12-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_grid.py (ListTable.__init__): Pødán assert na
+	argument `columns' a ka¾dý jeho prvek.  Naopak odebrán assert na
+	styl získaný z FieldSpec().
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Pøidán assert
+	na `style'.
+
 	* pytis/form/application.py (Application.refresh): Pracuj s
 	aktivním oknem, nikoli s posledním oknem na zásobníku.
 
