@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Funkce `refresh()' nyní pracuje správnì s aktivním
+	formuláøem, ne s posledním, jak tomu bylo dosud, tak¾e teï u¾ by
+	se mìl refresh skuteènì projevit ve v¹ech pøípadech.
+
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
 	Nová tøída `CheckItem' umo¾òuje definovat polo¾ku menu, které se v

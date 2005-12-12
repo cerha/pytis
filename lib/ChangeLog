@@ -1,3 +1,8 @@
+2005-12-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.refresh): Pracuj s
+	aktivním oknem, nikoli s posledním oknem na zásobníku.
+
 2005-12-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.__init__): Neinicializuj

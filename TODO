@@ -175,4 +175,7 @@ INTERNÍ ZÁLE®ITOSTI:
    a neprokousávat se tak sérií if/elif v on_command.  To by mohlo zùstat jako
    fallback handler, kdy¾ není nalezena metoda odpovídajícího názvu.
 
-   
+ * Grouping nemá být øe¹en pøes reset.
+
+   Proto¾e grouping neovlivòuje poèet, poøadí ani data øádkù, není dùvod, proè
+   by se mìl nastavovat pomocí reset().   
