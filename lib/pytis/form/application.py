@@ -604,11 +604,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
         
     def refresh(self):
         """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
-        for stack in (self._modals, self._windows):
-            if not stack.empty():
-                top = stack.top()
-                if isinstance(top, Refreshable):
-                    top.refresh()
+        for w in (self._modals.top(), self._windows.active()):
+            if isinstance(w, Refreshable):
+                w.refresh()
         
     def set_status(self, id, message, timeout=None, root=False):
         """Nastav v poli stavové øádky daného 'id' zprávu 'message'.
