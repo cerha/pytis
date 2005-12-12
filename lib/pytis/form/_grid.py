@@ -155,6 +155,7 @@ class ListTable(wx.grid.PyGridTableBase):
                  sorting=(), grouping=None, inserted_row_number=None,
                  inserted_row=None, prefill=None):
         wx.grid.PyGridTableBase.__init__(self)
+        assert is_sequence(columns)
         if self._TYPE_MAPPING is None:
             # Musíme inicializovat a¾ zde kvùli neXovému serveru.
             # Nepou¾íváme mapování pro Float, proto¾e to by nám zru¹ilo
@@ -175,12 +176,10 @@ class ListTable(wx.grid.PyGridTableBase):
                                          columns))
         self._column_info = column_info = []
         for c in columns:
+            assert isinstance(c, FieldSpec)
             cid = c.id()
             label = c.column_label() or ''
             style = c.style()
-            assert isinstance(style, pytis.presentation.FieldStyle) \
-                   or callable(style), \
-                   ('Invalid field style', cid, style)
             t = c.type(data)
             try:
                 wxtype = self._TYPE_MAPPING[t.__class__]
