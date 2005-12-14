@@ -155,13 +155,6 @@ class ListTable(wx.grid.PyGridTableBase):
                  sorting=(), grouping=None, inserted_row_number=None,
                  inserted_row=None, prefill=None):
         wx.grid.PyGridTableBase.__init__(self)
-        assert is_sequence(columns)
-        if self._TYPE_MAPPING is None:
-            # Musíme inicializovat a¾ zde kvùli neXovému serveru.
-            # Nepou¾íváme mapování pro Float, proto¾e to by nám zru¹ilo
-            # na¹e formátování èísel.
-            self.__class__._TYPE_MAPPING = \
-                  {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
         self._frame = frame
         self._data = data
         self._fields = fields
@@ -171,22 +164,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._prefill = prefill
         self._current_row = None
         # Zpracuj sloupce
-        self._columns = columns
-        self._column_count = len(filter (lambda c: c.column_width(),
-                                         columns))
-        self._column_info = column_info = []
-        for c in columns:
-            assert isinstance(c, FieldSpec)
-            cid = c.id()
-            label = c.column_label() or ''
-            style = c.style()
-            t = c.type(data)
-            try:
-                wxtype = self._TYPE_MAPPING[t.__class__]
-            except KeyError:
-                wxtype = wx.grid.GRID_VALUE_STRING
-            cc = self._Column(cid, wxtype, label, style)
-            column_info.append(cc)
+        self._update_columns(columns)
         # Vytvoø cache
         self._cache = self._DisplayCache()
         self._attr_cache = {}
@@ -201,11 +179,27 @@ class ListTable(wx.grid.PyGridTableBase):
             self._edited_row = self._EditedRow(inserted_row_number,
                                                inserted_row, fields, data,
                                                new=True, prefill=prefill)
-        self._presented_row = PresentedRow(fields, data, None,
-                                           singleline=True,
+        self._presented_row = PresentedRow(fields, data, None, singleline=True,
                                            prefill=prefill)
 
     # Pomocné metody
+
+    def _wx_type(self, t):
+        if self._TYPE_MAPPING is None:
+            # Musíme inicializovat a¾ zde kvùli neXovému serveru.
+            # Nepou¾íváme mapování pro Float, proto¾e to by nám zru¹ilo
+            # na¹e formátování èísel.
+            self.__class__._TYPE_MAPPING = \
+                    {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
+        return self._TYPE_MAPPING.get(t.__class__, wx.grid.GRID_VALUE_STRING)
+
+    def _update_columns(self, columns):
+        self._columns = [self._Column(c.id(),
+                                      self._wx_type(c.type(self._data)),
+                                      c.column_label() or '',
+                                      c.style())
+                         for c in columns]
+        self._column_count = len(self._columns)
         
     def _panic(self):
         if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
@@ -338,8 +332,9 @@ class ListTable(wx.grid.PyGridTableBase):
 
     # Na¹e veøejné metody
         
-    def update(self, row_count, sorting, grouping, inserted_row_number,
+    def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row, prefill):
+        self._update_columns(columns)
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
@@ -372,7 +367,6 @@ class ListTable(wx.grid.PyGridTableBase):
         self._frame = None
         self._fields = None
         self._columns = None
-        self._column_info = None
         self._cache = None
         self._attr_cache = None
         self._font_cache = None
@@ -396,7 +390,7 @@ class ListTable(wx.grid.PyGridTableBase):
             style_dict = {}
             value_dict = {}
             # Cache the values and styles for all columns at once.
-            for c in self._column_info:
+            for c in self._columns:
                 cid = c.id
                 s = c.style
                 if callable(s):
@@ -480,10 +474,10 @@ class ListTable(wx.grid.PyGridTableBase):
             return None
 
     def column_id(self, col):
-        return self._column_info[col].id
+        return self._columns[col].id
         
     def column_label(self, col):
-        return self._column_info[col].label
+        return self._columns[col].label
 
     def rewind(self, position=None):
         """Pøesuò datové ukazovátko na zaèátek dat.
@@ -575,7 +569,7 @@ class ListTable(wx.grid.PyGridTableBase):
         # Je tabulka ji¾ uzavøena?
         if not self._data:
             return ''
-        col_id = self._column_info[col].id
+        col_id = self._columns[col].id
         if self._edited_row and row == self._edited_row.row:
             the_row = self._edited_row.the_row
             if the_row is None:
@@ -585,7 +579,7 @@ class ListTable(wx.grid.PyGridTableBase):
             value = self._cached_value(row, col_id)
         # Vytáhni hodnotu sloupce
         if not inputfield and \
-               self._column_info[col].wxtype == wx.grid.GRID_VALUE_BOOL and \
+               self._columns[col].wxtype == wx.grid.GRID_VALUE_BOOL and \
                value == 'F':
             # V této podobì gridu je 0 pova¾ována za pravdu.
             # Mo¾ná to souvisí s C++ pøijímajícím zde pouze strings.
@@ -606,7 +600,7 @@ class ListTable(wx.grid.PyGridTableBase):
             # SetValue ...
             return
         # Nastav hodnotu editovanému sloupci
-        cid = self._column_info[col].id
+        cid = self._columns[col].id
         edited.update(cid, value)
         log(EVENT, 'Nastavena hodnota editovaného políèka:',
             (row, col, value))
@@ -617,12 +611,12 @@ class ListTable(wx.grid.PyGridTableBase):
     # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
-        return self._column_info[col].wxtype
+        return self._columns[col].wxtype
     
     def GetAttr(self, row, col, _something):
         if row >= self.GetNumberRows(): # mù¾e se stát...
             return None
-        column = self._column_info[col]
+        column = self._columns[col]
         style = column.style
         if callable(style):
             style = self._cached_value(row, column.id, style=True)
