@@ -244,7 +244,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _update_grid(self, data_init=False, inserted_row_number=None,
                      inserted_row=None, delete_column=None, insert_column=None,
-                     inserted_column_index=None):
+                     inserted_column_index=None, reset_columns=False):
         g = self._grid
         t = self._table
         def notify(id, *args):
@@ -262,6 +262,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         new_row_count = row_count
         # Uprav velikost gridu
         g.BeginBatch()
+        if reset_columns:
+            deleted = len(self._columns)
+            colspecs = [self._view.field(id) for id in self._default_columns()]
+            self._columns = [c for c in colspecs if c.column_width()]
+            inserted = len(self._columns)
+            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
+            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
         if delete_column is not None:
             i = self._columns.index(delete_column)
             del self._columns[i]
@@ -675,7 +682,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                  state=lambda a, c=c: c in self._columns,
                                  command=ListForm.COMMAND_TOGGLE_COLUMN,
                                  args=dict(column_id=c.id(), col=col))
-                       for c in self._view.fields()]),
+                       for c in self._view.fields()] + \
+                      [MSeparator(),
+                       MItem(_("Vrátit výchozí sloupce"),
+                             command=ListForm.COMMAND_RESET_COLUMNS)]),
                  )
         menu = Menu('', items).create(g, self)
         g.PopupMenu(menu)
@@ -829,6 +839,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._update_grid(insert_column=self._view.field(column_id),
                               inserted_column_index=col)
         self._on_size()
+
+    def _on_reset_columns(self):
+        self._update_grid(reset_columns=True)
+        self._on_size()
+
         
     def show_context_menu(self, position=None):
         if self._table.editing():
@@ -919,6 +934,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return True
         elif command == ListForm.COMMAND_TOGGLE_COLUMN:
             self._on_toggle_column(**kwargs)
+            return True
+        elif command == ListForm.COMMAND_RESET_COLUMNS:
+            self._on_reset_columns(**kwargs)
             return True
         elif command == ListForm.COMMAND_SELECT_CELL:
             self._select_cell(**kwargs)
