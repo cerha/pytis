@@ -819,7 +819,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             scrollTo = vsy - pxy / lines
         g.Scroll(-1, scrollTo)    
 
-    def _on_toggle_column(column_id, col=None):
+    def _on_toggle_column(self, column_id, col=None):
         if len(self._columns) == 1:
             message(_("Poslední sloupec"), beep_=True)
             return
