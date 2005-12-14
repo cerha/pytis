@@ -4,6 +4,21 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-14  Tomas Cerha  <cerha@brailcom.org>
+
+	Byly implementovány funkce umo¾òující u¾ivateli interaktivnì mìnit
+	poøadí sloupcù, skrývat vybrané sloupce a zobrazovat sloupce,
+	které jsou implicitnì skryté.  V kontextovém menu záhlaví sloupce
+	je polo¾ka pro skrytí aktuálního sloupce a podmenu, ve kerém jsou
+	vidìt v¹echny dostupné sloupce a jejich aktuální stav.  Výbìrem
+	polo¾ky je tak mo¾né libovolný sloupec skrýt nebo zobrazit.
+
+	Zmìnu poøadí sloupcù lze nyní jednodu¹e mìnit pøetahováním záhlaví
+	sloupce my¹í.
+	
+	* BUGFIX: O¹etøen pøípad, kdy v hlavním formuláøi dualformu není
+	vybrán ¾ádný øádek.  Pøedchozí oprava toti¾ mìla mouchy...
+
 2005-12-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Funkce `refresh()' nyní pracuje správnì s aktivním

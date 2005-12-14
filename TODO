@@ -1,5 +1,7 @@
 CHYBY:
 
+ * Ctrl-Enter ve filtraèním dialogu.
+
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
@@ -35,7 +37,17 @@ NOVÉ VLASTNOSTI:
 
  * Zobrazit informaci o do¹lé notifikaci zmìny dat ve stavové øádce.
 
- * U¾ivatelsky pøizpùsobitelné poøadí a poèet sloupcù libovolného BrowseFromu.
+ * U¾ivatelská pøizpùsobení sloupcù BrowseFromu.
+
+   Nastavení poøadí sloupcù, jejich ¹íøek a skrývání/zobrazení sloupcù oproti
+   výchozímu nastavení se zatím neukládá.  Bude tøeba implementovat mechanismus
+   ukládání u¾ivatelských nastavení pro ka¾dý formuláø a vhodný zpùsob jejich
+   uplatnìní pøi inicializaci formuláøe.
+
+   Dále by bylo vhodné mít mo¾nost u nìkterých sloupcù v defsu nastavit, ¾e je
+   není mo¾né skrýt.
+
+   Pøesun sloupce vpravo/vlevo klávesovou zkratkou.
    
  * Ulo¾ené filtrovací podmínky.
 
@@ -94,9 +106,10 @@ NOVÉ VLASTNOSTI:
    Tak, jako lze zjistit práva na spu¹tìní formuláøe, mìlo by jít zjistit práva
    na spu¹tìní procedury.  Bude v¹ak tøeba vytvoøit nìjaký zpùsob, jak práva
    definovat.
- 
- * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
 
+   Potom bychom mohli v¹echny u¾ivatelské pøíkazy nahradit pøíkazem
+   RUN_PROCEDURE a definování u¾ivatelskách pøíkazù by tak nebylo vùbec nutné.
+ 
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
    Definovat pøíslu¹né funkce v pytis-extensions.  Zejména jde o otevírání
@@ -104,11 +117,13 @@ NOVÉ VLASTNOSTI:
 
  * Automaticky doplnit 'codebook' pro fieldspec políèka s enumerátorem.
 
- * Práva view na jednotlivé sloupce.
-
  * V tiskovém menu umo¾nit definovat separátor a klávesové zkratky.
 
+ * Práva view na jednotlivé sloupce.
+
  * Formuláøový dialog.
+
+ * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
 
  * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
 

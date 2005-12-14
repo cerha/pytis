@@ -1,5 +1,7 @@
 2005-12-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/commands_.py: Nový pøíkaz `COMMAND_RESET_COLUMNS'.
+
 	* pytis/form/screen.py (MItem.create): Kosmetické úpravy.
 	(CheckItem.state): Nová metoda.
 	(CheckItem._on_ui_event): Vyu¾ívej ji.
@@ -68,7 +70,11 @@
 	skrytí vazebního sloupce.
 	(ListForm._on_label_right_down): V menu sloupcù zobrazuj úplnì
 	v¹echna políèka z fields.
-	
+	(ListForm._update_grid): Nový argument `reset_columns'.
+	(ListForm._on_label_right_down): Pøidána polo¾ka pro vrácení
+	výchozích sloupcù.
+	(ListForm._on_reset_columns): Nová metoda.
+	(ListForm.on_command): O¹etøuj pøíkaz `COMMAND_RESET_COLUMNS'.
 
 2005-12-12  Tomas Cerha  <cerha@brailcom.org>
 
