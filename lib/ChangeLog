@@ -1,3 +1,66 @@
+2005-12-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (ListTable.__init__): Neinicializuj
+	`self._TYPE_MAPPING' zde.
+	(ListTable.__init__): Namísto procházení sloupcù zde volej
+	`self._update_columns()'.
+	(ListTable._wx_type): Nová metoda.  Zde inicializuj
+	`self._TYPE_MAPPING'.
+	(ListTable._update_columns): Nová metoda.  Namísto `self._column_info'
+	inicializuj `self._columns'.
+	(ListTable.update): Nový argument `columns'.  Aktualizuj poka¾dé
+	mno¾inu sloupcù.
+	(ListTable._cached_value, ListTable.column_id) 
+	(ListTable.column_label, ListTable.GetValue, ListTable.GetValue) 
+	(ListTable.SetValue, ListTable.GetTypeName, ListTable.GetAttr):
+	namísto `self._column_info' pou¾ívej `self._columns'.
+
+	* pytis/form/dualform.py
+	(PostponedSelectionDualForm._on_main_selection): Skuteènì o¹etøuj
+	pøíkpad, kdy `row' je None.
+	
+	* pytis/form/list.py (ListForm._init_attributes): Nenastavuj zde
+	`_orig_columns' ale rovnou `_columns'.  Do `_columns' dej pouze
+	viditelné sloupce.  Inicializuj atributy `_column_to_move' a
+	`_column_move_target'.
+	(ListForm._create_grid): Nenastavuj zde `_columns'.  Pøedávej
+	`_columns' konstruktoru `ListTable'.  Nastav mód výbìru v gridu na
+	výbìr øádkù.  Namísto `wx.grid.EVT_GRID_LABEL_LEFT_CLICK' o¹etøuj
+	`wx.EVT_LEFT_DOWN' a `wx.EVT_LEFT_UP'.  Názvy handlerù událostí
+	pøejmenovány podle konzistentìj¹ího schematu - viz dále.  O¹etøuj
+	také `wx.grid.EVT_GRID_COL_SIZE' a `wx.EVT_MOTION'.
+	(ListForm._update_grid): Nové argumenty `delete_column',
+	`insert_column' a `inserted_column_index'.
+	(ListForm._update_grid.notify): Nová funkce.
+	(ListForm._update_grid): Vyu¾ívej ji.  Provádìj také skrývání a
+	zobrazování sloupcù a související úpravy v `_columns'.
+	(_on_label_left): Zru¹eno.  Øazení je nyní provádìno v rámci
+	`_on_label_left_up', ale jen pokud nejde o pøesun sloupce.
+	(_on_column_header_paint): Pøejmenováno na `_on_label_paint'.
+	(_on_label_paint): Nová metoda.  Kromì toho, co bylo døíve v
+	`_on_column_header_paint' také vykresluj ¹ipeèku pøi pøesunu
+	sloupce a trojúhelník indikující tøídìní kresli o kousek vìt¹í.
+	(ListForm._on_label_right_down): Nové polo¾ky pro skrývání a
+	zobrazování sloupcù.  Nenastavuj pozici menu ruènì -- pøenech to
+	na wx.  Respektuj zmìnu typu o¹etøovaného eventu
+	`wx.grid.EVT_GRID_LABEL_LEFT_CLICK' -> `wx.EVT_LEFT_DOWN'.
+	(ListForm._on_label_left_down): Nová metoda.
+	(ListForm._on_label_left_up): Nová metoda.
+	(ListForm._on_label_mouse_move): Nová metoda.
+	(ListForm._on_label_drag_size): Nová metoda.
+	(ListForm._on_toggle_column): Nová metoda.
+	(ListForm.on_command): O¹etøuj `ListForm.COMMAND_TOGGLE_COLUMN'.
+	(ListForm._on_delete_record): Úprava komentáøe.
+	(ListForm._on_size): Nevy¾aduj arguemnt `event'.  Pokud není
+	pøedán, pøepoèítej v¹e bez ohledu na to, zda se zmìnila celková
+	velikost.
+	(ListForm.Close): Zavírej editor, pouze pokud je¹tì ¾ije.
+	(CodebookForm): Upraven docstring.
+	(SideBrowseForm._init_attributes): Nenastavuj `_orig_columns'.
+	Zapamatuj si vazební sloupec v atributech.
+	(SideBrowseForm._default_columns): Nová metoda.  Zde provádìj
+	skrytí vazebního sloupce.
+
 2005-12-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_grid.py (ListTable.__init__): Pødán assert na
