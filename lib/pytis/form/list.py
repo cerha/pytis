@@ -675,8 +675,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                  state=lambda a, c=c: c in self._columns,
                                  command=ListForm.COMMAND_TOGGLE_COLUMN,
                                  args=dict(column_id=c.id(), col=col))
-                       for c in [self._view.field(id)
-                                 for id in self._view.columns()]]),
+                       for c in self._view.fields()]),
                  )
         menu = Menu('', items).create(g, self)
         g.PopupMenu(menu)
