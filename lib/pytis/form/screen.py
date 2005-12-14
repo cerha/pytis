@@ -1120,6 +1120,8 @@ class Menu:
                 # Toto je zde zejména kvùli nake¹ování vypoètených hodnot
                 # uvnitø 'Command.enabled()' pøi startu aplikace.
                 menu.Enable(item.GetId(), i.command().enabled(appl, i.args()))
+                if isinstance(i, (RadioItem, CheckItem)):
+                    item.Check(i.state())
                 width = parent.GetTextExtent(i.title())[0]
                 if hotkey_string.has_key(i):
                     hotkey_items.append((i, item, width))
@@ -1210,14 +1212,11 @@ class MItem(object):
     
     def create(self, parent, parent_menu):
         appl = pytis.form.application._application
-        def callback(item):
-            c = appl.on_command
-            return lambda e: apply(c, (item.command(),), item.args())
-        id = wx.NewId()
-        item = wx.MenuItem(parent_menu, id, self.title(), self._help,
+        item = wx.MenuItem(parent_menu, -1, self.title(), self._help,
                            kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, id, callback(self))
-        wx_callback(wx.EVT_UPDATE_UI, parent, id, self._on_ui_event)
+        wx_callback(wx.EVT_MENU, parent, item.GetId(),
+                    lambda e: appl.on_command(self.command(), **self.args()))
+        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
         return item
         
     def title(self):
@@ -1261,10 +1260,11 @@ class CheckItem(MItem):
         self._state = state
         super(CheckItem, self).__init__(title, command, **kwargs)
 
+    def state(self):
+        return self._state(pytis.form.application._application)
+        
     def _on_ui_event(self, event):
-        appl = pytis.form.application._application
-        if appl:
-            event.Check(self._state(appl))
+        event.Check(self.state())
         super(CheckItem, self)._on_ui_event(event)
 
         
