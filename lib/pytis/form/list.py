@@ -106,7 +106,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         """
         super_(ListForm)._init_attributes(self, **kwargs)
         assert columns is None or is_sequence(columns)
-        self._orig_columns = columns or self._default_columns()
+        colspecs = [self._view.field(id)
+                    for id in columns or self._default_columns()]
+        self._columns = [c for c in colspecs if c.column_width()]
         # Inicializace atributù
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
@@ -116,6 +118,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._in_select_cell = False
         self._last_reshuffle_request = self._reshuffle_request = 0
         self._current_editor = None
+        self._column_to_move = None
+        self._column_move_target = None
         # Parametry zobrazení
         self._initial_position = self._position = 0
 
@@ -154,22 +158,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
-        # Uprav sloupce
-        visible_columns = []
-        hidden_columns = []
-        for c in [self._view.field(id) for id in self._orig_columns]:
-            if c.column_width():
-                visible_columns.append(c)
-            else:
-                hidden_columns.append(c)
-        self._columns = columns = visible_columns + hidden_columns
         # Vytvoø grid a tabulku
         g = wx.grid.Grid(self, wx.NewId())
         # Inicializuj datový select
         row_count = self._init_select()
         self._table = table = \
-          _grid.ListTable(self._parent, self._data, self._fields, columns,
-                          row_count, sorting=self._lf_sorting,
+          _grid.ListTable(self._parent, self._data, self._fields,
+                          self._columns, row_count, sorting=self._lf_sorting,
                           grouping=self._lf_grouping, prefill=self._prefill)
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
@@ -177,6 +172,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
         g.SetMargins(0,0)
         g.DisableDragGridSize()
+        g.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
         labelfont = g.GetLabelFont()
         labelfont.SetWeight(wx.NORMAL)
         g.SetLabelFont(labelfont)
@@ -191,7 +187,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._current_editor = editor
         editable = False
         total_width = 0
-        for i, c in enumerate(visible_columns):
+        for i, c in enumerate(self._columns):
             w = self._column_width(g, c)
             g.SetColSize(i, w)
             total_width += w
@@ -221,20 +217,20 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             g.SetColAttr(i, attr)
         self._total_width = total_width
         self.editable = editable
+        labels = g.GetGridColLabelWindow()
         # Event handlery
-        wx_callback(wx.grid.EVT_GRID_SELECT_CELL, g, self._on_select_cell)
-        # CLICK automaticky vovolá SELECT_CELL, tak¾e by následující øádka
-        # nemìla být tøeba.  Odkomentováním bude metoda volána dokonce tøikrát.
-        #wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_select_cell)
+        wx_callback(wx.grid.EVT_GRID_SELECT_CELL,   g, self._on_select_cell)
+        wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
+        wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_context_menu)
-        wx_callback(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, g, self._on_label_left)
-        wx_callback(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, g, self._on_label_right)
-        wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN, g, self._on_editor_shown)
-        wx_callback(wx.EVT_MOUSEWHEEL, g, self._on_wheel)
-        wx_callback(wx.EVT_IDLE, g, self._on_idle)
-        wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
-        wx_callback(wx.EVT_PAINT, g.GetGridColLabelWindow(),
-                    self._on_column_header_paint)
+        wx_callback(wx.EVT_MOUSEWHEEL, g,      self._on_wheel)
+        wx_callback(wx.EVT_IDLE,       g,      self._on_idle)
+        wx_callback(wx.EVT_KEY_DOWN,   g,      self.on_key_down)
+        wx_callback(wx.EVT_LEFT_DOWN,  labels, self._on_label_left_down)
+        wx_callback(wx.EVT_LEFT_UP,    labels, self._on_label_left_up)
+        wx_callback(wx.EVT_RIGHT_DOWN, labels, self._on_label_right_down)
+        wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
+        wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
         self._update_label_colors(g)
         if __debug__: log(DEBUG, 'Nový grid vytvoøen')
         return g
@@ -246,7 +242,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Veto()
             self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
     
-    def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row=None):
+    def _update_grid(self, data_init=False, inserted_row_number=None,
+                     inserted_row=None, delete_column=None, insert_column=None,
+                     inserted_column_index=None):
+        g = self._grid
+        t = self._table
+        def notify(id, *args):
+            msg = wx.grid.GridTableMessage(t, id, *args)
+            g.ProcessTableMessage(msg)
         current_row = self._table.current_row()
         if data_init:
             row_count = self._init_select()
@@ -255,34 +258,34 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._data.rewind()
         if inserted_row_number is not None:
             row_count = row_count + 1
-        # Uprav velikost gridu
         old_row_count = self._table.GetNumberRows()
         new_row_count = row_count
-        t = self._table
-        t.update(row_count=row_count, sorting=self._lf_sorting,
+        # Uprav velikost gridu
+        g.BeginBatch()
+        if delete_column is not None:
+            i = self._columns.index(delete_column)
+            del self._columns[i]
+            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, i, 1)
+        if insert_column is not None:
+            if inserted_column_index is None:
+                i = len(self._columns)
+            else:
+                i = inserted_column_index
+            self._columns.insert(i, insert_column)
+            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
+        t.update(columns=self._columns,
+                 row_count=row_count, sorting=self._lf_sorting,
                  grouping=self._lf_grouping,
                  inserted_row_number=inserted_row_number,
                  inserted_row=inserted_row, prefill=self._prefill)
-        g = self._grid
-        g.BeginBatch()
         ndiff = new_row_count - old_row_count
         if new_row_count < old_row_count:
             if new_row_count == 0:
                 current_row = 1
-            gmessage_id = wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED
-            ndiff = -ndiff
-            gmargs = (current_row, ndiff,)
+            notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -ndiff)
         elif new_row_count > old_row_count:
-            gmessage_id = wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED
-            gmargs = (ndiff,)
-        else:
-            gmessage_id = None
-        if gmessage_id is not None:
-            gmessage = wx.grid.GridTableMessage(t, gmessage_id, *gmargs)
-            g.ProcessTableMessage(gmessage)
-        gmessage = wx.grid.GridTableMessage(
-            t, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-        g.ProcessTableMessage(gmessage)
+            notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
+        notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         g.EndBatch()
         # Závìreèné úpravy
         if new_row_count != old_row_count:
@@ -608,26 +611,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         pass
             message(display_value)
     
-    def _on_wheel(self, event):
-        g = self._grid
-        delta = event.GetWheelDelta()
-        linesPer = event.GetLinesPerAction()
-        pxx, pxy = g.GetScrollPixelsPerUnit()
-        rot = event.GetWheelRotation()
-        lines = rot / delta
-        if lines != 0:
-            vsx, vsy = g.GetViewStart()
-            lines = lines * linesPer
-            scrollTo = vsy - pxy / lines
-        g.Scroll(-1, scrollTo)    
-
-    def _on_label_left(self, event):
-        col = event.GetCol()
-        self._run_callback(self.CALL_USER_INTERACTION)
-        invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
-                       direction=LookupForm.SORTING_CYCLE_DIRECTION)
-        return True
-
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
             # GetBatchCount zji¹»ujeme proto, aby nedhocházelo k volání
@@ -644,99 +627,61 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._grid.SelectRow(self._grid.GetGridCursorRow())
 
 
-    def _on_column_header_paint(self, event):
-        def triangle (x, y, reversed=True):
-            if reversed:
-                return ((x, y), (x+6, y), (x+3, y+4))
-            else:
-                return ((x+3, y), (x+6, y+4), (x, y+4))
-        g = self._grid
-        t = self._table
-        dc = wx.PaintDC(g.GetGridColLabelWindow())
-        x = - g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
-        y = 0
-        height = g.GetColLabelSize()
-        for col in range(g.GetNumberCols()):
-            id = t.column_id(col)
-            width = g.GetColSize(col)
-            # Draw the rectangle around.
-            dc.SetBrush(wx.Brush("GRAY", wx.TRANSPARENT))
-            dc.SetTextForeground(wx.BLACK)
-            d = col == 0 and 0 or 1
-            dc.DrawRectangle(x-d, y, width+d, height)
-            # Draw the sorting sign.
-            pos = position(id, self._lf_sorting, key=lambda x: x[0])
-            if pos is not None:
-                left = x+width-10
-                top = y+3
-                a = self._lf_sorting[pos][1] == LookupForm.SORTING_ASCENDENT
-                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
-                for i in range(pos):
-                    dc.DrawLine(left, top+2*i, left+7, top+2*i)
-                dc.DrawPolygon(triangle(left, top+pos*2, reversed=a))
-            # Draw the grouping sign.
-            if self._lf_grouping == id:
-                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
-                dc.DrawCircle(x+5, y+5, 2)
-            # Draw the label itself.
-            label = t.column_label(col)
-            while dc.GetTextExtent(label)[0] > width and len(label):
-                label = label[:-1] # Don't allow the label to extend the width.
-            dc.DrawLabel(label, (x,y,width,height), wx.ALIGN_CENTER|wx.CENTER)
-            x += width
-        
-    def _on_label_right(self, event):
+            
+    def _on_label_right_down(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         g = self._grid
-        col = event.GetCol()
+        col = g.XToCol(event.GetX())
         # Menu musíme zkonstruovat a¾ zde, proto¾e argumentem pøíkazù je èíslo
         # sloupce, které zjistím a¾ z eventu.
         items = (Menu(_("Primární øazení"),
                       (MItem(_("Øadit vzestupnì"),
-                             command = LookupForm.COMMAND_SORT_COLUMN,
-                             args = {'direction':LookupForm.SORTING_ASCENDENT,
-                               'col': col, 'primary': True}),
+                             command=LookupForm.COMMAND_SORT_COLUMN,
+                             args=dict(direction=LookupForm.SORTING_ASCENDENT,
+                                       col=col, primary=True)),
                        MItem(_("Øadit sestupnì"),
-                             command = LookupForm.COMMAND_SORT_COLUMN,
-                             args = {'direction':
-                                     LookupForm.SORTING_DESCENDANT,
-                                     'col': col, 'primary': True}),)),
+                             command=LookupForm.COMMAND_SORT_COLUMN,
+                             args=dict(direction=LookupForm.SORTING_DESCENDANT,
+                                       col=col, primary=True)),)),
                  Menu(_("Dodateèné øazení"),
                       (MItem(_("Øadit vzestupnì"),
-                             command = LookupForm.COMMAND_SORT_COLUMN,
-                             args = {'direction':LookupForm.SORTING_ASCENDENT,
-                                     'col': col}),
+                             command=LookupForm.COMMAND_SORT_COLUMN,
+                             args=dict(direction=LookupForm.SORTING_ASCENDENT,
+                                       col=col)),
                        MItem(_("Øadit sestupnì"),
-                             command = LookupForm.COMMAND_SORT_COLUMN,
-                             args = {'direction':
-                                     LookupForm.SORTING_DESCENDANT,
-                                     'col': col}),
-                       )),
+                             command=LookupForm.COMMAND_SORT_COLUMN,
+                             args=dict(direction=LookupForm.SORTING_DESCENDANT,
+                                       col=col)),)),
                  MSeparator(),
                  MItem(_("Neøadit podle tohoto sloupce"),
-                       command = LookupForm.COMMAND_SORT_COLUMN,
-                       args = {'direction': LookupForm.SORTING_NONE,
-                               'col': col}),
+                       command=LookupForm.COMMAND_SORT_COLUMN,
+                       args=dict(direction=LookupForm.SORTING_NONE, col=col)),
                  MItem(_("Zru¹it øazení úplnì"),
-                       command = LookupForm.COMMAND_SORT_COLUMN,
-                       args = {'direction': LookupForm.SORTING_NONE}),
+                       command=LookupForm.COMMAND_SORT_COLUMN,
+                       args=dict(direction=LookupForm.SORTING_NONE)),
                  MSeparator(),
                  MItem(_("Seskupit podle tohoto sloupce"),
-                       command = ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args = {'column_id': self._columns[col].id()}),
+                       command=ListForm.COMMAND_SET_GROUPING_COLUMN,
+                       args=dict(column_id=self._columns[col].id())),
                  MItem(_("Zru¹it seskupování"),
-                       command = ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args = {'column_id': None}),
+                       command=ListForm.COMMAND_SET_GROUPING_COLUMN,
+                       args=dict(column_id=None)),
+                 MSeparator(),
+                 MItem(_("Skrýt tento sloupec"),
+                       command=ListForm.COMMAND_TOGGLE_COLUMN,
+                       args=dict(column_id=self._columns[col].id())),
+                 Menu(_("Zobrazené sloupce"),
+                      [CheckItem(c.label(),
+                                 state=lambda a, c=c: c in self._columns,
+                                 command=ListForm.COMMAND_TOGGLE_COLUMN,
+                                 args=dict(column_id=c.id(), col=col))
+                       for c in [self._view.field(id)
+                                 for id in self._view.columns()]]),
                  )
         menu = Menu('', items).create(g, self)
-        pos = event.GetPosition()
-        # Od wxWin 2.3 je vrácena pozice vèetnì vý¹ky záhlaví, co¾ je v
-        # pøípadì záhlaví ¹patnì, tek¾e musíme opìt pøepoèítávat...
-        pos.y = pos.y - g.GetColLabelSize()
-        g.PopupMenu(menu, pos)
+        g.PopupMenu(menu)
         menu.Destroy()
         event.Skip()
-        return True
 
     def _on_context_menu(self, event):
         # Popup menu pro vybraný øádek gridu
@@ -745,8 +690,147 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._select_cell(row=row, col=col)
         self.show_context_menu(position=event.GetPosition())
         event.Skip()
-        return True
 
+    def _on_label_left_down(self, event):
+        self._column_to_move = self._grid.XToCol(event.GetX())
+        event.Skip()
+        
+    def _on_label_left_up(self, event):
+        col = self._grid.XToCol(event.GetX())
+        if self._column_move_target is not None:
+            old_index = self._column_to_move
+            new_index = self._column_move_target
+            if new_index > old_index:
+                new_index -= 1
+            #print "***", old_index, "=>", new_index
+            if old_index is not None and old_index != new_index:
+                c = self._columns[old_index]
+                self._update_grid(delete_column=c, insert_column=c,
+                                  inserted_column_index=new_index)
+                self._on_size()
+        else:
+            self._run_callback(self.CALL_USER_INTERACTION)
+            invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
+                           direction=LookupForm.SORTING_CYCLE_DIRECTION)
+        self._column_move_target = None
+        self._column_to_move = None
+        event.GetEventObject().Refresh()
+        event.Skip()
+        
+    def _on_label_mouse_move(self, event):
+        def nearest_column(x):
+            g = self._grid
+            n = g.GetNumberCols()
+            pos = 0
+            lastwidth = 0
+            for col in range(n+1):
+                if col <= n:
+                    width = g.GetColSize(col)
+                else:
+                    width = 0
+                if pos - lastwidth/2 <= x <= pos + width/2:
+                    return col
+                lastwidth = width
+                pos += width
+            return g.GetNumberCols()
+        if self._column_to_move is not None and event.Dragging():
+            self._column_move_target = nearest_column(event.GetX())
+            event.GetEventObject().Refresh()
+        event.Skip()
+
+    def _on_label_drag_size(self, event):
+        #print "<=>"
+        # TODO: Tady by to chtìlo nìjaký rozumný _on_size(), ale nesmí se nám to
+        # pod rukou (pod my¹í) moc rozjet...
+        self._column_move_target = None
+        event.Skip()
+        
+    def _on_label_paint(self, event):
+        def triangle(x, y, r=4, reversed=True):
+            # Return polygon coordinates for a triangle.
+            if reversed:
+                return ((x, y), (x+2*r, y), (x+r, y+r))
+            else:
+                return ((x+r, y), (x+2*r, y+r), (x, y+r))
+        def arrow(x, y, r=5, l=4):
+            # Return polygon coordinates for an arrow.
+            return ((x, y), (x-r, y-r), (x-r/2, y-r), (x-r/2, y-r-l),
+                    (x+r/2, y-r-l), (x+r/2, y-r), (x+r, y-r))
+        g = self._grid
+        #t = self._table
+        dc = wx.PaintDC(g.GetGridColLabelWindow())
+        x = - g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
+        y = 0
+        height = g.GetColLabelSize()
+        for col, c in enumerate(self._columns):
+            id = c.id()
+            width = g.GetColSize(col)
+            if col == 0:
+                d = 0
+            else:
+                d = 1
+            dc.SetBrush(wx.Brush("GRAY", wx.TRANSPARENT))
+            dc.SetTextForeground(wx.BLACK)
+            # Draw the rectangle around.
+            dc.DrawRectangle(x-d, y, width+d, height)
+            # Draw the label itself.
+            label = c.label()
+            while dc.GetTextExtent(label)[0] > width and len(label):
+                label = label[:-1] # Don't allow the label to extend the width.
+            dc.DrawLabel(label, (x,y,width,height), wx.ALIGN_CENTER|wx.CENTER)
+            # Draw the sorting sign.
+            pos = position(id, self._lf_sorting, key=lambda x: x[0])
+            if pos is not None:
+                left = x+width-12
+                top = y+3
+                r = self._lf_sorting[pos][1] == LookupForm.SORTING_ASCENDENT
+                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
+                for i in range(pos):
+                    dc.DrawLine(left, top+2*i, left+9, top+2*i)
+                dc.DrawPolygon(triangle(left, top+pos*2, reversed=r))
+            # Draw the grouping sign.
+            if self._lf_grouping == id:
+                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
+                dc.DrawCircle(x+5, y+5, 2)
+            # Indicate when the column is being moved.
+            move_target = self._column_move_target
+            if self._column_to_move is not None and move_target is not None:
+                if col == move_target:
+                    ax = x - d + (col == 0 and 5 or 0)
+                elif col == move_target-1 and col == len(self._columns)-1:
+                    ax = x + width - 5
+                else:
+                    ax = None
+                if ax is not None:
+                    dc.SetBrush(wx.Brush("GREEN", wx.SOLID))
+                    dc.DrawPolygon(arrow(ax, height-2))
+            x += width
+
+    def _on_wheel(self, event):
+        g = self._grid
+        delta = event.GetWheelDelta()
+        linesPer = event.GetLinesPerAction()
+        pxx, pxy = g.GetScrollPixelsPerUnit()
+        rot = event.GetWheelRotation()
+        lines = rot / delta
+        if lines != 0:
+            vsx, vsy = g.GetViewStart()
+            lines = lines * linesPer
+            scrollTo = vsy - pxy / lines
+        g.Scroll(-1, scrollTo)    
+
+    def _on_toggle_column(column_id, col=None):
+        if len(self._columns) == 1:
+            message(_("Poslední sloupec"), beep_=True)
+            return
+        c = find(column_id, self._columns, key=lambda c: c.id())
+        if c:
+            self._update_grid(delete_column=c)
+        else:
+            self._update_grid(insert_column=self._view.field(column_id),
+                              inserted_column_index=col)
+        self._on_size()
+        
     def show_context_menu(self, position=None):
         if self._table.editing():
             menu = self._edit_menu()
@@ -833,6 +917,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return True
         elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
             self._refresh(reset={'grouping': kwargs['column_id']})
+            return True
+        elif command == ListForm.COMMAND_TOGGLE_COLUMN:
+            self._on_toggle_column(**kwargs)
             return True
         elif command == ListForm.COMMAND_SELECT_CELL:
             self._select_cell(**kwargs)
@@ -996,7 +1083,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _on_export_csv(self):
         log(EVENT, 'Vyvolání CSV exportu')
-        table = self._table
         data = self._data
         # Kontrola poètu øádkù
         number_rows = self._table.GetNumberRows()
@@ -1065,7 +1151,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     if isinstance(ctype, pytis.data.Float):
                         s = self._table.row(r)[cid].export(locale_format=False)
                     else:
-                        s = self._table.row(r)[cid].export()                        
+                        s = self._table.row(r)[cid].export()
                     if export_encoding and export_encoding != db_encoding:
                         if not is_unicode(s):
                             s = unicode(s, db_encoding)
@@ -1300,11 +1386,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._select_cell(row=r+1)
             elif r > 0:
                 self._select_cell(row=r-1)
-            # TODO: Pavel Hanák 03.10.2005
-            #       Udìláme radìji refresh celého formuláøe na vrcholu
-            #       zásobníku, proto¾e jinak se nerefreshne horní formuláø
-            #       po vymazání záznamu ze sideformu.        
-            # self.refresh()
+            # Udìláme radìji refresh celé aplikace, proto¾e jinak se
+            # nerefreshne horní formuláø po vymazání záznamu ze sideformu.
             refresh()
 
     # Veøejné metody
@@ -1485,17 +1568,20 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     # wx metody
 
-    def _on_size(self, event):
-        size = event.GetSize()
+    def _on_size(self, event=None):
         g = self._grid
-        oldsize = g.GetSize()
+        if event:
+            size = event.GetSize()
+            oldsize = g.GetSize()
+            if size.width == oldsize.width:
+                event.Skip()
+                return False
+        else:
+            size = g.GetSize()
         width = size.width
         height = size.height
-        if width == oldsize.width:
-            event.Skip()
-            return False
         if height < self._total_height():
-            width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
+            width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) - 1
         if width > self._total_width:
             coef = float(width) / self._total_width
         else:
@@ -1515,7 +1601,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             total += w
         if coef != 1 and total != width and last is not None:
             g.SetColSize(last, g.GetColSize(last) + (width - total))
-        event.Skip()
+        if event:
+            event.Skip()
 
     def Close(self):
         self._data.remove_callback_on_change(self.on_data_change)
@@ -1525,7 +1612,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             pass
         # Musíme ruènì zru¹it editory, jinak se doèkáme segmentation fault.
         for e in self._editors:
-            e.close()
+            if e:
+                e.close()
         # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
         # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
         # v novém gridu.
@@ -1558,16 +1646,9 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
     vybere.  U¾ivatel kromì výbìru a listování nemù¾e s øádky nijak
     manipulovat.
 
-    Tøída se od svého pøedka li¹í následujícími vlastnostmi:
-
-    - Jsou zobrazeny pouze sloupce, jejich¾ identifikátory jsou v mno¾inì
-      'columns' pøedané jako argument konstruktoru (pokud není None).
-
-    - Formuláø je zobrazen jako modální okno pomocí metody 'run()', která
-      skonèí po výbìru polo¾ky a vrátí instanci PresentedRow pro vybraný
-      øádek. 
-      Pokud byl formuláø ukonèen jinak ne¾ výbìrem záznamu, je vrácena hodnota
-      'None'.
+    Formuláø je zobrazen jako modální okno pomocí metody 'run()', která skonèí
+    po výbìru polo¾ky a vrátí instanci PresentedRow pro vybraný øádek.  Pokud
+    byl formuláø ukonèen jinak ne¾ výbìrem záznamu, je vrácena hodnota 'None'.
 
     """
 
@@ -1969,16 +2050,22 @@ class SideBrowseForm(FilteredBrowseForm):
                                                    row[sibling_binding_column])
         if append_condition:
             condition = lambda row: pytis.data.AND(column_condition(row),
-                                                 append_condition(row))
+                                                   append_condition(row))
         else:
             condition = column_condition
-        super_(SideBrowseForm)._init_attributes(self, condition, **kwargs)
         self._sibling_name = sibling_name
         self._sibling_row = sibling_row
         self._title = title
-        if hide_binding_column:
-            self._orig_columns = filter(lambda c: c != binding_column,
-                                        self._orig_columns)
+        self._hide_binding_column = hide_binding_column
+        self._binding_column = binding_column
+        super_(SideBrowseForm)._init_attributes(self, condition, **kwargs)
+
+    def _default_columns(self):
+        columns = super(SideBrowseForm, self)._default_columns()
+        if self._hide_binding_column:
+            return [c for c in columns if c != self._binding_column]
+        else:
+            return columns
         
     def _init_filter(self):
         self.filter({})
