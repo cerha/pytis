@@ -1,5 +1,11 @@
 2005-12-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (MItem.create): Kosmetické úpravy.
+	(CheckItem.state): Nová metoda.
+	(CheckItem._on_ui_event): Vyu¾ívej ji.
+	(Menu.create): Pøednastav `state' polo¾ek typu `RadioItem',
+	`CheckItem'.
+
 	* pytis/form/_grid.py (ListTable.__init__): Neinicializuj
 	`self._TYPE_MAPPING' zde.
 	(ListTable.__init__): Namísto procházení sloupcù zde volej
@@ -60,6 +66,9 @@
 	Zapamatuj si vazební sloupec v atributech.
 	(SideBrowseForm._default_columns): Nová metoda.  Zde provádìj
 	skrytí vazebního sloupce.
+	(ListForm._on_label_right_down): V menu sloupcù zobrazuj úplnì
+	v¹echna políèka z fields.
+	
 
 2005-12-12  Tomas Cerha  <cerha@brailcom.org>
 
