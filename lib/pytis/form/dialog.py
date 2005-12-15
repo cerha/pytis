@@ -261,7 +261,7 @@ class GenericDialog(Dialog):
 
     def _close_dialog(self):
         return self._end_modal(wx.ID_CANCEL)
-        
+
     def _commit_dialog(self):
         focused = wx_focused_window()
         if focused and self._can_commit(focused):
@@ -1192,7 +1192,7 @@ class BugReport(GenericDialog):
             raise ProgramError('Unknown BugReport dialog result', label)
         return result
 
-    def _close_dialog(self, command, **kwargs):
+    def _close_dialog(self):
         self._end_modal(self._button_id(self._IGNORE_LABEL))
 
         
