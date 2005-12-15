@@ -1,5 +1,8 @@
 2005-12-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py (BugReport._close_dialog): Nevy¾aduj ¾ádné
+	argumenty.
+
 	* pytis/util/configuration.py
 	(Configuration._Option_config_file.environment): `EBASCONFIG' ->
 	`PYTISCONFIG'.
