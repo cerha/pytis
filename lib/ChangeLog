@@ -1,7 +1,24 @@
 2005-12-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/commands_.py: Novı pøíaz `COMMAND_FORCE_COMMIT_DIALOG'.
+	(DEFAULT_COMMAND_KEYS): Nová klávesa pro `COMMAND_FORCE_COMMIT_DIALOG'.
+
+	* pytis/form/search.py (_COMMIT): Konstanta zru¹ena.
+	(SFDialog._commit_dialog): Metoda zru¹ena.
+	(SearchDialog._COMMIT): Pøejmenováno na `_COMMIT_BUTTON'.
+	(FilterDialog._COMMIT): Pøejmenováno na `_COMMIT_BUTTON'.
+	(SortingDialog._COMMIT): Pøejmenováno na `_COMMIT_BUTTON'. 
+	(SortingDialog._commit_dialog): Metoda zru¹ena.
+
 	* pytis/form/dialog.py (BugReport._close_dialog): Nevy¾aduj ¾ádné
 	argumenty.
+	(Dialog._COMMIT_BUTTON): Nová konstanta.
+	(GenericDialog._can_commit): Testuj rovnou pøítomnost widgetu v
+	`self._buttons', ne jeho wx id ve slovníku id.
+	(_commit_dialog): Novı argument 'force'.
+	(GenericDialog.on_command): O¹etøuj pøíkaz
+	`COMMAND_FORCE_COMMIT_DIALOG'.
+	(InputDialog._COMMIT_BUTTON): Nová konstanta.
 
 	* pytis/util/configuration.py
 	(Configuration._Option_config_file.environment): `EBASCONFIG' ->
