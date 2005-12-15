@@ -75,7 +75,9 @@ class GenericDialog(Dialog):
     konkrétních dialogù pomocí pøedefinování nìkterých metod.
     
     """    
-        
+    _COMMIT_BUTTON = None
+
+    
     def __init__(self, parent, title, buttons, default=None, report=None,
                  report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
@@ -111,7 +113,7 @@ class GenericDialog(Dialog):
         self._report_format = report_format
         self._want_focus = None
         self._shown = False
-        
+
     def _create_dialog(self):
         """Vytvoø celý dialog (postupnì okno, jeho obsah a tlaèítka).
         
@@ -199,7 +201,7 @@ class GenericDialog(Dialog):
             return None
 
     def _can_commit(self, widget):
-        return widget.GetId() in self._button_labels.keys()
+        return widget in self._buttons
 
     def _on_idle(self, event):
         event.Skip()
@@ -262,12 +264,15 @@ class GenericDialog(Dialog):
     def _close_dialog(self):
         return self._end_modal(wx.ID_CANCEL)
 
-    def _commit_dialog(self):
-        focused = wx_focused_window()
-        if focused and self._can_commit(focused):
-            self._end_modal(focused.GetId())
+    def _commit_dialog(self, force=False):
+        if force and self._COMMIT_BUTTON in self._button_labels.values():
+            self._end_modal(self._button_id(self._COMMIT_BUTTON))
         else:
-            self._navigate()
+            focused = wx_focused_window()
+            if focused and self._can_commit(focused):
+                self._end_modal(focused.GetId())
+            else:
+                self._navigate()
         return True
         
     def on_command(self, command, **kwargs):
@@ -275,6 +280,8 @@ class GenericDialog(Dialog):
             return self._close_dialog()
         if command == Dialog.COMMAND_COMMIT_DIALOG:
             return self._commit_dialog()
+        if command == Dialog.COMMAND_FORCE_COMMIT_DIALOG:
+            return self._commit_dialog(force=True)
         return False
 
     def run(self):
@@ -494,6 +501,9 @@ class InputDialog(Message):
     jinak (tlaèítko 'Zru¹it', klávesa Escape apod.).
 
     """
+    _COMMIT_BUTTON = Message.BUTTON_OK
+
+    
     def __init__(self, parent, message=None, value=None, prompt=None,
                  title=_("Zadejte hodnotu"), icon=None, passwd=False,
                  report=None, report_format=TextFormat.PLAIN,
