@@ -393,9 +393,10 @@ class _GsqlTable(_GsqlSpec):
     _SQL_NAME = 'TABLE'
     _PGSQL_TYPE = 'r'
     
-    def __init__(self, name, columns, inherits=None, view=None, sql=None,
+    def __init__(self, name, columns, inherits=None, view=None,
+                 with_oids=True, sql=None,
                  on_insert=None, on_update=None, on_delete=None,
-                 init_values=(), init_columns=(),
+                 init_values=(), init_columns=(), 
                  upd_log_trigger=None, **kwargs):
         """Inicializuj instanci.
 
@@ -439,6 +440,7 @@ class _GsqlTable(_GsqlSpec):
         self._columns = columns
         self._inherits = inherits or ()
         self._views = map(self._make_view, xtuple(view or ()))
+        self._with_oids = with_oids
         self._sql = sql
         self._name = name
         self._on_insert, self._on_update, self._on_delete = \
@@ -565,10 +567,14 @@ class _GsqlTable(_GsqlSpec):
                 inherits = ' INHERITS (%s)' % string.join(self._inherits, ',')
             else:
                 inherits = ''
+            if self._with_oids:
+                with_oids = ' WITH OIDS'
+            else:
+                with_oids = ' WITHOUT OIDS'                
         result = ''
         if not _re:
-            result = result + ('CREATE TABLE %s (\n%s)%s;\n' %
-                               (self._name, columns, inherits))
+            result = result + ('CREATE TABLE %s (\n%s)%s%s;\n' %
+                               (self._name, columns, inherits, with_oids))
         if self._doc is not None:
             doc = "COMMENT ON TABLE %s IS '%s';\n" % \
                   (self._name, _gsql_escape(self._doc))
@@ -1461,8 +1467,7 @@ class _GsqlDefs(UserDict.UserDict):
             sys.stdout.write('\n')
         self._process_resolved(process)
 
-    def check_db(self, _quietly=False):
-        # Open the database connection
+    def get_connection(self):
         from pyPgSQL import libpq
         while True:
             connection_string = ''
@@ -1488,6 +1493,11 @@ class _GsqlDefs(UserDict.UserDict):
                     continue
                 raise
             break
+        return connection
+
+    def check_db(self, _quietly=False):
+        # Open the database connection
+        connection = self.get_connection()
         # Found all relevant objects in all the object classes
         all_names = []
         names = {}
@@ -1545,6 +1555,38 @@ database dumps if you want to be sure about your schema.
         self.check_db(_quietly=True)
         self.regensql()
 
+    def update_view(self):
+        view = _GsqlConfig.update_view
+        connection = self.get_connection()
+        depends = []
+        todo = [_GsqlConfig.update_view]
+        while todo != []:
+            v = todo.pop()
+            if v in depends:
+                continue
+            else:
+                depends.append(v)
+            data = connection.query(
+               ("select distinct c.relname "+
+                " from pg_class d, pg_depend a join pg_rewrite b on a.objid=b.oid "+
+                " join pg_class c on ev_class=c.oid "+
+                " join pg_views e on e.viewname=c.relname "+
+                " where refclassid = 'pg_class'::regclass and refobjid = d.oid "+
+                " and ev_class<>d.oid and d.relname='%s'") %
+               view)
+            for i in range(data.ntuples):
+                todo.append(data.getvalue(i, 0))
+        sys.stdout.write('drop view %s cascade;\n' % view)        
+        def process(o):
+            if self[o].name() not in depends:
+                return
+            if isinstance(self[o], _GsqlView):
+                sys.stdout.write(self[o].reoutput(self._table_keys))
+            else:
+                sys.stdout.write(self[o].reoutput())
+            sys.stdout.write('\n')
+        self._process_resolved(process)
+        
 
 _gsql_defs = _GsqlDefs()
 
@@ -1631,6 +1673,7 @@ class _GsqlConfig:
     RGNDB = _gsql_defs.regensql
     CHKDB = _gsql_defs.check_db
     FIXDB = _gsql_defs.fix_db
+    UPDVW = _gsql_defs.update_view
 
     request = RGNDB
     warnings = True
@@ -1646,11 +1689,13 @@ _GSQL_OPTIONS = (
     ('create-all       ', 'create all database objects with data'),
     ('recreate         ', 'recreate all non-data database objects'),
     ('check-db=DATABASE', 'check DATABASE contents against definitions'),
+    ('update-view=VIEW', 'update specific view'),
     ('fix-db=DATABASE  ', 'update DATABASE contents according to definitions'),
     ('no-warn          ', 'suppress warnings when checking/fixing'),
     ('host=HOST        ', 'connect to DATABASE at HOST'),
     ('user=USER        ', 'connect to DATABASE as USER'),
-    ('password=PASSWORD', 'use PASSWORD when connecting to DATABASE')
+    ('password=PASSWORD', 'use PASSWORD when connecting to DATABASE'),
+    ('database=DATABASE', 'DATABASE for connection string'),
     )
 
 def _usage(optexception=None):
@@ -1690,6 +1735,8 @@ def _go(argv=None):
             _GsqlConfig.dbuser = v
         elif o == '--password':
             _GsqlConfig.dbpassword = v
+        elif o == '--database':
+            _GsqlConfig.dbname = v
         elif o == '--create':
             _GsqlConfig.request = _GsqlConfig.GENDB
         elif o == '--create-all':
@@ -1699,6 +1746,9 @@ def _go(argv=None):
         elif o == '--check-db':
             _GsqlConfig.request = _GsqlConfig.CHKDB
             _GsqlConfig.dbname = v
+        elif o == '--update-view':
+            _GsqlConfig.request = _GsqlConfig.UPDVW
+            _GsqlConfig.update_view = v
         elif o == '--fix-db':
             _GsqlConfig.request = _GsqlConfig.FIXDB
             _GsqlConfig.dbname = v
@@ -1714,4 +1764,3 @@ def _go(argv=None):
 
 if __name__ == '__main__':
     _go()
-0
