@@ -112,7 +112,6 @@ class SFDialog(SFSDialog):
 
     _TITLE = ''
     _BUTTONS = (_("Zavøít"),)
-    _COMMIT = None
 
     def __init__(self, parent, columns):
         """Inicializuj dialog.
@@ -296,9 +295,6 @@ class SFDialog(SFSDialog):
         self._condition = None
         self._widget.EndModal(0)
 
-    def _commit_dialog(self):
-        return self._end_modal(self._button_id(self._COMMIT))
-
     def _customize_result(self, button_wid):
         self._condition = None
         return self._condition
@@ -398,7 +394,7 @@ class SearchDialog(SFDialog):
     _NEXT_BUTTON = _("Dal¹í")
     _PREVIOUS_BUTTON = _("Pøedchozí")
     _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFDialog._BUTTONS
-    _COMMIT = _NEXT_BUTTON    
+    _COMMIT_BUTTON = _NEXT_BUTTON    
     _TITLE = _("Hledání")
 
     def _search(self, direction):
@@ -446,7 +442,7 @@ class FilterDialog(SFDialog):
     _FILTER_BUTTON = _("Filtrovat")
     _UNFILTER_BUTTON = _("Zru¹it filtr")
     _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFDialog._BUTTONS
-    _COMMIT = _FILTER_BUTTON
+    _COMMIT_BUTTON = _FILTER_BUTTON
     _AGG_OPERATORS = ((_("Poèet"), pytis.data.Data.AGG_COUNT),
                       (_("Minimum"), pytis.data.Data.AGG_MIN),
                       (_("Maximum"), pytis.data.Data.AGG_MAX),
@@ -546,6 +542,8 @@ class SortingDialog(SFSDialog):
     _OK_BUTTON = _("Setøídit")
     _CANCEL_BUTTON = _("Resetovat tøídìní")
     _ESCAPE_BUTTON = _("Zavøít")
+
+    _COMMIT_BUTTON = _OK_BUTTON
     
     _ASCENDENT = _("Vzestupnì")
     _DESCENDANT = _("Sestupnì")
@@ -625,9 +623,6 @@ class SortingDialog(SFSDialog):
         big_sizer.Add(add_button)
         return big_sizer
 
-    def _commit_dialog(self):
-        return self._end_modal(self._button_id(self._OK_BUTTON))
-        
     def _customize_result(self, button_wid):
         label = self._button_label(button_wid)
         if label == self._CANCEL_BUTTON:
