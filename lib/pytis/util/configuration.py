@@ -208,7 +208,7 @@ class Configuration:
         def long_option(self):
             return 'config='
         def environment(self):
-            return ('EBASCONFIG',)
+            return ('PYTISCONFIG',)
         def default(self):
             for filename in ('./config.py', '/etc/pytis/config.py'):
                 if os.access(filename, os.F_OK):
@@ -345,7 +345,7 @@ class Configuration:
         def long_option(self):
             return 'defdir='
         def environment(self):
-            return ('EBASDEFDIR',)
+            return ('PYTISDEFDIR',)
         def default(self):
             return './defs'
 
@@ -357,7 +357,7 @@ class Configuration:
         def long_option(self):
             return 'docdir='
         def environment(self):
-            return ('EBASDOCDIR',)
+            return ('PYTISDOCDIR',)
         def default(self):
             return './docs'
 
