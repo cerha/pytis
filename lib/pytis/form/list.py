@@ -829,11 +829,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g.Scroll(-1, scrollTo)    
 
     def _on_toggle_column(self, column_id, col=None):
-        if len(self._columns) == 1:
-            message(_("Poslední sloupec"), beep_=True)
-            return
         c = find(column_id, self._columns, key=lambda c: c.id())
         if c:
+            if len(self._columns) == 1:
+                message(_("Poslední sloupec"), beep_=True)
+                return
             self._update_grid(delete_column=c)
         else:
             self._update_grid(insert_column=self._view.field(column_id),
