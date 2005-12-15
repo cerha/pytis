@@ -184,6 +184,8 @@ Command(Dialog, 'CLOSE_DIALOG',
         "Opu¹tìní dialogu bez potvrzení.")
 Command(Dialog, 'COMMIT_DIALOG',
         "Potvrzení dialogu.")
+Command(Dialog, 'FORCE_COMMIT_DIALOG',
+        "Odeslání dialogu, jako by bylo stisknuto výchozí tlaèítko.")
 
 
 DEFAULT_COMMAND_KEYS = (
@@ -242,7 +244,8 @@ DEFAULT_COMMAND_KEYS = (
     (Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE,'Ctrl-F2'),
     (ListField.COMMAND_SHOW_SELECTED,             'Backspace'),  
     (Dialog.COMMAND_CLOSE_DIALOG,                 'Escape'),
-    (Dialog.COMMAND_COMMIT_DIALOG,                'Enter'))
+    (Dialog.COMMAND_COMMIT_DIALOG,                'Enter'),
+    (Dialog.COMMAND_FORCE_COMMIT_DIALOG,          'Ctrl-Enter'))
 
 
 
