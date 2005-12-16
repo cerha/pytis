@@ -1000,6 +1000,7 @@ class Calendar(GenericDialog):
     byl dialog opu¹tìn.
     
     """
+    _COMMIT_BUTTON = Message.BUTTON_OK
 
     def __init__(self, parent, date, title=_("Kalendáø"),
                  enable_year=True, enable_month=True, monday_first=True):
@@ -1125,6 +1126,7 @@ class BugReport(GenericDialog):
     _IGNORE_LABEL = _("Ignorovat")
     _REPORT_LABEL = _("Poslat oznámení o chybì")
     _EXIT_LABEL = _("Ukonèit aplikaci")
+    _COMMIT_BUTTON = _EXIT_LABEL
     
     def __init__(self, parent, einfo):
         """Inicializuj instanci.
