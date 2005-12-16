@@ -201,7 +201,8 @@ class GenericDialog(Dialog):
             return None
 
     def _can_commit(self, widget):
-        return widget in self._buttons
+        # Return True when the widget is on of the submit buttons.
+        return self._button_label(widget.GetId()) is not None
 
     def _on_idle(self, event):
         event.Skip()
