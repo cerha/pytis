@@ -47,7 +47,8 @@ class Configuration:
         konfiguraèní volba aplikace.  Jméno volby je shodné s èástí jména
         takové tøídy následující za prefixem '_Option_', její popis je
         v docstringu tøídy.  Ostatní vlastnosti volby jsou definovány metodami
-        dané tøídy.  Konkrétní hodnota je pak udr¾ována v její instanci.
+        a/nebo konstantami dané tøídy.  Konkrétní hodnota je pak udr¾ována
+        v její instanci.
 
         Docstring tøíd nepodléhá obvyklým formátovacím pravidlùm.  Mìl by mít
         podobu, je¾ se dobøe vyjímá v komentáøi pythonového zdrojového souboru.
@@ -61,13 +62,32 @@ class Configuration:
         pøíkazové øádky pøiøazena do 'sys.argv'.
 
         """
-        VISIBLE = 'VISIBLE'
-        """Konstanta pro dump, viz 'visible()'."""
-        HIDDEN = 'HIDDEN'
-        """Konstanta pro dump, viz 'visible()'."""
-        COMMENTED_OUT = 'COMMENTED_OUT'
-        """Konstanta pro dump, viz 'visible()'."""
+
+        _DEFAULT = None
+        """Výchozí hodnota konfiguraèní volby.
+
+        Více viz. dokumentace metody `default()'."""
+
+        _DEFAULT_STRING = None
+        """Výchozí hodnota konfiguraèní volby pro dump.
+
+        Více viz. dokumentace metody `default_string()'."""
+
+        _OPTION = None
+        """Specifikace dlouhé volby pro 'getopt' jako string.
+
+        Více viz. dokumentace metody `long_option()'."""
         
+        _ENVIRONMENT = ()
+        """Specifikace jmen promìnných prostøedí obsahujících hodnotu volby.
+
+        Více viz. dokumentace metody `environment()'."""
+
+        _VISIBLE = True
+        """Specifikace viditelnosti volby.
+
+        Více viz. dokumentace metody `visible()'."""
+
         def __init__(self, configuration):
             """Inicializuj instanci volby.
 
@@ -141,8 +161,11 @@ class Configuration:
             Pokud konfiguraèní volba není spojena s ¾ádnou volbou pøíkazové
             øádky, vra» 'None'.
 
+            Specifikaci lze upravit pøedefinováním konstanty `_OPTION' v
+            odvozené tøídì.
+            
             """
-            return None
+            return self._OPTION
 
         def environment(self):
             """Vra» tuple jmen promìnných prostøedí obsahujících hodnotu volby.
@@ -153,45 +176,57 @@ class Configuration:
             prostøedí mají ni¾¹í prioritu ne¾ volba pøíkazové øádky nebo
             hodnota v konfiguraèním souboru, av¹ak vy¹¹í prioritu ne¾ hodnota
             vrácená metodou 'default'.
+
+            Specifikaci lze upravit pøedefinováním konstanty `_ENVIRONMENT' v
+            odvozené tøídì.
             
             """
-            return ()
+            return self._ENVIRONMENT
 
         def default(self):
-            """Vra» implicitní hodnotu konfiguraèní volby.
+            """Vra» výchozí hodnotu konfiguraèní volby.
             
             Hodnota vrácená touto metodou je pou¾ita, pokud nebylo mo¾no
-            implicitní hodnotu volby zjistit jinak.
+            výchozí hodnotu volby zjistit jinak.
 
+            Specifikaci lze upravit pøedefinováním konstanty `_DEFAULT' v
+            odvozené tøídù, nebo ve slo¾itìj¹ích pøípadech pøedefinováním této
+            metody.
+            
             """
-            return None
+            return self._DEFAULT
         
         def default_string(self):
-            """Vra» implicitní hodnotu konfiguraèní volby pro dump.
+            """Vra» výchozí hodnotu konfiguraèní volby pro dump.
 
             Hodnota je vrácena jako øetìzec, který bude vlo¾en do vzorového
             konfiguraèního souboru.  Tuto metodu je u¾iteèné pøedefinovat
-            v pøípadì, ¾e implicitní hodnota volby vrácená metodou 'default()'
-            je závislá na konkrétním prostøedí a/nebo nevystihuje zpùsob svého
+            v pøípadì, ¾e výchozí hodnota volby vrácená metodou 'default()' je
+            závislá na konkrétním prostøedí a/nebo nevystihuje zpùsob svého
             získání.
 
+            Specifikaci lze upravit pøedefinováním konstanty `_DEFAULT_STRING'
+            v odvozené tøídì, nebo ve slo¾itìj¹ích pøípadech pøedefinováním
+            této metody.
+
+
             """
-            return `self.default()`
+            if self._DEFAULT_STRING is not None:
+                return self._DEFAULT_STRING
+            else:
+                return `self.default()`
         
         def visible(self):
-            """Vra» jednotu z konstant viditelnosti volby.
+            """Vra» pøíznak viditelnosti volby.
 
-            Vrácená hodnota urèuje, zda ve vzorovém konfiguraèním souboru má
-            být volba pøítomna a v jaké podobì, a mù¾e být jedna
-            z následujících konstant tøídy:
+            Vrácená hodnota urèuje, zda má být volba pøítomna ve vzorovém
+            konfiguraèním souboru.
 
-              VISIBLE -- volba bude ve vzorovém konfiguraèním souboru uvedena
-              HIDDEN -- volba nebude ve vzorovém konfiguraèním souboru uvedena
-              COMMENTED_OUT -- volba bude ve vzorovém konfiguraèním souboru
-                uvedena, av¹ak zakomentovaná
+            Specifikaci lze upravit pøedefinováním konstanty `_VISIBLE'
+            v odvozené tøídì.
 
             """
-            return self.COMMENTED_OUT
+            return self._VISIBLE
 
     class _FileOption(Option):
         def _compute_init_value(self, *args, **kwargs):
@@ -205,10 +240,9 @@ class Configuration:
 
     class _Option_config_file(Option):
         """Umístìní konfiguraèního souboru."""
-        def long_option(self):
-            return 'config='
-        def environment(self):
-            return ('PYTISCONFIG',)
+        _OPTION = 'config='
+        _ENVIRONMENT = ('PYTISCONFIG',)
+        _VISIBLE = False
         def default(self):
             for filename in ('./config.py', '/etc/pytis/config.py'):
                 if os.access(filename, os.F_OK):
@@ -217,8 +251,6 @@ class Configuration:
             else:
                 result = None
             return result
-        def visible(self):
-            return self.HIDDEN
 
     class _Option_user_config_file(Option):
         """Umístìní doplòujícího konfiguraèního souboru u¾ivatele.
@@ -227,6 +259,7 @@ class Configuration:
         standardním konfiguraèním souboru.
         U¾iteèné pøevá¾nì pro ladìní.
         """
+        _VISIBLE = False
         def default(self):
             config_file = self._configuration.config_file
             if config_file:
@@ -235,31 +268,22 @@ class Configuration:
             else:
                 result = None 
             return result
-        def visible(self):
-            return self.HIDDEN
         
     # Volby u¾iteèné hlavnì pro ladìní
 
     class _Option_help(Option):
         """Volba odpovídající --help na pøíkazové øádce."""
-        def long_option(self):
-            return 'help'
-        def default(self):
-            return False
-        def visible(self):
-            return self.HIDDEN
+        _OPTION = 'help'
+        _DEFAULT = False
+        _VISIBLE = False
         
     class _Option_debug(Option):
         """Pøíznak ladícího re¾imu.
         Je-li zapnut, aplikace mù¾e bì¾et s více kontrolami a vypisovat
         spoustu informací, obvykle v¹ak za cenu svého výrazného zpomalení.
         """
-        def long_option(self):
-            return 'debug'
-        def default(self):
-            return False
-        def default_string(self):
-            return 'False'
+        _OPTION = 'debug'
+        _DEFAULT = False
         
     class _Option_debug_on_error(Option):
         """Pøíznak vyvolání debuggeru pøi chybì.
@@ -267,34 +291,25 @@ class Configuration:
         vyvolán interaktivní debugger.  Je-li zapnuta volba 'debug', je
         implicitnì zapnuta i tato volba.  U¾iteèné pouze pro ladìní.
         """
-        def long_option(self):
-            return 'debug-on-error'
+        _OPTION = 'debug-on-error'
         def default(self):
             return self._configuration.debug
-        def default_string(self):
-            return 'False'
 
     class _Option_debug_memory(Option):
         """Pøíznak výpisu ladících informací o pamìti.
         Je-li zapnuta, aplikace vypisuje informativní hlá¹ky garbage collectoru
         a jiné údaje o pamìti.
         """
-        def long_option(self):
-            return 'debug-memory'
-        def default(self):
-            return False
-        def default_string(self):
-            return 'False'
+        _OPTION = 'debug-memory'
+        _DEFAULT = False
 
     class _Option_bug_report_address(Option):
         """E-mailová adresa, na kterou mají být posílána oznámení o chybì."""
-        def default(self):
-            return ''
+        _DEFAULT = ''
 
     class _Option_bug_report_subject(Option):
         """Subject mailu oznámení o chybì aplikace."""
-        def default(self):
-            return 'Bug report: Unexpected exception'
+        _DEFAULT = 'Bug report: Unexpected exception'
 
     class _Option_profile(Option):
         """Pøíznak profilování.
@@ -302,12 +317,8 @@ class Configuration:
         informace o trvání jednotlivých volání do souboru.  Zapnutí této volby
         velmi výraznì zpomaluje bìh aplikace.
         """
-        def long_option(self):
-            return 'profile'
-        def default(self):
-            return False
-        def default_string(self):
-            return 'False'        
+        _OPTION = 'profile'
+        _DEFAULT = False
         
     class _Option_auto_reload_defs(Option):
         """Pøíznak automatického pøenaèítání zmìnìných definièních souborù.
@@ -317,23 +328,18 @@ class Configuration:
         """
         def default(self):
             return self._configuration.debug
-        def default_string(self):
-            return 'False'
 
     class _Option_test_run_interactive(Option):
         """Pøíznak urèující, zda mají být spou¹tìny i interaktivní testy.
         Týká se pouze regresivního testování.
         """
-        def visible(self):
-            return self.HIDDEN
+        _VISIBLE = False
 
     class _Option_custom_debug(Option):
         """Zvlá¹tní ladící funkce, napojená na pøíkaz 'COMMAND_CUSTOM_DEBUG'.
         """
-        def default(self):
-            return (lambda: None)
-        def visible(self):
-            return self.HIDDEN
+        _DEFAULT = (lambda: None)
+        _VISIBLE = False
 
     # Cesty a adresáøe
 
@@ -342,35 +348,29 @@ class Configuration:
         Adresáø mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu
         adresáøi.
         """
-        def long_option(self):
-            return 'defdir='
-        def environment(self):
-            return ('PYTISDEFDIR',)
-        def default(self):
-            return './defs'
+        _OPTION = 'defdir='
+        _DEFAULT = './defs'
+        _ENVIRONMENT = ('PYTISDEFDIR',)
 
     class _Option_doc_dir(_FileOption):
         """Adresáø obsahující dokumentaèní soubory.
         Adresáø mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu
         adresáøi.
         """
-        def long_option(self):
-            return 'docdir='
-        def environment(self):
-            return ('PYTISDOCDIR',)
-        def default(self):
-            return './docs'
+        _OPTION = 'docdir='
+        _ENVIRONMENT = ('PYTISDOCDIR',)
+        _DEFAULT = './docs'
 
     class _Option_icon_dir(_FileOption):
         """Adresáø s obrázkovými soubory.
         Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu adresáøi.
         """
-        def default(self):
-            return '../icons'
+        _DEFAULT = '../icons'
 
     class _Option_tmp_dir(Option):
         """Adresáø pro doèasné pomocné soubory.
         """
+        _DEFAULT_STRING = "'/tmp'"
         def default(self):
             dirs = ['/tmp', '/var/tmp', '/usr/tmp']
             tmpdir = os.getenv('TMPDIR')
@@ -383,73 +383,57 @@ class Configuration:
             else:
                 result = '.'
             return result
-        def default_string(self):
-            return "'/tmp'"
 
     class _Option_server(Option):
         """Jméno stroje, na kterém bì¾í Pyro server, jako string.
         Mù¾e být té¾ 'None', pak se klient nepøipojuje na server a pou¾ívá
         lokální konfiguraci.
         """
-        def default(self):
-            return None
-        def long_option(self):
-            return 'server='
+        _DEFAULT = None
+        _OPTION = 'server='
 
     # Databáze
     
     class _Option_dbuser(Option):
         """U¾ivatelské jméno (login) pro databázové spojení."""
-        def long_option(self):
-            return 'dbuser='
+        _OPTION = 'dbuser='
+        _DEFAULT_STRING = 'getpass.getuser()'
         def default(self):
             import getpass
             return getpass.getuser()
-        def default_string(self):
-            return 'getpass.getuser()'
         
     class _Option_dbhost(Option):
         """Jméno databázového serveru."""
-        def long_option(self):
-            return 'dbhost='
-        def default(self):
-            return 'localhost'
+        _OPTION = 'dbhost='
+        _DEFAULT = 'localhost'
     
     class _Option_dbport(Option):
         """Port databázového serveru."""
-        def long_option(self):
-            return 'dbport='
-        def default(self):
-            return None
+        _OPTION = 'dbport='
+        _DEFAULT = None
     
     class _Option_dbname(Option):
         """Jméno aplikaèní databáze."""
-        def default(self):
-            return 'pytis'
+        _DEFAULT = 'pytis'
 
     class _Option_dbconnection(Option):
         """Instance specifikace spojení do databáze ('pytis.data.DBConnection').
         Implicitnì se vytváøí z vý¹e uvedených databázových voleb.
         """
+        _VISIBLE = False
         def default(self):
             import pytis.data
             c = self._configuration
             return pytis.data.DBConnection(user=c.dbuser, host=c.dbhost,
                                            database=c.dbname, port=c.dbport)
-        def visible(self):
-            return self.HIDDEN
 
     class _Option_dblogtable(Option):
         """Jméno tabulky, do které mají být logovány DML SQL pøíkazy."""
-        def default(self):
-            return ''
+        _DEFAULT = ''
 
     class _Option_dblisten(Option):
         """Flag urèující, zda má být spou¹tìn dohlí¾eè zmìn dat."""
-        def default(self):
-            return True
-        def default_string(self):
-            return 'True'
+        _DEFAULT = True
 
     # Logovací volby
 
@@ -460,24 +444,22 @@ class Configuration:
         konstruktoru.  Standardní dostupné tøídy jsou SyslogLogger a
         StreamLogger.  Více o nich lze nalézt v jejich dokumentaci.
         """
+        _DEFAULT_STRING = '(log.StreamLogger, (sys.stderr,), {})'
         def default(self):
             import log
             return (log.StreamLogger, (sys.stderr,), {})
-        def default_string(self):
-            return '(log.StreamLogger, (sys.stderr,), {})'
 
     class _Option_log_exclude(Option):
         """Seznam typù logovacích hlá¹ek, které mají být odfiltrovány.
         V seznamu lze pou¾ít konstanty OPERATIONAL, ACTION, EVENT a DEBUG.
         """
+        _DEFAULT_STRING = '[DEBUG]'
         def default(self):
             if self._configuration.debug:
                 return []
             else:
                 import log
                 return [log.DEBUG]
-        def default_string(self):
-            return '[DEBUG]'
 
     class _Option_log_one_line_preferred(Option):
         """Urèuje, zda je preferováno struèné nebo jednotné formátování.
@@ -485,10 +467,7 @@ class Configuration:
         hlá¹kách doporuèujících struènost pøipojena ihned za hlá¹ku místo
         vypsání na samostatný øádek.
         """
-        def default(self):
-            return True
-        def default_string(self):
-            return 'True'
+        _DEFAULT = True
 
     class _Option_log_module_filter(Option):
         """Prefix jména modulu, jeho¾ debugovací hlá¹ky jsou propu¹tìny.
@@ -497,10 +476,8 @@ class Configuration:
         filtr jinak).
         U¾iteèné pouze pro ladìní.
         """
-        def default(self):
-            return ''
-        def default_string(self):
-            return "'pytis.data'"
+        _DEFAULT = ''
+        _DEFAULT_STRING = "'pytis.data'"
 
     class _Option_log_class_filter(Option):
         """Sekvence jmen tøíd, jejich¾ debugovací hlá¹ky jsou propu¹tìny.
@@ -509,10 +486,8 @@ class Configuration:
         filtr jinak).
         U¾iteèné pouze pro ladìní.
         """
-        def default(self):
-            return None
-        def default_string(self):
-            return "('pytis.data.DBDefaultClass',)"
+        _DEFAULT = None
+        _DEFAULT_STRING = "('pytis.data.DBDefaultClass',)"
             
     # Externí programy
 
@@ -520,13 +495,11 @@ class Configuration:
         """Shellový pøíkaz pro provedení tisku, vèetnì argumentù.
         Pøíkaz musí být schopen pøevzít tisková data ze standardního vstupu.
         """
-        def default(self):
-            return 'lpr'
+        _DEFAULT = 'lpr'
 
     class _Option_sendmail_command(Option):
         """Shellový pøíkaz sendmail vèetnì celé cesty."""
-        def default(self):
-            return '/usr/lib/sendmail'
+        _DEFAULT = '/usr/lib/sendmail'
         
     # Ostatní konfiguraèní volby
 
@@ -535,8 +508,7 @@ class Configuration:
         Jméno mù¾e být libovolné, pou¾ívá se pouze ve vìcech jako titulky oken
         nebo logování.
         """
-        def default(self):
-            return 'Pytis'
+        _DEFAULT = 'Pytis'
 
     class _Option_date_time_format(Option):
         """Formát spoleènì uvedeného data a èasu.
@@ -570,162 +542,132 @@ class Configuration:
         Hodnota musí být string reprezentující locale pro formátování èíselných
         polo¾ek. 
         """
-        def default(self):
-            return 'C'
+        _DEFAULT = 'C'
 
     class _Option_export_directory(Option):
         """Adresáø pro export textových souborù.
         Hodnota musí být øetìzec udávající cestu k adresáøi, kde se budou
         ukládat textové CSV soubory. 
         """
-        def default(self):
-            return '/tmp'
+        _DEFAULT = '/tmp'
 
     class _Option_export_encoding(Option):
         """Kódování exportovaných øetìzcù
         Hodnota musí být jedním z podporovaných kódování pro metodu
         encode() unicodových øetìzcù v Pythonu. 
         """
-        def default(self):
-            return 'iso8859-2'
+        _DEFAULT = 'iso8859-2'
 
     class _Option_db_encoding(Option):
         """Interní kódování databáze
         Hodnota musí být jedním z podporovaných kódování pro metodu
         encode() unicodových øetìzcù v Pythonu. 
         """
-        def default(self):
-            return 'utf-8'
+        _DEFAULT = 'utf-8'
 
     class _Option_cache_size(Option):
         """Velikost cache pro øádky datového objektu. Velikost je integer,
         který udává poèet øádkù cache.
         """
-        def default(self):
-            return 20000
+        _DEFAULT = 20000
 
     class _Option_initial_fetch_size(Option):
         """Poèet øádkù, které se pøednaètou do cache pøi prvním selectu
         z datového objektu.
         """
-        def default(self):
-            return 100
+        _DEFAULT = 100
 
     class _Option_fetch_size(Option):
         """Poèet øádkù, které se pøinaèítají do cache pøi dal¹ích selectech
         z datového objektu.
         """
-        def default(self):
-            return 100
+        _DEFAULT = 100
 
     # Volby pøizpùsobení u¾ivatelského rozhraní
         
     class _Option_show_tooltips(Option):
         """Pøíznak zobrazování bublinové nápovìdy."""
-        def default(self):
-            return True
-        def default_string(self):
-            return 'True'
+        _DEFAULT = True
         
     class _Option_show_splash(Option):
         """Pøíznak zobrazování úvodního uvítacího dialogu."""
-        def default(self):
-            return True
-        def default_string(self):
-            return 'True'
+        _DEFAULT = True
         
     class _Option_cache_spec_onstart(Option):
         """Pøíznak cachování specifikací pøi startu aplikace."""
-        def default(self):
-            return True
-        def default_string(self):
-            return 'True'
+        _DEFAULT = True
 
     class _Option_startup_forms(Option):
         """Seznam formuláøù, které mají být otevøeny po spu¹tìní aplikace."""
-        def long_option(self):
-            return 'startup-forms='
-        def default(self):
-            return None
+        _OPTION = 'startup-forms='
+        _DEFAULT = None
 
     class _Option_row_focus_fg_color(Option):
         """Barva textu aktivního øádku tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#ffffff'
+        _DEFAULT = '#ffffff'
         
     class _Option_row_focus_bg_color(Option):
         """Barva pozadí aktivního øádku tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         Pokud je None, bude pou¾ita systémová barva zvýraznìní.
         """
-        def default(self):
-            return None
-            
+        _DEFAULT = None
         
     class _Option_row_nofocus_fg_color(Option):
         """Barva textu neaktivního øádku tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#000000'
+        _DEFAULT = '#000000'
         
     class _Option_row_nofocus_bg_color(Option):
         """Barva pozadí neaktivního øádku tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#b6b6b6'
+        _DEFAULT = '#b6b6b6'
         
     class _Option_row_edit_fg_color(Option):
         """Barva textu editovaného øádku tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#ffffff'
+        _DEFAULT = '#ffffff'
 
     class _Option_row_edit_bg_color(Option):
         """Barva pozadí editovaného øádku.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#c80000'
+        _DEFAULT = '#c80000'
 
     class _Option_cell_highlight_color(Option):
         """Barva zvýraznìní aktivní buòky tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#ffa000'
+        _DEFAULT = '#ffa000'
 
     class _Option_grid_line_color(Option):
         """Barva møí¾ky tabulkového formuláøe.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#6482be'
+        _DEFAULT = '#6482be'
 
     class _Option_field_disabled_color(Option):
         """Barva pozadí needitovatelného vstupního políèka.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#c0c0c0'
+        _DEFAULT = '#c0c0c0'
 
     class _Option_field_inaccessible_color(Option):
         """Barva pozadí políèka needitovatelného kvùli pøístupovým právùm.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#e0e4f0'
+        _DEFAULT = '#e0e4f0'
 
     class _Option_filter_color(Option):
         """Barva záhlaví tabulkového formuláøe pøi zapnutém filtrování.
         Barva je dána øetìzcem '#RRGGBB'.
         """
-        def default(self):
-            return '#82c882'
+        _DEFAULT = '#82c882'
 
     # Metody
 
@@ -899,14 +841,10 @@ class Configuration:
         """
         stream.write('# -*- coding: iso-8859-2 -*-\n\n')
         for name, option in self._options.items():
-            visibility = option.visible()
-            if visibility != self.Option.HIDDEN:
+            if option.visible():
                 for line in string.split(option.__doc__, '\n'):
                     stream.write('# %s\n' % string.strip(line))
-                if visibility == self.Option.COMMENTED_OUT:
-                    stream.write('#')
-                stream.write('%s = %s\n' % (name, option.default_string()))
-                stream.write('\n')
+                stream.write('#%s = %s\n\n' % (name, option.default_string()))
 
     def print_options(self):
         """Vypi¹ na standardní výstup v¹echny volby a jejich hodnoty."""
