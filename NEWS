@@ -4,6 +4,16 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-15  Tomas Cerha  <cerha@brailcom.org>
+
+	Dialog lze nyní odeslat klávesou Ctrl-Enter.  Tímto zpùsobem je
+	dialog odeslán stejnì, jako by bylo stisknuto potvrzovací
+	tlaèítko.  Toto potvrzovací tlaèítko mají definováno jen dialogy,
+	u kterých to má smysl (napø. vyhledávací/filtrovací).
+	
+	* BUGFIX: Pøidání sloupce nyní funguje i pokud je zobrazen pouze
+	jeden sloupec.
+	
 2005-12-14  Tomas Cerha  <cerha@brailcom.org>
 
 	Byly implementovány funkce umo¾òující u¾ivateli interaktivnì mìnit

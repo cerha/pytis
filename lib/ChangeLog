@@ -1,3 +1,8 @@
+2005-12-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dialog.py (Calendar._COMMIT_BUTTON)
+	(BugReport._COMMIT_BUTTON): Nové konstanty.
+
 2005-12-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py: Nový pøíaz `COMMAND_FORCE_COMMIT_DIALOG'.
