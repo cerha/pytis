@@ -2,6 +2,8 @@
 
 	* pytis/form/dialog.py (Calendar._COMMIT_BUTTON)
 	(BugReport._COMMIT_BUTTON): Nové konstanty.
+	(GenericDialog._can_commit): Testuj zda jde o tlaèítko pomocí
+	`self._button_label()'.
 
 2005-12-15  Tomas Cerha  <cerha@brailcom.org>
 
