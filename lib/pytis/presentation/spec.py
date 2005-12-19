@@ -221,6 +221,50 @@ class GroupSpec(object):
         """Vra» styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
         return self._border_style
 
+    
+class HGroup(GroupSpec):
+    """Horizontální seskupení políèek.
+
+    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+
+    """
+    def __init__(self, *items, **kwargs):
+        kwargs['orientation'] = Orientation.HORIZONTAL
+        super(HGroup, self).__init__(items, **kwargs)
+
+        
+class VGroup(GroupSpec):
+    """Vertikální seskupení políèek.
+
+    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+
+    """
+    def __init__(self, *items, **kwargs):
+        kwargs['orientation'] = Orientation.VERTICAL
+        super(VGroup, self).__init__(items, **kwargs)
+
+        
+class LHGroup(HGroup):
+    """Horizontální seskupení políèek s labelem a orámováním.
+
+    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+
+    """
+    def __init__(self, label, *items, **kwargs):
+        kwargs['label'] = label
+        super(LHGroup, self).__init__(*items, **kwargs)
+
+        
+class LVGroup(VGroup):
+    """Vertikální seskupení políèek s labelem a orámováním.
+
+    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+
+    """
+    def __init__(self, label, *items, **kwargs):
+        kwargs['label'] = label
+        super(LVGroup, self).__init__(*items, **kwargs)
+    
 
 class LayoutSpec(object):
     """Specifikace rozmístìní vstupních polí editaèního formuláøe.
@@ -333,7 +377,9 @@ class ViewSpec(object):
           layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
             instance tøídy 'LayoutSpec'.
           columns -- specifikace sloupcù tabulkového formuláøe, sekvence
-            indentifikátorù políèek z 'fields'.
+            indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
+            výchozí seznam sloupcù obsahovat v¹echna políèka z fields, která
+            nemají 'column_width' nastaveno na nulu.
           popup_menu -- specifikace polo¾ek kontextového menu pro jeden øádek
             tabulky.  Tato políèka budou pøidána do kontextového popup menu
             vyvolaného pravým tlaèítkem my¹i nad jedním záznamem v seznamovém
@@ -447,12 +493,13 @@ class ViewSpec(object):
                                "'%s' specification of '%s'.") % (dep, s, f.id())
         # Initialize `columns' specification parameter
         if columns is None:
-            columns=tuple(map(lambda f: f.id(), self._fields))
-        elif __debug__:
-            assert is_sequence(columns)
-            for id in columns:
-                assert is_string(id)
-                assert self._field_dict.has_key(id), \
+            columns = tuple([f.id() for f in self._fields if f.column_width()])
+        else:
+            if __debug__:
+                assert is_sequence(columns)
+                for id in columns:
+                    assert is_string(id)
+                    assert self._field_dict.has_key(id), \
                        (_("Unknown column id in 'columns' specification:"), id)
         # Initialize other specification parameters
         if popup_menu is not None:
@@ -497,7 +544,11 @@ class ViewSpec(object):
         return self._fields
         
     def field(self, id):
-        """Vra» specifikaci políèka daného 'id' jako instanci 'FieldSpec'."""
+        """Vra» specifikaci políèka daného 'id' jako instanci 'FieldSpec'.
+
+        Pokud takové políèko neexistuje, vra» 'None'.
+        
+        """
         return self._field_dict.get(id)
         
     def layout(self):
