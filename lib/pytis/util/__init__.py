@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 
 from util import *
 from caching import *
-from configuration import *
 from log import *
+from configuration import *
 from resolver import *
 from test import *
 
