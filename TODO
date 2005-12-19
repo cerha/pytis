@@ -1,5 +1,8 @@
 CHYBY:
 
+ * Podle sloupce vybraného pøes menu "Zobrazené sloupce" se nedá filtrovat,
+   respektive se neukazuje ve filtraèním dialogu. 
+
  * Ctrl-Enter ve filtraèním dialogu.
 
  * ShowForm po vyvolání pøes Enter nemá fokus.
