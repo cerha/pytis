@@ -2168,7 +2168,7 @@ class PostgreSQLStandardBindingHandler(object):
                 else:
                     neq = relop(cid, row[cid], ignore_case=False)
                     if relop is GT:
-                        nullval = pytis.data.Value(row[cid].type(), None)
+                        nullval = Value(row[cid].type(), None)
                         neq = OR(neq, EQ(cid, nullval))
                     conds.append(neq)
                 if conds:
@@ -2738,15 +2738,10 @@ class DBColumnBinding(DBBinding):
         'related_to' je obecnì nesymetrická relace pøibli¾nì odpovídající
         specifikátoru REFERENCES.
 
-        Pokud argument 'enumerator' není 'None', bude typem tohoto sloupce
-        automaticky 'pytis.data.Codebook', jeho¾ sloupce poskytující u¾ivatelské
-        hodnoty jsou dány druhým a dal¹ími prvky sekvence 'enumerator'
-        (nejsou-li ¾ádné, budou pou¾ity klíèové sloupce datového objektu).
-        Pokud má 'enumerator' klíè skládající se z více sloupcù, není argument
-        'column' string, nýbr¾ sekvence o stejném poètu prvkù, odpovídajících
-        onìm sloupcù vèetnì poøadí.  Datové objekty zpracovávající tuto
-        specifikaci nejsou povinny jakkoli zohledòovat propojení tabulky
-        'enumerator' a tohoto sloupce.
+        Pokud argument 'enumerator' není 'None', bude pro datový typ sloupce
+        automaticky vytvoøen enumerátor typu 'DataEnumerator', jeho¾
+        konstruktoru budou pøedány také pøípadné argumenty 'value_column' a
+        'validity_column'.
           
         """
         DBBinding.__init__(self, id)
