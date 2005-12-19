@@ -194,32 +194,6 @@ ALWAYS = Editable.ALWAYS
 ONCE = Editable.ONCE
 NEVER = Editable.NEVER
 
-# Odvozené specializované tøídy
-
-class HGroup(GroupSpec):
-    """Horizontální seskupení políèek."""
-    def __init__(self, *items, **kwargs):
-        kwargs['orientation'] = Orientation.HORIZONTAL
-        super(HGroup, self).__init__(items, **kwargs)
-
-class VGroup(GroupSpec):
-    """Vertikální seskupení políèek."""
-    def __init__(self, *items, **kwargs):
-        kwargs['orientation'] = Orientation.VERTICAL
-        super(VGroup, self).__init__(items, **kwargs)
-        
-class LHGroup(HGroup):
-    """Horizontální seskupení políèek s labelem a orámováním."""
-    def __init__(self, label, *items, **kwargs):
-        kwargs['label'] = label
-        super(LHGroup, self).__init__(*items, **kwargs)
-
-class LVGroup(VGroup):
-    """Vertikální seskupení políèek s labelem a orámováním."""
-    def __init__(self, label, *items, **kwargs):
-        kwargs['label'] = label
-        super(LVGroup, self).__init__(*items, **kwargs)
-
 def run_procedure_mitem(title, name, proc_name, hotkey=None):
     return MItem(title, command=pytis.form.Application.COMMAND_RUN_PROCEDURE,
                  args=dict(spec_name=name, proc_name=proc_name),
