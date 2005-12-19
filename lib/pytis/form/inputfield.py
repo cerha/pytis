@@ -1196,7 +1196,10 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         self._display.SetValue(dv and dv.export() or '')
 
     def _on_invoke_selection(self, alternate=False, **kwargs):
-        begin_search = alternate or self._cb_spec.begin_search() or None
+        if alternate:
+            begin_search = self._type.enumerator().value_column()
+        else:
+            begin_search = self._cb_spec.begin_search()
         self._run_codebook_form(begin_search=begin_search)
         return True
 
