@@ -1,7 +1,12 @@
 2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
-	* lib/pytis/extensions/misc.py (ConfigDB): Noví tøída (pøesunuto z
+	* lib/pytis/extensions/misc.py (ConfigDB): Nová tøída (pøesunuto z
 	pytis).
+	(DBConfig): Nová tøída.
+	(ConfigDB): Buï potomkem `DBConfig'.  Pozor, rozhraní je lehce
+	pozmìnìno.
+	(saved_config_reader, saved_config_writer): Nové funkce.
+	(cfg_param): Nechachuj datové objekty zde, ale vyu¾ívej `DBConfig'.
 
 2005-12-19  Tomas Cerha  <cerha@brailcom.org>
 
