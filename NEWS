@@ -4,6 +4,32 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2005-12-20
+
+	* BUGFIX: Záhlaví sloupcù nech» zobrazují `column_label', nikoli
+	plný název sloupce.
+
+2005-12-19
+
+        Ka¾dá konfiguraèní volba nyní udr¾uje informaci o své pùvodní
+	hodnotì a umo¾òuje tak zjistit, zda za bìhu aplikace do¹lo ke
+	zmìnì této hodnoty u¾ivatelem.  Tím bude mo¾né zmìnìné volby pøed
+	ukonèením aplikace ulo¾it a pøi pøí¹tím startu opìt obnovit.
+	
+	* BUGFIX: begin_search
+	
+2005-12-16  Tomas Cerha  <cerha@brailcom.org>
+
+        Vìt¹ina vlastností konfiguraèních voleb (v modulu
+	`configuration.py') je nyní definována pomocí konstant.  Není tak
+	nutno pøedefinovávat celé metody a definice je tak pøehlednìj¹í a
+	snáze udr¾ovatelná.
+
+	* BUGFIX: Opravena vèerej¹í chybka, která mìla za následek ¾e
+	stiskem Enter na tlaèítku dialogu nebyl vyvolán stisk tlaèítka,
+	tak¾e dialog ne¹el tímto zpùsobem odeslat.
+
 2005-12-15  Tomas Cerha  <cerha@brailcom.org>
 
 	Dialog lze nyní odeslat klávesou Ctrl-Enter.  Tímto zpùsobem je

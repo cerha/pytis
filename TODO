@@ -1,9 +1,8 @@
 CHYBY:
 
- * Nad sloupeèkama se objevují plné názvy a né názvy z column_label.
+ * Podle sloupce vybraného pøes menu "Zobrazené sloupce" se nedá filtrovat.
 
- * Podle sloupce vybraného pøes menu "Zobrazené sloupce" se nedá filtrovat,
-   respektive se neukazuje ve filtraèním dialogu. 
+   Sloupec se neukazuje ve filtraèním dialogu.
 
  * Ctrl-Enter ve filtraèním dialogu.
 
@@ -155,6 +154,12 @@ INTERNÍ ZÁLE®ITOSTI:
  
 
 ÈI©TÌNÍ:
+
+ * Validace hodnot konfiguraèních voleb.
+
+   Pro ka¾dou konfiguraèní volbu je nyní znám její datový typ, tak¾e by nebyl
+   problém do metody `Option.set_value()' pøidat kontrolu, zda pøedaná hodnota
+   skuteènì odpovídá deklarovanému typu volby.
 
  * Zru¹it tøídu 'RefSpec' & spol.
 
