@@ -7,6 +7,45 @@
 
 2005-12-20
 
+        Tabulkové formuláøe si nyní ukládají nastavení sloupcù do
+	konfigurace, tak¾e pokud si u¾ivatel pøeskupí, skryje èi zobrazí
+	sloupce oproti specifikaci, budou tyto zmìny zapamatovány.  Také
+	¹íøky sloupcù jsou ukládány.  Není zatím øe¹ena napø. situace, kdy
+	ve specifikaci aplikace pøibydou nové sloupce, nebo bylo zmìnìno
+	jejich výchozí poøadí, èi názvy.  Pokud si u¾ivatel sloupce ji¾
+	upravil, o zmìnì se nyní nedozví, pouze sloupce, které ji¾ ne
+	specifikaci neexistují nebudou zobrazeny.  Tuto situaci bude tøeba
+	je¹tì o¹etøit.
+
+	Byl také implementován mechanismus ukládání konfiguraèních voleb
+	pøi ukonèení aplikace a jejich obnovení pøi dal¹ím spu¹tìní, tak¾e
+	napø. zmìny sloucù, ale i zmìny libovolných jiných konfiguraèních
+	voleb jsou perzistentní.  Výchozí metodou ukládání konfigurace je
+	konfiguraèní soubor v domovském adresáøi u¾ivatele (na platformì
+	UNIX - na jiných platformáých by tomu bylo jinak, napø. Windows
+	Registry).  Ve specifikaci aplikace ('application.py') v¹ak lze
+	metodu ukládání pøedefinovat libovolnou vlastní metodou (více viz
+	dokumnetace tøídy pytis.form.Application).  Navíc v
+	pytis-extensions byly definovány nové funkce umo¾òující ukládání
+	konfigurace v zapicklované podobì do stringového sloupeèku v
+	databázi.
+	
+        V pytis-extensions je nyní nová tøída DBConfig, nahrazující
+	døívìj¹í ConfigDB.  Není s pùvodní tøídou zcela kompatibilní,
+	proto nový název.  Stará tøída by ji¾ nemìla být vyu¾ívána a bude
+	èasem zru¹ena.  Kromì jednodu¹¹ích arguemntù konstruktoru nová
+	tøída opravuje nekonzistenci rozhraní, kdy nastavení hodnoty
+	slovníku oèakávalo instanci Value, ale získání hodnoty vracelo
+	Pythonovou hodnotu.  Nyní se v¹ude pracuje pouze s Pythonovými
+	hodnotami.  K získání instance Value je navíc mo¾né vyu¾ít novou
+	metodu `value()'.  Kromì toho tøída ke¹uje datové objekty, tak¾e
+	je nyní vnitøne vyu¾ívána i funkcí `cfg_param', její¾ rozhraní se
+	v¹ak nijak nezmìnilo.
+
+	* BUGFIX: Opraveno ¹patné chování metody `Configuration.changed()'
+	pøi práci s mutable objekty.  Inicializaèní hodnota je nyní
+	kopírována, tak¾e dojde ke správné detekci zmìny.
+	
 	* BUGFIX: Záhlaví sloupcù nech» zobrazují `column_label', nikoli
 	plný název sloupce.
 
