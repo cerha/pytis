@@ -106,9 +106,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         """
         super_(ListForm)._init_attributes(self, **kwargs)
         assert columns is None or is_sequence(columns)
-        colspecs = [self._view.field(id)
-                    for id in columns or self._default_columns()]
-        self._columns = [c for c in colspecs if c.column_width()]
+        if not columns:
+            columns = [id for id in self._get_state_param('columns', ())
+                       if self._view.field(id) is not None]
+        self._columns = [self._view.field(id)
+                         for id in columns or self._default_columns()]
         # Inicializace atributù
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
@@ -153,9 +155,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
     def _column_width(self, grid, column):
-        column_width = max(column.column_width(), len(column.column_label()))
-        return dlg2px(grid, 4*column_width+8)
-        
+        try:
+            #TODO: Column widths should be saved/restored in dialog units.
+            return self._get_state_param('column_width', {})[column.id()]
+        except KeyError:
+            width = max(column.column_width(), len(column.column_label()))
+            return dlg2px(grid, 4*width + 8)
+
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
         # Vytvoø grid a tabulku
@@ -260,12 +266,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             row_count = row_count + 1
         old_row_count = self._table.GetNumberRows()
         new_row_count = row_count
+        old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
         g.BeginBatch()
         if reset_columns:
             deleted = len(self._columns)
-            colspecs = [self._view.field(id) for id in self._default_columns()]
-            self._columns = [c for c in colspecs if c.column_width()]
+            self._columns = [self._view.field(id)
+                             for id in self._default_columns()]
             inserted = len(self._columns)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
@@ -280,6 +287,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 i = inserted_column_index
             self._columns.insert(i, insert_column)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
+        new_columns = tuple([c.id() for c in self._columns])
+        if new_columns != old_columns:
+            self._set_state_param('columns', new_columns)
         t.update(columns=self._columns,
                  row_count=row_count, sorting=self._lf_sorting,
                  grouping=self._lf_grouping,
@@ -711,7 +721,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             new_index = self._column_move_target
             if new_index > old_index:
                 new_index -= 1
-            #print "***", old_index, "=>", new_index
             if old_index is not None and old_index != new_index:
                 c = self._columns[old_index]
                 self._update_grid(delete_column=c, insert_column=c,
@@ -748,9 +757,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         event.Skip()
 
     def _on_label_drag_size(self, event):
-        #print "<=>"
+        col = event.GetRowOrCol()
         # TODO: Tady by to chtìlo nìjaký rozumný _on_size(), ale nesmí se nám to
         # pod rukou (pod my¹í) moc rozjet...
+        stored = self._get_state_param('column_width', {})
+        stored[self._columns[col].id()] = self._grid.GetColSize(col)
+        self._set_state_param('column_width', stored)
         self._column_move_target = None
         event.Skip()
         
@@ -1607,8 +1619,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         last = None
         # Pøenastav ¹íøky sloupcù
         for i, c in enumerate(self._columns):
-            if not c.column_width():
-                continue
             if c.fixed():
                 w = g.GetColSize(i)
             else:
@@ -1723,9 +1733,11 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
                           "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
                         beep_=True)
             col = find(col_id, self._columns, key=lambda c:c.id())
-            assert col is not None, "Invalid column: %s" % col_id
-            self._select_cell(row=0, col=self._columns.index(col))
-            self._on_incremental_search(False)
+            if col is not None:
+                self._select_cell(row=0, col=self._columns.index(col))
+                self._on_incremental_search(False)
+            else:
+                log(OPERATIONAL, "Invalid search column:", col_id)
 
     def _default_columns(self):
         return self._cb_spec.columns() \
