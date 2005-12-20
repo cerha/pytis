@@ -52,9 +52,8 @@ class ResolverModuleError(ResolverError):
           args -- dal¹í argumenty pøedané konstruktoru pøedka
 
         """
-        super_(ResolverModuleError).__init__(self,
-                                             'Specification module not found',
-                                             module_name, *args)
+        msg = 'Specification module not found: %s, %s' % (module_name, args)
+        super_(ResolverModuleError).__init__(self, msg)
     
 
 class ResolverFileError(ResolverModuleError):
@@ -76,7 +75,7 @@ class ResolverFileError(ResolverModuleError):
 
 
 class ResolverSpecError(ResolverError):
-    """Výjimka vyvolaná není-li ve specifikaèním modulu ¾ádaná specifikace."""
+    """Výjimka vyvolaná není-li ve specifikaèním modulu ¾ádaná funkce."""
     
     def __init__(self, module_name, spec_name):
         """Inicializuj výjimku.
@@ -84,11 +83,11 @@ class ResolverSpecError(ResolverError):
         Argumenty:
 
           module_name -- jméno specifikaèního modulu, string
-          spec_name -- jméno specfikace, string
+          spec_name -- jméno specfikaèní funkce, string
           
         """
-        super_(ResolverSpecError).__init__(self, 'Specification not found',
-                                           module_name, spec_name)
+        msg = 'Specification not found: %s, %s' % (module_name, spec_name)
+        super_(ResolverSpecError).__init__(self, msg)
 
 
 class Resolver(object):
