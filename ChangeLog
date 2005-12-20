@@ -1,3 +1,8 @@
+2005-12-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (ConfigDB): Noví tøída (pøesunuto z
+	pytis).
+
 2005-12-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (HGroup, VGroup, LHGroup, LVGroup):
