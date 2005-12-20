@@ -102,6 +102,8 @@ class ConfigDB(DBConfig):
     """Wrapper pro zpìtnou kompatibilitu.  Nepou¾ívat!"""
     def __init__(self, resolver, name, **kwargs):
         super(ConfigDB, self).__init__(name)
+    def __setitem__(self, key, value):
+        super(ConfigDB, self).__setitem__(key, value.value())
 
 def saved_config_reader(name, column):
     def reader():
