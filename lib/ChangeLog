@@ -11,7 +11,8 @@
 	sloupcù, ukládej seznam sloupcù do stavových parametrù.
 	(ListForm._on_label_drag_size): Ukládej novou velikost sloupce do
 	stavových parametrù.
-	(ListForm._on_size): Neignoruj sloupce s nulovou velikostí ve specifikaci.
+	(ListForm._on_size): Neignoruj sloupce s nulovou velikostí ve
+	specifikaci.
 	(ListForm._on_label_paint): Titulek sloupce zji¹»uj pøes
 	`column_label', nikoli `label'.
 
