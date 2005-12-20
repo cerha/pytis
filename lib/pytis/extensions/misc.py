@@ -34,7 +34,7 @@ import cPickle as pickle
 import config
 
 
-class DBConfig:
+class DBConfig(object):
     """Konfigurace spojená s datovým objektem.
 
     Konfigurace vnitønì pracuje s datovým objektem vytvoøeným nad specifikací
