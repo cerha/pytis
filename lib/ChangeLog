@@ -1,5 +1,9 @@
 2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/__init__.py (Module): Importuj `configui'.
+
+	* pytis/form/configui.py (Module): Nový modul.
+
 	* pytis/form/list.py (CodebookForm._on_idle): Pokud po¾adovaný
 	sloupec pro `begin_search' není v columns, nepokou¹ej se
 	nastartovat inkrementální vyhledávání a tuto skuteènost loguj.
