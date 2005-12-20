@@ -1,3 +1,14 @@
+2005-12-20  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlFunction._format_body): Místo 'plpython'
+	pou¾ívej 'plpythonu'.
+
+2005-12-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable.__init__): Doplnìn argument 'with_oids'.
+	(_GsqlDefs.get_connection): Nová metoda.
+	(_GsqlDefs.update_view): Nová metoda.
+
 2005-12-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* icons/warning.xpm: Soubor odstranìn.
