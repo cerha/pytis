@@ -27,6 +27,7 @@ u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
 import os.path
 import sys
 import time
+import cPickle as pickle
 
 import config
 import pytis.form
@@ -58,37 +59,66 @@ def run_application(resolver=None):
 
 
 class Application(wx.App, KeyHandler, CommandHandler):
-    """Hlavní okno aplikace.
+    """Aplikace systému Pytis.
 
-    Aplikaèní okno sestává jednak ze statických prvkù a jednak z vymìnitelného
-    vnitøku okna.  Statickými prvky jsou pull-down menu a stavový øádek.  Jsou
-    vytvoøeny pøi vzniku aplikaèního okna a dále se ji¾ nemìní, kromì typu
-    aktivace polo¾ek menu pøi výmìnách vnitøku.  Vymìnitelný vnitøek mù¾e být
-    libovolná instance tøídy 'wx.Window'.
+    Pro ka¾dou aplikaci systému Pytis existuje po celou dobu jejího bìhu jedno
+    hlavní aplikaèní okno.  To se sestává jednak ze statických prvkù a jednak z
+    vymìnitelného vnitøku okna (vlastních formuláøù).  Statickými prvky jsou
+    pull-down menu a stavový øádek.
 
-    Statické prvky jsou parametrizovány specifikaèním souborem aplikace.  Tím
-    je soubor 'application.py' v adresáøi resolveru (urèeném konfiguraèní
-    volbou 'def_dir').  Pou¾itelné specifikaèní funkce jsou:
+    Start aplikace a vytvoøení statických prvkù je mo¾né parametrizovat
+    specifikaèním souborem aplikace.  Tím je soubor 'application.py' v adresáøi
+    resolveru (urèeném konfiguraèní volbou 'def_dir').  Pou¾itelné specifikaèní
+    funkce jsou:
 
-      title -- titulek okna aplikace jako string.
-      menu -- specifikace pull-down menu je ve formátu specifikaèního
+      read_config -- vrací odkaz na funkci, která bude spu¹tìna v prùbìhu
+        inicializace aplikace.  Pokud je definována, je oèekáváno, ¾e funkce
+        naète konfiguraèní volby z externího zdroje (napø. z databáze) a pøedá
+        je jako svou návratovou hodnotu ve formì sekvence dvojic (NÁZEV,
+        HODNOTA), kde NÁZEV je v¾dy platným názvem konfiguraèní volby a HODNOTA
+        je její ulo¾ená hodnota.  V¹echny takto naètené volby budou automaticky
+        nastaveny v globální promìnné `config' a vyu¾ívány aplikací.  Pokud
+        funkce není definována, pokusí se aplikace volby naèíst vlastním
+        mechanismem.
+
+      write_config -- vrací odkaz na funkci jednoho argumentu, která bude
+        spu¹tìna v prùbìhu ukonèení aplikace.  Argumentem je sekvence dvojic,
+        stejnì jako v pøípadì návratové hodnoty funkce 'read_config'.  Od
+        funkce je oèekáváno, ¾e takto pøedané volby ulo¾í do externího úlo¾ného
+        prostoru, aby mohly být obnoveny funkcí 'read_config' pøi pøí¹tím
+        spu¹tìní aplikace.  Pokud funkce není definována, pokusí se aplikace
+        volby ulo¾it vlastním mechanismem.  Ukládané volby obsahují pouze ty
+        polo¾ky konfigurace, které byly zmìnìny za bìhu aplikace oproti svým
+        poèáteèním hodnotám naèteným z pøíkazové øádky a konfiguraèního
+        souboru.
+      
+      menu -- specifikace hlavního menu aplikace ve formátu specifikaèního
         argumentu konstruktoru tøídy 'pytis.form.screen.MenuBar'.
-      status_fields -- specifikace polí stavové øádky ve formátu
+        
+      status_fields -- specifikace polí stavové øádky aplikace ve formátu
         specifikaèního argumentu konstruktoru tøídy
         'pytis.form.screen.StatusBar'.
+        
       command_keys -- specifikace pøiøazení kláves pøíkazùm jako sekvence
         dvojic (COMMAND, KEY), kde COMMAND je instance tøídy 'Command' a KEY je
         jemu pøíslu¹ná klávesa.
+
+      init -- Tato funkce mù¾e provádìt libovolné, blí¾e neurèené,
+        inicializaèní akce aplikace.  Je spu¹tìna a¾ po sestavení hlavního
+        aplikaèního okna a naètení konfigurace, tak¾e zde mù¾eme pracovat i s
+        u¾ivatelským rozhraním.
+
+      TODO: Následující volby by bylo vhodnìj¹í pøesunout do konfigurace.
+        
       default_font_encoding -- implicitní kódování fontù jako odpovídající wx
         konstanta.
-      
-    Dynamický vnitøek lze nastavit metodami 'push()', 'pop()' a 'replace()'.
-    Celá aplikace funguje jako zásobník vnitøních oken a s nimi souvisejících
-    stavù statických prvkù.  Vnitøní okna lze na zásobník pøidávat, ze
-    zásobníku odstraòovat nebo nahrazovat horní element zásobníku.
+        
+      logo -- Název souboru loga zobraeného na pozadí aplikaèního okna.
 
-    Start u¾ivatelského spoèívá ve vytvoøení instance této tøídy (resp. tøídy z
-    ní odvozené) a volání její metody 'run()'.
+    Ka¾dá z tìchto funkcí 
+        
+    Start u¾ivatelského rozhraní spoèívá ve vytvoøení instance této tøídy a
+    volání její metody 'run()'.
     
     """
     _menubar_forms = {}
@@ -123,6 +153,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame = self._frame = wx.Frame(None, -1, title, 
                                        pos=(0,0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
+        wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # Tento panel slou¾í pouze pro odchytávání klávesových událostí,
         # proto¾e na frame se nedá navìsit EVT_KEY_DOWN.
         self._panel = wx.Panel(self._frame, -1)
@@ -165,8 +196,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         wx_callback(wx.EVT_SIZE, self._frame, self._on_frame_size)
         self.SetTopWindow(self._frame)
         self._frame.Show(True)
+        # Read the stored configuration.
+        read_config = self._spec('read_config', self._read_config)
+        items = read_config()
+        for option, value in items:
+            setattr(config, option, value)
+        log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
+        # Run application specific initialization.
         self._spec('init')
         self._panel.SetFocus()
+        # Open the startup forms.
         if config.startup_forms:
             for name in config.startup_forms.split(','):
                 separator_position = name.find('/')
@@ -186,12 +225,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self.run_form(form_cls, name.strip())
         return True
 
-    def _spec(self, name, default_value=None):
+    def _spec(self, name, default=None, **kwargs):
         try:
-            result = self._resolver.get('application', name)
+            result = self._resolver.get('application', name, **kwargs)
         except ResolverError, e:
             log(OPERATIONAL, str(e))
-            result = default_value
+            result = default
         return result
 
     
@@ -252,6 +291,109 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if select_row:
             form.select_row(select_row)
 
+    def _config_name(self):
+        # Return a name for saving/restoring the configuration.
+        # This name must be usable as a filename and should be
+        # application-specific, so we will derive it from the application name
+        # avoiding any non-alphanumeric characters.
+        import re
+        import unicodedata
+        def safe_char(match):
+            base_name = re.sub(" WITH .*", '', unicodedata.name(match.group(0)))
+            base_char = unicodedata.lookup(base_name)
+            return base_char.isalnum() and base_char or '-'
+        name = config.application_name.lower()
+        return str(re.sub("[^a-zA-Z0-9-]", safe_char, unicode(name)))
+            
+    def _read_config(self):
+        name = self._config_name()
+        log(OPERATIONAL, "Naèítám konfiguraci výchozí metodou:", name)
+        wxconfig = wx.Config(name)
+        options = []
+        cont, key, index = wxconfig.GetFirstEntry()
+        while cont:
+            options.append(key)
+            cont, key, index = wxconfig.GetNextEntry(index)
+        mapping = ((pytis.data.String,  wxconfig.Read),
+                   (pytis.data.Integer, wxconfig.ReadInt),
+                   (pytis.data.Boolean, wxconfig.ReadBool))
+        items = []
+        for option in options:
+            t = config.type(option)
+            for type, read in mapping:
+                if isinstance(t, type):
+                    value = read(option)
+            else:
+                value = pickle.loads(str(wxconfig.Read(option)))
+            items.append((option, value))
+        return tuple(items)
+
+            
+    def _write_config(self, items):
+        name = self._config_name()
+        log(OPERATIONAL, "Ukládám konfiguraci výchozí metodou:", name)
+        wxconfig = wx.Config(name)
+        mapping = ((pytis.data.String,  wxconfig.Write),
+                   (pytis.data.Integer, wxconfig.WriteInt),
+                   (pytis.data.Boolean, wxconfig.WriteBool))
+        for option, value in items:
+            t = config.type(option)
+            for type, write in mapping:
+                #TODO: Co None hodnoty???
+                if isinstance(t, type):
+                    write(option, value)
+            else:
+                wxconfig.Write(option, pickle.dumps(value))
+
+    def _on_frame_close(self, event):
+        if not self._cleanup():
+            event.Veto()
+        else:
+            event.Skip()
+            global _application
+            _application = None
+
+
+    def _cleanup(self, quietly=False):
+        # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
+        # situaci bylo mo¾no aplikaci ukonèit.
+        try:
+            log(ACTION, 'Voláno ukonèení aplikace')
+        except:
+            pass
+        try:
+            if not self._modals.empty():
+                log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
+                    self._modals.top())
+                return False
+            if not quietly and not self._windows.empty():
+                q = _("Aplikace obsahuje otevøené formuláøe\n" + \
+                      "Opravdu chcete ukonèit aplikaci?")
+                if not self.run_dialog(Question, q):
+                    return False
+        except:
+            pass
+        try:
+            while not self._windows.empty():
+                try:
+                    self.leave_form()
+                except:
+                    break
+        except:
+            pass
+        try:
+            items = tuple([(o, getattr(config, o))
+                           for o in config.options() if config.changed(o)])
+            write_config = self._spec('write_config', self._write_config)
+            write_config(items)
+            log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))
+        except Exception, e:
+            try:
+                log(EVENT, "Saving changed configuration failed:", str(e))
+            except:
+                pass
+        return True
+        
     # Ostatní veøejné metody
 
     def run_form(self, form_class, name, *args, **kwargs):
@@ -510,7 +652,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self.restore()
         else:
             log(EVENT, "Není otevøen ¾ádný formuláø.")
-
+                
     def exit(self, quietly=False):
         """Ukonèi u¾ivatelské rozhraní aplikace.
 
@@ -520,35 +662,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             u¾ivateli ¾ádné dotazy
 
         """
-        # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
-        # situaci bylo mo¾no aplikaci ukonèit.
-        try:
-            log(ACTION, 'Voláno ukonèení aplikace')
-        except:
-            pass
-        try:
-            if not self._modals.empty():
-                log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
-                    self._modals.top())
-                return False
-            if not quietly and not self._windows.empty():
-                q = _("Aplikace obsahuje otevøené formuláøe\n" + \
-                      "Opravdu chcete ukonèit aplikaci?")
-                if not self.run_dialog(Question, q):
-                    return False
-        except:
-            pass
-        while not self._windows.empty():
-            try:
-                self.leave_form()
-            except:
-                break
-        try:
-            self._frame.Close()
-        except:
-            pass
-        global _application
-        _application = None
+        self._frame.Close()
 
     def run(self):
         """Spus» bìh u¾ivatelského rozhraní.
