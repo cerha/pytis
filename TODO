@@ -1,5 +1,7 @@
 CHYBY:
 
+ * Nad sloupeèkama se objevují plné názvy a né názvy z column_label.
+
  * Podle sloupce vybraného pøes menu "Zobrazené sloupce" se nedá filtrovat,
    respektive se neukazuje ve filtraèním dialogu. 
 
