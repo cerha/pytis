@@ -8,6 +8,8 @@
 	(saved_config_reader, saved_config_writer): Nové funkce.
 	(cfg_param): Nechachuj datové objekty zde, ale vyu¾ívej `DBConfig'.
 	(ConfigDB.__setitem__): Nová metoda.
+	(DBConfig): Buï potomkem `object'.
+	
 
 2005-12-19  Tomas Cerha  <cerha@brailcom.org>
 
