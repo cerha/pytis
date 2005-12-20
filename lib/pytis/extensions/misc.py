@@ -31,6 +31,39 @@ from pytis.form import *
 
 import config
 
+
+class ConfigDB:
+    """Konfigurace ulo¾ená v datovém objektu s rozhraním slovníku."""
+
+    def __init__(self, resolver, name, *args, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          resolver -- resolver specifikací (instance 'pytis.util.Resolver').
+          name -- jméno specifikace datového objektu, ze kterého má být
+            konfigurace naètena.
+          args, kwargs -- argumenty pro vytvoøení datového objektu, které budou
+            pøedány metodì 'pytis.data.Data.create()'.
+
+        """
+        data_spec = resolver.get(name, 'data_spec')
+        self._data = data_spec.create(*args, **kwargs)
+        self._data.select()
+        self._row = self._data.fetchone()
+        self._data.close()
+
+    def __getitem__(self, key):
+        return self._row[key].value()
+
+    def __setitem__(self, key, value):
+        self._row[key] = value
+        self._data.update(self._row[self._data.key()[0].id()], self._row)
+
+    def keys(self):
+        return self._row.keys()
+
+
 def cfg_param(column, cfgspec='Nastaveni', value_column=None):
     """Vrací instanci Value pro konfiguraèní parametr.
 
