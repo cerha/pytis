@@ -1254,7 +1254,7 @@ class _GsqlFunction(_GsqlSpec):
             source_list = map(get_source, tuple(self._use_functions)+(body,))
             # plpython nemá rád prázdné øádky
             source_text = string.join(source_list, '')
-            result = "'%s' LANGUAGE plpython" % source_text
+            result = "'%s' LANGUAGE plpythonu" % source_text
         return result
         
     def output(self):
@@ -1280,7 +1280,7 @@ class _GsqlFunction(_GsqlSpec):
         names = []
         for i in range(data.ntuples):
             n = data.getvalue(i, 0)
-            if n not in ('plpython_call_handler', 'plpgsql_call_handler'):
+            if n not in ('plpythonu_call_handler', 'plpgsql_call_handler'):
                 names.append(n)
         return names
     db_all_names = classmethod(db_all_names)
