@@ -236,14 +236,28 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         menu = Menu('', self._print_menu).create(button, self)
         button.PopupMenu(menu, (0, button.GetSize().y))
         menu.Destroy()
-        
+
+    def _form_state_key(self):
+        return self.__class__.__name__+'/'+self._name
+    
+    def _get_state_param(self, name, default=None):
+        try:
+            return config.form_state[self._form_state_key()][name]
+        except KeyError:
+            return default
+
+    def _set_state_param(self, name, value):
+        key = self._form_state_key()
+        params = config.form_state.get(key, {})
+        params[name] = value
+        config.form_state[key] = params
     
     # Veøejné metody
     
     def name(self):
         """Vra» název specifikace formuláøe."""
         return self._name
-
+    
     def on_command(self, command, **kwargs):
         """Zpracuj 'command'.
 
@@ -1147,7 +1161,7 @@ class LookupForm(RecordForm):
         else:
             return super_(LookupForm).on_command(self, command, **kwargs)
 
-        
+       
 
 ### Editaèní formuláø
 
