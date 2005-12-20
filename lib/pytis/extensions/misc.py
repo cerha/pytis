@@ -29,41 +29,95 @@ from pytis.presentation import *
 from pytis.util import *
 from pytis.form import *
 
+import cPickle as pickle
+
 import config
 
 
-class ConfigDB:
-    """Konfigurace ulo¾ená v datovém objektu s rozhraním slovníku."""
+class DBConfig:
+    """Konfigurace spojená s datovým objektem.
 
-    def __init__(self, resolver, name, *args, **kwargs):
+    Konfigurace vnitønì pracuje s datovým objektem vytvoøeným nad specifikací
+    urèenou argumentem konstruktoru.  Pøedpokládá se, ¾e datový objekt vrací
+    v¾dy jen jeden øádek (na úrovni SQL omezený napø na aktuálního u¾ivatele).
+    Hodnotu datového sloupeèku je potom mo¾né z tohoto objektu získat jako ze
+    slovníku.
+
+    Zápis hodnoty do slovníku vyvolá zapsání zmìnìné hodnoty do databáze.
+    Pøípadné zmìny dat na úrvni databáze nejsou tímto objektem v souèasné
+    implementaci reflektovány.
+
+    """
+
+    def __init__(self, name):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          resolver -- resolver specifikací (instance 'pytis.util.Resolver').
-          name -- jméno specifikace datového objektu, ze kterého má být
-            konfigurace naètena.
-          args, kwargs -- argumenty pro vytvoøení datového objektu, které budou
-            pøedány metodì 'pytis.data.Data.create()'.
+        Argument 'name' urèuje název specifikace datového objektu pro resolver.
 
         """
-        data_spec = resolver.get(name, 'data_spec')
-        self._data = data_spec.create(*args, **kwargs)
+        global data_object_cache
+        try:
+            cache = data_object_cache
+        except NameError:
+            cache = data_object_cache = {}
+        try:
+            data_object = cache[name]
+        except KeyError:
+            resolver = pytis.form.resolver()
+            data_spec = resolver.get(name, 'data_spec')
+            dbconn = config.dbconnection
+            data_object = data_spec.create(dbconnection_spec=dbconn)
+            cache[name] = data_object
+        self._data = data_object
         self._data.select()
         self._row = self._data.fetchone()
+        self._key = [self._row[c.id()] for c in self._data.key()]
         self._data.close()
 
+    def value(self, key):
+        """Vra» hodnotu 'key' jako instanci 'pytis.data.Value'."""
+        return self._row[key]
+        
     def __getitem__(self, key):
+        """Vra» hodnotu 'key' jako Pythonovou hodnotu."""
         return self._row[key].value()
 
     def __setitem__(self, key, value):
-        self._row[key] = value
-        self._data.update(self._row[self._data.key()[0].id()], self._row)
+        """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
+        type = self._row[key].type()
+        self._row[key] = pytis.data.Value(type, value)
+        self._data.update(self._key, self._row)
+
+    def has_key(self, key):
+        return self._row.has_key(key)
 
     def keys(self):
         return self._row.keys()
 
+    def items(self):
+        return tuple([(key, self[key]) for key in self._row.keys()])
 
+
+class ConfigDB(DBConfig):
+    """Wrapper pro zpìtnou kompatibilitu.  Nepou¾ívat!"""
+    def __init__(self, resolver, name, **kwargs):
+        super(ConfigDB, self).__init__(name)
+
+def saved_config_reader(name, column):
+    def reader():
+        value = DBConfig(name)[column]
+        try:
+            return pickle.loads(str(value))
+        except pickle.UnpicklingError, e:
+            log(OPERATIONAL, "Nepodaøilo se obnovit ulo¾enou konfiguraci")
+            return ()
+    return reader
+
+def saved_config_writer(name, column):
+    def writer(items):
+        DBConfig(name)[column] = pickle.dumps(items)
+    return writer
+    
 def cfg_param(column, cfgspec='Nastaveni', value_column=None):
     """Vrací instanci Value pro konfiguraèní parametr.
 
@@ -76,29 +130,14 @@ def cfg_param(column, cfgspec='Nastaveni', value_column=None):
         hodnotu u¾ivatelského sloupce.
 
     """
-    global cfg_objects
-    data_object = None
-    try:
-        data_object = cfg_objects[cfgspec]
-    except NameError:
-        cfg_objects = {}
-    except KeyError:
-        pass
-    if not data_object:    
-        resolver = pytis.form.resolver()
-        cfg = resolver.get(cfgspec, 'data_spec')
-        data_object = cfg.create(dbconnection_spec=config.dbconnection)
-        cfg_objects[cfgspec] = data_object
-    data_object.select()
-    cfg_row = data_object.fetchone()
-    if not cfg_row.has_key(column):
+    dbconfig = DBConfig(cfgspec)
+    if not dbconfig.has_key(column):
         return pytis.data.Value(None, None)
-    value = cfg_row[column]
+    value = dbconfig.value(column)
     if value.type().enumerator():
         return cb2colvalue(value, column=value_column)
     else:
         return value
-
 
 def cb_computer(codebook, column, default=None):
     """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
