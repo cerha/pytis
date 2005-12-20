@@ -157,7 +157,8 @@ class Configuration:
 
             """
             if force or self._value is self._undefined:
-                self._value = self._compute_init_value(self._configuration)
+                v = self._compute_init_value(self._configuration)
+                self._value = self._initial_value = v
 
         def value(self):
             """Vra» aktuální hodnotu konfiguraèní volby."""
@@ -636,9 +637,9 @@ class Configuration:
         """Seznam formuláøù, které mají být otevøeny po spu¹tìní aplikace."""
         _DEFAULT = None
 
-    class _Option_form_state(_StringOption, _HiddenOption):
+    class _Option_form_state(Option, _HiddenOption):
         """Tato volba je vyu¾ívána aplikací pro ukládání stavu formuláøù."""
-        _DEFAULT = None
+        _DEFAULT = {}
 
     class _Option_row_focus_fg_color(_ColorOption):
         """Barva textu aktivního øádku tabulkového formuláøe.
@@ -871,24 +872,26 @@ class Configuration:
                     stream.write('# %s\n' % string.strip(line))
                 stream.write('#%s = %s\n\n' % (name, option.default_string()))
 
-    def print_options(self):
-        """Vypi¹ na standardní výstup v¹echny volby a jejich hodnoty."""
-        options = self._options
-        keys = options.keys()
-        keys.sort()
-        for k in keys:
-            sys.stdout.write('%s = %s\n' % (k, `options[k].value()`))
-
     def options(self):
+        """Vra» seznam názvù v¹ech konfiguraèních voleb jako tuple øetìzcù.""" 
         return self._options.keys()
 
     def description(self, name):
-        return self._options[name].__doc__
+        """Vra» popis volby 'name' jako øetìzec (mù¾e být i víceøádkový).""" 
+        return self._options[name].__doc__.strip()
     
     def type(self, name):
+        """Vra» datový typ volby 'name' jako instanci 'pytis.data.Type'.""" 
         return self._options[name].type()
 
     def changed(self, name):
+        """Vra» pravdu, pokud hodnota volby 'name' byla zmìnìna aplikací.
+
+        Za zmìnu je pova¾ováno jakékoliv nastavení volby na jinou hodnotu, ne¾
+        jakou daná volba nabyla bìhem inicializace (tj. pøi naèítání voleb
+        pøíkazové øádky a konfiguraèního souboru).
+        
+        """ 
         return self._options[name].changed()
     
 
