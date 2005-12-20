@@ -795,7 +795,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # Draw the rectangle around.
             dc.DrawRectangle(x-d, y, width+d, height)
             # Draw the label itself.
-            label = c.label()
+            label = c.column_label()
             while dc.GetTextExtent(label)[0] > width and len(label):
                 label = label[:-1] # Don't allow the label to extend the width.
             dc.DrawLabel(label, (x,y,width,height), wx.ALIGN_CENTER|wx.CENTER)
