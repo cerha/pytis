@@ -1,4 +1,131 @@
+2005-12-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (CodebookForm._on_idle): Pokud po¾adovaný
+	sloupec pro `begin_search' není v columns, nepokou¹ej se
+	nastartovat inkrementální vyhledávání a tuto skuteènost loguj.
+	(ListForm._init_attributes): Pokus se naèíst seznam sloupcù z
+	upo¾ených parametrù.
+	(ListForm._column_width): Pokus se zjistit ¹íøku sloupce z
+	ulo¾ených parametrù.
+	(ListForm._update_grid): Pokud do¹lo ke zmìnì poøadí nebo poètu
+	sloupcù, ukládej seznam sloupcù do stavových parametrù.
+	(ListForm._on_label_drag_size): Ukládej novou velikost sloupce do
+	stavových parametrù.
+	(ListForm._on_size): Neignoruj sloupce s nulovou velikostí ve specifikaci.
+	(ListForm._on_label_paint): Titulek sloupce zji¹»uj pøes
+	`column_label', nikoli `label'.
+
+	* pytis/form/application.py: Importuj `cPickle' jako `pickle'.
+	(Application): Aktualizován docstring.
+	(Application.OnInit): Událost uzavøení hlavního okna aplikace
+	o¹etøuj voláním `self._on_frame_close()'.  Naèítej a obnovuj
+	konfiguraci z externího zdroje.
+	(Application._spec): Argument `default_value' pøejmenován na
+	`default'.  V¹echny pøípadné klíèové argumenty pøedávej metodì
+	`get()' resolveru.
+	(Application._config_name, Application._on_frame_close)
+	(Application._read_config, Application._write_config)
+	(Application._cleanup): Nové metody.
+	(Application.exit): Ve¹keré ukonèovací akce pøesunuty do
+	`_cleanup()'.  Zde pouze zavøi hlavní okno.
+	
+
+	* pytis/form/form.py (Form._form_state_key) 
+	(Form._get_state_param, Form._set_state_param): Nové metody.
+
+	* pytis/util/resolver.py (ResolverModuleError.__init__): Zprávu
+	pøedávej pøedkovi jako øetìzec, ne tuple.
+	(ResolverSpecError): Úprava docstringu.
+	(ResolverSpecError.__init__): Zprávu pøedávej pøedkovi jako
+	øetìzec, ne tuple.
+
+	* pytis/util/configuration.py (Configuration.Option.init_value):
+	Nastavuje také `self._initial_value'.
+	(Configuration._Option_form_state): Buï potomkem `Option', nikoli
+	`_StringOption'.
+	(Configuration._Option_startup_forms._DEFAULT): Výchozí hodnotou
+	nech» je prázdný slovník, nikoli None.
+	(print_options): Zru¹eno.
+	(Configuration.options, Configuration.description) 
+	(Configuration.type, Configuration.changed): Doplnìn docstring.
+	(ConfigDB): Zru¹eno (pøesunuto do pytis-extensions).
+	(Configuration.Option.init_value, Configuration.Option.set_value):
+	Do `self._initial_value' ukládej v¾dy kopii hodnoty.
+
+2005-12-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pg_search.sorting_condition):
+	`pytis.data.Value' -> `Value'.
+	(DBColumnBinding.__init__): Aktualizován docstring.
+
+	* pytis/presentation/spec.py: 
+	(HGroup, VGroup, LHGroup, LVGroup): Nové tøídy.
+	(ViewSpec.__init__): Aktualizován docstring.  Pøi výpoètu výchozí
+	hodnoty pro `columns' vynechávej sloupce s `column_width' rovným nule.
+	(ViewSpec.field): Aktualizován docstring.
+
+	* pytis/util/configuration.py (Configuration.Option._OPTION):
+	Konstanta zru¹ena.
+	(Configuration.Option._CMDLINE): Nová konstanta.
+	(Configuration.Option._LONG_OPTION): Nová konstanta.
+	(Configuration.Option.__init__): Inicializuj také
+	`self._initial_value'.
+	(Configuration.Option.name): Nová metoda.
+	(Configuration.Option.set_value): Nový nepovinný argument
+	`initialization'.  Pokud je pravdivý, pøenastav také
+	`self._initial_value'.
+	(Configuration.Option.changed): Nová metoda.
+	(Configuration.Option.long_option): Pokud není definováno
+	`_LONG_OPTION', vytváøej argument pro 'getopt' automaticky podle
+	typu.
+	(Configuration.Option.type): Nová metoda.
+	(Configuration._StringOption, Configuration._BooleanOption)
+	(Configuration._ColorOption, Configuration._NumericOption): Nové
+	tøídy.
+	(Configuration._FileOption): Buï potomkem `_StringOption'.
+	(Configuration._HiddenOption, Configuration._CommandlineOption):
+	Nové tøídy.
+	(Configuration._Option_*): Vyu¾ívej nových tøíd k urèení typu
+	ka¾dé volby a dal¹ích parametrù.
+	(Configuration._Option_form_state): Nová konfiguraèní volba.
+	(Configuration._parse_command_line_options): Pou¾ívej "list
+	comprehension" namísto map a filter.
+	(Configuration._read_configuration_file): Pøi volání
+	`Option.set_value()' nastavuj `initialization' na True.
+	(Configuration.serial_number): Metoda zru¹ena.
+	(Configuration.options, Configuration.description, Configuration.type) 
+	(Configuration.changed): Nové metody.
+
+	* pytis/form/inputfield.py (CodebookField._on_invoke_selection):
+	Pokud je `alternate' True, nastavuj `begin_search' na
+	`value_column' enumerátoru.
+
 2005-12-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/configuration.py (Configuration.Option.HIDDEN)
+	(Configuration.Option.VISIBLE,
+	Configuration.Option.COMMENTED_OUT): Konstanty zru¹eny.
+	(Configuration.Option._DEFAULT) 
+	(Configuration.Option._DEFAULT_STRING) 
+	(Configuration.Option._OPTION, Configuration.Option._ENVIRONMENT) 
+	(Configuration.Option._VISIBLE): Nové konstanty.
+	(Configuration.Option.long_option): Jako výchozí hodnotu pou¾ívej
+	konstantu `_OPTION'.
+	(Configuration.Option.environment): Jako výchozí hodnotu pou¾ívej
+	konstantu `_ENVIRONMENT'.
+	(Configuration.Option.default): Jako výchozí hodnotu pou¾ívej
+	konstantu `_DEFAULT'.
+	(Configuration.Option.default_string): Jako výchozí hodnotu pou¾ívej
+	konstantu `_DEFAULT_STRING', pokud není `None'.
+	(Configuration.Option.visible): Jako výchozí hodnotu pou¾ívej
+	konstantu `_VISIBLE'.
+	(Configuration._Option_*): Pokud to lze, pøedefinovávej pouze
+	pøíslu¹né konstanty namísto metod `default', `default_string',
+	`visible', `long_option' a `environment'.
+	(Configuration.dump_config_template): S návratovou hodnotou
+	`Option.visible()' pracuj jako s boolean pøíznakem.  Volby které
+	nejsou skryté jsou v¾dy zakomentované.
 
 	* pytis/form/dialog.py (Calendar._COMMIT_BUTTON)
 	(BugReport._COMMIT_BUTTON): Nové konstanty.
