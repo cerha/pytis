@@ -41,6 +41,7 @@ from list import *
 from dualform import *
 from output import *
 from application import *
+from configui import *
 from commands_ import *
 import _grid
 
