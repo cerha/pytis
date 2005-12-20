@@ -32,6 +32,7 @@ import stat
 import string
 import sys
 import time
+import copy
 
 from pytis.util import *
 import pytis.data
@@ -157,8 +158,14 @@ class Configuration:
 
             """
             if force or self._value is self._undefined:
-                v = self._compute_init_value(self._configuration)
-                self._value = self._initial_value = v
+                value = self._compute_init_value(self._configuration)
+                self._value = value
+                # Callable objekty nelze kopírovat, tak zkopírujeme alespoò
+                # v¹echny ostatní...
+                if callable(value):
+                    self._initial_value = value
+                else:
+                    self._initial_value = copy.copy(value)
 
         def value(self):
             """Vra» aktuální hodnotu konfiguraèní volby."""
@@ -172,7 +179,10 @@ class Configuration:
         def set_value(self, value, initialization=False):
             """Nastav hodnotu konfiguraèní volby na 'value'."""
             if initialization:
-                self._initial_value = value
+                if callable(value):
+                    self._initial_value = value
+                else:
+                    self._initial_value = copy.copy(value)
             self._value = value
 
         def changed(self):
