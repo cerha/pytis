@@ -1,0 +1,113 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Formuláøe pro editaci konfiguraèních voleb v u¾ivatelském rozhraní.
+
+Formuláøe nejsou vázány na ¾ádnou specifikaci.  Datový objekt i prezentaèní
+specifikace jsou generovány automaticky pøi vytvoøení formuláøe.  Layout
+formuláøe je získáván z konstanty '_LAYOUT' definované ní¾e.  Ta je slovníkem
+jednotlivých Layoutù, kde klíèem je arguemnt 'name' konstruktoru formuláøe.
+Tak¾e výbìr specifikace z resolveru, bì¾ný u jiných formuláøù je zde nahrazen
+výbìrem layoutu ze slovníku a vygenerováním zbylých specifikaèních parametrù
+podle vlastností konfiguraèních voleb obsa¾ených v tomto layoutu.
+
+"""
+
+from pytis.form import *
+
+_LAYOUT = {
+    'ui': LayoutSpec(_("Nastavení u¾ivatelského rozhraní"), VGroup(
+    LVGroup(_("Barvy"),
+            HGroup(LHGroup(_("Aktivní øádek"),
+                           'row_focus_fg_color','row_focus_bg_color'),
+                   LHGroup(_("Neaktivní øádek"),
+                           'row_nofocus_fg_color', 'row_nofocus_bg_color'),
+                   LHGroup(_("Editovaný øádek"),
+                           'row_edit_fg_color','row_edit_bg_color'),
+                   ),
+            'cell_highlight_color',
+            'grid_line_color',
+            #'grouping_background_downgrade',
+            ),
+    #LVGroup(_("Písma"),
+    #        'edit_form_caption_font'),
+    LVGroup(_("Chování"),
+            'show_splash', 'show_tooltips', 'cache_spec_onstart'),
+    ))
+    }
+
+_LABELS = {'row_focus_fg_color':            _("Text"),
+           'row_focus_bg_color':            _("Pozadí"),
+           'row_nofocus_fg_color':          _("Text"),
+           'row_nofocus_bg_color':          _("Pozadí"),
+           'row_edit_fg_color':             _("Text"),
+           'row_edit_bg_color':             _("Pozadí"),
+           'cell_highlight_color':          _("Zvýraznìní aktivní buòky"),
+           'grid_line_color':               _("Møí¾ka tabulky"),
+           #'grouping_background_downgrade': _("Ztmavení seskupených øádkù"),
+           #'edit_form_caption_font':        _("Font"),
+           'show_splash':                   _("Zobrazovat úvodní dialog"),
+           'show_tooltips':                 _("Zobrazovat bublinovou nápovìdu"),
+           'cache_spec_onstart':            _("Naèítat specifikace pøi startu"),
+           }
+
+
+class _MemData(pytis.data.MemData, pytis.data.RestrictedData):
+    def __init__(self, bindings):
+        access_rights=pytis.data.AccessRights((None, (None, pytis.data.Permission.ALL)))
+        pytis.data.RestrictedData.__init__(self, access_rights)
+        pytis.data.MemData.__init__(self, bindings)
+
+
+class ConfigForm(PopupEditForm):
+    """Formuláø pro editaci konfiguraèních voleb.
+
+    Argument 'name' konstruktoru zde nemá obvyklý význam.  Slou¾í jako klíè do
+    slovníku layoutù definovaného vý¹e (konstanta '_LAYOUT').  Datová i
+    prezentaèní specifikace pro tento layout jsou vytvoøeny automaticky.
+    
+    Formuláø po svém ukonèení automaticky aktualizuje konfiguraci novými
+    hodnotami.
+
+    """
+
+    def _layout(self):
+        return _LAYOUT[self._name]
+    
+    def _create_view_spec(self, **kwargs):
+        def cleanup(row):
+            # Update konfiguraèních voleb po odeslání formuláøe.
+            for o in row.keys():
+                setattr(config, o, row[o].value())
+                
+        fields = [FieldSpec(o, _LABELS.get(o, o),
+                            descr=config.description(o),
+                            default=lambda o=o: getattr(config, o),
+                            )
+                  for o in self._layout().order()]
+
+        return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
+                        fields, layout=self._layout(), cleanup=cleanup)
+
+    def _create_data_object(self, **kwargs):
+        columns = [pytis.data.ColumnSpec(id, config.type(o))
+                   for id in self._layout().order()]
+        return pytis.data.DataFactory(_MemData, columns).create()
+
+    def _create_print_menu(self):
+        return None
