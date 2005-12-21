@@ -653,68 +653,78 @@ class Configuration:
 
     class _Option_row_focus_fg_color(_ColorOption):
         """Barva textu aktivního øádku tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#ffffff'
         
     class _Option_row_focus_bg_color(_ColorOption):
         """Barva pozadí aktivního øádku tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
-        Pokud je None, bude pou¾ita systémová barva zvýraznìní.
+        Pokud barva není nastavena, bude pou¾ita systémová barva zvýraznìní.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = None
         
     class _Option_row_nofocus_fg_color(_ColorOption):
         """Barva textu neaktivního øádku tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#000000'
         
     class _Option_row_nofocus_bg_color(_ColorOption):
         """Barva pozadí neaktivního øádku tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#b6b6b6'
         
     class _Option_row_edit_fg_color(_ColorOption):
         """Barva textu editovaného øádku tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#ffffff'
 
     class _Option_row_edit_bg_color(_ColorOption):
         """Barva pozadí editovaného øádku.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#c80000'
 
     class _Option_cell_highlight_color(_ColorOption):
         """Barva zvýraznìní aktivní buòky tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#ffa000'
 
     class _Option_grid_line_color(_ColorOption):
         """Barva møí¾ky tabulkového formuláøe.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#6482be'
 
+    class _Option_grouping_background_downgrade(_ColorOption):
+        """Ztmavení barvy skupiny pøi seskupování øádkù.
+        Proto¾e barva pozadí øádkù není v¾dy bílá, je tato hodnota chápána jako
+        relativní.  O kolik je zvolená barva tmav¹í ne¾ bílá, o tolik bude
+        výsledná barva skupiny tmav¹í, ne¾ barva pozadí ostatních øádkù.
+        I zde je barva reprezentována øetìzcem '#RRGGBB'.
+        """
+        _DEFAULT = '#6482be'
+        
+
     class _Option_field_disabled_color(_ColorOption):
         """Barva pozadí needitovatelného vstupního políèka.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#c0c0c0'
 
     class _Option_field_inaccessible_color(_ColorOption):
         """Barva pozadí políèka needitovatelného kvùli pøístupovým právùm.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#e0e4f0'
 
     class _Option_filter_color(_ColorOption):
         """Barva záhlaví tabulkového formuláøe pøi zapnutém filtrování.
-        Barva je dána øetìzcem '#RRGGBB'.
+        Barva je reprezentována øetìzcem '#RRGGBB'.
         """
         _DEFAULT = '#82c882'
 
