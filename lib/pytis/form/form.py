@@ -1608,9 +1608,9 @@ class PopupEditForm(PopupForm, EditForm):
             p = p.GetParent()
         parent.SetTitle('%s: %s' % (p.GetTitle(), self.title()))
 
-    def _init_attributes(self, disable_new_button=False, **kwargs):
+    def _init_attributes(self, disable_next_button=False, **kwargs):
         EditForm._init_attributes(self, **kwargs)
-        self._disable_new_button = disable_new_button
+        self._disable_next_button = disable_next_button
         
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
@@ -1661,7 +1661,7 @@ class PopupEditForm(PopupForm, EditForm):
         wx_callback(wx.EVT_BUTTON, self, wx.ID_CANCEL, self._on_cancel)
         ok.SetToolTipString(_("Ulo¾it záznam a uzavøít formuláø"))
         cancel.SetToolTipString(_("Uzavøít formuláø bez ulo¾ení dat"))
-        if self._mode == self.MODE_INSERT and not self._disable_new_button:
+        if self._mode == self.MODE_INSERT and not self._disable_next_button:
             next = wx.Button(self, wx.ID_FORWARD, _("Dal¹í"))
             wx_callback(wx.EVT_BUTTON, self, wx.ID_FORWARD, self._on_next)
             next.SetToolTipString(_("Ulo¾it záznam a reinicializovat formuláø"
