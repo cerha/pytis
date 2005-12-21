@@ -66,6 +66,16 @@ _LABELS = {'row_focus_fg_color':            _("Text"),
            'cache_spec_onstart':            _("Naèítat specifikace pøi startu"),
            }
 
+def config_menu_items(hotkeys={}):
+    items = [MItem(layout.caption(),
+                   command=pytis.form.Application.COMMAND_RUN_FORM,
+                   args=dict(form_class=ConfigForm, name=name),
+                   hotkey=hotkeys.get(name),
+                   help=(_('Otevøít konfiguraèní formuláø "%s"') % \
+                         layout.caption()))
+             for name, layout in _LAYOUT.items()]
+    return tuple(items)
+
 
 class _MemData(pytis.data.MemData, pytis.data.RestrictedData):
     def __init__(self, bindings):
