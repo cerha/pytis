@@ -92,21 +92,21 @@ class ConfigForm(PopupEditForm):
     def _create_view_spec(self, **kwargs):
         def cleanup(row):
             # Update konfiguraèních voleb po odeslání formuláøe.
-            for o in row.keys():
-                setattr(config, o, row[o].value())
+            for option in row.keys():
+                setattr(config, option, row[option].value())
                 
-        fields = [FieldSpec(o, _LABELS.get(o, o),
-                            descr=config.description(o),
-                            default=lambda o=o: getattr(config, o),
+        fields = [FieldSpec(option, _LABELS.get(option, option),
+                            descr=config.description(option),
+                            default=lambda o=option: getattr(config, o),
                             )
-                  for o in self._layout().order()]
+                  for option in self._layout().order()]
 
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
                         fields, layout=self._layout(), cleanup=cleanup)
 
     def _create_data_object(self, **kwargs):
-        columns = [pytis.data.ColumnSpec(id, config.type(o))
-                   for id in self._layout().order()]
+        columns = [pytis.data.ColumnSpec(option, config.type(option))
+                   for option in self._layout().order()]
         return pytis.data.DataFactory(_MemData, columns).create()
 
     def _create_print_menu(self):
