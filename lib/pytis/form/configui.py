@@ -67,6 +67,15 @@ _LABELS = {'row_focus_fg_color':            _("Text"),
            }
 
 def config_menu_items(hotkeys={}):
+    """Vra» seznam polo¾ek menu pro otevøení konfiguraèních formuláøù.
+
+    Vrací tuple instancí 'MItem', z nich¾ ka¾dá otevírá jeden ze standardnì
+    definovaných formuláøù pro editaci konfiguraèních voleb.  Pou¾itím této
+    funkce v definici menu aplikace budou automaticky do menu pøidávány polo¾ky
+    standardních konfiguraèních formuláøù bez nutnosti zmìn v aplikaci pøi
+    aktualizaci systému Pytis.
+
+    """
     items = [MItem(layout.caption(),
                    command=pytis.form.Application.COMMAND_RUN_FORM,
                    args=dict(form_class=ConfigForm, name=name),
@@ -132,11 +141,15 @@ class ConfigForm(PopupEditForm):
             refresh()
         return True
 
-    def _create_additional_buttons(self):
-        b = wx.Button(self, wx.ID_APPLY)
-        wx_callback(wx.EVT_BUTTON, self, b.GetId(),
-                    lambda e: self._commit_form(close=False))
-        return (b,)
+    def _buttons(self):
+        list = __builtins__['list']
+        apply = {'id': wx.ID_APPLY,
+                 'toottip': _("Uplatnit zmìny bez uzavøení formuláøe"),
+                 'handler': lambda e: self._commit_form(close=False)}
+        buttons = list(super(ConfigForm, self)._buttons())
+        buttons.insert(1, apply)
+        return tuple(buttons)
+        
     
     def _create_print_menu(self):
         return None
