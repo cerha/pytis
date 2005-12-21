@@ -428,10 +428,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             kwargs['select_row'] = kwargs['key']
             del kwargs['key']
         if issubclass(form_class, EditForm):
-            if not kwargs.has_key('select_row') or not kwargs['select_row'] \
-                   or kwargs.has_key('new') and kwargs['new']:
-                kwargs['mode'] = EditForm.MODE_INSERT
             if kwargs.has_key('new'):
+                if kwargs['new']:
+                    kwargs['mode'] = EditForm.MODE_INSERT
                 del kwargs['new']
         # konec doèasného hacku    
         for arg in ('select_row', ):
