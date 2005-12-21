@@ -1,3 +1,51 @@
+2005-12-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._create_form_parts): Po vytvoøení
+	gridu volej self._update_colors()
+	(ListForm._update_colors): Nová metoda.
+	(ListForm._create_grid): Nenastavuj barvy zde, dìlej to v
+	`_update_colors()'.
+	(ListForm._update_grid): Namísto `_update_label_colors()' volej
+	`_update_colors()'.
+	(ListForm._update_label_colors): Zru¹en argument `grid'.  Pou¾ívej
+	`self._grid'.
+
+	* pytis/form/inputfield.py: Importuj `wx.lib.colourselect'.
+	(ColorSelectionField._create_button):
+	Namísto obuyèejného 'wx.Button' vytváøej
+	`wx.lib.colourselect.ColourSelect'.
+	(ColorSelectionField._set_value): Namísto `SetBackgroundColour()'
+	volej `SetColour()'.
+
+	* pytis/util/configuration.py
+	(Configuration._Option_row_focus_bg_color): Update docstringu.
+	(Configuration._Option_grouping_background_downgrade): Nová
+	konfiguraèní volba.
+
+	* pytis/form/form.py (PopupEditForm._init_attributes): Arguemnt
+	`disable_new_button' pøejmenován na `disable_next_button'.
+	(PopupEditForm._create_buttons): `self._disable_new_button' ->
+	`self._disable_next_button'.
+	(PopupEditForm._create_buttons): Nenastavuj tlaèítkùm labely.  Tím
+	budou vytvoøena "Stock Buttons", která mají label automaticky a
+	navíc ikonu.
+	(PopupEditForm._create_buttons): Pøidávej k tlaèítkùm také
+	výsledek volání `self._create_additional_buttons()'.
+	(PopupEditForm._create_additional_buttons): Nová metoda.
+	(TitledForm._create_title_bar): Tiskové tlaèítko vytváøej bez okraje.
+
+	* pytis/form/application.py (Application.run_form): Nenastavuj
+	`mode' na MODE_INSERT, pokud není konstruktoru EditForm pøedán
+	argument `select_row'.
+
+	* pytis/form/configui.py (ConfigForm._create_view_spec)
+	(ConfigForm._create_data_object): Kosmetické úpravy.
+	(ConfigForm.__init__): Nová metoda.
+	(ConfigForm._create_view_spec.cleanup): Zru¹eno,
+	(ConfigForm._create_view_spec): Nenastavuj políèkùm `default'.
+	(ConfigForm._commit_form): Nová metoda.
+	(ConfigForm._create_additional_buttons): Nová metoda.
+
 2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/__init__.py (Module): Importuj `configui'.
