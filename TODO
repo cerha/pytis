@@ -4,8 +4,6 @@ CHYBY:
 
    Sloupec se neukazuje ve filtraèním dialogu.
 
- * Ctrl-Enter ve filtraèním dialogu.
-
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
@@ -166,6 +164,11 @@ INTERNÍ ZÁLE®ITOSTI:
    Kromì vlastního 'RefSpec' je tøeba zru¹it také argument 'references'
    konstruktoru FieldSpec a metodu 'PresentedRow.refvalue' (a v¹echna její
    pou¾ití v defsech).
+
+ * Zru¹it pøenastavování argumentù v metodì 'Application.run_form'.
+
+   Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
+   'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.
 
  * Zru¹it argument 'check' konstruktoru FieldSpec.
 

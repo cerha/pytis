@@ -4,8 +4,29 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-21  Tomas Cerha  <cerha@brailcom.org>
 
-2005-12-20
+        ListForm nyní pøi refreshi aktualizuje i nastavení v¹ech barev,
+	tak¾e po zmìnì v konfiguraci se v¹e hned promítne.
+
+	EditForm nyní pou¾ívá "Stock Buttons", tak¾e tlaèítka mají nyní
+	ikonky.  Tlaèítko "Ok" se teï sice jmenuje "Budi¾", co¾ nelze
+	zmìnit, proto¾e to je vlastnost GTK, ale snad to u¾ivatelùm vadit
+	nebude.  Ikonky se jim urèitì líbit budou.
+
+	V pytis.form nyní pøibyl nový modul `configui', který realizuje
+	u¾ivatelské rozhraní pro nastavování konfiguraèních voleb.
+	Konfiguraèní formuláøe jsou tak nyní souèástí pytis a nemysí být
+	slo¾itì znova a znova implementovány v ka¾dé aplikaci.  Zejména
+	nemusí být pro ka¾dou konfiguraèní volbu vytváøen sloupeèek v
+	databázi, co¾ umo¾ní snadné pøidávání nových voleb do formuláøù.
+
+	Pou¾ití konfiguraèních formuláøù je snadné.  Staèí pøi vytváøení
+	menu aplikace pou¾ít funkci `config_menu_items()', která
+	automaticky do menu doplní polo¾ky pro v¹echny dostupné
+	konfiguraèní formuláøe.
+	
+2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
         Tabulkové formuláøe si nyní ukládají nastavení sloupcù do
 	konfigurace, tak¾e pokud si u¾ivatel pøeskupí, skryje èi zobrazí
@@ -49,7 +70,7 @@
 	* BUGFIX: Záhlaví sloupcù nech» zobrazují `column_label', nikoli
 	plný název sloupce.
 
-2005-12-19
+2005-12-19  Tomas Cerha  <cerha@brailcom.org>
 
         Ka¾dá konfiguraèní volba nyní udr¾uje informaci o své pùvodní
 	hodnotì a umo¾òuje tak zjistit, zda za bìhu aplikace do¹lo ke

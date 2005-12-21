@@ -26,13 +26,17 @@
 	`disable_new_button' pøejmenován na `disable_next_button'.
 	(PopupEditForm._create_buttons): `self._disable_new_button' ->
 	`self._disable_next_button'.
+	(PopupEditForm._buttons): Nová metoda.
 	(PopupEditForm._create_buttons): Nenastavuj tlaèítkùm labely.  Tím
 	budou vytvoøena "Stock Buttons", která mají label automaticky a
-	navíc ikonu.
-	(PopupEditForm._create_buttons): Pøidávej k tlaèítkùm také
-	výsledek volání `self._create_additional_buttons()'.
+	navíc ikonu.  Vytváøej tlaèítka podle informací ze `self._buttons()'.
 	(PopupEditForm._create_additional_buttons): Nová metoda.
 	(TitledForm._create_title_bar): Tiskové tlaèítko vytváøej bez okraje.
+	(PopupEditForm._create_additional_buttons): Zru¹eno.
+	(_on_submit): Zru¹eno.
+	(_on_cancel): Zru¹eno.
+	(PopupEditForm._buttons): Nevyu¾ívej zru¹ené metody a volej
+	handler rovnou pomocí `lambda'.
 
 	* pytis/form/application.py (Application.run_form): Nenastavuj
 	`mode' na MODE_INSERT, pokud není konstruktoru EditForm pøedán
@@ -44,7 +48,9 @@
 	(ConfigForm._create_view_spec.cleanup): Zru¹eno,
 	(ConfigForm._create_view_spec): Nenastavuj políèkùm `default'.
 	(ConfigForm._commit_form): Nová metoda.
-	(ConfigForm._create_additional_buttons): Nová metoda.
+	(config_menu_items): Nová funkce.
+	(ConfigForm._buttons): Nová metoda.
+	(config_menu_items): Doplnìn docstring.
 
 2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
