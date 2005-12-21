@@ -86,28 +86,47 @@ class ConfigForm(PopupEditForm):
 
     """
 
+    def __init__(self, *args, **kwargs):
+        super_(ConfigForm).__init__(self, *args, **kwargs)
+        values = [(o, pytis.data.Value(config.type(o), getattr(config, o)))
+                  for o in self._layout().order()]
+        self._select_row(pytis.data.Row(values))
+    
     def _layout(self):
         return _LAYOUT[self._name]
     
     def _create_view_spec(self, **kwargs):
-        def cleanup(row):
-            # Update konfiguraèních voleb po odeslání formuláøe.
-            for option in row.keys():
-                setattr(config, option, row[option].value())
-                
         fields = [FieldSpec(option, _LABELS.get(option, option),
-                            descr=config.description(option),
-                            default=lambda o=option: getattr(config, o),
-                            )
+                            descr=config.description(option))
                   for option in self._layout().order()]
 
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
-                        fields, layout=self._layout(), cleanup=cleanup)
+                        fields, layout=self._layout())
 
     def _create_data_object(self, **kwargs):
         columns = [pytis.data.ColumnSpec(option, config.type(option))
                    for option in self._layout().order()]
         return pytis.data.DataFactory(_MemData, columns).create()
 
+    def _commit_form(self, close=True):
+        # Update konfiguraèních voleb po odeslání formuláøe.
+        if not self._validate_fields():
+            return False
+        for field in self._fields:
+            option = field.id()
+            setattr(config, option, self._row[option].value())
+            field.init(field.get_value())
+        if close:    
+            self._parent.Close()
+        else:
+            refresh()
+        return True
+
+    def _create_additional_buttons(self):
+        b = wx.Button(self, wx.ID_APPLY)
+        wx_callback(wx.EVT_BUTTON, self, b.GetId(),
+                    lambda e: self._commit_form(close=False))
+        return (b,)
+    
     def _create_print_menu(self):
         return None
