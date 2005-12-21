@@ -591,16 +591,15 @@ class Configuration:
         _DEFAULT = 'C'
 
     class _Option_export_directory(_StringOption):
-        """Adresáø pro export textových souborù.
-        Hodnota musí být øetìzec udávající cestu k adresáøi, kde se budou
+        """Adresáø pro export do CSV souborù.
+        Hodnota udává cestu k adresáøi, kde se budou
         ukládat textové CSV soubory. 
         """
         _DEFAULT = '/tmp'
 
     class _Option_export_encoding(_StringOption):
-        """Kódování exportovaných øetìzcù
-        Hodnota musí být jedním z podporovaných kódování pro metodu
-        encode() unicodových øetìzcù v Pythonu. 
+        """Kódování exportovaných dat.
+        Hodnota musí být jedním z podporovaných kódování v Pythonu. 
         """
         _DEFAULT = 'iso8859-2'
 
