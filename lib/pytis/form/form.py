@@ -506,7 +506,7 @@ class TitledForm:
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel, text, size=size)
         bmp = wx.ArtProvider_GetBitmap(wx.ART_PRINT, wx.ART_TOOLBAR, (16,16))
-        button = wx.BitmapButton(panel, -1, bmp)
+        button = wx.BitmapButton(panel, -1, bmp, style=wx.NO_BORDER)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(), self._on_print_menu)
         box = wx.BoxSizer()
         box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
@@ -1443,7 +1443,7 @@ class EditForm(LookupForm, TitledForm):
             log(ACTION, 'Update øádku')
             op = (self._data.update, (self._current_key(), rdata))
         else:
-            raise ProgramError("Can't commit in this mode.")
+            raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
         success, result = db_operation(op)
         if success and result[1]:
@@ -1655,8 +1655,8 @@ class PopupEditForm(PopupForm, EditForm):
         return True
     
     def _create_buttons(self):
-        ok, cancel = buttons = (wx.Button(self, wx.ID_OK, _("Ok")),
-                                wx.Button(self, wx.ID_CANCEL, _("Zavøít")))
+        ok, cancel = buttons = (wx.Button(self, wx.ID_OK),
+                                wx.Button(self, wx.ID_CANCEL))
         wx_callback(wx.EVT_BUTTON, self, wx.ID_OK, self._on_submit)
         wx_callback(wx.EVT_BUTTON, self, wx.ID_CANCEL, self._on_cancel)
         ok.SetToolTipString(_("Ulo¾it záznam a uzavøít formuláø"))
@@ -1666,12 +1666,16 @@ class PopupEditForm(PopupForm, EditForm):
             wx_callback(wx.EVT_BUTTON, self, wx.ID_FORWARD, self._on_next)
             next.SetToolTipString(_("Ulo¾it záznam a reinicializovat formuláø"
                                     " pro vlo¾ení dal¹ího záznamu"))
-            buttons = (ok, cancel, next)
+            buttons += (next,)
+        buttons += self._create_additional_buttons()
         ok.SetDefault()
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
             sizer.Add(b, 0, wx.ALL, 20)
         return sizer
+
+    def _create_additional_buttons(self):
+        return ()
     
     def run(self):
         key = self._current_key()
