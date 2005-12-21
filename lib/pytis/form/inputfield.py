@@ -29,6 +29,7 @@ Vytvoøení patøièné tøídy.
 
 import pytis.data
 from pytis.form import *
+import wx.lib.colourselect
 #from wxPython.pytis.maskededit import wxMaskedTextCtrl
 
 
@@ -1050,9 +1051,8 @@ class ColorSelectionField(Invocable, TextField):
         return True
 
     def _create_button(self, height):
-        button = wx.Button(self._parent)
-        button.SetSize((height, height))
-        #wx_callback(wx.EVT_PAINT, button, self._on_button_paint)
+        button = wx.lib.colourselect.ColourSelect(self._parent, -1,
+                                                  size=(height, height))
         return button
 
     #def _on_button_paint(self, event):
@@ -1064,8 +1064,7 @@ class ColorSelectionField(Invocable, TextField):
     #    dc.DrawRect(0, 0, 10, 10) #size.GetWidth(), size.GetHeight()
     
     def _set_value(self, value):
-        self._invocation_button.SetBackgroundColour(value)
-        self._invocation_button.SetForegroundColour(value)
+        self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
 
 class GenericCodebookField(InputField):
