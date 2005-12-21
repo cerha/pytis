@@ -152,6 +152,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             self._title_bar = None
         self._grid = self._create_grid()
+        self._update_colors()
         sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
     def _column_width(self, grid, column):
@@ -182,10 +183,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         labelfont = g.GetLabelFont()
         labelfont.SetWeight(wx.NORMAL)
         g.SetLabelFont(labelfont)
-        if config.cell_highlight_color is not None:
-            g.SetCellHighlightColour(config.cell_highlight_color)
-        if config.grid_line_color is not None:
-            g.SetGridLineColour(config.grid_line_color)
         g.SetDefaultRowSize(dlg2px(g, 0, 10).GetHeight())
         # (Re)inicializuj atributy instance a gridu
         self._editors = []
@@ -237,7 +234,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_RIGHT_DOWN, labels, self._on_label_right_down)
         wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
-        self._update_label_colors(g)
         if __debug__: log(DEBUG, 'Nový grid vytvoøen')
         return g
 
@@ -311,13 +307,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # grid.  Thus we generate one artificially...
             g.SetSize(g.GetSize())
         self._select_cell(row=self._position)
-        self._update_label_colors(g)
+        self._update_colors()
         #g.SetFocus()
 
-    def _update_label_colors(self, grid):
+    def _update_label_colors(self):
         color = self._lf_indicate_filter and config.filter_color or \
                 self._TITLE_FOREGROUND_COLOR
-        grid.SetLabelBackgroundColour(color)
+        self._grid.SetLabelBackgroundColour(color)
 
     def _context_menu(self):
         """Vra» specifikaci \"kontextového\" popup menu vybrané buòky seznamu.
@@ -1595,6 +1591,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # aktuálního formuláøe (s vyu¾itím této metody).
         return (('list-position', 7),)
 
+    def _update_colors(self):
+        self._update_selection_colors()
+        self._update_label_colors()
+        if config.cell_highlight_color is not None:
+            self._grid.SetCellHighlightColour(config.cell_highlight_color)
+        if config.grid_line_color is not None:
+            self._grid.SetGridLineColour(config.grid_line_color)
+    
     # wx metody
 
     def _on_size(self, event=None):
