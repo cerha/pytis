@@ -1638,10 +1638,6 @@ class PopupEditForm(PopupForm, EditForm):
         box.Fit(status_bar)
         return status_bar
 
-    def _on_submit(self, event):
-        self._commit_form()
-        return True
-
     def _on_next(self, event):
         result = self._commit_form(close=False)
         if result:
@@ -1650,18 +1646,14 @@ class PopupEditForm(PopupForm, EditForm):
             self._select_row(None)
         return False
 
-    def _on_cancel(self, event):
-        self._leave_form()
-        return True
-
     def _buttons(self):
         buttons = ({'id': wx.ID_OK,
                     'toottip': _("Ulo¾it záznam a uzavøít formuláø"),
-                    'handler': self._on_submit,
+                    'handler': lambda e: self._commit_form(),
                     'default': True},
                    {'id': wx.ID_CANCEL,
                     'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
-                    'handler': self._on_cancel})
+                    'handler': lambda e: self._leave_form()})
         if self._mode == self.MODE_INSERT and not self._disable_next_button:
             buttons += ({'id': wx.ID_FORWARD,
                          'label': _("Dal¹í"),
