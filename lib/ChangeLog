@@ -21,6 +21,8 @@
 	(Configuration._Option_row_focus_bg_color): Update docstringu.
 	(Configuration._Option_grouping_background_downgrade): Nová
 	konfiguraèní volba.
+	(Configuration._Option_export_directory) 
+	(Configuration._Option_export_encoding): Update docstringu.
 
 	* pytis/form/form.py (PopupEditForm._init_attributes): Arguemnt
 	`disable_new_button' pøejmenován na `disable_next_button'.
@@ -51,6 +53,7 @@
 	(config_menu_items): Nová funkce.
 	(ConfigForm._buttons): Nová metoda.
 	(config_menu_items): Doplnìn docstring.
+	(_LAYOUT): Doplnìn layout `export'.
 
 2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
