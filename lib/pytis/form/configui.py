@@ -48,7 +48,9 @@ _LAYOUT = {
     #        'edit_form_caption_font'),
     LVGroup(_("Chování"),
             'show_splash', 'show_tooltips', 'cache_spec_onstart'),
-    ))
+    )),
+    'export': LayoutSpec(_("Nastavení exportu"),
+                         VGroup('export_directory','export_encoding')),
     }
 
 _LABELS = {'row_focus_fg_color':            _("Text"),
