@@ -1653,30 +1653,34 @@ class PopupEditForm(PopupForm, EditForm):
     def _on_cancel(self, event):
         self._leave_form()
         return True
-    
-    def _create_buttons(self):
-        ok, cancel = buttons = (wx.Button(self, wx.ID_OK),
-                                wx.Button(self, wx.ID_CANCEL))
-        wx_callback(wx.EVT_BUTTON, self, wx.ID_OK, self._on_submit)
-        wx_callback(wx.EVT_BUTTON, self, wx.ID_CANCEL, self._on_cancel)
-        ok.SetToolTipString(_("Ulo¾it záznam a uzavøít formuláø"))
-        cancel.SetToolTipString(_("Uzavøít formuláø bez ulo¾ení dat"))
+
+    def _buttons(self):
+        buttons = ({'id': wx.ID_OK,
+                    'toottip': _("Ulo¾it záznam a uzavøít formuláø"),
+                    'handler': self._on_submit,
+                    'default': True},
+                   {'id': wx.ID_CANCEL,
+                    'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
+                    'handler': self._on_cancel})
         if self._mode == self.MODE_INSERT and not self._disable_next_button:
-            next = wx.Button(self, wx.ID_FORWARD, _("Dal¹í"))
-            wx_callback(wx.EVT_BUTTON, self, wx.ID_FORWARD, self._on_next)
-            next.SetToolTipString(_("Ulo¾it záznam a reinicializovat formuláø"
-                                    " pro vlo¾ení dal¹ího záznamu"))
-            buttons += (next,)
-        buttons += self._create_additional_buttons()
-        ok.SetDefault()
+            buttons += ({'id': wx.ID_FORWARD,
+                         'label': _("Dal¹í"),
+                         'toottip': _("Ulo¾it záznam a reinicializovat formuláø"
+                                      " pro vlo¾ení dal¹ího záznamu"),
+                         'handler': self._on_next},)
+        return buttons
+        
+    def _create_buttons(self):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        for b in buttons:
-            sizer.Add(b, 0, wx.ALL, 20)
+        for b in self._buttons():
+            button = wx.Button(self, b.get('id', -1), b.get('label', ""))
+            wx_callback(wx.EVT_BUTTON, self, button.GetId(), b['handler'])
+            button.SetToolTipString(b.get('toottip'))
+            if b.get('default'):
+                button.SetDefault()
+            sizer.Add(button, 0, wx.ALL, 20)
         return sizer
 
-    def _create_additional_buttons(self):
-        return ()
-    
     def run(self):
         key = self._current_key()
         if self._mode == self.MODE_EDIT and key and not self._lock_record(key):
