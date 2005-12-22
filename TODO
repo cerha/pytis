@@ -207,3 +207,19 @@ INTERNÍ ZÁLE®ITOSTI:
 
    Proto¾e grouping neovlivòuje poèet, poøadí ani data øádkù, není dùvod, proè
    by se mìl nastavovat pomocí reset().   
+
+
+ * Zmìny týkající se standardních konfiguraèních voleb.
+
+   V defsech v¹ech proj¹ktù:
+    - zru¹it celý defs NastaveniUIUser.
+    - v NastaveniUIUser zru¹it sloupeèky `export_directory' a `export_encoding'.
+    - v NastaveniUIUser pøidat sloupeèek `saved_config'.
+    - export_directory nepou¾ívat pøes cfg_param() ale config.export_directory.
+    - v application.py pøidat podporu pro ukládání konfigurace do saved_config.
+    - v application.py pou¾ívat DBConfig namísto ConfigDB
+   
+   V databázi v¹ech projektù:
+    - zru¹it sloupeèky `export_directory' a `export_encoding'
+    - zru¹it v¹e, co se týká bv_users_ui_cfg.
+    - pøidat sloupeèek `saved_config' do bv_users_cfg.
