@@ -1,3 +1,18 @@
+2005-12-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (PopupForm._on_parent_close): Testuj, zda ji¾
+	okno není po smrti.
+
+	* pytis/form/configui.py: Update docstringu.
+	(_LAYOUT): Definuj jako tuple dvojic, ne jako slovník.
+	(config_menu_items, ConfigForm._layout): Respektuj to.
+
+	* pytis/form/application.py (Application.run_form): Pokud není
+	Editformu pøedán argument select_row, nastavuj `mode' na
+	`MODE_INSERT'.
+	(Application.new_record): Nenastavuj EditFormu afgument `new', ale
+	`mode'.
+
 2005-12-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._create_form_parts): Po vytvoøení
