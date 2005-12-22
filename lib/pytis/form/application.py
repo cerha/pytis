@@ -419,8 +419,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         odstranit metodou 'leave_form()'.
           
         """
-        result = None
-        state_kwargs = {}
         # TODO: Toto je jen kvùli zpìtné kompatibilitì.  Argument 'key' je
         # tøeba ve v¹ech projektech pøejmenovat na 'select_row' a následující
         # øádky èasem zru¹it.
@@ -432,7 +430,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if kwargs['new']:
                     kwargs['mode'] = EditForm.MODE_INSERT
                 del kwargs['new']
+            if not kwargs.get('select_row') and not kwargs.has_key('mode'):
+                kwargs['mode'] = EditForm.MODE_INSERT
         # konec doèasného hacku    
+        result = None
+        state_kwargs = {}
         for arg in ('select_row', ):
             if kwargs.has_key(arg):
                 state_kwargs[arg] = kwargs[arg]
@@ -581,8 +583,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if isinstance(top, Refreshable):
                 top.refresh()
         else:
-            result = run_form(PopupEditForm, name, select_row=key, new=True,
-                              prefill=prefill)
+            result = run_form(PopupEditForm, name, select_row=key,
+                              mode=EditForm.MODE_INSERT, prefill=prefill)
         return result
 
     def can_new_record(self, name, key=None, prefill=None):
