@@ -19,19 +19,19 @@
 """Formuláøe pro editaci konfiguraèních voleb v u¾ivatelském rozhraní.
 
 Formuláøe nejsou vázány na ¾ádnou specifikaci.  Datový objekt i prezentaèní
-specifikace jsou generovány automaticky pøi vytvoøení formuláøe.  Layout
-formuláøe je získáván z konstanty '_LAYOUT' definované ní¾e.  Ta je slovníkem
-jednotlivých Layoutù, kde klíèem je arguemnt 'name' konstruktoru formuláøe.
-Tak¾e výbìr specifikace z resolveru, bì¾ný u jiných formuláøù je zde nahrazen
-výbìrem layoutu ze slovníku a vygenerováním zbylých specifikaèních parametrù
-podle vlastností konfiguraèních voleb obsa¾ených v tomto layoutu.
+specifikace jsou generovány automaticky pøi vytvoøení formuláøe.  Layout je
+zvolen podle argumentu 'name' konstruktoru formuláøe jako jedna z polo¾ek
+konstanty '_LAYOUT' definované ní¾e.  Tak¾e výbìr specifikace z resolveru,
+bì¾ný u jiných formuláøù je zde nahrazen výbìrem layoutu z pøeddefinovaných
+layoutù a vygenerováním zbylých specifikaèních parametrù podle vlastností
+konfiguraèních voleb obsa¾ených v tomto layoutu.
 
 """
 
 from pytis.form import *
 
-_LAYOUT = {
-    'ui': LayoutSpec(_("Nastavení u¾ivatelského rozhraní"), VGroup(
+_LAYOUT = (
+    ('ui', LayoutSpec(_("Nastavení u¾ivatelského rozhraní"), VGroup(
     LVGroup(_("Barvy"),
             HGroup(LHGroup(_("Aktivní øádek"),
                            'row_focus_fg_color','row_focus_bg_color'),
@@ -44,14 +44,12 @@ _LAYOUT = {
             'grid_line_color',
             #'grouping_background_downgrade',
             ),
-    #LVGroup(_("Písma"),
-    #        'edit_form_caption_font'),
     LVGroup(_("Chování"),
             'show_splash', 'show_tooltips', 'cache_spec_onstart'),
-    )),
-    'export': LayoutSpec(_("Nastavení exportu"),
-                         VGroup('export_directory','export_encoding')),
-    }
+    ))),
+    ('export', LayoutSpec(_("Nastavení exportu"),
+                          VGroup('export_directory','export_encoding')),
+     ))
 
 _LABELS = {'row_focus_fg_color':            _("Text"),
            'row_focus_bg_color':            _("Pozadí"),
@@ -62,7 +60,6 @@ _LABELS = {'row_focus_fg_color':            _("Text"),
            'cell_highlight_color':          _("Zvýraznìní aktivní buòky"),
            'grid_line_color':               _("Møí¾ka tabulky"),
            #'grouping_background_downgrade': _("Ztmavení seskupených øádkù"),
-           #'edit_form_caption_font':        _("Font"),
            'show_splash':                   _("Zobrazovat úvodní dialog"),
            'show_tooltips':                 _("Zobrazovat bublinovou nápovìdu"),
            'cache_spec_onstart':            _("Naèítat specifikace pøi startu"),
@@ -84,7 +81,7 @@ def config_menu_items(hotkeys={}):
                    hotkey=hotkeys.get(name),
                    help=(_('Otevøít konfiguraèní formuláø "%s"') % \
                          layout.caption()))
-             for name, layout in _LAYOUT.items()]
+             for name, layout in _LAYOUT]
     return tuple(items)
 
 
@@ -99,7 +96,7 @@ class ConfigForm(PopupEditForm):
     """Formuláø pro editaci konfiguraèních voleb.
 
     Argument 'name' konstruktoru zde nemá obvyklý význam.  Slou¾í jako klíè do
-    slovníku layoutù definovaného vý¹e (konstanta '_LAYOUT').  Datová i
+    seznamu layoutù definovaného vý¹e (konstanta '_LAYOUT').  Datová i
     prezentaèní specifikace pro tento layout jsou vytvoøeny automaticky.
     
     Formuláø po svém ukonèení automaticky aktualizuje konfiguraci novými
@@ -114,7 +111,7 @@ class ConfigForm(PopupEditForm):
         self._select_row(pytis.data.Row(values))
     
     def _layout(self):
-        return _LAYOUT[self._name]
+        return dict(_LAYOUT)[self._name]
     
     def _create_view_spec(self, **kwargs):
         fields = [FieldSpec(option, _LABELS.get(option, option),
