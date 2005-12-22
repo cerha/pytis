@@ -461,13 +461,14 @@ class PopupForm:
 
     def _leave_form(self):
         self._popup_frame_.Close() # tím se autom. zavolá _on_parent_close()
-
+        
     def _on_parent_close(self, event):
         if hasattr(self, 'exit_check') and not self.exit_check():
             event.Veto()
             return True
         event.Skip()
-        self._parent.EndModal(0)
+        if self._parent:
+            self._parent.EndModal(0)
         return False
 
     def run(self):
