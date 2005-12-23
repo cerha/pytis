@@ -231,7 +231,7 @@
 # Instance specifikace spojení do databáze ('pytis.data.DBConnection').
 # Implicitnì se vytváøí z vý¹e uvedených databázových voleb.
 # 
-#dbconnection = <pytis.data.dbdata.DBConnection instance at 0xb790c9cc>
+#dbconnection = <pytis.data.dbdata.DBConnection instance at 0xb798f9cc>
 
 # Formát spoleènì uvedeného data a èasu.
 # Formát musí být string a musí být ve tvaru vy¾adovaném parametrem
@@ -273,7 +273,7 @@
 
 # Zvlá¹tní ladící funkce, napojená na pøíkaz 'COMMAND_CUSTOM_DEBUG'.
 # 
-#custom_debug = <bound method _Option_custom_debug.<lambda> of <pytis.util.configuration._Option_custom_debug object at 0xb791128c>>
+#custom_debug = <bound method _Option_custom_debug.<lambda> of <pytis.util.configuration._Option_custom_debug object at 0xb799428c>>
 
 # Specifikace logovací tøídy.
 # Trojice (CLASS, ARGS, KWARGS), kde CLASS je logovací tøída a ARGS,
