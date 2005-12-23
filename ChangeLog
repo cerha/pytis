@@ -1,3 +1,7 @@
+2005-12-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* config/config.py: Aktualizováno.
+
 2005-12-20  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlFunction._format_body): Místo 'plpython'
