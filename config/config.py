@@ -1,16 +1,16 @@
 # -*- coding: iso-8859-2 -*-
 
-# Interní kódování databáze
-# Hodnota musí být jedním z podporovaných kódování pro metodu
-# encode() unicodových řetězců v Pythonu.
-# 
-#db_encoding = 'utf-8'
+# Volba odpovídající --help na příkazové řádce.
+#help = False
+
+# Příznak cachování specifikací při startu aplikace.
+#cache_spec_onstart = True
+
+# Port databázového serveru.
+#dbport = None
 
 # Příznak zobrazování úvodního uvítacího dialogu.
 #show_splash = True
-
-# Příznak zobrazování úvodního uvítacího dialogu.
-#cache_spec_onstart = True
 
 # Adresář obsahující definiční soubory.
 # Adresář může být zadán absolutně i relativně vzhledem k aktuálnímu
@@ -19,15 +19,18 @@
 #def_dir = './defs'
 
 # Barva záhlaví tabulkového formuláře při zapnutém filtrování.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #filter_color = '#82c882'
 
 # E-mailová adresa, na kterou mají být posílána oznámení o chybě.
 #bug_report_address = ''
 
+# Umístění konfiguračního souboru.
+#config_file = None
+
 # Barva textu aktivního řádku tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #row_focus_fg_color = '#ffffff'
 
@@ -46,7 +49,7 @@
 #lc_numeric = 'C'
 
 # Barva pozadí needitovatelného vstupního políčka.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #field_disabled_color = '#c0c0c0'
 
@@ -65,9 +68,11 @@
 # 
 #debug_on_error = False
 
-# Kódování exportovaných řetězců
-# Hodnota musí být jedním z podporovaných kódování pro metodu
-# encode() unicodových řetězců v Pythonu.
+# Tato volba je využívána aplikací pro ukládání stavu formulářů.
+#form_state = {}
+
+# Kódování exportovaných dat.
+# Hodnota musí být jedním z podporovaných kódování v Pythonu.
 # 
 #export_encoding = 'iso8859-2'
 
@@ -85,7 +90,7 @@
 #log_class_filter = ('pytis.data.DBDefaultClass',)
 
 # Barva pozadí editovaného řádku.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #row_edit_bg_color = '#c80000'
 
@@ -95,14 +100,16 @@
 # Uživatelské jméno (login) pro databázové spojení.
 #dbuser = getpass.getuser()
 
-# Barva pozadí aktivního řádku tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
-# Pokud je None, bude použita systémová barva zvýraznění.
+# Ztmavení barvy skupiny při seskupování řádků.
+# Protože barva pozadí řádků není vždy bílá, je tato hodnota chápána jako
+# relativní.  O kolik je zvolená barva tmavší než bílá, o tolik bude
+# výsledná barva skupiny tmavší, než barva pozadí ostatních řádků.
+# I zde je barva reprezentována řetězcem '#RRGGBB'.
 # 
-#row_focus_bg_color = None
+#grouping_background_downgrade = '#6482be'
 
 # Barva pozadí políčka needitovatelného kvůli přístupovým právům.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #field_inaccessible_color = '#e0e4f0'
 
@@ -120,31 +127,36 @@
 # 
 #profile = False
 
-# Jméno aplikace.
-# Jméno může být libovolné, používá se pouze ve věcech jako titulky oken
-# nebo logování.
+# Adresář obsahující dokumentační soubory.
+# Adresář může být zadán absolutně i relativně vzhledem k aktuálnímu
+# adresáři.
 # 
-#application_name = 'Pytis'
+#doc_dir = './docs'
 
 # Barva mřížky tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #grid_line_color = '#6482be'
+
+# Příznak určující, zda mají být spouštěny i interaktivní testy.
+# Týká se pouze regresivního testování.
+# 
+#test_run_interactive = None
 
 # Adresář pro dočasné pomocné soubory.
 # 
 #tmp_dir = '/tmp'
 
 # Barva textu neaktivního řádku tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #row_nofocus_fg_color = '#000000'
 
 # Příznak zobrazování bublinové nápovědy.
 #show_tooltips = True
 
-# Adresář pro export textových souborů.
-# Hodnota musí být řetězec udávající cestu k adresáři, kde se budou
+# Adresář pro export do CSV souborů.
+# Hodnota udává cestu k adresáři, kde se budou
 # ukládat textové CSV soubory.
 # 
 #export_directory = '/tmp'
@@ -159,6 +171,17 @@
 # který udává počet řádků cache.
 # 
 #cache_size = 20000
+
+# Seznam formulářů, které mají být otevřeny po spuštění aplikace.
+#startup_forms = None
+
+# Prefix jména modulu, jehož debugovací hlášky jsou propuštěny.
+# Debugovací logovací hlášky modulů s jiným prefixem jsou odfiltrovány.
+# Není-li definováno, jsou propuštěny všechny hlášky (nestanoví-li jiný
+# filtr jinak).
+# Užitečné pouze pro ladění.
+# 
+#log_module_filter = 'pytis.data'
 
 # Příznak výpisu ladících informací o paměti.
 # Je-li zapnuta, aplikace vypisuje informativní hlášky garbage collectoru
@@ -176,6 +199,12 @@
 # Jméno aplikační databáze.
 #dbname = 'pytis'
 
+# Jméno aplikace.
+# Jméno může být libovolné, používá se pouze ve věcech jako titulky oken
+# nebo logování.
+# 
+#application_name = 'Pytis'
+
 # Formát data.
 # Formát musí být string a musí být ve tvaru vyžadovaném parametrem
 # `format' konstruktoru třídy 'pytis.data.Date'.
@@ -187,13 +216,22 @@
 # 
 #log_exclude = [DEBUG]
 
-# Prefix jména modulu, jehož debugovací hlášky jsou propuštěny.
-# Debugovací logovací hlášky modulů s jiným prefixem jsou odfiltrovány.
-# Není-li definováno, jsou propuštěny všechny hlášky (nestanoví-li jiný
-# filtr jinak).
-# Užitečné pouze pro ladění.
+# Barva pozadí aktivního řádku tabulkového formuláře.
+# Pokud barva není nastavena, bude použita systémová barva zvýraznění.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
-#log_module_filter = 'pytis.data'
+#row_focus_bg_color = None
+
+# Interní kódování databáze
+# Hodnota musí být jedním z podporovaných kódování pro metodu
+# encode() unicodových řetězců v Pythonu.
+# 
+#db_encoding = 'utf-8'
+
+# Instance specifikace spojení do databáze ('pytis.data.DBConnection').
+# Implicitně se vytváří z výše uvedených databázových voleb.
+# 
+#dbconnection = <pytis.data.dbdata.DBConnection instance at 0xb790c9cc>
 
 # Formát společně uvedeného data a času.
 # Formát musí být string a musí být ve tvaru vyžadovaném parametrem
@@ -216,14 +254,26 @@
 #server = None
 
 # Barva textu editovaného řádku tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #row_edit_fg_color = '#ffffff'
 
+# Umístění doplňujícího konfiguračního souboru uživatele.
+# Tento soubor, pokud, existuje, je načítán navíc ke standardní
+# konfiguraci a v něm definované volby mají vyšší prioritu než volby ve
+# standardním konfiguračním souboru.
+# Užitečné převážně pro ladění.
+# 
+#user_config_file = None
+
 # Barva pozadí neaktivního řádku tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #row_nofocus_bg_color = '#b6b6b6'
+
+# Zvláštní ladící funkce, napojená na příkaz 'COMMAND_CUSTOM_DEBUG'.
+# 
+#custom_debug = <bound method _Option_custom_debug.<lambda> of <pytis.util.configuration._Option_custom_debug object at 0xb791128c>>
 
 # Specifikace logovací třídy.
 # Trojice (CLASS, ARGS, KWARGS), kde CLASS je logovací třída a ARGS,
@@ -231,7 +281,7 @@
 # konstruktoru.  Standardní dostupné třídy jsou SyslogLogger a
 # StreamLogger.  Více o nich lze nalézt v jejich dokumentaci.
 # 
-#log_logger = (SyslogLogger, (), {})
+#log_logger = (log.StreamLogger, (sys.stderr,), {})
 
 # Příznak ladícího režimu.
 # Je-li zapnut, aplikace může běžet s více kontrolami a vypisovat
@@ -240,7 +290,7 @@
 #debug = False
 
 # Barva zvýraznění aktivní buňky tabulkového formuláře.
-# Barva je dána řetězcem '#RRGGBB'.
+# Barva je reprezentována řetězcem '#RRGGBB'.
 # 
 #cell_highlight_color = '#ffa000'
 
