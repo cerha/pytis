@@ -4,6 +4,16 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-22  Tomas Cerha  <cerha@brailcom.org>
+
+        Pøibyl nový konfiguraèní formuláø "Nastavení exportu", který
+	nahrazuje polo¾ky, které byly døíve zamíchány do u¾ivatelského
+	nastavení.  Tyto polo¾ky byly odstranìny z Isasu a Solasu.
+	
+	* BUGFIX: Pøi uzavírání popup oken je kontrolováno, zda pøíslu¹ný
+	wx prvek je¹tì ¾ije.  To døíve mohlo vést ve speciálních pøípadech
+	ke krachu aplikace.
+	
 2005-12-21  Tomas Cerha  <cerha@brailcom.org>
 
         ListForm nyní pøi refreshi aktualizuje i nastavení v¹ech barev,
