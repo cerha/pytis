@@ -1623,9 +1623,9 @@ class PopupEditForm(PopupForm, EditForm):
         status_bar = self._create_status_bar()
         # Add parts to the sizer.
         sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
-        sizer.Add(group, 0, wx.ALIGN_CENTER|wx.ALL, 6)
+        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.ALL, 6)
         sizer.Add(buttons, 0, wx.ALIGN_CENTER)
-        sizer.Add(status_bar, 0, wx.EXPAND)            
+        sizer.Add(status_bar, 0, wx.EXPAND)
 
     def _create_status_bar(self):
         # Our own statusbar implementation
