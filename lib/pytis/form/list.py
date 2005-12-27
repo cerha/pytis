@@ -78,7 +78,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     _GROUPING_BACKGROUND_DOWNGRADE = (18, 16, 14) # sní¾ení slo¾ek jasu RGB
     _TITLE_FOREGROUND_COLOR = WxColor(210, 210, 210)
     
-    _STATUS_FIELDS = ['list-position']
+    _STATUS_FIELDS = ('list-position', 'data-changed')
 
 
     def __init__(self, *args, **kwargs):
@@ -576,6 +576,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         now = time.time()
         maybe_future = self._last_reshuffle_request + self._REFRESH_PERIOD
         self._reshuffle_request = max(now, maybe_future)
+        self._show_data_status()
 
     def _on_idle(self, event):
         if self._selection_candidate is not None:
@@ -884,6 +885,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         total = self._table.GetNumberRows()
         set_status('list-position', "%d/%d" % (row + 1, total))
 
+    def _show_data_status(self):
+        if self._reshuffle_request > self._last_reshuffle_request:
+            status = _("Data zmìnìna")
+        else:
+            status = _("Data ok")
+        set_status('data-changed', status)
+        
     def on_key_down(self, event, dont_skip=True):
         self._run_callback(self.CALL_USER_INTERACTION)
         if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
@@ -1583,6 +1591,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._select_cell(row=row)
         else:
             self._select_cell(row=row)
+        self._show_data_status()
         return True
 
     def status_fields(self):
@@ -1661,6 +1670,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def focus(self):
         super_(ListForm).focus(self)
         self.show_position()
+        self._show_data_status()
         self._update_selection_colors()
         self._grid.SetFocus()
         
