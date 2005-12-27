@@ -1,3 +1,15 @@
+2005-12-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/configui.py (_LABELS): Pøidány popisky pro volby exportu.
+	(_ConfigData): Nová tøída.
+	(_MemData): Tøída zru¹ena.
+	(ConfigForm.__init__): Nastavuj `mode' v¾dy na `MODE_EDIT'.
+	Inicializuj select a vyber první øádek z datového objektu.
+	(ConfigForm._commit_form): Metoda zru¹ena/
+	(ConfigForm._on_apply): Nová metoda.
+	(ConfigForm._buttons): Vyu¾ívej ji.  Vytváøej výsledek skládáním
+	tuplù a u¹etøi tak pøevod na list.
+
 2005-12-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (PopupForm._on_parent_close): Testuj, zda ji¾
