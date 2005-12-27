@@ -1,5 +1,8 @@
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (PopupEditForm._create_form_parts): Povol
+	horizontální expanzi obsahu formuláøe v sizeru.
+
 	* pytis/form/configui.py (_LABELS): Pøidány popisky pro volby exportu.
 	(_ConfigData): Nová tøída.
 	(_MemData): Tøída zru¹ena.
