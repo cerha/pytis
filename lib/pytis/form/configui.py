@@ -51,19 +51,21 @@ _LAYOUT = (
                           VGroup('export_directory','export_encoding')),
      ))
 
-_LABELS = {'row_focus_fg_color':            _("Text"),
-           'row_focus_bg_color':            _("Pozadí"),
-           'row_nofocus_fg_color':          _("Text"),
-           'row_nofocus_bg_color':          _("Pozadí"),
-           'row_edit_fg_color':             _("Text"),
-           'row_edit_bg_color':             _("Pozadí"),
-           'cell_highlight_color':          _("Zvýraznìní aktivní buòky"),
-           'grid_line_color':               _("Møí¾ka tabulky"),
-           #'grouping_background_downgrade': _("Ztmavení seskupených øádkù"),
-           'show_splash':                   _("Zobrazovat úvodní dialog"),
-           'show_tooltips':                 _("Zobrazovat bublinovou nápovìdu"),
-           'cache_spec_onstart':            _("Naèítat specifikace pøi startu"),
-           }
+_LABELS = {'row_focus_fg_color':    _("Text"),
+           'row_focus_bg_color':    _("Pozadí"),
+           'row_nofocus_fg_color':  _("Text"),
+           'row_nofocus_bg_color':  _("Pozadí"),
+           'row_edit_fg_color':     _("Text"),
+           'row_edit_bg_color':     _("Pozadí"),
+           'cell_highlight_color':  _("Zvýraznìní aktivní buòky"),
+           'grid_line_color':       _("Møí¾ka tabulky"),
+           'grouping_background_downgrade': _("Ztmavení øádkù pøi seskupování"),
+           'show_splash':           _("Zobrazovat úvodní dialog"),
+           'show_tooltips':         _("Zobrazovat bublinovou nápovìdu"),
+           'cache_spec_onstart':    _("Naèítat specifikace pøi startu"),
+           'export_directory':      _("Výchozí adresáø"),
+           'export_encoding':       _("Kódování exportovaných dat"),
+}
 
 def config_menu_items(hotkeys={}):
     """Vra» seznam polo¾ek menu pro otevøení konfiguraèních formuláøù.
@@ -85,12 +87,35 @@ def config_menu_items(hotkeys={}):
     return tuple(items)
 
 
-class _MemData(pytis.data.MemData, pytis.data.RestrictedData):
-    def __init__(self, bindings):
-        access_rights=pytis.data.AccessRights((None, (None, pytis.data.Permission.ALL)))
+class _ConfigData(pytis.data.Data, pytis.data.RestrictedData):
+    """Fale¹ná datová tøída."""
+    
+    def __init__(self, columns):
+        AR = pytis.data.AccessRights
+        access_rights = AR((None, (None, pytis.data.Permission.ALL)))
         pytis.data.RestrictedData.__init__(self, access_rights)
-        pytis.data.MemData.__init__(self, bindings)
+        pytis.data.Data.__init__(self, columns, columns[0])
+        self._giveone = False
 
+    def select(self, condition=None, sort=None, reuse=False):
+        self._giveone = True
+        return 1
+
+    def fetchone(self, direction=pytis.data.FORWARD):
+        if direction != pytis.data.FORWARD or not self._giveone:
+            return None
+        self._giveone = False
+        row_data = [(o, pytis.data.Value(config.type(o), getattr(config, o)))
+                    for o in [c.id() for c in self.columns()]]
+        return pytis.data.Row(row_data)
+
+    def update(self, key, row):
+        options = [c.id() for c in self.columns()]
+        for option in options:
+            setattr(config, option, row[option].value())
+        return row, True
+        
+        
 
 class ConfigForm(PopupEditForm):
     """Formuláø pro editaci konfiguraèních voleb.
@@ -105,50 +130,37 @@ class ConfigForm(PopupEditForm):
     """
 
     def __init__(self, *args, **kwargs):
-        super_(ConfigForm).__init__(self, *args, **kwargs)
-        values = [(o, pytis.data.Value(config.type(o), getattr(config, o)))
-                  for o in self._layout().order()]
-        self._select_row(pytis.data.Row(values))
-    
+        kwargs['mode'] = self.MODE_EDIT
+        super(ConfigForm, self).__init__(*args, **kwargs)
+        self._init_select()
+        self.select_row(0)
+        
     def _layout(self):
         return dict(_LAYOUT)[self._name]
-    
+
     def _create_view_spec(self, **kwargs):
         fields = [FieldSpec(option, _LABELS.get(option, option),
                             descr=config.description(option))
                   for option in self._layout().order()]
-
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
                         fields, layout=self._layout())
 
     def _create_data_object(self, **kwargs):
         columns = [pytis.data.ColumnSpec(option, config.type(option))
                    for option in self._layout().order()]
-        return pytis.data.DataFactory(_MemData, columns).create()
-
-    def _commit_form(self, close=True):
-        # Update konfiguraèních voleb po odeslání formuláøe.
-        if not self._validate_fields():
-            return False
-        for field in self._fields:
-            option = field.id()
-            setattr(config, option, self._row[option].value())
-            field.init(field.get_value())
-        if close:    
-            self._parent.Close()
-        else:
-            refresh()
-        return True
-
-    def _buttons(self):
-        list = __builtins__['list']
-        apply = {'id': wx.ID_APPLY,
-                 'toottip': _("Uplatnit zmìny bez uzavøení formuláøe"),
-                 'handler': lambda e: self._commit_form(close=False)}
-        buttons = list(super(ConfigForm, self)._buttons())
-        buttons.insert(1, apply)
-        return tuple(buttons)
-        
+        return pytis.data.DataFactory(_ConfigData, columns).create()
     
     def _create_print_menu(self):
         return None
+    
+    def _on_apply(self):
+        self._commit_form(close=False)
+        refresh()
+
+    def _buttons(self):
+        apply = {'id': wx.ID_APPLY,
+                 'toottip': _("Uplatnit zmìny bez uzavøení formuláøe"),
+                 'handler': lambda e: self._on_apply}
+        buttons = super(ConfigForm, self)._buttons()
+        return (buttons[0], apply) + buttons[1:]
+    
