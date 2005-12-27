@@ -1,5 +1,11 @@
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._STATUS_FIELDS): Nová polo¾ka
+	'data-changed'.
+	(ListForm._show_data_status): Nová metoda.
+	(ListForm.on_data_change, ListForm._refresh, ListForm.focus):
+	Volej ji.
+
 	* pytis/form/form.py (PopupEditForm._create_form_parts): Povol
 	horizontální expanzi obsahu formuláøe v sizeru.
 

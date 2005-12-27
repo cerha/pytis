@@ -4,6 +4,30 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-27  Tomas Cerha  <cerha@brailcom.org>
+
+	Notifikace o zmìnì dat v databázi (napø. jiným u¾ivatelem) je nyní
+	mo¾no zobrazovat ve stavové øádce.  Staèí v definici polí
+	stavového øádku (v application.py) pøidat polo¾ku
+	"('data-changed', 13)" a v aplikaci pøibyde nové stavové pole,
+	které zobrazuje text "Data ok", pokud jsou data aktuální a "Data
+	zmìnìna", pokud byla data v databázi zmìnìna a je tedy nutné
+	zobrazení aktualizovat.  Jsou vítány návrhy na lep¹í hlá¹ky,
+	proto¾e "data zmìnìna" mù¾e vypadat i jako ¾e u¾ivatel nìco zmìnil
+	a neulo¾il, ale v¹echny jiné varianty jsou pøíli¹ dlouhé...
+
+	V budoucnu bude vhodné umo¾nit zobrazení ikony s tooltipem, èím¾
+	se vyøe¹í dilema s délkou/výsti¾ností hlá¹ky.  Také by tato
+	polo¾ka mìla být pøidávána do statusbaru automaticky, tak¾e nebude
+	nutné upravovat application.py v¹ech aplikací.  K tomu je ov¹em
+	tøeba trochu pøepracovat implementaci stavové øádky.
+
+	Dále byla dnes commitnuta úprava v configui, která zaji¹»uje
+	naèítání a ukládání konfigurace v konfiguraèním formuláøi pomocí
+	speciální "fale¹né" datové tøídy, èím¾ se jednak zjednodu¹ila
+	implementace formuláøe a jednak vyøe¹il døívìj¹í problém s módem
+	formuláøe.
+	
 2005-12-22  Tomas Cerha  <cerha@brailcom.org>
 
         Pøibyl nový konfiguraèní formuláø "Nastavení exportu", který

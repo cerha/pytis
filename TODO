@@ -148,7 +148,15 @@ INTERNÍ ZÁLE®ITOSTI:
    Value, ne se stringy.  Také by bylo vhodné, kdyby políèko mìlo pøístup pøímo
    k PresentedRow.
    
- * Pøepracování stavového øádku?
+ * Pøepracování stavového øádku.
+
+   Pole definovaná aplikací (message, list-position, ...) by mìla být pøítomna
+   automaticky.  Mìlo by být mo¾né zobrazit ikonu a tooltip.  Mìlo by být mo¾né
+   definovat políèko sledující stav konfiguraèní volby (nebo i jiné hodnoty?).
+   Je tøeba myslet také na obnovení stavu pøi pøepínání formuláøù
+   (`Form.restore()').
+
+
  
 
 ÈI©TÌNÍ:
@@ -211,13 +219,10 @@ INTERNÍ ZÁLE®ITOSTI:
 
  * Zmìny týkající se standardních konfiguraèních voleb.
 
-   V defsech v¹ech proj¹ktù:
+   V defsech v¹ech projektù:
     - zru¹it celý defs NastaveniUIUser.
-    - v NastaveniUIUser zru¹it sloupeèky `export_directory' a `export_encoding'.
-    - v NastaveniUIUser pøidat sloupeèek `saved_config'.
-    - export_directory nepou¾ívat pøes cfg_param() ale config.export_directory.
+    - v NastaveniUser pøidat sloupeèek `saved_config'.
     - v application.py pøidat podporu pro ukládání konfigurace do saved_config.
-    - v application.py pou¾ívat DBConfig namísto ConfigDB
    
    V databázi v¹ech projektù:
     - zru¹it sloupeèky `export_directory' a `export_encoding'
