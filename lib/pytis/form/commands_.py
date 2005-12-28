@@ -163,7 +163,7 @@ Command(ListForm, 'CONTEXT_MENU_ACTION',
         Navíc, pokud tyto funkce pøijímají jeden pozièní argument,
 	dostanou jako první argument instanci PresentedRow aktuálního øádku,
 	nad kterým byla akce vyvolána.  Pokud pøijímají dva pozièní argumenty,
-	bude na prvním místì pøedán je¹tì datový objekt formuláøe.")
+	bude na prvním místì pøedán je¹tì datový objekt formuláøe.""")
 Command(BrowseForm, 'IMPORT_INTERACTIVE',
         "Interaktivní import dat z CSV souboru.")
 Command(EditForm, 'COMMIT_RECORD',
