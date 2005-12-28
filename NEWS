@@ -15,6 +15,17 @@
 	pro znovuotevírání èasto pou¾ívaných formuláøù.  Menu si pamatuje
 	pouze posledních deset polo¾ek.
 
+	* BUGFIX: Byl o¹etøen pøípad vkládání záznamu do prázdné tabulky.
+
+	* BUGFIX: Pøi zji¹»ování editovatelnosti políèka v inline editaci
+	je nyní správnì pou¾it rozeditovaný øádek, ne øádek stejného èísla.
+	
+	* BUGFIX: Pøi aktualizaci gridu nyní nevoláme `_select_cell()' pro
+	výbìr pøedchozí vybrané buòky.  Vìt¹inou to není potøeba a bìhem
+	refresh, kde to potøeba je, se to stejnì provádí na konci je¹tì
+	jednou.  Naopak v nìkterých pøípadech vkládání øádkù je to
+	ne¾ádoucí, proto¾e je tím opìt zru¹ena nastartovaná editace.
+	
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
 	Notifikace o zmìnì dat v databázi (napø. jiným u¾ivatelem) je nyní
