@@ -81,6 +81,9 @@ class Command(object):
             identifikáítor, mezi názvy pøíkazù unikátní.  Název je pou¾it pro
             vytvoøení konstanty (viz. ní¾e), tak¾e dal¹ím po¾adavkem je, aby
             ve¹kerá písmena byla velká.
+          doc -- dokumentaèní øetìzec pøíazu.  Pokud je pøíkaz urèen k
+            u¾ivatelskému vyu¾ití, mìly by být zmínìny zejména argumenty
+            pøíkazu.
           handler -- obslu¾ná funkce volaná pøi zpracování pøíkazu.  Má význam
             pøi definici u¾ivatelských pøíkazù.  Blí¾e viz dokumentace tøídy.
             Hodnotou je callable object, nebo None.
@@ -132,6 +135,7 @@ class Command(object):
                           (types.StringType, types.TupleType, types.ListType))
         self._cls = cls
         self._name = name
+        self._doc = doc
         self._id = id = '.'.join((cls.__name__, name.lower().replace('_', '-')))
         if key is not None:
             log(OPERATIONAL,
@@ -170,6 +174,10 @@ class Command(object):
         """
         return self._id
 
+    def doc(self):
+        """Vra» dokumentaèní øetìzec pøíkazu jako string, nebo None."""
+        return self._doc
+    
     def handler(self):
         """Vra» rutinu pro zpracování pøíkazu zadanou v konstruktoru."""
         return self._handler
