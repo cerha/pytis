@@ -1,5 +1,12 @@
 2005-12-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._on_insert_line): O¹etøuj pøípad
+	prázdné tabulky.
+	(ListForm.__init__): Na konci nevolej `_select_cell()'.
+	(ListForm._is_editable_cell): Pokud se nacházíme v editaci, pracuj
+	s editovaným øádkem.
+	(ListForm._find_next_editable_cell): Kosmetická úprava.
+
 	* pytis/form/application.py
 	(Application._RECENT_FORMS_MENU_TITLE): Nová konstanta.
 	(Application.OnInit): Read the stored configuration before
