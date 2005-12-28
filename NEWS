@@ -4,6 +4,17 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2005-12-28  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøi definici menu aplikace je mo¾no v libovolném místì pou¾ít
+	novou funkci `recent_forms_menu()', která vytvoøí menu poslednì
+	otevøených formuláøù.  Do tohoto menu jsou potom automaticky
+	pøidávány v¹echny spou¹tìné formuláøe (vyjma popup formuláøù).
+	Výbìrem polo¾ky menu je stejný formuláø otevøen znovu.  Stav je
+	ukládán pøi ukonèení aplikace, tak¾e se menu bude hodit zejména
+	pro znovuotevírání èasto pou¾ívaných formuláøù.  Menu si pamatuje
+	pouze posledních deset polo¾ek.
+
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
 	Notifikace o zmìnì dat v databázi (napø. jiným u¾ivatelem) je nyní
