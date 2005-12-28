@@ -141,7 +141,29 @@ Command(ListForm, 'TOGGLE_COLUMN',
 Command(ListForm, 'RESET_COLUMNS',
         "Vrácení výchozího nastavení sloupcù.")
 Command(ListForm, 'CONTEXT_MENU_ACTION',
-        "Akce kontextového menu øádku tabulky.")
+        """Akce kontextového menu øádku tabulky.
+        
+	Je urèen k vytváøení u¾ivatelem definovaných akcí v kontextovém menu
+	øádku BrowseFormu.
+
+	Pøíkaz mù¾e mít libovolné argumenty, av¹ak dva z nich jsou
+	zpracovány odli¹nì:
+
+           `handler' -- je povinný a musí odkazovat na funkci, která akci
+              provede.
+
+           `enabled' -- funkce, vracející pravdu, pokud je pøíkaz aktivní a
+              nepravdu v opaèném pøípadì.  Argument je nepovinný a pokud není
+              uveden, je pøíkaz v¾dy aktivní.
+
+	Funkce `handler' i `enabled' dostanou jako klíèové argumenty v¹echny
+	ostatní argumenty pøíkazu, vyjma sebe sama (argumentù `handler' a
+	`enabled').
+
+        Navíc, pokud tyto funkce pøijímají jeden pozièní argument,
+	dostanou jako první argument instanci PresentedRow aktuálního øádku,
+	nad kterým byla akce vyvolána.  Pokud pøijímají dva pozièní argumenty,
+	bude na prvním místì pøedán je¹tì datový objekt formuláøe.")
 Command(BrowseForm, 'IMPORT_INTERACTIVE',
         "Interaktivní import dat z CSV souboru.")
 Command(EditForm, 'COMMIT_RECORD',
