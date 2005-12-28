@@ -1112,8 +1112,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                handler)
         args, kwargs = self._context_menu_handler_args(handler, **kwargs)
         handler(*args, **kwargs)
-        if not norefresh:
-            self.refresh()
+        #if not norefresh:
+        self.refresh()
         return True
     
     def can_context_menu_action(self, handler=None, enabled=None, **kwargs):
