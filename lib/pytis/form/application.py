@@ -124,6 +124,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _menubar_forms = {}
 
     _WINDOW_MENU_TITLE = _("Okn&a")
+    _RECENT_FORMS_MENU_TITLE = _("Poslednì otevøené formuláøe")
 
     def get_command_handler_instance(cls, application):
         return application
@@ -146,6 +147,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     
     def OnInit(self):
         init_colors()
+        # Create the main application window.
         title = config.application_name
         if __debug__:
             title += ' (wxWidgets %d.%d.%d)' % \
@@ -170,6 +172,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(OPERATIONAL, "Unable to read logo:", logo_file)
         global _application
         _application = self
+        # Read the stored configuration.
+        read_config = self._spec('read_config', self._read_config)
+        items = read_config()
+        for option, value in items:
+            setattr(config, option, value)
+        log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
+        # Initialize the application.
         keymap = self.keymap = Keymap()
         custom_keys = self._spec('command_keys', ())
         assert is_sequence(custom_keys), "Specifikace klávesových zkratek " + \
@@ -186,22 +195,29 @@ class Application(wx.App, KeyHandler, CommandHandler):
             for title, cmd in group:
                 command_menu_items.append(MItem(title, command=cmd))
         menus = self._spec('menu') + (
-            Menu(self._WINDOW_MENU_TITLE, (), activation=(Window.ACT_WINDOW)),
-            Menu(_("Pøíkazy"), command_menu_items, activation=Form.ACT_FORM))
+            Menu(self._WINDOW_MENU_TITLE, ()),
+            Menu(_("Pøíkazy"), command_menu_items))
         self._menubar = mb = MenuBar(self._frame, menus, self)
-
+        # Try to find the recent forms menu.
+        menu_id = mb.FindMenu(self._RECENT_FORMS_MENU_TITLE)
+        if menu_id != -1:
+            menu = mb.GetMenu(menu_id)
+        else:
+            for i in range(mb.GetMenuCount()):
+                m = mb.GetMenu(i)
+                menu_id = m.FindItem(self._RECENT_FORMS_MENU_TITLE)
+                if menu_id != -1:
+                    menu = m.FindItemById(menu_id).GetSubMenu()
+                    break
+            else:
+                menu = None
+        self._recent_forms_menu = menu
         default_font_encoding = self._spec('default_font_encoding')
         if default_font_encoding is not None:
             wx.Font.SetDefaultEncoding(default_font_encoding)
         wx_callback(wx.EVT_SIZE, self._frame, self._on_frame_size)
         self.SetTopWindow(self._frame)
         self._frame.Show(True)
-        # Read the stored configuration.
-        read_config = self._spec('read_config', self._read_config)
-        items = read_config()
-        for option, value in items:
-            setattr(config, option, value)
-        log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
         # Run application specific initialization.
         self._spec('init')
         self._panel.SetFocus()
@@ -248,12 +264,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
         groups = pytis.data.DBDataDefault.class_access_groups(connection)
         result = rights.permitted(perm, groups)
         return result
-        
+
+    def _form_menu_item_title(self, form):
+        title = form.title()
+        if form.__class__ != BrowseForm:
+            title += " (%s)" % form.descr()
+        return title
+    
     def _update_window_menu(self, recreate=True):
-        def wmitem(title, form):
-            return RadioItem(title,
-                             help=_('Vyzvednout okno formuláøe "%s" %s') % \
-                             (form.title(), str(form)),
+        def wmitem(i, form):
+            return RadioItem("&%d. %s" % (i, self._form_menu_item_title(form)),
+                             help=_('Vyzvednout okno formuláøe "%s" (%s/%s)') %\
+                             (form.title(),form.__class__.__name__,form.name()),
                              command=Application.COMMAND_RAISE_FORM,
                              state=lambda a: a.top_window() is form,
                              args={'form': form})
@@ -266,11 +288,41 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 menu.Remove(item.GetId())
                 item.Destroy()
             for i, form in enumerate(self._windows.items()):
-                title = "&%d. %s" % (i+1, form.title())
-                if form.__class__ != BrowseForm:
-                    title += " (%s)" % form.descr()
-                menu.AppendItem(wmitem(title, form).create(self._frame, menu))
+                menu.AppendItem(wmitem(i+1, form).create(self._frame, menu))
 
+    def _update_recent_forms(self, item=None):
+        menu = self._recent_forms_menu
+        if menu is not None:
+            recent = config.form_state.get('recent_forms', [])
+            if item is not None:
+                try:
+                    recent.remove(item)
+                except ValueError:
+                    pass
+                recent.insert(0, item)
+                config.form_state['recent_forms'] = recent[:10]
+            for item in menu.GetMenuItems():
+                menu.Remove(item.GetId())
+                item.Destroy()
+            for item in self._recent_forms_menu_items():
+                if isinstance(item, MSeparator):
+                    menu.AppendSeparator()
+                else:
+                    menu.AppendItem(item.create(self._frame, menu))
+                
+    def _recent_forms_menu_items(self):
+        recent = config.form_state.get('recent_forms', [])
+        items = [MItem(title,
+                       help=_('Otevøít formuláø "%s" (%s/%s)') %
+                            (title, args['form_class'].__name__, args['name']),
+                       command=Application.COMMAND_RUN_FORM, args=args)
+                 for title, args in recent]
+        items.append(MSeparator())
+        items.append(MItem(_("Vyèistit"),
+                           help=_("Vymazat menu poslednì otevøených formuláøù"),
+                           command=Application.COMMAND_CLEAR_RECENT_FORMS))
+        return items
+        
         
     def _raise_form(self, form):
         if form is not None:
@@ -503,6 +555,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.show()
                     self._activate(form.ACTIVATIONS, form)
                     self._update_window_menu()
+                    item = (self._form_menu_item_title(form),
+                            dict(form_class=form_class, name=name))
+                    self._update_recent_forms(item)
         except UserBreakException:
             pass
         except:
@@ -785,6 +840,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._activate((), None)
             self._panel.SetFocus()
 
+    def recent_forms_menu(self):
+        """Vra» menu poslednì otevøených formuláøù jako instanci 'Menu'."""
+        return Menu(self._RECENT_FORMS_MENU_TITLE,
+                    self._recent_forms_menu_items())
+
     # Callbacky
 
     def _on_frame_size(self, event):
@@ -848,6 +908,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._raise_form(self._windows.prev())
                 elif command == Application.COMMAND_REFRESH:
                     self.refresh()
+                elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
+                    config.form_state['recent_forms'] = []
+                    self._update_recent_forms()
                 elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
                     config.custom_debug()
                 else:
@@ -871,6 +934,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def can_leave_form(self):
         return self.current_form() is not None
+
+    def can_clear_recent_forms(self):
+        return len(config.form_state.get('recent_forms', ())) > 0
+
 
 
 # Funkce
@@ -996,3 +1063,12 @@ def block_refresh(function, *args, **kwargs):
     
     """
     return Refreshable.block_refresh(function, *args, **kwargs)
+
+def recent_forms_menu():
+    """Vra» menu poslednì otevøených formuláøù jako instanci 'pytis.form.Menu'.
+
+    Tato funkce je urèena pro vyu¾ití pøi definici menu aplikace.  Pokud ji
+    pou¾ijeme, bude aplikace toto menu dále obhospodaøovat.
+        
+    """
+    return _application.recent_forms_menu()
