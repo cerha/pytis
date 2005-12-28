@@ -37,14 +37,10 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * Zobrazit informaci o do¹lé notifikaci zmìny dat ve stavové øádce.
-
  * U¾ivatelská pøizpùsobení sloupcù BrowseFromu.
 
-   Nastavení poøadí sloupcù, jejich ¹íøek a skrývání/zobrazení sloupcù oproti
-   výchozímu nastavení se zatím neukládá.  Bude tøeba implementovat mechanismus
-   ukládání u¾ivatelských nastavení pro ka¾dý formuláø a vhodný zpùsob jejich
-   uplatnìní pøi inicializaci formuláøe.
+   Pøi zmìnì poøadí sloupcù v defsu a zejména pokud pøibydou èi ubydou sloupce
+   musíme informovat u¾ivatele (pokud má ulo¾en vlastní výbìr sloupcù).
 
    Dále by bylo vhodné mít mo¾nost u nìkterých sloupcù v defsu nastavit, ¾e je
    není mo¾né skrýt.
@@ -110,7 +106,7 @@ NOVÉ VLASTNOSTI:
    definovat.
 
    Potom bychom mohli v¹echny u¾ivatelské pøíkazy nahradit pøíkazem
-   RUN_PROCEDURE a definování u¾ivatelskách pøíkazù by tak nebylo vùbec nutné.
+cvs   RUN_PROCEDURE a definování u¾ivatelskách pøíkazù by tak nebylo vùbec nutné.
  
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
@@ -210,6 +206,18 @@ INTERNÍ ZÁLE®ITOSTI:
    Dále by bylo mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu
    a neprokousávat se tak sérií if/elif v on_command.  To by mohlo zùstat jako
    fallback handler, kdy¾ není nalezena metoda odpovídajícího názvu.
+
+ * U¾ivatelské pøíkazy.
+ 
+   Pøíkazy s handlerem by nemìly být vùbec pou¾ívány.  Namísto nich nech» je
+   vyu¾íván pøíkaz COMMAND_CONTEXT_MENU_ACTION, kde se handler definuje jako
+   souèást argumentù a ne jako argument konstruktoru Command.  U¾ivatel zkrátka
+   nemá co vytváøet vlastní instance tøídy Command.
+
+   Ve v¹ech aplikacích je tøeba u¾ivatelské pøíkazy (definované pomocí
+   user_cmd()) nahradit s vyu¾itím pøíkazu ListForm.COMMAND_CONTEXT_MENU_ACTION
+   a poté mù¾eme v ListForm zru¹it zpracování pøíkazù s handlerem a také tento
+   argument konstruktoru tøídy `Command'.
 
  * Grouping nemá být øe¹en pøes reset.
 

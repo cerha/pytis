@@ -6,6 +6,34 @@
 
 2005-12-28  Tomas Cerha  <cerha@brailcom.org>
 
+	Pøíkazy kontextového menu øádkového formuláøe:
+	
+	ListForm má nyní nový pøíkaz `COMMAND_CONTEXT_MENU_ACTION', který
+	je urèen k vytváøení akcí v kontextovém menu øádku BrowseFormu.
+
+	Pøíkaz mù¾e mít libovolné argumenty, av¹ak dva z nich jsou
+	zpracovány odli¹nì.  Argument `handler' je povinný a musí
+	odkazovat na funkci, která akci provede.  Dal¹ím speciálním
+	argumentem je `enabled', co¾ mù¾e být funkce, vracející pravdu,
+	pokud je pøíkaz aktivní a nepravdu v opaèném pøípadì.
+
+	Obì funkce (`handler' i `enabled') dostanou jako klíèové argumenty
+	v¹echny ostatní argumenty pøíkazu, vyjma argumentù `handler' a
+	`enabled'.  Navíc, pokud tyto funkce pøijímají jeden pozièní
+	argument, dostanou jako první argument instanci PresentedRow
+	aktuálního øádku, nad kterým byla akce vyvolána.  Pokud pøijímají
+	dva pozièní argumenty, bude na prvním místì pøedán je¹tì datový
+	objekt formuláøe.
+
+	Tento pøíkaz by mìl být vyu¾íván namísto u¾ivatelských pøíkazù,
+	ale pro finální pou¾ití bude je¹tì dodìlána nìjaká podpora
+	zjednodu¹ující definici.   Bohu¾el asi nebude mo¾é automaticky
+	zmìnit typ pøíkazu vracený funkcí `user_cmd()', proto¾e ta vrací
+	pouze pøíkaz a my potøebujeme zmìnit také jeho argumenty...  Je¹tì
+	se na to ale podíváme.
+
+	Menu poslednì otevøených formuláøù:
+	
 	Pøi definici menu aplikace je mo¾no v libovolném místì pou¾ít
 	novou funkci `recent_forms_menu()', která vytvoøí menu poslednì
 	otevøených formuláøù.  Do tohoto menu jsou potom automaticky

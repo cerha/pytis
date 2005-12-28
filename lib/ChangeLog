@@ -6,6 +6,12 @@
 	(ListForm._is_editable_cell): Pokud se nacházíme v editaci, pracuj
 	s editovaným øádkem.
 	(ListForm._find_next_editable_cell): Kosmetická úprava.
+	(ListForm.on_command): O¹etøuj nový pøíkaz
+	`COMMAND_CONTEXT_MENU_ACTION'.
+	(ListForm._context_menu_handler_args): Nová metoda.
+	(ListForm._on_handled_command): Vyu¾ívej ji.
+	(ListForm._on_context_menu_action): Nová metoda.
+	(ListForm.can_context_menu_action): Nová metoda.
 
 	* pytis/form/application.py
 	(Application._RECENT_FORMS_MENU_TITLE): Nová konstanta.
@@ -28,6 +34,7 @@
 	(Application.can_clear_recent_forms): Nová metoda.
 
 	* pytis/form/commands_.py: Nový pøíkaz `COMMAND_CLEAR_RECENT_FORMS'.
+	Nový pøíkaz `COMMAND_CONTEXT_MENU_ACTION'.
 
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
