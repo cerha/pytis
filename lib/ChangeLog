@@ -40,6 +40,7 @@
 
 	* pytis/form/commands_.py: Nový pøíkaz `COMMAND_CLEAR_RECENT_FORMS'.
 	Nový pøíkaz `COMMAND_CONTEXT_MENU_ACTION'.
+	
 
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
