@@ -140,6 +140,8 @@ Command(ListForm, 'TOGGLE_COLUMN',
         "Skrytí/zobrazení sloupce.")
 Command(ListForm, 'RESET_COLUMNS',
         "Vrácení výchozího nastavení sloupcù.")
+Command(ListForm, 'CONTEXT_MENU_ACTION',
+        "Akce kontextového menu øádku tabulky.")
 Command(BrowseForm, 'IMPORT_INTERACTIVE',
         "Interaktivní import dat z CSV souboru.")
 Command(EditForm, 'COMMIT_RECORD',
