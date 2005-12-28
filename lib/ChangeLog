@@ -1,3 +1,27 @@
+2005-12-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py
+	(Application._RECENT_FORMS_MENU_TITLE): Nová konstanta.
+	(Application.OnInit): Read the stored configuration before
+	creating the menu.  Nenastavuj aktivace menu oken a pøíkazù -
+	nech» jsou vidìt v¾dy.  Po sestavení menu se pokus vyhledat menu
+	poslednì otevøených formuláøù a zapamatuj jej v atributu
+	`self._recent_forms_menu'.
+	(Application._recent_forms_menu_items): Nová metoda.
+	(Application._update_window_menu.wmitem): Vyu¾ívej ji.
+	(Application._update_window_menu): Pøedávej volání `wmitem()' jen
+	èíslo a formuláø.
+	(Application._update_recent_forms): Nová metoda.
+	(Application._recent_forms_menu_items): Nová metoda.
+	(Application.run_form): Aktualizuj menu poslednì spu¹tìných
+	formuláøù.
+	(Application.recent_forms_menu): Nová meotda.
+	(recent_forms_menu): Nová funkce.
+	(Application.on_command): O¹etøuj pøíkaz `COMMAND_CLEAR_RECENT_FORMS'.
+	(Application.can_clear_recent_forms): Nová metoda.
+
+	* pytis/form/commands_.py: Nový pøíkaz `COMMAND_CLEAR_RECENT_FORMS'.
+
 2005-12-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._STATUS_FIELDS): Nová polo¾ka
