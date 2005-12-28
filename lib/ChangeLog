@@ -1,5 +1,10 @@
 2005-12-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/command.py
+	(Command.__init__): Update docstringu.  Pamatuj si dokumentaèní
+	øetìzec pøíkazu.
+	(Command.doc): Nová metoda.
+
 	* pytis/form/list.py (ListForm._on_insert_line): O¹etøuj pøípad
 	prázdné tabulky.
 	(ListForm.__init__): Na konci nevolej `_select_cell()'.
