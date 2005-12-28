@@ -306,9 +306,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # shown or hidden properly, until a size event is received by the
             # grid.  Thus we generate one artificially...
             g.SetSize(g.GetSize())
-        self._select_cell(row=self._position)
+        # Tento _select_cell() zde nemù¾e být, proto¾e vyvolá ukonèení editace
+        # pøi vkládání øádku.  Pokud to je nìkdy potøeba, bude nutné volat
+        # _select_cell() zvlá¹» po _update_grid().  Zatím to ale spí¹ vypadá,
+        # ¾e je to tady zbyteènì (kostlivec).  TC 2005-12-28
+        #self._select_cell(row=self._position)
         self._update_colors()
-        #g.SetFocus()
 
     def _update_label_colors(self):
         color = self._lf_indicate_filter and config.filter_color or \
@@ -416,6 +419,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _finish_editing(self, question=None, row=None):
         # Vrací pravdu, právì kdy¾ nejsou akce blokovány editací øádku.
+        
         table = self._table
         editing = table.editing()
         if not editing:
@@ -476,17 +480,19 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         
     def _is_editable_cell(self, row, col):
         # Vra» pravdu, pokud je buòka daného øádku a sloupca editovatelná.
-        the_row = self._table.row(row)
+        editing = self._table.editing()
+        if row == editing.row:
+            the_row = editing.the_row
+        else:
+            the_row = self._table.row(row)
         id = self._columns[col].id()
         return the_row.editable(id)
     
     def _find_next_editable_cell(self):
         # Vra» pravdu, pokud bylo pohybem vpravo nalezeno editovatelné políèko.
         row, col = self._current_cell()
-        while True:
-            if not self._grid.MoveCursorRight(False):
-                return False
-            col = col + 1
+        while self._grid.MoveCursorRight(False):
+            col += 1
             if self._is_editable_cell(row, col):
                 self._edit_cell()
                 return True
@@ -1179,7 +1185,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             export_file.write('\n')
             for r in range(0,number_rows):
                 if not update(int(float(r)/number_rows*100)):
-                    break                
+                    break
                 for cid, ctype in column_list:
                     if isinstance(ctype, pytis.data.Float):
                         s = self._table.row(r)[cid].export(locale_format=False)
@@ -1270,6 +1276,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 the_row[k]
         if after and not oldempty:
             row = row + 1
+        if row == -1:
+            row = 0
         self._update_grid(inserted_row_number=row, inserted_row=the_row)
         self._select_cell(row=row, col=0, invoke_callback=False)
         if not self._is_editable_cell(row, 0) \
@@ -1372,7 +1380,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not editing:
             return True
         if editing.valid:
-            
             if not self._find_next_editable_cell():
                 if editing.new:
                     q = _("Ulo¾it øádek?")
