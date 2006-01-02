@@ -1,5 +1,8 @@
 2006-01-02  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/configuration.py (Configuration.description):
+	Pou¾ívej `inspect' k zji¹tìní dokumentaèního øetìzce.
+
 	* pytis/form/list.py (ListForm._context_menu_handler_args):
 	O¹etøuj pøípad, kdy handler nemá ¾ádné klíèové argumenty.
 
