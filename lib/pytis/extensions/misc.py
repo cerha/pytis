@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,8 +65,8 @@ class DBConfig(object):
         except KeyError:
             resolver = pytis.form.resolver()
             data_spec = resolver.get(name, 'data_spec')
-            dbconn = config.dbconnection
-            data_object = data_spec.create(dbconnection_spec=dbconn)
+            op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
+            success, data_object = db_operation(op)
             cache[name] = data_object
         self._data = data_object
         self._data.select()
