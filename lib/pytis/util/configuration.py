@@ -2,7 +2,7 @@
 
 # Prostøedky pro definici a zpracování konfigurace bìhu aplikace
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -896,8 +896,11 @@ class Configuration:
         return self._options.keys()
 
     def description(self, name):
-        """Vra» popis volby 'name' jako øetìzec (mù¾e být i víceøádkový).""" 
-        return self._options[name].__doc__.strip()
+        """Vra» popis volby 'name' jako øetìzec (mù¾e být i víceøádkový)."""
+        import inspect
+        # Musíme pou¾ít inspect, proto¾e jinak nejsou dokumentaèní øetìzce k
+        # dispozici v optimalizovaném re¾imu...
+        return inspect.getdoc(self._options[name]).strip()
     
     def type(self, name):
         """Vra» datový typ volby 'name' jako instanci 'pytis.data.Type'.""" 
