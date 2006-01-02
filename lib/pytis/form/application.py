@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -170,6 +170,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._logo.Show(False)
             else:
                 log(OPERATIONAL, "Unable to read logo:", logo_file)
+        self._windows = XStack()
+        self._modals = Stack()
+        self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
         global _application
         _application = self
         # Read the stored configuration.
@@ -185,9 +188,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                "'command_keys' musí vracet sekvenci dvojic (COMMAND, KEY)."
         for cmd, key in command.DEFAULT_COMMAND_KEYS + custom_keys:
             keymap.define_key(key, cmd)
-        self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
-        self._windows = XStack()
-        self._modals = Stack()
         command_menu_items = []
         for group in FORM_COMMAND_MENU:
             if command_menu_items:
