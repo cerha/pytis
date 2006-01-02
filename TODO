@@ -1,5 +1,8 @@
 CHYBY:
 
+ * Funkcionalita ukládání ¹íøky sloupce nefunguje v pøípadì zmìny ¹íøky pøes
+   klávesové zkratky "Alt <-" a "Alt ->".
+
  * Podle sloupce vybraného pøes menu "Zobrazené sloupce" se nedá filtrovat.
 
    Sloupec se neukazuje ve filtraèním dialogu.
