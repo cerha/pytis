@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1101,8 +1101,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             args = (self._data, the_row)
         if not varkw:
-            kwnames = allargs[-len(defaults):]
-            kwargs = dict([(k,v) for k,v in kwargs.items() if k in kwnames])
+            if defaults is not None:
+                kwnames = allargs[-len(defaults):]
+                kwargs = dict([(k,v) for k,v in kwargs.items() if k in kwnames])
+            else:
+                kwargs = {}
         return args, kwargs
     
     def _on_context_menu_action(self, handler=None, enabled=None, **kwargs):
