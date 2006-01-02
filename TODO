@@ -99,19 +99,10 @@ NOVÉ VLASTNOSTI:
 
 2) Specifikace
 
- * Práva na procedury.
-
-   Tak, jako lze zjistit práva na spu¹tìní formuláøe, mìlo by jít zjistit práva
-   na spu¹tìní procedury.  Bude v¹ak tøeba vytvoøit nìjaký zpùsob, jak práva
-   definovat.
-
-   Potom bychom mohli v¹echny u¾ivatelské pøíkazy nahradit pøíkazem
-cvs   RUN_PROCEDURE a definování u¾ivatelskách pøíkazù by tak nebylo vùbec nutné.
- 
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
-   Definovat pøíslu¹né funkce v pytis-extensions.  Zejména jde o otevírání
-   souvisejícího formuláøe.
+   Definovat v pytis-extensions parametrizovatelné funkce pro vytváøení èasto
+   pou¾ívaných pøíkazù, jako napø. otevírání souvisejícího formuláøe apod.
 
  * Automaticky doplnit 'codebook' pro fieldspec políèka s enumerátorem.
 
@@ -218,6 +209,12 @@ INTERNÍ ZÁLE®ITOSTI:
    user_cmd()) nahradit s vyu¾itím pøíkazu ListForm.COMMAND_CONTEXT_MENU_ACTION
    a poté mù¾eme v ListForm zru¹it zpracování pøíkazù s handlerem a také tento
    argument konstruktoru tøídy `Command'.
+
+   Nìkteré pøíkazy nepracují s aktuálním øádkem.  Pro ty bude tøeba definovat
+   dal¹í specialozovaný pøíkaz.  Pøedávání argumentù by mìlo být pro ka¾dý
+   pøíkaz pevnì dané a ne, ¾e se argumenty handleru zji¹»ují pomocí inspect...
+   To se zavedlo zejména kvùli pøíkazùm, které nepracují s aktuálním øádkem,
+   tak¾e nepøebírají argument 'row' a nìkdy potøebují datový objekt.
 
  * Grouping nemá být øe¹en pøes reset.
 
