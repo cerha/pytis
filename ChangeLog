@@ -1,3 +1,8 @@
+2006-01-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (DBConfig.__init__): Vytváøej
+	datový objekt pomocí `db_operation'.
+
 2005-12-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/misc.py (ConfigDB): Nová tøída (pøesunuto z
