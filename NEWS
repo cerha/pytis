@@ -6,7 +6,14 @@
 
 2006-01-02  Tomas Cerha  <cerha@brailcom.org>
 
-	* BUGFIX: Pøi napèítání konfigurace z databáze je díky pou¾ití
+        V pytis-extensions byla definována nová pomocná funkce
+	`context_mitem()', která usnadòuje definici polo¾ek kontextového
+	menu.
+	
+	* BUGFIX: Zobrazování popiskù konfiguraèních voleb ji¾ funguje i v
+	optimalizovaném re¾imu.
+	
+	* BUGFIX: Pøi naèítání konfigurace z databáze je díky pou¾ití
 	`db_operation' nyní správnì provedeno pøihlá¹ení do databáze.
 
 	* BUGFIX: Pøi sestavování argumentù handleru pøíkazu je o¹etøena
