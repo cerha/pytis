@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -222,6 +222,19 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
     return MItem(title, hotkey=hotkey,
                  command=cmd_help_window,
                  args={'inputfile': inputfile, 'format': format})
+
+def context_mitem(title, handler, hotkey=None, **kwargs):
+    """Vrať položku menu vyvolávající akci kontextového menu řádku formuláře.
+
+    Bude vyvolán příkaz `ListForm.COMMAND_CONTEXT_MENU_ACTION', kterému budou
+    předány všechny klíčové argumenty.  Argument 'handler' je k nim automaticky
+    přidán.
+
+    """
+    kwargs['handler'] = handler
+    return MItem(title, command=ListForm.COMMAND_CONTEXT_MENU_ACTION,
+                 args=kwargs, hotkey=hotkey)
+
 
 _user_cmd_caller = {}
 def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
