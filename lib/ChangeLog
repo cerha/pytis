@@ -1,3 +1,8 @@
+2006-01-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.OnInit): Vytvoø stack
+	oken a stavovou øádku je¹tì pøed naèítáním konfigurace.
+
 2005-12-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/command.py
