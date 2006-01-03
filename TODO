@@ -1,13 +1,5 @@
 CHYBY:
 
- * Ukládání ¹íøky sloupce po zmìnách pomocí klávesových zkratek.
-
-   Zmìny provedené pomocí klávesových zkratek "Alt <-" a "Alt ->" se neulo¾í.
-
- * Podle sloupce vybraného pøes menu "Zobrazené sloupce" se nedá filtrovat.
-
-   Sloupec se neukazuje ve filtraèním dialogu.
-
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
@@ -58,14 +50,6 @@ NOVÉ VLASTNOSTI:
 
    Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
    by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
-
- * Validace ve filtrovacím dialogu.
-
-   Hodnoty jsou validovány (podle typu pøíslu¹ného sloupce) ve chvíli
-   filtrace.  Pøi nevalidní hodnotì je zobrazena zpráva, ale filtraèní fialog
-   je i pøesto uzavøen.  Patrnì by bylo lep¹í aby zùstal otevøen, dokud není
-   zadána pou¾itelná hodnota.  Navíc by asi nemìly pøi validaci být brány v
-   úvahu constrainty.
 
  * Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky).
  
@@ -237,3 +221,8 @@ INTERNÍ ZÁLE®ITOSTI:
     - zru¹it sloupeèky `export_directory' a `export_encoding'
     - zru¹it v¹e, co se týká bv_users_ui_cfg.
     - pøidat sloupeèek `saved_config' do bv_users_cfg.
+
+ * Zru¹it konfiguraèní volbu `show_tooltips'.
+
+   Proè by si to mìl nìkdo vypínat?
+   
