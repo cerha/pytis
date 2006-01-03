@@ -1,5 +1,8 @@
 2006-01-03  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (LookupForm._lf_sfs_columns): Vracej úplnì
+	v¹echny definované sloupce.
+
 	* pytis/form/application.py (Application._stored_options): Nová metoda.
 	(Application._read_config): Vyu¾ívej ji.
 	(Application._write_config): Pøed zapsáním vyma¾ v¹echny

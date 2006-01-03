@@ -25,6 +25,9 @@
 	zmìnil a potom vrátil na výchozí hodnotu, si poøád dr¾ely zmìnìnou
 	hodnotu.
 	
+	* BUGFIX: Ve filtrovacím dialogu se nyní zobrazují v¹echny
+	dostupné sloupce (tedy u ty, které momentálnì nejsou zobrazené).
+	
 2006-01-02  Tomas Cerha  <cerha@brailcom.org>
 
         V pytis-extensions byla definována nová pomocná funkce
