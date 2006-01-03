@@ -179,7 +179,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         read_config = self._spec('read_config', self._read_config)
         items = read_config()
         for option, value in items:
-            setattr(config, option, value)
+            if option != 'dbconnection':
+                setattr(config, option, value)
         log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
         # Initialize the application.
         keymap = self.keymap = Keymap()
@@ -439,7 +440,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             pass
         try:
             items = tuple([(o, getattr(config, o))
-                           for o in config.options() if config.changed(o)])
+                           for o in config.options()
+                           if config.changed(o) and o != 'dbconnection'])
             write_config = self._spec('write_config', self._write_config)
             write_config(items)
             log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))
