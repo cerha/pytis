@@ -356,21 +356,24 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return base_char.isalnum() and base_char or '-'
         name = config.application_name.lower()
         return str(re.sub("[^a-zA-Z0-9-]", safe_char, unicode(name)))
-            
-    def _read_config(self):
-        name = self._config_name()
-        log(OPERATIONAL, "Naèítám konfiguraci výchozí metodou:", name)
-        wxconfig = wx.Config(name)
+
+    def _stored_options(self, wxconfig):
         options = []
         cont, key, index = wxconfig.GetFirstEntry()
         while cont:
             options.append(key)
             cont, key, index = wxconfig.GetNextEntry(index)
+        return options
+
+    def _read_config(self):
+        name = self._config_name()
+        log(OPERATIONAL, "Naèítám konfiguraci výchozí metodou:", name)
+        wxconfig = wx.Config(name)
         mapping = ((pytis.data.String,  wxconfig.Read),
                    (pytis.data.Integer, wxconfig.ReadInt),
                    (pytis.data.Boolean, wxconfig.ReadBool))
         items = []
-        for option in options:
+        for option in self._stored_options(wxconfig):
             t = config.type(option)
             for type, read in mapping:
                 if isinstance(t, type):
@@ -379,7 +382,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 value = pickle.loads(str(wxconfig.Read(option)))
             items.append((option, value))
         return tuple(items)
-
             
     def _write_config(self, items):
         name = self._config_name()
@@ -388,6 +390,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         mapping = ((pytis.data.String,  wxconfig.Write),
                    (pytis.data.Integer, wxconfig.WriteInt),
                    (pytis.data.Boolean, wxconfig.WriteBool))
+        for option in self._stored_options(wxconfig):
+            wxconfig.DeleteEntry(option)
         for option, value in items:
             t = config.type(option)
             for type, write in mapping:
