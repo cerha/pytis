@@ -4,6 +4,27 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-03  Tomas Cerha  <cerha@brailcom.org>
+
+        Algoritmus pro pøepoèítávání ¹íøek sloupcù byl upraven, aby lépe
+	zohledòoval u¾ivatelem nastavené ¹íøky sloupcù.
+
+	Nová konfiguraèní volba (v dialogu nastavení u¾ivatelského
+	rozhraní) umo¾òuje zakázat automatické roztahování tabulek na
+	celou ¹íøku okna.
+
+	* BUGFIX: Tlaèítko "Pou¾ít" v konfiguraèním dialogu ji¾ opìt
+	funguje.
+
+	* BUGFIX: Zmìna ¹íøky sloupce pomocí klávesových zkratek je
+	zapamatována.
+
+	* BUGFIX: Døíve ulo¾ené konfiguraèní volby v u¾ivatelském
+	konfiguraèním souboru jsou pøed ulo¾ením souèasných voleb
+	promazávány.  Pokud se tak nedìlo, volby, které u¾ivatel jednou
+	zmìnil a potom vrátil na výchozí hodnotu, si poøád dr¾ely zmìnìnou
+	hodnotu.
+	
 2006-01-02  Tomas Cerha  <cerha@brailcom.org>
 
         V pytis-extensions byla definována nová pomocná funkce
