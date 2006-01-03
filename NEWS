@@ -6,6 +6,10 @@
 
 2006-01-03  Tomas Cerha  <cerha@brailcom.org>
 
+        Validace hodnot zadaných ve filtrovacím nebo vyhledávacím dialogu
+	nyní není striktní a pokud k chybì validace dojde, dialog se
+	neukonèí.
+	
         Algoritmus pro pøepoèítávání ¹íøek sloupcù byl upraven, aby lépe
 	zohledòoval u¾ivatelem nastavené ¹íøky sloupcù.
 
