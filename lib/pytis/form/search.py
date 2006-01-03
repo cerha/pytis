@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001-2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -240,12 +240,12 @@ class SFDialog(SFSDialog):
                         value, err = column_type.validate(vval, extended=True)
                     else:
                         op = o[2]
-                        value, err = column_type.validate(vval)
+                        value, err = column_type.validate(vval, strict=False)
                     if err:
-                        message = _("Chybná hodnota v podmínce %d:\n%s") % \
-                                  (k+1, err)
-                        run_dialog(Error, message)
-                        return
+                        msg = _("Chybná hodnota v podmínce %d:\n%s") % \
+                              (k+1, err.message())
+                        run_dialog(Error, msg)
+                        raise err
                     break
             else:
                 raise ProgramError('Operator disappeared', vop)
@@ -398,19 +398,30 @@ class SearchDialog(SFDialog):
     _TITLE = _("Hledání")
 
     def _search(self, direction):
-        self._condition = self._selected_condition()
+        try:
+            self._condition = self._selected_condition()
+        except pytis.data.ValidationError, e:
+            return False
         self._direction = direction
+        return True
+
+    def _on_button(self, event):
+        label = self._button_label(event.GetId())
+        if label == self._NEXT_BUTTON:
+            direction = pytis.data.FORWARD
+        elif label == self._PREVIOUS_BUTTON:
+            direction = pytis.data.BACKWARD
+        else:
+            direction = None
+        if direction is None or self._search(direction):
+            return super(SearchDialog, self)._on_button(event)
 
     def _customize_result(self, button_wid):
         label = self._button_label(button_wid)
-        if label == self._NEXT_BUTTON:
-            self._search(pytis.data.FORWARD)
-        elif label == self._PREVIOUS_BUTTON:
-            self._search(pytis.data.BACKWARD)
+        if label in (self._NEXT_BUTTON, self._PREVIOUS_BUTTON):
+            return self._condition, self._direction
         else:
             return None, None
-        result = self._condition, self._direction
-        return result
 
     def run(self, current_row, col=None):
         """Zobraz formuláø a po jeho ukonèení vra» zvolené parametry hledání.
@@ -468,9 +479,22 @@ class FilterDialog(SFDialog):
         return content + (computer,)
 
     def _on_filter(self):
-        self._condition = self._selected_condition()
+        try:
+            self._condition = self._selected_condition()
+        except pytis.data.ValidationError, e:
+            return False
         self._perform = True
+        return True
 
+    def _on_button(self, event):
+        label = self._button_label(event.GetId())
+        if label == self._FILTER_BUTTON:
+            if not self._on_filter():
+                return False
+        elif label == self._UNFILTER_BUTTON:
+            self._on_reset_filter()
+        return super(FilterDialog, self)._on_button(event)
+        
     def _on_reset_filter(self):
         self._condition = None
         self._perform = True
@@ -490,14 +514,10 @@ class FilterDialog(SFDialog):
 
     def _customize_result(self, button_wid):
         label = self._button_label(button_wid)
-        if label == self._FILTER_BUTTON:
-            self._on_filter()
-        elif label == self._UNFILTER_BUTTON:
-            self._on_reset_filter()
+        if label in (self._FILTER_BUTTON, self._UNFILTER_BUTTON):
+            return self._perform, self._condition
         else:
             return None, None
-        result = self._perform, self._condition
-        return result
 
     def run(self, data, filter, current_row, col):
         """Zobraz formuláø a po jeho ukonèení vra» parametry filtrování.
