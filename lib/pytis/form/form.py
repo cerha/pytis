@@ -251,7 +251,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         params = config.form_state.get(key, {})
         params[name] = value
         config.form_state[key] = params
-    
+
+    def _unset_state_param(self, name):
+        key = self._form_state_key()
+        params = config.form_state.get(key, {})
+        try:
+            del params[name]
+        except KeyError:
+            pass
+        config.form_state[key] = params
+
+        
     # Veøejné metody
     
     def name(self):
