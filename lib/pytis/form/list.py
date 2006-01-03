@@ -155,13 +155,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_colors()
         sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
-    def _column_width(self, grid, column):
+    def _column_width(self, column):
         try:
             #TODO: Column widths should be saved/restored in dialog units.
             return self._get_state_param('column_width', {})[column.id()]
         except KeyError:
             width = max(column.column_width(), len(column.column_label()))
-            return dlg2px(grid, 4*width + 8)
+            return dlg2px(self._grid, 4*width + 8)
 
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
@@ -189,11 +189,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         def registration(editor):
             self._current_editor = editor
         editable = False
-        total_width = 0
         for i, c in enumerate(self._columns):
-            w = self._column_width(g, c)
-            g.SetColSize(i, w)
-            total_width += w
             # typ sloupce
             t = c.type(self._data)
             # zarovnání
@@ -218,7 +214,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             else:
                 attr.SetReadOnly()
             g.SetColAttr(i, attr)
-        self._total_width = total_width
         self.editable = editable
         labels = g.GetGridColLabelWindow()
         # Event handlery
@@ -312,6 +307,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # ¾e je to tady zbyteènì (kostlivec).  TC 2005-12-28
         #self._select_cell(row=self._position)
         self._update_colors()
+        self._resize_columns()
+
 
     def _update_label_colors(self):
         color = self._lf_indicate_filter and config.filter_color or \
@@ -530,13 +527,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
 
-    def _modify_column_width(self, col, d):
+    def _resize_column(self, col, diff):
+        # diff can be positive or negative integer in pixels.
         g = self._grid
-        newsize = g.GetColSize(col) + d
+        newsize = g.GetColSize(col) + diff
         if newsize > 0:
             g.SetColSize(col, newsize)
             g.SetSize(g.GetSize())
             g.Refresh()
+            self._remember_column_size(col)
+
         
     def _on_sort_column(self, col=None, direction=None, primary=False):
         if not self._finish_editing():
@@ -598,8 +598,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 row = self._selection_callback_candidate
                 self._selection_callback_candidate = None
                 the_row = self._table.row(row)
-                self._run_callback(self.CALL_SELECTION, (the_row,))
-                self._post_selection_hook(the_row)
+                if the_row is not None:
+                    self._run_callback(self.CALL_SELECTION, (the_row,))
+                    self._post_selection_hook(the_row)
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
         event.Skip()
         return False
@@ -726,7 +727,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 c = self._columns[old_index]
                 self._update_grid(delete_column=c, insert_column=c,
                                   inserted_column_index=new_index)
-                self._on_size()
         else:
             self._run_callback(self.CALL_USER_INTERACTION)
             invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
@@ -758,14 +758,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         event.Skip()
 
     def _on_label_drag_size(self, event):
-        col = event.GetRowOrCol()
-        # TODO: Tady by to chtìlo nìjaký rozumný _on_size(), ale nesmí se nám to
-        # pod rukou (pod my¹í) moc rozjet...
+        self._remember_column_size(event.GetRowOrCol())
+        self._column_move_target = None
+        event.Skip()
+
+    def _remember_column_size(self, col):
         stored = self._get_state_param('column_width', {})
         stored[self._columns[col].id()] = self._grid.GetColSize(col)
         self._set_state_param('column_width', stored)
-        self._column_move_target = None
-        event.Skip()
         
     def _on_label_paint(self, event):
         def triangle(x, y, r=4, reversed=True):
@@ -851,12 +851,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             self._update_grid(insert_column=self._view.field(column_id),
                               inserted_column_index=col)
-        self._on_size()
 
     def _on_reset_columns(self):
         self._update_grid(reset_columns=True)
-        self._on_size()
-
         
     def show_context_menu(self, position=None):
         if self._table.editing():
@@ -965,10 +962,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._select_cell(**kwargs)
             return True
         elif command == ListForm.COMMAND_ENLARGE_COLUMN:
-            self._modify_column_width(self._current_cell()[1], +5)
+            self._resize_column(self._current_cell()[1], +5)
             return True
         elif command == ListForm.COMMAND_CONTRACT_COLUMN:
-            self._modify_column_width(self._current_cell()[1], -5)
+            self._resize_column(self._current_cell()[1], -5)
             return True
         # Pøíkazy bìhem editace øádku
         elif self._table.editing():
@@ -1649,42 +1646,46 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if config.grid_line_color is not None:
             self._grid.SetGridLineColour(config.grid_line_color)
     
-    # wx metody
+    def _total_width(self):
+        total = 0
+        for c in self._columns:
+            total += self._column_width(c)
+        return total
 
-    def _on_size(self, event=None):
+    def _resize_columns(self, size=None):
         g = self._grid
-        if event:
-            size = event.GetSize()
-            oldsize = g.GetSize()
-            if size.width == oldsize.width:
-                event.Skip()
-                return False
-        else:
+        if size is None:
             size = g.GetSize()
         width = size.width
         height = size.height
         if height < self._total_height():
             width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) - 1
-        if width > self._total_width:
-            coef = float(width) / self._total_width
+        total_width = self._total_width()
+        if width > total_width:
+            coef = float(width) / total_width
         else:
             coef = 1
         total = 0
         last = None
         # Pøenastav ¹íøky sloupcù
         for i, c in enumerate(self._columns):
-            if c.fixed():
-                w = g.GetColSize(i)
-            else:
-                w = int(self._column_width(g, c)*coef)
-                g.SetColSize(i, w)
+            w = self._column_width(c)
+            if not c.fixed() and config.stretch_tables:
+                w = int(w*coef)
                 last = i
+            g.SetColSize(i, w)
             total += w
         if coef != 1 and total != width and last is not None:
             g.SetColSize(last, g.GetColSize(last) + (width - total))
-        if event:
-            event.Skip()
 
+    # wx metody
+
+    def _on_size(self, event):
+        size = event.GetSize()
+        if size.width != self._grid.GetSize().width:
+            self._resize_columns(size)
+        event.Skip()
+            
     def Close(self):
         self._data.remove_callback_on_change(self.on_data_change)
         try:
@@ -1741,7 +1742,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
         super_(CodebookForm).__init__(self, parent, *args, **kwargs)
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
         h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
-        self.SetSize((self._total_width+30, h))
+        self.SetSize((self._total_width()+30, h))
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
                     lambda e: self._on_activation())
 
