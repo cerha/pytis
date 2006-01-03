@@ -401,6 +401,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     write(option, value)
             else:
                 wxconfig.Write(option, pickle.dumps(value))
+        wxconfig.Flush()
 
     def _on_frame_close(self, event):
         if not self._cleanup():
