@@ -45,7 +45,10 @@ _LAYOUT = (
             #'grouping_background_downgrade',
             ),
     LVGroup(_("Chování"),
-            'show_splash', 'show_tooltips', 'cache_spec_onstart'),
+            'stretch_tables',
+            'show_tooltips',
+            'show_splash',
+            'cache_spec_onstart'),
     ))),
     ('export', LayoutSpec(_("Nastavení exportu"),
                           VGroup('export_directory','export_encoding')),
@@ -62,6 +65,7 @@ _LABELS = {'row_focus_fg_color':    _("Text"),
            'grouping_background_downgrade': _("Ztmavení øádkù pøi seskupování"),
            'show_splash':           _("Zobrazovat úvodní dialog"),
            'show_tooltips':         _("Zobrazovat bublinovou nápovìdu"),
+           'stretch_tables':        _("Rozpínat tabulky na ¹íøku okna"),
            'cache_spec_onstart':    _("Naèítat specifikace pøi startu"),
            'export_directory':      _("Výchozí adresáø"),
            'export_encoding':       _("Kódování exportovaných dat"),
@@ -160,7 +164,7 @@ class ConfigForm(PopupEditForm):
     def _buttons(self):
         apply = {'id': wx.ID_APPLY,
                  'toottip': _("Uplatnit zmìny bez uzavøení formuláøe"),
-                 'handler': lambda e: self._on_apply}
+                 'handler': lambda e: self._on_apply()}
         buttons = super(ConfigForm, self)._buttons()
         return (buttons[0], apply) + buttons[1:]
     
