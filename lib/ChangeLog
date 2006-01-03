@@ -1,3 +1,37 @@
+2006-01-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._column_width): Nevy¾aduj argument
+	`grid'.
+	(ListForm._create_grid): Neinicializuj `self._total_width'.
+	Nenastavuj zde vùbec velikosti sloupcù.
+	(ListForm._update_grid): Nakonci volej `self._resize_columns()'.
+	(ListForm._modify_column_width): Pøejmenováno na
+	`_resize_column()'.  Na konci volej `self._remember_column_size()'
+	(ListForm._resize_column): Nová metoda.
+	(ListForm._on_idle): Volej callback a hook pouze pokud øádek není
+	None.
+	(ListForm._on_label_left_up): Nevolej zde `self._on_size()'.
+	(ListForm._on_label_drag_size): Nezapamatovávej ¹íøku zde, volej
+	`self._remember_column_size()'.
+	(ListForm._remember_column_size): Nová metoda.
+	(ListForm._on_toggle_column, ListForm._on_reset_columns): Nevolej
+	zde `self._on_size()'.
+	(ListForm.on_command): `_modify_column_width()' ->
+	`_resize_column()'.
+	(ListForm._resize_columns): Nová metoda.
+	(ListForm._on_size): Vy¾aduj argument event.  Vlastní pøepoèítání sloupcù
+	pøesunuto do `_resize_columns()' a algoritmus pozmìnìn.  Zde pouze
+	obstarej v¹e co souvisí s eventem.
+	(CodebookForm.__init__): Namísto atributu `self._total_width'
+	pou¾ívej metodu `self._total_width()'.
+
+	* pytis/util/configuration.py: 
+	(Configuration._Option_stretch_tables): Nová volba.
+
+	* pytis/form/configui.py (_LAYOUT, _LABELS): Pøidána polo¾ka pro
+	`stretch_tables'.
+	(ConfigForm._buttons): Metodu _on_apply() skuteènì volej.
+
 2006-01-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/configui.py (ConfigForm._create_view_spec): Metodì
