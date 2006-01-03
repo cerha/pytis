@@ -1,5 +1,19 @@
 2006-01-03  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFDialog._selected_condition): Validuj
+	hodnoty s nastavením `strict=False'.  Pokud do¹lo k validaèní
+	chybì, vyvolej výjimku.
+	(SearchDialog._search, FilterDialog._on_filter): O¹etøuj výjimky v
+	`_selected_condition()'.  Vracej pravdu, pokud k výjimce nedo¹lo.
+	(SearchDialog._on_button): Nová metoda.
+	(SearchDialog._customize_result): Neprovádìj search zde, ponech to
+	na `_on_button()'.
+	(FilterDialog._on_filter): O¹etøuj výjimky v
+	`_selected_condition()'.  Vracej pravdu, pokud k výjimce nedo¹lo.
+	(FilterDialog._on_button): Nová metoda.
+	(FilterDialog._customize_result): Neprovádìj filtrování zde,
+	ponech to na `_on_button()'.
+
 	* pytis/form/form.py (LookupForm._lf_sfs_columns): Vracej úplnì
 	v¹echny definované sloupce.
 
