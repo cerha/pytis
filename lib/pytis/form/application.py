@@ -388,19 +388,21 @@ class Application(wx.App, KeyHandler, CommandHandler):
         name = self._config_name()
         log(OPERATIONAL, "Ukládám konfiguraci výchozí metodou:", name)
         wxconfig = wx.Config(name)
+        to_delete = self._stored_options(wxconfig)
         mapping = ((pytis.data.String,  wxconfig.Write),
                    (pytis.data.Integer, wxconfig.WriteInt),
                    (pytis.data.Boolean, wxconfig.WriteBool))
-        for option in self._stored_options(wxconfig):
-            wxconfig.DeleteEntry(option)
         for option, value in items:
             t = config.type(option)
+            to_delete.remove(option)
             for type, write in mapping:
                 #TODO: Co None hodnoty???
                 if isinstance(t, type):
                     write(option, value)
             else:
                 wxconfig.Write(option, pickle.dumps(value))
+        for option in to_delete:
+            wxconfig.DeleteEntry(option)
         wxconfig.Flush()
 
     def _on_frame_close(self, event):
