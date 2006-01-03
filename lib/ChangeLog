@@ -3,10 +3,15 @@
 	* pytis/form/form.py (LookupForm._lf_sfs_columns): Vracej úplnì
 	v¹echny definované sloupce.
 
-	* pytis/form/application.py (Application._stored_options): Nová metoda.
+	* pytis/form/application.py (Application._stored_options): Nová
+	metoda.
 	(Application._read_config): Vyu¾ívej ji.
 	(Application._write_config): Pøed zapsáním vyma¾ v¹echny
 	existující volby.
+	(Application.OnInit): Vyluèuj 'dbconnection' z naètených
+	konfiguraèních voleb.
+	(Application._cleanup): Vyluèuj 'dbconnection' z ukládaných
+	konfiguraèních voleb.
 
 	* pytis/form/list.py (ListForm._column_width): Nevy¾aduj argument
 	`grid'.
@@ -27,9 +32,9 @@
 	(ListForm.on_command): `_modify_column_width()' ->
 	`_resize_column()'.
 	(ListForm._resize_columns): Nová metoda.
-	(ListForm._on_size): Vy¾aduj argument event.  Vlastní pøepoèítání sloupcù
-	pøesunuto do `_resize_columns()' a algoritmus pozmìnìn.  Zde pouze
-	obstarej v¹e co souvisí s eventem.
+	(ListForm._on_size): Vy¾aduj argument event.  Vlastní pøepoèítání
+	sloupcù pøesunuto do `_resize_columns()' a algoritmus pozmìnìn.
+	Zde pouze obstarej v¹e co souvisí s eventem.
 	(CodebookForm.__init__): Namísto atributu `self._total_width'
 	pou¾ívej metodu `self._total_width()'.
 
