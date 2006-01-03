@@ -646,6 +646,10 @@ class Configuration:
         _DESCR = _("Pøíznak zobrazování bublinové nápovìdy.")
         _DEFAULT = True
         
+    class _Option_stretch_tables(_BooleanOption):
+        _DESCR = _("Roztahovat sloupce tabulek, aby vyu¾ily celou ¹íøku okna.")
+        _DEFAULT = True
+        
     class _Option_show_splash(_BooleanOption):
         _DESCR = _("Pøíznak zobrazování úvodního uvítacího dialogu.")
         _DEFAULT = True
