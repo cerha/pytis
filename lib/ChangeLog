@@ -26,6 +26,8 @@
 	konfiguraèních voleb.
 	(Application._cleanup): Vyluèuj 'dbconnection' z ukládaných
 	konfiguraèních voleb.
+	(Application._write_config): Na konci volej je¹tì `wxconfig.Flush()'.
+	(Application._write_config): Ma¾ pouze polo¾ky, které nebyly nastaveny.
 
 	* pytis/form/list.py (ListForm._column_width): Nevy¾aduj argument
 	`grid'.
