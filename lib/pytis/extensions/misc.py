@@ -654,13 +654,13 @@ def flatten_menus():
 def get_menu_defs(without_duals=False):
     resolver = pytis.form.resolver()
     RF = pytis.form.Application.COMMAND_RUN_FORM
-    config_items = config_menu_items()
     items = [item for item in flatten_menus()
              if isinstance(item, pytis.form.MItem) and item.command() == RF \
-             and item not in config_items]
+             and not issubclass(item.args()['form_class'],
+                                pytis.form.ConfigForm)]
     duals = [item for item in items
              if issubclass(item.args()['form_class'], DualForm) \
-             and not issubclass(item.args()['form_class'], DescriptiveDualForm)]
+                and not issubclass(item.args()['form_class'], DescriptiveDualForm)]
     notduals = [item for item in items if item not in duals]
     subduals = []
     for item in duals:
