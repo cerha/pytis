@@ -1,3 +1,8 @@
+2006-01-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.OnInit): Inicializuj
+	klávesovou mapu pøed naèítáním konfigurace.
+
 2006-01-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py (SFDialog._selected_condition): Validuj
@@ -16,6 +21,7 @@
 
 	* pytis/form/form.py (LookupForm._lf_sfs_columns): Vracej úplnì
 	v¹echny definované sloupce.
+	(Form._unset_state_param): Nová metoda.
 
 	* pytis/form/application.py (Application._stored_options): Nová
 	metoda.
