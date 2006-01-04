@@ -173,6 +173,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._windows = XStack()
         self._modals = Stack()
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
+        keymap = self.keymap = Keymap()
+        custom_keys = self._spec('command_keys', ())
+        assert is_sequence(custom_keys), "Specifikace klávesových zkratek " + \
+               "'command_keys' musí vracet sekvenci dvojic (COMMAND, KEY)."
+        for cmd, key in command.DEFAULT_COMMAND_KEYS + custom_keys:
+            keymap.define_key(key, cmd)
         global _application
         _application = self
         # Read the stored configuration.
@@ -182,13 +188,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if option != 'dbconnection':
                 setattr(config, option, value)
         log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
-        # Initialize the application.
-        keymap = self.keymap = Keymap()
-        custom_keys = self._spec('command_keys', ())
-        assert is_sequence(custom_keys), "Specifikace klávesových zkratek " + \
-               "'command_keys' musí vracet sekvenci dvojic (COMMAND, KEY)."
-        for cmd, key in command.DEFAULT_COMMAND_KEYS + custom_keys:
-            keymap.define_key(key, cmd)
+        # Initialize the menubar.
         command_menu_items = []
         for group in FORM_COMMAND_MENU:
             if command_menu_items:
