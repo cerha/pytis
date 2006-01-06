@@ -349,6 +349,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             #MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
             )
 
+    def _lf_sfs_columns(self):
+        shown = tuple(self._columns)
+        hidden = tuple([c for c in self._view.fields()
+                        if c not in shown and c.column_label()])
+        def labelfunc(c):
+            label = c.column_label()
+            if c in hidden:
+                return "(" + label + ")"
+            else:
+                return label
+        return sfs_columns(shown + hidden, self._data, labelfunc=labelfunc)
+    
     # Pomocné metody
 
     def _current_cell(self):
