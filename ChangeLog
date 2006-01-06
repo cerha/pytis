@@ -1,3 +1,8 @@
+2006-01-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (DBConfig.__init__): Ukládej datový
+	objekt do cache pouze pokud se ho skuteènì podaøilo vytvoøit.
+
 2006-01-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/misc.py (get_menu_defs): Vynechávej polo¾ky
