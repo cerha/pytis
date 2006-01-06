@@ -42,7 +42,7 @@ _LAYOUT = (
                    ),
             'cell_highlight_color',
             'grid_line_color',
-            #'grouping_background_downgrade',
+            'grouping_background_downgrade',
             ),
     LVGroup(_("Chování"),
             'stretch_tables',
