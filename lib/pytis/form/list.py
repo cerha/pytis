@@ -663,12 +663,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Veto()
             self._grid.SelectRow(self._grid.GetGridCursorRow())
 
-
+    def _scroll_x_offset(self):
+        g = self._grid
+        return g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
             
     def _on_label_right_down(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         g = self._grid
-        col = g.XToCol(event.GetX())
+        col = g.XToCol(event.GetX() + self._scroll_x_offset())
         # Menu musíme zkonstruovat a¾ zde, proto¾e argumentem pøíkazù je èíslo
         # sloupce, které zjistím a¾ z eventu.
         items = (Menu(_("Primární øazení"),
@@ -732,7 +734,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _on_label_left_down(self, event):
         g = self._grid
-        x = event.GetX()
+        x = event.GetX() + self._scroll_x_offset()
         col = g.XToCol(x)
         x1 = reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
         x2 = x1 + g.GetColSize(col)
@@ -742,7 +744,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         event.Skip()
         
     def _on_label_left_up(self, event):
-        col = self._grid.XToCol(event.GetX())
+        col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
         if self._column_move_target is not None:
             old_index = self._column_to_move
             new_index = self._column_move_target
@@ -778,7 +780,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 pos += width
             return g.GetNumberCols()
         if self._column_to_move is not None:
-            self._column_move_target = nearest_column(event.GetX())
+            x = event.GetX() + self._scroll_x_offset()
+            self._column_move_target = nearest_column(x)
             event.GetEventObject().Refresh()
         self._mouse_dragged = True
         event.Skip()
@@ -816,7 +819,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g = self._grid
         #t = self._table
         dc = wx.PaintDC(g.GetGridColLabelWindow())
-        x = - g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
+        x = - self._scroll_x_offset()
         y = 0
         height = g.GetColLabelSize()
         for col, c in enumerate(self._columns):
