@@ -233,7 +233,7 @@ class SFDialog(SFSDialog):
                         value, err = column.type().validate(vval, extended=True)
                     else:
                         op = o[2]
-                        value, err = columntype().validate(vval, strict=False)
+                        value, err = column.type().validate(vval, strict=False)
                     if err:
                         msg = _("Chybná hodnota v podmínce %d:\n%s") % \
                               (k+1, err.message())
