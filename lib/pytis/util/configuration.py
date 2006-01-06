@@ -709,8 +709,7 @@ class Configuration:
                  "ne¾ bílá, o tolik bude výsledná barva skupiny tmav¹í, ne¾ "
                  "barva pozadí ostatních øádkù.  Barva je reprezentována "
                  "øetìzcem '#RRGGBB'.")
-        _DEFAULT = '#6482be'
-        
+        _DEFAULT = '#eceef0'
 
     class _Option_field_disabled_color(_ColorOption):
         _DESCR = _("Barva pozadí needitovatelného vstupního políèka.")
