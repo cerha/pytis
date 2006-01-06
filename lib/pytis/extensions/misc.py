@@ -67,7 +67,10 @@ class DBConfig(object):
             data_spec = resolver.get(name, 'data_spec')
             op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
             success, data_object = db_operation(op)
-            cache[name] = data_object
+            if success:
+                cache[name] = data_object
+            else:
+                data_object = None
         self._data = data_object
         self._data.select()
         self._row = self._data.fetchone()
