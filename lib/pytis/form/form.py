@@ -948,9 +948,7 @@ class LookupForm(RecordForm):
         return tuple(map(trans, self._lf_sorting))
 
     def _lf_sfs_columns(self):
-        return sfs_columns(self._view.fields(), self._data,
-                           labelfunc=FieldSpec.column_label,
-                           widthfunc=FieldSpec.column_width)
+        return sfs_columns(self._view.fields(), self._data)
     
     def _lf_sf_dialog(self, attr, class_):
         dialog = getattr(self, attr)
