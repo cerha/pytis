@@ -664,8 +664,7 @@ class SortingDialog(SFSDialog):
         self.rebuild()
 
 
-def sfs_columns(columns, data, labelfunc=FieldSpec.label,
-                widthfunc=FieldSpec.width):
+def sfs_columns(columns, data, labelfunc=FieldSpec.label):
     """Vra» sloupce vhodné k pou¾ití v konstruktorech SFS dialogù.
 
     (SFS = Search, Filter, Sort)
@@ -676,17 +675,14 @@ def sfs_columns(columns, data, labelfunc=FieldSpec.label,
       data -- datový objekt, na nìj¾ jsou sloupce navázány
       labelfunc -- funkce jednoho argumentu (instance 'Column') vracející
         návì¹tí sloupce v dialogu
-      widthfunc -- funkce jednoho argumentu (instance 'Column') vracející
-        ¹íøku sloupce (obecnou, slou¾í k rozpoznání skrytých políèek)
 
     """
     sfs_columns = []
     for c in columns:
-        if data.find_column(c.id()) is None or \
-           not widthfunc(c):
+        label = labelfunc(c)
+        if data.find_column(c.id()) is None or not label:
             continue
         id = c.id()
-        label = labelfunc(c)
         type_ = c.type(data)
         sfs_columns.append(SFSColumn(id, type_, label))
     return sfs_columns
