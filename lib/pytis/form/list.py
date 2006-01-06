@@ -75,7 +75,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     _REFRESH_PERIOD = 60 # sekund
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
-    _GROUPING_BACKGROUND_DOWNGRADE = (18, 16, 14) # sní¾ení slo¾ek jasu RGB
     _TITLE_FOREGROUND_COLOR = WxColor(210, 210, 210)
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
@@ -105,12 +104,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
         """
         super_(ListForm)._init_attributes(self, **kwargs)
+        self._default_columns_changed = False
         assert columns is None or is_sequence(columns)
         if not columns:
-            columns = [id for id in self._get_state_param('columns', ())
-                       if self._view.field(id) is not None]
-        self._columns = [self._view.field(id)
-                         for id in columns or self._default_columns()]
+            default = self._default_columns()
+            columns = self._get_state_param('columns', default)
+            if default != self._get_state_param('default_columns', default):
+                self._default_columns_changed = True
+                columns = [id for id in columns
+                           if self._view.field(id) is not None]
+        self._columns = [self._view.field(id) for id in columns]
         # Inicializace atributù
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
@@ -122,6 +125,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._current_editor = None
         self._column_to_move = None
         self._column_move_target = None
+        self._mouse_dragged = False
         # Parametry zobrazení
         self._initial_position = self._position = 0
 
@@ -172,7 +176,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._table = table = \
           _grid.ListTable(self._parent, self._data, self._fields,
                           self._columns, row_count, sorting=self._lf_sorting,
-                          grouping=self._lf_grouping, prefill=self._prefill)
+                          grouping=self._lf_grouping, prefill=self._prefill,
+                          row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
         g.SetColLabelSize(dlg2px(g, 0, 12).GetHeight())
@@ -279,8 +284,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._columns.insert(i, insert_column)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
         new_columns = tuple([c.id() for c in self._columns])
-        if new_columns != old_columns:
+        if reset_columns:
+            self._unset_state_param('columns')
+            self._unset_state_param('default_columns')
+        elif new_columns != old_columns:
             self._set_state_param('columns', new_columns)
+            self._set_state_param('default_columns', self._default_columns())
         t.update(columns=self._columns,
                  row_count=row_count, sorting=self._lf_sorting,
                  grouping=self._lf_grouping,
@@ -601,6 +610,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 if the_row is not None:
                     self._run_callback(self.CALL_SELECTION, (the_row,))
                     self._post_selection_hook(the_row)
+        if self._default_columns_changed:
+            self._default_columns_changed = False
+            msg = _("Specifikace sloupcù formuláøe byla zmìnìna.\n"
+                    "Va¹e u¾ivatelské nastavení sloupcù je ji¾ zastaralé.\n"
+                    "Chcete pou¾ít nové vıchozí nastavení sloupcù?")
+            if run_dialog(Question, msg):
+                self._on_reset_columns()
+            else:
+                self._set_state_param('default_columns',self._default_columns())
         # V budoucnu by zde mohlo bıt pøednaèítání dal¹ích øádkù nebo dat
         event.Skip()
         return False
@@ -713,7 +731,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         event.Skip()
 
     def _on_label_left_down(self, event):
-        self._column_to_move = self._grid.XToCol(event.GetX())
+        g = self._grid
+        x = event.GetX()
+        col = g.XToCol(x)
+        x1 = reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
+        x2 = x1 + g.GetColSize(col)
+        if x > x1+2 and x < x2-2:
+            self._column_to_move = col
+        self._mouse_dragged = False
         event.Skip()
         
     def _on_label_left_up(self, event):
@@ -727,7 +752,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 c = self._columns[old_index]
                 self._update_grid(delete_column=c, insert_column=c,
                                   inserted_column_index=new_index)
-        else:
+        elif not self._mouse_dragged:
             self._run_callback(self.CALL_USER_INTERACTION)
             invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
                            direction=LookupForm.SORTING_CYCLE_DIRECTION)
@@ -752,14 +777,24 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 lastwidth = width
                 pos += width
             return g.GetNumberCols()
-        if self._column_to_move is not None and event.Dragging():
+        if self._column_to_move is not None:
             self._column_move_target = nearest_column(event.GetX())
             event.GetEventObject().Refresh()
+        self._mouse_dragged = True
         event.Skip()
 
     def _on_label_drag_size(self, event):
         self._remember_column_size(event.GetRowOrCol())
-        self._column_move_target = None
+        # Mohli bychom roz¹íøit poslední sloupec, ale jak ho potom zase zú¾it?
+        #if config.stretch_tables:
+        #    g = self._grid
+        #    n = g.GetNumberCols()
+        #    w = reduce(lambda x, i: x + g.GetColSize(i), range(n), 0)
+        #    x = g.GetSize().x
+        #    if w < x:
+        #        col = n-1
+        #        g.SetColSize(col, g.GetColSize(col) + (x - w))
+        #        self._remember_column_size(col)
         event.Skip()
 
     def _remember_column_size(self, col):
@@ -1645,7 +1680,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._grid.SetCellHighlightColour(config.cell_highlight_color)
         if config.grid_line_color is not None:
             self._grid.SetGridLineColour(config.grid_line_color)
-    
+
     def _total_width(self):
         total = 0
         for c in self._columns:
@@ -2148,7 +2183,7 @@ class SideBrowseForm(FilteredBrowseForm):
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
         if self._hide_binding_column:
-            return [c for c in columns if c != self._binding_column]
+            return tuple([c for c in columns if c != self._binding_column])
         else:
             return columns
         
