@@ -219,14 +219,7 @@ class SFDialog(SFSDialog):
         keys.sort()
         for k in keys:
             wcol, wop, wval = selectors[k]
-            vcol = wcol.GetStringSelection()
-            for c in self._columns:
-                if c.label() == vcol:
-                    column_id = c.id()
-                    column_type = c.type()
-                    break
-            else:
-                raise ProgramError('Column disappeared', vcol)
+            column = self._columns[wcol.GetSelection()]
             vop = wop.GetStringSelection()
             vval = wval.GetValue()
             for o in self._OPERATORS:
@@ -234,13 +227,13 @@ class SFDialog(SFSDialog):
                     if (o[1] is not o[2] and
                         vval.find('*') >= 0 or vval.find('?') >= 0):
                         op = o[1]
-                        value, err = column_type.wm_validate(vval)
+                        value, err = column.type().wm_validate(vval)
                     elif isinstance(column_type, pytis.data.Boolean):
                         op = o[2]
-                        value, err = column_type.validate(vval, extended=True)
+                        value, err = column.type().validate(vval, extended=True)
                     else:
                         op = o[2]
-                        value, err = column_type.validate(vval, strict=False)
+                        value, err = columntype().validate(vval, strict=False)
                     if err:
                         msg = _("Chybná hodnota v podmínce %d:\n%s") % \
                               (k+1, err.message())
@@ -249,7 +242,7 @@ class SFDialog(SFSDialog):
                     break
             else:
                 raise ProgramError('Operator disappeared', vop)
-            subcondition = op(column_id, value)
+            subcondition = op(column.id(), value)
             if k > 0:
                 lopindex = logical_selectors[k-1].GetSelection()
                 lop = self._LOGICAL_OPERATORS[lopindex][1]
