@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -153,7 +153,7 @@ class ListTable(wx.grid.PyGridTableBase):
         
     def __init__(self, frame, data, fields, columns, row_count,
                  sorting=(), grouping=None, inserted_row_number=None,
-                 inserted_row=None, prefill=None):
+                 inserted_row=None, prefill=None, row_style=None):
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
         self._data = data
@@ -163,6 +163,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._grouping = grouping
         self._prefill = prefill
         self._current_row = None
+        self._row_style = row_style
         # Zpracuj sloupce
         self._update_columns(columns)
         # Vytvoř cache
@@ -171,6 +172,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._font_cache = {}
         self._group_cache = {0: False}
         self._group_value_cache = {}
+        self._grouping_background_downgrade = self._group_bg_downgrade()
         # Nastav řádek
         self.rewind()
         if inserted_row_number is None:
@@ -331,7 +333,11 @@ class ListTable(wx.grid.PyGridTableBase):
         return (color2wx(style.foreground()), color2wx(style.background()),font)
 
     # Naše veřejné metody
-        
+
+    def _group_bg_downgrade(self):
+        d = wx.NamedColor(config.grouping_background_downgrade)
+        return (255-d.Red(), 255-d.Green(), 255-d.Blue())
+    
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row, prefill):
         self._update_columns(columns)
@@ -342,6 +348,7 @@ class ListTable(wx.grid.PyGridTableBase):
         # Smaž cache
         self._group_cache = {0: False}
         self._group_value_cache = {}
+        self._grouping_background_downgrade = self._group_bg_downgrade()
         # Nastav řádek
         self.rewind()
         if inserted_row_number is None:
@@ -374,6 +381,9 @@ class ListTable(wx.grid.PyGridTableBase):
         self._group_value_cache = None
         self._edited_row = None
         self._presented_row = None
+        self._current_row = None
+        self._row_style = None
+        self._grouping_background_downgrade = None
 
     def _cached_value(self, row, col_id, style=False):
         # Return the cached value for given row and column id.
@@ -396,6 +406,13 @@ class ListTable(wx.grid.PyGridTableBase):
                 if callable(s):
                     style_dict[cid] = s(cid, the_row)
                 value_dict[cid] = the_row.format(cid)
+            # Grouping column may not be in self._columns.
+            grouping_column = self._grouping
+            if grouping_column and not value_dict.has_key(grouping_column):
+                value_dict[grouping_column] = the_row.format(grouping_column)
+            # When row_style was defined, lets compute it.
+            if callable(self._row_style):
+                style_dict[None] = self._row_style(the_row)
             self._cache[row] = cached_things = [value_dict, style_dict]
         cached_row = cached_things[style and 1 or 0]
         return cached_row[col_id]
@@ -618,8 +635,13 @@ class ListTable(wx.grid.PyGridTableBase):
             return None
         column = self._columns[col]
         style = column.style
+        if style is None:
+            style = self._row_style
+            style_column = None
+        else:
+            style_column = column.id
         if callable(style):
-            style = self._cached_value(row, column.id, style=True)
+            style = self._cached_value(row, style_column, style=True)
         try:
             fg, bg, font = self._attr_cache[style]
         except KeyError:
@@ -627,7 +649,7 @@ class ListTable(wx.grid.PyGridTableBase):
         if self._group(row):
             rgb = [max(0, x - y)
                    for x, y in zip((bg.Red(), bg.Green(), bg.Blue()),
-                                   ListForm._GROUPING_BACKGROUND_DOWNGRADE)]
+                                   self._grouping_background_downgrade)]
             bg = wx.Colour(*rgb)
         provider = self.GetAttrProvider()
         if provider:
