@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -267,7 +267,10 @@ class GenericDialog(Dialog):
 
     def _commit_dialog(self, force=False):
         if force and self._COMMIT_BUTTON in self._button_labels.values():
-            self._end_modal(self._button_id(self._COMMIT_BUTTON))
+            # Simulate a click on the commit button.
+            id = self._button_id(self._COMMIT_BUTTON)
+            button = wx.FindWindowById(id, self._parent)
+            button.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, id))
         else:
             focused = wx_focused_window()
             if focused and self._can_commit(focused):
