@@ -1,3 +1,60 @@
+2006-01-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Nový argument
+	`row_style'.
+	(ViewSpec.row_style): Nová metoda.
+	(FieldSpec.__init__): Výchozí hodnotou argumentu `style' nech» je
+	`None'.
+
+	* pytis/form/configui.py (_LAYOUT): Pøidána také volba
+	`grouping_background_downgrade'.
+
+	* pytis/form/list.py (ListForm._GROUPING_BACKGROUND_DOWNGRADE):
+	Konstanta zru¹ena.
+	(ListForm._init_attributes): Pokud do¹lo ke zmìnì sloupcù ve
+	specifikaci, nastav `self._default_columns_changed'.  Inicializuj
+	atribut `self._mouse_dragged' na `False'.
+	(ListForm._create_grid): Pøedávej konstruktoru `ListTable'
+	argument `row_style'.
+	(ListForm._update_grid): Pøi `reset_columns' ma¾ zapamatované
+	u¾ivatelské nastavení sloupcù.
+	(ListForm._on_idle): Pokud je nastaveno
+	`self._default_columns_changed', zobraz dialog s upozornìním na
+	zmìny ve specifikaci sloupcù a zeptej se, zda u¾ivatel chce
+	sloupce resetovat.
+	(ListForm._on_label_left_down): Poèni pøetahování sloupce pouze
+	pokud u¾ivatel kliknul dostateènì daleko od rozhraní sloupcù.
+	Nuluj `self._mouse_dragged'.
+	(ListForm._on_label_left_up): Proveï tøídìní pouze pokud nedo¹lo k
+	popota¾ení my¹i.
+	(ListForm._on_label_mouse_move): Netestuj `event.Dragging()'.
+	(ListForm._on_label_mouse_move): Nastavuj `self._mouse_dragged'.
+	(SideBrowseForm._default_columns): Vracej tuple.
+
+	* pytis/form/_grid.py (ListTable.__init__): Nový argument
+	`row_style'.  Inicializuj `self._grouping_background_downgrade'.
+	(ListTable._group_bg_downgrade): Nová metoda.
+	(ListTable.update): Pøepoèítej
+	`self._grouping_background_downgrade'.
+	(ListTable.close): Nuluj také `self._current_row',
+	`self._row_style' a `self._grouping_background_downgrade'.
+	(ListTable._cached_value): Pokud grouping column není v columns,
+	stejnì nacachuj jeho hodnotu.  Vypoèti také `row_style' pokud jde
+	o funkci.
+	(ListTable.GetAttr): Pokud je styl None, zkus pou¾ij `row_style'.
+	Pou¾ívej `self._grouping_background_downgrade' namísto
+	`ListForm._GROUPING_BACKGROUND_DOWNGRADE'.
+
+	* pytis/util/configuration.py
+	(Configuration._Option_grouping_background_downgrade._DEFAULT):
+	Pozmìnìna výchozí hodnota.
+
+	* pytis/form/search.py (SFDialog._selected_condition): Nezji¹»uj
+	sloupec podle labelu, ale podle poøadí.
+
+	* pytis/form/dialog.py (GenericDialog._commit_dialog): Don't end
+	the dialog.  Rather simulate a button click.
+
 2006-01-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.OnInit): Inicializuj
