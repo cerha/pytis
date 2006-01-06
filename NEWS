@@ -4,6 +4,53 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-06  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøi ka¾dém otevøení formuláøe je kontrolováno, zda se mno¾ina
+	sloupcù definovaná ve specifikaci nezmìnila od doby, kdy si
+	u¾ivatel ulo¾il vlastní nastavení sloupcù.  Pokud ano, vyskoèí
+	dialog, jeho¾ potvrzením je u¾ivatelské nastavení zahozano.
+	U¾ivatel mù¾e zahození také zamítnout.  V tom pøípadì vidí jen ty
+	sloupce, ze svého nastavení, které v souèasné specifikaci zùstaly,
+	resp. jejich¾ identifikátory se nezmìnily.
+	
+	Nový argument `row_style' ve `ViewSpec' umo¾òuje definovat styl
+	pro celý øádek, tedy v¹echna políèka zároveò.  Tím by se mohly
+	nìkteré formuláøe dosti urychlit, proto¾e se styl i pøi velkém
+	poètu sloupcù poèítá pro ka¾dý øádek jen jednou.  Je v¹ak tøeba
+	zru¹it v¹echny styly definované jako `style' ve `FieldSpec' a
+	definovat místo toho `row_style'.  Pokud má nìjaký sloupec
+	pou¾ívat jiný styl, není problém oba styly kombinovat -- `style'
+	ve `FieldSpec' má pøednost, pokud je definován.
+
+	Nová konfiguraèní volba ve formuláøi "Nastavení u¾ivatelského
+	rozhraní" umo¾òuje nastavit 
+
+	* BUGFIX: Filtraèní dialog u¾ opìt filtruje i pøi stisku
+	"Ctrl-Enter".
+
+	* BUGFIX: Filtraèní a tøídící dialog nyní rozeznávají sloupeèky
+	podle poøadí, nikoliv podle názvu, co¾ opravuje napøíklad
+	nefunkèní filtraci v zakázkách isasu, kde byly dva sloupce
+	stejného názvu a filtrování se tak provádìlo v jiném sloupci, ne¾
+	u¾ivatel oèekával.
+
+	* BUGFIX: Grouping nyní funguje i pokud sloupec zrovna není
+	zobrazen.
+
+	* BUGFIX: Pokud je sloupec roztahován/zu¾ován my¹í, nedochází ji¾
+	k nechtìnému pøesouvání sloupce pøi pøeta¾ení okraje za polovinu
+	vedlej¹ího sloupce.
+	
+2006-01-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: V pytis-extensions byla opravena funkce
+	`get_menu_defs()', tak aby nezahrnovala polo¾ky týkající se
+	konfigurace.
+
+	* BUGFIX: Inicializuj klávesovou mapu pøed naèítáním konfigurace,
+	jinak nefungují klávesy v dialogu pro pøihlá¹ení k databázi.
+	
 2006-01-03  Tomas Cerha  <cerha@brailcom.org>
 
         Validace hodnot zadaných ve filtrovacím nebo vyhledávacím dialogu
