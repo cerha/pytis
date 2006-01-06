@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,6 +50,74 @@ class BorderStyle(object):
     """Mezera je jen vlevo."""
 
     
+class Color(object):
+    """Na GUI toolkitu nezávislé konstanty pro některé barvy."""
+    WHITE = 'WHITE'
+    BLACK = 'BLACK'
+    RED = 'RED'
+    RED20 = 'RED20'
+    GREEN = 'GREEN'
+    BLUE = 'BLUE'
+    YELLOW = 'YELLOW'
+    GRAY   = 'GRAY'
+    GRAY10 = 'GRAY10'
+    GRAY20 = 'GRAY20'
+    GRAY30 = 'GRAY30'
+    GRAY40 = 'GRAY40'
+    GRAY50 = 'GRAY50'
+    GRAY60 = 'GRAY60'
+    GRAY70 = 'GRAY70'
+    GRAY80 = 'GRAY80'
+    GRAY90 = 'GRAY90'
+    BLANCHETALMOND = 'BLANCHETALMOND'
+    LIGHTYELLOW = 'LIGHTYELLOW'
+    PEACHPUFF2 = 'PEACHPUFF2'
+    SLATEGRAY2 = 'SLATEGRAY2'
+    LIGHTSALMON = 'LIGHTSALMON'
+
+    
+class FieldStyle(object):
+    """Specifikační třída definující podobu vnitřku políčka s hodnotou."""
+
+    def __init__(self, foreground=Color.BLACK, background=Color.WHITE,
+                 bold=False, slanted=False):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          foreground -- barva textu políčka, jedna z konstant třídy 'Color'
+          background -- barva pozadí políčka, jedna z konstant třídy 'Color'
+          bold -- příznak určující, zda má být text políčka tučný
+          slanted -- příznak určující, zda má být text políčka skloněný
+          
+        """
+        self._foreground = foreground
+        self._background = background
+        self._bold = bold
+        self._slanted = slanted
+
+    def foreground(self):
+        """Vrať barvu textu zadanou v konstruktoru."""
+        return self._foreground
+
+    def background(self):
+        """Vrať barvu pozadí zadanou v konstruktoru."""
+        return self._background
+
+    def bold(self):
+        """Vrať pravdu, právě když má text blikat."""
+        return self._bold
+
+    def slanted(self):
+        """Vrať pravdu, právě když má být text tučný."""
+        return self._slanted
+
+
+FIELD_STYLE_DEFAULT = FieldStyle()
+FIELD_STYLE_EMPHASIS = FieldStyle(bold=True)
+FIELD_STYLE_WARNING = FieldStyle(foreground=Color.RED)
+
+
 class Orientation(object):
     """Výčtová třída definující konstanty pro směrovou orientaci."""
     HORIZONTAL = 'HORIZONTAL'
@@ -365,7 +433,8 @@ class ViewSpec(object):
                  check=None, cleanup=None, on_new_record=None,
                  on_edit_record=None, on_delete_record=None,
                  enable_inline_insert=True, on_line_commit=None,
-                 focus_field=None, description=None):
+                 focus_field=None, description=None,
+                 row_style=FIELD_STYLE_DEFAULT):
         """Inicializuj instanci.
 
         Argumenty:
@@ -452,6 +521,10 @@ class ViewSpec(object):
              vrací příslušný identifikátor políčka.
            description -- popis formuláře pro bublinkový help.
 
+           row_style -- instance třídy 'FieldStyle' určující vizuální styl
+             společný pro všechna políčka, nebo funkce jednoho argumentu
+             (instance 'PresentedRow') vracející instanci třídy 'FieldStyle'.
+
         Pokud není argument 'layout' nebo 'columns' uveden, bude vygenerován
         implicitní layout a seznam sloupců, odpovídající pořadí políček ve
         'fields'.
@@ -522,6 +595,7 @@ class ViewSpec(object):
         assert on_line_commit is None or callable(on_line_commit)
         assert focus_field is None or is_anystring(focus_field) \
                or callable(focus_field)
+        assert isinstance(row_style, FieldStyle) or callable(row_style)
         self._title = gettext_(title)
         self._columns = columns
         self._layout = layout
@@ -538,7 +612,8 @@ class ViewSpec(object):
         self._enable_inline_insert = enable_inline_insert
         self._focus_field = focus_field
         self._description = description
-                
+        self._row_style = row_style
+
     def fields(self):
         """Vrať tuple specifikací všech políček v layoutu."""
         return self._fields
@@ -614,6 +689,10 @@ class ViewSpec(object):
     def description(self):
         """Vrať řetězec nebo funkci, určující políčko formuláře s fokusem."""
         return self._description
+
+    def row_style(self):
+        """Vrať výchozí styl řádku, nebo funkci, která jej vypočte."""
+        return self._row_style
 
     
 class DualSpec(object):
@@ -742,81 +821,7 @@ class SelectionType(object):
     LIST = 'LIST'
     """Vícesloupcové/víceřádkové výběrové políčko pro číselníky."""
 
-class Color(object):
-    """Na GUI toolkitu nezávislé konstanty pro některé barvy."""
-    WHITE = 'WHITE'
-    BLACK = 'BLACK'
-    RED = 'RED'
-    RED20 = 'RED20'
-    GREEN = 'GREEN'
-    BLUE = 'BLUE'
-    YELLOW = 'YELLOW'
-    GRAY   = 'GRAY'
-    GRAY10 = 'GRAY10'
-    GRAY20 = 'GRAY20'
-    GRAY30 = 'GRAY30'
-    GRAY40 = 'GRAY40'
-    GRAY50 = 'GRAY50'
-    GRAY60 = 'GRAY60'
-    GRAY70 = 'GRAY70'
-    GRAY80 = 'GRAY80'
-    GRAY90 = 'GRAY90'
-    BLANCHETALMOND = 'BLANCHETALMOND'
-    LIGHTYELLOW = 'LIGHTYELLOW'
-    PEACHPUFF2 = 'PEACHPUFF2'
-    SLATEGRAY2 = 'SLATEGRAY2'
-    LIGHTSALMON = 'LIGHTSALMON'
-
-
-class TextFormat(object):
-    """Konstanty pro definici vstupního formátu textu."""
-    PLAIN = 'PLAIN'
-    HTML = 'HTML'
-    WIKI = 'WIKI'
-
-    
-class FieldStyle(object):
-    """Specifikační třída definující podobu vnitřku políčka s hodnotou."""
-
-    def __init__(self, foreground=Color.BLACK, background=Color.WHITE,
-                 bold=False, slanted=False):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          foreground -- barva textu políčka, jedna z konstant třídy 'Color'
-          background -- barva pozadí políčka, jedna z konstant třídy 'Color'
-          bold -- příznak určující, zda má být text políčka tučný
-          slanted -- příznak určující, zda má být text políčka skloněný
-          
-        """
-        self._foreground = foreground
-        self._background = background
-        self._bold = bold
-        self._slanted = slanted
-
-    def foreground(self):
-        """Vrať barvu textu zadanou v konstruktoru."""
-        return self._foreground
-
-    def background(self):
-        """Vrať barvu pozadí zadanou v konstruktoru."""
-        return self._background
-
-    def bold(self):
-        """Vrať pravdu, právě když má text blikat."""
-        return self._bold
-
-    def slanted(self):
-        """Vrať pravdu, právě když má být text tučný."""
-        return self._slanted
-
-
-FIELD_STYLE_DEFAULT = FieldStyle()
-FIELD_STYLE_EMPHASIS = FieldStyle(bold=True)
-FIELD_STYLE_WARNING = FieldStyle(foreground=Color.RED)
-
-    
+   
 class PostProcess(object):
     "Výčtová třída definující konstanty pro způsob zpracování uživ. vstupu."
     UPPER = 'UPPER'
@@ -890,6 +895,13 @@ class Computer(object):
     def depends(self):
         """Vrať seznam id sloupců, ne kterých počítaná hodnota závisí."""
         return self._depends
+
+     
+class TextFormat(object):
+    """Konstanty pro definici vstupního formátu textu."""
+    PLAIN = 'PLAIN'
+    HTML = 'HTML'
+    WIKI = 'WIKI'
 
 
 class CodebookSpec(object):
@@ -989,7 +1001,7 @@ class FieldSpec(object):
                  orientation=Orientation.VERTICAL,
                  references=None,
                  post_process=None, filter=None, filter_list=None,
-                 check=None, style=FIELD_STYLE_DEFAULT):
+                 check=None, style=None):
         """Inicializace a doplnění výchozích hodnot atributů.
 
         Argumenty:
@@ -1098,8 +1110,9 @@ class FieldSpec(object):
           style -- instance třídy 'FieldStyle' určující vizuální styl políčka
             nebo funkce dvou argumentů vracející instanci třídy 'FieldStyle'.
             Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
-            a aktuální datový řádek jako instance 'PresentedRow' nebo
-            'pytis.data.Row', v tomto pořadí.
+            a aktuální datový řádek jako instance 'PresentedRow'.  Pokud je
+            None, bude použit výchozí styl řádku (viz. argument 'row_style'
+            konstruktoru 'ViewSpec').
             
         Nejdůležitějším parametrem vstupního pole je 'id'. To specifikuje jeho
         vazbu do datového zdroje.
@@ -1162,8 +1175,8 @@ class FieldSpec(object):
         assert editable in public_attributes(Editable) or \
                isinstance(editable, Computer)
         assert check is None or callable(check)
-        assert isinstance(style, FieldStyle) or callable(style), \
-               ('Invalid field style', id, style)
+        assert style is None or isinstance(style, FieldStyle) \
+               or callable(style), ('Invalid field style', id, style)
         if check is not None:
             log(EVENT, "Použita potlačená funkce 'check' třídy 'FieldSpec'!")
         if references is not None:
