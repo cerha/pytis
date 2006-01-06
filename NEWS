@@ -41,6 +41,12 @@
 	* BUGFIX: Pokud je sloupec roztahován/zu¾ován my¹í, nedochází ji¾
 	k nechtìnému pøesouvání sloupce pøi pøeta¾ení okraje za polovinu
 	vedlej¹ího sloupce.
+
+	* BUGFIX: Urèení pozice sloupce nyní poèítá i s offsetem
+	zpùsobeným horizontálním scrollováním.  Ve¹keré akce nad sloupci
+	provádìné my¹í tak nyní pracují za v¹ech okolností se správným
+	sloupcem.  Døíve byl napøíklad pøesunut nebo skryt jiný sloupec,
+	pokud byla tabulka odscrollovaná doprava.
 	
 2006-01-04  Tomas Cerha  <cerha@brailcom.org>
 

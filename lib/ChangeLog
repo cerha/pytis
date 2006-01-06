@@ -30,6 +30,10 @@
 	(ListForm._on_label_mouse_move): Netestuj `event.Dragging()'.
 	(ListForm._on_label_mouse_move): Nastavuj `self._mouse_dragged'.
 	(SideBrowseForm._default_columns): Vracej tuple.
+	(ListForm._scroll_x_offset): Nová metoda.
+	(ListForm._on_label_right_down, ListForm._on_label_left_down) 
+	(ListForm._on_label_left_up, ListForm._on_label_mouse_move) 
+	(ListForm._on_label_paint): Vyu¾ívej ji.
 
 	* pytis/form/_grid.py (ListTable.__init__): Nový argument
 	`row_style'.  Inicializuj `self._grouping_background_downgrade'.
