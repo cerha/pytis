@@ -258,14 +258,9 @@ class SFDialog(SFSDialog):
         value.SetValue('')
 
     def _on_suck(self, event, id):
-        column, __, value = self._selectors[id]
-        label = column.GetStringSelection()
-        for c in self._columns:
-            if c.label() == label:
-                v = self._row[c.id()].export()
-                break
-        else:
-            raise ProgramError('Unknown column selected', label)
+        wcol, __, value = self._selectors[id]
+        column = self._columns[wcol.GetSelection()]
+        v = self._row[column.id()].export()
         if is_sequence(v):
             v = v[0]
         value.SetValue(v)
