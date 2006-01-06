@@ -228,7 +228,7 @@ class SFDialog(SFSDialog):
                         vval.find('*') >= 0 or vval.find('?') >= 0):
                         op = o[1]
                         value, err = column.type().wm_validate(vval)
-                    elif isinstance(column_type, pytis.data.Boolean):
+                    elif isinstance(column.type(), pytis.data.Boolean):
                         op = o[2]
                         value, err = column.type().validate(vval, extended=True)
                     else:
