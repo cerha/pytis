@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     Argumenty:
 
       object -- ui prvek který má být přeskočen.
-      dir -- směr pohybu, boolean, pravda při pohybu vpřed.
+      back -- směr pohybu, boolean, pravda při pohybu vzad.
 
     To je vhodné například pro tlačítka políček typu 'Invocable', nebo display
     u 'CodebookField'.  Navigaci však zajišťuje nadřízený formulář.
@@ -212,7 +212,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         def cb(e):
             if not self._unregistered_widgets.has_key(widget):
                 self._run_callback(self.CALL_SKIP_NAVIGATION,
-                                   (widget, e.GetDirection()))
+                                   (widget, not e.GetDirection()))
                 return True
             else:
                 e.Skip()
@@ -1000,9 +1000,7 @@ class Invocable(object, CommandHandler):
     def on_command(self, command, **kwargs):
         if self._enabled:
             if command == Invocable.COMMAND_INVOKE_SELECTION:
-                return self._on_invoke_selection()
-            if command == Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE:
-                return self._on_invoke_selection(alternate=True)
+                return self._on_invoke_selection(**kwargs)
         return super(Invocable, self).on_command(command, **kwargs)
 
     def can_invoke_selection(self, **kwargs):
