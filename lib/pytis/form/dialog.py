@@ -107,7 +107,7 @@ class GenericDialog(Dialog):
         assert report_format in public_attributes(TextFormat)
         super_(GenericDialog).__init__(self, parent)
         self._title = unicode(title)
-        self._buttons = buttons
+        self._button_labels = buttons
         self._default = default
         self._report = report
         self._report_format = report_format
@@ -142,7 +142,7 @@ class GenericDialog(Dialog):
         '_create_buttons()').
 
         Tuto metodu by nemìlo být tøeba pøedefinovávat. Ve vìt¹inì pøípadù by
-        mìlo staèit pøedefinovat metodu '_create_content()' nebo
+        mìlo staèit pøedefinovat metodu '_create_content()' a/nebo
         '_create_buttons()'.
 
         """
@@ -181,17 +181,17 @@ class GenericDialog(Dialog):
     
     def _create_buttons(self):
         """Vytvoø tlaèítka a vra» je jako sekvenci."""
-        buttons = []
-        self._button_labels = {}
-        for label in self._buttons:
+        self._buttons = []
+        self._button_label_dict = {}
+        for label in self._button_labels:
             id = wx.NewId()
-            self._button_labels[id] = label
+            self._button_label_dict[id] = label
             button = wx.Button(self._dialog, id, unicode(label))
-            buttons.append(button)
+            self._buttons.append(button)
             if self._default == label:
                 button.SetDefault()
                 self._want_focus = button
-        return tuple(buttons)
+        return self._buttons
 
     def _create_icon(self, artid):
         bitmap = wx.ArtProvider_GetBitmap(artid, wx.ART_MESSAGE_BOX, (48,48))
@@ -201,8 +201,9 @@ class GenericDialog(Dialog):
             return None
 
     def _can_commit(self, widget):
-        # Return True when the widget is on of the submit buttons.
-        return self._button_label(widget.GetId()) is not None
+        # Override to allow certain widgets to commit the whole dialog, when
+        # COMMIT_DIALOG command is invoked (from the keyboard).
+        return False
 
     def _on_idle(self, event):
         event.Skip()
@@ -239,14 +240,14 @@ class GenericDialog(Dialog):
     def _button_label(self, id):
         # Vra» nápis tlaèítka s daným id.
         try:
-            return self._button_labels[id]
+            return self._button_label_dict[id]
         except KeyError:
             return None
 
     def _button_id(self, label):
         # Vra» id tlaèítka s daným nápisem.
-        for id in self._button_labels.keys():
-            if self._button_labels[id] == label:
+        for id, l in self._button_label_dict.items():
+            if l == label:
                 return id
         return None
 
@@ -266,26 +267,26 @@ class GenericDialog(Dialog):
         return self._end_modal(wx.ID_CANCEL)
 
     def _commit_dialog(self, force=False):
-        if force and self._COMMIT_BUTTON in self._button_labels.values():
-            # Simulate a click on the commit button.
+        if force:
             id = self._button_id(self._COMMIT_BUTTON)
-            button = wx.FindWindowById(id, self._parent)
-            button.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, id))
+            widget = wx.FindWindowById(id, self._parent)
         else:
-            focused = wx_focused_window()
-            if focused and self._can_commit(focused):
-                self._end_modal(focused.GetId())
-            else:
-                self._navigate()
+            widget = wx_focused_window()
+        if widget in self._buttons:
+            # Simulate a click on the commit button.
+            widget.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED,
+                                           widget.GetId()))
+        elif widget and self._can_commit(widget):
+            self._end_modal(widget.GetId())
+        else:
+            self._navigate()
         return True
         
     def on_command(self, command, **kwargs):
         if command == Dialog.COMMAND_CLOSE_DIALOG:
             return self._close_dialog()
         if command == Dialog.COMMAND_COMMIT_DIALOG:
-            return self._commit_dialog()
-        if command == Dialog.COMMAND_FORCE_COMMIT_DIALOG:
-            return self._commit_dialog(force=True)
+            return self._commit_dialog(**kwargs)
         return False
 
     def run(self):
