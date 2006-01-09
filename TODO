@@ -88,7 +88,7 @@ NOVÉ VLASTNOSTI:
    Nový atribut `disabled' zcela zemezí takový sloupec zobrazit.
 
    `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
-   bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné....
+   bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné...
 
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
