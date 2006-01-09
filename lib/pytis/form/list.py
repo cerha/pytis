@@ -1065,13 +1065,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._on_alternate_activation()
             elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
                 self._on_show_cell_codebook()
-            elif command == LookupForm.COMMAND_SEARCH:
-                self._on_search()
-            elif command == LookupForm.COMMAND_SEARCH_NEXT:
-                self._on_search(show_dialog=False, direction=pytis.data.FORWARD)
-            elif command == LookupForm.COMMAND_SEARCH_PREVIOUS:
-                self._on_search(show_dialog=False,
-                                direction=pytis.data.BACKWARD)
             elif command == LookupForm.COMMAND_FILTER:
                 self._on_filter()
             elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
