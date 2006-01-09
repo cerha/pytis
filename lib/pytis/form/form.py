@@ -857,9 +857,7 @@ class RecordForm(Form):
             key = self._current_key()
             self._on_delete_record(key)
         elif command == RecordForm.COMMAND_NEW_RECORD:
-            self._run_callback(self.CALL_NEW_RECORD)
-        elif command == RecordForm.COMMAND_NEW_RECORD_COPY:
-            self._run_callback(self.CALL_NEW_RECORD, (True,))
+            self._run_callback(self.CALL_NEW_RECORD, kwargs=kwargs)
         elif command == RecordForm.COMMAND_EDIT_RECORD:
             key = self._current_key()
             if key is not None:
@@ -1547,11 +1545,11 @@ class EditForm(LookupForm, TitledForm):
             else:                
                 self._field(id).disable()
                 
-    def _navigate(self, object=None, forward=True):
+    def _navigate(self, object=None, back=False):
         # Vygeneruj událost navigace mezi políèky.
         if self._mode != self.MODE_VIEW:
             nav = wx.NavigationKeyEvent()
-            nav.SetDirection(forward)
+            nav.SetDirection(not back)
             if object:
                 nav.SetEventObject(object)
                 nav.SetCurrentFocus(object)
@@ -1590,9 +1588,7 @@ class EditForm(LookupForm, TitledForm):
             
         # Common commands
         if command == EditForm.COMMAND_NAVIGATE:
-            return self._navigate()
-        elif command == EditForm.COMMAND_NAVIGATE_BACK:
-            return self._navigate(forward=False)
+            return self._navigate(**kwargs)
         else:
             return super_(EditForm).on_command(self, command, **kwargs)
         return False
