@@ -991,13 +991,12 @@ class LookupForm(RecordForm):
             if number:
                 self.select_row(number.value()-1)
         
-    def _on_search(self, show_dialog=True, direction=pytis.data.FORWARD):
+    def _on_search(self, direction=None):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
-        if show_dialog:
+        condition = sf_dialog.condition()
+        if condition is None or direction is None:
             condition, direction = \
                        block_refresh(lambda: run_dialog(sf_dialog, self._row))
-        else:
-            condition = sf_dialog.condition()
         if condition is not None:
             self._search(condition, direction)
 
@@ -1152,13 +1151,7 @@ class LookupForm(RecordForm):
             self._on_jump()
             return True
         if command == LookupForm.COMMAND_SEARCH:
-            self._on_search()
-            return True
-        elif command == LookupForm.COMMAND_SEARCH_NEXT:
-            self._on_search(show_dialog=False, direction = pytis.data.FORWARD)
-            return True
-        elif command == LookupForm.COMMAND_SEARCH_PREVIOUS:
-            self._on_search(show_dialog=False, direction = pytis.data.BACKWARD)
+            self._on_search(**kwargs)
             return True
         elif command == LookupForm.COMMAND_FILTER:
             self._on_filter()
