@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -811,7 +811,7 @@ class CallbackHandler:
             return self._callbacks[kind]
         return None
 
-    def _run_callback(self, kind, args=()):
+    def _run_callback(self, kind, args=(), kwargs={}):
         """Vyvolej funkci pro ošetření callbacku 'kind'.
 
         Pokud nebyla funkce pro ošetření daného callbacku předtím nastavena
@@ -821,9 +821,9 @@ class CallbackHandler:
         Argumenty:
         
           kind -- druh callbacku, jedna z 'CALL_*' konstant třídy
-          args -- funkce, která má být vyvolána.  Počet a význam argumentů
-            je dán odvozenou třídou a měl by být zdokumentovám v rámci
-            její dokumentace.
+          args -- argumenty funkce, která má být vyvolána.  Počet a význam
+            argumentů je dán odvozenou třídou a měl by být zdokumentovám v
+            rámci její dokumentace.
             
         """
         try:
@@ -832,7 +832,7 @@ class CallbackHandler:
             return False
         if callback:
             if __debug__: log(DEBUG, 'Bude volán callback:', (kind, callback))
-            apply(callback, args)
+            apply(callback, args, kwargs)
             return True
             
 
