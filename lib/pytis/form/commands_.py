@@ -76,16 +76,12 @@ Command(LookupForm, 'SORT_COLUMN',
         "Setøídìní podle sloupce.")
 Command(RecordForm, 'NEW_RECORD',
         "Vlo¾ení nového záznamu pomocí editaèního formuláøe.")
-Command(RecordForm, 'NEW_RECORD_COPY',
-        "Vlo¾ení kopie záznamu pomocí editaèního formuláøe.")
 Command(RecordForm, 'EDIT_RECORD',
         "Editace aktuálního záznamu v editaèním formuláøi.")
 Command(RecordForm, 'DELETE_RECORD',
         "Vymazání editovaného záznamu z databáze.")
 Command(ListForm, 'ACTIVATE',
-        "Aktivaèní funkce pro aktuální øádek formuláøe.")
-Command(ListForm, 'ACTIVATE_ALTERNATE',
-        "Alternativní aktivaèní funkce pro aktuální øádek.")
+        "Aktivaèní funkce pro aktuální øádek formuláøe. (arg. 'alternate')")
 Command(ListForm, 'SHOW_CELL_CODEBOOK',
         "Vyvolání èíselníku aktivní buòky øádkového formuláøe.")
 Command(ListForm, 'SELECT_CELL',
@@ -95,9 +91,7 @@ Command(ListForm, 'FIRST_COLUMN',
 Command(ListForm, 'LAST_COLUMN',
         "Pøechod na poslední sloupec tabulky.")
 Command(ListForm, 'INCREMENTAL_SEARCH',
-        "Prefixové inkrementální hledání záznamu.")
-Command(ListForm, 'FULL_INCREMENTAL_SEARCH',
-        "Plné inkrementální hledání záznamu.")
+        "Prefixové inkrementální hledání záznamu. (arg. 'full')")
 Command(ListForm, 'EDIT',
         "Vyvolání inline editace aktuální buòky.")
 Command(ListForm, 'COPY_CELL',
@@ -109,23 +103,15 @@ Command(ListForm, 'EXPORT_CSV',
 Command(ListForm, 'LINE_COMMIT',
         "Dokonèení editace záznamu (ulo¾ení).")
 Command(ListForm, 'LINE_ROLLBACK',
-        "Kompletní zru¹ení editace záznamu.")
-Command(ListForm, 'LINE_SOFT_ROLLBACK',
-        "Kompletní zru¹ení editace zatím nezmìnìného záznamu.")
+        "Kompletní zru¹ení editace záznamu. (arg. 'soft')")
 Command(ListForm, 'FINISH_EDITING',
         "Opu¹tìní editace øádku.")
 Command(ListForm, 'CELL_COMMIT',
         "Ukonèení editace políèka s novou hodnotou.")
 Command(ListForm, 'CELL_ROLLBACK',
         "Ukonèení editace políèka s vrácením pùvodní hodnoty.")
-Command(ListForm, 'NEW_LINE_AFTER',
-        "Vlo¾ení nového záznamu za aktuální øádek.")
-Command(ListForm, 'NEW_LINE_AFTER_COPY',
-        "Vlo¾ení záznamu za aktuální øádek jako jeho kopie.")
-Command(ListForm, 'NEW_LINE_BEFORE',
-        "Vlo¾ení nového záznamu pøed aktuální øádek.")
-Command(ListForm, 'NEW_LINE_BEFORE_COPY',
-        "Vlo¾ení záznamu pøed aktuální øádek jako jeho kopie.")
+Command(ListForm, 'NEW_LINE',
+        "In-line vlo¾ení nového záznamu. (arg. 'before' a 'copy')")
 Command(ListForm, 'SET_GROUPING_COLUMN',
         "Zmìna sloupce vizuáního seskupování.")
 Command(ListForm, 'RESIZE_COLUMN',
@@ -165,9 +151,7 @@ Command(BrowseForm, 'IMPORT_INTERACTIVE',
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn.")
 Command(EditForm, 'NAVIGATE',
-        "Navigace mezi políèky editaèního formuláøe.")
-Command(EditForm, 'NAVIGATE_BACK',
-        "Zpìtná navigace mezi políèky editaèního formuláøe.")
+        "Navigace mezi políèky editaèního formuláøe. (arg. 'back')")
 Command(BrowsableShowForm, 'NEXT_RECORD',
         "Pøechod na dal¹í záznam.")
 Command(BrowsableShowForm, 'PREVIOUS_RECORD',
@@ -189,9 +173,7 @@ Command(InputField, 'COMMIT_FIELD',
 Command(InputField, 'LEAVE_FIELD',
         "Odchod z editace vstupního políèka.")
 Command(Invocable, 'INVOKE_SELECTION',
-        "Vyvolání výbìru hodnoty vstupního políèka.")
-Command(Invocable, 'INVOKE_SELECTION_ALTERNATE',
-        "Vyvolání alternativního výbìru hodnoty políèka.")
+        "Vyvolání výbìru hodnoty vstupního políèka. (arg. 'alternate')")
 Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
         "Vyvolání alternativního výbìru hodnoty políèka.")
 Command(ListField, 'SELECT',
@@ -216,7 +198,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-M',      Application.COMMAND_SHOW_POPUP_MENU),
     (('Ctrl-x', 'p'), Form.COMMAND_PRINT),
     ('F6',          RecordForm.COMMAND_NEW_RECORD),
-    ('Ctrl-F6',     RecordForm.COMMAND_NEW_RECORD_COPY),
+    ('Ctrl-F6',     RecordForm.COMMAND_NEW_RECORD(copy=True)),
     ('F5',          RecordForm.COMMAND_EDIT_RECORD),
     ('F8',          RecordForm.COMMAND_DELETE_RECORD),
     ('F4',          LookupForm.COMMAND_SORT_COLUMN),
@@ -226,9 +208,9 @@ DEFAULT_KEYMAP = (
     ('Ctrl-r',      LookupForm.COMMAND_SEARCH(direction=pytis.data.BACKWARD)),
     ('Ctrl-j',      LookupForm.COMMAND_JUMP),
     ('Ctrl-F3',     ListForm.COMMAND_INCREMENTAL_SEARCH),
-    ('Alt-F3',      ListForm.COMMAND_FULL_INCREMENTAL_SEARCH),
+    ('Alt-F3',      ListForm.COMMAND_INCREMENTAL_SEARCH(full=True)),
     ('Enter',       ListForm.COMMAND_ACTIVATE),
-    (' ',           ListForm.COMMAND_ACTIVATE_ALTERNATE),
+    (' ',           ListForm.COMMAND_ACTIVATE(alternate=True)),
     ('Ctrl-c',      ListForm.COMMAND_COPY_CELL),
     ('Home',        ListForm.COMMAND_FIRST_COLUMN),
     ('End',         ListForm.COMMAND_LAST_COLUMN),
@@ -240,10 +222,10 @@ DEFAULT_KEYMAP = (
     ('F12',         ListForm.COMMAND_LINE_COMMIT),
     ('Enter',       ListForm.COMMAND_CELL_COMMIT),
     ('Escape',      ListForm.COMMAND_CELL_ROLLBACK),
-    ('Insert',      ListForm.COMMAND_NEW_LINE_AFTER),
-    ('F7',          ListForm.COMMAND_NEW_LINE_AFTER_COPY),
-    ('Ctrl-Insert', ListForm.COMMAND_NEW_LINE_BEFORE),
-    ('Ctrl-F7',     ListForm.COMMAND_NEW_LINE_BEFORE_COPY),
+    ('Insert',      ListForm.COMMAND_NEW_LINE()),
+    ('F7',          ListForm.COMMAND_NEW_LINE(copy=True)),
+    ('Ctrl-Insert', ListForm.COMMAND_NEW_LINE(before=True)),
+    ('Ctrl-F7',     ListForm.COMMAND_NEW_LINE(before=True, copy=True)),
     ('Alt-Right',   ListForm.COMMAND_RESIZE_COLUMN(diff=+5)),
     ('Alt-Left',    ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
     ('Shift-Right', ListForm.COMMAND_MOVE_COLUMN(diff=+1)),
@@ -251,7 +233,7 @@ DEFAULT_KEYMAP = (
     ('Alt-F6',      BrowseForm.COMMAND_IMPORT_INTERACTIVE),
     ('Ctrl-Enter',  EditForm.COMMAND_COMMIT_RECORD),
     ('Tab',         EditForm.COMMAND_NAVIGATE),
-    ('Shift-Tab',   EditForm.COMMAND_NAVIGATE_BACK),
+    ('Shift-Tab',   EditForm.COMMAND_NAVIGATE(back=True)),
     ('Next',        BrowsableShowForm.COMMAND_NEXT_RECORD),
     ('Prior',       BrowsableShowForm.COMMAND_PREVIOUS_RECORD),
     ('Home',        BrowsableShowForm.COMMAND_FIRST_RECORD),
@@ -262,7 +244,7 @@ DEFAULT_KEYMAP = (
     ('Enter',       InputField.COMMAND_COMMIT_FIELD),
     ('Escape',      InputField.COMMAND_LEAVE_FIELD),
     ('F2',          Invocable.COMMAND_INVOKE_SELECTION),
-    ('Ctrl-F2',     Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE),
+    ('Ctrl-F2',     Invocable.COMMAND_INVOKE_SELECTION(alternate=True)),
     ('Backspace',   ListField.COMMAND_SHOW_SELECTED),
     ('Escape',      Dialog.COMMAND_CLOSE_DIALOG),
     ('Enter',       Dialog.COMMAND_COMMIT_DIALOG),
@@ -291,26 +273,27 @@ FORM_COMMAND_MENU = ((
                                                           pytis.data.BACKWARD)),
     (_("Inkrementální hledání"), ListForm.COMMAND_INCREMENTAL_SEARCH),
     (_("Inkrementální hledání podøetìzce"),
-                                ListForm.COMMAND_FULL_INCREMENTAL_SEARCH),
+                                ListForm.COMMAND_INCREMENTAL_SEARCH(full=True)),
     ),(#---------------
-    (_("Tøídìní"),                    LookupForm.COMMAND_SORT_COLUMN),
-    (_("Filtrování"),                 LookupForm.COMMAND_FILTER),
+    (_("Tøídìní"),              LookupForm.COMMAND_SORT_COLUMN),
+    (_("Filtrování"),           LookupForm.COMMAND_FILTER),
     ),(#---------------
-    (_("Nový záznam"),                BrowseForm.COMMAND_NEW_RECORD),
-    (_("Nový záznam - kopie"),        BrowseForm.COMMAND_NEW_RECORD_COPY),
-    (_("Editovat záznam"),            BrowseForm.COMMAND_EDIT_RECORD),
-    (_("Vlo¾it øádku nad"),           ListForm.COMMAND_NEW_LINE_BEFORE),
-    (_("Vlo¾it øádku pod"),           ListForm.COMMAND_NEW_LINE_AFTER),
-    (_("Kopírovat øádku nad"),        ListForm.COMMAND_NEW_LINE_BEFORE_COPY),
-    (_("Kopírovat øádku pod"),        ListForm.COMMAND_NEW_LINE_AFTER_COPY),
-    (_("Editace buòky"),              ListForm.COMMAND_EDIT),
-    (_("Smazat záznam"),              RecordForm.COMMAND_DELETE_RECORD),
+    (_("Nový záznam"),          BrowseForm.COMMAND_NEW_RECORD),
+    (_("Nový záznam - kopie"),  BrowseForm.COMMAND_NEW_RECORD(copy=True)),
+    (_("Editovat záznam"),      BrowseForm.COMMAND_EDIT_RECORD),
+    (_("Vlo¾it øádku pod"),     ListForm.COMMAND_NEW_LINE()),
+    (_("Vlo¾it øádku nad"),     ListForm.COMMAND_NEW_LINE(before=True)),
+    (_("Kopírovat øádku pod"),  ListForm.COMMAND_NEW_LINE(copy=True)),
+    (_("Kopírovat øádku nad"),  ListForm.COMMAND_NEW_LINE(copy=True,
+                                                          before=True)),
+    (_("Editace buòky"),        ListForm.COMMAND_EDIT),
+    (_("Smazat záznam"),        RecordForm.COMMAND_DELETE_RECORD),
     ),(#---------------
-    (_("Ulo¾it"),                     ListForm.COMMAND_LINE_COMMIT),
-    (_("Zru¹it zmìny"),               ListForm.COMMAND_LINE_ROLLBACK),
+    (_("Ulo¾it"),               ListForm.COMMAND_LINE_COMMIT),
+    (_("Zru¹it zmìny"),         ListForm.COMMAND_LINE_ROLLBACK),
     ),(#---------------
     (_("Export do textového souboru"),ListForm.COMMAND_EXPORT_CSV),
     ),(#---------------
     (_("Zobrazit náhled záznamu"),    ListForm.COMMAND_ACTIVATE),
-    (_("Náhled v duálním formuláøi"), ListForm.COMMAND_ACTIVATE_ALTERNATE),
+    (_("Náhled v duálním formuláøi"), ListForm.COMMAND_ACTIVATE(alternate=True)),
     ))
