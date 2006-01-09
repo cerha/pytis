@@ -1,5 +1,51 @@
 2006-01-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (InputField.CALL_SKIP_NAVIGATION):
+	Update docstringu.
+	(InputField._skip_navigation_callback.cb): Hodnotu argumentu pro
+	callback `CALL_SKIP_NAVIGATION' pøedávaj jako `back', ne
+	`forward'.
+	(Invocable.on_command): Namísto o¹etøování
+	`COMMAND_INVOKE_SELECTION_ALTERNATE' pøedávej argumenty pro
+	`COMMAND_INVOKE_SELECTION'.
+
+	* pytis/form/dualform.py
+	(BrowseDualForm._set_main_form_callbacks): Nastavuje callback
+	`CALL_ACTIVATION' na `self._on_main_activation()'.
+	(BrowseDualForm._on_show_record): Metoda zru¹ena.
+	(BrowseDualForm._on_main_activation): Nová metoda.
+
+	* pytis/form/screen.py (CallbackHandler._run_callback): Nový
+	argument `kwargs' pøedávej callbackové funkci jako klíèové argumenty.
+
+	* pytis/form/form.py (LookupForm._on_search): Zru¹en argument
+	`show_dialog'.  Výchozí hodnota `direction' nech» je None.  Zobraz
+	dialog jen pokud není urèen smìr, nebo nebyla zadána podmínka.
+	(LookupForm.on_command): Neo¹etøuj zru¹ené pøíkazy
+	`COMMAND_SEARCH_NEXT' a `COMMAND_SEARCH_PREVIOUS' a pøi vyvolání
+	`COMMAND_SEARCH' pøedávej v¹echny argumenty.
+	(RecordForm.on_command): Neo¹etøuj `COMMAND_NEW_RECORD_COPY'.  Pøi
+	o¹etøování `COMMAND_NEW_RECORD' pøedávej callbacku arguemnty.
+	(EditForm._navigate): Arguemnt `forward' nahrazen argumentem `back'.
+	(EditForm.on_command): Namísto o¹etøování `COMMAND_NAVIGATE_BACK'
+	pøedávej argumenty pøi vyvolání `COMMAND_NAVIGATE'.
+
+	* pytis/form/command.py (Command.__call__): Nová metoda.
+
+	* pytis/form/dialog.py (GenericDialog.__init__): `self._buttons'
+	pøejmenováno na
+	(GenericDialog._create_buttons): `self._button_labels' ->
+	`self._button_label_dict'.  `self._buttons' ->
+	`self._button_labels'.  Ukládej talèítka do `self._buttons'.
+	(GenericDialog._can_commit): V¾dy vracej `False'.
+	(GenericDialog._button_label): `self._button_labels' ->
+	`self._button_label_dict'.
+	(GenericDialog._commit_dialog): Pokud jde o tlaèítko, simuluj jeho
+	stisk i kdy¾ `force' není pravda.
+	(GenericDialog.on_command): Neo¹etøuj zru¹ený pøíkaz
+	`COMMAND_FORCE_COMMIT_DIALOG'.  Pøedávej volání
+	`self._commit_dialog()' argumenty.
+
 	* pytis/form/list.py (ListForm._resize_column): Zru¹en argument
 	`col' - pracuj automaticky s aktuálním sloupcem.
 	(ListForm._move_column): Nová metoda.
@@ -8,19 +54,63 @@
 	pøíkazù `ENLARGE_COLUMN' a `CONTRACT_COLUMN' nyní o¹etøuj pouze
 	`RESIZE_COLUMN'.
 	(ListForm.can_show_cell_codebook): Kosmetická zmìna.
+	(ListForm.on_command): Zde neo¹etøuj ¾ádné vyhledávací pøíkazy.
+	(BrowseForm._on_import_interactive): Oprava èíslování øádkù.
+	(ListForm.CALL_ALTERNATE_ACTIVATION): Konstanta zru¹ena.
+	(ListForm.__init__): Nastavuj callback `CALL_ACTIVATION' na
+	`self._on_activation()'.
+	(ListForm._on_activation): Nová metoda.
+	(ListForm.on_command): Namísto o¹etøování
+	`COMMAND_LINE_SOFT_ROLLBACK' pøedávej argumenty pøi volání
+	`COMMAND_LINE_ROLLBACK.  Namísto o¹etøování
+	`COMMAND_ACTIVATE_ALTERNATE' pøedávej argumenty pøi volání
+	`COMMAND_ACTIVATE'.  `COMMAND_ACTIVATE' o¹etøuj vyvoláním
+	callbacku s pøíslu¹nými argumenty.  Namísto o¹etøování
+	`COMMAND_FULL_INCREMENTAL_SEARCH' pøedávej argumenty pøi volání
+	`COMMAND_INCREMENTAL_SEARCH'.  Namísto o¹etøování
+	`COMMAND_NEW_LINE_AFTER', `COMMAND_NEW_LINE_AFTER_COPY',
+	`COMMAND_NEW_LINE_BEFORE' a `COMMAND_NEW_LINE_BEFORE_COPY' o¹etøuj
+	`COMMAND_NEW_LINE' a pøedávej arguemnty.
+	(ListForm._on_activation): Metoda zru¹ena.
+	(ListForm._on_alternate_activation): Metoda zru¹ena.
+	(ListForm._on_incremental_search): Nech» je arguemnt `full'
+	klíèový.
+	(ListForm._on_insert_line): Argumnet `after' nahrazen argumentem
+	`before'.
+	(CodebookForm.__init__): Nenastavuj callback `CALL_ACTIVATION'.
+	(CodebookForm._on_activation): Definuj klíèové argumenty `key' a
+	`alternate'.
+	(BrowseForm.__init__): Metoda zru¹ena.
+	(BrowseForm._context_menu): Namísto `COMMAND_ACTIVATE_ALTERNATE'
+	pou¾ívej `COMMAND_ACTIVATE' s argumentem `alternate'.
 
 	* pytis/form/application.py (Application): Název i formát
 	specifikaèní funkce `command_keys' zmìnìn.  Nový název je `keymap'
 	a polo¾ky definují navíc také argumenty pøíkazu, pøièem¾ definice
 	klávesy je nyní na prvním místì.
+	(Application.OnInit): Pokud je pøíkaz definovaný v
+	`DEFAULT_KEYMAP', nebo `FORM_COMMAND_MENU' sekvencí, pova¾uj tuto
+	sekvenci za dvojici (COMMAND, ARGS).
 
 	* pytis/form/commands_.py: Pøíkazy `ENLARGE_COLUMN' a
 	`CONTRACT_COLUMN' nahrazeny jedním `RESIZE_COLUMN'.  Nový pøíkaz
-	`MOVE_COLUMN'.
-
+	`MOVE_COLUMN'.  Zru¹eny pøíkazy `FORCE_COMMIT_DIALOG',
+	`SEARCH_PREVIOUS' a `SEARCH_NEXT'.
+	Pøíkazy `NEW_LINE_AFTER', `NEW_LINE_AFTER_COPY', `NEW_LINE_BEFORE'
+	a `NEW_LINE_BEFORE_COPY' nahrazeny jendím `NEW_LINE' a argumenty
+	`before' a `copy'.  Pøíkaz `NEW_RECORD_COPY' nahrazen arguemntem
+	`copy' pøíkazu `NEW_RECORD'.  `ACTIVATE_ALTERNATE' nahrazen
+	argumentem `alternate' pøíkazu
+	`ACTIVATE'. `FULL_INCREMENTAL_SEARCH' nahrazeno arguemntem `full'
+	pøíkazu `INCREMENTAL_SEARCH'. `LINE_SOFT_ROLLBACK' nahrazeno
+	arguemntem `soft' pøíkazu `LINE_ROLLBACK'.  `NAVIGATE_BACK'  nahrazeno
+	arguemntem `back' pøíkazu `NAVIGATE'.
+	`INVOKE_SELECTION_ALTERNATE'  nahrazeno
+	arguemntem `alternate' pøíkazu `INVOKE_SELECTION'.
 	(DEFAULT_COMMAND_KEYS): Konstanta zru¹ena.
 	(DEFAULT_KEYMAP): Nová konstanta s novým formátem podle zmìn v
-	`application.py'.
+	`application.py' a s vyu¾itím argumentù pøíkazù.
+	(FORM_COMMAND_MENU): Vyu¾ívej definice pøíkazù vèetnì argumentù.
 	
 
 2006-01-06  Tomas Cerha  <cerha@brailcom.org>

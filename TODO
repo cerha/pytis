@@ -77,6 +77,18 @@ NOVÉ VLASTNOSTI:
 
 2) Specifikace
 
+ * Zmìny týkající se standardních konfiguraèních voleb.
+
+   V defsech v¹ech projektù:
+    - zru¹it celý defs NastaveniUIUser.
+    - v NastaveniUser pøidat sloupeèek `saved_config'.
+    - v application.py pøidat podporu pro ukládání konfigurace do saved_config.
+   
+   V databázi v¹ech projektù:
+    - zru¹it sloupeèky `export_directory' a `export_encoding'
+    - zru¹it v¹e, co se týká bv_users_ui_cfg.
+    - pøidat sloupeèek `saved_config' do bv_users_cfg.
+   
  * Zmìny ohlednì u¾ivatelského pøizpùsobení sloupcù BrowseFromu.
 
    `width = 0' zakázat a v¹echna taková políèka vyøadit z layoutu (nejprve
@@ -90,6 +102,17 @@ NOVÉ VLASTNOSTI:
    `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
    bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné...
 
+   Umo¾nit zahodit zmìny u¾ivatelské konfigurace formuláøe provedené bìhem
+   aktuálního sezení (pøenaèíst u¾ivatelskou konfiguraci).
+
+ * Zjednodu¹ená definice pøíkazù a jejich argumentù.
+
+   Pokud instanci pøíkazu zavoláme s libovolnými klíèovými argumenty, je nyní
+   vrácena dvojice (COMMAND, ARGS).  Toho by ¹lo vyu¾ít napø. v konstruktoru
+   MItem, který by argument `command' mohl zkoumat a pøi pøedání sekvence jej
+   rovnou rozbalit.  Zatím je toho vyu¾ito pouze pøi rozbalování
+   FORM_COMMAND_MENU a DEFAULT_KEYMAP v application.py.
+   
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
    Definovat v pytis-extensions parametrizovatelné funkce pro vytváøení èasto
@@ -134,8 +157,6 @@ INTERNÍ ZÁLE®ITOSTI:
    Je tøeba myslet také na obnovení stavu pøi pøepínání formuláøù
    (`Form.restore()').
 
-
- 
 
 ÈI©TÌNÍ:
 
@@ -211,16 +232,3 @@ INTERNÍ ZÁLE®ITOSTI:
 
    Proto¾e grouping neovlivòuje poèet, poøadí ani data øádkù, není dùvod, proè
    by se mìl nastavovat pomocí reset().   
-
-
- * Zmìny týkající se standardních konfiguraèních voleb.
-
-   V defsech v¹ech projektù:
-    - zru¹it celý defs NastaveniUIUser.
-    - v NastaveniUser pøidat sloupeèek `saved_config'.
-    - v application.py pøidat podporu pro ukládání konfigurace do saved_config.
-   
-   V databázi v¹ech projektù:
-    - zru¹it sloupeèky `export_directory' a `export_encoding'
-    - zru¹it v¹e, co se týká bv_users_ui_cfg.
-    - pøidat sloupeèek `saved_config' do bv_users_cfg.
