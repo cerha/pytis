@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,10 +132,10 @@ Command(ListForm, 'NEW_LINE_BEFORE_COPY',
         "Vlo¾ení záznamu pøed aktuální øádek jako jeho kopie.")
 Command(ListForm, 'SET_GROUPING_COLUMN',
         "Zmìna sloupce vizuáního seskupování.")
-Command(ListForm, 'ENLARGE_COLUMN',
-        "Roz¹íøení sloupce.")
-Command(ListForm, 'CONTRACT_COLUMN',
-        "Zù¾ení sloupce.")
+Command(ListForm, 'RESIZE_COLUMN',
+        "Roz¹íøení/zù¾ení sloupce.  Argument 'diff' udává poèet +/- pixelù.")
+Command(ListForm, 'MOVE_COLUMN',
+        "Pøesunutí sloupce doprava/doleva.  'diff' udává +/- o kolik sloupcù.")
 Command(ListForm, 'TOGGLE_COLUMN',
         "Skrytí/zobrazení sloupce.")
 Command(ListForm, 'RESET_COLUMNS',
@@ -214,72 +214,75 @@ Command(Dialog, 'FORCE_COMMIT_DIALOG',
         "Odeslání dialogu, jako by bylo stisknuto výchozí tlaèítko.")
 
 
-DEFAULT_COMMAND_KEYS = (
-    (Application.COMMAND_BREAK,                   'Ctrl-g'),
-    (Application.COMMAND_LEAVE_FORM,              'Escape'),
-    (Application.COMMAND_NEXT_FORM,               'Ctrl-Down'),
-    (Application.COMMAND_PREV_FORM,               'Ctrl-Up'),
-    (Application.COMMAND_REFRESH,                 'Ctrl-l'),
-    (Application.COMMAND_SHOW_POPUP_MENU,         'Ctrl-M'),
-    (Form.COMMAND_PRINT,                         ('Ctrl-x', 'p')),
-    (RecordForm.COMMAND_NEW_RECORD,               'F6'),
-    (RecordForm.COMMAND_NEW_RECORD_COPY,          'Ctrl-F6'),
-    (RecordForm.COMMAND_EDIT_RECORD,              'F5'),
-    (RecordForm.COMMAND_DELETE_RECORD,            'F8'),
-    (LookupForm.COMMAND_SORT_COLUMN,              'F4'),
-    (LookupForm.COMMAND_FILTER,                   'Ctrl-F4'),
-    (LookupForm.COMMAND_SEARCH_NEXT,              'Ctrl-s'),
-    (LookupForm.COMMAND_SEARCH_PREVIOUS,          'Ctrl-r'),
-    (LookupForm.COMMAND_SEARCH,                   'F3'),
-    (LookupForm.COMMAND_JUMP,                     'Ctrl-j'),
-    (ListForm.COMMAND_INCREMENTAL_SEARCH,         'Ctrl-F3'),
-    (ListForm.COMMAND_FULL_INCREMENTAL_SEARCH,   ('Ctrl-u', 'Ctrl-F3')),
-    (ListForm.COMMAND_ACTIVATE,                   'Enter'),
-    (ListForm.COMMAND_ACTIVATE_ALTERNATE,         ' '),
-    (ListForm.COMMAND_COPY_CELL,                  'Ctrl-c'),
-    (ListForm.COMMAND_FIRST_COLUMN,               'Home'),
-    (ListForm.COMMAND_LAST_COLUMN,                'End'),
-    (ListForm.COMMAND_EXPORT_CSV,                 'Ctrl-e'),
-    (ListForm.COMMAND_EDIT,                       'F2'),
-    (ListForm.COMMAND_EDIT,                       'F9'), # backw. compatibility
-    (ListForm.COMMAND_LINE_ROLLBACK,              'Ctrl-F12'),
-    (ListForm.COMMAND_FINISH_EDITING,             'Escape'),
-    (ListForm.COMMAND_LINE_COMMIT,                'F12'),
-    (ListForm.COMMAND_CELL_COMMIT,                'Enter'),
-    (ListForm.COMMAND_CELL_ROLLBACK,              'Escape'),
-    (ListForm.COMMAND_NEW_LINE_AFTER,             'Insert'),
-    (ListForm.COMMAND_NEW_LINE_AFTER_COPY,        'F7'),
-    (ListForm.COMMAND_NEW_LINE_BEFORE,            'Ctrl-Insert'),
-    (ListForm.COMMAND_NEW_LINE_BEFORE_COPY,       'Ctrl-F7'),
-    (ListForm.COMMAND_ENLARGE_COLUMN,             'Alt-Right'),
-    (ListForm.COMMAND_CONTRACT_COLUMN,            'Alt-Left'),
-    (BrowseForm.COMMAND_IMPORT_INTERACTIVE,       'Alt-F6'),
-    (EditForm.COMMAND_COMMIT_RECORD,              'Ctrl-Enter'),
-    (EditForm.COMMAND_NAVIGATE,                   'Tab'),
-    (EditForm.COMMAND_NAVIGATE_BACK,              'Shift-Tab'),        
-    (BrowsableShowForm.COMMAND_NEXT_RECORD,       'Next'),
-    (BrowsableShowForm.COMMAND_PREVIOUS_RECORD,   'Prior'),
-    (BrowsableShowForm.COMMAND_FIRST_RECORD,      'Home'),
-    (BrowsableShowForm.COMMAND_LAST_RECORD,       'End'),
-    (DualForm.COMMAND_OTHER_FORM,                 'Ctrl-Tab'),
-    (PrintForm.COMMAND_NEXT_PAGE,                 'Next'),
-    (PrintForm.COMMAND_PREVIOUS_PAGE,             'Prior'),
-    (InputField.COMMAND_COMMIT_FIELD,             'Enter'),
-    (InputField.COMMAND_LEAVE_FIELD,              'Escape'),
-    (Invocable.COMMAND_INVOKE_SELECTION,          'F2'),
-    (Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE,'Ctrl-F2'),
-    (ListField.COMMAND_SHOW_SELECTED,             'Backspace'),  
-    (Dialog.COMMAND_CLOSE_DIALOG,                 'Escape'),
-    (Dialog.COMMAND_COMMIT_DIALOG,                'Enter'),
-    (Dialog.COMMAND_FORCE_COMMIT_DIALOG,          'Ctrl-Enter'))
+DEFAULT_KEYMAP = (
+    ('Ctrl-g',      Application.COMMAND_BREAK, {}),
+    ('Escape',      Application.COMMAND_LEAVE_FORM, {}),
+    ('Ctrl-Down',   Application.COMMAND_NEXT_FORM, {}),
+    ('Ctrl-Up',     Application.COMMAND_PREV_FORM, {}),
+    ('Ctrl-l',      Application.COMMAND_REFRESH, {}),
+    ('Ctrl-M',      Application.COMMAND_SHOW_POPUP_MENU, {}),
+    (('Ctrl-x', 'p'), Form.COMMAND_PRINT, {}),
+    ('F6',          RecordForm.COMMAND_NEW_RECORD, {}),
+    ('Ctrl-F6',     RecordForm.COMMAND_NEW_RECORD_COPY, {}),
+    ('F5',          RecordForm.COMMAND_EDIT_RECORD, {}),
+    ('F8',          RecordForm.COMMAND_DELETE_RECORD, {}),
+    ('F4',          LookupForm.COMMAND_SORT_COLUMN, {}),
+    ('Ctrl-F4',     LookupForm.COMMAND_FILTER, {}),
+    ('Ctrl-s',      LookupForm.COMMAND_SEARCH_NEXT, {}),
+    ('Ctrl-r',      LookupForm.COMMAND_SEARCH_PREVIOUS, {}),
+    ('F3',          LookupForm.COMMAND_SEARCH, {}),
+    ('Ctrl-j',      LookupForm.COMMAND_JUMP, {}),
+    ('Ctrl-F3',     ListForm.COMMAND_INCREMENTAL_SEARCH, {}),
+    ('Alt-F3',      ListForm.COMMAND_FULL_INCREMENTAL_SEARCH, {}),
+    ('Enter',       ListForm.COMMAND_ACTIVATE, {}),
+    (' ',           ListForm.COMMAND_ACTIVATE_ALTERNATE, {}),
+    ('Ctrl-c',      ListForm.COMMAND_COPY_CELL, {}),
+    ('Home',        ListForm.COMMAND_FIRST_COLUMN, {}),
+    ('End',         ListForm.COMMAND_LAST_COLUMN, {}),
+    ('Ctrl-e',      ListForm.COMMAND_EXPORT_CSV, {}),
+    ('F2',          ListForm.COMMAND_EDIT, {}),
+    ('F9',          ListForm.COMMAND_EDIT, {}),
+    ('Ctrl-F12',    ListForm.COMMAND_LINE_ROLLBACK, {}),
+    ('Escape',      ListForm.COMMAND_FINISH_EDITING, {}),
+    ('F12',         ListForm.COMMAND_LINE_COMMIT, {}),
+    ('Enter',       ListForm.COMMAND_CELL_COMMIT, {}),
+    ('Escape',      ListForm.COMMAND_CELL_ROLLBACK, {}),
+    ('Insert',      ListForm.COMMAND_NEW_LINE_AFTER, {}),
+    ('F7',          ListForm.COMMAND_NEW_LINE_AFTER_COPY, {}),
+    ('Ctrl-Insert', ListForm.COMMAND_NEW_LINE_BEFORE, {}),
+    ('Ctrl-F7',     ListForm.COMMAND_NEW_LINE_BEFORE_COPY, {}),
+    ('Alt-Right',   ListForm.COMMAND_RESIZE_COLUMN, {'diff': +5}),
+    ('Alt-Left',    ListForm.COMMAND_RESIZE_COLUMN, {'diff': -5}),
+    ('Shift-Right', ListForm.COMMAND_MOVE_COLUMN, {'diff': +1}),
+    ('Shift-Left',  ListForm.COMMAND_MOVE_COLUMN, {'diff': -1}),
+    ('Alt-F6',      BrowseForm.COMMAND_IMPORT_INTERACTIVE, {}),
+    ('Ctrl-Enter',  EditForm.COMMAND_COMMIT_RECORD, {}),
+    ('Tab',         EditForm.COMMAND_NAVIGATE, {}),
+    ('Shift-Tab',   EditForm.COMMAND_NAVIGATE_BACK, {}),
+    ('Next',        BrowsableShowForm.COMMAND_NEXT_RECORD, {}),
+    ('Prior',       BrowsableShowForm.COMMAND_PREVIOUS_RECORD, {}),
+    ('Home',        BrowsableShowForm.COMMAND_FIRST_RECORD, {}),
+    ('End',         BrowsableShowForm.COMMAND_LAST_RECORD, {}),
+    ('Ctrl-Tab',    DualForm.COMMAND_OTHER_FORM, {}),
+    ('Next',        PrintForm.COMMAND_NEXT_PAGE, {}),
+    ('Prior',       PrintForm.COMMAND_PREVIOUS_PAGE, {}),
+    ('Enter',       InputField.COMMAND_COMMIT_FIELD, {}),
+    ('Escape',      InputField.COMMAND_LEAVE_FIELD, {}),
+    ('F2',          Invocable.COMMAND_INVOKE_SELECTION, {}),
+    ('Ctrl-F2',     Invocable.COMMAND_INVOKE_SELECTION_ALTERNATE, {}),
+    ('Backspace',   ListField.COMMAND_SHOW_SELECTED, {}),
+    ('Escape',      Dialog.COMMAND_CLOSE_DIALOG, {}),
+    ('Enter',       Dialog.COMMAND_COMMIT_DIALOG, {}),
+    ('Ctrl-Enter',  Dialog.COMMAND_FORCE_COMMIT_DIALOG, {}),
+    )
 
 
 
 if __debug__:
     Command(Application, 'CUSTOM_DEBUG',
             "Pomocný pøíkaz pro vyvolání pomocné ladící funkce.")
-    DEFAULT_COMMAND_KEYS += \
-        ((Application.COMMAND_CUSTOM_DEBUG, 'Ctrl-Backspace'),)
+    DEFAULT_KEYMAP += \
+        (('Ctrl-Backspace', Application.COMMAND_CUSTOM_DEBUG, {}),)
 
 
 FORM_COMMAND_MENU = ((
