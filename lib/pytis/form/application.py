@@ -177,8 +177,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
         assert is_sequence(custom_keymap), "Specifikace klávesových zkratek " +\
-               "'keymap' musí vracet sekvenci trojic (KEY, COMMAND, ARGS)."
-        for key, cmd, args in command.DEFAULT_KEYMAP + custom_keymap:
+               "'keymap' musí vracet sekvenci dvojic (KEY, COMMAND)."
+        for key, cmd in command.DEFAULT_KEYMAP + custom_keymap:
+            if is_sequence(cmd):
+                cmd, args = cmd
+            else:
+                args = {}
             keymap.define_key(key, cmd, args)
         global _application
         _application = self
@@ -195,7 +199,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if command_menu_items:
                 command_menu_items.append(MSeparator())
             for title, cmd in group:
-                command_menu_items.append(MItem(title, command=cmd))
+                if is_sequence(cmd):
+                    cmd, args = cmd
+                else:
+                    args = {}
+                command_menu_items.append(MItem(title, command=cmd, args=args))
         menus = self._spec('menu') + (
             Menu(self._WINDOW_MENU_TITLE, ()),
             Menu(_("Pøíkazy"), command_menu_items))
