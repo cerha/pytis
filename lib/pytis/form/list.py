@@ -548,9 +548,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
 
-    def _resize_column(self, col, diff):
+    def _resize_column(self, diff=5):
         # diff can be positive or negative integer in pixels.
         g = self._grid
+        col = g.GetGridCursorCol()
         newsize = g.GetColSize(col) + diff
         if newsize > 0:
             g.SetColSize(col, newsize)
@@ -558,6 +559,20 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             g.Refresh()
             self._remember_column_size(col)
 
+    def _move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        newcol = col + diff
+        if 0 <= newcol < len(self._columns):
+            c = self._columns[col]
+            self._update_grid(delete_column=c, insert_column=c,
+                              inserted_column_index=newcol)
+            self._select_cell(col=newcol)
+        else:
+            log(OPERATIONAL, "Invalid column move command:", (col, newcol))
+
+    def can_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        return 0 <= col + diff < len(self._columns)
         
     def _on_sort_column(self, col=None, direction=None, primary=False):
         if not self._finish_editing():
@@ -1011,11 +1026,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         elif command == ListForm.COMMAND_SELECT_CELL:
             self._select_cell(**kwargs)
             return True
-        elif command == ListForm.COMMAND_ENLARGE_COLUMN:
-            self._resize_column(self._current_cell()[1], +5)
+        elif command == ListForm.COMMAND_RESIZE_COLUMN:
+            self._resize_column(**kwargs)
             return True
-        elif command == ListForm.COMMAND_CONTRACT_COLUMN:
-            self._resize_column(self._current_cell()[1], -5)
+        elif command == ListForm.COMMAND_MOVE_COLUMN:
+            self._move_column(**kwargs)
             return True
         # Pøíkazy bìhem editace øádku
         elif self._table.editing():
@@ -1101,10 +1116,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._run_callback(self.CALL_ALTERNATE_ACTIVATION, (key,))
 
     def _on_show_cell_codebook(self):
-        column = self._columns[self._current_cell()[1]]
+        row, col = self._current_cell()
+        column = self._columns[col]
         cb_name = column.codebook()
         if cb_name:
-            the_row = self._table.row(self._current_cell()[0])
+            the_row = self._table.row(row)
             v = the_row[column.id()]
             e = v.type().enumerator()
             run_form(BrowseForm, cb_name, select_row={e.value_column(): v})
