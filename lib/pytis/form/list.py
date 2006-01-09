@@ -2007,7 +2007,7 @@ class BrowseForm(ListForm):
                     msg = _("Chybný identifikátor sloupce: %s")
                     run_dialog(Error, msg % key.strip())
                     return False
-            i = 1 # aktuální èíslo øádku (jeden u¾ byl pøeèten)
+            i = 0 # aktuální èíslo øádku dat (nepoèítaje záhlaví)
             n = 0 # poèet skuteènì vlo¾ených záznamù
             prefill = self.prefill()
             for line in f:
@@ -2017,7 +2017,7 @@ class BrowseForm(ListForm):
                     msg = _("Chyba na øádku %d: "
                             "Poèet hodnot neodpovídá poètu sloupcù.\n"
                             "Chcete pøesto pokraèovat (dal¹ím záznamem)?")
-                    if run_dialog(Question, msg % i,
+                    if run_dialog(Question, msg % i+1,
                                   title=_("Chyba vstupních dat"),
                                   icon=Question.ICON_ERROR):
                         continue
@@ -2030,7 +2030,7 @@ class BrowseForm(ListForm):
                     if error:
                         msg = _("Chybná hodnota sloupce '%s' na øádku %d: %s\n"
                                 "Chcete pøesto záznam vlo¾it?")
-                        msg = msg % (col.id(), i, error.message())
+                        msg = msg % (col.id(), i+1, error.message())
                         if not run_dialog(Question, msg,
                                           title=_("Chyba vstupních dat"),
                                           icon=Question.ICON_ERROR):
