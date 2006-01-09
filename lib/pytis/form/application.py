@@ -99,9 +99,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         specifikaèního argumentu konstruktoru tøídy
         'pytis.form.screen.StatusBar'.
         
-      command_keys -- specifikace pøiøazení kláves pøíkazùm jako sekvence
-        dvojic (COMMAND, KEY), kde COMMAND je instance tøídy 'Command' a KEY je
-        jemu pøíslu¹ná klávesa.
+      keymap -- specifikace pøiøazení kláves pøíkazùm jako sekvence trojic
+        (KEY, COMMAND, ARGS), kde KEY je definice klávesové zkratky, COMMAND je
+        instance tøídy 'Command' a ARGS je slovník argumentù, které mají být
+        pøíkazu pøedány.
 
       init -- Tato funkce mù¾e provádìt libovolné, blí¾e neurèené,
         inicializaèní akce aplikace.  Je spu¹tìna a¾ po sestavení hlavního
@@ -174,11 +175,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._modals = Stack()
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
         keymap = self.keymap = Keymap()
-        custom_keys = self._spec('command_keys', ())
-        assert is_sequence(custom_keys), "Specifikace klávesových zkratek " + \
-               "'command_keys' musí vracet sekvenci dvojic (COMMAND, KEY)."
-        for cmd, key in command.DEFAULT_COMMAND_KEYS + custom_keys:
-            keymap.define_key(key, cmd)
+        custom_keymap = self._spec('keymap', ())
+        assert is_sequence(custom_keymap), "Specifikace klávesových zkratek " +\
+               "'keymap' musí vracet sekvenci trojic (KEY, COMMAND, ARGS)."
+        for key, cmd, args in command.DEFAULT_KEYMAP + custom_keymap:
+            keymap.define_key(key, cmd, args)
         global _application
         _application = self
         # Read the stored configuration.
