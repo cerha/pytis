@@ -33,16 +33,6 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * U¾ivatelská pøizpùsobení sloupcù BrowseFromu.
-
-   Pøi zmìnì poøadí sloupcù v defsu a zejména pokud pøibydou èi ubydou sloupce
-   musíme informovat u¾ivatele (pokud má ulo¾en vlastní výbìr sloupcù).
-
-   Dále by bylo vhodné mít mo¾nost u nìkterých sloupcù v defsu nastavit, ¾e je
-   není mo¾né skrýt.
-
-   Pøesun sloupce vpravo/vlevo klávesovou zkratkou.
-   
  * Ulo¾ené filtrovací podmínky.
 
    K tomu bude nejprve tøeba nìjak zpøehlednit v¹e, co se týká práce s rùznými
@@ -86,6 +76,19 @@ NOVÉ VLASTNOSTI:
 
 
 2) Specifikace
+
+ * Zmìny ohlednì u¾ivatelského pøizpùsobení sloupcù BrowseFromu.
+
+   `width = 0' zakázat a v¹echna taková políèka vyøadit z layoutu (nejprve
+   logovat jako deprecated).
+   
+   `column_width = 0' nijak speciálnì neo¹etøovat (stejnì je ¹íøka minimálnì
+   taková, aby se ve¹el label)
+
+   Nový atribut `disabled' zcela zemezí takový sloupec zobrazit.
+
+   `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
+   bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné....
 
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
@@ -221,8 +224,3 @@ INTERNÍ ZÁLE®ITOSTI:
     - zru¹it sloupeèky `export_directory' a `export_encoding'
     - zru¹it v¹e, co se týká bv_users_ui_cfg.
     - pøidat sloupeèek `saved_config' do bv_users_cfg.
-
- * Zru¹it konfiguraèní volbu `show_tooltips'.
-
-   Proè by si to mìl nìkdo vypínat?
-   

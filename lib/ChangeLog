@@ -1,4 +1,32 @@
+2006-01-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._resize_column): Zru¹en argument
+	`col' - pracuj automaticky s aktuálním sloupcem.
+	(ListForm._move_column): Nová metoda.
+	(ListForm.can_move_column): Nová metoda.
+	(ListForm.on_command): O¹etøuj nový pøíkaz `MOVE_COLUMN'.  Namísto
+	pøíkazù `ENLARGE_COLUMN' a `CONTRACT_COLUMN' nyní o¹etøuj pouze
+	`RESIZE_COLUMN'.
+	(ListForm.can_show_cell_codebook): Kosmetická zmìna.
+
+	* pytis/form/application.py (Application): Název i formát
+	specifikaèní funkce `command_keys' zmìnìn.  Nový název je `keymap'
+	a polo¾ky definují navíc také argumenty pøíkazu, pøièem¾ definice
+	klávesy je nyní na prvním místì.
+
+	* pytis/form/commands_.py: Pøíkazy `ENLARGE_COLUMN' a
+	`CONTRACT_COLUMN' nahrazeny jedním `RESIZE_COLUMN'.  Nový pøíkaz
+	`MOVE_COLUMN'.
+
+	(DEFAULT_COMMAND_KEYS): Konstanta zru¹ena.
+	(DEFAULT_KEYMAP): Nová konstanta s novým formátem podle zmìn v
+	`application.py'.
+	
+
 2006-01-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm._lf_sfs_columns): Nepøedávej
+	funkci `sfs_columns()' `labelfunc' ani `widthfunc'.
 
 	* pytis/presentation/spec.py (ViewSpec.__init__): Nový argument
 	`row_style'.
@@ -34,6 +62,7 @@
 	(ListForm._on_label_right_down, ListForm._on_label_left_down) 
 	(ListForm._on_label_left_up, ListForm._on_label_mouse_move) 
 	(ListForm._on_label_paint): Vyu¾ívej ji.
+	(ListForm._lf_sfs_columns): Nová metoda.
 
 	* pytis/form/_grid.py (ListTable.__init__): Nový argument
 	`row_style'.  Inicializuj `self._grouping_background_downgrade'.
@@ -55,6 +84,9 @@
 
 	* pytis/form/search.py (SFDialog._selected_condition): Nezji¹»uj
 	sloupec podle labelu, ale podle poøadí.
+	(SFDialog._on_suck): Urèuj sloupec podle poøadí, ne podle labelu.
+	(sfs_columns): Zru¹en argument `widthfunc'.  Vynechávej sloupeèky
+	bez labelu.
 
 	* pytis/form/dialog.py (GenericDialog._commit_dialog): Don't end
 	the dialog.  Rather simulate a button click.
