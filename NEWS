@@ -4,7 +4,26 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-09  Tomas Cerha  <cerha@brailcom.org>
+
+	Název i formát specifikaèní funkce `command_keys' zmìnìn.  Nový
+	název je `keymap' a polo¾ky definují navíc také argumenty pøíkazu,
+	pøièem¾	definice klávesy je nyní na prvním místì.  Pøíkladem je
+	definice `DEFAULT_KEYMAP' v `commands_.py'.  Hlavní výhodou je to,
+	¾e nyní mù¾eme definovat i argumenty pøíkazù a nemusíme vytváøet
+	pro ka¾dou variantu pøíkazy jeho specializovanou instanci.
+
+	Nové klávesové zkratky `Shift-Left' a `Shift-Right' (¹ipky),
+	umo¾òují pøesunout aktuální sloupec vlevo/vpravo bez pou¾ití my¹i.
+
+	
+	
 2006-01-06  Tomas Cerha  <cerha@brailcom.org>
+
+	Ve filtraèním, vyhledávacím a tøídícím dialogu se nyní zobrazené
+	sloupce zobrazují na zaèátku a skryté sloupce jsou za nimi a
+	jejich názvy jsou v závorkách.  Tím by mìl být výbìr sloupce
+	daleko pøehlednìj¹í.
 
 	Pøi ka¾dém otevøení formuláøe je kontrolováno, zda se mno¾ina
 	sloupcù definovaná ve specifikaci nezmìnila od doby, kdy si
@@ -24,7 +43,8 @@
 	ve `FieldSpec' má pøednost, pokud je definován.
 
 	Nová konfiguraèní volba ve formuláøi "Nastavení u¾ivatelského
-	rozhraní" umo¾òuje nastavit 
+	rozhraní" umo¾òuje nastavit ztmavení øádkù pøi vizuálním
+	seskupování.
 
 	* BUGFIX: Filtraèní dialog u¾ opìt filtruje i pøi stisku
 	"Ctrl-Enter".
