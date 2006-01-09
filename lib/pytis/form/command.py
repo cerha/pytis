@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -157,6 +157,19 @@ class Command(object):
         setattr(cls, 'COMMAND_' + name, self)
         
 
+    def __call__(self, **kwargs):
+        """Umo¾òuje pohodlnì vytvoøit definici pøíkazu a jeho argumentù.
+
+        Vrací dvojici (COMMAND, ARGS), kde COMMAND je instance pøíkazu a ARGS
+        jsou jeho argumenty jako slovník.
+
+        Této vlastnosti lze vyu¾ít napøíklad pro zjednodu¹ení zápisu
+        klávesových map apod., kde pøíkaz a jeho argumenty tvoøí nedílnou
+        dvojici.
+
+        """
+        return (self, kwargs)
+        
     def cls(self):
         """Vra» tøídu u¾ivatelsk0ho rozhraní, která tento pøíkaz zpracovává."""
         return self._cls
