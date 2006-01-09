@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -377,7 +377,7 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
         f.set_callback(ListForm.CALL_USER_INTERACTION,
                        lambda : self._select_form(self._main_form))
         f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
-        f.set_callback(ListForm.CALL_ACTIVATION, self._on_show_record)
+        f.set_callback(ListForm.CALL_ACTIVATION, self._on_main_activation)
         f.set_callback(BrowseForm.CALL_NEW_RECORD, self._on_new_record)
     
     def _on_new_record(self, copy=False):
@@ -386,11 +386,15 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
             self._main_form.select_row(result.row())
             self._side_form.refresh(when=ListForm.DOIT_IMMEDIATELY)
             self._select_form(self._side_form)
-            invoke_command(ListForm.COMMAND_NEW_LINE_AFTER)
+            invoke_command(ListForm.COMMAND_INSERT_LINE, after=True)
         return result
     
-    def _on_show_record(self, key):
-        run_form(ShowDualForm, self._name, select_row=key)
+    def _on_main_activation(self, key, alternate=False):
+        if alternate:
+            f = DescriptiveDualForm
+        else:
+            f = ShowDualForm
+        run_form(f, self._name, select_row=key)
 
     def _refresh(self, when=None):
         self._main_form.refresh()
