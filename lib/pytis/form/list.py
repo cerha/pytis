@@ -66,8 +66,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     """
     CALL_ACTIVATION = 'CALL_ACTIVATION'
     """Konstanta callbacku aktivace øádku."""
-    CALL_ALTERNATE_ACTIVATION = 'CALL_ALTERNATE_ACTIVATION'
-    """Konstanta callbacku alternativní aktivace øádku."""
     CALL_MODIFICATION = 'CALL_MODIFICATION'
     """Konstanta callbacku modifikace øádku."""
     CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
@@ -91,6 +89,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         self._select_cell(row=self._position)
+        self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
 
     def _init_attributes(self, columns=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -690,6 +689,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Veto()
             self._grid.SelectRow(self._grid.GetGridCursorRow())
 
+    def _on_activation(self, key, alternate=False):
+        if alternate:
+            f = DescriptiveDualForm
+        else:
+            f = BrowsableShowForm
+        self._run_form(f, key)
+
     def _scroll_x_offset(self):
         g = self._grid
         return g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
@@ -1037,9 +1043,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if command == ListForm.COMMAND_LINE_COMMIT:
                 return self._on_line_commit()
             elif command == ListForm.COMMAND_LINE_ROLLBACK:
-                return self._on_line_rollback()
-            elif command == ListForm.COMMAND_LINE_SOFT_ROLLBACK:
-                return self._on_line_rollback(soft=True)
+                return self._on_line_rollback(**kwargs)
             elif command == ListForm.COMMAND_FINISH_EDITING:
                 self._finish_editing()
                 return True
@@ -1060,25 +1064,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             elif command == ListForm.COMMAND_LAST_COLUMN:
                 self._select_cell(col=len(self._columns)-1)
             elif command == ListForm.COMMAND_ACTIVATE:
-                self._on_activation()
-            elif command == ListForm.COMMAND_ACTIVATE_ALTERNATE:
-                self._on_alternate_activation()
+                key = self._current_key()
+                self._run_callback(self.CALL_ACTIVATION, (key,), kwargs)
             elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
                 self._on_show_cell_codebook()
             elif command == LookupForm.COMMAND_FILTER:
                 self._on_filter()
             elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
-                self._on_incremental_search(full=False)
-            elif command == ListForm.COMMAND_FULL_INCREMENTAL_SEARCH:
-                self._on_incremental_search(full=True)
-            elif command == ListForm.COMMAND_NEW_LINE_AFTER:
-                self._on_insert_line()
-            elif command == ListForm.COMMAND_NEW_LINE_AFTER_COPY:
-                self._on_insert_line(copy=True)
-            elif command == ListForm.COMMAND_NEW_LINE_BEFORE:
-                self._on_insert_line(after=False)
-            elif command == ListForm.COMMAND_NEW_LINE_BEFORE_COPY:
-                self._on_insert_line(after=False, copy=True)
+                self._on_incremental_search(**kwargs)
+            elif command == ListForm.COMMAND_NEW_LINE:
+                self._on_insert_line(**kwargs)
             else:
                 return super_(ListForm).on_command(self, command, **kwargs)
             return True
@@ -1096,18 +1091,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     # Metody volané pøímo z callbackových metod
                                    
-    def _on_activation(self):
-        log(EVENT, 'Aktivace øádku øádkového seznamu')
-        key = self._current_key()
-        if key:
-            self._run_callback(self.CALL_ACTIVATION, (key,))
-
-    def _on_alternate_activation(self):
-        log(EVENT, 'Aktivace øádku øádkového seznamu')
-        key = self._current_key()
-        if key:
-            self._run_callback(self.CALL_ALTERNATE_ACTIVATION, (key,))
-
     def _on_show_cell_codebook(self):
         row, col = self._current_cell()
         column = self._columns[col]
@@ -1182,7 +1165,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return True
 
-    def _on_incremental_search(self, full):
+    def _on_incremental_search(self, full=False):
         row, col = self._current_cell()
         column = self._columns[col]
         if not isinstance(column.type(self._data), pytis.data.String):
@@ -1304,13 +1287,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._on_line_rollback()
         return True
 
-    def _on_insert_line(self, after=True, copy=False):
+    def _on_insert_line(self, before=False, copy=False):
         """Vlo¾ nový øádek do seznamu.
 
         Argumenty:
 
-          after -- je-li pravda, nový øádek se vlo¾í za aktuální øádek, jinak
-            se vlo¾í pøed aktuální øádek
+          before -- je-li pravda, nový øádek se vlo¾í pøed aktuální øádek, jinak
+            se vlo¾í za aktuální øádek
           copy -- je-li pravda a seznam není prázdný, obsahem nového øádku bude
             obsah aktuálního øádku, v opaèném pøípadì bude nový øádek prázdný
 
@@ -1327,7 +1310,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
         """
         row = self._current_cell()[0]
-        log(EVENT, 'Vlo¾ení nového øádku:', (row, after, copy))
+        log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))
         if not self._data.accessible(None, pytis.data.Permission.INSERT):
             message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
                     'tabulky!', beep_=True)
@@ -1364,7 +1347,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                    new=True)
             for k in the_row.keys():
                 the_row[k]
-        if after and not oldempty:
+        if not before and not oldempty:
             row = row + 1
         if row == -1:
             row = 0
@@ -1799,7 +1782,6 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         super_(CodebookForm).__init__(self, parent, *args, **kwargs)
-        self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
         h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
         self.SetSize((self._total_width()+30, h))
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
@@ -1850,7 +1832,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             col = find(col_id, self._columns, key=lambda c:c.id())
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))
-                self._on_incremental_search(False)
+                self._on_incremental_search(full=False)
             else:
                 log(OPERATIONAL, "Invalid search column:", col_id)
 
@@ -1876,7 +1858,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             return True
         return super_(CodebookForm).on_command(self, command, **kwargs)
 
-    def _on_activation(self):
+    def _on_activation(self, key=None, alternate=False):
         """Nastav návratovou hodnotu a ukonèi modální dialog."""
         self._result = self.current_row()
         self._parent.EndModal(1)
@@ -1911,13 +1893,6 @@ class BrowseForm(ListForm):
             except ResolverModuleError:
                 result = self._Spec()
             return result
-
-    def __init__(self, *args, **kwargs):
-        super_(BrowseForm).__init__(self, *args, **kwargs)
-        self.set_callback(ListForm.CALL_ACTIVATION,
-                          lambda key: self._run_form(BrowsableShowForm, key))
-        self.set_callback(ListForm.CALL_ALTERNATE_ACTIVATION,
-                          lambda key: self._run_form(DescriptiveDualForm, key))
         
     def _formatter_parameters(self):
         name = self._name
@@ -1950,7 +1925,7 @@ class BrowseForm(ListForm):
             MItem(_("Náhled"),
                   command=ListForm.COMMAND_ACTIVATE),
             MItem(_("Náhled v druhém formuláøi"),
-                  command=ListForm.COMMAND_ACTIVATE_ALTERNATE),
+                  command=ListForm.COMMAND_ACTIVATE, args=dict(alternate=True)),
             MItem(_("Zobrazit související èíselník"),
                   command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
             )
