@@ -160,7 +160,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         metody '__init__()' a inicializovány atributy instance.
 
         """
-        pass
+        key = self._form_state_key()
+        self._form_state = config.form_state.get(key)
+        if not isinstance(self._form_state, types.DictType):
+            self._form_state = config.form_state[key] = {}
+        self._initial_form_state = copy.copy(self._form_state)
 
     def _create_view_spec(self, **kwargs):
         spec = self._resolver.get(self._name, 'view_spec', **kwargs)
@@ -241,27 +245,18 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return self.__class__.__name__+'/'+self._name
     
     def _get_state_param(self, name, default=None):
-        try:
-            return config.form_state[self._form_state_key()][name]
-        except KeyError:
-            return default
+        return self._form_state.get(name, default)
 
     def _set_state_param(self, name, value):
-        key = self._form_state_key()
-        params = config.form_state.get(key, {})
-        params[name] = value
-        config.form_state[key] = params
+        self._form_state[name] = value
 
     def _unset_state_param(self, name):
-        key = self._form_state_key()
-        params = config.form_state.get(key, {})
-        try:
-            del params[name]
-        except KeyError:
-            pass
-        config.form_state[key] = params
+        if self._form_state.has_key(name):
+            del self._form_state[name]
 
-        
+    def _on_reload_form_state(self):
+        pass
+            
     # Veøejné metody
     
     def name(self):
@@ -284,6 +279,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         V této tøídì metoda nedìlá nic a vrací False.
         
         """
+        if command == Form.COMMAND_RELOAD_FORM_STATE:
+            self._form_state = copy.copy(self._initial_form_state)
+            config.form_state[self._form_state_key()] = self._form_state
+            self._on_reload_form_state()
+            return True
         return False
 
     def descr(self):
