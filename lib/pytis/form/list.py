@@ -161,7 +161,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _column_width(self, column):
         try:
             #TODO: Column widths should be saved/restored in dialog units.
-            return self._get_state_param('column_width', {})[column.id()]
+            return dict(self._get_state_param('column_width', ()))[column.id()]
         except KeyError:
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
@@ -245,7 +245,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _update_grid(self, data_init=False, inserted_row_number=None,
                      inserted_row=None, delete_column=None, insert_column=None,
-                     inserted_column_index=None, reset_columns=False):
+                     inserted_column_index=None, reset_columns=False,
+                     soft_reset_columns=False):
         g = self._grid
         t = self._table
         def notify(id, *args):
@@ -264,10 +265,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
         g.BeginBatch()
-        if reset_columns:
+        if reset_columns or soft_reset_columns:
             deleted = len(self._columns)
-            self._columns = [self._view.field(id)
-                             for id in self._default_columns()]
+            columns = self._default_columns()
+            if not reset_columns:
+                columns = self._get_state_param('columns', columns)
+            self._columns = [self._view.field(id) for id in columns]
             inserted = len(self._columns)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
@@ -835,9 +838,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         event.Skip()
 
     def _remember_column_size(self, col):
-        stored = self._get_state_param('column_width', {})
+        stored = dict(self._get_state_param('column_width', ()))
         stored[self._columns[col].id()] = self._grid.GetColSize(col)
-        self._set_state_param('column_width', stored)
+        self._set_state_param('column_width', stored.items())
         
     def _on_label_paint(self, event):
         def triangle(x, y, r=4, reversed=True):
@@ -926,6 +929,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _on_reset_columns(self):
         self._update_grid(reset_columns=True)
+
+    def _on_reload_form_state(self):
+        self._update_grid(soft_reset_columns=True)
         
     def show_context_menu(self, position=None):
         if self._table.editing():
