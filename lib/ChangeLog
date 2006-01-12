@@ -1,5 +1,8 @@
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/configuration.py
+	(Configuration._Option_application_state): Nová volba.
+
 	* pytis/form/form.py (RecordForm._on_import_interactive): Nová
 	metoda.
 	(RecordForm.on_command): O¹etøuj pøíkaz
@@ -26,18 +29,45 @@
 	(PopupEditForm._on_skip_button): Nová metoda.
 	(PopupEditForm._buttons): Nepou¾ívej `self._disable_next_button'.
 	Pokud máme `inserted_data', pøidávej také tlaèítko "Pøeskoèit".
+	(Form._init_attributes): Nastavuj `self._form_state' podle
+	konfigurace a kopíruj poèáteèní hodnotu do `self._initial_form_state'.
+	(Form._get_state_param, Form._set_state_param) 
+	(Form._unset_state_param): Pracuj jen s `self._form_state'.
+	(Form._on_reload_form_state): Nová metoda.
+	(Form.on_command): O¹etøuj pøíkaz `Form.COMMAND_RELOAD_FORM_STATE'.
 
 	* pytis/form/list.py (BrowseForm._on_import_interactive): Metoda
 	zru¹ena.
 	(BrowseForm.on_command): Neo¹etøuj pøíkaz
 	`BrowseForm.IMPORT_INTERACTIVE'.
 	(ListForm._on_label_drag_size): Pøenastav velikost gridu.
+	(ListForm._column_width, ListForm._remember_column_size): Ulo¾ené
+	¹íøky sloupcù pøevádìj pøed pou¾itím na slovník.
+	(ListForm._update_grid): Nový argument `soft_reset_columns'.
+	(ListForm._remember_column_size): Ukládej ¹íøky jako tuple dvojic
+	pøevoditelný na slovník.
+	(ListForm._on_reset_columns): Nová metoda.
 
-	* pytis/form/commands_.py: `BrowseForm.IMPORT_INTERACTIVE' ->
-	`RecordForm.IMPORT_INTERACTIVE'.
+	* pytis/form/commands_.py: `BrowseForm.COMMAND_IMPORT_INTERACTIVE'
+	-> `RecordForm.COMMAND_IMPORT_INTERACTIVE'.  Nový pøíkaz
+	`Form.COMMAND_RELOAD_FORM_STATE'.
+	
 
 	* pytis/form/application.py (Application.new_record): Nový
 	argument `inserted_data'.
+	(Application.OnInit): Ulo¾ seznam poslednì otevøených formuláøù do
+	`self._recent_forms'.  Neneèítel je z `config.form_state', ale
+	`config.application_state'.
+	(Application._recent_forms_menu_items, Application.on_command)
+	(Application.can_clear_recent_forms)
+	(Application._update_recent_forms): Zde pracuj u¾ pouze se
+	`self._recent_forms', ne s konfiguraèní volbou.
+	(Application._set_form_state): Pøejmenováno na
+	`Application._post_init_form'.
+	(Application._write_config): Nepokou¹ej se vyøadit volby, které
+	pøedtím nebyly ulo¾eny.
+	(Application.run_form): `state_kwargs' -> `post_init_kwargs',
+	`self._set_form_state' -> `self._post_init_form'.
 
 2006-01-09  Tomas Cerha  <cerha@brailcom.org>
 
