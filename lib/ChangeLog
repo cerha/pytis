@@ -31,6 +31,7 @@
 	zru¹ena.
 	(BrowseForm.on_command): Neo¹etøuj pøíkaz
 	`BrowseForm.IMPORT_INTERACTIVE'.
+	(ListForm._on_label_drag_size): Pøenastav velikost gridu.
 
 	* pytis/form/commands_.py: `BrowseForm.IMPORT_INTERACTIVE' ->
 	`RecordForm.IMPORT_INTERACTIVE'.

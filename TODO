@@ -1,13 +1,8 @@
 CHYBY:
 
- * Resize gridu po rozta¾ení sloupce.
-
-   Pokud je grid ¹ir¹í ne¾ okno, neroz¹íøí se viditelná (scrollovatelná) oblast
-   spoleènì s roz¹íøením sloupce.  Díky tomu je potom konec useknutý.
-
  * Aktualizace políèka `data-changed' ve stavové øádce.
 
-   Po editaci záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
+   Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
    kterého byla zmìna provedena.
 
  * ShowForm po vyvolání pøes Enter nemá fokus.

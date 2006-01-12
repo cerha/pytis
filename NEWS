@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX:  Velikost gridu je nyní po rozta¾ení sloupce upravena
+	tak, aby koncové sloupce nebyly useknuté.
+	
 2006-01-11  Tomas Cerha  <cerha@brailcom.org>
 
 	Nový argument `inserted_data' konstruktoru PopupEditForm umo¾òuje
@@ -17,7 +22,7 @@
 	obsahovat nìkterá dal¹í zajímavá políèka, jako napø. pøíznak
 	zmìny, nebo zkrátka co nás napadne.  Staèí vymyslet nìco
 	smysluplného...
-		
+
 2006-01-09  Tomas Cerha  <cerha@brailcom.org>
 
 	Název i formát specifikaèní funkce `command_keys' zmìnìn.  Nový
