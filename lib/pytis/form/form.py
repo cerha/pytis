@@ -1292,7 +1292,7 @@ class EditForm(LookupForm, TitledForm):
             vstup.
 
           
-          kwargs -- argumenty pøedané konstruktoru prvního pøedka
+          kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
         super_(EditForm)._init_attributes(self, **kwargs)
@@ -1682,11 +1682,23 @@ class PopupEditForm(PopupForm, EditForm):
             p = p.GetParent()
         parent.SetTitle('%s: %s' % (p.GetTitle(), self.title()))
 
-    def _init_attributes(self, disable_next_button=False, inserted_data=None,
-                         **kwargs):
+    def _init_attributes(self, inserted_data=None, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+
+          inserted_data -- umo¾òuje pøedat libovolnou sekvenci datových øádkù
+            (instancí pytis.data.Row).  Formuláø je potom postupnì
+            pøedvyplòován tìmito øádky a tlaèítkem ``Dal¹í'' je ka¾dý záznam
+            ulo¾en a formuláø naplnìn dal¹ím øádkem.  Takto je mo¾né jednodu¹e
+            vyu¾ít formuláø k hromadnému vkládání øádkù naètených z libovolného
+            zdroje.
+
+          kwargs -- argumenty pøedané konstruktoru pøedka.
+            
+        """
         EditForm._init_attributes(self, **kwargs)
         assert inserted_data is None or self._mode == self.MODE_INSERT
-        self._disable_next_button = disable_next_button
         self._inserted_data = inserted_data
         self._inserted_data_pointer = 0
         
@@ -1705,16 +1717,19 @@ class PopupEditForm(PopupForm, EditForm):
         sizer.Add(status_bar, 0, wx.EXPAND)
 
     def _create_status_bar(self):
-        # Our own statusbar implementation
+        # We use our own statusbar implementation
+        spec = (('message', None, _("Oznamovací oblast")),)
+        if self._inserted_data is not None:
+            spec += (('progress', 9, _("Ukazatel pozice hromadného vkládání")),)
         box = wx.BoxSizer()
-        self._status_fields = {
-            'message': self._create_status_bar_field(box),
-            'progress': self._create_status_bar_field(box, 9),
-            }
+        self._status_fields = dict(
+            [(id, self._create_status_bar_field(box, width, descr))
+             for id, width, descr in spec])
         return box
 
-    def _create_status_bar_field(self, sizer, width=None):
+    def _create_status_bar_field(self, sizer, width, descr):
         panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
+        panel.SetToolTipString(descr)
         box = wx.BoxSizer()
         panel.SetSizer(box)
         panel.SetAutoLayout(True)
@@ -1743,8 +1758,7 @@ class PopupEditForm(PopupForm, EditForm):
                 return data[i]
             else:
                 self.set_status('progress', '')
-                msg = _("V¹ech %d záznamù bylo vlo¾eno.") % len(data)
-                run_dialog(Message, msg)
+                run_dialog(Message, _("V¹echny záznamy byly zpracovány."))
                 self._inserted_data = None
         return None
 
@@ -1765,8 +1779,13 @@ class PopupEditForm(PopupForm, EditForm):
             message(_("Záznam ulo¾en"))
             refresh()
             self._select_row(self._inserted_row())
-        return False
 
+    def _on_skip_button(self, event):
+        i = self._inserted_data_pointer
+        message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
+        self._select_row(self._inserted_row())
+
+    
     def _buttons(self):
         buttons = ({'id': wx.ID_OK,
                     'toottip': _("Ulo¾it záznam a uzavøít formuláø"),
@@ -1775,12 +1794,16 @@ class PopupEditForm(PopupForm, EditForm):
                    {'id': wx.ID_CANCEL,
                     'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
                     'handler': self._on_cancel_button})
-        if self._mode == self.MODE_INSERT and not self._disable_next_button:
+        if self._mode == self.MODE_INSERT:
             buttons += ({'id': wx.ID_FORWARD,
                          'label': _("Dal¹í"),
                          'toottip': _("Ulo¾it záznam a reinicializovat formuláø"
                                       " pro vlo¾ení dal¹ího záznamu"),
                          'handler': self._on_next_button},)
+        if self._inserted_data is not None:
+            buttons += ({'label': _("Pøeskoèit"),
+                         'toottip': _("Pøeskoèit tento záznam bez ulo¾ení"),
+                         'handler': self._on_skip_button},)
         return buttons
         
     def _create_buttons(self):
