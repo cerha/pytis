@@ -193,6 +193,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if option != 'dbconnection':
                 setattr(config, option, value)
         log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
+        # Init the recent forms list.
+        self._recent_forms = config.application_state.get('recent_forms')
+        if not isinstance(self._recent_forms, types.ListType):
+            self._recent_forms = config.application_state['recent_forms'] = []
         # Initialize the menubar.
         command_menu_items = []
         for group in FORM_COMMAND_MENU:
@@ -303,14 +307,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _update_recent_forms(self, item=None):
         menu = self._recent_forms_menu
         if menu is not None:
-            recent = config.form_state.get('recent_forms', [])
+            recent = self._recent_forms
             if item is not None:
                 try:
                     recent.remove(item)
                 except ValueError:
                     pass
                 recent.insert(0, item)
-                config.form_state['recent_forms'] = recent[:10]
+                if len(self._recent_forms) > 10:
+                    self._recent_forms[10:] = []
             for item in menu.GetMenuItems():
                 menu.Remove(item.GetId())
                 item.Destroy()
@@ -321,12 +326,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     menu.AppendItem(item.create(self._frame, menu))
                 
     def _recent_forms_menu_items(self):
-        recent = config.form_state.get('recent_forms', [])
         items = [MItem(title,
                        help=_('Otevøít formuláø "%s" (%s/%s)') %
                             (title, args['form_class'].__name__, args['name']),
                        command=Application.COMMAND_RUN_FORM, args=args)
-                 for title, args in recent]
+                 for title, args in self._recent_forms]
         items.append(MSeparator())
         items.append(MItem(_("Vyèistit"),
                            help=_("Vymazat menu poslednì otevøených formuláøù"),
@@ -349,7 +353,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _activate(self, activations, form):
         self._menubar.activate(activations, form)
             
-    def _set_form_state(self, form, select_row=None):
+    def _post_init_form(self, form, select_row=None):
         if select_row:
             form.select_row(select_row)
 
@@ -403,7 +407,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                    (pytis.data.Boolean, wxconfig.WriteBool))
         for option, value in items:
             t = config.type(option)
-            to_delete.remove(option)
+            if option in to_delete:
+                to_delete.remove(option)
             for type, write in mapping:
                 #TODO: Co None hodnoty???
                 if isinstance(t, type):
@@ -504,10 +509,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 kwargs['mode'] = EditForm.MODE_INSERT
         # konec doèasného hacku    
         result = None
-        state_kwargs = {}
+        post_init_kwargs = {}
         for arg in ('select_row', ):
             if kwargs.has_key(arg):
-                state_kwargs[arg] = kwargs[arg]
+                post_init_kwargs[arg] = kwargs[arg]
                 del kwargs[arg]
         try:
             if callable(name):
@@ -528,7 +533,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._raise_form(form)
                 message(_('Formuláø "%s" nalezen na zásobníku oken.') % \
                         form.title())
-                self._set_form_state(form, **state_kwargs)
+                self._post_init_form(form, **post_init_kwargs)
                 return result
             if issubclass(form_class, PopupForm):
                 parent = self._modals.top() or self._frame
@@ -542,7 +547,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if form is None:
                 self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit"))
             else:
-                self._set_form_state(form, **state_kwargs)
+                self._post_init_form(form, **post_init_kwargs)
                 if isinstance(form, PopupForm):
                     log(EVENT, "Zobrazuji modální formuláø:", form)
                     self._modals.push(form)
@@ -930,7 +935,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 elif command == Application.COMMAND_REFRESH:
                     self.refresh()
                 elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
-                    config.form_state['recent_forms'] = []
+                    self._recent_forms[:] = []
                     self._update_recent_forms()
                 elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
                     config.custom_debug()
@@ -957,7 +962,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return self.current_form() is not None
 
     def can_clear_recent_forms(self):
-        return len(config.form_state.get('recent_forms', ())) > 0
+        return len(self._recent_forms) > 0
 
 
 
