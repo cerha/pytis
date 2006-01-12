@@ -6,8 +6,15 @@
 
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
-	* BUGFIX:  Velikost gridu je nyní po rozta¾ení sloupce upravena
+        Robustnìj¹í nakládání s ulo¾enými informacemi o formuláøích a
+	stavu aplikace by mìlo zamezit zhroucení aplikace pøi potenciálním
+	chybném obsahu ulo¾ených stavových informací.
+	
+	* BUGFIX: Velikost gridu je nyní po rozta¾ení sloupce upravena
 	tak, aby koncové sloupce nebyly useknuté.
+
+	* BUGFIX: Ukládání u¾ivatelské konfigurace ji¾ nesel¾e díky nové,
+	døíve neexistující volbì.
 	
 2006-01-11  Tomas Cerha  <cerha@brailcom.org>
 
