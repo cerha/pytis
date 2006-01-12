@@ -76,6 +76,8 @@ Command(LookupForm, 'SORT_COLUMN',
         "Setøídìní podle sloupce.")
 Command(RecordForm, 'NEW_RECORD',
         "Vlo¾ení nového záznamu pomocí editaèního formuláøe.")
+Command(RecordForm, 'IMPORT_INTERACTIVE',
+        "Interaktivní import dat z CSV souboru.")
 Command(RecordForm, 'EDIT_RECORD',
         "Editace aktuálního záznamu v editaèním formuláøi.")
 Command(RecordForm, 'DELETE_RECORD',
@@ -146,8 +148,6 @@ Command(ListForm, 'CONTEXT_MENU_ACTION',
 	dostanou jako první argument instanci PresentedRow aktuálního øádku,
 	nad kterým byla akce vyvolána.  Pokud pøijímají dva pozièní argumenty,
 	bude na prvním místì pøedán je¹tì datový objekt formuláøe.""")
-Command(BrowseForm, 'IMPORT_INTERACTIVE',
-        "Interaktivní import dat z CSV souboru.")
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn.")
 Command(EditForm, 'NAVIGATE',
@@ -199,6 +199,7 @@ DEFAULT_KEYMAP = (
     (('Ctrl-x', 'p'), Form.COMMAND_PRINT),
     ('F6',          RecordForm.COMMAND_NEW_RECORD),
     ('Ctrl-F6',     RecordForm.COMMAND_NEW_RECORD(copy=True)),
+    ('Alt-F6',      RecordForm.COMMAND_IMPORT_INTERACTIVE),
     ('F5',          RecordForm.COMMAND_EDIT_RECORD),
     ('F8',          RecordForm.COMMAND_DELETE_RECORD),
     ('F4',          LookupForm.COMMAND_SORT_COLUMN),
@@ -230,7 +231,6 @@ DEFAULT_KEYMAP = (
     ('Alt-Left',    ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
     ('Shift-Right', ListForm.COMMAND_MOVE_COLUMN(diff=+1)),
     ('Shift-Left',  ListForm.COMMAND_MOVE_COLUMN(diff=-1)),
-    ('Alt-F6',      BrowseForm.COMMAND_IMPORT_INTERACTIVE),
     ('Ctrl-Enter',  EditForm.COMMAND_COMMIT_RECORD),
     ('Tab',         EditForm.COMMAND_NAVIGATE),
     ('Shift-Tab',   EditForm.COMMAND_NAVIGATE(back=True)),
