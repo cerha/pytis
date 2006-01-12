@@ -770,6 +770,78 @@ class RecordForm(Form):
         else:
             return False
 
+    def _on_import_interactive(self):
+        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
+            message(msg, beep_=True)
+            return False
+        msg = _("Nejprve vyberte soubor obsahující importovaná data. "
+                "Poté budete moci zkontrolovat a potvrdit ka¾dý záznam.\n\n"
+                "*Formát vstupního souboru:*\n\n"
+                "Ka¾dý øádek obsahuje seznam hodnot oddìlených zvoleným "
+                "znakem, nebo skupinou znakù (vyplòte ní¾e). "
+                "Tabelátor zapi¹te jako ='\\t'=.\n\n"
+                "První øádek obsahuje identifikátory sloupcù a urèuje tedy "
+                "význam a poøadí hodnot v následujících (datových) øádcích.\n\n"
+                "Identifikátory jednotlivých sloupcù jsou následující:\n\n" + \
+                "\n".join(["|*%s*|=%s=|" % \
+                           (c.column_label(), c.id().replace('_', '!_'))
+                           for c in [self._view.field(id)
+                                     for id in self._view.layout().order()]]))
+        separator = run_dialog(InputDialog, 
+                               title=_("Hromadné vkládání dat"),
+                               report=msg, report_format=TextFormat.WIKI,
+                               prompt="Oddìlovaè", value='|')
+        if not separator:
+            if separator is not None:
+                message(_("Nebyl zadán oddìlovaè."), beep_=True)
+            return False
+        separator.replace('\\t', '\t')
+        while 1:
+            filename = run_dialog(FileDialog)
+            if filename is None:
+                message(_("Nebyl zadán soubor. Proces ukonèen."), beep_=True)
+                return False
+            try:
+                fh = open(filename)
+            except IOError, e:
+                msg = _("Nepodaøilo se otevøít soubor '%s': %s")
+                run_dialog(Error, msg % (filename, str(e)))
+                continue
+            break
+        try:
+            columns = [str(id.strip()) for id in fh.readline().split(separator)]
+            fields = [self._view.field(id) for id in columns]
+            if None in fields:
+                msg = _("Chybný identifikátor sloupce: %s")
+                run_dialog(Error, msg % columns[fields.index(None)])
+                return False
+            types = [f.type(self._data) for f in fields]
+            line_number = 1
+            data = []
+            for line in fh:
+                line_number += 1
+                values = line.rstrip('\r\n').split(separator)
+                if len(values) != len(columns):
+                    msg = _("Chyba dat na øádku %d:\n"
+                            "Poèet hodnot neodpovídá poètu sloupcù.")
+                    run_dialog(Error, msg % line_number)
+                    return False
+                row_data = []
+                for id, type, val in zip(columns, types, values):
+                    value, error = type.validate(val)
+                    if error:
+                        msg = _("Chyba dat na øádku %d:\n"
+                                "Nevalidní hodnota sloupce '%s': %s") % \
+                                (line_number, id, error.message())
+                        run_dialog(Error, msg)
+                        return False
+                    row_data.append((id, value))
+                data.append(pytis.data.Row(row_data))
+        finally:
+            fh.close()
+        new_record(self._name, prefill=self.prefill(), inserted_data=data)
+            
     # Veøejné metody
     
     def select_row(self, position, quiet=False):
@@ -791,7 +863,7 @@ class RecordForm(Form):
         
         Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
         Argumentem 'quiet' lze zobrazení chybového dialogu potlaèit, tak¾e
-        nenalezení øádku je ti¹e ignorováno. 
+        nenalezení øádku je ti¹e ignorováno.
 
         Výbìrem je my¹lena akce relevantní pro daný typ formuláøe (odvozené
         tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
@@ -851,13 +923,15 @@ class RecordForm(Form):
 
     def can_delete_record(self):
         return self.check_permission(pytis.data.Permission.DELETE)
-        
+
     def on_command(self, command, **kwargs):
         if command == RecordForm.COMMAND_DELETE_RECORD:
             key = self._current_key()
             self._on_delete_record(key)
         elif command == RecordForm.COMMAND_NEW_RECORD:
             self._run_callback(self.CALL_NEW_RECORD, kwargs=kwargs)
+        elif command == RecordForm.COMMAND_IMPORT_INTERACTIVE:
+            self._on_import_interactive()
         elif command == RecordForm.COMMAND_EDIT_RECORD:
             key = self._current_key()
             if key is not None:
@@ -1197,7 +1271,7 @@ class EditForm(LookupForm, TitledForm):
                 f.enable()
         if self._mode == self.MODE_INSERT:
             # Inicializuji prázdný záznam.
-            self._select_row(None)
+            self._select_row(self._inserted_row())
         if isinstance(self._parent, wx.Dialog):
             wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
@@ -1229,6 +1303,9 @@ class EditForm(LookupForm, TitledForm):
         # Other attributes
         self._fields = []
 
+    def _inserted_row(self):
+        return None
+        
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políèek."""
         if self._focus_field:
@@ -1477,7 +1554,7 @@ class EditForm(LookupForm, TitledForm):
                 msg = "%s\n\n%s" % (result[0], msg)
             run_dialog(Error, msg)
             return False
-
+    
     def _select_row(self, row):
         prow = PresentedRow(self._view.fields(), self._data, row,
                             prefill=self._prefill,
@@ -1605,9 +1682,13 @@ class PopupEditForm(PopupForm, EditForm):
             p = p.GetParent()
         parent.SetTitle('%s: %s' % (p.GetTitle(), self.title()))
 
-    def _init_attributes(self, disable_next_button=False, **kwargs):
+    def _init_attributes(self, disable_next_button=False, inserted_data=None,
+                         **kwargs):
         EditForm._init_attributes(self, **kwargs)
+        assert inserted_data is None or self._mode == self.MODE_INSERT
         self._disable_next_button = disable_next_button
+        self._inserted_data = inserted_data
+        self._inserted_data_pointer = 0
         
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
@@ -1625,22 +1706,65 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _create_status_bar(self):
         # Our own statusbar implementation
-        status_bar = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
         box = wx.BoxSizer()
-        status_bar.SetSizer(box)
-        status_bar.SetAutoLayout(True)
-        self._status = wx.StaticText(status_bar, -1, '',
-                                     style=wx.ALIGN_LEFT)
-        box.Add(self._status, 1, wx.EXPAND|wx.ALL, 2)
-        box.Fit(status_bar)
-        return status_bar
+        self._status_fields = {
+            'message': self._create_status_bar_field(box),
+            'progress': self._create_status_bar_field(box, 9),
+            }
+        return box
 
-    def _on_next(self, event):
+    def _create_status_bar_field(self, sizer, width=None):
+        panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
+        box = wx.BoxSizer()
+        panel.SetSizer(box)
+        panel.SetAutoLayout(True)
+        field = wx.StaticText(panel, -1, '', style=wx.ALIGN_LEFT)
+        box.Add(field, 1, wx.EXPAND|wx.ALL, 2)
+        box.Fit(panel)
+        if width is not None:
+            width = dlg2px(field, 4*width)
+            height = field.GetSize().GetHeight()
+            field.SetMinSize((width, height))
+            expansion = 0
+        else:
+            expansion = 1
+        sizer.Add(panel, expansion, wx.EXPAND)
+        return field
+
+    def _inserted_row(self):
+        i = self._inserted_data_pointer
+        data = self._inserted_data
+        if data is not None:
+            if i < len(data):
+                self.set_status('progress', "%d/%d" % (i+1, len(data)))
+                self._inserted_data_pointer += 1
+                ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
+                ok_button.Enable(i == len(data)-1)
+                return data[i]
+            else:
+                self.set_status('progress', '')
+                msg = _("V¹ech %d záznamù bylo vlo¾eno.") % len(data)
+                run_dialog(Message, msg)
+                self._inserted_data = None
+        return None
+
+    def _on_cancel_button(self, event):
+        i = self._inserted_data_pointer
+        data = self._inserted_data
+        if data is not None and i <= len(data):
+            msg = _("Je¹tì nebyly zpracovány v¹echny øádky "
+                    "vstupních dat.\n"
+                    "Chcete opravdu ukonèit vkládání?")
+            if not run_dialog(Question, msg, default=False):
+                return
+        self._leave_form()
+
+    def _on_next_button(self, event):
         result = self._commit_form(close=False)
         if result:
             message(_("Záznam ulo¾en"))
             refresh()
-            self._select_row(None)
+            self._select_row(self._inserted_row())
         return False
 
     def _buttons(self):
@@ -1650,13 +1774,13 @@ class PopupEditForm(PopupForm, EditForm):
                     'default': True},
                    {'id': wx.ID_CANCEL,
                     'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
-                    'handler': lambda e: self._leave_form()})
+                    'handler': self._on_cancel_button})
         if self._mode == self.MODE_INSERT and not self._disable_next_button:
             buttons += ({'id': wx.ID_FORWARD,
                          'label': _("Dal¹í"),
                          'toottip': _("Ulo¾it záznam a reinicializovat formuláø"
                                       " pro vlo¾ení dal¹ího záznamu"),
-                         'handler': self._on_next},)
+                         'handler': self._on_next_button},)
         return buttons
         
     def _create_buttons(self):
@@ -1680,10 +1804,8 @@ class PopupEditForm(PopupForm, EditForm):
             self._unlock_record()
 
     def set_status(self, field, message):
-        if field == 'message':
-            if message is None:
-                message = ''
-            self._status.SetLabel(unicode(message))
+        if self._status_fields.has_key(field):
+            self._status_fields[field].SetLabel(unicode(message or ''))
             return True
         else:
             return False
