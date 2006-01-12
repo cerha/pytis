@@ -664,8 +664,11 @@ class Configuration:
         _DEFAULT = None
 
     class _Option_form_state(Option, _HiddenOption):
-        _DESCR = _("Tato volba je vyu¾ívána aplikací pro ukládání stavu "
-                   "formuláøù.")
+        _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu formuláøù.")
+        _DEFAULT = {}
+
+    class _Option_application_state(Option, _HiddenOption):
+        _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu aplikace.")
         _DEFAULT = {}
 
     class _Option_row_focus_fg_color(_ColorOption):
