@@ -66,6 +66,8 @@ Command(Application, 'CLEAR_RECENT_FORMS',
         "Vyèisti menu poslednì otevøených formuláøù.")
 Command(Form, 'PRINT',
         "Tisk aktuálního obsahu formuláøe.")
+Command(Form, 'RELOAD_FORM_STATE',
+        "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty.")
 Command(LookupForm, 'FILTER',
         "Filtrování záznamù.")
 Command(LookupForm, 'JUMP',
@@ -196,7 +198,8 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Up',     Application.COMMAND_PREV_FORM),
     ('Ctrl-l',      Application.COMMAND_REFRESH),
     ('Ctrl-M',      Application.COMMAND_SHOW_POPUP_MENU),
-    (('Ctrl-x', 'p'), Form.COMMAND_PRINT),
+    (('Ctrl-x', 'p'),  Form.COMMAND_PRINT),
+    ('Ctrl-Backspace', Form.COMMAND_RELOAD_FORM_STATE),
     ('F6',          RecordForm.COMMAND_NEW_RECORD),
     ('Ctrl-F6',     RecordForm.COMMAND_NEW_RECORD(copy=True)),
     ('Alt-F6',      RecordForm.COMMAND_IMPORT_INTERACTIVE),
