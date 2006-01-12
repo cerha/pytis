@@ -637,7 +637,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def new_record(self, name, key=None, prefill=None):
+    def new_record(self, name, key=None, prefill=None, inserted_data=None):
         """Spus» interaktivní akci pøidání nového záznamu.
         
         Argumenty:
@@ -646,6 +646,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
           key -- klíè kopírovaného záznamu, nebo None.
           prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
             pøedvyplnìny pøi inicializaci formuláøe.
+          inserted_data -- sekvence datových øádkù (instancí pytis.data.Row),
+            kterými má být vstupní formuláø postupnì plnìn.
 
         """
         view = self._resolver.get(name, 'view_spec')
@@ -657,7 +659,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 top.refresh()
         else:
             result = run_form(PopupEditForm, name, select_row=key,
-                              mode=EditForm.MODE_INSERT, prefill=prefill)
+                              mode=EditForm.MODE_INSERT, prefill=prefill,
+                              inserted_data=inserted_data)
         return result
 
     def can_new_record(self, name, key=None, prefill=None):
