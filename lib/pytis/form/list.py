@@ -821,6 +821,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _on_label_drag_size(self, event):
         self._remember_column_size(event.GetRowOrCol())
+        self._grid.SetSize(self._grid.GetSize())
         # Mohli bychom roz¹íøit poslední sloupec, ale jak ho potom zase zú¾it?
         #if config.stretch_tables:
         #    g = self._grid
