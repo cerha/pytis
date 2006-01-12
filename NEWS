@@ -4,6 +4,20 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-11  Tomas Cerha  <cerha@brailcom.org>
+
+	Nový argument `inserted_data' konstruktoru PopupEditForm umo¾òuje
+	pøedat libovolnou sekvenci datových øádkù (instancí
+	pytis.data.Row).  Formuláø je potom postupnì pøedvyplòován tìmito
+	øádky a tlaèítkem "Dal¹í" je ka¾dý záznam ulo¾en a formuláø
+	naplnìn dal¹ím øádkem.  Takto je mo¾né jednodu¹e vyu¾ít formuláø k
+	hromadnému vkládání øádkù naètených z libovolného zdroje.
+
+	Stavový øádek PopupEditFormu je teï flexibilnìj¹í a mohl by
+	obsahovat nìkterá dal¹í zajímavá políèka, jako napø. pøíznak
+	zmìny, nebo zkrátka co nás napadne.  Staèí vymyslet nìco
+	smysluplného...
+		
 2006-01-09  Tomas Cerha  <cerha@brailcom.org>
 
 	Název i formát specifikaèní funkce `command_keys' zmìnìn.  Nový

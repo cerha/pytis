@@ -1,3 +1,43 @@
+2006-01-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (RecordForm._on_import_interactive): Nová
+	metoda.
+	(RecordForm.on_command): O¹etøuj pøíkaz
+	`BrowseForm.IMPORT_INTERACTIVE'.
+	(EditForm._inserted_row, EditForm.__init__): Vyu¾ívej ji.
+	(PopupEditForm._init_attributes): Nový argument `inserted_data'.
+	Inicializuj `self._inserted_data' a `self._inserted_data_pointer'.
+	(PopupEditForm._create_status_bar_field): Nová metoda.
+	(PopupEditForm._create_status_bar): Vyu¾ívej ji.
+	(PopupEditForm._inserted_row): Nová metoda.
+	(PopupEditForm._on_cancel_button): Nová metoda.
+	(PopupEditForm._on_next): Pøejmenováno na `_on_next_button'.
+	(PopupEditForm._on_next_button): Vyu¾ívej `self._inserted_row()'.
+	(PopupEditForm._buttons): Vyu¾ívej `self._on_cancel_button'.
+	`_on_next' -> `_on_next_button'.
+	(PopupEditForm.set_status): Vyu¾ívej v¹echna políèka stavového
+	øádku.
+	(PopupEditForm._init_attributes): Doplnìn docstring.  Zru¹en
+	argument `disable_next_button'.
+	(PopupEditForm._create_status_bar_field): Nový arguemnt `descr'
+	(PopupEditForm._create_status_bar): Pou¾ívej ho.  Vytváøej políèko
+	`progress' pouze pokud máme `inserted_data'.
+	(PopupEditForm._inserted_row): Úprava zprávy v dialogu.
+	(PopupEditForm._on_skip_button): Nová metoda.
+	(PopupEditForm._buttons): Nepou¾ívej `self._disable_next_button'.
+	Pokud máme `inserted_data', pøidávej také tlaèítko "Pøeskoèit".
+
+	* pytis/form/list.py (BrowseForm._on_import_interactive): Metoda
+	zru¹ena.
+	(BrowseForm.on_command): Neo¹etøuj pøíkaz
+	`BrowseForm.IMPORT_INTERACTIVE'.
+
+	* pytis/form/commands_.py: `BrowseForm.IMPORT_INTERACTIVE' ->
+	`RecordForm.IMPORT_INTERACTIVE'.
+
+	* pytis/form/application.py (Application.new_record): Nový
+	argument `inserted_data'.
+
 2006-01-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField.CALL_SKIP_NAVIGATION):

@@ -43,6 +43,11 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
+ * Návrat k pøedchozímu u¾ivatelskému nastavení formuláøe.
+
+   Umo¾nit zahodit zmìny u¾ivatelské konfigurace formuláøe provedené bìhem
+   aktuálního sezení (pøenaèíst u¾ivatelskou konfiguraci).
+
  * Ulo¾ené filtrovací podmínky.
 
    K tomu bude nejprve tøeba nìjak zpøehlednit v¹e, co se týká práce s rùznými
@@ -111,9 +116,6 @@ NOVÉ VLASTNOSTI:
 
    `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
    bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné...
-
-   Umo¾nit zahodit zmìny u¾ivatelské konfigurace formuláøe provedené bìhem
-   aktuálního sezení (pøenaèíst u¾ivatelskou konfiguraci).
 
  * Zjednodu¹ená definice pøíkazù a jejich argumentù.
 
