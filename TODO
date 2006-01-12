@@ -38,10 +38,7 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * Návrat k pøedchozímu u¾ivatelskému nastavení formuláøe.
-
-   Umo¾nit zahodit zmìny u¾ivatelské konfigurace formuláøe provedené bìhem
-   aktuálního sezení (pøenaèíst u¾ivatelskou konfiguraci).
+ * Automaticky pamatovat také nastavení tøídìní a grouping.
 
  * Ulo¾ené filtrovací podmínky.
 

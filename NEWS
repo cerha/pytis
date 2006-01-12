@@ -6,6 +6,13 @@
 
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
+        Nový pøíkaz `Form.COMMAND_RELOAD_FORM_STATE' (spou¹tìný momentálnì
+	klávesovou zkratkou `Ctrl-Baskcpace' umo¾òuje zahodit aktuální
+	u¾ivatelská nastavení formuláøe (napø. zobrazené sloupce, jejich
+	¹íøky apod.) a vrátit døíve ulo¾ené u¾ivatelské nastavení.  V
+	podstatì je formuláø reinicializován do stavu, v jakém byl otevøen
+	a v¹echny zmìny od té doby provedené jsou tak zapomenuty.
+	
         Robustnìj¹í nakládání s ulo¾enými informacemi o formuláøích a
 	stavu aplikace by mìlo zamezit zhroucení aplikace pøi potenciálním
 	chybném obsahu ulo¾ených stavových informací.
