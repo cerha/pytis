@@ -4,6 +4,44 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-13  Tomas Cerha  <cerha@brailcom.org>
+
+        V¹echny hodnoty naèítané z form_state jsou nyní dùkladnì
+	kontrolovány, zda neobsahují nesmyslné, nebo zastaralé údaje a v
+	pøípadì nesrovnalostí jsou ignorovány.
+
+	Kontextové menu sloupce, pokud je vyvoláno v oblasti, kde ji¾ není
+	¾ádný sloupec, nyní obsahuje pouze seznam sloupcù, s mo¾ností
+	zapnout a vypnout jednotlivé sloupce.  Díky tomu bylo mo¾né
+	povolit skrýtí sloupce, by» je posledním zobrazeným sloupcem.
+	Tak¾e teï mù¾eme skrýt v¹echny sloupce a pak zase nìkterý zobrazit
+	výbìrem z tohoto menu.  Zároveò bylo o¹etøeno nìkolik chyb,
+	vznikajících kdy¾ formuláø nemá zobrazený ¾ádné sloupce.
+
+	Drobná zmìna ve vytváøení atributù v gridu by mohla pøinést mírné
+	zrychlení vykreslování pøi pou¾ití stylù.
+
+	Kvùli ukládání u¾ivatelského nastavení seskupování a tøídìní bylo
+	nutné proèistit a zpøehlednit nakládání s tìmito parametry, tak¾e
+	nyní je v¹e ve slu¹ném stavu.
+
+	* BUGFIX: O¹etøena situace, kdy byl pøidán nový sloupec z
+	kontextového menu sloupce vyvolaného v oblasti za posledním
+	sloupcem.  To vedlo k rozhození sloupcù a následnì èasto k
+	segfaultu.
+
+	* BUGFIX: I ostatní pøíkazy vyvolávané klikáním na záhlaví sloupcù
+	o¹etøují kliknutí mimo existující sloupec a s tím související
+	chyby.
+
+	* BUGFIX: Ve filtrovacím a vyhledávacím dialogu se opìt správnì
+	pøednastavuje aktuální sloupec a to i za situací, kdy se to døíve
+	nedìlo (pøi druhém a dal¹ím spu¹tìní, pokud je podmínka prázdná).
+
+	* BUGFIX: Polo¾ky menu pro grouping jsou nyní aktivní/neaktivní
+	podle aktuálního stavu.
+
+	
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
         Nový pøíkaz `Form.COMMAND_RELOAD_FORM_STATE' (spou¹tìný momentálnì
@@ -16,6 +54,11 @@
         Robustnìj¹í nakládání s ulo¾enými informacemi o formuláøích a
 	stavu aplikace by mìlo zamezit zhroucení aplikace pøi potenciálním
 	chybném obsahu ulo¾ených stavových informací.
+
+	Novì je nyní ukládáno také u¾ivatelské nastavení vizuálního
+	seskupování a tøídìní pro ka¾dý formuláø.  Oba parametry se
+	zároveò korektnì obnovují po vyvolání pøíkazu
+	`Form.COMMAND_RELOAD_FORM_STATE'.
 	
 	* BUGFIX: Velikost gridu je nyní po rozta¾ení sloupce upravena
 	tak, aby koncové sloupce nebyly useknuté.
