@@ -260,7 +260,7 @@ if __debug__:
     Command(Application, 'CUSTOM_DEBUG',
             "Pomocný pøíkaz pro vyvolání pomocné ladící funkce.")
     DEFAULT_KEYMAP += \
-        (('Ctrl-Backspace', Application.COMMAND_CUSTOM_DEBUG),)
+        ((('Ctrl-x', 'd'), Application.COMMAND_CUSTOM_DEBUG),)
 
 
 FORM_COMMAND_MENU = ((
