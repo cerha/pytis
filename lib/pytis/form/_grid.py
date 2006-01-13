@@ -584,7 +584,7 @@ class ListTable(wx.grid.PyGridTableBase):
     def GetValue(self, row, col, inputfield=False):
         # `row' a `col' jsou èíslovány od 0.
         # Je tabulka ji¾ uzavøena?
-        if not self._data:
+        if not self._data or col >= self.GetNumberCols():
             return ''
         col_id = self._columns[col].id
         if self._edited_row and row == self._edited_row.row:
@@ -628,10 +628,13 @@ class ListTable(wx.grid.PyGridTableBase):
     # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
-        return self._columns[col].wxtype
+        if col >= self.GetNumberCols():
+            return wx.grid.GRID_VALUE_STRING
+        else:
+            return self._columns[col].wxtype
     
     def GetAttr(self, row, col, kind):
-        if row >= self.GetNumberRows(): # mù¾e se stát...
+        if row >= self.GetNumberRows() or col >= self.GetNumberCols(): # mù¾e se stát...
             return None
         column = self._columns[col]
         style = column.style
