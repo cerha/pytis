@@ -630,7 +630,7 @@ class ListTable(wx.grid.PyGridTableBase):
     def GetTypeName(self, row, col):
         return self._columns[col].wxtype
     
-    def GetAttr(self, row, col, _something):
+    def GetAttr(self, row, col, kind):
         if row >= self.GetNumberRows(): # mù¾e se stát...
             return None
         column = self._columns[col]
@@ -651,15 +651,11 @@ class ListTable(wx.grid.PyGridTableBase):
                    for x, y in zip((bg.Red(), bg.Green(), bg.Blue()),
                                    self._grouping_background_downgrade)]
             bg = wx.Colour(*rgb)
-        provider = self.GetAttrProvider()
-        if provider:
-            attr = provider.GetAttr(row, col, _something)
-            if attr:
-                attr.SetTextColour(fg)
-                attr.SetBackgroundColour(bg)
-                attr.SetFont(font)
-                return attr
-        return None
+        attr = wx.grid.GridCellAttr()
+        attr.SetTextColour(fg)
+        attr.SetBackgroundColour(bg)
+        attr.SetFont(font)
+        return attr
 
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
