@@ -910,6 +910,10 @@ class RecordForm(Form):
         """
         return self._current_key()
 
+    def current_field(self):
+        """Vra» identifikátor aktuálnì vybraného políèka/sloupeèku."""
+        return None
+
     def prefill(self):
         """Vra» data pro pøedvyplnìní nového záznamu."""
         return self._prefill
@@ -1081,7 +1085,8 @@ class LookupForm(RecordForm):
         condition = sf_dialog.condition()
         if condition is None or direction is None:
             condition, direction = \
-                       block_refresh(lambda: run_dialog(sf_dialog, self._row))
+                block_refresh(lambda: run_dialog(sf_dialog, self.current_row(),
+                                                 self.current_field()))
         if condition is not None:
             self._search(condition, direction)
 
@@ -1105,13 +1110,13 @@ class LookupForm(RecordForm):
         self._init_select()
         self.select_row(self._current_key())
 
-    def _on_filter(self, row=None, col=None, show_dialog=True):
+    def _on_filter(self, show_dialog=True):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
         if show_dialog:
-            if row is None:
-                row = self._row
             perform, filter = run_dialog(sf_dialog, self._data,
-                                         self._lf_initial_condition, row, col)
+                                         self._lf_initial_condition,
+                                         self.current_row(),
+                                         self.current_field())
         else:
             perform, filter = (True, sf_dialog.condition())
         if perform and filter != self._lf_filter:
