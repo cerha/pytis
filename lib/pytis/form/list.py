@@ -384,6 +384,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return None
         else:
             return self._table.row(row)
+
+    def current_field(self):
+        col = self._current_cell()[1]
+        return self._columns[col].id()
         
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Vrací pravdu, pokud mù¾e být událost provedena (viz _on_select_cell).
@@ -1208,11 +1212,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return
         search_field = _grid.IncrementalSearch(self, full)
         search_field.run()
-
-    def _on_filter(self, show_dialog=True):
-        row, col = self._current_cell()
-        super_(ListForm)._on_filter(self, row=self._table.row(row),
-                                    col=col, show_dialog=show_dialog)
 
     def _on_copy_cell(self):
         row, col = self._current_cell()
