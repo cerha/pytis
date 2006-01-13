@@ -256,7 +256,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _on_reload_form_state(self):
         pass
-            
+    
     # Veøejné metody
     
     def name(self):
@@ -954,7 +954,7 @@ class LookupForm(RecordForm):
     """Konstanta pro argument direction metody '_on_sort_column()'."""
 
     
-    def _init_attributes(self, sorting=None, grouping=None, condition=None,
+    def _init_attributes(self, sorting=None, condition=None,
                          indicate_filter=False, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
@@ -962,7 +962,6 @@ class LookupForm(RecordForm):
 
           sorting -- specifikace poèáteèního tøídìní formuláøe, viz argument
             'sort' metody 'pytis.data.Data.select()'
-          grouping -- ???
           condition -- podmínka výbìru dat, viz argument 'condition' metody
             'pytis.data.Data.select()'
           indicate_filter -- ???
@@ -970,12 +969,11 @@ class LookupForm(RecordForm):
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
-        self._lf_sorting = sorting or self._default_sorting()
-        self._lf_grouping = grouping or self._default_grouping()
+        self._lf_sorting = sorting or self._get_state_param('sorting') or \
+                           self._default_sorting()
         self._lf_condition = condition
         self._lf_indicate_filter = indicate_filter
         self._lf_initial_sorting = self._lf_sorting
-        self._lf_initial_grouping = self._lf_grouping
         self._lf_initial_condition = self._lf_condition
         self._lf_search_dialog = None
         self._lf_filter_dialog = None
@@ -986,10 +984,12 @@ class LookupForm(RecordForm):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
     
     def _default_sorting(self):
-        return ()
-
-    def _default_grouping(self):
-        return None
+        sorting = self._view.sorting()
+        if sorting is None:
+            sorting = tuple([(k.id(), LookupForm.SORTING_DESCENDANT)
+                             for k in self._data.key()
+                             if self._view.field(k.id()) is not None])
+        return sorting
 
     def _init_select(self):
         data = self._data
@@ -1071,6 +1071,12 @@ class LookupForm(RecordForm):
                        block_refresh(lambda: run_dialog(sf_dialog, self._row))
         if condition is not None:
             self._search(condition, direction)
+
+    def _on_reload_form_state(self):
+        self._lf_sorting = self._lf_initial_sorting
+        if isinstance(self, Refreshable):
+            self.refresh()
+        super(LookupForm, self)._on_reload_form_state()
 
     def _is_searching(self):
         sd = self._lf_search_dialog
@@ -1172,6 +1178,7 @@ class LookupForm(RecordForm):
             sorting = tuple(sorting)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
+            self._set_state_param('sorting', sorting)
             self.select_row(self._current_key())
         return sorting
     
