@@ -3,6 +3,9 @@
 	* pytis/form/_grid.py (ListTable.GetAttr): Nepokou¹ej se získat
 	instanci `wx.grid.GridCellAttr' od providera, rovnou vytvoø
 	vlastní.
+	(ListTable.GetValue, ListTable.GetTypeName, ListTable.GetAttr):
+	O¹etøuj situaci, kdy èíslo sloupce neodpovídá poètu zobrazených
+	sloupcù.
 
 	* pytis/form/commands_.py (DEFAULT_KEYMAP): Klávesová zkratka pro
 	pøíkaz `Application.COMMAND_CUSTOM_DEBUG' zmìnìna na `Ctrl-x d'
@@ -60,6 +63,18 @@
 	a `self._init_column_widths()'.
 	(ListForm._set_grouping_column): Ukládej nastavenou hodnotu jako
 	u¾ivatelské nastavení.
+	(ListForm._update_grid): Ujisti se, ¾e `inserted_column_index' je
+	v rozumných mezích.
+	(ListForm._displayed_columns_menu): Nová meotda.
+	(ListForm._column_context_menu): Nová meotda.
+	(ListForm._on_label_right_down): Vyu¾ívej tyto metody.  Pokud jsme
+	mimo sloupce, zobrazuj pouze menu pro zobrazení/skrytí sloupcù
+	(ListForm._on_label_left_down, ListForm._on_label_left_up):
+	O¹etøuj situaci, kdy bylo kliknuto mimo sloupce.
+	(ListForm._on_toggle_column): Umo¾ni skrýt sloupec, by» je
+	posledním zobrazeným sloupcem v gridu.
+	(ListForm._resize_columns): U¹etøi nulovou celkovou ¹íøku pøi
+	skrytí v¹ech sloupcù.
 
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
