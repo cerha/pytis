@@ -244,8 +244,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _form_state_key(self):
         return self.__class__.__name__+'/'+self._name
     
-    def _get_state_param(self, name, default=None):
-        return self._form_state.get(name, default)
+    def _get_state_param(self, name, default=None, cls=None):
+        param = self._form_state.get(name, default)
+        if cls is not None and not isinstance(param, cls):
+            log(OPERATIONAL, "Invalid saved form attribute value:", name)
+            return default
+        return param
 
     def _set_state_param(self, name, value):
         self._form_state[name] = value
@@ -969,7 +973,7 @@ class LookupForm(RecordForm):
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
-        self._lf_sorting = sorting or self._get_state_param('sorting') or \
+        self._lf_sorting = sorting or self._user_defined_sorting() or \
                            self._default_sorting()
         self._lf_condition = condition
         self._lf_indicate_filter = indicate_filter
@@ -982,6 +986,15 @@ class LookupForm(RecordForm):
 
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
+
+    def _user_defined_sorting(self):
+        sorting = self._get_state_param('sorting', None, types.TupleType)
+        if sorting is not None:
+            for id, direction in sorting:
+                if self._view.field(id) is None or direction not in \
+                       (self.SORTING_ASCENDENT, self.SORTING_DESCENDANT):
+                    return None
+        return sorting
     
     def _default_sorting(self):
         sorting = self._view.sorting()
