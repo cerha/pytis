@@ -1,3 +1,66 @@
+2006-01-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (ListTable.GetAttr): Nepokou¹ej se získat
+	instanci `wx.grid.GridCellAttr' od providera, rovnou vytvoø
+	vlastní.
+
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): Klávesová zkratka pro
+	pøíkaz `Application.COMMAND_CUSTOM_DEBUG' zmìnìna na `Ctrl-x d'
+
+	* pytis/form/form.py (LookupForm._init_attributes): Zru¹en
+	argument `grouping'.  Zjisti a pøípadnì uplatni u¾ivatelské
+	nastavení tøídìní.
+	(LookupForm._default_grouping): Metoda zru¹ena.
+	(LookupForm._on_reload_form_state): Nová metoda.
+	(LookupForm._on_sort_column): Zapamatuj si tøídìní jako
+	u¾ivatelské nastavení.
+	(LookupForm._default_sorting): Urèi výchozí tøídìní a vra»
+	specifikaci.
+	(Form._get_state_param): Nový argument `cls'.
+	(LookupForm._init_attributes): Pou¾ívej metodu
+	`self._user_defined_sorting()'.
+	(LookupForm._user_defined_sorting): Nová metoda.
+
+	* pytis/form/list.py (ListForm.can_set_grouping_column): Nová
+	metoda.
+	(ListForm.can_set_grouping): Metoda zru¹ena.
+	(ListForm._init_attributes): Nový argument `grouping'.
+	Inicializuj `self._grouping'.
+	(ListForm._default_grouping): Metoda zru¹ena.
+	(ListForm._default_sorting): Metoda zru¹ena.
+	(ListForm._update_grid): Pou¾ívej `self._grouping' namísto
+	`self._lf_grouping'.
+	(ListForm._on_label_right_down): Pøíkazu
+	`ListForm.COMMAND_SET_GROUPING_COLUMN' pøedávej èíslo, ne id
+	sloupce jako argument.
+	(ListForm._on_label_paint): Pou¾ívej `self._grouping' namísto
+	`self._lf_grouping'.
+	(ListForm._on_reload_form_state): Reinicializuj `self._grouping'.
+	Volej metodu pøedka.
+	(ListForm.on_command): Pøíkaz
+	`ListForm.COMMAND_SET_GROUPING_COLUMN' obsluhuj voláním
+	`self._set_grouping_column()', ne `self._refresh()'.
+	(ListForm._set_grouping_column): Nová metoda.
+	(ListForm._refresh): Nestarej se zde vùbec o grouping.  Zapamatuj
+	si tøídìní jako u¾ivatelské nastavení.
+	(ListForm._init_attributes): Neinicializuj sloupce ani grouping
+	zde, volej `self._init_columns()', `self._init_grouping(grouping)'
+	a také `self._init_column_widths()'.  Inicializuj
+	`self._check_default_columns'.
+	(ListForm._init_columns, ListForm._init_column_widths)
+	(ListForm._init_grouping): Nové metody.
+	(ListForm._column_width): Pou¾ívej slovník ulo¾ený v
+	`self._column_widths'.
+	(ListForm._update_grid): Pou¾ívej `self._init_columns()'.
+	(ListForm._on_idle): Pokud je nastaveno
+	`self._check_default_columns', zkontroluj zmìnu pøímo zde.
+	(ListForm._remember_column_size): Pou¾ívej slovník ulo¾ený v
+	`self._column_widths'.
+	(ListForm._on_reload_form_state): Pou¾ívej `self._init_grouping()'
+	a `self._init_column_widths()'.
+	(ListForm._set_grouping_column): Ukládej nastavenou hodnotu jako
+	u¾ivatelské nastavení.
+
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py
