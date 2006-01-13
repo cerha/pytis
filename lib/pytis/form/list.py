@@ -287,10 +287,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             del self._columns[i]
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, i, 1)
         if insert_column is not None:
-            if inserted_column_index is None:
+            i = inserted_column_index
+            if i is None or not (0 <= i <= len(self._columns)):
                 i = len(self._columns)
-            else:
-                i = inserted_column_index
             self._columns.insert(i, insert_column)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
         new_columns = tuple([c.id() for c in self._columns])
