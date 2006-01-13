@@ -147,18 +147,15 @@ class SFDialog(SFSDialog):
         parent = self._dialog
         # Prvky
         def condition(id):
-            column = self._create_choice(map(SFSColumn.label, self._columns),
+            column = self._create_choice([c.label() for c in self._columns],
                                          tip=_("Zvolte sloupec tabulky"))
             try:
                 wcol, wop, wval, __ = self._defaults[id]
             except KeyError:
                 wcol, wop, wval, __ = self._defaults[id] = self._default_item
             if wcol == -1:
-                if id == 0:
-                    sel = self._colnum
-                else:
-                    sel = self._defaults[id-1][0]
-                column.SetSelection(sel)
+                c = find(self._field_id, self._columns, key=lambda c: c.id())
+                column.SetSelection(self._columns.index(c))
             else:
                 column.SetSelection(wcol)
             op = self._create_choice(map(lambda o: o[0], self._OPERATORS),
@@ -167,17 +164,16 @@ class SFDialog(SFSDialog):
             value = self._create_text_ctrl(18, wval,
                                    tip=_("Zapi¹te hodnotu podmínkového výrazu"))
             self._selectors[id] = (column, op, value)
-            clear  = self._create_button(_("Smazat"),
-                                         lambda e: self._on_clear(e, id),
-                                         tip=_("Vymazat obsah podmínky"))
-            suck   = self._create_button(_("Nasát"),
-                                         lambda e: self._on_suck(e, id),
-                                         tip=_("Naèíst hodnotu aktivní buòky"))
-            remove = self._create_button(_("Odebrat"),
-                                         lambda e: self._on_remove(e, id),
-                                         tip=_("Zru¹it tuto podmínku"))
+            buttons = [self._create_button(label, handler, tip=tooltip)
+                       for label, tooltip, handler in
+                       ((_("Smazat"), _("Vymazat obsah podmínky"),
+                         lambda e: self._on_clear(e, id)),
+                        (_("Nasát"), _("Naèíst hodnotu aktivní buòky"),
+                         lambda e: self._on_suck(e, id)),
+                        (_("Odebrat"), _("Zru¹it tuto podmínku"),
+                         lambda e: self._on_remove(e, id)))]
             sizer = wx.BoxSizer()
-            for x in (column, op, value, clear, suck, remove):
+            for x in (column, op, value) + tuple(buttons):
                 sizer.Add(x)
             return sizer
         def and_or_separator(id):
@@ -317,6 +313,10 @@ class SFDialog(SFSDialog):
             defaults = (wcol.GetSelection(), wop.GetSelection(),
                         wval.GetValue(), logsel)
             self._defaults[k] = defaults
+        keys = self._defaults.keys()
+        if len(keys) == 1 and self._defaults[keys[0]][2] == '':
+            # We don't want to remember an empty condition.
+            self._defaults = {}
             
     def append_condition(self, col_id, value):
         """Pøidej filtrovací podmínku neinteraktivnì.
@@ -356,7 +356,7 @@ class SFDialog(SFSDialog):
         """Vra» aktuální podmínku nebo 'None', pokud ¾ádná není."""
         return self._condition
 
-    def run(self, current_row, col):
+    def run(self, current_row, current_field):
         """Zobraz formuláø a po jeho ukonèení vra» zvolenou podmínku.
 
         Argumenty:
@@ -364,7 +364,8 @@ class SFDialog(SFSDialog):
           current_row -- aktuální øádek formuláøe jako instance tøídy
             'pytis.data.Row'; pokud ve formuláøi není zvolen ¾ádný øádek, tak
             'None'
-          col -- èíslo aktuálního sloupce, poèínaje od 0
+          current_field -- identifikátor aktuálního políèka/sloupce.  Je-li
+            'None', bude vybrán nìjaký implicitní sloupec.
 
         Vrácená podmínka je instance podmínkového operátoru pou¾ívaného
         metodami tøídy 'pytis.data.Data'.  Pokud je dialog opu¹tìn bez zadání
@@ -372,7 +373,7 @@ class SFDialog(SFSDialog):
 
         """
         self._row = current_row
-        self._colnum = col
+        self._field_id = current_field
         return super_(SFDialog).run(self)
 
 
@@ -411,15 +412,15 @@ class SearchDialog(SFDialog):
         else:
             return None, None
 
-    def run(self, current_row, col=None):
+    def run(self, current_row, current_field):
         """Zobraz formuláø a po jeho ukonèení vra» zvolené parametry hledání.
 
         Argumenty:
         
           row -- aktuální øádek formuláøe jako instance tøídy 'pytis.data.Row';
             pokud ve formuláøi není zvolen ¾ádný øádek, tak 'None'
-          col -- èíslo aktuálního sloupce, poèínaje od 0; mù¾e být té¾ 'None',
-            v kterém¾to pøípadì je pou¾ito implicitní èíslo sloupce
+          current_field -- identifikátor aktuálního políèka/sloupce.  Je-li
+            'None', bude vybrán nìjaký implicitní sloupec.
 
         Vrací: Dvojici (CONDITION, DIRECTION).  CONDITION je instance
         podmínkového operátoru pou¾ívaného metodami tøídy 'pytis.data.Data'.
@@ -430,9 +431,7 @@ class SearchDialog(SFDialog):
 
         """
         self._direction = None
-        if col is None:
-            col = 0
-        return super_(SearchDialog).run(self, current_row, col)
+        return super_(SearchDialog).run(self, current_row, current_field)
 
 
 class FilterDialog(SFDialog):
@@ -507,7 +506,7 @@ class FilterDialog(SFDialog):
         else:
             return None, None
 
-    def run(self, data, filter, current_row, col):
+    def run(self, data, filter, current_row, current_field):
         """Zobraz formuláø a po jeho ukonèení vra» parametry filtrování.
         
         Argumenty:
@@ -521,8 +520,8 @@ class FilterDialog(SFDialog):
           current_row -- aktuální øádek formuláøe jako instance tøídy
             'pytis.data.Row'; pokud ve formuláøi není zvolen ¾ádný øádek, tak
             'None'
-          col -- èíslo aktuálního sloupce, poèínaje od 0; je-li 'None', bude
-            vybrán nìjaký implicitní sloupec
+          current_field -- identifikátor aktuálního políèka/sloupce.  Je-li
+            'None', bude vybrán nìjaký implicitní sloupec.
 
         Vrací: Dvojici (FILTER, CONDITION).  CONDITION je instance
         podmínkového operátoru pou¾ívaného metodami tøídy 'pytis.data.Data'.
@@ -533,9 +532,7 @@ class FilterDialog(SFDialog):
         self._data = data
         self._data_filter = filter
         self._perform = False
-        if col is None:
-            col = 0
-        return super_(FilterDialog).run(self, current_row, col)
+        return super_(FilterDialog).run(self, current_row, current_field)
 
 
 class SortingDialog(SFSDialog):
