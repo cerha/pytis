@@ -106,19 +106,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
         """
         super_(ListForm)._init_attributes(self, **kwargs)
-        self._default_columns_changed = False
         assert columns is None or is_sequence(columns)
-        if not columns:
-            default = self._default_columns()
-            columns = self._get_state_param('columns', default)
-            if default != self._get_state_param('default_columns', default):
-                self._default_columns_changed = True
-                columns = [id for id in columns
-                           if self._view.field(id) is not None]
-        self._columns = [self._view.field(id) for id in columns]
-        self._grouping = grouping or self._get_state_param('grouping') or \
-                         self._view.grouping()
-        # Inicializace atributù
+        # Inicializace atributù závislých na u¾ivatelském nastavení.
+        self._init_columns(columns)
+        self._init_grouping(grouping)
+        self._init_column_widths()
+        # Inicializace ostatních atributù.
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
         self._selection_candidate = None
@@ -130,12 +123,40 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._column_to_move = None
         self._column_move_target = None
         self._mouse_dragged = False
-        # Parametry zobrazení
+        self._check_default_columns = not columns
+        # Parametry zobrazení.
         self._initial_position = self._position = 0
 
     def _default_columns(self):
         return self._view.columns()
-        
+
+    def _init_columns(self, columns=None, allow_user_settings=True):
+        if not columns:
+            columns = default = self._default_columns()
+            if allow_user_settings:
+                user_columns = self._get_state_param('columns', default,
+                                                     types.TupleType)
+                columns = [id for id in user_columns if self._view.field(id)] \
+                          or default
+        self._columns = [self._view.field(id) for id in columns]
+    
+    def _init_grouping(self, grouping=None):
+        if grouping is None:
+            grouping = self._get_state_param('grouping')
+        if self._view.field(grouping) is None:
+            grouping = self._view.grouping()
+        self._grouping = grouping
+            
+    def _init_column_widths(self):
+        widths = self._get_state_param('column_width', (), types.TupleType)
+        try:
+            #TODO: Should column widths be saved/restored in dialog units?
+            self._column_widths = dict([(id, width) for id, width in widths
+                                        if self._view.field(id) is not None \
+                                        and isinstance(width, types.IntType)])
+        except ValueError:
+            self._column_widths = {}
+    
     def _create_form_parts(self, sizer):
         title = self.title()
         if title is not None:
@@ -151,8 +172,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _column_width(self, column):
         try:
-            #TODO: Column widths should be saved/restored in dialog units.
-            return dict(self._get_state_param('column_width', ()))[column.id()]
+            return self._column_widths[column.id()]
         except KeyError:
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
@@ -258,10 +278,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g.BeginBatch()
         if reset_columns or soft_reset_columns:
             deleted = len(self._columns)
-            columns = self._default_columns()
-            if not reset_columns:
-                columns = self._get_state_param('columns', columns)
-            self._columns = [self._view.field(id) for id in columns]
+            self._init_columns(allow_user_settings = not reset_columns)
             inserted = len(self._columns)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
@@ -630,15 +647,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 if the_row is not None:
                     self._run_callback(self.CALL_SELECTION, (the_row,))
                     self._post_selection_hook(the_row)
-        if self._default_columns_changed:
-            self._default_columns_changed = False
-            msg = _("Specifikace sloupcù formuláøe byla zmìnìna.\n"
-                    "Va¹e u¾ivatelské nastavení sloupcù je ji¾ zastaralé.\n"
-                    "Chcete pou¾ít nové výchozí nastavení sloupcù?")
-            if run_dialog(Question, msg):
-                self._on_reset_columns()
-            else:
-                self._set_state_param('default_columns',self._default_columns())
+        if self._check_default_columns:
+            self._check_default_columns = False
+            columns = self._default_columns()
+            if columns != self._get_state_param('default_columns', columns):
+                msg = _("Specifikace sloupcù formuláøe byla zmìnìna.\n"
+                        "Va¹e u¾ivatelské nastavení sloupcù je ji¾ zastaralé.\n"
+                        "Chcete pou¾ít nové výchozí nastavení sloupcù?")
+                if run_dialog(Question, msg):
+                    self._on_reset_columns()
+                else:
+                    self._set_state_param('default_columns', columns)
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
         event.Skip()
         return False
@@ -829,9 +848,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         event.Skip()
 
     def _remember_column_size(self, col):
-        stored = dict(self._get_state_param('column_width', ()))
-        stored[self._columns[col].id()] = self._grid.GetColSize(col)
-        self._set_state_param('column_width', stored.items())
+        id = self._columns[col].id()
+        self._column_widths[id] = self._grid.GetColSize(col)
+        self._set_state_param('column_width', self._column_widths.items())
         
     def _on_label_paint(self, event):
         def triangle(x, y, r=4, reversed=True):
@@ -922,7 +941,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_grid(reset_columns=True)
 
     def _on_reload_form_state(self):
-        self._grouping = self._get_state_param('grouping')
+        self._init_grouping()
+        self._init_column_widths() 
         self._update_grid(soft_reset_columns=True)
         super(ListForm, self)._on_reload_form_state()
 
@@ -1084,6 +1104,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._grouping = None
         else:
             self._grouping = self._columns[col].id()
+        self._set_state_param('grouping', self._grouping)
         self._update_grid()
     
     def can_set_grouping_column(self, col=None):
