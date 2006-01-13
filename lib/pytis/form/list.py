@@ -711,62 +711,74 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _scroll_x_offset(self):
         g = self._grid
         return g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
-            
+
+    def _displayed_columns_menu(self, col):
+        return Menu(_("Zobrazené sloupce"),
+                    [CheckItem(c.label(),
+                               command=ListForm.COMMAND_TOGGLE_COLUMN,
+                               args=dict(column_id=c.id(), col=col),
+                               state=lambda a, c=c: c in self._columns)
+                     for c in self._view.fields()] + \
+                    [MSeparator(),
+                     MItem(_("Vrátit výchozí sloupce"),
+                           command=ListForm.COMMAND_RESET_COLUMNS)])
+    
+    def _column_context_menu(self, col):
+        M = Menu
+        I = MItem
+        ________ = MSeparator()
+        ASC = LookupForm.SORTING_ASCENDENT
+        DESC = LookupForm.SORTING_DESCENDANT
+        #
+        items = (M(_("Primární øazení"),
+                   (I(_("Øadit vzestupnì"),
+                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      args=dict(direction=ASC, col=col, primary=True)),
+                    I(_("Øadit sestupnì"),
+                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      args=dict(direction=DESC, col=col, primary=True)),)),
+                 M(_("Dodateèné øazení"),
+                   (I(_("Øadit vzestupnì"),
+                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      args=dict(direction=ASC, col=col)),
+                    I(_("Øadit sestupnì"),
+                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      args=dict(direction=DESC, col=col)),)),
+                 ________,
+                 I(_("Neøadit podle tohoto sloupce"),
+                   command=LookupForm.COMMAND_SORT_COLUMN,
+                   args=dict(direction=LookupForm.SORTING_NONE, col=col)),
+                 I(_("Zru¹it øazení úplnì"),
+                   command=LookupForm.COMMAND_SORT_COLUMN,
+                   args=dict(direction=LookupForm.SORTING_NONE)),
+                 ________,
+                 I(_("Seskupit podle tohoto sloupce"),
+                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
+                   args=dict(col=col)),
+                 I(_("Zru¹it seskupování"),
+                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
+                   args=dict(col=None)),
+                 ________,
+                 I(_("Skrýt tento sloupec"),
+                   command=ListForm.COMMAND_TOGGLE_COLUMN,
+                   args=dict(column_id=self._columns[col].id())),
+                 self._displayed_columns_menu(col=col)
+                 )
+        return Menu('', items)
+    
     def _on_label_right_down(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         g = self._grid
         col = g.XToCol(event.GetX() + self._scroll_x_offset())
         # Menu musíme zkonstruovat a¾ zde, proto¾e argumentem pøíkazù je èíslo
         # sloupce, které zjistím a¾ z eventu.
-        items = (Menu(_("Primární øazení"),
-                      (MItem(_("Øadit vzestupnì"),
-                             command=LookupForm.COMMAND_SORT_COLUMN,
-                             args=dict(direction=LookupForm.SORTING_ASCENDENT,
-                                       col=col, primary=True)),
-                       MItem(_("Øadit sestupnì"),
-                             command=LookupForm.COMMAND_SORT_COLUMN,
-                             args=dict(direction=LookupForm.SORTING_DESCENDANT,
-                                       col=col, primary=True)),)),
-                 Menu(_("Dodateèné øazení"),
-                      (MItem(_("Øadit vzestupnì"),
-                             command=LookupForm.COMMAND_SORT_COLUMN,
-                             args=dict(direction=LookupForm.SORTING_ASCENDENT,
-                                       col=col)),
-                       MItem(_("Øadit sestupnì"),
-                             command=LookupForm.COMMAND_SORT_COLUMN,
-                             args=dict(direction=LookupForm.SORTING_DESCENDANT,
-                                       col=col)),)),
-                 MSeparator(),
-                 MItem(_("Neøadit podle tohoto sloupce"),
-                       command=LookupForm.COMMAND_SORT_COLUMN,
-                       args=dict(direction=LookupForm.SORTING_NONE, col=col)),
-                 MItem(_("Zru¹it øazení úplnì"),
-                       command=LookupForm.COMMAND_SORT_COLUMN,
-                       args=dict(direction=LookupForm.SORTING_NONE)),
-                 MSeparator(),
-                 MItem(_("Seskupit podle tohoto sloupce"),
-                       command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args=dict(col=col)),
-                 MItem(_("Zru¹it seskupování"),
-                       command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args=dict(col=None)),
-                 MSeparator(),
-                 MItem(_("Skrýt tento sloupec"),
-                       command=ListForm.COMMAND_TOGGLE_COLUMN,
-                       args=dict(column_id=self._columns[col].id())),
-                 Menu(_("Zobrazené sloupce"),
-                      [CheckItem(c.label(),
-                                 state=lambda a, c=c: c in self._columns,
-                                 command=ListForm.COMMAND_TOGGLE_COLUMN,
-                                 args=dict(column_id=c.id(), col=col))
-                       for c in self._view.fields()] + \
-                      [MSeparator(),
-                       MItem(_("Vrátit výchozí sloupce"),
-                             command=ListForm.COMMAND_RESET_COLUMNS)]),
-                 )
-        menu = Menu('', items).create(g, self)
-        g.PopupMenu(menu)
-        menu.Destroy()
+        if col == -1:
+            menu = self._displayed_columns_menu(None)
+        else:
+            menu = self._column_context_menu(col)
+        m = menu.create(g, self)
+        g.PopupMenu(m)
+        m.Destroy()
         event.Skip()
 
     def _on_context_menu(self, event):
@@ -781,15 +793,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g = self._grid
         x = event.GetX() + self._scroll_x_offset()
         col = g.XToCol(x)
-        x1 = reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
-        x2 = x1 + g.GetColSize(col)
-        if x > x1+2 and x < x2-2:
-            self._column_to_move = col
+        if col != -1:
+            x1 = reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
+            x2 = x1 + g.GetColSize(col)
+            if x > x1+2 and x < x2-2:
+                self._column_to_move = col
         self._mouse_dragged = False
         event.Skip()
         
     def _on_label_left_up(self, event):
-        col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
         if self._column_move_target is not None:
             old_index = self._column_to_move
             new_index = self._column_move_target
@@ -800,9 +812,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._update_grid(delete_column=c, insert_column=c,
                                   inserted_column_index=new_index)
         elif not self._mouse_dragged:
-            self._run_callback(self.CALL_USER_INTERACTION)
-            invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
-                           direction=LookupForm.SORTING_CYCLE_DIRECTION)
+            col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
+            if col != -1:
+                self._run_callback(self.CALL_USER_INTERACTION)
+                invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
+                               direction=LookupForm.SORTING_CYCLE_DIRECTION)
         self._column_move_target = None
         self._column_to_move = None
         event.GetEventObject().Refresh()
@@ -928,9 +942,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_toggle_column(self, column_id, col=None):
         c = find(column_id, self._columns, key=lambda c: c.id())
         if c:
-            if len(self._columns) == 1:
-                message(_("Poslední sloupec"), beep_=True)
-                return
             self._update_grid(delete_column=c)
         else:
             self._update_grid(insert_column=self._view.field(column_id),
@@ -1724,7 +1735,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if height < self._total_height():
             width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) - 1
         total_width = self._total_width()
-        if width > total_width:
+        if width > total_width > 0:
             coef = float(width) / total_width
         else:
             coef = 1
