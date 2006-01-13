@@ -91,7 +91,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._select_cell(row=self._position)
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
 
-    def _init_attributes(self, columns=None, **kwargs):
+    def _init_attributes(self, columns=None, grouping=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
@@ -99,6 +99,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
           columns -- pokud není None, bude formuláø pou¾ívat dané sloupce.
             Jinak je pou¾it seznam sloupcù daný specifikací.  Hodnotou je
             sekvence identifikátorù sloupcù obsa¾enýh ve specifikaci.
+
+          grouping -- id sloupce vizuálního seskupování nebo None.
+            
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
@@ -113,6 +116,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 columns = [id for id in columns
                            if self._view.field(id) is not None]
         self._columns = [self._view.field(id) for id in columns]
+        self._grouping = grouping or self._get_state_param('grouping') or \
+                         self._view.grouping()
         # Inicializace atributù
         self._fields = self._view.fields()
         self._enable_inline_insert = self._view.enable_inline_insert()
@@ -130,20 +135,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _default_columns(self):
         return self._view.columns()
-        
-    def _default_grouping(self):
-        return self._view.grouping()
-
-    def _default_sorting(self):
-        view = self._view
-        sorting = view.sorting()
-        if sorting is None:
-            key = filter(lambda k: view.field(k.id()) is not None,
-                         self._data.key())
-            sorting = tuple(map(lambda k: (k.id(),
-                                           LookupForm.SORTING_DESCENDANT),
-                                key))
-        return sorting
         
     def _create_form_parts(self, sizer):
         title = self.title()
@@ -175,7 +166,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._table = table = \
           _grid.ListTable(self._parent, self._data, self._fields,
                           self._columns, row_count, sorting=self._lf_sorting,
-                          grouping=self._lf_grouping, prefill=self._prefill,
+                          grouping=self._grouping, prefill=self._prefill,
                           row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
@@ -294,7 +285,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._set_state_param('default_columns', self._default_columns())
         t.update(columns=self._columns,
                  row_count=row_count, sorting=self._lf_sorting,
-                 grouping=self._lf_grouping,
+                 grouping=self._grouping,
                  inserted_row_number=inserted_row_number,
                  inserted_row=inserted_row, prefill=self._prefill)
         ndiff = new_row_count - old_row_count
@@ -737,10 +728,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                  MSeparator(),
                  MItem(_("Seskupit podle tohoto sloupce"),
                        command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args=dict(column_id=self._columns[col].id())),
+                       args=dict(col=col)),
                  MItem(_("Zru¹it seskupování"),
                        command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                       args=dict(column_id=None)),
+                       args=dict(col=None)),
                  MSeparator(),
                  MItem(_("Skrýt tento sloupec"),
                        command=ListForm.COMMAND_TOGGLE_COLUMN,
@@ -886,7 +877,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     dc.DrawLine(left, top+2*i, left+9, top+2*i)
                 dc.DrawPolygon(triangle(left, top+pos*2, reversed=r))
             # Draw the grouping sign.
-            if self._lf_grouping == id:
+            if self._grouping == id:
                 dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
                 dc.DrawCircle(x+5, y+5, 2)
             # Indicate when the column is being moved.
@@ -931,8 +922,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_grid(reset_columns=True)
 
     def _on_reload_form_state(self):
+        self._grouping = self._get_state_param('grouping')
         self._update_grid(soft_reset_columns=True)
-        
+        super(ListForm, self)._on_reload_form_state()
+
     def show_context_menu(self, position=None):
         if self._table.editing():
             menu = self._edit_menu()
@@ -1028,7 +1021,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._on_sort_column(**kwargs)
             return True
         elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
-            self._refresh(reset={'grouping': kwargs['column_id']})
+            self._set_grouping_column(**kwargs)
             return True
         elif command == ListForm.COMMAND_TOGGLE_COLUMN:
             self._on_toggle_column(**kwargs)
@@ -1085,16 +1078,19 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 return super_(ListForm).on_command(self, command, **kwargs)
             return True
         return super_(ListForm).on_command(self, command, **kwargs)
-            
-    def can_set_grouping(cls, appl, cmd, args):
-        f = appl.current_form()
-        cid = args.get('column_id')
-        if f and isinstance(f, LookupForm):
-            grp = f._lf_grouping
-            return (cid and cid != grp or grp and not cid)
+
+    def _set_grouping_column(self, col=None):
+        if col is None:
+            self._grouping = None
         else:
-            return False
-    can_set_grouping = classmethod(can_set_grouping)
+            self._grouping = self._columns[col].id()
+        self._update_grid()
+    
+    def can_set_grouping_column(self, col=None):
+        if col is None:
+            return self._grouping is not None
+        else:
+            return self._columns[col].id() != self._grouping
 
     # Metody volané pøímo z callbackových metod
                                    
@@ -1605,9 +1601,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             hodnotou prázdné dictionary, jsou naopak v¹echny tyto parametry
             resetovány na své poèáteèní hodnoty.  Jinak jsou resetovány právì
             ty parametry, pro nì¾ v dictionary existuje klíè (jeden z øetìzcù
-            'sorting', 'grouping', 'condition', 'position' a 'filter_flag'),
-            a to na hodnotou z dictionary pro daný klíè.  Parametr
-            'filter_flag' udává, zda má být zobrazena indikace filtru.
+            'sorting', 'condition', 'position' a 'filter_flag'), a to na
+            hodnotou z dictionary pro daný klíè.  Parametr 'filter_flag' udává,
+            zda má být zobrazena indikace filtru.
 
           when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
             jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
@@ -1630,7 +1626,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             reset = {}
         elif reset == {}:
             reset = {'sorting': self._lf_initial_sorting,
-                     'grouping': self._lf_initial_grouping,
                      'condition': self._lf_initial_condition,
                      'position': self._initial_position,
                      'filter_flag': False}
@@ -1655,8 +1650,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._lf_condition = v
             elif k == 'sorting':
                 self._lf_sorting = v
-            elif k == 'grouping':
-                self._lf_grouping = v
+                self._set_state_param('sorting', v)
             elif k == 'position':
                 self._position = v
             elif k == 'filter_flag':
