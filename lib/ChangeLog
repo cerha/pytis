@@ -1,5 +1,13 @@
 2006-01-13  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFDialog._create_content.condition):
+	Pou¾ij pou¾ij v¾dy `self._field_id' jako pøednastavený sloupec pro
+	novou podmínku.
+	(SFDialog._save_values): Neukládej nastavení, pokud máme pouze
+	jednu nevyplnìnou podmínku.
+	(SFDialog.run, SearchDialog.run, FilterDialog.run): Arguemnt `col'
+	zmìnìn na `fiald_id'.
+
 	* pytis/form/_grid.py (ListTable.GetAttr): Nepokou¹ej se získat
 	instanci `wx.grid.GridCellAttr' od providera, rovnou vytvoø
 	vlastní.
@@ -23,6 +31,11 @@
 	(LookupForm._init_attributes): Pou¾ívej metodu
 	`self._user_defined_sorting()'.
 	(LookupForm._user_defined_sorting): Nová metoda.
+	(RecordForm.current_field): Nová metoda.
+	(LookupForm._on_search): Pøedávej metodì `run()' dialogu
+	identifikátor aktuálního políèka.
+	(LookupForm._on_filter): Zru¹eny argumenty `row' a `col'.
+	Pøedávej metodì `run()' dialogu identifikátor aktuálního políèka.
 
 	* pytis/form/list.py (ListForm.can_set_grouping_column): Nová
 	metoda.
@@ -75,6 +88,8 @@
 	posledním zobrazeným sloupcem v gridu.
 	(ListForm._resize_columns): U¹etøi nulovou celkovou ¹íøku pøi
 	skrytí v¹ech sloupcù.
+	(ListForm.current_row): Nová metoda.
+	(ListForm._on_filter): Metoda zru¹ena.
 
 2006-01-12  Tomas Cerha  <cerha@brailcom.org>
 
