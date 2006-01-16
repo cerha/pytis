@@ -654,11 +654,18 @@ class ListTable(wx.grid.PyGridTableBase):
                    for x, y in zip((bg.Red(), bg.Green(), bg.Blue()),
                                    self._grouping_background_downgrade)]
             bg = wx.Colour(*rgb)
-        attr = wx.grid.GridCellAttr()
-        attr.SetTextColour(fg)
-        attr.SetBackgroundColour(bg)
-        attr.SetFont(font)
-        return attr
+        provider = self.GetAttrProvider()
+        if provider:
+            attr = provider.GetAttr(row, col, kind)
+            if attr:
+                attr.SetTextColour(fg)
+                attr.SetBackgroundColour(bg)
+                attr.SetFont(font)
+                return attr
+            else:
+                print "---", row, col, kind
+        return None
+        
 
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
