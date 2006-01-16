@@ -166,7 +166,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         else:
             self._title_bar = None
-        self._grid = self._create_grid()
+        self._create_grid()
         self._update_colors()
         sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
@@ -180,7 +180,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _create_grid(self):
         if __debug__: log(DEBUG, 'Vytváøení nového gridu')
         # Vytvoø grid a tabulku
-        g = wx.grid.Grid(self, wx.NewId())
+        self._grid = g = wx.grid.Grid(self, wx.NewId())
         # Inicializuj datový select
         row_count = self._init_select()
         self._table = table = \
@@ -199,38 +199,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         labelfont.SetWeight(wx.NORMAL)
         g.SetLabelFont(labelfont)
         g.SetDefaultRowSize(dlg2px(g, 0, 10).GetHeight())
-        # (Re)inicializuj atributy instance a gridu
-        self._editors = []
-        def registration(editor):
-            self._current_editor = editor
-        editable = False
-        for i, c in enumerate(self._columns):
-            # typ sloupce
-            t = c.type(self._data)
-            # zarovnání
-            attr = wx.grid.GridCellAttr()
-            if isinstance(t, pytis.data.Number):
-                alignment = wx.ALIGN_RIGHT
-            else:
-                alignment = wx.ALIGN_LEFT
-            attr.SetAlignment(alignment, wx.CENTER)
-            # editor
-            editable = c.editable()
-            if editable or editable in (Editable.ALWAYS, Editable.ONCE):
-                editable = True
-                editor = _grid.InputFieldCellEditor(self._parent, table, self,
-                                                    c, self._data, registration)
-                editor.set_callback(InputField.CALL_LEAVE_FIELD,
-                                    self._on_cell_rollback)
-                editor.set_callback(InputField.CALL_COMMIT_FIELD, 
-                                    self._on_cell_commit)
-                self._editors.append(editor)
-                attr.SetEditor(editor)
-            else:
-                attr.SetReadOnly()
-            g.SetColAttr(i, attr)
-        self.editable = editable
         labels = g.GetGridColLabelWindow()
+        self._editors = []
+        self._init_col_attr()
         # Event handlery
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL,   g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
@@ -245,7 +216,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
         if __debug__: log(DEBUG, 'Nový grid vytvoøen')
-        return g
 
     def _on_editor_shown(self, event):
         if self._table.editing():
@@ -312,6 +282,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         elif new_row_count > old_row_count:
             notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
         notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+        if new_columns != old_columns or reset_columns or soft_reset_columns:
+            self._close_editors()
+            self._init_col_attr()
         g.EndBatch()
         # Závìreèné úpravy
         if new_row_count != old_row_count:
@@ -327,7 +300,35 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_colors()
         self._resize_columns()
 
-
+    def _init_col_attr(self):
+        # (Re)inicializuj atributy sloupcù gridu.
+        def registration(editor):
+            self._current_editor = editor
+        self.editable = False
+        for i, c in enumerate(self._columns):
+            # zarovnání
+            attr = wx.grid.GridCellAttr()
+            if isinstance(c.type(self._data), pytis.data.Number):
+                alignment = wx.ALIGN_RIGHT
+            else:
+                alignment = wx.ALIGN_LEFT
+            attr.SetAlignment(alignment, wx.CENTER)
+            # editor
+            if c.editable() in (Editable.ALWAYS, Editable.ONCE):
+                self.editable = True
+                e = _grid.InputFieldCellEditor(self._parent, self._table, self,
+                                               c, self._data, registration)
+                e.set_callback(InputField.CALL_LEAVE_FIELD,
+                               self._on_cell_rollback)
+                e.set_callback(InputField.CALL_COMMIT_FIELD, 
+                               self._on_cell_commit)
+                self._editors.append(e)
+                print "***", i, e
+                attr.SetEditor(e)
+            else:
+                attr.SetReadOnly()
+            self._grid.SetColAttr(i, attr)
+        
     def _update_label_colors(self):
         color = self._lf_indicate_filter and config.filter_color or \
                 self._TITLE_FOREGROUND_COLOR
@@ -445,7 +446,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             message(_("Políèko je needitovatelné"), kind=ACTION, beep_=True)
             return False
         self._grid.EnableCellEditControl()       
-        log(EVENT, 'Spu¹tìn editor políèka:', (row, col))
+        log(EVENT, 'Spu¹tìn editor políèka:', (row, cid))
         return True
     
     def _finish_editing(self, question=None, row=None):
@@ -1082,8 +1083,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._finish_editing()
                 return True
             # Pøíkazy vztahující se pouze k editaci políèka
-            elif self._grid.IsCellEditControlEnabled() and \
-                     self._current_editor is not None:
+            elif self._grid.IsCellEditControlEnabled():
                 if command == ListForm.COMMAND_CELL_COMMIT:
                     return self._on_cell_commit()
                 elif command == ListForm.COMMAND_CELL_ROLLBACK:
@@ -1759,7 +1759,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if size.width != self._grid.GetSize().width:
             self._resize_columns(size)
         event.Skip()
-            
+
+    def _close_editors(self):
+        for e in self._editors:
+            if e:
+                e.close()
+        self._editors = []
+
+        
     def Close(self):
         self._data.remove_callback_on_change(self.on_data_change)
         try:
@@ -1767,9 +1774,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         except pytis.data.DBException:
             pass
         # Musíme ruènì zru¹it editory, jinak se doèkáme segmentation fault.
-        for e in self._editors:
-            if e:
-                e.close()
+        self._close_editors()
         # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
         # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
         # v novém gridu.
