@@ -1082,7 +1082,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._finish_editing()
                 return True
             # Pøíkazy vztahující se pouze k editaci políèka
-            elif self._grid.IsCellEditControlEnabled():
+            elif self._grid.IsCellEditControlEnabled() and \
+                     self._current_editor is not None:
                 if command == ListForm.COMMAND_CELL_COMMIT:
                     return self._on_cell_commit()
                 elif command == ListForm.COMMAND_CELL_ROLLBACK:
