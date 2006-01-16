@@ -1,3 +1,22 @@
+2006-01-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (ListTable.GetAttr): Pøeci jen pou¾ívej
+	providera k zji¹tìní výchozích atributù buòky (obsahují atributy
+	sloupce).
+
+	* pytis/form/list.py (ListForm._create_form_parts): Neoèekávej
+	návratovou hodnotu od `self._create_grid()'.
+	(ListForm._create_grid): Pøiøazuj rovnou zde do `saelf._grid'.
+	Nevracej ¾ádnou návratovou hodnotu.  Neinicializuj atributu
+	sloupcù zde.  Vyu¾ívej k tomu `self._init_col_attr()'.
+	(ListForm._update_grid): Pokud do¹lo ke zmìnám sloupcù, volej
+	`self._init_col_attr()'.
+	(ListForm._init_col_attr): Nová metoda.
+	(ListForm._edit_cell): Loguj radìji identifikátor sloupce.
+	(ListForm.on_command): Netestuj
+	(ListForm._close_editors): Nová metoda.
+	(ListForm.Close): Vyu¾ívej ji.
+
 2006-01-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py (SFDialog._create_content.condition):
