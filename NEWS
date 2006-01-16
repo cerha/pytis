@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2006-01-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi pøeskupování sloupcù jsou nyní také aktualizovány
+	atributy sloupcù gridu.  Díky tomu jednak opìt chodí inline
+	editace a jednak dojde ke korektnímu pøenastavení atributù po
+	vyvolání pøíkazu `Form.COMMAND_RELOAD_FORM_STATE'.
+
 2006-01-13  Tomas Cerha  <cerha@brailcom.org>
 
         V¹echny hodnoty naèítané z form_state jsou nyní dùkladnì
