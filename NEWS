@@ -19,12 +19,12 @@
 	pøípadì nesrovnalostí jsou ignorovány.
 
 	Kontextové menu sloupce, pokud je vyvoláno v oblasti, kde ji¾ není
-	¾ádný sloupec, nyní obsahuje pouze seznam sloupcù, s mo¾ností
+	¾ádný sloupec, nyní obsahuje pouze seznam sloupcù s mo¾ností
 	zapnout a vypnout jednotlivé sloupce.  Díky tomu bylo mo¾né
 	povolit skrýtí sloupce, by» je posledním zobrazeným sloupcem.
-	Tak¾e teï mù¾eme skrýt v¹echny sloupce a pak zase nìkterý zobrazit
-	výbìrem z tohoto menu.  Zároveò bylo o¹etøeno nìkolik chyb,
-	vznikajících kdy¾ formuláø nemá zobrazený ¾ádné sloupce.
+	Tak¾e teï mù¾eme skrýt v¹echny sloupce a pak zase nìkterý sloupec
+	zobrazit výbìrem z tohoto menu.  Zároveò bylo o¹etøeno nìkolik
+	chyb, vznikajících kdy¾ formuláø nemá zobrazeny ¾ádné sloupce.
 
 	Drobná zmìna ve vytváøení atributù v gridu by mohla pøinést mírné
 	zrychlení vykreslování pøi pou¾ití stylù.
