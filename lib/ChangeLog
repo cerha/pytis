@@ -14,16 +14,26 @@
 
 	* pytis/form/list.py (ListForm._on_sort_column): Nekontroluj zde
 	pøítomnost sloupce v datech, dìlá to pøedek.
-	(ListForm._on_label_left_up): Pokud není stisknutá klávesa `Shift',
-	nastav tøídící sloupec jako primární.
+	(ListForm._on_label_left_up): Pokud není stisknutá klávesa
+	`Shift', nastav tøídící sloupec jako primární.
 	(ListForm._refresh): Neukládej nastavení tøídìní zde.
 	(ListForm._on_label_paint, CodebookForm._on_idle): Nepracuj s
 	promìnnou `self._lf_sorting' pøímo.  Pou¾ívej nové metody.
 	(ListForm._init_grouping): Pracuj s groupingem jako s tuple.
-	(ListForm._column_context_menu): Roz¹íøeny pøíkazy pro práci s groupingem.
+	(ListForm._column_context_menu): Roz¹íøeny pøíkazy pro práci s
+	groupingem.
 	(ListForm._on_label_paint): Pracuj s groupingem jako s tuple.
 	(ListForm._set_grouping_column, can_set_grouping_column): Nové
 	arguemnty `reset' a `remove'.  Pracuj s groupingem jako s tuple.
+	(ListForm._set_grouping_column): Zru¹eny argumenty `reset' a
+	`remove'.  Nastavuj seskupování jen podle tøídících sloupcù, a¾ po
+	`col'.
+	(ListForm._column_context_menu): Pro seskupování pou¾ij jen dva
+	pøíkazy, respektující tøídìní.
+	(ListForm._on_label_paint): Seskupování indikuj barvou tøídícího
+	trojúhelníèku.
+	(ListForm.can_set_grouping_column): Zru¹eny argumenty `reset' a
+	`remove'.  Umo¾ni seskupování jen podle tøídících sloupcù.
 
 	* pytis/form/form.py (LookupForm.SORTING_NONE) 
 	(LookupForm.SORTING_CYCLE_DIRECTION) 
