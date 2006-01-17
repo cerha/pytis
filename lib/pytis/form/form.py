@@ -516,6 +516,13 @@ class TitledForm:
         caption.SetSize(wx.Size(width, height))
         return caption
 
+    def _on_show_description(self, event):
+        title = self._view.title()
+        description = self._view.description()
+        description_format = self._view.description_format()
+        return InfoWindow(_("Nápovìda pro %s") % title, text=description,
+                          format=description_format)
+
     def _create_title_bar(self, text, size=None, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
@@ -528,9 +535,15 @@ class TitledForm:
         box.Add(button)
         panel.SetSizer(box)
         panel.SetAutoLayout(True)        
-        box.Fit(panel)
         if description:
-            panel.SetToolTipString(description)
+            descbmp = wx.ArtProvider_GetBitmap(wx.ART_HELP_BOOK, wx.ART_TOOLBAR,
+                                               (16,16))
+            descbutton = wx.BitmapButton(panel, -1, descbmp, style=wx.NO_BORDER)
+            wx_callback(wx.EVT_BUTTON, descbutton, descbutton.GetId(),
+                        self._on_show_description)
+            box.Add(descbutton)
+            # panel.SetToolTipString(description)
+        box.Fit(panel)
         return panel
 
 

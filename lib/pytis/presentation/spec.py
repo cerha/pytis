@@ -35,6 +35,11 @@ import pytis.data
 from pytis.util import *
 from pytis.presentation import *
 
+class TextFormat(object):
+    """Konstanty pro definici vstupního formátu textu."""
+    PLAIN = 'PLAIN'
+    HTML = 'HTML'
+    WIKI = 'WIKI'
 
 class BorderStyle(object):
     """Výètová tøída definující konstanty pro styl orámování."""
@@ -434,6 +439,7 @@ class ViewSpec(object):
                  on_edit_record=None, on_delete_record=None,
                  enable_inline_insert=True, on_line_commit=None,
                  focus_field=None, description=None,
+                 description_format=TextFormat.PLAIN,
                  row_style=FIELD_STYLE_DEFAULT):
         """Inicializuj instanci.
 
@@ -519,7 +525,8 @@ class ViewSpec(object):
              které políèko má po otevøení formuláøe fokus, nebo funkce jednoho
              argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
              vrací pøíslu¹ný identifikátor políèka.
-           description -- popis formuláøe pro bublinkový help.
+           description -- popis formuláøe.
+           description_format -- typ popisu, jedna z konsant tøídy TextFormat. 
 
            row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
              spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
@@ -622,6 +629,7 @@ class ViewSpec(object):
         self._enable_inline_insert = enable_inline_insert
         self._focus_field = focus_field
         self._description = description
+        self._description_format = description_format
         self._row_style = row_style
 
     def fields(self):
@@ -697,8 +705,12 @@ class ViewSpec(object):
         return self._focus_field
 
     def description(self):
-        """Vra» øetìzec nebo funkci, urèující políèko formuláøe s fokusem."""
+        """Vra» nápovìdu pro formuláø."""
         return self._description
+
+    def description_format(self):
+        """Vrátí formát, ve kterém je psáno description."""
+        return self._description_format
 
     def row_style(self):
         """Vra» výchozí styl øádku, nebo funkci, která jej vypoète."""
@@ -904,15 +916,7 @@ class Computer(object):
 
     def depends(self):
         """Vra» seznam id sloupcù, ne kterých poèítaná hodnota závisí."""
-        return self._depends
-
-     
-class TextFormat(object):
-    """Konstanty pro definici vstupního formátu textu."""
-    PLAIN = 'PLAIN'
-    HTML = 'HTML'
-    WIKI = 'WIKI'
-
+        return self._depends    
 
 class CodebookSpec(object):
     """Specifikace èíselníkového políèka.

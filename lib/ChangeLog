@@ -1,3 +1,13 @@
+2006-01-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/presentation/spec.py (TextFormat): Tøída pøesunuta 'vý¹'.
+	(ViewSpec.__init__): nový argument 'description_format'.
+	(ViewSpec.description_format): Nová metoda.
+
+	* pytis/form/form.py (TitledForm._on_show_description): Nová
+	metoda. 
+	(TitledForm._create_title_bar): Doplnìn button pro description.
+
 2006-01-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_grid.py (ListTable.__init__): Výchozí hodnotou pro
