@@ -457,12 +457,12 @@ class ViewSpec(object):
             odpovídajícím argumentu 'sort' metody 'pytis.data.select()', nebo
             None.  Potom je výchozí seøazení tabulky podle klíèového sloupce
             datového objektu vzestupnì.
-          grouping -- výchozí vizuální seskupování tabulky.  Idendifikátor
-            sloupce, podle kterého mají být øádky seskupeny, nebo None.
-            Vizuální seskupování umo¾òuje graficky odli¹it skupiny øádkù,
-            které následují bezprostøednì po sobì a pøitom mají stejnou
-            hodnotu seskupovacího sloupce.  To má význam pouze u sloupcù,
-            podle kterých je zároveò øazeno.
+          grouping -- výchozí vizuální seskupování tabulky.  Mù¾e být None,
+            idendifikátor sloupce, nebo tuple idendifikátorù.  Vizuální
+            seskupování umo¾òuje graficky odli¹it skupiny øádkù, které
+            následují bezprostøednì po sobì a pøitom mají stejnou hodnotu v¹ech
+            seskupovacích sloupcù.  To má význam pouze u sloupcù, podle kterých
+            je zároveò øazeno.
           redirect -- pøesmìrování formuløe pro zobrazení/editaci jednoho
             záznamu.  Jedná se o funkci jednoho argumentu, jím¾ je instance
             'PresentedRow' reprezentující øádek dat, pro který je
@@ -577,15 +577,25 @@ class ViewSpec(object):
         # Initialize other specification parameters
         if popup_menu is not None:
             assert is_sequence(popup_menu)
-            for item in popup_menu:
-                assert isinstance(item, (pytis.form.MItem,
-                                         pytis.form.MSeparator,
-                                         pytis.form.Menu))
+            if __debug__:
+                for item in popup_menu:
+                    assert isinstance(item, (pytis.form.MItem,
+                                             pytis.form.MSeparator,
+                                             pytis.form.Menu))
         if sorting is not None:
             assert is_sequence(sorting)
-            for item in sorting:
-                assert is_sequence(item)
-        assert grouping is None or self._field_dict.has_key(grouping)
+            if __debug__:
+                for id, direction in sorting:
+                    assert self.field(id) is not None
+                    assert direction in (LookupForm.SORTING_ASCENDENT,
+                                         LookupForm.SORTING_DESCENDANT)
+        if grouping is None:
+            grouping = ()
+        else:
+            grouping = xtuple(grouping)
+            if __debug__:
+                for id in grouping:
+                    assert self.field(id) is not None
         assert redirect is None or callable(redirect)
         assert check is None or callable(check)
         assert cleanup is None or callable(cleanup)
@@ -647,7 +657,7 @@ class ViewSpec(object):
         return self._sorting
 
     def grouping(self):
-        """Vra» id sloupce výchozího vizuálního seskupování, nebo None."""
+        """Vra» tuple id sloupcù výchozího vizuálního seskupování."""
         return self._grouping
 
     def redirect(self):
