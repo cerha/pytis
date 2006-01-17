@@ -1,5 +1,11 @@
 CHYBY:
 
+ * Parametr `allow_inline_insert' ji¾ nemá smysl.
+
+   Pøi u¾ivatelsky nastavitelných sloupcích ji¾ není mo¾né urèit staticky, zda
+   je mo¾né do tabulkového formuláøe vkládat, èi ne.  Je tøeba zkontrolovat,
+   zda se ve sloupcích vyskytují v¹echny not_null sloupce.
+
  * Pøi kliknutí na záhlaví sloupce se Shiftem dojde k výbìru v¹ech buòek.
 
    Pokud chci pøidat dodateèný tøídící sloupec, dojde k doèasnému roz¹íøení
