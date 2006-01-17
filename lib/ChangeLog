@@ -1,3 +1,25 @@
+2006-01-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._on_sort_column): Nekontroluj zde
+	pøítomnost sloupce v datech, dìlá to pøedek.
+	(ListForm._on_label_left_up): Pokud není stisknutá klávesa `Shift',
+	nastav tøídící sloupec jako primární.
+	(ListForm._refresh): Neukládej nastavení tøídìní zde.
+	(ListForm._on_label_paint, CodebookForm._on_idle): Nepracuj s
+	promìnnou `self._lf_sorting' pøímo.  Pou¾ívej nové metody.
+
+	* pytis/form/form.py (LookupForm.SORTING_NONE) 
+	(LookupForm.SORTING_CYCLE_DIRECTION) 
+	(LookupForm.SORTING_ASCENDENT, LookupForm.SORTING_DESCENDANT):
+	Aktualizace docstringu.
+	(_lf_translated_sorting): Pøejmenováno na `self._data_sorting()'.
+	(LookupForm._data_sorting): Nová metoda.
+	(LookupForm._sorting_columns): Nová metoda.
+	(LookupForm._sorting_position): Nová metoda.
+	(LookupForm._sorting_direction): Nová metoda.
+	(LookupForm._on_sort_column): Výraznì pøepsáno.
+	(LookupForm.can_sort_column): Výraznì pøepsáno.
+
 2006-01-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_grid.py (ListTable.GetAttr): Pøeci jen pou¾ívej
