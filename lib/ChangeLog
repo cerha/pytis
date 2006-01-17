@@ -1,5 +1,17 @@
 2006-01-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_grid.py (ListTable.__init__): Výchozí hodnotou pro
+	`grouping' nech» je prázdný tuple.  Pøidán assert.
+	(ListTable._group): Poèítej s vícesloupcovým seskupováním.
+	(ListTable._cached_value): Ke¹uj v¹echny sloupce z `grouping'.
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Aktualizace
+	docstringu.  Povol sekvenci, jako hodnotu pro `grouping' a pokud
+	jde jen o jeden identifikátor sloupce, pøeveï jej na jednoprvkový
+	tuple.  Provádìj kontrolu na existenci sloupcù z `grouping' a
+	`sorting'.
+	(ViewSpec.grouping): Aktualizace docstringu.
+
 	* pytis/form/list.py (ListForm._on_sort_column): Nekontroluj zde
 	pøítomnost sloupce v datech, dìlá to pøedek.
 	(ListForm._on_label_left_up): Pokud není stisknutá klávesa `Shift',
@@ -7,6 +19,11 @@
 	(ListForm._refresh): Neukládej nastavení tøídìní zde.
 	(ListForm._on_label_paint, CodebookForm._on_idle): Nepracuj s
 	promìnnou `self._lf_sorting' pøímo.  Pou¾ívej nové metody.
+	(ListForm._init_grouping): Pracuj s groupingem jako s tuple.
+	(ListForm._column_context_menu): Roz¹íøeny pøíkazy pro práci s groupingem.
+	(ListForm._on_label_paint): Pracuj s groupingem jako s tuple.
+	(ListForm._set_grouping_column, can_set_grouping_column): Nové
+	arguemnty `reset' a `remove'.  Pracuj s groupingem jako s tuple.
 
 	* pytis/form/form.py (LookupForm.SORTING_NONE) 
 	(LookupForm.SORTING_CYCLE_DIRECTION) 
