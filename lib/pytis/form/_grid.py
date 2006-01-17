@@ -152,8 +152,9 @@ class ListTable(wx.grid.PyGridTableBase):
     _TYPE_MAPPING = None
         
     def __init__(self, frame, data, fields, columns, row_count,
-                 sorting=(), grouping=None, inserted_row_number=None,
+                 sorting=(), grouping=(), inserted_row_number=None,
                  inserted_row=None, prefill=None, row_style=None):
+        assert isinstance(grouping, types.TupleType)
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
         self._data = data
@@ -274,35 +275,37 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _group(self, row):
         # Return true, if given row belongs to a highlighted group
-        if self._grouping is None:
+        def cached_values(row, cols):
+            return tuple([self._cached_value(row, cid) for cid in cols])
+        grouping = self._grouping
+        if not grouping:
             return False
         try:
             return self._group_cache[row]
         except KeyError:
-            grouping_column = self._grouping
-            this_value = self._cached_value(row, grouping_column)
+            values = cached_values(row, grouping)
             try:
-                result = self._group_value_cache[this_value]
+                result = self._group_value_cache[values]
                 self._group_cache[row] = result
                 return result
             except KeyError:
                 cached = self._group_cache.keys()
                 lower = filter(lambda k: k < row, cached)
                 if len(lower) and (row < 100 or row - max(lower) < 80):
-                    prev_value = self._cached_value(row-1, grouping_column)
+                    prev_values = cached_values(row-1, grouping)
                     prev_group = self._group(row-1)
-                    if this_value == prev_value:
+                    if values == prev_values:
                         result = prev_group
                     else:
                         result = not prev_group
-                    self._group_value_cache[this_value] = result
+                    self._group_value_cache[values] = result
                     self._group_cache[row] = result
                     return result
                 higher = filter(lambda k: k > row, cached)
                 if len(higher) and min(higher) - row < 80:
-                    next_value = self._cached_value(row+1, grouping_column)
+                    next_values = cached_values(row+1, grouping)
                     next_group = self._group(row+1)
-                    if this_value == next_value:
+                    if values == next_values:
                         result = next_group
                     else:
                         result = not next_group
@@ -311,7 +314,7 @@ class ListTable(wx.grid.PyGridTableBase):
                 # There is no cached group within nearest rows, so start
                 # again with an empty cache.
                 self._group_cache = {row: False}
-                self._group_value_cache = {this_value: False}
+                self._group_value_cache = {values: False}
                 return False
         
     def _make_attr(self, style):
@@ -340,6 +343,7 @@ class ListTable(wx.grid.PyGridTableBase):
     
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row, prefill):
+        assert isinstance(grouping, types.TupleType)
         self._update_columns(columns)
         self._row_count = row_count
         self._sorting = sorting
@@ -407,9 +411,9 @@ class ListTable(wx.grid.PyGridTableBase):
                     style_dict[cid] = s(cid, the_row)
                 value_dict[cid] = the_row.format(cid)
             # Grouping column may not be in self._columns.
-            grouping_column = self._grouping
-            if grouping_column and not value_dict.has_key(grouping_column):
-                value_dict[grouping_column] = the_row.format(grouping_column)
+            for gcol in self._grouping:
+                if not value_dict.has_key(gcol):
+                    value_dict[gcol] = the_row.format(gcol)
             # When row_style was defined, lets compute it.
             if callable(self._row_style):
                 style_dict[None] = self._row_style(the_row)
