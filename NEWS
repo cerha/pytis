@@ -14,6 +14,14 @@
 	Pøidat sloupec jako dodateèný je nyní mo¾né jednodu¹e tak, ¾e pøi
 	kliknutí na záhlaví sloupce pøidr¾ím klávesu Shift.
 
+	Vizuální seskupování je nyní mo¾né i podle nìkolika sloupcù
+	zároveò.  V kontextovém menu záhlaví sloupce proto pøibyly dvì
+	nové polo¾ky, umo¾òující sloupec pøidat ke stávajícím seskupovacím
+	sloupcùm, a nebo jej naopak odebrat.  Také ve specifikacích lze
+	pro parametr `grouping' namísto prostého identifikátoru sloupce
+	pøedat tuple a zapnout tak výchozí seskupování podle nìkolika
+	sloupcù zároveò.
+
 	* BUGFIX: U¾ivatelské nastavení tøídìní je bráno v potaz i pokud
 	si u¾ivatel tøídìní zcela zru¹il.
 	

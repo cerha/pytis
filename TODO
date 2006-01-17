@@ -49,7 +49,11 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * Umo¾nit grouping podle nìkolika sloupcù zároveò.
+ * Grouping versus tøídìní.
+
+   Grouping má smysl pouze nad sloupci, podle kterých je zároveò tøídìno.  Mìl
+   by tedy být umo¾nìn jen podle tøídících sloupcù?  A zru¹en, pokud tøídìní
+   nad daným sloupcem zru¹ím?
 
  * Ulo¾ené filtrovací podmínky.
 
