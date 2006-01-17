@@ -585,10 +585,10 @@ class ViewSpec(object):
         if sorting is not None:
             assert is_sequence(sorting)
             if __debug__:
-                for id, direction in sorting:
+                for id, dir in sorting:
                     assert self.field(id) is not None
-                    assert direction in (LookupForm.SORTING_ASCENDENT,
-                                         LookupForm.SORTING_DESCENDANT)
+                    assert dir in (pytis.form.LookupForm.SORTING_ASCENDENT,
+                                   pytis.form.LookupForm.SORTING_DESCENDANT)
         if grouping is None:
             grouping = ()
         else:
