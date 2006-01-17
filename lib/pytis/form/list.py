@@ -754,18 +754,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                    command=LookupForm.COMMAND_SORT_COLUMN,
                    args=dict(direction=LookupForm.SORTING_NONE)),
                  ________,
-                 I(_("Seskupovat podle tohoto sloupce"),
-                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                   args=dict(col=col, reset=True)),
-                 I(_("Pøidat k seskupovacím sloupcùm"),
+                 I(_("Seskupovat a¾ po tento sloupec"),
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
                    args=dict(col=col)),
-                 I(_("Odebrat ze seskupovacích sloupcù"),
+                 I(_("Zru¹it vizuální seskupování"),
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                   args=dict(col=col, remove=True)),
-                 I(_("Zru¹it seskupování úplnì"),
-                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                   args=dict(reset=True)),
+                   args=dict(col=None)),
                  ________,
                  I(_("Skrýt tento sloupec"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN,
@@ -915,14 +909,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 left = x+width-12
                 top = y+3
                 r = self._sorting_direction(id) == LookupForm.SORTING_ASCENDENT
-                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
+                if id in self._grouping:
+                    color = 'GREEN'
+                else:
+                    color = 'CORAL'
+                dc.SetBrush(wx.Brush(color, wx.SOLID))
                 for i in range(pos):
                     dc.DrawLine(left, top+2*i, left+9, top+2*i)
                 dc.DrawPolygon(triangle(left, top+pos*2, reversed=r))
-            # Draw the grouping sign.
-            if id in self._grouping:
-                dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
-                dc.DrawCircle(x+5, y+5, 2)
             # Indicate when the column is being moved.
             move_target = self._column_move_target
             if self._column_to_move is not None and move_target is not None:
@@ -1120,32 +1114,26 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return True
         return super_(ListForm).on_command(self, command, **kwargs)
 
-    def _set_grouping_column(self, col=None, remove=False, reset=False):
-        # Mo¾nosti:
-        #    - nastavit sloupec jako jediný (zru¹it pøípadné ostatní).
-        #    - pøidat sloupec ke stávajícím
-        #    - odebrat sloupec od stávajících
-        #    - zru¹it v¹e
-        if reset:
-            self._grouping = ()
+    def _set_grouping_column(self, col=None):
         if col is not None:
             cid = self._columns[col].id()
-            if remove:
-                self._grouping = tuple([c for c in self._grouping if c != cid])
+            pos = self._sorting_position(cid)
+            if pos is not None:
+                cols = self._sorting_columns()
+                self._grouping = tuple(cols[:pos+1])
             else:
-                self._grouping += (cid, )
+                log(OPERATIONAL, "Invalid grouping column:", cid)
+                return
+        else:
+            self._grouping = ()
         self._set_state_param('grouping', self._grouping)
         self._update_grid()
     
-    def can_set_grouping_column(self, col=None, remove=False, reset=False):
+    def can_set_grouping_column(self, col=None):
         if col is not None:
-            cid = self._columns[col].id()
-            if remove:
-                return cid in self._grouping
-            else:
-                return cid not in self._grouping or reset
+            return self._columns[col].id() in self._sorting_columns()
         else:
-            return reset and self._grouping
+            return bool(self._grouping)
 
     # Metody volané pøímo z callbackových metod
                                    
