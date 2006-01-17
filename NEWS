@@ -13,6 +13,9 @@
 	se vìt¹inou mo¾ností nìkolika tøídících sloupcù vùbec nezatì¾ují).
 	Pøidat sloupec jako dodateèný je nyní mo¾né jednodu¹e tak, ¾e pøi
 	kliknutí na záhlaví sloupce pøidr¾ím klávesu Shift.
+
+	* BUGFIX: U¾ivatelské nastavení tøídìní je bráno v potaz i pokud
+	si u¾ivatel tøídìní zcela zru¹il.
 	
 2006-01-16  Tomas Cerha  <cerha@brailcom.org>
 

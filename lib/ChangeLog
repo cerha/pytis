@@ -19,6 +19,9 @@
 	(LookupForm._sorting_direction): Nová metoda.
 	(LookupForm._on_sort_column): Výraznì pøepsáno.
 	(LookupForm.can_sort_column): Výraznì pøepsáno.
+	(LookupForm._init_sorting): Nová metoda.
+	(LookupForm._init_attributes): Pou¾ívej ji.
+	(_user_defined_sorting): Metoda zru¹ena.
 
 2006-01-16  Tomas Cerha  <cerha@brailcom.org>
 
