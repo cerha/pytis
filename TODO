@@ -1,5 +1,10 @@
 CHYBY:
 
+ * Pøi kliknutí na záhlaví sloupce se Shiftem dojde k vıbìru v¹ech buòek.
+
+   Pokud chci pøidat dodateènı tøídící sloupec, dojde k doèasnému roz¹íøení
+   vıbìru gridu na v¹echna políèka, co¾ mù¾e trvat i hodnì dlouho.
+
  * Aktualizace políèka `data-changed' ve stavové øádce.
 
    Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze

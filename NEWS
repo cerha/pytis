@@ -4,7 +4,16 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-17  Tomas Cerha  <cerha@brailcom.org>
 
+	Ovládání tøídìní sloupcù by nyní mìlo být intuitivnìj¹í.
+	Kliknutím na záhaví sloupce nyní nedojde k jeho pøidání jako
+	dodateèného tøídícího sloupce, ale sloupec se stane primárním
+	tøídícím sloupcem.  To je chování obvyklé v jiných aplikacích (ty
+	se vìt¹inou mo¾ností nìkolika tøídících sloupcù vùbec nezatì¾ují).
+	Pøidat sloupec jako dodateèný je nyní mo¾né jednodu¹e tak, ¾e pøi
+	kliknutí na záhlaví sloupce pøidr¾ím klávesu Shift.
+	
 2006-01-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi pøeskupování sloupcù jsou nyní také aktualizovány
