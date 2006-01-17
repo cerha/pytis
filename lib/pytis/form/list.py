@@ -142,8 +142,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _init_grouping(self, grouping=None):
         if grouping is None:
-            grouping = self._get_state_param('grouping')
-        if self._view.field(grouping) is None:
+            grouping = self._get_state_param('grouping', None, types.TupleType)
+            if grouping and None in [self._view.field(cid) for cid in grouping]:
+                grouping = None
+        if grouping is None:
             grouping = self._view.grouping()
         self._grouping = grouping
             
@@ -323,7 +325,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 e.set_callback(InputField.CALL_COMMIT_FIELD, 
                                self._on_cell_commit)
                 self._editors.append(e)
-                print "***", i, e
                 attr.SetEditor(e)
             else:
                 attr.SetReadOnly()
@@ -753,12 +754,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                    command=LookupForm.COMMAND_SORT_COLUMN,
                    args=dict(direction=LookupForm.SORTING_NONE)),
                  ________,
-                 I(_("Seskupit podle tohoto sloupce"),
+                 I(_("Seskupovat podle tohoto sloupce"),
+                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
+                   args=dict(col=col, reset=True)),
+                 I(_("Pøidat k seskupovacím sloupcùm"),
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
                    args=dict(col=col)),
-                 I(_("Zru¹it seskupování"),
+                 I(_("Odebrat ze seskupovacích sloupcù"),
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                   args=dict(col=None)),
+                   args=dict(col=col, remove=True)),
+                 I(_("Zru¹it seskupování úplnì"),
+                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
+                   args=dict(reset=True)),
                  ________,
                  I(_("Skrýt tento sloupec"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN,
@@ -913,7 +920,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     dc.DrawLine(left, top+2*i, left+9, top+2*i)
                 dc.DrawPolygon(triangle(left, top+pos*2, reversed=r))
             # Draw the grouping sign.
-            if self._grouping == id:
+            if id in self._grouping:
                 dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
                 dc.DrawCircle(x+5, y+5, 2)
             # Indicate when the column is being moved.
@@ -1113,19 +1120,32 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return True
         return super_(ListForm).on_command(self, command, **kwargs)
 
-    def _set_grouping_column(self, col=None):
-        if col is None:
-            self._grouping = None
-        else:
-            self._grouping = self._columns[col].id()
+    def _set_grouping_column(self, col=None, remove=False, reset=False):
+        # Mo¾nosti:
+        #    - nastavit sloupec jako jediný (zru¹it pøípadné ostatní).
+        #    - pøidat sloupec ke stávajícím
+        #    - odebrat sloupec od stávajících
+        #    - zru¹it v¹e
+        if reset:
+            self._grouping = ()
+        if col is not None:
+            cid = self._columns[col].id()
+            if remove:
+                self._grouping = tuple([c for c in self._grouping if c != cid])
+            else:
+                self._grouping += (cid, )
         self._set_state_param('grouping', self._grouping)
         self._update_grid()
     
-    def can_set_grouping_column(self, col=None):
-        if col is None:
-            return self._grouping is not None
+    def can_set_grouping_column(self, col=None, remove=False, reset=False):
+        if col is not None:
+            cid = self._columns[col].id()
+            if remove:
+                return cid in self._grouping
+            else:
+                return cid not in self._grouping or reset
         else:
-            return self._columns[col].id() != self._grouping
+            return reset and self._grouping
 
     # Metody volané pøímo z callbackových metod
                                    
