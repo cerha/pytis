@@ -593,17 +593,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return
         if col is not None:
             col = self._columns[col].id()
-            if not self._data.find_column(col):
-                message(_("Podle tohoto sloupce nelze tøídit"),
-                        beep_=True)
-                return
         old_sorting = self._lf_sorting
         sorting = super_(ListForm)._on_sort_column(self, col=col,
                                                    direction=direction,
                                                    primary=primary)
         if sorting is not None and sorting != old_sorting:
-            self._refresh(reset={'condition':self._lf_condition,
-                                 'sorting':sorting},
+            self._refresh(reset={'condition': self._lf_condition,
+                                 'sorting': sorting},
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
@@ -820,7 +816,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
             if col != -1:
                 self._run_callback(self.CALL_USER_INTERACTION)
+                c = self._columns[col]
                 invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
+                               primary = not event.ShiftDown() and \
+                               c.id() not in self._sorting_columns(),
                                direction=LookupForm.SORTING_CYCLE_DIRECTION)
         self._column_move_target = None
         self._column_to_move = None
@@ -904,11 +903,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 label = label[:-1] # Don't allow the label to extend the width.
             dc.DrawLabel(label, (x,y,width,height), wx.ALIGN_CENTER|wx.CENTER)
             # Draw the sorting sign.
-            pos = position(id, self._lf_sorting, key=lambda x: x[0])
+            pos = self._sorting_position(id)
             if pos is not None:
                 left = x+width-12
                 top = y+3
-                r = self._lf_sorting[pos][1] == LookupForm.SORTING_ASCENDENT
+                r = self._sorting_direction(id) == LookupForm.SORTING_ASCENDENT
                 dc.SetBrush(wx.Brush("CORAL", wx.SOLID))
                 for i in range(pos):
                     dc.DrawLine(left, top+2*i, left+9, top+2*i)
@@ -1681,7 +1680,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._lf_condition = v
             elif k == 'sorting':
                 self._lf_sorting = v
-                self._set_state_param('sorting', v)
             elif k == 'position':
                 self._position = v
             elif k == 'filter_flag':
@@ -1860,12 +1858,14 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             self._begin_search = None
             if isinstance(begin_search, types.StringType):
                 col_id = begin_search
-            elif self._lf_sorting is not None:
-                col_id = self._lf_sorting[0][0]
             else:
-                message(_("Nelze zaèít inkrementální vyhledávání. "
-                          "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
-                        beep_=True)
+                cols = self._sorting_columns()
+                if cols:
+                    col_id = cols[0]
+                else:
+                    message(_("Nelze zaèít inkrementální vyhledávání. "
+                              "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
+                            beep_=True)
             col = find(col_id, self._columns, key=lambda c:c.id())
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))
