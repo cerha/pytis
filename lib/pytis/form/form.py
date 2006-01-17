@@ -953,13 +953,13 @@ class LookupForm(RecordForm):
     """Formuláø s vyhledáváním a tøídìním."""
     
     SORTING_CYCLE_DIRECTION = 'SORTING_CYCLE_DIRECTION'
-    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
     SORTING_NONE = 'SORTING_NONE'
-    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
     SORTING_ASCENDENT = 'SORTING_ASCENDENT'
-    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
-    """Konstanta pro argument direction metody '_on_sort_column()'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
 
     
     def _init_attributes(self, sorting=None, condition=None,
@@ -1016,25 +1016,35 @@ class LookupForm(RecordForm):
             condition = self._lf_condition or self._lf_filter
         if self._lf_initial_condition:
             condition = pytis.data.AND(condition, self._lf_initial_condition)
-        sorting = self._lf_translated_sorting()
-        op = lambda : data.select(condition=condition, sort=sorting,
-                                  reuse=False)
+        op = lambda : data.select(condition=condition,
+                                  sort=self._data_sorting(), reuse=False)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
             throw('form-init-error')
         return self._lf_select_count
 
-    def _lf_translated_sorting(self):
-        def trans(x):
-            if x[1] == self.SORTING_ASCENDENT:
-                t = pytis.data.ASCENDENT
-            elif x[1] == self.SORTING_DESCENDANT:
-                t = pytis.data.DESCENDANT
-            else:
-                raise ProgramError('Invalid sorting spec', x[1])
-            return x[0], t
-        return tuple(map(trans, self._lf_sorting))
+    def _data_sorting(self):
+        mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
+                   self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
+        return tuple([(cid, mapping[dir]) for cid, dir in self._lf_sorting])
+
+    def _sorting_columns(self):
+        return [cid for cid, direction in self._lf_sorting]
+        
+    def _sorting_position(self, cid):
+        try:
+            return self._sorting_columns().index(cid)
+        except ValueError:
+            return None
+        
+    def _sorting_direction(self, cid):
+        pos = self._sorting_position(cid)
+        if pos is not None:
+            return self._lf_sorting[pos][1]
+        else:
+            return None
+        
 
     def _lf_sfs_columns(self):
         return sfs_columns(self._view.fields(), self._data)
@@ -1146,13 +1156,12 @@ class LookupForm(RecordForm):
         automaticky vyvolán dialog pro výbìr tøídících kritérií.
         
         """
-        # TODO: Toto celé je bastl, nutno èasem proèistit.
-        sorting = xlist(self._lf_sorting)
-        if direction is None or \
-               col is None and direction != self.SORTING_NONE:
+        if col is None and direction == self.SORTING_NONE:
+            sorting = ()
+        elif col is None or direction is None:
             columns = self._lf_sfs_columns()
-            if col is None and self._lf_sorting:
-                col, __dir = self._lf_sorting[0]                
+            if col is None and self._lf_sorting: 
+                col = self._sorting_columns()[0]
             d = SortingDialog(self._parent, columns, self._lf_sorting,
                               col=col, direction=direction)
             sorting = run_dialog(d)
@@ -1160,40 +1169,34 @@ class LookupForm(RecordForm):
                 return None
             elif sorting is ():
                 sorting = self._lf_initial_sorting
-        else:
-            if col is not None:
-                if not self._data.find_column(col):
-                    message(_("Podle tohoto sloupce nelze tøídit"),
-                            beep_=True)
-                    return
-            pos = position(col, sorting, key=lambda x: x[0])
+        elif col is not None:
+            if not self._data.find_column(col):
+                message(_("Podle tohoto sloupce nelze tøídit"),
+                        beep_=True)
+                return None
+            pos = self._sorting_position(col)
+            sorting = xlist(self._lf_sorting)
             if direction == self.SORTING_CYCLE_DIRECTION:
-                if pos is not None:
-                    current_direction = sorting[pos][1]
-                    if current_direction == self.SORTING_ASCENDENT:
-                        direction = self.SORTING_DESCENDANT
-                    elif current_direction == self.SORTING_DESCENDANT:
-                        direction = self.SORTING_NONE
-                    else:    
-                        direction = self.SORTING_ASCENDENT
-                else:    
-                    direction = self.SORTING_ASCENDENT
+                dir = self._sorting_direction(col) or self.SORTING_NONE
+                cycle = [self.SORTING_ASCENDENT,
+                         self.SORTING_DESCENDANT,
+                         self.SORTING_NONE]
+                direction = cycle[(cycle.index(dir)+1)%3]
             if direction == self.SORTING_NONE:
-                if pos is not None:
-                    del sorting[pos]
-                elif col is None:
-                    sorting = ()
+                del sorting[pos]
             else:
                 assert direction in (self.SORTING_ASCENDENT,
                                      self.SORTING_DESCENDANT)
-                new_col_spec = (col, direction)
+                new_sort_spec = (col, direction)
                 if primary:
-                    sorting = (new_col_spec,)
+                    sorting = (new_sort_spec,)
                 elif pos is None:
-                    sorting.append(new_col_spec)
+                    sorting.append(new_sort_spec)
                 else:
-                    sorting[pos] = new_col_spec
+                    sorting[pos] = new_sort_spec
             sorting = tuple(sorting)
+        else:
+            raise ProgramError("Invalid sorting arguments:", (col, direction))
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
             self._set_state_param('sorting', sorting)
@@ -1201,16 +1204,19 @@ class LookupForm(RecordForm):
         return sorting
     
     def can_sort_column(self, col=None, direction=None, primary=False):
-        sorting = xtuple(self._lf_sorting)
+        # `col' je zde identifikátor sloupce.
+        sorting_columns = tuple(self._sorting_columns())
         if direction == self.SORTING_CYCLE_DIRECTION:
             return True
         elif direction == self.SORTING_NONE:
-            return sorting and (col is None or col in [c for c,d in sorting])
-        elif direction is not None and col is not None and sorting:
+            return sorting_columns and (col is None or col in sorting_columns)
+        elif direction is not None and col is not None:
+            pos = self._sorting_position(col)
+            dir = self._sorting_direction(col)
             if primary:
-                return (col, direction) != sorting[0]
+                return pos != 0 or direction != dir
             else:
-                return (col, direction) not in sorting and col != sorting[0][0]
+                return pos != 0 and direction != dir and sorting_columns
         else:
             return True
         
