@@ -801,7 +801,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if x > x1+2 and x < x2-2:
                 self._column_to_move = col
         self._mouse_dragged = False
-        event.Skip()
+        # We don't call event.Skip() since we want to suppress default bahavior
+        # (eg. range selection when Shift is down).
         
     def _on_label_left_up(self, event):
         if self._column_move_target is not None:
