@@ -232,6 +232,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         g = self._grid
         t = self._table
         def notify(id, *args):
+            if id == wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED:
+                self._close_editors()
             msg = wx.grid.GridTableMessage(t, id, *args)
             g.ProcessTableMessage(msg)
         current_row = self._table.current_row()
@@ -284,7 +286,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
         notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         if new_columns != old_columns or reset_columns or soft_reset_columns:
-            self._close_editors()
             self._init_col_attr()
         g.EndBatch()
         # Závìreèné úpravy
@@ -306,6 +307,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         def registration(editor):
             self._current_editor = editor
         self.editable = False
+        if self._editors:
+            self._close_editors()
         for i, c in enumerate(self._columns):
             # zarovnání
             attr = wx.grid.GridCellAttr()
