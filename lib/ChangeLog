@@ -1,7 +1,16 @@
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (ViewSpec.__init__): Loguj pou¾ití
+	potlaèeného argumentu `enable_inline_insert'.
+	(ViewSpec.enable_inline_insert): Metoda zru¹ena.
+
 	* pytis/form/list.py (ListForm._on_label_left_down): Nevolej
 	`event.Skip()'.
+	(ListForm._on_insert_line): Ignoruj `enable_codebook_insert' a
+	namísto toho kontroluj, zda jsou zobrazeny v¹echny not_null
+	sloupce.
+	(ListForm._init_attributes): Neinicializuj
+	`self._enable_inline_insert'.
 
 	* pytis/form/application.py (Application.on_command): Testuj
 	existenci aktivního formuláøe v boolean kontextu, ne jen na None
