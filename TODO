@@ -1,15 +1,6 @@
 CHYBY:
 
- * Parametr `allow_inline_insert' ji¾ nemá smysl.
-
-   Pøi u¾ivatelsky nastavitelných sloupcích ji¾ není mo¾né urèit staticky, zda
-   je mo¾né do tabulkového formuláøe vkládat, èi ne.  Je tøeba zkontrolovat,
-   zda se ve sloupcích vyskytují v¹echny not_null sloupce.
-
- * Pøi kliknutí na záhlaví sloupce se Shiftem dojde k výbìru v¹ech buòek.
-
-   Pokud chci pøidat dodateèný tøídící sloupec, dojde k doèasnému roz¹íøení
-   výbìru gridu na v¹echna políèka, co¾ mù¾e trvat i hodnì dlouho.
+ * Skrytí sloupce po pøedchozí inline editaci skonèí na SEGFAULT.
 
  * Aktualizace políèka `data-changed' ve stavové øádce.
 
@@ -48,12 +39,6 @@ CHYBY:
 NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
-
- * Grouping versus tøídìní.
-
-   Grouping má smysl pouze nad sloupci, podle kterých je zároveò tøídìno.  Mìl
-   by tedy být umo¾nìn jen podle tøídících sloupcù?  A zru¹en, pokud tøídìní
-   nad daným sloupcem zru¹ím?
 
  * Ulo¾ené filtrovací podmínky.
 
