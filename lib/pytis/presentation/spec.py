@@ -437,7 +437,7 @@ class ViewSpec(object):
                  popup_menu=None, sorting=None, grouping=None, redirect=None,
                  check=None, cleanup=None, on_new_record=None,
                  on_edit_record=None, on_delete_record=None,
-                 enable_inline_insert=True, on_line_commit=None,
+                 enable_inline_insert=None, on_line_commit=None,
                  focus_field=None, description=None,
                  description_format=TextFormat.PLAIN,
                  row_style=FIELD_STYLE_DEFAULT):
@@ -514,23 +514,21 @@ class ViewSpec(object):
             `PresentedRow', lze vyvolat doplòující akce po editaci inline
             záznamu.
              
-           enable_inline_insert -- umo¾òuje zakázat vkládání záznamù v re¾imu
-             inline editace (v øádkovém formuláøi).  Typicky je to nutné v
-             pøípadì, kdy øádkový formuláø neobsahuje v¹echny sloupce nutné k
-             úspì¹nému vlo¾ení nového záznamu do databáze.  Pokud je pravdivý,
-             bude u¾ivteli pokus o vlo¾ení záznamu odmítnut s pøíslu¹nou
-             zprávou.  Vkládání pomocí editaèního formuláøe je pøitom dostupné
-             v¾dy.
-           focus_field -- øetìzcová hodnota identifikátoru políèka urèující,
-             které políèko má po otevøení formuláøe fokus, nebo funkce jednoho
-             argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
-             vrací pøíslu¹ný identifikátor políèka.
-           description -- popis formuláøe.
-           description_format -- typ popisu, jedna z konsant tøídy TextFormat. 
+          focus_field -- øetìzcová hodnota identifikátoru políèka urèující,
+            které políèko má po otevøení formuláøe fokus, nebo funkce jednoho
+            argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
+            vrací pøíslu¹ný identifikátor políèka.
+            
+          description -- popis formuláøe.
+          description_format -- typ popisu, jedna z konsant tøídy TextFormat. 
 
-           row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
-             spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
-             (instance 'PresentedRow') vracející instanci tøídy 'FieldStyle'.
+          row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
+            spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
+            (instance 'PresentedRow') vracející instanci tøídy 'FieldStyle'.
+           
+          enable_inline_insert -- tento parametr není nadále podporován a v
+            budoucnu bude zcela zru¹en.  Zatím je ponechán pro zpìtnou
+            kompatibilitu.
 
         Pokud není argument 'layout' nebo 'columns' uveden, bude vygenerován
         implicitní layout a seznam sloupcù, odpovídající poøadí políèek ve
@@ -613,6 +611,9 @@ class ViewSpec(object):
         assert focus_field is None or is_anystring(focus_field) \
                or callable(focus_field)
         assert isinstance(row_style, FieldStyle) or callable(row_style)
+        if enable_inline_insert is not None:
+            log(OPERATIONAL,
+                "Pou¾it potlaèený argument 'enable_inline_insert'.")
         self._title = gettext_(title)
         self._columns = columns
         self._layout = layout
@@ -626,7 +627,6 @@ class ViewSpec(object):
         self._on_edit_record = on_edit_record
         self._on_delete_record = on_delete_record
         self._on_line_commit = on_line_commit
-        self._enable_inline_insert = enable_inline_insert
         self._focus_field = focus_field
         self._description = description
         self._description_format = description_format
@@ -695,10 +695,6 @@ class ViewSpec(object):
     def on_line_commit(self):
         """Vra» funkci volanou po ulo¾ení inline øádku."""
         return self._on_line_commit
-
-    def enable_inline_insert(self):
-        """Vra» pravdu, je li povoleno vkládání øádkù v in-line re¾imu."""
-        return self._enable_inline_insert
 
     def focus_field(self):
         """Vra» øetìzec nebo funkci, urèující políèko formuláøe s fokusem."""
