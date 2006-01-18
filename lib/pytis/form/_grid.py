@@ -666,8 +666,6 @@ class ListTable(wx.grid.PyGridTableBase):
                 attr.SetBackgroundColour(bg)
                 attr.SetFont(font)
                 return attr
-            else:
-                print "---", row, col, kind
         return None
         
 
@@ -733,7 +731,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         
     def Clone(self):
         return InputFieldCellEditor()
-       
+
     # Ostatní metody
     
     def field(self):
