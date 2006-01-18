@@ -12,6 +12,11 @@
 	pou¾ití je logováno, ale èasem bude potøeba jej v¹ude odstranit.
 	Mo¾nost inline vkládání formuláø nyní zji¹»uje automaticky podle
 	toho, zda jsou zobrazeny v¹echny NOT NULL sloupce.
+
+	* BUGFIX: Pøi skrytí, èi pøesunu sloupce, nad ním¾ byla pøedtím
+	provádìna inline editace se aplikace shroutila na SEGFAULT.  Tomu
+	se podaøilo pøedejít uzavíráním v¹ech editorù je¹tì pøed
+	manipulacemi se sloupci.
 	
 	* BUGFIX: Pøi kliknutí na záhlaví sloupce se stisknutým Shiftem
 	ji¾ nedojde k doèasnému výbìru v¹ech øádkù gridu.  To bylo

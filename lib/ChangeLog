@@ -1,5 +1,7 @@
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_grid.py (ListTable.GetAttr): Zru¹en zapomenutý print.
+
 	* pytis/presentation/spec.py (ViewSpec.__init__): Loguj pou¾ití
 	potlaèeného argumentu `enable_inline_insert'.
 	(ViewSpec.enable_inline_insert): Metoda zru¹ena.
@@ -11,6 +13,12 @@
 	sloupce.
 	(ListForm._init_attributes): Neinicializuj
 	`self._enable_inline_insert'.
+	(ListForm._update_grid.notify): Zavírej editory je¹tì pøed ru¹ením
+	sloupcù.
+	(ListForm._update_grid): Nezavírej editory zde.
+	(ListForm._init_col_attr): Pokud existují nìjaké editory, napøed
+	je zavøi.
+	
 
 	* pytis/form/application.py (Application.on_command): Testuj
 	existenci aktivního formuláøe v boolean kontextu, ne jen na None
