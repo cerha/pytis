@@ -1952,7 +1952,7 @@ class BrowseForm(ListForm):
         return {(name+'/'+pytis.output.P_CONDITION):
                 pytis.data.AND(self._lf_initial_condition, self._lf_condition),
                 (name+'/'+pytis.output.P_SORTING):
-                self._lf_translated_sorting(),
+                self._data_sorting(),
                 (name+'/'+pytis.output.P_KEY):
                 self._current_key(),
                 (name+'/'+pytis.output.P_ROW):
