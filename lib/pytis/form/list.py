@@ -1343,9 +1343,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         ¾ádný øádek editován, a» u¾ nový nebo stávající.  Pøi pokusu o vlo¾ení
         nového øádku bìhem editace jiného øádku je chování metody nedefinováno.
 
-        Vlo¾ení nového øádku mù¾e být také zakázáno pro konkrétní formuláø v
-        jeho specifikaci (viz argument 'enable_inline_insert' konstruktoru
-        tøídy 'ViewSpec').
+        Vlo¾ení nového øádku také není umo¾nìno, pokud mezi právì zobrazenými
+        sloupci chybí nìkterý NOT NULL sloupec.
         
         Po vlo¾ení nového øádku seznam automaticky pøejde do re¾imu editace
         tohoto øádku a spustí editaci první editovatelné buòky øádku.
@@ -1360,10 +1359,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
             return False
-        if not self._enable_inline_insert:
-            message('Není mo¾né vkládat øádky v in-line editaci. ' +
-                    'Pou¾ijte editaèní formuláø.', beep_=True)
-            return False
+
+        cols = [c.id() for c in self._columns]
+        for col in self._data.columns():
+            if col.type().not_null() and col.id() not in cols:
+                msg = _('Povinný sloupec "%s" není zobrazen.\n'
+                        'Není mo¾né vkládat øádky v in-line editaci.\n'
+                        'Pøidejte sloupec nebo pou¾ijte editaèní formuláø.')
+                label = self._view.field(col.id()).column_label()
+                run_dialog(Warning, msg % label)
+                return False
         table = self._table
         if table.editing():
             log(EVENT, 'Pokus o vlo¾ení nového øádku bìhem editace')
