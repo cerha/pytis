@@ -113,7 +113,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._init_column_widths()
         # Inicializace ostatních atributù.
         self._fields = self._view.fields()
-        self._enable_inline_insert = self._view.enable_inline_insert()
         self._selection_candidate = None
         self._selection_callback_candidate = None
         self._selection_callback_tick = None
