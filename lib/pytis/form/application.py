@@ -941,7 +941,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     config.custom_debug()
                 else:
                     top = self._windows.active()
-                    if top is not None and top.on_command(command, **kwargs):
+                    if top and top.on_command(command, **kwargs):
                         return True
                     return False
             finally:
