@@ -18,7 +18,8 @@
 	(ListForm._update_grid): Nezavírej editory zde.
 	(ListForm._init_col_attr): Pokud existují nìjaké editory, napøed
 	je zavøi.
-	
+	(BrowseForm._formatter_parameters): `_lf_translated_sorting' ->
+	`_data_sorting'.
 
 	* pytis/form/application.py (Application.on_command): Testuj
 	existenci aktivního formuláøe v boolean kontextu, ne jen na None
