@@ -6,6 +6,12 @@
 
 
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
+
+        Specifikaèní parametr `enable_inline_insert' by ji¾ nemìl být
+	pou¾íván.  Prozatím byl ponechán pro zpìtnou kompatibilitu a jeho
+	pou¾ití je logováno, ale èasem bude potøeba jej v¹ude odstranit.
+	Mo¾nost inline vkládání formuláø nyní zji¹»uje automaticky podle
+	toho, zda jsou zobrazeny v¹echny NOT NULL sloupce.
 	
 	* BUGFIX: Pøi kliknutí na záhlaví sloupce se stisknutým Shiftem
 	ji¾ nedojde k doèasnému výbìru v¹ech øádkù gridu.  To bylo
