@@ -1,5 +1,8 @@
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._on_label_left_down): Nevolej
+	`event.Skip()'.
+
 	* pytis/form/application.py (Application.on_command): Testuj
 	existenci aktivního formuláøe v boolean kontextu, ne jen na None
 	hodnotu.  To by mìlo zachytit i mrtvé formuláøe.

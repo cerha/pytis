@@ -6,6 +6,11 @@
 
 
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
+	
+	* BUGFIX: Pøi kliknutí na záhlaví sloupce se stisknutým Shiftem
+	ji¾ nedojde k doèasnému výbìru v¹ech øádkù gridu.  To bylo
+	implicitní chování wx, které výraznì zdr¾ovalo (zejména u velkých
+	tabulek) pøi pøepínání dodateèného tøídìní.
 
 	* BUGFIX: O¹etøen pøípad vyvolání pøíkazu nad mrtvým formuláøem.
 	
