@@ -1571,6 +1571,7 @@ class EditForm(LookupForm, TitledForm):
         success, result = db_operation(op)
         if success and result[1]:
             new_row = result[0]
+            original_row = self._row.original_row()
             if new_row is not None:
                 self._row.set_row(new_row, reset=True)
                 self.set_row(self._row)
@@ -1587,7 +1588,7 @@ class EditForm(LookupForm, TitledForm):
                     field.init(field.get_value())
             cleanup = self._view.cleanup()
             if cleanup is not None:
-                cleanup(self._row)
+                cleanup(self._row, original_row)
             if close:    
                 self._result = self._row
                 # tím je automaticky zavoláno _on_parent_close()

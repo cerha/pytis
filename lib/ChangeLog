@@ -1,3 +1,8 @@
+2006-01-20  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (EditForm._commit_form): Do cleanupu pøedávej
+	i pùvodní øádek.
+
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_grid.py (ListTable.GetAttr): Zru¹en zapomenutý print.
