@@ -4,6 +4,20 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-23  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøi ukládání konfiguraèních voleb se nyní berou v úvahu pouze
+	volby nastavitelné v konfiguraèních formuláøích a dal¹í explicitnì
+	vyjmenované volby, jako napø. informace o stavu formuláøù apod.
+	Tím zamazíme potenciálním budoucím tì¾ko odhalitelným problémùm,
+	jako bylo napø ukládání `dbconnection' apod.
+
+	* BUGFIX: Pøi kliknutí na záhlaví sloupce bez stisknutého Shift je
+	nyní v¾dy provedeno primární setøídìní i pokud je sloupec ji¾
+	setøídìn sekundárnì.
+
+	* BUGFIX: Po ve¹kerých zmìnách tøídìní je aktualizován grouping,
+	aby neobsahoval sloupce, podle kterých ji¾ není tøídìno.
 
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
 
