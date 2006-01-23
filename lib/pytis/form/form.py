@@ -522,6 +522,7 @@ class TitledForm:
         description_format = self._view.description_format()
         return InfoWindow(_("Nápovìda pro %s") % title, text=description,
                           format=description_format)
+        
 
     def _create_title_bar(self, text, size=None, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
@@ -965,8 +966,6 @@ class RecordForm(Form):
 class LookupForm(RecordForm):
     """Formuláø s vyhledáváním a tøídìním."""
     
-    SORTING_CYCLE_DIRECTION = 'SORTING_CYCLE_DIRECTION'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
     SORTING_NONE = 'SORTING_NONE'
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
     SORTING_ASCENDENT = 'SORTING_ASCENDENT'
@@ -1156,11 +1155,8 @@ class LookupForm(RecordForm):
 
           col -- id sloupce, podle kterého má být seznam setøídìn, nebo
             'None' pro globální zmìny (napøíklad vypnutí ve¹kerého tøídìní)
-          direction -- smìr tøídìní (sestupnì/vzestupnì/vùbec/cyklicky).  Pokud
-            je hodnotou konstanta 'LookupForm.SORTING_CYCLE_DIRECTION', bude
-            tøídìní cyklicky pøepnuto na dal¹í z variant
-            (sestupnì/vzestupnì/vùbec).  Hodnota daná konstantou
-            'LookupForm.SORTING_NONE' znaèí explicitní po¾adavek na zru¹ení
+          direction -- smìr tøídìní (sestupnì/vzestupnì/vùbec).  Hodnota daná
+            konstantou 'LookupForm.SORTING_NONE' znaèí po¾adavek na zru¹ení
             tøídìní.  Jinak je oèekávána jedna z konstant
             'LookupForm.SORTING_ASCENDENT' (pro sestupné tøídìní), nebo
             'LookupForm.SORTING_DESCENDANT' (pro vzestupné tøídìní).
@@ -1192,19 +1188,13 @@ class LookupForm(RecordForm):
                 return None
             pos = self._sorting_position(col)
             sorting = xlist(self._lf_sorting)
-            if direction == self.SORTING_CYCLE_DIRECTION:
-                dir = self._sorting_direction(col) or self.SORTING_NONE
-                cycle = [self.SORTING_ASCENDENT,
-                         self.SORTING_DESCENDANT,
-                         self.SORTING_NONE]
-                direction = cycle[(cycle.index(dir)+1)%3]
             if direction == self.SORTING_NONE:
                 del sorting[pos]
             else:
                 assert direction in (self.SORTING_ASCENDENT,
                                      self.SORTING_DESCENDANT)
                 new_sort_spec = (col, direction)
-                if primary:
+                if primary and pos !=0:
                     sorting = (new_sort_spec,)
                 elif pos is None:
                     sorting.append(new_sort_spec)
@@ -1222,9 +1212,7 @@ class LookupForm(RecordForm):
     def can_sort_column(self, col=None, direction=None, primary=False):
         # `col' je zde identifikátor sloupce.
         sorting_columns = tuple(self._sorting_columns())
-        if direction == self.SORTING_CYCLE_DIRECTION:
-            return True
-        elif direction == self.SORTING_NONE:
+        if direction == self.SORTING_NONE:
             return sorting_columns and (col is None or col in sorting_columns)
         elif direction is not None and col is not None:
             pos = self._sorting_position(col)
