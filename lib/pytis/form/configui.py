@@ -90,6 +90,14 @@ def config_menu_items(hotkeys={}):
              for name, layout in _LAYOUT]
     return tuple(items)
 
+def configurable_options():
+    """Vra» seznam v¹ech voleb nastavitelných pomocí konfiguraèních formuláøù.
+
+    Vrací tuple øetìzcù odpovídajících názvùm konfiguraèních voleb.
+
+    """
+    return tuple(reduce(lambda all, layout: all + tuple(layout.order()),
+                        [layout for id, layout in _LAYOUT], ()))
 
 class _ConfigData(pytis.data.Data, pytis.data.RestrictedData):
     """Fale¹ná datová tøída."""
