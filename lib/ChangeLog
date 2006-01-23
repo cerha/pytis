@@ -1,3 +1,20 @@
+2006-01-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._on_sort_column): Aktualizuj také
+	grouping.
+	(ListForm._on_label_left_up): Vypoèti nový smìr tøídìní a pøedej
+	konkrétní smìr, nikoli konstantu `SORTING_CYCLE_DIRECTION'.  Pokud
+	není stisknut Shift, proveï primární tøídìní i pokud sloupec ji¾
+	je setøídìn (sekundárnì).
+
+	* pytis/form/form.py (LookupForm.SORTING_CYCLE_DIRECTION):
+	Konstanta zru¹ena.
+	(LookupForm._on_sort_column): Aktualizace docstringu.  Neøe¹
+	cyklické pøepínání smìru zde.
+	(LookupForm.can_sort_column): Neuva¾uj s `SORTING_CYCLE_DIRECTION'.
+
+	* pytis/form/configui.py (configurable_options): Nová funkce.
+
 2006-01-23  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (EditForm._commit_form): Do cleanupu pøedávej

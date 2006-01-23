@@ -170,6 +170,8 @@ INTERNÍ ZÁLE®ITOSTI:
    problém do metody `Option.set_value()' pøidat kontrolu, zda pøedaná hodnota
    skuteènì odpovídá deklarovanému typu volby.
 
+ * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
+
  * Zru¹it tøídu 'RefSpec' & spol.
 
    Kromì vlastního 'RefSpec' je tøeba zru¹it také argument 'references'
@@ -232,7 +234,4 @@ INTERNÍ ZÁLE®ITOSTI:
    To se zavedlo zejména kvùli pøíkazùm, které nepracují s aktuálním øádkem,
    tak¾e nepøebírají argument 'row' a nìkdy potøebují datový objekt.
 
- * Grouping nemá být øe¹en pøes reset.
-
-   Proto¾e grouping neovlivòuje poèet, poøadí ani data øádkù, není dùvod, proè
-   by se mìl nastavovat pomocí reset().   
+  
