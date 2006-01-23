@@ -1,3 +1,8 @@
+2006-01-23  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (EditForm._commit_form): Do cleanupu pøedávej
+	skuteènì pùvodní hodnotu 'original_row'.
+
 2006-01-20  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (EditForm._commit_form): Do cleanupu pøedávej
