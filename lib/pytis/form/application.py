@@ -38,6 +38,7 @@ if config.server:
         pass
 from pytis.form import *
 import wx
+import wx.html
 
 _application = None
 
@@ -174,6 +175,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._windows = XStack()
         self._modals = Stack()
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
+        self._help_controller = None
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
         assert is_sequence(custom_keymap), "Specifikace klávesových zkratek " +\
@@ -457,8 +459,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             pass
         try:
             items = tuple([(o, getattr(config, o))
-                           for o in config.options()
-                           if config.changed(o) and o != 'dbconnection'])
+                           for o in configurable_options() + \
+                           ('application_state', 'form_state') 
+                           if config.changed(o)])
             write_config = self._spec('write_config', self._write_config)
             write_config(items)
             log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))
@@ -734,7 +737,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self.restore()
         else:
             log(EVENT, "Není otevøen ¾ádný formuláø.")
-                
+
+    def help(self, topic):
+        if self._help_controller is None:
+            self._help_controller = controller = wx.html.HtmlHelpController()
+            controller.AddBook('./help/pytis.hhp')
+        self._help_controller.Display(topic)
+            
     def exit(self, quietly=False):
         """Ukonèi u¾ivatelské rozhraní aplikace.
 
@@ -745,7 +754,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
         """
         self._frame.Close()
-
+        
     def run(self):
         """Spus» bìh u¾ivatelského rozhraní.
 
@@ -1098,3 +1107,7 @@ def recent_forms_menu():
         
     """
     return _application.recent_forms_menu()
+
+def help(topic):
+    return _application.help(topic)
+    
