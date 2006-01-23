@@ -601,6 +601,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                                    direction=direction,
                                                    primary=primary)
         if sorting is not None and sorting != old_sorting:
+            # Update grouping first.
+            cols = self._sorting_columns()
+            l = min(len(cols), len(self._grouping))
+            self._grouping = tuple(cols[:l])
+            self._set_state_param('grouping', self._grouping)
+            # Make the changes visible.
             self._refresh(reset={'condition': self._lf_condition,
                                  'sorting': sorting},
                           when=self.DOIT_IMMEDIATELY)
@@ -820,11 +826,20 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
             if col != -1:
                 self._run_callback(self.CALL_USER_INTERACTION)
-                c = self._columns[col]
+                cid = self._columns[col].id()
+                primary = not event.ShiftDown()
+                pos = self._sorting_position(cid)
+                if primary and pos != 0:
+                    direction = self.SORTING_ASCENDENT
+                else:
+                    dir = self._sorting_direction(cid) \
+                          or self.SORTING_NONE
+                    cycle = [self.SORTING_ASCENDENT,
+                             self.SORTING_DESCENDANT,
+                             self.SORTING_NONE]
+                    direction = cycle[(cycle.index(dir)+1)%3]
                 invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
-                               primary = not event.ShiftDown() and \
-                               c.id() not in self._sorting_columns(),
-                               direction=LookupForm.SORTING_CYCLE_DIRECTION)
+                               primary=primary, direction=direction)
         self._column_move_target = None
         self._column_to_move = None
         event.GetEventObject().Refresh()
