@@ -1,3 +1,9 @@
+2006-01-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._update_grid): Provádìj
+	pøenastavení velikosti gridu i pokud do¹lo ke zmìnì poètu sloupcù,
+	nejen øádkù, a provádìj jej v¾dy a¾ úplnì nakonec.
+
 2006-01-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py: Importuj `wx.html'.
