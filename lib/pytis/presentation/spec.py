@@ -486,12 +486,16 @@ class ViewSpec(object):
             v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
             id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.  Formuláø
             by potom mìl u¾ivatele vrátit do editace daného polèka.
-          cleanup -- funkce provádìjící závìreèné akce pøi uzavøení
-            formuláøe.  Jedná se o funkci jednoho argumentu, jím¾ je instance
-            'PresentedRow' obsahující aktuální data formuláøe.  Funkce je
+          cleanup -- funkce provádìjící závìreèné akce pøi uzavøení formuláøe.
+            Jedná se o funkci dvou argumentù.  Prvním je výsledný ulo¾ený øádek
+            odpovídající koneènému stavu databáze a druhým je pùvodní øádek z
+            formuláøe pøed ulo¾ením (na úrovni databáze mohou být nìkteré
+            hodnoty zmìnìny èi doplnìny ``default'' hodnoty apod.).  Druhý
+            øádek obsahuje hodnoty po editaci u¾ivatelem, ale pomocí jeho
+            metody `original_row' je mo¾né také získat pùvodní hodnoty pøed
+            editací.  Oba argumenty jsou instance 'PresentedRow'.  Funkce je
             spou¹tìna v¾dy pøi pøi uzavøení editaèního formuláøe tlaèítkem
-            \"Ok\" (potvrzením) a to i v pøípadì, ¾e ¾ádná data nebyla
-            zmìnìna.
+            ``Ok'' (potvrzením) a to i v pøípadì, ¾e ¾ádná data nebyla zmìnìna.
           on_new_record -- akce vlo¾ení nového záznamu.  Pokud je None, bude
             provedena výchozí akce (otevøení PopupEditForm nad danou
             specifikací).  Pøedáním funkce dvou klíèových argumentù ('key' a
