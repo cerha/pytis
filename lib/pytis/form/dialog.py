@@ -394,7 +394,8 @@ class Message(GenericDialog):
 class Warning(Message):
     """Dialog pro zobrazení varovné zprávy."""
 
-    def __init__(self, parent, message, title=_('Varování')):
+    def __init__(self, parent, message, title=_('Varování'), report=None,
+                 report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
 
         Argumenty:
@@ -411,13 +412,15 @@ class Warning(Message):
         super_(Warning).__init__(self, parent, message, title=title,
                                  icon=Message.ICON_WARNING,
                                  buttons=(Message.BUTTON_OK,),
-                                 default=Message.BUTTON_OK)
+                                 default=Message.BUTTON_OK,
+                                 report=report, report_format=report_format)
 
 
 class Error(Message):
     """Dialog pro zobrazení chybové zprávy."""
 
-    def __init__(self, parent, message, title=_('Chyba')):
+    def __init__(self, parent, message, title=_('Chyba'), report=None,
+                 report_format=TextFormat.PLAIN):
         """Inicializuj dialog.
         
         Argumenty:
@@ -434,7 +437,8 @@ class Error(Message):
         super_(Error).__init__(self, parent, message, title=title,
                                icon=Message.ICON_ERROR,
                                buttons=(Message.BUTTON_OK,),
-                               default=Message.BUTTON_OK)
+                               default=Message.BUTTON_OK,
+                               report=report, report_format=report_format)
 
 
 class MultiQuestion(Message):
