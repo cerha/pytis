@@ -1,5 +1,13 @@
 2006-01-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Importuj `wx.html'.
+	(Application.OnInit): Inicializuj atribut `self._help_controller'.
+	(Application._cleanup): Mezi ukládané konfiguraèní volby zahrnuj
+	pouze volbu z konfiguraèních formuláøù a nìkteré explicitnì
+	vyjmenované volby.
+	(Application.help): Nová metoda.
+	(help): Nová funkce.
+
 	* pytis/form/list.py (ListForm._on_sort_column): Aktualizuj také
 	grouping.
 	(ListForm._on_label_left_up): Vypoèti nový smìr tøídìní a pøedej
