@@ -24,6 +24,16 @@
 	* BUGFIX: Po ve¹kerých zmìnách tøídìní je aktualizován grouping,
 	aby neobsahoval sloupce, podle kterých ji¾ není tøídìno.
 
+2006-01-23  Pavel Hanak  <hanak@asellus.cz>
+
+	Funkce `cleanup()', volaná po editaci záznamu má nyní dva
+	argumenty, prvním je výsledný ulo¾ený øádek odpovídající koneènému
+	stavu databáze a druhým je pùvodní øádek z formuláøe pøed ulo¾ením
+	(na úrovni databáze mohou být nìkteré hodnoty zmìnìny èi doplnìny
+	"default" hodnoty apod.).  Druhý øádek obsahuje hodnoty po editaci
+	u¾ivatelem, ale pomocí joho metody `original_row' je mo¾né také
+	získat pùvodní hodnoty pøed editací.
+	
 2006-01-18  Tomas Cerha  <cerha@brailcom.org>
 
         Specifikaèní parametr `enable_inline_insert' by ji¾ nemìl být
