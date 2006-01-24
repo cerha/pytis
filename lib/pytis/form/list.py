@@ -289,7 +289,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._init_col_attr()
         g.EndBatch()
         # Závìreèné úpravy
-        if new_row_count != old_row_count:
+        self._update_colors()
+        self._resize_columns()
+        if new_row_count != old_row_count or new_columns != old_columns \
+               or reset_columns or soft_reset_columns:
             # This is a workaround of a wxWidgets bug.  The scrollbars are not
             # shown or hidden properly, until a size event is received by the
             # grid.  Thus we generate one artificially...
@@ -299,8 +302,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # _select_cell() zvlá¹» po _update_grid().  Zatím to ale spí¹ vypadá,
         # ¾e je to tady zbyteènì (kostlivec).  TC 2005-12-28
         #self._select_cell(row=self._position)
-        self._update_colors()
-        self._resize_columns()
 
     def _init_col_attr(self):
         # (Re)inicializuj atributy sloupcù gridu.
