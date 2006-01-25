@@ -738,11 +738,21 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             log(EVENT, "Není otevøen ¾ádný formuláø.")
 
-    def help(self, topic):
+    def help(self, topic=None):
+        """Zobraz dané téma v proholí¾eèi nápovìdy."""
         if self._help_controller is None:
             self._help_controller = controller = wx.html.HtmlHelpController()
-            controller.AddBook('./help/pytis.hhp')
-        self._help_controller.Display(topic)
+            controller.SetTitleFormat(_("Nápovìda")+": %s")
+            pytis_help_file = os.path.join(config.help_dir, 'header.hhp')
+            if os.path.exists(pytis_help_file):
+                controller.AddBook(pytis_help_file)
+            else:
+                msg = _("Soubor s nápovìdou systému Pytis nebyl nalezen.\n"
+                        "Zkontrolujte zda je správnì nastavena "
+                        "konfiguraèní volba 'help_dir'\n"
+                        "a zda daný adresáø obsahuje vygenerovanou nápovìdu.")
+                run_dialog(Warning, msg)
+        self._help_controller.Display((topic or 'index')+'.html')
             
     def exit(self, quietly=False):
         """Ukonèi u¾ivatelské rozhraní aplikace.
@@ -925,6 +935,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     return self._modals.top().on_command(command, **kwargs)
                 elif command == Application.COMMAND_EXIT:
                     self.exit()
+                elif command == Application.COMMAND_HELP:
+                    self.help()
                 elif command == Application.COMMAND_BREAK:
                     message(_("Stop"), beep_=True)
                 elif command == Application.COMMAND_RUN_FORM:
@@ -1108,6 +1120,7 @@ def recent_forms_menu():
     """
     return _application.recent_forms_menu()
 
-def help(topic):
+def help(topic=None):
+    """Zobraz dané téma v proholí¾eèi nápovìdy."""
     return _application.help(topic)
     
