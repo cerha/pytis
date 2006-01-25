@@ -1,3 +1,19 @@
+2006-01-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.help): Nech» je argument
+	`topic' nepovinný.  Pou¾ívej konfiguraèní volbu `help_dir' a
+	zobraz varování, pokud soubor nápovìdy není nalezen.  Doplnìn
+	docstring.
+	(help): Nech» je argument `topic' nepovinný. Doplnìn docstring.
+	(Application.on_command): O¹etøuj pøíkaz `Application.COMMAND_HELP'.
+
+	* pytis/util/configuration.py (Configuration._Option_help_dir):
+	Nová volba.
+	(Configuration._Option_doc_dir): Volba zru¹ena.
+
+	* pytis/form/commands_.py: Nový pøíkaz `Application.COMMAND_HELP'
+	a klávesová zkratka.
+
 2006-01-24  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/dialog.py (Warning.__init__): Roz¹íøeno o argumenty
@@ -5,6 +21,9 @@
 	(Error.__init__): Roz¹íøeno o argumenty 'report' a 'report_init'.
 
 2006-01-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Aktualizace
+	docstringu.
 
 	* pytis/form/list.py (ListForm._update_grid): Provádìj
 	pøenastavení velikosti gridu i pokud do¹lo ke zmìnì poètu sloupcù,
