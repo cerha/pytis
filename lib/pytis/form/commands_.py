@@ -42,6 +42,8 @@ from pytis.form import *
     
 Command(Application, 'EXIT',
         "Ukonèení aplikace.")
+Command(Application, 'HELP',
+        "Vyvolání nápovìdy.")
 Command(Application, 'BREAK',
         "Pøeru¹ení aktuálnì provádìné operace.")
 Command(Application, 'REFRESH',
@@ -192,6 +194,7 @@ Command(Dialog, 'COMMIT_DIALOG',
         "Potvrzení dialogu.  Arg. 'force' simuluje stisk výchozího tlaèítka.")
 
 DEFAULT_KEYMAP = (
+    ('F1',          Application.COMMAND_HELP),
     ('Ctrl-g',      Application.COMMAND_BREAK),
     ('Escape',      Application.COMMAND_LEAVE_FORM),
     ('Ctrl-Down',   Application.COMMAND_NEXT_FORM),
