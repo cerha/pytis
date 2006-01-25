@@ -435,12 +435,12 @@ class Configuration:
         _DEFAULT = './defs'
         _ENVIRONMENT = ('PYTISDEFDIR',)
 
-    class _Option_doc_dir(_FileOption, _CommandlineOption):
-        _DESCR = _("Adresáø obsahující dokumentaèní soubory.")
+    class _Option_help_dir(_FileOption, _CommandlineOption):
+        _DESCR = _("Adresáø obsahující soubory s nápovìdou.")
         _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
                  "adresáøi.")
-        _ENVIRONMENT = ('PYTISDOCDIR',)
-        _DEFAULT = './docs'
+        _ENVIRONMENT = ('PYTISHELPDIR',)
+        _DEFAULT = './help'
 
     class _Option_icon_dir(_FileOption):
         _DESCR = _("Adresáø s obrázkovými soubory.")
