@@ -81,6 +81,8 @@ NOVÉ VLASTNOSTI:
 
  * Zarovnávání a atributy v InputFieldu.
 
+ * Masky políèek.
+
 
 2) Specifikace
 
@@ -134,8 +136,6 @@ NOVÉ VLASTNOSTI:
 
  * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
 
- * Masky políèek.
-
 
 INTERNÍ ZÁLE®ITOSTI:
 
@@ -170,8 +170,6 @@ INTERNÍ ZÁLE®ITOSTI:
    problém do metody `Option.set_value()' pøidat kontrolu, zda pøedaná hodnota
    skuteènì odpovídá deklarovanému typu volby.
 
- * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
-
  * Zru¹it tøídu 'RefSpec' & spol.
 
    Kromì vlastního 'RefSpec' je tøeba zru¹it také argument 'references'
@@ -194,13 +192,17 @@ INTERNÍ ZÁLE®ITOSTI:
 
  * Zru¹it argument 'ignore_enumerators' tøídy DataSpec a metodu 'make'.
 
- * Zru¹it `allow_codebook_insert'???
+ * Zru¹it 'allow_codebook_insert'???
 
    Vlo¾ení nové hodnoty do èíselníku by mohlo být provádìno pøes pøíkaz z popup
    menu èíselníkového políèka (pøes pravé tlaèítko my¹i).  To by mohlo být
    povoleno pro v¹echny èíselníky a tlaèítko "+" ve formuláøi by tak bylo
    zbyteèné.
 
+ * Zru¹it 'enable_inline_insert'.
+
+   Argument ji¾ nemá smysl.  Zji¹tìní je nyní automatické.
+   
  * Handlery pøíkazù.
 
    Pøíkazy jsou obsluhovány tak, ¾e vyvoláme on_command aplikace a ta je
@@ -233,5 +235,7 @@ INTERNÍ ZÁLE®ITOSTI:
    pøíkaz pevnì dané a ne, ¾e se argumenty handleru zji¹»ují pomocí inspect...
    To se zavedlo zejména kvùli pøíkazùm, které nepracují s aktuálním øádkem,
    tak¾e nepøebírají argument 'row' a nìkdy potøebují datový objekt.
+
+ * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
 
   
