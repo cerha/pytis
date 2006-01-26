@@ -5,6 +5,7 @@
 
 	* pytis/form/application.py (Application.run_form):
 	`self._post_init_form()' volej a¾ po zobrazení formuláøe.
+	(Application.help): Roz¹íøena chybová zpráva pøi nenalezení manuálu.
 
 2006-01-25  Tomas Cerha  <cerha@brailcom.org>
 
