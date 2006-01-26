@@ -1559,7 +1559,7 @@ class EditForm(LookupForm, TitledForm):
         success, result = db_operation(op)
         if success and result[1]:
             new_row = result[0]
-            original_row = self._row
+            original_row = copy.copy(self._row)
             if new_row is not None:
                 self._row.set_row(new_row, reset=True)
                 self.set_row(self._row)

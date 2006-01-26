@@ -1,3 +1,8 @@
+2006-01-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (EditForm._commit_form): 'original_row'
+	pøedávej do cleanupu jako novou instanci.
+
 2006-01-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py (SFDialog._create_content.condition): Pokud
