@@ -550,12 +550,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if form is None:
                 self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit"))
             else:
-                self._post_init_form(form, **post_init_kwargs)
                 if isinstance(form, PopupForm):
                     log(EVENT, "Zobrazuji modální formuláø:", form)
                     self._modals.push(form)
                     message('', root=True)
                     form.show()
+                    self._post_init_form(form, **post_init_kwargs)
                     try:
                         result = form.run()
                         log(EVENT, "Modální formuláø byl uzavøen:", form)
@@ -584,6 +584,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     item = (self._form_menu_item_title(form),
                             dict(form_class=form_class, name=name))
                     self._update_recent_forms(item)
+                    self._post_init_form(form, **post_init_kwargs)
         except UserBreakException:
             pass
         except:
