@@ -744,15 +744,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if self._help_controller is None:
             self._help_controller = controller = wx.html.HtmlHelpController()
             controller.SetTitleFormat(_("Nápovìda")+": %s")
-            pytis_help_file = os.path.join(config.help_dir, 'header.hhp')
+            pytis_help_file = os.path.join(config.help_dir, 'index.hhp')
             if os.path.exists(pytis_help_file):
                 controller.AddBook(pytis_help_file)
             else:
                 msg = _("Soubor s nápovìdou systému Pytis nebyl nalezen.\n"
-                        "Zkontrolujte zda je správnì nastavena "
-                        "konfiguraèní volba 'help_dir'\n"
-                        "a zda daný adresáø obsahuje vygenerovanou nápovìdu.")
-                run_dialog(Warning, msg)
+                        "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
+                        "Zkontrolujte zda je cesta správnì\n"
+                        "a zda adresáø obsahuje soubory nápovìdy.")
+                run_dialog(Warning, msg % config.help_dir)
         self._help_controller.Display((topic or 'index')+'.html')
             
     def exit(self, quietly=False):
