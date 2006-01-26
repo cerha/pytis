@@ -6,9 +6,13 @@
 
 2006-01-25  Tomas Cerha  <cerha@brailcom.org>
 
-	* BUGFIX: Výbìr øádku formuláøe je volán a¾ po jeho zobrazení,
-	tak¾e nyní nedojde k tomu, ¾e zobrazení chybového dialogu pøi
-	nenalezení øádku zamezí korektní inicializaci okna formuláøe.
+	* BUGFIX: Pokud pøi vyvolání formuláøe není nalezen po¾adovaný
+	øádek, ji¾ se nestane, ¾e formuláø zùstane nerozta¾en (¹edá
+	plocha).
+	
+	* BUGFIX: O¹etøena situace, kdy pøi pøidání filtrovací podmínky za
+	urèitých okolností nebylo mo¾né nastavit výchozí sloupec nové
+	podmínky.
 	
 2006-01-24  Tomas Cerha  <cerha@brailcom.org>
 
