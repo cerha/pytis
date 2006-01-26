@@ -432,12 +432,10 @@ def smssend(tel, message):
         return "Není nainstalován balík 'sqsh'. SMS nebude odeslána."
     if len(message) > MAX_LENGTH:
         return "Zpráva je del¹í ne¾ %s. SMS nebude odeslána." % (MAX_LENGTH)
-    if len(tel) == 13 and tel[0:4] == '+420':
-	tel = '00420' + tel[4:]
-    elif (len(tel) == 14 and tel[0:5] <> '00420') or len(tel) <> 9:
-	return ("©patný fromát telefoního èísla %s." + \
-	        "Èíslo musí mít tvar:\n00420xxxxxxxxx\n+420xxxxxxxxx\n" + \
-		"xxxxxxxxx") % (tel) 
+    if len(tel) not in (14,9):
+	return ("©patný fromát telefoního èísla %s.\n\n"
+	        "Èíslo musí mít tvar:\nPPPPPxxxxxxxxx - (pìt znakù pøedvolba "
+                "- devìt znakù èíslo)\nxxxxxxxxx - (devìt znakù èíslo)") % (tel)
     message.replace('"','')
     message.replace("'","")	
     sms_insert = TEMPLATE % (tel, message)
