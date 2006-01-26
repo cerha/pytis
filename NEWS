@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Výbìr øádku formuláøe je volán a¾ po jeho zobrazení,
+	tak¾e nyní nedojde k tomu, ¾e zobrazení chybového dialogu pøi
+	nenalezení øádku zamezí korektní inicializaci okna formuláøe.
+	
 2006-01-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Po pøidání èi odebrání sloupce je pøenastavena velikost

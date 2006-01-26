@@ -1,3 +1,8 @@
+2006-01-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.run_form):
+	`self._post_init_form()' volej a¾ po zobrazení formuláøe.
+
 2006-01-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.help): Nech» je argument
