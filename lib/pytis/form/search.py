@@ -154,10 +154,15 @@ class SFDialog(SFSDialog):
             except KeyError:
                 wcol, wop, wval, __ = self._defaults[id] = self._default_item
             if wcol == -1:
-                c = find(self._field_id, self._columns, key=lambda c: c.id())
-                column.SetSelection(self._columns.index(c))
-            else:
-                column.SetSelection(wcol)
+                if self._field_id:
+                    c = find(self._field_id, self._columns,
+                             key=lambda c: c.id())
+                    wcol = self._columns.index(c)
+                elif id > 0 and self._defaults[id-1][0] != -1:
+                    wcol = self._defaults[id-1][0]
+                else:
+                    wcol = 0
+            column.SetSelection(wcol)
             op = self._create_choice(map(lambda o: o[0], self._OPERATORS),
                                      tip=_("Zvolte operátor"), enlarge=False)
             op.SetSelection(wop)
