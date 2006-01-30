@@ -442,6 +442,11 @@ class Configuration:
         _ENVIRONMENT = ('PYTISHELPDIR',)
         _DEFAULT = './help'
 
+    # TODO: Doèasnì vráceno, dokud ve v¹ech projektech nepøejdeme na nový
+    # systém nápovìdy.
+    class _Option_docs_dir(_FileOption, _CommandlineOption):
+        _DEFAULT = './docs'
+
     class _Option_icon_dir(_FileOption):
         _DESCR = _("Adresáø s obrázkovými soubory.")
         _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
