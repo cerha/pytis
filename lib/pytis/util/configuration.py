@@ -445,6 +445,7 @@ class Configuration:
     # TODO: Doèasnì vráceno, dokud ve v¹ech projektech nepøejdeme na nový
     # systém nápovìdy.
     class _Option_doc_dir(_FileOption, _CommandlineOption):
+        _DESCR = _("Adresáø obsahující dokumentaci.")
         _DEFAULT = './docs'
 
     class _Option_icon_dir(_FileOption):
