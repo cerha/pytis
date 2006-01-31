@@ -390,7 +390,8 @@ class SearchDialog(SFDialog):
     _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFDialog._BUTTONS
     _COMMIT_BUTTON = _NEXT_BUTTON    
     _TITLE = _("Hledání")
-
+    _HELP_TOPIC = 'searching'
+    
     def _search(self, direction):
         try:
             self._condition = self._selected_condition()
@@ -452,6 +453,7 @@ class FilterDialog(SFDialog):
                       (_("Souèet"), pytis.data.Data.AGG_SUM),
                       (_("Prùmìr"), pytis.data.Data.AGG_AVG))
     _TITLE = _("Filtrování")
+    _HELP_TOPIC = 'filtering'
 
     def _create_content(self, **kwargs):
         content = super_(FilterDialog)._create_content(self, **kwargs)
@@ -558,6 +560,7 @@ class SortingDialog(SFSDialog):
     _ASCENDENT = _("Vzestupnì")
     _DESCENDANT = _("Sestupnì")
     _NOSORTING = _("Netøídit")
+    _HELP_TOPIC = 'sorting'
     
     def __init__(self, parent, columns, sorting, col=None, direction=None):
         """Inicializuj dialog.
