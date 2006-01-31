@@ -1,3 +1,22 @@
+2006-01-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/search.py (SearchDialog._HELP_TOPIC)
+	(FilterDialog._HELP_TOPIC, SortingDialog._HELP_TOPIC): Nové
+	konstanty.
+
+	* pytis/form/dialog.py (GenericDialog._HELP_TOPIC): Nová
+	konstanta.
+	(GenericDialog._create_dialog): Nevytváøej dialog se stylem
+	`wx.STAY_ON_TOP'.
+	(GenericDialog.on_command): O¹etøuj pøíkaz `Dialog.COMMAND_HELP'.
+
+	* pytis/form/commands_.py: Nový pøíkaz `Dialog.COMMAND_HELP'.
+
+	* pytis/form/application.py (Application._cleanup): Uzavírej také
+	okno nápovìdy.
+	(Application.help): V adresáøi nápovìdy vyhledej v¹echny dostupné
+	soubory s nápovìdou v zazipované podobì a pou¾ij je.
+
 2006-01-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py (Configuration._Option_doc_dir):
