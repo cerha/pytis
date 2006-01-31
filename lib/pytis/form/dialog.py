@@ -76,7 +76,7 @@ class GenericDialog(Dialog):
     
     """    
     _COMMIT_BUTTON = None
-
+    _HELP_TOPIC = 'dialog'
     
     def __init__(self, parent, title, buttons, default=None, report=None,
                  report_format=TextFormat.PLAIN):
@@ -125,7 +125,7 @@ class GenericDialog(Dialog):
 
         """
         style = (wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX |
-                 wx.SYSTEM_MENU | wx.STAY_ON_TOP)
+                 wx.SYSTEM_MENU)
         if self._report is not None:
             style |= wx.RESIZE_BORDER
         self._dialog = dialog = wx.Dialog(self._parent, title=self._title,
@@ -287,6 +287,9 @@ class GenericDialog(Dialog):
             return self._close_dialog()
         if command == Dialog.COMMAND_COMMIT_DIALOG:
             return self._commit_dialog(**kwargs)
+        if command == Dialog.COMMAND_HELP:
+            help(topic=self._HELP_TOPIC)
+            return True
         return False
 
     def run(self):
