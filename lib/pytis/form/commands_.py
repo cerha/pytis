@@ -192,6 +192,8 @@ Command(Dialog, 'CLOSE_DIALOG',
         "Opu¹tìní dialogu bez potvrzení.")
 Command(Dialog, 'COMMIT_DIALOG',
         "Potvrzení dialogu.  Arg. 'force' simuluje stisk výchozího tlaèítka.")
+Command(Dialog, 'HELP',
+        "Vyvolání nápovìdy dialogu.")
 
 DEFAULT_KEYMAP = (
     ('F1',          Application.COMMAND_HELP),
