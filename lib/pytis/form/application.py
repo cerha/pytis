@@ -470,6 +470,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(EVENT, "Saving changed configuration failed:", str(e))
             except:
                 pass
+        try:
+            if self._help_controller is not None:
+                self._help_controller.GetFrame().Close()
+        except:
+            pass
         return True
         
     # Ostatní veøejné metody
@@ -744,15 +749,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if self._help_controller is None:
             self._help_controller = controller = wx.html.HtmlHelpController()
             controller.SetTitleFormat(_("Nápovìda")+": %s")
-            pytis_help_file = os.path.join(config.help_dir, 'index.hhp')
-            if os.path.exists(pytis_help_file):
-                controller.AddBook(pytis_help_file)
-            else:
-                msg = _("Soubor s nápovìdou systému Pytis nebyl nalezen.\n"
+            wx.FileSystem_AddHandler(wx.ZipFSHandler())
+            files = [os.path.join(config.help_dir, file)
+                     for file in os.listdir(config.help_dir)
+                     if os.path.splitext(file)[1].lower() == '.zip']
+            if not files:
+                msg = _("®ádný soubor s nápovìdou nebyl nalezen.\n"
                         "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
-                        "Zkontrolujte zda je cesta správnì\n"
+                        "Zkontrolujte zda je cesta správná\n"
                         "a zda adresáø obsahuje soubory nápovìdy.")
                 run_dialog(Warning, msg % config.help_dir)
+            for file in files:
+                controller.AddBook(file)
         self._help_controller.Display((topic or 'index')+'.html')
             
     def exit(self, quietly=False):
