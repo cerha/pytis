@@ -319,7 +319,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 alignment = wx.ALIGN_LEFT
             attr.SetAlignment(alignment, wx.CENTER)
             # editor
-            if c.editable() in (Editable.ALWAYS, Editable.ONCE):
+            if c.editable() in (Editable.ALWAYS, Editable.ONCE) \
+                   or isinstance(c.editable(), Computer):
                 self.editable = True
                 e = _grid.InputFieldCellEditor(self._parent, self._table, self,
                                                c, self._data, registration)
