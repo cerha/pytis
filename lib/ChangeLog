@@ -1,3 +1,8 @@
+2006-02-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._displayed_columns_menu): Zobrazuj
+	v menu `column_label', ne `label'.
+
 2006-01-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py (SearchDialog._HELP_TOPIC)

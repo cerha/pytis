@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-01-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: V menu zobrazených sloupcù se nyní zobrazeuje
+	`column_label', ne `label'.
+		
 2006-01-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pokud pøi vyvolání formuláøe není nalezen po¾adovaný
