@@ -35,7 +35,15 @@ CHYBY:
 
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
-   
+ * Chybné zobrazení záznamu z jiné tabulky pøi zapnutém filtrování.
+
+   Pøi zobrazení záznamu z jiné tabulky (napø. pøes kontextové menu øádku) je
+   zobrazen pøíslu¹ný formuláø a vyhledán záznam.  Pokud jsem v¹ak ji¾ tento
+   formuláø mìl pøedtím otevøený a nad ním zapnutý filter, nemusí se hledaný
+   záznam ve formuláøi nacházet.  To v¹ak není nijak indikováno a je zvýraznìn
+   øádek, který pravdìpodobnì odpovídá poøadí záznamu v nevyfiltrované
+   tabulce.  V takové situaci je tøeba ohlásit, ¾e záznam nebyl nalezen.
+
 NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
