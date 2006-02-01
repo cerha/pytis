@@ -9,6 +9,9 @@
 	* BUGFIX: V menu zobrazených sloupcù se nyní zobrazeuje
 	`column_label', ne `label'.
 		
+	* BUGFIX: Sloupce, které mají editovatelnost urèenu computerem,
+	nyní nejsou nastavovány jako read only.
+
 2006-01-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pokud pøi vyvolání formuláøe není nalezen po¾adovaný

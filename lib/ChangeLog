@@ -2,6 +2,8 @@
 
 	* pytis/form/list.py (ListForm._displayed_columns_menu): Zobrazuj
 	v menu `column_label', ne `label'.
+	(ListForm._init_col_attr): Pokud je editovatelnost urèena
+	computerem, nastav sloupec jako editovatelný.
 
 2006-01-31  Tomas Cerha  <cerha@brailcom.org>
 
