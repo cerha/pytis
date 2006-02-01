@@ -1,5 +1,16 @@
 2006-02-01  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (EditForm.__init__): Volej
+	`self._init_inserted_row()' namísto výbìru `self._inserted_row()'
+	zde.
+	(EditForm._inserted_row, PopupEditForm._inserted_row): Metody
+	zru¹eny.
+	(EditForm._init_inserted_row, PopupEditForm._init_inserted_row):
+	Nové metody.
+	(PopupEditForm._on_next_button, PopupEditForm._on_skip_button):
+	Volej `self._init_inserted_row()' namísto výbìru
+	`self._inserted_row()' zde.
+
 	* pytis/form/list.py (ListForm._displayed_columns_menu): Zobrazuj
 	v menu `column_label', ne `label'.
 	(ListForm._init_col_attr): Pokud je editovatelnost urèena
