@@ -1306,7 +1306,7 @@ class EditForm(LookupForm, TitledForm):
                 f.enable()
         if self._mode == self.MODE_INSERT:
             # Inicializuji prázdný záznam.
-            self._select_row(self._inserted_row())
+            self._init_inserted_row()
         if isinstance(self._parent, wx.Dialog):
             wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
@@ -1338,8 +1338,8 @@ class EditForm(LookupForm, TitledForm):
         # Other attributes
         self._fields = []
 
-    def _inserted_row(self):
-        return None
+    def _init_inserted_row(self):
+        self._select_row(None)
         
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políèek."""
@@ -1782,21 +1782,22 @@ class PopupEditForm(PopupForm, EditForm):
         sizer.Add(panel, expansion, wx.EXPAND)
         return field
 
-    def _inserted_row(self):
-        i = self._inserted_data_pointer
+    def _init_inserted_row(self):
+        super(PopupEditForm, self)._init_inserted_row()
         data = self._inserted_data
         if data is not None:
+            i = self._inserted_data_pointer
             if i < len(data):
                 self.set_status('progress', "%d/%d" % (i+1, len(data)))
                 self._inserted_data_pointer += 1
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
                 ok_button.Enable(i == len(data)-1)
-                return data[i]
+                for id, value in data[i].items():
+                    self._field(id).set_value(value.export())
             else:
                 self.set_status('progress', '')
                 run_dialog(Message, _("V¹echny záznamy byly zpracovány."))
                 self._inserted_data = None
-        return None
 
     def _on_cancel_button(self, event):
         i = self._inserted_data_pointer
@@ -1814,12 +1815,12 @@ class PopupEditForm(PopupForm, EditForm):
         if result:
             message(_("Záznam ulo¾en"))
             refresh()
-            self._select_row(self._inserted_row())
+            self._init_inserted_row()
 
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
         message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
-        self._select_row(self._inserted_row())
+        self._init_inserted_row()
 
     
     def _buttons(self):
