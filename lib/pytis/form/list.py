@@ -725,7 +725,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _displayed_columns_menu(self, col):
         return Menu(_("Zobrazené sloupce"),
-                    [CheckItem(c.label(),
+                    [CheckItem(c.column_label(),
                                command=ListForm.COMMAND_TOGGLE_COLUMN,
                                args=dict(column_id=c.id(), col=col),
                                state=lambda a, c=c: c in self._columns)
