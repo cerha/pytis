@@ -1,5 +1,13 @@
 CHYBY:
 
+ * Chyba v ukládání nastavení sloupeèkù.
+   V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.
+   Pøes nabídku "Spustit formuláø" jsem si spustil defs ZakazkaSet:NAAN a skryl
+   jsem si první dva sloupeèky. 
+   Vyskoèil jsem z ISASu a pøidal se do skupiny isas_admin.	
+   Spustil jsem si ISAS, napsal heslo a ke konci ke¹ování defsù to spadlo.	
+   Pomáhá jedinì update bv_users_cfg set saved_config = NULL;
+
  * Skrytí sloupce po pøedchozí inline editaci skonèí na SEGFAULT.
 
  * Aktualizace políèka `data-changed' ve stavové øádce.
