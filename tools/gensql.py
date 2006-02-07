@@ -1359,6 +1359,7 @@ class _GsqlRaw(_GsqlSpec):
         result = self._sql + '\n'
         if self._file_name:
             result = '''
+            
 ---------------------------
 -- Included file: %s --
 ---------------------------
@@ -1367,6 +1368,88 @@ class _GsqlRaw(_GsqlSpec):
 
 -- End of included file: %s
 ''' % (self._file_name, result, self._file_name)
+        return result
+
+    def reoutput(self):
+        sys.stdout.write(
+            _gsql_warning("Raw SQL commands not considered: %s" %
+                          self.name()))
+        return super(_GsqlRaw, self).reoutput()
+
+    def db_update(self, connection):
+        return _gsql_warning('Raw command not considered: %s' % self.name())
+
+
+class _GviewsqlRaw(_GsqlSpec):
+    """View definované prostými SQL pøíkazy."""
+
+   
+    def __init__(self, name, columns, fromitems, where=None, 
+                 groupby=None, having=None,
+                 insert=None, update=None, delete=None,
+                 **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          name -- název view
+          columns -- textovì vyjmenované sloupce
+          fromitems -- textovì vyjmenované relace a joins
+          where -- textovì vyjmenované podmínky
+          groupby -- textovì vyjmenované GROUP BY
+          having -- textovì vyjmenované HAVING
+          insert -- None nebo textovì vyjmenované akce pro insert rule
+          update -- None nebo textovì vyjmenované akce pro update rule
+          delete -- None nebo textovì vyjmenované akce pro delete rule
+          kwargs -- argumenty pøedané konstruktoru pøedka
+        """
+        super(_GviewsqlRaw, self).__init__(name, **kwargs)
+        self._columns = columns
+        self._fromitems = fromitems
+        self._where = where
+        self._groupby = groupby
+        self._having = having
+        self._insert = insert
+        self._update = update
+        self._delete = delete
+
+    def _format_rule(self, kind, action):
+        suffixes = {'INSERT': 'ins',
+                    'UPDATE': 'upd',
+                    'DELETE': 'del',
+                    }
+        if action is None:
+            body = 'NOTHING'
+        elif is_sequence(action):
+            body = '(%s;\n    %s)' % (body, string.join(action, ';\n    '))
+        else:
+            body = action
+        rule = ("CREATE OR REPLACE RULE %s_%s\n"
+                "AS ON %s TO %s DO INSTEAD\n"
+                "%s;\n\n") % (self._name, suffixes[kind],
+                           kind, self._name, body)
+        return rule
+
+    def output(self):
+        body = "SELECT %s\nFROM %s\n" % (self._columns, self._fromitems)
+        if self._where:
+            body += "WHERE %s\n" % self._where
+        if self._groupby:
+            body += "GROUP BY %s\n" % self._groupby
+        if self._having:
+            body += "HAVING %s\n" % self._having
+        result = "CREATE OR REPLACE VIEW %s AS\n%s;\n\n" % \
+                 (self._name, body)
+        for kind, action in (('INSERT', self._insert),
+                             ('UPDATE', self._update),
+                             ('DELETE', self._delete)):
+            result = result + self._format_rule(kind, action)
+        if self._doc is not None:
+            doc = "COMMENT ON VIEW %s IS '%s';\n" % (self._name,
+                                                     self._doc)
+        result = result + self._revoke_command()
+        for g in self._grant:
+            result = result + self._grant_command(g)
         return result
 
     def reoutput(self):
@@ -1628,6 +1711,11 @@ def sql_raw(text, name=None, depends=()):
       
     """
     return _gsql_process(_GsqlRaw, (text,), {'name': name, 'depends': depends})
+
+
+def view_sql_raw(*args, **kwargs):
+    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GviewsqlRaw."""
+    return _gsql_process(_GviewsqlRaw, args, kwargs)
 
 
 def sql_raw_include(file_name, depends=()):

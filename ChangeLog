@@ -1,3 +1,8 @@
+2006-02-07  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GviewsqlRaw): Nová tøída.
+	(view_sql_raw): Nová funkce.
+
 2005-12-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* config/config.py: Aktualizováno.
