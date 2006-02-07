@@ -57,6 +57,7 @@ import re
 import string
 import sys
 import UserDict
+import types
 
 from pytis.util import *
 import pytis.data
@@ -1431,6 +1432,8 @@ class _GviewsqlRaw(_GsqlSpec):
         return rule
 
     def output(self):
+        if isinstance(self._columns, types.TupleType):
+            self._columns = ', '.join(self._columns)
         body = "SELECT %s\nFROM %s\n" % (self._columns, self._fromitems)
         if self._where:
             body += "WHERE %s\n" % self._where

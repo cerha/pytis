@@ -2,6 +2,7 @@
 
 	* tools/gensql.py (_GviewsqlRaw): Nová tøída.
 	(view_sql_raw): Nová funkce.
+	(_GviewsqlRaw.output): Umo¾ni pøedání columns jako tuple.
 
 2005-12-23  Tomas Cerha  <cerha@brailcom.org>
 
