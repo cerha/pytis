@@ -1,11 +1,4 @@
 CHYBY:
-
- * Chyba v ukládání nastavení sloupeèkù.
-   Do pou¾ívaného defsu jsem vyjmenoval sloupeèky parametrem columns a pøi
-   spu¹tìní defsu mì upozornila hlá¹ka "Specifikace sloupcù formuláøe byla
-   zmìnìna. ... Chcete pou¾ít nové výchozí nastavení sloupcù?". Zadal jsem Ano
-   a vyhodila výjimku AttributeError: 'NoneType' object has no attribute 'id'.
-   Pøi zmáèknutí Ne to probìhlo v pohodì.
  
  * Chyba v ukládání nastavení sloupeèkù.
    V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.
