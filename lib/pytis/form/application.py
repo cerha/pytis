@@ -58,7 +58,24 @@ def run_application(resolver=None):
         resolver = FileResolver(config.def_dir)
     Application(resolver).run()
 
+    
+class NullApplication:
+    # Toto je hack, který umo¾òuje natáhnout defsy bez toho, aby bì¾elo
+    # u¾ivatelské rozhraní.  Defsy toti¾ èasto pou¾ívají globální funkce z
+    # application.  Bude tøeba to zmìnit, abychom se tohoto mohli zbavit.
+    # Proto¾e je to jen doèasný hack, nebyla ani snaha deklarovat spoleèné
+    # vlastnosti obou aplikací v nadtøídì...
+    def __init__(self, resolver):
+        self._resolver = resolver
+        global _application
+        _application = self
+    def resolver(self):
+        return self._resolver
+    def run_dialog(self, *args, **kwargs):
+        log(OPERATIONAL, "Pokus o spu¹tìní dialogu:", (args, kwargs))
 
+    
+    
 class Application(wx.App, KeyHandler, CommandHandler):
     """Aplikace systému Pytis.
 
@@ -1132,4 +1149,3 @@ def recent_forms_menu():
 def help(topic=None):
     """Zobraz dané téma v proholí¾eèi nápovìdy."""
     return _application.help(topic)
-    
