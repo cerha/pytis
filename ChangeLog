@@ -1,5 +1,7 @@
 2006-02-10  Pavel Hanak  <hanak@asellus.cz>
 
+	* lib/pytis/extensions/__init__.py: 	
+
 	* lib/pytis/extensions/www.py (DBTable): Nová funkce.
 
 2006-01-26  Petr Malivanek  <malivanek@asellus.cz>
