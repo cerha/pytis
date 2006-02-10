@@ -65,7 +65,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Seznam aktivaèních kategorií pro tuto tøídu."""
 
     _STATUS_FIELDS = ()
-    _DESCR = None
+    DESCR = None
 
     def get_command_handler_instance(cls, application):
         return application.current_form()
@@ -292,8 +292,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def descr(self):
         """Vra» textový popis typu formuláøe jako øetìzec."""
-        if self._DESCR is not None:
-            return self._DESCR
+        if self.DESCR is not None:
+            return self.DESCR
         else:
             return self.__class__.__name__
         
@@ -1709,6 +1709,8 @@ class EditForm(LookupForm, TitledForm):
     
 class PopupEditForm(PopupForm, EditForm):
     """Stejné jako 'EditForm', av¹ak v popup podobì."""
+
+    DESCR = _("editaèní formuláø")
     
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -1880,7 +1882,7 @@ class ShowForm(EditForm):
 
     """
 
-    _DESCR = _("náhled")
+    DESCR = _("náhledový formuláø")
 
     def _init_attributes(self, mode=EditForm.MODE_VIEW, **kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, **kwargs)
@@ -1907,7 +1909,7 @@ class BrowsableShowForm(ShowForm):
     jeden záznam zobrazený v Layoutu editaèního formuláøe.
     
     """
-    
+        
     def __init__(self, *args, **kwargs):
         super_(BrowsableShowForm).__init__(self, *args, **kwargs)
         self._init_select()
