@@ -265,9 +265,10 @@ def dbselect(data_spec, *args, **kwargs):
         
     Vrací v¹echny øádky vrácené z databáze jako list.
     
-    """    
+    """
     if isinstance(data_spec, types.StringType):
-        data_spec = pytis.form.resolver().get(data_spec, 'data_spec')
+        resolver = FileResolver(config.def_dir)
+        data_spec = resolver.get(data_spec, 'data_spec')
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
     condition=None
@@ -889,7 +890,7 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
     if not inputfile:
         pytis.form.run_dialog(pytis.form.Warning, _("Textový soubor nenalezen"))
         return
-    path = os.path.join(config.doc_dir, inputfile)
+    path = os.path.join(config.help_dir, inputfile)
     if not os.path.exists(path):
         dir, xx = os.path.split(os.path.realpath(pytis.extensions.__file__))
         p = os.path.normpath(os.path.join(dir, '../../../doc', inputfile))
