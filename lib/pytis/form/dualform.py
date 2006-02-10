@@ -66,7 +66,7 @@ class DualForm(Form):
     Tyto konkrétní konfigurace jsou realizovány potomky této tøídy.
 
     """
-    _DESCR = _("duální formuláø")
+    DESCR = _("duální formuláø")
     
     def get_command_handler_instance(cls, application):
         return application.top_window()
@@ -360,6 +360,7 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
     prostøednictvím vazebních sloupcù daných specifikací `DualSpec'.
     
     """
+
     def _create_main_form(self, parent, **kwargs):
         dualform = self
         class _MainBrowseForm(BrowseForm):
@@ -447,7 +448,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
     (napø. výsledky agregací nad daty horního formuláøe atd.).
 
     """
-    _DESCR = _("duální náhled")
+    DESCR = _("duální náhled")
     
     def _create_main_form(self, parent, **kwargs):
         return BrowseForm(parent, self._resolver, self._name, guardian=self,
