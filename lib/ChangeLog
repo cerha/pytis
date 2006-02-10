@@ -1,3 +1,15 @@
+2006-02-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm.DESCR, CodebookForm.DESCR): Nová konstanta.
+
+	* pytis/form/application.py (NullApplication): Nová tøída.
+
+	* pytis/form/dualform.py (DualForm, BrowseShowDualForm): `_DESCR'
+	-> `DESCR'.
+
+	* pytis/form/form.py (Form._DESCR): Pøejmenováno na `DESCR'.
+	(PopupEditForm, ShowForm, Form.descr): `_DESCR' -> `DESCR'.
+
 2006-02-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (EditForm.__init__): Volej
