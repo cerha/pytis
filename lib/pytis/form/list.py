@@ -77,6 +77,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
+    DESCR = _("øádkový formuláø")
 
     def __init__(self, *args, **kwargs):
         super_(ListForm).__init__(self, *args, **kwargs)
@@ -1844,6 +1845,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
     byl formuláø ukonèen jinak ne¾ výbìrem záznamu, je vrácena hodnota 'None'.
 
     """
+    DESCR = _("èíselník")
 
     _DEFAULT_WINDOW_HEIGHT = 500
 
