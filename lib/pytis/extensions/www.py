@@ -19,7 +19,7 @@
 """Nástroje pro generování HTML na základì dat z pytisu."""
 
 import HyperText
-from HyperText.HTML import TABLE
+from HyperText.HTML import TABLE, TR, TD
 from pytis.extensions import dbselect
 
 def DBTable(spec, columns,
