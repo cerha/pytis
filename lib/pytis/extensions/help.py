@@ -72,7 +72,8 @@ class ItemNode(lcg.ContentNode):
             info.append(("Typ formuláøe",
                          '%s (%s)' % (form.DESCR.capitalize(), form.__name__)))
             if not issubclass(form, pytis.form.ConfigForm):
-                if issubclass(form, pytis.form.BrowseDualForm):
+                if issubclass(form, pytis.form.DualForm) and \
+                       not issubclass(form, pytis.form.DescriptiveDualForm):
                     resolver = pytis.form.resolver()
                     dual = resolver.get(name, 'dual_spec')
                     node_name = name + '-dual'
@@ -214,7 +215,8 @@ class DualDescrNode(DescrNode):
         return text
     
     def _specific_info(self):
-        return [_fieldset(self, ((_("Horní formuláø"), \
+        return [lcg.HorizontalSeparator(self),
+                _fieldset(self, ((_("Horní formuláø"), \
                                   "[%s]" % self._dual_spec.main_name()),
                                  (_("Dolní formuláø"),
                                   "[%s]" % self._dual_spec.side_name())))]
@@ -243,7 +245,6 @@ class DescrIndex(lcg.ContentNode):
         cls = lambda name: name.endswith('-dual') and DualDescrNode or DescrNode
         return [self._create_child(cls(name), name, subdir='descr')
                 for name in _used_defs]
-
 
 # def export(c):
 #     if isinstance(c, (lcg.TextContent, lcg.WikiText)):
