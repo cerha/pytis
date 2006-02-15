@@ -41,162 +41,165 @@ definujeme na jediném místì v tomto modulu.
 from pytis.form import *
     
 Command(Application, 'EXIT',
-        "Ukonèení aplikace.")
+        "Ukonèení aplikace")
 Command(Application, 'HELP',
-        "Vyvolání nápovìdy.")
+        "Vyvolání nápovìdy")
 Command(Application, 'BREAK',
-        "Pøeru¹ení aktuálnì provádìné operace.")
+        "Pøeru¹ení aktuálnì provádìné operace")
 Command(Application, 'REFRESH',
-        "Vy¾ádání obnovení obsahu aktivního formuláøe.")
+        "Vy¾ádání obnovení obsahu aktivního formuláøe")
 Command(Application, 'NEW_RECORD',
-        "Vlo¾ení nového záznamu.")
+        "Vlo¾ení nového záznamu")
 Command(Application, 'RUN_FORM',
-        "Spu¹tìní formuláøe.")
+        "Spu¹tìní formuláøe")
 Command(Application, 'RUN_PROCEDURE',
-        "Spu¹tìní procedury.")
+        "Spu¹tìní procedury")
 Command(Application, 'LEAVE_FORM',
-        "Odstranìní aktivního okna formuláøe z aplikace.")
+        "Odstranìní aktivního okna formuláøe z aplikace")
 Command(Application, 'RAISE_FORM',
-        "Vyzvednutí okna formuláøe v oknì aplikace.")
+        "Vyzvednutí okna formuláøe v oknì aplikace")
 Command(Application, 'PREV_FORM',
-        "Vyzvednutí okna pøedchozího formuláøe.")
+        "Vyzvednutí okna pøedchozího formuláøe")
 Command(Application, 'NEXT_FORM',
-        "Vyzvednutí okna následujícího formuláøe.")
+        "Vyzvednutí okna následujícího formuláøe")
 Command(Application, 'SHOW_POPUP_MENU',
-        "Zobraz kontextové menu aktivního prvku.")
+        "Zobraz kontextové menu aktivního prvku")
 Command(Application, 'CLEAR_RECENT_FORMS',
-        "Vyèisti menu poslednì otevøených formuláøù.")
+        "Vyèisti menu poslednì otevøených formuláøù")
 Command(Form, 'PRINT',
-        "Tisk aktuálního obsahu formuláøe.")
+        "Tisk aktuálního obsahu formuláøe")
+Command(Form, 'HELP',
+        "Zobrazení nápovìdy formuláøe")
 Command(Form, 'RELOAD_FORM_STATE',
-        "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty.")
+        "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty")
 Command(LookupForm, 'FILTER',
-        "Filtrování záznamù.")
+        "Filtrování záznamù")
 Command(LookupForm, 'JUMP',
-        "Skok na záznam.")
+        "Skok na záznam")
 Command(LookupForm, 'SEARCH',
-        "Hledání záznamu.")
+        "Hledání záznamu")
 Command(LookupForm, 'SORT_COLUMN',
-        "Setøídìní podle sloupce.")
+        "Setøídìní podle sloupce")
 Command(RecordForm, 'NEW_RECORD',
-        "Vlo¾ení nového záznamu pomocí editaèního formuláøe.")
+        "Vlo¾ení nového záznamu pomocí editaèního formuláøe")
 Command(RecordForm, 'IMPORT_INTERACTIVE',
-        "Interaktivní import dat z CSV souboru.")
+        "Interaktivní import dat z CSV souboru")
 Command(RecordForm, 'EDIT_RECORD',
-        "Editace aktuálního záznamu v editaèním formuláøi.")
+        "Editace aktuálního záznamu v editaèním formuláøi")
 Command(RecordForm, 'DELETE_RECORD',
-        "Vymazání editovaného záznamu z databáze.")
+        "Vymazání editovaného záznamu z databáze")
 Command(ListForm, 'ACTIVATE',
-        "Aktivaèní funkce pro aktuální øádek formuláøe. (arg. 'alternate')")
+        "Aktivaèní funkce pro aktuální øádek formuláøe") # arg. 'alternate'
 Command(ListForm, 'SHOW_CELL_CODEBOOK',
-        "Vyvolání èíselníku aktivní buòky øádkového formuláøe.")
+        "Vyvolání èíselníku aktivní buòky øádkového formuláøe")
 Command(ListForm, 'SELECT_CELL',
-        "Výbìr buòky seznamu.")
+        "Výbìr buòky seznamu")
 Command(ListForm, 'FIRST_COLUMN',
-        "Pøechod na první sloupec tabulky.")
+        "Pøechod na první sloupec tabulky")
 Command(ListForm, 'LAST_COLUMN',
-        "Pøechod na poslední sloupec tabulky.")
+        "Pøechod na poslední sloupec tabulky")
 Command(ListForm, 'INCREMENTAL_SEARCH',
-        "Prefixové inkrementální hledání záznamu. (arg. 'full')")
+        "Prefixové inkrementální hledání záznamu") # arg. 'full'
 Command(ListForm, 'EDIT',
-        "Vyvolání inline editace aktuální buòky.")
+        "Vyvolání inline editace aktuální buòky")
 Command(ListForm, 'COPY_CELL',
-        "Zkopírování obsahu aktuální buòky do clipboardu.")
+        "Zkopírování obsahu aktuální buòky do clipboardu")
 Command(ListForm, 'FILTER_BY_CELL',
-        "Vyfiltrování formuláøe podle hodnoty aktuální buòky.")
+        "Vyfiltrování formuláøe podle hodnoty aktuální buòky")
 Command(ListForm, 'EXPORT_CSV',
-        "Export øádkového formuláøe do csv souboru.")
+        "Export øádkového formuláøe do csv souboru")
 Command(ListForm, 'LINE_COMMIT',
-        "Dokonèení editace záznamu (ulo¾ení).")
+        "Dokonèení editace záznamu (ulo¾ení)")
 Command(ListForm, 'LINE_ROLLBACK',
-        "Kompletní zru¹ení editace záznamu. (arg. 'soft')")
+        "Kompletní zru¹ení editace záznamu") # arg. 'soft'
 Command(ListForm, 'FINISH_EDITING',
-        "Opu¹tìní editace øádku.")
+        "Opu¹tìní editace øádku")
 Command(ListForm, 'CELL_COMMIT',
-        "Ukonèení editace políèka s novou hodnotou.")
+        "Ukonèení editace políèka s novou hodnotou")
 Command(ListForm, 'CELL_ROLLBACK',
-        "Ukonèení editace políèka s vrácením pùvodní hodnoty.")
+        "Ukonèení editace políèka s vrácením pùvodní hodnoty")
 Command(ListForm, 'NEW_LINE',
-        "In-line vlo¾ení nového záznamu. (arg. 'before' a 'copy')")
+        "In-line vlo¾ení nového záznamu") # arg. 'before' a 'copy'
 Command(ListForm, 'SET_GROUPING_COLUMN',
-        "Zmìna sloupce vizuáního seskupování.")
+        "Zmìna sloupce vizuáního seskupování")
 Command(ListForm, 'RESIZE_COLUMN',
-        "Roz¹íøení/zù¾ení sloupce.  Argument 'diff' udává poèet +/- pixelù.")
+        "Roz¹íøení/zù¾ení sloupce") # arg. 'diff' udává poèet +/- pixelù
 Command(ListForm, 'MOVE_COLUMN',
-        "Pøesunutí sloupce doprava/doleva.  'diff' udává +/- o kolik sloupcù.")
+        "Pøesunutí sloupce doprava/doleva") # arg. 'diff' +/- o kolik sloupcù
 Command(ListForm, 'TOGGLE_COLUMN',
-        "Skrytí/zobrazení sloupce.")
+        "Skrytí/zobrazení sloupce")
 Command(ListForm, 'RESET_COLUMNS',
-        "Vrácení výchozího nastavení sloupcù.")
+        "Vrácení výchozího nastavení sloupcù")
 Command(ListForm, 'CONTEXT_MENU_ACTION',
-        """Akce kontextového menu øádku tabulky.
-        
-	Je urèen k vytváøení u¾ivatelem definovaných akcí v kontextovém menu
-	øádku BrowseFormu.
+        "Akce kontextového menu øádku tabulky")
+# 	Tento Pøíkaz je urèen k vytváøení u¾ivatelem definovaných akcí v
+# 	kontextovém menu øádku BrowseFormu.
 
-	Pøíkaz mù¾e mít libovolné argumenty, av¹ak dva z nich jsou
-	zpracovány odli¹nì:
+# 	Pøíkaz mù¾e mít libovolné argumenty, av¹ak dva z nich jsou
+# 	zpracovány odli¹nì:
 
-           `handler' -- je povinný a musí odkazovat na funkci, která akci
-              provede.
+#            `handler' -- je povinný a musí odkazovat na funkci, která akci
+#               provede.
 
-           `enabled' -- funkce, vracející pravdu, pokud je pøíkaz aktivní a
-              nepravdu v opaèném pøípadì.  Argument je nepovinný a pokud není
-              uveden, je pøíkaz v¾dy aktivní.
+#            `enabled' -- funkce, vracející pravdu, pokud je pøíkaz aktivní a
+#               nepravdu v opaèném pøípadì.  Argument je nepovinný a pokud není
+#               uveden, je pøíkaz v¾dy aktivní.
 
-	Funkce `handler' i `enabled' dostanou jako klíèové argumenty v¹echny
-	ostatní argumenty pøíkazu, vyjma sebe sama (argumentù `handler' a
-	`enabled').
+# 	Funkce `handler' i `enabled' dostanou jako klíèové argumenty v¹echny
+# 	ostatní argumenty pøíkazu, vyjma sebe sama (argumentù `handler' a
+# 	`enabled').
 
-        Navíc, pokud tyto funkce pøijímají jeden pozièní argument,
-	dostanou jako první argument instanci PresentedRow aktuálního øádku,
-	nad kterým byla akce vyvolána.  Pokud pøijímají dva pozièní argumenty,
-	bude na prvním místì pøedán je¹tì datový objekt formuláøe.""")
+#         Navíc, pokud tyto funkce pøijímají jeden pozièní argument,
+# 	dostanou jako první argument instanci PresentedRow aktuálního øádku,
+# 	nad kterým byla akce vyvolána.  Pokud pøijímají dva pozièní argumenty,
+# 	bude na prvním místì pøedán je¹tì datový objekt formuláøe.
+
 Command(EditForm, 'COMMIT_RECORD',
-        "Ukonèení editaèního formuláøe s ulo¾ením zmìn.")
+        "Ukonèení editaèního formuláøe s ulo¾ením zmìn")
 Command(EditForm, 'NAVIGATE',
-        "Navigace mezi políèky editaèního formuláøe. (arg. 'back')")
+        "Navigace mezi políèky editaèního formuláøe") # arg. 'back'
 Command(BrowsableShowForm, 'NEXT_RECORD',
-        "Pøechod na dal¹í záznam.")
+        "Pøechod na dal¹í záznam")
 Command(BrowsableShowForm, 'PREVIOUS_RECORD',
-        "Pøechod na pøedchozí záznam.")
+        "Pøechod na pøedchozí záznam")
 Command(BrowsableShowForm, 'FIRST_RECORD',
-        "Pøechod na první záznam.")
+        "Pøechod na první záznam")
 Command(BrowsableShowForm, 'LAST_RECORD',
-        "Pøechod na poslední záznam.")
+        "Pøechod na poslední záznam")
 Command(DualForm, 'OTHER_FORM',
-        "Pøechod mezi podformuláøi duálního formuláøe.")
+        "Pøechod mezi podformuláøi duálního formuláøe")
 Command(PrintForm, 'NEXT_PAGE',
-        "Pøechod na dal¹í stránku tiskového náhledu.")
+        "Pøechod na dal¹í stránku tiskového náhledu")
 Command(PrintForm, 'PREVIOUS_PAGE',
-        "Pøechod na pøedchozí stránku tiskového náhledu.")
+        "Pøechod na pøedchozí stránku tiskového náhledu")
 Command(InputField, 'RESET_FIELD',
-        "Vrácení pùvodní hodnoty vstupního políèka.")
+        "Vrácení pùvodní hodnoty vstupního políèka")
 Command(InputField, 'COMMIT_FIELD',
-        "Úspì¹né ukonèení editace vstupního políèka.")
+        "Úspì¹né ukonèení editace vstupního políèka")
 Command(InputField, 'LEAVE_FIELD',
-        "Odchod z editace vstupního políèka.")
+        "Odchod z editace vstupního políèka")
 Command(Invocable, 'INVOKE_SELECTION',
-        "Vyvolání výbìru hodnoty vstupního políèka. (arg. 'alternate')")
+        "Vyvolání výbìru hodnoty vstupního políèka") # arg. 'alternate'
 Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
-        "Vyvolání alternativního výbìru hodnoty políèka.")
+        "Vyvolání alternativního výbìru hodnoty políèka")
 Command(ListField, 'SELECT',
-        "Výbìr aktuálního záznamu.")
+        "Výbìr aktuálního záznamu")
 Command(ListField, 'SHOW_SELECTED',
-        "Výbìr aktuálního záznamu.")
+        "Výbìr aktuálního záznamu")
 Command(ListField, 'INVOKE_EDIT_FORM',
-        "Vyvolání editaèního formuláøe nad akt. záznamem.")
+        "Vyvolání editaèního formuláøe nad akt. záznamem")
 Command(ListField, 'INVOKE_BROWSE_FORM',
-        "Zobrazení aktuálního záznamu v novém formuláøi.")
+        "Zobrazení aktuálního záznamu v novém formuláøi")
 Command(Dialog, 'CLOSE_DIALOG',
-        "Opu¹tìní dialogu bez potvrzení.")
+        "Opu¹tìní dialogu bez potvrzení")
 Command(Dialog, 'COMMIT_DIALOG',
-        "Potvrzení dialogu.  Arg. 'force' simuluje stisk výchozího tlaèítka.")
+        "Potvrzení dialogu") # arg. 'force' simuluje stisk výchozího tlaèítka
 Command(Dialog, 'HELP',
-        "Vyvolání nápovìdy dialogu.")
+        "Vyvolání nápovìdy dialogu")
 
 DEFAULT_KEYMAP = (
-    ('F1',          Application.COMMAND_HELP),
+    ('F1',          Application.COMMAND_HELP(topic='pytis')),
+    ('Ctrl-F1',     Form.COMMAND_HELP),
     ('Ctrl-g',      Application.COMMAND_BREAK),
     ('Escape',      Application.COMMAND_LEAVE_FORM),
     ('Ctrl-Down',   Application.COMMAND_NEXT_FORM),
@@ -263,7 +266,7 @@ DEFAULT_KEYMAP = (
 
 if __debug__:
     Command(Application, 'CUSTOM_DEBUG',
-            "Pomocný pøíkaz pro vyvolání pomocné ladící funkce.")
+            "Pomocný pøíkaz pro vyvolání pomocné ladící funkce")
     DEFAULT_KEYMAP += \
         ((('Ctrl-x', 'd'), Application.COMMAND_CUSTOM_DEBUG),)
 
