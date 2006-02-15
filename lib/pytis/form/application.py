@@ -193,6 +193,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._modals = Stack()
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
         self._help_controller = None
+        self._help_files = self._find_help_files()
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
         assert is_sequence(custom_keymap), "Specifikace klávesových zkratek " +\
@@ -217,19 +218,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if not isinstance(self._recent_forms, types.ListType):
             self._recent_forms = config.application_state['recent_forms'] = []
         # Initialize the menubar.
-        command_menu_items = []
-        for group in FORM_COMMAND_MENU:
-            if command_menu_items:
-                command_menu_items.append(MSeparator())
-            for title, cmd in group:
-                if is_sequence(cmd):
-                    cmd, args = cmd
-                else:
-                    args = {}
-                command_menu_items.append(MItem(title, command=cmd, args=args))
-        menus = self._spec('menu') + (
-            Menu(self._WINDOW_MENU_TITLE, ()),
-            Menu(_("Pøíkazy"), command_menu_items))
+        menus = list(self._spec('menu'))
+        menus.append(Menu(self._WINDOW_MENU_TITLE, ()))
+        self._create_command_menu(menus)
+        self._create_help_menu(menus)
         self._menubar = mb = MenuBar(self._frame, menus, self)
         # Try to find the recent forms menu.
         menu_id = mb.FindMenu(self._RECENT_FORMS_MENU_TITLE)
@@ -282,7 +274,57 @@ class Application(wx.App, KeyHandler, CommandHandler):
             result = default
         return result
 
-    
+    def _find_help_files(self):
+        import zipfile
+        result = []
+        for file in os.listdir(config.help_dir):
+            if os.path.splitext(file)[1].lower() == '.zip':
+                filename = os.path.join(config.help_dir, file)
+                zfile = zipfile.ZipFile(filename)
+                for f in zfile.namelist():
+                    if f.endswith('.hhp'):
+                        values = {}
+                        for line in zfile.read(f).splitlines():
+                            pos = line.find('=')
+                            if pos != -1:
+                                key = line[:pos].lower().strip()
+                                values[key] = line[pos+1:].strip()
+                        if values.has_key('default topic') and \
+                           values.has_key('title'):
+                            title = values['title']
+                            index = os.path.splitext(values['default topic'])[0]
+                            if values.has_key('charset'):
+                                title = unicode(title, values['charset'])
+                            result.append((filename, index, title))
+        return result
+
+    def _create_command_menu(self, menus):
+        items = []
+        for group in FORM_COMMAND_MENU:
+            if items:
+                items.append(MSeparator())
+            for title, cmd in group:
+                if is_sequence(cmd):
+                    cmd, args = cmd
+                else:
+                    args = {}
+                items.append(MItem(title, command=cmd, args=args))
+        menus.append(Menu(_("Pøíkazy"), items))
+
+    def _create_help_menu(self, menus):
+        if [m for m in menus if m.title() == _("Nápovìda")]:
+            log(OPERATIONAL, "Menu nápovìdy nalezeno - nevytváøím vlastní.")
+            return
+        items = [MItem(title, command=Application.COMMAND_HELP(topic=index))
+                 for file, index, title in self._help_files]
+        if items:
+            items.extend((MSeparator(),
+                          MItem(_("Nápovìda k aktuálnímu formuláøi"), 
+                                command=Form.COMMAND_HELP)))
+            menus.append(Menu(_("Nápovìda"), items))
+        else:
+            log(OPERATIONAL, "®ádné soubory nápovìdy nebyly nalezeny.")
+
     # Ostatní metody
 
     def _check_perm(self, perm, name):
@@ -761,24 +803,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             log(EVENT, "Není otevøen ¾ádný formuláø.")
 
+
     def help(self, topic=None):
         """Zobraz dané téma v proholí¾eèi nápovìdy."""
+        if not self._help_files:
+            msg = _("®ádný soubor s nápovìdou nebyl nalezen.\n"
+                    "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
+                    "Zkontrolujte zda je cesta správná\n"
+                    "a zda adresáø obsahuje soubory nápovìdy.")
+            run_dialog(Warning, msg % config.help_dir)
+            return
         if self._help_controller is None:
             self._help_controller = controller = wx.html.HtmlHelpController()
             controller.SetTitleFormat(_("Nápovìda")+": %s")
             wx.FileSystem_AddHandler(wx.ZipFSHandler())
-            files = [os.path.join(config.help_dir, file)
-                     for file in os.listdir(config.help_dir)
-                     if os.path.splitext(file)[1].lower() == '.zip']
-            if not files:
-                msg = _("®ádný soubor s nápovìdou nebyl nalezen.\n"
-                        "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
-                        "Zkontrolujte zda je cesta správná\n"
-                        "a zda adresáø obsahuje soubory nápovìdy.")
-                run_dialog(Warning, msg % config.help_dir)
-            for file in files:
-                controller.AddBook(file)
-        self._help_controller.Display((topic or 'index')+'.html')
+            for filename, index, title in self._help_files:
+                controller.AddBook(filename)
+        self._help_controller.Display((topic or self._help_files[0][1])+'.html')
             
     def exit(self, quietly=False):
         """Ukonèi u¾ivatelské rozhraní aplikace.
@@ -962,7 +1003,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 elif command == Application.COMMAND_EXIT:
                     self.exit()
                 elif command == Application.COMMAND_HELP:
-                    self.help()
+                    self.help(**kwargs)
                 elif command == Application.COMMAND_BREAK:
                     message(_("Stop"), beep_=True)
                 elif command == Application.COMMAND_RUN_FORM:
