@@ -140,7 +140,8 @@ class ConfigForm(PopupEditForm):
     hodnotami.
 
     """
-
+    DESCR = _("konfiguraèní formuláø")
+    
     def __init__(self, *args, **kwargs):
         kwargs['mode'] = self.MODE_EDIT
         super(ConfigForm, self).__init__(*args, **kwargs)
