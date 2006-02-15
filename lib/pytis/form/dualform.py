@@ -169,7 +169,7 @@ class DualForm(Form):
         elif command == Form.COMMAND_PRINT and \
                  kwargs.get('form') in (self._main_form, self._side_form):
             target = kwargs['form']
-        elif command == Form.COMMAND_HELP:
+        elif command == Form.COMMAND_HELP and isinstance(self._view, DualSpec):
             help(self._name.replace(':','-')+'-dual')
             return True
         else:
