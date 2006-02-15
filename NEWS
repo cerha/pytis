@@ -4,8 +4,22 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-02-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi výpoètu pozic scrollbarù pøi zobrazování postscriptu
+	bylo o¹etøeno dìlení nulou.
+	
+	* BUGFIX: Ulo¾ené polo¾ky pro menu poslednì otevøených formuláøù
+	jsou nyní zkontrolovány a pokud se pøíslu¹né specifikace nepovede
+	otevøít, je polo¾ka vynechána.  Tím je o¹etøena chyba, kdy nelze
+	nastartovat aplikaci, pokud mám v mezi poslednì otevøenými
+	formuláøi polo¾ku, její¾ specifikace byla zru¹ena èi pøejmenována.
+	
 2006-01-01  Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: Hromadné vkládání dat ze souboru nyní správnì
+	pøedvyplòuje formuláø i v kombinaci s default funkcemi.        
+	
 	* BUGFIX: V menu zobrazených sloupcù se nyní zobrazeuje
 	`column_label', ne `label'.
 		

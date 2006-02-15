@@ -1,5 +1,8 @@
 2006-02-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/output.py (PostscriptViewer.show_page): O¹etøeno
+	dìlení nulou pøi výpoètu nastavení scrollbarù.
+
 	* pytis/util/log.py (Module, Logger._retrieve_info): Pou¾ívej
 	`positive_id()' namísto `id()'.
 
@@ -24,9 +27,14 @@
 	(Application._create_help_menu, Application._create_command_menu)
 	(Application._find_help_files): Nové metody.
 	(Application.help): Vyu¾ívej seznam dostupných souborù nápovìdy
-	`self._help_files'.  Pokud nejsou dostupné ¾ádné soubory, 
+	`self._help_files'.  Pokud nejsou dostupné ¾ádné soubory, zobraz
+	v¾dy jen informaèní dialog.  Jako výchozí topic vyu¾ívej index
+	prvního nalezeného souboru nápovìdy.
 	(Application.on_command): Pøedávej argumenty pøíkazu
 	`Application.HELP' metodì `help()'.
+	(Application.can_run_form): Netoleruj neexistující specifikace.
+	(Application.OnInit): Po naètení ulo¾eného `recent_forms'
+	zkontroluj, zda dané specifikace stále existují.
 
 	* pytis/form/commands_.py: Nový pøíkaz `Form.COMMAND_HELP'.
 	Popisky pøíkazù upraveny, aby neobsahovaly argumenty a teèku na konci.
