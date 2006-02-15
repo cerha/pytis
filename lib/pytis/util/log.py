@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ class Logger(object):
                     class_name = class_.__name__
                 except:
                     pass
-                id_ = '%x' % id(s)
+                id_ = '%x' % positive_id(s)
         self._module = module
         self._class_ = class_
         self._class_name = class_name
