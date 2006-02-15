@@ -1166,15 +1166,18 @@ class MItem(object):
     _WX_KIND = wx.ITEM_NORMAL
     _used_titles = {}
     
-    def __init__(self, title, command, args={}, help='', hotkey=None):
+    def __init__(self, title, command, args=None, help='', hotkey=None):
         """Uschovej parametry.
 
         Argumenty:
 
           title -- titulek menu, neprázdný øetìzec
           command -- instance tøídy 'Command' odpovídající pøíkazu, který má
-            být pøi aktivaci této polo¾ky menu vyvolán
-          args -- dictionary argumentù pøíkazu 'command'
+            být pøi aktivaci této polo¾ky menu vyvolán.  Zde mù¾e být pøedána
+            také dvojice (COMMAND, ARGS).  V tom pøípadì je instance pøíkazu
+            prvním prvkem této dvojice a druhý prvek nahrazuje argument
+            `args', který tímto ji¾ nesmí být pøedán.
+          args -- dictionary argumentù pøíkazu 'command'.
           help -- øetìzec obsahující jednoøádkovou nápovìdu, zobrazovaný
             ve stavovém øádku pøi prùchodu pøes polo¾ku; mù¾e být prázdný
           hotkey -- horká klávesa pro okam¾itý výbìr polo¾ky menu, string nebo
@@ -1187,16 +1190,20 @@ class MItem(object):
         a tudí¾ automaticky podléhají jazykové konverzi.
 
         """
+        if is_sequence(command):
+            assert len(command) == 2
+            assert args is None
+            command, args = command
         assert is_anystring(title)
         assert isinstance(command, Command)
-        assert is_dictionary(args)
+        assert args is None or is_dictionary(args)
         assert help is None or is_anystring(help)
         assert hotkey is None or is_anystring(hotkey) or \
                is_sequence(hotkey)
         self._title = gettext_(title)
         self._hotkey = xtuple(hotkey)
         self._command = command
-        self._args = args
+        self._args = args or {}
         self._help = gettext_(help)
 
     def _on_ui_event(self, event):
