@@ -170,7 +170,7 @@ class DualForm(Form):
                  kwargs.get('form') in (self._main_form, self._side_form):
             target = kwargs['form']
         elif command == Form.COMMAND_HELP:
-            help(self._help_name())
+            help(self._name.replace(':','-')+'-dual')
             return True
         else:
             target = self._active_form
@@ -364,9 +364,6 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
     
     """
 
-    def _help_name(self):
-        return super(BrowseDualForm, self)._help_name()+'-dual'
-    
     def _create_main_form(self, parent, **kwargs):
         dualform = self
         class _MainBrowseForm(BrowseForm):
