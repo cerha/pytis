@@ -1,3 +1,39 @@
+2006-02-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/log.py (Module, Logger._retrieve_info): Pou¾ívej
+	`positive_id()' namísto `id()'.
+
+	* pytis/util/util.py (positive_id): Nová funkce.
+
+	* pytis/form/screen.py (MItem.__init__): Umo¾ni pøedat namísto
+	argumentu `command' pøímo dvojici (COMMAND, ARGS), urèující jak
+	pøíkaz, tak jeho argumenty.
+
+	* pytis/form/form.py (Form._help_name): Nová metoda.
+	(Form.on_command): O¹etøuj pøíkaz `Form.COMMAND_HELP'.
+
+	* pytis/form/dualform.py (DualForm.on_command): O¹etøuj pøíkaz `Form.COMMAND_HELP'.
+	(BrowseDualForm._help_name): Nová metoda.
+
+	* pytis/form/configui.py (ConfigForm.DESCR): Nová konstanta. 
+
+	* pytis/form/application.py (Application.OnInit): Naèítej hned pøi
+	startu seznam dostupných souborù nápovìdy.  Vytváøení menu pøíkazù
+	pøesunuto do `_create_command_menu()'.  Pøidávej také menu
+	nápovìdy s vyu¾itím `_create_help_menu()'.
+	(Application._create_help_menu, Application._create_command_menu)
+	(Application._find_help_files): Nové metody.
+	(Application.help): Vyu¾ívej seznam dostupných souborù nápovìdy
+	`self._help_files'.  Pokud nejsou dostupné ¾ádné soubory, 
+	(Application.on_command): Pøedávej argumenty pøíkazu
+	`Application.HELP' metodì `help()'.
+
+	* pytis/form/commands_.py: Nový pøíkaz `Form.COMMAND_HELP'.
+	Popisky pøíkazù upraveny, aby neobsahovaly argumenty a teèku na konci.
+	(DEFAULT_KEYMAP): Nová zkratka `Ctrl-F1' pro `Form.COMMAND_HELP'.
+	Pøíkazu `Application.HELP' na `F1' pøedávej arguemnt `topic' s
+	hodnotou `pytis'.
+
 2006-02-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm.DESCR, CodebookForm.DESCR): Nová konstanta.
