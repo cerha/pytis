@@ -12,11 +12,15 @@
 	argumentu `command' pøímo dvojici (COMMAND, ARGS), urèující jak
 	pøíkaz, tak jeho argumenty.
 
-	* pytis/form/form.py (Form._help_name): Nová metoda.
-	(Form.on_command): O¹etøuj pøíkaz `Form.COMMAND_HELP'.
+	* pytis/form/form.py (Form.on_command): O¹etøuj pøíkaz
+	`Form.COMMAND_HELP'.
+	(Form.on_command): Název topicu sestav pøímo zde.
 
-	* pytis/form/dualform.py (DualForm.on_command): O¹etøuj pøíkaz `Form.COMMAND_HELP'.
-	(BrowseDualForm._help_name): Nová metoda.
+	* pytis/form/dualform.py (DualForm.on_command): O¹etøuj pøíkaz
+	`Form.COMMAND_HELP'.
+	(DualForm.on_command): O¹etøuj `Form.COMMAND_HELP' jen pokud jde
+	duální formuláø vytvoøený nad DualSpec.
+	
 
 	* pytis/form/configui.py (ConfigForm.DESCR): Nová konstanta. 
 
