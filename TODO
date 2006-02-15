@@ -1,6 +1,13 @@
 CHYBY:
- 
+
+ * Pøi obnovì výchozích sloupcù (podle defsu) není obnoveno tøídìní atd.
+
+   Je otázka, zda v¾dy chceme obnovit také tøídìní, seskupování atd, ale
+   ka¾dopádnì by to jít mìlo, a» u¾ to budou dva rùzné pøíkazy, nebo bude jen
+   jeden který obnoví v¹e a hotovo. 
+
  * Chyba v ukládání nastavení sloupeèkù.
+
    V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.
    Pøes nabídku "Spustit formuláø" jsem si spustil defs ZakazkaSet:NAAN a skryl
    jsem si první dva sloupeèky. 
