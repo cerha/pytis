@@ -214,9 +214,22 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 setattr(config, option, value)
         log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
         # Init the recent forms list.
-        self._recent_forms = config.application_state.get('recent_forms')
-        if not isinstance(self._recent_forms, types.ListType):
-            self._recent_forms = config.application_state['recent_forms'] = []
+        recent_forms = config.application_state.get('recent_forms')
+        if not isinstance(recent_forms, types.ListType):
+            recent_forms = []
+        self._recent_forms = []
+        for title, args in recent_forms:
+            try:
+                assert issubclass(args['form_class'], Form), \
+                       'Not a valid form class: %s' % args['form_class']
+                # This is a simple way to test whether the specification
+                # still exists.
+                self.can_run_form(**args)
+            except Exception, e:
+                log(OPERATIONAL, "Ignoring recent form:", (args, e))
+                continue
+            self._recent_forms.append((title, args))
+        config.application_state['recent_forms'] = self._recent_forms
         # Initialize the menubar.
         menus = list(self._spec('menu'))
         menus.append(Menu(self._WINDOW_MENU_TITLE, ()))
@@ -657,11 +670,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def can_run_form(self, form_class, name, *args, **kwargs):
         perm = pytis.data.Permission.VIEW
-        if issubclass(form_class, pytis.form.DualForm):
-            try:
-                dual_spec = resolver().get(name, 'dual_spec')
-            except ResolverError:
-                return True
+        if issubclass(form_class, DualForm) and \
+               not issubclass(form_class, DescriptiveDualForm):
+            dual_spec = resolver().get(name, 'dual_spec')
             result = self._check_perm(perm, dual_spec.main_name()) and \
                      self._check_perm(perm, dual_spec.side_name())
         else:
