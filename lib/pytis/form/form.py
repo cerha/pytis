@@ -261,6 +261,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _on_reload_form_state(self):
         pass
     
+    def _help_name(self):
+        return self._name.replace(':', '-')
+    
     # Veøejné metody
     
     def name(self):
@@ -287,6 +290,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._form_state = copy.copy(self._initial_form_state)
             config.form_state[self._form_state_key()] = self._form_state
             self._on_reload_form_state()
+            return True
+        elif command == Form.COMMAND_HELP:
+            help(self._help_name())
             return True
         return False
 
