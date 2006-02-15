@@ -2,7 +2,7 @@
 
 # Formuláø s tiskovým preview a tiskem
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -250,7 +250,10 @@ class PostscriptViewer(wx.ScrolledWindow):
             else:
                 width, height = image.GetWidth(), image.GetHeight()
             hs, vs = width/hsteps, height/vsteps
-            self.SetScrollbars(hs, vs, width/hs + 1, height/vs + 1)
+            if hs and vs:
+                # TODO: Bráníme se dìlení nulou. Nemìli bychom v¹ak pøesto
+                # scrollbary v takovém pøípadì nìjak nastravit?
+                self.SetScrollbars(hs, vs, width/hs + 1, height/vs + 1)
             self.Refresh()
         if __debug__: log(DEBUG, 'Zobrazena stránka:', page_number)
         return page_number
