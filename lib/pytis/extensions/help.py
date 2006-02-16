@@ -172,9 +172,6 @@ class DescrNode(lcg.ContentNode):
 
     def output_file(self):
         return self.id().replace(':', '-') + '.html'
-
-    def _p(self, text):
-        return lcg.Paragraph(self, lcg.TextContent(self, text))
         
     def _info(self):
         # Create the list of relevant menu items
@@ -196,7 +193,8 @@ class DescrNode(lcg.ContentNode):
             content.extend(self.parse_wiki_file(self._id, ext='txt'))
         else:
             # The file does not exist.  Let's read the specification.
-            content.append(self._p(self._default_description_text()))
+            text = lcg.TextContent(self, self._default_description_text())
+            content.append(lcg.Paragraph(self, text))
         content.extend(self._access_rights())
         return content
             
