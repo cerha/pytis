@@ -288,8 +288,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def _find_help_files(self):
-        import zipfile
+        if not os.path.exists(config.help_dir):
+            return []
         result = []
+        import zipfile
         for file in os.listdir(config.help_dir):
             if os.path.splitext(file)[1].lower() == '.zip':
                 filename = os.path.join(config.help_dir, file)
