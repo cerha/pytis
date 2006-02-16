@@ -33,13 +33,14 @@ import sys, os
 import lcg, pytis.form, pytis.util
 
 
-global _used_defs
+global _used_defs, _menu_items
 _used_defs = []
-
+_menu_items = {}
         
 def _fieldset(parent, pairs, title=None):
     """Vra» instanci 'lcg.FieldSet' sestavenou ze seznamu dvojic øetìzcù."""
     fields = [lcg.Field(parent, lcg.TextContent(parent, l),
+                        isinstance(v, lcg.Content) and v or \
                         lcg.WikiText(parent, v)) for l,v in pairs]
     return lcg.FieldSet(parent, fields, title=title)
 
@@ -53,6 +54,19 @@ class ItemNode(lcg.ContentNode):
         
     def _title(self):
         return self._item.title()
+
+    def menu_path(self):
+        path = []
+        root_seen = False
+        for n in self._node_path():
+            if root_seen:
+                if path:
+                    path.append(lcg.TextContent(self, " -> "))
+                path.append(lcg.Link(self, n))
+            elif n.id() == 'menu':
+                root_seen = True
+        return lcg.Container(self, path)
+        
 
     def _create_content(self):
         command, args = (self._item.command(), self._item.args())
@@ -81,10 +95,15 @@ class ItemNode(lcg.ContentNode):
                 else:
                     node_name = name
                     names = (name,)
-                global _used_defs
+                global _used_defs, _menu_items
                 for n in names:
                     if n not in _used_defs:
                         _used_defs.append(n)
+
+                if _menu_items.has_key(node_name):
+                    _menu_items[node_name].append(self)
+                else:
+                    _menu_items[node_name] = [self]
                 info.append(("Náhled", "[%s] (%s)" % (node_name, name)))
         else:
             a = ', '.join(['%s=%r' % x for x in args.items()])
@@ -157,21 +176,34 @@ class DescrNode(lcg.ContentNode):
     def _p(self, text):
         return lcg.Paragraph(self, lcg.TextContent(self, text))
         
+    def _info(self):
+        # Create the list of relevant menu items
+        global _menu_items
+        if _menu_items.has_key(self._id):
+            links = [i.menu_path() for i in _menu_items[self._id]]
+            if len(links) > 1:
+                menu_items = lcg.ItemizedList(self, links)
+            else:
+                menu_items = links[0]
+        else:
+            menu_items = _("®ádné")
+        return ((_("Název specifikace"), self._name(self._id)),
+                (_("Menu"), menu_items))
+        
     def _create_content(self):
-        # Try to read the description from file.
-        content = [self._p(_("Název specifikace:") +' '+ self._name(self.id()))]
+        content = [_fieldset(self, self._info())]
         if os.path.exists(self._input_file(self._id, ext='txt')):
             content.extend(self.parse_wiki_file(self._id, ext='txt'))
         else:
             # The file does not exist.  Let's read the specification.
             content.append(self._p(self._default_description_text()))
-        content.extend(self._specific_info())
+        content.extend(self._access_rights())
         return content
             
     def _default_description_text(self):
         return self._view_spec.description() or _("Popis není k dispozici.")
 
-    def _specific_info(self):
+    def _access_rights(self):
         if not self._data_spec.access_rights():
             return []
         rights = self._data_spec.access_rights()
@@ -199,7 +231,12 @@ class DualDescrNode(DescrNode):
 
     def _title(self):
         return self._main_spec.title() +' / '+ self._side_spec.title()
-        
+
+    def _info(self):
+        return super(DualDescrNode, self)._info() + \
+               ((_("Horní formuláø"), "[%s]" % self._dual_spec.main_name()),
+                (_("Dolní formuláø"), "[%s]" % self._dual_spec.side_name()))
+    
     def _default_description_text(self):
         def clabel(cid, view):
             c = view.field(cid)
@@ -214,12 +251,8 @@ class DualDescrNode(DescrNode):
                   clabel(dual.side_binding_column(), side))
         return text
     
-    def _specific_info(self):
-        return [lcg.HorizontalSeparator(self),
-                _fieldset(self, ((_("Horní formuláø"), \
-                                  "[%s]" % self._dual_spec.main_name()),
-                                 (_("Dolní formuláø"),
-                                  "[%s]" % self._dual_spec.side_name())))]
+    def _access_rights(self):
+        return []
     
 
 class DescrIndex(lcg.ContentNode):
