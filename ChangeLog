@@ -1,3 +1,28 @@
+2006-02-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (_menu_items): Nová globální
+	promìnná.
+	(ItemNode.menu_path): Nová metoda.
+	(ItemNode._create_content): Vytváøej seznam polo¾ek menu pro ka¾dý
+	defs `_menu_items'.
+	(DescrNode._info): Nová metoda.
+	(DescrNode._create_content): Vyu¾ívej ji.  `_specific_info()' ->
+	`_access_rights'.
+	(DescrNode._specific_info): Pøejmenováno na `_access_rights'.
+	(DescrNode._info): Nová metoda.
+	(DualDescrNode._specific_info): Pøejmenováno na `_access_rights'.
+	Vracej prázdný seznam.
+	(DescrNode._p): Metoda zru¹ena.
+	(DescrNode._create_content): Nepou¾ívej `_p', ale vytváøej pøímo
+	`lcg.Paragraph'.
+
+2006-02-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (ItemNode._create_content):
+	Upravena podmínka rozeznání duálního formuláøe.
+	(DualDescrNode._specific_info): Nad tabulku pøidej horizontální
+	separátor.
+
 2006-02-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py: Nový modul.
