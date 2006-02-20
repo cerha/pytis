@@ -73,7 +73,8 @@ class NullApplication:
         return self._resolver
     def run_dialog(self, *args, **kwargs):
         log(OPERATIONAL, "Pokus o spu¹tìní dialogu:", (args, kwargs))
-
+    def recent_forms_menu(self):
+        return Menu(Application._RECENT_FORMS_MENU_TITLE, ())
     
     
 class Application(wx.App, KeyHandler, CommandHandler):
