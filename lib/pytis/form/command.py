@@ -124,8 +124,8 @@ class Command(object):
                 stack_info(depth=2).splitlines()[0])
         assert issubclass(cls, CommandHandler), \
                "Not a CommandHandler subclass: %s" % cls
-        assert isinstance(name, types.StringType) and name == name.upper()
-        assert handler is None or callable(handler)
+        assert isinstance(name, types.StringType) and name == name.upper(), name
+        assert handler is None or callable(handler), handler
         assert doc is None or isinstance(doc, types.StringTypes)
         assert key is None or is_string(key) or is_sequence(key)
         assert callable(enabled) or isinstance(enabled, types.BooleanType)
