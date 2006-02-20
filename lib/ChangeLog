@@ -1,3 +1,7 @@
+2006-02-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py (Command.__init__): Pøidány hlá¹ky k assertùm.
+
 2006-02-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application._find_help_files): Pokud
