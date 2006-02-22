@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-02-21  Tomas Cerha  <cerha@brailcom.org>
+
+	V minulých dnech pøibylo nìkolik nových vlastností týkajících se
+	nového systému nápovìdy.  V novém tutoriálu `doc/tutorials/Help'
+	je popsáno jak v¹e funguje a jak v aplikacích systém nápovìdy
+	vyu¾ívat.
+
+	
 2006-02-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi výpoètu pozic scrollbarù pøi zobrazování postscriptu
