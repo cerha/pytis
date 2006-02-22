@@ -1,3 +1,7 @@
+2006-02-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (context_rp): Nová funkce.
+
 2006-02-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py (_menu_items): Nová globální
