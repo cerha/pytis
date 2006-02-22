@@ -134,26 +134,28 @@ Command(ListForm, 'CONTEXT_MENU_ACTION',
         "Akce kontextového menu øádku tabulky")
 # 	Tento Pøíkaz je urèen k vytváøení u¾ivatelem definovaných akcí v
 # 	kontextovém menu øádku BrowseFormu.
-
-# 	Pøíkaz mù¾e mít libovolné argumenty, av¹ak dva z nich jsou
-# 	zpracovány odli¹nì:
-
+#
+# 	Pøíkaz mù¾e mít libovolné argumenty, av¹ak tøi z nich jsou zpracovány
+# 	odli¹nì:
+#
 #            `handler' -- je povinný a musí odkazovat na funkci, která akci
 #               provede.
-
+#
 #            `enabled' -- funkce, vracející pravdu, pokud je pøíkaz aktivní a
 #               nepravdu v opaèném pøípadì.  Argument je nepovinný a pokud není
-#               uveden, je pøíkaz v¾dy aktivní.
-
-# 	Funkce `handler' i `enabled' dostanou jako klíèové argumenty v¹echny
-# 	ostatní argumenty pøíkazu, vyjma sebe sama (argumentù `handler' a
-# 	`enabled').
-
-#         Navíc, pokud tyto funkce pøijímají jeden pozièní argument,
-# 	dostanou jako první argument instanci PresentedRow aktuálního øádku,
-# 	nad kterým byla akce vyvolána.  Pokud pøijímají dva pozièní argumenty,
-# 	bude na prvním místì pøedán je¹tì datový objekt formuláøe.
-
+#               uveden, je pøíkaz aktivní v závislosti na `access_groups'.
+#
+#            `access_groups' -- seznam skupin, které mají právo pøíkaz
+#               vyvolat.  Pøíkaz se pro ostatní u¾ivatele stane automaticky
+#               neaktivní (teprve pokud u¾ivatel patøí do jedné z vyjmenovaných
+#               skupin, je zpracováván argument `enabled'.
+#
+#       Jako první pozièní argument bude funkci `handler' i `enabled' pøedána
+#       instance PresentedRow aktuálního øádku, nad kterým byla akce vyvolána.
+#
+# 	Dále budou pøedány v¹echny klíèové argumenty pøíkazu, vyjma argumentù
+# 	`handler', `enabled' a `access_groups' (ty jsou zpracovávány internì).
+#
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn")
 Command(EditForm, 'NAVIGATE',
