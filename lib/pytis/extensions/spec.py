@@ -248,7 +248,9 @@ def context_rp(spec_name, proc_name, *args):
     odpovídá názvu klíèe.
 
     """
-    
+    if __debug__:
+        for arg in (spec_name, proc_name) + args:
+            assert isinstance(arg, types.StringType)
     return lambda row: run_procedure(spec_name, proc_name,
                                      **dict([(key, row[key]) for key in args]))
 
