@@ -4,6 +4,29 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-02-22  Tomas Cerha  <cerha@brailcom.org>
+
+	V pytis-extensions pøibyla nová funkce `context_rp()', která
+	vytvoøí handler pro pøíkaz kontextového menu øádku.  Tento handler
+	vyvolá proceduru daného jména z dané specifikace a pøedá jí urèené
+	hodnoty z aktuálního øádku jako argumenty.
+
+	Pøíkazu `BrowseForm.COMMAND_CONTEXT_MENU_ACTION' (vytváøeném
+	napø. pomocí context_mitem) lze nyní pøedat také argument
+	`access_groups'.
+
+	Handler pøíkazu `BrowseForm.COMMAND_CONTEXT_MENU_ACTION' nyní musí
+	v¾dy pøijímat instanci `PresentedRow' jako první pozièní argument.
+	®ádné zkoumání argumentù pomocí inspect ji¾ není provádìno.  K
+	tomu dochází u¾ jen pøi zpracování pøíkazù vytvoøených pomocí
+	`user_cmd()'.  Proto je tøeba pøi jejich pøepisu dávat pozor a
+	pøípadnì upravit argumenty handleru.  POZOR, pokud handler s
+	aktuálním øádkem vùbec nepracuje, není ¾ádoucí, aby takový pøíkaz
+	byl typu `BrowseForm.COMMAND_CONTEXT_MENU_ACTION'!!!  V takových
+	pøípadech bude tøeba zvolit jiný pøíkaz (pøípadnì implementovat
+	nový typ pøíkazu v knihovnách).
+	
+	
 2006-02-21  Tomas Cerha  <cerha@brailcom.org>
 
 	V minulých dnech pøibylo nìkolik nových vlastností týkajících se
@@ -11,7 +34,6 @@
 	je popsáno jak v¹e funguje a jak v aplikacích systém nápovìdy
 	vyu¾ívat.
 
-	
 2006-02-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi výpoètu pozic scrollbarù pøi zobrazování postscriptu

@@ -1,3 +1,16 @@
+2006-02-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._on_context_menu_action): Nový
+	arguemnt `access_groups'.  Nezkoumej argumenty handleru pomocí
+	`inspect'.  V¾dy pøedej aktuální øádek a v¹echny klíèové
+	argumenty.
+	(ListForm.can_context_menu_action): Nový arguemnt
+	`access_groups'.  Provìøuj nejprve pøítomnost v `access_groups',
+	teprve potom funkci `enabled'.
+
+	* pytis/form/commands_.py: Aktualizován popis pøíkazu
+	`BrowseForm.COMMAND_CONTEXT_MENU_ACTION'.  
+
 2006-02-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (NullApplication.recent_forms_menu):
