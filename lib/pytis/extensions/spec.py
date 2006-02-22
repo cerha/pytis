@@ -236,6 +236,23 @@ def context_mitem(title, handler, hotkey=None, **kwargs):
                  args=kwargs, hotkey=hotkey)
 
 
+def context_rp(spec_name, proc_name, *args):
+    
+    """Vra» handler akce kontextového menu, který spustí proceduru s argumenty.
+
+    Vrácený handler vyvolá proceduru 'proc_name' ze specifikace 'spec_name' a
+    pøedá jí v¹echny hodnoty aktuálního øádku odpovídající klíèùm pøedaným v
+    'args'.  Args je tedy seznamem identifikátorù sloupcù.
+
+    Hodnoty jsou proceduøe pøedány jako klíèové argumenty, kde název argumentu
+    odpovídá názvu klíèe.
+
+    """
+    
+    return lambda row: run_procedure(spec_name, proc_name,
+                                     **dict([(key, row[key]) for key in args]))
+
+
 _user_cmd_caller = {}
 def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
     if spec:
