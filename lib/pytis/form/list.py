@@ -1214,18 +1214,25 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 kwargs = {}
         return args, kwargs
     
-    def _on_context_menu_action(self, handler=None, enabled=None, **kwargs):
+    def _on_context_menu_action(self, handler=None, enabled=None,
+                                access_groups=None, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler akce kontextového menu.')
         if not callable(handler):
             raise ProgramError("Nepøípustný handler akce konetxtového menu:",
                                handler)
-        args, kwargs = self._context_menu_handler_args(handler, **kwargs)
-        handler(*args, **kwargs)
+        handler(self.current_row(), **kwargs)
         #if not norefresh:
         self.refresh()
         return True
     
-    def can_context_menu_action(self, handler=None, enabled=None, **kwargs):
+    def can_context_menu_action(self, handler=None, enabled=None,
+                                access_groups=None, **kwargs):
+        if access_groups is not None:
+            dbconnection = config.dbconnection
+            groups = pytis.data.DBDataDefault.class_access_groups(dbconnection)
+            if groups is not None and not some(lambda g: g in groups,
+                                               xtuple(access_groups)):
+                return False
         if enabled:
             args, kwargs = self._context_menu_handler_args(enabled, **kwargs)
             return enabled(*args, **kwargs)
