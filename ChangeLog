@@ -1,3 +1,7 @@
+2006-02-22  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/www.py: Upraveny importy.
+
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (context_rp): Nová funkce.
