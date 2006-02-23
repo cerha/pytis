@@ -115,7 +115,7 @@ Automaticky generované informace o náhledu jsou napøíklad:
 
 Kromì tìchto informací je do dokumnetu vkládán také textový popis náhledu.  Ten
 je naèten buïto ze souboru, nebo pokud odpovídající soubor neexistuje, je
-naèten struèný popis z defsu.
+naèten struèný popis z defsu (pøednost tedy má soubor, pokud existuje).
 
 Soubor s popisem je vyhdedáván v adresáøi `descr' umístìném v hlavním adresáøi
 nápovìdy aplikace.  Název souboru musí odpovídat názvu specifikace, vèetnì
