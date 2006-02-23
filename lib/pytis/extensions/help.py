@@ -193,13 +193,14 @@ class DescrNode(lcg.ContentNode):
             content.extend(self.parse_wiki_file(self._id, ext='txt'))
         else:
             # The file does not exist.  Let's read the specification.
-            text = lcg.TextContent(self, self._default_description_text())
+            text = lcg.WikiText(self, self._default_description_text())
             content.append(lcg.Paragraph(self, text))
         content.extend(self._access_rights())
         return content
             
     def _default_description_text(self):
-        return self._view_spec.description() or _("Popis není k dispozici.")
+        return self._view_spec.help() or self._view_spec.description() or \
+               _("Popis není k dispozici.")
 
     def _access_rights(self):
         if not self._data_spec.access_rights():
