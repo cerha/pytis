@@ -1,3 +1,15 @@
+2006-02-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/misc.py (ConfigDB): Tøída zru¹ena.
+	(DBConfig, saved_config_reader.reader) 
+	(saved_config_writer.writer, cfg_param): Pøesunuto do nového modulu
+	`configuration'.
+
+	* lib/pytis/extensions/__init__.py: Importuj nový modul
+	`configuration'.
+
+	* lib/pytis/extensions/configuration.py: Nový soubor.
+
 2006-02-22  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/www.py: Upraveny importy.
