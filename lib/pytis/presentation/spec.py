@@ -537,11 +537,11 @@ class ViewSpec(object):
             vrací pøíslu¹ný identifikátor políèka.
             
           description -- popis formuláøe.  Krátký text rozsahu jedné a¾ dvou
-            vìt.
+            vìt.  Více také viz poznámka ní¾e.
           
           help -- podrobnìj¹í nápovìda formuláøe formátovaná jako strukturovaný
-            text (wiki).
-          
+            text (wiki).  Více také viz poznámka ní¾e.
+
           description_format -- Potlaèený argument.  Description nech» je v¾dy
             prostý text.  Podrobnìj¹í popis, který potøebuje formátování nech»
             je uvádìn jako 'help'.
@@ -557,6 +557,14 @@ class ViewSpec(object):
         Klíèové atributy 'layout' a 'columns' mohou být uvádìny bez
         identifikátoru a tudí¾ by mìlo být zaruèeno, ¾e budou v budoucnu
         zachovány vèetnì poøadí.
+
+	Argument `help' nech» je vyu¾íván pro rozsáhlej¹í popis formuláøe,
+	který vy¾aduje formátování.  Jednoduchý popis v rozsahu jedné a¾ dvou
+	vìt nech» je uvádìn jako `description'.  Proto¾e se oba popisy
+	pou¾ívají v jiných situacích, není pravda, ¾e staèí uvést jeden z nich.
+	Description by mìl být uveden prakticky v¾dy.  Help slou¾í pro
+	generování nápovìdy a namísto nìho je mo¾né vytvoøit odpovídající
+	soubor ve zdrojovém adresáøi nápovìdy (viz tutoriál Help).
 
         """
         assert isinstance(title, types.StringTypes)
