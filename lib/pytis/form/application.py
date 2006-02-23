@@ -655,9 +655,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     message('', root=True)
                     form.show()
                     self._update_window_menu()
-                    item = (self._form_menu_item_title(form),
-                            dict(form_class=form_class, name=name))
-                    self._update_recent_forms(item)
+                    if not isinstance(form, PrintForm):
+                        item = (self._form_menu_item_title(form),
+                                dict(form_class=form_class, name=name))
+                        self._update_recent_forms(item)
                     self._post_init_form(form, **post_init_kwargs)
         except UserBreakException:
             pass
