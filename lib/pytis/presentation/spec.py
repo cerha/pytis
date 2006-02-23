@@ -438,7 +438,7 @@ class ViewSpec(object):
                  check=None, cleanup=None,
                  on_new_record=None, on_edit_record=None, on_delete_record=None,
                  on_line_commit=None,
-                 focus_field=None, description=None,
+                 focus_field=None, description=None, help=None,
                  description_format=TextFormat.PLAIN,
                  row_style=FIELD_STYLE_DEFAULT):
         """Inicializuj instanci.
@@ -536,9 +536,15 @@ class ViewSpec(object):
             argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
             vrací pøíslu¹ný identifikátor políèka.
             
-          description -- popis formuláøe.
+          description -- popis formuláøe.  Krátký text rozsahu jedné a¾ dvou
+            vìt.
           
-          description_format -- typ popisu, jedna z konsant tøídy TextFormat. 
+          help -- podrobnìj¹í nápovìda formuláøe formátovaná jako strukturovaný
+            text (wiki).
+          
+          description_format -- Potlaèený argument.  Description nech» je v¾dy
+            prostý text.  Podrobnìj¹í popis, který potøebuje formátování nech»
+            je uvádìn jako 'help'.
 
           row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
             spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
@@ -553,7 +559,7 @@ class ViewSpec(object):
         zachovány vèetnì poøadí.
 
         """
-        assert is_anystring(title)
+        assert isinstance(title, types.StringTypes)
         assert is_sequence(fields)
         # Initialize field dictionary
         self._field_dict = {}
@@ -622,9 +628,11 @@ class ViewSpec(object):
         assert on_edit_record is None or callable(on_edit_record)
         assert on_delete_record is None or callable(on_delete_record)
         assert on_line_commit is None or callable(on_line_commit)
-        assert focus_field is None or is_anystring(focus_field) \
-               or callable(focus_field)
+        assert focus_field is None or callable(focus_field) or \
+               isinstance(focus_field, types.StringTypes)
         assert isinstance(row_style, FieldStyle) or callable(row_style)
+        assert description is None or isinstance(description, types.StringTypes)
+        assert help is None or isinstance(help, types.StringTypes)
         self._title = gettext_(title)
         self._columns = columns
         self._layout = layout
@@ -640,6 +648,7 @@ class ViewSpec(object):
         self._on_line_commit = on_line_commit
         self._focus_field = focus_field
         self._description = description
+        self._help = help
         self._description_format = description_format
         self._row_style = row_style
 
@@ -719,6 +728,10 @@ class ViewSpec(object):
         """Vrátí formát, ve kterém je psáno description."""
         return self._description_format
 
+    def help(self):
+        """Vrátí formát, ve kterém je psáno description."""
+        return self._help
+    
     def row_style(self):
         """Vra» výchozí styl øádku, nebo funkci, která jej vypoète."""
         return self._row_style
