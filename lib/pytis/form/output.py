@@ -351,9 +351,9 @@ class PrintForm(Form):
         preview.show_page(1)
         # Control widgets
         control_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        def make_button(label, callback):
-            button = wx.Button(self, -1, label)
-            button.SetSize(dlg2px(button, 4*(len(label)+2), 15))
+        def make_button(callback, label="", id=-1):
+            button = wx.Button(self, id, label)
+            #button.SetSize(dlg2px(button, 4*(len(label)+2), 15))
             wx_callback(wx.EVT_BUTTON, self, button.GetId(), callback)
             control_sizer.Add(button)
         def make_widget(class_, third_arg, callback=None, fixed=False,
@@ -364,8 +364,8 @@ class PrintForm(Form):
                 wx_callback(callback[0], self, widget.GetId(), callback[1])
             control_sizer.Add(widget)
             return widget
-        make_button("|<<", self._on_first_page)
-        make_button("<", self._on_previous_page)
+        make_button(self._on_first_page, "|<<")
+        make_button(self._on_previous_page, "<")
         page_indicator = self._page_indicator_ctrl = \
           make_widget(wx.TextCtrl, '1' , size=7,
                       callback=(wx.EVT_TEXT_ENTER, self._on_goto_page))
@@ -377,19 +377,19 @@ class PrintForm(Form):
         total_pages = self._total_pages_ctrl = \
           make_widget(wx.TextCtrl, npages_string, style=wx.TE_READONLY, size=7)
 
-        make_button(">", self._on_next_page)
-        make_button(">>|", self._on_last_page)
+        make_button(self._on_next_page, ">")
+        make_button(self._on_last_page, ">>|")
         make_widget(wx.StaticText, ' ', size=8)
         
         zoom = self._zoom_ctrl = \
           make_widget(wx.TextCtrl, '100',
                       callback=(wx.EVT_TEXT_ENTER, self._on_zoom), size=5)
         make_widget(wx.StaticText, ' % ', fixed=True)
-        make_button('-', self._on_zoom_out)
-        make_button('+', self._on_zoom_in_)
+        make_button(self._on_zoom_out, id=wx.ID_ZOOM_OUT)
+        make_button(self._on_zoom_in_, id=wx.ID_ZOOM_IN)
 
         make_widget(wx.StaticText, ' ', size=8)
-        make_button('Vytisknout', self._on_print_)
+        make_button(self._on_print_, id=wx.ID_PRINT)
         # Sizers
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         sizer = self._sizer = wx.BoxSizer(wx.VERTICAL)
