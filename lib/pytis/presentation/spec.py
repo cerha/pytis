@@ -435,9 +435,9 @@ class ViewSpec(object):
     """
     def __init__(self, title, fields, layout=None, columns=None,
                  popup_menu=None, sorting=None, grouping=None, redirect=None,
-                 check=None, cleanup=None, on_new_record=None,
-                 on_edit_record=None, on_delete_record=None,
-                 enable_inline_insert=None, on_line_commit=None,
+                 check=None, cleanup=None,
+                 on_new_record=None, on_edit_record=None, on_delete_record=None,
+                 on_line_commit=None,
                  focus_field=None, description=None,
                  description_format=TextFormat.PLAIN,
                  row_style=FIELD_STYLE_DEFAULT):
@@ -447,28 +447,35 @@ class ViewSpec(object):
 
           title -- titulek záhlaví seznamových formuláøù jako øetìzec; mù¾e
             být té¾ 'None', v kterém¾to pøípadì formuláø ¾ádné záhlaví nemá.
+            
           fields -- specifikace políèek jednoho záznamu jako sekvence instancí
-            tøídy 'FieldSpec'.  
+            tøídy 'FieldSpec'.
+            
           layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
             instance tøídy 'LayoutSpec'.
+            
           columns -- specifikace sloupcù tabulkového formuláøe, sekvence
             indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
             výchozí seznam sloupcù obsahovat v¹echna políèka z fields, která
             nemají 'column_width' nastaveno na nulu.
+            
           popup_menu -- specifikace polo¾ek kontextového menu pro jeden øádek
             tabulky.  Tato políèka budou pøidána do kontextového popup menu
             vyvolaného pravým tlaèítkem my¹i nad jedním záznamem v seznamovém
             formuláøi.  Jde o sekvenci instancí 'pytis.form.MItem'.
+            
           sorting -- výchozí seøazení tabulky.  Specifikace øazení ve formátu
             odpovídajícím argumentu 'sort' metody 'pytis.data.select()', nebo
             None.  Potom je výchozí seøazení tabulky podle klíèového sloupce
             datového objektu vzestupnì.
+            
           grouping -- výchozí vizuální seskupování tabulky.  Mù¾e být None,
             idendifikátor sloupce, nebo tuple idendifikátorù.  Vizuální
             seskupování umo¾òuje graficky odli¹it skupiny øádkù, které
             následují bezprostøednì po sobì a pøitom mají stejnou hodnotu v¹ech
             seskupovacích sloupcù.  To má význam pouze u sloupcù, podle kterých
             je zároveò øazeno.
+            
           redirect -- pøesmìrování formuløe pro zobrazení/editaci jednoho
             záznamu.  Jedná se o funkci jednoho argumentu, jím¾ je instance
             'PresentedRow' reprezentující øádek dat, pro který je
@@ -476,6 +483,7 @@ class ViewSpec(object):
             specifikace, nad kterou bude vytváøený formuláø sestaven.  Pokud
             funkce vrátí None, nebo není ¾ádná funkce specifikována, k ¾ádnému
             pøesmìrování nedojde.
+            
           check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
             funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
             reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
@@ -486,6 +494,7 @@ class ViewSpec(object):
             v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
             id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.  Formuláø
             by potom mìl u¾ivatele vrátit do editace daného polèka.
+            
           cleanup -- funkce provádìjící závìreèné akce pøi uzavøení formuláøe.
             Jedná se o funkci dvou argumentù.  Prvním je výsledný ulo¾ený øádek
             odpovídající koneènému stavu databáze a druhým je pùvodní øádek z
@@ -496,16 +505,19 @@ class ViewSpec(object):
             editací.  Oba argumenty jsou instance 'PresentedRow'.  Funkce je
             spou¹tìna v¾dy pøi pøi uzavøení editaèního formuláøe tlaèítkem
             ``Ok'' (potvrzením) a to i v pøípadì, ¾e ¾ádná data nebyla zmìnìna.
+            
           on_new_record -- akce vlo¾ení nového záznamu.  Pokud je None, bude
             provedena výchozí akce (otevøení PopupEditForm nad danou
             specifikací).  Pøedáním funkce dvou klíèových argumentù ('key' a
             'prefill', viz 'pytis.form.new_record()') lze pøedefinovat pøidání
             nového záznamu libovolnou vlastní funkcionalitou.
+            
           on_edit_record -- akce editace záznamu.  Pokud je None, bude
             provedena výchozí akce (otevøení PopupEditForm nad danou
             specifikací).  Pøedáním funkce jednoho klíèového argumentu,
             jím¾ je instance 'PresentedRow', lze pøedefinovat editaci záznamu
             libovolnou vlastní funkcionalitou.
+            
           on_delete_record -- akce vymazání záznamu.  Pokud je None, bude
             provedena výchozí akce (vymazání záznamu).  Pøedáním funkce
             jednoho klíèového argumentu, jím¾ je instance 'PresentedRow', lze
@@ -513,6 +525,7 @@ class ViewSpec(object):
             funkcionalitou. Pokud tato funkce vrací None, nedojde k ¾ádným
             dal¹ím akcím, pokud vrací instancí 'pytis.data.Operator', bude
             provedeno 'pytis.data.delete_many()' s pøíslu¹nou podmínkou.
+            
           on_line_commit -- akce volaná po ulo¾ení øádku v inline editaci.
             Pøedáním funkce jednoho argumentu, jím¾ je instance
             `PresentedRow', lze vyvolat doplòující akce po editaci inline
@@ -524,16 +537,13 @@ class ViewSpec(object):
             vrací pøíslu¹ný identifikátor políèka.
             
           description -- popis formuláøe.
+          
           description_format -- typ popisu, jedna z konsant tøídy TextFormat. 
 
           row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
             spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
             (instance 'PresentedRow') vracející instanci tøídy 'FieldStyle'.
            
-          enable_inline_insert -- tento parametr není nadále podporován a v
-            budoucnu bude zcela zru¹en.  Zatím je ponechán pro zpìtnou
-            kompatibilitu.
-
         Pokud není argument 'layout' nebo 'columns' uveden, bude vygenerován
         implicitní layout a seznam sloupcù, odpovídající poøadí políèek ve
         'fields'.
@@ -615,9 +625,6 @@ class ViewSpec(object):
         assert focus_field is None or is_anystring(focus_field) \
                or callable(focus_field)
         assert isinstance(row_style, FieldStyle) or callable(row_style)
-        if enable_inline_insert is not None:
-            log(OPERATIONAL,
-                "Pou¾it potlaèený argument 'enable_inline_insert'.")
         self._title = gettext_(title)
         self._columns = columns
         self._layout = layout
@@ -925,8 +932,7 @@ class CodebookSpec(object):
 
     """
     def __init__(self, columns=None, sorting=None, display=None,
-                 display_size=20, insert_unknown_values=False,
-                 begin_search=None):
+                 display_size=20, begin_search=None):
         
         """Inicializace a doplnìní výchozích hodnot atributù.
 
@@ -944,7 +950,6 @@ class CodebookSpec(object):
             sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
             musí být obsa¾en v datové specifikaci èíselníku).
           display_size -- ¹íøka políèka displeje ve znacích
-          insert_unknown_values -- Potlaèený argument.  Èasem bude zru¹en.
           begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
             spustit automatické inkrementální vyhledávání.
           
@@ -954,8 +959,6 @@ class CodebookSpec(object):
         assert display is None or isinstance(display, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert begin_search is None or isinstance(begin_search,types.StringType)
-        if insert_unknown_values:
-            log(EVENT, "Pou¾it potlaèený argument 'insert_unknown_values'!")
         self._columns = columns
         self._sorting = sorting
         self._display = display
