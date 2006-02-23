@@ -46,6 +46,16 @@
 
 	V titulku aplikace se nyní automaticky zobrazuje název databáze,
 	u¾ivatelské jméno, databázový stroj i port.
+
+	Konstruktor ViewSpec má nyní nový argument `help'.  Ten nech» je
+	vyu¾íván pro rozsáhlej¹í popis formuláøe, který vy¾aduje
+	formátování.  Jednoduchý popis v rozsahu jedné a¾ dvou vìt nech»
+	je uvádìn jako `description'.  Proto¾e se oba popisy pou¾ívají v
+	jiných situacích, není pravda, ¾e staèí uvést jeden z nich.
+	Description by mìl být uveden prakticky v¾dy.  Help slou¾í pro
+	generování nápovìdy a namísto nìho je mo¾né vytvoøit odpovídající
+	soubor ve zdrojovém adresáøi nápovìdy (viz tutoriál Help).
+	
 	
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
 

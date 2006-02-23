@@ -208,16 +208,20 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
- * Zru¹it argument 'check' konstruktoru FieldSpec.
+ * Zru¹it argument `check' konstruktoru FieldSpec.
 
- * Zru¹it argument 'ignore_enumerators' tøídy DataSpec a metodu 'make'.
+ * Zru¹it argument `ignore_enumerators' tøídy DataSpec a metodu 'make'.
 
+ * Zru¹it argument `description_format' tøídy ViewSpec.
+
+   Tam, kde je description ve formátu WIKI, je tøeba vyu¾ít argument `help'.
+   
  * S groupingem pracovat jako s celým èíslem.
 
    Problém bude hlavnì ve defsech, kde bývá grouping èasto specifikován jako
    název sloupce.
    
- * Zru¹it pøenastavování argumentù v metodì 'Application.run_form'.
+ * Zru¹it pøenastavování argumentù v metodì `Application.run_form'.
 
    Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
    'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.

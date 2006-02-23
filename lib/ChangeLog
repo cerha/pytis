@@ -6,6 +6,7 @@
 	(CodebookSpec.__init__): Zru¹en argument `insert_unknown_values'.
 	(ViewSpec.__init__): Nový argument `help'.
 	(ViewSpec.help): Nová meotda.
+	(ViewSpec.__init__): Aktualizován docstring.
 
 	* pytis/presentation/field.py (PresentedRow.refvalue): Metoda zru¹ena.
 
