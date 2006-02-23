@@ -29,120 +29,8 @@ from pytis.presentation import *
 from pytis.util import *
 from pytis.form import *
 
-import cPickle as pickle
-
 import config
 
-
-class DBConfig(object):
-    """Konfigurace spojená s datovým objektem.
-
-    Konfigurace vnitønì pracuje s datovým objektem vytvoøeným nad specifikací
-    urèenou argumentem konstruktoru.  Pøedpokládá se, ¾e datový objekt vrací
-    v¾dy jen jeden øádek (na úrovni SQL omezený napø na aktuálního u¾ivatele).
-    Hodnotu datového sloupeèku je potom mo¾né z tohoto objektu získat jako ze
-    slovníku.
-
-    Zápis hodnoty do slovníku vyvolá zapsání zmìnìné hodnoty do databáze.
-    Pøípadné zmìny dat na úrvni databáze nejsou tímto objektem v souèasné
-    implementaci reflektovány.
-
-    """
-
-    def __init__(self, name):
-        """Inicializuj instanci.
-
-        Argument 'name' urèuje název specifikace datového objektu pro resolver.
-
-        """
-        global data_object_cache
-        try:
-            cache = data_object_cache
-        except NameError:
-            cache = data_object_cache = {}
-        try:
-            data_object = cache[name]
-        except KeyError:
-            resolver = pytis.form.resolver()
-            data_spec = resolver.get(name, 'data_spec')
-            op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-            success, data_object = db_operation(op)
-            if success:
-                cache[name] = data_object
-            else:
-                data_object = None
-        self._data = data_object
-        self._data.select()
-        self._row = self._data.fetchone()
-        self._key = [self._row[c.id()] for c in self._data.key()]
-        self._data.close()
-
-    def value(self, key):
-        """Vra» hodnotu 'key' jako instanci 'pytis.data.Value'."""
-        return self._row[key]
-        
-    def __getitem__(self, key):
-        """Vra» hodnotu 'key' jako Pythonovou hodnotu."""
-        return self._row[key].value()
-
-    def __setitem__(self, key, value):
-        """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
-        type = self._row[key].type()
-        self._row[key] = pytis.data.Value(type, value)
-        self._data.update(self._key, self._row)
-
-    def has_key(self, key):
-        return self._row.has_key(key)
-
-    def keys(self):
-        return self._row.keys()
-
-    def items(self):
-        return tuple([(key, self[key]) for key in self._row.keys()])
-
-
-class ConfigDB(DBConfig):
-    """Wrapper pro zpìtnou kompatibilitu.  Nepou¾ívat!"""
-    def __init__(self, resolver, name, **kwargs):
-        super(ConfigDB, self).__init__(name)
-    def __setitem__(self, key, value):
-        super(ConfigDB, self).__setitem__(key, value.value())
-
-def saved_config_reader(name, column):
-    def reader():
-        value = DBConfig(name)[column]
-        try:
-            return pickle.loads(str(value))
-        except pickle.UnpicklingError, e:
-            log(OPERATIONAL, "Nepodaøilo se obnovit ulo¾enou konfiguraci")
-            return ()
-    return reader
-
-def saved_config_writer(name, column):
-    def writer(items):
-        DBConfig(name)[column] = pickle.dumps(items)
-    return writer
-    
-def cfg_param(column, cfgspec='Nastaveni', value_column=None):
-    """Vrací instanci Value pro konfiguraèní parametr.
-
-    Argumenty:
-
-      column -- název sloupce v konfiguraèní tabulce uvedené ve specifikaci
-        udané druhým parametrem.
-      cfgspec -- volitelný název specifikace s vazbou na konfiguraèní tabulku.
-      value_column -- pokud je po¾adavaný sloupec Codebook, umo¾òuje získat
-        hodnotu u¾ivatelského sloupce.
-
-    """
-    dbconfig = DBConfig(cfgspec)
-    if not dbconfig.has_key(column):
-        return pytis.data.Value(None, None)
-    value = dbconfig.value(column)
-    if value.type().enumerator():
-        return cb2colvalue(value, column=value_column)
-    else:
-        return value
 
 def cb_computer(codebook, column, default=None):
     """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
@@ -916,6 +804,8 @@ def run_any_form():
         pytis.form.run_form(*result)
                                       
 cmd_run_any_form = Command(Application, 'RUN_ANY_FORM', handler=run_any_form)
+
+
 
 # Additional constraints
             
