@@ -1,5 +1,12 @@
 2006-02-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (RefSpec): Tøída zru¹ena.
+	(FieldSpec.__init__): Zru¹en argument `references'.
+	(ViewSpec.__init__): Zru¹en argument `enable_inline_insert'.
+	(CodebookSpec.__init__): Zru¹en argument `insert_unknown_values'.
+
+	* pytis/presentation/field.py (PresentedRow.refvalue): Metoda zru¹ena.
+
 	* pytis/form/screen.py (KEY_ANY): Konstanta zru¹ena.
 	(Window.ACT_WINDOW, Window.ACTIVATIONS): Konstanty zru¹eny.
 	(_MenuObject): Nová tøída.
@@ -40,6 +47,8 @@
 	`_update_window_menu()'.
 	(Application.run_form): Pokud jde o PrintForm, nepøidávej jej do
 	recent_forms.
+	(Application.OnInit): Zobraz v titulku aplikace informace o
+	databázovém spojení.
 
 	* pytis/form/form.py (Form.ACT_FORM, Form.ACTIVATIONS): Konstanty
 	zru¹eny.

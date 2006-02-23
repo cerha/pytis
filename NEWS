@@ -43,7 +43,9 @@
 	Dále byl zru¹en argument `enable_inline_insert' konstruktoru
 	`ViewSpec' a `insert_unknown_values' konstruktoru `CodebookSpec'.
 	Opìt nebylo nalezeno pou¾ití v defsech.
-	
+
+	V titulku aplikace se nyní automaticky zobrazuje název databáze,
+	u¾ivatelské jméno, databázový stroj i port.
 	
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
 
