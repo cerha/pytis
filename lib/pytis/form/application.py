@@ -278,6 +278,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     form_cls = BrowseForm
                 self.run_form(form_cls, name.strip())
+        conn = config.dbconnection
+        if conn:
+            title = self._frame.GetTitle()
+            title += " %s@%s %s:%d" % (conn.user(), conn.database(),
+                                       conn.host(), int(conn.port()))
+            self._frame.SetTitle(title)
         return True
 
     def _spec(self, name, default=None, **kwargs):
