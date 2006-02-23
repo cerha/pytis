@@ -58,12 +58,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         specifikací, relativní k adresáøi s definièními soubory, bez pøípony
 
     """
-    ACT_FORM = 'ACT_FORM'
-    """Aktivaèní konstanta formuláøe."""
-    
-    ACTIVATIONS = Window.ACTIVATIONS + [ACT_FORM]
-    """Seznam aktivaèních kategorií pro tuto tøídu."""
-
     _STATUS_FIELDS = ()
     DESCR = None
 
