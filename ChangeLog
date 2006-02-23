@@ -1,3 +1,14 @@
+2006-02-23  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py: Neimportuj 'pytis.output'.
+	(data_create): Nová funkce.
+	(printdirect): Importuj 'pytis.output'.
+
+	* lib/pytis/extensions/www.py: Pou¾ívej 'NullApplication'.
+	(DBTable): Doplnìn dokumentaèní øetìzec.
+	(form_validate): Nová funkce.
+	(PopupCB): Nová funkce.
+
 2006-02-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py

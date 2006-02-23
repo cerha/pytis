@@ -21,12 +21,26 @@
 import pytis.form
 from pytis.util import *
 import config
+resolver = pytis.util.FileResolver(config.def_dir)
+pytis.form.NullApplication(resolver)
 import HyperText
-from HyperText.HTML import TABLE, TR, TD
-from pytis.extensions import dbselect
+from HyperText.HTML import TABLE, TR, TD, Select
+from pytis.extensions import dbselect, data_create
+
 
 def DBTable(spec, columns,
             condition=None, sort=(), **attrs):
+    """Generuje HTML tabulku.
+
+    Argumenty:
+
+      spec -- název specifikace
+      columns -- seznam sloupcù, které se pou¾ijí v HTML tabulce
+      condition -- podmínka odpovídající argumentu volání pytis.data.select()
+      sort -- øazení odpovídající argumentu volání pytis.data.select()    
+
+    Vrací instanci HyperText.TABLE.
+    """
     t = apply(TABLE, (), attrs)
     dbrows = dbselect(spec, condition=condition, sort=sort)
     rows = [[r[c].export() for c in columns] for r in dbrows]
@@ -36,3 +50,47 @@ def DBTable(spec, columns,
             t.append(r)
     return t        
 
+
+def form_validate(spec, prefill):
+    # Sestavíme datový objekt
+    success, data = data_create(spec)
+    if not data:
+        return None, None
+    failed = []
+    row = []
+    for c in data.columns():
+        if prefill.has_key(c.id()):
+            value, error = c.type().validate(prefill[c.id()])
+            if error:
+                failed.append(c.id())
+                continue
+            else:
+                row.append((c.id(), value))
+    if len(failed) > 0:
+        return None, failed
+    else:
+        return pytis.data.Row(row), None
+
+        
+def PopupCB(spec, name, column, returned_column,
+            condition=None, sort=(), **attrs):
+    """Generuje popup list na základì hodnot z èíselníku.
+
+    Argumenty:
+
+      spec -- název specifikace
+      name -- jméno pro HTML widget
+      label -- popis pro HTML widget
+      column -- název sloupce èíselníku, jeho¾ hodnoty se budou zobrazovat
+      returned_column -- název sloupce èíselníku, jeho¾ hodnoty se budou vracet
+      sort -- øazení odpovídající argumentu volání pytis.data.select()    
+      condition -- podmínka odpovídající argumentu volání pytis.data.select()
+
+    Vrací instanci HyperText.Select nebo None v pøípadì neúspìchu.
+    """
+    dbrows = dbselect(spec, condition=condition, sort=sort)
+    if len(dbrows) == 0:
+        return None
+    options = [(r[column].value(), r[returned_column].value())
+               for r in dbrows]
+    return Select(options, name=name, **attrs)

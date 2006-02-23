@@ -20,7 +20,6 @@
 
 from pytis.extensions import *
 
-import pytis.output
 import pytis.form
 import pytis.data
 import re
@@ -31,7 +30,15 @@ from pytis.form import *
 
 import config
 
-
+def data_create(spec):
+    """Sestaví datový objekt na základì specifikace."""
+    import config
+    resolver = pytis.form.resolver()
+    data_spec = resolver.get(spec, 'data_spec')
+    op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
+    success, data = pytis.form.db_operation(op)
+    return success, data
+    
 def cb_computer(codebook, column, default=None):
     """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
 
@@ -155,7 +162,7 @@ def dbselect(data_spec, *args, **kwargs):
     
     """
     if isinstance(data_spec, types.StringType):
-        resolver = FileResolver(config.def_dir)
+        resolver = pytis.form.resolver()
         data_spec = resolver.get(data_spec, 'data_spec')
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
@@ -265,6 +272,7 @@ def end_date_value():
 
 def printdirect(resolver, spec, print_spec, row):
     """Tiskni specifikaci pomocí pøíkazu config.printing_command."""
+    import pytis.output
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
         class _Spec:
