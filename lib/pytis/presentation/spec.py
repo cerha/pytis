@@ -983,12 +983,6 @@ class CodebookSpec(object):
         return self._begin_search
 
 
-class RefSpec(object):
-    """Zachováno pouze pro zpìtnou kompatibilitu."""
-    def __init__(self, name, key, columns, sorting=(), returned_columns=None):
-        pass
-
-
 class FieldSpec(object):
     """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
 
@@ -1013,7 +1007,6 @@ class FieldSpec(object):
                  codebook_runtime_filter=None, 
                  selection_type=None,
                  orientation=Orientation.VERTICAL,
-                 references=None,
                  post_process=None, filter=None, filter_list=None,
                  check=None, style=None):
         """Inicializace a doplnìní výchozích hodnot atributù.
@@ -1193,8 +1186,6 @@ class FieldSpec(object):
                or callable(style), ('Invalid field style', id, style)
         if check is not None:
             log(EVENT, "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
-        if references is not None:
-            log(EVENT, "Pou¾it potlaèený argument 'references' tøídy 'FieldSpec'!")
         self._id = id
         self._label = gettext_(label)
         self._descr = gettext_(descr)
