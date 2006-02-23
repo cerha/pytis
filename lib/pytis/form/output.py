@@ -295,7 +295,8 @@ class PostscriptViewer(wx.ScrolledWindow):
 
 class PrintForm(Form):
     """Formuláø zobrazující preview tisku s mo¾ností jeho provedení."""
-
+    DESCR = "tisková sestava"
+    
     def __init__(self, parent, resolver, name, formatter,
                  guardian=None):
         """Inicializuj instanci.
