@@ -9,6 +9,7 @@
 	`configuration'.
 
 	* lib/pytis/extensions/configuration.py: Nový soubor.
+	(cfg_param): Odstranìn zapomenutý print.
 
 2006-02-22  Pavel Hanak  <hanak@asellus.cz>
 
