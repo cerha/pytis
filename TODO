@@ -63,6 +63,10 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
+ * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
+
+   Nad tìmito øádky by potom ¹lo napøíklad spustit nìjakou proceduru, apod.
+
  * Ulo¾ené filtrovací podmínky.
 
    K tomu bude nejprve tøeba nìjak zpøehlednit v¹e, co se týká práce s rùznými
@@ -111,6 +115,8 @@ NOVÉ VLASTNOSTI:
    V souèasné dobì se dìje jen pøi zmìnì hodnoty.  Chtìli bychom ale, aby k
    pøepoèítání do¹lo pøi ka¾dém dvojkliku (nebo výbìru pravým tlaèítkem).
 
+ * Pro datumová políèka umo¾nit display ukazující odpovídající den v týdnu.
+
 
 2) Specifikace
 
@@ -142,10 +148,11 @@ NOVÉ VLASTNOSTI:
  * Zjednodu¹ená definice pøíkazù a jejich argumentù.
 
    Pokud instanci pøíkazu zavoláme s libovolnými klíèovými argumenty, je nyní
-   vrácena dvojice (COMMAND, ARGS).  Toho by ¹lo vyu¾ít napø. v konstruktoru
-   MItem, který by argument `command' mohl zkoumat a pøi pøedání sekvence jej
-   rovnou rozbalit.  Zatím je toho vyu¾ito pouze pøi rozbalování
-   FORM_COMMAND_MENU a DEFAULT_KEYMAP v application.py.
+   vrácena dvojice (COMMAND, ARGS).  Toho je nyní vyu¾ito jednak pøi
+   rozbalování FORM_COMMAND_MENU a DEFAULT_KEYMAP v application.py a jednak
+   konstruktoru MItem, který by argument `command' v pøípadì pøedání dvojice
+   rozbalí.  Bylo by dobré oddìlené pøedávání `args' úplnì zakázat a v¹ude
+   pøejít na nový zpùsob definice.
    
  * Zjednodu¹ení vytváøení handlerù popup menu aktivního øádku BrowseFormu.
 
@@ -164,6 +171,13 @@ NOVÉ VLASTNOSTI:
 
  * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
 
+ * Zru¹it 'allow_codebook_insert'???
+
+   Vlo¾ení nové hodnoty do èíselníku by mohlo být provádìno pøes pøíkaz z popup
+   menu èíselníkového políèka (pøes pravé tlaèítko my¹i).  To by mohlo být
+   povoleno pro v¹echny èíselníky a tlaèítko "+" ve formuláøi by tak bylo
+   zbyteèné.
+   
 
 INTERNÍ ZÁLE®ITOSTI:
 
@@ -189,7 +203,9 @@ INTERNÍ ZÁLE®ITOSTI:
    Je tøeba myslet také na obnovení stavu pøi pøepínání formuláøù
    (`Form.restore()').
 
-
+ * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
+   
+   
 ÈI©TÌNÍ:
 
  * Validace hodnot konfiguraèních voleb.
@@ -204,33 +220,21 @@ INTERNÍ ZÁLE®ITOSTI:
    konstruktoru FieldSpec a metodu 'PresentedRow.refvalue' (a v¹echna její
    pou¾ití v defsech).
 
- * Zru¹it pøenastavování argumentù v metodì 'Application.run_form'.
-
-   Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
-   'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.
-
  * Zru¹it argument 'check' konstruktoru FieldSpec.
 
  * Zru¹it argument 'insert_unknown_values' konstruktoru 'CodebookSpec'.
 
- * Zru¹it pou¾ití atributu 'key' tøídy 'Command'.
-
-   Také stejnojmenný argument konstruktoru nesmí být nikde pou¾it.  Poté je
-   mo¾né zru¹it také metodu 'Command.__setattr__()'.
-
  * Zru¹it argument 'ignore_enumerators' tøídy DataSpec a metodu 'make'.
-
- * Zru¹it 'allow_codebook_insert'???
-
-   Vlo¾ení nové hodnoty do èíselníku by mohlo být provádìno pøes pøíkaz z popup
-   menu èíselníkového políèka (pøes pravé tlaèítko my¹i).  To by mohlo být
-   povoleno pro v¹echny èíselníky a tlaèítko "+" ve formuláøi by tak bylo
-   zbyteèné.
 
  * Zru¹it 'enable_inline_insert'.
 
    Argument ji¾ nemá smysl.  Zji¹tìní je nyní automatické.
    
+ * Zru¹it pøenastavování argumentù v metodì 'Application.run_form'.
+
+   Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
+   'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.
+
  * Handlery pøíkazù.
 
    Pøíkazy jsou obsluhovány tak, ¾e vyvoláme on_command aplikace a ta je
@@ -263,14 +267,3 @@ INTERNÍ ZÁLE®ITOSTI:
    pøíkaz pevnì dané a ne, ¾e se argumenty handleru zji¹»ují pomocí inspect...
    To se zavedlo zejména kvùli pøíkazùm, které nepracují s aktuálním øádkem,
    tak¾e nepøebírají argument 'row' a nìkdy potøebují datový objekt.
-
-   Pøi vytváøení polo¾ky menu context_mitem je tøeba mít mo¾nost pøedat
-   access_groups.
-
-   Zjednou¹it vytváøení polo¾ek, které volají run_procedure.  Ty jsou nyní také
-   øe¹eny pøes user_cmd, kde handlerem je funkce, volající run_procedure s
-   argumenty vyta¾enými z row.  Pøípadný wrapper tedy musí pøedev¹ím vyøe¹it
-   transformaci argumentù.  Argumentem wrapperu bude seznam identifikátorù
-   sloupcù, které se mají run_procedure pøedat.
-   
- * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.

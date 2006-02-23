@@ -1,3 +1,51 @@
+2006-02-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (KEY_ANY): Konstanta zru¹ena.
+	(Window.ACT_WINDOW, Window.ACTIVATIONS): Konstanty zru¹eny.
+	(_MenuObject): Nová tøída.
+	(MSeparator): Buï jejím potomkem.
+	(_TitledMenuObject): Nová tøída.
+	(MenuBar._append_menu, MenuBar._replace_menu)
+	(MenuBar._remove_menu, MenuBar.add_menu, MenuBar.activate)
+	(MenuBar.save, MenuBar.restore): Metody zru¹eny.
+	(Menu): Buï potomkem `_TitledMenuObject'.
+	(Menu.__init__): Zru¹en argument `activation'.  Zru¹ena mo¾nost
+	pøedávat v items funkci, vytváøející menu dynamicky.
+	(Menu.activation, Menu.dynamic, Menu.title): Metody zru¹eny.
+	(Menu.create): Zru¹en argument `form'.  Kosmetické úpravy.  Wx
+	metodám pøedávej "raw" titulek.
+	(MItem): Buï potomkem `_TitledMenuObject'.
+	(MItem.__init__): Kosmetické úpravy assertù.  Volej konstruktor
+	pøedka.
+	(MItem._on_ui_event): Nepøedávej argument `application' metodì
+	`Command.enabled()'.
+	(MItem.title): Metoda zru¹ena.
+	(MItem.create): Wx metodám pøedávej "raw" titulek.
+	(ButtonSpec, ButtonBar, Help, HelpFrame): Tøídy zru¹eny.
+
+	* pytis/form/command.py (Command.__init__): Zru¹eny argumenty
+	`key' a `static'.  Argument `name', nech» je pozièní.  Zru¹en hack
+	upravující po staru pøedané argumenty.
+	(Command.enabled): Zru¹en argument `application'.  Neke¹uj
+	výsledky volání `enabled()' funkce.
+	(Command.__setattr__): Metoda zru¹ena.
+	(invoke_command): Nepøedávej argument `application' metodì
+	`Command.enabled()'.
+
+	* pytis/form/application.py (Application._update_window_menu):
+	Zru¹en argument `recreate'.
+	(Application._activate): Metoda zru¹ena.
+	(Application.run_form): Nevolej `_activate()'.
+	(Application.restore): Nevolej `_activate()' ani
+	`_update_window_menu()'.
+
+	* pytis/form/form.py (Form.ACT_FORM, Form.ACTIVATIONS): Konstanty
+	zru¹eny.
+
+	* pytis/form/output.py (PrintForm.ACT_PRINT_FORM) 
+	(PrintForm.ACTIVATIONS): Konstanty zru¹eny.
+	(PrintForm._menus): Metoda zru¹ena.
+
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._on_context_menu_action): Nový
