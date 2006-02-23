@@ -280,9 +280,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self.run_form(form_cls, name.strip())
         conn = config.dbconnection
         if conn:
-            title = self._frame.GetTitle()
-            title += " %s@%s %s:%d" % (conn.user(), conn.database(),
-                                       conn.host(), int(conn.port()))
+            title = self._frame.GetTitle()            
+            title += " %s@%s %s" % (conn.user(), conn.database(),
+                                    conn.host())
+            if conn.port():
+                title += ":%d" % int(conn.port())
             self._frame.SetTitle(title)
         return True
 
@@ -820,7 +822,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
 
     def help(self, topic=None):
-        """Zobraz dané téma v proholí¾eèi nápovìdy."""
+        """Zobraz dané téma v prohlí¾eèi nápovìdy."""
         if not self._help_files:
             msg = _("®ádný soubor s nápovìdou nebyl nalezen.\n"
                     "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
