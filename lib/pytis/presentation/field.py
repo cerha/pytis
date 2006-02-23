@@ -2,7 +2,7 @@
 
 # Prezentace dat v políèkách.
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -517,15 +517,4 @@ class PresentedRow(object):
             if c.check is not None and not c.check(self):
                 log(EVENT, 'Kontrola integrity selhala:', (c.id, self))
                 return c.id
-        return None
-
-        
-    def refvalue(self, key):
-        """Metoda existuje jen kvùli zpìtné kompatibilitì, ale vrací v¾dy None.
-
-        Brzy bude zru¹ena, tak¾e je tøeba v¹echna její pou¾ití odstranit.
-        
-        """
-        log(EVENT, "Pou¾ita potlaèená metoda 'PresentedRow.refvalue()'!")
-        # TODO: Zru¹it!!!
         return None
