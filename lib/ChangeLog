@@ -4,6 +4,8 @@
 	(FieldSpec.__init__): Zru¹en argument `references'.
 	(ViewSpec.__init__): Zru¹en argument `enable_inline_insert'.
 	(CodebookSpec.__init__): Zru¹en argument `insert_unknown_values'.
+	(ViewSpec.__init__): Nový argument `help'.
+	(ViewSpec.help): Nová meotda.
 
 	* pytis/presentation/field.py (PresentedRow.refvalue): Metoda zru¹ena.
 
