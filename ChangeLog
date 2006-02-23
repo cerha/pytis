@@ -1,5 +1,9 @@
 2006-02-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/help.py
+	(DescrNode._default_description_text): Pokud není definováno
+	`description', pou¾ij `help'.
+
 	* lib/pytis/extensions/misc.py (ConfigDB): Tøída zru¹ena.
 	(DBConfig, saved_config_reader.reader) 
 	(saved_config_writer.writer, cfg_param): Pøesunuto do nového modulu
