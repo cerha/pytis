@@ -362,7 +362,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             title += " (%s)" % form.descr()
         return title
     
-    def _update_window_menu(self, recreate=True):
+    def _update_window_menu(self):
         def wmitem(i, form):
             return RadioItem("&%d. %s" % (i, self._form_menu_item_title(form)),
                              help=_('Vyzvednout okno formuláøe "%s" (%s/%s)') %\
@@ -372,9 +372,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                              args={'form': form})
         mb = self._menubar
         menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
-        if menu is None:
-            return 
-        if recreate:
+        if menu is not None:
             for item in menu.GetMenuItems():
                 menu.Remove(item.GetId())
                 item.Destroy()
@@ -427,9 +425,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._windows.activate(form)
                 self.restore()
 
-    def _activate(self, activations, form):
-        self._menubar.activate(activations, form)
-            
     def _post_init_form(self, form, select_row=None):
         if select_row:
             form.select_row(select_row)
@@ -659,7 +654,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._windows.push(form)
                     message('', root=True)
                     form.show()
-                    self._activate(form.ACTIVATIONS, form)
                     self._update_window_menu()
                     item = (self._form_menu_item_title(form),
                             dict(form_class=form_class, name=name))
@@ -958,12 +952,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 form.refresh()
             form.show()
             form.restore()
-            self._activate(form.ACTIVATIONS, form)
-            if Window.ACT_WINDOW in form.ACTIVATIONS:
-                self._update_window_menu(recreate=False)
             form.focus()    
         else:
-            self._activate((), None)
             self._panel.SetFocus()
 
     def recent_forms_menu(self):
