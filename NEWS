@@ -35,6 +35,14 @@
 	vytvoøen pøíslu¹ný formátovaè.  Ten je nutné vytvoøit ve
 	formuláøi, nad kterým je tisk spou¹tìn.  Proto pøímé vyvolání
 	printformu z menu nemá smysl.
+
+	Byla zru¹ena specifikaèní tøída 'RefSpec', argument 'references'
+	konstruktoru `FieldSpec' a metoda 'PresentedRow.refvalue'.  Nebyla
+	ji¾ nalezena ¾ádná pou¾ití v defsech.
+
+	Dále byl zru¹en argument `enable_inline_insert' konstruktoru
+	`ViewSpec' a `insert_unknown_values' konstruktoru `CodebookSpec'.
+	Opìt nebylo nalezeno pou¾ití v defsech.
 	
 	
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
