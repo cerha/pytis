@@ -38,6 +38,8 @@
 	(Application.run_form): Nevolej `_activate()'.
 	(Application.restore): Nevolej `_activate()' ani
 	`_update_window_menu()'.
+	(Application.run_form): Pokud jde o PrintForm, nepøidávej jej do
+	recent_forms.
 
 	* pytis/form/form.py (Form.ACT_FORM, Form.ACTIVATIONS): Konstanty
 	zru¹eny.
@@ -45,6 +47,8 @@
 	* pytis/form/output.py (PrintForm.ACT_PRINT_FORM) 
 	(PrintForm.ACTIVATIONS): Konstanty zru¹eny.
 	(PrintForm._menus): Metoda zru¹ena.
+	(PrintForm.DESCR): Nová konstanta.
+	(PrintForm._create_controls): Pou¾ívej stock buttons.
 
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
 

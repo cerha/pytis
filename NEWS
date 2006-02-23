@@ -4,6 +4,39 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-02-23  Tomas Cerha  <cerha@brailcom.org>
+
+	V pytis-extensions byly tøídy a funkce související s konfigurací
+	ulo¾enou v databázi pøesunuty do nového modulu `configuration'.
+
+	Nepou¾ívané argumenty `static' a `key' konstruktoru `Command' byly
+	odstranìny.  V defsech ¾ádného ze souèasných projektù nebylo
+	pou¾ití tìchto argumentù nalezeno, tak¾e by se snad nic nemìlo
+	pokazit.
+
+	Menubar ji¾ nepodporuje aktivaèní kategorie.  Menu je statické a
+	v¹echny polo¾ky jsou pøítomny po celou dobu bìhu aplikace.  Podle
+	kontextu mohou být jednotlivé polo¾ky aktivní, nebo neaktivní, ale
+	nikdy nemizí.  Toto chování je z pohledu u¾ivatelského rozhraní
+	standardnìj¹í.  Kód se tím na mnoha místech podstatnì zjednodu¹il.
+
+	Definice aktivaèních kategorií byla také zru¹ena ze v¹ech
+	formuláøových tøíd a aplikace se nyní nestará o aktivace pøi práci
+	se zásobníkem oken.
+
+	Z modulu `screen' bylo odstranìno nìkolik dal¹ích kostlivcù, jako
+	`ButtonBar', `HelpFrame' apod.
+
+	V tiskovém formuláøi jsou nyní vyu¾ívána stock buttons, díky èemu¾
+	mají nìkterá tlaèítka ikonky.
+
+	Tiskový formuláø ji¾ není pøidáván do menu poslednì otevøených
+	formuláøù, proto¾e jeho obnovení stejnì nìní mo¾né, pokud není
+	vytvoøen pøíslu¹ný formátovaè.  Ten je nutné vytvoøit ve
+	formuláøi, nad kterým je tisk spou¹tìn.  Proto pøímé vyvolání
+	printformu z menu nemá smysl.
+	
+	
 2006-02-22  Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions pøibyla nová funkce `context_rp()', která
