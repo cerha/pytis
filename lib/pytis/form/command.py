@@ -68,8 +68,8 @@ class Command(object):
     tøeba mít rozli¹ení na pamìti.
     
     """
-    def __init__(self, cls, name=None, doc=None, key=None, handler=None,
-                 enabled=True, access_groups=None, static=False, log_=True):
+    def __init__(self, cls, name, doc=None, handler=None,
+                 enabled=True, access_groups=None, log_=True):
         """Definuj pøíkaz.
 
         Argumenty:
@@ -81,9 +81,8 @@ class Command(object):
             identifikáítor, mezi názvy pøíkazù unikátní.  Název je pou¾it pro
             vytvoøení konstanty (viz. ní¾e), tak¾e dal¹ím po¾adavkem je, aby
             ve¹kerá písmena byla velká.
-          doc -- dokumentaèní øetìzec pøíazu.  Pokud je pøíkaz urèen k
-            u¾ivatelskému vyu¾ití, mìly by být zmínìny zejména argumenty
-            pøíkazu.
+          doc -- dokumentaèní øetìzec pøíkazu.  Struèný popis, který mù¾e být
+            napø. zobrazen v u¾ivatelském rozhraní.
           handler -- obslu¾ná funkce volaná pøi zpracování pøíkazu.  Má význam
             pøi definici u¾ivatelských pøíkazù.  Blí¾e viz dokumentace tøídy.
             Hodnotou je callable object, nebo None.
@@ -100,10 +99,6 @@ class Command(object):
             COMMAND, ARGS), kde APPL je instance aplikace (tøídy
             'Application'), COMMAND je instance pøíkazu a ARGS je slovník
             arguemntù s jakými bude pøíkaz volán.
-          static -- pokud je pøedána pravdivá hodnota, bude hodnota vrácená
-            funkcí `enabled' pova¾ována za nemìnnou a výsledek tedy bude
-            cachován.  V opaèném pøípadì (výchozí hodnota) bude funkce volána
-            pøi ka¾dém po¾adavku na zji¹tìní hodnoty enabled.
           log_ -- právì kdy¾ je pravdivé, je vyvolání pøíkazu logováno jako
             EVENT, jinak je logováno pouze jako DEBUG
 
@@ -114,22 +109,12 @@ class Command(object):
         'LookupForm.COMMAND_SORT_COLUMN'.
 
         """
-        if isinstance(cls, types.StringType):
-            # TODO: A¾ se to bude ru¹it, je tøeba také udìlat argument `name'
-            # pozièním (povinným) argumentem.
-            assert name is None
-            name = cls.replace('user-command.', '').upper().replace('-', '_')
-            cls = BrowseForm
-            log(OPERATIONAL, "Konstruktor Command volán se starými argumenty!",
-                stack_info(depth=2).splitlines()[0])
         assert issubclass(cls, CommandHandler), \
                "Not a CommandHandler subclass: %s" % cls
         assert isinstance(name, types.StringType) and name == name.upper(), name
         assert handler is None or callable(handler), handler
         assert doc is None or isinstance(doc, types.StringTypes)
-        assert key is None or is_string(key) or is_sequence(key)
         assert callable(enabled) or isinstance(enabled, types.BooleanType)
-        assert isinstance(static, types.BooleanType)
         assert access_groups is None or \
                isinstance(access_groups,
                           (types.StringType, types.TupleType, types.ListType))
@@ -137,9 +122,6 @@ class Command(object):
         self._name = name
         self._doc = doc
         self._id = id = '.'.join((cls.__name__, name.lower().replace('_', '-')))
-        if key is not None:
-            log(OPERATIONAL,
-                "Pou¾it potlaèený argument `key' tøídy `Command':", (key, id))
         self._handler = handler
         self._log = log_
         self._has_access = True
@@ -150,7 +132,6 @@ class Command(object):
             if groups is not None:
                 self._has_access = some(lambda g: g in groups, access_groups)
         self._enabled = enabled
-        self._static = static
         self._cache = {}
         assert not hasattr(cls, 'COMMAND_' + name), \
                "Command '%s' already defined for %s" % (name, cls.__name__)
@@ -195,21 +176,23 @@ class Command(object):
         """Vra» rutinu pro zpracování pøíkazu zadanou v konstruktoru."""
         return self._handler
 
-    def enabled(self, application, args):
+    def enabled(self, args):
         """Vra» pravdu, pokud je pøíkaz aktivní (smí být vyvolán).
 
-        Pokud u¾ivatel nemá pøístupová práva k danému pøíkazu, je automaticky
-        vráceno False.  Pøíkazy, které nejsou kompatibilní s aktivním prvkem
-        aplikace (instancí 'CommandHandler') jsou rovnì¾ automaticky neaktivní.
-        Také pøíkazy, pro nì¾ aktivní prvek aplikace definuje metodu
-        'can_<command_name>' a ta vrátí False, jsou neaktivní.  A¾ nakonec je
-        testována hodnota (nebo výsledek volání funkce) argumentu 'enabled'
-        konstruktoru.
+        Pokud u¾ivatel nemá pøístupová práva k danému pøíkazu (s danými
+        argumenty), je automaticky vráceno False.  Pøíkazy, které nejsou
+        kompatibilní s aktivním prvkem aplikace (instancí 'CommandHandler')
+        jsou rovnì¾ automaticky neaktivní.  Také pøíkazy, pro nì¾ aktivní prvek
+        aplikace definuje metodu 'can_<command_name>' a ta vrátí False, jsou
+        neaktivní.  A¾ nakonec je testována hodnota (nebo výsledek volání
+        funkce) argumentu 'enabled' konstruktoru.
         
         """
+        appl = pytis.form.application._application
+        
         if not self._has_access:
             return False
-        handler = self._cls.get_command_handler_instance(application)
+        handler = self._cls.get_command_handler_instance(appl)
         if handler is None or not hasattr(handler, 'COMMAND_'+self._name) \
                or not getattr(handler, 'COMMAND_'+self._name) == self:
             return False
@@ -220,15 +203,7 @@ class Command(object):
                 return False
         enabled = self._enabled
         if not isinstance(enabled, types.BooleanType):
-            if self._static:
-                cache_key = tuple(args.items())
-                try:
-                    enabled = self._cache[cache_key]
-                except KeyError:
-                    enabled = bool(enabled(application, self, args))
-                    self._cache[cache_key] = enabled
-            else:
-                enabled = bool(enabled(application, self, args))
+            enabled = bool(enabled(appl, self, args))
         return enabled
     
     def log_kind(self):
@@ -256,13 +231,6 @@ class Command(object):
     def __str__(self):
         return '<Command: %s>' % self._id
 
-    def __setattr__(self, name, value):
-        # TODO: Èasem zru¹it.
-        if name == 'key':
-            log(OPERATIONAL,
-                "Nastaven potlaèený atribut `key' tøídy `Command':",
-                (value, self._id))
-        self.__dict__[name] = value
             
         
 def invoke_command(command, **kwargs):
@@ -274,14 +242,14 @@ def invoke_command(command, **kwargs):
       kwargs -- parametry pøíkazu
 
     """
-    appl = pytis.form.application._application
     # TODO: Zde vyvoláme on_command aplikace a ta je zodpovìdna za pøedání
     # pøíkazu formuláøi, pokud to není její pøíkaz.  Formuláø zase pøedává
     # pøíkazy políèkùm.  To odpovídá pùvodnímu návrhu.  Nyní v¹ak máme
     # CommandHandler a metodu get_command_handler_instance(), tak¾e bychom
     # pøíkazy mohli pøedávat rovnou instanci, které pøíkaz nále¾í.  Pozor,
     # mo¾ná to také nìjak souvisí s metodou KeyHandler._maybe_invoke_command().
-    if command.enabled(appl, kwargs):
+    if command.enabled(kwargs):
+        appl = pytis.form.application._application
         return appl.on_command(command, **kwargs)
     else:
         return False
