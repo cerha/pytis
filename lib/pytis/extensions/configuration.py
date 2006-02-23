@@ -116,7 +116,6 @@ def cfg_param(column, cfgspec='Nastaveni', value_column=None):
         hodnotu u¾ivatelského sloupce.
 
     """
-    print "***", column
     dbconfig = DBConfig(cfgspec)
     if not dbconfig.has_key(column):
         return pytis.data.Value(None, None)
