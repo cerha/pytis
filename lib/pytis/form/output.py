@@ -296,11 +296,6 @@ class PostscriptViewer(wx.ScrolledWindow):
 class PrintForm(Form):
     """Formuláø zobrazující preview tisku s mo¾ností jeho provedení."""
 
-    ACT_PRINT_FORM = 'ACT_PRINT_FORM'
-    """Aktivaèní konstanta tiskového formuláøe."""
-    
-    ACTIVATIONS = Window.ACTIVATIONS + [ACT_PRINT_FORM]
-        
     def __init__(self, parent, resolver, name, formatter,
                  guardian=None):
         """Inicializuj instanci.
@@ -329,13 +324,6 @@ class PrintForm(Form):
         self._create_controls()
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
-    def _menus(self):
-        return (Menu(_("Vytisknout"),
-                     (MItem(_("Vytisknout"),
-                            command=Form.COMMAND_PRINT),
-                      ),
-                     activation=PrintForm.ACT_PRINT_FORM),)
-                
     def _run_formatter(self, stream):
         if __debug__: log(DEBUG, 'Spou¹tím formátovaè')
         try:
