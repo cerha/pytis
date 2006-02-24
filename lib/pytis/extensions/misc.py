@@ -30,11 +30,11 @@ from pytis.form import *
 
 import config
 
-def data_create(spec):
-    """Sestaví datový objekt na základì specifikace."""
+def data_create(name):
+    """Sestaví datový objekt na základì názvu specifikace."""
     import config
     resolver = pytis.form.resolver()
-    data_spec = resolver.get(spec, 'data_spec')
+    data_spec = resolver.get(name, 'data_spec')
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
     return success, data
