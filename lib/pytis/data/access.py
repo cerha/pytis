@@ -2,7 +2,7 @@
 
 # Pøístupová práva
 # 
-# Copyright (C) 2002, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -330,3 +330,19 @@ class DataAccessException(Exception):
             (config.dbconnection.user(), permission, table, column))
         Exception.__init__(self, _("Pøístup odmítnut"),
                            permission, table, column)
+
+
+def is_in_groups(access_groups):
+    """Vra» pravdu pokud pøihlá¹ený u¾ivatel patøí alespoò do jedné ze skupin.
+    
+    'access_groups' je sekvence názvù skupin, jako øetìzcù, nebo None, v
+    kterém¾to pøípadì je vrácena v¾dy pravda.
+    
+    """
+    import config
+    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
+    if groups is None or access_groups is None\
+           or some(lambda g: g in groups, xtuple(access_groups)):
+        return True
+    else:
+        return False
