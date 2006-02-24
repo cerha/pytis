@@ -1,3 +1,9 @@
+2006-02-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py (_pypg_new_connection): Pokud dojde k chybì
+	a chybová zpráva obsahuje øetìzec 'authentication failed', pova¾uj
+	chybu také za DBLoginException.
+
 2006-02-24  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/util/configuration.py (Configuration._Option_dbpass):
@@ -6,6 +12,19 @@
 	konfiguraèní volbu 'dbpass'.
 
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (TableRowIterator): Nová tøída.
+
+	* pytis/form/command.py (Command.__init__): Vyu¾ívej
+	`pytis.data.is_in_groups()'.
+
+	* pytis/data/access.py (is_in_groups): Nová funkce.
+
+	* pytis/form/search.py (SFDialog._create_content.condition):
+	O¹etøi pøípad, kdy `self._field_id' ji¾ není v `self._columns'.
+
+	* pytis/form/screen.py (wx_text_view): Pøedávej argument `id'
+	konstruktoru `lcg.WikiNode'.
 
 	* pytis/form/application.py (Application.OnInit): S èíslem portu
 	db spojení pracuj jako s øetìzcem.
