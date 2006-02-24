@@ -1,3 +1,10 @@
+2006-02-24  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/util/configuration.py (Configuration._Option_dbpass):
+	Nová konfiguraèní volba.
+	(Configuration._Option_dbconnection.default): Doplò i novou
+	konfiguraèní volbu 'dbpass'.
+
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.OnInit): S èíslem portu
