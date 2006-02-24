@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1319,13 +1319,12 @@ def _pypg_new_connection(spec, data):
     connection_string = ''
     for option, accessor in (('user', DBConnection.user),
                              ('password', DBConnection.password),
+                             ('dbname', DBConnection.database),
                              ('host', DBConnection.host),
-                             ('port', DBConnection.port),
-                             ('dbname', DBConnection.database)):
+                             ('port', DBConnection.port)):
         value = accessor(spec)
         if value != None:
-            connection_string = "%s %s='%s'" % \
-                                (connection_string, option, _pg_escape(value))
+            connection_string += " %s='%s'" % (option, _pg_escape(str(value)))
     # Otevři spojení
     if __debug__: log(DEBUG, 'Připojovací řetězec:', connection_string)
     try:
