@@ -498,7 +498,7 @@ class Configuration:
         _DEFAULT = 'pytis'
 
     class _Option_dbpass(_StringOption):
-        _DESCR = _("Heslo pro pøipojení.")
+        _DESCR = _("Heslo pro pøihlá¹ení k databázi.")
         _DEFAULT = None
 
     class _Option_dbconnection(Option, _HiddenOption):
