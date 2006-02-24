@@ -53,7 +53,7 @@ def DBTable(spec, columns,
 
 def form_validate(spec, prefill):
     # Sestavíme datový objekt
-    success, data = data_create(spec)
+    data = data_create(spec)
     if not data:
         return None, None
     failed = []
@@ -73,6 +73,7 @@ def form_validate(spec, prefill):
 
         
 def PopupCB(spec, name, column, returned_column,
+            selected=None,
             condition=None, sort=(), **attrs):
     """Generuje popup list na základì hodnot z èíselníku.
 
@@ -83,6 +84,8 @@ def PopupCB(spec, name, column, returned_column,
       label -- popis pro HTML widget
       column -- název sloupce èíselníku, jeho¾ hodnoty se budou zobrazovat
       returned_column -- název sloupce èíselníku, jeho¾ hodnoty se budou vracet
+      selected -- None nebo seznam hodnot, které budou mít v HTML hodnotu
+                  selected
       sort -- øazení odpovídající argumentu volání pytis.data.select()    
       condition -- podmínka odpovídající argumentu volání pytis.data.select()
 
@@ -93,4 +96,11 @@ def PopupCB(spec, name, column, returned_column,
         return None
     options = [(r[column].value(), r[returned_column].value())
                for r in dbrows]
-    return Select(options, name=name, **attrs)
+    if selected:
+        if isinstance(selected, types.StringTypes):
+            selected = xtuple(selected)
+        if len(selected) > 1:
+            attrs['multiple'] = 1
+    else:
+        selected = []
+    return Select(options, selected=selected, name=name, **attrs)

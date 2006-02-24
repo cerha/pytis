@@ -37,7 +37,7 @@ def data_create(name):
     data_spec = resolver.get(name, 'data_spec')
     op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
-    return success, data
+    return data
     
 def cb_computer(codebook, column, default=None):
     """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
@@ -210,39 +210,36 @@ def dbupdate_many(spec, condition=None, update_row=None):
     result = data.update_many(condition, update_row) 
     return result
 
-def dbinsert(spec, row=()):
+def dbinsert(spec, row):
     """Provede update nad tabulkou danou specifikací.
 
     Argumenty:
 
       spec -- specifikace datového objektu nad kterým má být proveden
         select; string'
-      condition -- podmínka updatovaní.
-      update_row -- øádek kterým se provede update, 
+      row -- sekvence dvouprvkových sekvencí (id, value) nebo
+        instance pytis.data.Row.
         
     Vrací poèet updatovaných øádkù.
     
     """
     resolver = pytis.form.resolver()
     # Kontroly
-    if not is_sequence(row):
-        raise _("Argument must be a sequence")
-    for item in row:
-        if not is_sequence(item) or len(item) != 2:
-            raise 'Column definition must be (ID, VALUE) pair'
-        k, v = item
-        if not is_string(k):
-            raise 'Invalid column id %s' % k
-        if not isinstance(v, pytis.data.Value):
-            raise 'Invalid column value %s' % v
-    data_spec = resolver.get(spec, 'data_spec')
-    if not data_spec:
-        raise "Specifikace %s nebyla nalezena!" % (spec)
-    op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-    success, data = pytis.form.db_operation(op)
-    if not success:
-        raise "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
-    op = lambda: data.insert(pytis.data.Row(data=row))
+    assert isinstance(row, pytis.data.Row) or \
+           is_sequence(row), \
+           _("Argument must be a sequence or Row instance")
+    if is_sequence(row):
+        for item in row:
+            if not is_sequence(item) or len(item) != 2:
+                raise 'Column definition must be (ID, VALUE) pair'
+            k, v = item
+            if not is_string(k):
+                raise 'Invalid column id %s' % k
+            if not isinstance(v, pytis.data.Value):
+                raise 'Invalid column value %s' % v
+        row = pytis.data.Row(row)
+    data = data_create(spec)
+    op = lambda: data.insert(row)
     success, result = pytis.form.db_operation(op)
     return result
 

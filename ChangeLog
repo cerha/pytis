@@ -1,3 +1,13 @@
+2006-02-24  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (data_create): Vra» jen data. 
+	(dbinsert): Argument 'row' je pozièní.
+	(dbinsert): Upraveno s mo¾ností pøedání pytis.data.Row.
+
+	* lib/pytis/extensions/www.py (form_validate): Pou¾ij
+	'data_create'. 
+	(PopupCB): Doplnìn argument 'selected'.
+
 2006-02-23  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py: Neimportuj 'pytis.output'.
