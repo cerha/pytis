@@ -307,11 +307,10 @@ def printdirect(resolver, spec, print_spec, row):
     formatter = pytis.output.Formatter(resolvers, spec_path)
     formatter.printdirect()
 
-
-def smssend(tel, message):
+def smssend(tel, message, server='192.168.1.55'):
     import os, os.path, commands
 
-    SERVER='192.168.1.55'
+    SERVER=server
     UID='sms'
     PWD='sms'
     DB='SMS'
@@ -323,7 +322,6 @@ def smssend(tel, message):
     values
     ('%s', 0, 0, 0, '%s')
     """
-
 
     if not os.path.exists(SQSH):
         return "Není nainstalován balík 'sqsh'. SMS nebude odeslána."
