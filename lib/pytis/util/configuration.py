@@ -484,7 +484,15 @@ class Configuration:
         def default(self):
             import getpass
             return getpass.getuser()
+
+    class _Option_dbpass(_StringOption):
+        _DESCR = _("Heslo pro pøihlá¹ení k databázi.")
+        _DEFAULT = None
         
+    class _Option_dbname(_StringOption):
+        _DESCR = _("Jméno aplikaèní databáze.")
+        _DEFAULT = 'pytis'
+
     class _Option_dbhost(_StringOption, _CommandlineOption):
         _DESCR = _("Jméno databázového serveru.")
         _DEFAULT = 'localhost'
@@ -493,23 +501,15 @@ class Configuration:
         _DESCR = _("Port databázového serveru.")
         _DEFAULT = None
     
-    class _Option_dbname(_StringOption):
-        _DESCR = _("Jméno aplikaèní databáze.")
-        _DEFAULT = 'pytis'
-
-    class _Option_dbpass(_StringOption):
-        _DESCR = _("Heslo pro pøihlá¹ení k databázi.")
-        _DEFAULT = None
-
     class _Option_dbconnection(Option, _HiddenOption):
         _DESCR = _("Instance specifikace spojení do databáze "
                    "('pytis.data.DBConnection').")
         _DOC = _("Implicitnì se vytváøí z vý¹e uvedených databázových voleb.")
         def default(self):
             c = self._configuration
-            return pytis.data.DBConnection(user=c.dbuser, host=c.dbhost,
-                                           database=c.dbname, port=c.dbport,
-                                           password=c.dbpass)
+            return pytis.data.DBConnection(user=c.dbuser, password=c.dbpass,
+                                           database=c.dbname, host=c.dbhost,
+                                           port=c.dbport)
 
     class _Option_dblogtable(_StringOption):
         _DESCR = _("Jméno tabulky, do které mají být logovány DML SQL pøíkazy.")
