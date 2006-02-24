@@ -124,13 +124,7 @@ class Command(object):
         self._id = id = '.'.join((cls.__name__, name.lower().replace('_', '-')))
         self._handler = handler
         self._log = log_
-        self._has_access = True
-        if access_groups is not None:
-            access_groups = xtuple(access_groups)
-            dbconnection = config.dbconnection
-            groups = pytis.data.DBDataDefault.class_access_groups(dbconnection)
-            if groups is not None:
-                self._has_access = some(lambda g: g in groups, access_groups)
+        self._has_access = pytis.data.is_in_groups(access_groups)
         self._enabled = enabled
         self._cache = {}
         assert not hasattr(cls, 'COMMAND_' + name), \
