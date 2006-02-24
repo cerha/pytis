@@ -153,12 +153,12 @@ class SFDialog(SFSDialog):
                 wcol, wop, wval, __ = self._defaults[id]
             except KeyError:
                 wcol, wop, wval, __ = self._defaults[id] = self._default_item
-            if wcol == -1:
-                if self._field_id:
-                    c = find(self._field_id, self._columns,
-                             key=lambda c: c.id())
+            if wcol == -1 and self._field_id:
+                c = find(self._field_id, self._columns, key=lambda c: c.id())
+                if c is not None:
                     wcol = self._columns.index(c)
-                elif id > 0 and self._defaults[id-1][0] != -1:
+            if wcol == -1:
+                if id > 0 and self._defaults[id-1][0] != -1:
                     wcol = self._defaults[id-1][0]
                 else:
                     wcol = 0
