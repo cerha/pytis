@@ -1,5 +1,8 @@
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application.OnInit): S èíslem portu
+	db spojení pracuj jako s øetìzcem.
+
 	* pytis/data/dbdata.py (_pypg_new_connection): Pøevádìj èíslo
 	portu na øetìzec.
 
