@@ -1,5 +1,8 @@
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/configuration.py
+	(Configuration._Option_dbpass._DESCR): Doplnìno.
+
 	* pytis/data/dbdata.py (_pypg_new_connection): Pokud dojde k chybì
 	a chybová zpráva obsahuje øetìzec 'authentication failed', pova¾uj
 	chybu také za DBLoginException.

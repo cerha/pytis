@@ -4,6 +4,22 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-02-24  Tomas Cerha  <cerha@brailcom.org>
+
+	V modulu pytis.data.access pøibyla nová funkce `', umo¾òující
+	pohodlnì zjistit, zda pøihlá¹ený u¾ivatel patøí do jedné z
+	vyjmenovaných skupin.
+	
+	* BUGFIX: Ve filtrovacím dialogu je o¹etøena situace, kdy výchozí
+	sloupec není v aktuální mno¾inì sloupcù.
+	
+	* BUGFIX: Pøi formátování textù pomocí LCG jsou nyní pøedávány
+	argumenty konstruktoru `lcg.WikiNode' pro novìj¹í verzi LCG.
+	
+	* BUGFIX: Chyba pøihlá¹ení je nyní detekována i pøi pøihla¹ování
+	pomocí PAM.  Díky tomu je pøi ¹patném zadání hesla pøi PAM
+	pøihla¹ování znovu nabídnut pøihla¹ovací dialog.
+	
 2006-02-23  Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions byly tøídy a funkce související s konfigurací
