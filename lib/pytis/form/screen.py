@@ -1416,7 +1416,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
     else:
         if format == TextFormat.WIKI:
             import lcg
-            n = lcg.WikiNode(content, title='')
+            n = lcg.WikiNode('x', content, title='')
             html = n.content().export()
         else:
             html = content
