@@ -280,11 +280,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self.run_form(form_cls, name.strip())
         conn = config.dbconnection
         if conn:
+            # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
+            # databázi (není vyvolána ¾ádná databázová operace), nemusí být
+            # hodnoty správnì.
             title = self._frame.GetTitle()            
             title += " %s@%s %s" % (conn.user(), conn.database(),
                                     conn.host())
             if conn.port():
-                title += ":%d" % int(conn.port())
+                title += ":%d" % conn.port()
             self._frame.SetTitle(title)
         return True
 
