@@ -669,6 +669,30 @@ class ListTable(wx.grid.PyGridTableBase):
         return None
         
 
+class TableRowIterator(object):
+    """Vytvoøí iterátor nad tabulkou, který postupnì vrací urèené øádky.
+
+    Argumenty konstruktoru:
+      table -- instance ListTable
+      rows -- sekvence celých èísel urèujících jednotlivé øádky
+    
+    """
+    def __init__(self, table, rows):
+        self._pointer = -1
+        self._table = table
+        self._rows = rows
+        
+    def __iter__(self):
+        return self
+
+    def next(self):
+        self._pointer += 1
+        if self._pointer >= len(self._rows):
+            raise StopIteration
+        else:
+            return self._table.row(self._rows[self._pointer])
+        
+    
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
 
