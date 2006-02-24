@@ -1337,10 +1337,12 @@ def _pypg_new_connection(spec, data):
             raise DBException(_("Nelze nastavit client_encoding na %s"  
                                 % config.db_encoding), e)
     except libpq.DatabaseError, e:
-        if e.args and string.find(string.lower(e.args[0]), 'password') != -1:
-            raise DBLoginException()
-        else:
-            raise DBException(_("Nelze se pøipojit k databázi"), e)
+        if e.args:
+            msg = e.args[0].lower()
+            if msg.find('password') != -1 or \
+                   msg.find('authentication failed') != -1:
+                raise DBLoginException()
+        raise DBException(_("Nelze se pøipojit k databázi"), e)
     # Nastavujeme serializované transakce, abychom v rámci jedné transakce
     # nemohli dostat rùzné výsledky pro opakované selecty.
     try:
