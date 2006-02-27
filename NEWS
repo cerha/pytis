@@ -4,8 +4,46 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
+2006-02-27  Tomas Cerha  <cerha@brailcom.org>
+
+	Byly implementovány funkce pro práci s výbìrem v øádkovém
+	formuláøi.  V ka¾dém formuláøi je nyní mo¾no vybrat i nìkolik
+	øádkù souèasnì a s nimi dále pracovat.  Výbìr je mo¾no roz¹iøovat
+	pomocí levého tlaèítka my¹i a souèasnì stisknuté klávesy Ctrl,
+	nebo Shift.  Chování je obdobné, jak tomu bývá bì¾né v jiných
+	aplikacích.  
+
+	Problém v¹ak nastává vzhledem k na¹í pùvodní koncepci aktuálního
+	øádku.  Ta autuální øádek v¾dy zvýrazòuje právì pomocí výbìru,
+	tak¾e napøíklad pøi pohybu kurzoru v gridu dochází k zru¹ení
+	jakéhokoliv výbìru a nastavení výbìru v¾dy na øádek, kde se
+	nachází kurzor.  Výbìr tedy pøi pohybu kurzoru není zachován.
+
+	Stejný problém nastává pøi kliknutí pravým tlaèítkem my¹i, kdy
+	potøebujeme kurzor pøesunout na místo kliknutí.  Tím je v¹ak øádek
+	vybrán a pøedchozí výbìr zru¹en.  Nyní bylo chování upraveno, aby
+	v pøípadì, ¾e jsou vybrány nìjaké øádky (kromì aktuálního), výbìr
+	ru¹en nebyl.  V takovém pøípadì v¹ak není mo¾né zobrazit menu,
+	proto¾e by nebylo zøejmé, nad kterým øádkem je akce vyvolána.
+
+	Pokud problém doøe¹íme, bude mo¾né definovat také menu pøíkazù,
+	které pracují s aktuálním výbìrem.
+
+	Pøed plným vyu¾itím práce s výbìrem v¹ak bude tøeba zvolit jinou
+	techniku zvýraznìní aktuálního øádku, aby výbìr a aktuální øádek
+	byly zcela nezávislé.  To v¹ak bude znamenat zmìnu chování, která
+	by mohla být z u¾ivatelského hlediska pomìrnì nebezpeèná (vyvolání
+	akce nad jiným, ne¾ zamý¹leným záznamem, apod.).
+
+	Prozatím je mo¾né jedno konkrétní vyu¾ití vícenásobného výbìru
+	øádkù.  Nová formuláøová tøída `SelectRowsForm' je obdobou
+	èíselníku.  Namísto aktuálního øádku v¹ak vrací v¹echny oznaèené
+	øádky jako tuple instancí PresentedRow.  Implementace je zamý¹lena
+	jako prototyp a zatím není doporuèováno pøípi¹ èetné vyu¾ívání.
+	Mù¾eme si v¹ak díky tomu vícenásobný výbìr vyzkou¹et a doøe¹it tak
+	vý¹e zmiòované problémy.
+	
 	V pytis-extensions byly databázové funkce soustøedìny do nového
 	modulu `dbutils'.  Nìkteré funkce byly pøejmenovány v zájmu
 	konzistence.  Pro pùvodní názvy byly vytvoøeny aliasy, tak¾e

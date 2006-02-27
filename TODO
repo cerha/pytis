@@ -65,7 +65,9 @@ NOVÉ VLASTNOSTI:
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
-   Nad tìmito øádky by potom ¹lo napøíklad spustit nìjakou proceduru, apod.
+   Práce s výbìrem je nyní problematická, proto¾e výbìr je pou¾íván také k
+   vysvícení aktuálního øádku.  Je tøeba nejprve vymyslet, jak se to má
+   chovat.  Více viz news 2006-02-27.
 
  * Ulo¾ené filtrovací podmínky.
 
