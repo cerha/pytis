@@ -1,5 +1,8 @@
 2006-02-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/spec.py (context_mitem): Vytváøej pøíkaz
+	`COMMAND_CURRENT_ROW_ACTION', ne `COMMAND_CONTEXT_MENU_ACTION'.
+
 	* lib/pytis/extensions/__init__.py: Aktualizováno.
 
 	* lib/pytis/extensions/dbutils.py: Nový modul.
