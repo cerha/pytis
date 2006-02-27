@@ -1,3 +1,27 @@
+2006-02-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/__init__.py: Aktualizováno.
+
+	* lib/pytis/extensions/dbutils.py: Nový modul.
+	(dbfunction): Netoleruj ¾ádné klíèové argumenty, kromì
+	`proceed_with_empty_values'.
+	(dbupdate_many): Vyu¾ívej `data_object()'.
+	(row_update): Pøejmenováno na `dbupdate'.  Ponechán alias pro
+	zpìtnou kompatibilitu.
+	(dbinsert): Vyu¾ívej `data_object()'.
+	(dbselect): Vyu¾ívej `data_object()'.  Netoleruj ¾ádné klíèové argumenty, kromì `condition' a
+	`sort'.
+	(dbfunction): Oprava zpracování argumentù.
+
+	* lib/pytis/extensions/misc.py (data_create, dbfunction) 
+	(dbselect, dbupdate_many, dbinsert, row_update, is_in_groups):
+	Funkce pøesunuty do nového modulu `dbutils'.
+
+	* lib/pytis/extensions/configuration.py: Pøejmenováno na `dbconfig.py'.
+
+	* lib/pytis/extensions/dbconfig.py: Nový soubor.
+	(DBConfig.__init__): Vyu¾ívej funkce `data_object()'.
+
 2006-02-24  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (data_create): Vra» jen data. 
