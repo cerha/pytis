@@ -64,17 +64,12 @@ class DBConfig(object):
         except NameError:
             cache = data_object_cache = {}
         try:
-            data_object = cache[name]
+            data = cache[name]
         except KeyError:
-            resolver = pytis.form.resolver()
-            data_spec = resolver.get(name, 'data_spec')
-            op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-            success, data_object = pytis.form.db_operation(op)
-            if success:
-                cache[name] = data_object
-            else:
-                data_object = None
-        self._data = data_object
+            data = data_object(name)
+            if data is not None:
+                cache[name] = data
+        self._data = data
         self._data.select()
         self._row = self._data.fetchone()
         self._key = [self._row[c.id()] for c in self._data.key()]
