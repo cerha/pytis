@@ -6,9 +6,15 @@
 
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
-	V modulu pytis.data.access pøibyla nová funkce `', umo¾òující
-	pohodlnì zjistit, zda pøihlá¹ený u¾ivatel patøí do jedné z
-	vyjmenovaných skupin.
+	V modulu pytis.data.access pøibyla nová funkce `is_in_groups()',
+	umo¾òující pohodlnì zjistit, zda pøihlá¹ený u¾ivatel patøí do
+	jedné z vyjmenovaných skupin.
+
+	Nová konfiguraèní volba dbpass umo¾òuje pøímé nastavení hesla.
+	Pou¾ití v konfiguraèním souboru èi na pøíkazové øádce není z
+	bezpeènostních dùvodù doporuèováno.  Volba se v¹ak mù¾e hodit
+	napøíklad pøi pøístupu k databázi z jiného programu vyu¾ívajícího
+	Ptytis API.
 	
 	* BUGFIX: Ve filtrovacím dialogu je o¹etøena situace, kdy výchozí
 	sloupec není v aktuální mno¾inì sloupcù.
@@ -19,6 +25,12 @@
 	* BUGFIX: Chyba pøihlá¹ení je nyní detekována i pøi pøihla¹ování
 	pomocí PAM.  Díky tomu je pøi ¹patném zadání hesla pøi PAM
 	pøihla¹ování znovu nabídnut pøihla¹ovací dialog.
+
+	* BUGFIX: S èíslem portu nastaveným pomocí konfiguraèní volby
+	`dbport' je nyní nakládáno jako s celoèíselnou hodnotou, ne jako s
+	øetìzcem, co¾ odporovalo definici.  Pokud byl `dbport' nìkde
+	nastavován jako øetìzec, nebude to nyní fungovat.  Konfiguraèní
+	soubory je v tomto pøípadì tøeba opravit.
 	
 2006-02-23  Tomas Cerha  <cerha@brailcom.org>
 
