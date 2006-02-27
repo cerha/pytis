@@ -6,6 +6,16 @@
 
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
+	V pytis-extensions byly databázové funkce soustøedìny do nového
+	modulu `dbutils'.  Nìkteré funkce byly pøejmenovány v zájmu
+	konzistence.  Pro pùvodní názvy byly vytvoøeny aliasy, tak¾e
+	zpìtná kompatibilita by mìla být zachována beze zmìn, ale je
+	doporuèováno pou¾ívat nové názvy.  Více viz ChangeLog.  Kód byl
+	navíc proèi¹tìn a tento modul ji¾ nevyu¾ívá ¾ádné identifikátory z
+	hvìzdièkových importù.
+	
+2006-02-24  Tomas Cerha  <cerha@brailcom.org>
+
 	V modulu pytis.data.access pøibyla nová funkce `is_in_groups()',
 	umo¾òující pohodlnì zjistit, zda pøihlá¹ený u¾ivatel patøí do
 	jedné z vyjmenovaných skupin.
