@@ -13,6 +13,10 @@
 	doporuèováno pou¾ívat nové názvy.  Více viz ChangeLog.  Kód byl
 	navíc proèi¹tìn a tento modul ji¾ nevyu¾ívá ¾ádné identifikátory z
 	hvìzdièkových importù.
+
+	* BUGFIX: Pøi ukládání ¹íøek sloupcù je slovník pøeveden korektnì
+	na tuple, tak¾e zapamatovaná hodnota není pozdìji zahozena, co¾
+	znefunkèòovalo obnovování u¾ivatelem nastavených ¹íøek sloupcù.
 	
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
