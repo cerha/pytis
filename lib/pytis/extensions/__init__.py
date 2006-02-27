@@ -16,14 +16,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from configuration import *
-# Díky divokým importùm v modulech importovaných ní¾e je identifikátor
-# `configuration' pøebit modulem 'pytis.util.configurtion'...
-configuration_ = configuration 
+from dbconfig import *
+from dbutils import *
 from misc import *
 from types import *
 from spec import *
 
-for file in (configuration_, misc, types, spec):
+for file in (dbconfig, dbutils, misc, types, spec):
     file.__dict__.update(globals())
 
