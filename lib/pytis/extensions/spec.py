@@ -226,13 +226,13 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
 def context_mitem(title, handler, hotkey=None, **kwargs):
     """Vra» polo¾ku menu vyvolávající akci kontextového menu øádku formuláøe.
 
-    Bude vyvolán pøíkaz `ListForm.COMMAND_CONTEXT_MENU_ACTION', kterému budou
+    Bude vyvolán pøíkaz `ListForm.COMMAND_CURRENT_ROW_ACTION', kterému budou
     pøedány v¹echny klíèové argumenty.  Argument 'handler' je k nim automaticky
     pøidán.
 
     """
     kwargs['handler'] = handler
-    return MItem(title, command=ListForm.COMMAND_CONTEXT_MENU_ACTION,
+    return MItem(title, command=ListForm.COMMAND_CURRENT_ROW_ACTION,
                  args=kwargs, hotkey=hotkey)
 
 
@@ -284,7 +284,6 @@ def ddf(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
 def ef(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey)
-
 
 def enum(name):
     """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
