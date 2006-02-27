@@ -29,15 +29,6 @@ from pytis.util import *
 from pytis.form import *
 
 import config
-
-def data_create(name):
-    """Sestaví datový objekt na základì názvu specifikace."""
-    import config
-    resolver = pytis.form.resolver()
-    data_spec = resolver.get(name, 'data_spec')
-    op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-    success, data = pytis.form.db_operation(op)
-    return data
     
 def cb_computer(codebook, column, default=None):
     """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
@@ -116,132 +107,6 @@ def cb2strvalue(value, column=None):
         else:
             v = None
     return pytis.data.Value(pytis.data.String(), v)
-
-
-def dbfunction(name, *args, **kwargs):
-    """Zavolej databázovou funkci a vra» výsledek jako Pythonovou hodnotu.
-
-    Argumenty:
-
-      name -- název funkce.
-      args -- argumenty volání funkce; sekvence dvouprvkových tuplù, kde první
-        prvek je název argumentu a druhý jeho hodnota jako instance 'Value'.
-      proceed_with_empty_values -- pokud je pravdivé, volá databázovou funkci
-        v¾dy.  V opaèném pøípadì (vývchozí chování) testuje, zda v¹echny
-        argumenty obsahují neprázdnou hodnotu (jejich vnitøí hodnota není None
-        ani prázdný øetìzec) a pokud test neprojde, vrátí None bez volání
-        databázové funkce.  To znamená úsporu pokud je tato funkce pou¾ita v
-        computeru políèka, které je závislé na jiných políèkách, která je¹tì
-        nejsou vyplnìna.
-
-    """
-    def proceed_with_empty_values(proceed_with_empty_values=False):
-        return proceed_with_empty_values
-    if not proceed_with_empty_values(**kwargs):
-        for id, v in args:
-            value = v.value()
-            if value is None or value == '':
-                return None
-    op = lambda: pytis.data.DBFunctionDefault(name, config.dbconnection)
-    success, function = pytis.form.db_operation(op)
-    op = lambda: function.call(pytis.data.Row(args))[0][0]
-    success, result = pytis.form.db_operation(op)
-    return result.value()
-
-
-def dbselect(data_spec, *args, **kwargs):
-    """Zavolej nad tabulkou dané specifikace select s danými argumenty.
-
-    Argumenty:
-
-      data_spec -- název specifikace datového objektu nad kterým má být proveden
-        select nebo pøímo instance tøídy 'pytis.data.DataFactory'
-      args, kwargs -- argumenty volání 'pytis.data.select()'.
-        
-    Vrací v¹echny øádky vrácené z databáze jako list.
-    
-    """
-    if isinstance(data_spec, types.StringType):
-        resolver = pytis.form.resolver()
-        data_spec = resolver.get(data_spec, 'data_spec')
-    op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-    success, data = pytis.form.db_operation(op)
-    condition=None
-    sort=()
-    if kwargs.has_key('condition'):
-        condition=kwargs['condition']
-    if kwargs.has_key('sort'):
-        sort=kwargs['sort']
-    data.select(condition=condition, sort=sort)
-    result = []
-    while True:
-        row = data.fetchone()
-        if row is None:
-            data.close()
-            break
-        result.append(row)
-    return result
-
-def dbupdate_many(spec, condition=None, update_row=None):
-    """Provede update nad tabulkou danou specifikací.
-
-    Argumenty:
-
-      spec -- specifikace datového objektu nad kterým má být proveden
-        select; string'
-      condition -- podmínka updatovaní.
-      update_row -- øádek kterým se provede update, 
-        
-    Vrací poèet updatovaných øádkù.
-    
-    """
-    resolver = pytis.form.resolver()    
-    if condition is None or not isinstance(condition,pytis.data.Operator):
-        raise "Nebyla pøedána pro update_many"
-    elif update_row is None or not isinstance(update_row,pytis.data.Row):
-        raise "Nebyl pøedán øádek pro update"
-    data_spec = resolver.get(spec, 'data_spec')
-    if not data_spec:
-        raise "Specifikace %s nebyla nalezena!" % (spec)
-    op = lambda: data_spec.create(dbconnection_spec=config.dbconnection)
-    success, data = pytis.form.db_operation(op)
-    if not success:
-        raise "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
-    result = data.update_many(condition, update_row) 
-    return result
-
-def dbinsert(spec, row):
-    """Provede update nad tabulkou danou specifikací.
-
-    Argumenty:
-
-      spec -- specifikace datového objektu nad kterým má být proveden
-        select; string'
-      row -- sekvence dvouprvkových sekvencí (id, value) nebo
-        instance pytis.data.Row.
-        
-    Vrací poèet updatovaných øádkù.
-    
-    """
-    resolver = pytis.form.resolver()
-    # Kontroly
-    assert isinstance(row, pytis.data.Row) or \
-           is_sequence(row), \
-           _("Argument must be a sequence or Row instance")
-    if is_sequence(row):
-        for item in row:
-            if not is_sequence(item) or len(item) != 2:
-                raise 'Column definition must be (ID, VALUE) pair'
-            k, v = item
-            if not is_string(k):
-                raise 'Invalid column id %s' % k
-            if not isinstance(v, pytis.data.Value):
-                raise 'Invalid column value %s' % v
-        row = pytis.data.Row(row)
-    data = data_create(spec)
-    op = lambda: data.insert(row)
-    success, result = pytis.form.db_operation(op)
-    return result
 
 def session_date(*args):
     """Vra» vnitøní hodnotu nastaveného pracovního datumu."""
@@ -492,37 +357,6 @@ def run_cb(spec, begin_search=None, condition=None,
                     begin_search=begin_search,
                     condition=condition,
                     select_row=select_row)
-
-def row_update(row, values=()):
-    """Provede update nad pøedaným øádkem.
-
-    Argumenty:
-
-      row -- pøedaná instance aktuálního PresentedRow.
-      values -- sekvence dvouprvkových sekvencí ('id', value) ,
-        kde 'id' je øetìzcový identifikátor políèka a value je
-        instance, kterou se bude políèko aktualizovat.
-    """
-    data = row.data()
-    updaterow = row.row()
-    key = data.key()
-    if is_sequence(key):
-        key = key[0]
-    for col, val in values:
-        updaterow[col] = val
-    op = lambda: data.update(row[key.id()], updaterow)
-    return pytis.form.db_operation(op)
-
-def is_in_groups(groups):
-    if isinstance(groups, types.StringType):
-        groups = xtuple(groups)
-    from sets import Set
-    conn = config.dbconnection
-    dbgroups=pytis.data.PostgreSQLUserGroups.class_access_groups(conn)
-    if Set(groups) & Set(dbgroups) == Set([]):
-        return False
-    else:
-        return True
 
 
 # Application function
