@@ -144,7 +144,7 @@ def dbupdate_many(spec, condition=None, update_row=None):
     return data.update_many(condition, update_row) 
 
 
-def dbfunction(name, *args, proceed_with_empty_values=False):
+def dbfunction(name, *args, **kwargs):
     """Zavolej databázovou funkci a vra» výsledek jako Pythonovou hodnotu.
 
     Argumenty:
@@ -161,7 +161,9 @@ def dbfunction(name, *args, proceed_with_empty_values=False):
         nejsou vyplnìna.
 
     """
-    if not proceed_with_empty_values:
+    def proceed_with_empty_values(proceed_with_empty_values=False):
+        return proceed_with_empty_values
+    if not proceed_with_empty_values(**kwargs):
         for id, v in args:
             value = v.value()
             if value is None or value == '':
