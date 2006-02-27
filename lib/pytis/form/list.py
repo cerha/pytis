@@ -395,7 +395,22 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def current_field(self):
         col = self._current_cell()[1]
         return self._columns[col].id()
-        
+
+    def _selected_rows(self):
+        g = self._grid
+        # g.SelectedRows() nefunguje, proto následující hrùza...
+        rows = []
+        if g.IsInSelection(*self._current_cell()):
+            rows.append(g.GetGridCursorRow())
+        for start, end in zip([r for r, c in g.GetSelectionBlockTopLeft()],
+                              [r for r, c in g.GetSelectionBlockBottomRight()]):
+            rows.extend([r for r in range(start, end+1) if r not in rows])
+        rows.sort()
+        return rows
+
+    def selected_rows(self):
+        return _grid.TableRowIterator(self._table, self._selected_rows())
+    
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Vrací pravdu, pokud mù¾e být událost provedena (viz _on_select_cell).
         if self._in_select_cell:
@@ -794,14 +809,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         m.Destroy()
         event.Skip()
 
-    def _on_context_menu(self, event):
-        # Popup menu pro vybraný øádek gridu
-        self._run_callback(self.CALL_USER_INTERACTION)
-        row, col = event.GetRow(), event.GetCol()
-        self._select_cell(row=row, col=col)
-        self.show_context_menu(position=event.GetPosition())
-        event.Skip()
-
     def _on_label_left_down(self, event):
         g = self._grid
         x = event.GetX() + self._scroll_x_offset()
@@ -889,7 +896,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _remember_column_size(self, col):
         id = self._columns[col].id()
         self._column_widths[id] = self._grid.GetColSize(col)
-        self._set_state_param('column_width', self._column_widths.items())
+        saved_value = tuple(self._column_widths.items())
+        self._set_state_param('column_width', saved_value)
         
     def _on_label_paint(self, event):
         def triangle(x, y, r=4, reversed=True):
@@ -952,19 +960,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     dc.DrawPolygon(arrow(ax, height-2))
             x += width
 
-    def _on_wheel(self, event):
-        g = self._grid
-        delta = event.GetWheelDelta()
-        linesPer = event.GetLinesPerAction()
-        pxx, pxy = g.GetScrollPixelsPerUnit()
-        rot = event.GetWheelRotation()
-        lines = rot / delta
-        if lines != 0:
-            vsx, vsy = g.GetViewStart()
-            lines = lines * linesPer
-            scrollTo = vsy - pxy / lines
-        g.Scroll(-1, scrollTo)    
-
     def _on_toggle_column(self, column_id, col=None):
         c = find(column_id, self._columns, key=lambda c: c.id())
         if c:
@@ -981,6 +976,27 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._init_column_widths() 
         self._update_grid(soft_reset_columns=True)
         super(ListForm, self)._on_reload_form_state()
+
+    def _on_context_menu(self, event):
+        # Popup menu pro vybraný øádek gridu
+        self._run_callback(self.CALL_USER_INTERACTION)
+        row, col = event.GetRow(), event.GetCol()
+        self._select_cell(row=row, col=col)
+        self.show_context_menu(position=event.GetPosition())
+        event.Skip()
+            
+    def _on_wheel(self, event):
+        g = self._grid
+        delta = event.GetWheelDelta()
+        linesPer = event.GetLinesPerAction()
+        pxx, pxy = g.GetScrollPixelsPerUnit()
+        rot = event.GetWheelRotation()
+        lines = rot / delta
+        if lines != 0:
+            vsx, vsy = g.GetViewStart()
+            lines = lines * linesPer
+            scrollTo = vsy - pxy / lines
+        g.Scroll(-1, scrollTo)    
 
     def show_context_menu(self, position=None):
         if self._table.editing():
@@ -1058,8 +1074,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Univerzální pøíkazy
         if command.handler() is not None:
             return self._on_handled_command(command, **kwargs)
-        elif command == ListForm.COMMAND_CONTEXT_MENU_ACTION:
-            self._on_context_menu_action(**kwargs)
+        elif command == ListForm.COMMAND_CURRENT_ROW_ACTION:
+            self._on_current_row_action(**kwargs)
+            return True
+        elif command == ListForm.COMMAND_SELECTED_ROWS_ACTION:
+            self._on_selected_rows_action(**kwargs)
             return True
         elif command == ListForm.COMMAND_COPY_CELL:
             self._on_copy_cell()
@@ -1175,7 +1194,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_handled_command(self, command, norefresh=False, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
         # TODO: Pøíkazy s handlerem by nemìly být vùbec pou¾ívány.  Namísto
-        # nich nech» je vyu¾íván pøíkaz COMMAND_CONTEXT_MENU_ACTION,
+        # nich nech» je vyu¾íván pøíkaz COMMAND_CURRENT_ROW_ACTION,
         # kde se handler definuje jako souèást argumentù a ne jako argument
         # konstruktoru Command.  U¾ivatel zkrátka nemá co vytváøet vlastní
         # instance tøídy Command...  Tato metoda a pøíslu¹ná èást v on_command
@@ -1214,31 +1233,47 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 kwargs = {}
         return args, kwargs
     
-    def _on_context_menu_action(self, handler=None, enabled=None,
-                                access_groups=None, **kwargs):
-        log(EVENT, 'Vyvolávám u¾ivatelský handler akce kontextového menu.')
-        if not callable(handler):
-            raise ProgramError("Nepøípustný handler akce konetxtového menu:",
-                               handler)
+    def _on_current_row_action(self, handler=None, enabled=None,
+                               access_groups=None, **kwargs):
+        log(EVENT, 'Vyvolávám u¾ivatelský handler akce nad aktuálním øádkem.')
         handler(self.current_row(), **kwargs)
         #if not norefresh:
         self.refresh()
         return True
-    
-    def can_context_menu_action(self, handler=None, enabled=None,
-                                access_groups=None, **kwargs):
-        if access_groups is not None:
-            dbconnection = config.dbconnection
-            groups = pytis.data.DBDataDefault.class_access_groups(dbconnection)
-            if groups is not None and not some(lambda g: g in groups,
-                                               xtuple(access_groups)):
-                return False
+
+    def can_current_row_action(self, handler=None, enabled=None,
+                               access_groups=None, **kwargs):
+        rows = self._selected_rows()
+        if len(rows) != 1 or rows[0] != self._grid.GetGridCursorRow():
+            # Mù¾e se stát, ¾e vybraný øádek není aktuální øádek.  Potom by
+            # se u¾ivatel mohl domnívat, ¾e pracuje s vybraným, ale ve
+            # skuteènosti pracuje s tím, na kterém je kurzor.
+            return False
+        if not pytis.data.is_in_groups(access_groups):
+            return False
         if enabled:
-            args, kwargs = self._context_menu_handler_args(enabled, **kwargs)
-            return enabled(*args, **kwargs)
+            return enabled(self.current_row(), **kwargs)
         else:
             return True
 
+    def _on_selected_rows_action(self, handler=None, enabled=None,
+                             access_groups=None, **kwargs):
+        log(EVENT, 'Vyvolávám u¾ivatelský handler akce nad aktuálním výbìrem.')
+        handler(self.selected_rows(), **kwargs)
+        self.refresh()
+        return True
+    
+    def can_selected_rows_action(self, handler=None, enabled=None,
+                             access_groups=None, **kwargs):
+        if len(self._selected_rows()) == 0:
+            return False
+        if not pytis.data.is_in_groups(access_groups):
+            return False
+        if enabled:
+            return enabled(self.selected_rows(), **kwargs)
+        else:
+            return True
+    
     def _on_incremental_search(self, full=False):
         row, col = self._current_cell()
         column = self._columns[col]
