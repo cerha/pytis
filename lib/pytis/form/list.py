@@ -1886,7 +1886,6 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
     DESCR = _("èíselník")
 
     _DEFAULT_WINDOW_HEIGHT = 500
-    _ACTIVATE_COMMAND_TITLE = _("Vybrat")
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -1959,7 +1958,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             return super(CodebookForm, self)._default_sorting()
         
     def _context_menu(self):
-        return (MItem(self._ACTIVATE_COMMAND_TITLE,
+        return (MItem(_("Vybrat"),
                       command = ListForm.COMMAND_ACTIVATE),
                 )
 
@@ -1977,7 +1976,6 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
 
 class SelectRowsForm(CodebookForm):
     """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
-    _ACTIVATE_COMMAND_TITLE = _("Pou¾ij vybrané øádky")
 
     def _on_activation(self, key=None, alternate=False):
         self._result = tuple(self.selected_rows())
