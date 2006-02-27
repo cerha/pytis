@@ -1,3 +1,30 @@
+2006-02-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py: Pøíkaz `COMMAND_CONTEXT_MENU_ACTION'
+	pøejmenován na `COMMAND_CURRENT_ROW_ACTION'.  Nový pøíkaz
+	`SELECTED_ROWS_ACTION'.
+
+	* pytis/form/list.py (ListForm._context_menu): Nová metoda.
+	(ListForm._context_menu, ListForm._context_menu): Nové metody.
+	(ListForm.on_command): Namísto `COMMAND_CONTEXT_MENU_ACTION'
+	o¹etøuj `COMMAND_CURRENT_ROW_ACTION' a
+	`COMMAND_SELECTED_ROWS_ACTION'.
+	(ListForm._on_context_menu_action): Pøevedeno na
+	`_on_current_row_action'.
+	(ListForm.can_context_menu_action): Pøevedeno na
+	`can_current_row_action'.  Nedovol akci, pokud aktuálnì vybraný
+	øádek není øádek, na kterém je kurzor.
+	(ListForm._on_selected_rows_action)
+	(ListForm.can_selected_rows_action): Nové metody.
+	(ListForm.can_current_row_action): Nezkoumej argumenty handleru
+	pøes inspect.
+	(ListForm._on_context_menu): Nepøenastavuj výbìr.
+	(SelectRowsForm): Nová tøída.
+	(ListForm._create_grid): `self._on_context_menu()' ->
+	`self._on_right_click()'.
+	(ListForm._on_context_menu): Pøejmenováno na `_on_right_click'.
+	Zobrazuj menu pouze pokud je aktivní øádek jediným vybraným øádkem.
+
 2006-02-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py
