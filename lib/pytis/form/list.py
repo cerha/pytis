@@ -208,7 +208,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL,   g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
-        wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_context_menu)
+        wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
         wx_callback(wx.EVT_MOUSEWHEEL, g,      self._on_wheel)
         wx_callback(wx.EVT_IDLE,       g,      self._on_idle)
         wx_callback(wx.EVT_KEY_DOWN,   g,      self.on_key_down)
@@ -977,12 +977,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_grid(soft_reset_columns=True)
         super(ListForm, self)._on_reload_form_state()
 
-    def _on_context_menu(self, event):
-        # Popup menu pro vybraný øádek gridu
+    def _on_right_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
-        #row, col = event.GetRow(), event.GetCol()
-        #self._select_cell(row=row, col=col)
-        self.show_context_menu(position=event.GetPosition())
+        selected = len(self._selected_rows())
+        if selected == 1 and self._grid.IsInSelection(*self._current_cell()) \
+               or selected == 0:
+            row, col = event.GetRow(), event.GetCol()
+            self._select_cell(row, col)
+            self.show_context_menu(position=event.GetPosition())
         event.Skip()
             
     def _on_wheel(self, event):
@@ -1014,7 +1016,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if position is None:
                 row, col = self._current_cell()
                 rect = g.CellToRect(row, col)
-                pos = (rect.GetX() + rect.GetWidth()/3 ,
+                pos = (rect.GetX() + rect.GetWidth()/3,
                        rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
                 position = self._grid.CalcScrolledPosition(pos)
             menu = Menu('', menu).create(g, self)
@@ -1243,12 +1245,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def can_current_row_action(self, handler=None, enabled=None,
                                access_groups=None, **kwargs):
-        rows = self._selected_rows()
-        if len(rows) != 1 or rows[0] != self._grid.GetGridCursorRow():
-            # Mù¾e se stát, ¾e vybraný øádek není aktuální øádek.  Potom by
-            # se u¾ivatel mohl domnívat, ¾e pracuje s vybraným, ale ve
-            # skuteènosti pracuje s tím, na kterém je kurzor.
-            return False
         if not pytis.data.is_in_groups(access_groups):
             return False
         if enabled:
@@ -1982,13 +1978,13 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
 class SelectRowsForm(CodebookForm):
     """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
     _ACTIVATE_COMMAND_TITLE = _("Pou¾ij vybrané øádky")
-    
+
     def _on_activation(self, key=None, alternate=False):
         self._result = tuple(self.selected_rows())
         self._parent.EndModal(1)
         return True
 
-    
+
 class BrowseForm(ListForm):
     """Formuláø pro prohlí¾ení dat s mo¾ností editace."""
 
