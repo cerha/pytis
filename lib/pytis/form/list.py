@@ -980,8 +980,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_context_menu(self, event):
         # Popup menu pro vybraný øádek gridu
         self._run_callback(self.CALL_USER_INTERACTION)
-        row, col = event.GetRow(), event.GetCol()
-        self._select_cell(row=row, col=col)
+        #row, col = event.GetRow(), event.GetCol()
+        #self._select_cell(row=row, col=col)
         self.show_context_menu(position=event.GetPosition())
         event.Skip()
             
@@ -1890,6 +1890,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
     DESCR = _("èíselník")
 
     _DEFAULT_WINDOW_HEIGHT = 500
+    _ACTIVATE_COMMAND_TITLE = _("Vybrat")
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -1962,7 +1963,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             return super(CodebookForm, self)._default_sorting()
         
     def _context_menu(self):
-        return (MItem(_("Vybrat"),
+        return (MItem(self._ACTIVATE_COMMAND_TITLE,
                       command = ListForm.COMMAND_ACTIVATE),
                 )
 
@@ -1975,6 +1976,15 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
     def _on_activation(self, key=None, alternate=False):
         """Nastav návratovou hodnotu a ukonèi modální dialog."""
         self._result = self.current_row()
+        self._parent.EndModal(1)
+        return True
+
+class SelectRowsForm(CodebookForm):
+    """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
+    _ACTIVATE_COMMAND_TITLE = _("Pou¾ij vybrané øádky")
+    
+    def _on_activation(self, key=None, alternate=False):
+        self._result = tuple(self.selected_rows())
         self._parent.EndModal(1)
         return True
 
