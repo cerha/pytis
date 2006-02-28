@@ -1753,7 +1753,10 @@ class PostgreSQLStandardBindingHandler(object):
                         'text': String,
                         'timestamp': DateTime,
                         'timestamptz': DateTime,
-                        'varchar': String}
+                        'varchar': String,
+                        'inet': Inet,
+                        'macaddr': Macaddr
+                        }
         try:
             type_class_ = TYPE_MAPPING[type_]
         except KeyError:
@@ -1849,6 +1852,7 @@ class PostgreSQLStandardBindingHandler(object):
         keytabcols = reduce(operator.add, keytabcols, [])
         key_eqs = map(lambda k: '%s=%%s' % k, keytabcols)
         key_cond = string.join(key_eqs, ' and ')
+        first_key_column = keytabcols[0]
         def sortspec(dir, self=self, keytabcols=keytabcols):
             items = []
             for i in range(len(keytabcols)):
@@ -1870,8 +1874,8 @@ class PostgreSQLStandardBindingHandler(object):
           (column_list, oidstrings, table_list, relation_and_condition,
            ordering)
         self._pdbb_command_count = \
-          'select count(*) from %s where %%s and (%s)' % \
-          (table_list, relation)
+          'select count(%s) from %s where %%s and (%s)' % \
+          (first_key_column, table_list, relation)
         self._pdbb_command_select = \
           ('declare %s scroll cursor for select %s, %s from %s '+\
            'where %%s and (%s) order by %%s %s') % \
@@ -1897,8 +1901,8 @@ class PostgreSQLStandardBindingHandler(object):
            'limit 1') % \
            (column_list, oidstrings, main_table, relation, rordering)
         self._pdbb_command_search_distance = \
-          'select count(*) from %s where (%s) and %%s' % \
-          (main_table, relation)
+          'select count(%s) from %s where (%s) and %%s' % \
+          (first_key_column, main_table, relation)
         self._pdbb_command_insert = \
           'insert into %s (%%s) values (%%s)' % main_table
         if self._ordering:
@@ -1932,8 +1936,8 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_command_update = \
           'update %s set %%s where (%s) and (%%s)' % (main_table, relation)
         self._pdbb_command_broken_update_preselect = \
-          'select count (*) from %s where (%s) and (%%s)' % \
-          (main_table, relation)
+          'select count (%s) from %s where (%s) and (%%s)' % \
+          (first_key_column, main_table, relation)
         self._pdbb_command_test_broken_update = \
           ("select 'yes' from pg_class, pg_rewrite "+\
            "where pg_rewrite.ev_type = 2 and "+\
@@ -2186,7 +2190,7 @@ class PostgreSQLStandardBindingHandler(object):
         # Najdi první øádek splòující po¾adovanou podmínku
         search_cond = AND(common_cond, condition)
         cond_string = self._pdbb_condition2sql(search_cond)
-        if direction == FORWARD:
+        if direction == FORWARD:            
             sql_command = self._pdbb_command_search_first
         elif direction == BACKWARD:
             sql_command = self._pdbb_command_search_last

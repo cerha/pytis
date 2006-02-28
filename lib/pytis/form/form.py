@@ -659,7 +659,20 @@ class RecordForm(Form):
         # Naplò formuláø daty z daného *datového* øádku
         raise ProgrammError("This method must be overridden.")
 
-    def _current_key(self):
+    def _original_key(self):        
+        the_row = self.current_row()
+        if the_row is not None:
+            original_row = the_row.original_row()
+            if original_row is not None:
+                kc = [c.id() for c in self._data.key()]
+                try:
+                    return original_row.columns(kc)
+                except KeyError:
+                    log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
+                    run_dialog(Error, _("Chyba v definici dat"))
+        return None
+
+    def _current_key(self):        
         the_row = self.current_row()
         if the_row is not None:
             kc = [c.id() for c in self._data.key()]
@@ -1549,7 +1562,7 @@ class EditForm(LookupForm, TitledForm):
             op = (self._data.insert, (rdata,))
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            op = (self._data.update, (self._current_key(), rdata))
+            op = (self._data.update, (self._original_key(), rdata))
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace

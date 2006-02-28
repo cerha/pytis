@@ -658,6 +658,59 @@ class Color(String):
             value, error = None, self._validation_error(self.VM_COLOR_FORMAT)
         return value, error
 
+class Inet(String):
+    """IPv4 nebo IPv6 adresa."""
+
+    VM_INET_FORMAT = 'VM_INET_FORMAT'
+    VM_INET_MASK = 'VM_INET_MASK'
+    VM_INET_ADDR = 'VM_INET_ADDR'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update(
+        {VM_INET_FORMAT: _("Chybný formát Inet adresy."),
+         VM_INET_MASK: _("Chybná maska Inet adresy"),
+         VM_INET_ADDR: _("Chybná hodnota Inet adresy"),
+         })
+    
+    _INET_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
+
+    def _validate(self, string, *args, **kwargs):
+        if not self._INET_FORMAT.match(string):
+            raise ValidationError(self.VM_INET_FORMAT)
+        if string.find('/') != -1:
+            addr, mask = string.split('/')
+            if int(mask) > 32:
+                raise ValidationError(self.VM_INET_MASK)                
+        else:
+            addr, mask = string, '32'
+        numbers = addr.split('.')        
+        for n in numbers:
+            if n and int(n) > 255:
+                raise ValidationError(self.VM_INET_ADDR)                
+        for i in range(len(numbers), 4):
+            numbers.append('0')
+        value = '%s/%s' % ('.'.join(numbers), mask)
+        return Value(self, unicode(value)), None
+
+
+class Macaddr(String):
+    """MAC adresa."""
+
+    VM_MACADDR_FORMAT = 'VM_MACADDR_FORMAT'
+    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    _VALIDATION_MESSAGES.update(
+        {VM_MACADDR_FORMAT: _("Chybný formát MAC adresy."),
+         })
+    
+    _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}')
+    
+    def _validate(self, string, *args, **kwargs):
+        if not self._MACADDR_FORMAT.match(string):
+            raise ValidationError(self.VM_MACADDR_FORMAT)
+        macaddr = string.replace(':','').replace('-','')
+        value = ':'.join( [macaddr[x:x+2]
+                            for x in range(0,len(macaddr),2)] )
+        return Value(self, unicode(value)), None
+
     
 class DateTime(Type):
     """Èasový okam¾ik reprezentovaný instancí tøídy 'DateTime.DateTime'.

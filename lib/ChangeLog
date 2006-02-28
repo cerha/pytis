@@ -1,3 +1,17 @@
+2006-02-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (RecordForm._original_key): Nová metoda.
+	(EditForm._commit_form): Pro update pou¾ij pùvodní klíè.
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_get_type): Doplnìn typ
+	'inet' a 'macaddr'.
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands):
+	V pøíkazech 'select count' nahraï 'count(*)' pomocí 'count(key)'. 
+
+	* pytis/data/types_.py (Inet): Nový typ.
+	(Macaddr): Nový typ.
+
 2006-02-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py: Pøíkaz `COMMAND_CONTEXT_MENU_ACTION'
