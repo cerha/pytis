@@ -1,5 +1,8 @@
 2006-02-28  Pavel Hanak  <hanak@asellus.cz>
 
+	* pytis/data/types_.py (Inet._validate): Úprava chybových hlá¹ek.
+	(Macaddr._validate): Úprava chybových hlá¹ek.
+
 	* pytis/form/form.py (RecordForm._original_key): Nová metoda.
 	(EditForm._commit_form): Pro update pou¾ij pùvodní klíè.
 
