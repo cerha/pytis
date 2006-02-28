@@ -5,6 +5,16 @@
 ; uvozen "* BUGFIX:"
 
 
+2006-02-27  Pavel Hanák  <hanak@asellus.cz>
+
+        Byly implementovány dva nové datové typy Inet a Macaddr,	
+	odpovídající stejným typùm v PostgreSQL.
+	
+	* BUGFIX: Pøi updatu øádku, kde dochází ke zmìnì klíèe se nyní
+	pro metodu data.update pou¾ije pùvodní klíè. Doposud se pou¾il
+	aktuální klíè, a tak v pøípadì modifikace klíèe do¹lo k selhání
+	metody 'data.update'.
+
 2006-02-27  Tomas Cerha  <cerha@brailcom.org>
 
 	Byly implementovány funkce pro práci s výbìrem v øádkovém
