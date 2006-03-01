@@ -301,6 +301,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _find_help_files(self):
         if not os.path.exists(config.help_dir):
+            log(OPERATIONAL, "Neexistující adresáø nápovìdy:", config.help_dir)
             return []
         result = []
         import zipfile
@@ -323,6 +324,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             if values.has_key('charset'):
                                 title = unicode(title, values['charset'])
                             result.append((filename, index, title))
+
+        if len(result) == 0:
+            log(OPERATIONAL, "®ádné soubory nápovìdy nebyly nalezeny:",
+                config.help_dir)
         return result
 
     def _create_command_menu(self, menus):
@@ -349,8 +354,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                           MItem(_("Nápovìda k aktuálnímu formuláøi"), 
                                 command=Form.COMMAND_HELP)))
             menus.append(Menu(_("Nápovìda"), items))
-        else:
-            log(OPERATIONAL, "®ádné soubory nápovìdy nebyly nalezeny.")
 
     # Ostatní metody
 
