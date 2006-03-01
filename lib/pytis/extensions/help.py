@@ -32,7 +32,6 @@ LCG.
 import sys, os
 import lcg, pytis.form, pytis.util
 
-
 global _used_defs, _menu_items
 _used_defs = []
 _menu_items = {}
@@ -55,18 +54,22 @@ class ItemNode(lcg.ContentNode):
     def _title(self):
         return self._item.title()
 
+    def _menu_node_path(self):
+        path = self._node_path()
+        menu = pytis.util.find('menu', self._node_path(), lambda n: n.id())
+        i = list(path).index(menu)
+        return path[i+1:]
+    
     def menu_path(self):
         path = []
-        root_seen = False
-        for n in self._node_path():
-            if root_seen:
-                if path:
-                    path.append(lcg.TextContent(self, " -> "))
-                path.append(lcg.Link(self, n))
-            elif n.id() == 'menu':
-                root_seen = True
+        for n in self._menu_node_path():
+            if path:
+                path.append(lcg.TextContent(self, " -> "))
+            path.append(lcg.Link(self, n))
         return lcg.Container(self, path)
         
+    def menu_path_title(self):
+        return ' -> '.join([n.title() for n in self._menu_node_path()])
 
     def _create_content(self):
         command, args = (self._item.command(), self._item.args())
@@ -81,8 +84,13 @@ class ItemNode(lcg.ContentNode):
             cmd = command.name()
         info = [("Klávesová zkratka", key),
                 ("Pøíkaz", cmd)]
-        if command == pytis.form.Application.COMMAND_RUN_FORM:
-            name, form = (args['name'], args['form_class'])
+        if command in (pytis.form.Application.COMMAND_RUN_FORM,
+                       pytis.form.Application.COMMAND_NEW_RECORD):
+            name = args['name']
+            if command == pytis.form.Application.COMMAND_RUN_FORM:
+                form =  args['form_class']
+            else:
+                form = pytis.form.PopupEditForm
             info.append(("Typ formuláøe",
                          '%s (%s)' % (form.DESCR.capitalize(), form.__name__)))
             if not issubclass(form, pytis.form.ConfigForm):
@@ -99,7 +107,6 @@ class ItemNode(lcg.ContentNode):
                 for n in names:
                     if n not in _used_defs:
                         _used_defs.append(n)
-
                 if _menu_items.has_key(node_name):
                     _menu_items[node_name].append(self)
                 else:
@@ -153,12 +160,10 @@ class MenuIndex(MenuNode):
 class DescrNode(lcg.ContentNode):
     """Stránka s popisem jednoduchého náhledu."""
 
-    
     def __init__(self, parent, id, *args, **kwargs):
         resolver = pytis.form.resolver()
         self._read_spec(resolver, id)
         super(DescrNode, self).__init__(parent, id, *args, **kwargs)
-
 
     def _name(self, id):
         return id
@@ -169,6 +174,14 @@ class DescrNode(lcg.ContentNode):
         
     def _title(self):
         return self._view_spec.title()
+
+    def _descr(self):
+        global _menu_items
+        if _menu_items.has_key(self._id):
+            items = [i.menu_path_title() for i in _menu_items[self._id]]
+            return ", ".join(items)
+        else:
+            return None
 
     def output_file(self):
         return self.id().replace(':', '-') + '.html'
@@ -272,23 +285,49 @@ class DescrIndex(lcg.ContentNode):
         return lcg.TableOfContents(self, depth=1)
 
     def _create_children(self):
+        #_split_menu_descriptions(self._read_file('descr'), 'src/descr')
         global _used_defs
         _used_defs.sort()
         cls = lambda name: name.endswith('-dual') and DualDescrNode or DescrNode
         return [self._create_child(cls(name), name, subdir='descr')
                 for name in _used_defs]
 
-# def export(c):
-#     if isinstance(c, (lcg.TextContent, lcg.WikiText)):
-#         return c._text
-#     elif isinstance(c, lcg.Paragraph):
-#         return ' '.join([export(x) for x in c._content])
-#     elif isinstance(c, lcg.ItemizedList):
-#         return "\n\n".join([" * "+export(x) for x in c._content])
-#     elif isinstance(c, lcg.Section):
-#         return "\n\n".join([export(x) for x in c._content
-#                             if not isinstance(x, lcg.Section)])
-#     elif isinstance(c, lcg.Container):
-#         return "\n\n".join([export(x) for x in c.content()])
-#     else:
-#         print "***", c
+
+def _split_menu_descriptions(text, dir, strayfile='_stray.txt'):
+    """Rozdìlí dokument s popisky formuláøù do jednotlivých souborù.
+
+    Jednotlivé sekce dokumnetu musí být pojmenovány jako odpovídající polo¾ky
+    menu.  Soubory budou ulo¾eny do daného adresáøe.
+
+    Nepøiøazené polo¾ky budou zapsány do souboru 
+    
+    """
+    global _menu_items
+    menu = {}
+    for name, items in _menu_items.items():
+        for item in items:
+            menu[item.title()] = (item, name)
+    import re
+    sections = re.split("(?m)^=+\s+(?:[\d\.]+\s+)?(.*)\s+=+$", text)
+    modeline = '# -*- coding: utf-8; mode: structured-text -*-\n'
+    stray = modeline
+    for title, text in zip(sections[1::2], sections[2::2]):
+        text = text.strip()
+        if menu.has_key(title):
+            item, name = menu[title]
+            filename = fn = os.path.join(dir, name+'.txt')
+            n = 0
+            while os.path.exists(fn):
+                n+=1
+                fn = '%s.%d' % (filename, n)
+            print "**", title, fn
+            #fh = file(fn, 'w')
+            #fh.write(modeline +"\n" + text.encode('utf-8'))
+            #fh.close()
+        else:
+            print "--", title
+            #stray += "\n== %s ==\n\n%s\n" % (title, text)
+    #sfh = file(strayfile, 'w')
+    #sfh.write(stray.encode('utf-8'))
+    #sfh.close()
+
