@@ -1,3 +1,13 @@
+2006-03-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (ItemNode._menu_node_path) 
+	(ItemNode._menu_node_path): Nová metoda.
+	(ItemNode.menu_path): Vyu¾ívej ji.
+	(ItemNode.menu_path_title): Nová metoda.
+	(ItemNode._create_content): Uvádìj náhled také u pøíkazu New Record.
+	(DescrNode._descr): Nová metoda.
+	(_split_menu_descriptions): Nová funkce.
+
 2006-02-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (context_mitem): Vytváøej pøíkaz
