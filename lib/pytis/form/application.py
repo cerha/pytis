@@ -733,13 +733,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def new_record(self, name, key=None, prefill=None, inserted_data=None):
+    def new_record(self, name, prefill=None, inserted_data=None):
         """Spus» interaktivní akci pøidání nového záznamu.
         
         Argumenty:
         
           name -- jméno specifikace pro resolver.
-          key -- klíè kopírovaného záznamu, nebo None.
           prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
             pøedvyplnìny pøi inicializaci formuláøe.
           inserted_data -- sekvence datových øádkù (instancí pytis.data.Row),
@@ -749,17 +748,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         view = self._resolver.get(name, 'view_spec')
         on_new_record = view.on_new_record()
         if on_new_record is not None:
-            result = on_new_record(key=key, prefill=prefill)
+            result = on_new_record(prefill=prefill)
             top = self.current_form()
             if isinstance(top, Refreshable):
                 top.refresh()
         else:
-            result = run_form(PopupEditForm, name, select_row=key,
-                              mode=EditForm.MODE_INSERT, prefill=prefill,
-                              inserted_data=inserted_data)
+            result = run_form(PopupEditForm, name, mode=EditForm.MODE_INSERT,
+                              prefill=prefill, inserted_data=inserted_data)
         return result
 
-    def can_new_record(self, name, key=None, prefill=None):
+    def can_new_record(self, name, prefill=None):
         return self._check_perm(pytis.data.Permission.INSERT, name)
     
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
