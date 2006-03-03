@@ -4,7 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-03-03  Tomas Cerha  <cerha@brailcom.org>
 
+	Doplnìná nápovìda Pytisu je v CVS pytis-help.
+
+	
+	
 2006-02-27  Pavel Hanák  <hanak@asellus.cz>
 
         Byly implementovány dva nové datové typy Inet a Macaddr,	
