@@ -1435,28 +1435,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         oldg = self._grid
         oldempty = (oldg.GetNumberRows() == 0)
         if not copy or oldempty:
-            the_row = None
+            inserted_row = None
         else:
             the_row = table.row(row)
-            # TODO: mo¾ná pùjde vyøe¹it èistìji
-            # Jde o to vytvoøit kopii øádku, ale klíè nekopírovat.
-            prefill = {}
-            keys = [c.id() for c in the_row.data().key()]
-            for k in the_row.keys():
-                if k not in keys:
-#                    prefill[k] = the_row[k].value()
-                    prefill[k] = the_row[k]
-            fields = the_row.fields()
-            data = the_row.data()
-            the_row = PresentedRow(fields, data, None, prefill=prefill,
-                                   new=True)
-            for k in the_row.keys():
-                the_row[k]
+            inserted_row = PresentedRow(the_row.fields(), the_row.data(), None,
+                                        prefill=self._row_copy_prefill(the_row),
+                                        new=True)
         if not before and not oldempty:
             row = row + 1
         if row == -1:
             row = 0
-        self._update_grid(inserted_row_number=row, inserted_row=the_row)
+        self._update_grid(inserted_row_number=row, inserted_row=inserted_row)
         self._select_cell(row=row, col=0, invoke_callback=False)
         if not self._is_editable_cell(row, 0) \
                and not self._find_next_editable_cell():
