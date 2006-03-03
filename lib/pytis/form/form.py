@@ -744,14 +744,23 @@ class RecordForm(Form):
                  if self._data.find_column(f.id()) is not None]
         return pytis.data.Row(rdata)
 
+    def _row_copy_prefill(self, the_row):
+        # Jde o to vytvoøit kopii øádku, ale klíè nekopírovat.
+        if the_row:
+            keys = [c.id() for c in the_row.data().key()]
+            prefill = [(k, the_row[k]) for k in the_row.keys() if k not in keys]
+        else:
+            prefill = {}
+        return dict(prefill)
+    
     def _on_new_record(self, copy=False):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
+        import copy as copy_
+        prefill = self._prefill and copy_.copy(self._prefill) or {}
         if copy:
-            key = self._current_key()
-        else:
-            key = None
-        result = new_record(self._name, key=key, prefill=self.prefill())
+            prefill.update(self._row_copy_prefill(self.current_row()))
+        result = new_record(self._name, prefill=prefill)
         if result is not None:
             self.select_row(result.row())
     
@@ -868,7 +877,7 @@ class RecordForm(Form):
                 data.append(pytis.data.Row(row_data))
         finally:
             fh.close()
-        new_record(self._name, prefill=self.prefill(), inserted_data=data)
+        new_record(self._name, prefill=self._prefill, inserted_data=data)
             
     # Veøejné metody
     
