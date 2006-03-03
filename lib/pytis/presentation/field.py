@@ -186,12 +186,16 @@ class PresentedRow(object):
                 key = c.id()
                 if prefill is not None and prefill.has_key(key):
                     value = prefill[key]
-                    # Pro Codebooky radìji taky vytvoøíme novou instanci
+                    # Radìji vytvoøíme novou instanci
                     if not isinstance(value, pytis.data.Value):
                         value = pytis.data.Value(c.type(), value)
                     else:
                         value = pytis.data.Value(c.type(), value.value())
                     if self._dirty.has_key(key):
+                        # Prefill má pøednost pøed computerem, proto¾e nìkdy
+                        # chceme v procedurách mít mo¾nost ve formuláøi za
+                        # nìjakých okolností pøednastavit jinou hodnotu, ne¾
+                        # jaká by byla computerem normálnì vypoètena.
                         self._dirty[key] = False
                 else:
                     if self._columns.has_key(key):
