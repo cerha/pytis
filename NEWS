@@ -8,8 +8,34 @@
 
 	Doplnìná nápovìda Pytisu je v CVS pytis-help.
 
-	
-	
+	Pro generování nápovìdy doporuèuji aktualizaci LCG, které doznalo
+	nìkolika drobných vylep¹ení.  V souvislosti s tím bude tøeba i
+	aktualizace pytis-extensions.
+
+	Funkce `new_record()' ji¾ neakceptuje argument `key'.  Pøedání
+	kopírovaného øádku nech» je provádìno s pou¾itím argumentu
+	`prefill'.  V rámci pytisu bylo pøedávání argumentù upraveno a v
+	rámci aplikací jsem nenalezl ¾ádné pou¾ití argumentu `key'.
+
+	Zároveò funkce `on_new_record' by ji¾ argument `key' nemìla
+	akceptovat.  Ve v¹ech projektech je funkce `on_new_record' nyní
+	definována tak, ¾e argument `key' akceptuje.  To by v¹ak nemìlo
+	vadit, proto¾e je definován jako klíèový.  Hodnota zkrátka nebude
+	nikdy pøedána.  Problém by nastal pouze pokud by se v rámci funkce
+	nìjak implementovala podpora pro vytváøení nového záznamu jako
+	kopie pùvodního, tak¾e by se s argumentem `key' nìjak poèítalo.
+	To jsem v¹ak pøi zbì¾né kontrole nikde nevidìl.  Pravda je, ¾e
+	argumenty `key' a `prefill' jsou vìt¹inou vesele ignorovány.  To
+	je nyní sice výhodné, proto¾e nevznikne nekompatibilita, ale ve
+	skuteènosti to není správnì.  Argument `prefill' (který nyní
+	obsahuje také data kopírovaného øádku) by mìl být, pokud je to
+	mo¾né, pøedáván dále do otevíraných formuláøù, pokud jsou nìjakým
+	zpùsobem kompatibilní s daty náhledu, který funkci on_new_record
+	implementuje.  Zkrátka argument `prefill' by mìl být v¾dy brán v
+	úvahu a mìlo by být uèinìno maximum proto, aby data z nìho byla
+	nìjakým zpùsobem vyu¾ita, pokud to v daném pøípadì dává alespoò
+	trochu smysl.
+
 2006-02-27  Pavel Hanák  <hanak@asellus.cz>
 
         Byly implementovány dva nové datové typy Inet a Macaddr,	
