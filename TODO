@@ -206,6 +206,17 @@ INTERNÍ ZÁLE®ITOSTI:
    (`Form.restore()').
 
  * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
+
+ * Vyjasnìní práce s arguemntem prefill.
+
+   Argument prefill je nyní pou¾íván k nìkolika pomìrnì rozlièným úèelùm
+   (napø. pøednastavení hodnoty vazebního sloupce, pøedvyplnìní dat
+   kopírovaného øádku, apod.).  Bylo by vhodné se zamyslet nad tím, zda
+   jednotlivé zpùsoby pou¾ití vzájemnì nekolidují.  Problém by mohl být zejména
+   v tom, ¾e prefill není pou¾it jen k pøednastavení výchozích hodnot nového
+   øádku, ale je formuláøem také zapamatován a pøedáván dále.
+
+   
    
    
 ÈI©TÌNÍ:
@@ -252,12 +263,12 @@ INTERNÍ ZÁLE®ITOSTI:
  * U¾ivatelské pøíkazy.
  
    Pøíkazy s handlerem by nemìly být vùbec pou¾ívány.  Namísto nich nech» je
-   vyu¾íván pøíkaz COMMAND_CONTEXT_MENU_ACTION, kde se handler definuje jako
+   vyu¾íván pøíkaz COMMAND_CURRRENT_ROW_ACTION, kde se handler definuje jako
    souèást argumentù a ne jako argument konstruktoru Command.  U¾ivatel zkrátka
    nemá co vytváøet vlastní instance tøídy Command.
 
    Ve v¹ech aplikacích je tøeba u¾ivatelské pøíkazy (definované pomocí
-   user_cmd()) nahradit s vyu¾itím pøíkazu ListForm.COMMAND_CONTEXT_MENU_ACTION
+   user_cmd()) nahradit s vyu¾itím pøíkazu ListForm.COMMAND_CURRENT_ROW_ACTION
    a poté mù¾eme v ListForm zru¹it zpracování pøíkazù s handlerem a také tento
    argument konstruktoru tøídy `Command'.
 
@@ -266,3 +277,5 @@ INTERNÍ ZÁLE®ITOSTI:
    pøíkaz pevnì dané a ne, ¾e se argumenty handleru zji¹»ují pomocí inspect...
    To se zavedlo zejména kvùli pøíkazùm, které nepracují s aktuálním øádkem,
    tak¾e nepøebírají argument 'row' a nìkdy potøebují datový objekt.
+
+ * Form._original_key by nemìlo být.  _current_key by mìl vracet pùvodní klíè.
