@@ -1,5 +1,8 @@
 2006-03-03  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (ViewSpec.__init__): Aktualizace
+	docstringu.
+
 	* pytis/form/application.py (Application.new_record): Zru¹en
 	argument `key'.
 	(Application.can_new_record): Zru¹en argument `key'.
