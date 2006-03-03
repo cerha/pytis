@@ -508,9 +508,10 @@ class ViewSpec(object):
             
           on_new_record -- akce vlo¾ení nového záznamu.  Pokud je None, bude
             provedena výchozí akce (otevøení PopupEditForm nad danou
-            specifikací).  Pøedáním funkce dvou klíèových argumentù ('key' a
-            'prefill', viz 'pytis.form.new_record()') lze pøedefinovat pøidání
-            nového záznamu libovolnou vlastní funkcionalitou.
+            specifikací).  Pøedáním funkce lze pøedefinovat pøidání nového
+            záznamu v daném náhledu libovolnou vlastní funkcionalitou.  Funkce
+            musí akceptovat klíèový argument 'prefill' (viz.
+            'pytis.form.new_record()').
             
           on_edit_record -- akce editace záznamu.  Pokud je None, bude
             provedena výchozí akce (otevøení PopupEditForm nad danou
