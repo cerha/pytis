@@ -2,9 +2,14 @@ CHYBY:
 
  * Pøi obnovì výchozích sloupcù (podle defsu) není obnoveno tøídìní atd.
 
-   Je otázka, zda v¾dy chceme obnovit také tøídìní, seskupování atd, ale
-   ka¾dopádnì by to jít mìlo, a» u¾ to budou dva rùzné pøíkazy, nebo bude jen
-   jeden který obnoví v¹e a hotovo. 
+   Chceme obnovit také tøídìní, seskupování atd.
+
+
+ * Posun po zamítnutí mazání øádku.
+
+   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
+   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
+  
 
  * Chyba v ukládání nastavení sloupeèkù.
 
@@ -29,11 +34,6 @@ CHYBY:
    bì¾ných bankovních úètù ne (Základní tabulky -> Banka úèty -> V¹echny úèty
    -> Bì¾ný úèet).  Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
 
- * Posun po zamítnutí mazání øádku.
-
-   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
-   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
-  
  * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
 
    Popisovaný problém se bì¾nì neprojevuje.  Napøíklad v zakázkách pøi
@@ -62,6 +62,12 @@ CHYBY:
 NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
+
+ * RELOAD_FORM_STATE pøidat do menu pod obnovu výchozích sloupcù.
+
+ * Na klávesovou zkratku (a pøípadnì z menu) zru¹it filter.
+
+ * Cyklické pøepínání dvou posledních formuláøù.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
@@ -279,3 +285,48 @@ INTERNÍ ZÁLE®ITOSTI:
    tak¾e nepøebírají argument 'row' a nìkdy potøebují datový objekt.
 
  * Form._original_key by nemìlo být.  _current_key by mìl vracet pùvodní klíè.
+
+ * Vyhodit side_columns a side_title z DualSpec.
+
+   Udr¾ování identifikátorù sloupcù pro 'side_columns' v defsu pro DualSpec je
+   velice nevhodné.  Èasto to vede k nekonzistenci a k následným chybám.
+   Namísto uvádìní sloupcù zde je lep¹í vytvoøit zvlá¹tní variantu.  Tím jsou
+   seznamy sloupcù pro rùzná pou¾ití formuláøe v¾dy pohromadì.  To samé platí
+   pro argumenty 'title' a 'side_title'.  Nebylo by v¹ak od vìci definovat
+   titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
+   pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
+  
+
+Meeting 2006-03-06:
+
+ * Mo¾nost definovat odkud hodnota pochází.
+
+   Dnes se to pozná podle definice `codebook' ve FieldSpec.  To umo¾òuje
+   zobrazit související èíselník buòky.  Nìkterá políèka v¹ak èíselník nemají,
+   ale pøesto je to hodnota pocházející z jiného náhledu.  Napøíklad ve view
+   vytahuji název spoleènosti, ale název není klíè, tak¾e jako èíselník
+   nefunguje.  Pøesto chci mít mo¾nost zobrazit podrobnosti o dané
+   spoleènosti.  Musím definovat název souvisejícího klíèe, který ji¾ codebook
+   definovaný má.
+
+   Podle práv k danému náhledu je potøeba nastavit také access_groups.
+   
+ * Mo¾nost definovat seznam odskokù.
+
+   Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
+   celý øádek.  Parametrem je názav specifikace (nebo funkce row, která vrátí
+   název specifikace).  Druhým parametrem by mìl být select_row, jako funkce
+   row, která vrátí hodnotu pro argument select_row otevøeného formuláøe.  Dále
+   by mìlo být mo¾né zvolit v jakém typu formuláøe bude øádek otevøen, ale
+   mo¾ná by mìl mít u¾ivatel sám mo¾nost v¾dy urèit, jakým zpùsobem chce
+   odkazovaný záznam vidìt.  Vìt¹inou jde o BrowseForm (nebo BrowseDualForm),
+   ShowForm, nebo vytvoøení nového záznamu s prefillem.
+   
+ * Rekurze pøi volání new_record v rámci on_new_record.
+
+   Nový argument `no_override' by se pøedával pokud volám new_record v
+   rámci on_new_record.
+
+ * Poslat Malvovi nezaøazené popisky z Isasu.
+
+   
