@@ -4,6 +4,19 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-03-08  Tomas Cerha  <cerha@brailcom.org>
+
+	Funkce `run_procedure' nyní pøijímá a pøedává jak klíèové, tak
+	pozièní argumenty.  Toho je vyu¾ito napøíklad ve wrapperu
+	'context_rp' v pytis-extensions, který teï pøedává vyjmenované
+	hodnoty z row jako pozièní argumenty (v poøadí, ve kterém jsou
+	uvedeny), èím¾ odpadá nutnost udr¾ovat názvy identifikátorù
+	sloupcù v defcech a v procedurách v konzistenci.
+
+	Dále byla roz¹íøena assertová hlá¹ka pøi kontrole názvu
+	vytváøeného pøíkazu a v `user_cmd()' odstranìn jeden potenciální
+	problém, který mo¾ná zpùsoboval chybu pøi ke¹ování specifikací.
+	
 2006-03-03  Tomas Cerha  <cerha@brailcom.org>
 
 	Doplnìná nápovìda Pytisu je v CVS pytis-help.
