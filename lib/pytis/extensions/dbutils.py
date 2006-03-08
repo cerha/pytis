@@ -69,7 +69,7 @@ def dbselect(spec, condition=None, sort=()):
 
 
 def dbinsert(spec, row):
-    """Provede update nad tabulkou danou specifikací.
+    """Provede insert do tabulky dané specifikací.
 
     Argumenty:
 
@@ -78,7 +78,7 @@ def dbinsert(spec, row):
       row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
         pytis.data.Row
         
-    Vrací poèet updatovaných øádkù.
+    Vrací poèet vlo¾ených øádkù.
     
     """
     assert isinstance(row, pytis.data.Row) or is_sequence(row), \

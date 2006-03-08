@@ -19,36 +19,192 @@
 """Nástroje pro generování HTML na základì dat z pytisu."""
 
 import pytis.form
+import pytis.data
 from pytis.util import *
 import config
 resolver = pytis.util.FileResolver(config.def_dir)
 pytis.form.NullApplication(resolver)
 import HyperText
-from HyperText.HTML import TABLE, TR, TD, Select
+from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
 from pytis.extensions import dbselect, data_create
 
 
-def DBTable(spec, columns,
-            condition=None, sort=(), **attrs):
-    """Generuje HTML tabulku.
+class BaseDBTable(object):
 
-    Argumenty:
+    def __init__(self, spec, columns, condition=None, sort=(),
+                 show_headers=True, klass=None,
+                 **attrs):
+        """Vytvoø tabulku, její¾ obsah je získán z databázového objektu.
 
-      spec -- název specifikace
-      columns -- seznam sloupcù, které se pou¾ijí v HTML tabulce
-      condition -- podmínka odpovídající argumentu volání pytis.data.select()
-      sort -- øazení odpovídající argumentu volání pytis.data.select()    
+        Argumenty:
 
-    Vrací instanci HyperText.TABLE.
-    """
-    t = apply(TABLE, (), attrs)
-    dbrows = dbselect(spec, condition=condition, sort=sort)
-    rows = [[r[c].export() for c in columns] for r in dbrows]
-    if len(rows) > 0:
-        for row in rows:
-            r = apply(TR, tuple(map(TD, row)))
-            t.append(r)
-    return t        
+        spec -- název specifikace
+        columns -- seznam sloupcù, které se pou¾ijí v HTML tabulce
+        condition -- podmínka odpovídající argumentu volání
+                     pytis.data.select()
+        sort -- øazení odpovídající argumentu volání pytis.data.select()
+        show_headers -- pokud je True, zobrazí se záhlaví sloupcù, na základì
+                        'label' z jednotlivých políèek
+        klass -- None nebo funkce jednoho argumentu, kterým je øádek tabulky
+                 a která vrací None nebo odpovídající styl
+        attrs -- atributy pro HyperText.TABLE
+        
+        Vrací instanci HyperText.TABLE.
+        """        
+        self._spec = spec
+        self._columns = columns
+        self._condition = condition
+        self._sort = sort
+        self._view = resolver.get(self._spec, 'view_spec')
+        self._data = data_create(self._spec)
+        self._fields = self._get_fields()
+        self._klass = klass
+        self._table = TABLE(**attrs)
+        if show_headers:
+            self._headers = self._get_headers()
+            self._append_headers()
+
+    def _get_headers(self):
+        return [f.label() for f in self._fields]
+
+    def _append_headers(self):
+        headerline = TR(*[TH(h) for h in self._headers])
+        self._table.append(headerline)
+
+    def _get_fields(self):
+        return [self._view.field(c) for c in self._columns]
+
+    def _col_aligns(self):
+        def align(type):
+            if isinstance(type, pytis.data.Number):
+                return 'right'
+            else:
+                return 'left'
+        return [align(f.type(self._data)) for f in self._fields]
+
+    def spec(self):
+        return self._spec
+
+    def columns(self):
+        return self._columns
+
+    def condition(self):
+        return self._condition
+
+    def sort(self):
+        return self._sort
+
+    def dbrows(self):
+        rows = dbselect(self._spec, condition=self._condition,
+                        sort=self._sort)
+        return [pytis.data.Row([(c, r[c]) for c in self._columns])
+                for r in rows]
+
+        
+    def table(self):
+        aligns = self._col_aligns()
+        rows = self.dbrows()
+        if len(rows) > 0:
+            for row in rows:
+                r = TR()
+                for i, c in enumerate(row):
+                    val = c.export()
+                    if self._klass:
+                        style = self._klass(row, self._columns[i])
+                        if style:
+                            r.append(TD(val, align=aligns[i],
+                                klass=style))
+                        else:    
+                            r.append(TD(val, align=aligns[i]))
+                    else:
+                        r.append(TD(val, align=aligns[i]))
+                self._table.append(r)
+        return self._table
+    
+
+class BrowsableDBTable(BaseDBTable):
+
+    def __init__(self, spec, columns, condition=None, sort=(),
+                 uri=None, pageno=1, limit=20,
+                 **kwargs):
+        self._uri = uri
+        self._pageno = pageno
+        self._limit = limit
+        self._row_count = 0
+        super(BrowsableDBTable, self).__init__(spec, columns, **kwargs)
+
+    def dbrows(self):
+        self._row_count = self._data.select(condition=self._condition,
+                                      sort=self._sort)        
+        offset = (self._pageno - 1) * self._limit
+        self._data.skip(offset)
+        rows = []
+        i = 0
+        while True:
+            row = self._data.fetchone()
+            i = i + 1
+            if row is None or i >= self._limit or i > self._row_count:
+                self._data.close()
+                break
+            rows.append(pytis.data.Row([(c,row[c])
+                                        for c in self._columns]))
+        return rows    
+
+    def _labelfirst(self):
+        return "|<<"
+
+    def _labelprevious(self):
+        return "<"
+
+    def _labelnext(self):
+        return ">"
+
+    def _labellast(self):
+        return ">>|"
+
+    def lastpageno(self):
+        return int(self._row_count / self._limit)        
+           
+    def first(self):
+        return Href(URL(self._uri), self._labelfirst())
+
+    def previous(self):
+        previousno = max(self._pageno - 1, 1)
+        return Href(URL(self._uri, pageno=str(previousno)),
+                    self._labelprevious())
+   
+    def next(self):
+        nextno = min(self._pageno + 1, self.lastpageno())
+        return Href(URL(self._uri, pageno=str(nextno)),
+                    self._labelnext())
+    
+    def last(self):
+        return Href(URL(self._uri, pageno=str(self.lastpageno())),
+                    self._labellast())
+
+    def controls(self):
+        f = self.first()
+        p = self.previous()
+        n = self.next()
+        l = self.last()
+        return f, nbsp, p, nbsp, n, nbsp, l
+
+    def table(self):
+        super(BrowsableDBTable, self).table()
+        controls = self.controls()
+        rcontrols = TR(TD(colspan=len(self.columns()), *controls))
+        self._table.append(rcontrols)
+        return self._table
+        
+    
+
+def base_db_table(*args, **kwargs):
+    t = BaseDBTable(*args, **kwargs)
+    return t.table()
+
+def browsable_db_table(*args, **kwargs):
+    t = BrowsableDBTable(*args, **kwargs)
+    return t.table()   
 
 
 def form_validate(spec, prefill):
