@@ -236,29 +236,28 @@ def context_mitem(title, handler, hotkey=None, **kwargs):
                  args=kwargs, hotkey=hotkey)
 
 
-def context_rp(spec_name, proc_name, *args):
-    
+def context_rp(spec_name, proc_name, *args, **kwargs):
     """Vra» handler akce kontextového menu, který spustí proceduru s argumenty.
 
     Vrácený handler vyvolá proceduru 'proc_name' ze specifikace 'spec_name' a
     pøedá jí v¹echny hodnoty aktuálního øádku odpovídající klíèùm pøedaným v
-    'args'.  Args je tedy seznamem identifikátorù sloupcù.
+    'args'.  Args je tedy seznamem identifikátorù sloupcù.  Hodnoty jsou
+    proceduøe pøedány jako pozièní argumenty v daném poøadí.
 
-    Hodnoty jsou proceduøe pøedány jako klíèové argumenty, kde název argumentu
-    odpovídá názvu klíèe.
-
+    Klíèové argumenty jsou pøedány beze zmìn.
+    
     """
     if __debug__:
         for arg in (spec_name, proc_name) + args:
             assert isinstance(arg, types.StringType)
     return lambda row: run_procedure(spec_name, proc_name,
-                                     **dict([(key, row[key]) for key in args]))
+                                     *[row[key] for key in args], **kwargs)
 
 
 _user_cmd_caller = {}
 def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
     if spec:
-        name = name + "_" + spec.upper()
+        name = name + "_" + spec.upper().replace(':', '_')
     name = name.upper().replace('-', '_')
     if hasattr(BrowseForm, 'COMMAND_'+name):
         cmd = getattr(BrowseForm, 'COMMAND_'+name)
