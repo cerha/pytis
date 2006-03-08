@@ -1,3 +1,15 @@
+2006-03-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (context_rp): Argumenty pøedávej
+	proceduøe jako pozièní.  Navíc také pøedávej libovolné klíèové
+	argumenty.
+	(user_cmd): Nahrazuj dvojteèky v názvu specifikace podtr¾ítky.
+
+2006-03-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (context_rp): Pøedávej proceduøe
+	argumenty jako pozièní.
+
 2006-03-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py (ItemNode._menu_node_path) 
