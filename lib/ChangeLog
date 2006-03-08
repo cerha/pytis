@@ -1,4 +1,15 @@
+2006-03-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py (Command.__init__): V assertové hlá¹ce
+	uveï také typ argumentu 'name'.
+
+	* pytis/form/application.py (Application.run_procedure): Volané
+	proceduøe pøadávej jak klíèové, tak pozièní argumenty.
+
 2006-03-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow._init_row.genval):
+	Pøidán komentáø.	
 
 	* pytis/presentation/spec.py (ViewSpec.__init__): Aktualizace
 	docstringu.
