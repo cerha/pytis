@@ -691,8 +691,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             result = self._check_perm(perm, name)
         return result
 
-    def run_procedure(self, spec_name, proc_name, block_refresh_=False,
-                      **kwargs):
+    def run_procedure(self, spec_name, proc_name, *args, **kwargs):
         """Spus» proceduru.
 
         Argumenty:
@@ -701,14 +700,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
           proc_name -- jméno procedury, která má být spu¹tìna.  Jde o klíè do
             slovníku, který je vracen specifikaèní funkcí 'proc_spec'.
 
-        Klíèové argumenty budou pøedány spou¹tìné proceduøe.
+        V¹echny dal¹í argumenty (vèetnì klíèových) budou pøedány spou¹tìné
+        proceduøe.  Výjimkou je klíèový argument 'block_refresh_', který pøedán
+        není, ale pokud je pravdivý, tak bude volání procedury obaleno voláním
+        'block_refresh()'.
 
-        Návratová hodnota procedury je návratovou hodnotou volání této metody.         
+        Návratová hodnota procedury je návratovou hodnotou volání této metody.
 
         """
         result = None
         try:
-            log(ACTION, 'Spou¹tím proceduru:', (spec_name, proc_name, kwargs))
+            log(ACTION, 'Spou¹tím proceduru:', (spec_name, proc_name, args, kwargs))
             message(_("Spou¹tím proceduru..."), root=True, timeout=2)
             # Kvùli wx.SafeYield() se ztrácí focus, tak¾e
             # si ho ulo¾íme a pak zase obnovíme.
@@ -720,10 +722,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
             assert spec.has_key(proc_name), \
                   _("Specifikace procedur neobsahuje definici '%s'") % proc_name
             proc = spec[proc_name]
-            if block_refresh_:
-                result = block_refresh(proc, **kwargs)
+            if kwargs.has_key('block_refresh_'):
+                block_refresh_ = kwargs['block_refresh_']
+                del kwargs['block_refresh_']
             else:
-                result = proc(**kwargs)
+                block_refresh_ = False
+            if block_refresh_:
+                result = block_refresh(proc, *args, **kwargs)
+            else:
+                result = proc(*args, **kwargs)
             log(ACTION, "Návratová hodnota procedury:", result)
             if focused:
                 focused.SetFocus()
