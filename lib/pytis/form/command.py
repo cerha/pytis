@@ -111,7 +111,8 @@ class Command(object):
         """
         assert issubclass(cls, CommandHandler), \
                "Not a CommandHandler subclass: %s" % cls
-        assert isinstance(name, types.StringType) and name == name.upper(), name
+        assert isinstance(name, types.StringType) and name == name.upper(), \
+               (name, type(name))
         assert handler is None or callable(handler), handler
         assert doc is None or isinstance(doc, types.StringTypes)
         assert callable(enabled) or isinstance(enabled, types.BooleanType)
