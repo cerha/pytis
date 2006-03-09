@@ -257,7 +257,9 @@ def context_rp(spec_name, proc_name, *args, **kwargs):
 _user_cmd_caller = {}
 def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
     if spec:
-        name = name + "_" + spec.upper().replace(':', '_')
+        # TODO: toto zlobí
+        # name = name + "_" + spec.upper().replace(':', '_')
+        name = name + "_" + spec.upper()
     name = name.upper().replace('-', '_')
     if hasattr(BrowseForm, 'COMMAND_'+name):
         cmd = getattr(BrowseForm, 'COMMAND_'+name)
