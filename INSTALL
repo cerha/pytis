@@ -3,3 +3,13 @@
 Pytis is a pure Python program.  The installation is as simple as putting
 the contents of the `lib' subdirectory of this archive somewhere into your
 Python path.
+
+* Requirements:
+
+  - PostgreSQL 8.1 or above
+
+  - python-wxgtk2.6 or above
+
+  - egenix-mx-datetime library
+
+  
