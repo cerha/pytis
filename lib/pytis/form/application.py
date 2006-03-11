@@ -357,19 +357,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     # Ostatní metody
 
-    def _check_perm(self, perm, name):
-        try:
-            data_spec = self._resolver.get(name, 'data_spec')
-        except ResolverError:
-            return True
-        rights = data_spec.access_rights()
-        if not rights:
-            return True
-        connection = config.dbconnection
-        groups = pytis.data.DBDataDefault.class_access_groups(connection)
-        result = rights.permitted(perm, groups)
-        return result
-
     def _form_menu_item_title(self, form):
         title = form.title()
         if form.__class__ != BrowseForm:
@@ -681,14 +668,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def can_run_form(self, form_class, name, *args, **kwargs):
-        perm = pytis.data.Permission.VIEW
         if issubclass(form_class, DualForm) and \
                not issubclass(form_class, DescriptiveDualForm):
             dual_spec = resolver().get(name, 'dual_spec')
-            result = self._check_perm(perm, dual_spec.main_name()) and \
-                     self._check_perm(perm, dual_spec.side_name())
+            result = has_access(dual_spec.main_name()) and \
+                     has_access(dual_spec.side_name())
         else:
-            result = self._check_perm(perm, name)
+            result = has_access(name)
         return result
 
     def run_procedure(self, spec_name, proc_name, *args, **kwargs):
@@ -765,7 +751,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def can_new_record(self, name, prefill=None):
-        return self._check_perm(pytis.data.Permission.INSERT, name)
+        return has_access(name, perm=pytis.data.Permission.INSERT)
     
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Zobraz dialog urèené tøídy s hlavním oknem aplikace jako rodièem.
@@ -1079,6 +1065,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
 
 # Funkce
+
+def has_access(name, perm=pytis.data.Permission.VIEW):
+    """Vra» pravdu, pokud má pøihlá¹ený u¾ivatel práva k danému náhledu.
+
+    Argumenty:
+    
+      name -- název specifikace jako øetìzec.
+      perm -- právo jako jedna z konstant `pytis.data.Permission'.
+
+    """
+    try:
+        data_spec = _application.resolver().get(name, 'data_spec')
+    except ResolverError:
+        return True
+    rights = data_spec.access_rights()
+    if not rights:
+        return True
+    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
+    return rights.permitted(perm, groups)
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False):
