@@ -1076,11 +1076,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Univerzální pøíkazy
         if command.handler() is not None:
             return self._on_handled_command(command, **kwargs)
-        elif command == ListForm.COMMAND_CURRENT_ROW_ACTION:
-            self._on_current_row_action(**kwargs)
-            return True
-        elif command == ListForm.COMMAND_SELECTED_ROWS_ACTION:
-            self._on_selected_rows_action(**kwargs)
+        elif command == ListForm.COMMAND_CONTEXT_ACTION:
+            self._on_context_action(**kwargs)
             return True
         elif command == ListForm.COMMAND_COPY_CELL:
             self._on_copy_cell()
@@ -1196,7 +1193,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_handled_command(self, command, norefresh=False, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
         # TODO: Pøíkazy s handlerem by nemìly být vùbec pou¾ívány.  Namísto
-        # nich nech» je vyu¾íván pøíkaz COMMAND_CURRENT_ROW_ACTION,
+        # nich nech» je vyu¾íván pøíkaz COMMAND_CONTEXT_ACTION,
         # kde se handler definuje jako souèást argumentù a ne jako argument
         # konstruktoru Command.  U¾ivatel zkrátka nemá co vytváøet vlastní
         # instance tøídy Command...  Tato metoda a pøíslu¹ná èást v on_command
@@ -1234,41 +1231,71 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             else:
                 kwargs = {}
         return args, kwargs
-    
-    def _on_current_row_action(self, handler=None, enabled=None,
-                               access_groups=None, **kwargs):
-        log(EVENT, 'Vyvolávám u¾ivatelský handler akce nad aktuálním øádkem.')
-        handler(self.current_row(), **kwargs)
-        #if not norefresh:
-        self.refresh()
+
+    def _on_context_action(self, action, **kwargs):
+        args = self._context_action_args(action)
+        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
+        apply(action.handler(), args, kwargs)
+        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
+        # dualform.  Jinak refreshujeme jen sebe sama.
+        dual = self._dualform()
+        if dual:
+            dual.refresh()
+        else:
+            self.refresh()
         return True
 
-    def can_current_row_action(self, handler=None, enabled=None,
-                               access_groups=None, **kwargs):
-        if not pytis.data.is_in_groups(access_groups):
-            return False
-        if enabled:
-            return enabled(self.current_row(), **kwargs)
+    def _dualform(self):
+        # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
+        top = application._application.top_window()
+        if isinstance(top, DualForm) and \
+               self in (top.active_form(), top.inactive_form()):
+            return top
         else:
-            return True
-
-    def _on_selected_rows_action(self, handler=None, enabled=None,
-                             access_groups=None, **kwargs):
-        log(EVENT, 'Vyvolávám u¾ivatelský handler akce nad aktuálním výbìrem.')
-        handler(self.selected_rows(), **kwargs)
-        self.refresh()
-        return True
+            return None
     
-    def can_selected_rows_action(self, handler=None, enabled=None,
-                             access_groups=None, **kwargs):
-        if len(self._selected_rows()) == 0:
+    def can_context_action(self, action, **kwargs):
+        if action.context() == ActionContext.SELECTION and \
+           len(self._selected_rows()) < 1:
             return False
-        if not pytis.data.is_in_groups(access_groups):
+        if action.secondary_context() is not None and \
+               self._secondary_context(action.secondary_context()) is None:
             return False
-        if enabled:
-            return enabled(self.selected_rows(), **kwargs)
+        if not pytis.data.is_in_groups(action.access_groups()):
+            return False
+        enabled = action.enabled()
+        if callable(enabled):
+            args = self._context_action_args(action)
+            return enabled(*args, **kwargs)
         else:
-            return True
+            return enabled
+
+    def _context_action_args(self, action):
+        if action.context() == ActionContext.CURRENT_ROW:
+            args = (self.current_row(),)
+        elif action.context() == ActionContext.SELECTION:
+            args = (self.selected_rows(),)
+        else:
+            raise ProgramError("Invalid action context:", action.context())
+        if action.secondary_context() is not None:
+            args += (self._secondary_context(action.secondary_context()),)
+        return args
+    
+    def _secondary_context(self, context):
+        dual = self._dualform()
+        if dual:
+            if dual.active_form() is self:
+                form = top.inactive_form()
+            else:
+                form = top.active_form()
+            if context == ActionContext.CURRENT_ROW:
+                return form.current_row()
+            elif context == ActionContext.SELECTION:
+                return form.selected_rows()
+            else:
+                raise ProgramError("Invalid action secondary_context:", context)
+        else:
+            return None
     
     def _on_incremental_search(self, full=False):
         row, col = self._current_cell()
@@ -2032,13 +2059,16 @@ class BrowseForm(ListForm):
             MItem(_("Náhled"),
                   command=ListForm.COMMAND_ACTIVATE),
             MItem(_("Náhled v druhém formuláøi"),
-                  command=ListForm.COMMAND_ACTIVATE, args=dict(alternate=True)),
+                  command=ListForm.COMMAND_ACTIVATE(alternate=True)),
             MItem(_("Zobrazit související èíselník"),
                   command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
             )
-        custom_menu = self._view.popup_menu()
-        if custom_menu:
-            menu += (MSeparator(),) + custom_menu
+        actions = list(self._view.popup_menu() or ())
+        actions += [MItem(a.title(), command=ListForm.COMMAND_CONTEXT_ACTION,
+                          args=dict(action=a, **a.kwargs()), hotkey=a.hotkey())
+                    for a in self._view.actions()]
+        if actions:
+            menu += (MSeparator(),) + tuple(actions)
         return menu
 
     def _on_print_(self, spec_path):
