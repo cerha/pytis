@@ -1232,8 +1232,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 kwargs = {}
         return args, kwargs
 
-    def _on_context_action(self, action, **kwargs):
+    def _on_context_action(self, action):
         args = self._context_action_args(action)
+        kwargs = action.kwargs()
         log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
         apply(action.handler(), args, kwargs)
         # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
@@ -1254,7 +1255,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return None
     
-    def can_context_action(self, action, **kwargs):
+    def can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and \
            len(self._selected_rows()) < 1:
             return False
@@ -1266,6 +1267,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         enabled = action.enabled()
         if callable(enabled):
             args = self._context_action_args(action)
+            kwargs = action.kwargs()
             return enabled(*args, **kwargs)
         else:
             return enabled
@@ -2064,8 +2066,9 @@ class BrowseForm(ListForm):
                   command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
             )
         actions = list(self._view.popup_menu() or ())
-        actions += [MItem(a.title(), command=ListForm.COMMAND_CONTEXT_ACTION,
-                          args=dict(action=a, **a.kwargs()), hotkey=a.hotkey())
+        actions += [MItem(a.title(),
+                          command=ListForm.COMMAND_CONTEXT_ACTION(action=a),
+                          hotkey=a.hotkey())
                     for a in self._view.actions()]
         if actions:
             menu += (MSeparator(),) + tuple(actions)
