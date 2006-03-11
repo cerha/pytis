@@ -130,37 +130,9 @@ Command(ListForm, 'TOGGLE_COLUMN',
         "Skrytí/zobrazení sloupce")
 Command(ListForm, 'RESET_COLUMNS',
         "Vrácení výchozího nastavení sloupcù")
-Command(ListForm, 'CURRENT_ROW_ACTION',
-        "Akce nad aktuálním øádkem tabulky")
-# 	Tento pøíkaz je urèen k vytváøení u¾ivatelem definovaných akcí
-#       pracujících s aktuálním øádkem tabulky.  Typické pou¾ití je v 
-# 	kontextovém menu BrowseFormu.
-#
-# 	Pøíkaz mù¾e mít libovolné argumenty, av¹ak tøi z nich jsou zpracovány
-# 	odli¹nì:
-#
-#            `handler' -- je povinný a musí odkazovat na funkci, která akci
-#               provede.
-#
-#            `enabled' -- funkce, vracející pravdu, pokud je pøíkaz aktivní a
-#               nepravdu v opaèném pøípadì.  Argument je nepovinný a pokud není
-#               uveden, je pøíkaz aktivní v závislosti na `access_groups'.
-#
-#            `access_groups' -- seznam skupin, které mají právo pøíkaz
-#               vyvolat.  Pøíkaz se pro ostatní u¾ivatele stane automaticky
-#               neaktivní (teprve pokud u¾ivatel patøí do jedné z vyjmenovaných
-#               skupin, je zpracováván argument `enabled'.
-#
-#       Jako první pozièní argument bude funkci `handler' i `enabled' pøedána
-#       instance PresentedRow aktuálního øádku tabulky.
-#
-# 	Dále budou pøedány v¹echny klíèové argumenty pøíkazu, vyjma argumentù
-# 	`handler', `enabled' a `access_groups' (ty jsou zpracovávány internì).
-#
-Command(ListForm, 'SELECTED_ROWS_ACTION',
-        "Akce nad v¹emi právì vybranými øádky tabulky")
-#       Obdoba CURRENT_ROW_ACTION, ale zde je handleru pøedáván iterátor, který
-#       vrací v¹echny právì vybrané øádky tabulky (jako instance PresentedRow).
+Command(ListForm, 'CONTEXT_ACTION',
+        "Akce v kontextu øádkového formuláøe")
+        # Povinný argument 'action' je instancí specifikacní tøídy 'Action'.
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn")
 Command(EditForm, 'NAVIGATE',
