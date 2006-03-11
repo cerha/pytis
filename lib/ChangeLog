@@ -1,5 +1,12 @@
 2006-03-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (_check_perm): Metoda zru¹ena.
+	(has_access): Nová metoda.
+	(Application.can_run_form): Pou¾ívaj `has_access()' namísto
+	`self._check_perm()'.
+	(Application.can_new_record): Pou¾ívaj `has_access()' namísto
+	`self._check_perm()'.
+
 	* pytis/form/commands_.py: Zru¹eny pøíkazy
 	`COMMAND_CURRENT_ROW_ACTION' a `COMMAND_SELECTED_ROWS_ACTION'.
 	Nový pøíkaz `COMMAND_CONTEXT_ACTION'.
@@ -22,6 +29,12 @@
 	(ListForm._secondary_context): Nové metody.
 	(BrowseForm._context_menu): Pøidávej do menu také polo¾ky
 	vytvoøené z `ViewSpec.actions()'.
+	(ListForm._on_context_action): Neoèakávej ¾ádné klíèové
+	argumenty.  Klíèové arumenty handleru získávej ze specifikace akce.
+	(ListForm.can_context_action): Neoèakávej ¾ádné klíèové
+	argumenty.  Klíèové arumenty handleru získávej ze specifikace akce.
+	(BrowseForm._context_menu): Pøíkazu `COMMAND_CONTEXT_ACTION'
+	pøadávej pouze jediný argument -- `action'.
 
 	* pytis/presentation/spec.py (ActionContext): Nová tøída.
 	(Action): Nová tøída.
