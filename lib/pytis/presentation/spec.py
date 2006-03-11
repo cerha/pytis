@@ -194,6 +194,143 @@ class Button(object):
     def active_in_popup_form(self):
         return self._active_in_popup_form
 
+class ActionContext(object):
+    """Výètová tøída definující konstanty pro urèení kontextu akce."""
+    
+    CURRENT_ROW = 'CURRENT_ROW'
+
+    """Akce je provádìna nad aktuálním øádkem tabulky.  Ten bude pøedán
+    handleru akce jako pozièní argument v podobì instance PresentedRow."""
+    
+    SELECTION = 'SELECTION'
+
+    """Akce je provádìna nad aktuálním výbìrem, tedy nad v¹emi vybranými øádky
+    tabulky.  Výbìr bude pøedán handleru akce jako pozièní argument v podobì
+    iterátoru, který vrací jednotlivé øádky jako instance PresentedRow."""
+
+    # TODO: Zde by je¹tì mohla být jedna hodnota, která by umo¾nila definovat
+    # univerzální akce, které pracují implicitnì s aktuálním øádkem, ale pokud
+    # existuje výbìr, tak s výbìrem.
+    
+    
+class Action(object):
+    """Definice kontextovì závislé akce.
+
+    Tato definice akce slou¾í pro pou¾ití ve specifikátoru 'actions' tøídy
+    'ViewSpec'.  Ka¾dá akce je o¹etøena vlastní obslu¾nou funkcí, co¾ umo¾òuje
+    implementovat libovolnou vlastní funkcionalitu.  Pro ka¾dou akci lze
+    definovat také kontext, který urèuje kdy má akce smysl a jaké argumenty
+    budou handleru akce pøedány.  Tím je napøíklad mo¾né, aby akce pracovala s
+    aktuálním øádkem tabulky apod.  Více viz argumenty konstruktoru.
+    
+    """
+    def __init__(self, title, handler, context=ActionContext.CURRENT_ROW,
+                 secondary_context=None, enabled=True, access_groups=None,
+                 descr=None, hotkey=None, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          title -- titulek akce zobrazený v u¾ivatelském rozhraní.
+
+          handler -- callable objekt o¹etøující danou akci.  Handleru jsou pøi
+            vyvolání akce pøedány argumenty odpovídající danému kontextu.
+            První pozièní argument je instance 'PresentedRow' odpovídající
+            aktuálnímu øádku, nebo sekvence vybraných øádkù, v závislosti na
+            argumentu 'context'.  Pokud je definován také argument
+            'secondary_context', bude pøedán také druhý pozièní argument
+            odpovídající kontextu ve druhém formuláøi duálního formuláøe.  Dále
+            jsou handleru pøedány také ve¹keré zbylé klíèové argumenty.
+        
+          context -- Instance 'ActionContext' urèující v jakém kontextu mù¾e
+            být akce vyvolána.  Tato hodnota ovlivòuje argumenty, které jsou
+            handleru akce pøedány pøi jejím vyvolání.
+        
+          secondary_context -- Instance 'ActionContext', nebo None.  Nìkteré
+            akce mohou v duálním formuláøi pracovat i s kontextovou informací z
+            druhého formuláøe.  Tímto argumentem, podobnì jako argumentem
+            'context' urèujeme s èím se pracuje.  Specifikace ovlivní druhý
+            pozièní argument pøedaný handleru akce.  Pokud je None, s ¾ádným
+            dal¹ím kontextem se nepracuje a druhý pozièní argument se handleru
+            nepøadává.
+
+          enabled -- funkce, vracející pravdu, pokud je akce aktivní a nepravdu
+            v opaèném pøípadì.  Funkci jsou pøadány stejné argumenty, jako
+            handleru.  Není-li uvedeno, je akce aktivní v závislosti na
+            'access_groups'.  Namísto funkce mù¾e být pøedána té¾ pøímo boolean
+            hodnota, které dostupnost akce urèuje staticky.
+
+          access_groups -- seznam u¾ivatelských skupin, které mají právo akci
+            vyvolat.  Akce se pro ostatní u¾ivatele stane automaticky
+            neaktivní.  Teprve pokud u¾ivatel patøí do jedné z vyjmenovaných
+            skupin, je dostupnost akce zji¹tìna pomocí funkce 'enabled'.
+              
+          descr -- textový popis akce, který mù¾e být pou¾it jak k vytvoøení
+            nápovìdy, tak k zobrazení v u¾ivatelském rozhraní.
+
+          hotkey -- pøípadná klávesová zkratka, která akci vyvolá.
+
+          V¹echny ostatní klíèové argumenty budou pøi vyvolání akce pøedány
+          handleru jako klíèové argmenty.  Takto napøíklad lze jeden handler
+          pou¾ít pro více podobných akcí.
+        
+        """
+        assert isinstance(title, types.StringTypes)
+        assert callable(handler)
+        assert context in public_attributes(ActionContext)
+        assert secondary_context in (None,) + public_attributes(ActionContext)
+        assert callable(enabled) or isinstance(enabled, types.BooleanType)
+        assert access_groups is None or \
+               isinstance(access_groups,
+                          (types.StringType, types.TupleType, types.ListType))
+        assert descr is None or isinstance(descr, types.StringTypes)
+        assert hotkey is None or isinstance(hotkey, types.SequenceType)
+        self._title = title
+        self._handler = handler
+        self._context = context
+        self._secondary_context = secondary_context
+        self._enabled = enabled
+        self._access_groups = access_groups
+        self._descr = descr
+        self._hotkey = hotkey
+        self._kwargs = kwargs
+        
+    def title(self):
+        """Vra» název akce."""
+        return self._title
+        
+    def handler(self):
+        """Vra» obslu¾nou funkci akce."""
+        return self._handler
+
+    def context(self):
+        """Vra» kontext akce jako instanci 'ActionContext'."""
+        return self._context
+    
+    def secondary_context(self):
+        """Vra» pøídavný kontext akce, pokud je definován, nebo None."""
+        return self._secondary_context
+
+    def enabled(self):
+        """Vra» funkci k zji¹tìní dostupnosti akce, nebo pøímo bool hodnotu."""
+        return self._enabled
+        
+    def access_groups(self):
+        """Vra» seznam u¾iv. skupin které mají právo akci vyvolat.""" 
+        return self._access_groups
+        
+    def descr(self):
+        """Vra» popis akce.""" 
+        return self._descr
+        
+    def hotkey(self):
+        """Vra» klávesovou zkratku akce.""" 
+        return self._hotkey
+    
+    def kwargs(self):
+        """Vra» klíèové argumenty pro handler akce."""
+        return self._kwargs
+    
     
 class GroupSpec(object):
     """Definice skupiny vstupních polí editaèního formuláøe.
@@ -222,7 +359,7 @@ class GroupSpec(object):
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
-        """Inicializace a doplnìní výchozích hodnot atributù.
+        """Inicializuj instanci.
 
         Argumenty:
 
@@ -434,7 +571,8 @@ class ViewSpec(object):
 
     """
     def __init__(self, title, fields, layout=None, columns=None,
-                 popup_menu=None, sorting=None, grouping=None, redirect=None,
+                 popup_menu=None, actions=(),
+                 sorting=None, grouping=None, redirect=None,
                  check=None, cleanup=None,
                  on_new_record=None, on_edit_record=None, on_delete_record=None,
                  on_line_commit=None,
@@ -463,6 +601,9 @@ class ViewSpec(object):
             tabulky.  Tato políèka budou pøidána do kontextového popup menu
             vyvolaného pravým tlaèítkem my¹i nad jedním záznamem v seznamovém
             formuláøi.  Jde o sekvenci instancí 'pytis.form.MItem'.
+
+          actions -- specifikace dostupných u¾ivatelských akcí jako sekvence
+            instancí 'ActionSpec'.
             
           sorting -- výchozí seøazení tabulky.  Specifikace øazení ve formátu
             odpovídajícím argumentu 'sort' metody 'pytis.data.select()', nebo
@@ -609,7 +750,13 @@ class ViewSpec(object):
                     assert self._field_dict.has_key(id), \
                        (_("Unknown column id in 'columns' specification:"), id)
         # Initialize other specification parameters
+        assert isinstance(actions, (types.TupleType, types.ListType))
+        if __debug__:
+            for action in actions:
+                assert isinstance(action, Action)
         if popup_menu is not None:
+            #log(OPERATIONAL,
+            #    "Pou¾it potlaèený argument 'popup_menu' tøídy 'ViewSpec'!")
             assert is_sequence(popup_menu)
             if __debug__:
                 for item in popup_menu:
@@ -645,6 +792,7 @@ class ViewSpec(object):
         self._title = gettext_(title)
         self._columns = columns
         self._layout = layout
+        self._actions = actions
         self._popup_menu = popup_menu
         self._sorting = sorting
         self._grouping = grouping
@@ -688,6 +836,10 @@ class ViewSpec(object):
     def popup_menu(self):        
         """Vra» specifikaci polo¾ek kontextového menu pro záznam v tabulce."""
         return self._popup_menu
+
+    def actions(self):        
+        """Vra» specifikaci akcí."""
+        return self._actions
 
     def sorting(self):
         """Vra» specifikaci výchozího øazení."""
@@ -787,6 +939,13 @@ class DualSpec(object):
           side_title -- titulek vedlej¹ího formuláøe jako øetìzec.  Pokud není
             None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
             ze specifikace vedlej¹ího formuláøe.
+
+          POZOR: Argument 'side_columns' je velice nevhodný.  Udr¾ování
+          identifikátorù sloupcù v jiném defsu, ne¾ odkud pocházejí vede èasto
+          k nekonzistenci a k následným chybám.  Namísto uvádìní sloupcù zde je
+          lep¹í vytvoøit zvlá¹tní variantu.  Tím jsou seznamy sloupcù pro rùzná
+          pou¾ití formuláøe v¾dy hezky pohromadì.  To samé platí pro argumenty
+          'title' a 'side_title'.
             
         """
         assert is_anystring(main_name)
@@ -1210,7 +1369,8 @@ class FieldSpec(object):
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
         if check is not None:
-            log(EVENT, "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
+            log(OPERATIONAL,
+                "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
         self._id = id
         self._label = gettext_(label)
         self._descr = gettext_(descr)
