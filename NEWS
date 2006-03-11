@@ -1,9 +1,51 @@
-; -*- mode: change-log -*-
+	; -*- mode: change-log -*-
 ; Tento dokument obsahuje chronologický seznam nových u¾ivatelských vlastností
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-03-11  Tomas Cerha  <cerha@brailcom.org>
+
+	Namísto pøímé specifikace polo¾ek kontextového menu pomocí
+	argumentu `popup_menu' ve `ViewSpec', je nyní mo¾né definovat
+	seznam u¾ivatelských akcí pomocí argumentu `actions'.  Argumentem
+	je sekvence specifikací akcí jako instanci nové tøídy `Action'.
+	Takto definované akce nyní umo¾òují i èisté øe¹ení práce s duálním
+	formuláøem.  Je mo¾né handleru pøedávat øádek z druhého formuláøe
+	a korektnì je øe¹en také refresh duálních formuláøù.  Více
+	informací v dokumentaci tøídy `Action'.
+
+	Nová globální funkce `has_access' v `applicvation.py' umo¾òuje
+	zjistit pøístupová práva pøihlá¹eného u¾ivatele k danému náhledu.
+	
+	DÙLE®ITÉ UPOZORNÌNÍ: `Action' umo¾òuje definovat také
+	`access_groups', ale podle v¹eho je nyní pøi definici kontextových
+	pøíkazù `access_groups' vyu¾íváno hlavnì k vyjmenování skupin,
+	které mají právo pracovat s nìjakým náhledem, se kterým se pracuje
+	v rámci handleru.  To není zrovna praktické, proto¾e `access
+	groups' jsou zde definovány duplicitnì.  Pokud potom napøíklad
+	zmìním pøístupová práva ve specifikaci náhledu, u¾ je nejspí¹e
+	zapomenu zmìnit ve v¹ech definicích pøíkazù, které s daným
+	náhledem pracují.  I kdybych to udìlat chtìl, tak se nikde
+	nedozvím, které v¹echny pøíkazy to jsou.  Argument `access_groups'
+	by mìl být u¾íván jen v opravdu nutných pøípadech (dost mo¾ná
+	¾ádné takové nejsou).  V¹ude kde to jde, by mìla být práva
+	zji¹tìna pomocí metody nové `has_access()' (viz vý¹e).  Tu lze
+	pou¾ít ve funkci `enabled' pøi definici `Action' napøíklad
+	následovnì:
+
+		enabled=lambda row: has_access('Faktury')
+	
+	V pytis.extensins byla funkce `context_mitem' oznaèena za
+	potlaènou a není tedy dále doporuèováno ji pou¾ívat.  Funkce bude
+	zru¹ena, jakmile budou v¹echna její pou¾ití nahrazena pomocí
+	`actions'.
+
+	Dále byla v pytis.extensins funkce `context_rp' pøejmenována na
+	`rp_handler', co¾ lépe odpovídá jejímu urèení.  Pro zpìtnou
+	kompatibilitu byl vytvoøen alias `context_rp', ale bude vhodné
+	v¹echna pou¾ití starého názvu ve specifikacích pøepsat.
+	
 2006-03-08  Tomas Cerha  <cerha@brailcom.org>
 
 	Funkce `run_procedure' nyní pøijímá a pøedává jak klíèové, tak
