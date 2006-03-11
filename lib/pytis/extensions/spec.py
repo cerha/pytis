@@ -223,21 +223,20 @@ def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
                  command=cmd_help_window,
                  args={'inputfile': inputfile, 'format': format})
 
-def context_mitem(title, handler, hotkey=None, **kwargs):
-    """Vra» polo¾ku menu vyvolávající akci kontextového menu øádku formuláøe.
+def context_mitem(title, handler, **kwargs):
+    """Funkce pro zpìtnou kompatibilitu.
 
-    Bude vyvolán pøíkaz `ListForm.COMMAND_CURRENT_ROW_ACTION', kterému budou
-    pøedány v¹echny klíèové argumenty.  Argument 'handler' je k nim automaticky
-    pøidán.
+    Tato funkce nech» ji¾ není pou¾ívána!  Namísto ní nech» jsou u¾ivatelské
+    akce specifikovány pomocí argumentu `actions' tøídy `ViewSpec'.
 
     """
-    kwargs['handler'] = handler
-    return MItem(title, command=ListForm.COMMAND_CURRENT_ROW_ACTION,
-                 args=kwargs, hotkey=hotkey)
+    action = Action(title, handler, **kwargs)
+    return MItem(title, command=ListForm.COMMAND_CONTEXT_ACTION(action=action),
+                 hotkey=action.hotkey())
 
 
-def context_rp(spec_name, proc_name, *args, **kwargs):
-    """Vra» handler akce kontextového menu, který spustí proceduru s argumenty.
+def rp_handler(spec_name, proc_name, *args, **kwargs):
+    """Vra» handler u¾ivatelské akce, který spustí proceduru s danými argumenty.
 
     Vrácený handler vyvolá proceduru 'proc_name' ze specifikace 'spec_name' a
     pøedá jí v¹echny hodnoty aktuálního øádku odpovídající klíèùm pøedaným v
@@ -253,6 +252,7 @@ def context_rp(spec_name, proc_name, *args, **kwargs):
     return lambda row: run_procedure(spec_name, proc_name,
                                      *[row[key] for key in args], **kwargs)
 
+context_rp = rp_handler # Pro zpìtnou kompatibilitu.  Èasem smazat!  2006-03-11
 
 _user_cmd_caller = {}
 def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
