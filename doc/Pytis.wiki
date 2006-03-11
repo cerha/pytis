@@ -1,226 +1,13 @@
-= Nápovìda = menu
+= Nápovìda =
 
 @TOC@
 
-== Øádkový formuláø {browse form} ==
-
-Klasický jednoduchý tabulkový náhled, který umo¾òuje sledovat na jedné obrazovce desítky záznamù. Je vhodný k pøehlednému získávání informací nebo pro rychlé vkládání dat pomocí tzv. inline editace. Ve formuláøi se lze pohybovat pomocí ¹ipek, PageDown, PageUp, Home (nebo Ctrl-¹ipka vlevo), End (nebo Ctrl-¹ipka vpravo), Ctrl-Home, Ctrl-End. Záznamy je mo¾né vyhledávat, tøídit, filtrovat nebo seskupovat (viz ní¾e).
-
-[#menu|index]
-
-== Duální formuláø {dual form} ==
-
-Jedná se v podstatì pouze o zobrazení dvou øádkových formuláøù najednou, pøièem¾ v dolním  formuláøi se zobrazují záznamy provázané s aktuálním záznamem v horním formuláøi. Pøepínání mezi formuláøi je pomocí klávesy Ctrl-Tab. V dolním náhledu se filtrují øádky podle aktivního øádku v horním náhledu.
-
- * /aktuální záznam - záznam, na kterém je fokus (viz ní¾e)/.
-
-[#menu|index]
-
-== Editaèní formuláø {edit form} ==
-
-Formuláø urèený k u¾ivatelsky pohodlnému vkládání dat. Nejèastìji se vyvolá pomocí klávesy F5 (Editace existujícího záznamu) nebo F6 (Vlo¾ení nového záznamu). Na tomto formuláøi se mohou nacházet nìkteré dal¹í prvky jako políèka, tlaèítka. Ve formuláøi se lze pohybovat pomocí klávesy Tab nebo Enter. Pohyb je povolen jen v buòkách, které mù¾e daný u¾ivatel editovat. Editaèní formuláø lze potvrdit (tlaèítko OK), pak se zmìny aplikují, nebo zru¹it (tlaèítko Zru¹it) a pak k ¾ádným zmìnám v databázi nedojde. V nìkterých formuláøích je mo¾né pou¾ít tlaèítko Dal¹í, které ulo¾í záznam, ale narozdíl od tlaèítka OK, neuzavøe daný formuláø, jenom vyèistí editovatelné políèka pro vlo¾ení dal¹ího záznamu. Tahle funkce je vhodná pøi vkládání velkého poètu záznamù. 
-
-[#menu|index]
-
-== Náhledový formuláø {show form} ==
-
-Slou¾í pro odli¹né (detailní) zobrazení dat prezentovaných øádkovým formuláøem. Dostanete se do nìj z øádkového formuláøe stisknutím klávesy Mezera
-nebo Enter. Prvním zpùsobem se naète duální náhled, detailní informace jsou zobrazeny v dolní èásti. Enterem zobrazíme detailní informace na celou plochu, pøièem¾ pohybovaní po jednotlivých záznamech je mo¾né pomocí PageUp a PageDown.
-
-[#menu|index]
-
-== Tisková sestava {print form} ==
-
-Zobrazuje data naformátovaná a pøipravená pro tisk. Nelze zde vkládat, mazat,
-ani opravovat. Slou¾í výhradnì jako náhled pøed tiskem. Nad ka¾dým øádkovým
-formuláøem, pøípadnì duálním formuláøem lze vyvolat tiskovou sestavu pomocí
-*Ctrl-x p* nebo z menu volbou *Tisk*. V menu je vidìt seznam v¹ech
-zadefinovaných tiskových sestav nad daným náhledem. Vìt¹ina náhledù nemá
-explicitnì pøedefinovanou tiskovou sestavu, proto se pou¾ije implicitní
-sestava, která se pokusí zobrazovaný formuláø pøipravit pro
-tisk. *POZOR*: pro dlouhé øádky mù¾e dojít u implicitní tiskové sestavy
-k nekorektnímu zobrazení tisknutých dat, proto je nutné pro tyhle záznamy
-pøedefinovat tiskovou sestavu v spolupráci s vývojáøi. Ve vytvoøené tiskové
-sestavì je mo¾né listovat po jednotlivých stránkách, pøípadnì zvìt¹ovat
-a zmen¹ovat náhled.
-
-== Dialogové okno {dialog} ==
-
-Informaèní okénko, které umo¾òuje vìt¹inou pouze potvrzení, nebo zru¹ení akce. 
-
-[#menu|index]
-
-== Políèko {field}  ==
-
-V øádkovém formuláøi takté¾ známo pod názvem *buòka*. Jedná se o elementární
-prvek. Z hlediska informaèního systému je dùle¾ité to, ¾e data umístìná v buòce
-jsou dále nedìlitelná a nelze dále zpracovávat pouze èásti bunìk.
-
-V editaèním formuláøi se vyskytují napøíklad tyto typy políèek:
- * klasické vstupní
- * za¹krtávací
- * èíselníkové
-
-Lze omezovat rozsah hodnot platných pro políèko (vybrané znaky, èíselné
-hodnoty, ...). Tohle omezení vstupných hodnot øe¹í filtr.
-
-V nìkterých pøípadech musí hodnota splnit dal¹í podmínky, jako napøíklad:
- * datum musí být reálný,
- * èíselníkové políèko musí obsahovat hodnotu z èíselníku,
- * políèko musí být vyplnìno, atd.
-
-Správné vyplnìní u¾ivatelem v daných pøípadech kontroluje tzv. *Validace*,
-která u¾ivatelovi oznámí pøípadné ¹patné zadání hodnoty v dialogovém øádku.
-
-*Za¹edlá políèka jsou needitovatelná* a mají pouze informativní charakter.
-
-Pokud se jedná o políèko navázané na èíselník a toto je aktivní, lze
-pomocný *èíselník* vyvolat klávesovou zkratkou *F2*. Pomocí klávesové zkratky
-*Ctrl F2* je mo¾né vyvolat èíselník s automaticky zapnutým inkrementálním
-vyhledáváním.
-
-Obsah nìkterých políèek mù¾e být automaticky zmìnìn na základe
-zadané hodnoty v jiném políèku daného formuláøe. To jsou tzv. *dopoèítávána
-políèka*. Jejich hodnotu lze dodateènì zmìnit. Na základì zadané hodnoty v
-jedním políèku se mù¾e zmìnit i mo¾nost editace jiných políèek (buï se umo¾ní
-nebo znemo¾ní jejich editace). Tahle funkce se nazývá *Dynamická editace*.
-
-V urèitých pøípadech mù¾e u¾ivatel bìhem editace zjistit, ¾e potøebuje do
-políèka zadat èíselníkovou hodnotu, kterou daný èíselník je¹tì neobsahuje. Pro
-úspì¹né zadání dané hodnoty je nutné èíselník doplnit o tuto hodnotu. Aby
-u¾ivatel nemusel zavøít právì otevøený editaèní formuláø, je mo¾né vyvolat
-zadání hodnoty do èíselníku pomocí tlaèítka "*+*". Po obnovení èíselníku mù¾e
-u¾ivatel pokraèovat v zadávání hodnot editaèního formuláøe. Tlaèítko "*+*" se
-vkládá do vybraných editaèních formuláøù na ¾ádost u¾ivatelù.
-
----
-
-Po odeslání formuláøe tlaèítkem OK (nebo Dal¹í) se kontrolují zadané hodnoty
-kontrolními funkcemi tzv. "*Checky*". Check mù¾e vypsat varování o nesprávnì
-zadané hodnotì.
-
-[#menu|index]
-
-== Fokus ==
-
-Barevné zvýraznìní u¾ivatelem vybraného záznamu (tmavé podbarvení øádku a svìtlé orámování buòky).
-
-[#menu|index]
-
-== Hledání  (F3,Ctrl-r,Ctrl-s) ==
-
-Slou¾í k rychlému nalezení záznamu v rozsáhlém øádkovém formuláøi. Funkce
-"Hledání" se spou¹tí pøes klávesu F3, kterou se vyvolá formuláø pro zadání
-podmínek hledání. Do podmínky hledání je mo¾né zadat znak "*!**", který slou¾í
-jako zástupní znak pro jeden nebo více znakù hledaného øetìzce. U¾ivatel mù¾e
-vyhledávat záznamy smìrem dopøedu (Dal¹í Ctrl-r) nebo dozadu (Pøedchozí Ctrl-s).
-[#menu|index]
-
-== Inkrementální hledání (Ctrl-F3,Ctrl-u Ctrl-F3) ==
-
-Funkce "Inkrementální hledání" se spou¹tí pøes klávesu Ctrl-F3 . Pøed vyvoláním
-funkce musí být fokus na sloupci (buòce v sloupci), v kterém u¾ivatel záznam
-hledá. Je vhodné záznamy taky setøídit podle tohoto sloupce. Po stisku klávesy
-Ctrl-F3 se objeví vlevo nahoøe nad prvním sloupcem editaèní buòka, do které
-u¾ivatel postupnì zadává znaky hledaného øetìzce. Po ka¾dém zadaní dal¹ího
-znaku funkce posouvá fokus na první záznam, který vyhovuje zadané podmínce. Do
-podmínky hledání je mo¾né zadat znak "*!**", který slou¾í jako zástupní znak pro jeden nebo více znakù hledaného øetìzce.
-Opìt je mo¾né, tak jako u klasického hledání, pohybovat se na dal¹í (Ctrl-r)
-nebo pøedchozí (Ctrl-s) záznamy, které odpovídají zadané podmínce.
-
-*POZOR* - po najetí (pøesunu fokusu) na hledaný záznam je *NUTNÉ* potvrdit
-zadanou podmínku klávesou *ENTER*! V opaèném pøípade se fokus vrátí na pùvodní
-pozici pøed spu¹tìním inkrementálního hledání. Funkci je kdykoliv mo¾né
-ukonèit klávesou Escape. Po zadaní ¹patného znaku do podmínky není nutné
-ukonèovat funkci. Staèí znak smazat a zadat správný.
-
-Nìkdy si u¾ivatel pamatuje jenom èást hledaného záznamu (napø. druhé slovo
-z tøíslovního názvu firmy). V takovém pøípadì je potøebné pou¾ít
-inkrementální hledání èásti øetìzce. Tahle funkce se spou¹tí pøes
-klávesu Ctrl-u Ctrl-F3.
-
-[#menu|index]
-
-== Skok na záznam (Ctrl-j) ==
-
-V øádkovém formuláøi, který obsahuje velké mno¾ství záznamù, mù¾e u¾ivatel vyu¾it funkci "Skok na záznam", která se spou¹tí  pøes klávesu Ctrl-j. Po vyvolání funkce se objeví výzva na zadání èísla øádku, na který chce u¾ivatel skoèit.
-
-[#menu|index]
-
-== Tøídìní (F4) ==
-
-Nebo také sortování záznamù. V øádkovém formuláøi mù¾e u¾ivatel vzestupnì
-nebo sestupnì tøídit záznamy podle jednotlivých sloupcù. Smìr a prioritu
-øazení dat urèí buï my¹í po kliknutí na záhlaví (levým nebo pravým tlaèítkem),
-nebo klávesou F4. Nejpøehlednìj¹í je zpùsob pøes pravé tlaèítko my¹i po
-kliknutí na záhlaví sloupce. Aktuální øazení je signalizováno grafickými
-symboly v záhlaví sloupce (smìr trojúhelníku urèuje smìr øazení záznamù
-a poèet èárek urèuje prioritu øazení.).
-
-[#menu|index]
-
-== Filtrování (Ctrl-F4) ==
-
-Funkce omezí výpis záznamù øádkového formuláøe podle u¾ivatelem nadefinovaných
-pravidel. Filtrování se spou¹tí pøes klávesu *Ctrl-F4*, která vyvolá editaèní
-formuláø pro zadaní filtrovacích podmínek. U¾ivatel mù¾e zkombinovat i více
-podmínek, pøièem¾ se vy¾aduje základní znalost matematické logiky "a zároveò"
-- "nebo" (AND OR). V øetìzci filtrovací podmínky mù¾e u¾ivatel pou¾ít znak
-"*!**" jako zástupní znak pro jeden nebo nìkolik znakù.
-
-K dispozici jsou i *agregaèní funkce*, které umo¾òují zji¹»ovat
-rùzné hodnoty (poèet, minimum, maximum, souèet, prùmìr) záznamù
-v jednotlivých sloupcích bez aktivování filtru.
-
-Funkce "Filtrování" umo¾òuje vytváøet nové náhledy na data bez
-nutnosti zásahu vývojáøe. Pro velmi èasto u¾ivatelem definované
-filtry je v¹ak efektivnìj¹í po¾ádat vývojáøe o statickou
-implementaci formou nového formuláøe. 
-
-[#menu|index]
-
-== Seskupování ==
-
-Funkce slou¾í k seskupení záznamù podle vybraného sloupce. Funkce
-obarvuje pozadí záznamù podle pravidla "zmìna hodnoty buòky != zmìna
-podbarvení øádku daného záznamu". K získání pøehledného náhledu
-je potøebné sloupec (podle kterého se seskupuje) nejprve setøídit (seøadit).
-
-Pøíklad: Kdyby jsme mìli náhled èíselník zemí se sloupci: kód zemì,
-název zemì, kontinent. Pou¾ijeme setøídìní a seskupení záznamù podle
-sloupce kontinent. Náhled zaèíná zemìmi prvního kontinentu podbarvené
-stejnou barvou, pøi prvním zázname zemì z dal¹ího kontinentu nastala
-v sloupci kontinent zmìna, co znamená ¾e se zmìní i podbarvení záznamù
-zemí z druhého kontinentu. Cyklicky se mìní podbarvení v¾dy pøi
-zmìnì kontinentu. V tomhle pøípade je nutná názorná ukázka :)
-
-[#menu|index]
 
 == Vkládání speciálních znakù (pro u¾ivatele s MS Windows) ==
 
 Speciální znaky (@#$%^&*) se vkládají pomocí klávesy pravý
 Alt-pøíslu¹ná klávesa.
 
-[#menu|index]
-
-== Funkce na pravé tlaèítko my¹i ==
-
-Pomocí pravého tlaèítka my¹i mù¾e u¾ivatel vyvolat nad jakýmkoliv záznamem
-nabídku pøedefinovaných a defaultních funkcí. Mezi defaultní funkce patøí:
-
- * *Filtrovat podle buòky* - funkce vyvolá filtrování náhledu s automaticky
-   zadanou filtraèní podmínkou, která se "nasaje" z buòky na které byl fokus
-   pøi vyvolání funkce '_filtrovat podle buòky_'
-
- * *Zobrazit související èíselník* - funkce zobrazí èíselník, který souvisí s
-    hodnotou v buòce, na které byl fokus pøi vyvolání funkce. Pøi buòkách,
-    které neobsahují èíselníkové hodnoty je tato funkce neaktivní.
-   
-== Procházení v zásobníku oken ==
-
-Okna, které si u¾ivatel postupnì otevírá, se øadí do zásobníku oken (polo¾ka menu "Okna" obsahuje názvy v¹ech otevøených oken). Mezi otevøenými okny se mù¾e u¾ivatel pohybovat pomocí kláves Ctrl-¹ipka nahoru nebo Ctrl-¹ipka dolù, pøièem¾ se cyklicky posouvá v zásobníku oken jedním nebo druhým smìrem. Jestli¾e u¾ivatel nechce procházet v¹emi otevøenými okny uvedeným zpùsobem, má mo¾nost pomocí klávesy Alt-a vyvolat zásobník oken a ¹ipkou nahoru nebo dolù vybrat název po¾adovaného okna. Výbìr lze udìlat i levým tlaèítkem my¹i, ale naè sahat na my¹, kdy¾ ovládání pomocí klávesnice je mnohem rychlej¹í.
-
-[#menu|index]
 
 == Bublinková nápovìda ==
 
@@ -234,38 +21,8 @@ V náhledech je mo¾né po konzultaci s vývojáøi nastavit rùznou barvu písma u
 záznamù, které se li¹í od jiných záznamù urèitým parametrem. Napøíklad: kladné
 hodnoty èerným písmem, záporné hodnoty èerveným písmem, atd. Pozor v¹ak na
 nastavení u¾ivatelského rozhraní, které se nachází v Systém -> U¾ivatelská
-nastavení -> Nastavení u¾ivatelského rozhraní. Doporuèujeme pou¾ívat Defaultní hodnoty.
-
-== Menu ==
-
-HLAVNÍ MENU: Za¹edlá (neaktivní) polo¾ka v tomto náhledu znamená, ¾e k
-náhledu nemá daný u¾ivatel práva pro zobrazení. Proto na polo¾ku menu
-není mo¾no kliknout a vyvolat spu¹tìní náhledu.
-
-Pokud pro svoji práci daný náhled potøebujete obra»te se na urèenou
-osobu s ¾ádostí o zmìnu nastavení práv pro daný náhled.
-
-MENU NA PRAVÉ TLAÈÍTKO (popup_menu):
-
-a) Nemáte dostateèná práva pro spu¹tìní pøíkazu.
-
-b) Spu¹tìní pøíkazu na daném øádku nemá smysl.
-   
-ISAS Pøíklad: Chci v náhledu na "spoleènosti x jednatelé" pou¾ít pøíkaz
-"Zobraz jednatele jednatele" pro jednatele - fyzickou osobu,
-který ale ¾ádné vlastní jednatele nemá.
-Daná polo¾ka pak bude v popup_menu za¹edlá, proto¾e by spou¹tìt danou
-funkci nemìlo ¾ádný smysl. (Zaktivní se a¾ na øádku jednatele typ P -
-právnická osoba)
-
-== Odesílání chybových hlá¹ení (bug report) ==
-
-Pøi rychlém vývoji nových funkcionalit informaèního systému se nìkdy objevují
-chyby aplikace. V takovém pøípadì se u¾ivatelovi objeví informaèní okno, ve
-kterém má mo¾nost odeslat chybové hlá¹ení vývojovém týmu. Je to velice dùle¾ité
-pro odhalení a opravení chybného kódu aplikace. Do chybového hlá¹ení se
-automaticky nadefinuje emailová adresa u¾ivatele, aby mohl být pøípadnì
-kontaktován telefonicky vývojovým týmem.
+nastavení -> Nastavení u¾ivatelského rozhraní. Doporuèujeme pou¾ívat Defaultní
+hodnoty.
 
 == Logování u¾ivatelských zásahù ==
 
@@ -273,7 +30,6 @@ Ka¾dé vlo¾ení, editování èi mazání dat u¾ivatelem je zaznamenáno, a tudí¾
 zpìtnì je mo¾né dohledat kdo kdy zmìnil urèitý záznam. Je dùle¾ité, aby se
 u¾ivatelé *v¾dy pøihla¹ovali do informaèního systému svým pøihla¹ovacím
 jménem*! A nesdìlovali svoje heslo svým kolegùm.
-
 
 == Informaèní øádek (status line) ==
 
@@ -287,21 +43,4 @@ line*, který je rozdìlen do ètyø èástí.
  * Tøetí èást zobrazuje jméno pøihlá¹eného u¾ivatele.
  * Ètvrtá èást zobrazuje aktuální datum.
 
-== Práva ==
 
-Ka¾dá spoleènost má svoji organizaèní strukturu, která definuje skupiny
-pracovníkù. V¹em skupinám je mo¾né zadefinovat zdali mají oprávnìní vidìt,
-vkládat, editovat èi mazat záznamy v jednotlivých náhledech, nebo zdali mají
-oprávnìní vykonávat urèité specifické èinnosti jako napøíklad: zálohování
-databáze, synchronizace dat, export dat, spu¹tìní uzávìrky dne a pod. Zalo¾ení
-skupin, zalo¾ení u¾ivatelù a jejich pøira¾ení do jednotlivých skupin realizuje
-vývojový tým na ¾ádost u¾ivatele, který patøí k vedení firmy.
-
-== Export ==
-
-U¾ivatelé mohou z jednotlivých náhledù exportovat data do formátu TXT nebo CSV
-(v pøípadì, ¾e daný u¾ivatel patøí do skupiny, která mù¾e exportovat; a daný
-náhled má zadefinované právo exportu). Výsledný soubor se ulo¾í do adresáøe,
-který je nastavený v profile daného u¾ivatele /Systém -> U¾ivatelská nastavení
--> Základní nastavení: Pøedvolený adresáø pro export/. Daný soubor je mo¾né
-naimportovat do aplikace Open Office Calc nebo MS Excel, a dále s ním pracovat. 
