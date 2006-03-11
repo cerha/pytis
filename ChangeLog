@@ -1,5 +1,8 @@
 2006-03-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* doc/Pytis.wiki (Module): Vymazáno v¹e, co bylo pøesunuto do
+	nápovìdy pytisu.
+
 	* lib/pytis/extensions/spec.py (context_mitem): Upraven
 	docstring.  Namísto `COMMAND_CURRENT_ROW_ACTION' vyvolávej
 	`COMMAND_CONTEXT_ACTION' a vytváøej pøíslu¹nou instanci `Action'.
