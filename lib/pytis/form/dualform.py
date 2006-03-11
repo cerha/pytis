@@ -153,6 +153,8 @@ class DualForm(Form):
         """Vra» název formuláøe jako øetìzec."""
         return self._main_form.title()
 
+    
+
     def select_row(self, *args, **kwargs):
         if hasattr(self._main_form, 'select_row'):
             self._main_form.select_row(*args, **kwargs)
@@ -189,7 +191,12 @@ class DualForm(Form):
             return False
 
     def active_form(self):
+        """Vra» aktivní formuláø tohoto duálního formuláøe."""
         return self._active_form
+
+    def inactive_form(self):
+        """Vra» neaktivní formuláø tohoto duálního formuláøe."""
+        return self._other_form(self._active_form)
 
     def show(self):
         # Musíme volat show obou podformuláøù, proto¾e splitter je nevolá a
