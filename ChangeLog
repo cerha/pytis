@@ -1,3 +1,11 @@
+2006-03-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (context_mitem): Upraven
+	docstring.  Namísto `COMMAND_CURRENT_ROW_ACTION' vyvolávej
+	`COMMAND_CONTEXT_ACTION' a vytváøej pøíslu¹nou instanci `Action'.
+	(context_rp): Pøejmenováno na `rp_handler'.
+	(context_rp): Nový alias pro `rp_handler'.
+
 2006-03-09  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (user_cmd): Zru¹ena pøedchozí
