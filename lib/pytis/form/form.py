@@ -1642,11 +1642,6 @@ class EditForm(LookupForm, TitledForm):
         
         """
         return self._size
-
-    def set_scrollbars(self):
-        step = 20
-        size = self.GetSize()
-        self.SetScrollbars(step, step, size.width/step, size.height/step)
     
     def changed(self):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
@@ -1916,7 +1911,9 @@ class ShowForm(EditForm):
         sizer.Add(group, 1, wx.ALIGN_CENTER|wx.BOTTOM, 8)
 
     def _on_size(self, event):
-        self.set_scrollbars()
+        step = 20
+        size = self.GetSize()
+        self.SetScrollbars(step, step, size.width/step, size.height/step)
         event.Skip()
 
 class BrowsableShowForm(ShowForm):
