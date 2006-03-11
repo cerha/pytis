@@ -1,3 +1,36 @@
+2006-03-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py: Zru¹eny pøíkazy
+	`COMMAND_CURRENT_ROW_ACTION' a `COMMAND_SELECTED_ROWS_ACTION'.
+	Nový pøíkaz `COMMAND_CONTEXT_ACTION'.
+
+
+	* pytis/form/dualform.py (DualForm.inactive_form): Nová metoda.
+
+	* pytis/form/form.py (set_scrollbars): Metoda zru¹ena.
+	(ShowForm._on_size): Nastavuj scrollbary pøímo zde.
+
+	* pytis/form/list.py (ListForm.on_command): Namísto
+	`COMMAND_CURRENT_ROW_ACTION' a `COMMAND_SELECTED_ROWS_ACTION'
+	o¹etøuj `COMMAND_CONTEXT_ACTION'.
+	(ListForm._on_current_row_action)
+	(ListForm._on_selected_rows_action): 
+	(ListForm.can_selected_rows_action): 
+	(ListForm.can_current_row_action): Metody zru¹eny.
+	(ListForm._on_context_action, ListForm._on_context_action) 
+	(ListForm.can_context_action, ListForm._context_action_args) 
+	(ListForm._secondary_context): Nové metody.
+	(BrowseForm._context_menu): Pøidávej do menu také polo¾ky
+	vytvoøené z `ViewSpec.actions()'.
+
+	* pytis/presentation/spec.py (ActionContext): Nová tøída.
+	(Action): Nová tøída.
+	(ViewSpec.__init__): Nový argument `actions'.
+	(ViewSpec.actions): Nová metoda.
+	(DualSpec.__init__): Doplnìn docstring.
+	(FieldSpec.__init__): Loguj potlaèenou funkci `check' s prioritou
+	`OPERATIONAL'.
+
 2006-03-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/command.py (Command.__init__): V assertové hlá¹ce
