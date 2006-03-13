@@ -1,3 +1,10 @@
+2006-03-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/www.py (BrowsableDBTable.__init__): Oprava
+	pøedání parametrù "condition", "sort".
+	(BrowsableDBTable.table): Vytvoø kontrolní li¹tu jen, pokud je k
+	dispozici 'uri'.
+
 2006-03-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* doc/Pytis.wiki (Module): Vymazáno v¹e, co bylo pøesunuto do

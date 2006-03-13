@@ -124,8 +124,7 @@ class BaseDBTable(object):
 
 class BrowsableDBTable(BaseDBTable):
 
-    def __init__(self, spec, columns, condition=None, sort=(),
-                 uri=None, pageno=1, limit=20,
+    def __init__(self, spec, columns, uri=None, pageno=1, limit=20,
                  **kwargs):
         self._uri = uri
         self._pageno = pageno
@@ -191,12 +190,11 @@ class BrowsableDBTable(BaseDBTable):
 
     def table(self):
         super(BrowsableDBTable, self).table()
-        controls = self.controls()
-        rcontrols = TR(TD(colspan=len(self.columns()), *controls))
-        self._table.append(rcontrols)
-        return self._table
-        
-    
+        if self._uri is not None:
+            controls = self.controls()
+            rcontrols = TR(TD(colspan=len(self.columns()), *controls))
+            self._table.append(rcontrols)
+        return self._table            
 
 def base_db_table(*args, **kwargs):
     t = BaseDBTable(*args, **kwargs)
