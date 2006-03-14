@@ -1,9 +1,16 @@
-	; -*- mode: change-log -*-
+; -*- mode: change-log -*-
 ; Tento dokument obsahuje chronologický seznam nových u¾ivatelských vlastností
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-03-14  Pavel Hanak  <hanak@asellus.cz>
+
+        Do funkce 'new_record' byl pøidán argument 'block_on_new_record',
+	který slou¾í k zablokování volání funkce 'on_new_record'. Tak je
+	mo¾no i v rámci procedury 'on_new_record' pou¾ít funkci
+	'new_record' pro pøidání záznamu.
+	
 2006-03-11  Tomas Cerha  <cerha@brailcom.org>
 
 	Namísto pøímé specifikace polo¾ek kontextového menu pomocí
