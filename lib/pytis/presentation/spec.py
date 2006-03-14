@@ -284,7 +284,7 @@ class Action(object):
                isinstance(access_groups,
                           (types.StringType, types.TupleType, types.ListType))
         assert descr is None or isinstance(descr, types.StringTypes)
-        assert hotkey is None or isinstance(hotkey, (types.StrintType,
+        assert hotkey is None or isinstance(hotkey, (types.StringType,
                                                      types.TupleType))
         self._title = title
         self._handler = handler

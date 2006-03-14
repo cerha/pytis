@@ -1,3 +1,7 @@
+2006-03-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Action.__init__): Oprava pøeklepu.
+
 2006-03-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (Action.__init__): Opraven assert pro
