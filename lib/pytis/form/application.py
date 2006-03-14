@@ -726,7 +726,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def new_record(self, name, prefill=None, inserted_data=None):
+    def new_record(self, name, prefill=None, inserted_data=None,
+                   block_on_new_record=False):
         """Spus» interaktivní akci pøidání nového záznamu.
         
         Argumenty:
@@ -736,11 +737,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             pøedvyplnìny pøi inicializaci formuláøe.
           inserted_data -- sekvence datových øádkù (instancí pytis.data.Row),
             kterými má být vstupní formuláø postupnì plnìn.
-
+          block_on_new_record -- Pokud je True, nebude provedena procedura
+            on_new_record; v podstatì umo¾òuje zavolání new_record v rámci
+            procedury on_new_record.
         """
         view = self._resolver.get(name, 'view_spec')
         on_new_record = view.on_new_record()
-        if on_new_record is not None:
+        if not block_on_new_record and on_new_record is not None:
             result = on_new_record(prefill=prefill)
             top = self.current_form()
             if isinstance(top, Refreshable):
