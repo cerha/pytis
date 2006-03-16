@@ -1,3 +1,8 @@
+2006-03-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (SideBrowseDualForm._do_selection):
+	Instanci Value pro prefill vytváøej pøímo, bez validace.
+
 2006-03-14  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/application.py (Application.new_record): Nový
