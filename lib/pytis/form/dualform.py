@@ -340,7 +340,8 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             # zná nìkdo lep¹í øe¹ení?
             return False
         try:
-            v, e = self._sbcol_type.validate(row[self._binding_column].export())
+            v = pytis.data.Value(self._sbcol_type,
+                                 row[self._binding_column].value())
             f = self._side_form
             f.set_prefill({self._side_binding_column: v})
             f.filter(data=row.row())
