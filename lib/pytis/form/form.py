@@ -1590,9 +1590,9 @@ class EditForm(LookupForm, TitledForm):
                 log(ACTION, 'Záznam vlo¾en')
             else:
                 log(ACTION, 'Záznam updatován')
-                # Políèka se tímto trikem budou tváøit nezmnìnìná.
-                for field in self._fields:
-                    field.init(field.get_value())
+            for field in self._fields:
+                # Políèka se tímto trikem budou tváøit jako nezmnìnìná.
+                field.init(field.get_value())
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row, original_row)
