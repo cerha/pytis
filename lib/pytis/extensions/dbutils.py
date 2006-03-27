@@ -31,7 +31,7 @@ def data_object(spec):
     'pytis.data.DataFactory'
     
     """
-    if isinstance(spec, types.StringType):
+    if isinstance(spec, types.StringTypes):
         resolver = pytis.form.resolver()
         spec = resolver.get(spec, 'data_spec')
     op = lambda: spec.create(dbconnection_spec=config.dbconnection)
@@ -173,7 +173,6 @@ def dbfunction(name, *args, **kwargs):
     op = lambda: function.call(pytis.data.Row(args))[0][0]
     success, result = pytis.form.db_operation(op)
     return result.value()
-
 
 
 # Pozor, stejná metoda metoda je definována i v pytis.data.access

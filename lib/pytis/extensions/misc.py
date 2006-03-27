@@ -337,8 +337,8 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
     return 0
 
        
-def run_cb(spec, begin_search=None, condition=None,
-           columns=None, select_row=0):
+def run_cb(spec, begin_search=None, condition=None, sort=(),
+           columns=None, select_row=0, multirow=False):
     """Vyvolá èíselník urèený specifikací.
 
     Argumenty:
@@ -347,19 +347,70 @@ def run_cb(spec, begin_search=None, condition=None,
       begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
         inkrementální vyhledávání.
       condition -- podmínka pro filtrování záznamù.
+      sort -- øazení (viz pytis.data.select())
       columns -- seznam sloupcù, pokud se má li¹it od seznamu uvedeného
         ve specifikaci.
       select_row -- øádek, na který se má nastavit kurzor.
+      multirow -- umo¾ní výbìr více øádkù.
         
-    Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek.
+    Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek nebo
+    tuple vybraných øádkù (pokud je argument multirow nastaven).    
     """
-    return run_form(CodebookForm, spec, columns=columns,
+    if multirow:
+        class_ = SelectRowsForm
+    else:    
+        class_ = CodebookForm
+    return run_form(class_, spec, columns=columns,
                     begin_search=begin_search,
                     condition=condition,
                     select_row=select_row)
 
 
 # Application function
+
+def get_default_select(spec):
+    ASC = pytis.form.LookupForm.SORTING_ASCENDENT
+    DESC = pytis.form.LookupForm.SORTING_DESCENDANT
+    def default_sorting(view, data):
+        sorting = view.sorting()
+        if sorting is None:
+            sorting = tuple([(k.id(), LookupForm.SORTING_DESCENDANT)
+                             for k in data.key()
+                             if view.field(k.id()) is not None])
+        return sorting
+    def data_sorting(view, data):
+        mapping = {ASC:  pytis.data.ASCENDENT,
+                   DESC: pytis.data.DESCENDANT}
+        return tuple([(cid, mapping[dir]) for cid, dir
+                      in default_sorting(view, data)])    
+    def init_select(view, data):
+        op = lambda : data.select(sort=data_sorting(view, data),
+                                  reuse=False)
+        success, select_count = db_operation(op)
+        if not success:
+            log(EVENT, 'Selhání databázové operace')
+            return None
+        return select_count
+    resolver = pytis.form.resolver()
+    try:
+        view = resolver.get(spec, 'view_spec')                
+    except:
+        log(OPERATIONAL, "Nepodaøilo se vytvoøit view_spec")
+        return None
+    try:
+        data = data_object(spec)
+    except:
+        log(OPERATIONAL, "Nepodaøilo se vytvoøit datový objekt")
+        return None
+    data = data_object(spec)
+    select_count = init_select(view, data)
+    if select_count:
+        print "Default select pro specifikaci %s vrací %s øádkù" % (spec,
+                                                                    select_count)
+        import time
+        start_time = time.time()
+        data.fetchone()
+        
 
 def flatten_menus():
     """Vra» linearizovaný seznam v¹ech polo¾ek menu."""
@@ -509,12 +560,16 @@ def check_form():
         # Popup menu
         popup_menu = view_spec.popup_menu()
         if popup_menu:                
-            popup_items = [p.title() for p in popup_menu]
+            popup_items = [p.title() for p in popup_menu
+                           if isinstance(p, MItem)]
             obsah = obsah + "\n\nPolo¾ky popup_menu:\n"
             obsah = obsah + "\n".join(popup_items)
+        # Default select
+        get_default_select(spec)
         pytis.form.run_dialog(pytis.form.Message,
                               "DEFS: %s" % spec,
                               report=obsah)
+        
 
 cmd_check_form = Command(Application, 'CHECK_FORM', handler=check_form)
         
@@ -641,7 +696,6 @@ def run_any_form():
         pytis.form.run_form(*result)
                                       
 cmd_run_any_form = Command(Application, 'RUN_ANY_FORM', handler=run_any_form)
-
 
 
 # Additional constraints

@@ -1,3 +1,13 @@
+2006-03-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (run_cb): Doplnìn argument 'sort' a
+	'multirow'.
+	(check_form): Pøi kontrole popup_menu pøeskakuj MSeparator.
+	(get_default_select): Nová funkce.
+
+	* lib/pytis/extensions/dbutils.py (data_object): Specifikace mù¾e
+	být i unicode.
+
 2006-03-13  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/www.py (BrowsableDBTable.__init__): Oprava
