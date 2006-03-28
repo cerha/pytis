@@ -1,5 +1,8 @@
 2006-03-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (EditForm._commit_form): Reinicializuj
+	políèka v pøípadì vkládání nového záznamu.
+
 	* pytis/form/dualform.py (SideBrowseDualForm._do_selection):
 	Instanci Value pro prefill vytváøej pøímo, bez validace.
 
