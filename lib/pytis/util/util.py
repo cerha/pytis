@@ -1254,12 +1254,14 @@ def mem_info():
 def ipython():
     """Vyvolej embedded IPython."""
     try:
-        from IPython.Shell import IPythonShellEmbed
+        from IPython.Shell import IPShellEmbed
     except ImportError:
         sys.stderr.write('IPython not available\n')
         return
-    ipshell = IPythonShellEmbed (
-        '-nosep',
+    args = ['-pi1','In2<\\#>: ','-pi2','   .\\D.: ',
+            '-po','Out<\\#>: ','-nosep']
+    ipshell = IPShellEmbed (
+        args,
         banner='---\nEntering IPython, hit Ctrl-d to continue the program.',
         exit_msg='Leaving IPython.\n---')
     locals = inspect.currentframe().f_back.f_locals

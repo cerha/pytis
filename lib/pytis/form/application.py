@@ -181,7 +181,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._panel = wx.Panel(self._frame, -1)
         KeyHandler.__init__(self, self._panel)
         self._logo = None
-        logo_file = self._spec('logo')
+        logo_file = config.logo
         if logo_file is not None:
             if os.access(logo_file, os.R_OK):
                 logo = wx.Image(logo_file, type=wx.BITMAP_TYPE_BMP)

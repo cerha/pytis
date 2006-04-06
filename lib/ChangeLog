@@ -1,3 +1,13 @@
+2006-04-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/application.py (Application.OnInit): Pou¾ívej logo z
+	konfiguraèního souboru.
+
+	* pytis/util/util.py (ipython): Úprava volání ipython.
+
+	* pytis/util/configuration.py (Configuration._Option_logo): Nová
+	konfiguraèní volba.
+
 2006-03-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (EditForm._commit_form): Reinicializuj

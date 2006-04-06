@@ -470,6 +470,12 @@ class Configuration:
                 result = '.'
             return result
 
+    class _Option_logo(_FileOption, _CommandlineOption):
+        _DESCR = _("Cesta k souboru s logem.")
+        _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
+                 "adresáøi.")
+        _DEFAULT = './icons/logo.bmp'
+
     class _Option_server(_StringOption, _CommandlineOption):
         _DESCR = _("Jméno stroje (øetìzec), na kterém bì¾í Pyro server.")
         _DOC = _("Mù¾e být té¾ 'None', pak se klient nepøipojuje na server "
