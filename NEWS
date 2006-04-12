@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-03-11  Tomas Cerha  <cerha@brailcom.org>
+
+	Zobrazení kontextového menu akcí na pravé tlaèítko lze ovlivòovat
+	seskupováním.  Více viz dokumentace argumentu `actions'
+	konstruktoru ViewSpec.
+
 2006-03-14  Pavel Hanak  <hanak@asellus.cz>
 
         Do funkce 'new_record' byl pøidán argument 'block_on_new_record',

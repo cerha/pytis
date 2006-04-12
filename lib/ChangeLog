@@ -1,5 +1,14 @@
 2006-04-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (BrowseForm._context_menu.action_mitems):
+	Nová funkce.
+	(BrowseForm._context_menu): Podporuj vnoøené
+	seznamy a instance `ActionGroup' ve `ViewSpec.actions()'.
+
+	* pytis/presentation/spec.py (ActionGroup): Nová tøída.
+	(ViewSpec.__init__): Aktualizace docstringu.  Povol vnoøené
+	seznamy a instance `ActionGroup' v `actions'.
+
 	* pytis/form/application.py (Application): Aktualizace docstringu.
 
 2006-04-06  Pavel Hanak  <hanak@asellus.cz>
