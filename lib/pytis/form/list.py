@@ -2045,6 +2045,22 @@ class BrowseForm(ListForm):
                 }
 
     def _context_menu(self):
+        def action_mitems(actions):
+            items = []
+            for x in actions:
+                if isinstance(x, Action):
+                    cmd = ListForm.COMMAND_CONTEXT_ACTION(action=x)
+                    items.append(MItem(x.title(), command=cmd,
+                                         hotkey=x.hotkey()))
+                elif isinstance(x, ActionGroup):
+                    items.append(Menu(x.title(), action_mitems(x.actions())))
+                elif isinstance(x, (types.TupleType, types.ListType)):
+                    if items:
+                        items.append(MSeparator())
+                    items.extend(action_mitems(x))
+                else:
+                    raise ProgramError("Invalid action specification: %s" % x)
+            return items
         # Sestav specifikaci kontextového menu
         menu = super_(BrowseForm)._context_menu(self) + (
             MItem(_("Editovat buòku"),
@@ -2065,11 +2081,8 @@ class BrowseForm(ListForm):
             MItem(_("Zobrazit související èíselník"),
                   command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
             )
-        actions = list(self._view.popup_menu() or ())
-        actions += [MItem(a.title(),
-                          command=ListForm.COMMAND_CONTEXT_ACTION(action=a),
-                          hotkey=a.hotkey())
-                    for a in self._view.actions()]
+        actions = list(self._view.popup_menu() or ()) + \
+                  action_mitems(self._view.actions())
         if actions:
             menu += (MSeparator(),) + tuple(actions)
         return menu
