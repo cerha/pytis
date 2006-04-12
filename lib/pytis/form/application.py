@@ -128,13 +128,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         aplikaèního okna a naètení konfigurace, tak¾e zde mù¾eme pracovat i s
         u¾ivatelským rozhraním.
 
-      TODO: Následující volby by bylo vhodnìj¹í pøesunout do konfigurace.
+      TODO: Následující volbu by bylo vhodnìj¹í pøesunout do konfigurace.
         
       default_font_encoding -- implicitní kódování fontù jako odpovídající wx
         konstanta.
         
-      logo -- Název souboru loga zobraeného na pozadí aplikaèního okna.
-
     Ka¾dá z tìchto funkcí 
         
     Start u¾ivatelského rozhraní spoèívá ve vytvoøení instance této tøídy a
