@@ -332,6 +332,47 @@ class Action(object):
         """Vra» klíèové argumenty pro handler akce."""
         return self._kwargs
     
+
+class ActionGroup(object):
+    """Definice pojmenované logické skupiny akcí.
+
+    Skupiny akcí slou¾í k logickému seskupení souvisejících akcí.  V
+    u¾ivatelském rozhraní se takto definované akce napøíklad zobrazí jako
+    samostatné podmenu v menu akcí.
+
+    """
+    def __init__(self, title, *actions):
+        """Inicializuj instanci.
+
+        Argumenty:
+        
+          title -- název skupiny jako øetìzec
+
+          actions -- obsah této skupiny.  Zde platí rekurzívnì stejná pravidla
+            jako pro stejnojmennný argument konstruktoru ViesSpec.
+
+        """
+        assert isinstance(title, types.StringTypes)
+        assert isinstance(actions, (types.ListType, types.TupleType))
+        if __debug__:
+            for x in actions:
+                if isinstance(x, (types.TupleType, types.ListType)):
+                    for y in x:
+                        assert isinstance(y, (Action, ActionGroup))
+                else:
+                    assert isinstance(x, (Action, ActionGroup))
+        self._title = title
+        self._actions = actions
+        
+    def title(self):
+        """Vra» název skupiny jako øetìzec.""" 
+        return self._title
+        
+    def actions(self):
+        """Vra» seznam akcí jako tuple.""" 
+        return self._actions
+        
+    
     
 class GroupSpec(object):
     """Definice skupiny vstupních polí editaèního formuláøe.
@@ -604,8 +645,16 @@ class ViewSpec(object):
             formuláøi.  Jde o sekvenci instancí 'pytis.form.MItem'.
 
           actions -- specifikace dostupných u¾ivatelských akcí jako sekvence
-            instancí 'ActionSpec'.
-            
+            instancí 'Action', vnoøených sekvencí, nebo instancí 'ActionGroup'.
+            V nejjednodu¹¹ím pøípadì jde o prostý seznam instancí 'Action'.
+            Pokud chceme ovlivnit reprezentaci seznamu dostupných akcí v
+            u¾ivatelském rozhraní, je mo¾né akce seskupit do vnoøenách tuplù èi
+            listù.  Takto vytvoøené skupiny akcí budou oddìleny separátorem.
+            Dále je mo¾né vytvoøit vnoøenou pojmenovanou skupinu
+            (reprezentovanou jako samostatné podmenu) pou¾itím instance
+            'ActionGroup'.  Prvky v rámci ka¾dé 'ActionGroup' lze dále
+            seskupovat stejným zpùsobem.
+                        
           sorting -- výchozí seøazení tabulky.  Specifikace øazení ve formátu
             odpovídajícím argumentu 'sort' metody 'pytis.data.select()', nebo
             None.  Potom je výchozí seøazení tabulky podle klíèového sloupce
@@ -751,10 +800,13 @@ class ViewSpec(object):
                     assert self._field_dict.has_key(id), \
                        (_("Unknown column id in 'columns' specification:"), id)
         # Initialize other specification parameters
-        assert isinstance(actions, (types.TupleType, types.ListType))
         if __debug__:
-            for action in actions:
-                assert isinstance(action, Action)
+            for x in actions:
+                if isinstance(x, (types.TupleType, types.ListType)):
+                    for y in x:
+                        assert isinstance(y, (Action, ActionGroup))
+                else:
+                    assert isinstance(x, (Action, ActionGroup))
         if popup_menu is not None:
             #log(OPERATIONAL,
             #    "Pou¾it potlaèený argument 'popup_menu' tøídy 'ViewSpec'!")
