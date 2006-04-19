@@ -104,16 +104,18 @@ class DataSpec(pytis.data.DataFactory):
         key = find(key, bindings, key=lambda b: b.column())
         super(DataSpec, self).__init__(data_class_, bindings, key,
                                        access_rights=access_rights)
-        
-    def make(self):
-        """Vta» instanci 'pytis.data.DataFactory' odpovídající specifikaci."""
-        # TODO: Èasem smazat.  Nyní staèí pøedávat pøímo instanci.
-        return self
+        self._columns = tuple(columns)
+
+    def columns(self):
+        """Vra» specifikaci sloupcù zadanou v konstruktoru, jako tuple."""
+        return self._columns
 
     
 class Column(object):
+    """Specifikace sloupce pro datovou specifikaci 'DataSpec'."""
+    
     def __init__(self, id, column=None, enumerator=None, type=None, **kwargs):
-        """Inicializuj specifikaci enumerátoru.
+        """Inicializuj specifikaci.
 
         Argumenty:
         
@@ -123,9 +125,8 @@ class Column(object):
             je doplnìna hodnota 'id', tak¾e pokud se název sloupce
             shoduje s identifikátorem, není jej tøeba definovat.
           enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
-            této specifikace bude získán datový objekt a pou¾it jako èíselník.
-            V takovém pøípadì bude typ tohoto sloupeèku automaticky 
-            'pytis.data.Codebook', pokud není urèen explicitnì (viz. ní¾e).
+            této specifikace bude získán datový objekt a pou¾it jako enumerátor
+            hodnot datového typu.
           type -- explicitní urèení datového typu sloupce (instance
             'pytis.data.Type', nebo None).  Tento argument by mìl být pou¾it
             pouze pokud chceme urèit vlastní (odvozený) datový typ, nikoliv
@@ -297,6 +298,9 @@ def enum(name):
     data_spec = pytis.form.resolver().get(name, 'data_spec')
     kwargs = dict(dbconnection_spec=config.dbconnection)
     return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
+
+
+
 
 
 class ReusableSpec:
