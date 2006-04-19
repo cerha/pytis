@@ -8,6 +8,9 @@
 
 	Byl zru¹en argument `check' ve FieldSpec.  Nyní lze pou¾ívat jen
 	`check' specifikovaný ve ViewSpec.
+
+	Dále byl v pytis.extensions zru¹en argument `ignore_enumerators' a
+	metoda `make()'.
 	
 2006-04-12  Tomas Cerha  <cerha@brailcom.org>
 
