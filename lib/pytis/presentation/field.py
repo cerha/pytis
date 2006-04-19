@@ -44,14 +44,13 @@ class PresentedRow(object):
     """
     class _Column:
         def __init__(self, id_, type_, computer, line_separator,
-                     default, editable, check, codebook_runtime_filter):
+                     default, editable, codebook_runtime_filter):
             self.id = id_
             self.type = type_
             self.computer = computer
             self.line_separator = line_separator
             self.default = default
             self.editable = editable
-            self.check = check
             self.codebook_runtime_filter = codebook_runtime_filter
             
     def __init__(self, fieldspec, data, row, prefill=None, singleline=False,
@@ -152,7 +151,7 @@ class PresentedRow(object):
             key = f.id()
             c = self._Column(key, f.type(data), f.computer(),
                              f.line_separator(), f.default(), f.editable(),
-                             f.check(), f.codebook_runtime_filter())
+                             f.codebook_runtime_filter())
             self._columns[key] = c
             if c.computer is not None:
                 self._dirty[key] = True
@@ -499,26 +498,3 @@ class PresentedRow(object):
     #    else:
     #        return None
 
-    def check(self):
-        """Proveï kontrolu vzájemné integrity dat øádku.
-        
-        Metoda provede v¹echny existující 'check' funkce definované ve
-        'FieldSpec' obsa¾ených políèek.  Pøi neúspìchu kontroly nìkterého
-        políèka není provádìna ¾ádná akce, pouze je vráceno id tohoto políèka a
-        provedeno zalogování.  Oèekává se, ¾e pøípadná interakce s u¾ivatelem
-        je provádìna v rámci check funkce.
-
-        Vrací: Id políèka, pokud nìkterá kontrolní funkce neprojde, nebo None v
-        pøípadì, ¾e je v¹e v poøádku.
-
-        """
-        # TODO: Tato metoda bude zru¹ena, hned jak se pøestanou pou¾ívat funkce
-        # 'check' ve 'FieldSpec', které¾to mají být nahrazeny stejnojmennou
-        # funkcí ve 'ViewSpec', ke které zde v¹ak není pøístup, tak¾e se volá
-        # na úrovni formuláøe.
-        for spec in self._fieldspec:
-            c = self._columns[spec.id()]
-            if c.check is not None and not c.check(self):
-                log(EVENT, 'Kontrola integrity selhala:', (c.id, self))
-                return c.id
-        return None
