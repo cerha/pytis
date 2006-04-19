@@ -719,25 +719,22 @@ class RecordForm(Form):
 
     def _check_record(self, row):
         # Proveï kontrolu integrity dané instance PresentedRow.
-        error = None
         check = self._view.check()
         if check is not None:
-            error = check(row)
-        if error is None:
-            error = row.check()
-        if error is not None:
-            if is_sequence(error):
-                failed_id, msg = error
-                message(msg)
-            else:
-                failed_id = error
-                # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø 'check()'.
-                # Pokud ale ¾ádná zpráva nebyla nastavena, u¾ivatel netu¹í...
-                #message(_("Kontrola integrity selhala!"))
-            log(EVENT, 'Kontrola integrity selhala:', failed_id)
-            return failed_id
-        else:
-            return None
+            result = check(row)
+            if result is not None:
+                if is_sequence(result):
+                    failed_id, msg = result
+                    message(msg)
+                else:
+                    failed_id = result
+                    # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø
+                    # 'check()'.  Pokud ale ¾ádná zpráva nebyla nastavena,
+                    # u¾ivatel netu¹í...
+                    #message(_("Kontrola integrity selhala!"))
+                log(EVENT, 'Kontrola integrity selhala:', failed_id)
+                return failed_id
+        return None
 
     def _record_data(self, row):
         rdata = [(f.id(), row[f.id()]) for f in row.fields()
