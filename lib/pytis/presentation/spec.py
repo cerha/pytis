@@ -1245,7 +1245,7 @@ class FieldSpec(object):
                  selection_type=None,
                  orientation=Orientation.VERTICAL,
                  post_process=None, filter=None, filter_list=None,
-                 check=None, style=None):
+                 style=None):
         """Inicializace a doplnìní výchozích hodnot atributù.
 
         Argumenty:
@@ -1340,17 +1340,6 @@ class FieldSpec(object):
           filter_list -- sekvence povolených, nebo zakázaných znakù.
             Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
             'EXCLUDE_LIST'.
-          check -- funkce pro ovìøení integrity dat formuláøe.  Jedná se o
-            funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
-            reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
-            od validace hodnot políèek, která závisí na datovém typu a má k
-            dispozici pouze vlastní obsah políèka, má tato funkce k dispozici i
-            hodnoty ostatních políèek, tak¾e je vhodná pro ovìøení vzájemné
-            sluèitelnosti tìchto hodnot.  Tato funkce vrací pravdu, pokud je
-            v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
-            nepravdu, pokud je nutné hodnotu políèka upravit.
-            POZOR: Tato fnkce by nemìla být nadále vyu¾ívána.  Namísto ní,
-            nech» je vyu¾ívána stejnojmenná funkce specifikovaná ve `ViewSpec'.
           style -- instance tøídy 'FieldStyle' urèující vizuální styl políèka
             nebo funkce dvou argumentù vracející instanci tøídy 'FieldStyle'.
             Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
@@ -1418,12 +1407,8 @@ class FieldSpec(object):
             else: editable = Editable.ALWAYS
         assert editable in public_attributes(Editable) or \
                isinstance(editable, Computer)
-        assert check is None or callable(check)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
-        if check is not None:
-            log(OPERATIONAL,
-                "Pou¾ita potlaèená funkce 'check' tøídy 'FieldSpec'!")
         self._id = id
         self._label = gettext_(label)
         self._descr = gettext_(descr)
@@ -1459,7 +1444,6 @@ class FieldSpec(object):
         self._post_process = post_process
         self._filter = filter
         self._filter_list = filter_list
-        self._check = check
         self._style = style
 
     def __str__(self):
@@ -1622,10 +1606,6 @@ class FieldSpec(object):
     def filter_list(self):
         """Vra» seznam povolených/zakázaných znakù pro filter."""
         return self._filter_list
-
-    def check(self):
-        """Vra» funkci pro ovìøení integrity dat formuláøe."""
-        return self._check
 
     def style(self):
         """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
