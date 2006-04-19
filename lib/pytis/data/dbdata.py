@@ -1747,6 +1747,7 @@ class PostgreSQLStandardBindingHandler(object):
                         'int4': Integer,
                         'int8': Integer,
                         'numeric': Float,
+                        'float4': Float,
                         'float8': Float,
                         'oid': Oid,
                         'name': String,
