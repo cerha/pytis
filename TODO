@@ -227,9 +227,7 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
- * Zru¹it argument `check' konstruktoru FieldSpec.
-
- * Zru¹it argument `ignore_enumerators' tøídy DataSpec a metodu 'make'.
+ * Zru¹it argument `ignore_enumerators' tøídy DataSpec.
 
  * Zru¹it argument `description_format' tøídy ViewSpec.
 
@@ -326,7 +324,3 @@ Meeting 2006-03-06:
 
    Nový argument `no_override' by se pøedával pokud volám new_record v
    rámci on_new_record.
-
- * Poslat Malvovi nezaøazené popisky z Isasu.
-
-   
