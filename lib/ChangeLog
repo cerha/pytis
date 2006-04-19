@@ -1,3 +1,20 @@
+2006-04-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Zru¹en argument
+	`check'.
+	(FieldSpec.check): Metoda zru¹ena.
+
+	* pytis/presentation/field.py (check): Metoda zru¹ena.
+	(PresentedRow._Column.__init__): Zru¹en argument `check'.
+	(PresentedRow._process_fieldspec): Nepøedávej jej.
+
+	* pytis/form/form.py (RecordForm._check_record): Nevyu¾ívej ji¾
+	metodu `PresentedRow.check()'.
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pdbb_get_type): Pøidáno
+	mapování pro `float4'.
+
 2006-04-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (BrowseForm._context_menu.action_mitems):

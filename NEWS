@@ -4,7 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2006-03-11  Tomas Cerha  <cerha@brailcom.org>
+2006-04-19  Tomas Cerha  <cerha@brailcom.org>
+
+	Byl zru¹en argument `check' ve FieldSpec.  Nyní lze pou¾ívat jen
+	`check' specifikovaný ve ViewSpec.
+	
+2006-04-12  Tomas Cerha  <cerha@brailcom.org>
 
 	Zobrazení kontextového menu akcí na pravé tlaèítko lze ovlivòovat
 	seskupováním.  Více viz dokumentace argumentu `actions'
