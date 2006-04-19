@@ -3,6 +3,7 @@
 	* lib/pytis/extensions/spec.py (DataSpec.make): Metoda zru¹ena.
 	(DataSpec.columns): Nová metoda.
 	(Column.__init__): Doplnìny docstringy.
+	(DataSpec.__init__): Zru¹en argument `ignore_enumerators'.
 
 2006-03-27  Pavel Hanak  <hanak@asellus.cz>
 
