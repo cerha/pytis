@@ -4,12 +4,10 @@ CHYBY:
 
    Chceme obnovit také tøídìní, seskupování atd.
 
-
  * Posun po zamítnutí mazání øádku.
 
    Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
    dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
-  
 
  * Chyba v ukládání nastavení sloupeèkù.
 
@@ -224,10 +222,7 @@ INTERNÍ ZÁLE®ITOSTI:
 
    
    
-   
 ÈI©TÌNÍ:
-
- * Zru¹it argument `ignore_enumerators' tøídy DataSpec.
 
  * Zru¹it argument `description_format' tøídy ViewSpec.
 
@@ -306,7 +301,7 @@ Meeting 2006-03-06:
    nefunguje.  Pøesto chci mít mo¾nost zobrazit podrobnosti o dané
    spoleènosti.  Musím definovat název souvisejícího klíèe, který ji¾ codebook
    definovaný má.
-
+   
    Podle práv k danému náhledu je potøeba nastavit také access_groups.
    
  * Mo¾nost definovat seznam odskokù.
