@@ -32,13 +32,9 @@ class DataSpec(pytis.data.DataFactory):
 
     Podrobný popis rozhraní viz. konstruktor tøídy.
 
-    Po vytvoøení instance této tøídy je mo¾né získat odpovídající instanci
-    'pytis.data.DataFactory' voláním metody 'make()'.
-    
     """
     
     def __init__(self, table, columns, key, oid=None, access_rights=None,
-                 ignore_enumerators=False,
                  data_class_=pytis.data.DBDataDefault):
         """Inicializuj specifikaci.
 
@@ -56,8 +52,6 @@ class DataSpec(pytis.data.DataFactory):
             Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
           access_rights -- práva jako instance 'pytis.data.AccessRights' nebo
             None, pokud mají být práva neomezená.
-          ignore_enumerators -- pokud bude pøedána pravdivá hodnota, budou
-            enumerátory v¹ech sloupcù ignorovány.
           data_class_ -- tøída datového objektu, odvozená od `Data'.
             
         Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
@@ -69,12 +63,12 @@ class DataSpec(pytis.data.DataFactory):
         assert isinstance(key, types.StringType)
         assert isinstance(key, (types.StringType, types.ListType,
                                 types.TupleType)) or oid is None
-        assert isinstance(ignore_enumerators, types.BooleanType)
         assert isinstance(access_rights, pytis.data.AccessRights) \
                or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
-        for c in columns:
-            assert isinstance(c, Column)
+        if __debug__:
+            for c in columns:
+                assert isinstance(c, Column)
         if oid is None:
             if find('oid', columns, key=lambda c: c.id()):
                 oid = ()
@@ -87,24 +81,20 @@ class DataSpec(pytis.data.DataFactory):
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        bindings = []
         columns += tuple([Column(c, type=pytis.data.Oid()) for c in oid])
+        self._columns = columns
+        bindings = []
         for c in columns:
-            type = c.type()
-            kwargs = c.kwargs()
             e = c.enumerator()
-            if ignore_enumerators:
-                e = None
-                kwargs = {}
             enumerator = e and pytis.form.resolver().get(e, 'data_spec') or None
             bindings.append(pytis.data.DBColumnBinding(c.id(), table,
                                                        c.column(),
                                                        enumerator=enumerator,
-                                                       type_=type, **kwargs))
+                                                       type_=c.type(),
+                                                       **c.kwargs()))
         key = find(key, bindings, key=lambda b: b.column())
         super(DataSpec, self).__init__(data_class_, bindings, key,
                                        access_rights=access_rights)
-        self._columns = tuple(columns)
 
     def columns(self):
         """Vra» specifikaci sloupcù zadanou v konstruktoru, jako tuple."""
