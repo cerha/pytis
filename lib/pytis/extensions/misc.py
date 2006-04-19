@@ -352,9 +352,10 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
         ve specifikaci.
       select_row -- øádek, na který se má nastavit kurzor.
       multirow -- umo¾ní výbìr více øádkù.
-        
+    
     Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek nebo
-    tuple vybraných øádkù (pokud je argument multirow nastaven).    
+    tuple vybraných øádkù (pokud je argument multirow nastaven).
+    
     """
     if multirow:
         class_ = SelectRowsForm

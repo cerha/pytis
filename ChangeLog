@@ -1,3 +1,9 @@
+2006-04-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (DataSpec.make): Metoda zru¹ena.
+	(DataSpec.columns): Nová metoda.
+	(Column.__init__): Doplnìny docstringy.
+
 2006-03-27  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (run_cb): Doplnìn argument 'sort' a
