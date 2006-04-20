@@ -619,7 +619,6 @@ class ViewSpec(object):
                  on_new_record=None, on_edit_record=None, on_delete_record=None,
                  on_line_commit=None,
                  focus_field=None, description=None, help=None,
-                 description_format=TextFormat.PLAIN,
                  row_style=FIELD_STYLE_DEFAULT):
         """Inicializuj instanci.
 
@@ -733,10 +732,6 @@ class ViewSpec(object):
           
           help -- podrobnìj¹í nápovìda formuláøe formátovaná jako strukturovaný
             text (wiki).  Více také viz poznámka ní¾e.
-
-          description_format -- Potlaèený argument.  Description nech» je v¾dy
-            prostý text.  Podrobnìj¹í popis, který potøebuje formátování nech»
-            je uvádìn jako 'help'.
 
           row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
             spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
@@ -859,7 +854,6 @@ class ViewSpec(object):
         self._focus_field = focus_field
         self._description = description
         self._help = help
-        self._description_format = description_format
         self._row_style = row_style
 
     def fields(self):
@@ -937,10 +931,6 @@ class ViewSpec(object):
     def description(self):
         """Vra» nápovìdu pro formuláø."""
         return self._description
-
-    def description_format(self):
-        """Vrátí formát, ve kterém je psáno description."""
-        return self._description_format
 
     def help(self):
         """Vrátí formát, ve kterém je psáno description."""
