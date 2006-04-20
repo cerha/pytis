@@ -514,12 +514,9 @@ class TitledForm:
         return caption
 
     def _on_show_description(self, event):
-        title = self._view.title()
-        description = self._view.description()
-        description_format = self._view.description_format()
-        return InfoWindow(_("Nápovìda pro %s") % title, text=description,
-                          format=description_format)
-        
+        return InfoWindow(_("Nápovìda pro %s") % self._view.title(),
+                          text=self._view.description(),
+                          format=TextFormat.WIKI)
 
     def _create_title_bar(self, text, size=None, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
@@ -539,6 +536,7 @@ class TitledForm:
             descbutton = wx.BitmapButton(panel, -1, descbmp, style=wx.NO_BORDER)
             wx_callback(wx.EVT_BUTTON, descbutton, descbutton.GetId(),
                         self._on_show_description)
+            descbutton.SetToolTipString(description)
             box.Add(descbutton)
             # panel.SetToolTipString(description)
         box.Fit(panel)
