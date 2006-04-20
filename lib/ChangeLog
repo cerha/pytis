@@ -1,3 +1,15 @@
+2006-04-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Zru¹en argument
+	`description_format'.
+	(ViewSpec.description_format): Metoda zru¹ena.
+
+	* pytis/form/form.py (TitledForm._on_show_description): Nepou¾ívaj
+	`ViewSpec.description_format()'.  Formát popisu je v¾dy
+	`TextFormat.PLAIN'.
+	(TitledForm._create_title_bar): Ukazuj popis formuláøe také jako
+	tooltip tlaèítka vyvolávajícího okno, které popis zobrazí.
+
 2006-04-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): Zru¹en argument
