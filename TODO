@@ -224,10 +224,6 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
- * Zru¹it argument `description_format' tøídy ViewSpec.
-
-   Tam, kde je description ve formátu WIKI, je tøeba vyu¾ít argument `help'.
-   
  * S groupingem pracovat jako s celým èíslem.
 
    Problém bude hlavnì ve defsech, kde bývá grouping èasto specifikován jako
