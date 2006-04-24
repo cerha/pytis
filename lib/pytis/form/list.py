@@ -1287,9 +1287,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         dual = self._dualform()
         if dual:
             if dual.active_form() is self:
-                form = top.inactive_form()
+                form = dual.inactive_form()
             else:
-                form = top.active_form()
+                form = dual.active_form()
             if context == ActionContext.CURRENT_ROW:
                 return form.current_row()
             elif context == ActionContext.SELECTION:
