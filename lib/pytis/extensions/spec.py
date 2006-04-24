@@ -26,9 +26,10 @@ class DataSpec(pytis.data.DataFactory):
     """Tøída zjednodu¹ující tvorbu datové specifikace.
 
     Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává
-    tak nìkteré nízkoúrovòové detaily pøed tvùrcem specifikace.  Zároveò je
-    odstranìna duplicita nìkterých informací, které se pøi pøímém pou¾ití
-    specifikaèních tøíd datového rozhraní není mo¾né zcela vyhnout.
+    tak nìkteré nízkoúrovòové detaily pøed tvùrcem specifikace.  Oproti
+    rodièovské tøídì je podstatnì omezena obecnost, ale v typickém pøípadì
+    pou¾ití datového rozhraní v Pytis aplikaci je specifikace pøi pou¾ití této
+    tøídy nejen pøehlednìj¹í, ale také flexibilnìj¹í.
 
     Podrobný popis rozhraní viz. konstruktor tøídy.
 
