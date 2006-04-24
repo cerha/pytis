@@ -151,18 +151,23 @@ class Column(object):
         self._kwargs = kwargs
     
     def id(self):
+        """Vra» identifikátor sloupce jako øetìzec."""
         return self._id
     
     def column(self):
+        """Vra» název sloupce v datovém zdroji jako øetìzec."""
         return self._column
 
     def enumerator(self):
+        """Vra» název specifikace enumerátoru jako øetìzec nebo None."""
         return self._enumerator
 
     def type(self):
+        """Vra» datový typ sloupce jako instanci 'pytis.data.Type' nebo None."""
         return self._type
     
     def kwargs(self):
+        """Vra» slovník klíèových argumentù konstruktoru datového typu."""
         return self._kwargs
 
 # Zkratky na èasto pou¾ívané identifikátory.
