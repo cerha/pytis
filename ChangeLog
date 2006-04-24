@@ -1,3 +1,9 @@
+2006-04-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (Column.id, Column.column)
+	(Column.enumerator, Column.type, Column.kwargs): Doplnìny datové
+	typy.
+
 2006-04-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (DataSpec.make): Metoda zru¹ena.
