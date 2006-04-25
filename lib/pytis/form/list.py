@@ -1173,19 +1173,26 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return bool(self._grouping)
 
     # Metody volané pøímo z callbackových metod
-                                   
-    def _on_show_cell_codebook(self):
+
+    def _current_codebook_column(self):
         row, col = self._current_cell()
         column = self._columns[col]
+        related = column.related_codebook_field()
+        if related:
+            column = self._view.field(related)
+        return column
+        
+    def _on_show_cell_codebook(self):
+        column = self._current_codebook_column()
         codebook = column.codebook(self._data)
         enumerator = column.type(self._data).enumerator()
         if codebook and enumerator:
-            value = self._table.row(row)[column.id()]
+            value = self._table.row(self._current_cell()[0])[column.id()]
             select_row = {enumerator.value_column(): value}
             run_form(BrowseForm, codebook, select_row=select_row)
 
     def can_show_cell_codebook(self):
-        column = self._columns[self._current_cell()[1]]
+        column = self._current_codebook_column()
         codebook = column.codebook(self._data)
         enumerator = column.type(self._data).enumerator()
         return codebook and enumerator
