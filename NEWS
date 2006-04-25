@@ -4,6 +4,21 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-04-25  Tomas Cerha  <cerha@brailcom.org>
+
+	Tøídy DataSpec a Column byly pøesunuty z extensions pøímo do
+	Pytisu.  Dále bylo v tøídì DataSpec a DataEnumerátor
+	implementováno roz¹íøení, které umo¾òuje zjistit název specifikace
+	èíselníku pøímo z instance enumerátoru.  Toho je nyní vyu¾ito pøi
+	sestavování vstupních políèek a není tedy ji¾ nutné ve FieldSpec
+	uvádìt argument `codebook'.  Staèí definovat jen `enumerator' v
+	`DataSpec' a rozhraní automaticky zjistí jaký èíselník má být
+	pou¾it.  Argumenty `codebook' ve stávajících defsech momentálnì
+	nièemu nevadí, ale jsou tam ji¾ zbyteèné.  Vzhledem k tomu, ¾e v
+	budoucnu budeme tento argument mo¾ná vyu¾ívat k jiným úèelùm, bylo
+	by mo¾ná nejlep¹í pro pøehlednost tyto nadbyteèné argumenty ze
+	v¹ech defsù vyhodit...
+	
 2006-04-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Opravena drobná chyba, kvùli které nefungovalo pøedávání
