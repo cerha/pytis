@@ -694,25 +694,23 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # TODO: viz poznámka v _select_cell.
             self.show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
+            message('')
             column = self._columns[self._current_cell()[1]]
-            value = the_row[column.id()]
-            enumerator = value.type().enumerator()
-            display_value = ''
-            if enumerator and column.codebook():
+            codebook = column.codebook(self._data)
+            if codebook:
                 try:
-                    cb_spec = resolver().get(column.codebook(), 'cb_spec')
+                    cb_spec = resolver().get(codebook, 'cb_spec')
                 except ResolverError:
                     cb_spec = None
-                except AttributeError:
-                    cb_spec = None
                 if cb_spec and cb_spec.display():
+                    value = the_row[column.id()].value()
+                    enumerator = column.type(self._data).enumerator()
                     try:
-                        v = enumerator.get(value.value(), cb_spec.display())
+                        v = enumerator.get(value, cb_spec.display())
                         if v:
-                            display_value = v.export()
+                            message(v.export())
                     except pytis.data.DataAccessException:
                         pass
-            message(display_value)
     
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
@@ -1179,16 +1177,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_show_cell_codebook(self):
         row, col = self._current_cell()
         column = self._columns[col]
-        cb_name = column.codebook()
-        if cb_name:
+        codebook = column.codebook(self._data)
+        if codebook:
             the_row = self._table.row(row)
             v = the_row[column.id()]
             e = v.type().enumerator()
-            run_form(BrowseForm, cb_name, select_row={e.value_column(): v})
+            run_form(BrowseForm, codebook, select_row={e.value_column(): v})
 
     def can_show_cell_codebook(self):
         column = self._columns[self._current_cell()[1]]
-        return column.codebook() is not None
+        return column.codebook(self._data) is not None
 
     def _on_handled_command(self, command, norefresh=False, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
@@ -1332,9 +1330,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             run_dialog(Warning, msg)
             return
         # Seznam sloupcù
-        column_list = []
-        for column in self._columns:
-            column_list.append((column.id(), column.type(data)))
+        column_list = [(c.id(), c.type(data)) for c in self._columns]
         allowed = True
         # Kontrola práv        
         for cid, ctype in column_list:
