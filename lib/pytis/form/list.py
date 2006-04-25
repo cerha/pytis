@@ -1178,15 +1178,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         row, col = self._current_cell()
         column = self._columns[col]
         codebook = column.codebook(self._data)
-        if codebook:
-            the_row = self._table.row(row)
-            v = the_row[column.id()]
-            e = v.type().enumerator()
-            run_form(BrowseForm, codebook, select_row={e.value_column(): v})
+        enumerator = column.type(self._data).enumerator()
+        if codebook and enumerator:
+            value = self._table.row(row)[column.id()]
+            select_row = {enumerator.value_column(): value}
+            run_form(BrowseForm, codebook, select_row=select_row)
 
     def can_show_cell_codebook(self):
         column = self._columns[self._current_cell()[1]]
-        return column.codebook(self._data) is not None
+        codebook = column.codebook(self._data)
+        enumerator = column.type(self._data).enumerator()
+        return codebook and enumerator
 
     def _on_handled_command(self, command, norefresh=False, **kwargs):
         log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
