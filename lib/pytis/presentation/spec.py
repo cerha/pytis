@@ -757,10 +757,7 @@ class ViewSpec(object):
         assert isinstance(title, types.StringTypes)
         assert is_sequence(fields)
         # Initialize field dictionary
-        self._field_dict = {}
-        for f in fields:
-            assert isinstance(f, FieldSpec)
-            self._field_dict[f.id()] = f
+        self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         # Initialize `layout' specification parameter
         if layout is None:
@@ -777,6 +774,9 @@ class ViewSpec(object):
                                (_("Unknown field id in 'layout' spec.:"), item)
             recourse_group(layout.group())
             for f in fields:
+                assert isinstance(f, FieldSpec)
+                assert f.related_codebook_field() is None \
+                       or f.related_codebook_field() in self._field_dict.keys()
                 for (s, c) in (('computer', f.computer()),
                                ('editable', f.editable())):
                     if isinstance(c, Computer):
@@ -1229,7 +1229,7 @@ class FieldSpec(object):
                  editable=None, compact=False, type_=None, 
                  default=None, computer=None,
                  line_separator='; ',
-                 codebook=None, display_size=None,
+                 codebook=None, display_size=None, related_codebook_field=None,
                  allow_codebook_insert=False, codebook_insert_spec=None,
                  codebook_runtime_filter=None, 
                  selection_type=None,
@@ -1307,22 +1307,29 @@ class FieldSpec(object):
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
             
-          codebook -- název specifikace èíselníku (øetìzec), nebo None.
-            Implicitnì je název specifikace èíselníku pøebírán ze specifikace
+          codebook -- název specifikace èíselníku (øetìzec), nebo None.  Název
+            specifikace èíselníku je normálnì pøebírán ze specifikace
             enumerátoru datového typu odpovídajícího sloupce v 'DataSpec'.
-            Pokud v¹ak z nìjakých dùvodù chceme v u¾ivatelském rozhraní
-            pracovat s jiným èíselníkem (napø. jeho jinou variantou) je mo¾né
-            jej zde pøedefinovat.  Tento název je zároveò vyu¾íván k vytvoøení
-            odskoku na èíselník v kontextovém menu buòky.  Pro sloupce s
-            enumerátorem je èíselník urèen tímto enumerátorem, ale pokud
-            sloupec enumerátor nemá a pøesto jde o hodnotu pocházející z
-            èíselníku (napø. je do tabulky zahrnuta v rámci view na úrovni
-            databáze), je explicitní urèení názvu èíselníku pomocí tohoto
-            specifikátoru jedinou mo¾ností.
+            Pokud v¹ak z nìjakého dùvodu datová specifikace není definována
+            pomocí tøídy DataSpec, ale pøímo pomocí tøíd datového rozhraní,
+            není tato informace aplikaci dostupná.  Potom je nutné název
+            èíselníku urèit zde.
             
           display_size -- velikost displeje èíselníku ve znacích.  Relevantní
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
             'cb_spec' ve specifikaci èíselníku.
+
+          related_codebook_field -- identifikátor souvisejíciho èíselníkového
+            políèka.  Pokud je urèeno, musí být odkazované políèko spojeno s
+            èíselníkem (viz také popis argumentu 'codebook').  To se hodí pokud
+            máme v náhledu více sloupeèkù zobrazujících hodnoty ze stejného
+            èíselníku.  V takovém pøípadì bývá vazba na èíselník známá pouze
+            pro jedno z políèek (je definován enumerátor).  Ostatní políèka
+            slou¾í vìt¹inou jen k zobrazování dal¹ích infomrací z tabulky
+            èíselníku.  Provázáním tìchto informaèních políèek s hlavním
+            políèkem dáváme aplikaci navìdomí tuto souvislost a aplikace je
+            potom schopna napøíklad poskytnout pro libovolné z tìchto políèek
+            odkaz pro zobrazení souvisejícího èíselníku apod.
             
           allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
             pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
@@ -1409,24 +1416,26 @@ class FieldSpec(object):
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
+        assert related_codebook_field is None \
+               or isinstance(related_codebook_field, types.StringType)
         assert isinstance(allow_codebook_insert, types.BooleanType)
-        assert codebook_insert_spec is None or \
-               isinstance(codebook_insert_spec, types.StringType)
+        assert codebook_insert_spec is None \
+               or isinstance(codebook_insert_spec, types.StringType)
         assert width is None or isinstance(width, types.IntType)
-        assert codebook_runtime_filter is None or \
-               isinstance(codebook_runtime_filter, Computer)
-        assert selection_type is None or \
-               selection_type in public_attributes(SelectionType)
-        assert post_process is None or callable(post_process) or \
-               post_process in public_attributes(PostProcess)
+        assert codebook_runtime_filter is None \
+               or isinstance(codebook_runtime_filter, Computer)
+        assert selection_type is None \
+               or selection_type in public_attributes(SelectionType)
+        assert post_process is None or callable(post_process) \
+               or post_process in public_attributes(PostProcess)
         assert filter is None or filter in public_attributes(TextFilter)
-        assert filter not in ('INCLUDE_LIST','EXCLUDE_LIST') or \
-               is_sequence(filter_list)
+        assert filter not in ('INCLUDE_LIST','EXCLUDE_LIST') \
+               or is_sequence(filter_list)
         if editable is None:
             if width == 0 or computer: editable = Editable.NEVER
             else: editable = Editable.ALWAYS
-        assert editable in public_attributes(Editable) or \
-               isinstance(editable, Computer)
+        assert editable in public_attributes(Editable) \
+               or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
         self._id = id
@@ -1446,6 +1455,7 @@ class FieldSpec(object):
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
+        self._related_codebook_field = related_codebook_field
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
@@ -1579,17 +1589,19 @@ class FieldSpec(object):
     
     def codebook(self, data):
         """Vra» název specifikace navázaného èíselníku."""
-        codebook = self._codebook
-        if codebook is None:
-            enumerator = self.type(data).enumerator()
-            if isinstance(enumerator, pytis.data.DataEnumerator) \
-                   and isinstance(enumerator.data_factory(), DataSpec):
-                codebook = enumerator.data_factory().origin()
-        return codebook
+        enumerator = self.type(data).enumerator()
+        if isinstance(enumerator, pytis.data.DataEnumerator) and \
+               isinstance(enumerator.data_factory(), DataSpec):
+            return enumerator.data_factory().origin() or self._codebook
+        return self._codebook
 
     def display_size(self):
         """Vra» velikost displeje èíselníku (poèet znakù)."""
         return self._display_size
+
+    def related_codebook_field(self):
+        """Vra» identifikátor souvisejícího èíselníkového políèka."""
+        return self._related_codebook_field
     
     def allow_codebook_insert(self):
         """Vra» pravdu, má-li být  zobrazeno tlaèítko pøidání do èíselníku."""
