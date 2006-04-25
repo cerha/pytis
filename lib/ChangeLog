@@ -15,10 +15,16 @@
 
 	* pytis/form/list.py (ListForm._post_selection_hook): Èást
 	zobrazující hodnotu èíselníku podstatnì pøepsána.
-	(ListForm._on_show_cell_codebook) 
+	(ListForm._on_show_cell_codebook)
 	(ListForm.can_show_cell_codebook): Pøedávej metodì
 	`FieldSpec.codebook()' datový objekt.
 	(ListForm._on_export_csv): Kosmetická úprava.
+	(ListForm._on_show_cell_codebook)
+	(ListForm.can_show_cell_codebook): Pracuj zatím pouze se sloupci,
+	které mají enumerátor.
+	(ListForm._current_codebook_column): Nová metoda.
+	(ListForm._on_show_cell_codebook,
+	ListForm.can_show_cell_codebook): Vyu¾ívej ji.
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): Významnì
 	aktualizován docstring.  Neprovádìj ¾ádné doplòování výchozí
@@ -26,6 +32,13 @@
 	(FieldSpec.codebook): Nový argument `data'.
 	(DataSpec): Nová tøída.
 	(Column): Nová tøída.
+	(ViewSpec): Pøidány asserty na hodnotu `related_codebook_field'.
+	(FieldSpec.__init__): Nový argument `related_codebook_field'.
+	Aktualizován docstring.
+	(FieldSpec.codebook): Hodnotu specifikovanou argumentem
+	konstruktoru `codebook' pøedávej pouze pokud není mo¾né zjistit
+	název èíselníku z enumerátoru.
+	(FieldSpec.related_codebook_field): Nová metoda.
 
 	* pytis/data/types_.py (DataEnumerator.iter): Doplnìn docstring a
 	komentáø.

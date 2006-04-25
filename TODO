@@ -1,5 +1,9 @@
 CHYBY:
 
+ * Odkaz "Zobrazit související èíselník" nepovolit, pokud nejsou práva.
+
+   Pouze pokud má u¾ivatel práva k danému náhledu, je mo¾né odkaz povolit.
+
  * Pøi obnovì výchozích sloupcù (podle defsu) není obnoveno tøídìní atd.
 
    Chceme obnovit také tøídìní, seskupování atd.
@@ -125,6 +129,17 @@ NOVÉ VLASTNOSTI:
 
 
 2) Specifikace
+
+ * Mo¾nost definovat seznam odskokù.
+
+   Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
+   celý øádek.  Parametrem je názav specifikace (nebo funkce row, která vrátí
+   název specifikace).  Druhým parametrem by mìl být select_row, jako funkce
+   row, která vrátí hodnotu pro argument select_row otevøeného formuláøe.  Dále
+   by mìlo být mo¾né zvolit v jakém typu formuláøe bude øádek otevøen, ale
+   mo¾ná by mìl mít u¾ivatel sám mo¾nost v¾dy urèit, jakým zpùsobem chce
+   odkazovaný záznam vidìt.  Vìt¹inou jde o BrowseForm (nebo BrowseDualForm),
+   ShowForm, nebo vytvoøení nového záznamu s prefillem.
 
  * Zmìny týkající se standardních konfiguraèních voleb.
 
@@ -289,32 +304,3 @@ INTERNÍ ZÁLE®ITOSTI:
    pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
   
 
-Meeting 2006-03-06:
-
- * Mo¾nost definovat odkud hodnota pochází.
-
-   Dnes se to pozná podle definice `codebook' ve FieldSpec.  To umo¾òuje
-   zobrazit související èíselník buòky.  Nìkterá políèka v¹ak èíselník nemají,
-   ale pøesto je to hodnota pocházející z jiného náhledu.  Napøíklad ve view
-   vytahuji název spoleènosti, ale název není klíè, tak¾e jako èíselník
-   nefunguje.  Pøesto chci mít mo¾nost zobrazit podrobnosti o dané
-   spoleènosti.  Musím definovat název souvisejícího klíèe, který ji¾ codebook
-   definovaný má.
-   
-   Podle práv k danému náhledu je potøeba nastavit také access_groups.
-   
- * Mo¾nost definovat seznam odskokù.
-
-   Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
-   celý øádek.  Parametrem je názav specifikace (nebo funkce row, která vrátí
-   název specifikace).  Druhým parametrem by mìl být select_row, jako funkce
-   row, která vrátí hodnotu pro argument select_row otevøeného formuláøe.  Dále
-   by mìlo být mo¾né zvolit v jakém typu formuláøe bude øádek otevøen, ale
-   mo¾ná by mìl mít u¾ivatel sám mo¾nost v¾dy urèit, jakým zpùsobem chce
-   odkazovaný záznam vidìt.  Vìt¹inou jde o BrowseForm (nebo BrowseDualForm),
-   ShowForm, nebo vytvoøení nového záznamu s prefillem.
-   
- * Rekurze pøi volání new_record v rámci on_new_record.
-
-   Nový argument `no_override' by se pøedával pokud volám new_record v
-   rámci on_new_record.

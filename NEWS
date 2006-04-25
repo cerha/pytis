@@ -14,10 +14,17 @@
 	uvádìt argument `codebook'.  Staèí definovat jen `enumerator' v
 	`DataSpec' a rozhraní automaticky zjistí jaký èíselník má být
 	pou¾it.  Argumenty `codebook' ve stávajících defsech momentálnì
-	nièemu nevadí, ale jsou tam ji¾ zbyteèné.  Vzhledem k tomu, ¾e v
-	budoucnu budeme tento argument mo¾ná vyu¾ívat k jiným úèelùm, bylo
-	by mo¾ná nejlep¹í pro pøehlednost tyto nadbyteèné argumenty ze
-	v¹ech defsù vyhodit...
+	nièemu nevadí, ale jsou tam ji¾ zbyteèné.  Pro pøehlednost by bylo
+	nejlep¹í tyto nadbyteèné argumenty ze v¹ech defsù vyhodit...
+
+	Nový argument `related_codebook_field' ve FieldSpec umo¾òuje urèit
+	ke kterému èíselníkovému sloupeèku se daný sloupeèek vá¾e.  Tím
+	zaènou fungovat odkazy "Zobrazit související èíselník" i u
+	sloupeèkù, které samy enumerátor nemají, ale pøesto jde o hodnoty
+	pocházející z èíselníku (napøíklad jsou do náhledu zahrnuty na
+	úrovni view).  Podmínkou je, aby sloupeèek s enumerátorem ve
+	specifikaci sloupcù existoval.
+	
 	
 2006-04-24  Tomas Cerha  <cerha@brailcom.org>
 
