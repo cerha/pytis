@@ -1240,24 +1240,38 @@ class FieldSpec(object):
 
         Argumenty:
 
-          id  -- textový identifikátor pole; neprázdný string.
-          label -- text nápisu u vstupního pole; string
+          id -- textový identifikátor pole; neprázdný øetìzec.  Urèuje vazbu do
+            datového zdroje a slou¾í k pøístupu k hodnotì políèka v rámci celé
+            aplikace.
+          
+          label -- text nápisu u vstupního pole jako øetìzec.  Smí být uvádìn
+            té¾ jako pozièní argument.  Poøadí je zaruèeno.
+          
           column_label -- nadpis sloupce, je-li políèko ve sloupci, jako
             string.  Je-li 'None', je pou¾ita hodnota 'label'.
+            
           descr -- podrobnìj¹í popis v rozsahu cca jedné vìty vhodný napøíklad
             pro zobrazení bublinové nápovìdy.
+            
           width -- ¹íøka pole ve znacích; kladné celé èíslo, nebo 0,
             v kterém¾to pøípadì je pole skryté.  Je-li 'None', bude pou¾ita
-            implicitní ¹íøka.
-          height -- vý¹ka pole ve znacích, kladné reálné èíslo.
+            implicitní ¹íøka.  U nìkterých typù vstupních políèek mù¾e mít
+            speciální význam (viz jejich dokumentace).
+            
+          height -- vý¹ka pole ve znacích, kladné reálné èíslo.  U nìkterých
+            typù vstupních políèek mù¾e mít speciální význam (viz jejich
+            dokumentace).
+          
           column_width -- ¹íøka sloupce v tabulce ve znacích, kladné celé
             èíslo.  Je-li 'None', je pou¾ita hodnota 'width'.
+            
           fixed -- pokud bude pøadána pravdivá hodnota, nebude ¹íøka sloupce
             automaticky pøepoèítávána pøi zmìnì valikosti tabulkového
             formuláøe.  Implicitnì jsou sloupce automaticky
             roztahovány/zu¾ovány tak, aby byla rovnomìrnì vyu¾ita plocha
             formuláøe.  Hodnota 'width/column_width' tak slou¾í pouze jako
             výchozí hodnota.  Pro 'fixed' sloupce v¹ak bude v¾dy dodr¾ována.
+            
           editable -- instance Computer nebo jedna z konstant tøídy 'Editable',
             urèující za jakých okolností je políèko editovatelné.  Je-li 'None',
             bude pou¾ita implicitní hodnota, kterou je obvykle
@@ -1265,71 +1279,96 @@ class FieldSpec(object):
             (napø. 'computer') mù¾e být implicitní hodnota jiná.
             Pokud je editable instancí tøídy `Computer', budou jeho funkci
             pøedány dva argumenty: instance PresentedRow a identifikátor
-            políèka.          
+            políèka.
+            
           compact -- pravdivá hodnota znamená, ¾e bude textový popisek políèka
             v editaèním formuláøi pøimknut k hornímu okraji vstupního prvku
             (bude tedy nad políèkem).  V opaèném pøípadì (výchozí chování) je
             popisek vlevo od políèka.
+            
           type_ -- explicitní urèení typu hodnoty, se kterou pracuje toto
             políèko; instance 'pytis.data.Type'.  Typ mù¾e být vìt¹inou urèen
             podle navázaného sloupeèku datového objektu.  Nìkterá
             (napø. dopoèítávaná) políèka v¹ak nemusí být navázána na konkrétní
-            datový sloupec, nebo lze z nìjakého dùvodu chtít pro prezentaci
-            hodnot pou¾ít jiný typ (ten v¹ak *musí* být instancí typu sloupce
-            z datového objektu, pokud je políèko na nìjaký navázáno).  Viz také
-            metoda 'type()'.  Není-li zadáno, je pou¾it typ z datového
-            objektu.
+            datový sloupec, nebo mù¾e být z nìjakého dùvodu vhodné pro
+            prezentaci hodnot pou¾ít jiný typ (ten v¹ak *musí* být instancí
+            typu sloupce z datového objektu, pokud je políèko na nìjaký
+            navázáno).  Viz také metoda 'type()'.  Není-li zadáno, je pou¾it
+            typ z datového objektu.
+            
           default -- funkce pro výpoèet výchozí hodnoty políèka.  Callable
             object vracející hodnotu kompatibilní s vnitøní hodnotou
             odpovídajícího datového typu (viz argument 'type_').
-          computer -- 'None' nebo instance tøídy 'Computer', specifikuje
-            dopoèítávané políèko (viz. také ní¾e).  
+            
+          computer -- 'instance tøídy 'Computer', nebo None.  Specifikuje
+            dopoèítávané políèko (viz. také ní¾e).
+            
           line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
-          codebook -- název specifikace èíselníku (øetìzec), pokud je políèko
-            na nìjaký vázáno.
+            
+          codebook -- název specifikace èíselníku (øetìzec), nebo None.
+            Implicitnì je název specifikace èíselníku pøebírán ze specifikace
+            enumerátoru datového typu odpovídajícího sloupce v 'DataSpec'.
+            Pokud v¹ak z nìjakých dùvodù chceme v u¾ivatelském rozhraní
+            pracovat s jiným èíselníkem (napø. jeho jinou variantou) je mo¾né
+            jej zde pøedefinovat.  Tento název je zároveò vyu¾íván k vytvoøení
+            odskoku na èíselník v kontextovém menu buòky.  Pro sloupce s
+            enumerátorem je èíselník urèen tímto enumerátorem, ale pokud
+            sloupec enumerátor nemá a pøesto jde o hodnotu pocházející z
+            èíselníku (napø. je do tabulky zahrnuta v rámci view na úrovni
+            databáze), je explicitní urèení názvu èíselníku pomocí tohoto
+            specifikátoru jedinou mo¾ností.
+            
           display_size -- velikost displeje èíselníku ve znacích.  Relevantní
-            jen pokud je definován 'codebook'.  Pokud je None, bude pou¾ita
-            hodnota z 'cb_spec' ve specifikaci èíselníku.
-          allow_codebook_insert -- .  Povol zobrazení tlaèítka pro pøidání nové
-            hodnoty do èíselníku.  Relevantní jen pokud je definován
-            'codebook'.
+            jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
+            'cb_spec' ve specifikaci èíselníku.
+            
+          allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
+            pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
+            èíselníková políèka.
+            
           codebook_insert_spec -- Název specifikace, která má být pou¾ita pro
             vkládání nových záznamù (viz 'allow_codebook_insert').  Pokud je
-            None, bude pou¾ita specifikace z 'codebook'.  Relevantní jen pokud
-            je definován 'codebook' a 'allow_codebook_insert' je pravdivé.
-          codebook_runtime_filter -- dopoèítávaè run-time filtrovací
-            podmínky èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit
-            mno¾inu hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací
-            funkce dostane jako argument aktuální data formuláøe jako instanci
+            None, bude pou¾ita hodnota 'codebook', nebo její výchozí hodnota.
+            Relevantní jen pro èíselníková políèka, kde 'allow_codebook_insert'
+            je pravdivé.
+            
+          codebook_runtime_filter -- dopoèítávaè run-time filtrovací podmínky
+            èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit mno¾inu
+            hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací funkce
+            dostane jako argument aktuální data formuláøe jako instanci
             'PresentedRow' a vrací filtrovací podmínku typu
             'pytis.data.Operator'.  Èíselník bude po zmìnì závislých políèek
-            aktualizován tak, aby obsahoval pouze øádku vyhovující dané podmínce.
+            aktualizován tak, aby obsahoval pouze øádku vyhovující dané
+            podmínce.
+            
           selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
             tøídy 'SelectionType'.  Relevantní jen pro vstupní pole výètových
-            typù.  Pokud je urèen èíselník argumentem 'codebook', je výchozí
-            hodnotou 'SelectionType.CODEBOOK'.  Jinak je to
-            'SelectionType.CHOICE'.
+            typù (datový typ má urèen enumerátor).
+            
           orientation -- orientace políèka, jedna z konstant tøídy
             'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
             napø. 'inputfield.RadioBoxInputField'.
-          post_process -- funkce upravující nìjakým zpùsobem vkládaný text.
-            Jedná se o funkci jednoho argumentu, kterým je hodnota políèka
-            získaná metodou 'InputField.get_value()'.  Vrácená hodnota je
-            potom nastavena jako nová hodnota políèka (musí to tedy být hodnota
-            akceptovatelná metodou 'InputField.set_value()'). Tato funkce je
-            volána pøi ka¾dé zmìnì hodnoty textového políèka.  Pøíkladem
-            postprocessingu mù¾e být zmìna velikosti písmen, pokud chceme, aby
-            textové políèko mohlo obsahovat jen velká písmena.  Hodnotou tohoto
-            argumentu mù¾e být také nìkterá z konstant tøídy 'PostProcess',
-            èím¾ je u¹etøeno psaní nìkterých èasto pou¾ívaných funkcí.
+            
+          post_process -- funkce upravující vkládaný text bìhem psaní.  Jedná
+            se o funkci jednoho argumentu, kterým je øetìzcová hodnota políèka.
+            Vrácená hodnota je potom nastavena jako nová hodnota políèka.  Tato
+            funkce je volána pøi ka¾dé zmìnì hodnoty textového políèka.
+            Pøíkladem postprocessingu mù¾e být zmìna velikosti písmen, pokud
+            chceme, aby textové políèko mohlo obsahovat jen velká písmena.
+            Hodnotou tohoto argumentu mù¾e být také nìkterá z konstant tøídy
+            'PostProcess', èím¾ je u¹etøeno psaní nìkterých èasto pou¾ívaných
+            funkcí.
+            
           filter -- specifikace jednoho z pøednastavených filtrù znakù
             propou¹tìných do textového políèka z u¾ivatelského vstupu.  Jedna
             z konstant tøídy 'TextFilter'.
+            
           filter_list -- sekvence povolených, nebo zakázaných znakù.
             Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
             'EXCLUDE_LIST'.
+            
           style -- instance tøídy 'FieldStyle' urèující vizuální styl políèka
             nebo funkce dvou argumentù vracející instanci tøídy 'FieldStyle'.
             Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
@@ -1337,15 +1376,6 @@ class FieldSpec(object):
             None, bude pou¾it výchozí styl øádku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
             
-        Nejdùle¾itìj¹ím parametrem vstupního pole je 'id'. To specifikuje jeho
-        vazbu do datového zdroje.
-
-        Atributy 'width' a 'height' mohou mít u nìkterých typù vstupních polí
-        speciální význam (viz dokumentace vstupních polí).
-
-        Argumenty `label' a `width' smí být uvádìny té¾ jako pozièní (bez
-        klíèe), tak¾e jejich poøadí by mìlo být zaruèeno.
-
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
         hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
         poèítána.  Takový sloupec mù¾e být plnì \"virtuální\", tj. není
@@ -1421,15 +1451,6 @@ class FieldSpec(object):
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_runtime_filter = codebook_runtime_filter
         self._orientation = orientation
-        if selection_type is None:
-            if codebook is not None:
-                selection_type = SelectionType.CODEBOOK
-            else:
-                selection_type = SelectionType.CHOICE
- 
-        cbtypes = (SelectionType.CODEBOOK, SelectionType.LIST)
-        assert selection_type not in cbtypes or codebook is not None, \
-               "SelectionType.%s vy¾aduje argument 'codebook'!" % selection_type
         self._selection_type = selection_type
         self._post_process = post_process
         self._filter = filter
@@ -1556,9 +1577,15 @@ class FieldSpec(object):
         """Vra» odddìlovaè øádkù zadaný v konstruktoru."""
         return self._line_separator
     
-    def codebook(self):
-        """Vra» specifikaci navázaného èíselníku."""
-        return self._codebook
+    def codebook(self, data):
+        """Vra» název specifikace navázaného èíselníku."""
+        codebook = self._codebook
+        if codebook is None:
+            enumerator = self.type(data).enumerator()
+            if isinstance(enumerator, pytis.data.DataEnumerator) \
+                   and isinstance(enumerator.data_factory(), DataSpec):
+                codebook = enumerator.data_factory().origin()
+        return codebook
 
     def display_size(self):
         """Vra» velikost displeje èíselníku (poèet znakù)."""
@@ -1600,3 +1627,181 @@ class FieldSpec(object):
     def style(self):
         """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
         return self._style
+
+
+
+class DataSpec(pytis.data.DataFactory):
+    """Tøída zjednodu¹ující tvorbu datové specifikace.
+
+    Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává
+    tak nìkteré nízkoúrovòové detaily pøed tvùrcem specifikace.  Oproti
+    rodièovské tøídì je podstatnì omezena obecnost, ale v typickém pøípadì
+    pou¾ití datového rozhraní v Pytis aplikaci je specifikace pøi pou¾ití této
+    tøídy nejen pøehlednìj¹í, ale také flexibilnìj¹í.
+
+    Podrobný popis rozhraní viz. konstruktor tøídy.
+
+    """
+    
+    def __init__(self, table, columns, key, oid=None, access_rights=None,
+                 data_class_=pytis.data.DBDataDefault):
+        """Inicializuj specifikaci.
+
+        Argumenty:
+
+          table -- název datové tabulky jako øetìzec.
+          columns -- sekvence specifikací sloupcù jako instancí 'Column'.
+            Jedná se v¾dy o sloupce z tabulky 'table'.
+          key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
+            identifikátorem musí být pøítomný v 'columns'.
+          oid -- seznam názvù OID sloupcù (tuple).  Pokud je None (výchozí
+            hodnota), bude doplnìn jeden sloupec s názvem 'oid'.  Pro v¹echny
+            uvedené sloupce budou automaticky pøidány pøíslu¹né vazby.  Pokud
+            tabulka nemá ¾ádný mít ¾ádný oid sloupec, uvedeme prázdný seznam.
+            Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
+          access_rights -- práva jako instance 'pytis.data.AccessRights' nebo
+            None, pokud mají být práva neomezená.
+          data_class_ -- tøída datového objektu, odvozená od `Data'.
+            
+        Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
+        automaticky doplnìn sloupec 'oid' typu 'pytis.data.Oid'.
+
+        """
+        assert isinstance(table, types.StringType)
+        assert isinstance(columns, (types.ListType, types.TupleType))
+        assert isinstance(key, types.StringType)
+        assert isinstance(key, (types.StringType, types.ListType,
+                                types.TupleType)) or oid is None
+        assert isinstance(access_rights, pytis.data.AccessRights) \
+               or access_rights is None
+        assert find(key, columns, key=lambda c: c.id()) is not None
+        if __debug__:
+            for c in columns:
+                assert isinstance(c, Column)
+        if oid is None:
+            if find('oid', columns, key=lambda c: c.id()):
+                oid = ()
+            else:    
+                oid = ('oid',)
+        else:
+            oid = xtuple(oid)
+            for c in oid:
+                assert isinstance(c, types.StringType)
+        if access_rights is None:
+            perm = pytis.data.Permission.ALL
+            access_rights = pytis.data.AccessRights((None, (None, perm)))
+        columns += tuple([Column(c, type=pytis.data.Oid()) for c in oid])
+        bindings = []
+        for c in columns:
+            e = c.enumerator()
+            if e:
+                enumerator = pytis.form.resolver().get(e, 'data_spec')
+                if isinstance(enumerator, DataSpec):
+                    enumerator.set_origin(e)
+            else:
+                enumerator = None
+            bindings.append(pytis.data.DBColumnBinding(c.id(), table,
+                                                       c.column(),
+                                                       enumerator=enumerator,
+                                                       type_=c.type(),
+                                                       **c.kwargs()))
+        key = find(key, bindings, key=lambda b: b.column())
+        super(DataSpec, self).__init__(data_class_, bindings, key,
+                                       access_rights=access_rights)
+        self._origin = None
+        
+    def set_origin(self, name):
+        """Nastav pùvodce této specifikace.
+
+          Argumentem je název specifikace pro resolver.
+
+        Instance si takto mù¾e pamatovat ze které specifikace pochází a tato
+        infomace mù¾e být v aplikaci dále vyu¾ita.  Je to trochu hack, ale
+        umo¾ní to velké zjednodu¹ení
+        
+        """
+        # TODO: Je to trochu hack, ale umo¾òuje to velké zjednodu¹ení ve
+        # specifikacích.  Pokud by ¹el název specifikace zjistit nìjak èistìji,
+        # tak by to urèitì nebylo na ¹kodu.  Takto jsme omezeni na pou¾ití této
+        # tøídy (s DataFactory tuto informaci nemáme).  Mo¾ná nìjaké roz¹íøení
+        # na úrovni resloveru?
+        self._origin = name
+        
+    def origin(self):
+        """Vra» název specifikace, ze které tato instance pochází.
+
+        Pokud je pùvod znám, je vrácen název pro resolver, jinak None.
+ 
+        """
+        return self._origin
+
+    
+class Column(object):
+    """Specifikace sloupce pro datovou specifikaci 'DataSpec'."""
+    
+    def __init__(self, id, column=None, enumerator=None, type=None, **kwargs):
+        """Inicializuj specifikaci.
+
+        Argumenty:
+        
+          id -- identifikátor sloupce (øetìzec).  Pod tímto identifikátorem
+            bude sloubec vystupovat v aplikaci.
+          column -- název databázového sloupce (øetìzec nebo None).  Implicitnì
+            je doplnìna hodnota 'id', tak¾e pokud se název sloupce
+            shoduje s identifikátorem, není jej tøeba definovat.
+          enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
+            této specifikace bude získán datový objekt a pou¾it jako enumerátor
+            hodnot datového typu.
+          type -- explicitní urèení datového typu sloupce (instance
+            'pytis.data.Type', nebo None).  Tento argument by mìl být pou¾it
+            pouze pokud chceme urèit vlastní (odvozený) datový typ, nikoliv
+            pokud chceme mìnit parametry standardních typù.  Ty je mo¾no
+            nastavit pøedáním klíèovách argumentù (viz ní¾e).
+          **kwargs -- pokud jsou uvedeny jakékoliv dal¹í klíèové argumenty,
+            budou tyto pøedány konstruktoru datového typu sloupce.  Tento
+            postup by mìl být preferován pøed explicitní definicí instance typu
+            argumentem 'type', pokud je to mo¾né.
+
+        """
+        assert isinstance(id, types.StringType), \
+               "Invalid value for argument 'id': %s" % id
+        assert isinstance(column, types.StringType) or column is None, \
+               "Invalid value for argument 'column': %s" % column
+        assert isinstance(enumerator, types.StringType) or enumerator is None, \
+               "Invalid value for argument 'enumerator': %s" % enumerator
+        assert isinstance(type, pytis.data.Type) or type is None, \
+               "Invalid value for argument 'type': %s" % type
+        assert enumerator is None or type is None \
+               or isinstance(type, pytis.data.Codebook), \
+               "Invalid codebook type: %s" % type
+        assert type is None or kwargs == {}, \
+               "When the 'type' is defined explicitly, " + \
+               "using kwargs makes no sense: %s" % kwargs
+        self._id = id
+        if column is None:
+            column = id
+        self._column = column
+        self._enumerator = enumerator
+        self._type = type
+        self._kwargs = kwargs
+    
+    def id(self):
+        """Vra» identifikátor sloupce jako øetìzec."""
+        return self._id
+    
+    def column(self):
+        """Vra» název sloupce v datovém zdroji jako øetìzec."""
+        return self._column
+
+    def enumerator(self):
+        """Vra» název specifikace enumerátoru jako øetìzec nebo None."""
+        return self._enumerator
+
+    def type(self):
+        """Vra» datový typ sloupce jako instanci 'pytis.data.Type' nebo None."""
+        return self._type
+    
+    def kwargs(self):
+        """Vra» slovník klíèových argumentù konstruktoru datového typu."""
+        return self._kwargs
+
