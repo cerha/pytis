@@ -1195,20 +1195,16 @@ class DataEnumerator(MutableEnumerator):
 
     # Extended interface.
 
-    def iter(self):
-        self._data.select(self.validity_condition())
-        def fetchone():
-            row = self._data.fetchone()
-            if row is None:
-                self._data.close()
-            return row
-        return iter(fetchone, None)
+    def data_factory(self):
+        """Vra» specifikaci datového jako instanci 'pytis.data.DataFactory'."""
+        return self._data_factory
     
     def value_column(self):
+        """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""
         return self._value_column
     
     def get(self, value, column=None):
-        """Získej z dat hodnotu daného sloupce z øádku odpovídajícímu 'value'.
+        """Získej z dat hodnotu daného sloupce z øádku odpovídajícího 'value'.
 
         Argumenty:
         
@@ -1230,6 +1226,21 @@ class DataEnumerator(MutableEnumerator):
             result = row[column]
         return result
     
+    def iter(self):
+        """Vra» iterátor, iterující pøes v¹echny datové øádky."""
+        # TODO: Asi by bylo èist¹í pøedefinovat metodu values a tu potom
+        # pou¾ívat v kombinaci s metodou get.  Aby se ov¹em v get neprovádìl
+        # zbyteènì nový select, bylo by nutné si nìjak internì pamatovat
+        # poslední øádek a v metodì get jej potom rovnou pou¾ít, pokud je to
+        # øádek po¾adované hodnoty.
+        self._data.select(self.validity_condition())
+        def fetchone():
+            row = self._data.fetchone()
+            if row is None:
+                self._data.close()
+            return row
+        return iter(fetchone, None)
+
     # Run-time filter interface.
 
     def set_runtime_filter_provider(self, provider, args):
