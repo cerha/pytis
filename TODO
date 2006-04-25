@@ -165,8 +165,6 @@ NOVÉ VLASTNOSTI:
    Definovat v pytis-extensions parametrizovatelné funkce pro vytváøení èasto
    pou¾ívaných pøíkazù, jako napø. otevírání souvisejícího formuláøe apod.
 
- * Automaticky doplnit 'codebook' pro fieldspec políèka s enumerátorem.
-
  * V tiskovém menu umo¾nit definovat separátor a klávesové zkratky.
 
  * Práva view na jednotlivé sloupce.
@@ -224,6 +222,11 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
+ * Zru¹it HiddenField.
+
+   U¾ není potøeba.  Nejprve je v¹ak potøeba ve specifikacích zru¹it v¹echna
+   políèka s width=0.
+   
  * S groupingem pracovat jako s celým èíslem.
 
    Problém bude hlavnì ve defsech, kde bývá grouping èasto specifikován jako

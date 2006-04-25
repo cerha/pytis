@@ -1,3 +1,38 @@
+2006-04-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField.create): Urèi výchozí
+	hodnotu `selection_type' podle toho, zda políèko má enumerátor a
+	je znám název èíselníku.  Pøedávej metodì `FieldSpec.codebook()'
+	datový objekt.
+	(InputField.__init__): `fspec' -> `spec'.
+	(GenericCodebookField.__init__): Pøedávej metodì
+	`FieldSpec.codebook()' datový objekt.  Ukládej název specifikace
+	èíselníku do `self._codebook_name'.
+	(GenericCodebookField._run_codebook_form)
+	(CodebookField._on_codebook_insert, ListField._create_ctrl)
+	(ListField.on_command, ListField.on_command): Vyu¾ívej
+	`self._codebook_name'.
+
+	* pytis/form/list.py (ListForm._post_selection_hook): Èást
+	zobrazující hodnotu èíselníku podstatnì pøepsána.
+	(ListForm._on_show_cell_codebook) 
+	(ListForm.can_show_cell_codebook): Pøedávej metodì
+	`FieldSpec.codebook()' datový objekt.
+	(ListForm._on_export_csv): Kosmetická úprava.
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Významnì
+	aktualizován docstring.  Neprovádìj ¾ádné doplòování výchozí
+	hodnoty `selection_type' a asserty.
+	(FieldSpec.codebook): Nový argument `data'.
+	(DataSpec): Nová tøída.
+	(Column): Nová tøída.
+
+	* pytis/data/types_.py (DataEnumerator.iter): Doplnìn docstring a
+	komentáø.
+	(DataEnumerator.data_factory): Nová metoda.
+	(DataEnumerator.get): Opraven docstring.
+	(DataEnumerator.value_column): Doplnìn docstring.
+
 2006-04-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._secondary_context): Oprava chyby
