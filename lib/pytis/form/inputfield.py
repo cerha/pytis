@@ -111,16 +111,16 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return InputField.focused()
     get_command_handler_instance = classmethod(get_command_handler_instance)
     
-    def create(cls, parent, fspec, data, guardian=None, inline=False,
+    def create(cls, parent, spec, data, guardian=None, inline=False,
                accessible=True):
         """Vra» instanci políèka odpovídajícího typu.
         
         Argumewnty jsou toto¾né, jako u metody 'InputField.__init__()'.
         
         """
-        field = TextField # default
-        type = fspec.type(data)
-        if fspec.width() == 0: 
+        type = spec.type(data)
+        codebook = spec.codebook(data)
+        if spec.width() == 0: 
             field = HiddenField
         elif isinstance(type, pytis.data.Date):
             field = DateField
@@ -129,13 +129,21 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
         elif isinstance(type, (pytis.data.Number, pytis.data.String)) \
-                 and type.enumerator():
+                 and type.enumerator() is not None and codebook is not None:
             if inline:
-                if fspec.codebook():
+                if codebook:
                     field = CodebookField
                 else:
                     field = ChoiceField 
             else:
+                selection_type = spec.selection_type()
+                if selection_type is None:
+                    if codebook is not None:
+                        selection_type = SelectionType.CODEBOOK
+                    else:
+                        selection_type = SelectionType.CHOICE
+                #cbtypes = (SelectionType.CODEBOOK, SelectionType.LIST)
+                #assert selection_type not in cbtypes or codebook is not None
                 mapping = {
                     SelectionType.CODEBOOK:  CodebookField,
                     SelectionType.LIST:      ListField,
@@ -143,17 +151,19 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                     SelectionType.LIST_BOX:  ListBoxField,
                     SelectionType.RADIO_BOX: RadioBoxField,
                     }
-                field = mapping[fspec.selection_type()]
+                field = mapping[selection_type]
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
             field = NumericField
-        return field(parent, fspec, data, guardian=guardian, inline=inline,
+        else:
+            field = TextField
+        return field(parent, spec, data, guardian=guardian, inline=inline,
                      accessible=accessible)
 
     create = classmethod(create)
 
-    def __init__(self, parent, fspec, data, guardian=None, inline=False,
+    def __init__(self, parent, spec, data, guardian=None, inline=False,
                  accessible=True):
         """Vytvoø vstupní políèko, podle specifikace a typu dat.
 
@@ -161,7 +171,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
           parent -- libovolná instance 'wx.Window', která má být pou¾ívána
             jako wx rodiè v¹ech vytváøených wx prvkù
-          fspec -- specifikace prezentaèních vlastností, instance tøídy
+          spec -- specifikace prezentaèních vlastností, instance tøídy
             'spec.FieldSpec'
           data -- datový objekt, instance tøídy 'pytis.data.Data'
           guardian -- nadøazený 'KeyHandler'.
@@ -180,13 +190,13 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         assert self != None
         #assert isinstance(parent, wx.Window)
         assert isinstance(guardian, KeyHandler)
-        assert isinstance(fspec, FieldSpec)
+        assert isinstance(spec, FieldSpec)
         CallbackHandler.__init__(self)
         self._parent = parent
-        self._type = fspec.type(data)
-        self._spec = fspec
+        self._type = spec.type(data)
+        self._spec = spec
         self._guardian = guardian
-        self._id = id = fspec.id()
+        self._id = id = spec.id()
         self._inline = inline
         self._initial_value = None
         self._want_focus = False
@@ -1068,12 +1078,14 @@ class ColorSelectionField(Invocable, TextField):
 class GenericCodebookField(InputField):
     """Spoleèná nadtøída èíselníkových políèek."""
 
-    def __init__(self, parent, fspec, *args, **kwargs):
+    def __init__(self, parent, spec, data, *args, **kwargs):
+        self._codebook_name = codebook = spec.codebook(data)
+        assert codebook is not None
         try:
-            self._cb_spec = resolver().get(fspec.codebook(), 'cb_spec')
+            self._cb_spec = resolver().get(codebook, 'cb_spec')
         except ResolverError:
             self._cb_spec = CodebookSpec()
-        super(GenericCodebookField, self).__init__(parent, fspec, *args,
+        super(GenericCodebookField, self).__init__(parent, spec, data, *args,
                                                    **kwargs)
         self._type.enumerator().add_hook_on_update(self._on_enumerator_change)
 
@@ -1088,7 +1100,7 @@ class GenericCodebookField(InputField):
     def _run_codebook_form(self, begin_search=None):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
         enumerator = self._type.enumerator()
-        result = run_form(CodebookForm, self.spec().codebook(),
+        result = run_form(CodebookForm, self._codebook_name,
                           begin_search=begin_search,
                           select_row=self._select_row_arg(),
                           condition=enumerator.validity_condition())
@@ -1206,7 +1218,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             prefill = {value_column: self.get_value()}
         else:
             prefill = {}
-        spec = self.spec().codebook_insert_spec() or self.spec().codebook()
+        spec = self.spec().codebook_insert_spec() or self._codebook_name
         result = run_form(PopupEditForm, spec, prefill=prefill)
         if result and result.has_key(value_column):
             self.set_value(result[value_column].export())
@@ -1225,7 +1237,7 @@ class ListField(GenericCodebookField):
 
     def _create_ctrl(self):
         # Naètu specifikace.
-        view_spec = resolver().get(self.spec().codebook(), 'view_spec')
+        view_spec = resolver().get(self._codebook_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         # Vytvoøím vlastní seznamový widget.
         style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL
@@ -1375,11 +1387,11 @@ class ListField(GenericCodebookField):
             self._set_selection(self._selected_item)
             return True
         elif command == self.COMMAND_INVOKE_EDIT_FORM:
-            run_form(PopupEditForm, self.spec().codebook(),
+            run_form(PopupEditForm, self._codebook_name,
                      select_row=self._select_row_arg())
             return True
         elif command == self.COMMAND_INVOKE_BROWSE_FORM:
-            run_form(BrowseForm, self.spec().codebook(),
+            run_form(BrowseForm, self._codebook_name,
                      select_row=self._select_row_arg())
             return True
         else:            
