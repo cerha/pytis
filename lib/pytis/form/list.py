@@ -2086,8 +2086,7 @@ class BrowseForm(ListForm):
             MItem(_("Zobrazit související èíselník"),
                   command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
             )
-        actions = list(self._view.popup_menu() or ()) + \
-                  action_mitems(self._view.actions())
+        actions = action_mitems(self._view.actions())
         if actions:
             menu += (MSeparator(),) + tuple(actions)
         return menu
