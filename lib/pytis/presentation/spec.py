@@ -612,8 +612,7 @@ class ViewSpec(object):
     pro nìj relevantní.
 
     """
-    def __init__(self, title, fields, layout=None, columns=None,
-                 popup_menu=None, actions=(),
+    def __init__(self, title, fields, layout=None, columns=None, actions=(),
                  sorting=None, grouping=None, redirect=None,
                  check=None, cleanup=None,
                  on_new_record=None, on_edit_record=None, on_delete_record=None,
@@ -638,11 +637,6 @@ class ViewSpec(object):
             výchozí seznam sloupcù obsahovat v¹echna políèka z fields, která
             nemají 'column_width' nastaveno na nulu.
             
-          popup_menu -- specifikace polo¾ek kontextového menu pro jeden øádek
-            tabulky.  Tato políèka budou pøidána do kontextového popup menu
-            vyvolaného pravým tlaèítkem my¹i nad jedním záznamem v seznamovém
-            formuláøi.  Jde o sekvenci instancí 'pytis.form.MItem'.
-
           actions -- specifikace dostupných u¾ivatelských akcí jako sekvence
             instancí 'Action', vnoøených sekvencí, nebo instancí 'ActionGroup'.
             V nejjednodu¹¹ím pøípadì jde o prostý seznam instancí 'Action'.
@@ -802,15 +796,6 @@ class ViewSpec(object):
                         assert isinstance(y, (Action, ActionGroup))
                 else:
                     assert isinstance(x, (Action, ActionGroup))
-        if popup_menu is not None:
-            #log(OPERATIONAL,
-            #    "Pou¾it potlaèený argument 'popup_menu' tøídy 'ViewSpec'!")
-            assert is_sequence(popup_menu)
-            if __debug__:
-                for item in popup_menu:
-                    assert isinstance(item, (pytis.form.MItem,
-                                             pytis.form.MSeparator,
-                                             pytis.form.Menu))
         if sorting is not None:
             assert is_sequence(sorting)
             if __debug__:
@@ -841,7 +826,6 @@ class ViewSpec(object):
         self._columns = columns
         self._layout = layout
         self._actions = actions
-        self._popup_menu = popup_menu
         self._sorting = sorting
         self._grouping = grouping
         self._redirect = redirect
@@ -879,10 +863,6 @@ class ViewSpec(object):
     def title(self):        
         """Vra» titulek tabulkového formuláøe jako string, nebo None."""
         return self._title
-
-    def popup_menu(self):        
-        """Vra» specifikaci polo¾ek kontextového menu pro záznam v tabulce."""
-        return self._popup_menu
 
     def actions(self):        
         """Vra» specifikaci akcí."""
