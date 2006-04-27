@@ -16,158 +16,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Definice èasto pou¾ívaných funkcí a utilit pro Pytis aplikace.""" 
+"""Drobné doplòkové funkce.
+
+Do tohoto modulu patøí funkce, které nemají s Pytisem jako takovým nic
+spoleèného.  Nepracují pøímo s jeho API, jen se zkrátka v defsech mohou nìjak
+hodit.
+
+"""
 
 from pytis.extensions import *
 
-import pytis.form
-import pytis.data
 import re
-# TODO: je to tu potøeba?  Pøíle¾itostnì smazat!
-from pytis.presentation import *
-from pytis.util import *
-from pytis.form import *
-
-import config
-    
-def cb_computer(codebook, column, default=None):
-    """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
-
-    Vytvoø instanci 'Computer', její¾ dopoèítávací funkce vrací hodnotu sloupce
-    èíselníku.  Computer automaticky závisí na daném èíselníkovém políèku.
-
-    Argumenty:
-      'codebook' -- id èíselníkového políèka, z jeho¾ enumerátoru má být
-        hodnota zji¹tìna.
-      'column' -- id sloupce v datovém objektu èíselníku, jeho¾ hodnota má být
-        dopoèítávací funkcí vrácena.
-      'default' -- implicitní hodnota, která bude dopoèítávací funkcí
-        vrácena, pokud není hodnota èíselníkového políèka definována (je None).
-    
-    """
-    assert isinstance(codebook, types.StringType)
-    assert isinstance(column, types.StringType)
-    def func(row):
-        cbvalue = row[codebook]
-        if cbvalue.value() is None:
-            value = default
-        else:
-            value = cb2colvalue(cbvalue, column=column).value()
-        return value
-    return Computer(func, depends=(codebook,))
-
-
-def cb2colvalue(value, column=None):
-    """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
-    
-    Argumenty:
-
-      value -- Instance `Value', její¾ typ má definován enumerátor typu
-        'pytis.data.DataEnumerator'.
-      column -- název jiného sloupce èíselníku; øetìzec.  Viz
-        'pytis.data.DataEnumerator.get()'
-
-    Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
-    stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
-    'None'.  Takováto hodnota nemusí být validní hodnotou typu, ale
-    zjednodu¹uje se tím práce s výsledkem.  Pokud je zapotøebí korektnìj¹ího
-    chování, je doporuèeno pou¾ít pøímo metodu 'DataEnumerator.get()'
-    (napøíklad voláním 'value.type().enumerator().get(value.value(), column))'.
-        
-    """
-    assert isinstance(value, pytis.data.Value)
-    assert value.type().enumerator() is not None
-    if column is None:
-        return value
-    else:
-        v = value.type().enumerator().get(value.value(), column=column)
-        if v is None:
-            return pytis.data.Value(value.type(), None)
-        else:
-            return v
-    
-def cb2strvalue(value, column=None):
-    """Pøeveï instanci 'Value' typu 'Codebook' na 'Value' typu 'String'.
-
-    Argumenty:
-
-      value -- Instance `pytis.data.Value' typu `pytis.data.Codebook'.
-      column -- název jiného sloupce èíselníku; øetìzec.  Viz
-        `Codebook.data_value()'.
-
-    """
-    assert isinstance(value, pytis.data.Value)
-    assert value.type().enumerator() is not None
-    if column is None:
-        v = value.value()
-    else:
-        col_value = cb2colvalue(value, column=column)
-        if col_value:
-            v = col_value.value()
-        else:
-            v = None
-    return pytis.data.Value(pytis.data.String(), v)
-
-def session_date(*args):
-    """Vra» vnitøní hodnotu nastaveného pracovního datumu."""
-    return session_date_value().value()
-
-def session_date_value():
-    """Vra» nastavené pracovní datum pøihlá¹eného u¾ivatele."""
-    return cfg_param('datum', 'NastaveniUser')
-
-def start_date(*args):
-    """Vra» vnitøní hodnotu nastaveného 'datumu od'."""
-    return start_date_value().value()
-
-def start_date_value():
-    """Vra» nastavené 'datum od' pøihlá¹eného u¾ivatele."""
-    return cfg_param('datum_od', 'NastaveniUser')
-
-def end_date(*args):
-    """Vra» vnitøní hodnotu nastaveného 'datumu do'."""
-    return end_date_value().value()
-
-def end_date_value():
-    """Vra» nastavené 'datum do' pøihlá¹eného u¾ivatele."""
-    return cfg_param('datum_do', 'NastaveniUser')
-
-def printdirect(resolver, spec, print_spec, row):
-    """Tiskni specifikaci pomocí pøíkazu config.printing_command."""
-    import pytis.output
-    class _PrintResolver (pytis.output.OutputResolver):
-        P_NAME = 'P_NAME'
-        class _Spec:
-            def body(self, resolver):
-                return None
-            def doc_header(self, resolver):
-                return None
-            def doc_footer(self, resolver):
-                return None
-            def coding(self, resolver):
-                if wx.Font_GetDefaultEncoding() == \
-                   wx.FONTENCODING_ISO8859_2:
-                    result = pytis.output.Coding.LATIN2
-                else:
-                    result = pytis.output.Coding.ASCII
-                return result
-        def _get_module(self, module_name):
-            try:
-                result = pytis.output.OutputResolver._get_module(self,
-                                                               module_name)
-            except ResolverModuleError:
-                result = self._Spec()
-            return result
-        
-    log(EVENT, 'Vyvolání tiskového formuláøe')
-    spec_path = os.path.join('output', print_spec)
-    P = _PrintResolver    
-    parameters = {(spec+'/'+pytis.output.P_ROW): row}
-    parameters.update({P.P_NAME: spec})
-    print_resolver = P(resolver, parameters=parameters)
-    resolvers = (print_resolver,)
-    formatter = pytis.output.Formatter(resolvers, spec_path)
-    formatter.printdirect()
 
 def smssend(tel, message, server='192.168.1.55'):
     import os, os.path, commands
@@ -336,374 +195,15 @@ def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
         return 1
     return 0
 
-       
-def run_cb(spec, begin_search=None, condition=None, sort=(),
-           columns=None, select_row=0, multirow=False):
-    """Vyvolá èíselník urèený specifikací.
-
-    Argumenty:
-
-      spec -- název specifikace èíselníku.
-      begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
-        inkrementální vyhledávání.
-      condition -- podmínka pro filtrování záznamù.
-      sort -- øazení (viz pytis.data.select())
-      columns -- seznam sloupcù, pokud se má li¹it od seznamu uvedeného
-        ve specifikaci.
-      select_row -- øádek, na který se má nastavit kurzor.
-      multirow -- umo¾ní výbìr více øádkù.
-    
-    Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek nebo
-    tuple vybraných øádkù (pokud je argument multirow nastaven).
-    
-    """
-    if multirow:
-        class_ = SelectRowsForm
-    else:    
-        class_ = CodebookForm
-    return run_form(class_, spec, columns=columns,
-                    begin_search=begin_search,
-                    condition=condition,
-                    select_row=select_row)
-
-
-# Application function
-
-def get_default_select(spec):
-    ASC = pytis.form.LookupForm.SORTING_ASCENDENT
-    DESC = pytis.form.LookupForm.SORTING_DESCENDANT
-    def default_sorting(view, data):
-        sorting = view.sorting()
-        if sorting is None:
-            sorting = tuple([(k.id(), LookupForm.SORTING_DESCENDANT)
-                             for k in data.key()
-                             if view.field(k.id()) is not None])
-        return sorting
-    def data_sorting(view, data):
-        mapping = {ASC:  pytis.data.ASCENDENT,
-                   DESC: pytis.data.DESCENDANT}
-        return tuple([(cid, mapping[dir]) for cid, dir
-                      in default_sorting(view, data)])    
-    def init_select(view, data):
-        op = lambda : data.select(sort=data_sorting(view, data),
-                                  reuse=False)
-        success, select_count = db_operation(op)
-        if not success:
-            log(EVENT, 'Selhání databázové operace')
-            return None
-        return select_count
-    resolver = pytis.form.resolver()
-    try:
-        view = resolver.get(spec, 'view_spec')                
-    except:
-        log(OPERATIONAL, "Nepodaøilo se vytvoøit view_spec")
-        return None
-    try:
-        data = data_object(spec)
-    except:
-        log(OPERATIONAL, "Nepodaøilo se vytvoøit datový objekt")
-        return None
-    data = data_object(spec)
-    select_count = init_select(view, data)
-    if select_count:
-        print "Default select pro specifikaci %s vrací %s øádkù" % (spec,
-                                                                    select_count)
-        import time
-        start_time = time.time()
-        data.fetchone()
-        
-
-def flatten_menus():
-    """Vra» linearizovaný seznam v¹ech polo¾ek menu."""
-    def flatten(queue, found, level=0):
-        if queue:
-            head, tail = queue[0], queue[1:]
-            found.append(head)
-            if isinstance(head, pytis.form.Menu):
-                flatten(head.items(), found, level=level+1)
-            result = flatten(tail, found, level=level)
-        else:
-            result = found                
-        return result
-    resolver = pytis.form.resolver()
-    menus = resolver.get('application', 'menu')
-    return flatten(menus, [])
-
-
-def get_menu_defs(without_duals=False):
-    resolver = pytis.form.resolver()
-    RF = pytis.form.Application.COMMAND_RUN_FORM
-    items = [item for item in flatten_menus()
-             if isinstance(item, pytis.form.MItem) and item.command() == RF \
-             and not issubclass(item.args()['form_class'],
-                                pytis.form.ConfigForm)]
-    duals = [item for item in items
-             if issubclass(item.args()['form_class'], DualForm) \
-                and not issubclass(item.args()['form_class'], DescriptiveDualForm)]
-    notduals = [item for item in items if item not in duals]
-    subduals = []
-    for item in duals:
-        dual_spec = resolver.get(item.args()['name'], 'dual_spec')
-        subduals.append(dual_spec.main_name())
-        subduals.append(dual_spec.side_name())
-    specs = [item.args()['name'] for item in notduals] + subduals
-    if not without_duals:
-        specs = specs + [item.args()['name'] for m in duals]
-    specs = remove_duplicates(specs)
-    # Zjistíme i varianty podle konstanty VARIANTS
-    variants = []
-    for m in specs:
-        try:
-            vlist = resolver.get_object(m, 'VARIANTS')
-            vlist = ['%s:%s' % (m, v) for v in vlist
-                     if isinstance(v, types.StringType)]
-            variants = variants + list(vlist)
-        except Exception, e:
-            pass
-    return remove_duplicates(specs + variants)
-
-def menu_report():
-    """Vytváøí pøehledný náhled na polo¾ky menu."""
-    resolver = pytis.form.resolver()
-    data_specs = []
-    COMMAND_RUN_FORM = pytis.form.Application.COMMAND_RUN_FORM
-    def spec(name):
-        return '<a href="#%s">%s</a>' % (name, name)
-    def make_list(menu):
-        items = []
-        for item in menu:
-            if isinstance(item, MSeparator):
-                x = '------'
-            elif isinstance(item, Menu):
-                x = item.title() + make_list(item.items())
-            elif isinstance(item, MItem) and item.command() == COMMAND_RUN_FORM:
-                args = item.args()
-                form = args['form_class']
-                spec_name = args['name']
-                spec_link = spec(spec_name)
-                data_specs.append(spec_name)
-                if issubclass(form, DualForm) and \
-                       not issubclass(form, DescriptiveDualForm):
-                    dual_spec = resolver.get(spec_name, 'dual_spec')
-                    main = dual_spec.main_name()
-                    side = dual_spec.side_name()
-                    spec_link += "(%s,%s)" % (spec(main), spec(side))
-                    data_specs.extend((main, side))
-                x = "%s: %s, %s" % (item.title(), spec_link, form.__name__)
-            else:
-                x = item.title()
-            items.append(x)
-        list_items = ["<li>%s</li>" % i for i in items]
-        return "\n".join(("<ul>",) + tuple(list_items) + ("</ul>",))
-    content = "<h3>Pøehled polo¾ek menu a názvù specifikací</h3>"
-    content += '<a name="menu"></a>'
-    content += make_list(resolver.get('application', 'menu'))
-    data_specs = remove_duplicates(data_specs)
-    data_specs.sort()
-    content += '<h1>Pøehled práv pro jednotlivé specifikace</h1>\n'
-    for spec_name in data_specs:
-        content += '<a name="%s"></a>\n<h5>%s</h5>\n' % (spec_name, spec_name)
-        try:
-            data_spec = resolver.get(spec_name, 'data_spec')
-        except Exception, e:
-            content += "<p><b>Chyba</b>: Specifikace nenalezena.</p>"
-            continue
-        rights = data_spec.access_rights()
-        if rights:
-            perms = (pytis.data.Permission.VIEW,
-                     pytis.data.Permission.INSERT,
-                     pytis.data.Permission.UPDATE,
-                     pytis.data.Permission.DELETE,
-                     pytis.data.Permission.EXPORT)
-            content += "<table>"
-            for perm in perms:
-                groups = rights.permitted_groups(perm, None)
-                content += '<tr><td valign="top">%s</td><td>%s</td></tr>' % \
-                           ('<b>'+perm+'</b>', ', '.join(map(str, groups)))
-            content += "</table>"
-        content += "<a href=#menu>Zpìt na menu</a>"
-    pytis.form.InfoWindow("Pøehled polo¾ek menu a názvù specifikací",
-                          text=content, format=TextFormat.HTML)
-
-cmd_menu_report = Command(Application, 'MENU_REPORT', handler=menu_report)
-    
-def check_form():
-    """Zeptá se na název specifikace a zobrazí její report."""
-    resolver = pytis.form.resolver()
-    spec = pytis.form.run_dialog(pytis.form.InputDialog,
-                                 message="Kontrola defsu",
-                                 prompt="Specifikace",
-                                 input_width=30)
-    if spec:
-        try:
-            data_spec = resolver.get(spec, 'data_spec')
-            view_spec = resolver.get(spec, 'view_spec')                
-        except ResolverError:
-            msg = 'Specifikace nenalezena.'
-            pytis.form.run_dialog(pytis.form.Warning, msg)
-            return
-        data = data_spec.create(dbconnection_spec=config.dbconnection)
-        # Políèka v bindings
-        cols = [c.id() for c in data.columns() if c.id()!='oid']
-        obsah = "Políèka v data_spec:\n"
-        obsah = obsah + "\n".join(cols)
-        # Název tabulky
-        table = data.table(cols[0])
-        obsah = obsah + "\n\nTabulka: %s" % (table)
-        # Políèka v bindings
-        fields = [f.id() for f in view_spec.fields()]
-        obsah = obsah + "\n\nPolíèka ve fields:\n"
-        obsah = obsah + "\n".join(fields)
-        # Title
-        title = view_spec.title()
-        obsah = obsah + "\n\n"
-        obsah = obsah + "Title: %s" % (title)
-        # Popup menu
-        popup_menu = view_spec.popup_menu()
-        if popup_menu:                
-            popup_items = [p.title() for p in popup_menu
-                           if isinstance(p, MItem)]
-            obsah = obsah + "\n\nPolo¾ky popup_menu:\n"
-            obsah = obsah + "\n".join(popup_items)
-        # Default select
-        get_default_select(spec)
-        pytis.form.run_dialog(pytis.form.Message,
-                              "DEFS: %s" % spec,
-                              report=obsah)
-        
-
-cmd_check_form = Command(Application, 'CHECK_FORM', handler=check_form)
-        
-
-def check_defs(seznam):
-    """Zkontroluje specifikace pro uvedený seznam.
-
-    Argumenty:
-      seznam -- seznam názvù specifikací
-
-    """
-    resolver = pytis.form.resolver()
-    errors = []
-    dbconn = dbconnection_spec=config.dbconnection
-    def check_spec(update, seznam):
-        total = len(seznam)
-        last_error = ''
-        step = 1 # aktualizujeme jen po ka¾dých 'step' procentech...
-        for n, s in enumerate(seznam):
-            newmsg = "\n".join(("Kontroluji datové specifikace...",
-                                "Specifikace: " + s,
-                                "Poslední chyba v: " + last_error))
-            status = int(float(n)/total*100/step)
-            if not update(status*step, newmsg=newmsg):
-                break
-            try:
-                data_spec = resolver.get(s, 'data_spec')
-                try:
-                    op = lambda: data_spec.create(dbconnection_spec=dbconn)
-                    success, data = pytis.form.db_operation(op)
-                    if not success:
-                        err = "Specifikace %s: Nepodaøilo se vytvoøit datový objekt." % (s)
-                        errors.append()
-                        last_error = "%s\n(Nepodaøilo se vytvoøit datový objekt)" % s
-                        continue
-                    data.select()
-                    row = data.fetchone()
-                    if row:
-                        try:
-                            view_spec = resolver.get(s, 'view_spec')
-                            fields = view_spec.fields()
-                            prow = PresentedRow(fields, data, row)
-                        except Exception, e:
-                            err = """Specifikace %s: %s""" % (s, str(e))
-                            errors.append(err)
-                            last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
-                except Exception, e:
-                    err = """Specifikace %s: %s""" % (s, str(e))
-                    errors.append(err)
-                    last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
-            except ResolverError, e:
-                err = """Specifikace %s: %s""" % (s, str(e))
-                errors.append(err)                
-                last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
-    sirka = max([len(s) for s in seznam]) + len('Poslední chyba v: ') + 6
-    msg = 'Kontroluji datové specifikace...'.ljust(sirka)
-    msg = msg + '\n\n\n\n'
-    pytis.form.run_dialog(pytis.form.ProgressDialog, check_spec, args=(seznam,),
-                          message=msg, elapsed_time=True, can_abort=True)
-    if errors:
-        obsah = "\n".join(errors)
-        pytis.form.run_dialog(pytis.form.Message,
-                              "Chyby ve specifikacích",
-                              report=obsah)
- 
-def check_menus_defs():
-    return check_defs(get_menu_defs(without_duals=True))
-
-cmd_check_menus_defs = Command(Application, 'CHECK_MENUS_DEFS',
-                               handler=check_menus_defs)
-
-def cache_spec(*args, **kwargs):
-    resolver = pytis.form.resolver()
-    def do(update, specs):
-        total = len(specs)        
-        last_status = 0
-        step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
-        for n, file in enumerate(specs):
-            status = int(float(n)/total*100/step)
-            if status != last_status:
-                last_status = status 
-                if not update(status*step):
-                    break
-            for spec in ('dual_spec', 'data_spec', 'view_spec',
-                         'cb_spec', 'proc_spec'):
-                try:
-                    resolver.get(file, spec)
-                except ResolverError:
-                    pass
-    msg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
-                     'Naèítání je mo¾no trvale vypnout pomocí dialogu',
-                     '"Nastavení u¾ivatelského rozhraní"'))
-    specs = get_menu_defs()
-    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(specs,),
-                          message=msg, elapsed_time=True, can_abort=True)
-
-def help_window(inputfile=None, format=TextFormat.PLAIN):
-    if not inputfile:
-        pytis.form.run_dialog(pytis.form.Warning, _("Textový soubor nenalezen"))
-        return
-    path = os.path.join(config.help_dir, inputfile)
-    if not os.path.exists(path):
-        dir, xx = os.path.split(os.path.realpath(pytis.extensions.__file__))
-        p = os.path.normpath(os.path.join(dir, '../../../doc', inputfile))
-        if os.path.exists(p):
-            path = p
-        else:
-            log(OPERATIONAL, "Soubor nenalezen:", p)
-    try:
-        f = open(path, 'r')
-    except IOError, e:
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Nemohu otevøít soubor nápovìdy: %s") % e)
-    else:
-        text = f.read()
-        f.close()
-        pytis.form.InfoWindow("Nápovìda", text=text, format=format)
-        
-cmd_help_window = Command(Application, 'HELP_WINDOW', handler=help_window)
-
-def run_any_form():
-    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
-    if result is not None:
-        pytis.form.run_form(*result)
-                                      
-cmd_run_any_form = Command(Application, 'RUN_ANY_FORM', handler=run_any_form)
-
-
 # Additional constraints
             
 def constraints_email(email):
-    """Kontroluje string podle re výrazu. Pokud odpovídá nebo je None funkce
-    vrací None. Jinak vrací string s chybovou hlá¹kou"""
+    """Ovìø platnost zápisu e-mailové adresy.
+    
+    Pokud má adresa platný tvar, nebo je None vrací None.  Jinak vrací øetìzec
+    s chybovou hlá¹kou
+
+    """
     if email is None:
         return None
     mask=re.compile(r"^[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\.\-\d])*\@[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\d])*$")
@@ -712,9 +212,12 @@ def constraints_email(email):
     return None
 
 def constraints_email_many(emails):
-    """Kontroluje string podle re výrazu pro ka¾dou jeho èást odìlenou èárkou.
-    Pokud odpovídá nebo je None funkce vrací None. Jinak vrací string s
-    chybovou hlá¹kou"""
+    """Ovìø platnost zápisu seznamu e=mailových adres oddìlených èárkami.
+
+    Pokud má seznam i ka¾dá adresa platný tvar, nebo je None funkce vrací None.
+    Jinak vrací øetìzec s chybovou hlá¹kou.
+
+    """
     if emails is None:
         return None
     not_match=[]
@@ -726,4 +229,29 @@ def constraints_email_many(emails):
         return None
     return '\n'.join(not_match)
 
+# Nìkteré èasto pou¾ívané konfiguraèní parametry.
+
+def session_date(*args):
+    """Vra» vnitøní hodnotu nastaveného pracovního datumu."""
+    return session_date_value().value()
+
+def session_date_value():
+    """Vra» nastavené pracovní datum pøihlá¹eného u¾ivatele."""
+    return cfg_param('datum', 'NastaveniUser')
+
+def start_date(*args):
+    """Vra» vnitøní hodnotu nastaveného 'datumu od'."""
+    return start_date_value().value()
+
+def start_date_value():
+    """Vra» nastavené 'datum od' pøihlá¹eného u¾ivatele."""
+    return cfg_param('datum_od', 'NastaveniUser')
+
+def end_date(*args):
+    """Vra» vnitøní hodnotu nastaveného 'datumu do'."""
+    return end_date_value().value()
+
+def end_date_value():
+    """Vra» nastavené 'datum do' pøihlá¹eného u¾ivatele."""
+    return cfg_param('datum_do', 'NastaveniUser')
 
