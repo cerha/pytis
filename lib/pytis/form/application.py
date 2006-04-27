@@ -1002,9 +1002,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             try:
                 busy_cursor(True)
-                if issubclass(command.cls(), Application) \
-                       and command.handler() is not None:
-                    command.handler()(**kwargs)
+                if command == Application.COMMAND_HANDLED_ACTION:
+                    self._on_handled_action(**kwargs)
                 elif command == Application.COMMAND_SHOW_POPUP_MENU:
                     top = self.top_window()
                     if hasattr(top, 'show_popup_menu'):
@@ -1051,6 +1050,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except:
             top_level_exception()
 
+    def _on_handled_action(self, handler=None, enabled=None, **kwargs):
+        return handler(**kwargs)
+        
+    def can_handled_action(self, handler=None, enabled=None, **kwargs):
+        return enabled is None and True or enabled(**kwargs)
+        
     def can_next_form(self):
         return len(self._windows.items()) > 1
 
