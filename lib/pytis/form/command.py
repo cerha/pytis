@@ -68,8 +68,7 @@ class Command(object):
     tøeba mít rozli¹ení na pamìti.
     
     """
-    def __init__(self, cls, name, doc=None, handler=None,
-                 enabled=True, access_groups=None, log_=True):
+    def __init__(self, cls, name, doc=None, log_=True):
         """Definuj pøíkaz.
 
         Argumenty:
@@ -83,22 +82,6 @@ class Command(object):
             ve¹kerá písmena byla velká.
           doc -- dokumentaèní øetìzec pøíkazu.  Struèný popis, který mù¾e být
             napø. zobrazen v u¾ivatelském rozhraní.
-          handler -- obslu¾ná funkce volaná pøi zpracování pøíkazu.  Má význam
-            pøi definici u¾ivatelských pøíkazù.  Blí¾e viz dokumentace tøídy.
-            Hodnotou je callable object, nebo None.
-          access_groups -- sekvence jmen skupin (strings), které mají právo
-            pøíkaz vyvolat; mù¾e být té¾ 'None', v kterém¾to pøípadì pøíkaz
-            mohou vyvolat v¹echny skupiny.  Toto oprávnìní je formální,
-            zohlednìné jen v u¾ivatelském rozhraní, nemá faktickou bezpeènostní
-            roli.  Pøítomnost u¾ivatele ve skupinách je zji¹»ována pouze jednou
-            pøi inicializaci instance pøíkazu, co¾ je vìt¹inou pøi startu
-            aplikace.
-          enabled -- buïto pøímo boolean hodnota urèující, zda je pøíkaz
-            aktivní, nebo odkaz na funkci, která toto zjistí (a vrátí
-            odpovídající boolean hodnotu).  Jde o funkci tøí argumentù (APPL,
-            COMMAND, ARGS), kde APPL je instance aplikace (tøídy
-            'Application'), COMMAND je instance pøíkazu a ARGS je slovník
-            arguemntù s jakými bude pøíkaz volán.
           log_ -- právì kdy¾ je pravdivé, je vyvolání pøíkazu logováno jako
             EVENT, jinak je logováno pouze jako DEBUG
 
@@ -113,25 +96,15 @@ class Command(object):
                "Not a CommandHandler subclass: %s" % cls
         assert isinstance(name, types.StringType) and name == name.upper(), \
                (name, type(name))
-        assert handler is None or callable(handler), handler
         assert doc is None or isinstance(doc, types.StringTypes)
-        assert callable(enabled) or isinstance(enabled, types.BooleanType)
-        assert access_groups is None or \
-               isinstance(access_groups,
-                          (types.StringType, types.TupleType, types.ListType))
         self._cls = cls
         self._name = name
         self._doc = doc
         self._id = id = '.'.join((cls.__name__, name.lower().replace('_', '-')))
-        self._handler = handler
         self._log = log_
-        self._has_access = pytis.data.is_in_groups(access_groups)
-        self._enabled = enabled
-        self._cache = {}
         assert not hasattr(cls, 'COMMAND_' + name), \
                "Command '%s' already defined for %s" % (name, cls.__name__)
         setattr(cls, 'COMMAND_' + name, self)
-        
 
     def __call__(self, **kwargs):
         """Umo¾òuje pohodlnì vytvoøit definici pøíkazu a jeho argumentù.
@@ -167,10 +140,6 @@ class Command(object):
         """Vra» dokumentaèní øetìzec pøíkazu jako string, nebo None."""
         return self._doc
     
-    def handler(self):
-        """Vra» rutinu pro zpracování pøíkazu zadanou v konstruktoru."""
-        return self._handler
-
     def enabled(self, args):
         """Vra» pravdu, pokud je pøíkaz aktivní (smí být vyvolán).
 
@@ -184,9 +153,6 @@ class Command(object):
         
         """
         appl = pytis.form.application._application
-        
-        if not self._has_access:
-            return False
         handler = self._cls.get_command_handler_instance(appl)
         if handler is None or not hasattr(handler, 'COMMAND_'+self._name) \
                or not getattr(handler, 'COMMAND_'+self._name) == self:
@@ -196,10 +162,7 @@ class Command(object):
             can = getattr(handler, can_method_name)
             if not can(**args):
                 return False
-        enabled = self._enabled
-        if not isinstance(enabled, types.BooleanType):
-            enabled = bool(enabled(appl, self, args))
-        return enabled
+        return True
     
     def log_kind(self):
         """Vra» druh logovací hlá¹ky, pod kterým má být pøíkaz logován."""
@@ -208,9 +171,6 @@ class Command(object):
         else:
             kind = DEBUG
         return kind
-
-    def has_access(self):
-        return self._has_access
 
     def __cmp__(self, other):
         if sameclass(self, other):
