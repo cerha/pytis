@@ -1,7 +1,29 @@
 2006-04-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (DualForm.on_command): Neo¹etøuj pøíkazy
+	s handlerem.
+
+	* pytis/form/command.py (Command.__init__): Zru¹eny argumenty
+	`handler', `enabled' a `access_groups'.
+	(Command.handler, Command.has_access): Metody zru¹eny.
+	(Command.enabled): Nepracuj s atributy `_enabled' a `_has_access'.
+
+	* pytis/form/screen.py (Menu.create): Nepou¾ívej zru¹enou metodu
+	`Command.has_access()'.
+
+	* pytis/form/commands_.py: Nový pøíkaz
+	`Application.COMMAND_HANDLED_ACTION'.
+
+	* pytis/form/application.py (Application.on_command): Namísto
+	pøíkazu s handlerem o¹etøuj pøíkaz `COMMAND_HANDLED_ACTION'.
+	(Application._on_handled_action, Application._on_handled_action):
+	Nové metody.
+
 	* pytis/form/list.py (BrowseForm._context_menu): Nepou¾ívej
 	`ViewSpec.popup_menu()'.
+	(ListForm.on_command): Neo¹etøuj pøíkazy s handlerem.
+	(ListForm._on_handled_command)
+	(ListForm._context_menu_handler_args): Metody zru¹eny.
 
 	* pytis/presentation/spec.py (ViewSpec.__init__): Zru¹en argument
 	`popup_menu'.
