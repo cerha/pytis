@@ -16,11 +16,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Tøídy pro zjednodu¹ení a zpøehlednìní tvorby specifikaèních souborù.""" 
+"""Funkce a tøídy pro zjednodu¹ení a zpøehlednìní tvorby specifikaèních souborù.
+
+Do tohoto modulu patøí v¹e, co nìjakým zpùsobem obaluje API Pytisu.  Jedná se
+vìt¹inou o funkce, které se hodí v rùzných konkrétních situacích, kde vyjádøení
+nìjaké konstrukce vy¾aduje slo¾itìj¹í zápis, ale proto¾e se tato konstrukce
+èasto opakuje, je mo¾né ji parametrizovanì vytvoøit automaticky.
+
+""" 
 
 from pytis.extensions import *
-from pytis.presentation import *
 
+import config
 
 # Zkratky na èasto pou¾ívané identifikátory.
     
@@ -42,10 +49,7 @@ ALWAYS = Editable.ALWAYS
 ONCE = Editable.ONCE
 NEVER = Editable.NEVER
 
-def run_procedure_mitem(title, name, proc_name, hotkey=None):
-    return MItem(title, command=pytis.form.Application.COMMAND_RUN_PROCEDURE,
-                 args=dict(spec_name=name, proc_name=proc_name),
-                 hotkey=hotkey, help='Spustit proceduru "%s"' % title)
+# Funkce pro zjednodu¹ení vytváøení polo¾ek menu.
 
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_FORM
@@ -66,22 +70,24 @@ def new_record_mitem(title, name, hotkey=None):
     help = _('Otevøít vstupní formuláø "%s"') % title
     return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
-def help_mitem(title, inputfile, hotkey=None, format=TextFormat.WIKI):
-    return MItem(title, hotkey=hotkey,
-                 command=cmd_help_window,
-                 args={'inputfile': inputfile, 'format': format})
+def run_procedure_mitem(title, name, proc_name, hotkey=None):
+    return MItem(title, command=pytis.form.Application.COMMAND_RUN_PROCEDURE,
+                 args=dict(spec_name=name, proc_name=proc_name),
+                 hotkey=hotkey, help='Spustit proceduru "%s"' % title)
 
-def context_mitem(title, handler, **kwargs):
-    """Funkce pro zpìtnou kompatibilitu.
+nr = new_record_mitem
+rp = run_procedure_mitem
+def bf(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey)
+def df(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
+def ddf(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
+def ef(title, name, hotkey=None):
+    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey)
 
-    Tato funkce nech» ji¾ není pou¾ívána!  Namísto ní nech» jsou u¾ivatelské
-    akce specifikovány pomocí argumentu `actions' tøídy `ViewSpec'.
 
-    """
-    action = Action(title, handler, **kwargs)
-    return MItem(title, command=ListForm.COMMAND_CONTEXT_ACTION(action=action),
-                 hotkey=action.hotkey())
-
+# Dal¹í funkce pro zjednodu¹ení èasto pou¾ívaných konstrukcí
 
 def rp_handler(spec_name, proc_name, *args, **kwargs):
     """Vra» handler u¾ivatelské akce, který spustí proceduru s danými argumenty.
@@ -100,53 +106,185 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     return lambda row: run_procedure(spec_name, proc_name,
                                      *[row[key] for key in args], **kwargs)
 
-context_rp = rp_handler # Pro zpìtnou kompatibilitu.  Èasem smazat!  2006-03-11
 
-_user_cmd_caller = {}
-def user_cmd(name, handler, spec=None, block_refresh_=False, **kwargs):
-    if spec:
-        # TODO: toto zlobí
-        # name = name + "_" + spec.upper().replace(':', '_')
-        name = name + "_" + spec.upper()
-    name = name.upper().replace('-', '_')
-    if hasattr(BrowseForm, 'COMMAND_'+name):
-        cmd = getattr(BrowseForm, 'COMMAND_'+name)
-        caller = _user_cmd_caller[name]
-        if caller != stack_info(depth=2).splitlines()[0]:
-            raise ProgramError("Command '%s' already defined:" % name, caller)
-        return cmd
-    if block_refresh_:
-        h = lambda *a, **aa: block_refresh(handler, *a, **aa)
-    else:
-        h = handler
-    _user_cmd_caller[name] = stack_info(depth=2).splitlines()[0]
-    return Command(BrowseForm, name, handler=h, **kwargs)
+def cb_computer(codebook, column, default=None):
+    """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
 
+    Vytvoø instanci 'Computer', její¾ dopoèítávací funkce vrací hodnotu sloupce
+    èíselníku.  Computer automaticky závisí na daném èíselníkovém políèku.
 
-nr = new_record_mitem
-rp = run_procedure_mitem
-def bf(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey)
-def df(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
-def ddf(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
-def ef(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey)
-
-def enum(name):
-    """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
-
-    Takto vytvoøený enumerátor lze pou¾ít jako argument 'enumerator'
-    konstruktoru datového typu.  Argument 'name' je øetìzec urèující název
-    specifikace, ze které bude získán datový objekt enumerátoru.
+    Argumenty:
+      'codebook' -- id èíselníkového políèka, z jeho¾ enumerátoru má být
+        hodnota zji¹tìna.
+      'column' -- id sloupce v datovém objektu èíselníku, jeho¾ hodnota má být
+        dopoèítávací funkcí vrácena.
+      'default' -- implicitní hodnota, která bude dopoèítávací funkcí
+        vrácena, pokud není hodnota èíselníkového políèka definována (je None).
     
     """
-    data_spec = pytis.form.resolver().get(name, 'data_spec')
-    kwargs = dict(dbconnection_spec=config.dbconnection)
-    return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
+    assert isinstance(codebook, types.StringType)
+    assert isinstance(column, types.StringType)
+    def func(row):
+        cbvalue = row[codebook]
+        if cbvalue.value() is None:
+            value = default
+        else:
+            value = cb2colvalue(cbvalue, column=column).value()
+        return value
+    return Computer(func, depends=(codebook,))
 
 
+def cb2colvalue(value, column=None):
+    """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
+    
+    Argumenty:
+
+      value -- Instance `Value', její¾ typ má definován enumerátor typu
+        'pytis.data.DataEnumerator'.
+      column -- název jiného sloupce èíselníku; øetìzec.  Viz
+        'pytis.data.DataEnumerator.get()'
+
+    Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
+    stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
+    'None'.  Takováto hodnota nemusí být validní hodnotou typu, ale
+    zjednodu¹uje se tím práce s výsledkem.  Pokud je zapotøebí korektnìj¹ího
+    chování, je doporuèeno pou¾ít pøímo metodu 'DataEnumerator.get()'
+    (napøíklad voláním 'value.type().enumerator().get(value.value(), column))'.
+        
+    """
+    assert isinstance(value, pytis.data.Value)
+    assert value.type().enumerator() is not None
+    if column is None:
+        return value
+    else:
+        v = value.type().enumerator().get(value.value(), column=column)
+        if v is None:
+            return pytis.data.Value(value.type(), None)
+        else:
+            return v
+
+        
+def cb2strvalue(value, column=None):
+    """Pøeveï instanci 'Value' typu 'Codebook' na 'Value' typu 'String'.
+
+    Argumenty:
+
+      value -- Instance `pytis.data.Value' typu `pytis.data.Codebook'.
+      column -- název jiného sloupce èíselníku; øetìzec.  Viz
+        `Codebook.data_value()'.
+
+    """
+    assert isinstance(value, pytis.data.Value)
+    assert value.type().enumerator() is not None
+    if column is None:
+        v = value.value()
+    else:
+        col_value = cb2colvalue(value, column=column)
+        if col_value:
+            v = col_value.value()
+        else:
+            v = None
+    return pytis.data.Value(pytis.data.String(), v)
+
+
+def run_cb(spec, begin_search=None, condition=None, sort=(),
+           columns=None, select_row=0, multirow=False):
+    """Vyvolá èíselník urèený specifikací.
+
+    Argumenty:
+
+      spec -- název specifikace èíselníku.
+      begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
+        inkrementální vyhledávání.
+      condition -- podmínka pro filtrování záznamù.
+      sort -- øazení (viz pytis.data.select())
+      columns -- seznam sloupcù, pokud se má li¹it od seznamu uvedeného
+        ve specifikaci.
+      select_row -- øádek, na který se má nastavit kurzor.
+      multirow -- umo¾ní výbìr více øádkù.
+    
+    Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek nebo
+    tuple vybraných øádkù (pokud je argument multirow nastaven).
+    
+    """
+    if multirow:
+        class_ = SelectRowsForm
+    else:    
+        class_ = CodebookForm
+    return run_form(class_, spec, columns=columns,
+                    begin_search=begin_search,
+                    condition=condition,
+                    select_row=select_row)
+
+
+def help_window(inputfile=None, format=TextFormat.PLAIN):
+    if not inputfile:
+        pytis.form.run_dialog(pytis.form.Warning, _("Textový soubor nenalezen"))
+        return
+    path = os.path.join(config.help_dir, inputfile)
+    if not os.path.exists(path):
+        dir, xx = os.path.split(os.path.realpath(pytis.extensions.__file__))
+        p = os.path.normpath(os.path.join(dir, '../../../doc', inputfile))
+        if os.path.exists(p):
+            path = p
+        else:
+            log(OPERATIONAL, "Soubor nenalezen:", p)
+    try:
+        f = open(path, 'r')
+    except IOError, e:
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nemohu otevøít soubor nápovìdy: %s") % e)
+    else:
+        text = f.read()
+        f.close()
+        pytis.form.InfoWindow("Nápovìda", text=text, format=format)
+        
+
+def run_any_form():
+    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
+    if result is not None:
+        pytis.form.run_form(*result)
+                                      
+cmd_run_any_form = (Application.COMMAND_HANDLED_ACTION,
+                    dict(handler=run_any_form, xx='aa'))
+
+
+def printdirect(resolver, spec, print_spec, row):
+    """Tiskni specifikaci pomocí pøíkazu config.printing_command."""
+    import pytis.output
+    class _PrintResolver (pytis.output.OutputResolver):
+        P_NAME = 'P_NAME'
+        class _Spec:
+            def body(self, resolver):
+                return None
+            def doc_header(self, resolver):
+                return None
+            def doc_footer(self, resolver):
+                return None
+            def coding(self, resolver):
+                if wx.Font_GetDefaultEncoding() == \
+                   wx.FONTENCODING_ISO8859_2:
+                    result = pytis.output.Coding.LATIN2
+                else:
+                    result = pytis.output.Coding.ASCII
+                return result
+        def _get_module(self, module_name):
+            try:
+                result = pytis.output.OutputResolver._get_module(self,
+                                                               module_name)
+            except ResolverModuleError:
+                result = self._Spec()
+            return result
+        
+    log(EVENT, 'Vyvolání tiskového formuláøe')
+    spec_path = os.path.join('output', print_spec)
+    P = _PrintResolver    
+    parameters = {(spec+'/'+pytis.output.P_ROW): row}
+    parameters.update({P.P_NAME: spec})
+    print_resolver = P(resolver, parameters=parameters)
+    resolvers = (print_resolver,)
+    formatter = pytis.output.Formatter(resolvers, spec_path)
+    formatter.printdirect()
 
 
 
