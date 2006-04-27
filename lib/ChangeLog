@@ -1,5 +1,8 @@
 2006-04-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (BrowseForm._context_menu): Nepou¾ívej
+	`ViewSpec.popup_menu()'.
+
 	* pytis/presentation/spec.py (ViewSpec.__init__): Zru¹en argument
 	`popup_menu'.
 	(ViewSpec.popup_menu): Metoda zru¹ena.
