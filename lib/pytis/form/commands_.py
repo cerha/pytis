@@ -66,6 +66,8 @@ Command(Application, 'SHOW_POPUP_MENU',
         "Zobraz kontextové menu aktivního prvku")
 Command(Application, 'CLEAR_RECENT_FORMS',
         "Vyèisti menu poslednì otevøených formuláøù")
+Command(Application, 'HANDLED_ACTION',
+        "Proveï u¾ivatelem definovanou akci.") # arg. 'handler', 'enabled'
 Command(Form, 'PRINT',
         "Tisk aktuálního obsahu formuláøe")
 Command(Form, 'HELP',
