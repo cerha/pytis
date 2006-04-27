@@ -1072,9 +1072,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             
     def on_command(self, command, **kwargs):
         # Univerzální pøíkazy
-        if command.handler() is not None:
-            return self._on_handled_command(command, **kwargs)
-        elif command == ListForm.COMMAND_CONTEXT_ACTION:
+        if command == ListForm.COMMAND_CONTEXT_ACTION:
             self._on_context_action(**kwargs)
             return True
         elif command == ListForm.COMMAND_COPY_CELL:
@@ -1196,48 +1194,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         codebook = column.codebook(self._data)
         enumerator = column.type(self._data).enumerator()
         return codebook and enumerator
-
-    def _on_handled_command(self, command, norefresh=False, **kwargs):
-        log(EVENT, 'Vyvolávám u¾ivatelský handler pøíkazu:', command)
-        # TODO: Pøíkazy s handlerem by nemìly být vùbec pou¾ívány.  Namísto
-        # nich nech» je vyu¾íván pøíkaz COMMAND_CONTEXT_ACTION,
-        # kde se handler definuje jako souèást argumentù a ne jako argument
-        # konstruktoru Command.  U¾ivatel zkrátka nemá co vytváøet vlastní
-        # instance tøídy Command...  Tato metoda a pøíslu¹ná èást v on_command
-        # jsou zde jen kvùli zpìtné kompatibilitì a a¾ se v aplikacích
-        # v¹echy u¾ivatelské pøíkazy nahradí, bude mo¾né ji zru¹it.
-        handler = command.handler()
-        args, kwargs = self._context_menu_handler_args(handler, **kwargs)
-        handler(*args, **kwargs)
-        if not norefresh:
-            self.refresh()
-        return True
-
-    def _context_menu_handler_args(self, handler, **kwargs):
-        # Zjistíme, jaké má u¾ivatelský handler argumenty.
-        import inspect
-        allargs, varargs, varkw, defaults = inspect.getargspec(handler)
-        if allargs:
-            if defaults:
-                posargs = len(allargs) - len(defaults)
-            else:
-                posargs = len(allargs)
-        else:
-            posargs = 0
-        the_row = self.current_row()
-        if posargs == 0:
-            args = ()
-        elif posargs == 1:
-            args = (the_row,)
-        else:
-            args = (self._data, the_row)
-        if not varkw:
-            if defaults is not None:
-                kwnames = allargs[-len(defaults):]
-                kwargs = dict([(k,v) for k,v in kwargs.items() if k in kwnames])
-            else:
-                kwargs = {}
-        return args, kwargs
 
     def _on_context_action(self, action):
         args = self._context_action_args(action)
