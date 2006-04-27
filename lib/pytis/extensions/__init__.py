@@ -16,12 +16,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import pytis.data
+import pytis.form
+from pytis.form import *
+
 from dbconfig import *
 from dbutils import *
 from misc import *
 from types import *
 from spec import *
+from defs import *
 
-for file in (dbconfig, dbutils, misc, types, spec):
+for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
 
