@@ -20,8 +20,6 @@
 
 from pytis.extensions import *
 
-import pytis.form
-import pytis.data
 import config
 
 def data_object(spec):
@@ -173,6 +171,19 @@ def dbfunction(name, *args, **kwargs):
     op = lambda: function.call(pytis.data.Row(args))[0][0]
     success, result = pytis.form.db_operation(op)
     return result.value()
+
+
+def enum(name):
+    """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
+
+    Takto vytvoøený enumerátor lze pou¾ít jako argument 'enumerator'
+    konstruktoru datového typu.  Argument 'name' je øetìzec urèující název
+    specifikace, ze které bude získán datový objekt enumerátoru.
+    
+    """
+    data_spec = pytis.form.resolver().get(name, 'data_spec')
+    kwargs = dict(dbconnection_spec=config.dbconnection)
+    return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
 
 
 # Pozor, stejná metoda metoda je definována i v pytis.data.access
