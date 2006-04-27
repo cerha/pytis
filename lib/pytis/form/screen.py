@@ -926,12 +926,7 @@ class Menu(_TitledMenuObject):
         for i in self._items:
             if isinstance(i, MItem):
                 hotkey, command, args = i.hotkey(), i.command(), i.args()
-                # Pokud k pøíkazu nejsou pøístupová práva, pou¾ij na místì hotkey
-                # øetìzec (N/A)
-                if not command.has_access():
-                    hotkey = "(N/A)"
-                    hotkey = xtuple(hotkey)                    
-                elif hotkey == (None,) and keyhandler.keymap is not None:
+                if hotkey == (None,) and keyhandler.keymap is not None:
                     hotkey = keyhandler.keymap.lookup_command(command, args)
                     hotkey = xtuple(hotkey)
                 elif keyhandler.keymap is not None:
