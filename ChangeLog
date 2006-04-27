@@ -1,3 +1,39 @@
+2006-04-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/defs.py: Nový modul.
+	(get_default_select, flatten_menus, get_menu_defs, menu_report)
+	(cmd_menu_report, check_form, cmd_check_form, check_defs)
+	(check_menus_defs, cmd_check_menus_defs, cache_spec): Pøesunuto z
+	`misc'.
+	(cmd_menu_report, cmd_check_form, cmd_check_menus_defs): Pøepsáno
+	s pou¾itím `Application.COMMAND_HANDLED_ACTION'.
+
+	* lib/pytis/extensions/spec.py (user_cmd, _user_cmd_caller):
+	Zru¹eno.
+	(printdirect, cmd_run_any_form, run_any_form, help_window)
+	(run_cb, cb2strvalue, cb2colvalue, cb_computer): Nové funkce
+	pøesunuté z `misc'.
+	(context_rp): Zru¹eno.
+	(enum): Pøesunuto do 'dbutils'.
+	(cmd_run_any_form): Pøepsáno s pou¾itím
+	`Application.COMMAND_HANDLED_ACTION'.
+
+	* lib/pytis/extensions/misc.py: Zru¹eny v¹echny divoké importy.
+	Spoléhej na importy v `__init__.py'.
+	(cb_computer, cb2colvalue, cb2strvalue, printdirect, run_cb) 
+	(help_window, run_any_form, cmd_run_any_form): Pøesunuto do `spec'.
+	(constraints_email_many, constraints_email): Opraven docstring.
+	(cmd_help_window): Zru¹eno.
+	(get_default_select, flatten_menus, get_menu_defs, menu_report) 
+	(cmd_menu_report, check_form, cmd_check_form, check_defs) 
+	(check_menus_defs, cmd_check_menus_defs, cache_spec): Pøesunuto do
+	nového modulu `defs'.
+	
+	* lib/pytis/extensions/dbutils.py (enum): Pøesunuto ze `spec'.
+
+	* lib/pytis/extensions/__init__.py: Importuj zde v¹e z
+	`pytis.form'.  Importuj také nový modul `defs'.
+
 2006-04-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (DataSpec, Column): Tøídy pøesunuty
