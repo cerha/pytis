@@ -176,15 +176,6 @@ class DualForm(Form):
             return True
         else:
             target = self._active_form
-        if command.handler() is not None:
-            kwargs['mainform'] = self._main_form
-            kwargs['sideform'] = self._side_form
-            kwargs['norefresh'] = True
-            # TODO: To je odporný hack!!!
-            result = target._on_handled_command(command, **kwargs)
-            self.refresh()
-            target.SetFocus()
-            return result
         if isinstance(target, KeyHandler):
             return target.on_command(command, **kwargs)
         else:
