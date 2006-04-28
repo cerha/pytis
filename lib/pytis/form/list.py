@@ -695,22 +695,21 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self.show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
             message('')
-            column = self._columns[self._current_cell()[1]]
-            codebook = column.codebook(self._data)
+            column, enumerator, codebook = self._current_codebook_info()
             if codebook:
                 try:
                     cb_spec = resolver().get(codebook, 'cb_spec')
                 except ResolverError:
-                    cb_spec = None
-                if cb_spec and cb_spec.display():
-                    value = the_row[column.id()].value()
-                    enumerator = column.type(self._data).enumerator()
-                    try:
-                        v = enumerator.get(value, cb_spec.display())
-                        if v:
-                            message(v.export())
-                    except pytis.data.DataAccessException:
-                        pass
+                    pass
+                else:
+                    if cb_spec.display():
+                        value = the_row[column.id()].value()
+                        try:
+                            v = enumerator.get(value, cb_spec.display())
+                            if v:
+                                message(v.export())
+                        except pytis.data.DataAccessException:
+                            pass
     
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
@@ -1172,27 +1171,25 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     # Metody volané pøímo z callbackových metod
 
-    def _current_codebook_column(self):
+    def _current_codebook_info(self):
         row, col = self._current_cell()
         column = self._columns[col]
         related = column.related_codebook_field()
         if related:
             column = self._view.field(related)
-        return column
+        enumerator = column.type(self._data).enumerator()
+        codebook = column.codebook(self._data)
+        return (column, enumerator, codebook)
         
     def _on_show_cell_codebook(self):
-        column = self._current_codebook_column()
-        codebook = column.codebook(self._data)
-        enumerator = column.type(self._data).enumerator()
+        column, enumerator, codebook = self._current_codebook_info()
         if codebook and enumerator:
             value = self._table.row(self._current_cell()[0])[column.id()]
             select_row = {enumerator.value_column(): value}
             run_form(BrowseForm, codebook, select_row=select_row)
 
     def can_show_cell_codebook(self):
-        column = self._current_codebook_column()
-        codebook = column.codebook(self._data)
-        enumerator = column.type(self._data).enumerator()
+        column, enumerator, codebook = self._current_codebook_info()
         return codebook and enumerator
 
     def _on_context_action(self, action):
