@@ -1,3 +1,9 @@
+2006-04-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (cb_computer): Argument `codebook'
+	pøejmenován na `codebook_field'.  Doplnìn docstring.
+	(cb_computed_field_args): Nová funkce.
+
 2006-04-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/defs.py: Nový modul.
