@@ -120,9 +120,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """
         type = spec.type(data)
         codebook = spec.codebook(data)
-        if spec.width() == 0: 
-            field = HiddenField
-        elif isinstance(type, pytis.data.Date):
+        if isinstance(type, pytis.data.Date):
             field = DateField
         elif isinstance(type, pytis.data.Boolean):
             field = CheckBoxField
@@ -1403,46 +1401,5 @@ class ListField(GenericCodebookField):
     def can_invoke_browse_form(self, **kwargs):
         return not isinstance(current_form(), PopupForm)
 
-class HiddenField(InputField):
-    """Skryté (virtuální) políèko. Políèko pouze dr¾í nastavenou hodnotu."""
-
-    def _init_ctrl(self):
-        pass
-    
-    def _enable(self):
-        pass
-
-    def _disable(self, change_appearance):
-        pass
-    
-    def _set_focus(self):
-        pass
-    
-    def _create_ctrl(self):
-        return None
-
-    def _enable_event_handlers(self):
-        pass
-    
-    def _disable_event_handlers(self):
-        pass
-
-    def _register_skip_navigation_callback(self):
-        pass
-        
-    def _create_label(self):
-        return None
-    
-    def get_value(self):
-        """Vra» døíve ulo¾enou hodnotu políèka."""
-        try:
-            return self._value
-        except:
-            return None
-        
-    def _set_value(self, value):
-        """Nastav hodnotu políèka na 'value'."""
-        self._value = value
-        return True
 
     
