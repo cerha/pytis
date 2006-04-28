@@ -1301,17 +1301,19 @@ class FieldSpec(object):
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
             'cb_spec' ve specifikaci èíselníku.
 
-          related_codebook_field -- identifikátor souvisejíciho èíselníkového
-            políèka.  Pokud je urèeno, musí být odkazované políèko spojeno s
-            èíselníkem (viz také popis argumentu 'codebook').  To se hodí pokud
-            máme v náhledu více sloupeèkù zobrazujících hodnoty ze stejného
-            èíselníku.  V takovém pøípadì bývá vazba na èíselník známá pouze
-            pro jedno z políèek (je definován enumerátor).  Ostatní políèka
-            slou¾í vìt¹inou jen k zobrazování dal¹ích infomrací z tabulky
-            èíselníku.  Provázáním tìchto informaèních políèek s hlavním
-            políèkem dáváme aplikaci navìdomí tuto souvislost a aplikace je
-            potom schopna napøíklad poskytnout pro libovolné z tìchto políèek
-            odkaz pro zobrazení souvisejícího èíselníku apod.
+          related_codebook_field -- specifikace vazby tohoto políèka (pro
+            názornost si jej oznaème A) do èíselníku.  Jde o dvojici
+            identifikátorù sloupcù (øetìzcù).  První identifikátor urèuje
+            políèko B ve stejném defsu, které je spojeno s èíselníkem (jeho
+            datový typ má enumerátor typu DataEnumerator).  Neurèujeme zde tedy
+            pøímo vlastní èíselník políèka A, ale signalizujeme jeho vazbu na
+            èíselník políèka B.  Druhý pøedaný identifikátor oznaèuje políèko C
+            z datového objektu enumerátoru.  Pro políèko A bude automaticky
+            vytvoøen 'computer', který bude hodnotu políèka C z èíselníku
+            získávat a zobrazovat jako hodnotu políèka A.  Pokud je
+            identifikátor C shodny s identifikátorem A, lze jej vypustit a jako
+            hodnotu tohoto argumentu uvést prostý øetìzec - identifikátor
+            èíselníkového políèka B.
             
           allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
             pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
@@ -1398,8 +1400,6 @@ class FieldSpec(object):
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, types.StringType)
         assert display_size is None or isinstance(display_size, types.IntType)
-        assert related_codebook_field is None \
-               or isinstance(related_codebook_field, types.StringType)
         assert isinstance(allow_codebook_insert, types.BooleanType)
         assert codebook_insert_spec is None \
                or isinstance(codebook_insert_spec, types.StringType)
@@ -1420,6 +1420,25 @@ class FieldSpec(object):
                or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
+        if related_codebook_field is not None:
+            if isinstance(related_codebook_field, types.StringType):
+                cb_field, cb_column = (related_codebook_field, id)
+            else:
+                cb_field, cb_column = related_codebook_field
+                assert isinstance(cb_field, types.StringType)
+                assert isinstance(cb_column, types.StringType)
+            assert computer is None
+            def func(row):
+                cbvalue = row[cb_field]
+                if cbvalue.value() is not None:
+                    e = cbvalue.type().enumerator()
+                    value = e.get(cbvalue.value(), cb_column)
+                    if value:
+                        return value.value()
+                return None
+            computer = Computer(func, depends=(cb_field,))
+        else:
+            cb_field = cb_column = None
         self._id = id
         self._label = gettext_(label)
         self._descr = gettext_(descr)
@@ -1437,7 +1456,8 @@ class FieldSpec(object):
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
-        self._related_codebook_field = related_codebook_field
+        self._related_codebook_field = cb_field # id from the same spec
+        self._related_codebook_column = cb_column # id from the codebook spec
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
@@ -1549,6 +1569,10 @@ class FieldSpec(object):
             type = self._type
             assert column is None or \
                    isinstance(type, column.type().__class__)
+        elif self._related_codebook_column:
+            cb_column = data.find_column(self._related_codebook_field)
+            enumerator = cb_column.type().enumerator()
+            type = enumerator.type(self._related_codebook_column)
         else:
             assert column != None, \
                    ('Data type not specified for virtual column ' + \
