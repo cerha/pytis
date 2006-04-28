@@ -4,6 +4,17 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2006-04-28  Tomas Cerha  <cerha@brailcom.org>
+	
+	Políèka s nulovou ¹íøkou v layoutu jsou ignorována (není ji¾ pro
+	nì vytváøena instance HiddenField).  Taková políèka jsou pøi
+	naètení specifikace logována.  Bylo by dobré je z layoutu
+	odstranit, proto¾e tam ji¾ nejsou zapotøebí.  V budocnu bude
+	pravdìpodobnì speciální o¹etøování nulové ¹íøky zcela zru¹eno.
+	Políèka, která nejsou ve formuláøi zobrazená zkrátka nemají v
+	layoutu co dìlat.
+	
 2006-04-25  Tomas Cerha  <cerha@brailcom.org>
 
 	Tøídy DataSpec a Column byly pøesunuty z extensions pøímo do

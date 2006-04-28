@@ -1,3 +1,29 @@
+2006-04-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (EditForm._create_form): Vytváøej políèko
+	pouze pokud není jeho ¹íøka nulová.
+	(EditForm._create_group): Ka¾dý identifikátor nejprve pøeveï na
+	instanci InputField a potom ji¾ pracuj s ní.  Ignoruj
+	identifikátory políèek, která mají nulovou ¹íøku.
+	(EditForm._pack_fields): Nepøevádìj `gap' a `space' na pixely,
+	hodnoty ji¾ jsou v pixelech.  Oèekávej pøímo instance InputField,
+	ne identifikátor.  Neo¹etøuj HiddenField.
+
+	* pytis/form/list.py (ListForm._current_codebook_column):
+	Pøejmenováno na `_current_codebook_info'.
+	(ListForm._current_codebook_info): Vracej trojici column,
+	codebook, enumerator.
+	(ListForm._on_show_cell_codebook) 
+	(ListForm.can_show_cell_codebook) 
+	(ListForm._post_selection_hook): Pou¾ívej `_current_codebook_info'.
+
+	* pytis/form/inputfield.py (InputField.create): Neo¹etøuj nulovou
+	¹íøku políèka.
+	(HiddenField): Tøída zru¹ena.
+
+	* pytis/presentation/spec.py (ViewSpec.recourse_group): Loguj
+	políèka s nulovou ¹íøkou v layoutu.
+
 2006-04-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (DualForm.on_command): Neo¹etøuj pøíkazy

@@ -232,11 +232,15 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
- * Zru¹it HiddenField.
+ * Zru¹it speciální o¹etøování políèek s nulovou ¹íøkou.
 
-   U¾ není potøeba.  Nejprve je v¹ak potøeba ve specifikacích zru¹it v¹echna
-   políèka s width=0.
-   
+   Momentálnì jsou políèka s nulovou ¹íøkou pøítomná v layoutu logována a
+   ignorována.  Správnì by nemìla být nulová ¹íøka nijak speciálnì o¹etøována,
+   ale bude tøeba mít mo¾nost urèit, ¾e nìkteré políèko nemá být zaøazeno do
+   automaticky vytváøeného layoutu.  To v¹ak nic nemìní na tom, ¾e v explicitnì
+   definovaných layoutech nemají neviditelná políèka co dìlat a je tøeba je
+   odtamtud vyhodit.
+
  * S groupingem pracovat jako s celým èíslem.
 
    Problém bude hlavnì ve defsech, kde bývá grouping èasto specifikován jako
@@ -267,13 +271,6 @@ INTERNÍ ZÁLE®ITOSTI:
    Dále by bylo mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu
    a neprokousávat se tak sérií if/elif v on_command.  To by mohlo zùstat jako
    fallback handler, kdy¾ není nalezena metoda odpovídajícího názvu.
-
- * U¾ivatelské pøíkazy.
- 
-   Pøíkazy s handlerem by nemìly být vùbec pou¾ívány.  Namísto nich nech» je
-   vyu¾íván pøíkaz COMMAND_CURRRENT_ROW_ACTION, kde se handler definuje jako
-   souèást argumentù a ne jako argument konstruktoru Command.  U¾ivatel zkrátka
-   nemá co vytváøet vlastní instance tøídy Command.
 
  * Form._original_key by nemìlo být.  _current_key by mìl vracet pùvodní klíè.
 
