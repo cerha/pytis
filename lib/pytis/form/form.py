@@ -1380,16 +1380,17 @@ class EditForm(LookupForm, TitledForm):
         data_columns = [c.id() for c in self._data.columns()]
         for id in self._view.layout().order():
             spec = self._view.field(id)
-            if id in data_columns:
-                acc = self._data.accessible(id, permission)
-            else:
-                acc = True
-            f = InputField.create(self, spec, self._data, guardian=self,
-                                  accessible=acc)
-            f.set_callback(InputField.CALL_SKIP_NAVIGATION, self._navigate)
-            f.set_callback(InputField.CALL_FIELD_CHANGE, self._on_field_edit)
-            f.set_callback(InputField.CALL_COMMIT_FIELD, self._navigate)
-            self._fields.append(f)
+            if spec.width() != 0:
+                if id in data_columns:
+                    acc = self._data.accessible(id, permission)
+                else:
+                    acc = True
+                f = InputField.create(self, spec, self._data, guardian=self,
+                                      accessible=acc)
+                f.set_callback(InputField.CALL_SKIP_NAVIGATION, self._navigate)
+                f.set_callback(InputField.CALL_FIELD_CHANGE,self._on_field_edit)
+                f.set_callback(InputField.CALL_COMMIT_FIELD, self._navigate)
+                self._fields.append(f)
         super_(EditForm)._create_form(self)
 
     def _field(self, id):
@@ -1460,10 +1461,13 @@ class EditForm(LookupForm, TitledForm):
         border = dlg2px(self, group.border())
         border_style = border_style2wx(group.border_style())
         for item in group.items():
-            if (is_anystring(item) and
-                not self._view.field(item).compact() or
-                isinstance(item, Button)):
-                # Field of this id will become a part of current pack
+            if is_string(item):
+                if self._view.field(item).width() == 0:
+                    continue
+                item = self._field(item)
+            if isinstance(item, InputField) and not item.spec().compact() \
+                   or isinstance(item, Button):
+                # This field will become a part of current pack
                 pack.append(item)
                 continue
             if len(pack) != 0:
@@ -1472,18 +1476,13 @@ class EditForm(LookupForm, TitledForm):
                           0, wx.ALIGN_TOP|border_style, border)
                 pack = []
             if isinstance(item, GroupSpec):
-                g = self._create_group(item)
-                sizer.Add(g, 0, wx.ALIGN_TOP|border_style, border)
+                x = self._create_group(item)
             else:
                 # This is a compact field (not a part of the pack)
-                field = self._field(item)
-                w = field.widget()
-                if w is not None:
-                    s = wx.BoxSizer(wx.VERTICAL)
-                    label = field.label()
-                    s.Add(label, 0, wx.ALIGN_LEFT)
-                    s.Add(w)
-                    sizer.Add(s, 0, wx.ALIGN_TOP|border_style, border)
+                x = wx.BoxSizer(wx.VERTICAL)
+                x.Add(item.label(), 0, wx.ALIGN_LEFT)
+                x.Add(item.widget())
+            sizer.Add(x, 0, wx.ALIGN_TOP|border_style, border)
         if len(pack) != 0:
             # pøidej zbylý sled políèek (pokud nìjaký byl)
             sizer.Add(self._pack_fields(pack, space, gap),
@@ -1513,8 +1512,7 @@ class EditForm(LookupForm, TitledForm):
         Vrací: instanci 'wx.FlexGridSizer' naplnìnou políèky a tlaèítky.
 
         """
-        grid = wx.FlexGridSizer(len(items), 2,
-                                  dlg2px(self,gap), dlg2px(self,space))
+        grid = wx.FlexGridSizer(len(items), 2, gap, space)
         for item in items:
             if isinstance(item, Button):
                 button = self._create_button(item)
@@ -1524,14 +1522,12 @@ class EditForm(LookupForm, TitledForm):
                 grid.Add(label, 0, style, 2)
                 grid.Add(button)                
             else:    
-                field = self._field(item)
-                if field.height() > 1:
+                if item.height() > 1:
                     style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
                 else:
                     style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-                if not isinstance(field, HiddenField):
-                    grid.Add(field.label(), 0, style, 2)
-                    grid.Add(field.widget())
+                grid.Add(item.label(), 0, style, 2)
+                grid.Add(item.widget())
         return grid
 
     def _signal_update(self):
