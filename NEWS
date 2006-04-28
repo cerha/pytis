@@ -6,6 +6,8 @@
 
 
 2006-04-28  Tomas Cerha  <cerha@brailcom.org>
+
+        Nová funkce `cb_computed_field_args()' v Pytis extensions umo¾òuje 
 	
 	Políèka s nulovou ¹íøkou v layoutu jsou ignorována (není ji¾ pro
 	nì vytváøena instance HiddenField).  Taková políèka jsou pøi
@@ -14,6 +16,23 @@
 	pravdìpodobnì speciální o¹etøování nulové ¹íøky zcela zru¹eno.
 	Políèka, která nejsou ve formuláøi zobrazená zkrátka nemají v
 	layoutu co dìlat.
+
+2006-04-27  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla zru¹ena funkce `user_cmd()' v extensions a v souvislosti s
+	tím bylo zru¹eno mnoho hackù, které ji¾ koneènì nejsou potøeba.
+
+	Ji¾ nelze v aplikaci definovat vlastní instance pøíkazù (tøídy
+	`Command').  Namísto toho je mo¾né vyu¾ívat pøíkazy
+	`BrowseForm.COMMAND_CONTEXT_ACTION' a
+	`Applicvation.COMMAND_HANDLED_ACTION'.  Druhý zmínìný pøíkaz je
+	nový a slou¾í k vytváøení u¾ivatelem o¹etøených akcí.  Stejnì jako
+	COMMAND_CONTEXT_ACTION umo¾òuje definovat obslu¾nou rutinu jako
+	povinný argument `handler' a funkci `enabled' pro zji¹tìní
+	dostupnosti pøíkazu.  Na rozdíl od handleru COMMAND_CONTEXT_ACTION
+	nedostává handler COMMAND_HANDLED_ACTION ¾ádné argumenty navíc.
+	Pøedány jsou v¹ak v¹echny ostatní argumenty, kromì `handler' a
+	`command', tak¾e lze jeden handler pou¾ít ve více situacích.
 	
 2006-04-25  Tomas Cerha  <cerha@brailcom.org>
 
