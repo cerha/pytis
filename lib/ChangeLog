@@ -23,6 +23,13 @@
 
 	* pytis/presentation/spec.py (ViewSpec.recourse_group): Loguj
 	políèka s nulovou ¹íøkou v layoutu.
+	(FieldSpec.__init__): Pokud je jako `related_codebook_field'
+	pøedána dvojice, je druhý identifikátor pova¾ován za identifikátor
+	sloupce v èíselníku, ze kterého má být brána hodnota tohoto
+	sloupce a je automaticky vytvoøen pøíslu¹ný computer.
+	Aktualizován docstring.
+	(FieldSpec.type): Automaticky doplò typ podle typu sloupce v
+	navázaném èíselníku, pokud byl urèen `related_codebook_field'.
 
 2006-04-27  Tomas Cerha  <cerha@brailcom.org>
 
