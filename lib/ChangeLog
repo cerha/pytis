@@ -1,5 +1,7 @@
 2006-04-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py (DataEnumerator.type): Nová metoda.
+
 	* pytis/form/form.py (EditForm._create_form): Vytváøej políèko
 	pouze pokud není jeho ¹íøka nulová.
 	(EditForm._create_group): Ka¾dý identifikátor nejprve pøeveï na
