@@ -7,7 +7,13 @@
 
 2006-04-28  Tomas Cerha  <cerha@brailcom.org>
 
-        Nová funkce `cb_computed_field_args()' v Pytis extensions umo¾òuje 
+        Pomocí argumentu `related_codebook_field' je nyní mo¾no urèit také
+	sloupec v navázaném èíselníku, ze kterého má být pøevzata hodnota.
+	Díky tomu by funkce `cb_computer()' v Pytis extensions nemìla být
+	ji¾ potøeba.  Její poui¾ití je proto logováno.  Dal¹í výhodou je,
+	¾e není nutné definovat explicitnì typ virtuálních políèek, která
+	mají nastaveno `related_codebook_field'.  Ten je mo¾né také
+	automaticky urèit z èíselníku. 
 	
 	Políèka s nulovou ¹íøkou v layoutu jsou ignorována (není ji¾ pro
 	nì vytváøena instance HiddenField).  Taková políèka jsou pøi
