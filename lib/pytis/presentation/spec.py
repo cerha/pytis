@@ -766,6 +766,8 @@ class ViewSpec(object):
                     elif not isinstance(item, Button):
                         assert self._field_dict.has_key(item), \
                                (_("Unknown field id in 'layout' spec.:"), item)
+                        if self._field_dict[item].width() == 0:
+                            log(OPERATIONAL, "Zero width field in layout:",item)
             recourse_group(layout.group())
             for f in fields:
                 assert isinstance(f, FieldSpec)
