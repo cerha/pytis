@@ -1225,7 +1225,11 @@ class DataEnumerator(MutableEnumerator):
                 column = self._value_column
             result = row[column]
         return result
-    
+
+    def type(self, column):
+        """Vra» datový typ daného sloupce v datovém objektu enumerátoru."""
+        return self._data.find_column(column).type()
+
     def iter(self):
         """Vra» iterátor, iterující pøes v¹echny datové øádky."""
         # TODO: Asi by bylo èist¹í pøedefinovat metodu values a tu potom
