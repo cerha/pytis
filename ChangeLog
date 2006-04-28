@@ -1,3 +1,15 @@
+2006-04-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (JoinType): Nová tøída.
+	(ViewRelation): Nová tøída.
+	(_GsqlViewNG): Nová tøída.
+	(_format_rule): Nepou¾ívej 'table_column_names' a 'colnames'.
+	(_GsqlView.columns): Nová metoda.
+	(_GsqlDefs.__init__): Nový atribut 'self._relation_columns'. 
+	(_GsqlDefs._add_resolved): Pro tabulky a view zjisti jejich
+	sloupce a vlo¾ je do 'self._relation_columns'.
+	(viewng): Nová funkce.
+
 2006-03-10  Pavel Hanak  <hanak@asellus.cz>
 
 	* INSTALL: Added 'requirements' section.

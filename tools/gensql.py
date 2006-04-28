@@ -355,6 +355,58 @@ class ViewColumn(object):
             self.update = 'new.%s' % (alias)
 
 
+class JoinType(object):
+    """Specifikaèní tøída pro typy joinù."""
+    FROM = 'FROM'
+    INNER = 'INNER'
+    LEFT_OUTER = 'LEFT_OUTER'
+    RIGHT_OUTER = 'RIGHT_OUTER'
+    FULL_OUTER = 'FULL_OUTER'
+    CROSS = 'CROSS'
+    TEMPLATES = {FROM: 'FROM %s %s%s',
+                 INNER: 'INNER JOIN %s %s\n ON (%s)',                       
+                 LEFT_OUTER: 'LEFT OUTER JOIN %s %s\n ON (%s)',
+                 RIGHT_OUTER: 'RIGHT OUTER JOIN %s %s\n ON (%s)',
+                 FULL_OUTER: 'FULL OUTER JOIN %s %s\n ON (%s)',
+                 CROSS: 'CROSS JOIN %s %s%s',
+                 }
+    
+class ViewRelation(object):
+    """Úlo¾ná tøída specifikace relace view."""
+    def __init__(self, relname, alias=None,
+                 key_column=None, exclude_columns=(), column_aliases=(),
+                 jointype=JoinType.FROM, condition=None,
+                 insert_columns=(), update_columns=()
+                 ):
+        """Specifikace joinu relace s pøedchozími relacemi.
+        Argumenty:
+
+          relname -- název tabulky nebo view.
+          alias -- alias pro pou¾ití pøi výbìru sloupcù.
+          key_column -- název sloupce, který je pro danou relaci klíèem.
+          exclude_columns -- seznam názvù sloupcù, které nemají být do view
+            zahrnuty. Je-li None, budou pou¾ity v¹echny sloupce ze v¹ech
+            relací (pozor na konflikty jmen!). Pokud je v seznamu
+            znak '*', týká se specifikace v¹ech sloupcù dané relace.
+          columns_aliases -- seznam dvojic (column, alias) uvádìjící
+            alias pro uvedený sloupec.
+          jointype -- typ joinu.
+          condition -- podmínka, která se pou¾ije ve specifikaci ON
+            nebo v pøípadì typu FROM jako WHERE.
+        """
+        assert jointype != JoinType.CROSS or \
+               condition is None
+        self.relname = relname
+        self.alias = alias
+        self.key_column = key_column
+        self.exclude_columns = exclude_columns
+        self.column_aliases = column_aliases
+        self.jointype = jointype
+        self.condition = condition
+        self.insert_columns = insert_columns
+        self.update_columns = update_columns
+
+
 class TableView(object):
     """Úlo¾ná tøída specifikace view asociovaného s tabulkou.
 
@@ -453,7 +505,7 @@ class _GsqlTable(_GsqlSpec):
         self._init_columns = [isinstance(c, str) and c
                               or self._column_column(c)
                               for c in init_columns]
-        
+       
 
     def _full_column_name(self, column):
         if not _gsql_column_table_column(column.name)[0]:
@@ -796,6 +848,276 @@ class _GsqlTable(_GsqlSpec):
         return result
 
 
+class _GsqlViewNG(_GsqlSpec):
+    """Specifikace view (nová)."""
+    
+    _SQL_NAME = 'VIEW'
+    _PGSQL_TYPE = 'v'
+
+    _INSERT = 'INSERT'
+    _UPDATE = 'UPDATE'
+    _DELETE = 'DELETE'
+   
+    def __init__(self, name, relations, include_columns=(),
+                 limit=None,
+                 insert=(), update=(), delete=(),
+                 insert_order=None, update_order=None, delete_order=None,
+                 **kwargs):
+        """Inicializuj instanci.
+        Argumenty:
+
+          name -- jméno view jako SQL string
+          relations -- sekvence instancí tøídy ViewRelation
+          include_columns -- seznam instancí tøídy ViewColumn, které budou
+            pøidány ke sloupcùm z relations (typicky výrazové sloupce).
+          limit -- hodnota limit pro select.  
+          insert -- specifikace akce nad view pøi provedení operace INSERT.
+            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
+            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
+            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
+            provedené navíc po vlo¾ení pøedaných hodnot sloupcù do tabulky
+            prvního sloupce view.
+          update -- specifikace akce nad view pøi provedení operace UPDATE.
+            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
+            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
+            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
+            provedené navíc po updatu pøedaných hodnot sloupcù v tabulce
+            prvního sloupce view.
+          delete -- specifikace akce nad view pøi provedení operace DELETE.
+            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
+            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
+            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
+            provedené navíc po smazání daného záznamu z tabulky prvního sloupce
+            view.
+          insert_order -- None nebo sekvence názvù ViewRelation. Pokud je None,
+            budou defaultní inserty v insert rulu provedeny pro jednotlivé
+            relace v poøadí jejich uvedení, pokud je uvedena sekvence názvù,
+            budou provedeny v uvedeném poøadí. Vynecháním názvu ViewRelation
+            se docílí toho, ¾e insert pro danou relaci nebude vùbec proveden.
+          update_order -- None nebo sekvence názvù ViewRelation. Pokud je None,
+            budou defaultní updaty v update rulu provedeny pro jednotlivé
+            relace v poøadí jejich uvedení, pokud je uvedena sekvence názvù,
+            budou provedeny v uvedeném poøadí. Vynecháním názvu ViewRelation
+            se docílí toho, ¾e update pro danou relaci nebude vùbec proveden.
+          delete_order -- None nebo sekvence názvù ViewRelation. Pokud je None,
+            budou defaultní delety v delete rulu provedeny pro jednotlivé
+            relace v poøadí jejich uvedení, pokud je uvedena sekvence názvù,
+            budou provedeny v uvedeném poøadí. Vynecháním názvu ViewRelation
+            se docílí toho, ¾e delete pro danou relaci nebude vùbec proveden.
+        """
+        assert relations[0].jointype == JoinType.FROM
+        super(ViewNG, self).__init__(name, **kwargs)
+        self._name = name
+        self._relations = relations
+        self._limit = limit
+        self._include_columns = include_columns
+        self._insert = insert
+        self._update = update
+        self._delete = delete
+        self._insert_order = insert_order
+        self._update_order = update_order
+        self._delete_order = delete_order
+        self._columns = None
+
+    def _column_column(self, column):        
+        return _gsql_column_table_column(column.name)[1]
+
+    def _format_column(self, column):
+        if isinstance(column, str):
+            cname = alias = column
+        else:
+            if column.sql:
+                cname = column.sql
+            else:    
+                cname = column.name
+            alias = column.alias
+        if type is None:
+            cname = 'NULL'
+        elif isinstance(type, pytis.data.Type):
+            cname = 'NULL::%s' % _gsql_format_type(type)
+        elif isinstance(type, str):
+            cname = 'NULL::%s' % type
+        return '%s AS %s' % (cname, alias)
+
+    def _format_columns(self):
+        COLSEP = ',\n\t'
+        result = COLSEP.join([self._format_column(c)
+                              for c in self._columns])
+        return result
+
+    def _format_relations(self):
+        def format_relation(relation):
+            jtype = relation.jointype
+            name = relation.relname
+            alias = relation.alias or ''
+            condition = relation.condition or ''
+            return JoinType.TEMPLATES[jtype] % (name, alias, condition)
+        alias = self._relations[0].alias or ''
+        result = 'FROM %s %s\n' % (self._relations[0].relname,
+                                   alias)
+        wherecondition = self._relations[0].condition
+        joins = [format_relation(r) for r in self._relations
+                 if r.jointype != JoinType.FROM]
+        if len(joins) > 0:
+            joinsstr = '\n '.join(joins)
+            result = '%s %s\n' % (result, joinsstr)
+        if wherecondition:
+            result = '%s WHERE %s\n' % (result, wherecondition)
+        return result
+
+    def _format_rule(self, kind):
+        def relations(list_order):
+            if not list_order:
+                rels = self._relations
+            else:
+                rels = []
+                for r in list_order:
+                    rel = find(r, self._relations, lambda x: x.relname)
+                    if rel is not None:
+                        rels.append(rel)
+            return rels 
+        body = []
+        if kind == self._INSERT:
+            command = 'INSERT'
+            suffix = 'ins'
+            for r in relations(self._insert_order):
+                table_alias = r.alias or r.relname
+                column_names = []
+                column_values = []
+                for c in self._columns:
+                    if c.name is None:
+                        continue
+                    rel, col = _gsql_column_table_column(c.name)
+                    if rel == table_alias and col != 'oid' and c.insert:
+                        column_names.append(col)
+                        if c.insert == '':
+                            val = 'new.%s' % (c.alias)
+                        else:    
+                            val = c.insert
+                            column_values.append(val)
+                columns = ',\n      '.join(column_names)
+                values = ',\n      '.join(column_values)
+                if len(column_names) > 0:
+                    body.append('INSERT INTO %s (\n      %s)\n     '
+                                'VALUES (\n      %s)' % (r.relname,
+                                                         columns, values))
+            action = self._insert
+        elif kind == self._UPDATE:
+            command = 'UPDATE'
+            suffix = 'upd'
+            for r in relations(self._update_order):
+                if not r.key_column:
+                    continue
+                table_alias = r.alias or r.relname
+                column_names = []
+                values = []                
+                for c in self._columns:
+                    if c.name is None:
+                        continue
+                    rel, col = _gsql_column_table_column(c.name)
+                    if rel == table_alias and col != 'oid' and c.update:
+                        column_names.append(col)
+                        if c.update == '':
+                            val = 'new.%s' % (c.alias)
+                        else:    
+                            val = c.update                            
+                            values.append(val)
+                settings = ',\n      '.join(['%s = %s' % (c, v)
+                                             for c, v in zip(column_names,
+                                                             values)])
+                condition = '%s = old.%s' % (r.key_column, r.key_column)
+                if len(column_names) > 0:
+                    body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
+                                (r.relname, settings, condition))
+            action = self._update
+        elif kind == self._DELETE:
+            command = 'DELETE'
+            suffix = 'del'
+            for r in relations(self._delete_order):
+                if not r.key_column:
+                    continue
+                condition = '%s = old.%s' % (r.key_column, r.key_column)
+                body.append('DELETE FROM %s \n    WHERE %s' % (r.relname,
+                                                               condition))
+            action = self._delete
+        else:
+            raise ProgramError('Invalid rule specifier', kind)
+        if action is None:
+            body = 'NOTHING'
+        elif is_sequence(action):
+            body = body + list(action)
+            if len(body) == 0:
+                body = 'NOTHING'
+            else:
+                body = '(%s;)' % (';\n    '.join(body))
+        else:
+            body = action
+        return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' + \
+                '    %s;\n\n') % \
+               (self._name, suffix, command, self._name, body)
+
+    def get_columns(self, relation_columns):
+        vcolumns = []
+        aliases = []
+        for r in self._relations:
+            if '*' in r.exclude_columns:
+                continue
+            relation = r.relname
+            alias = r.alias
+            column_aliases = r.column_aliases
+            for c in relation_columns[relation]:
+                if isinstance(c, ViewColumn) and c.alias:
+                    cname = c.alias
+                else:    
+                    cname = self._column_column(c)
+                if cname in r.exclude_columns:
+                    continue
+                calias = assoc(cname, column_aliases)
+                if not calias:
+                    calias = cname
+                else:
+                    calias = calias[1]
+                if calias not in aliases:
+                    aliases.append(calias)
+                    vname = '%s.%s' % (alias, cname)                    
+                    vcolumns.append(ViewColumn(vname, alias=calias))
+                else:
+                    raise ProgramError('Duplicate column name', calias)
+        for c in self._include_columns:
+            vcolumns.append(c)
+        return vcolumns
+
+    def set_columns(self, columns):
+        self._columns = columns
+
+    def columns(self):
+        return self._columns
+
+    def format_select(self):
+        relations = self._format_relations()
+        columns = self._format_columns()
+        select = ' SELECT\n\t%s\n %s' % (columns, relations)
+        if self._limit:
+            select = '%s LIMIT %s' % (select, self._limit)
+        return select
+        
+    def output(self):
+        select = self.format_select()
+        result = 'CREATE OR REPLACE VIEW %s AS\n%s;\n\n' % \
+                 (self._name, select)        
+        for kind in (self._INSERT, self._UPDATE, self._DELETE):
+            result = result + self._format_rule(kind)
+        if self._doc is not None:
+            doc = "COMMENT ON VIEW %s IS '%s';\n" % \
+                  (self._name, _gsql_escape(self._doc))
+            result = result + doc
+        result = result + self._revoke_command()
+        for g in self._grant:
+            result = result + self._grant_command(g)
+        return result
+
+ViewNG = _GsqlViewNG    
+
 class _GsqlView(_GsqlSpec):
     """Specifikace view."""
     
@@ -1042,22 +1364,18 @@ class _GsqlView(_GsqlSpec):
 
     def _format_rule(self, kind):
         table_columns = {}
-        table_column_names = {}
         if not self._complexp:
             for t in self._tables:
                 table_alias = assoc(t, self._table_alias or ())
                 table_alias = table_alias and table_alias[1] or t
                 cols = []
-                colnames = []
                 for c in self._columns:
                     if not is_sequence(c.name[0]):
                         tname = self._column_table(c)
                         cname = self._column_column(c)
                         if tname == table_alias and cname != 'oid':
                             cols.append(c)
-                            colnames.append(c.name)
                 table_columns[t] = cols
-                table_column_names[t] = colnames
         if kind is self._INSERT:
             command = 'INSERT'
             suffix = 'ins'
@@ -1129,6 +1447,9 @@ class _GsqlView(_GsqlSpec):
         return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' + \
                 '    %s;\n\n') % \
                (self._name, suffix, command, self._name, body)
+
+    def columns(self):
+        return self._columns
         
     def output(self, table_keys):
         columns = self._format_complex_columns()
@@ -1472,6 +1793,7 @@ class _GsqlDefs(UserDict.UserDict):
         self._resolved = []
         self._unresolved = []
         self._table_keys = {}
+        self._relation_columns = {}
         
     def _resolvedp(self, spec):
         missing = some(lambda d: d not in self._resolved, spec.depends())
@@ -1504,7 +1826,14 @@ class _GsqlDefs(UserDict.UserDict):
             if name in self[o].depends():
                 i = self._resolved.index(o)
                 break
-        self._resolved.insert(i, name)       
+        self._resolved.insert(i, name)
+        # Pro tables a views updatujeme seznam sloupcù
+        spec = self[name]
+        if isinstance(spec, _GsqlTable) or isinstance(spec, _GsqlView):
+            self._relation_columns[name] = spec.columns()
+        elif isinstance(spec, ViewNG):    
+            self._relation_columns[name] = spec.get_columns(self._relation_columns)
+            spec.set_columns(self._relation_columns[name])
         
     def add(self, spec):
         name = spec.name()
@@ -1529,7 +1858,7 @@ class _GsqlDefs(UserDict.UserDict):
     def gensql(self):
         def process(o):
             if isinstance(self[o], _GsqlView):
-               sys.stdout.write(self[o].output(self._table_keys))
+                sys.stdout.write(self[o].output(self._table_keys))
             else:
                 sys.stdout.write(self[o].output())
             sys.stdout.write('\n')
@@ -1689,6 +2018,11 @@ def table(*args, **kwargs):
 def view(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlView."""
     return _gsql_process(_GsqlView, args, kwargs)
+
+def viewng(*args, **kwargs):
+    """Z hlediska specifikace ekvivalentní volání konstruktoru 'ViewNG."""
+    return _gsql_process(ViewNG, args, kwargs)
+
 
 def function(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlFunction.
