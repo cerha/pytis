@@ -285,7 +285,7 @@ def run_any_form():
         pytis.form.run_form(*result)
                                       
 cmd_run_any_form = (Application.COMMAND_HANDLED_ACTION,
-                    dict(handler=run_any_form, xx='aa'))
+                    dict(handler=run_any_form,))
 
 
 def printdirect(resolver, spec, print_spec, row):
