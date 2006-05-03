@@ -181,8 +181,6 @@ NOVÉ VLASTNOSTI:
 
  * Formuláøový dialog.
 
- * Nápovìda (pro specifikaci a také zvlá¹» pro ka¾dé políèko).
-
  * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
 
  * Zru¹it 'allow_codebook_insert'???
@@ -190,7 +188,7 @@ NOVÉ VLASTNOSTI:
    Vlo¾ení nové hodnoty do èíselníku by mohlo být provádìno pøes pøíkaz z popup
    menu èíselníkového políèka (pøes pravé tlaèítko my¹i).  To by mohlo být
    povoleno pro v¹echny èíselníky a tlaèítko "+" ve formuláøi by tak bylo
-   zbyteèné.
+   zbyteèné.  Problém je, ¾e popup menu je nìkdy pøebito popup menu GTK...
    
 
 INTERNÍ ZÁLE®ITOSTI:
