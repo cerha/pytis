@@ -152,15 +152,19 @@ class Button(object):
         Argumenty:
 
           label -- nápis tlaèítka jako string.
+          
           handler -- funkce jednoho argumentu, kterým je instance
             'PresentedRow' obsahující aktuální hodnoty políèek formuláøe.  Tato
             funkce je vyvolána pøi stisku tlaèítka.
+            
           width -- ¹íøka (poèet znakù).  Implicitnì je ¹íøka nastavena
             automaticky podle ¹íøky nápisu ('label'), ale pokud je tento
             argument specifikován, bude ¹íøka nastavena podle dané celoèíselné
             hodnoty.
+            
           tooltip -- text, který se zobrazí jako bublinová nápovìda pro toto
             tlaèítko.
+            
           active_in_popup_form -- Pokud je zde specifikována pravdivá hodnota,
             nebude tlaèítko aktivní v popup (modálních) formuláøích.  To je
             urèeno zejména pro tlaèítka, která mají vyvolat otevøení nového
@@ -408,16 +412,22 @@ class GroupSpec(object):
           items -- obsah této skupiny jako sekvence vnoøených skupin (instancí
             'GroupSpec'), nebo pøímo vstupních políèek urèených svým
             identifikátorem (øetìzec).
+            
           orientation -- orientace skládání obsa¾ených prvkù; konstanta
             tøídy 'Orientation'.
+            
           label -- název skupiny uvedený v záhlaví rámeèku - pokud není None,
             skupina bude orámována; string;
+            
           gap -- velikost vertikální mezery mezi jednotlivými políèky
             v dialog units; integer; 1 du = 1/4 ¹íøky bì¾ného znaku.
             Relevantní pouze pokud 'items' obsahuje pøímo políèka.
+            
           space -- velikost mezery mezi políèkem a jeho labelem v du; integer;
             Relevantní pouze pokud 'items' obsahuje pøímo políèka.
+            
           border -- velikost mezery kolem celé skupiny v du; integer;
+          
           border_style -- styl orámování; mezera je implicitnì ze v¹ech stran,
             mù¾e v¹ak být pouze vpravo, vlevo, nahoøe, nebo dole; Konstanta
             tøídy 'BorderStyle'.
@@ -532,10 +542,13 @@ class LayoutSpec(object):
         """Inicializace a doplnìní defaultních hodnot atributù.
 
         Argumenty:
+        
           caption -- nadpis editaèního formuláøe jednoho záznamu
+          
           group -- specifikace skupiny políèek nejvý¹¹í úrovnì; instance
             'GroupSpec'. Tato skupina mù¾e obsahovat dal¹í vnoøené skupiny
             (viz dokumentace tøídy 'GroupSpec').
+            
           order -- specifikace poøadí procházení mezi políèky jako sekvence
             øatìzcù - identifikátorù políèek.  Pokud není None, je poøadí
             procházení políèek urèeno poøadím jejich identifikátorù v této
@@ -938,29 +951,37 @@ class DualSpec(object):
         Argumenty:
 
           main_name -- jméno specifikace hlavního formuláøe; øetìzec.
+
           side_name -- jméno specifikace vedlej¹ího formuláøe; øetìzec.
+
           binding_column -- identifikátor vazebního sloupce.  Tento sloupec
             bude pou¾it pro filtrování vedlej¹ího formuláøe pøi pohybu po
             záznamech v hlavním formuláøi.  Filtrovací podmínka je implicitnì
             rovnost hodnot zvolených sloupcù hlavního a vedlej¹ího formuláøe.
+
           side_binding_column -- identifikátor vazebního sloupce ve vedlej¹ím
             formuláøi, pokud je jiný, ne¾ `binding_column'.  Výchozí hodnota
             `None' znamená, ¾e název vazebního sloupce je ve vedlej¹ím
             formuláøi stejný, jako v hlavním formuláøi.
+            
           side_columns -- sekvence identifikátorù sloupcù vedlej¹ího formuláøe.
             Pokud je None, budou ve vedlej¹ím formuláøi zobrazeny v¹echny
             sloupce dané jeho specifikací.
+            
           hide_binding_column -- vazební sloupec mù¾e být (a implicitnì je)
             ve vedlej¹ím formuláøi vypu¹tìn (jeho hodnota je pro v¹echny
             vyfiltrované záznamy shodná -- odpovídá hodnotì z hlavního
             formuláøe).
+            
           append_condition -- None nebo funkce jednoho argumentu, kterým je
             aktuální øádek hlavního formuláøe. V tomto pøípadì musí funkce
             vrátit instanci Operator, která se pøipojí k implicitní
             podmínce provazující vazební sloupce.
+            
           title -- titulek hlavního formuláøe jako øetìzec.  Pokud není
             None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
             ze specifikace hlavního formuláøe.
+            
           side_title -- titulek vedlej¹ího formuláøe jako øetìzec.  Pokud není
             None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
             ze specifikace vedlej¹ího formuláøe.
@@ -1103,6 +1124,7 @@ class Computer(object):
           function -- libovolná funkce vracející hodnotu kompatibilní s vnitøní
             hodnotou datového typu odpovídajícího sloupci, pro který je
             pou¾ita.
+            
           depends -- seznam sloupcù, na kterých dané poèítané políèko závisí.
             Mìl by obsahovat v¹echny sloupce, které poèítací funkce pou¾ívá pro
             urèení výsledné hodnoty.  Hodnota potom bude pøepoèítána pouze
@@ -1148,14 +1170,18 @@ class CodebookSpec(object):
             v èíselníkovém formuláøi (tøída 'CodebookForm').  Pokud je 'None',
             bude èíselník zobrazovat v¹echny sloupce ze specifikace dané
             tabulky.
+            
           sorting -- sekvence identifikátorù sloupcù, podle kterých mají být
             záznamy èíselníkového formuláøe setøídìny.  Pokud je 'None',
             bude pou¾ito tøídìní z ViewSpec.
+            
           display -- pokud není 'None', bude èíselníkové políèko vybaveno
             displejem, (viz 'CodebookField').  Hodnotou je identifikátor
             sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
             musí být obsa¾en v datové specifikaci èíselníku).
+            
           display_size -- ¹íøka políèka displeje ve znacích
+          
           begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
             spustit automatické inkrementální vyhledávání.
           
@@ -1668,17 +1694,22 @@ class DataSpec(pytis.data.DataFactory):
         Argumenty:
 
           table -- název datové tabulky jako øetìzec.
+          
           columns -- sekvence specifikací sloupcù jako instancí 'Column'.
             Jedná se v¾dy o sloupce z tabulky 'table'.
+            
           key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
             identifikátorem musí být pøítomný v 'columns'.
+            
           oid -- seznam názvù OID sloupcù (tuple).  Pokud je None (výchozí
             hodnota), bude doplnìn jeden sloupec s názvem 'oid'.  Pro v¹echny
             uvedené sloupce budou automaticky pøidány pøíslu¹né vazby.  Pokud
             tabulka nemá ¾ádný mít ¾ádný oid sloupec, uvedeme prázdný seznam.
             Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
+            
           access_rights -- práva jako instance 'pytis.data.AccessRights' nebo
             None, pokud mají být práva neomezená.
+            
           data_class_ -- tøída datového objektu, odvozená od `Data'.
             
         Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
@@ -1764,17 +1795,21 @@ class Column(object):
         
           id -- identifikátor sloupce (øetìzec).  Pod tímto identifikátorem
             bude sloubec vystupovat v aplikaci.
+            
           column -- název databázového sloupce (øetìzec nebo None).  Implicitnì
             je doplnìna hodnota 'id', tak¾e pokud se název sloupce
             shoduje s identifikátorem, není jej tøeba definovat.
+            
           enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
             této specifikace bude získán datový objekt a pou¾it jako enumerátor
             hodnot datového typu.
+            
           type -- explicitní urèení datového typu sloupce (instance
             'pytis.data.Type', nebo None).  Tento argument by mìl být pou¾it
             pouze pokud chceme urèit vlastní (odvozený) datový typ, nikoliv
             pokud chceme mìnit parametry standardních typù.  Ty je mo¾no
             nastavit pøedáním klíèovách argumentù (viz ní¾e).
+            
           **kwargs -- pokud jsou uvedeny jakékoliv dal¹í klíèové argumenty,
             budou tyto pøedány konstruktoru datového typu sloupce.  Tento
             postup by mìl být preferován pøed explicitní definicí instance typu
