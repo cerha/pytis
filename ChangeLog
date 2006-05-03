@@ -1,3 +1,15 @@
+2006-05-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (SelectRelation): Nová tøída (pøejmenování
+	pùvodní tøídy ViewRelation).
+	(SelectRelation.__init__): Argument 'relname' pøejmenován na
+	'relation'.
+	(Select): Nová tøída.
+	(Select.get_columns): Pøepsáno se zohlednìním subselectù.
+	(Select.format_select): Nový argument 'indent'.
+	(_GsqlViewNG): Odstranìny argumenty a metody, které byly pøesunuty
+	do nové tøídy Select.
+
 2006-04-28  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (JoinType): Nová tøída.
