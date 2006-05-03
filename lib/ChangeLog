@@ -1,3 +1,8 @@
+2006-05-03  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py (RecordForm._on_import_interactive):
+	Oprava nahrazení tabulátoru v separátoru.
+
 2006-05-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py: Kosmetické úpravy.

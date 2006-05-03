@@ -828,7 +828,7 @@ class RecordForm(Form):
             if separator is not None:
                 message(_("Nebyl zadán oddìlovaè."), beep_=True)
             return False
-        separator.replace('\\t', '\t')
+        separator = separator.replace('\\t', '\t')
         while 1:
             filename = run_dialog(FileDialog)
             if filename is None:
