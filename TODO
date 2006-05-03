@@ -112,7 +112,7 @@ NOVÉ VLASTNOSTI:
 
  * Pou¾ití externího PS prohlí¾eèe.
 
- * Správa pøístupových práv pøes databázi a formuláø, nikoly pøes specifikace.
+ * Správa pøístupových práv pøes databázi a formuláø, nikoli pøes specifikace.
 
  * Menu na pravé tlaèítko ve vstupních políèkách versus gtk menu.
 
@@ -241,7 +241,7 @@ INTERNÍ ZÁLE®ITOSTI:
 
  * S groupingem pracovat jako s celým èíslem.
 
-   Problém bude hlavnì ve defsech, kde bývá grouping èasto specifikován jako
+   Problém bude hlavnì v defsech, kde bývá grouping èasto specifikován jako
    název sloupce.
    
  * Zru¹it pøenastavování argumentù v metodì `Application.run_form'.

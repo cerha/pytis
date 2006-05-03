@@ -1,3 +1,7 @@
+2006-05-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py: Kosmetické úpravy.
+
 2006-04-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/types_.py (DataEnumerator.type): Nová metoda.
