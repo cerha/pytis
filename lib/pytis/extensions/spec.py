@@ -127,6 +127,8 @@ def cb_computer(codebook_field, column, default=None):
     """
     assert isinstance(codebook_field, types.StringType)
     assert isinstance(column, types.StringType)
+    log(OPERATIONAL, "Pou¾ita potlaèená funkce cb_computer. "
+        "Pou¾ijte radìji related_codebook_field!", (codebook_field, column))
     def func(row):
         cbvalue = row[codebook_field]
         if cbvalue.value() is None:
@@ -135,44 +137,8 @@ def cb_computer(codebook_field, column, default=None):
             value = cb2colvalue(cbvalue, column=column).value()
         return value
     return Computer(func, depends=(codebook_field,))
-
-def cb_computed_field_args(codebook_field, column, default=None, virtual=False):
-    """Vra» slovník argumentù pro FieldSpec políèka dopoèítávaného z èíselníku.
-
-    Argumenty této funkce jsou shodné jako u funkce 'cb_computer()'.  Navíc je
-    zde pouze argument 'virtual'.  Pokud je jeho hodnota pravdivá, jde o
-    virtuální políèko (k nìmu¾ neexistuje datový sloupec), a k vráceným
-    argumentùm bude automaticky pøidán také argument 'type_'.  Jako typ je v¹ak
-    v¾dy doplòen typ 'pytis.data.String()', tak¾e pokud je sloupec ve
-    skuteènosti jiného typu, je nutné argument 'type_' definovat explicitnì.
-    Ve vìt¹inì pøípadù v¹ak toto zjednodu¹ení postaèuje.
-
-    Vrací slovník argumentù pro 'FieldSpec' políèka.
-
-    Pøíklad pou¾ití:
-
-      FieldSpec('address', **cb_computed_field_args('customer', 'address'))
-
-    Toto je stejné jako:
     
-      FieldSpec('address',
-                computer=cb_computer('customer', 'address'),
-                related_codebook_field='customer')
-                
-    Pokud bychom pøidali je¹tì 'virtual=True', dostaneme:
-    
-      FieldSpec('address',
-                computer=cb_computer('customer', 'address'),
-                related_codebook_field='customer'
-                type_=pytis.data.String())
-    
-    """
-    args = {'computer': cb_computer(codebook_field, column, default=default),
-            'related_codebook_field': codebook_field}
-    if virtual:
-        args['type_'] = pytis.data.String()
-    return args
-    
+
 def cb2colvalue(value, column=None):
     """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
     
