@@ -4,7 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: Opravena nesprávná konverze tebelátoru v separátoru
+	záznamù pøi interaktivním vkládání série záznamù z CSV.
+	
 2006-04-28  Tomas Cerha  <cerha@brailcom.org>
 
         Pomocí argumentu `related_codebook_field' je nyní mo¾no urèit také
