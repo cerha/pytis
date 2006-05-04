@@ -831,8 +831,7 @@ class CheckBoxField(Unlabeled, InputField):
         assert value in ('T','F',''), ('Invalid argument', value)
         wxvalue = value == 'T' and True or False
         self._ctrl.SetValue(wxvalue)
-        # _on_change musíme volat ruènì, proto¾e SetValue() nevyvolá
-        # EVT_CHECKBOX.  TODO: Mo¾ná je to potøeba i u EnumerationField.
+        # _on_change musíme volat ruènì, proto¾e SetValue() nevyvolá událost.
         self._on_change()
         return True
 
@@ -858,7 +857,11 @@ class EnumerationField(InputField):
 
     def _set_value(self, value):
         assert isinstance(value, types.StringTypes), ('Invalid value', value)
-        return self._ctrl.SetStringSelection(value)
+        result = self._ctrl.SetStringSelection(value)
+        # _on_change musíme volat ruènì, proto¾e SetStringSelection() nevyvolá
+        # událost.
+        self._on_change()
+        return result
 
 
 class ChoiceField(EnumerationField):
