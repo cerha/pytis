@@ -270,8 +270,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if command == self.COMMAND_RESET_FIELD:
             self.reset()
             return True
-        elif command == self.COMMAND_COMMIT_FIELD:
-            return self._run_callback(self.CALL_COMMIT_FIELD, ())
         elif command == self.COMMAND_LEAVE_FIELD:
             return self._run_callback(self.CALL_LEAVE_FIELD, ())
         return False
@@ -668,7 +666,11 @@ class TextField(InputField):
                   range(ord('A'),ord('Z')+1))
 
     def _create_ctrl(self):
-        control = wx.TextCtrl(self._parent, -1, '', style=self._style())
+        style = wx.TE_PROCESS_ENTER
+        if self.height() > 1:
+            style |= wx.TE_MULTILINE
+        control = wx.TextCtrl(self._parent, -1, '', style=style)
+        wxid = control.GetId()
         if not self._inline:
             width, height = self.width(), self.height()
             size = dlg2px(control, 4*(width+1)+2, 8*height+4.5)
@@ -677,47 +679,27 @@ class TextField(InputField):
         maxlen = self._maxlen()
         if maxlen is not None:
             control.SetMaxLength(maxlen)
-            wx_callback(wx.EVT_TEXT_MAXLEN, control, control.GetId(),
-                        self._on_maxlen)
+            wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid, self._on_maxlen)
         filter = self._filter()
         control.SetValidator(_TextValidator(control, filter=filter))
-        wx_callback(wx.EVT_TEXT, control, control.GetId(), self._on_change)
-        if self.height() > 1: # For multiline fields add a custom key handler
-            wx_callback(wx.EVT_KEY_DOWN, control,
-                        lambda e: self._on_key_down_multiline(e, control))
+        wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
+        wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
         return control
     
     def _maxlen(self):
         """Vra» maximální délku zadaného textu."""
         return None
 
-    def _style(self):
-        # Return the style for created text control (to be redefined).
-        style = 0 #wx.NO_BORDER
-        if self.height() > 1:
-            style = style | wx.TE_MULTILINE
-        return style
-
-    def _on_set_focus(self, event):
-        super_(TextField)._on_set_focus(self, event)
-        if self._enabled:
-            event.GetEventObject().SetSelection(-1, -1)
-        
     def _on_maxlen(self, event):
         # User tried to enter more text into the control than the limit
         beep()
         message(_("Pøekroèena maximální délka."))
     
-    def _on_key_down_multiline(self, event, control):
-        # Used only for multiline fields,
-        if event.GetKeyCode() == wx.WXK_RETURN and self._enabled:
-            control.WriteText("\n");
-            self._on_change()
-            return True
-        else:
-            # Other keys are processed in a standard way.
+    def _on_enter_key(self, event):
+        if self.height() > 1:
             event.Skip()
-            return True
+        else:
+            self._run_callback(self.CALL_COMMIT_FIELD, ())
 
     def _post_process_func(self):
         """Vra» funkci odpovídající specifikaci postprocessingu políèka.
@@ -780,8 +762,8 @@ class TextField(InputField):
 
     def _post_process(self):
         f = self._post_process_func()
-        oldval = self.get_value()
         if f:
+            oldval = self.get_value()
             args = (oldval,)
             val = f(*args)
             if val != oldval:
@@ -807,11 +789,10 @@ class StringField(TextField):
     def _maxlen(self):
         return self._type.maxlen()
 
+    
 class NumericField(TextField):
     """Textové vstupní políèko pro data typu 'pytis.data.Number'."""
-
-    def _style(self):
-        return super(NumericField, self)._style()#| wx.TE_RIGHT
+    pass
 
 
 class CheckBoxField(Unlabeled, InputField):
@@ -850,6 +831,9 @@ class CheckBoxField(Unlabeled, InputField):
         assert value in ('T','F',''), ('Invalid argument', value)
         wxvalue = value == 'T' and True or False
         self._ctrl.SetValue(wxvalue)
+        # _on_change musíme volat ruènì, proto¾e SetValue() nevyvolá
+        # EVT_CHECKBOX.  TODO: Mo¾ná je to potøeba i u EnumerationField.
+        self._on_change()
         return True
 
 
@@ -1061,18 +1045,11 @@ class ColorSelectionField(Invocable, TextField):
                                                   size=(height, height))
         return button
 
-    #def _on_button_paint(self, event):
-    #    print "======="
-    #    b = self._invocation_button
-    #    dc = wx.PaintDC(b)
-    #    size = GetClientSize(b)
-    #    dc.SetBrush(wx.Brush(self.get_value(), wx.SOLID))
-    #    dc.DrawRect(0, 0, 10, 10) #size.GetWidth(), size.GetHeight()
-    
     def _set_value(self, value):
         self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
 
+    
 class GenericCodebookField(InputField):
     """Spoleèná nadtøída èíselníkových políèek."""
 
