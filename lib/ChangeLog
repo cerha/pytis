@@ -1,3 +1,20 @@
+2006-05-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py: Zru¹en pøíkaz `COMMAND_COMMIT_FIELD'.
+	(DEFAULT_KEYMAP): Zru¹eno pøiøazení kláves pro `COMMAND_COMMIT_FIELD'.
+
+	* pytis/form/inputfield.py (InputField.on_command): Neo¹etøuj
+	`COMMAND_COMMIT_FIELD'.
+	(TextField._create_ctrl): Nepou¾ívej `self._style()'.  Style
+	nastavuj pøímo zde a pøidej `wx.TE_PROCESS_ENTER'.  Neo¹etøuj
+	`wx.EVT_KEY_DOWN', ale `wx.EVT_TEXT_ENTER' a to u v¹ech políèek.
+	(TextField._style): Metoda zru¹ena.
+	(TextField._on_set_focus): Metoda zru¹ena.
+	(TextField._on_key_down_multiline): Metoda zru¹ena.
+	(TextField._on_enter_key): Nová metoda.
+	(NumericField._style): Metoda zru¹ena.
+	(CheckBoxField._set_value): Volej zde `self._on_change()'.
+
 2006-05-03  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/form.py (RecordForm._on_import_interactive):
