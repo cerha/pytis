@@ -1,3 +1,9 @@
+2006-05-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (cb_computed_field_args): Funkce
+	zru¹ena.
+	(cb_computer): Loguj pou¾ití.
+
 2006-05-02  Ales Bublik  <bublik@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (cmd_run_any_form): Argument xx
