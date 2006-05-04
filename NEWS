@@ -6,6 +6,15 @@
 
 2006-05-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: Opraveno nekorektní chování políèek typu CheckBox, kde
+	nedocházelo k vyvolání callbacku pøi programovém nastavení
+	hodnoty, èím¾ se pøedvyplnìné hodnoty ve formuláøi sice zobrazily
+	jakoby správnì, ale do ukládaného záznamu se ji¾ nedostaly..
+	
+	* BUGFIX: Opravena reakce na ENTER ve víceøádkových políèkách.
+	Ten nefungoval, proto¾e byl pøebit pøíkazem pro posun mezi políèky
+	formuláøe.
+	
 	* BUGFIX: Opravena nesprávná konverze tebelátoru v separátoru
 	záznamù pøi interaktivním vkládání série záznamù z CSV.
 	
