@@ -261,7 +261,6 @@ class PresentedRow(object):
         return value
 
     def __setitem__(self, key, value):
-        print "====", key, value
         assert isinstance(value, pytis.data.Value)
         column = self._columns[key]
         assert value.type() == column.type, \

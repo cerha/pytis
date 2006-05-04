@@ -1,5 +1,8 @@
 2006-05-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (RecordForm._on_import_interactive):
+	Neprovádìj konverzi podtr¾ítek n názvech políèek.
+
 	* pytis/form/commands_.py: Zru¹en pøíkaz `COMMAND_COMMIT_FIELD'.
 	(DEFAULT_KEYMAP): Zru¹eno pøiøazení kláves pro `COMMAND_COMMIT_FIELD'.
 
@@ -14,6 +17,8 @@
 	(TextField._on_enter_key): Nová metoda.
 	(NumericField._style): Metoda zru¹ena.
 	(CheckBoxField._set_value): Volej zde `self._on_change()'.
+	(EnumerationField._set_value): Volej zde `self._on_change()'.
+	
 
 2006-05-03  Pavel Hanak  <hanak@asellus.cz>
 
