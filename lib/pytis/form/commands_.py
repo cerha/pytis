@@ -155,8 +155,8 @@ Command(PrintForm, 'PREVIOUS_PAGE',
         "Pøechod na pøedchozí stránku tiskového náhledu")
 Command(InputField, 'RESET_FIELD',
         "Vrácení pùvodní hodnoty vstupního políèka")
-Command(InputField, 'COMMIT_FIELD',
-        "Úspì¹né ukonèení editace vstupního políèka")
+#Command(InputField, 'COMMIT_FIELD',
+#        "Úspì¹né ukonèení editace vstupního políèka")
 Command(InputField, 'LEAVE_FIELD',
         "Odchod z editace vstupního políèka")
 Command(Invocable, 'INVOKE_SELECTION',
@@ -233,7 +233,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Tab',    DualForm.COMMAND_OTHER_FORM),
     ('Next',        PrintForm.COMMAND_NEXT_PAGE),
     ('Prior',       PrintForm.COMMAND_PREVIOUS_PAGE),
-    ('Enter',       InputField.COMMAND_COMMIT_FIELD),
+    #('Enter',       InputField.COMMAND_COMMIT_FIELD),
     ('Escape',      InputField.COMMAND_LEAVE_FIELD),
     ('F2',          Invocable.COMMAND_INVOKE_SELECTION),
     ('Ctrl-F2',     Invocable.COMMAND_INVOKE_SELECTION(alternate=True)),
