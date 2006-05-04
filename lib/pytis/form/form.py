@@ -816,10 +816,9 @@ class RecordForm(Form):
                 "První øádek obsahuje identifikátory sloupcù a urèuje tedy "
                 "význam a poøadí hodnot v následujících (datových) øádcích.\n\n"
                 "Identifikátory jednotlivých sloupcù jsou následující:\n\n" + \
-                "\n".join(["|*%s*|=%s=|" % \
-                           (c.column_label(), c.id().replace('_', '!_'))
-                           for c in [self._view.field(id)
-                                     for id in self._view.layout().order()]]))
+                "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
+                           [self._view.field(id)
+                            for id in self._view.layout().order()]]))
         separator = run_dialog(InputDialog, 
                                title=_("Hromadné vkládání dat"),
                                report=msg, report_format=TextFormat.WIKI,
