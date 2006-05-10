@@ -1142,6 +1142,10 @@ def current_form():
     """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje."""
     return _application.current_form()
 
+def top_window():
+    """Vra» aktivní okno aplikace (formuláø, nebo dialog)."""
+    return _application.top_window()
+
 def resolver():
     """Vra» resolver aplikace získaný pøes 'Application.resolver()'."""
     return _application.resolver()
