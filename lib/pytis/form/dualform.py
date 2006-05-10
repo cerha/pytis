@@ -69,8 +69,7 @@ class DualForm(Form):
     DESCR = _("duální formuláø")
     
     def _get_command_handler_instance(cls):
-        print "****", cls
-        return pytis.form.application._application.top_window()
+        return top_window()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def __init__(self, *args, **kwargs):
