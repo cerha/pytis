@@ -364,11 +364,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
     
     def _update_window_menu(self):
         def wmitem(i, form):
-            return RadioItem("&%d. %s" % (i, self._form_menu_item_title(form)),
+            return CheckItem("&%d. %s" % (i, self._form_menu_item_title(form)),
                              help=_('Vyzvednout okno formuláøe "%s" (%s/%s)') %\
                              (form.title(),form.__class__.__name__,form.name()),
                              command=Application.COMMAND_RAISE_FORM,
-                             state=lambda a: a.top_window() is form,
+                             state=lambda : top_window() is form,
                              args={'form': form})
         mb = self._menubar
         menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
