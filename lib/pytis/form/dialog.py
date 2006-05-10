@@ -49,9 +49,9 @@ class Dialog(KeyHandler, CommandHandler, object):
     Tato tøída pouze definuje abstraktní metodu 'run()'.
     
     """
-    def get_command_handler_instance(cls, application):
-        return application.top_window()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
+    def _get_command_handler_instance(cls):
+        return pytis.form.application._application.top_window()
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def __init__(self, parent):
         self._parent = parent
@@ -232,10 +232,9 @@ class GenericDialog(Dialog):
     def _end_modal(self, result):
         self._finish_dialog()
         self._dialog.EndModal(result)
-        return True
     
     def _on_button(self, event):
-        return self._end_modal(event.GetId())
+        self._end_modal(event.GetId())
     
     def _button_label(self, id):
         # Vra» nápis tlaèítka s daným id.
@@ -264,7 +263,7 @@ class GenericDialog(Dialog):
         return self._dialog.ShowModal()
 
     def _close_dialog(self):
-        return self._end_modal(wx.ID_CANCEL)
+        self._end_modal(wx.ID_CANCEL)
 
     def _commit_dialog(self, force=False):
         if force:
@@ -280,17 +279,17 @@ class GenericDialog(Dialog):
             self._end_modal(widget.GetId())
         else:
             self._navigate()
-        return True
         
     def on_command(self, command, **kwargs):
         if command == Dialog.COMMAND_CLOSE_DIALOG:
-            return self._close_dialog()
-        if command == Dialog.COMMAND_COMMIT_DIALOG:
-            return self._commit_dialog(**kwargs)
-        if command == Dialog.COMMAND_HELP:
+            self._close_dialog()
+        elif command == Dialog.COMMAND_COMMIT_DIALOG:
+            self._commit_dialog(**kwargs)
+        elif command == Dialog.COMMAND_HELP:
             help(topic=self._HELP_TOPIC)
-            return True
-        return False
+        else:
+            return False
+        return True
 
     def run(self):
         """Zobraz dialog a po jeho ukonèení vra» jeho návratovou hodnotu.
@@ -1277,7 +1276,8 @@ class FileDialog(Dialog):
 
     def on_command(self, command, **kwargs):
         if command == Dialog.COMMAND_CLOSE_DIALOG:
-            return self._end_modal(wx.ID_CANCEL)
+            self._end_modal(wx.ID_CANCEL)
+            return True
         return False
 
     def run(self):
