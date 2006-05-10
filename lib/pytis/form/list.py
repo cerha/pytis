@@ -1220,7 +1220,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _dualform(self):
         # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
-        top = application._application.top_window()
+        top = top_window()
         if isinstance(top, DualForm) and \
                self in (top.active_form(), top.inactive_form()):
             return top
