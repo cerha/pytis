@@ -1001,6 +1001,17 @@ class MItem(_TitledMenuObject):
         self._hotkey = xtuple(hotkey)
         super(MItem, self).__init__(title)
 
+    def _on_ui_event(self, event):
+        event.Enable(self._command.enabled(**self._args))
+        
+    def create(self, parent, parent_menu):
+        item = wx.MenuItem(parent_menu, -1, self._title, self._help,
+                           kind=self._WX_KIND)
+        wx_callback(wx.EVT_MENU, parent, item.GetId(),
+                    lambda e: self._command.invoke(**self._args))
+        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
+        return item
+        
     def set_hotkey(self, hotkey):
         """Nastav dodateènì klávesovou zkratku polo¾ky menu."""
         assert hotkey is None or isinstance(hotkey, (types.StringTypes,
@@ -1008,15 +1019,6 @@ class MItem(_TitledMenuObject):
                                                      types.ListType))
         self._hotkey = xtuple(hotkey)
     
-    def create(self, parent, parent_menu):
-        item = wx.MenuItem(parent_menu, -1, self._title, self._help,
-                           kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, item.GetId(),
-                    lambda e: self._command.invoke(**self._args))
-        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(),
-                    lambda e: e.Enable(self._command.enabled(**self._args)))
-        return item
-        
     def command(self):
         """Vra» command zadaný v konstruktoru."""
         return self._command
@@ -1043,9 +1045,8 @@ class CheckItem(MItem):
 
         Arguemnty:
 
-          state -- funkce jednoho argumentu (instance 'Application' právì
-            bì¾ící aplikace), která vrací True/False podle toho, zda je stav této
-            polo¾ky 'zapnuto', nebo 'vypnuto'.
+          state -- funkce (volaná bez argumentù), která vrací True/False podle
+            toho, zda je stav této polo¾ky 'zapnuto', nebo 'vypnuto'.
 
           V¹echny ostatní arguemnty jsou sthodné jako v konstruktoru pøedka.
 
@@ -1055,7 +1056,7 @@ class CheckItem(MItem):
         super(CheckItem, self).__init__(title, command, **kwargs)
 
     def state(self):
-        return self._state(pytis.form.application._application)
+        return self._state()
         
     def _on_ui_event(self, event):
         event.Check(self.state())
