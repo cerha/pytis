@@ -325,10 +325,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self.editable = True
                 e = _grid.InputFieldCellEditor(self._parent, self._table, self,
                                                c, self._data, registration)
-                e.set_callback(InputField.CALL_LEAVE_FIELD,
-                               self._on_cell_rollback)
-                e.set_callback(InputField.CALL_COMMIT_FIELD, 
-                               self._on_cell_commit)
+                # TODO:
+                #e.set_callback(InputField.CALL_FIELD_CHANGE,
+                #               ...)
                 self._editors.append(e)
                 attr.SetEditor(e)
             else:
@@ -472,7 +471,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _finish_editing(self, question=None, row=None):
         # Vrací pravdu, právì kdy¾ nejsou akce blokovány editací øádku.
-        
         table = self._table
         editing = table.editing()
         if not editing:
@@ -593,6 +591,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             g.SetSize(g.GetSize())
             g.Refresh()
             self._remember_column_size(col)
+            if g.IsCellEditControlEnabled():
+                row = g.GetGridCursorRow()
+                self._current_editor.SetSize(g.CellToRect(row, col))
 
     def _move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
@@ -973,7 +974,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._init_column_widths() 
         self._update_grid(soft_reset_columns=True)
         super(ListForm, self)._on_reload_form_state()
-
+        
+    def can_reload_form_state(self):
+        return not self._table.editing()
+        
     def _on_right_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         selected = len(self._selected_rows())
@@ -1068,85 +1072,93 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def can_line_rollback(self):
         return self._is_changed()
-            
+
+    def can_cell_commit(self):
+        return self._grid.IsCellEditControlEnabled()
+
+    def can_cell_rollback(self):
+        return self._grid.IsCellEditControlEnabled()
+
+    def can_command(self, command, **kwargs):
+        # Pøíkazy platné i bìhem editace, pokud není aktivní editor.
+        UNIVERSAL_COMMANDS = (ListForm.COMMAND_COPY_CELL,
+                              ListForm.COMMAND_SELECT_CELL,
+                              ListForm.COMMAND_RESIZE_COLUMN,
+                              ListForm.COMMAND_EDIT,
+                              ListForm.COMMAND_FIRST_COLUMN,
+                              ListForm.COMMAND_LAST_COLUMN)
+        # Pøíkazy platné pouze bìhem editace øádku.
+        EDIT_COMMANDS = (ListForm.COMMAND_LINE_COMMIT,
+                         ListForm.COMMAND_LINE_ROLLBACK,
+                         ListForm.COMMAND_FINISH_EDITING,
+                         ListForm.COMMAND_CELL_COMMIT,
+                         ListForm.COMMAND_CELL_ROLLBACK)
+        if self._table.editing():
+            allowed = EDIT_COMMANDS
+            if not self._grid.IsCellEditControlEnabled():
+                allowed  += UNIVERSAL_COMMANDS
+            if command not in allowed:
+                return False
+        elif command in EDIT_COMMANDS:
+            return False
+        return super_(ListForm).can_command(self, command, **kwargs)
+    
     def on_command(self, command, **kwargs):
         # Univerzální pøíkazy
-        if command == ListForm.COMMAND_CONTEXT_ACTION:
-            self._on_context_action(**kwargs)
-            return True
-        elif command == ListForm.COMMAND_COPY_CELL:
-            self._on_copy_cell()
-            return True
-        elif command == ListForm.COMMAND_FILTER_BY_CELL:
-            self._filter_by_cell()
-            return True
-        elif command == ListForm.COMMAND_EDIT:
+        if command == ListForm.COMMAND_EDIT:
             self._on_edit()
-            return True
-        elif command == ListForm.COMMAND_EXPORT_CSV:
-            self._on_export_csv()
-            return True
-        elif command == LookupForm.COMMAND_SORT_COLUMN:
-            self._on_sort_column(**kwargs)
-            return True
-        elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
-            self._set_grouping_column(**kwargs)
-            return True
-        elif command == ListForm.COMMAND_TOGGLE_COLUMN:
-            self._on_toggle_column(**kwargs)
-            return True
-        elif command == ListForm.COMMAND_RESET_COLUMNS:
-            self._on_reset_columns(**kwargs)
-            return True
         elif command == ListForm.COMMAND_SELECT_CELL:
             self._select_cell(**kwargs)
-            return True
+        elif command == ListForm.COMMAND_COPY_CELL:
+            self._on_copy_cell()
         elif command == ListForm.COMMAND_RESIZE_COLUMN:
             self._resize_column(**kwargs)
-            return True
+        elif command == ListForm.COMMAND_FIRST_COLUMN:
+            self._select_cell(col=0)
+        elif command == ListForm.COMMAND_LAST_COLUMN:
+            self._select_cell(col=len(self._columns)-1)
+        # Pøíkazy bìhem editace øádku
+        elif command == ListForm.COMMAND_LINE_COMMIT:
+            self._on_line_commit()
+        elif command == ListForm.COMMAND_LINE_ROLLBACK:
+            self._on_line_rollback(**kwargs)
+        elif command == ListForm.COMMAND_FINISH_EDITING:
+            self._finish_editing()
+        elif command == ListForm.COMMAND_CELL_COMMIT:
+            self._on_cell_commit()
+        elif command == ListForm.COMMAND_CELL_ROLLBACK:
+            self._on_cell_rollback()
+        # Pøíkazy mimo editaci
+        elif command == ListForm.COMMAND_CONTEXT_ACTION:
+            self._on_context_action(**kwargs)
+        elif command == ListForm.COMMAND_EXPORT_CSV:
+            self._on_export_csv()
+        elif command == LookupForm.COMMAND_SORT_COLUMN:
+            self._on_sort_column(**kwargs)
+        elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
+            self._set_grouping_column(**kwargs)
+        elif command == ListForm.COMMAND_FILTER_BY_CELL:
+            self._filter_by_cell()
+        elif command == ListForm.COMMAND_ACTIVATE:
+            key = self._current_key()
+            self._run_callback(self.CALL_ACTIVATION, (key,), kwargs)
+        elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
+            self._on_show_cell_codebook()
+        elif command == LookupForm.COMMAND_FILTER:
+            self._on_filter()
+        elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
+            self._on_incremental_search(**kwargs)
+        elif command == ListForm.COMMAND_NEW_LINE:
+            self._on_insert_line(**kwargs)
+        elif command == ListForm.COMMAND_TOGGLE_COLUMN:
+            self._on_toggle_column(**kwargs)
         elif command == ListForm.COMMAND_MOVE_COLUMN:
             self._move_column(**kwargs)
-            return True
-        # Pøíkazy bìhem editace øádku
-        elif self._table.editing():
-            if command == ListForm.COMMAND_LINE_COMMIT:
-                return self._on_line_commit()
-            elif command == ListForm.COMMAND_LINE_ROLLBACK:
-                return self._on_line_rollback(**kwargs)
-            elif command == ListForm.COMMAND_FINISH_EDITING:
-                self._finish_editing()
-                return True
-            # Pøíkazy vztahující se pouze k editaci políèka
-            elif self._grid.IsCellEditControlEnabled():
-                if command == ListForm.COMMAND_CELL_COMMIT:
-                    return self._on_cell_commit()
-                elif command == ListForm.COMMAND_CELL_ROLLBACK:
-                    return self._on_cell_rollback()
-                else:
-                    field = self._current_editor.field()
-                    if field.on_command(command, **kwargs):
-                        return True
-        # Pøíkazy mimo editaci
+        elif command == ListForm.COMMAND_RESET_COLUMNS:
+            self._on_reset_columns(**kwargs)
         else:
-            if command == ListForm.COMMAND_FIRST_COLUMN:
-                self._select_cell(col=0)
-            elif command == ListForm.COMMAND_LAST_COLUMN:
-                self._select_cell(col=len(self._columns)-1)
-            elif command == ListForm.COMMAND_ACTIVATE:
-                key = self._current_key()
-                self._run_callback(self.CALL_ACTIVATION, (key,), kwargs)
-            elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
-                self._on_show_cell_codebook()
-            elif command == LookupForm.COMMAND_FILTER:
-                self._on_filter()
-            elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
-                self._on_incremental_search(**kwargs)
-            elif command == ListForm.COMMAND_NEW_LINE:
-                self._on_insert_line(**kwargs)
-            else:
-                return super_(ListForm).on_command(self, command, **kwargs)
-            return True
-        return super_(ListForm).on_command(self, command, **kwargs)
+            return super_(ListForm).on_command(self, command, **kwargs)
+        return True
 
     def _set_grouping_column(self, col=None):
         if col is not None:
@@ -1583,19 +1595,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # Udìláme radìji refresh celé aplikace, proto¾e jinak se
             # nerefreshne horní formuláø po vymazání záznamu ze sideformu.
             refresh()
-
-    # Veøejné metody
-
-    def is_edited(self):
-        """Vra» pravdu, právì kdy¾ je List ve stavu øádkové editace."""
-        return self._table.editing()
-
-    def exit_check(self):
-        """Proveï kontrolu ukonèení editace øádku pøed opu¹tìním seznamu.
-
-        Metoda nic nevrací, pouze sama provede, co je potøeba.
-
-        """
+            
+    def _exit_check(self):
+        # Opu¹tìní formuláøe je umo¾nìno v¾dy, ale pøed opu¹tìním bìhem editace
+        # je nutné provést dodateèné akce.
         editing = self._table.editing()
         if editing:
             log(EVENT, 'Pokus o odchod z øádkového formuláøe bìhem editace')
@@ -1606,6 +1609,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             else:
                 log(EVENT, 'Ulo¾ení zamítnuto')
                 self._on_line_rollback()
+        return True
+
+    # Veøejné metody
+
+    def is_edited(self):
+        """Vra» pravdu, právì kdy¾ je List ve stavu øádkové editace."""
+        return self._table.editing()
+
 
     def _total_height(self):
         g = self._grid
@@ -1829,7 +1840,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def Show(self, show):
         if not show:
-            self.exit_check()
+            self._exit_check()
         return super_(ListForm).Show(self, show)
     
     # Ostatní veøejné metody
@@ -1847,7 +1858,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
 
 
-class CodebookForm(ListForm, PopupForm, KeyHandler):
+class CodebookForm(PopupForm, ListForm, KeyHandler):
     """Formuláø pro zobrazení výbìrového seznamu (èíselníku).
 
     Výbìrový seznam zobrazuje øádky dat, z nich¾ u¾ivatel nìkterý øádek
@@ -1865,7 +1876,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
-        super_(CodebookForm).__init__(self, parent, *args, **kwargs)
+        super(CodebookForm, self).__init__(parent, *args, **kwargs)
         h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
         self.SetSize((self._total_width()+30, h))
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
@@ -1891,7 +1902,7 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
             self._cb_spec = self._resolver.get(self._name, 'cb_spec')
         except ResolverError:
             self._cb_spec = CodebookSpec()
-        super_(CodebookForm)._init_attributes(self, **kwargs)
+        super(CodebookForm, self)._init_attributes(**kwargs)
         self._begin_search = begin_search
         if condition is not None:
             condition = pytis.data.AND(self._lf_initial_condition, condition)
@@ -1937,12 +1948,6 @@ class CodebookForm(ListForm, PopupForm, KeyHandler):
         return (MItem(_("Vybrat"),
                       command = ListForm.COMMAND_ACTIVATE),
                 )
-
-    def on_command(self, command, **kwargs):
-        if command == Application.COMMAND_LEAVE_FORM:
-            self._leave_form()
-            return True
-        return super_(CodebookForm).on_command(self, command, **kwargs)
 
     def _on_activation(self, key=None, alternate=False):
         """Nastav návratovou hodnotu a ukonèi modální dialog."""
@@ -2065,8 +2070,7 @@ class BrowseForm(ListForm):
         run_form(PrintForm, name, formatter=formatter)
 
     def on_command(self, command, **kwargs):
-        if command == Form.COMMAND_PRINT and \
-               (not kwargs.has_key('form') or kwargs['form'] is self):
+        if command == Form.COMMAND_PRINT:
             self._on_print_(kwargs.get('print_spec_path'))
         else:
             return super_(BrowseForm).on_command(self, command, **kwargs)
