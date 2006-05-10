@@ -68,9 +68,10 @@ class DualForm(Form):
     """
     DESCR = _("duální formuláø")
     
-    def get_command_handler_instance(cls, application):
-        return application.top_window()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
+    def _get_command_handler_instance(cls):
+        print "****", cls
+        return pytis.form.application._application.top_window()
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def __init__(self, *args, **kwargs):
         """Inicializuj duální formuláø.
@@ -168,19 +169,15 @@ class DualForm(Form):
         if command == DualForm.COMMAND_OTHER_FORM:
             self._select_form(self._other_form(self._active_form))
             return True
-        elif command == Form.COMMAND_PRINT and \
-                 kwargs.get('form') in (self._main_form, self._side_form):
-            target = kwargs['form']
-        elif command == Form.COMMAND_HELP and isinstance(self._view, DualSpec):
-            help(self._name.replace(':','-')+'-dual')
-            return True
-        else:
-            target = self._active_form
-        if isinstance(target, KeyHandler):
-            return target.on_command(command, **kwargs)
         else:
             return False
 
+    def help_name(self):
+        name = super(DualForm, self).help_name()
+        if isinstance(self._view, DualSpec):
+            name += '-dual'
+        return
+        
     def active_form(self):
         """Vra» aktivní formuláø tohoto duálního formuláøe."""
         return self._active_form
