@@ -144,9 +144,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _WINDOW_MENU_TITLE = _("Okn&a")
     _RECENT_FORMS_MENU_TITLE = _("Poslednì otevøené formuláøe")
 
-    def get_command_handler_instance(cls, application):
-        return application
-    get_command_handler_instance = classmethod(get_command_handler_instance)
+    def _get_command_handler_instance(cls):
+        global _application
+        return _application
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def __init__(self, resolver):
         """Inicializuj aplikaci.
@@ -992,63 +993,40 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return KeyHandler.on_key_down(self, event)
 
     def on_command(self, command, **kwargs):
-        """Po¹li 'command' s 'kwargs' aktuálnímu oknu.
-
-        Není-li ¾ádné aktuální okno nebo pokud toto okno nemá metodu
-        'on_command()', nedìlej nic a vra» nepravdu.
-
-        """
-        log(command.log_kind(), 'Vyvolán pøíkaz:', (command, kwargs))
-        try:
-            try:
-                busy_cursor(True)
-                if command == Application.COMMAND_HANDLED_ACTION:
-                    self._on_handled_action(**kwargs)
-                elif command == Application.COMMAND_SHOW_POPUP_MENU:
-                    top = self.top_window()
-                    if hasattr(top, 'show_popup_menu'):
-                        top.show_popup_menu()
-                elif not self._modals.empty():
-                    return self._modals.top().on_command(command, **kwargs)
-                elif command == Application.COMMAND_EXIT:
-                    self.exit()
-                elif command == Application.COMMAND_HELP:
-                    self.help(**kwargs)
-                elif command == Application.COMMAND_BREAK:
-                    message(_("Stop"), beep_=True)
-                elif command == Application.COMMAND_RUN_FORM:
-                    self.run_form(**kwargs)
-                elif command == Application.COMMAND_RUN_PROCEDURE:
-                    self.run_procedure(**kwargs)
-                elif command == Application.COMMAND_NEW_RECORD:
-                    self.new_record(**kwargs)
-                elif command == Application.COMMAND_LEAVE_FORM:
-                    self.leave_form()
-                elif command == Application.COMMAND_RAISE_FORM:
-                    self._raise_form(kwargs['form'])
-                elif command == Application.COMMAND_NEXT_FORM:
-                    self._raise_form(self._windows.next())
-                elif command == Application.COMMAND_PREV_FORM:
-                    self._raise_form(self._windows.prev())
-                elif command == Application.COMMAND_REFRESH:
-                    self.refresh()
-                elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
-                    self._recent_forms[:] = []
-                    self._update_recent_forms()
-                elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
-                    config.custom_debug()
-                else:
-                    top = self._windows.active()
-                    if top and top.on_command(command, **kwargs):
-                        return True
-                    return False
-            finally:
-                busy_cursor(False)
-            return True
-        except UserBreakException:
-            pass
-        except:
-            top_level_exception()
+        if command == Application.COMMAND_HANDLED_ACTION:
+            self._on_handled_action(**kwargs)
+        elif command == Application.COMMAND_SHOW_POPUP_MENU:
+            top = self.top_window()
+            if hasattr(top, 'show_popup_menu'):
+                top.show_popup_menu()
+        elif command == Application.COMMAND_EXIT:
+            self.exit()
+        elif command == Application.COMMAND_HELP:
+            self.help(**kwargs)
+        elif command == Application.COMMAND_BREAK:
+            message(_("Stop"), beep_=True)
+        elif command == Application.COMMAND_RUN_FORM:
+            self.run_form(**kwargs)
+        elif command == Application.COMMAND_RUN_PROCEDURE:
+            self.run_procedure(**kwargs)
+        elif command == Application.COMMAND_NEW_RECORD:
+            self.new_record(**kwargs)
+        elif command == Application.COMMAND_RAISE_FORM:
+            self._raise_form(kwargs['form'])
+        elif command == Application.COMMAND_NEXT_FORM:
+            self._raise_form(self._windows.next())
+        elif command == Application.COMMAND_PREV_FORM:
+            self._raise_form(self._windows.prev())
+        elif command == Application.COMMAND_REFRESH:
+            self.refresh()
+        elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
+            self._recent_forms[:] = []
+            self._update_recent_forms()
+        elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
+            config.custom_debug()
+        else:
+            return False
+        return True
 
     def _on_handled_action(self, handler=None, enabled=None, **kwargs):
         return handler(**kwargs)
@@ -1061,9 +1039,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def can_prev_form(self):
         return len(self._windows.items()) > 1
-
-    def can_leave_form(self):
-        return self.current_form() is not None
 
     def can_clear_recent_forms(self):
         return len(self._recent_forms) > 0
