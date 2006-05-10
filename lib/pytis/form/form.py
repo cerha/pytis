@@ -271,7 +271,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def name(self):
         """Vra» název specifikace formuláøe."""
         return self._name
-    
+
+    def help_name(self):
+        return self._name.replace(':','-')
+
     def on_command(self, command, **kwargs):
         if command == Form.COMMAND_LEAVE_FORM:
             self._leave_form()
@@ -280,7 +283,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             config.form_state[self._form_state_key()] = self._form_state
             self._on_reload_form_state()
         elif command == Form.COMMAND_HELP:
-            help(self._name.replace(':','-'))
+            help(top_window().help_name())
         else:
             return False
         return True
