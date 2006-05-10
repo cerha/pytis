@@ -743,7 +743,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     [CheckItem(c.column_label(),
                                command=ListForm.COMMAND_TOGGLE_COLUMN,
                                args=dict(column_id=c.id(), col=col),
-                               state=lambda a, c=c: c in self._columns)
+                               state=lambda c=c: c in self._columns)
                      for c in self._view.fields()] + \
                     [MSeparator(),
                      MItem(_("Vrátit výchozí sloupce"),
