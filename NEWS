@@ -4,6 +4,41 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-10  Tomas Cerha  <cerha@brailcom.org>
+
+	Bylo kompletnì pøepsáno v¹e, co se týká zpracování pøíkazù.  O
+	zpracování se nyní stará tøída `CommandHandler' a instance, která
+	má pøíkaz zpracovat, je vyhledána automaticky v závislosti na
+	tøídì, která pøíkaz definuje.  Tím je koneènì sjednocen zpùsob
+	zji¹»ování dostupnosti pøíkazu s jeho vlastním vyvoláním.  To
+	umo¾nilo odstranìní nìkolika o¹klivých hackù, podstatnì
+	zjednodu¹ilo zpracování pøíkazù v metodách `on_command' a umo¾ní
+	to i flexibilnìj¹í vytváøení handlerù událostí v budoucnosti.
+	Dále v souvislosti s touto zmìnou byly zrevidovány a pøepsány
+	metody zji¹»ující dostupnost pøíkazù a bylo odstranìno nìkolik
+	známých i novì odhalených chyb (vesmìs souvisejících s vyvoláním
+	nechtìného pøíkazu bìhem inline editace a následným SEGFAULTEM).
+
+	Vý¹e popsaná zmìna by mohla také umo¾nit rozli¹ení dùvodu
+	nedostupnosti pøíkazu - pøíkaz není v daném kontextu pou¾itelný,
+	nebo u¾ivatel nemá dostateèná pøístupová práva.
+
+	Zároveò bylo provedeno nìkolik zmìn ve vlastních pøíkazech a byly
+	nahrazeny nìkteré související callbacky vstupních políèek, které
+	ji¾ nejsou potøeba (více viz Changelog).
+
+	Vzhledem k mno¾ství zmìn je nutné kód dùkladnì otestovat!  Zejména
+	bude vhodné se zamìøit na reakce na klávesové zkratky v rùzných
+	komplikovanìj¹ích situacích (duální formuláøe, inline editace
+	apod.).
+	
+	* BUGFIX: Pøi roz¹iøování/zu¾ování sloupce bìhem inline editace je
+	aktualizována také velikost vstupního pole.
+	
+	* BUGFIX: Pøi inline editaci ji¾ nelze aplikaci shodit na SEGFAULT
+	klávesovou kombinací Ctrl-¹ipka.  Také nìkolik dal¹ích pøíkazù,
+	bylo v prùbìhu editace zakázáno.
+	
 2006-05-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Opraveno nekorektní chování políèek typu CheckBox,

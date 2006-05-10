@@ -255,21 +255,6 @@ INTERNÍ ZÁLE®ITOSTI:
    problém do metody `Option.set_value()' pøidat kontrolu, zda pøedaná hodnota
    skuteènì odpovídá deklarovanému typu volby.
 
- * Handlery pøíkazù.
-
-   Pøíkazy jsou obsluhovány tak, ¾e vyvoláme on_command aplikace a ta je
-   zodpovìdna za pøedání pøíkazu formuláøi, pokud to není její pøíkaz.
-   Formuláø zase pøedává pøíkazy políèkùm.  To odpovídá pùvodnímu návrhu.  Nyní
-   v¹ak máme CommandHandler a metodu get_command_handler_instance(), tak¾e
-   bychom pøíkazy mohli pøedávat rovnou instanci, které pøíkaz nále¾í.
-
-   Pozor, mo¾ná to také nìjak souvisí s metodou
-   KeyHandler._maybe_invoke_command().
-
-   Dále by bylo mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu
-   a neprokousávat se tak sérií if/elif v on_command.  To by mohlo zùstat jako
-   fallback handler, kdy¾ není nalezena metoda odpovídajícího názvu.
-
  * Form._original_key by nemìlo být.  _current_key by mìl vracet pùvodní klíè.
 
  * Vyhodit side_columns a side_title z DualSpec.
@@ -282,4 +267,20 @@ INTERNÍ ZÁLE®ITOSTI:
    titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
    pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
   
+ * Zru¹it funkci `invoke_command()' v `command.py'.
 
+   Funkce je zde pouze pro zpìtnou kompatibilitu.  Namísto ní lze pou¾ívat
+   pøímo metodu `Command.invoke()'.  Pokud nebude nikde pou¾ívána, lze ji
+   zru¹it.
+
+ * Zpracování pøíkazù.
+
+   Bylo by mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu a
+   neprokousávat se tak sérií if/elif v on_command.
+
+ * Nedostupnost pøíkazu vs. pøístupová práva.
+
+   Pokud není pøíkaz dostupný z dùvodu nedostateèných pøístupových práv,
+   bylo by dobré o tom u¾ivatele nìjak informovat.  Bude to v¹ak tøeba nejprve
+   nìjak rozli¹it -- buïto pomocí návratové hodnoty funkce enabled, nebo je¹tì
+   dal¹í funkcí pro zji¹tìní pøístupových práv.
