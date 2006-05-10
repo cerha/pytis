@@ -54,8 +54,6 @@ Command(Application, 'RUN_FORM',
         "Spu¹tìní formuláøe")
 Command(Application, 'RUN_PROCEDURE',
         "Spu¹tìní procedury")
-Command(Application, 'LEAVE_FORM',
-        "Odstranìní aktivního okna formuláøe z aplikace")
 Command(Application, 'RAISE_FORM',
         "Vyzvednutí okna formuláøe v oknì aplikace")
 Command(Application, 'PREV_FORM',
@@ -68,6 +66,8 @@ Command(Application, 'CLEAR_RECENT_FORMS',
         "Vyèisti menu poslednì otevøených formuláøù")
 Command(Application, 'HANDLED_ACTION',
         "Proveï u¾ivatelem definovanou akci.") # arg. 'handler', 'enabled'
+Command(Form, 'LEAVE_FORM',
+        "Uzavøení formuláøe")
 Command(Form, 'PRINT',
         "Tisk aktuálního obsahu formuláøe")
 Command(Form, 'HELP',
@@ -157,7 +157,7 @@ Command(InputField, 'RESET_FIELD',
         "Vrácení pùvodní hodnoty vstupního políèka")
 #Command(InputField, 'COMMIT_FIELD',
 #        "Úspì¹né ukonèení editace vstupního políèka")
-Command(InputField, 'LEAVE_FIELD',
+Command(InputField, 'LEAVE_INLINE_EDIT',
         "Odchod z editace vstupního políèka")
 Command(Invocable, 'INVOKE_SELECTION',
         "Vyvolání výbìru hodnoty vstupního políèka") # arg. 'alternate'
@@ -180,13 +180,13 @@ Command(Dialog, 'HELP',
 
 DEFAULT_KEYMAP = (
     ('F1',          Application.COMMAND_HELP(topic='pytis')),
-    ('Ctrl-F1',     Form.COMMAND_HELP),
     ('Ctrl-g',      Application.COMMAND_BREAK),
-    ('Escape',      Application.COMMAND_LEAVE_FORM),
     ('Ctrl-Down',   Application.COMMAND_NEXT_FORM),
     ('Ctrl-Up',     Application.COMMAND_PREV_FORM),
     ('Ctrl-l',      Application.COMMAND_REFRESH),
     ('Ctrl-M',      Application.COMMAND_SHOW_POPUP_MENU),
+    ('Ctrl-F1',     Form.COMMAND_HELP),
+    ('Escape',      Form.COMMAND_LEAVE_FORM),
     (('Ctrl-x', 'p'),  Form.COMMAND_PRINT),
     ('Ctrl-Backspace', Form.COMMAND_RELOAD_FORM_STATE),
     ('F6',          RecordForm.COMMAND_NEW_RECORD),
@@ -233,8 +233,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Tab',    DualForm.COMMAND_OTHER_FORM),
     ('Next',        PrintForm.COMMAND_NEXT_PAGE),
     ('Prior',       PrintForm.COMMAND_PREVIOUS_PAGE),
-    #('Enter',       InputField.COMMAND_COMMIT_FIELD),
-    ('Escape',      InputField.COMMAND_LEAVE_FIELD),
+    ('Ctrl-Backspace', InputField.COMMAND_RESET_FIELD),
     ('F2',          Invocable.COMMAND_INVOKE_SELECTION),
     ('Ctrl-F2',     Invocable.COMMAND_INVOKE_SELECTION(alternate=True)),
     ('Backspace',   ListField.COMMAND_SHOW_SELECTED),
@@ -255,7 +254,7 @@ if __debug__:
 FORM_COMMAND_MENU = ((
     (_("Pøedchozí okno"),       Application.COMMAND_PREV_FORM),
     (_("Následující okno"),     Application.COMMAND_NEXT_FORM),
-    (_("Zavøít aktuální okno"), Application.COMMAND_LEAVE_FORM),
+    (_("Zavøít aktuální okno"), Form.COMMAND_LEAVE_FORM),
     ),(#---------------
     (_("Skok na záznam"),       LookupForm.COMMAND_JUMP),
     (_("Hledat"),               LookupForm.COMMAND_SEARCH),
