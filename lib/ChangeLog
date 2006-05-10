@@ -1,3 +1,135 @@
+2006-05-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/event.py (wx_callback.process_event): Vyu¾ívej nové funkce `top_window()'.
+
+	* pytis/form/list.py (ListForm._init_col_attr): Nenastavuj editoru
+	callback `InputField.CALL_LEAVE_FIELD' ani `CALL_COMMIT_FIELD'.
+	(ListForm._resize_column): Pokud je spu¹tìn editor, zmìò také jeho
+	velikost.
+	(ListForm.can_reload_form_state, ListForm.can_cell_commit)
+	(ListForm.can_cell_rollback, ListForm.can_command): Nové metody.
+	(ListForm.on_command): Zpracuj pouze pøíkazy tøídy ListForm.
+	Provádìj zpracování nepodmínìnì.  Ve¹keré podmínky pøesunuty do
+	`can_command'.  Sjednoceny návratové hodnoty.
+	(ListForm.exit_check): Pøejmenováno na `_exit_check'.
+	(ListForm.Show): `exit_check' -> `_exit_check'.
+	(CodebookForm): Nech» je `PopupForm' první v seznamu pøedkù.
+	(CodebookForm.__init__): `super_()' -> `super()'.
+	(CodebookForm._init_attributes): `super_()' -> `super()'.
+	(CodebookForm.on_command): Metoda Zru¹ena.
+	(BrowseForm.on_command): O¹etøuj pouze vlastní pøíkazy a to
+	nepodmínìnì.
+	(ListForm._dualform): Vyu¾ívej nové funkce `top_window()'.
+	(ListForm._displayed_columns_menu): Definuj funkci `state'
+	konstruktoru `CheckItem' bez argumentù.
+
+	* pytis/form/dualform.py (DualForm.get_command_handler_instance):
+	Pøejmenováno na `_get_command_handler_instance'.
+	(DualForm.on_command): Nepøedávej pøíkaz aktuálnímu formuláøi a
+	nestarej se o argumenty pro jeho pøesmìrování.
+	(DualForm.help_name): Nová metoda.
+	(DualForm._get_command_handler_instance): Pou¾ívej
+	`top_window()'.  Zru¹en zapomenutý print.
+
+	* pytis/form/dialog.py
+	(Dialog.get_command_handler_instance): Pøejmenováno na
+	`_get_command_handler_instance'.
+	(GenericDialog._on_button, GenericDialog._close_dialog):
+	Nenastavuj návratovou hodnotu. 
+	(GenericDialog.on_command, FileDialog.on_command): ): Kosmetické
+	úpravy.  Sjednoceno nastavení návratové hodnoty.
+	(Dialog._get_command_handler_instance): Pou¾ívej novou funkci
+	`top_window()'.  
+	
+
+	* pytis/form/inputfield.py (InputField.CALL_LEAVE_FIELD)
+	(InputField.CALL_COMMIT_FIELD): Callbacky zru¹eny.
+	(InputField.CALL_SKIP_NAVIGATION): Pøejmenováno na
+	`CALL_NAVIGATE'.
+	(InputField.CALL_NAVIGATE): Aktualizace docstringu.
+	(InputField.get_command_handler_instance): Pøejmenováno na
+	`_get_command_handler_instance'.
+	(InputField._skip_navigation_callback.cb): `CALL_SKIP_NAVIGATION'
+	-> `CALL_NAVIGATE'.
+	(InputField.on_command): Nezpracovávej `COMMAND_LEAVE_FIELD'.
+	(TextField._on_enter_key): Namísto `CALL_COMMIT_FIELD' volej
+	`CALL_NAVIGATE'.
+	(Invocable.get_command_handler_instance): Pøejmenováno na
+	`_get_command_handler_instance'.
+	(Invocable._menu): Namísto argumentu `originator' nastavuj
+	`_command_handler'.
+	(Invocable.on_command): Zpracuj pøíkazy nepodmínìnì.
+	(CodebookField._menu): Namísto argumentu `originator' nastavuj
+	`_command_handler'.
+	(ListField._set_value, ListField.on_command): Kosmetické úpravy.
+
+	* pytis/form/form.py (Form.get_command_handler_instance):
+	Pøejmenováno na `_get_command_handler_instance'.
+	(Form._leave_form, Form._exit_check): Nové metody.
+	(Form.on_command): Zpracuj `COMMAND_LEAVE_FORM'.
+	(PopupForm._on_parent_close): Netestuj existenci metody
+	`_exit_check()'.  Nenastavuj návratovou hodnotu.
+	(LookupForm.on_command): Pøepsáno.
+	(EditForm._create_form): Nastavuj `InputField.CALL_NAVIGATE'
+	namísto `InputField.CALL_SKIP_NAVIGATION'.  Nenastavuj
+	`InputField.CALL_COMMIT_FIELD'.
+	(EditForm.exit_check): Pøejmenováno na `_exit_check'.
+	(EditForm.can_commit_record): Nová metoda.
+	(EditForm.on_command): Zru¹en hack s pøeposíláním pøíkazu pøes
+	argument `originator'.  Zpracovávej pouze vlastní pøíkazy a to
+	bezpodmíneènì.
+	(Form.help_name): Nová metoda.
+	(Form.on_command): Vyvolávej help aktuálního okna, ne sebe sama
+	/kvùli duálním formuláøùm/.
+
+	* pytis/form/commands_.py: Zru¹en pøíkaz
+	`Application.COMMAND_LEAVE_FORM'.  Nový pøíkaz
+	`Form.COMMAND_LEAVE_FORM'.  Pøíkaz
+	`InputField.COMMAND_LEAVE_FIELD' nahrazen
+	`InputField.COMMAND__INLINE_EDIT'.
+	(DEFAULT_KEYMAP): Nová zkratka `Ctrl-Backspace' pro navrácení
+	pùvodní hodnoty políèka bìhem editace.  Respektuj zmìny názvù
+	pøíkazù.
+
+	* pytis/form/application.py
+	(Application.get_command_handler_instance): Pøejmenováno na
+	`_get_command_handler_instance'.
+	(Application.on_command): Nepøedávej pøíkazy oknùm ani nepodmiòuj
+	jejich zpracování podmínkami.  Nezpracovávej pøíkaz
+	`COMMAND_LEAVE_FORM'.
+	(Application.can_leave_form): Metoda zru¹ena.
+	(top_window): Nová globální funkce.
+	(Application._update_window_menu.wmitem): Definuj funkci `state'
+	konstruktoru `RadioItem' bez argumentù.
+
+	* pytis/form/command.py (CommandHandler): Doplnìn docstring.
+	(CommandHandler.get_command_handler_instance): Pøejmenováno na
+	`_get_command_handler_instance'.
+	(CommandHandler._command_handler): Nová metoda tøídy.
+	(CommandHandler.command_enabled, CommandHandler.invoke_command):
+	Nové metody tøídy.
+	(CommandHandler.on_command, CommandHandler.can_command): Nové
+	metody instance.
+	(Command.__init__): Aktualizace docstringu.  Argument `cls'
+	pøejmenován na `handler'.
+	(Command.cls): Pøejmenováno na `handler'.
+	(Command.enabled): Pøijímej argumenty jako klíèové, ne jako
+	slovník.  Rovnou vracej výsledek metody
+	`CommandHandler.command_enabled()'.
+	(Command.invoke): Nová metoda.
+	(Command.log_kind): Metoda zru¹ena.
+	(invoke_command): Pouze volej `Command.invoke()'.
+
+	* pytis/form/screen.py (Keymap.define_key, Keymap.lookup_key)
+	(KeyHandler, KeyHandler.on_key_down): Aktualizace docstringu.
+	(KeyHandler.on_command): Metoda zru¹ena / pøesunuta do `command'.
+	(KeyHandler._maybe_invoke_command):
+	(Menu.create): Metodì `Command.enabled()' pøedávej argumenty jako
+	klíèové, ne jako slovník.
+	(KeyHandler._maybe_invoke_command): Namísto funkce
+	`invoke_command()' pou¾ívej metodu `Command.invoke()'.
+	(CheckItem.state): Nepøedávej funkce `state' ¾ádné argumenty
+
 2006-05-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (RecordForm._on_import_interactive):
