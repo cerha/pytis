@@ -2,7 +2,7 @@
 
 # Zpracování událostí
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -250,7 +250,7 @@ def wx_callback(evt_function, *args):
                     result = True
                 else:
                     result = system_callback()
-            elif is_user and modal(application._application.top_window()):
+            elif is_user and modal(top_window()):
                 # Událost vyvolaná u¾ivatelským pøíkazem v modálním oknì
                 result = callback(event)
             elif is_user:
