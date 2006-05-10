@@ -61,9 +61,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     _STATUS_FIELDS = ()
     DESCR = None
 
-    def get_command_handler_instance(cls, application):
-        return application.current_form()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
+    def _get_command_handler_instance(cls):
+        return pytis.form.application._application.current_form()
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def __init__(self, parent, resolver, name, guardian=None, **kwargs):
         """Inicializuj instanci.
@@ -204,9 +204,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         if not print_spec:
             print_spec = ((_("Implicitní"), os.path.join('output', name)),)
         self._print_menu = [MItem(title, command=Form.COMMAND_PRINT,
-                                  args=dict(print_spec_path=path, form=self))
+                                  args=dict(print_spec_path=path,
+                                            _command_handler=self))
                             for title, path in print_spec]
-
     
     def _on_parent_close(self, event):
         """Handler události uzavøení rodièovského okna formuláøe.
@@ -223,6 +223,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         event.Skip()
         return False
 
+    def _leave_form(self):
+        leave_form()
+
+    def _exit_check(self):
+        """Proveï kontrolu formuláøe pøed uzavøením.
+
+        Vrací: Pravdu právì tehdy kdy¾ je mo¾no formuláø uzavøít.
+
+        """
+        return True
+        
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
 
@@ -262,30 +273,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return self._name
     
     def on_command(self, command, **kwargs):
-        """Zpracuj 'command'.
-
-        Argumenty:
-
-          command -- instance tøídy 'Command'
-
-        Metoda musí pøíkaz buï sama o¹etøit, nebo jek vypropagovat do vnitøního
-        prvku formuláøe, pokud takový je a má metodu stejného názvu jako tato.
-
-        Vrací: Pravdu, právì kdy¾ metoda nebo jí volaná metoda pøíkaz
-        zpracovala.
-        
-        V této tøídì metoda nedìlá nic a vrací False.
-        
-        """
-        if command == Form.COMMAND_RELOAD_FORM_STATE:
+        if command == Form.COMMAND_LEAVE_FORM:
+            self._leave_form()
+        elif command == Form.COMMAND_RELOAD_FORM_STATE:
             self._form_state = copy.copy(self._initial_form_state)
             config.form_state[self._form_state_key()] = self._form_state
             self._on_reload_form_state()
-            return True
         elif command == Form.COMMAND_HELP:
             help(self._name.replace(':','-'))
-            return True
-        return False
+        else:
+            return False
+        return True
 
     def descr(self):
         """Vra» textový popis typu formuláøe jako øetìzec."""
@@ -474,13 +472,12 @@ class PopupForm:
         self._popup_frame_.Close() # tím se autom. zavolá _on_parent_close()
         
     def _on_parent_close(self, event):
-        if hasattr(self, 'exit_check') and not self.exit_check():
+        if not self._exit_check():
             event.Veto()
-            return True
-        event.Skip()
-        if self._parent:
-            self._parent.EndModal(0)
-        return False
+        else:
+            event.Skip()
+            if self._parent:
+                self._parent.EndModal(0)
 
     def run(self):
         """Zobraz formuláø jako modální dialog."""
@@ -1269,18 +1266,15 @@ class LookupForm(RecordForm):
     def on_command(self, command, **kwargs):
         if command == LookupForm.COMMAND_JUMP:
             self._on_jump()
-            return True
-        if command == LookupForm.COMMAND_SEARCH:
+        elif command == LookupForm.COMMAND_SEARCH:
             self._on_search(**kwargs)
-            return True
         elif command == LookupForm.COMMAND_FILTER:
             self._on_filter()
-            return True
         elif command == LookupForm.COMMAND_SORT_COLUMN:
             self._on_sort_column()
-            return True            
         else:
             return super_(LookupForm).on_command(self, command, **kwargs)
+        return True
 
        
 
@@ -1386,9 +1380,8 @@ class EditForm(LookupForm, TitledForm):
                     acc = True
                 f = InputField.create(self, spec, self._data, guardian=self,
                                       accessible=acc)
-                f.set_callback(InputField.CALL_SKIP_NAVIGATION, self._navigate)
+                f.set_callback(InputField.CALL_NAVIGATE, self._navigate)
                 f.set_callback(InputField.CALL_FIELD_CHANGE,self._on_field_edit)
-                f.set_callback(InputField.CALL_COMMIT_FIELD, self._navigate)
                 self._fields.append(f)
         super_(EditForm)._create_form(self)
 
@@ -1589,7 +1582,6 @@ class EditForm(LookupForm, TitledForm):
             if close:    
                 self._result = self._row
                 # tím je automaticky zavoláno _on_parent_close()
-                # TODO: to asi nebude fungovat v embeded verzi!!!!!!!!!!
                 self._parent.Close()
             return True
         else:
@@ -1675,14 +1667,7 @@ class EditForm(LookupForm, TitledForm):
             self.GetEventHandler().ProcessEvent(nav)
         return True
 
-   
-    
-    def exit_check(self):
-        """Proveï kontrolu formuláøe pøed uzavøením.
-
-        Vrací: Pravdu právì tehdy kdy¾ je mo¾no formuláø uzavøít.
-
-        """
+    def _exit_check(self):
         if self.changed():
             q = _("Data byla zmìnìna a nebyla ulo¾ena!") + "\n" + \
                 _("Opravdu chcete uzavøít formuláø?")
@@ -1690,25 +1675,17 @@ class EditForm(LookupForm, TitledForm):
                 return False
         return True
 
+    def can_commit_record():
+        return self._mode != self.MODE_VIEW
+    
     def on_command(self, command, **kwargs):
-        if kwargs.has_key('originator') \
-               and kwargs['originator'] in self._fields:
-            field = kwargs['originator']
-        else:
-            field = InputField.focused()
-        if field is not None and field.on_command(command, **kwargs):
-            return True
-        if self._mode != self.MODE_VIEW:
-            if command == EditForm.COMMAND_COMMIT_RECORD:
-                self._commit_form()
-                return True
-            
-        # Common commands
-        if command == EditForm.COMMAND_NAVIGATE:
-            return self._navigate(**kwargs)
+        if command == EditForm.COMMAND_COMMIT_RECORD:
+            self._commit_form()
+        elif command == EditForm.COMMAND_NAVIGATE:
+            self._navigate(**kwargs)
         else:
             return super_(EditForm).on_command(self, command, **kwargs)
-        return False
+        return True
 
     
 class PopupEditForm(PopupForm, EditForm):
@@ -1949,15 +1926,12 @@ class BrowsableShowForm(ShowForm):
     def on_command(self, command, **kwargs):
         if command == BrowsableShowForm.COMMAND_NEXT_RECORD:
             self._on_next_record()
-            return True
         elif command == BrowsableShowForm.COMMAND_PREVIOUS_RECORD:
             self._on_next_record(direction=pytis.data.BACKWARD)
-            return True
         elif command == BrowsableShowForm.COMMAND_FIRST_RECORD:
             self.select_row(0)
-            return True
         elif command == BrowsableShowForm.COMMAND_LAST_RECORD:
             self.select_row(self._lf_select_count-1)
-            return True
         else:
             return super(BrowsableShowForm, self).on_command(command, **kwargs)
+        return True
