@@ -75,10 +75,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
 
-    CALL_LEAVE_FIELD = 'CALL_LEAVE_FIELD'
-    """Callback volaný pøi po¾adavku na opu¹tìní políèka. Bez argumentù."""
-    CALL_COMMIT_FIELD = 'CALL_COMMIT_FIELD'
-    """Voláno pøi opu¹tìní políèka s potvrzením hodnoty. Bez argumentù."""
     CALL_FIELD_CHANGE = 'CALL_FIELD_CHANGE'
     """Callback volaný pøi zmìnì políèka, pokud je nová hodnota validní.
 
@@ -91,25 +87,25 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     hodnoty.  Programové nastavování hodnoty callback nevyvolává.
     
     """
-    CALL_SKIP_NAVIGATION = 'CALL_SKIP_NAVIGATION'
-    """Voláno, pokud má být nìjaký ui prvek pøeskoèen pøi navigaci.
+    CALL_NAVIGATE = 'CALL_NAVIGATE'
+    """Voláno, pokud má být provedena navigace na dal¹í prvek ve formuláøi.
 
     Argumenty:
 
       object -- ui prvek který má být pøeskoèen.
       back -- smìr pohybu, boolean, pravda pøi pohybu vzad.
 
-    To je vhodné napøíklad pro tlaèítka políèek typu 'Invocable', nebo display
-    u 'CodebookField'.  Navigaci v¹ak zaji¹»uje nadøízený formuláø.
+    Políèka vyvolávají navigaci napøíklad k pøeskoèení neaktivních prvkù apod,
+    vlastní navigaci v¹ak zaji¹»uje nadøízený formuláø.
 
     """
 
     _focused_field = None
     _last_focused_field = None
     
-    def get_command_handler_instance(cls, application):
+    def _get_command_handler_instance(cls):
         return InputField.focused()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def create(cls, parent, spec, data, guardian=None, inline=False,
                accessible=True):
@@ -219,7 +215,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _skip_navigation_callback(self, widget):
         def cb(e):
             if not self._unregistered_widgets.has_key(widget):
-                self._run_callback(self.CALL_SKIP_NAVIGATION,
+                self._run_callback(self.CALL_NAVIGATE,
                                    (widget, not e.GetDirection()))
                 return True
             else:
@@ -260,7 +256,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _menu(self):
         # Return the tuple of popup menu items ('MItem' instances).
         return (MItem("Vrátit pùvodní hodnotu",
-                      command = InputField.COMMAND_RESET_FIELD),
+                      command=InputField.COMMAND_RESET_FIELD),
                 )
 
     def guardian(self):
@@ -270,8 +266,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if command == self.COMMAND_RESET_FIELD:
             self.reset()
             return True
-        elif command == self.COMMAND_LEAVE_FIELD:
-            return self._run_callback(self.CALL_LEAVE_FIELD, ())
         return False
 
     def can_reset_field(self):
@@ -471,7 +465,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """Povol u¾ivatelský vstup do políèka."""
         if self._accessible:
             self._enabled = True
-            self._enable()        
+            self._enable()
             self._unregister_skip_navigation_callback()
     
     def _enable(self):
@@ -699,7 +693,8 @@ class TextField(InputField):
         if self.height() > 1:
             event.Skip()
         else:
-            self._run_callback(self.CALL_COMMIT_FIELD, ())
+            ctrl = event.GetEventObject()
+            self._run_callback(self.CALL_NAVIGATE, (ctrl, False))
 
     def _post_process_func(self):
         """Vra» funkci odpovídající specifikaci postprocessingu políèka.
@@ -934,9 +929,9 @@ class Invocable(object, CommandHandler):
     """
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat hodnotu")
     
-    def get_command_handler_instance(cls, application):
-        return InputField.focused()
-    get_command_handler_instance = classmethod(get_command_handler_instance)
+    def _get_command_handler_instance(cls):
+        return InputField._get_command_handler_instance()
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def _call_next_method(self, name, *args, **kwargs):
         # Will not work in derived classes!
@@ -990,13 +985,14 @@ class Invocable(object, CommandHandler):
                (MSeparator(),
                 MItem(self._INVOKE_SELECTION_MENU_TITLE,
                       command=self.COMMAND_INVOKE_SELECTION,
-                      args={'originator': self}))
+                      args=dict(_command_handler=self)))
     
     def on_command(self, command, **kwargs):
-        if self._enabled:
-            if command == Invocable.COMMAND_INVOKE_SELECTION:
-                return self._on_invoke_selection(**kwargs)
-        return super(Invocable, self).on_command(command, **kwargs)
+        if command == Invocable.COMMAND_INVOKE_SELECTION:
+            self._on_invoke_selection(**kwargs)
+            return True
+        else:
+            return super(Invocable, self).on_command(command, **kwargs)
 
     def can_invoke_selection(self, **kwargs):
         return self.is_enabled()
@@ -1156,8 +1152,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _menu(self):
         return Invocable._menu(self) + \
                (MItem("Vyhledávat v èíselníku",
-                      command=self.COMMAND_INVOKE_SELECTION_ALTERNATE,
-                      args={'originator': self}),)
+                      command=self.COMMAND_INVOKE_SELECTION,
+                      args=dict(alternate=True, _command_handler=self)),)
 
     def _maxlen(self):
         try:
@@ -1327,7 +1323,6 @@ class ListField(GenericCodebookField):
             self._set_selection(None)
             return True
         
-        
     def get_value(self):
         """Vra» aktuální vnitøní hodnotu políèka."""
         i = self._selected_item
@@ -1339,20 +1334,20 @@ class ListField(GenericCodebookField):
     def _menu(self):
         menu = (MItem("Vybrat",
                       command=self.COMMAND_SELECT,
-                      args={'originator': self}),
+                      args=dict(_command_handler=self)),
                 MItem("Najít vybranou polo¾ku",
                       command=self.COMMAND_SHOW_SELECTED,
-                      args={'originator': self}),
+                      args=dict(_command_handler=self)),
                 MSeparator(),
                 MItem("Zobrazit èíselník",
                       command=self.COMMAND_INVOKE_CODEBOOK_FORM,
-                      args={'originator': self}),
+                      args=dict(_command_handler=self)),
                 MItem("Editovat vybraný záznam",
                       command=self.COMMAND_INVOKE_EDIT_FORM,
-                      args={'originator': self}),
+                      args=dict(_command_handler=self)),
                 MItem("Zobrazit celou tabulku",
                       command=self.COMMAND_INVOKE_BROWSE_FORM,
-                      args={'originator': self}),
+                      args=dict(_command_handler=self)),
                 )
         return menu   
 
@@ -1360,20 +1355,17 @@ class ListField(GenericCodebookField):
         if command == self.COMMAND_SELECT:
             i = self._list.GetNextItem(0 , state=wx.LIST_STATE_FOCUSED)
             self._set_selection(i)
-            return True
         elif command == self.COMMAND_SHOW_SELECTED:
             self._set_selection(self._selected_item)
-            return True
         elif command == self.COMMAND_INVOKE_EDIT_FORM:
             run_form(PopupEditForm, self._codebook_name,
                      select_row=self._select_row_arg())
-            return True
         elif command == self.COMMAND_INVOKE_BROWSE_FORM:
             run_form(BrowseForm, self._codebook_name,
                      select_row=self._select_row_arg())
-            return True
         else:            
             return super(ListField, self).on_command(command, **kwargs)
+        return True
     
     def can_invoke_edit_form(self, **kwargs):
         return self._selected_item is not None
