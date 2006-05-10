@@ -20,8 +20,9 @@
 
 """Tøídy slou¾ící k definici pøíkazù.
 
-Tento modul definuje tøídy slou¾ící k definici pøíkazù.  Vlastní definice v¹ech
-pøíkazù aplikace je potom soustøedìna centrálnì v modulu 'commands_'.
+Tento modul definuje tøídy slou¾ící k definici a zpracování pøíkazù.  Vlastní
+definice v¹ech dostupných pøíkazù aplikace je potom soustøedìna centrálnì v
+modulu 'commands_'.
 
 """
 
@@ -29,13 +30,105 @@ from pytis.form import *
 
 
 class CommandHandler:
-    """Mix-in tøída, kterou musí dìdit tøídy definující vlastní pøíkazy."""
+    """Mix-in tøída, kterou musí dìdit tøídy definující vlastní pøíkazy.
+
+    Tato tøída pøidává schopnost zpracovat pøíkazy (instance 'Command') a
+    zjistit, zda je konkrétní pøíkaz v danou chvíli dostupný.
+
+    TODO: Doplnit pøehled úèelu jednotlivých metod.
+
+    """
     
-    def get_command_handler_instance(cls, application):
+    def _get_command_handler_instance(cls):
         """Najdi v aplikaci aktivní prvek, který je schopen zpracovat pøíkaz."""
         raise ProgramError("This method must be overriden in derived class.")
-    get_command_handler_instance = classmethod(get_command_handler_instance)
-                           
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
+
+    def _command_handler(cls, command, _command_handler=None, **kwargs):
+        if _command_handler is not None:
+            handler = _command_handler
+        else:
+            handler = cls._get_command_handler_instance()
+        assert handler is None or isinstance(handler, cls), \
+               (str(command), handler, cls)
+        return handler, kwargs
+    _command_handler = classmethod(_command_handler)
+    
+    def command_enabled(cls, command, **kwargs):
+        """Vra» pravdu, pokud je daný pøíkaz aktivní (smí být vyvolán).
+        
+        Pøíkazy, které nejsou kompatibilní s aktivním prvkem aplikace (instancí
+        'CommandHandler') jsou automaticky neaktivní.  Pokud je kompatibilní
+        instance 'CommandHandler' nalezena, je dostupnost pøíkazu dále
+        vyhodnocena voláním metody 'can_command' této instance.
+
+        """
+        handler, kwargs = cls._command_handler(command, **kwargs)
+        if handler is None:
+            return False
+        if __debug__:
+            name = 'COMMAND_' + command.name()
+            assert hasattr(handler,name) and getattr(handler,name) == command,\
+                   "Invalid command '%s' for %s" % (name, handler)
+        return handler.can_command(command, **kwargs)
+    command_enabled = classmethod(command_enabled)
+
+    def invoke_command(cls, command, **kwargs):
+        """Vyhledej instanci handleru pøíkazu a pøíkaz proveï.
+
+        Vrací pravdu, pokud je handler nalezen, pøíkaz je zpracován a nemají
+        tedy ji¾ být provádìny dal¹í pokusy o jeho zpracování.
+
+        """
+        handler, kwargs = cls._command_handler(command, **kwargs)
+        try:
+            try:
+                busy_cursor(True)
+                return handler.on_command(command, **kwargs)
+            finally:
+                busy_cursor(False)
+        except UserBreakException:
+            pass
+        except:
+            top_level_exception()
+    invoke_command = classmethod(invoke_command)
+
+    def on_command(self, command, **kwargs):
+        """Zpracuj pøíkaz 'command' s parametry 'kwargs'.
+
+        Argumenty:
+
+          command -- instance 'Command'
+          kwargs -- argumenty pøíkazu 'command'
+
+        Vrací: Pravdu, právì kdy¾ pøíkaz byl zpracován a nemají být ji¾
+        provádìny dal¹í pokusy o jeho zpracování.
+
+        V této tøídì metoda nedìlá nic a vrací False.
+
+        V ka¾dé odvozené tøídì, která definuje vlastní pøíkazy, by tato metoda
+        mìla být pøedefinována a mìla by o¹etøovat v¹echny tyto pøíkazy.  
+
+        """
+        return False
+
+    def can_command(self, command, **kwargs):
+        """Vra» pravdu, pokud je pøíkaz aktivní a mù¾e být proveden.
+
+        Pokud je pøíkaz aktivní, znamená to, ¾e jeho provedení má v daném
+        kontextu smysl, u¾ivatel má dostateèná pøístupová práva atd.
+
+        Pøíkazy, pro nì¾ je definována metoda 'can_<command_name>' a ta vrátí
+        False, jsou neaktivní.
+
+        """
+        can_method_name = 'can_' + command.name().lower()
+        if hasattr(self, can_method_name):
+            can = getattr(self, can_method_name)
+            if not can(**kwargs):
+                return False
+        return True
+
     
 class Command(object):
     """Reprezentace obecného pøíkazu u¾ivatelského rozhraní.
@@ -45,37 +138,15 @@ class Command(object):
     Tøída ka¾dého takového prvku u¾ivatelského rozhraní, která chce vlastní
     pøíkazy definovat, musí být odvozena od tøídy 'CommandHandler'.
 
-    Metoda 'enabled()' ka¾dého pøíkazu potom nejprve zjistí, zda je aktivní
-    prvek aplikace (instance 'CommandHandler') kompatibilní s daným pøíkazem
-    (pøíkaz byl definován pro jeho tøídu).  Pokud ne, metoda vrací v¾dy false
-    bez testování hodnoty, dané arguemntem 'enabled' konstruktoru.  Tím jsou v
-    dùsledku automaticky zneaktivnìny i pøíslu¹né polo¾ky menu atd.
-
-    Obslu¾ná tøída (resp. její instance) ka¾dý pøíkaz zpracuje buïto sama
-    (pøíkazy definované pøímo Pytisem), nebo jde o tzv. `u¾ivatelský pøíkaz' s
-    vlastní obslu¾nou rutinou (definovanou u¾ivatelem/tvùrcem aplikace).
-
-    O¹etøení u¾ivatelských pøíkazù je provedeno vyvoláním obslu¾né rutiny,
-    specifikované argumentem konstruktoru 'handler'.  Parametry, se kterými
-    bude obslu¾ná rutina zavolána závisí na typu tøídy 'CommandHandler'.  Tøída
-    'BrowseForm' tak napøíklad jako argument pøedá data aktuálního øádku
-    seznamu apod.  Více v dokumentaci jednotlivých tøíd.
-
-    Terminologická poznámka: Název arguemntu konstruktoru 'handler' (obslu¾ná
-    rutina pøíkazu) nelze zamìòovat s pou¾itím oznaèení handler pro prvek
-    u¾ivatelského rozhraní, který se o zpracování pøíkazu postará
-    ('CommandHandler').  Shodné oznaèení je pou¾ito z historických dùvodù a je
-    tøeba mít rozli¹ení na pamìti.
-    
     """
-    def __init__(self, cls, name, doc=None, log_=True):
+    def __init__(self, handler, name, doc=None, log_=True):
         """Definuj pøíkaz.
 
         Argumenty:
 
-          cls -- Tøída prvku u¾ivatelského rozhraní, který pøíkaz zpracovává.
-            Tøída musí být potomkem tøídy 'CommandHandler'.  Více také
-            viz. vý¹e (dokumentace tøídy 'Command').
+          handler -- Tøída prvku u¾ivatelského rozhraní, který pøíkaz
+            zpracovává.  Tøída musí být potomkem tøídy 'CommandHandler'.  Více
+            také viz. vý¹e (dokumentace tøídy 'Command').
           name -- název pøíkazu.  Neprázdný øetìzec, pou¾itelný jako Pythonový
             identifikáítor, mezi názvy pøíkazù unikátní.  Název je pou¾it pro
             vytvoøení konstanty (viz. ní¾e), tak¾e dal¹ím po¾adavkem je, aby
@@ -86,25 +157,25 @@ class Command(object):
             EVENT, jinak je logováno pouze jako DEBUG
 
         Po definici pøíkazu je ka¾dý pøíkaz automaticky dostupný jako veøejná
-        konstanta své obslu¾né tøídy (dané argumentem 'cls').  Název této
+        konstanta své obslu¾né tøídy (dané argumentem 'handler').  Název této
         konstanty je v¾dy COMMAND_ + 'name' ('name' je název pøíkazu zadaný v
-        konstruktoru).  Naøíklad tedy 'Application.COMMAND_LEAVE_FORM', nebo
+        konstruktoru).  Naøíklad tedy 'Application.COMMAND_EXIT', nebo
         'LookupForm.COMMAND_SORT_COLUMN'.
 
         """
-        assert issubclass(cls, CommandHandler), \
-               "Not a CommandHandler subclass: %s" % cls
+        assert issubclass(handler, CommandHandler), \
+               "Not a CommandHandler subclass: %s" % handler
         assert isinstance(name, types.StringType) and name == name.upper(), \
                (name, type(name))
         assert doc is None or isinstance(doc, types.StringTypes)
-        self._cls = cls
+        self._handler = handler
         self._name = name
         self._doc = doc
-        self._id = id = '.'.join((cls.__name__, name.lower().replace('_', '-')))
+        self._id = '.'.join((handler.__name__, name.lower().replace('_', '-')))
         self._log = log_
-        assert not hasattr(cls, 'COMMAND_' + name), \
-               "Command '%s' already defined for %s" % (name, cls.__name__)
-        setattr(cls, 'COMMAND_' + name, self)
+        assert not hasattr(handler, 'COMMAND_' + name), \
+               "Command '%s' already defined for %s" % (name, handler.__name__)
+        setattr(handler, 'COMMAND_' + name, self)
 
     def __call__(self, **kwargs):
         """Umo¾òuje pohodlnì vytvoøit definici pøíkazu a jeho argumentù.
@@ -119,9 +190,9 @@ class Command(object):
         """
         return (self, kwargs)
         
-    def cls(self):
-        """Vra» tøídu u¾ivatelsk0ho rozhraní, která tento pøíkaz zpracovává."""
-        return self._cls
+    def handler(self):
+        """Vra» tøídu u¾ivatelského rozhraní, která tento pøíkaz zpracovává."""
+        return self._handler
 
     def name(self):
         """Vra» název pøíkazu zadaný v konstruktoru."""
@@ -140,38 +211,28 @@ class Command(object):
         """Vra» dokumentaèní øetìzec pøíkazu jako string, nebo None."""
         return self._doc
     
-    def enabled(self, args):
+    def enabled(self, **kwargs):
         """Vra» pravdu, pokud je pøíkaz aktivní (smí být vyvolán).
 
-        Pokud u¾ivatel nemá pøístupová práva k danému pøíkazu (s danými
-        argumenty), je automaticky vráceno False.  Pøíkazy, které nejsou
-        kompatibilní s aktivním prvkem aplikace (instancí 'CommandHandler')
-        jsou rovnì¾ automaticky neaktivní.  Také pøíkazy, pro nì¾ aktivní prvek
-        aplikace definuje metodu 'can_<command_name>' a ta vrátí False, jsou
-        neaktivní.  A¾ nakonec je testována hodnota (nebo výsledek volání
-        funkce) argumentu 'enabled' konstruktoru.
-        
-        """
-        appl = pytis.form.application._application
-        handler = self._cls.get_command_handler_instance(appl)
-        if handler is None or not hasattr(handler, 'COMMAND_'+self._name) \
-               or not getattr(handler, 'COMMAND_'+self._name) == self:
-            return False
-        can_method_name = 'can_' + self._name.lower()
-        if hasattr(handler, can_method_name):
-            can = getattr(handler, can_method_name)
-            if not can(**args):
-                return False
-        return True
-    
-    def log_kind(self):
-        """Vra» druh logovací hlá¹ky, pod kterým má být pøíkaz logován."""
-        if self._log:
-            kind = EVENT
-        else:
-            kind = DEBUG
-        return kind
+        Zji¹tìní dostupnosti pøíkazu je ponecháno na metodì 'command_enabled'
+        tøídy 'CommandHandler' pro kterou je tento pøíkaz definován.
 
+        """
+        return self._handler.command_enabled(self, **kwargs)
+
+    def invoke(self, **kwargs):
+        """Vyvolej v aplikaci zpracování pøíkazu s danými argumenty."""
+        if self.enabled(**kwargs):
+            if self._log:
+                kind = EVENT
+            else:
+                kind = DEBUG
+            log(kind, 'Vyvolán pøíkaz:', (self, kwargs))
+            return self._handler.invoke_command(self, **kwargs)
+        else:
+            log(EVENT, 'Zamítnuto vyvolání pøíkazu:', (self, kwargs))
+            return False
+    
     def __cmp__(self, other):
         if sameclass(self, other):
             if self._id == other._id:
@@ -197,14 +258,4 @@ def invoke_command(command, **kwargs):
       kwargs -- parametry pøíkazu
 
     """
-    # TODO: Zde vyvoláme on_command aplikace a ta je zodpovìdna za pøedání
-    # pøíkazu formuláøi, pokud to není její pøíkaz.  Formuláø zase pøedává
-    # pøíkazy políèkùm.  To odpovídá pùvodnímu návrhu.  Nyní v¹ak máme
-    # CommandHandler a metodu get_command_handler_instance(), tak¾e bychom
-    # pøíkazy mohli pøedávat rovnou instanci, které pøíkaz nále¾í.  Pozor,
-    # mo¾ná to také nìjak souvisí s metodou KeyHandler._maybe_invoke_command().
-    if command.enabled(kwargs):
-        appl = pytis.form.application._application
-        return appl.on_command(command, **kwargs)
-    else:
-        return False
+    return command.invoke(**kwargs)
