@@ -469,11 +469,12 @@ class Keymap:
 
         Argumenty:
 
-          key -- string, resp. sekvence strings, definující klávesu,
+          key -- øetìzec, resp. sekvence øetìzcù, definující klávesu,
             resp. sekvenci kláves; popis viz ní¾e
+            
           command -- pøiøazený pøíkaz, instance tøídy 'Command'
-          args -- parametry pøíkazu, pøedané pøi vyvolání pøíkazu metodì
-            'KeyHandler.on_command()'
+          
+          args -- parametry pøíkazu, pøedané pøi jeho vyvolání obslu¾né metodì
 
         Pøiøazované klávesy jsou øetìzce sestavené dle následujících pravidel:
 
@@ -516,10 +517,10 @@ class Keymap:
 
         Vrací: Je-li na klávesu napojen pøíkaz, vra» dvojici (COMMAND, ARGS),
           kde COMMAND je instance tøídy 'Command' a ARGS jsou jeho argumenty
-          jako dictionary pro pøedání metodì 'KeyHandler.on_command()'.
-          Je-li na klávesu pøipojena klávesová mapa (v pøípadì víceklávesových
-          definic), je vrácena tato mapa jako instance tøídy 'Keymap'.  Není-li
-          klávesa definována, vra» 'None'.
+          jako dictionary pro pøedání obslu¾né metodì.  Je-li na klávesu
+          pøipojena klávesová mapa (v pøípadì víceklávesových definic), je
+          vrácena tato mapa jako instance tøídy 'Keymap'.  Není-li klávesa
+          definována, vra» 'None'.
 
         """
         try:
@@ -564,7 +565,7 @@ class KeyHandler:
 
     Tøída v konstruktoru registruje pro zpracování kláves metodu
     'on_key_down()', která zaji¹»uje pøevod na klávesy na pøíkaz a vyvolání
-    metody 'on_command()'.  Ve tøídì se vytvoøí klávesová mapa poskládaná
+    jeho obslu¾né metody.  Ve tøídì se vytvoøí klávesová mapa poskládaná
     z kláves pøíkazù instance oné tøídy plus v¹ech jejích poruèníkù.  Pøi
     konfliktu kláves mají pøednost ty bli¾¹í dané tøídì.
 
@@ -628,7 +629,7 @@ class KeyHandler:
             if self._commands is None:
                 self._init_commands()
             if command in self._commands and \
-                   invoke_command(command, **kwargs):
+                   command.invoke(**kwargs):
                 if __debug__:
                     log(DEBUG, 'Nalezen pøíkaz klávesy', (command, kwargs))
                 return True
@@ -675,9 +676,8 @@ class KeyHandler:
         """Zpracuj klávesovou událost 'event'.
 
         Pokud existuje v instanci pøíkaz napojený na danou klávesu, zavolej
-        metodu 'on_command()' instance celé aplikace s odpovídajícím pøíkazem
-        jako jejím argumentem.  Pokud takový pøíkaz neexistuje nebo pokud
-        'on_command()' odmítne pøíkaz zpracovat (vrátí nepravdu), ponech
+        jeho obslu¾nou metodu.  Pokud takový pøíkaz neexistuje nebo pokud
+        obslu¾ná metoda odmítne pøíkaz zpracovat (vrátí nepravdu), ponech
         'event' k dal¹ímu zpracování.
 
         Argumenty:
@@ -729,29 +729,6 @@ class KeyHandler:
             else:
                 if __debug__: log(DEBUG, 'Klávesová událost pøeskoèena')
                 event.Skip()
-        return False
-
-    def on_command(self, command, **kwargs):
-        """Zpracuj 'command' s parametry 'kwargs'.
-
-        Argumenty:
-
-          command -- instance 'Command'
-          kwargs -- doplòující argumenty 'command'
-
-        Vrací: Pravdu, právì kdy¾ pøíkaz byl zpracován a nemají být ji¾
-        provádìny dal¹í pokusy o jeho zpracování.
-
-        V této tøídì metoda nedìlá nic a vrací False.
-
-        V potomcích této tøídy by metoda mìla být pøedefinována a o¹etøovat
-        v¹echny podporované pøíkazy.  Pokud se metoda k pøedanému 'command'
-        nehlásí, mìla by jej, pokud mo¾no, pøedat metodám stejného názvu svých
-        prvkù.  Zda je pøednostnì provedeno vlastní zpracování pøíkazu, nebo je
-        nejprve dána ¹ance vnitøním prvkùm, závisí na uvá¾ení dle konkrétní
-        tøídy.
-
-        """
         return False
 
 
@@ -946,7 +923,7 @@ class Menu(_TitledMenuObject):
                 # pro výpoèet 'Command.enabled()' pøi startu aplikace.  Polo¾ky
                 # jsou správnì aktivovány i bez toho, ale první zobrazení menu
                 # je pomalej¹í.
-                menu.Enable(item.GetId(), i.command().enabled(i.args()))
+                menu.Enable(item.GetId(), i.command().enabled(**i.args()))
                 if isinstance(i, (RadioItem, CheckItem)):
                     item.Check(i.state())
                 width = parent.GetTextExtent(i.title())[0]
@@ -1024,9 +1001,6 @@ class MItem(_TitledMenuObject):
         self._hotkey = xtuple(hotkey)
         super(MItem, self).__init__(title)
 
-    def _on_ui_event(self, event):
-        event.Enable(self._command.enabled(self._args))
-
     def set_hotkey(self, hotkey):
         """Nastav dodateènì klávesovou zkratku polo¾ky menu."""
         assert hotkey is None or isinstance(hotkey, (types.StringTypes,
@@ -1035,12 +1009,12 @@ class MItem(_TitledMenuObject):
         self._hotkey = xtuple(hotkey)
     
     def create(self, parent, parent_menu):
-        appl = pytis.form.application._application
         item = wx.MenuItem(parent_menu, -1, self._title, self._help,
                            kind=self._WX_KIND)
         wx_callback(wx.EVT_MENU, parent, item.GetId(),
-                    lambda e: appl.on_command(self.command(), **self.args()))
-        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
+                    lambda e: self._command.invoke(**self._args))
+        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(),
+                    lambda e: e.Enable(self._command.enabled(**self._args)))
         return item
         
     def command(self):
