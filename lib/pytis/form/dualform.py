@@ -175,7 +175,7 @@ class DualForm(Form):
         name = super(DualForm, self).help_name()
         if isinstance(self._view, DualSpec):
             name += '-dual'
-        return
+        return name
         
     def active_form(self):
         """Vra» aktivní formuláø tohoto duálního formuláøe."""
