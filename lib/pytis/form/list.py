@@ -1186,9 +1186,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _current_codebook_info(self):
         row, col = self._current_cell()
         column = self._columns[col]
-        related = column.related_codebook_field()
-        if related:
-            column = self._view.field(related)
+        computer = column.computer()
+        if computer and isinstance(computer, CbComputer):
+            column = self._view.field(computer.field())
         enumerator = column.type(self._data).enumerator()
         codebook = column.codebook(self._data)
         return (column, enumerator, codebook)
