@@ -548,21 +548,11 @@ class RecordForm(Form):
 
     CALL_SELECTION = 'CALL_SELECTION'
     """Konstanta callbacku zmìny záznamu."""
-    CALL_EDIT_RECORD = 'CALL_EDIT_RECORD'
-    """Voláno pøi po¾adavku na editaci akt. záznamu."""
     CALL_NEW_RECORD = 'CALL_NEW_RECORD'
-    """Voláno pøi po¾adavku na vytvoøení nového záznamu.
-
-    Mù¾e mít jeden nepovinný argument.  Pokud je pravdivý, bude nový záznam
-    pøedvyplnìn zkopírováním dat aktuálního øádku.
-
-    """
+    """Voláno po vlo¾ení nového záznamu."""
 
     def __init__(self, *args, **kwargs):
         super_(RecordForm).__init__(self, *args, **kwargs)
-        self.set_callback(self.CALL_NEW_RECORD,  self._on_new_record)
-        self.set_callback(self.CALL_EDIT_RECORD,
-                          lambda k: self._on_edit_record(k)),
 
     def _init_attributes(self, prefill=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -758,10 +748,11 @@ class RecordForm(Form):
         result = new_record(self._name, prefill=prefill)
         if result is not None:
             self.select_row(result.row())
+            self._run_callback(self.CALL_NEW_RECORD, (result,))
     
-    def _on_edit_record(self, key):
+    def _on_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
-            return False
+            return
         on_edit_record = self._view.on_edit_record()
         if on_edit_record is not None:
             on_edit_record(row=self.current_row())
@@ -772,14 +763,11 @@ class RecordForm(Form):
             # ostatních pøípadech zbyteènì a zdr¾uje.
             self._signal_update()
         else:
-            self._run_form(PopupEditForm, key)
+            self._run_form(PopupEditForm, self._current_key())
 
-    def _on_delete_record(self, key):
-        log(EVENT, 'Pokus o smazání záznamu:', key)
+    def _on_delete_record(self):
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
             return False
-        # Implicitní akce pro mazání 
-        op = lambda : self._data.delete(key)
         # O¹etøení u¾ivatelské funkce pro mazání
         on_delete_record = self._view.on_delete_record()
         if on_delete_record is not None:
@@ -788,16 +776,19 @@ class RecordForm(Form):
                 return True
             assert isinstance(condition, pytis.data.Operator)
             op = lambda : self._data.delete_many(condition)
+            log(EVENT, 'Mazání záznamu:', condition)
         else:
             msg = _("Opravdu chcete záznam zcela vymazat?")        
             if not run_dialog(Question, msg):
                 log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
                 return False
-            log(EVENT, 'Mazání øádku u¾ivatelem potvrzeno.')
+            key = self._current_key()
+            op = lambda : self._data.delete(key)
+            log(EVENT, 'Mazání záznamu:', key)
         success, result = db_operation(op)
         if success:
             self._signal_update()
-            log(ACTION, 'Øádek smazán')
+            log(ACTION, 'Záznam smazán.')
             return True
         else:
             return False
@@ -956,21 +947,22 @@ class RecordForm(Form):
         """
         self._prefill = data
 
-    def can_delete_record(self):
+    def _can_delete_record(self):
         return self.check_permission(pytis.data.Permission.DELETE)
+
+    def _can_edit_record(self):
+        return self._current_key() is not None \
+               and self.check_permission(pytis.data.Permission.UPDATE)
 
     def on_command(self, command, **kwargs):
         if command == RecordForm.COMMAND_DELETE_RECORD:
-            key = self._current_key()
-            self._on_delete_record(key)
+            self._on_delete_record(**kwargs)
         elif command == RecordForm.COMMAND_NEW_RECORD:
-            self._run_callback(self.CALL_NEW_RECORD, kwargs=kwargs)
+            self._on_new_record(**kwargs)
         elif command == RecordForm.COMMAND_IMPORT_INTERACTIVE:
             self._on_import_interactive()
         elif command == RecordForm.COMMAND_EDIT_RECORD:
-            key = self._current_key()
-            if key is not None:
-                self._run_callback(self.CALL_EDIT_RECORD, (key,))
+            self._on_edit_record(**kwargs)
         else:
             return super(RecordForm, self).on_command(command, **kwargs)
         return True
@@ -1138,10 +1130,10 @@ class LookupForm(RecordForm):
         sd = self._lf_search_dialog
         return bool(sd and sd._condition)
             
-    def can_search_next(self, **kwargs):
+    def _can_search_next(self, **kwargs):
         return self._is_searching()
 
-    def can_search_previous(self, **kwargs):
+    def _can_search_previous(self, **kwargs):
         return self._is_searching()
             
     def _filter(self, condition):
@@ -1222,7 +1214,7 @@ class LookupForm(RecordForm):
             self.select_row(self._current_key())
         return sorting
     
-    def can_sort_column(self, col=None, direction=None, primary=False):
+    def _can_sort_column(self, col=None, direction=None, primary=False):
         # `col' je zde identifikátor sloupce.
         sorting_columns = tuple(self._sorting_columns())
         if direction == self.SORTING_NONE:
@@ -1678,7 +1670,7 @@ class EditForm(LookupForm, TitledForm):
                 return False
         return True
 
-    def can_commit_record():
+    def _can_commit_record(self):
         return self._mode != self.MODE_VIEW
     
     def on_command(self, command, **kwargs):
