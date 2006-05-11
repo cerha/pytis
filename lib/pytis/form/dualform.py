@@ -370,23 +370,19 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
         return _MainBrowseForm(parent, self._resolver, self._view.main_name(),
                                guardian=self, **kwargs)
 
-
     def _set_main_form_callbacks(self):
         f = self._main_form
         f.set_callback(ListForm.CALL_USER_INTERACTION,
                        lambda : self._select_form(self._main_form))
         f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
         f.set_callback(ListForm.CALL_ACTIVATION, self._on_main_activation)
-        f.set_callback(BrowseForm.CALL_NEW_RECORD, self._on_new_record)
+        f.set_callback(BrowseForm.CALL_NEW_RECORD, self._new_record_hook)
     
-    def _on_new_record(self, copy=False):
-        result = self._main_form._on_new_record(copy=copy)
-        if result:
-            self._main_form.select_row(result.row())
-            self._side_form.refresh(when=ListForm.DOIT_IMMEDIATELY)
-            self._select_form(self._side_form)
-            invoke_command(ListForm.COMMAND_INSERT_LINE, after=True)
-        return result
+    def _new_record_hook(self, row):
+        self._main_form.select_row(row.row())
+        self._side_form.refresh(when=ListForm.DOIT_IMMEDIATELY)
+        self._select_form(self._side_form)
+        ListForm.COMMAND_INSERT_LINE.invoke()
     
     def _on_main_activation(self, key, alternate=False):
         if alternate:
