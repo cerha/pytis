@@ -215,8 +215,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _skip_navigation_callback(self, widget):
         def cb(e):
             if not self._unregistered_widgets.has_key(widget):
-                self._run_callback(self.CALL_NAVIGATE,
-                                   (widget, not e.GetDirection()))
+                self._run_callback(self.CALL_NAVIGATE, widget,
+                                   back=not e.GetDirection())
                 return True
             else:
                 e.Skip()
@@ -297,7 +297,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             # Pokud je hodnota validní, dej o zmìnì vìdìt formuláøi.
             value = self._value()
             if value:
-                self._run_callback(self.CALL_FIELD_CHANGE, (self.id(), value))
+                self._run_callback(self.CALL_FIELD_CHANGE, self.id(), value)
             self._is_changed = False
         if self._want_focus and not self.has_focus():
             self._set_focus()
@@ -694,7 +694,7 @@ class TextField(InputField):
             event.Skip()
         else:
             ctrl = event.GetEventObject()
-            self._run_callback(self.CALL_NAVIGATE, (ctrl, False))
+            self._run_callback(self.CALL_NAVIGATE, ctrl, back=False)
 
     def _post_process_func(self):
         """Vra» funkci odpovídající specifikaci postprocessingu políèka.
