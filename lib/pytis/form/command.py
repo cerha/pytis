@@ -122,7 +122,7 @@ class CommandHandler:
         False, jsou neaktivní.
 
         """
-        can_method_name = 'can_' + command.name().lower()
+        can_method_name = '_can_' + command.name().lower()
         if hasattr(self, can_method_name):
             can = getattr(self, can_method_name)
             if not can(**kwargs):
@@ -246,16 +246,3 @@ class Command(object):
         
     def __str__(self):
         return '<Command: %s>' % self._id
-
-            
-        
-def invoke_command(command, **kwargs):
-    """Vyvolej globální zpracování pøíkazu 'command'.
-
-    Argumenty:
-
-      command -- instance tøídy 'Command'
-      kwargs -- parametry pøíkazu
-
-    """
-    return command.invoke(**kwargs)
