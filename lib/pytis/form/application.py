@@ -224,7 +224,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                        'Not a valid form class: %s' % args['form_class']
                 # This is a simple way to test whether the specification
                 # still exists.
-                self.can_run_form(**args)
+                self._can_run_form(**args)
             except Exception, e:
                 log(OPERATIONAL, "Ignoring recent form:", (args, e))
                 continue
@@ -666,7 +666,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def can_run_form(self, form_class, name, *args, **kwargs):
+    def _can_run_form(self, form_class, name, *args, **kwargs):
         if issubclass(form_class, DualForm) and \
                not issubclass(form_class, DescriptiveDualForm):
             dual_spec = resolver().get(name, 'dual_spec')
@@ -752,7 +752,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                               prefill=prefill, inserted_data=inserted_data)
         return result
 
-    def can_new_record(self, name, prefill=None):
+    def _can_new_record(self, name, prefill=None):
         return has_access(name, perm=pytis.data.Permission.INSERT)
     
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
@@ -1031,16 +1031,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _on_handled_action(self, handler=None, enabled=None, **kwargs):
         return handler(**kwargs)
         
-    def can_handled_action(self, handler=None, enabled=None, **kwargs):
+    def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
         
-    def can_next_form(self):
+    def _can_next_form(self):
         return len(self._windows.items()) > 1
 
-    def can_prev_form(self):
+    def _can_prev_form(self):
         return len(self._windows.items()) > 1
 
-    def can_clear_recent_forms(self):
+    def _can_clear_recent_forms(self):
         return len(self._recent_forms) > 0
 
 
