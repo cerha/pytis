@@ -1,3 +1,102 @@
+2006-05-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (IncrementalSearch._exit): Pøedávej
+	argumenty metodì `_run_callback' pøímo.
+
+	* pytis/form/screen.py (CallbackHandler._run_callback): Argumenty
+	callbackové funkce pøijímej jako `*args' a `**kwargs'.
+
+	* pytis/form/commands_.py: `ListForm.COMMAND_NEW_LINE' ->
+	`ListForm.COMMAND_INSERT_LINE'.
+
+	* pytis/form/dualform.py (BrowseDualForm._new_record_hook): Nová metoda.
+	(BrowseDualForm._on_new_record): Metoda zru¹ena.
+	(BrowseDualForm._set_main_form_callbacks): Pou¾ívej
+	`_new_record_hook' namísto `_on_new_record'.
+
+	* pytis/form/form.py (RecordForm.CALL_NEW_RECORD)
+	(RecordForm.CALL_EDIT_RECORD): Callback zru¹en.
+	(RecordForm._init_attributes): Nenastavuj callbacky
+	`CALL_NEW_RECORD' a `CALL_EDIT_RECORD'.
+	(RecordForm._on_new_record): Nakonec volej callback
+	`CALL_NEW_RECORD'.
+	(RecordForm._on_edit_record): Nevy¾aduj ¾ádné argumenty.  Klíè
+	editovaného øádku nech» je v¾dy aktuální klíè.
+	(RecordForm._on_delete_record): Nevy¾aduj ¾ádné argumenty.  Klíè
+	mazaného øádku nech» je v¾dy aktuální klíè.  Upraveno logování.
+	(RecordForm.can_delete_record): Pøejmenováno na
+	`_can_delete_record'.
+	(RecordForm._can_edit_record): Nová metoda.
+	(RecordForm.on_command): Metodám `_on_delete_record' a
+	`_on_edit_record' nepøedávej klíè aktuálního záznamu jako
+	argument.  Pøedávej obdr¾ené klíèové argumenty.  Pøíkazy
+	`COMMAND_NEW_RECORD' a `COMMAND_NEW_RECORD' o¹etøuj pøímo voláním
+	`_on_new_record' a `_on_edit_record', nikoliv voláním callbacku.
+	(LookupForm.can_search_next): Pøejmenováno na `_can_search_next'.
+	(LookupForm.can_search_previous): Pøejmenováno na
+	w	`_can_search_previous'.
+	(LookupForm.can_sort_column): Pøejmenováno na `_can_sort_column'.
+	(EditForm.can_commit_record): Pøejmenováno na
+	`_can_commit_record'.
+	(RecordForm.CALL_NEW_RECORD): Doplnìn docstring.
+	(RecordForm.CALL_SELECTION): Doplnìn docstring.
+	(RecordForm._on_new_record, RecordForm.set_row): Pøedávej
+	argumenty metodì `_run_callback' pøímo.
+
+	* pytis/form/list.py (ListForm.can_move_column): Pøejmenováno na
+	`_'.
+	(ListForm.can_sort_column): Pøejmenováno na `_'.
+	(ListForm._on_label_left_up): Namísto funkce `invoke_command()'
+	pou¾ívej metodu `Command.invoke()'.
+	(ListForm.can_reload_form_state): Pøejmenováno na
+	`_can_reload_form_state'.
+	(ListForm.can_line_rollback): Pøejmenováno na
+	`_can_line_rollback'.
+	(ListForm.can_cell_commit): Pøejmenováno na `_can_cell_commit'.
+	(ListForm.can_cell_rollback): Pøejmenováno na
+	`_can_cell_rollback'.
+	(ListForm.on_command): `ListForm.COMMAND_NEW_LINE' ->
+	`ListForm.COMMAND_INSERT_LINE'.
+	(ListForm.can_set_grouping_column): Pøejmenováno na
+	`_can_set_grouping_column'.
+	(ListForm.can_show_cell_codebook): Pøejmenováno na
+	`_can_show_cell_codebook'.
+	(ListForm.can_context_action): Pøejmenováno na
+	`_can_context_action'.
+	(ListForm._on_delete_record): Nevy¾aduj ¾ádné argumenty.  Klíè
+	mazaného øádku nech» je v¾dy aktuální klíè.
+	(ListForm._on_idle, ListForm.on_command): Pøedávej argumenty
+	metodì `_run_callback' pøímo.
+
+	* pytis/form/inputfield.py (InputField.can_reset_field):
+	Pøejmenováno na `_'.
+	(Invocable.can_invoke_selection): Pøejmenováno na
+	`_can_invoke_selection'.
+	(Invocable.can_invoke_selection_alternate): Pøejmenováno na
+	`_can_invoke_selection_alternate'.
+	(ListField.can_invoke_edit_form): Pøejmenováno na
+	`_can_invoke_edit_form'.
+	(ListField.can_invoke_browse_form): Pøejmenováno na
+	`_can_invoke_browse_form'.
+	(InputField._skip_navigation_callback.cb, InputField._on_idle)
+	(TextField._on_enter_key): Pøedávej argumenty metodì
+	`_run_callback' pøímo.
+
+	* pytis/form/command.py (CommandHandler.can_command): Název metody
+	pro zji¹tìní dostupnosti pøíkazu nech» zaèíná podtr¾ítkem.
+	(invoke_command): Funkce zru¹ena.
+
+	* pytis/form/application.py (Application.OnInit): `can_run_form'
+	-> `_can_run_form'.
+	(Application.can_run_form): Pøejmenováno na `_can_run_form'.
+	(Application.can_new_record): Pøejmenováno na `_can_new_record'.
+	(Application.can_handled_action): Pøejmenováno na
+	`_can_handled_action'.
+	(Application.can_next_form): Pøejmenováno na `_can_next_form'.
+	(Application.can_prev_form): Pøejmenováno na `_can_prev_form'.
+	(Application.can_clear_recent_forms): Pøejmenováno na
+	`_can_clear_recent_forms'.
+
 2006-05-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/event.py (wx_callback.process_event): Vyu¾ívej nové funkce `top_window()'.
