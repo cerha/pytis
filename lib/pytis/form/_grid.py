@@ -849,7 +849,7 @@ class IncrementalSearch:
             if not rollback:
                 l = self._listform
                 the_row = l._table.row(l._table.current_row())
-                l._run_callback(l.CALL_SELECTION, (the_row,))
+                l._run_callback(l.CALL_SELECTION, the_row)
 
     def _back(self):
         if self._rows:
