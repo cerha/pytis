@@ -268,7 +268,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             return True
         return False
 
-    def can_reset_field(self):
+    def _can_reset_field(self):
         return self.is_modified()
     
     def show_popup_menu(self, position=None):
@@ -994,10 +994,10 @@ class Invocable(object, CommandHandler):
         else:
             return super(Invocable, self).on_command(command, **kwargs)
 
-    def can_invoke_selection(self, **kwargs):
+    def _can_invoke_selection(self, **kwargs):
         return self.is_enabled()
 
-    def can_invoke_selection_alternate(self, **kwargs):
+    def _can_invoke_selection_alternate(self, **kwargs):
         return self.is_enabled()
 
     
@@ -1367,10 +1367,10 @@ class ListField(GenericCodebookField):
             return super(ListField, self).on_command(command, **kwargs)
         return True
     
-    def can_invoke_edit_form(self, **kwargs):
+    def _can_invoke_edit_form(self, **kwargs):
         return self._selected_item is not None
 
-    def can_invoke_browse_form(self, **kwargs):
+    def _can_invoke_browse_form(self, **kwargs):
         return not isinstance(current_form(), PopupForm)
 
 
