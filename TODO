@@ -267,12 +267,6 @@ INTERNÍ ZÁLE®ITOSTI:
    titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
    pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
   
- * Zru¹it funkci `invoke_command()' v `command.py'.
-
-   Funkce je zde pouze pro zpìtnou kompatibilitu.  Namísto ní lze pou¾ívat
-   pøímo metodu `Command.invoke()'.  Pokud nebude nikde pou¾ívána, lze ji
-   zru¹it.
-
  * Zpracování pøíkazù.
 
    Bylo by mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu a

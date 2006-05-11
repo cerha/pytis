@@ -6,6 +6,23 @@
 
 2006-05-10  Tomas Cerha  <cerha@brailcom.org>
 
+	Proèi¹tìní callbackù v RecordForm a jejich vyu¾ití v duálním
+	formuláøi (odstranìn hack).
+
+	V¹echny metody pro zji¹»ování dostupnosti pøíkazù jsou nyní
+	neveøejné ("_can_*" namísto "can_*").
+
+	Proèi¹tìní `RecordForm.on_command()' a zpùsobu volání metod
+	o¹etøujících pøíkazy.
+
+	Metodì `_run_callback()' jsou nyní pøedávány argumenty pøímo v
+	rozbalené podobì, ne jako tuple a slovník (Pythonov¹tìj¹í).
+
+	Byla zcela zru¹ena funkce `invoke_command()'.  Namísto ní nech» je
+	vyu¾ívána metoda `Command.invoke()'.
+
+2006-05-10  Tomas Cerha  <cerha@brailcom.org>
+
 	Bylo kompletnì pøepsáno v¹e, co se týká zpracování pøíkazù.  O
 	zpracování se nyní stará tøída `CommandHandler' a instance, která
 	má pøíkaz zpracovat, je vyhledána automaticky v závislosti na
