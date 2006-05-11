@@ -606,7 +606,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             log(OPERATIONAL, "Invalid column move command:", (col, newcol))
 
-    def can_move_column(self, diff=1):
+    def _can_move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
         return 0 <= col + diff < len(self._columns)
         
@@ -631,11 +631,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
-    def can_sort_column(self, **kwargs):
+    def _can_sort_column(self, **kwargs):
         col = kwargs.get('col')
         if col is not None:
             kwargs['col'] = self._columns[col].id()
-        return super(ListForm, self).can_sort_column(**kwargs)
+        return super(ListForm, self)._can_sort_column(**kwargs)
             
     # Callbacky
 
@@ -846,8 +846,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                              self.SORTING_DESCENDANT,
                              self.SORTING_NONE]
                     direction = cycle[(cycle.index(dir)+1)%3]
-                invoke_command(LookupForm.COMMAND_SORT_COLUMN, col=col,
-                               primary=primary, direction=direction)
+                LookupForm.COMMAND_SORT_COLUMN.invoke(col=col, primary=primary,
+                                                      direction=direction)
         self._column_move_target = None
         self._column_to_move = None
         event.GetEventObject().Refresh()
@@ -975,7 +975,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._update_grid(soft_reset_columns=True)
         super(ListForm, self)._on_reload_form_state()
         
-    def can_reload_form_state(self):
+    def _can_reload_form_state(self):
         return not self._table.editing()
         
     def _on_right_click(self, event):
@@ -1067,16 +1067,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         editing = self._table.editing()
         return editing and editing.changed
 
-    def can_line_commit(self):
+    def _can_line_commit(self):
         return self._is_changed()
 
-    def can_line_rollback(self):
+    def _can_line_rollback(self):
         return self._is_changed()
 
-    def can_cell_commit(self):
+    def _can_cell_commit(self):
         return self._grid.IsCellEditControlEnabled()
 
-    def can_cell_rollback(self):
+    def _can_cell_rollback(self):
         return self._grid.IsCellEditControlEnabled()
 
     def can_command(self, command, **kwargs):
@@ -1148,7 +1148,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._on_filter()
         elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
             self._on_incremental_search(**kwargs)
-        elif command == ListForm.COMMAND_NEW_LINE:
+        elif command == ListForm.COMMAND_INSERT_LINE:
             self._on_insert_line(**kwargs)
         elif command == ListForm.COMMAND_TOGGLE_COLUMN:
             self._on_toggle_column(**kwargs)
@@ -1175,7 +1175,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._set_state_param('grouping', self._grouping)
         self._update_grid()
     
-    def can_set_grouping_column(self, col=None):
+    def _can_set_grouping_column(self, col=None):
         if col is not None:
             return self._columns[col].id() in self._sorting_columns()
         else:
@@ -1200,7 +1200,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             select_row = {enumerator.value_column(): value}
             run_form(BrowseForm, codebook, select_row=select_row)
 
-    def can_show_cell_codebook(self):
+    def _can_show_cell_codebook(self):
         column, enumerator, codebook = self._current_codebook_info()
         return codebook and enumerator
 
@@ -1227,7 +1227,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return None
     
-    def can_context_action(self, action):
+    def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and \
            len(self._selected_rows()) < 1:
             return False
