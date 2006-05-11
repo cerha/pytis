@@ -673,7 +673,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._selection_callback_candidate = None
                 the_row = self._table.row(row)
                 if the_row is not None:
-                    self._run_callback(self.CALL_SELECTION, (the_row,))
+                    self._run_callback(self.CALL_SELECTION, the_row)
                     self._post_selection_hook(the_row)
         if self._check_default_columns:
             self._check_default_columns = False
@@ -1141,7 +1141,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._filter_by_cell()
         elif command == ListForm.COMMAND_ACTIVATE:
             key = self._current_key()
-            self._run_callback(self.CALL_ACTIVATION, (key,), kwargs)
+            self._run_callback(self.CALL_ACTIVATION, key, **kwargs)
         elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
             self._on_show_cell_codebook()
         elif command == LookupForm.COMMAND_FILTER:
