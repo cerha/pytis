@@ -784,8 +784,8 @@ class ViewSpec(object):
             recourse_group(layout.group())
             for f in fields:
                 assert isinstance(f, FieldSpec)
-                assert f.related_codebook_field() is None \
-                       or f.related_codebook_field() in self._field_dict.keys()
+                assert not isinstance(f.computer(), CbComputer) \
+                       or f.computer().field() in self._field_dict.keys()
                 for (s, c) in (('computer', f.computer()),
                                ('editable', f.editable())):
                     if isinstance(c, Computer):
@@ -1153,10 +1153,66 @@ class Computer(object):
         """Vra» seznam id sloupcù, ne kterých poèítaná hodnota závisí."""
         return self._depends    
 
-class CodebookSpec(object):
-    """Specifikace èíselníkového políèka.
 
-    Specifikace pro argument 'codebook' konstruktoru tøídy 'FieldSpec'
+class CbComputer(Computer):
+    """Specializovaný computer, který získává hodnotu z èíselníku.
+    
+    Tento computer automaticky poskytuje dopoèítávací funkci, která získává
+    hodnotu z nìkterého sloupce èíselníku navázaného na jiné políèko stejného
+    náhledu.  Toho lze vyu¾ít u políèek, která ve skuteènosti jen zobrazují
+    doplòující informace z èíselníku.
+
+    Stejného efektu by sice ¹lo dosáhnout i pou¾itím standardního computeru s
+    pøíslu¹nou dopoèítávací funkcí, ale tím by se u¾ivatelské rozhraní
+    nedozvìdìlo nic o vazbì dopoèítávaného políèka na políèko s enumerátorem a
+    nebylo by schopno poskytnout dal¹í u¾iteèné funkce, jako napøíklad otevøení
+    náhledu èíselníku jako akce kontextového menu buòky, zobrazení klíèe
+    èíselníku pøi aktivaci buòky, automatické urèení datového typu virtuálního
+    políèka apod.
+
+    """
+    def __init__(self, field, column, default=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+        
+          field -- identifikátor políèka ve stejném náhledu, které je spojeno s
+            èíselníkem (jeho datový typ má enumerátor typu DataEnumerator).
+
+          column -- sloupeèek datového objektu enumerátoru, který udává
+            výslednou hodnotu dopoèítávací funkce.
+        
+        """
+        assert isinstance(field, types.StringType)
+        assert column is None or isinstance(column, types.StringType)
+        self._field = field
+        self._column = column
+        self._default = default
+        super(CbComputer, self).__init__(self._compute, depends=(field,))
+        
+    def _compute(self, row):
+        cbvalue = row[self._field]
+        if cbvalue.value() is not None:
+            e = cbvalue.type().enumerator()
+            value = e.get(cbvalue.value(), self._column)
+            if value:
+                return value.value()
+        return self._default
+
+    def field(self):
+        """Vra» id políèka, jeho¾ enumerátor je pou¾it."""
+        return self._field
+    
+    def column(self):
+        """Vra» id sloupce datového objektu enumerátoru, který udává hodnotu."""
+        return self._column
+    
+    
+class CodebookSpec(object):
+    """Specifikace vlastností náhledu pro jeho pou¾ití jako èíselníku.
+
+    Nepovinná specifikaèní funkce 'cb_spec' mù¾e pomocí instance této tøídy
+    upøesnit vlastnosti daného náhledu pro jeho pou¾ití v kontextu èíselníku.
 
     """
     def __init__(self, columns=None, sorting=None, display=None,
@@ -1175,12 +1231,15 @@ class CodebookSpec(object):
             záznamy èíselníkového formuláøe setøídìny.  Pokud je 'None',
             bude pou¾ito tøídìní z ViewSpec.
             
-          display -- pokud není 'None', bude èíselníkové políèko vybaveno
-            displejem, (viz 'CodebookField').  Hodnotou je identifikátor
-            sloupce obsahujícího hodnotu k zobrazení v displeji (tento sloupec
-            musí být obsa¾en v datové specifikaci èíselníku).
+          display -- pokud není 'None', budou èíselníková políèka vázaná na
+            tento èíselník automaticky vybavena displejem, (viz
+            'CodebookField').  Hodnotou je identifikátor sloupce obsahujícího
+            hodnotu k zobrazení v displeji (tento sloupec musí být obsa¾en v
+            datové specifikaci èíselníku).
             
-          display_size -- ¹íøka políèka displeje ve znacích
+          display_size -- ¹íøka políèka displeje ve znacích.  Lze také
+            pøedefinovat stejnojmeným argumentem 'FieldSpec' pro konkrétní
+            èíselníkové políèko.
           
           begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
             spustit automatické inkrementální vyhledávání.
@@ -1295,14 +1354,14 @@ class FieldSpec(object):
             popisek vlevo od políèka.
             
           type_ -- explicitní urèení typu hodnoty, se kterou pracuje toto
-            políèko; instance 'pytis.data.Type'.  Typ mù¾e být vìt¹inou urèen
-            podle navázaného sloupeèku datového objektu.  Nìkterá
-            (napø. dopoèítávaná) políèka v¹ak nemusí být navázána na konkrétní
-            datový sloupec, nebo mù¾e být z nìjakého dùvodu vhodné pro
-            prezentaci hodnot pou¾ít jiný typ (ten v¹ak *musí* být instancí
-            typu sloupce z datového objektu, pokud je políèko na nìjaký
-            navázáno).  Viz také metoda 'type()'.  Není-li zadáno, je pou¾it
-            typ z datového objektu.
+            políèko; instance 'pytis.data.Type'.  Výchozí datový typ je urèen
+            podle odpovídajícího sloupeèku datového objektu.  Pokud je v¹ak
+            políèko virtuální (viz ní¾e), je nutné typ urèit explicitnì (s
+            výjimkou virtuálních políèek pou¾ívajících 'CbComputer').  Typ
+            mù¾eme také explicitnì pøedefinovat, pokud chceme pro prezentaci
+            hodnot pou¾ít jiný typ, ne¾ výchozí typ datového rozhraní (ten v¹ak
+            *musí* být kompatibilní s typem datového rozhraní).  Viz také
+            metoda 'type()'.
             
           default -- funkce pro výpoèet výchozí hodnoty políèka.  Callable
             object vracející hodnotu kompatibilní s vnitøní hodnotou
@@ -1327,19 +1386,8 @@ class FieldSpec(object):
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
             'cb_spec' ve specifikaci èíselníku.
 
-          related_codebook_field -- specifikace vazby tohoto políèka (pro
-            názornost si jej oznaème A) do èíselníku.  Jde o dvojici
-            identifikátorù sloupcù (øetìzcù).  První identifikátor urèuje
-            políèko B ve stejném defsu, které je spojeno s èíselníkem (jeho
-            datový typ má enumerátor typu DataEnumerator).  Neurèujeme zde tedy
-            pøímo vlastní èíselník políèka A, ale signalizujeme jeho vazbu na
-            èíselník políèka B.  Druhý pøedaný identifikátor oznaèuje políèko C
-            z datového objektu enumerátoru.  Pro políèko A bude automaticky
-            vytvoøen 'computer', který bude hodnotu políèka C z èíselníku
-            získávat a zobrazovat jako hodnotu políèka A.  Pokud je
-            identifikátor C shodny s identifikátorem A, lze jej vypustit a jako
-            hodnotu tohoto argumentu uvést prostý øetìzec - identifikátor
-            èíselníkového políèka B.
+          related_codebook_field -- Potlaèený atribut.  Namísto nìj, nech» je
+            pou¾íván computer typu 'CbComputer'.
             
           allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
             pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
@@ -1398,7 +1446,13 @@ class FieldSpec(object):
         poèítána.  Takový sloupec mù¾e být plnì \"virtuální\", tj. není
         pøítomen v datovém objektu a jeho hodnota je v¾dy poèítána, nebo mù¾e
         být v datovém objektu, av¹ak hodnota je dopoèítávána v prùbìhu editace
-        (i novì vytvoøeného) záznamu.
+        (i novì vytvoøeného) záznamu.  Pou¾ití plnì virtuálních sloupcù není
+        doporuèováno z dùvodu výkonnostních problémù v rozsáhlej¹ích
+        tabulkových náhledech.  U plnì virtuálních políèek je také nutné urèit
+        explicitnì datový typ pomocí specifikátoru 'type_', proto¾e není mo¾né
+        jej pøevzít automaticky z datového objektu.  Jedinou výjimkou jsou
+        dopoèítávaná virtuální políèka typu 'CbComputer', kde je typ pøevzat z
+        datového objektu enumerátoru.
 
         Dopoèítávání pomocí 'computer' nelze zamìòovat s výpoètem výchozí
         hodnoty (specifikátor 'default').  Výpoèet výchozí hodnoty je proveden
@@ -1447,22 +1501,12 @@ class FieldSpec(object):
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
         if related_codebook_field is not None:
+            assert computer is None
             if isinstance(related_codebook_field, types.StringType):
                 cb_field, cb_column = (related_codebook_field, id)
             else:
                 cb_field, cb_column = related_codebook_field
-                assert isinstance(cb_field, types.StringType)
-                assert isinstance(cb_column, types.StringType)
-            assert computer is None
-            def func(row):
-                cbvalue = row[cb_field]
-                if cbvalue.value() is not None:
-                    e = cbvalue.type().enumerator()
-                    value = e.get(cbvalue.value(), cb_column)
-                    if value:
-                        return value.value()
-                return None
-            computer = Computer(func, depends=(cb_field,))
+            computer = CbComputer(cb_field, cb_column)
         else:
             cb_field = cb_column = None
         self._id = id
@@ -1482,8 +1526,6 @@ class FieldSpec(object):
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
-        self._related_codebook_field = cb_field # id from the same spec
-        self._related_codebook_column = cb_column # id from the codebook spec
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
@@ -1595,10 +1637,10 @@ class FieldSpec(object):
             type = self._type
             assert column is None or \
                    isinstance(type, column.type().__class__)
-        elif self._related_codebook_column:
-            cb_column = data.find_column(self._related_codebook_field)
+        elif isinstance(self._computer, CbComputer):
+            cb_column = data.find_column(self._computer.field())
             enumerator = cb_column.type().enumerator()
-            type = enumerator.type(self._related_codebook_column)
+            type = enumerator.type(self._computer.column())
         else:
             assert column != None, \
                    ('Data type not specified for virtual column ' + \
@@ -1631,10 +1673,6 @@ class FieldSpec(object):
         """Vra» velikost displeje èíselníku (poèet znakù)."""
         return self._display_size
 
-    def related_codebook_field(self):
-        """Vra» identifikátor souvisejícího èíselníkového políèka."""
-        return self._related_codebook_field
-    
     def allow_codebook_insert(self):
         """Vra» pravdu, má-li být  zobrazeno tlaèítko pøidání do èíselníku."""
         return self._allow_codebook_insert
