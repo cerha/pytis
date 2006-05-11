@@ -779,7 +779,7 @@ class CallbackHandler:
             return self._callbacks[kind]
         return None
 
-    def _run_callback(self, kind, args=(), kwargs={}):
+    def _run_callback(self, kind, *args, **kwargs):
         """Vyvolej funkci pro o¹etøení callbacku 'kind'.
 
         Pokud nebyla funkce pro o¹etøení daného callbacku pøedtím nastavena
@@ -789,9 +789,10 @@ class CallbackHandler:
         Argumenty:
         
           kind -- druh callbacku, jedna z 'CALL_*' konstant tøídy
-          args -- argumenty funkce, která má být vyvolána.  Poèet a význam
-            argumentù je dán odvozenou tøídou a mìl by být zdokumentovám v
-            rámci její dokumentace.
+          
+          args, kwargs -- argumenty volané funkce.  Poèet a význam argumentù je
+            dán odvozenou tøídou a mìl by být zdokumentovám v rámci dokumentace
+            callbackové konstanty.
             
         """
         try:
