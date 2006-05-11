@@ -547,9 +547,18 @@ class RecordForm(Form):
     """Formuláø schopný nìjakým zpùsobem zobrazit aktuální záznam."""
 
     CALL_SELECTION = 'CALL_SELECTION'
-    """Konstanta callbacku zmìny záznamu."""
+    """Konstanta callbacku výbìru (zmìny aktuálního) záznamu.
+
+    Argumentem callbackové funkce je novì vybraný záznam jako instance
+    'PresentedRow'.
+    
+    """
     CALL_NEW_RECORD = 'CALL_NEW_RECORD'
-    """Voláno po vlo¾ení nového záznamu."""
+    """Voláno po vlo¾ení nového záznamu.
+    
+    Argumentem callbackové funkce je nový záznam jako instance 'PresentedRow'.
+    
+    """
 
     def __init__(self, *args, **kwargs):
         super_(RecordForm).__init__(self, *args, **kwargs)
@@ -748,7 +757,7 @@ class RecordForm(Form):
         result = new_record(self._name, prefill=prefill)
         if result is not None:
             self.select_row(result.row())
-            self._run_callback(self.CALL_NEW_RECORD, (result,))
+            self._run_callback(self.CALL_NEW_RECORD, result)
     
     def _on_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
@@ -909,7 +918,7 @@ class RecordForm(Form):
     def set_row(self, row):
         """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
         self._row = row
-        self._run_callback(self.CALL_SELECTION, (row,))
+        self._run_callback(self.CALL_SELECTION, row)
         
     def current_row(self):
         """Vra» instanci PresentedRow právì aktivního øádku.
