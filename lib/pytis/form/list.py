@@ -1576,13 +1576,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._current_editor = None
         return True
 
-    def _on_delete_record(self, key):
+    def _on_delete_record(self):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
             return False
         def blocked_code():
-            key = self._current_key()
-            deleted = super(ListForm, self)._on_delete_record(key)
+            deleted = super(ListForm, self)._on_delete_record()
             self._table.edit_row(None)
             return deleted
         if block_refresh(blocked_code):
