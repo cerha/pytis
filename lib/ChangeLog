@@ -1,5 +1,17 @@
 2006-05-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (CbComputer): Nová tøída.
+	(ViewSpec.layout): Netestuj `related_codebook_field', ale
+	`CbComputer'.
+	(CodebookSpec): Opraven neaktuální docstring.
+	(CodebookSpec.__init__): Opraven neaktuální docstring.
+	(FieldSpec.__init__): Upraven docstring.  Z
+	`related_codebook_field' vytváøej CbComputer (pro zpìtnou
+	kompatibilitu).
+	(FieldSpec.type): Nepracuj s `related_codebook_field', ale
+	zji¹»uj, zda computer není typu `CbComputer'.
+	(FieldSpec.related_codebook_field): Metoda zru¹ena.
+
 	* pytis/form/_grid.py (IncrementalSearch._exit): Pøedávej
 	argumenty metodì `_run_callback' pøímo.
 
@@ -67,6 +79,9 @@
 	mazaného øádku nech» je v¾dy aktuální klíè.
 	(ListForm._on_idle, ListForm.on_command): Pøedávej argumenty
 	metodì `_run_callback' pøímo.
+	(ListForm._current_codebook_info): Nepou¾ívej
+	`related_codebook_field', ale zji¹»uj, zda computer není typu
+	`CbComputer'.
 
 	* pytis/form/inputfield.py (InputField.can_reset_field):
 	Pøejmenováno na `_'.
