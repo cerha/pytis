@@ -1,3 +1,20 @@
+2006-05-12  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py:
+	(SelectSetType): Nová tøída.
+	(SelectSet): Nová tøída.
+	(Select.__init__): Odebrán argument 'name'.
+	(Select): Zaji¹tìno zji¹»ování sloupcù i pro SelectSet.
+	(Select._is_set): Nová metoda.
+	(Select.set_columns): Pøepsáno.
+	(Select.get_columns): Zru¹eno.
+	(Select.columns): Pøepsáno.
+	(format_select): Pøepsáno pro zohlednìní SelectSet.
+	(Select.output): Vracej prázdný øetìzec.
+	(_GsqlViewNG.__init__): Zohlednìny zmìny ve tøídì Select.
+	(_GsqlViewNG._format_rule.get_default_body): Nová metoda.
+        (_GsqlViewNG._format_rule): Pøepsáno.
+
 2006-05-03  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (SelectRelation): Nová tøída (pøejmenování

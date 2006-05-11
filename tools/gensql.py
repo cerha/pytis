@@ -410,6 +410,46 @@ class SelectRelation(object):
         self.update_columns = update_columns
 
 
+class SelectSetType(object):
+    """Specifikaèní tøída pro typy kombinace selectù."""
+    UNION = 'UNION'
+    INTERSECT = 'INTERSECT'
+    EXCEPT = 'EXCEPT'
+    UNION_ALL = 'UNION_ALL'
+    INTERSECT_ALL = 'INTERSECT_ALL'
+    EXCEPT_ALL = 'EXCEPT_ALL'
+
+class SelectSet(object):
+    """Úlo¾ná tøída specifikace kombinace selectù."""
+    _FORMAT_SET = {
+        SelectSetType.UNION: 'UNION',
+        SelectSetType.INTERSECT: 'INTERSECT',
+        SelectSetType.EXCEPT: 'EXCEPT',
+        SelectSetType.UNION_ALL: 'UNION ALL',
+        SelectSetType.INTERSECT_ALL: 'INTERSECT ALL',
+        SelectSetType.EXCEPT_ALL: 'EXCEPT ALL',
+        }
+    def __init__(self, select, 
+                 settype=None
+                 ):
+        """Úlo¾ná tøída specifikace kombinace selectù.
+        Argumenty:
+
+          select -- název pojmenovaného selectu nebo instance
+            Select.
+          settype -- typ spojení selectù - konstanta tøídy SelectSetType. 
+        """
+        self.select = select
+        self.settype = settype    
+
+    def format_select(self, indent=0):
+        output = self.select.format_select(indent=indent)        
+        if self.settype:
+            outputset = ' ' * (indent+1) + self._FORMAT_SET[self.settype]
+            output = '%s\n%s' % (outputset, output)
+        return output    
+        
+
 class TableView(object):
     """Úlo¾ná tøída specifikace view asociovaného s tabulkou.
 
@@ -850,18 +890,18 @@ class _GsqlTable(_GsqlSpec):
             result = super(_GsqlTable, self).db_update(connection)
         return result
 
-
+    
 class Select(_GsqlSpec):
     """Specifikace SQL selectu."""
 
-    def __init__(self, name, relations, include_columns=(),
+    def __init__(self, relations, include_columns=(),
                  group_by=None, having=None, order_by=None, limit=None,
                  **kwargs):
         """Inicializuj instanci.
         Argumenty:
 
-          name -- jméno view jako SQL string
-          relations -- sekvence instancí tøídy SelectRelation
+          name -- jméno selectu.
+          relations -- sekvence instancí tøídy SelectRelation nebo SelectSet.
           include_columns -- seznam instancí tøídy ViewColumn, které budou
             pøidány ke sloupcùm z relations (typicky výrazové sloupce).
           group_by -- string pro klauzuli GROUP BY.  
@@ -869,17 +909,34 @@ class Select(_GsqlSpec):
           order_by -- string pro klauzuli GROUP BY.  
           limit -- hodnota limit pro select.  
         """
-        assert relations[0].jointype == JoinType.FROM
-        super(Select, self).__init__(name, **kwargs)
-        self._name = name
+        super(Select, self).__init__(None, **kwargs)
         self._relations = relations
         self._group_by = group_by
         self._having = having
         self._order_by = order_by
         self._limit = limit
         self._include_columns = include_columns
-        self._columns = None
-    
+        self._columns = []
+        self._set = self._is_set()
+
+    def _is_set(self):
+        first = self._relations[0]
+        for r in self._relations:
+            if not sameclass(r, first):
+                raise ProgramError('Different classes in relation sequence.')
+        if isinstance(first, SelectSet):
+            if self._group_by:
+                raise ProgramError('Bad Syntax: group by')
+            if self._having:
+                raise ProgramError('Bad Syntax: having')
+            if self._include_columns:
+                raise ProgramError('Bad Syntax: include_columns')               
+            return True
+        elif isinstance(first, SelectSet):
+            if self._relations[0].jointype != JoinType.FROM:
+                raise ProgramError('Bad Syntax: First join must be FROM')
+            return False
+        
     def _column_column(self, column):        
         return _gsql_column_table_column(column.name)[1]
 
@@ -927,7 +984,8 @@ class Select(_GsqlSpec):
             result = '%s\n WHERE %s' % (result, wherecondition)
         return result
 
-    def get_columns(self, relation_columns):
+    def set_columns(self, relation_columns):
+        self._relation_columns = relation_columns
         vcolumns = []
         aliases = []
         def make_columns(cols, column_aliases, rel_alias):
@@ -948,38 +1006,79 @@ class Select(_GsqlSpec):
                     vname = '%s.%s' % (rel_alias, cname)                    
                     vcolumns.append(ViewColumn(vname, alias=calias))
                 else:
-                    raise ProgramError('Duplicate column name', calias) 
-        for r in self._relations:
-            rel_alias = r.alias
-            column_aliases = r.column_aliases
-            if isinstance(r.relation, Select):
-                columnlist = r.relation.get_columns(relation_columns)
-                r.relation.set_columns(columnlist)
-            else:    
-                if '*' in r.exclude_columns:
-                    continue
-                columnlist = relation_columns[r.relation]
-            make_columns(columnlist, column_aliases,
-                         rel_alias)            
-        for c in self._include_columns:
-            vcolumns.append(c)
-        return vcolumns
-
-    def set_columns(self, columns):
-        self._columns = columns
-
-    def columns(self):
+                    raise ProgramError('Duplicate column name', calias)
+        if self._set:
+            for r in self._relations:
+                vcolumns = r.select.set_columns(self._relation_columns)
+                self._columns.append(vcolumns)
+        else:    
+            for r in self._relations:
+                rel_alias = r.alias
+                column_aliases = r.column_aliases
+                if isinstance(r.relation, Select):
+                    columnlist = r.relation.set_columns(self._relation_columns)
+                else:    
+                    if '*' in r.exclude_columns:
+                        continue
+                    columnlist = self._relation_columns[r.relation]
+                make_columns(columnlist, column_aliases,
+                             rel_alias)            
+            for c in self._include_columns:
+                vcolumns.append(c)
+            self._columns = vcolumns
         return self._columns
 
+    def columns(self):
+        if self._set:
+            columns = self._columns[0]
+        else:
+            columns = self._columns
+        return [ViewColumn(c.alias) for c in columns]           
+
+    def sort_set_columns(self):
+        # Check length
+        length = len(self._columns[0])
+        for cols in self._columns[1:]:
+            if len(cols) != length:
+                colnames = []
+                for c in cols:
+                    colnames.append(c.alias)
+                    colnames2 = ' '.join(colnames)
+                raise ProgramError('Different number of columns in SelectSet',
+                                   len(cols), length, colnames2)
+        # Reorder
+        columns = []
+        aliases = [c.alias for c in self._columns[0]]
+        columns.append(self._columns[0])
+        for cols in self._columns[1:]:
+            newcols = []
+            for a in aliases:
+                col = find(a, cols, key=lambda c: c.alias)
+                if col is None:
+                    raise ProgramError("Can't find columns alias in SelectSet",
+                                       a)
+                else:
+                    newcols.append(col)
+            columns.append(newcols)
+        self._columns = columns
+                    
+
     def format_select(self, indent=0):
-        relations = self._format_relations(indent=indent)
-        columns = self._format_columns(indent=indent)
-        select = '%sSELECT\n\t%s\n %s\n' % (' '*(indent+1), columns,
-                                            relations)
-        if self._group_by:
-            select = '%s GROUP BY %s\n' % (select, self._order_by)
-        if self._having:
-            select = '%s HAVING %s\n' % (select, self._having)
+        if not self._set:
+            relations = self._format_relations(indent=indent)
+            columns = self._format_columns(indent=indent)
+            select = '%sSELECT\n\t%s\n %s\n' % (' '*(indent+1), columns,
+                                                relations)
+            if self._group_by:
+                select = '%s GROUP BY %s\n' % (select, self._order_by)
+            if self._having:
+                select = '%s HAVING %s\n' % (select, self._having)
+        else:
+            self.sort_set_columns()
+            selects = []
+            for r in self._relations:
+                selects.append(r.format_select(indent=indent))
+            select = ''.join(selects)
         if self._order_by:
             select = '%s ORDER_BY %s\n' % (select, self._order_by)
         if self._limit:
@@ -987,7 +1086,7 @@ class Select(_GsqlSpec):
         return select
 
     def output(self):
-        return self.format_select()
+        return ''
     
 
 class _GsqlViewNG(Select):
@@ -1043,19 +1142,20 @@ class _GsqlViewNG(Select):
             budou provedeny v uvedeném poøadí. Vynecháním názvu SelectRelation
             se docílí toho, ¾e delete pro danou relaci nebude vùbec proveden.
         """
-        assert relations[0].jointype == JoinType.FROM
-        super(ViewNG, self).__init__(name, relations, **kwargs)
+        #assert relations[0].jointype == JoinType.FROM
+        super(ViewNG, self).__init__(relations, **kwargs)
+        self._name = name
         self._insert = insert
         self._update = update
         self._delete = delete
         self._insert_order = insert_order
         self._update_order = update_order
         self._delete_order = delete_order
-        self._columns = None
+        self._columns = []
 
     def _format_rule(self, kind):
         def relations(list_order):
-            if not list_order:
+            if list_order is None:
                 rels = self._relations
             else:
                 rels = []
@@ -1063,77 +1163,105 @@ class _GsqlViewNG(Select):
                     rel = find(r, self._relations, lambda x: x.relation)
                     if rel is not None:
                         rels.append(rel)
-            return rels 
-        body = []
-        if kind == self._INSERT:
-            command = 'INSERT'
-            suffix = 'ins'
-            for r in relations(self._insert_order):
-                table_alias = r.alias or r.relation
-                column_names = []
-                column_values = []
-                for c in self._columns:
-                    if c.name is None:
+            return rels
+        def get_default_body(kind):
+            body = []
+            if kind == self._INSERT:
+                for r in relations(self._insert_order):
+                    table_alias = r.alias or r.relation
+                    column_names = []
+                    column_values = []
+                    for c in self._columns:
+                        if c.name is None:
+                            continue
+                        rel, col = _gsql_column_table_column(c.name)
+                        if rel == table_alias and col != 'oid' and c.insert:
+                            column_names.append(col)
+                            if c.insert == '':
+                                val = 'new.%s' % (c.alias)
+                            else:    
+                                val = c.insert
+                                column_values.append(val)
+                    columns = ',\n      '.join(column_names)
+                    values = ',\n      '.join(column_values)
+                    if len(column_names) > 0:
+                        body.append('INSERT INTO %s (\n      %s)\n     '
+                                    'VALUES (\n      %s)' % (r.relation,
+                                                             columns, values))
+                action = self._insert
+            elif kind == self._UPDATE:
+                command = 'UPDATE'
+                suffix = 'upd'
+                for r in relations(self._update_order):
+                    if isinstance(r.relation, Select):
                         continue
-                    rel, col = _gsql_column_table_column(c.name)
-                    if rel == table_alias and col != 'oid' and c.insert:
-                        column_names.append(col)
-                        if c.insert == '':
-                            val = 'new.%s' % (c.alias)
-                        else:    
-                            val = c.insert
-                            column_values.append(val)
-                columns = ',\n      '.join(column_names)
-                values = ',\n      '.join(column_values)
-                if len(column_names) > 0:
-                    body.append('INSERT INTO %s (\n      %s)\n     '
-                                'VALUES (\n      %s)' % (r.relation,
-                                                         columns, values))
-            action = self._insert
-        elif kind == self._UPDATE:
-            command = 'UPDATE'
-            suffix = 'upd'
-            for r in relations(self._update_order):
-                if not r.key_column:
-                    continue
-                table_alias = r.alias or r.relation
-                column_names = []
-                values = []                
-                for c in self._columns:
-                    if c.name is None:
+                    if not r.key_column:
+                        raise ProgramError("Update rule: no key column "
+                                           "specified", r.relation)
+                    table_alias = r.alias or r.relation
+                    column_names = []
+                    values = []                
+                    for c in self._columns:
+                        if c.name is None:
+                            continue
+                        rel, col = _gsql_column_table_column(c.name)
+                        if rel == table_alias and col != 'oid' and c.update:
+                            column_names.append(col)
+                            if c.update == '':
+                                val = 'new.%s' % (c.alias)
+                            else:    
+                                val = c.update                            
+                                values.append(val)
+                    settings = ',\n      '.join(['%s = %s' % (c, v)
+                                                 for c, v in zip(column_names,
+                                                                 values)])
+                    condition = '%s = old.%s' % (r.key_column, r.key_column)
+                    if len(column_names) > 0:
+                        body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
+                                    (r.relation, settings, condition))
+                action = self._update
+            elif kind == self._DELETE:
+                command = 'DELETE'
+                suffix = 'del'
+                for r in relations(self._delete_order):
+                    if isinstance(r.relation, Select):
                         continue
-                    rel, col = _gsql_column_table_column(c.name)
-                    if rel == table_alias and col != 'oid' and c.update:
-                        column_names.append(col)
-                        if c.update == '':
-                            val = 'new.%s' % (c.alias)
-                        else:    
-                            val = c.update                            
-                            values.append(val)
-                settings = ',\n      '.join(['%s = %s' % (c, v)
-                                             for c, v in zip(column_names,
-                                                             values)])
-                condition = '%s = old.%s' % (r.key_column, r.key_column)
-                if len(column_names) > 0:
-                    body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
-                                (r.relation, settings, condition))
-            action = self._update
-        elif kind == self._DELETE:
-            command = 'DELETE'
-            suffix = 'del'
-            for r in relations(self._delete_order):
-                if not r.key_column:
-                    continue
-                condition = '%s = old.%s' % (r.key_column, r.key_column)
-                body.append('DELETE FROM %s \n    WHERE %s' % (r.relation,
-                                                               condition))
-            action = self._delete
-        else:
-            raise ProgramError('Invalid rule specifier', kind)
+                    if not r.key_column:
+                        raise ProgramError("Delete rule: no key column "
+                                           "specified", r.relation)
+                        continue
+                    condition = '%s = old.%s' % (r.key_column, r.key_column)
+                    body.append('DELETE FROM %s \n    WHERE %s' % (r.relation,
+                                                                   condition))
+                action = self._delete
+            else:
+                raise ProgramError('Invalid rule specifier', kind)
+            return body
+        def get_params(kind):
+            if kind == self._INSERT:
+                command = 'INSERT'
+                suffix = 'ins'
+                action = self._insert
+            elif kind == self._UPDATE:
+                command = 'UPDATE'
+                suffix = 'upd'
+                action = self._update
+            elif kind == self._DELETE:
+                command = 'DELETE'
+                suffix = 'del'
+                action = self._delete
+            else:    
+                raise ProgramError('Invalid rule specifier', kind)
+            return action, command, suffix
+        action, command, suffix = get_params(kind)
         if action is None:
             body = 'NOTHING'
         elif is_sequence(action):
-            body = body + list(action)
+            if self._set:
+                body = []
+            else:    
+                body = get_default_body(kind)
+            body = list(body) + list(action)
             if len(body) == 0:
                 body = 'NOTHING'
             else:
@@ -1875,9 +2003,9 @@ class _GsqlDefs(UserDict.UserDict):
         spec = self[name]
         if isinstance(spec, _GsqlTable) or isinstance(spec, _GsqlView):
             self._relation_columns[name] = spec.columns()
-        elif isinstance(spec, ViewNG):    
-            self._relation_columns[name] = spec.get_columns(self._relation_columns)
-            spec.set_columns(self._relation_columns[name])
+        elif isinstance(spec, Select):
+            spec.set_columns(self._relation_columns)
+            self._relation_columns[name] = spec.columns()
         
     def add(self, spec):
         name = spec.name()
