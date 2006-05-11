@@ -21,6 +21,29 @@
 	Byla zcela zru¹ena funkce `invoke_command()'.  Namísto ní nech» je
 	vyu¾ívána metoda `Command.invoke()'.
 
+	Specifikace virtuálního políèka dopoèítávaného z èíselníku byla
+	koneènì vyøe¹ena s uspokojením (snad) v¹ech po¾adavkù.  Argument
+	`related_codebook_field' byl zru¹en (je stále funkèní pro zpìtnou
+	kompatibilitu, ale mìl by být èasem nahrazen).  Namísto nìho je
+	virtuální políèko opìt specifikováno pomocí `computer'.  Oproti
+	pùvodnímu stavu je zde v¹ak pomìrnì zásadní rozdíl.  K vytvoøení
+	computeru slou¾í nová tøída `CbComputer', které pouze sdìlíme jaký
+	je identifikátor sloupce navázaného na èíselník a jeký je název
+	sloupce v èíselníku, urèujícího výslednou hodnotu.  Tøída u¾ sama
+	doplní odpovídající dopoèítávací funkci a závislosti.  Navíc tøída
+	poskytuje u¾ivatelskému rozhraní infomace o vazbì na èíselník,
+	tak¾e jsou zde zachovány ve¹keré výhody, které vedly k zavedení
+	`related_codebook_field'.  Také datový typ virtuálního políèka,
+	které pou¾ívá `CbComputer' je automaticky získán z enumerátoru,
+	tak¾e není nutné jej explicitnì definovat pomocí 'type_'.  A
+	koneènì je také mo¾né urèit výchozí hodnotu, kterou computer
+	vrací, kdy¾ èíselníkové políèko není vyplnìno.  Více viz
+	dokumentace 'CbComputer' a jeho konstruktoru.
+
+	Byla doplnìna a aktualizována dokumentace FieldSpec a
+	ComputerSpec.
+	
+
 2006-05-10  Tomas Cerha  <cerha@brailcom.org>
 
 	Bylo kompletnì pøepsáno v¹e, co se týká zpracování pøíkazù.  O
