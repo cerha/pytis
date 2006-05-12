@@ -229,9 +229,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         wx_callback(wx.EVT_IDLE,       c, self._on_idle)
         wx_callback(wx.EVT_KILL_FOCUS, c, self._on_kill_focus)
         wx_callback(wx.EVT_SET_FOCUS,  c, self._on_set_focus)
-        wx_callback(wx.EVT_RIGHT_UP,   c, self._on_popup_menu)
-        wx_callback(wx.EVT_COMMAND_RIGHT_CLICK, c, c.GetId(),
-                    self._on_popup_menu)
+        wx_callback(wx.EVT_RIGHT_DOWN, c, self._on_context_menu)
         if self._spec.descr() is not None and config.show_tooltips:
             c.SetToolTipString(self._spec.descr())
             
@@ -256,41 +254,35 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _menu(self):
         # Return the tuple of popup menu items ('MItem' instances).
         return (MItem("Vrátit pùvodní hodnotu",
-                      command=InputField.COMMAND_RESET_FIELD),
+                      command=InputField.COMMAND_RESET_FIELD,
+                      args=dict(_command_handler=self)),
                 )
 
     def guardian(self):
         return self._guardian
-    
-    def on_command(self, command, **kwargs):
-        if command == self.COMMAND_RESET_FIELD:
-            self.reset()
-            return True
-        return False
 
+    # Zpracování pøíkazù
+    
     def _can_reset_field(self):
         return self.is_modified()
-    
-    def show_popup_menu(self, position=None):
-        """Zobraz kontextové menu vstupního políèka.
 
-        Argumenty:
-        
-          position -- tuple (x, y) udávající pozici relativnì k vstupnímu
-            prvku tohoto políèka.
-        
-        """
+    def _cmd_reset_field(self):
+        self.reset()
+
+    def _cmd_context_menu(self):
+        self._on_context_menu()
+
+    def _on_context_menu(self, event=None):
         control = self._ctrl
-        if position is None:
+        if event:
+            position = (event.GetX(), event.GetY())
+        else:
             size = control.GetSize()
             position = (size.x/3, size.y/2)
         menu = Menu('', self._menu()).create(control, self)
         control.PopupMenu(menu, position)
         menu.Destroy()
-
-    def _on_popup_menu(self, event):
-        self.show_popup_menu(position=(event.GetX(), event.GetY()))
-        event.Skip()
+        #event.Skip()
 
     def _on_idle(self, event):
         if self._is_changed:
@@ -976,10 +968,6 @@ class Invocable(object, CommandHandler):
         self._invocation_button.Enable(True)
         self._call_next_method('_enable')
     
-    def _on_invoke_selection(self, **kwargs):
-        """Callback pro akci vyvolání výbìru."""
-        raise ProgramError("This method must be overriden!")
-
     def _menu(self):
         return InputField._menu(self) + \
                (MSeparator(),
@@ -987,17 +975,13 @@ class Invocable(object, CommandHandler):
                       command=self.COMMAND_INVOKE_SELECTION,
                       args=dict(_command_handler=self)))
     
-    def on_command(self, command, **kwargs):
-        if command == Invocable.COMMAND_INVOKE_SELECTION:
-            self._on_invoke_selection(**kwargs)
-            return True
-        else:
-            return super(Invocable, self).on_command(command, **kwargs)
-
+    def _on_invoke_selection(self):
+        raise ProgramError("This method must be overriden!")
+    
+    def _cmd_invoke_selection(self, **kwargs):
+        self._on_invoke_selection(**kwargs)
+        
     def _can_invoke_selection(self, **kwargs):
-        return self.is_enabled()
-
-    def _can_invoke_selection_alternate(self, **kwargs):
         return self.is_enabled()
 
     
@@ -1013,8 +997,7 @@ class DateField(Invocable, TextField):
     _DEFAULT_WIDTH = 10
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z kalendáøe")
     
-    def _on_invoke_selection(self, **kwargs):
-        """Zobraz kalendáø a po jeho skonèení nastav hodnotu políèka."""
+    def _on_invoke_selection(self):
         value = self._value()
         if value is not None:
             d = value.value()
@@ -1032,8 +1015,7 @@ class ColorSelectionField(Invocable, TextField):
     _DEFAULT_WIDTH = 7
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat barvu")
     
-    def _on_invoke_selection(self, **kwargs):
-        """Zobraz kalendáø a po jeho skonèení nastav hodnotu políèka."""
+    def _on_invoke_selection(self):
         color = run_dialog(ColorSelector, self.get_value())
         if color != None:
             self.set_value(color)
@@ -1085,11 +1067,8 @@ class GenericCodebookField(InputField):
     def _on_enumerator_change(self):
         pass
 
-    def on_command(self, command, **kwargs):
-        if self._enabled and command == self.COMMAND_INVOKE_CODEBOOK_FORM:
-            self._run_codebook_form()
-            return True
-        return super(GenericCodebookField, self).on_command(command, **kwargs)
+    def _cmd_invoke_codebook_form(self):
+        self._run_codebook_form()
     
 
 class CodebookField(Invocable, GenericCodebookField, TextField):
@@ -1178,7 +1157,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         dv = v and self._type.enumerator().get(v.value(), self._display_column)
         self._display.SetValue(dv and dv.export() or '')
 
-    def _on_invoke_selection(self, alternate=False, **kwargs):
+    def _on_invoke_selection(self, alternate=False):
         if alternate:
             begin_search = self._type.enumerator().value_column()
         else:
@@ -1351,6 +1330,8 @@ class ListField(GenericCodebookField):
                 )
         return menu   
 
+    # Zpracování pøíkazù
+    
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_SELECT:
             i = self._list.GetNextItem(0 , state=wx.LIST_STATE_FOCUSED)
