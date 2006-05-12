@@ -1024,7 +1024,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             g.PopupMenu(menu, position)
             menu.Destroy()
 
-    def show_popup_menu(self):
+    def _cmd_context_menu(self):
         self.show_context_menu()
 
     def show_position(self):
