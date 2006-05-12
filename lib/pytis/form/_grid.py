@@ -206,7 +206,7 @@ class ListTable(wx.grid.PyGridTableBase):
         
     def _panic(self):
         if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
-        leave_form()
+        Form.COMMAND_LEAVE_FORM.invoke()
 
     def _get_row(self, row, autoadjust=False):
         """Vra» øádek èíslo 'row' z databáze jako instanci 'pytis.data.Row'.
