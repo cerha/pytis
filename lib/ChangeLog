@@ -1,3 +1,49 @@
+2006-05-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (ListTable._panic): Namísto `leave_form()'
+	vyvolej pøíkaz `COMMAND_LEAVE_FORM'.
+
+	* pytis/form/application.py (_on_frame_close): Nová meotda.
+	(Application._cleanup): Namísto `self.leave_form()' vyvolej pøíkaz
+	`COMMAND_LEAVE_FORM'.
+	(Application._on_form_close): Nová metoda.
+	(Application.run_form): Neuzavírej modální formuláø po jeho
+	skonèení.  Na nemodální formuláø nava¾ `self._on_form_close()' pøi
+	události jeho uzavøení.
+	(Application.leave_form): Metoda Zru¹ena.
+	(leave_form): Funkce zru¹ena. 
+
+	* pytis/form/command.py (CommandHandler.on_command): Pokud
+	tøída definuje metodu `_cmd_*', kde * je název pøíkazu, pou¾it
+	tuto metodu rovnou pro obsluhu pøíkazu.
+
+	* pytis/form/form.py (Form.__init__): Nenavazuj
+	`_on_parent_close()' na uzavøení formuláøe.
+	(Form._on_parent_close): Meotda zru¹ena.
+	(Form._leave_form): Provádìj zde `_exit_check()' a vracej pravdu,
+	pokud k uzavøení formuláøe skuteènì do¹lo.  Nevyu¾ívej
+	`Application.leave_form()', ale rovnou formuláø uzavøi.
+	(Form._cmd_reload_form_state): Nová metoda.
+	(Form._cmd_help): Nová metoda.
+	(Form._cmd_leave_form): Nová metoda.
+	(Form.on_command): Metoda zru¹ena.
+	(PopupForm._popup_frame): Nava¾ `_on_frame_close()' na událost
+	uzavøení popup okna.
+	(PopupForm._on_parent_close): Pøejmenováno na `_on_frame_close'.
+	Pøed vlastním uzavøením volej `self.defocus()'.  Neuzavírej zde
+	formuláø, ten je uzavøen automaticky wx Windows po uzavøení jeho
+	rodièovského okna (pokud voláme `event.Skip()').
+	(PopupForm.run): Kosmetická úprava.
+	(EditForm._commit_form): Namísto pøímého uzavírání okna pou¾ij
+	`self._leave_form()'.
+	(PopupEditForm._on_cancel_button): Zru¹eno.
+	(PopupEditForm._exit_check): Nová metoda nahrazující
+	`_on_cancel_button'.
+	(PopupEditForm._buttons): Na tlaèítko `Cancel' nava¾
+	`self._leave_form()'.
+	
+	* pytis/form/list.py (ListForm.Show): Metoda zru¹ena.
+
 2006-05-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (CbComputer): Nová tøída.
