@@ -12,8 +12,23 @@
 	Tøída CommandHandler nyní vyhledává obslu¾nou rutinu pøíkazu podle
 	názvu.  Pokud je nalezena metoda `_cmd_*', kde * odpovídá názvu
 	pøíkazu, je automaticky tato metoda zavolána a není tak nutno
-	procházet sérii if/elsif v `on_command'.  Nìkteré obslu¾né rutiny
+	procházet sérii if/elsif v `on_command'.  Mnohé obslu¾né rutiny
 	ji¾ byly na tento nový zpùsob pøevedeny.
+
+	Vyøe¹eno rozdìlení pøíkazù na pøíkazy propagované do vnitøních
+	formuláøù duálního formuláøe a pøíkazy zpracovávané pøímo duálním
+	formuláøem.
+
+	Globální pøíkaz `Application.COMMAND_SHOW_POPUP_MENU' nahrazen
+	pøíkazy `ListForm.COMMAND_CONTEXT_MENU' a
+	`InputField.COMMAND_CONTEXT_MENU' a proèi¹tìn zbyteèný kód.
+
+	* BUGFIX: Vyøe¹en problém s kolidujícím menu GTK nad vstupním
+	políèkem a vlastním menu vstupních políèek.
+	
+	* BUGFIX: Opraven nefunkèní pøíkaz
+	`InputField.COMMAND_RESET_FIELD' pro navrácení pùvodní hodnoty
+	políèka.
 
 2006-05-11  Tomas Cerha  <cerha@brailcom.org>
 
@@ -133,7 +148,7 @@
 	Ji¾ nelze v aplikaci definovat vlastní instance pøíkazù (tøídy
 	`Command').  Namísto toho je mo¾né vyu¾ívat pøíkazy
 	`BrowseForm.COMMAND_CONTEXT_ACTION' a
-	`Applicvation.COMMAND_HANDLED_ACTION'.  Druhý zmínìný pøíkaz je
+	`Application.COMMAND_HANDLED_ACTION'.  Druhý zmínìný pøíkaz je
 	nový a slou¾í k vytváøení u¾ivatelem o¹etøených akcí.  Stejnì jako
 	COMMAND_CONTEXT_ACTION umo¾òuje definovat obslu¾nou rutinu jako
 	povinný argument `handler' a funkci `enabled' pro zji¹tìní
@@ -211,7 +226,7 @@
 	a korektnì je øe¹en také refresh duálních formuláøù.  Více
 	informací v dokumentaci tøídy `Action'.
 
-	Nová globální funkce `has_access' v `applicvation.py' umo¾òuje
+	Nová globální funkce `has_access' v `application.py' umo¾òuje
 	zjistit pøístupová práva pøihlá¹eného u¾ivatele k danému náhledu.
 	
 	DÙLE®ITÉ UPOZORNÌNÍ: `Action' umo¾òuje definovat také

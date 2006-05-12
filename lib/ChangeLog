@@ -1,5 +1,36 @@
 2006-05-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (InputField._init_ctrl): Menu zobrazuj
+	na `wx.EVT_RIGHT_DOWN', ne `wx.EVT_RIGHT_UP' a
+	`wx.EVT_COMMAND_RIGHT_CLICK'.
+	(InputField._menu): Nastavuj `_command_handler'.
+	(on_command): Metoda zru¹ena.
+	(show_popup_menu): Metoda zru¹ena.
+	(InputField._cmd_reset_field): Nová metoda.
+	(InputField._cmd_context_menu): Nová metoda.
+	(InputField._on_context_menu): Nová metoda.
+	(InputField._on_popup_menu): Metoda zru¹ena.
+	(Invocable.on_command): Metoda zru¹ena.
+	(Invocable._cmd_invoke_selection): Nová metoda.
+	(Invocable._can_invoke_selection_alternate): Metoda zru¹ena.
+	(Invocable._on_invoke_selection, DateField._on_invoke_selection)
+	(ColorSelectionField._on_invoke_selection)
+	(CodebookField._on_invoke_selection): Neakceptuj `**kwargs'.
+	(GenericCodebookField.on_command): Metoda zru¹ena.
+	(GenericCodebookField._cmd_invoke_codebook_form): Nová metoda.
+
+	* pytis/form/dualform.py (show_popup_menu): Metoda zru¹ena.
+	(DualForm._get_command_handler_instance): Metoda zru¹ena.
+	(DualForm.on_command): Metoda zru¹ena.
+	(DualForm._cmd_other_form): Nová metoda.
+
+	* pytis/form/commands_.py: Zru¹en pøíkaz
+	`Application.COMMAND_SHOW_POPUP_MENU'.  Nové pøíkazy
+	`ListForm.COMMAND_CONTEXT_MENU' a `InputField.COMMAND_CONTEXT_MENU'.
+	(DEFAULT_KEYMAP): Mapuj `Ctrl-m' na oba nové pøíkazy'.
+	(Form.COMMAND_PRINT, Form.COMMAND_RELOAD_FORM_STATE): Nech» jsou
+	to pøíkazy tøídy `InnerForm'.
+
 	* pytis/form/_grid.py (ListTable._panic): Namísto `leave_form()'
 	vyvolej pøíkaz `COMMAND_LEAVE_FORM'.
 
@@ -11,7 +42,13 @@
 	skonèení.  Na nemodální formuláø nava¾ `self._on_form_close()' pøi
 	události jeho uzavøení.
 	(Application.leave_form): Metoda Zru¹ena.
-	(leave_form): Funkce zru¹ena. 
+	(leave_form): Funkce zru¹ena.
+	(Application.on_command): Neo¹etøuj
+	`Application.COMMAND_HANDLED_ACTION' a
+	`Application.COMMAND_SHOW_POPUP_MENU'.
+	(_on_handled_action): Pøejmenováno na `_cmd_handled_action'.
+	(Application.current_form): Nový argument `inner'.
+	(current_form): Nový argument `inner'.
 
 	* pytis/form/command.py (CommandHandler.on_command): Pokud
 	tøída definuje metodu `_cmd_*', kde * je název pøíkazu, pou¾it
@@ -41,8 +78,17 @@
 	`_on_cancel_button'.
 	(PopupEditForm._buttons): Na tlaèítko `Cancel' nava¾
 	`self._leave_form()'.
-	
+	(EditForm.show_popup_menu): Metoda zru¹ena.
+	(Form.show_popup_menu): Metoda zru¹ena.
+	(Form._cmd_help): Zru¹en hack o¹etøující vyvolání pøíkazu pro
+	duální formuláø.
+	(InnerForm): Nová tøída.
+	(Form._get_command_handler_instance): Vracej v¾dy top-level
+	formuláø, ne vnitøní formuláø duálního formuláøe.
+	(RecordForm): Buï potomkem InnerForm.
+
 	* pytis/form/list.py (ListForm.Show): Metoda zru¹ena.
+	(ListForm.show_popup_menu): Pøejmenováno na `_cmd_context_menu'.
 
 2006-05-11  Tomas Cerha  <cerha@brailcom.org>
 
