@@ -14,6 +14,7 @@
 	(_GsqlViewNG.__init__): Zohlednìny zmìny ve tøídì Select.
 	(_GsqlViewNG._format_rule.get_default_body): Nová metoda.
         (_GsqlViewNG._format_rule): Pøepsáno.
+	(Select.format_select): Oprava chybného pøedání 'group_by'.
 
 2006-05-03  Pavel Hanak  <hanak@asellus.cz>
 

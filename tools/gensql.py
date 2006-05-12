@@ -1070,7 +1070,7 @@ class Select(_GsqlSpec):
             select = '%sSELECT\n\t%s\n %s\n' % (' '*(indent+1), columns,
                                                 relations)
             if self._group_by:
-                select = '%s GROUP BY %s\n' % (select, self._order_by)
+                select = '%s GROUP BY %s\n' % (select, self._group_by)
             if self._having:
                 select = '%s HAVING %s\n' % (select, self._having)
         else:
