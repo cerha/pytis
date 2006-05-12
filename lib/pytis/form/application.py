@@ -491,15 +491,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             wxconfig.DeleteEntry(option)
         wxconfig.Flush()
 
-    def _on_frame_close(self, event):
-        if not self._cleanup():
-            event.Veto()
-        else:
-            event.Skip()
-            global _application
-            _application = None
-
-
     def _cleanup(self, quietly=False):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
@@ -522,7 +513,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             while not self._windows.empty():
                 try:
-                    self.leave_form()
+                    Form.COMMAND_LEAVE_FORM.invoke()
                 except:
                     break
         except:
@@ -546,8 +537,108 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except:
             pass
         return True
+
+    # Callbacky
+
+    def _on_frame_close(self, event):
+        if not self._cleanup():
+            event.Veto()
+        else:
+            event.Skip()
+            global _application
+            _application = None
+
+    def _on_frame_size(self, event):
+        size = event.GetSize()
+        self._frame.SetSize(size)
+        top = self._windows.active()
+        if top is not None:
+            top.resize()
+        if self._logo is not None:
+            logo = self._logo.GetBitmap()
+            logo_posx = max((size.GetWidth()-logo.GetWidth()) / 2, 0)
+            logo_posy = max((size.GetHeight()-logo.GetHeight()-50) / 2, 0)
+            self._logo.SetPosition((logo_posx,logo_posy))
+            if top is None:
+                self._logo.Show(True)
+        return True
+
+    def _on_form_close(self, event):
+        form = event.GetEventObject()
+        assert form is self._windows.active()
+        log(EVENT, "Okno nemodálního formuláøe uzavøeno:", form)
+        self._windows.remove(form)
+        self._update_window_menu()
+        self.restore()
+    
+    def on_key_down(self, event, dont_skip=False):
+        # Toto je záchranný odchytávaè.  Vìøte tomu nebo ne, ale pokud tady ta
+        # metoda není, wxWindows se pøi více pøíle¾itostech po stisku klávesy
+        # zhroutí.
+        return KeyHandler.on_key_down(self, event)
+
+    # Zpracování pøíkazù
+
+    def on_command(self, command, **kwargs):
+        if command == Application.COMMAND_HANDLED_ACTION:
+            self._on_handled_action(**kwargs)
+        elif command == Application.COMMAND_SHOW_POPUP_MENU:
+            top = self.top_window()
+            if hasattr(top, 'show_popup_menu'):
+                top.show_popup_menu()
+        elif command == Application.COMMAND_EXIT:
+            self.exit()
+        elif command == Application.COMMAND_HELP:
+            self.help(**kwargs)
+        elif command == Application.COMMAND_BREAK:
+            message(_("Stop"), beep_=True)
+        elif command == Application.COMMAND_RUN_FORM:
+            self.run_form(**kwargs)
+        elif command == Application.COMMAND_RUN_PROCEDURE:
+            self.run_procedure(**kwargs)
+        elif command == Application.COMMAND_NEW_RECORD:
+            self.new_record(**kwargs)
+        elif command == Application.COMMAND_RAISE_FORM:
+            self._raise_form(kwargs['form'])
+        elif command == Application.COMMAND_NEXT_FORM:
+            self._raise_form(self._windows.next())
+        elif command == Application.COMMAND_PREV_FORM:
+            self._raise_form(self._windows.prev())
+        elif command == Application.COMMAND_REFRESH:
+            self.refresh()
+        elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
+            self._recent_forms[:] = []
+            self._update_recent_forms()
+        elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
+            config.custom_debug()
+        else:
+            return False
+        return True
+
+    def _on_handled_action(self, handler=None, enabled=None, **kwargs):
+        return handler(**kwargs)
         
-    # Ostatní veøejné metody
+    def _can_handled_action(self, handler=None, enabled=None, **kwargs):
+        return enabled is None and True or enabled(**kwargs)
+        
+    def _can_next_form(self):
+        return len(self._windows.items()) > 1
+
+    def _can_prev_form(self):
+        return len(self._windows.items()) > 1
+
+    def _can_clear_recent_forms(self):
+        return len(self._recent_forms) > 0
+    
+    def _can_run_form(self, form_class, name, *args, **kwargs):
+        if issubclass(form_class, DualForm) and \
+               not issubclass(form_class, DescriptiveDualForm):
+            dual_spec = resolver().get(name, 'dual_spec')
+            result = has_access(dual_spec.main_name()) and \
+                     has_access(dual_spec.side_name())
+        else:
+            result = has_access(name)
+        return result
 
     def run_form(self, form_class, name, *args, **kwargs):
         """Vytvoø formuláø a spus» jej.
@@ -569,7 +660,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         z této metody proveden a¾ po ukonèení formuláøe (uzavøení jeho okna).
         Pro nemodální formuláøe se metoda vrací ihned po zobrazení okna s
         návratovou hodnotou None.  Nemodální formuláø je potom nutné z aplikace
-        odstranit metodou 'leave_form()'.
+        odstranit pøíkazem 'Form.COMMAND_LEAVE_FORM'.
           
         """
         # TODO: Toto je jen kvùli zpìtné kompatibilitì.  Argument 'key' je
@@ -585,7 +676,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 del kwargs['new']
             if not kwargs.get('select_row') and not kwargs.has_key('mode'):
                 kwargs['mode'] = EditForm.MODE_INSERT
-        # konec doèasného hacku    
+        # konec doèasného hacku
         result = None
         post_init_kwargs = {}
         for arg in ('select_row', ):
@@ -637,7 +728,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         log(EVENT, "Návratová hodnota:", result)
                     finally:
                         self._modals.pop()
-                        form.close()
                         busy_cursor(False)
                     top = self.top_window()
                     if top is not None:
@@ -652,6 +742,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     if old is not None:
                         old.hide()
                     self._windows.push(form)
+                    wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     message('', root=True)
                     form.show()
                     self._update_window_menu()
@@ -664,16 +755,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             pass
         except:
             top_level_exception()
-        return result
-
-    def _can_run_form(self, form_class, name, *args, **kwargs):
-        if issubclass(form_class, DualForm) and \
-               not issubclass(form_class, DescriptiveDualForm):
-            dual_spec = resolver().get(name, 'dual_spec')
-            result = has_access(dual_spec.main_name()) and \
-                     has_access(dual_spec.side_name())
-        else:
-            result = has_access(name)
         return result
 
     def run_procedure(self, spec_name, proc_name, *args, **kwargs):
@@ -802,23 +883,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         top = self
         return result
 
-    def leave_form(self):
-        """Uzavøi aktuální formuláø otevøený v oknì aplikace.
-
-        Pokud není otevøen ¾ádný formuláø, zaloguj a jinak nedìlej nic.
-        
-        """
-        form = self._windows.active()
-        if form:
-            log(EVENT, "Zavírám okno nemodálního formuláøe:", form)
-            form.defocus()
-            self._windows.remove(form)
-            self._update_window_menu()
-            form.close()
-            self.restore()
-        else:
-            log(EVENT, "Není otevøen ¾ádný formuláø.")
-
+    # Ostatní veøejné metody
 
     def help(self, topic=None):
         """Zobraz dané téma v prohlí¾eèi nápovìdy."""
@@ -969,81 +1034,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return Menu(self._RECENT_FORMS_MENU_TITLE,
                     self._recent_forms_menu_items())
 
-    # Callbacky
-
-    def _on_frame_size(self, event):
-        size = event.GetSize()
-        self._frame.SetSize(size)
-        top = self._windows.active()
-        if top is not None:
-            top.resize()
-        if self._logo is not None:
-            logo = self._logo.GetBitmap()
-            logo_posx = max((size.GetWidth()-logo.GetWidth()) / 2, 0)
-            logo_posy = max((size.GetHeight()-logo.GetHeight()-50) / 2, 0)
-            self._logo.SetPosition((logo_posx,logo_posy))
-            if top is None:
-                self._logo.Show(True)
-        return True
-
-    def on_key_down(self, event, dont_skip=False):
-        # Toto je záchranný odchytávaè.  Vìøte tomu nebo ne, ale pokud tady ta
-        # metoda není, wxWindows se pøi více pøíle¾itostech po stisku klávesy
-        # zhroutí.
-        return KeyHandler.on_key_down(self, event)
-
-    def on_command(self, command, **kwargs):
-        if command == Application.COMMAND_HANDLED_ACTION:
-            self._on_handled_action(**kwargs)
-        elif command == Application.COMMAND_SHOW_POPUP_MENU:
-            top = self.top_window()
-            if hasattr(top, 'show_popup_menu'):
-                top.show_popup_menu()
-        elif command == Application.COMMAND_EXIT:
-            self.exit()
-        elif command == Application.COMMAND_HELP:
-            self.help(**kwargs)
-        elif command == Application.COMMAND_BREAK:
-            message(_("Stop"), beep_=True)
-        elif command == Application.COMMAND_RUN_FORM:
-            self.run_form(**kwargs)
-        elif command == Application.COMMAND_RUN_PROCEDURE:
-            self.run_procedure(**kwargs)
-        elif command == Application.COMMAND_NEW_RECORD:
-            self.new_record(**kwargs)
-        elif command == Application.COMMAND_RAISE_FORM:
-            self._raise_form(kwargs['form'])
-        elif command == Application.COMMAND_NEXT_FORM:
-            self._raise_form(self._windows.next())
-        elif command == Application.COMMAND_PREV_FORM:
-            self._raise_form(self._windows.prev())
-        elif command == Application.COMMAND_REFRESH:
-            self.refresh()
-        elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
-            self._recent_forms[:] = []
-            self._update_recent_forms()
-        elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
-            config.custom_debug()
-        else:
-            return False
-        return True
-
-    def _on_handled_action(self, handler=None, enabled=None, **kwargs):
-        return handler(**kwargs)
-        
-    def _can_handled_action(self, handler=None, enabled=None, **kwargs):
-        return enabled is None and True or enabled(**kwargs)
-        
-    def _can_next_form(self):
-        return len(self._windows.items()) > 1
-
-    def _can_prev_form(self):
-        return len(self._windows.items()) > 1
-
-    def _can_clear_recent_forms(self):
-        return len(self._recent_forms) > 0
-
-
 
 # Funkce
 
@@ -1133,10 +1123,6 @@ def run_procedure(*args, **kwargs):
 def new_record(*args, **kwargs):
     """Spus» akci pøidání nového záznamu (viz 'Application.new_record()')."""
     return _application.new_record(*args, **kwargs)
-
-def leave_form():
-    """Odstraò aktuální okno formuláøe z aplikace."""
-    return _application.leave_form()
 
 def current_form():
     """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje."""
