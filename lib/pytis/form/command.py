@@ -110,6 +110,11 @@ class CommandHandler:
         mìla být pøedefinována a mìla by o¹etøovat v¹echny tyto pøíkazy.  
 
         """
+        handler_method_name = '_cmd_' + command.name().lower()
+        if hasattr(self, handler_method_name):
+            handler = getattr(self, handler_method_name)
+            handler(**kwargs)
+            return True
         return False
 
     def can_command(self, command, **kwargs):
