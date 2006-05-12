@@ -596,7 +596,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             return False   
         
     # Class methods
-        
+
     def _defocus(cls, field):
         if cls._focused_field is field:
             cls._last_focused_field = cls._focused_field
@@ -671,7 +671,7 @@ class TextField(InputField):
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
         return control
-    
+
     def _maxlen(self):
         """Vra» maximální délku zadaného textu."""
         return None
@@ -768,6 +768,11 @@ class TextField(InputField):
                ('String or Unicode expected', value)
         self._ctrl.SetValue(value)
         return True
+
+    def _on_kill_focus(self, event):
+        if self._ctrl is not None:
+            self._ctrl.SetSelection(0, 0)
+        super(TextField, self)._on_kill_focus(event)
 
 
 class StringField(TextField):
@@ -1244,7 +1249,6 @@ class ListField(GenericCodebookField):
     #    if self._selected_item is not None:
     #        self._list.EnsureVisible(self._selected_item)
     #    super(ListField, self)._on_kill_focus(event)
-        
         
     def _load_list_data(self):
         current = self.get_value()
