@@ -68,10 +68,6 @@ class DualForm(Form):
     """
     DESCR = _("duální formuláø")
     
-    def _get_command_handler_instance(cls):
-        return top_window()
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
     def __init__(self, *args, **kwargs):
         """Inicializuj duální formuláø.
 
@@ -153,23 +149,14 @@ class DualForm(Form):
         """Vra» název formuláøe jako øetìzec."""
         return self._main_form.title()
 
-    
-
     def select_row(self, *args, **kwargs):
         if hasattr(self._main_form, 'select_row'):
             self._main_form.select_row(*args, **kwargs)
         else:
             log(EVENT, "Hlavní formuláø nepodporuje metodu `select_row()'!")
         
-    def show_popup_menu(self):
-        self._active_form.show_popup_menu()
-
-    def on_command(self, command, **kwargs):
-        if command == DualForm.COMMAND_OTHER_FORM:
-            self._select_form(self._other_form(self._active_form))
-            return True
-        else:
-            return False
+    def _cmd_other_form(self):
+        self._select_form(self._other_form(self._active_form))
 
     def help_name(self):
         name = super(DualForm, self).help_name()
