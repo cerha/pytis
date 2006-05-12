@@ -1837,11 +1837,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._table.close()    
         return super_(ListForm).Close(self)
 
-    def Show(self, show):
-        if not show:
-            self._exit_check()
-        return super_(ListForm).Show(self, show)
-    
     # Ostatní veøejné metody
 
     def focus(self):
