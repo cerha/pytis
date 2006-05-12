@@ -29,7 +29,11 @@
 	* BUGFIX: Opraven nefunkèní pøíkaz
 	`InputField.COMMAND_RESET_FIELD' pro navrácení pùvodní hodnoty
 	políèka.
+	
+	* BUGFIX: Pøi ztrátì fucusu políèka je zru¹en výbìr.  Tím je
+	zamezeno nepøíjemnému zneviditelnìní textu v nìkterých situacích.
 
+	
 2006-05-11  Tomas Cerha  <cerha@brailcom.org>
 
 	Proèi¹tìní callbackù v RecordForm a jejich vyu¾ití v duálním

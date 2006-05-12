@@ -18,6 +18,7 @@
 	(CodebookField._on_invoke_selection): Neakceptuj `**kwargs'.
 	(GenericCodebookField.on_command): Metoda zru¹ena.
 	(GenericCodebookField._cmd_invoke_codebook_form): Nová metoda.
+	(TextField._on_kill_focus): Nová meotda.
 
 	* pytis/form/dualform.py (show_popup_menu): Metoda zru¹ena.
 	(DualForm._get_command_handler_instance): Metoda zru¹ena.
