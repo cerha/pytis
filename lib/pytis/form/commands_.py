@@ -60,8 +60,6 @@ Command(Application, 'PREV_FORM',
         "Vyzvednutí okna pøedchozího formuláøe")
 Command(Application, 'NEXT_FORM',
         "Vyzvednutí okna následujícího formuláøe")
-Command(Application, 'SHOW_POPUP_MENU',
-        "Zobraz kontextové menu aktivního prvku")
 Command(Application, 'CLEAR_RECENT_FORMS',
         "Vyèisti menu poslednì otevøených formuláøù")
 Command(Application, 'HANDLED_ACTION',
@@ -133,8 +131,10 @@ Command(ListForm, 'TOGGLE_COLUMN',
 Command(ListForm, 'RESET_COLUMNS',
         "Vrácení výchozího nastavení sloupcù")
 Command(ListForm, 'CONTEXT_ACTION',
-        "Akce v kontextu øádkového formuláøe")
+        "Vyvolání akce nad aktuálním øádkem formuláøe")
         # Povinný argument 'action' je instancí specifikacní tøídy 'Action'.
+Command(ListForm, 'CONTEXT_MENU',
+        "Zobrazení kontextového menu aktivní buòky")
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn")
 Command(EditForm, 'NAVIGATE',
@@ -155,8 +155,8 @@ Command(PrintForm, 'PREVIOUS_PAGE',
         "Pøechod na pøedchozí stránku tiskového náhledu")
 Command(InputField, 'RESET_FIELD',
         "Vrácení pùvodní hodnoty vstupního políèka")
-#Command(InputField, 'COMMIT_FIELD',
-#        "Úspì¹né ukonèení editace vstupního políèka")
+Command(InputField, 'CONTEXT_MENU',
+        "Zobrazení kontextového menu vstupního políèka")
 Command(InputField, 'LEAVE_INLINE_EDIT',
         "Odchod z editace vstupního políèka")
 Command(Invocable, 'INVOKE_SELECTION',
@@ -184,7 +184,6 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Down',   Application.COMMAND_NEXT_FORM),
     ('Ctrl-Up',     Application.COMMAND_PREV_FORM),
     ('Ctrl-l',      Application.COMMAND_REFRESH),
-    ('Ctrl-M',      Application.COMMAND_SHOW_POPUP_MENU),
     ('Ctrl-F1',     Form.COMMAND_HELP),
     ('Escape',      Form.COMMAND_LEAVE_FORM),
     (('Ctrl-x', 'p'),  Form.COMMAND_PRINT),
@@ -223,6 +222,7 @@ DEFAULT_KEYMAP = (
     ('Alt-Left',    ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
     ('Shift-Right', ListForm.COMMAND_MOVE_COLUMN(diff=+1)),
     ('Shift-Left',  ListForm.COMMAND_MOVE_COLUMN(diff=-1)),
+    ('Ctrl-m',      ListForm.COMMAND_CONTEXT_MENU),
     ('Ctrl-Enter',  EditForm.COMMAND_COMMIT_RECORD),
     ('Tab',         EditForm.COMMAND_NAVIGATE),
     ('Shift-Tab',   EditForm.COMMAND_NAVIGATE(back=True)),
@@ -234,6 +234,7 @@ DEFAULT_KEYMAP = (
     ('Next',        PrintForm.COMMAND_NEXT_PAGE),
     ('Prior',       PrintForm.COMMAND_PREVIOUS_PAGE),
     ('Ctrl-Backspace', InputField.COMMAND_RESET_FIELD),
+    ('Ctrl-m',      InputField.COMMAND_CONTEXT_MENU),
     ('F2',          Invocable.COMMAND_INVOKE_SELECTION),
     ('Ctrl-F2',     Invocable.COMMAND_INVOKE_SELECTION(alternate=True)),
     ('Backspace',   ListField.COMMAND_SHOW_SELECTED),
