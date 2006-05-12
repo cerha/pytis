@@ -448,7 +448,9 @@ class SelectSet(object):
             outputset = ' ' * (indent+1) + self._FORMAT_SET[self.settype]
             output = '%s\n%s' % (outputset, output)
         return output    
-        
+
+    def sort_columns(self, aliases):
+        self.select.sort_columns(aliases)
 
 class TableView(object):
     """Úlo¾ná tøída specifikace view asociovaného s tabulkou.
@@ -1035,33 +1037,23 @@ class Select(_GsqlSpec):
             columns = self._columns
         return [ViewColumn(c.alias) for c in columns]           
 
-    def sort_set_columns(self):
-        # Check length
-        length = len(self._columns[0])
-        for cols in self._columns[1:]:
-            if len(cols) != length:
-                colnames = []
-                for c in cols:
-                    colnames.append(c.alias)
-                    colnames2 = ' '.join(colnames)
-                raise ProgramError('Different number of columns in SelectSet',
-                                   len(cols), length, colnames2)
+    def sort_columns(self, aliases):
+        # Check length and column aliases
+        from sets import Set
+        colaliases = [c.alias for c in self._columns]
+        missed = Set(aliases) ^ Set(colaliases)
+        if len(missed) != 0:
+            names = ' | '.join(missed)
+            raise ProgramError('Different columns in SelectSet', names)            
         # Reorder
         columns = []
-        aliases = [c.alias for c in self._columns[0]]
-        columns.append(self._columns[0])
-        for cols in self._columns[1:]:
-            newcols = []
-            for a in aliases:
-                col = find(a, cols, key=lambda c: c.alias)
-                if col is None:
-                    raise ProgramError("Can't find columns alias in SelectSet",
-                                       a)
-                else:
-                    newcols.append(col)
-            columns.append(newcols)
-        self._columns = columns
-                    
+        for a in aliases:
+            col = find(a, self._columns, key=lambda c: c.alias)
+            if col is None:
+                raise ProgramError("Can't find columns alias in SelectSet", a)
+            else:
+                columns.append(col)
+        self._columns = columns        
 
     def format_select(self, indent=0):
         if not self._set:
@@ -1074,13 +1066,15 @@ class Select(_GsqlSpec):
             if self._having:
                 select = '%s HAVING %s\n' % (select, self._having)
         else:
-            self.sort_set_columns()
+            #self.sort_set_columns()
             selects = []
+            aliases = [c.alias for c in self._columns[0]]
             for r in self._relations:
+                r.sort_columns(aliases)
                 selects.append(r.format_select(indent=indent))
             select = ''.join(selects)
         if self._order_by:
-            select = '%s ORDER_BY %s\n' % (select, self._order_by)
+            select = '%s ORDER BY %s\n' % (select, self._order_by)
         if self._limit:
             select = '%s LIMIT %s\n' % (select, self._limit)
         return select

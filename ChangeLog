@@ -15,6 +15,10 @@
 	(_GsqlViewNG._format_rule.get_default_body): Nová metoda.
         (_GsqlViewNG._format_rule): Pøepsáno.
 	(Select.format_select): Oprava chybného pøedání 'group_by'.
+	(SelectSet.sort_columns): Nová metoda nahrazuje
+	'sort_set_columns'. 
+	(Select.sort_set_columns): Odstranìno.
+	(Select.format_select): Oprava pøeklepu v ORDER BY.
 
 2006-05-03  Pavel Hanak  <hanak@asellus.cz>
 
