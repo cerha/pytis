@@ -135,7 +135,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._create_form()
         self._create_print_menu()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
-        wx_callback(wx.EVT_CLOSE, self._parent, self._on_parent_close)
 
     def _init_attributes(self, spec_args={}):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -208,30 +207,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                                             _command_handler=self))
                             for title, path in print_spec]
     
-    def _on_parent_close(self, event):
-        """Handler události uzavøení rodièovského okna formuláøe.
-
-        Tato metoda by mìla být pøedefinována, pokud chce daný typ formuláøe
-        reagovat na uzavøení rodièovského okna. Typické vyu¾ití je pro popup
-        formuláøe.
-
-        Pokud odvozená tøída pøedefinuje tuto metodu a ta za urèitých okolností
-        nezavolá 'event.Skip()', nebude zpracování události dokonèeno a
-        rodièovské okno tedy nebude uzavøeno.
-        """
-        if __debug__: log(DEBUG, "Voláno Form._on_parent_close()")
-        event.Skip()
-        return False
-
-    def _leave_form(self):
-        leave_form()
-
     def _exit_check(self):
-        """Proveï kontrolu formuláøe pøed uzavøením.
-
-        Vrací: Pravdu právì tehdy kdy¾ je mo¾no formuláø uzavøít.
-
-        """
+        # Proveï kontrolu formuláøe pøed uzavøením.
+        # Vrací pravdu právì tehdy kdy¾ je mo¾no formuláø uzavøít.
         return True
         
     def __str__(self):
@@ -265,7 +243,27 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _on_reload_form_state(self):
         pass
+
+    def _leave_form(self):
+        if self._exit_check():
+            self.close()
+            return True
+        else:
+            return False
+        
+    # Zpracování pøíkazù
     
+    def _cmd_reload_form_state(self):
+        self._form_state = copy.copy(self._initial_form_state)
+        config.form_state[self._form_state_key()] = self._form_state
+        self._on_reload_form_state()
+
+    def _cmd_help(self):
+        help(top_window().help_name())
+
+    def _cmd_leave_form(self):
+        self._leave_form()
+
     # Veøejné metody
     
     def name(self):
@@ -274,19 +272,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def help_name(self):
         return self._name.replace(':','-')
-
-    def on_command(self, command, **kwargs):
-        if command == Form.COMMAND_LEAVE_FORM:
-            self._leave_form()
-        elif command == Form.COMMAND_RELOAD_FORM_STATE:
-            self._form_state = copy.copy(self._initial_form_state)
-            config.form_state[self._form_state_key()] = self._form_state
-            self._on_reload_form_state()
-        elif command == Form.COMMAND_HELP:
-            help(top_window().help_name())
-        else:
-            return False
-        return True
 
     def descr(self):
         """Vra» textový popis typu formuláøe jako øetìzec."""
@@ -333,20 +318,21 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                 }[perm]
             message(msg, beep_=True)
         return result
-    
-    def set_status(self, field, message):
-        """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
-
-        Má-li formuláø stavovou øádku a v ní pole `id' zobraz v nìm danou
-        zprávu a vra» pravdu.  V opaèném pøípadì vra» nepravdu.
-
-        """
-        return False
 
     def show_popup_menu(self):
         """Zobraz kontextové menu právì aktivního prvku, pokud to umo¾òuje. """
         pass
         
+
+    def set_status(self, field, message):
+        """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
+
+        Má-li formuláø vlastní stavovou øádku a v ní pole `id' zobraz v nìm
+        danou zprávu a vra» pravdu.  V opaèném pøípadì vra» nepravdu.
+
+        """
+        return False
+
     def close(self):
         for id in self._STATUS_FIELDS:
             set_status(id, '')
@@ -469,25 +455,27 @@ class PopupForm:
             style = wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE
             frame = wx.Dialog(parent, style=style)
             self._popup_frame_ = frame
+            wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         return frame    
 
-    def _leave_form(self):
-        self._popup_frame_.Close() # tím se autom. zavolá _on_parent_close()
-        
-    def _on_parent_close(self, event):
+    def _on_frame_close(self, event):
         if not self._exit_check():
             event.Veto()
         else:
+            self.defocus()
             event.Skip()
-            if self._parent:
-                self._parent.EndModal(0)
 
+    def _leave_form(self):
+        # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
+        self._popup_frame_.Close()
+        
     def run(self):
         """Zobraz formuláø jako modální dialog."""
         unlock_callbacks()
-        self._parent.SetTitle(self.title())
-        self._parent.SetClientSize(self.GetSize())
-        self._parent.ShowModal()
+        frame = self._parent
+        frame.SetTitle(self.title())
+        frame.SetClientSize(self.GetSize())
+        frame.ShowModal()
         return self._result
 
 
@@ -746,6 +734,8 @@ class RecordForm(Form):
         else:
             prefill = {}
         return dict(prefill)
+
+    # Zpracování pøíkazù.
     
     def _on_new_record(self, copy=False):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
@@ -759,6 +749,10 @@ class RecordForm(Form):
             self.select_row(result.row())
             self._run_callback(self.CALL_NEW_RECORD, result)
     
+    def _can_edit_record(self):
+        return self._current_key() is not None \
+               and self.check_permission(pytis.data.Permission.UPDATE)
+
     def _on_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
             return
@@ -773,6 +767,9 @@ class RecordForm(Form):
             self._signal_update()
         else:
             self._run_form(PopupEditForm, self._current_key())
+
+    def _can_delete_record(self):
+        return self.check_permission(pytis.data.Permission.DELETE)
 
     def _on_delete_record(self):
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
@@ -955,13 +952,6 @@ class RecordForm(Form):
 
         """
         self._prefill = data
-
-    def _can_delete_record(self):
-        return self.check_permission(pytis.data.Permission.DELETE)
-
-    def _can_edit_record(self):
-        return self._current_key() is not None \
-               and self.check_permission(pytis.data.Permission.UPDATE)
 
     def on_command(self, command, **kwargs):
         if command == RecordForm.COMMAND_DELETE_RECORD:
@@ -1585,8 +1575,7 @@ class EditForm(LookupForm, TitledForm):
                 cleanup(self._row, original_row)
             if close:    
                 self._result = self._row
-                # tím je automaticky zavoláno _on_parent_close()
-                self._parent.Close()
+                self._leave_form()
             return True
         else:
             msg = _("Ulo¾ení záznamu se nezdaøilo")
@@ -1595,7 +1584,7 @@ class EditForm(LookupForm, TitledForm):
                 msg = "%s\n\n%s" % (result[0], msg)
             run_dialog(Error, msg)
             return False
-    
+
     def _select_row(self, row):
         prow = PresentedRow(self._view.fields(), self._data, row,
                             prefill=self._prefill,
@@ -1786,7 +1775,7 @@ class PopupEditForm(PopupForm, EditForm):
                 run_dialog(Message, _("V¹echny záznamy byly zpracovány."))
                 self._inserted_data = None
 
-    def _on_cancel_button(self, event):
+    def _exit_check(self):
         i = self._inserted_data_pointer
         data = self._inserted_data
         if data is not None and i <= len(data):
@@ -1794,8 +1783,8 @@ class PopupEditForm(PopupForm, EditForm):
                     "vstupních dat.\n"
                     "Chcete opravdu ukonèit vkládání?")
             if not run_dialog(Question, msg, default=False):
-                return
-        self._leave_form()
+                return False
+        return super(PopupEditForm, self)._exit_check()
 
     def _on_next_button(self, event):
         result = self._commit_form(close=False)
@@ -1817,7 +1806,7 @@ class PopupEditForm(PopupForm, EditForm):
                     'default': True},
                    {'id': wx.ID_CANCEL,
                     'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
-                    'handler': self._on_cancel_button})
+                    'handler': lambda e: self._leave_form()})
         if self._mode == self.MODE_INSERT:
             buttons += ({'id': wx.ID_FORWARD,
                          'label': _("Dal¹í"),
