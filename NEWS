@@ -4,7 +4,7 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2006-05-10  Tomas Cerha  <cerha@brailcom.org>
+2006-05-12  Tomas Cerha  <cerha@brailcom.org>
 
 	Proèi¹tìn zpùsob uzavírání formuláøù a odstranìno mnoho s tím
 	souvisejících hackù.
@@ -15,7 +15,7 @@
 	procházet sérii if/elsif v `on_command'.  Nìkteré obslu¾né rutiny
 	ji¾ byly na tento nový zpùsob pøevedeny.
 
-2006-05-10  Tomas Cerha  <cerha@brailcom.org>
+2006-05-11  Tomas Cerha  <cerha@brailcom.org>
 
 	Proèi¹tìní callbackù v RecordForm a jejich vyu¾ití v duálním
 	formuláøi (odstranìn hack).
