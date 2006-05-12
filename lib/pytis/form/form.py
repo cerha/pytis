@@ -62,7 +62,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     DESCR = None
 
     def _get_command_handler_instance(cls):
-        return pytis.form.application._application.current_form()
+        return pytis.form.application._application.current_form(inner=False)
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def __init__(self, parent, resolver, name, guardian=None, **kwargs):
@@ -259,7 +259,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._on_reload_form_state()
 
     def _cmd_help(self):
-        help(top_window().help_name())
+        help(self.help_name())
 
     def _cmd_leave_form(self):
         self._leave_form()
@@ -319,11 +319,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             message(msg, beep_=True)
         return result
 
-    def show_popup_menu(self):
-        """Zobraz kontextové menu právì aktivního prvku, pokud to umo¾òuje. """
-        pass
-        
-
     def set_status(self, field, message):
         """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
 
@@ -346,6 +341,26 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         for id, message in self._saved_state:
             set_status(id, message, log_=False)
 
+
+class InnerForm(Form):
+    """Formulø, který zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
+
+    Tato formuláøová tøída je zde pøedev¹ím kvùli definici a zpracování
+    pøíkazù.  Pokud je aktuálním formuláøem jednoduchý formuláø, je zpracování
+    pøíkazu pøedáno tomuto formuláøi.  Pokud je v¹ak aktuálním formuláøem
+    duální formuláø, je tøeba rozhodnout, zda bude pøíkaz zpracován pøímo
+    duálním formuláøem, nebo jeho aktivním podformuláøem.  Pøíkazy tøídy 'Form'
+    jsou zpracovávány v¾dy formuláøem nejvy¹¹í úrovnì (duálním formuláøem
+    samotným, pokud je aktuálním formuláøem duální formuláø).
+
+    Pøíkazy definované touto tøídou a tøídami z ní odvozenými jsou v¹ak v¾dy
+    pøedávány aktivnímu vnitønímu formuláøi.
+    
+    """
+    def _get_command_handler_instance(cls):
+        return pytis.form.application._application.current_form()
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
+    
 
 class Refreshable:
     """Tøída zaji¹»ující existenci metody 'refresh()' s daným významem.
@@ -480,7 +495,7 @@ class PopupForm:
 
 
 class TitledForm:
-    """Pøimíchávací tøída pro formuláøe s titulkem.
+    """Mix-in tøída pro formuláøe s titulkem.
     
     Lze vyu¾ít buïto pouze metodu '_create_caption()', která vytváøí samotný
     text titulku, nebo metodu '_create_title_bar()', která pøidává 3d panel.
@@ -531,7 +546,7 @@ class TitledForm:
         return panel
 
 
-class RecordForm(Form):
+class RecordForm(InnerForm):
     """Formuláø schopný nìjakým zpùsobem zobrazit aktuální záznam."""
 
     CALL_SELECTION = 'CALL_SELECTION'
@@ -547,7 +562,6 @@ class RecordForm(Form):
     Argumentem callbackové funkce je nový záznam jako instance 'PresentedRow'.
     
     """
-
     def __init__(self, *args, **kwargs):
         super_(RecordForm).__init__(self, *args, **kwargs)
 
@@ -1622,11 +1636,6 @@ class EditForm(LookupForm, TitledForm):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
         field = find(True, self._fields, key=lambda f: f.is_modified())
         return field is not None
-
-    def show_popup_menu(self):
-        field = InputField.focused()
-        if field is not None:
-            field.show_popup_menu()
 
     def _on_field_edit(self, id, value):
         # Signalizace zmìny políèka z InputField
