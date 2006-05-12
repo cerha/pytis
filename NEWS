@@ -6,6 +6,17 @@
 
 2006-05-10  Tomas Cerha  <cerha@brailcom.org>
 
+	Proèi¹tìn zpùsob uzavírání formuláøù a odstranìno mnoho s tím
+	souvisejících hackù.
+
+	Tøída CommandHandler nyní vyhledává obslu¾nou rutinu pøíkazu podle
+	názvu.  Pokud je nalezena metoda `_cmd_*', kde * odpovídá názvu
+	pøíkazu, je automaticky tato metoda zavolána a není tak nutno
+	procházet sérii if/elsif v `on_command'.  Nìkteré obslu¾né rutiny
+	ji¾ byly na tento nový zpùsob pøevedeny.
+
+2006-05-10  Tomas Cerha  <cerha@brailcom.org>
+
 	Proèi¹tìní callbackù v RecordForm a jejich vyu¾ití v duálním
 	formuláøi (odstranìn hack).
 
