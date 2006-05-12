@@ -580,13 +580,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     # Zpracování pøíkazù
 
     def on_command(self, command, **kwargs):
-        if command == Application.COMMAND_HANDLED_ACTION:
-            self._on_handled_action(**kwargs)
-        elif command == Application.COMMAND_SHOW_POPUP_MENU:
-            top = self.top_window()
-            if hasattr(top, 'show_popup_menu'):
-                top.show_popup_menu()
-        elif command == Application.COMMAND_EXIT:
+        if command == Application.COMMAND_EXIT:
             self.exit()
         elif command == Application.COMMAND_HELP:
             self.help(**kwargs)
@@ -612,10 +606,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
             config.custom_debug()
         else:
-            return False
+            return super(Application, self).on_command(command, **kwargs)
         return True
 
-    def _on_handled_action(self, handler=None, enabled=None, **kwargs):
+    def _cmd_handled_action(self, handler=None, enabled=None, **kwargs):
         return handler(**kwargs)
         
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
@@ -948,17 +942,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             return self._windows.active()
 
-    def current_form(self):
+    def current_form(self, inner=True):
         """Vra» právì aktivní formuláø aplikace, pokud existuje.
         
         Pokud není otevøen ¾ádný formuláø, nebo aktivním oknem není formuláø,
-        vrací None.  Pokud je otevøeným formuláøem duální formuláø, bude vrácen
-        jeho právì aktivní podformuláø.
+        vrací None.  Pokud je aktivním formuláøem duální formuláø, bude vrácen
+        jeho aktivní podformuláø, právì pokud je argument 'inner' pravdivý.
         
         """
         top = self.top_window()
         if isinstance(top, Form):
-            if isinstance(top, DualForm):
+            if inner and isinstance(top, DualForm):
                 return top.active_form()
             else:
                 return top
@@ -1124,9 +1118,9 @@ def new_record(*args, **kwargs):
     """Spus» akci pøidání nového záznamu (viz 'Application.new_record()')."""
     return _application.new_record(*args, **kwargs)
 
-def current_form():
+def current_form(inner=True):
     """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje."""
-    return _application.current_form()
+    return _application.current_form(inner=inner)
 
 def top_window():
     """Vra» aktivní okno aplikace (formuláø, nebo dialog)."""
