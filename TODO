@@ -1,12 +1,16 @@
 CHYBY:
 
- * Odkaz "Zobrazit související èíselník" nepovolit, pokud nejsou práva.
-
-   Pouze pokud má u¾ivatel práva k danému náhledu, je mo¾né odkaz povolit.
-
  * Pøi obnovì výchozích sloupcù (podle defsu) není obnoveno tøídìní atd.
 
    Chceme obnovit také tøídìní, seskupování atd.
+
+ * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
+
+   Tj. napø. kdy¾ je filter závislý na dopoèítávaném políèku, které je zmìnìno
+   na základì zmìny jiného políèka, není filter pøepoèítán.  Lze to obejít
+   uvedením závislosti na v¹ech políèkách, na kterých je závislé ono
+   dopoèítávané políèko (a také se tak v defsech dìje), ale není to
+   systematické (problémy s údr¾bou).
 
  * Posun po zamítnutí mazání øádku.
 
@@ -15,14 +19,11 @@ CHYBY:
 
  * Chyba v ukládání nastavení sloupeèkù.
 
-   V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.
-   Pøes nabídku "Spustit formuláø" jsem si spustil defs ZakazkaSet:NAAN a skryl
-   jsem si první dva sloupeèky. 
-   Vyskoèil jsem z ISASu a pøidal se do skupiny isas_admin.	
-   Spustil jsem si ISAS, napsal heslo a ke konci ke¹ování defsù to spadlo.	
-   Pomáhá jedinì update bv_users_cfg set saved_config = NULL;
-
- * Skrytí sloupce po pøedchozí inline editaci skonèí na SEGFAULT.
+   V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.  Pøes nabídku
+   "Spustit formuláø" jsem si spustil defs ZakazkaSet:NAAN a skryl jsem si
+   první dva sloupeèky.  Vyskoèil jsem z ISASu a pøidal se do skupiny
+   isas_admin.  Spustil jsem si ISAS, napsal heslo a ke konci ke¹ování defsù to
+   spadlo.  Pomáhá jedinì update bv_users_cfg set saved_config = NULL;
 
  * Aktualizace políèka `data-changed' ve stavové øádce.
 
@@ -41,14 +42,6 @@ CHYBY:
    Popisovaný problém se bì¾nì neprojevuje.  Napøíklad v zakázkách pøi
    vyhledávání podle kódu zakázky v¹ak bylo toto chování hlá¹eno, ale po
    restartu aplikace ne¹lo zreprodukovat.
-
- * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
-
-   Tj. napø. kdy¾ je filter závislý na dopoèítávaném políèku, které je zmìnìno
-   na základì zmìny jiného políèka, není filter pøepoèítán.  Lze to obejít
-   uvedením závislosti na v¹ech políèkách, na kterých je závislé ono
-   dopoèítávané políèko (a také se tak v defsech dìje), ale není to
-   systematické (problémy s údr¾bou).
 
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
@@ -230,24 +223,17 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
- * Zru¹it speciální o¹etøování políèek s nulovou ¹íøkou.
+ * Nedostupnost pøíkazu vs. pøístupová práva.
 
-   Momentálnì jsou políèka s nulovou ¹íøkou pøítomná v layoutu logována a
-   ignorována.  Správnì by nemìla být nulová ¹íøka nijak speciálnì o¹etøována,
-   ale bude tøeba mít mo¾nost urèit, ¾e nìkteré políèko nemá být zaøazeno do
-   automaticky vytváøeného layoutu.  To v¹ak nic nemìní na tom, ¾e v explicitnì
-   definovaných layoutech nemají neviditelná políèka co dìlat a je tøeba je
-   odtamtud vyhodit.
-
- * S groupingem pracovat jako s celým èíslem.
-
-   Problém bude hlavnì v defsech, kde bývá grouping èasto specifikován jako
-   název sloupce.
+   Pokud není pøíkaz dostupný z dùvodu nedostateèných pøístupových práv,
+   bylo by dobré o tom u¾ivatele nìjak informovat.  Bude to v¹ak tøeba nejprve
+   nìjak rozli¹it -- buïto pomocí návratové hodnoty funkce enabled, nebo je¹tì
+   dal¹í funkcí pro zji¹tìní pøístupových práv.
    
- * Zru¹it pøenastavování argumentù v metodì `Application.run_form'.
+ * Zpracování pøíkazù.
 
-   Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
-   'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.
+   Vyvolání handleru z on_command je nyní mo¾né nahradit metodu `_cmd_*', kde *
+   je název pøíkazu.
 
  * Validace hodnot konfiguraèních voleb.
 
@@ -266,15 +252,24 @@ INTERNÍ ZÁLE®ITOSTI:
    pro argumenty 'title' a 'side_title'.  Nebylo by v¹ak od vìci definovat
    titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
    pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
-  
- * Zpracování pøíkazù.
+   
+ * S groupingem pracovat jako s celým èíslem.
 
-   Bylo by mo¾né vyhledat pøímo metodu obsluhující daný pøíkaz podle názvu a
-   neprokousávat se tak sérií if/elif v on_command.
+   Problém bude hlavnì v defsech, kde bývá grouping èasto specifikován jako
+   název sloupce.
+   
+ * Zru¹it pøenastavování argumentù v metodì `Application.run_form'.
 
- * Nedostupnost pøíkazu vs. pøístupová práva.
+   Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
+   'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.
 
-   Pokud není pøíkaz dostupný z dùvodu nedostateèných pøístupových práv,
-   bylo by dobré o tom u¾ivatele nìjak informovat.  Bude to v¹ak tøeba nejprve
-   nìjak rozli¹it -- buïto pomocí návratové hodnoty funkce enabled, nebo je¹tì
-   dal¹í funkcí pro zji¹tìní pøístupových práv.
+ * Zru¹it speciální o¹etøování políèek s nulovou ¹íøkou.
+
+   Momentálnì jsou políèka s nulovou ¹íøkou pøítomná v layoutu logována a
+   ignorována.  Správnì by nemìla být nulová ¹íøka nijak speciálnì o¹etøována,
+   ale bude tøeba mít mo¾nost urèit, ¾e nìkteré políèko nemá být zaøazeno do
+   automaticky vytváøeného layoutu.  To v¹ak nic nemìní na tom, ¾e v explicitnì
+   definovaných layoutech nemají neviditelná políèka co dìlat a je tøeba je
+   odtamtud vyhodit.
+
+   
