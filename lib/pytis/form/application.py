@@ -276,7 +276,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         continue
                 else:
                     form_cls = BrowseForm
-                self.run_form(form_cls, name.strip())
+                run_form(form_cls, name.strip())
         conn = config.dbconnection
         if conn:
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
@@ -586,8 +586,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self.help(**kwargs)
         elif command == Application.COMMAND_BREAK:
             message(_("Stop"), beep_=True)
-        elif command == Application.COMMAND_RUN_FORM:
-            self.run_form(**kwargs)
         elif command == Application.COMMAND_RUN_PROCEDURE:
             self.run_procedure(**kwargs)
         elif command == Application.COMMAND_NEW_RECORD:
@@ -624,7 +622,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _can_clear_recent_forms(self):
         return len(self._recent_forms) > 0
     
-    def _can_run_form(self, form_class, name, *args, **kwargs):
+    def _can_run_form(self, form_class, name, **kwargs):
+        if name == 'Countries':
+            return False
         if issubclass(form_class, DualForm) and \
                not issubclass(form_class, DescriptiveDualForm):
             dual_spec = resolver().get(name, 'dual_spec')
@@ -634,29 +634,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             result = has_access(name)
         return result
 
-    def run_form(self, form_class, name, *args, **kwargs):
-        """Vytvoø formuláø a spus» jej.
-
-        Argumenty:
-
-          form_class -- tøída vytváøeného formuláøe (libovolná tøída odvozená
-            od tøídy `Form')
-          name -- jméno specifikace pro resolver
-
-        Dal¹í argumenty budou pøedány konstruktoru formuláøe, tak jak následují
-        za argumentem `name'.  Argumenty `parent' a `resolver'
-        budou doplnìny automaticky.
-
-        Vytvoøený formuláø bude zobrazen v oknì aplikace, nebo v novém modálním
-        oknì, pokud jde o modální formuláø odvozený od tøídy 'PopupForm'.
-        Modální formuláø je spu¹tìn metodou 'run()' a její výsledek je
-        návratovou hodnotou volání této metody.  V tomto pøípadì je v¹ak návrat
-        z této metody proveden a¾ po ukonèení formuláøe (uzavøení jeho okna).
-        Pro nemodální formuláøe se metoda vrací ihned po zobrazení okna s
-        návratovou hodnotou None.  Nemodální formuláø je potom nutné z aplikace
-        odstranit pøíkazem 'Form.COMMAND_LEAVE_FORM'.
-          
-        """
+    def _cmd_run_form(self, form_class, name, **kwargs):
         # TODO: Toto je jen kvùli zpìtné kompatibilitì.  Argument 'key' je
         # tøeba ve v¹ech projektech pøejmenovat na 'select_row' a následující
         # øádky èasem zru¹it.
@@ -682,8 +660,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 name = name()
                 if name is None:
                     return None
-            log(ACTION, 'Vytváøím nový formuláø:',
-                (form_class, name, args, kwargs))
+            log(ACTION, 'Vytváøím nový formuláø:', (form_class, name, kwargs))
             message(_("Spou¹tím formuláø..."), root=True)
             wx_yield_()
             assert issubclass(form_class, Form)
@@ -705,7 +682,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 assert self._modals.empty()
                 kwargs['guardian'] = self
                 parent = self._frame
-            args = (parent, self.resolver(), name) + args
+            args = (parent, self.resolver(), name)
             form = catch('form-init-error', form_class, *args, **kwargs)
             if form is None:
                 self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit"))
@@ -1106,9 +1083,35 @@ def run_dialog(*args, **kwargs):
     """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
     return _application.run_dialog(*args, **kwargs)
 
-def run_form(*args, **kwargs):
-    """Zobraz formuláø v oknì aplikace (viz 'Application.run_form()')."""
-    return _application.run_form(*args, **kwargs)
+def run_form(form_class, name, **kwargs):
+    """Vytvoø formuláø a spus» jej v aplikaci.
+    
+    Argumenty:
+    
+      form_class -- tøída vytváøeného formuláøe (odvozená od tøídy 'Form').
+        
+      name -- název specifikace pro resolverù øetìzec.
+
+      kwargs -- klíèové arguementy, které mají být pøedány konstruktoru
+        formuláøe.  Argumenty 'parent' a 'resolver' budou doplnìny automaticky.
+        
+    Vytvoøený formuláø bude zobrazen v oknì aplikace, nebo v novém modálním
+    oknì (pokud jde o modální formuláø odvozený od tøídy 'PopupForm').  Okno
+    nemodálního formuláøe zùstává po návratu této funkce v aplikaci otevøeno
+    (lze jej odstranit pøíkazem 'Form.COMMAND_LEAVE_FORM').  V pøípadì
+    modálního formuláøe se funkce vrací a¾ po jeho uzavøení.
+
+    Vrací: Návratovou hodnotu metody 'run()' v pøípadì modálního formuláøe,
+    nebo None v pøípadì nemodálního formuláøe.  Pokud formuláø nelze spustit
+    (napø. nedostateèná pøístupová práva) , vrací False.
+
+    """
+    cmd = Application.COMMAND_RUN_FORM
+    kwargs = dict(form_class=form_class, name=name, **kwargs)
+    if not cmd.enabled(**kwargs):
+        message(_("Spu¹tìní formuláøe zamítnuto."), beep_=True)
+        return False
+    return cmd.invoke(**kwargs)
 
 def run_procedure(*args, **kwargs):
     """Spus» proceduru (viz 'Application.run_procedure()')."""
