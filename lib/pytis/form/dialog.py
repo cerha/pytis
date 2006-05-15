@@ -288,7 +288,7 @@ class GenericDialog(Dialog):
         elif command == Dialog.COMMAND_HELP:
             help(topic=self._HELP_TOPIC)
         else:
-            return False
+            return super(GenericDialog, self).on_command(command, **kwargs)
         return True
 
     def run(self):
@@ -1273,12 +1273,6 @@ class FileDialog(Dialog):
         self._wildcards = wildcards
         self._multi = multi
         self._overwrite_prompt = overwrite_prompt
-
-    def on_command(self, command, **kwargs):
-        if command == Dialog.COMMAND_CLOSE_DIALOG:
-            self._end_modal(wx.ID_CANCEL)
-            return True
-        return False
 
     def run(self):
         """Zobraz dialog a vra» cestu k vybranému souboru jeko øetìzec.
