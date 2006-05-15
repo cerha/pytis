@@ -234,7 +234,7 @@ class Command(object):
             log(kind, 'Vyvolán pøíkaz:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
-            log(EVENT, 'Zamítnuto vyvolání pøíkazu:', (self, kwargs))
+            message(_("Vyvolání pøíkazu zamítnuto: %s") % self.id(), beep_=True)
             return False
     
     def __cmp__(self, other):
