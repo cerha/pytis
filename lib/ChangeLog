@@ -1,3 +1,37 @@
+2006-05-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/command.py (CommandHandler.on_command): Vracej pøímo
+	návratovou hodnotu obslu¾né rutiny.  Pokud není obslu¾ná metoda
+	nalezena, vyvolej výjimku `AttributeError'.  Aktualizován
+	docstring.
+	(CommandHandler.invoke_command): Aktualizován docstring.
+	(CommandHandler): Aktualizován docstring.
+	(Command.invoke): Pøi pokusu o vyvolání pøíkazu, který není
+	aktivní, vypi¹ chybovou zprávu a pípni.
+	
+
+	* pytis/form/dialog.py (GenericDialog.on_command): Pokud není
+	pøíkaz nalezen, volej metodu pøedka.
+	(FileDialog.on_command): Metoda zru¹ena.
+	
+
+	* pytis/form/screen.py (KeyHandler._maybe_invoke_command):
+	Netestuj návratovou hodnotu pøi pokusu o vyvolání pøíkazu, ale
+	testuj zda je pøíkaz dostupný.  Pokud ano, vyvolej jej.
+
+	* pytis/form/application.py (Application.OnInit): Nevolej
+	`self.run_form()' ale globální funkci `run_form().
+	(Application.on_command): Neo¹etøuj zde
+	`Application.COMMAND_RUN_FORM'.
+	(Application._can_run_form): Nepøijímej `*args'.
+	(Application.run_form): Pøejmenováno na `_cmd_run_form'.
+	Nepøijímej `*args'.  Docstring pøesunut do globální funkce
+	run_form().
+	(run_form): Namísto volání metody `run_form()' aktuální aplikace
+	vyvolej pøíkaz `Application.COMMAND_RUN_FORM'.  Pokud je pøíkaz
+	nedostupný, vypi¹ chybovou zprávu a vøa» False.  Doplnìn
+	docstring.
+
 2006-05-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField._init_ctrl): Menu zobrazuj
