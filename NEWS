@@ -4,6 +4,28 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-15  Tomas Cerha  <cerha@brailcom.org>
+
+	Globální funkce `run_form()' nyní nevolá pøímo metodu aplikace, ale
+	pøíkaz `Application.COMMAND_RUN_FORM'.  Pokud otevøení formuláøe
+	není mo¾né (napø. kvùli právùm, apod.), není pøíkaz vyvolán a je
+	zobrazena chybová zpráva.  Díky tomu není nutné v kódu práva nijak
+	o¹etøovat a funkci `run_form()' je mo¾no volat bez obav o
+	rozhození aplikace neúspì¹ným otevøením formuláøe.
+
+	Díky novému zpùsobu zpracování pøíkazù ji¾ není nutné v¹echny
+	potenciální pøíkazy zkou¹et spou¹tìt a podle výsledku rozhodovat,
+	zda ¹lo o platný pøíkaz èi ne.  Tím bylo umo¾nìno pøedávat
+	skuteènou návratovou hodnotu obslu¾né rutiny.  Toho je vyu¾ito
+	napøíklad v metodì `run_form()', ale bude mo¾né toho vyu¾ít i v
+	mnoha jiných pøípadech.  Mù¾e to znamenat odstranìní nìkterých
+	souèasných omezení.  Ve¹keré nápady jsou vítány...
+
+	* BUGFIX: Vý¹e popsaná úprava v `run_form()' vyøe¹ila i nahlá¹enou
+	chybu pøi otevírání odkazu "Zobrazit související èíselník" pøi
+	nedostateèných právech.
+
+	
 2006-05-12  Tomas Cerha  <cerha@brailcom.org>
 
 	Proèi¹tìn zpùsob uzavírání formuláøù a odstranìno mnoho s tím
