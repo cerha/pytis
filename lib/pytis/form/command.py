@@ -28,20 +28,20 @@ modulu 'commands_'.
 
 from pytis.form import *
 
-
 class CommandHandler:
     """Mix-in tøída, kterou musí dìdit tøídy definující vlastní pøíkazy.
 
     Tato tøída pøidává schopnost zpracovat pøíkazy (instance 'Command') a
     zjistit, zda je konkrétní pøíkaz v danou chvíli dostupný.
 
-    TODO: Doplnit pøehled úèelu jednotlivých metod.
+    TODO: Doplnit pøehled úèelu jednotlivých metod a zpùsobu vyhledání instance
+    handleru.
 
     """
     
     def _get_command_handler_instance(cls):
         """Najdi v aplikaci aktivní prvek, který je schopen zpracovat pøíkaz."""
-        raise ProgramError("This method must be overriden in derived class.")
+        raise ProgramError("This method must be overriden in a derived class.")
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def _command_handler(cls, command, _command_handler=None, **kwargs):
@@ -76,8 +76,7 @@ class CommandHandler:
     def invoke_command(cls, command, **kwargs):
         """Vyhledej instanci handleru pøíkazu a pøíkaz proveï.
 
-        Vrací pravdu, pokud je handler nalezen, pøíkaz je zpracován a nemají
-        tedy ji¾ být provádìny dal¹í pokusy o jeho zpracování.
+        Vrací: Návratovou hodnotu obslu¾né rutiny daného pøíkazu.
 
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
@@ -98,24 +97,24 @@ class CommandHandler:
 
         Argumenty:
 
-          command -- instance 'Command'
-          kwargs -- argumenty pøíkazu 'command'
+          command -- instance 'Command'.
 
-        Vrací: Pravdu, právì kdy¾ pøíkaz byl zpracován a nemají být ji¾
-        provádìny dal¹í pokusy o jeho zpracování.
+          kwargs -- argumenty, se kterámi byl pøíkaz 'command' vyvolán.
 
-        V této tøídì metoda nedìlá nic a vrací False.
+        Obslu¾dá rutina pøíkazu je nalezena automaticky podle názvu pøíkazu.
+        Napøíkad pro pøíkaz 'Application.COMMAND_RUN_FORM' je hledána metoda
+        'Application._cmd_run_form()'.  Této metodì jsou pøedány v¹echny
+        argumenty, se kterými byl pøíkaz vyvolán.
 
-        V ka¾dé odvozené tøídì, která definuje vlastní pøíkazy, by tato metoda
-        mìla být pøedefinována a mìla by o¹etøovat v¹echny tyto pøíkazy.  
+        Ka¾dá tøída, pro kterou jsou definovány pøíkazy, by tak mìla definovat
+        v¹echny odpovídající obslu¾né rutiny.  Druhou mo¾ností je pøedefinování
+        této metody a implementace vlastního mechanismu zpracování pøíkazù.
+        
+        Vrací: Návratovou hodnotu obslu¾né rutiny daného pøíkazu.
 
         """
-        handler_method_name = '_cmd_' + command.name().lower()
-        if hasattr(self, handler_method_name):
-            handler = getattr(self, handler_method_name)
-            handler(**kwargs)
-            return True
-        return False
+        handler = getattr(self, '_cmd_' + command.name().lower())
+        return handler(**kwargs)
 
     def can_command(self, command, **kwargs):
         """Vra» pravdu, pokud je pøíkaz aktivní a mù¾e být proveden.
