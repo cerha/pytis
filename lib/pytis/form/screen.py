@@ -628,11 +628,12 @@ class KeyHandler:
         for command, kwargs in key_commands:
             if self._commands is None:
                 self._init_commands()
-            if command in self._commands and \
-                   command.invoke(**kwargs):
+            if command in self._commands and command.enabled(**kwargs):
                 if __debug__:
                     log(DEBUG, 'Nalezen pøíkaz klávesy', (command, kwargs))
+                command.invoke(**kwargs)
                 return True
+                    
         else:
             guardian = self._key_guardian
             if guardian is None:
