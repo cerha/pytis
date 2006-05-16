@@ -579,49 +579,42 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     # Zpracování pøíkazù
 
-    def on_command(self, command, **kwargs):
-        if command == Application.COMMAND_EXIT:
-            self.exit()
-        elif command == Application.COMMAND_HELP:
-            self.help(**kwargs)
-        elif command == Application.COMMAND_BREAK:
-            message(_("Stop"), beep_=True)
-        elif command == Application.COMMAND_RUN_PROCEDURE:
-            self.run_procedure(**kwargs)
-        elif command == Application.COMMAND_NEW_RECORD:
-            self.new_record(**kwargs)
-        elif command == Application.COMMAND_RAISE_FORM:
-            self._raise_form(kwargs['form'])
-        elif command == Application.COMMAND_NEXT_FORM:
-            self._raise_form(self._windows.next())
-        elif command == Application.COMMAND_PREV_FORM:
-            self._raise_form(self._windows.prev())
-        elif command == Application.COMMAND_REFRESH:
-            self.refresh()
-        elif command == Application.COMMAND_CLEAR_RECENT_FORMS:
-            self._recent_forms[:] = []
-            self._update_recent_forms()
-        elif __debug__ and command == Application.COMMAND_CUSTOM_DEBUG:
-            config.custom_debug()
-        else:
-            return super(Application, self).on_command(command, **kwargs)
-        return True
-
-    def _cmd_handled_action(self, handler=None, enabled=None, **kwargs):
-        return handler(**kwargs)
+    def _cmd_break(self):
+        message(_("Stop"), beep_=True)
         
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
         
+    def _cmd_handled_action(self, handler=None, enabled=None, **kwargs):
+        return handler(**kwargs)
+        
+    def _cmd_raise_form(self, form):
+        self._raise_form(form)
+        
     def _can_next_form(self):
         return len(self._windows.items()) > 1
+    
+    def _cmd_next_form(self):
+        self._raise_form(self._windows.next())
 
     def _can_prev_form(self):
         return len(self._windows.items()) > 1
 
+    def _cmd_prev_form(self):
+        self._raise_form(self._windows.prev())
+
     def _can_clear_recent_forms(self):
         return len(self._recent_forms) > 0
-    
+
+    def _cmd_clear_recent_forms(self):
+        self._recent_forms[:] = []
+        self._update_recent_forms()
+
+    def _cmd_refresh(self):
+        for w in (self._modals.top(), self._windows.active()):
+            if isinstance(w, Refreshable):
+                w.refresh()
+
     def _can_run_form(self, form_class, name, **kwargs):
         if issubclass(form_class, DualForm) and \
                not issubclass(form_class, DescriptiveDualForm):
@@ -633,6 +626,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def _cmd_run_form(self, form_class, name, **kwargs):
+        # Dokumentace viz funkce run_form().
         # TODO: Toto je jen kvùli zpìtné kompatibilitì.  Argument 'key' je
         # tøeba ve v¹ech projektech pøejmenovat na 'select_row' a následující
         # øádky èasem zru¹it.
@@ -726,27 +720,32 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def run_procedure(self, spec_name, proc_name, *args, **kwargs):
-        """Spus» proceduru.
+    def _can_new_record(self, name, **kwargs):
+        return has_access(name, perm=pytis.data.Permission.INSERT)
+    
+    def _cmd_new_record(self, name, prefill=None, inserted_data=None,
+                        block_on_new_record=False):
+        # Dokumentace viz funkce new_record().
+        view = self._resolver.get(name, 'view_spec')
+        on_new_record = view.on_new_record()
+        if not block_on_new_record and on_new_record is not None:
+            result = on_new_record(prefill=prefill)
+            top = self.current_form()
+            if isinstance(top, Refreshable):
+                top.refresh()
+        else:
+            result = run_form(PopupEditForm, name, mode=EditForm.MODE_INSERT,
+                              prefill=prefill, inserted_data=inserted_data)
+        return result
 
-        Argumenty:
-
-          spec_name -- jméno specifikace pro resolver.
-          proc_name -- jméno procedury, která má být spu¹tìna.  Jde o klíè do
-            slovníku, který je vracen specifikaèní funkcí 'proc_spec'.
-
-        V¹echny dal¹í argumenty (vèetnì klíèových) budou pøedány spou¹tìné
-        proceduøe.  Výjimkou je klíèový argument 'block_refresh_', který pøedán
-        není, ale pokud je pravdivý, tak bude volání procedury obaleno voláním
-        'block_refresh()'.
-
-        Návratová hodnota procedury je návratovou hodnotou volání této metody.
-
-        """
+    def _cmd_run_procedure(self, spec_name, proc_name, args=(),
+                           block_refresh_=False, **kwargs):
+        # Dokumentace viz funkce run_procedure().
         result = None
         try:
-            log(ACTION, 'Spou¹tím proceduru:', (spec_name, proc_name, args, kwargs))
             message(_("Spou¹tím proceduru..."), root=True, timeout=2)
+            log(ACTION, 'Spou¹tím proceduru:',
+                (spec_name, proc_name, args, kwargs))
             # Kvùli wx.SafeYield() se ztrácí focus, tak¾e
             # si ho ulo¾íme a pak zase obnovíme.
             focused = wx_focused_window()
@@ -757,11 +756,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             assert spec.has_key(proc_name), \
                   _("Specifikace procedur neobsahuje definici '%s'") % proc_name
             proc = spec[proc_name]
-            if kwargs.has_key('block_refresh_'):
-                block_refresh_ = kwargs['block_refresh_']
-                del kwargs['block_refresh_']
-            else:
-                block_refresh_ = False
             if block_refresh_:
                 result = block_refresh(proc, *args, **kwargs)
             else:
@@ -775,36 +769,32 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def new_record(self, name, prefill=None, inserted_data=None,
-                   block_on_new_record=False):
-        """Spus» interaktivní akci pøidání nového záznamu.
-        
-        Argumenty:
-        
-          name -- jméno specifikace pro resolver.
-          prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
-            pøedvyplnìny pøi inicializaci formuláøe.
-          inserted_data -- sekvence datových øádkù (instancí pytis.data.Row),
-            kterými má být vstupní formuláø postupnì plnìn.
-          block_on_new_record -- Pokud je True, nebude provedena procedura
-            on_new_record; v podstatì umo¾òuje zavolání new_record v rámci
-            procedury on_new_record.
-        """
-        view = self._resolver.get(name, 'view_spec')
-        on_new_record = view.on_new_record()
-        if not block_on_new_record and on_new_record is not None:
-            result = on_new_record(prefill=prefill)
-            top = self.current_form()
-            if isinstance(top, Refreshable):
-                top.refresh()
-        else:
-            result = run_form(PopupEditForm, name, mode=EditForm.MODE_INSERT,
-                              prefill=prefill, inserted_data=inserted_data)
-        return result
+    def _cmd_help(self, topic=None):
+        """Zobraz dané téma v prohlí¾eèi nápovìdy."""
+        if not self._help_files:
+            msg = _("®ádný soubor s nápovìdou nebyl nalezen.\n"
+                    "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
+                    "Zkontrolujte zda je cesta správná\n"
+                    "a zda adresáø obsahuje soubory nápovìdy.")
+            run_dialog(Warning, msg % config.help_dir)
+            return
+        if self._help_controller is None:
+            self._help_controller = controller = wx.html.HtmlHelpController()
+            controller.SetTitleFormat(_("Nápovìda")+": %s")
+            wx.FileSystem_AddHandler(wx.ZipFSHandler())
+            for filename, index, title in self._help_files:
+                controller.AddBook(filename)
+        self._help_controller.Display((topic or self._help_files[0][1])+'.html')
 
-    def _can_new_record(self, name, prefill=None):
-        return has_access(name, perm=pytis.data.Permission.INSERT)
-    
+    def _cmd_custom_debug(self):
+        if __debug__:
+            config.custom_debug()
+        
+    def _cmd_exit(self):
+        self._frame.Close()
+        
+    # Ostatní veøejné metody
+
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Zobraz dialog urèené tøídy s hlavním oknem aplikace jako rodièem.
 
@@ -851,37 +841,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._panel.SetFocus()
         top = self
         return result
-
-    # Ostatní veøejné metody
-
-    def help(self, topic=None):
-        """Zobraz dané téma v prohlí¾eèi nápovìdy."""
-        if not self._help_files:
-            msg = _("®ádný soubor s nápovìdou nebyl nalezen.\n"
-                    "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
-                    "Zkontrolujte zda je cesta správná\n"
-                    "a zda adresáø obsahuje soubory nápovìdy.")
-            run_dialog(Warning, msg % config.help_dir)
-            return
-        if self._help_controller is None:
-            self._help_controller = controller = wx.html.HtmlHelpController()
-            controller.SetTitleFormat(_("Nápovìda")+": %s")
-            wx.FileSystem_AddHandler(wx.ZipFSHandler())
-            for filename, index, title in self._help_files:
-                controller.AddBook(filename)
-        self._help_controller.Display((topic or self._help_files[0][1])+'.html')
-            
-    def exit(self, quietly=False):
-        """Ukonèi u¾ivatelské rozhraní aplikace.
-
-        Argumenty:
-
-          quietly -- právì kdy¾ je pravdivé, nejsou pøi ukonèení kladeny
-            u¾ivateli ¾ádné dotazy
-
-        """
-        self._frame.Close()
-        
+    
     def run(self):
         """Spus» bìh u¾ivatelského rozhraní.
 
@@ -934,11 +894,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             return None
         
-    def refresh(self):
-        """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
-        for w in (self._modals.top(), self._windows.active()):
-            if isinstance(w, Refreshable):
-                w.refresh()
         
     def set_status(self, id, message, timeout=None, root=False):
         """Nastav v poli stavové øádky daného 'id' zprávu 'message'.
@@ -1111,13 +1066,50 @@ def run_form(form_class, name, **kwargs):
         return False
     return cmd.invoke(**kwargs)
 
-def run_procedure(*args, **kwargs):
-    """Spus» proceduru (viz 'Application.run_procedure()')."""
-    return _application.run_procedure(*args, **kwargs)
+def run_procedure(spec_name, proc_name, *args, **kwargs):
+    """Spus» proceduru.
+    
+    Argumenty:
+    
+      spec_name -- jméno specifikace pro resolver.
+    
+      proc_name -- jméno procedury, která má být spu¹tìna.  Jde o klíè do
+        slovníku, který je vracen specifikaèní funkcí 'proc_spec'.
 
-def new_record(*args, **kwargs):
-    """Spus» akci pøidání nového záznamu (viz 'Application.new_record()')."""
-    return _application.new_record(*args, **kwargs)
+    V¹echny dal¹í argumenty (vèetnì klíèových) budou pøedány spou¹tìné
+    proceduøe.  Výjimkou je klíèový argument 'block_refresh_', který pøedán
+    není, ale pokud je pravdivý, tak bude volání procedury obaleno voláním
+    'block_refresh()'.
+
+    Návratová hodnota procedury je návratovou hodnotou volání této metody.
+
+    """
+    assert not kwargs.has_key('args'), \
+           "The keyword argument 'args' is reserved for internal use!"
+    return Application.COMMAND_RUN_PROCEDURE.invoke(spec_name=spec_name,
+                                                    proc_name=proc_name,
+                                                    args=args, **kwargs)
+
+def new_record(name, prefill=None, inserted_data=None,
+               block_on_new_record=False):
+    """Spus» interaktivní akci pøidání nového záznamu.
+        
+    Argumenty:
+        
+      name -- jméno specifikace pro resolver.
+      
+      prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
+        pøedvyplnìny pøi inicializaci formuláøe.
+            
+      inserted_data -- sekvence datových øádkù (instancí pytis.data.Row),
+        kterými má být vstupní formuláø postupnì plnìn.
+            
+      block_on_new_record -- Pokud je True, nebude provedena procedura
+        on_new_record; v podstatì umo¾òuje zavolání new_record v rámci
+        procedury on_new_record.
+            
+    """
+    return Application.COMMAND_NEW_RECORD.invoke(**locals())
 
 def current_form(inner=True):
     """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje."""
@@ -1135,9 +1127,9 @@ def wx_frame():
     """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
 
-def exit(**kwargs):
-    """Zavolej 'Application.exit() aktuální aplikace a pøedej argumenty."""
-    return _application.exit(**kwargs)
+def exit():
+    """Ukonèi u¾ivatelské rozhraní aplikace."""
+    return Application.COMMAND_EXIT.invoke()
 
 def global_keymap():
     """Vra» klávesovou mapu aplikace jako instanci tøídy 'Keymap'."""
@@ -1162,8 +1154,7 @@ def wx_yield_(full=False):
 
 def refresh():
     """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
-    _application.refresh()
-
+    Application.COMMAND_REFRESH.invoke()
 
 def block_refresh(function, *args, **kwargs):
     """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
@@ -1176,12 +1167,14 @@ def block_refresh(function, *args, **kwargs):
 def recent_forms_menu():
     """Vra» menu poslednì otevøených formuláøù jako instanci 'pytis.form.Menu'.
 
-    Tato funkce je urèena pro vyu¾ití pøi definici menu aplikace.  Pokud ji
-    pou¾ijeme, bude aplikace toto menu dále obhospodaøovat.
+    Tato funkce je urèena pro vyu¾ití pøi definici menu aplikace.  Pokud menu
+    poslednì otevøených formuláøù tímto zpùsobem do hlavního menu aplikace
+    pøidáme, bude jej aplikace dále obhospodaøovat.
         
     """
     return _application.recent_forms_menu()
 
+
 def help(topic=None):
     """Zobraz dané téma v proholí¾eèi nápovìdy."""
-    return _application.help(topic)
+    return Application.COMMAND_HELP.invoke(topic=topic)
