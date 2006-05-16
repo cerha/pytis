@@ -262,7 +262,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         help(self.help_name())
 
     def _cmd_leave_form(self):
-        self._leave_form()
+        return self._leave_form()
 
     # Veøejné metody
     
@@ -482,7 +482,7 @@ class PopupForm:
 
     def _leave_form(self):
         # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
-        self._popup_frame_.Close()
+        return self._popup_frame_.Close()
         
     def run(self):
         """Zobraz formuláø jako modální dialog."""
