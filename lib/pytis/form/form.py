@@ -759,7 +759,7 @@ class RecordForm(InnerForm):
         if copy:
             prefill.update(self._row_copy_prefill(self.current_row()))
         result = new_record(self._name, prefill=prefill)
-        if result is not None:
+        if result:
             self.select_row(result.row())
             self._run_callback(self.CALL_NEW_RECORD, result)
     
