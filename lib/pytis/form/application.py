@@ -513,7 +513,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             while not self._windows.empty():
                 try:
-                    Form.COMMAND_LEAVE_FORM.invoke()
+                    if not Form.COMMAND_LEAVE_FORM.invoke():
+                        break
                 except:
                     break
         except:
@@ -793,7 +794,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_exit(self):
         self._frame.Close()
         
-    # Ostatní veøejné metody
+    # Veøejné metody
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Zobraz dialog urèené tøídy s hlavním oknem aplikace jako rodièem.
@@ -936,12 +937,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return self._statusbar.get_message(id)
 
     def resolver(self):
-        """Vra» resolver instancí podle jména; instance 'pytis.util.Resolver'."""
+        """Vra» globání resolver aplikace jako instanci 'Resolver'."""
         return self._resolver
-
-    def wx_frame(self):
-        """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
-        return self._frame
 
     def save(self):
         """Ulo¾ stav aplikace."""
@@ -966,6 +963,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """Vra» menu poslednì otevøených formuláøù jako instanci 'Menu'."""
         return Menu(self._RECENT_FORMS_MENU_TITLE,
                     self._recent_forms_menu_items())
+
+    def wx_frame(self):
+        """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
+        return self._frame
 
 
 # Funkce odpovídající pøíkazùm aplikace.
