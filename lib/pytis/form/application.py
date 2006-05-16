@@ -895,24 +895,33 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return None
         
         
-    def set_status(self, id, message, timeout=None, root=False):
+    def set_status(self, id, message, timeout=None, root=False, log_=True):
         """Nastav v poli stavové øádky daného 'id' zprávu 'message'.
         
         Argumenty:
         
           id -- identifikátor pole stavové øádky.
+          
           message -- string, který má být zobrazen, nebo 'None'; je-li 'None',
             bude pøedchozí hlá¹ení smazáno.
+            
           timeout -- není-li 'None', zpráva zmizí po zadaném poètu sekund.
+          
           root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
             aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního
             okna aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno,
             nebo se zobrazení zprávy v modálním oknì nepodaøilo.
+            
+          log_ -- pokud je pravda, bude událost zalogována.
 
         Zobrazení není garantováno, nemusí se zobrazit napøíklad v pøípadì, kdy
         stavový øádek neobsahuje odpovídající pole.
 
         """
+        if __debug__:
+            if log_:
+                log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
+
         modal = self._modals.top()
         if root or not isinstance(modal, Form) \
                or not modal.set_status(id, message):
@@ -959,82 +968,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._recent_forms_menu_items())
 
 
-# Funkce
-
-def has_access(name, perm=pytis.data.Permission.VIEW):
-    """Vra» pravdu, pokud má pøihlá¹ený u¾ivatel práva k danému náhledu.
-
-    Argumenty:
-    
-      name -- název specifikace jako øetìzec.
-      perm -- právo jako jedna z konstant `pytis.data.Permission'.
-
-    """
-    try:
-        data_spec = _application.resolver().get(name, 'data_spec')
-    except ResolverError:
-        return True
-    rights = data_spec.access_rights()
-    if not rights:
-        return True
-    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
-    return rights.permitted(perm, groups)
-
-def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
-            root=False):
-    """Zaloguj a zobraz neinteraktivní 'message' v oknì aplikace.
-
-    Argumenty:
-
-      message -- øetìzec, který má být zobrazen; obsahuje-li jako poslední znak
-        dvojteèku, není tato v oknì aplikace zobrazena
-      kind -- druh zprávy, jedna z konstant modulu 'log'
-      data -- doplòující data pro logování, stejné jako v 'log.log'
-      beep_ -- právì kdy¾ je pravdivé, bude hlá¹ení doprovázeno pípnutím
-      timeout -- pokud je zadáno, zpráva zmizí po zadaném poètu sekund
-      root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
-        aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního okna
-        aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno, nebo se
-        zobrazení zprávy v modálním oknì nepodaøilo.
-        
-    Pro zobrazení zprávy ve stavové øádce platí stejná pravidla, jako v pøípadì
-    metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
-
-    """
-    if beep_:
-        beep()
-    if message or data:
-        log(kind, message, data=data)
-    if _application:
-        if message and message[-1] == ':':
-            message = message[:-1]
-        _application.set_status('message', message, timeout=timeout,
-                                root=root)
-
-def set_status(id, message, log_=True):
-    """Nastav pole 'id' stavové øádky na 'message'.
-
-    Argumenty:
-
-      id -- identifikátor pole stavové øádky.
-      message -- øetìzec, který má být zobrazen.
-      log_ -- pokud je pravda, bude událost zalogována.
-
-    Pro zobrazení zprávy ve stavové øádce platí stejná omezení, jako v pøípadì
-    metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
-
-    """
-    if __debug__:
-        if log_: log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
-    return _application.set_status(id, message)
-
-def get_status(id):
-    """Vra» text pole 'id' stavové øádky. (viz 'Application.get_status()')"""
-    return _application.get_status(id)
-
-def run_dialog(*args, **kwargs):
-    """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
-    return _application.run_dialog(*args, **kwargs)
+# Funkce odpovídající pøíkazùm aplikace.
 
 def run_form(form_class, name, **kwargs):
     """Vytvoø formuláø a spus» jej v aplikaci.
@@ -1111,8 +1045,26 @@ def new_record(name, prefill=None, inserted_data=None,
     """
     return Application.COMMAND_NEW_RECORD.invoke(**locals())
 
+def refresh():
+    """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
+    Application.COMMAND_REFRESH.invoke()
+
+def help(topic=None):
+    """Zobraz dané téma v proholí¾eèi nápovìdy."""
+    return Application.COMMAND_HELP.invoke(topic=topic)
+
+def exit():
+    """Ukonèi u¾ivatelské rozhraní aplikace."""
+    return Application.COMMAND_EXIT.invoke()
+
+# Funkce, které jsou obrazem veøejných metod aktuální aplikace.
+
+def run_dialog(*args, **kwargs):
+    """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
+    return _application.run_dialog(*args, **kwargs)
+
 def current_form(inner=True):
-    """Vra» právì zobrazený formuláø aktuální aplikace, pokud existuje."""
+    """Vra» právì aktivní formuláø (viz 'Application.currnt_form()')."""
     return _application.current_form(inner=inner)
 
 def top_window():
@@ -1123,13 +1075,60 @@ def resolver():
     """Vra» resolver aplikace získaný pøes 'Application.resolver()'."""
     return _application.resolver()
 
+def set_status(id, message, log_=True):
+    """Nastav pole 'id' stavové øádky (viz 'Application.set_status()')."""
+    return _application.set_status(id, message, log_=log_)
+
+def get_status(id):
+    """Vra» text pole 'id' stavové øádky. (viz 'Application.get_status()')"""
+    return _application.get_status(id)
+
+def recent_forms_menu():
+    """Vra» menu poslednì otevøených formuláøù jako instanci 'pytis.form.Menu'.
+
+    Tato funkce je urèena pro vyu¾ití pøi definici menu aplikace.  Pokud menu
+    poslednì otevøených formuláøù tímto zpùsobem do hlavního menu aplikace
+    pøidáme, bude jej aplikace dále obhospodaøovat.
+        
+    """
+    return _application.recent_forms_menu()
+
 def wx_frame():
-    """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
+    """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
 
-def exit():
-    """Ukonèi u¾ivatelské rozhraní aplikace."""
-    return Application.COMMAND_EXIT.invoke()
+# Ostatní funkce.
+
+def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
+            root=False):
+    """Zaloguj a zobraz neinteraktivní 'message' v oknì aplikace.
+
+    Argumenty:
+
+      message -- øetìzec, který má být zobrazen; obsahuje-li jako poslední znak
+        dvojteèku, není tato v oknì aplikace zobrazena
+      kind -- druh zprávy, jedna z konstant modulu 'log'
+      data -- doplòující data pro logování, stejné jako v 'log.log'
+      beep_ -- právì kdy¾ je pravdivé, bude hlá¹ení doprovázeno pípnutím
+      timeout -- pokud je zadáno, zpráva zmizí po zadaném poètu sekund
+      root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
+        aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního okna
+        aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno, nebo se
+        zobrazení zprávy v modálním oknì nepodaøilo.
+        
+    Pro zobrazení zprávy ve stavové øádce platí stejná pravidla, jako v pøípadì
+    metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
+
+    """
+    if beep_:
+        beep()
+    if message or data:
+        log(kind, message, data=data)
+    if _application:
+        if message and message[-1] == ':':
+            message = message[:-1]
+        _application.set_status('message', message, timeout=timeout,
+                                root=root)
 
 def global_keymap():
     """Vra» klávesovou mapu aplikace jako instanci tøídy 'Keymap'."""
@@ -1137,6 +1136,33 @@ def global_keymap():
         return _application.keymap
     except AttributeError:
         return Keymap()
+
+def block_refresh(function, *args, **kwargs):
+    """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
+    
+    Vrací: výsledek vrácený volanou funkcí.
+    
+    """
+    return Refreshable.block_refresh(function, *args, **kwargs)
+
+def has_access(name, perm=pytis.data.Permission.VIEW):
+    """Vra» pravdu, pokud má pøihlá¹ený u¾ivatel práva k danému náhledu.
+
+    Argumenty:
+    
+      name -- název specifikace jako øetìzec.
+      perm -- právo jako jedna z konstant `pytis.data.Permission'.
+
+    """
+    try:
+        data_spec = _application.resolver().get(name, 'data_spec')
+    except ResolverError:
+        return True
+    rights = data_spec.access_rights()
+    if not rights:
+        return True
+    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
+    return rights.permitted(perm, groups)
 
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontì.
@@ -1152,29 +1178,3 @@ def wx_yield_(full=False):
     else:
         wx.SafeYield()
 
-def refresh():
-    """Aktualizuj zobrazení viditelných oken aplikace, pokud je to tøeba."""
-    Application.COMMAND_REFRESH.invoke()
-
-def block_refresh(function, *args, **kwargs):
-    """Zablokuj ve¹kerý refresh po dobu provádìní funkce 'function'.
-    
-    Vrací: výsledek vrácený volanou funkcí.
-    
-    """
-    return Refreshable.block_refresh(function, *args, **kwargs)
-
-def recent_forms_menu():
-    """Vra» menu poslednì otevøených formuláøù jako instanci 'pytis.form.Menu'.
-
-    Tato funkce je urèena pro vyu¾ití pøi definici menu aplikace.  Pokud menu
-    poslednì otevøených formuláøù tímto zpùsobem do hlavního menu aplikace
-    pøidáme, bude jej aplikace dále obhospodaøovat.
-        
-    """
-    return _application.recent_forms_menu()
-
-
-def help(topic=None):
-    """Zobraz dané téma v proholí¾eèi nápovìdy."""
-    return Application.COMMAND_HELP.invoke(topic=topic)
