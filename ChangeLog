@@ -1,3 +1,8 @@
+2006-05-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (run_form_mitem): Vypou¹tìj
+	speciální znaky z titulku pøi pou¾ití pro text nápovìdy.
+
 2006-05-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (cb_computed_field_args): Funkce
