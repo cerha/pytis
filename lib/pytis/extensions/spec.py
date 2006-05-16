@@ -61,7 +61,7 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
         pytis.form.CodebookForm:        "èíselníkový formuláø",
         pytis.form.DescriptiveDualForm: "duální náhledový formuláø",
         }.get(form_class, "formuláø")
-    help = _('Otevøít %s "%s"') % (descr, title)
+    help = _('Otevøít %s "%s"') % (descr, title.replace('&', ''))
     return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def new_record_mitem(title, name, hotkey=None):
