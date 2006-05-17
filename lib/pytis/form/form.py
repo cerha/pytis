@@ -62,7 +62,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     DESCR = None
 
     def _get_command_handler_instance(cls):
-        return pytis.form.application._application.current_form(inner=False)
+        return current_form(inner=False)
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def __init__(self, parent, resolver, name, guardian=None, **kwargs):
@@ -207,10 +207,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                                             _command_handler=self))
                             for title, path in print_spec]
     
-    def _exit_check(self):
-        # Proveï kontrolu formuláøe pøed uzavøením.
-        # Vrací pravdu právì tehdy kdy¾ je mo¾no formuláø uzavøít.
-        return True
         
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
@@ -244,13 +240,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _on_reload_form_state(self):
         pass
 
-    def _leave_form(self):
-        if self._exit_check():
-            self.close()
-            return True
-        else:
-            return False
-        
     # Zpracování pøíkazù
     
     def _cmd_reload_form_state(self):
@@ -262,7 +251,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         help(self.help_name())
 
     def _cmd_leave_form(self):
-        return self._leave_form()
+        return self.close()
 
     # Veøejné metody
     
@@ -328,11 +317,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """
         return False
 
-    def close(self):
-        for id in self._STATUS_FIELDS:
-            set_status(id, '')
-        return super_(Form).close(self)
-    
     def save(self):
         self._saved_state = map(lambda id: (id, get_status(id)),
                                 self._STATUS_FIELDS)
@@ -341,6 +325,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         for id, message in self._saved_state:
             set_status(id, message, log_=False)
 
+    def _cleanup(self):
+        super(Form, self)._cleanup()
+        for id in self._STATUS_FIELDS:
+            set_status(id, '')
+    
 
 class InnerForm(Form):
     """Formulø, který zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
@@ -358,7 +347,7 @@ class InnerForm(Form):
     
     """
     def _get_command_handler_instance(cls):
-        return pytis.form.application._application.current_form()
+        return current_form()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
 
@@ -474,15 +463,15 @@ class PopupForm:
         return frame    
 
     def _on_frame_close(self, event):
-        if not self._exit_check():
-            event.Veto()
-        else:
+        if self._exit_check():
             self.defocus()
             event.Skip()
+        else:
+            event.Veto()
 
-    def _leave_form(self):
+    def close(self, force=False):
         # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
-        return self._popup_frame_.Close()
+        return self._popup_frame_.Close(force=force)
         
     def run(self):
         """Zobraz formuláø jako modální dialog."""
@@ -491,7 +480,9 @@ class PopupForm:
         frame.SetTitle(self.title())
         frame.SetClientSize(self.GetSize())
         frame.ShowModal()
-        return self._result
+        result = self._result
+        self._close(force=True)
+        return result
 
 
 class TitledForm:
@@ -1057,6 +1048,13 @@ class LookupForm(RecordForm):
             throw('form-init-error')
         return self._lf_select_count
 
+    def _cleanup(self):
+        super(LookupForm, self)._cleanup()
+        if self._lf_search_dialog:
+            self._lf_search_dialog = None
+        if self._lf_filter_dialog:
+            self._lf_filter_dialog = None
+    
     def _data_sorting(self):
         mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
                    self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
@@ -1242,15 +1240,6 @@ class LookupForm(RecordForm):
         else:
             return True
         
-    # wx metody
-
-    def Close(self):
-        super_(LookupForm).Close(self)
-        if self._lf_search_dialog:
-            self._lf_search_dialog = None
-        if self._lf_filter_dialog:
-            self._lf_filter_dialog = None
-    
     # Veøejné metody
 
     def condition(self):
@@ -1589,7 +1578,7 @@ class EditForm(LookupForm, TitledForm):
                 cleanup(self._row, original_row)
             if close:    
                 self._result = self._row
-                self._leave_form()
+                self.close()
             return True
         else:
             msg = _("Ulo¾ení záznamu se nezdaøilo")
@@ -1815,7 +1804,7 @@ class PopupEditForm(PopupForm, EditForm):
                     'default': True},
                    {'id': wx.ID_CANCEL,
                     'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
-                    'handler': lambda e: self._leave_form()})
+                    'handler': lambda e: self.close()})
         if self._mode == self.MODE_INSERT:
             buttons += ({'id': wx.ID_FORWARD,
                          'label': _("Dal¹í"),
@@ -1839,14 +1828,15 @@ class PopupEditForm(PopupForm, EditForm):
             sizer.Add(button, 0, wx.ALL, 20)
         return sizer
 
+    def _cleanup(self):
+        self._unlock_record()
+        super(PopupEditForm, self)._cleanup()
+    
     def run(self):
         key = self._current_key()
         if self._mode == self.MODE_EDIT and key and not self._lock_record(key):
             return None
-        try:
-            return PopupForm.run(self)
-        finally:
-            self._unlock_record()
+        return PopupForm.run(self)
 
     def set_status(self, field, message):
         if self._status_fields.has_key(field):
