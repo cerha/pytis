@@ -1,3 +1,8 @@
+2006-05-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (Select.set_columns.make_columns): Oprava pro
+	'*' v exclude_columns.
+
 2006-05-12  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py:

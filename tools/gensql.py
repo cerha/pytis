@@ -996,7 +996,7 @@ class Select(_GsqlSpec):
                     cname = c.alias
                 else:    
                     cname = self._column_column(c)
-                if cname in r.exclude_columns:
+                if '*' in r.exclude_columns or cname in r.exclude_columns:
                     continue
                 calias = assoc(cname, column_aliases)
                 if not calias:
@@ -1018,7 +1018,7 @@ class Select(_GsqlSpec):
                 rel_alias = r.alias
                 column_aliases = r.column_aliases
                 if isinstance(r.relation, Select):
-                    columnlist = r.relation.set_columns(self._relation_columns)
+                    columnlist = r.relation.set_columns(self._relation_columns)                    
                 else:    
                     if '*' in r.exclude_columns:
                         continue
