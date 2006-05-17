@@ -1,5 +1,23 @@
 2006-05-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/util.py (XStack): Aktualizován docstring.
+	(XStack.__init__): Inicializuj `self._mru'.
+	(XStack.pop): Odstraò polo¾ku z `self._mru'.
+	(XStack.remove): Namísto `del' pou¾ívej metodu `remove'.  Odstraò
+	polo¾ku také z `self._mru'.
+	(XStack.activate): Pøesuò aktivovaný prvek na zaèátek `self._mru'.
+
+	* pytis/form/commands_.py: Nový pøíkaz
+	`Application.COMMAND_RAISE_RECENT_FORM'.  Pøíkazy
+	`Application.COMMAND_NEXT_FORM' a `Application.COMMAND_PREV_FORM'
+	pøejmenovány na `Application.COMMAND_RAISE_NEXT_FORM' a
+	`Application.COMMAND_RAISE_PREV_FORM'.
+	(DEFAULT_KEYMAP): Reflektovány zmìny názvù pøíkazù a pøidán pøíkaz
+	`Application.COMMAND_RAISE_RECENT_FORM'.
+	(FORM_COMMAND_MENU): Doplnìny nápovìdné øetìzce ke v¹em polo¾kám.
+	Reflektovány zmìny názvù pøíkazù a pøidán pøíkaz
+	`Application.COMMAND_RAISE_RECENT_FORM'.
+
 	* pytis/form/form.py (Form._get_command_handler_instance)
 	(InnerForm._get_command_handler_instance):
 	`pytis.form.application._application.current_form' ->
@@ -39,6 +57,15 @@
 	formuláøe pro logovací hlá¹ku po jeho uzavøení, kdy u¾ je mrtev.
 	(Application.run_dialog): Po uzavøení dialogu volej `wx_yield_',
 	aby byl správnì pøedán focus oken.
+	(Application.OnInit): Remember the window menu as
+	`self._window_menu'.
+	(Application._create_command_menu): Oèekávej také text nápovìdy v
+	`FORM_COMMAND_MENU'.
+	(Application._update_window_menu): Pou¾ívej `self._window_menu'.
+	(Application._can_raise_recent_form)
+	(Application._cmd_raise_recent_form): Nové metody.
+	(Application._cmd_next_form): -> `_cmd_raise_next_form'.
+	(Application._cmd_prev_form): -> `_cmd_raise_prev_form'.
 
 	* pytis/form/screen.py (Window.__init__): Pøidán assert na
 	`parent'.
