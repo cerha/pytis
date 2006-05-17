@@ -236,6 +236,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._create_command_menu(menus)
         self._create_help_menu(menus)
         self._menubar = mb = MenuBar(self._frame, menus, self)
+        self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
+        assert self._window_menu is not None
         # Try to find the recent forms menu.
         menu_id = mb.FindMenu(self._RECENT_FORMS_MENU_TITLE)
         if menu_id != -1:
@@ -334,12 +336,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for group in FORM_COMMAND_MENU:
             if items:
                 items.append(MSeparator())
-            for title, cmd in group:
+            for title, help, cmd in group:
                 if is_sequence(cmd):
                     cmd, args = cmd
                 else:
                     args = {}
-                items.append(MItem(title, command=cmd, args=args))
+                items.append(MItem(title, command=cmd, args=args, help=help))
         menus.append(Menu(_("Pøíkazy"), items))
 
     def _create_help_menu(self, menus):
@@ -361,7 +363,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if form.__class__ != BrowseForm:
             title += " (%s)" % form.descr()
         return title
-    
+
     def _update_window_menu(self):
         def wmitem(i, form):
             return CheckItem("&%d. %s" % (i, self._form_menu_item_title(form)),
@@ -370,8 +372,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                              command=Application.COMMAND_RAISE_FORM,
                              state=lambda : top_window() is form,
                              args={'form': form})
-        mb = self._menubar
-        menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
+        menu = self._window_menu
         if menu is not None:
             for item in menu.GetMenuItems():
                 menu.Remove(item.GetId())
@@ -593,16 +594,22 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_raise_form(self, form):
         self._raise_form(form)
         
-    def _can_next_form(self):
+    def _can_raise_recent_form(self):
+        return len(self._windows.mru()) > 1
+        
+    def _cmd_raise_recent_form(self):
+        self._raise_form(self._windows.mru()[1])
+       
+    def _can_raise_next_form(self):
         return len(self._windows.items()) > 1
     
-    def _cmd_next_form(self):
+    def _cmd_raise_next_form(self):
         self._raise_form(self._windows.next())
 
-    def _can_prev_form(self):
+    def _can_raise_prev_form(self):
         return len(self._windows.items()) > 1
 
-    def _cmd_prev_form(self):
+    def _cmd_raise_prev_form(self):
         self._raise_form(self._windows.prev())
 
     def _can_clear_recent_forms(self):
