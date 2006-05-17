@@ -4,6 +4,42 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-17  Tomas Cerha  <cerha@brailcom.org>
+	
+	Byl komplentì pøepracován mechanismus uzavírání oken a provádìní
+	cleanup kódu formuláøù.  Byly k tomu dva dùvody.  Zaprvé jsem
+	zjistil, ¾e popup formuláøe po svém uzavøení sice nejsou pøítomny
+	v u¾ivatelském rozhraní, ale jejich objekty stále ¾ijí.  To mohlo
+	vést k zaná¹ení pamìti.  Zajímalo by mne, jestli nebylo pozorováno
+	postupné zpomalování aplikace po del¹ím pou¾ívání a zda to teï
+	bude lep¹í.  Uzavøené formuláøe jsou nyní ka¾dopádnì likvidovány
+	dùslednì.  Druhý dùvod byl ten, ¾e nebylo korektnì o¹etøeno
+	uzavøení formuláøe ve v¹ech situacích.  Napøíklad pokud rozedituji
+	øádek a pøepnu se do jiného formuláøe (chci si nìco zkontrolovat)
+	a zavøu aplikaci (zapomenu, ¾e jsem mìl rozeditovaný øádek), bude
+	formuláø uzevøen a zmìny budou zahozeny bez mo¾nosti zásahu
+	u¾ivatele.  To by nyní mìlo být v¹e o¹etøeno správnì.  Vzhledem k
+	tomu, ¾e jde o pomìrnì citlivou zále¾itost (pøípadné chyby mohou
+	zpùsobovat segfaulty apod), prosím o dostateèné otestování.
+
+	Dále byl implementován nový pøíkaz
+	`Applcation.COMMAND_RAISE_RECENT_FORM', který vyzvedne
+	pøedposlední aktivní okno, tj. okno, které bylo aktivní pøed tím,
+	ne¾ se souèasné okno stalo aktivním.  Tím je v dùsledku umo¾nìno
+	se jednodu¹e cyklicky pøepínat mezi dvìma poslednì aktivními okny.
+	Pøíkaz je navázán na klávesovou zkratku `Ctrl-w'.
+
+	Do menu pøíkazù byly doplnìny také krátké popisy jednotlivých
+	pøíkazù, které jsou zobrazovány ve stavové øádce pøi procházení
+	menu.  Drobný problém mù¾e být, pokud je okno aplikace malé a
+	rozbalené menu tak stavovou øádku pøekrývá.  Proto bych navrhoval
+	pøíkazy seskupit do podmenu, co¾ by mìlo i tu výhodu, ¾e by bylo
+	mo¾né pøidat do menu pøíkazù více.
+	
+	* BUGFIX: Rozeditovaný formuláø ji¾ není potichu uzavøen pøi
+	pokusu o ukonèení aplikace, ale u¾ivatel má mo¾nost zmìny ulo¾it.
+	
+	
 2006-05-15  Tomas Cerha  <cerha@brailcom.org>
 
 	Globální funkce `run_form()' nyní nevolá pøímo metodu aplikace, ale
