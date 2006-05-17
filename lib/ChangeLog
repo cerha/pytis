@@ -1,3 +1,76 @@
+2006-05-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (Form._get_command_handler_instance)
+	(InnerForm._get_command_handler_instance):
+	`pytis.form.application._application.current_form' ->
+	`current_form'.
+	(Form._exit_check): Metoda zru¹ena.
+	(Form._cmd_leave_form): Volej `self.close()' namísto
+	`self._leave_form()'.
+	(Form.close): Metoda zru¹ena.
+	(Form._cleanup): Nová meotda.
+	(PopupForm._on_frame_close): Kosmetická úprava.
+	(PopupForm.close): Nová metoda.
+	(PopupForm._leave_form): Metoda zru¹ena.
+	(PopupForm.run): Nakonec volej `self.close()'.
+	(LookupForm._cleanup): Nová metoda.
+	(LookupForm.Close): Nahrazeno metodou `_cleanup'.
+	(EditForm._commit_form, PopupEditForm._buttons): Volej
+	`self.close()' namísto `self._leave_form()'.
+	(PopupEditForm._cleanup): Nová metoda.
+	(PopupEditForm.run): Neodemykej záznam zde, ale v `_cleanup().
+
+	* pytis/form/dualform.py (DualForm.close): Nahrazeno metodami
+	`_cleanup' a `_exit_check'.
+	(SideBrowseDualForm.close): Nahrazeno metodou `_cleanup'.
+
+	* pytis/form/list.py (ListForm.Close): Nahrazeno metodou
+	`_cleanup'.
+
+	* pytis/form/output.py (PrintForm.close): Nahrazeno metodou `_cleanup'.
+
+	* pytis/form/application.py (Application._cleanup): Zru¹en
+	argument `quietly'.  Otevøené formuláøe uzavírej ve `for' cyklu,
+	ne `while', je tím zabránìno nekoneèné smyèce kdy¾ nìkteré okno
+	nelze zavøít.  Pøed uzavíráním formuláøe jej vyzvedni, aby mohl
+	u¾ivatel reagovat na pøípadné ukonèovací akce.  Pokud je uzavøení
+	formuláøe zamítnuto, vracej False.
+	(Application._cmd_run_form): Zapamatuj si stringovou reprezentaci
+	formuláøe pro logovací hlá¹ku po jeho uzavøení, kdy u¾ je mrtev.
+	(Application.run_dialog): Po uzavøení dialogu volej `wx_yield_',
+	aby byl správnì pøedán focus oken.
+
+	* pytis/form/screen.py (Window.__init__): Pøidán assert na
+	`parent'.
+	(Window._exit_check, Window._exit_check, Window._exit_check): Nové
+	metody.
+	(Window.close): Nový argument `force'.  Zde jen volej
+	`self._close()'.
+
+2006-05-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (on_command): Metoda zru¹ena.
+	(Application._cmd_break, Application._cmd_raise_form)
+	(Application._cmd_next_form, Application._cmd_prev_form)
+	(Application._cmd_clear_recent_forms, Application._cmd_refresh)
+	(Application._cmd_custom_debug): Nové metody.
+	(Application.run_procedure): Transformováno na
+	`_cmd_run_procedure'.
+	(Application.new_record): Transformováno na `_cmd_new_record'.
+	(Application.help): Transformováno na `_cmd_new_record'.
+	(Application.refresh): Transformováno na `_cmd_refresh'.
+	(Application.exit): Transformováno na `_cmd_exit'.
+	(run_procedure, new_record, exit, refresh, help): Namísto volání
+	metody aplikace vyvolej pøíslu¹ný pøíkaz.
+	(Application._cleanup): Pokud pøíkaz uzavøení formuláøe vrátí
+	False, nepokou¹ej se o dal¹í uzavírání formuláøù.
+
+	* pytis/form/form.py (RecordForm._on_new_record): Netestuj
+	výsledek `new_record()' pøímo na None, ale v boolean kontextu.
+	(EditForm._commit_form): Pass on the return value of `_leave_form'
+	(PopupForm._leave_form): Pass on the return value of the frame's
+	`Close()' method.
+
 2006-05-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/command.py (CommandHandler.on_command): Vracej pøímo
