@@ -531,16 +531,11 @@ class PrintForm(Form):
             return super_(PrintForm).on_command(self, command, **kwargs)
         return True
 
-    def close(self):
+    def _cleanup(self):
+        super(PrintForm, self)._cleanup()
         self._formatter.close()
-        super_(PrintForm).close(self)
-    
-    # wx metody
-
-    def Close(self):
         if self._current_stream is not None:
             try:
                 self._current_stream.close()
             except IOError:
                 pass
-    
