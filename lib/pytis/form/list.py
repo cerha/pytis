@@ -1823,7 +1823,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._editors = []
 
         
-    def Close(self):
+    def _cleanup(self):
+        super(ListForm, self)._cleanup()
         self._data.remove_callback_on_change(self.on_data_change)
         try:
             self._data.close()
@@ -1834,8 +1835,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
         # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
         # v novém gridu.
-        self._table.close()    
-        return super_(ListForm).Close(self)
+        self._table.close()
 
     # Ostatní veøejné metody
 
