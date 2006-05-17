@@ -179,7 +179,6 @@ class Window(wx.ScrolledWindow, Restorable):
 
     """
 
-    
     _focused_window = None
 
     def __init__(self, parent):
@@ -190,9 +189,34 @@ class Window(wx.ScrolledWindow, Restorable):
           parent -- rodièovské okno.  Instance 'wx.Window'.
         
         """
+        assert isinstance(parent, wx.Window), parent
         wx.ScrolledWindow.__init__(self, parent, wx.NewId())
         self._parent = parent
         
+    def _exit_check(self):
+        "Proveï kontrolu pøed uzavøením a vra» pravdu, je-li mo¾no pokraèovat."
+        return True
+
+    def _cleanup(self):
+        "Proveï úklidové akce pøed uzavøením okna."
+        pass
+    
+    def close(self, force=False):
+        return self._close(force=force)
+
+    def _close(self, force=False):
+        """Definitivnì uzavøi okno a zru¹ ve¹kerý jeho obsah."""
+        if force or self._exit_check():
+            self.hide()
+            try:
+                self._cleanup()
+            finally:
+                self.Close()
+                self.Destroy()
+            return True
+        else:
+            return False
+    
     def parent(self):
         """Vra» rodièovské okno zadané v konstruktoru."""
         return self._parent
@@ -220,12 +244,6 @@ class Window(wx.ScrolledWindow, Restorable):
         self.Show(False) # nutné i pøed uzavøením
         self.Enable(False)
 
-    def close(self):
-        """Definitivnì uzavøi okno a zru¹ ve¹kerý jeho obsah."""
-        self.hide()
-        self.Close()
-        self.Destroy()               
-                        
     def focus(self):
         """Nastav focus tomuto oknu."""
         if Window._focused_window:
@@ -237,7 +255,9 @@ class Window(wx.ScrolledWindow, Restorable):
         """Zru¹ focus tomuto oknu."""
         if Window._focused_window is self:
             Window._focused_window = None
+    
 
+            
 def focused_window():
     """Vra» zaostøené okno nebo 'None', není-li jaké."""
     return Window._focused_window
