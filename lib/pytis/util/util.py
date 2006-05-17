@@ -444,9 +444,11 @@ class XStack(Stack):
       * zji¹tìní aktivního prvku
       * zji¹tìní seznamu v¹ech prvkù
       * vyjmutí libovolného prvku ze zásobníku
+      * zji¹tìní poøadí poslednì aktivovaných prvkù (MRU)
 
-    V zásobníku nesmí být pøítomen jeden objekt souèasnì vícekrát.  V takovém
-    pøípadì není chování zásobníku definováno.
+    Omezení: V zásobníku nesmí být pøítomen jeden objekt souèasnì vícekrát,
+    resp. zásobník nesmí obsahovat dva ekvivalentní prvky.  V
+    takovém pøípadì není chování zásobníku definováno.
 
     Vkládání je automaticky provádìno za právì aktivní prvek, nikoliv na
     poslední místo, jako v pøedkovi.
@@ -454,6 +456,7 @@ class XStack(Stack):
     """
     def __init__(self):
         self._active = None
+        self._mru = []
         super(XStack, self).__init__()
         
     def push(self, item):
@@ -464,7 +467,6 @@ class XStack(Stack):
         """
         if self.empty():
             super(XStack, self).push(item)
-            
         else:
             self._list.insert(self._list.index(self.active()), item)
         self.activate(item)
@@ -477,6 +479,7 @@ class XStack(Stack):
         
         """
         item = self.top()
+        self._mru.remove(item)
         super(XStack, self).pop()
         if item is self._active:
             self.activate(self.top())
@@ -492,7 +495,8 @@ class XStack(Stack):
             to_activate = self.prev()
         else:
             to_activate = self.next()
-        del self._list[self._list.index(item)]
+        self._list.remove(item)
+        self._mru.remove(item)
         if item is self._active:
             self.activate(to_activate)
 
@@ -504,10 +508,24 @@ class XStack(Stack):
         """
         return tuple(self._list)
 
+    def mru(self):
+        """Vra» seznam prvkù seøazený podle poslední aktivace.
+
+        Aktivní prvek je první, za ním následuje prvek, který byl aktivní pøed
+        tím, ne¾ se aktivní prvek stal aktivním, atd.
+        
+        """
+        return tuple(self._mru)
+
     def activate(self, item):
         """Aktivuj daný prvek."""
         assert item in self._list or item is None and self.empty()
         self._active = item
+        if item is not None:
+            if item in self._mru:
+                self._mru.remove(item)
+            self._mru.insert(0, item)
+            
         
     def active(self):
         """Vra» právì aktivní prvek"""
