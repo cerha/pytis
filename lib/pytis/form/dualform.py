@@ -186,17 +186,19 @@ class DualForm(Form):
         self._splitter.Show(False)
         self._splitter.Enable(False)
 
-    def close(self):
-        self._main_form.close()
-        self._side_form.close()
+    def _exit_check(self):
+        return self._main_form._exit_check() and self._side_form._exit_check()
+            
+    def _cleanup(self):
+        self._main_form.close(force=True)
+        self._side_form.close(force=True)
+        self._side_form = None
         self._main_form = None
         self._side_form = None
         self._active_form = None
         self._splitter.Show(False)
         self._splitter.Close()
-        self._splitter.Destroy()               
-        self.Close()
-        self.Destroy()
+        self._splitter.Destroy()
         
     def focus(self):
         active = self._active_form
@@ -332,9 +334,9 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
                 focused.SetFocus()
         return True
 
-    def close(self):
+    def _cleanup(self):
         self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
-        super_(SideBrowseDualForm).close(self)
+        super(SideBrowseDualForm, self)._cleanup()
 
 
 class BrowseDualForm(SideBrowseDualForm, Refreshable):
