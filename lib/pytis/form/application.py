@@ -491,7 +491,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             wxconfig.DeleteEntry(option)
         wxconfig.Flush()
 
-    def _cleanup(self, quietly=False):
+    def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
         try:
@@ -503,7 +503,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
                     self._modals.top())
                 return False
-            if not quietly and not self._windows.empty():
+            if not self._windows.empty():
                 q = _("Aplikace obsahuje otevøené formuláøe\n" + \
                       "Opravdu chcete ukonèit aplikaci?")
                 if not self.run_dialog(Question, q):
@@ -511,12 +511,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except:
             pass
         try:
-            while not self._windows.empty():
+            for form in self._windows.items():
                 try:
-                    if not Form.COMMAND_LEAVE_FORM.invoke():
-                        break
+                    self._raise_form(form)
+                    if not form.close():
+                        return False
                 except:
-                    break
+                    continue
         except:
             pass
         try:
@@ -687,8 +688,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.show()
                     self._post_init_form(form, **post_init_kwargs)
                     try:
+                        form_str = str(form) # Dead form doesn't speak...
                         result = form.run()
-                        log(EVENT, "Modální formuláø byl uzavøen:", form)
+                        log(EVENT, "Modální formuláø byl uzavøen:", form_str)
                         log(EVENT, "Návratová hodnota:", result)
                     finally:
                         self._modals.pop()
@@ -815,8 +817,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         návratovou hodnotou této metody.
         
         """
-
-        
         if not isinstance(dialog_or_class_, Dialog):
             class_ = dialog_or_class_
             assert issubclass(class_, Dialog)
@@ -835,6 +835,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         finally:
             self._modals.pop()
             busy_cursor(False)
+        # Tento yield zaruèí správné pøedání focusu oken.
+        wx_yield_() 
         top = self.top_window()
         if top is not None:
             top.focus()
