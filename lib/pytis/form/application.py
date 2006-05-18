@@ -625,6 +625,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 w.refresh()
 
     def _can_run_form(self, form_class, name, **kwargs):
+        if isinstance(self.current_form(), PopupForm) \
+           and not issubclass(form_class, PopupForm):
+            return False
         if issubclass(form_class, DualForm) and \
                not issubclass(form_class, DescriptiveDualForm):
             dual_spec = resolver().get(name, 'dual_spec')
