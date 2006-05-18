@@ -1,3 +1,18 @@
+2006-05-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._edit_menu) 
+	(BrowseForm._context_menu): Doplnìny texty nápovìdy polo¾ek menu.
+	(BrowseForm._context_menu.action_mitems): Nastavuj text nápovìdy
+	polo¾ky menu podle popisu akce.
+
+	* pytis/form/application.py (message): Nový argument `log_'.
+
+	* pytis/form/screen.py (Menu._on_highlight_item): Nová metoda.
+	(Menu.create): Nava¾ `wx.EVT_MENU_HIGHLIGHT_ALL' na
+	`_on_highlight_item'.
+	(Menu._on_highlight_item): Zaka¾ logování zobrazovaných zpráv.
+	(Menu.create): Kosmetická úprava.
+
 2006-05-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/util.py (XStack): Aktualizován docstring.
