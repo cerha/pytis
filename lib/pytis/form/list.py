@@ -352,15 +352,19 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _edit_menu(self):
         return (
-            MItem("Editovat buòku",
-                  command = ListForm.COMMAND_EDIT),
-            MItem("Ulo¾it záznam",
-                  command = ListForm.COMMAND_LINE_COMMIT),
-            MItem("Opustit editaci",
-                  command = ListForm.COMMAND_FINISH_EDITING),
+            MItem(_("Editovat buòku"),
+                  command = ListForm.COMMAND_EDIT,
+                  help=_("Otevøít vstupní políèko pro tuto hodnotu.")),
+            MItem(_("Ulo¾it záznam"),
+                  command = ListForm.COMMAND_LINE_COMMIT,
+                  help=_("Ukonèit editaci s ulo¾ením záznamu.")),
+            MItem(_("Opustit editaci"),
+                  command = ListForm.COMMAND_FINISH_EDITING,
+                  help=_("Ukonèit editaci bez ulo¾ení záznamu.")),
             MSeparator(),
-            MItem("Kopírovat obsah buòky",
-                  command = ListForm.COMMAND_COPY_CELL),
+            MItem(_("Kopírovat obsah buòky"),
+                  command = ListForm.COMMAND_COPY_CELL,
+                  help=_("Zkopírovat hodnotu do schránky.")),
             #MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
             )
 
@@ -747,7 +751,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                      for c in self._view.fields()] + \
                     [MSeparator(),
                      MItem(_("Vrátit výchozí sloupce"),
-                           command=ListForm.COMMAND_RESET_COLUMNS)])
+                           command=ListForm.COMMAND_RESET_COLUMNS),
+                     # TODO: Kam s ním, a jak to nazvat, aby to bylo jasné.
+                     #MItem(_("Zahodit zmìny nastavení sloupcù"),
+                     #      command=ListForm.COMMAND_RESET_COLUMNS)
+                     ])
     
     def _column_context_menu(self, col):
         M = Menu
@@ -2021,22 +2029,34 @@ class BrowseForm(ListForm):
         # Sestav specifikaci kontextového menu
         menu = super_(BrowseForm)._context_menu(self) + (
             MItem(_("Editovat buòku"),
-                  command=ListForm.COMMAND_EDIT),
+                  command=ListForm.COMMAND_EDIT,
+                  help=_("Upravit hodnotu v re¾imu inline editace")),
             MItem(_("Filtrovat podle buòky"),
-                  command=ListForm.COMMAND_FILTER_BY_CELL),
+                  command=ListForm.COMMAND_FILTER_BY_CELL,
+                  help=_("Vyfiltrovat øádky obsahující v tomto sloupci "
+                         "stejnou hodnotu")),
             MItem(_("Zkopírovat obsah buòky"),
-                  command=ListForm.COMMAND_COPY_CELL),
+                  command=ListForm.COMMAND_COPY_CELL,
+                  help=_("Zkopírovat hodnotu do schránky.")),
             MSeparator(),
             MItem(_("Editovat záznam"),
-                  command=BrowseForm.COMMAND_EDIT_RECORD),
+                  command=BrowseForm.COMMAND_EDIT_RECORD,
+                  help=_("Otevøít editaèní formuláø pro tento záznam.")),
             MItem(_("Smazat záznam"),
-                  command=RecordForm.COMMAND_DELETE_RECORD),
+                  command=RecordForm.COMMAND_DELETE_RECORD,
+                  help=_("Odstranit záznam z databáze.")),
             MItem(_("Náhled"),
-                  command=ListForm.COMMAND_ACTIVATE),
-            MItem(_("Náhled v druhém formuláøi"),
-                  command=ListForm.COMMAND_ACTIVATE(alternate=True)),
+                  command=ListForm.COMMAND_ACTIVATE,
+                  help=_("Otevøít náhledový formuláø s mo¾ností procházení "
+                         "záznamù")),
+            MItem(_("Duální náhled"),
+                  command=ListForm.COMMAND_ACTIVATE(alternate=True),
+                  help=_("Otevøít formuláø s tabulkou nahoøe a náhledem "
+                         "v dolní èásti.")),
             MItem(_("Zobrazit související èíselník"),
-                  command=ListForm.COMMAND_SHOW_CELL_CODEBOOK),
+                  command=ListForm.COMMAND_SHOW_CELL_CODEBOOK,
+                  help=_("Otevøít náhled èíselníku, ze kterého pochází tato "
+                         "hodnota.")),
             )
         actions = action_mitems(self._view.actions())
         if actions:
