@@ -1110,7 +1110,7 @@ def wx_frame():
 # Ostatní funkce.
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
-            root=False):
+            root=False, log_=True):
     """Zaloguj a zobraz neinteraktivní 'message' v oknì aplikace.
 
     Argumenty:
@@ -1125,14 +1125,15 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
         aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního okna
         aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno, nebo se
         zobrazení zprávy v modálním oknì nepodaøilo.
+      log_ -- pokud je pravda, bude zpráva také zalogována.
         
     Pro zobrazení zprávy ve stavové øádce platí stejná pravidla, jako v pøípadì
-    metody 'Application.set_status()'.  Zalogováno je v¹ak v ka¾dém pøípadì.
+    metody 'Application.set_status()'.
 
     """
     if beep_:
         beep()
-    if message or data:
+    if log_ and (message or data):
         log(kind, message, data=data)
     if _application:
         if message and message[-1] == ':':
