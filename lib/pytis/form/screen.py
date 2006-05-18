@@ -905,12 +905,12 @@ class Menu(_TitledMenuObject):
         """Vra» sekvenci polo¾ek menu zadanou v konstruktoru."""
         return self._items
 
-    def _on_highlight_item(self, event, menu):
+    def _on_highlight_item(self, menu, event):
         if event.GetMenuId() == -1:
-            message("")
+            msg = ""
         else:
-            item = menu.FindItemById(event.GetMenuId())
-            message(item.GetHelp())
+            msg = menu.FindItemById(event.GetMenuId()).GetHelp()
+        message(msg, log_=False)
         event.Skip()
         
     def create(self, parent, keyhandler):
@@ -928,7 +928,7 @@ class Menu(_TitledMenuObject):
         """
         menu = wx.Menu()
         wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
-                    lambda e: self._on_highlight_item(e, menu))
+                    lambda event: self._on_highlight_item(menu, event))
         # At first, compute the maximal width of hotkey string in this menu.
         max_hotkey_width = 0
         hotkey_string = {}
