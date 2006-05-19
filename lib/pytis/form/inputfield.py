@@ -252,34 +252,49 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._ctrl
 
     def _menu(self):
-        # Return the tuple of popup menu items ('MItem' instances).
-        return (MItem("Vrátit pùvodní hodnotu",
-                      command=InputField.COMMAND_RESET_FIELD,
-                      args=dict(_command_handler=self)),
-                )
+        # Return a tuple of popup menu items ('MItem' instances).
+        return ((InputField.COMMAND_RESET,
+                 _("Vrátit pùvodní hodnotu"),
+                 _("Vrátit ve¹keré provedené zmìny.")),)
 
     def guardian(self):
         return self._guardian
 
     # Zpracování pøíkazù
     
-    def _can_reset_field(self):
+    def _can_reset(self):
         return self.is_modified()
 
-    def _cmd_reset_field(self):
+    def _cmd_reset(self):
         self.reset()
 
     def _cmd_context_menu(self):
         self._on_context_menu()
 
+    # Ostatní neveøejné metody.
+
+    def _mitem(self, command, title=None, help=None):
+        if command is None:
+            return MSeparator()
+        else:
+            if isinstance(command, types.TupleType):
+                command, kwargs = command
+            else:
+                kwargs = {}
+            if issubclass(command.handler(), InputField):
+                kwargs['_command_handler'] = self
+                return MItem(title, command=command(**kwargs), help=help)
+                        
     def _on_context_menu(self, event=None):
         control = self._ctrl
         if event:
-            position = (event.GetX(), event.GetY())
+            position = None
         else:
             size = control.GetSize()
             position = (size.x/3, size.y/2)
-        menu = Menu('', self._menu()).create(control, self)
+        items = [self._mitem(*args) for args in self._menu()]
+        self._set_focus()
+        menu = Menu('', items).create(control, global_keymap())
         control.PopupMenu(menu, position)
         menu.Destroy()
         #event.Skip()
@@ -769,11 +784,48 @@ class TextField(InputField):
         self._ctrl.SetValue(value)
         return True
 
-    def _on_kill_focus(self, event):
-        if self._ctrl is not None:
-            self._ctrl.SetSelection(0, 0)
-        super(TextField, self)._on_kill_focus(event)
+    def _menu(self):
+        return super(TextField, self)._menu() + \
+               ((None,),
+                (TextField.COMMAND_CUT,
+                 _("Vyjmout"),
+                 _("Vyjmout oznaèený text a ulo¾it jej do schránky.")),
+                (TextField.COMMAND_COPY,
+                 _("Kopírovat"),
+                 _("Zkopírovat oznaèený text do schránky.")),
+                (TextField.COMMAND_PASTE,
+                 _("Vlo¾it"),
+                 _("Vlo¾it text ze schránky do políèka.")),
+                (TextField.COMMAND_SELECT_ALL,
+                 _("Vybrat v¹e"),
+                 _("Oznaèit celou hodnotu.")))
 
+    # Zpracování pøíkazù
+    
+    def _can_cut(self):
+        return self._ctrl.CanCut()
+        
+    def _cmd_cut(self):
+        self._ctrl.Cut()
+        
+    def _can_copy(self):
+        return self._ctrl.CanCopy()
+
+    def _cmd_copy(self):
+        self._ctrl.Copy()
+        
+    def _can_paste(self):
+        return self._ctrl.CanPaste()
+        
+    def _cmd_paste(self):
+        self._ctrl.Paste()
+        
+    def _can_select_all(self):
+        return bool(self.get_value())
+
+    def _cmd_select_all(self):
+        self._ctrl.SetSelection(-1, -1)
+        
 
 class StringField(TextField):
     """Textové vstupní políèko pro data typu 'pytis.data.String'."""
@@ -925,6 +977,7 @@ class Invocable(object, CommandHandler):
 
     """
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat hodnotu")
+    _INVOKE_SELECTION_MENU_HELP = None
     
     def _get_command_handler_instance(cls):
         return InputField._get_command_handler_instance()
@@ -974,11 +1027,11 @@ class Invocable(object, CommandHandler):
         self._call_next_method('_enable')
     
     def _menu(self):
-        return InputField._menu(self) + \
-               (MSeparator(),
-                MItem(self._INVOKE_SELECTION_MENU_TITLE,
-                      command=self.COMMAND_INVOKE_SELECTION,
-                      args=dict(_command_handler=self)))
+        return TextField._menu(self) + \
+               ((None,),
+                (self.COMMAND_INVOKE_SELECTION,
+                 self._INVOKE_SELECTION_MENU_TITLE,
+                 self._INVOKE_SELECTION_MENU_HELP))
     
     def _on_invoke_selection(self):
         raise ProgramError("This method must be overriden!")
@@ -1001,6 +1054,7 @@ class DateField(Invocable, TextField):
 
     _DEFAULT_WIDTH = 10
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z kalendáøe")
+    _INVOKE_SELECTION_MENU_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
     
     def _on_invoke_selection(self):
         value = self._value()
@@ -1019,6 +1073,7 @@ class ColorSelectionField(Invocable, TextField):
 
     _DEFAULT_WIDTH = 7
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat barvu")
+    _INVOKE_SELECTION_MENU_HELP = _("Zobrazit dialog pro výbìr barev.")
     
     def _on_invoke_selection(self):
         color = run_dialog(ColorSelector, self.get_value())
@@ -1094,6 +1149,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     """
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z èíselníku")
+    _INVOKE_SELECTION_MENU_HELP = _("Zobrazit èíselník pøípustných hodnot "
+                                    "s mo¾ností výbìru.")
     
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
@@ -1135,9 +1192,10 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _menu(self):
         return Invocable._menu(self) + \
-               (MItem("Vyhledávat v èíselníku",
-                      command=self.COMMAND_INVOKE_SELECTION,
-                      args=dict(alternate=True, _command_handler=self)),)
+               ((self.COMMAND_INVOKE_SELECTION(alternate=True),
+                 _("Vyhledávat v èíselníku"),
+                 _("Zobrazit èíselník se zapnutým inkrementálním "
+                   "vyhledáváním.")),)
 
     def _maxlen(self):
         try:
@@ -1275,7 +1333,7 @@ class ListField(GenericCodebookField):
     def _set_selection(self, i):
         list = self._list
         if self._selected_item is not None:
-            # Deselect tho old item.
+            # Deselect the old item.
             list.SetItemBackgroundColour(self._selected_item, None)
         self._selected_item = i
         if i is not None:
@@ -1315,48 +1373,46 @@ class ListField(GenericCodebookField):
             return None
 
     def _menu(self):
-        menu = (MItem("Vybrat",
-                      command=self.COMMAND_SELECT,
-                      args=dict(_command_handler=self)),
-                MItem("Najít vybranou polo¾ku",
-                      command=self.COMMAND_SHOW_SELECTED,
-                      args=dict(_command_handler=self)),
-                MSeparator(),
-                MItem("Zobrazit èíselník",
-                      command=self.COMMAND_INVOKE_CODEBOOK_FORM,
-                      args=dict(_command_handler=self)),
-                MItem("Editovat vybraný záznam",
-                      command=self.COMMAND_INVOKE_EDIT_FORM,
-                      args=dict(_command_handler=self)),
-                MItem("Zobrazit celou tabulku",
-                      command=self.COMMAND_INVOKE_BROWSE_FORM,
-                      args=dict(_command_handler=self)),
+        return ((self.COMMAND_SELECT,
+                 _("Vybrat"),
+                 _("Zvolit tuto polo¾ku jako aktivní.")),
+                (self.COMMAND_SHOW_SELECTED,
+                 _("Najít vybranou polo¾ku"),
+                 _("Nalistovat v seznamu vybranou polo¾ku.")),
+                (None,),
+                (self.COMMAND_INVOKE_CODEBOOK_FORM,
+                 _("Zobrazit èíselník"),
+                 _("Otevøít odpovídající èíselníkový formuláø.")),
+                (self.COMMAND_INVOKE_EDIT_FORM,
+                 _("Editovat vybraný záznam"),
+                 _("Otevøít vybraný záznam v editaèním formuláøi.")),
+                (Application.COMMAND_RUN_FORM(form_class=BrowseForm,
+                                            name=self._codebook_name,
+                                            select_row=self._select_row_arg()),
+                 _("Zobrazit celou tabulku"),
+                 _("Otevøít náhled èíselníku v øádkovém formuláøi.")),
                 )
-        return menu   
 
     # Zpracování pøíkazù
     
     def on_command(self, command, **kwargs):
         if command == self.COMMAND_SELECT:
-            i = self._list.GetNextItem(0 , state=wx.LIST_STATE_FOCUSED)
+            i = self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
             self._set_selection(i)
         elif command == self.COMMAND_SHOW_SELECTED:
             self._set_selection(self._selected_item)
         elif command == self.COMMAND_INVOKE_EDIT_FORM:
             run_form(PopupEditForm, self._codebook_name,
                      select_row=self._select_row_arg())
-        elif command == self.COMMAND_INVOKE_BROWSE_FORM:
-            run_form(BrowseForm, self._codebook_name,
-                     select_row=self._select_row_arg())
         else:            
             return super(ListField, self).on_command(command, **kwargs)
         return True
+
+    def _can_select(self):
+        return self.is_enabled()
     
     def _can_invoke_edit_form(self, **kwargs):
         return self._selected_item is not None
-
-    def _can_invoke_browse_form(self, **kwargs):
-        return not isinstance(current_form(), PopupForm)
 
 
     
