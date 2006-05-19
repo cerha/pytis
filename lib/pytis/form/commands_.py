@@ -179,8 +179,6 @@ Command(ListField, 'SHOW_SELECTED',
         "Výbìr aktuálního záznamu")
 Command(ListField, 'INVOKE_EDIT_FORM',
         "Vyvolání editaèního formuláøe nad akt. záznamem")
-Command(ListField, 'INVOKE_BROWSE_FORM',
-        "Zobrazení aktuálního záznamu v novém formuláøi")
 Command(Dialog, 'CLOSE_DIALOG',
         "Opu¹tìní dialogu bez potvrzení")
 Command(Dialog, 'COMMIT_DIALOG',
