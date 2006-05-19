@@ -263,7 +263,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     # Zpracování pøíkazù
     
     def _can_reset(self):
-        return self.is_modified()
+        return self.is_modified() and self.is_enabled()
 
     def _cmd_reset(self):
         self.reset()
@@ -281,9 +281,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                 command, kwargs = command
             else:
                 kwargs = {}
-            if issubclass(command.handler(), InputField):
+            if issubclass(command.handler(), (InputField, Invocable)):
                 kwargs['_command_handler'] = self
-                return MItem(title, command=command(**kwargs), help=help)
+            return MItem(title, command=command(**kwargs), help=help)
                         
     def _on_context_menu(self, event=None):
         control = self._ctrl
