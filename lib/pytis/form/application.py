@@ -235,7 +235,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menus.append(Menu(self._WINDOW_MENU_TITLE, ()))
         self._create_command_menu(menus)
         self._create_help_menu(menus)
-        self._menubar = mb = MenuBar(self._frame, menus, self)
+        self._menubar = mb = MenuBar(self._frame, menus, self.keymap)
         self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         assert self._window_menu is not None
         # Try to find the recent forms menu.
