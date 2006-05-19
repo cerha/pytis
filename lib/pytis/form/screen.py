@@ -464,7 +464,8 @@ class Keymap:
         if parent is None:
             keymap = {}
         else:
-            keymap = parent._keymap.copy()
+            keymap = dict([(key, copy.copy(keydef))
+                           for key, keydef in parent._keymap.items()])
         self._keymap = keymap
 
     def _define_key(self, key, command, args):
@@ -640,8 +641,6 @@ class KeyHandler:
         # Do atributu pøiøazujeme a¾ nyní, aby to bylo odolnìj¹í vláknùm
         for key, command, args in self._temporary_keymap:
             self.keymap.define_key(key, command, args)
-            if command not in commands:
-                commands.append(command)
         self._commands = commands
 
     def _maybe_invoke_command(self, key_commands):
@@ -690,8 +689,6 @@ class KeyHandler:
             self._temporary_keymap.append((key, command, args))
         else:
             self.keymap.define_key(key, command, args)
-            if command not in self._commands:
-                self._commands.append(command)
         
     def on_key_down(self, event, dont_skip=False):
         """Zpracuj klávesovou událost 'event'.
@@ -913,7 +910,7 @@ class Menu(_TitledMenuObject):
         message(msg, log_=False)
         event.Skip()
         
-    def create(self, parent, keyhandler):
+    def create(self, parent, keymap=None):
         """Vytvoø menu dle specifikace a vra» instanci 'wx.Menu'.
 
         Tato metoda zkonstruuje menu vèetnì v¹ech vnoøených podmenu, pøièem¾
@@ -922,8 +919,8 @@ class Menu(_TitledMenuObject):
         Argumenty:
 
           parent -- wx rodiè vytváøené instance 'wx.Menu'
-          keyhandler -- instance 'KeyHandler', její¾ klávesová mapa bude
-            synchronizována s pøíkazy a horkými klávesami polo¾ek menu.
+          keymap -- klávesová mapa (instance 'Keymap'), která má být
+             synchronizována s klávesovými zkratkami polo¾ek menu.
         
         """
         menu = wx.Menu()
@@ -935,13 +932,16 @@ class Menu(_TitledMenuObject):
         for i in self._items:
             if isinstance(i, MItem):
                 hotkey, command, args = i.hotkey(), i.command(), i.args()
-                if hotkey == (None,) and keyhandler.keymap is not None:
-                    hotkey = keyhandler.keymap.lookup_command(command, args)
-                    hotkey = xtuple(hotkey)
-                elif keyhandler.keymap is not None:
-                    keyhandler.keymap.define_key(hotkey, command, args)
+                if hotkey == (None,) and keymap is not None:
+                    real_args = dict([(k,v) for k,v in args.items()
+                                      if k!= '_command_handler'])
+                    hotkey = xtuple(keymap.lookup_command(command, real_args))
+                elif keymap is not None:
+                    keymap.define_key(hotkey, command, args)
                 if hotkey != (None,):
-                    s = hotkey_string[i] = '    ' + ' '.join(hotkey) 
+                    s = hotkey_string[i] = '    ' + \
+                        ' '.join([k.replace(' ', _("Mezerník"))
+                                  for k in hotkey]) 
                     hotkey_width = parent.GetTextExtent(s)[0]
                     max_hotkey_width = max(hotkey_width, max_hotkey_width)
         # Now create the items and remember max. width of whole item label
@@ -967,7 +967,7 @@ class Menu(_TitledMenuObject):
                 menu.AppendSeparator()
             elif isinstance(i, Menu):
                 menu.AppendMenu(wx.NewId(), i.title(raw=True),
-                                i.create(parent, keyhandler))
+                                i.create(parent, keymap))
                 width = parent.GetTextExtent(i.title())[0] + 20
                 max_label_width = max(width, max_label_width)
             else:
@@ -993,7 +993,7 @@ class MItem(_TitledMenuObject):
     _WX_KIND = wx.ITEM_NORMAL
     _used_titles = {}
     
-    def __init__(self, title, command, args=None, help='', hotkey=None):
+    def __init__(self, title, command, args=None, help=None, hotkey=None):
         """Uschovej parametry.
 
         Argumenty:
@@ -1029,7 +1029,7 @@ class MItem(_TitledMenuObject):
                                                      types.ListType))
         self._command = command
         self._args = args or {}
-        self._help = gettext_(help)
+        self._help = help
         self._hotkey = xtuple(hotkey)
         super(MItem, self).__init__(title)
 
@@ -1037,20 +1037,19 @@ class MItem(_TitledMenuObject):
         event.Enable(self._command.enabled(**self._args))
         
     def create(self, parent, parent_menu):
-        item = wx.MenuItem(parent_menu, -1, self._title, self._help,
+        item = wx.MenuItem(parent_menu, -1, self._title, self._help or "",
                            kind=self._WX_KIND)
         wx_callback(wx.EVT_MENU, parent, item.GetId(),
                     lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
+
+        icon_id = WX_COMMAND_ICONS.get(self._command)
+        if icon_id:
+            bitmap = wx.ArtProvider_GetBitmap(icon_id, wx.ART_MENU, (16,16))
+            if bitmap.Ok():
+                item.SetBitmap(bitmap)
         return item
         
-    def set_hotkey(self, hotkey):
-        """Nastav dodateènì klávesovou zkratku polo¾ky menu."""
-        assert hotkey is None or isinstance(hotkey, (types.StringTypes,
-                                                     types.TupleType,
-                                                     types.ListType))
-        self._hotkey = xtuple(hotkey)
-    
     def command(self):
         """Vra» command zadaný v konstruktoru."""
         return self._command
@@ -1115,7 +1114,7 @@ class MenuBar(wx.MenuBar):
     
     """
     
-    def __init__(self, parent, menus, keyhandler):
+    def __init__(self, parent, menus, keymap=None):
         """Vytvoø menubar na základì sekvence 'menus' a vlo¾ do 'parent'.
 
         Argumenty:
@@ -1124,9 +1123,9 @@ class MenuBar(wx.MenuBar):
           menus -- sekvence instancí tøídy 'Menu' definující jednotlivá
             menu v menu baru; menu se v menu baru vytvoøí ve stejném poøadí,
             v jakém jsou v této sekvenci uvedena
-          keyhandler -- instance 'KeyHandler', její¾ klávesová mapa bude
-            synchronizována s pøíkazy a horkými klávesami polo¾ek menu.
-            
+          keymap -- klávesová mapa (instance 'Keymap'), která má být
+            synchronizována s klávesovými zkratkami polo¾ek menu.
+         
         """
         wx.MenuBar.__init__(self)
         self._parent = parent
@@ -1135,7 +1134,7 @@ class MenuBar(wx.MenuBar):
             for m in menus:
                 self._check_duplicate_keys(m)
         for menu in menus:
-            self.Append(menu.create(self._parent, keyhandler),
+            self.Append(menu.create(self._parent, keymap),
                         menu.title(raw=True))
         parent.SetMenuBar(self)        
         
