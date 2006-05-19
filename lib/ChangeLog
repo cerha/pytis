@@ -1,3 +1,81 @@
+2006-05-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField._menu):
+	`InputField.COMMAND_RESET_FIELD' -> `InputField.COMMAND_RESET'.
+	Vracej jen seznam trojic (pøíkaz, titulek, nápovìda), nikoli pøímo
+	instance `MItem'.
+	(InputField._can_reset_field): -> `InputField._can_reset'
+	(InputField._cmd_reset_field): -> `InputField._cmd_reset'
+	(InputField._mitem): Nová metoda.
+	(InputField._on_context_menu): Vyu¾ívej ji.  Nenastavuj pozici
+	menu, kdy¾ je vyvoláno my¹í.
+	(TextField._on_kill_focus): Metoda zru¹ena.
+	(TextField._menu): Nová metoda.
+	(TextField._can_cut, TextField._cmd_cut, TextField._can_copy)
+	(TextField._cmd_copy, TextField._can_paste, TextField._cmd_paste)
+	(TextField._can_select_all, TextField._cmd_select_all): Nové
+	metody.
+	(Invocable._INVOKE_SELECTION_MENU_HELP)
+	(DateField._INVOKE_SELECTION_MENU_HELP)
+	(ColorSelectionField._INVOKE_SELECTION_MENU_HELP)
+	(CodebookField._INVOKE_SELECTION_MENU_HELP): Nová konstanta.
+	(Invocable._menu, CodebookField._menu, ListField._menu): Vracej
+	jen seznam trojic (pøíkaz, titulek, nápovìda), nikoli pøímo
+	instance `MItem'.  V¹em polo¾kám doplnìna nápovìda.
+	(ListField.on_command): Pøedávej -1 jako první argument
+	`wx.ListCrtl.GetNextItem()'.
+	(ListField.on_command): Nezpracovávej `COMMAND_INVOKE_BROWSE_FORM'
+	(_can_invoke_browse_form): Metoda zru¹ena.
+	(ListField._can_select): Nová meoétda.
+
+	* pytis/form/application.py (Application.OnInit): Pøedávej
+	konstruktoru `MenuBar' vlastní klávesovou mapu.
+
+	* pytis/form/commands_.py: Nové pøíkazy `TextField.COMMAND_CUT',
+	`TextField.COMMAND_PASTE', `TextField.COMMAND_COPY',
+	`TextField.COMMAND_SELECT_ALL'.  Pøíkaz
+	`InputField.COMMAND_RESET_FIELD' pøejmenován na
+	`InputField.COMMAND_RESET'.  Zru¹en pøíkaz
+	`ListField.COMMAND_INVOKE_BROWSE_FORM'.
+	(DEFAULT_KEYMAP): Zru¹eny klávesové zkratky s prefixem `Ctrl-x'.
+	Definovány nové zkratky pro nové pøíkazy.
+	(WX_COMMAND_ICONS): Nová konstanta.
+	
+
+	* pytis/form/form.py (Form._on_print_menu): Pøedávej metodì
+	`Menu.create()' vlastní klávesovou mapu.
+	(PopupEditForm.can_command): Nová metoda.
+
+	* pytis/form/screen.py (Keymap.__init__): Kopíruj klávesovou mapu
+	do hloubky.
+	(KeyHandler._init_commands): Nepøidávej pøíkazy z klávesové mapy k
+	`self._commands'.
+	(KeyHandler.define_key): Nepøidávej definovaný pøíkaz k
+	`self._commands'.
+	(Menu.create): Povinný argument `keyhandler' nahrazen nepovinným
+	`keymap'.  Mezeru v klávesové zkratce reprezentuj jako øetìzec
+	"Mezerník".
+	(MItem.__init__): Výchozí hodnota argumentu `help' nech» je None,
+	nikoli prázdný øetìzec.
+	(MItem.create): Pokud je help None, pøedávej wx prázdný øetìzec.
+	Pokud je ve `WX_COMMAND_ICONS' nalezena ikona pro pøíkaz této
+	polo¾ky, nastav pøíslu¹ný obrázek.
+	(MItem.set_hotkey): Metoda zru¹ena.
+	(MenuBar.__init__): Povinný argument `keyhandler' nahrazen nepovinným
+	`keymap'.  Pøedávej jej `Menu.create()'.
+
+	* pytis/form/list.py (ListForm.__init__): Definuj v lokální
+	klávesové mapì klávesy pro akce kontextového menu.
+	(ListForm._on_label_right_down): Pøedávej metodì `Menu.create()'
+	vlastní klávesovou mapu.
+	(ListForm.show_context_menu): Nenastavuj horké klávesy polo¾ek
+	menu podle klávesové mapy.
+	(ListForm.show_context_menu): Pøedávej metodì `Menu.create()'
+	vlastní klávesovou mapu.
+	(BrowseForm._context_menu.action_mitems): Nenastavuj polo¾kám menu
+	klávesové zkratky akcí zde, spolehni se na automatické pøevzetí z
+	klávesové mapy -- jinak klávesy stejnì nebudou fungovat.
+
 2006-05-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._edit_menu) 
@@ -6,6 +84,8 @@
 	polo¾ky menu podle popisu akce.
 
 	* pytis/form/application.py (message): Nový argument `log_'.
+	(Application._can_run_form): Neumo¾ni otevøít nemodální formuláø,
+	pokud je otevøen modální formuláø.
 
 	* pytis/form/screen.py (Menu._on_highlight_item): Nová metoda.
 	(Menu.create): Nava¾ `wx.EVT_MENU_HIGHLIGHT_ALL' na
