@@ -4,6 +4,49 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-19
+
+        Byly implementovány nové pøíkazy cut, copy, paste a select-all pro
+	vstupní políèka.  Tyto pøíkazy byly pøidány do kontextového menu
+	vstupních políèek.
+
+	Byla implementována podpora pro zobrazování ikon u polo¾ek menu.
+	Ikony jsou asociovány s jednotlivými pøíkazy.  Polo¾ka menu ikonu
+	zobrazí automaticky, pokud je k jejímu pøíkazu nìjaká ikona
+	pøiøazena.  Zatím bylo definováno jen nìkolik základních ikon.
+	Viz konstanta `WX_COMMAND_ICONS' v `commands_.py'.  Zatím jsou
+	pou¾ívány jen standardní ikony `wxWidgets' (viz "Using
+	Images/ArtProvider" ve wxdemo).  Pokud nìkdo ví, kde sehnat nìjaké
+	dal¹í pou¾itelné ikony, bylo by mo¾né vyu¾ít i jiné.
+	
+	* BUGFIX: V¹echny pøíkazy tøíd LookupForm a RecordForm jsou nyní v
+	PopupEditFormu zakázány.  Døíve tak bylo mo¾no napøíklad vyvolat
+	tøídící dialog nad editaèním formuláøem apod.
+	
+	* BUGFIX: Klávesové zkratky kontextových akcí jsou nyní definovány
+	v lokální klávesové mapì ji¾ v konstruktoru formuláøe, tak¾e jsou
+	dostupné ihned.  Døíve to bylo a¾ po prvním otevøení kontextového
+	menu.
+
+	* BUGFIX: Pøi kopírování klávesové mapy jsou nyní kopírovány i
+	jednotlivé klávesové definice, proto¾e jinak docházelo pøi
+	definici kláves v odvozené klávesové mapì i k pøedefinování kláves
+	v pùvodní klávesové mapì (pokud pro stejnou klávesu ji¾ byly
+	definovány jiné pøíkazy -- ty jsou toti¾ uchovávány jako list).
+	
+2006-05-18  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla implementována podpora pro zobrazování nápovìdy ve stavové
+	øádce pro polo¾ky popup-menu.  Doposud to fungovalo jen u polo¾ek
+	hlavního menu, nyní se zobrazuje nápovìda i u polo¾ek kontextového
+	menu v BrowseFormu a kontextového menu vstupních políèek.
+
+	* BUGFIX: V `ListField' byla opravena chyba, která znemo¾òovala
+	vybrat první polo¾ku seznamu pomocí my¹i.
+	
+	* BUGFIX: Výbìr polo¾ky v `ListField' je mo¾ný pouze pokud je
+	políèko editovatelné.
+
 2006-05-17  Tomas Cerha  <cerha@brailcom.org>
 	
 	Byl komplentì pøepracován mechanismus uzavírání oken a provádìní

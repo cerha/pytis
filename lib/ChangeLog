@@ -27,6 +27,9 @@
 	(ListField.on_command): Nezpracovávej `COMMAND_INVOKE_BROWSE_FORM'
 	(_can_invoke_browse_form): Metoda zru¹ena.
 	(ListField._can_select): Nová meoétda.
+	(InputField._can_reset): Povol pouze pokud je políèko editovatelné.
+	(InputField._mitem): Nastavuj `_command_handler' také pro pøíkazy
+	tøídy `Invocable'
 
 	* pytis/form/application.py (Application.OnInit): Pøedávej
 	konstruktoru `MenuBar' vlastní klávesovou mapu.
@@ -63,6 +66,7 @@
 	(MItem.set_hotkey): Metoda zru¹ena.
 	(MenuBar.__init__): Povinný argument `keyhandler' nahrazen nepovinným
 	`keymap'.  Pøedávej jej `Menu.create()'.
+	(Menu.__init__): 
 
 	* pytis/form/list.py (ListForm.__init__): Definuj v lokální
 	klávesové mapì klávesy pro akce kontextového menu.

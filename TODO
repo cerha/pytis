@@ -30,6 +30,12 @@ CHYBY:
    Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
    kterého byla zmìna provedena.
 
+ * Zobrazování nápovìdy polo¾ek menu ve stavové øádce.
+
+   Nepodaøilo se zatím zprovoznit v kontextovém menu vstupního políèka v re¾imu
+   inline editace, v kontextovém menu vstupního políèka v ShowFormu a v
+   kontextovém menu záhlaví sloupce.
+
  * ShowForm po vyvolání pøes Enter nemá fokus.
 
    Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
