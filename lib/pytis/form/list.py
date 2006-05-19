@@ -82,10 +82,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def __init__(self, *args, **kwargs):
         super_(ListForm).__init__(self, *args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
-        for item in self._context_menu() + self._edit_menu():
-            if isinstance(item, MItem):
-                if item.hotkey() != (None,):
-                    self.define_key(item.hotkey(), item.command(), item.args())
+        for action in self._view.actions():
+            if action.hotkey():
+                self.define_key(action.hotkey(),
+                                ListForm.COMMAND_CONTEXT_ACTION,
+                                dict(action=action))
         # Závìreèné akce
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
@@ -810,7 +811,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             menu = self._displayed_columns_menu(None)
         else:
             menu = self._column_context_menu(col)
-        m = menu.create(g, self)
+        m = menu.create(g, self.keymap)
         g.PopupMenu(m)
         m.Destroy()
         event.Skip()
@@ -1016,19 +1017,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             menu = self._context_menu()
         g = self._grid
         if menu:
-            keymap = global_keymap()
-            for item in menu:
-                if isinstance(item, MItem):
-                    hotkey = keymap.lookup_command(item.command(), item.args())
-                    if hotkey is not None:
-                        item.set_hotkey(hotkey)
             if position is None:
                 row, col = self._current_cell()
                 rect = g.CellToRect(row, col)
                 pos = (rect.GetX() + rect.GetWidth()/3,
                        rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
                 position = self._grid.CalcScrolledPosition(pos)
-            menu = Menu('', menu).create(g, self)
+            menu = Menu('', menu).create(g, self.keymap)
             g.PopupMenu(menu, position)
             menu.Destroy()
 
@@ -2016,7 +2011,7 @@ class BrowseForm(ListForm):
                 if isinstance(x, Action):
                     cmd = ListForm.COMMAND_CONTEXT_ACTION(action=x)
                     items.append(MItem(x.title(), command=cmd,
-                                       hotkey=x.hotkey(), help=x.descr()))
+                                       help=x.descr()))
                 elif isinstance(x, ActionGroup):
                     items.append(Menu(x.title(), action_mitems(x.actions())))
                 elif isinstance(x, (types.TupleType, types.ListType)):
