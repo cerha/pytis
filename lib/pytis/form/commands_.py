@@ -155,12 +155,20 @@ Command(PrintForm, 'NEXT_PAGE',
         "Pøechod na dal¹í stránku tiskového náhledu")
 Command(PrintForm, 'PREVIOUS_PAGE',
         "Pøechod na pøedchozí stránku tiskového náhledu")
-Command(InputField, 'RESET_FIELD',
+Command(InputField, 'RESET',
         "Vrácení pùvodní hodnoty vstupního políèka")
 Command(InputField, 'CONTEXT_MENU',
         "Zobrazení kontextového menu vstupního políèka")
 Command(InputField, 'LEAVE_INLINE_EDIT',
         "Odchod z editace vstupního políèka")
+Command(TextField, 'CUT',
+        "Vyjmutí oznaèeného textu do schránky.")
+Command(TextField, 'COPY',
+        "Zkopírování oznaèeného textu do schránky.")
+Command(TextField, 'PASTE',
+        "Vlo¾ení textu ze schránky do políèka.")
+Command(TextField, 'SELECT_ALL',
+        "Provedení výbìru celého textu políèka.")
 Command(Invocable, 'INVOKE_SELECTION',
         "Vyvolání výbìru hodnoty vstupního políèka") # arg. 'alternate'
 Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
@@ -189,7 +197,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-l',        Application.COMMAND_REFRESH),
     ('Ctrl-F1',       Form.COMMAND_HELP),
     ('Escape',        Form.COMMAND_LEAVE_FORM),
-    (('Ctrl-x', 'p'), InnerForm.COMMAND_PRINT),
+    ('Ctrl-p',        InnerForm.COMMAND_PRINT),
     ('Ctrl-Backspace',InnerForm.COMMAND_RELOAD_FORM_STATE),
     ('F6',            RecordForm.COMMAND_NEW_RECORD),
     ('Ctrl-F6',       RecordForm.COMMAND_NEW_RECORD(copy=True)),
@@ -236,8 +244,11 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Tab',      DualForm.COMMAND_OTHER_FORM),
     ('Next',          PrintForm.COMMAND_NEXT_PAGE),
     ('Prior',         PrintForm.COMMAND_PREVIOUS_PAGE),
-    ('Ctrl-Backspace',InputField.COMMAND_RESET_FIELD),
+    ('Ctrl-Backspace',InputField.COMMAND_RESET),
     ('Ctrl-m',        InputField.COMMAND_CONTEXT_MENU),
+    ('Ctrl-x',        TextField.COMMAND_CUT),
+    ('Ctrl-c',        TextField.COMMAND_COPY),
+    ('Ctrl-v',        TextField.COMMAND_PASTE),
     ('F2',            Invocable.COMMAND_INVOKE_SELECTION),
     ('Ctrl-F2',       Invocable.COMMAND_INVOKE_SELECTION(alternate=True)),
     ('Backspace',     ListField.COMMAND_SHOW_SELECTED),
@@ -252,7 +263,7 @@ if __debug__:
     Command(Application, 'CUSTOM_DEBUG',
             "Pomocný pøíkaz pro vyvolání pomocné ladící funkce")
     DEFAULT_KEYMAP += \
-        ((('Ctrl-x', 'd'), Application.COMMAND_CUSTOM_DEBUG),)
+        (('Ctrl-d', Application.COMMAND_CUSTOM_DEBUG),)
 
 
 FORM_COMMAND_MENU = ((
@@ -341,3 +352,12 @@ FORM_COMMAND_MENU = ((
      _("Zobrazit záznam v duálním náhledovém formuláøi."),
      ListForm.COMMAND_ACTIVATE(alternate=True)),
     ))
+
+WX_COMMAND_ICONS = {Application.COMMAND_HELP: wx.ART_HELP,
+                    Application.COMMAND_EXIT: wx.ART_QUIT,
+                    Form.COMMAND_PRINT:       wx.ART_PRINT,
+                    InputField.COMMAND_RESET: wx.ART_UNDO,
+                    TextField.COMMAND_CUT:    wx.ART_CUT,
+                    TextField.COMMAND_COPY:   wx.ART_COPY,
+                    TextField.COMMAND_PASTE:  wx.ART_PASTE,
+                    }
