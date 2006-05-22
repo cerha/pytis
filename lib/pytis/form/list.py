@@ -82,7 +82,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def __init__(self, *args, **kwargs):
         super_(ListForm).__init__(self, *args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
-        for action in self._view.actions():
+        for action in self._actions(self._view.actions()):
             if action.hotkey():
                 self.define_key(action.hotkey(),
                                 ListForm.COMMAND_CONTEXT_ACTION,
@@ -2004,23 +2004,39 @@ class BrowseForm(ListForm):
                 copy.copy(self._data)
                 }
 
+    def _actions(self, spec):
+        # Return a list of all 'Action' instances in action specification.
+        actions = []
+        for x in spec:
+            if isinstance(x, Action):
+                actions.append(x)
+            elif isinstance(x, ActionGroup):
+                actions.extend(self._actions(x.actions()))
+            elif isinstance(x, (types.TupleType, types.ListType)):
+                actions.extend(self._actions(x))
+            else:
+                raise ProgramError("Invalid action specification: %s" % x)
+        return actions
+    
+    def _action_mitems(self, spec):
+        items = []
+        for x in spec:
+            if isinstance(x, Action):
+                cmd = ListForm.COMMAND_CONTEXT_ACTION(action=x)
+                items.append(MItem(x.title(), command=cmd,
+                                   help=x.descr()))
+            elif isinstance(x, ActionGroup):
+                items.append(Menu(x.title(), self._action_mitems(x.actions())))
+            elif isinstance(x, (types.TupleType, types.ListType)):
+                if items:
+                    items.append(MSeparator())
+                items.extend(self._action_mitems(x))
+            else:
+                raise ProgramError("Invalid action specification: %s" % x)
+        return items
+
+    
     def _context_menu(self):
-        def action_mitems(actions):
-            items = []
-            for x in actions:
-                if isinstance(x, Action):
-                    cmd = ListForm.COMMAND_CONTEXT_ACTION(action=x)
-                    items.append(MItem(x.title(), command=cmd,
-                                       help=x.descr()))
-                elif isinstance(x, ActionGroup):
-                    items.append(Menu(x.title(), action_mitems(x.actions())))
-                elif isinstance(x, (types.TupleType, types.ListType)):
-                    if items:
-                        items.append(MSeparator())
-                    items.extend(action_mitems(x))
-                else:
-                    raise ProgramError("Invalid action specification: %s" % x)
-            return items
         # Sestav specifikaci kontextového menu
         menu = super_(BrowseForm)._context_menu(self) + (
             MItem(_("Editovat buòku"),
@@ -2053,7 +2069,7 @@ class BrowseForm(ListForm):
                   help=_("Otevøít náhled èíselníku, ze kterého pochází tato "
                          "hodnota.")),
             )
-        actions = action_mitems(self._view.actions())
+        actions = self._action_mitems(self._view.actions())
         if actions:
             menu += (MSeparator(),) + tuple(actions)
         return menu
