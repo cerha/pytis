@@ -1,3 +1,11 @@
+2006-05-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (BrowseForm._actions): Nová metoda.
+	(BrowseForm._context_menu.action_mitems): Pøevedeno na samostatnou
+	metodu `_action_mitems'.
+	(BrowseForm._context_menu): Pou¾ívej ji.
+	(ListForm.__init__): Specifikaci akcí pøevádìj pomocí `self._actions'.
+
 2006-05-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField._menu):
