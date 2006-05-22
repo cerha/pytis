@@ -4,6 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-22
+	
+	* BUGFIX: Pøi nastavování klávesových zkratek akcí v lokální
+	klávesové mapì `ListForm' je specifikace akcí pøevádìna na prostý
+	seznam.  Tím je zabránìno chybì pøi otevírání náhledu, který má
+	seznam akcí s vnoøenými seznamy a skupinami.
+	
 2006-05-19
 
         Byly implementovány nové pøíkazy cut, copy, paste a select-all pro
