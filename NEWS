@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-23
+
+	Nápovìda Pytisu byla aktualizována (pøidán popis nových
+	vlastností).  Doporuèuji pøegenerovat soubory nápovìdy (spustit
+	make v koøenovém adresáøi cvs modulu `pytis-help' a rozmístit
+	výsledný soubor `pytis.zip' na v¹echny stroje, odkud je spou¹tìn
+	Pytis.
+	
 2006-05-22
 	
 	* BUGFIX: Pøi nastavování klávesových zkratek akcí v lokální
