@@ -1,10 +1,17 @@
 2006-05-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): `Ctrl-m' -> `Ctrl-M'.
+
+	* pytis/form/screen.py (Keymap._define_key): Nedovol pøedefinovat
+	stávající zkratku prefixem.  Pøedefinování prefixu zkratkou chybu
+	jen loguj, nevyvolávej výjimku.
+
 	* pytis/form/list.py (BrowseForm._actions): Metoda zru¹ena.
 	(ListForm.__init__): Pou¾ívej `ViewSpec.actions(linear=True)'
 	namísto `self._actions()'.
 
 	* pytis/presentation/spec.py (ViewSpec.actions): Nový argument `linear'.
+	(ViewSpec.actions.linearize): Oprava.
 
 2006-05-22  Tomas Cerha  <cerha@brailcom.org>
 
