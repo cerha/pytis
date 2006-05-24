@@ -475,6 +475,10 @@ class Keymap:
         except KeyError:
             keydef = []
         if rest and not isinstance(keydef, Keymap):
+            if keydef:
+                log(OPERATIONAL, "Key '%s' is already used as non-prefix key."%\
+                    prefix)
+                return
             keydef = Keymap(None)
         self._keymap[prefix] = keydef
         if type(keydef) == type([]):
@@ -482,8 +486,8 @@ class Keymap:
         elif rest:
             keydef._define_key(rest, command, args)
         else:
-            raise ProgramError("Key is already defined as a prefix key:",
-                               prefix, str(command))
+            log(OPERATIONAL, "Key '%s' is already used as a prefix key." % \
+                prefix)
 
     def define_key(self, key, command, args={}):
         """Pøiøaï klávese 'key' pøíkaz 'command' s argumenty '**kwargs'.
