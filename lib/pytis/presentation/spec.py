@@ -216,8 +216,22 @@ class ActionContext(object):
     # univerzální akce, které pracují implicitnì s aktuálním øádkem, ale pokud
     # existuje výbìr, tak s výbìrem.
     
+
+class _ActionItem(object):
     
-class Action(object):
+    def __init__(self, title):
+        assert isinstance(title, types.StringTypes)
+        self._title = title
+
+    def title(self, raw=False):
+        """Vra» název akce."""
+        title = self._title
+        if not raw:
+            title = title.replace("&", "")
+        return title
+            
+    
+class Action(_ActionItem):
     """Definice kontextovì závislé akce.
 
     Tato definice akce slou¾í pro pou¾ití ve specifikátoru 'actions' tøídy
@@ -279,7 +293,6 @@ class Action(object):
           pou¾ít pro více podobných akcí.
         
         """
-        assert isinstance(title, types.StringTypes)
         assert callable(handler)
         assert context in public_attributes(ActionContext)
         assert secondary_context in (None,) + public_attributes(ActionContext)
@@ -290,7 +303,6 @@ class Action(object):
         assert descr is None or isinstance(descr, types.StringTypes)
         assert hotkey is None or isinstance(hotkey, (types.StringType,
                                                      types.TupleType))
-        self._title = title
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
@@ -299,10 +311,7 @@ class Action(object):
         self._descr = descr
         self._hotkey = hotkey
         self._kwargs = kwargs
-        
-    def title(self):
-        """Vra» název akce."""
-        return self._title
+        super(Action, self).__init__(title)
         
     def handler(self):
         """Vra» obslu¾nou funkci akce."""
@@ -337,7 +346,7 @@ class Action(object):
         return self._kwargs
     
 
-class ActionGroup(object):
+class ActionGroup(_ActionItem):
     """Definice pojmenované logické skupiny akcí.
 
     Skupiny akcí slou¾í k logickému seskupení souvisejících akcí.  V
@@ -356,7 +365,6 @@ class ActionGroup(object):
             jako pro stejnojmennný argument konstruktoru ViesSpec.
 
         """
-        assert isinstance(title, types.StringTypes)
         assert isinstance(actions, (types.ListType, types.TupleType))
         if __debug__:
             for x in actions:
@@ -365,17 +373,12 @@ class ActionGroup(object):
                         assert isinstance(y, (Action, ActionGroup))
                 else:
                     assert isinstance(x, (Action, ActionGroup))
-        self._title = title
         self._actions = actions
-        
-    def title(self):
-        """Vra» název skupiny jako øetìzec.""" 
-        return self._title
+        super(ActionGroup, self).__init__(title)
         
     def actions(self):
         """Vra» seznam akcí jako tuple."""
         return self._actions
-        
     
     
 class GroupSpec(object):
