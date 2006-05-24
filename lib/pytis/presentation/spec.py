@@ -887,9 +887,9 @@ class ViewSpec(object):
                 if isinstance(x, Action):
                     actions.append(x)
                 elif isinstance(x, ActionGroup):
-                    actions.extend(self._actions(x.actions()))
+                    actions.extend(linearize(x.actions()))
                 elif isinstance(x, (types.TupleType, types.ListType)):
-                    actions.extend(self._actions(x))
+                    actions.extend(linearize(x))
                 else:
                     raise ProgramError("Invalid action specification: %s" % x)
             return actions
