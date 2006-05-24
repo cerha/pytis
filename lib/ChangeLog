@@ -1,3 +1,11 @@
+2006-05-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (BrowseForm._actions): Metoda zru¹ena.
+	(ListForm.__init__): Pou¾ívej `ViewSpec.actions(linear=True)'
+	namísto `self._actions()'.
+
+	* pytis/presentation/spec.py (ViewSpec.actions): Nový argument `linear'.
+
 2006-05-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (BrowseForm._actions): Nová metoda.
