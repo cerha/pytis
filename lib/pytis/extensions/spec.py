@@ -128,7 +128,7 @@ def cb_computer(codebook_field, column, default=None):
     assert isinstance(codebook_field, types.StringType)
     assert isinstance(column, types.StringType)
     log(OPERATIONAL, "Pou¾ita potlaèená funkce cb_computer. "
-        "Pou¾ijte radìji related_codebook_field!", (codebook_field, column))
+        "Pou¾ijte radìji computer typu 'CbComputer'!", (codebook_field, column))
     def func(row):
         cbvalue = row[codebook_field]
         if cbvalue.value() is None:
