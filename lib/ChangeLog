@@ -1,6 +1,6 @@
 2006-05-24  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/commands_.py (DEFAULT_KEYMAP): `Ctrl-m' -> `Ctrl-M'.
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): `Ctrl-m' -> `Alt-Down'.
 
 	* pytis/form/screen.py (Keymap._define_key): Nedovol pøedefinovat
 	stávající zkratku prefixem.  Pøedefinování prefixu zkratkou chybu
@@ -9,9 +9,14 @@
 	* pytis/form/list.py (BrowseForm._actions): Metoda zru¹ena.
 	(ListForm.__init__): Pou¾ívej `ViewSpec.actions(linear=True)'
 	namísto `self._actions()'.
+	(BrowseForm._action_mitems): Titulky akcí získávej s `raw=True'.
 
 	* pytis/presentation/spec.py (ViewSpec.actions): Nový argument `linear'.
 	(ViewSpec.actions.linearize): Oprava.
+	(_ActionItem): Nová tøíáda.
+	(Action, ActionGroup): Buï jejím potomkem.
+	(Action.title, ActionGroup.title): Metody zru¹eny.
+	(Action.__init__, ActionGroup.__init__): Volej konstruktor pøedka.
 
 2006-05-22  Tomas Cerha  <cerha@brailcom.org>
 
