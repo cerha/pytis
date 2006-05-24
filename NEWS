@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-24
+
+	Definice klávesové zkratky, obsahující prefix, který ji¾ je
+	pou¾it k vyvolání koncového pøíkazu (není prefixem), nyní není
+	povolena a problém je logován.
+	
+	* BUGFIX: Opravena chyba znemo¾òující vyvolání èíselníku.
+	
 2006-05-23
 
 	Nápovìda Pytisu byla aktualizována (pøidán popis nových
