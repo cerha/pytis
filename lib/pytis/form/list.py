@@ -82,7 +82,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def __init__(self, *args, **kwargs):
         super_(ListForm).__init__(self, *args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
-        for action in self._actions(self._view.actions()):
+        for action in self._view.actions(linear=True):
             if action.hotkey():
                 self.define_key(action.hotkey(),
                                 ListForm.COMMAND_CONTEXT_ACTION,
@@ -2004,20 +2004,6 @@ class BrowseForm(ListForm):
                 copy.copy(self._data)
                 }
 
-    def _actions(self, spec):
-        # Return a list of all 'Action' instances in action specification.
-        actions = []
-        for x in spec:
-            if isinstance(x, Action):
-                actions.append(x)
-            elif isinstance(x, ActionGroup):
-                actions.extend(self._actions(x.actions()))
-            elif isinstance(x, (types.TupleType, types.ListType)):
-                actions.extend(self._actions(x))
-            else:
-                raise ProgramError("Invalid action specification: %s" % x)
-        return actions
-    
     def _action_mitems(self, spec):
         items = []
         for x in spec:
