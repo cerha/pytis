@@ -373,7 +373,7 @@ class ActionGroup(object):
         return self._title
         
     def actions(self):
-        """Vra» seznam akcí jako tuple.""" 
+        """Vra» seznam akcí jako tuple."""
         return self._actions
         
     
@@ -879,9 +879,24 @@ class ViewSpec(object):
         """Vra» titulek tabulkového formuláøe jako string, nebo None."""
         return self._title
 
-    def actions(self):        
+    def actions(self, linear=False):
         """Vra» specifikaci akcí."""
-        return self._actions
+        def linearize(spec):
+            actions = []
+            for x in spec:
+                if isinstance(x, Action):
+                    actions.append(x)
+                elif isinstance(x, ActionGroup):
+                    actions.extend(self._actions(x.actions()))
+                elif isinstance(x, (types.TupleType, types.ListType)):
+                    actions.extend(self._actions(x))
+                else:
+                    raise ProgramError("Invalid action specification: %s" % x)
+            return actions
+        if linear:
+            return linearize(self._actions)
+        else:
+            return self._actions
 
     def sorting(self):
         """Vra» specifikaci výchozího øazení."""
