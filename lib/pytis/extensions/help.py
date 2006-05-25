@@ -158,7 +158,7 @@ class MenuIndex(MenuNode):
 
         
 class DescrNode(lcg.ContentNode):
-    """Stránka s popisem jednoduchého náhledu."""
+    """Stránka s popisem náhledu."""
 
     def __init__(self, parent, id, *args, **kwargs):
         resolver = pytis.form.resolver()
@@ -201,23 +201,32 @@ class DescrNode(lcg.ContentNode):
                 (_("Menu"), menu_items))
         
     def _create_content(self):
-        content = [_fieldset(self, self._info())]
+        content = [lcg.Section(self, "Základní informace",
+                               _fieldset(self, self._info()))]
         if os.path.exists(self._input_file(self._id, ext='txt')):
-            content.extend(self.parse_wiki_file(self._id, ext='txt'))
+            descr = self.parse_wiki_file(self._id, ext='txt')
         else:
             # The file does not exist.  Let's read the specification.
             text = lcg.WikiText(self, self._default_description_text())
-            content.append(lcg.Paragraph(self, text))
-        content.extend(self._access_rights())
+            descr = lcg.Paragraph(self, text)
+        content.append(lcg.Section(self, "Popis", descr))
         return content
             
     def _default_description_text(self):
         return self._view_spec.help() or self._view_spec.description() or \
                _("Popis není k dispozici.")
 
-    def _access_rights(self):
+class SingleDescrNode(DescrNode):
+
+    def _create_content(self):
+        content = super(SingleDescrNode, self)._create_content()
+        actions = [lcg.Definition(self, lcg.TextContent(self, a.title()),
+                                  lcg.WikiText(self, a.descr() or ''))
+                   for a in self._view_spec.actions(linear=True)]
+        content.append(lcg.Section(self, "Akce kontextového menu",
+                                   lcg.DefinitionList(self, actions)))
         if not self._data_spec.access_rights():
-            return []
+            return content
         rights = self._data_spec.access_rights()
         perms = [(perm, ', '.join([str(g) for g in
                                    rights.permitted_groups(perm, None)]))
@@ -226,9 +235,10 @@ class DescrNode(lcg.ContentNode):
                               pytis.data.Permission.UPDATE,
                               pytis.data.Permission.DELETE,
                               pytis.data.Permission.EXPORT)]
-        return [lcg.Section(self, "Pøístupová práva",
-                            _fieldset(self, perms))]
-
+        content.append(lcg.Section(self, "Pøístupová práva",
+                                   _fieldset(self, perms)))
+        return content
+    
 class DualDescrNode(DescrNode):
     """Stránka s popisem duálního náhledu."""
 
@@ -263,9 +273,6 @@ class DualDescrNode(DescrNode):
                   clabel(dual.side_binding_column(), side))
         return text
     
-    def _access_rights(self):
-        return []
-    
 
 class DescrIndex(lcg.ContentNode):
     """Koøenová stránka popisu pou¾itých náhledù aplikace.
@@ -288,7 +295,8 @@ class DescrIndex(lcg.ContentNode):
         #_split_menu_descriptions(self._read_file('descr'), 'src/descr')
         global _used_defs
         _used_defs.sort()
-        cls = lambda name: name.endswith('-dual') and DualDescrNode or DescrNode
+        cls = lambda name: name.endswith('-dual') \
+              and DualDescrNode or SingleDescrNode
         return [self._create_child(cls(name), name, subdir='descr')
                 for name in _used_defs]
 
