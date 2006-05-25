@@ -494,8 +494,8 @@ class _GsqlTable(_GsqlSpec):
     def __init__(self, name, columns, inherits=None, view=None,
                  with_oids=True, sql=None,
                  on_insert=None, on_update=None, on_delete=None,
-                 init_values=(), init_columns=(), 
-                 upd_log_trigger=None, **kwargs):
+                 init_values=(), init_columns=(),
+                 tablespace=None, upd_log_trigger=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -529,6 +529,7 @@ class _GsqlTable(_GsqlSpec):
           init_columns -- sekvence jmen sloupcù nebo instancí tøídy 'Column',
             pro nì¾ jsou definovány 'init_values'; je-li prázdnou sekvencí,
             jsou to v¹echny sloupce tabulky
+          tablespace -- název tablespace, ve kterém bude tabulka vytvoøena  
           upd_log_trigger -- název trigger funkce, která bude logovat zmìny v
             záznamech, nebo None, pokud se nemá logovat.
           kwargs -- argumenty pøedané konstruktoru pøedka
@@ -544,6 +545,7 @@ class _GsqlTable(_GsqlSpec):
         self._on_insert, self._on_update, self._on_delete = \
           on_insert, on_update, on_delete
         self._init_values = init_values
+        self._tablespace = tablespace
         self._upd_log_trigger = upd_log_trigger
         if not init_columns:
             init_columns = columns
@@ -668,11 +670,16 @@ class _GsqlTable(_GsqlSpec):
             if self._with_oids:
                 with_oids = ' WITH OIDS'
             else:
-                with_oids = ' WITHOUT OIDS'                
+                with_oids = ' WITHOUT OIDS'
+            if self._tablespace:
+                tablespace = ' TABLESPACE %s' % self._tablespace
+            else:
+                tablespace = ''
         result = ''
         if not _re:
-            result = result + ('CREATE TABLE %s (\n%s)%s%s;\n' %
-                               (self._name, columns, inherits, with_oids))
+            result = result + ('CREATE TABLE %s (\n%s)%s%s%s;\n' %
+                               (self._name, columns, inherits, with_oids,
+                                tablespace))
         if self._doc is not None:
             doc = "COMMENT ON TABLE %s IS '%s';\n" % \
                   (self._name, _gsql_escape(self._doc))
@@ -902,7 +909,6 @@ class Select(_GsqlSpec):
         """Inicializuj instanci.
         Argumenty:
 
-          name -- jméno selectu.
           relations -- sekvence instancí tøídy SelectRelation nebo SelectSet.
           include_columns -- seznam instancí tøídy ViewColumn, které budou
             pøidány ke sloupcùm z relations (typicky výrazové sloupce).
@@ -921,7 +927,7 @@ class Select(_GsqlSpec):
         self._columns = []
         self._set = self._is_set()
 
-    def _is_set(self):
+    def _is_set(self):        
         first = self._relations[0]
         for r in self._relations:
             if not sameclass(r, first):
@@ -934,12 +940,12 @@ class Select(_GsqlSpec):
             if self._include_columns:
                 raise ProgramError('Bad Syntax: include_columns')               
             return True
-        elif isinstance(first, SelectSet):
+        else:
             if self._relations[0].jointype != JoinType.FROM:
                 raise ProgramError('Bad Syntax: First join must be FROM')
             return False
         
-    def _column_column(self, column):        
+    def _column_column(self, column):
         return _gsql_column_table_column(column.name)[1]
 
     def _format_column(self, column):
@@ -985,6 +991,7 @@ class Select(_GsqlSpec):
         if wherecondition:
             result = '%s\n WHERE %s' % (result, wherecondition)
         return result
+        
 
     def set_columns(self, relation_columns):
         self._relation_columns = relation_columns
@@ -992,9 +999,12 @@ class Select(_GsqlSpec):
         aliases = []
         def make_columns(cols, column_aliases, rel_alias):
             for c in cols:
-                if isinstance(c, ViewColumn) and c.alias:
-                    cname = c.alias
-                else:    
+                if isinstance(c, ViewColumn):
+                    if c.alias:
+                        cname = c.alias
+                    else:
+                        cname = c.name
+                else:                    
                     cname = self._column_column(c)
                 if '*' in r.exclude_columns or cname in r.exclude_columns:
                     continue
@@ -1018,15 +1028,19 @@ class Select(_GsqlSpec):
                 rel_alias = r.alias
                 column_aliases = r.column_aliases
                 if isinstance(r.relation, Select):
-                    columnlist = r.relation.set_columns(self._relation_columns)                    
+                    r.relation.set_columns(self._relation_columns)
+                    columnlist = r.relation.columns()                    
                 else:    
                     if '*' in r.exclude_columns:
                         continue
                     columnlist = self._relation_columns[r.relation]
-                make_columns(columnlist, column_aliases,
-                             rel_alias)            
-            for c in self._include_columns:
+                make_columns(columnlist, column_aliases, rel_alias)            
+        for c in self._include_columns:
+            if c.alias not in aliases:
+                aliases.append(c.alias)
                 vcolumns.append(c)
+            else:
+                raise ProgramError('Duplicate column name', c.alias)
             self._columns = vcolumns
         return self._columns
 
@@ -1036,6 +1050,7 @@ class Select(_GsqlSpec):
         else:
             columns = self._columns
         return [ViewColumn(c.alias) for c in columns]           
+            
 
     def sort_columns(self, aliases):
         # Check length and column aliases
@@ -1155,17 +1170,19 @@ class _GsqlViewNG(Select):
                 rels = []
                 for r in list_order:
                     rel = find(r, self._relations, lambda x: x.relation)
-                    if rel is not None:
+                    if rel is not None and \
+                       not isinstance(rel.relation, SelectRelation):
                         rels.append(rel)
             return rels
         def get_default_body(kind):
+            columns = self._columns
             body = []
             if kind == self._INSERT:
                 for r in relations(self._insert_order):
                     table_alias = r.alias or r.relation
                     column_names = []
                     column_values = []
-                    for c in self._columns:
+                    for c in columns:
                         if c.name is None:
                             continue
                         rel, col = _gsql_column_table_column(c.name)
@@ -1176,12 +1193,13 @@ class _GsqlViewNG(Select):
                             else:    
                                 val = c.insert
                                 column_values.append(val)
-                    columns = ',\n      '.join(column_names)
+                    bodycolumns = ',\n      '.join(column_names)
                     values = ',\n      '.join(column_values)
                     if len(column_names) > 0:
                         body.append('INSERT INTO %s (\n      %s)\n     '
                                     'VALUES (\n      %s)' % (r.relation,
-                                                             columns, values))
+                                                             bodycolumns,
+                                                             values))
                 action = self._insert
             elif kind == self._UPDATE:
                 command = 'UPDATE'
@@ -1195,7 +1213,7 @@ class _GsqlViewNG(Select):
                     table_alias = r.alias or r.relation
                     column_names = []
                     values = []                
-                    for c in self._columns:
+                    for c in columns:
                         if c.name is None:
                             continue
                         rel, col = _gsql_column_table_column(c.name)

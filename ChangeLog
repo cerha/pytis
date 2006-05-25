@@ -1,3 +1,17 @@
+2006-05-25  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlTable.__init__): Doplnìna mo¾nost
+	specifikovat 'tablespace'.
+	(_GsqlTable.output): Zohledni 'tablespace'.
+	(Select._is_set): Oprava podmínky.
+	(Select.set_columns.make_columns): Zohledni neexistující 'alias'.
+	(Select.set_columns): Pro SelectSet pou¾ij seznam sloupcù prvního
+	selectu. 
+	(Select.set_columns): 'include_columns' kontroluj proti seznamu
+	aliasù. 
+	(_GsqlViewNG._format_rule.relations): V default rulu se nezabývej
+	instancemi SelectRelation.
+
 2006-05-17  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (Select.set_columns.make_columns): Oprava pro
