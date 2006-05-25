@@ -1,3 +1,18 @@
+2006-05-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (DescrNode): Vyèlenìny pouze
+	spoleèné metody.
+	(SingleDescrNode): Nová tøída -- metody `DescrNode' specifické pro
+	jednoduché náhledy.
+	(SingleDescrNode._create_content): Pøidáno generování seznamu akcí
+	kontextového menu.
+	(DescrIndex._create_children): Pou¾ívej `SingleDescrNode' namísto
+	`DescrNode'.
+
+2006-05-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (cb_computer): Opravena logovací hlá¹ka.
+
 2006-05-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (run_form_mitem): Vypou¹tìj
