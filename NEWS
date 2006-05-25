@@ -4,6 +4,18 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-25
+
+	V pytis-extensions byly v kódu pro generování nápovìdy
+	implementovány nové funkce pro výpis pøehledu akcí kontextového
+	menu.  V souvislosti s tím doporuèuji doplnit popisy akcí do
+	defsù, aby v nápovìdì byl kromì názvu také struèný popis ka¾dé
+	akce.  Popis lze definovat pomocí argumentu `descr' konstruktoru
+	`Action'.  Stejný popis je zobrazen také ve stavovém øádku
+	aplikace kdy¾ u¾ivatel zvýrazní danou polo¾ku v kontextovém menu.
+	Aby se seznamy akcí v nápovìdì objevily, je nutné ji
+	pøegenerovat...
+	
 2006-05-24
 
 	Definice klávesové zkratky, obsahující prefix, který ji¾ je
