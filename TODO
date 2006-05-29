@@ -36,12 +36,14 @@ CHYBY:
    inline editace, v kontextovém menu vstupního políèka v ShowFormu a v
    kontextovém menu záhlaví sloupce.
 
- * ShowForm po vyvolání pøes Enter nemá fokus.
+ * Chybné zobrazení záznamu z jiné tabulky pøi zapnutém filtrování.
 
-   Procházení záznamù v ShowFormu má taky nìjaké mouchy. Taky se neaktualizuje
-   èíslo záznamu ve stavové øádce.  Pozor - úèetní deník fokus má, seznam
-   bì¾ných bankovních úètù ne (Základní tabulky -> Banka úèty -> V¹echny úèty
-   -> Bì¾ný úèet).  Podívat se na procházení PgUp/PgDn -- zdá se, ¾e je naopak.
+   Pøi zobrazení záznamu z jiné tabulky (napø. pøes kontextové menu øádku) je
+   zobrazen pøíslu¹ný formuláø a vyhledán záznam.  Pokud jsem v¹ak ji¾ tento
+   formuláø mìl pøedtím otevøený a nad ním zapnutý filter, nemusí se hledaný
+   záznam ve formuláøi nacházet.  To v¹ak není nijak indikováno a je zvýraznìn
+   øádek, který pravdìpodobnì odpovídá poøadí záznamu v nevyfiltrované
+   tabulce.  V takové situaci je tøeba ohlásit, ¾e záznam nebyl nalezen.
 
  * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
 
@@ -51,14 +53,6 @@ CHYBY:
 
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
- * Chybné zobrazení záznamu z jiné tabulky pøi zapnutém filtrování.
-
-   Pøi zobrazení záznamu z jiné tabulky (napø. pøes kontextové menu øádku) je
-   zobrazen pøíslu¹ný formuláø a vyhledán záznam.  Pokud jsem v¹ak ji¾ tento
-   formuláø mìl pøedtím otevøený a nad ním zapnutý filter, nemusí se hledaný
-   záznam ve formuláøi nacházet.  To v¹ak není nijak indikováno a je zvýraznìn
-   øádek, který pravdìpodobnì odpovídá poøadí záznamu v nevyfiltrované
-   tabulce.  V takové situaci je tøeba ohlásit, ¾e záznam nebyl nalezen.
 
 NOVÉ VLASTNOSTI:
 

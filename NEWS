@@ -4,6 +4,25 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-29
+
+	* BUGFIX: Pøi pokusu o výbìr neexistujícího øádku v ListFormu je
+	nyní korektnì zobrazena chybová zpráva.
+	
+	* BUGFIX: Pøi pøíkazu "Skok na záznam" je pou¾íván `InputDialog'
+	namísto nefunkèního `InputNumeric'.
+	
+	* BUGFIX: Procházení záznamù v ShowFormu nyní funguje v¾dy,
+	a nekoliduje s voláním `select_row'.  To, vzhledem k tomu, ¾e
+	select_row je voláno pøi ka¾dém otevøení showformu, zpùsobovalo,
+	¾e procházení v podstatì nikdy nefungovalo a navíc nefungovalo ani
+	vyhledávání, skok na záznam atd.
+	
+	* BUGFIX: Pøi zji¹tìní handleru pøíkazu je navíc testována tøída a
+	pokud neodpovídá, je handler brán jako nedostupný.  Tím je
+	zabránìno napø. tracebacku pøi pokusu o otevøení menu pøíkazù nad
+	ShowFormem nebo pøi pokusu o spu¹tìní pøíkazu ListFormu nad ShowFormem.
+	
 2006-05-25
 
 	V pytis-extensions byly v kódu pro generování nápovìdy

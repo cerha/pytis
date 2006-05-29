@@ -34,7 +34,7 @@
 
 	* pytis/presentation/field.py (PresentedRow._set_row): Pokud je
 	`row' None, nastavuj také `self._original_row' na None, nikoliv na
-	prázdný øádek jako instanci `PresentedRow'.
+		prázdný øádek jako instanci `PresentedRow'.
 	(PresentedRow.original_row): Aktualizace docstringu.
 
 2006-05-24  Tomas Cerha  <cerha@brailcom.org>
