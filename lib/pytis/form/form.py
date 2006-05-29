@@ -553,8 +553,6 @@ class RecordForm(InnerForm):
     Argumentem callbackové funkce je nový záznam jako instance 'PresentedRow'.
     
     """
-    def __init__(self, *args, **kwargs):
-        super_(RecordForm).__init__(self, *args, **kwargs)
 
     def _init_attributes(self, prefill=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -629,7 +627,6 @@ class RecordForm(InnerForm):
             return row
         else:
             return None
-
     
     def _get_row_number(self, row):
         """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'."""
@@ -649,28 +646,13 @@ class RecordForm(InnerForm):
         # Naplò formuláø daty z daného *datového* øádku
         raise ProgrammError("This method must be overridden.")
 
-    def _original_key(self):        
-        the_row = self.current_row()
-        if the_row is not None:
-            original_row = the_row.original_row()
-            if original_row is not None:
-                kc = [c.id() for c in self._data.key()]
-                try:
-                    return original_row.columns(kc)
-                except KeyError:
-                    log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
-                    run_dialog(Error, _("Chyba v definici dat"))
-        return None
-
     def _current_key(self):        
         the_row = self.current_row()
         if the_row is not None:
-            kc = [c.id() for c in self._data.key()]
-            try:
-                return the_row.row().columns(kc)
-            except KeyError:
-                log(OPERATIONAL, 'Chybí nìkterý z klíèových sloupcù:', kc)
-                run_dialog(Error, _("Chyba v definici dat"))
+            data_row = the_row.original_row()
+            if data_row is None:
+                data_row = the_row.row()
+            return data_row.columns([c.id() for c in self._data.key()])
         return None
 
     def _redirected_name(self, key):
@@ -915,6 +897,7 @@ class RecordForm(InnerForm):
             raise ProgramError("Invalid 'position':", position)
         if not quiet and position is not None and row is None:
             run_dialog(Warning, _("Záznam nenalezen"))
+            return
         self._select_row(row)
 
     def set_row(self, row):
@@ -1115,11 +1098,14 @@ class LookupForm(RecordForm):
     def _on_jump(self):
         if self._lf_select_count > 0:
             prompt = _("Záznam èíslo (1-%s):") % (self._lf_select_count)
-            number = run_dialog(InputNumeric, message=_("Skok na záznam"),
-                                prompt=prompt, min_value=1,
-                                max_value=self._lf_select_count)
-            if number:
-                self.select_row(number.value()-1)
+            while True:
+                result = run_dialog(InputDialog, message=_("Skok na záznam"),
+                                    prompt=prompt)
+                if result is None:
+                    break
+                elif result.isdigit():
+                    self.select_row(int(result)-1)
+                    break
         
     def _on_search(self, direction=None):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
@@ -1551,7 +1537,7 @@ class EditForm(LookupForm, TitledForm):
             op = (self._data.insert, (rdata,))
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            op = (self._data.update, (self._original_key(), rdata))
+            op = (self._data.update, (self._current_key(), rdata))
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
@@ -1598,6 +1584,7 @@ class EditForm(LookupForm, TitledForm):
 
     def set_row(self, row):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
+        super_(EditForm).set_row(self, row)
         for f in self._fields:
             f.init(row[f.id()].export())
             if self._mode != self.MODE_VIEW:
@@ -1605,7 +1592,6 @@ class EditForm(LookupForm, TitledForm):
                     f.enable()
                 else:
                     f.disable()
-        super_(EditForm).set_row(self, row)
         
     def title(self):
         """Vra» název formuláøe jako øetìzec."""        
@@ -1893,42 +1879,38 @@ class BrowsableShowForm(ShowForm):
     def __init__(self, *args, **kwargs):
         super_(BrowsableShowForm).__init__(self, *args, **kwargs)
         self._init_select()
-        self._set_status()
-
-    def _on_next_record(self, direction=pytis.data.FORWARD):
-        op = lambda : self._data.fetchone(direction=direction)
-        success, row = db_operation(op)
-        if not row:
-            if direction == pytis.data.FORWARD:
+        
+    def _cmd_next_record(self, back=False):
+        current_row = self.current_row()
+        if current_row:
+            row_number = self._get_row_number(current_row.row())
+        else:
+            row_number = 0
+        if not back:
+            row_number += 1
+            if row_number == self._lf_select_count:
                 message(_("Poslední záznam"), beep_=True)
-            else:
+                return
+        else:
+            if row_number == 0:
                 message(_("První záznam"), beep_=True)
-            # Pøesuneme ukazovátko zpìt na poslední záznam, to je chování
-            # oèekávané u¾ivateli.
-            antidir = pytis.data.opposite_direction(direction)
-            db_operation(lambda: self._data.fetchone(direction=antidir))
-        if not success or not row:
-            return
-        self._select_row(row)
+                return
+            row_number -= 1
+        self._select_row(self._find_row_by_number(row_number))
+
+    def _cmd_last_record(self, back=False):
+        if back:
+            row = 0
+        else:
+            row = self._lf_select_count - 1
+        self.select_row(row)
 
     def _select_row(self, row):
         super(BrowsableShowForm, self)._select_row(row)
-        self._set_status()
+        current_row = self.current_row()
+        total = self._lf_select_count
+        if current_row and total:
+            position = "%d/%d" % (self._get_row_number(current_row) + 1, total)
+            set_status('list-position', position)
+                     
 
-    def _set_status(self):
-        current, total = self._data.last_row_number(), self._lf_select_count
-        if total:
-            set_status('list-position', "%d/%d" % (current+1, total))        
-
-    def on_command(self, command, **kwargs):
-        if command == BrowsableShowForm.COMMAND_NEXT_RECORD:
-            self._on_next_record()
-        elif command == BrowsableShowForm.COMMAND_PREVIOUS_RECORD:
-            self._on_next_record(direction=pytis.data.BACKWARD)
-        elif command == BrowsableShowForm.COMMAND_FIRST_RECORD:
-            self.select_row(0)
-        elif command == BrowsableShowForm.COMMAND_LAST_RECORD:
-            self.select_row(self._lf_select_count-1)
-        else:
-            return super(BrowsableShowForm, self).on_command(command, **kwargs)
-        return True
