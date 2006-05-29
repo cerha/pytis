@@ -49,8 +49,8 @@ class CommandHandler:
             handler = _command_handler
         else:
             handler = cls._get_command_handler_instance()
-        assert handler is None or isinstance(handler, cls), \
-               (str(command), handler, cls)
+        if not isinstance(handler, cls):
+            handler = None
         return handler, kwargs
     _command_handler = classmethod(_command_handler)
     
