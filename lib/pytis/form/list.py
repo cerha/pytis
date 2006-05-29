@@ -1633,7 +1633,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _find_row_by_number(self, row_number):
         # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
         # Krom toho je toto rychlej¹í...
-        return self._table.row(row_number).row()
+        if row_number < self._table.GetNumberRows():
+            return self._table.row(row_number).row()
+        else:
+            return None
 
     def _find_row_by_values(self, cols, values):
         # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
@@ -1660,7 +1663,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
-        if isinstance(position, types.IntType):
+        if isinstance(position, types.IntType) \
+               and position < self._table.GetNumberRows():
             # Pro èíslo voláme rovnou _select_cell a nezdr¾ujeme se pøevodem na
             # row a zpìt, který probíhá v rodièovské metodì...
             self._select_cell(row=position)
