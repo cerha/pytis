@@ -142,13 +142,9 @@ Command(EditForm, 'COMMIT_RECORD',
 Command(EditForm, 'NAVIGATE',
         "Navigace mezi políèky editaèního formuláøe") # arg. 'back'
 Command(BrowsableShowForm, 'NEXT_RECORD',
-        "Pøechod na dal¹í záznam")
-Command(BrowsableShowForm, 'PREVIOUS_RECORD',
-        "Pøechod na pøedchozí záznam")
-Command(BrowsableShowForm, 'FIRST_RECORD',
-        "Pøechod na první záznam")
+        "Pøechod na dal¹í záznam vpøed/vzad") # arg. 'back'
 Command(BrowsableShowForm, 'LAST_RECORD',
-        "Pøechod na poslední záznam")
+        "Pøechod na první/poslední záznam") # arg. 'back'
 Command(DualForm, 'OTHER_FORM',
         "Pøechod mezi podformuláøi duálního formuláøe")
 Command(PrintForm, 'NEXT_PAGE',
@@ -231,20 +227,20 @@ DEFAULT_KEYMAP = (
     ('Alt-Left',      ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
     ('Shift-Right',   ListForm.COMMAND_MOVE_COLUMN(diff=+1)),
     ('Shift-Left',    ListForm.COMMAND_MOVE_COLUMN(diff=-1)),
-    ('Alt-Down',        ListForm.COMMAND_CONTEXT_MENU),
+    ('Alt-Down',      ListForm.COMMAND_CONTEXT_MENU),
     ('Alt-Enter',     ListForm.COMMAND_CONTEXT_MENU),
     ('Ctrl-Enter',    EditForm.COMMAND_COMMIT_RECORD),
     ('Tab',           EditForm.COMMAND_NAVIGATE),
     ('Shift-Tab',     EditForm.COMMAND_NAVIGATE(back=True)),
     ('Next',          BrowsableShowForm.COMMAND_NEXT_RECORD),
-    ('Prior',         BrowsableShowForm.COMMAND_PREVIOUS_RECORD),
-    ('Home',          BrowsableShowForm.COMMAND_FIRST_RECORD),
+    ('Prior',         BrowsableShowForm.COMMAND_NEXT_RECORD(back=True)),
     ('End',           BrowsableShowForm.COMMAND_LAST_RECORD),
+    ('Home',          BrowsableShowForm.COMMAND_LAST_RECORD(back=True)),
     ('Ctrl-Tab',      DualForm.COMMAND_OTHER_FORM),
     ('Next',          PrintForm.COMMAND_NEXT_PAGE),
     ('Prior',         PrintForm.COMMAND_PREVIOUS_PAGE),
     ('Ctrl-Backspace',InputField.COMMAND_RESET),
-    ('Alt-Down',        InputField.COMMAND_CONTEXT_MENU),
+    ('Alt-Down',      InputField.COMMAND_CONTEXT_MENU),
     ('Alt-Enter',     InputField.COMMAND_CONTEXT_MENU),
     ('Ctrl-x',        TextField.COMMAND_CUT),
     ('Ctrl-c',        TextField.COMMAND_COPY),
