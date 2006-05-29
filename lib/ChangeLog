@@ -1,3 +1,42 @@
+2006-05-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py: Zru¹eny pøíkazy
+	`BrowsableShowForm.COMMAND_PREVIOUS_RECORD' a
+	`BrowsableShowForm.COMMAND_FIRST_RECORD'.  Namísto toho nech» mají
+	pøíkazy `BrowsableShowForm.COMMAND_NEXT_RECORD' a
+	`BrowsableShowForm.COMMAND_LAST_RECORD' argument `back'.
+
+	* pytis/form/form.py (RecordForm.__init__): Metoda zru¹ena.
+	(RecordForm._original_key): Metoda zru¹ena.
+	(RecordForm._current_key): Pokud je `original_row()' aktuálního
+	øádku nenulové, vra» radìji klíè tohoto originálního øádku.
+	(LookupForm._on_jump): Pou¾ívej `InputDialog', ne `InputNumeric'.
+	(EditForm._commit_form): `self._original_key()' ->
+	`self._current_key()'.
+	(EditForm.set_row): Metodu pøedka volej ze v¹eho nejdøíve.
+	(BrowsableShowForm.__init__): Nevolej `self._set_status()'.
+	(BrowsableShowForm._on_next_record): Metoda zru¹ena.
+	(BrowsableShowForm._cmd_next_record): Nová metoda.
+	(BrowsableShowForm._cmd_last_record): Nová metoda.
+	(BrowsableShowForm._set_status): Metoda zru¹ena.
+	(BrowsableShowForm.on_command): Metoda zru¹ena.
+	(BrowsableShowForm._select_row): Nastav aktuální pozici ve stavové
+	øádce.
+
+	* pytis/form/command.py (CommandHandler._command_handler): Pokud
+	instance vrácená metodou `_get_command_handler_instance()'
+	neodpovídá tøídì pøíkazu, vracej None.
+
+	* pytis/form/list.py (ListForm._find_row_by_number): Pokud je
+	èíslo mimo rozsah tabulky, vracej None.
+	(ListForm.select_row): Èíselný argument zpracovávej pøímo zde jen
+	pokud je v mezích platných øádkù.
+
+	* pytis/presentation/field.py (PresentedRow._set_row): Pokud je
+	`row' None, nastavuj také `self._original_row' na None, nikoliv na
+	prázdný øádek jako instanci `PresentedRow'.
+	(PresentedRow.original_row): Aktualizace docstringu.
+
 2006-05-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py (DEFAULT_KEYMAP): `Ctrl-m' -> `Alt-Down'.
