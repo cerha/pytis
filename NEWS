@@ -6,6 +6,22 @@
 
 2006-05-29
 
+	Nový pøíkaz `LookupForm.COMMAND_UNFILTER', navázaný na klávesovou
+	zkratku `Ctrl-Shift-F4', zru¹í filter.  Chování je nyní takové, ¾e
+	stávající filtrovací podmínky zùstanou ve filtrovacím dialogu
+	navolené, ale nejsou aktivní a neuplatní se napøíklad ani po
+	následném pøidání filtrovací podmínky pomocí pøíkazu "Filtrovat
+	podle buòky".  To je dobøe, proto¾e u¾ivatel ji¾ nemusí o døíve
+	navolených podmínkách vìdìt, ale mù¾e to být matoucí ve chvíli,
+	kdy dialog otevøe a vidí tam jak stávající platné podmínky, tak
+	pøedchozí neplatné podmínky.  Pøi následném filtrování z
+	otevøeného dialogu se ji¾ uplatní v¹echny podmínky.  Pokud nìkdo
+	má nápad, jak by se to mohlo chovat lépe, tak jej uvítám, ale
+	realizace mù¾e být pomìrnì komplikovaná kvùli souèasné
+	implementaci filtrovacích dialogù (dal¹í dùvod pro pøepis).
+	
+2006-05-29
+
 	* BUGFIX: Pøi pokusu o výbìr neexistujícího øádku v ListFormu je
 	nyní korektnì zobrazena chybová zpráva.
 	
