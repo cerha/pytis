@@ -582,7 +582,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         id = self._columns[col].id()
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
         if sf_dialog.append_condition(id, self._table.row(row)[id]):
-            self._on_filter(show_dialog=False)
+            self.COMMAND_FILTER.invoke(show_dialog=False)
         else:
             message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
 
@@ -600,7 +600,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 row = g.GetGridCursorRow()
                 self._current_editor.SetSize(g.CellToRect(row, col))
 
-    def _move_column(self, diff=1):
+    def _can_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        return 0 <= col + diff < len(self._columns)
+        
+    def _cmd_move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
         newcol = col + diff
         if 0 <= newcol < len(self._columns):
@@ -611,17 +615,19 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             log(OPERATIONAL, "Invalid column move command:", (col, newcol))
 
-    def _can_move_column(self, diff=1):
-        col = self._grid.GetGridCursorCol()
-        return 0 <= col + diff < len(self._columns)
-        
-    def _on_sort_column(self, col=None, direction=None, primary=False):
+    def _can_sort(self, **kwargs):
+        col = kwargs.get('col')
+        if col is not None:
+            kwargs['col'] = self._columns[col].id()
+        return super(ListForm, self)._can_sort(**kwargs)
+            
+    def _cmd_sort(self, col=None, direction=None, primary=False):
         if not self._finish_editing():
             return
         if col is not None:
             col = self._columns[col].id()
         old_sorting = self._lf_sorting
-        sorting = super_(ListForm)._on_sort_column(self, col=col,
+        sorting = super_(ListForm)._cmd_sort(self, col=col,
                                                    direction=direction,
                                                    primary=primary)
         if sorting is not None and sorting != old_sorting:
@@ -636,12 +642,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
-    def _can_sort_column(self, **kwargs):
-        col = kwargs.get('col')
-        if col is not None:
-            kwargs['col'] = self._columns[col].id()
-        return super(ListForm, self)._can_sort_column(**kwargs)
-            
     # Callbacky
 
     def on_data_change(self):
@@ -767,24 +767,24 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         #
         items = (M(_("Primární øazení"),
                    (I(_("Øadit vzestupnì"),
-                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      command=LookupForm.COMMAND_SORT,
                       args=dict(direction=ASC, col=col, primary=True)),
                     I(_("Øadit sestupnì"),
-                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      command=LookupForm.COMMAND_SORT,
                       args=dict(direction=DESC, col=col, primary=True)),)),
                  M(_("Dodateèné øazení"),
                    (I(_("Øadit vzestupnì"),
-                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      command=LookupForm.COMMAND_SORT,
                       args=dict(direction=ASC, col=col)),
                     I(_("Øadit sestupnì"),
-                      command=LookupForm.COMMAND_SORT_COLUMN,
+                      command=LookupForm.COMMAND_SORT,
                       args=dict(direction=DESC, col=col)),)),
                  ________,
                  I(_("Neøadit podle tohoto sloupce"),
-                   command=LookupForm.COMMAND_SORT_COLUMN,
+                   command=LookupForm.COMMAND_SORT,
                    args=dict(direction=LookupForm.SORTING_NONE, col=col)),
                  I(_("Zru¹it øazení úplnì"),
-                   command=LookupForm.COMMAND_SORT_COLUMN,
+                   command=LookupForm.COMMAND_SORT,
                    args=dict(direction=LookupForm.SORTING_NONE)),
                  ________,
                  I(_("Seskupovat a¾ po tento sloupec"),
@@ -855,8 +855,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                              self.SORTING_DESCENDANT,
                              self.SORTING_NONE]
                     direction = cycle[(cycle.index(dir)+1)%3]
-                LookupForm.COMMAND_SORT_COLUMN.invoke(col=col, primary=primary,
-                                                      direction=direction)
+                LookupForm.COMMAND_SORT.invoke(col=col, primary=primary,
+                                               direction=direction)
         self._column_move_target = None
         self._column_to_move = None
         event.GetEventObject().Refresh()
@@ -1136,8 +1136,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._on_context_action(**kwargs)
         elif command == ListForm.COMMAND_EXPORT_CSV:
             self._on_export_csv()
-        elif command == LookupForm.COMMAND_SORT_COLUMN:
-            self._on_sort_column(**kwargs)
         elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
             self._set_grouping_column(**kwargs)
         elif command == ListForm.COMMAND_FILTER_BY_CELL:
@@ -1147,16 +1145,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._run_callback(self.CALL_ACTIVATION, key, **kwargs)
         elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
             self._on_show_cell_codebook()
-        elif command == LookupForm.COMMAND_FILTER:
-            self._on_filter()
         elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
             self._on_incremental_search(**kwargs)
         elif command == ListForm.COMMAND_INSERT_LINE:
             self._on_insert_line(**kwargs)
         elif command == ListForm.COMMAND_TOGGLE_COLUMN:
             self._on_toggle_column(**kwargs)
-        elif command == ListForm.COMMAND_MOVE_COLUMN:
-            self._move_column(**kwargs)
         elif command == ListForm.COMMAND_RESET_COLUMNS:
             self._on_reset_columns(**kwargs)
         else:
