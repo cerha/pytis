@@ -373,12 +373,12 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
         self._select_form(self._side_form)
         ListForm.COMMAND_INSERT_LINE.invoke()
     
-    def _on_main_activation(self, key, alternate=False):
+    def _on_main_activation(self, alternate=False):
         if alternate:
             f = DescriptiveDualForm
         else:
             f = ShowDualForm
-        run_form(f, self._name, select_row=key)
+        run_form(f, self._name, select_row=self._main_form.current_key())
 
     def _refresh(self, when=None):
         self._main_form.refresh()
