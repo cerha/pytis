@@ -1325,7 +1325,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def can_command(self, command, **kwargs):
         # Pøíkazy platné i bìhem editace, pokud není aktivní editor.
         UNIVERSAL_COMMANDS = (ListForm.COMMAND_COPY_CELL,
-                              ListForm.COMMAND_SELECT_CELL,
                               ListForm.COMMAND_RESIZE_COLUMN,
                               ListForm.COMMAND_EDIT,
                               ListForm.COMMAND_FIRST_COLUMN,
