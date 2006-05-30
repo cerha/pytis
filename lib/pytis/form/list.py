@@ -1632,14 +1632,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         cols = xtuple(cols)
         values = xtuple(values)
         assert len(cols) == len(values)
-        condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
+        cond = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
+        condition = pytis.data.AND(cond, self._lf_condition)
         data = self._data
         data.rewind()
         success, result = db_operation(lambda: data.search(condition))
         if not success:
-            row = 0
+            row = -1
         elif result == 0:
-            row = 0
+            row = -1
         else:
             row = result - 1
         prow = self._table.row(row)
