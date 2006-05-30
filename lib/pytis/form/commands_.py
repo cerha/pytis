@@ -201,7 +201,7 @@ DEFAULT_KEYMAP = (
     ('F5',            RecordForm.COMMAND_EDIT_RECORD),
     ('F8',            RecordForm.COMMAND_DELETE_RECORD),
     ('Ctrl-F4',       LookupForm.COMMAND_FILTER),
-    ('Ctrl-Shift=F4', LookupForm.COMMAND_UNFILTER),
+    ('Ctrl-Shift-F4', LookupForm.COMMAND_UNFILTER),
     ('F4',            LookupForm.COMMAND_SORT),
     ('F3',            LookupForm.COMMAND_SEARCH),
     ('Ctrl-s',        LookupForm.COMMAND_SEARCH(next=True)),
@@ -304,6 +304,9 @@ FORM_COMMAND_MENU = ((
     (_("Filtrování"),
      _("Filtrovat záznamy podle zadaných podmínek."),
      LookupForm.COMMAND_FILTER),
+    (_("Zru¹ filtr"),
+     _("Zru¹it filtrování záznamù."),
+     LookupForm.COMMAND_UNFILTER),
     ),(#---------------
     (_("Nový záznam"),
      _("Vlo¾it nový záznam."),
