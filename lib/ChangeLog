@@ -1,5 +1,8 @@
 2006-05-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (BrowseDualForm._on_main_activation):
+	Neoèekávej argument `key'.
+
 	* pytis/form/search.py (SFDialog.reset_condition): Nová metoda.
 
 	* pytis/form/inputfield.py (CALL_NAVIGATE): Callback zru¹en.
@@ -12,6 +15,7 @@
 	* pytis/form/commands_.py: `COMMAND_SORT_COLUMN' ->
 	`COMMAND_SORT'.  V definicích pøíkazu `COMMAND_SORT' pou¾ívej nové
 	argumenty.  Nový pøíkaz `LookupForm.COMMAND_UNFILTER'.
+	Zru¹en pøíkaz `ListForm.COMMAND_SELECT_CELL'.
 
 	* pytis/form/list.py (ListForm._filter_by_cell): Namísto volání
 	metody `_on_sort_column' vyvolej pøíkaz `COMMAND_SORT'.
@@ -62,7 +66,24 @@
 	(ListForm._on_insert_line): Pøejmenováno na `_cmd_insert_line'.
 	(ListForm._on_cell_commit): Pøejmenováno na `_cmd_cell_commit'.
 	(ListForm._on_cell_rollback): Pøejmenováno na `_cmd_cell_rollback.
-	
+	(ListForm._cmd_line_commit, ListForm._cmd_line_rollback)
+	(ListForm._cmd_finish_editing): Nové metody.
+	(ListForm._cmd_cell_commit): Neloguj a vracej návratovou hodnotu
+	`_on_line_commit()'.
+	(ListForm.on_command): Neo¹etøuj pøíkazy `COMMAND_LINE_COMMIT',
+	`COMMAND_LINE_ROLLBACK' a `COMMAND_FINISH_EDITING.
+	(ListForm._on_activation): Neoèekávej argument `key'.
+	(ListForm._on_toggle_column): Pøejmenováno na
+	`_cmd_toggle_column'.
+	(on_command): Metoda zcela zru¹ena.
+	(ListForm._cmd_activate, ListForm._cmd_first_column)
+	(ListForm._cmd_last_column): Nové metody.
+	(ListForm._cmd_toggle_column, ListForm._cmd_resize_column)
+	(ListForm._cmd_filter_by_cell): Nové metody.
+	(CodebookForm.__init__): Namísto volání `_on_activation' vyvolej
+	pøíkaz `COMMAND_ACTIVATE'.
+	(CodebookForm._on_activation, SelectRowsForm._on_activation):
+	Neoèekávej argument `key'.
 
 	* pytis/form/form.py (LookupForm.SORTING_ASCENDENT)
 	(LookupForm.SORTING_DESCENDANT)
