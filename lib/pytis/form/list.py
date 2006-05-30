@@ -641,7 +641,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         "Va¹e u¾ivatelské nastavení sloupcù je ji¾ zastaralé.\n"
                         "Chcete pou¾ít nové výchozí nastavení sloupcù?")
                 if run_dialog(Question, msg):
-                    self._on_reset_columns()
+                    self.COMMAND_RESET_COLUMNS.invoke()
                 else:
                     self._set_state_param('default_columns', columns)
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
@@ -928,17 +928,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._update_grid(insert_column=self._view.field(column_id),
                               inserted_column_index=col)
 
-    def _on_reset_columns(self):
-        self._update_grid(reset_columns=True)
-
     def _on_reload_form_state(self):
         self._init_grouping()
         self._init_column_widths() 
         self._update_grid(soft_reset_columns=True)
         super(ListForm, self)._on_reload_form_state()
-        
-    def _can_reload_form_state(self):
-        return not self._table.editing()
         
     def _on_right_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
@@ -975,30 +969,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             status = _("Data ok")
         set_status('data-changed', status)
         
-    def on_key_down(self, event, dont_skip=True):
-        self._run_callback(self.CALL_USER_INTERACTION)
-        if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
-            return True
-        def evil_key(event):
-            # Tato vìc je tu kvùli eliminaci vstupu do editace políèka
-            # libovolnou klávesou.  Není mi znám jiný zpùsob, jak této
-            # eliminace dosáhnout.
-            # Nelze pou¾ít hasModifiers ani test MetaDown kvùli NumLocku.
-            if event.AltDown() or event.ControlDown():
-                return False
-            code = event.GetKeyCode()
-            return code not in(wx.WXK_PRIOR, wx.WXK_NEXT, wx.WXK_LEFT,
-                               wx.WXK_RIGHT, wx.WXK_DOWN, wx.WXK_UP,
-                               wx.WXK_HOME, wx.WXK_END, wx.WXK_TAB,
-                               wx.WXK_ESCAPE)
-        if evil_key(event) or \
-           (self._grid.IsCellEditControlEnabled() and
-            WxKey().is_event_of_key(event, '\t')):
-            return False
-        else:
-            event.Skip()
-            return False
-
     def _is_changed(self):
         editing = self._table.editing()
         return editing and editing.changed
@@ -1118,8 +1088,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._on_insert_line(**kwargs)
         elif command == ListForm.COMMAND_TOGGLE_COLUMN:
             self._on_toggle_column(**kwargs)
-        elif command == ListForm.COMMAND_RESET_COLUMNS:
-            self._on_reset_columns(**kwargs)
         else:
             return super_(ListForm).on_command(self, command, **kwargs)
         return True
@@ -1140,6 +1108,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             menu = Menu('', menu).create(g, self.keymap)
             g.PopupMenu(menu, position)
             menu.Destroy()
+
+    def _can_reload_form_state(self):
+        return not self._table.editing()
+
+    def _cmd_reset_columns(self):
+        self._update_grid(reset_columns=True)
 
     def _can_move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
@@ -1828,6 +1802,30 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return (('list-position', 7),)
         
     # Ostatní veøejné metody
+
+    def on_key_down(self, event, dont_skip=True):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
+            return True
+        def evil_key(event):
+            # Tato vìc je tu kvùli eliminaci vstupu do editace políèka
+            # libovolnou klávesou.  Není mi znám jiný zpùsob, jak této
+            # eliminace dosáhnout.
+            # Nelze pou¾ít hasModifiers ani test MetaDown kvùli NumLocku.
+            if event.AltDown() or event.ControlDown():
+                return False
+            code = event.GetKeyCode()
+            return code not in(wx.WXK_PRIOR, wx.WXK_NEXT, wx.WXK_LEFT,
+                               wx.WXK_RIGHT, wx.WXK_DOWN, wx.WXK_UP,
+                               wx.WXK_HOME, wx.WXK_END, wx.WXK_TAB,
+                               wx.WXK_ESCAPE)
+        if evil_key(event) or \
+           (self._grid.IsCellEditControlEnabled() and
+            WxKey().is_event_of_key(event, '\t')):
+            return False
+        else:
+            event.Skip()
+            return False
 
     def focus(self):
         super_(ListForm).focus(self)
