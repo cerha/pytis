@@ -262,10 +262,7 @@ class GenericDialog(Dialog):
     def _run_dialog(self):
         return self._dialog.ShowModal()
 
-    def _close_dialog(self):
-        self._end_modal(wx.ID_CANCEL)
-
-    def _commit_dialog(self, force=False):
+    def _cmd_commit_dialog(self, force=False):
         if force:
             id = self._button_id(self._COMMIT_BUTTON)
             widget = wx.FindWindowById(id, self._parent)
@@ -280,16 +277,11 @@ class GenericDialog(Dialog):
         else:
             self._navigate()
         
-    def on_command(self, command, **kwargs):
-        if command == Dialog.COMMAND_CLOSE_DIALOG:
-            self._close_dialog()
-        elif command == Dialog.COMMAND_COMMIT_DIALOG:
-            self._commit_dialog(**kwargs)
-        elif command == Dialog.COMMAND_HELP:
-            help(topic=self._HELP_TOPIC)
-        else:
-            return super(GenericDialog, self).on_command(command, **kwargs)
-        return True
+    def _cmd_close_dialog(self):
+        self._end_modal(wx.ID_CANCEL)
+        
+    def _cmd_help(self):
+        help(topic=self._HELP_TOPIC)
 
     def run(self):
         """Zobraz dialog a po jeho ukonèení vra» jeho návratovou hodnotu.
@@ -1215,7 +1207,7 @@ class BugReport(GenericDialog):
             raise ProgramError('Unknown BugReport dialog result', label)
         return result
 
-    def _close_dialog(self):
+    def _cmd_close_dialog(self):
         self._end_modal(self._button_id(self._IGNORE_LABEL))
 
         
