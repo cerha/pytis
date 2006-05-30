@@ -509,6 +509,89 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 raise ProgramError('Unexpected dialog result', result)
         return finish
 
+    def _on_line_commit(self):
+        # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _cmd_cell_commit.
+        log(EVENT, 'Pokus o ulo¾ení øádku seznamu do databáze')
+        # Vyta¾ení nových dat
+        table = self._table
+        editing = table.editing()
+        if not editing:
+            return False
+        row = editing.row
+        the_row = editing.the_row
+        # Ovìøení integrity záznamu (funkce check).
+        failed_id = self._check_record(the_row)
+        if failed_id:
+            col = find(failed_id, self._columns, key=lambda c: c.id())
+            if col is not None:
+                i = self._columns.index(col)
+                self._select_cell(row=row, col=i, invoke_callback=False)
+                self._edit_cell()
+            return True
+        # Urèení operace a klíèe
+        rdata = self._record_data(the_row)
+        kc = [c.id() for c in self._data.key()]
+        if editing.new:
+            if row > 0:
+                after = table.row(row-1).row().columns(kc)
+                before = None
+            elif row < table.GetNumberRows() - 1:
+                after = None
+                before = table.row(row+1).row().columns(kc)
+            else:
+                after = before = None
+            op = (self._data.insert, (rdata,), dict(after=after, before=before))
+        else:
+            key = editing.orig_content.row().columns(kc)
+            op = (self._data.update, (key, rdata))
+        # Provedení operace
+        success, result = db_operation(op)
+        if success and result[1]:
+            table.edit_row(None)
+            self._unlock_record()
+            message('Øádek ulo¾en do databáze', ACTION)
+            self.refresh()
+            self._run_callback(self.CALL_MODIFICATION)
+            on_line_commit = self._view.on_line_commit()
+            if on_line_commit is not None:
+                on_line_commit(the_row)
+            self.focus()
+        elif success:
+            log(EVENT, 'Zamítnuto pro chybu klíèe')
+            if editing.new:
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
+                        "sousedního øádku")
+            else:
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "
+                        "øádek ji¾ neexistuje")
+            run_dialog(Warning, msg)
+            return False
+        else:
+            log(EVENT, 'Chyba databázové operace')
+            return False
+        return True
+
+    def _on_line_rollback(self, soft=False):
+        log(EVENT, 'Zru¹ení editace øádku')
+        editing = self._table.editing()
+        if not editing:
+            return False
+        if soft and editing.changed:
+            return True
+        self._unlock_record()
+        row = editing.row
+        if editing.new:
+            self._update_grid()
+        else:
+            self._table.edit_row(None)
+            self._update_selection_colors()
+            # Tento SelectRow je zde nutný pro vynucení pøekreslení øádku se
+            # staronovými hodnotami.
+            self._grid.SelectRow(row)
+        self._select_cell(row=row, invoke_callback=False)
+        self.refresh()
+        return True
+    
     def _update_selection_colors(self):
         if focused_window() is self:
             if self._table.editing():
@@ -571,29 +654,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._refresh(reset={'condition': condition,
                              'filter_flag': bool(condition)},
                       when=self.DOIT_IMMEDIATELY)
-
-    def _filter_by_cell(self, cancel=False):
-        row, col = self._current_cell()
-        id = self._columns[col].id()
-        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
-        if sf_dialog.append_condition(id, self._table.row(row)[id]):
-            self.COMMAND_FILTER.invoke(show_dialog=False)
-        else:
-            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
-
-    def _resize_column(self, diff=5):
-        # diff can be positive or negative integer in pixels.
-        g = self._grid
-        col = g.GetGridCursorCol()
-        newsize = g.GetColSize(col) + diff
-        if newsize > 0:
-            g.SetColSize(col, newsize)
-            g.SetSize(g.GetSize())
-            g.Refresh()
-            self._remember_column_size(col)
-            if g.IsCellEditControlEnabled():
-                row = g.GetGridCursorRow()
-                self._current_editor.SetSize(g.CellToRect(row, col))
 
     # Callbacky
 
@@ -685,12 +745,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             event.Veto()
             self._grid.SelectRow(self._grid.GetGridCursorRow())
 
-    def _on_activation(self, key, alternate=False):
+    def _on_activation(self, alternate=False):
         if alternate:
             f = DescriptiveDualForm
         else:
             f = BrowsableShowForm
-        self._run_form(f, key)
+        self._run_form(f, self._current_key())
 
     def _scroll_x_offset(self):
         g = self._grid
@@ -919,14 +979,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     dc.SetBrush(wx.Brush("GREEN", wx.SOLID))
                     dc.DrawPolygon(arrow(ax, height-2))
             x += width
-
-    def _on_toggle_column(self, column_id, col=None):
-        c = find(column_id, self._columns, key=lambda c: c.id())
-        if c:
-            self._update_grid(delete_column=c)
-        else:
-            self._update_grid(insert_column=self._view.field(column_id),
-                              inserted_column_index=col)
 
     def _on_reload_form_state(self):
         self._init_grouping()
@@ -1294,52 +1346,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         return super_(ListForm).can_command(self, command, **kwargs)
     
-    def on_command(self, command, **kwargs):
-        # Univerzální pøíkazy
-        if command == ListForm.COMMAND_SELECT_CELL:
-            self._select_cell(**kwargs)
-        elif command == ListForm.COMMAND_RESIZE_COLUMN:
-            self._resize_column(**kwargs)
-        elif command == ListForm.COMMAND_FIRST_COLUMN:
-            self._select_cell(col=0)
-        elif command == ListForm.COMMAND_LAST_COLUMN:
-            self._select_cell(col=len(self._columns)-1)
-        # Pøíkazy bìhem editace øádku
-        elif command == ListForm.COMMAND_LINE_COMMIT:
-            self._on_line_commit()
-        elif command == ListForm.COMMAND_LINE_ROLLBACK:
-            self._on_line_rollback(**kwargs)
-        elif command == ListForm.COMMAND_FINISH_EDITING:
-            self._finish_editing()
-        # Pøíkazy mimo editaci
-        elif command == ListForm.COMMAND_FILTER_BY_CELL:
-            self._filter_by_cell()
-        elif command == ListForm.COMMAND_ACTIVATE:
-            key = self._current_key()
-            self._run_callback(self.CALL_ACTIVATION, key, **kwargs)
-        elif command == ListForm.COMMAND_TOGGLE_COLUMN:
-            self._on_toggle_column(**kwargs)
-        else:
-            return super_(ListForm).on_command(self, command, **kwargs)
-        return True
+    def _cmd_activate(self, alternate=False):
+        self._run_callback(self.CALL_ACTIVATION, alternate=alternate)
+            
+    def _cmd_first_column(self):
+        self._select_cell(col=0)
+            
+    def _cmd_last_column(self):
+        self._select_cell(col=len(self._columns)-1)
     
-    def _cmd_context_menu(self, position=None):
-        if self._table.editing():
-            menu = self._edit_menu()
-        else:
-            menu = self._context_menu()
-        if menu:
-            g = self._grid
-            if position is None:
-                row, col = self._current_cell()
-                rect = g.CellToRect(row, col)
-                pos = (rect.GetX() + rect.GetWidth()/3,
-                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
-                position = self._grid.CalcScrolledPosition(pos)
-            menu = Menu('', menu).create(g, self.keymap)
-            g.PopupMenu(menu, position)
-            menu.Destroy()
-
     def _can_reload_form_state(self):
         return not self._table.editing()
 
@@ -1360,6 +1375,28 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._select_cell(col=newcol)
         else:
             log(OPERATIONAL, "Invalid column move command:", (col, newcol))
+
+    def _cmd_toggle_column(self, column_id, col=None):
+        c = find(column_id, self._columns, key=lambda c: c.id())
+        if c:
+            self._update_grid(delete_column=c)
+        else:
+            self._update_grid(insert_column=self._view.field(column_id),
+                              inserted_column_index=col)
+
+    def _cmd_resize_column(self, diff=5):
+        # diff can be positive or negative integer in pixels.
+        g = self._grid
+        col = g.GetGridCursorCol()
+        newsize = g.GetColSize(col) + diff
+        if newsize > 0:
+            g.SetColSize(col, newsize)
+            g.SetSize(g.GetSize())
+            g.Refresh()
+            self._remember_column_size(col)
+            if g.IsCellEditControlEnabled():
+                row = g.GetGridCursorRow()
+                self._current_editor.SetSize(g.CellToRect(row, col))
 
     def _can_sort(self, **kwargs):
         col = kwargs.get('col')
@@ -1388,11 +1425,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
-    def _can_line_commit(self):
-        return self._is_changed()
-
-    def _can_line_rollback(self):
-        return self._is_changed()
+    def _cmd_filter_by_cell(self):
+        row, col = self._current_cell()
+        id = self._columns[col].id()
+        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
+        if sf_dialog.append_condition(id, self._table.row(row)[id]):
+            self.COMMAND_FILTER.invoke(show_dialog=False)
+        else:
+            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
 
     def _can_show_cell_codebook(self):
         column, enumerator, codebook = self._current_codebook_info()
@@ -1404,6 +1444,23 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             value = self._table.row(self._current_cell()[0])[column.id()]
             select_row = {enumerator.value_column(): value}
             run_form(BrowseForm, codebook, select_row=select_row)
+            
+    def _cmd_context_menu(self, position=None):
+        if self._table.editing():
+            menu = self._edit_menu()
+        else:
+            menu = self._context_menu()
+        if menu:
+            g = self._grid
+            if position is None:
+                row, col = self._current_cell()
+                rect = g.CellToRect(row, col)
+                pos = (rect.GetX() + rect.GetWidth()/3,
+                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
+                position = self._grid.CalcScrolledPosition(pos)
+            menu = Menu('', menu).create(g, self.keymap)
+            g.PopupMenu(menu, position)
+            menu.Destroy()
 
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and \
@@ -1621,91 +1678,24 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         log(EVENT, 'Øádek vlo¾en')
         return True
 
-    def _on_line_commit(self):
-        # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _cmd_cell_commit.
-        log(EVENT, 'Pokus o ulo¾ení øádku seznamu do databáze')
-        # Vyta¾ení nových dat
-        table = self._table
-        editing = table.editing()
-        if not editing:
-            return False
-        row = editing.row
-        the_row = editing.the_row
-        # Ovìøení integrity záznamu (funkce check).
-        failed_id = self._check_record(the_row)
-        if failed_id:
-            col = find(failed_id, self._columns, key=lambda c: c.id())
-            if col is not None:
-                i = self._columns.index(col)
-                self._select_cell(row=row, col=i, invoke_callback=False)
-                self._edit_cell()
-            return True
-        # Urèení operace a klíèe
-        rdata = self._record_data(the_row)
-        kc = [c.id() for c in self._data.key()]
-        if editing.new:
-            if row > 0:
-                after = table.row(row-1).row().columns(kc)
-                before = None
-            elif row < table.GetNumberRows() - 1:
-                after = None
-                before = table.row(row+1).row().columns(kc)
-            else:
-                after = before = None
-            op = (self._data.insert, (rdata,), dict(after=after, before=before))
-        else:
-            key = editing.orig_content.row().columns(kc)
-            op = (self._data.update, (key, rdata))
-        # Provedení operace
-        success, result = db_operation(op)
-        if success and result[1]:
-            table.edit_row(None)
-            self._unlock_record()
-            message('Øádek ulo¾en do databáze', ACTION)
-            self.refresh()
-            self._run_callback(self.CALL_MODIFICATION)
-            on_line_commit = self._view.on_line_commit()
-            if on_line_commit is not None:
-                on_line_commit(the_row)
-            self.focus()
-        elif success:
-            log(EVENT, 'Zamítnuto pro chybu klíèe')
-            if editing.new:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
-                        "sousedního øádku")
-            else:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "
-                        "øádek ji¾ neexistuje")
-            run_dialog(Warning, msg)
-            return False
-        else:
-            log(EVENT, 'Chyba databázové operace')
-            return False
-        return True
 
-    def _on_line_rollback(self, soft=False):
-        log(EVENT, 'Zru¹ení editace øádku')
-        editing = self._table.editing()
-        if not editing:
-            return False
-        if soft and editing.changed:
-            return True
-        self._unlock_record()
-        row = editing.row
-        if editing.new:
-            self._update_grid()
-        else:
-            self._table.edit_row(None)
-            self._update_selection_colors()
-            # Tento SelectRow je zde nutný pro vynucení pøekreslení øádku se
-            # staronovými hodnotami.
-            self._grid.SelectRow(row)
-        self._select_cell(row=row, invoke_callback=False)
-        self.refresh()
-        return True
+    def _can_line_commit(self):
+        return self._is_changed()
+
+    def _cmd_line_commit(self):
+        return self._on_line_commit()
+
+    def _can_line_rollback(self):
+        return self._is_changed()
+
+    def _cmd_line_rollback(self):
+        return self._on_line_rollback()
 
     def _can_cell_commit(self):
         return self._grid.IsCellEditControlEnabled()
+
+    def _cmd_finish_editing(self):
+        return self._finish_editing()
 
     def _cmd_cell_commit(self):
         row, col = self._current_cell()
@@ -1719,9 +1709,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 if editing.new:
                     q = _("Ulo¾it øádek?")
                     if run_dialog(Question, q, True):
-                        log(EVENT, 'Kladná odpovìï na dotaz o ulo¾ení øádku')
-                        self._on_line_commit()
-                        return
+                        return self._on_line_commit()
                     else:
                         log(EVENT, 'Záporná odpovìï na dotaz o ulo¾ení øádku')
                 self._grid.SetGridCursor(row, 0)
@@ -1811,7 +1799,7 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
         h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
         self.SetSize((self._total_width()+30, h))
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
-                    lambda e: self._on_activation())
+                    lambda e: self.COMMAND_ACTIVATE.invoke())
 
     def _init_attributes(self, condition=None, begin_search=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -1880,7 +1868,7 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
                       command = ListForm.COMMAND_ACTIVATE),
                 )
 
-    def _on_activation(self, key=None, alternate=False):
+    def _on_activation(self, alternate=False):
         """Nastav návratovou hodnotu a ukonèi modální dialog."""
         self._result = self.current_row()
         self._parent.EndModal(1)
@@ -1889,7 +1877,7 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
 class SelectRowsForm(CodebookForm):
     """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
 
-    def _on_activation(self, key=None, alternate=False):
+    def _on_activation(self, alternate=False):
         self._result = tuple(self.selected_rows())
         self._parent.EndModal(1)
         return True
