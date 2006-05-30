@@ -1349,7 +1349,6 @@ class EditForm(LookupForm, TitledForm):
                     acc = True
                 f = InputField.create(self, spec, self._data, guardian=self,
                                       accessible=acc)
-                f.set_callback(InputField.CALL_NAVIGATE, self._navigate)
                 f.set_callback(InputField.CALL_FIELD_CHANGE,self._on_field_edit)
                 self._fields.append(f)
         super_(EditForm)._create_form(self)
@@ -1617,19 +1616,6 @@ class EditForm(LookupForm, TitledForm):
             else:                
                 self._field(id).disable()
                 
-    def _navigate(self, object=None, back=False):
-        # Vygeneruj událost navigace mezi políèky.
-        if self._mode != self.MODE_VIEW:
-            nav = wx.NavigationKeyEvent()
-            nav.SetDirection(not back)
-            if object:
-                nav.SetEventObject(object)
-                nav.SetCurrentFocus(object)
-            else:
-                nav.SetCurrentFocus(self)
-            self.GetEventHandler().ProcessEvent(nav)
-        return True
-
     def _exit_check(self):
         if self.changed():
             q = _("Data byla zmìnìna a nebyla ulo¾ena!") + "\n" + \
@@ -1641,14 +1627,20 @@ class EditForm(LookupForm, TitledForm):
     def _can_commit_record(self):
         return self._mode != self.MODE_VIEW
     
-    def on_command(self, command, **kwargs):
-        if command == EditForm.COMMAND_COMMIT_RECORD:
-            self._commit_form()
-        elif command == EditForm.COMMAND_NAVIGATE:
-            self._navigate(**kwargs)
-        else:
-            return super_(EditForm).on_command(self, command, **kwargs)
-        return True
+    def _cmd_commit_record(self):
+        return self._commit_form()
+
+    def _cmd_navigate(self, object=None, back=False):
+        # Vygeneruj událost navigace mezi políèky.
+        if self._mode != self.MODE_VIEW:
+            nav = wx.NavigationKeyEvent()
+            nav.SetDirection(not back)
+            if object:
+                nav.SetEventObject(object)
+                nav.SetCurrentFocus(object)
+            else:
+                nav.SetCurrentFocus(self)
+            self.GetEventHandler().ProcessEvent(nav)
 
     
 class PopupEditForm(PopupForm, EditForm):
