@@ -646,7 +646,7 @@ class RecordForm(InnerForm):
         else:
             return result - 1
         
-    def _select_row(self, row):
+    def _select_row(self, row, quiet=False):
         # Naplò formuláø daty z daného *datového* øádku
         raise ProgrammError("This method must be overridden.")
 
@@ -902,7 +902,7 @@ class RecordForm(InnerForm):
         if not quiet and position is not None and row is None:
             run_dialog(Warning, _("Záznam nenalezen"))
             return
-        self._select_row(row)
+        self._select_row(row, quiet=quiet)
 
     def set_row(self, row):
         """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
@@ -1576,7 +1576,7 @@ class EditForm(LookupForm, TitledForm):
             run_dialog(Error, msg)
             return False
 
-    def _select_row(self, row):
+    def _select_row(self, row, quiet=False):
         prow = PresentedRow(self._view.fields(), self._data, row,
                             prefill=self._prefill,
                             new=self._mode == self.MODE_INSERT,
@@ -1900,8 +1900,8 @@ class BrowsableShowForm(ShowForm):
             row = self._lf_select_count - 1
         self.select_row(row)
 
-    def _select_row(self, row):
-        super(BrowsableShowForm, self)._select_row(row)
+    def _select_row(self, row, quiet=False):
+        super(BrowsableShowForm, self)._select_row(row, quiet=quiet)
         current_row = self.current_row()
         total = self._lf_select_count
         if current_row and total:
