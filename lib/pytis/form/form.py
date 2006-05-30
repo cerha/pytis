@@ -1156,7 +1156,7 @@ class LookupForm(RecordForm):
             self._filter(filter)
 
     def _can_unfilter(self):
-        return self._lf_filter != self._lf_initial_condition
+        return self._lf_filter is not None
         
     def _cmd_unfilter(self):
         self._lf_sf_dialog('_lf_filter_dialog', FilterDialog).reset_condition()
