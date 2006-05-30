@@ -567,14 +567,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._select_cell(row=new_row)
 
     def _filter(self, condition):
-        # TODO: Jak to bylo my¹leno?
-        # if self._lf_initial_condition:
-        #      xcondition = pytis.data.AND(condition, self._lf_initial_condition)
-        # else:
-        #      xcondition = condition
         log(EVENT, 'U¾ivatelský filtr:', condition)
         self._refresh(reset={'condition': condition,
-                             'filter_flag': condition},
+                             'filter_flag': bool(condition)},
                       when=self.DOIT_IMMEDIATELY)
 
     def _filter_by_cell(self, cancel=False):
