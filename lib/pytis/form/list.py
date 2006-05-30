@@ -1982,32 +1982,22 @@ class BrowseForm(ListForm):
             menu += (MSeparator(),) + tuple(actions)
         return menu
 
-    def _on_print_(self, spec_path):
-        log(EVENT, 'Vyvolání tiskového formuláøe')
+    def _cmd_print(self, print_spec_path=None):
+        print_spec_path = None
+        log(EVENT, 'Vyvolání tiskového formuláøe:', print_spec_path)
         name = self._name
-        if not spec_path:
+        if not print_spec_path:
             try:
-                spec_paths = self._resolver.get(name, 'print_spec')
+                print_spec_path = self._resolver.get(name, 'print_spec')[0][1]
             except ResolverError:
-                spec_paths = None
-            if spec_paths:
-                spec_path = spec_paths[0][1]
-            else:
-                spec_path = os.path.join('output', name)
+                print_spec_path = os.path.join('output', name)
         P = self._PrintResolver
         parameters = self._formatter_parameters()
         parameters.update({P.P_NAME: name})
         print_resolver = P(self._resolver, parameters=parameters)
         resolvers = (print_resolver,)
-        formatter = pytis.output.Formatter(resolvers, spec_path)
+        formatter = pytis.output.Formatter(resolvers, print_spec_path)
         run_form(PrintForm, name, formatter=formatter)
-
-    def on_command(self, command, **kwargs):
-        if command == Form.COMMAND_PRINT:
-            self._on_print_(kwargs.get('print_spec_path'))
-        else:
-            return super_(BrowseForm).on_command(self, command, **kwargs)
-        return True
 
 
 class FilteredBrowseForm(BrowseForm):
