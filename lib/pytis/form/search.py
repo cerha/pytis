@@ -323,6 +323,9 @@ class SFDialog(SFSDialog):
             # We don't want to remember an empty condition.
             self._defaults = {}
             
+    def _finish_dialog(self):
+        self._save_values()
+
     def append_condition(self, col_id, value):
         """Pøidej filtrovací podmínku neinteraktivnì.
 
@@ -354,9 +357,18 @@ class SFDialog(SFSDialog):
             self._defaults[self._number_of_conditions-2] = d
         return True
             
-    def _finish_dialog(self):
-        self._save_values()
+    def reset_condition(self):
+        """Neinteraktivnì zru¹ stávající filtrovací podmínku.
 
+        Pozor, podmínka se pøestane uplatòovat pouze pro v¹echny následující
+        operace bez otevøení dialogu (append_condition).  Pøi následném
+        otevøení dialogu jsou v¹ak pøedchozí podmínky stále pøítomné a pøi
+        novém vyfiltrování se uplatní.  Zru¹ení podmínek z dialogu je nutno
+        provést ruènì.
+
+        """
+        self._condition = None
+        
     def condition(self):
         """Vra» aktuální podmínku nebo 'None', pokud ¾ádná není."""
         return self._condition
