@@ -595,48 +595,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 row = g.GetGridCursorRow()
                 self._current_editor.SetSize(g.CellToRect(row, col))
 
-    def _can_move_column(self, diff=1):
-        col = self._grid.GetGridCursorCol()
-        return 0 <= col + diff < len(self._columns)
-        
-    def _cmd_move_column(self, diff=1):
-        col = self._grid.GetGridCursorCol()
-        newcol = col + diff
-        if 0 <= newcol < len(self._columns):
-            c = self._columns[col]
-            self._update_grid(delete_column=c, insert_column=c,
-                              inserted_column_index=newcol)
-            self._select_cell(col=newcol)
-        else:
-            log(OPERATIONAL, "Invalid column move command:", (col, newcol))
-
-    def _can_sort(self, **kwargs):
-        col = kwargs.get('col')
-        if col is not None:
-            kwargs['col'] = self._columns[col].id()
-        return super(ListForm, self)._can_sort(**kwargs)
-            
-    def _cmd_sort(self, col=None, direction=None, primary=False):
-        if not self._finish_editing():
-            return
-        if col is not None:
-            col = self._columns[col].id()
-        old_sorting = self._lf_sorting
-        sorting = super_(ListForm)._cmd_sort(self, col=col,
-                                                   direction=direction,
-                                                   primary=primary)
-        if sorting is not None and sorting != old_sorting:
-            # Update grouping first.
-            cols = self._sorting_columns()
-            l = min(len(cols), len(self._grouping))
-            self._grouping = tuple(cols[:l])
-            self._set_state_param('grouping', self._grouping)
-            # Make the changes visible.
-            self._refresh(reset={'condition': self._lf_condition,
-                                 'sorting': sorting},
-                          when=self.DOIT_IMMEDIATELY)
-        return sorting
-
     # Callbacky
 
     def on_data_change(self):
@@ -989,7 +947,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                or selected == 0:
             row, col = event.GetRow(), event.GetCol()
             self._select_cell(row, col)
-            self.show_context_menu(position=event.GetPosition())
+            self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
         event.Skip()
             
     def _on_wheel(self, event):
@@ -1004,26 +962,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             lines = lines * linesPer
             scrollTo = vsy - pxy / lines
         g.Scroll(-1, scrollTo)    
-
-    def show_context_menu(self, position=None):
-        if self._table.editing():
-            menu = self._edit_menu()
-        else:
-            menu = self._context_menu()
-        g = self._grid
-        if menu:
-            if position is None:
-                row, col = self._current_cell()
-                rect = g.CellToRect(row, col)
-                pos = (rect.GetX() + rect.GetWidth()/3,
-                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
-                position = self._grid.CalcScrolledPosition(pos)
-            menu = Menu('', menu).create(g, self.keymap)
-            g.PopupMenu(menu, position)
-            menu.Destroy()
-
-    def _cmd_context_menu(self):
-        self.show_context_menu()
 
     def show_position(self):
         row = self._current_cell()[0]
@@ -1065,18 +1003,54 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         editing = self._table.editing()
         return editing and editing.changed
 
-    def _can_line_commit(self):
-        return self._is_changed()
-
-    def _can_line_rollback(self):
-        return self._is_changed()
-
-    def _can_cell_commit(self):
-        return self._grid.IsCellEditControlEnabled()
-
-    def _can_cell_rollback(self):
-        return self._grid.IsCellEditControlEnabled()
-
+    def _dualform(self):
+        # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
+        top = top_window()
+        if isinstance(top, DualForm) and \
+               self in (top.active_form(), top.inactive_form()):
+            return top
+        else:
+            return None
+    
+    def _context_action_args(self, action):
+        if action.context() == ActionContext.CURRENT_ROW:
+            args = (self.current_row(),)
+        elif action.context() == ActionContext.SELECTION:
+            args = (self.selected_rows(),)
+        else:
+            raise ProgramError("Invalid action context:", action.context())
+        if action.secondary_context() is not None:
+            args += (self._secondary_context(action.secondary_context()),)
+        return args
+    
+    def _secondary_context(self, context):
+        dual = self._dualform()
+        if dual:
+            if dual.active_form() is self:
+                form = dual.inactive_form()
+            else:
+                form = dual.active_form()
+            if context == ActionContext.CURRENT_ROW:
+                return form.current_row()
+            elif context == ActionContext.SELECTION:
+                return form.selected_rows()
+            else:
+                raise ProgramError("Invalid action secondary_context:", context)
+        else:
+            return None
+    
+    def _current_codebook_info(self):
+        row, col = self._current_cell()
+        column = self._columns[col]
+        computer = column.computer()
+        if computer and isinstance(computer, CbComputer):
+            column = self._view.field(computer.field())
+        enumerator = column.type(self._data).enumerator()
+        codebook = column.codebook(self._data)
+        return (column, enumerator, codebook)
+        
+    # Zpracování pøíkazù
+    
     def can_command(self, command, **kwargs):
         # Pøíkazy platné i bìhem editace, pokud není aktivní editor.
         UNIVERSAL_COMMANDS = (ListForm.COMMAND_COPY_CELL,
@@ -1094,7 +1068,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if self._table.editing():
             allowed = EDIT_COMMANDS
             if not self._grid.IsCellEditControlEnabled():
-                allowed  += UNIVERSAL_COMMANDS
+                allowed += UNIVERSAL_COMMANDS
             if command not in allowed:
                 return False
         elif command in EDIT_COMMANDS:
@@ -1127,8 +1101,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         elif command == ListForm.COMMAND_CELL_ROLLBACK:
             self._on_cell_rollback()
         # Pøíkazy mimo editaci
-        elif command == ListForm.COMMAND_CONTEXT_ACTION:
-            self._on_context_action(**kwargs)
         elif command == ListForm.COMMAND_EXPORT_CSV:
             self._on_export_csv()
         elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
@@ -1151,74 +1123,82 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return super_(ListForm).on_command(self, command, **kwargs)
         return True
-
-    def _set_grouping_column(self, col=None):
-        if col is not None:
-            cid = self._columns[col].id()
-            pos = self._sorting_position(cid)
-            if pos is not None:
-                cols = self._sorting_columns()
-                self._grouping = tuple(cols[:pos+1])
-            else:
-                log(OPERATIONAL, "Invalid grouping column:", cid)
-                return
-        else:
-            self._grouping = ()
-        self._set_state_param('grouping', self._grouping)
-        self._update_grid()
     
-    def _can_set_grouping_column(self, col=None):
-        if col is not None:
-            return self._columns[col].id() in self._sorting_columns()
+    def _cmd_context_menu(self, position=None):
+        if self._table.editing():
+            menu = self._edit_menu()
         else:
-            return bool(self._grouping)
+            menu = self._context_menu()
+        if menu:
+            g = self._grid
+            if position is None:
+                row, col = self._current_cell()
+                rect = g.CellToRect(row, col)
+                pos = (rect.GetX() + rect.GetWidth()/3,
+                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
+                position = self._grid.CalcScrolledPosition(pos)
+            menu = Menu('', menu).create(g, self.keymap)
+            g.PopupMenu(menu, position)
+            menu.Destroy()
 
-    # Metody volané pøímo z callbackových metod
-
-    def _current_codebook_info(self):
-        row, col = self._current_cell()
-        column = self._columns[col]
-        computer = column.computer()
-        if computer and isinstance(computer, CbComputer):
-            column = self._view.field(computer.field())
-        enumerator = column.type(self._data).enumerator()
-        codebook = column.codebook(self._data)
-        return (column, enumerator, codebook)
+    def _can_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        return 0 <= col + diff < len(self._columns)
         
-    def _on_show_cell_codebook(self):
-        column, enumerator, codebook = self._current_codebook_info()
-        if codebook and enumerator:
-            value = self._table.row(self._current_cell()[0])[column.id()]
-            select_row = {enumerator.value_column(): value}
-            run_form(BrowseForm, codebook, select_row=select_row)
+    def _cmd_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        newcol = col + diff
+        if 0 <= newcol < len(self._columns):
+            c = self._columns[col]
+            self._update_grid(delete_column=c, insert_column=c,
+                              inserted_column_index=newcol)
+            self._select_cell(col=newcol)
+        else:
+            log(OPERATIONAL, "Invalid column move command:", (col, newcol))
+
+    def _can_sort(self, **kwargs):
+        col = kwargs.get('col')
+        if col is not None:
+            kwargs['col'] = self._columns[col].id()
+        return super(ListForm, self)._can_sort(**kwargs)
+            
+    def _cmd_sort(self, col=None, direction=None, primary=False):
+        if not self._finish_editing():
+            return
+        if col is not None:
+            col = self._columns[col].id()
+        old_sorting = self._lf_sorting
+        sorting = super_(ListForm)._cmd_sort(self, col=col,
+                                                   direction=direction,
+                                                   primary=primary)
+        if sorting is not None and sorting != old_sorting:
+            # Update grouping first.
+            cols = self._sorting_columns()
+            l = min(len(cols), len(self._grouping))
+            self._grouping = tuple(cols[:l])
+            self._set_state_param('grouping', self._grouping)
+            # Make the changes visible.
+            self._refresh(reset={'condition': self._lf_condition,
+                                 'sorting': sorting},
+                          when=self.DOIT_IMMEDIATELY)
+        return sorting
+
+    def _can_line_commit(self):
+        return self._is_changed()
+
+    def _can_line_rollback(self):
+        return self._is_changed()
+
+    def _can_cell_commit(self):
+        return self._grid.IsCellEditControlEnabled()
+
+    def _can_cell_rollback(self):
+        return self._grid.IsCellEditControlEnabled()
 
     def _can_show_cell_codebook(self):
         column, enumerator, codebook = self._current_codebook_info()
         return codebook and enumerator
 
-    def _on_context_action(self, action):
-        args = self._context_action_args(action)
-        kwargs = action.kwargs()
-        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
-        apply(action.handler(), args, kwargs)
-        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
-        # dualform.  Jinak refreshujeme jen sebe sama.
-        dual = self._dualform()
-        if dual:
-            dual.refresh()
-        else:
-            self.refresh()
-        return True
-
-    def _dualform(self):
-        # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
-        top = top_window()
-        if isinstance(top, DualForm) and \
-               self in (top.active_form(), top.inactive_form()):
-            return top
-        else:
-            return None
-    
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and \
            len(self._selected_rows()) < 1:
@@ -1236,33 +1216,50 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return enabled
 
-    def _context_action_args(self, action):
-        if action.context() == ActionContext.CURRENT_ROW:
-            args = (self.current_row(),)
-        elif action.context() == ActionContext.SELECTION:
-            args = (self.selected_rows(),)
-        else:
-            raise ProgramError("Invalid action context:", action.context())
-        if action.secondary_context() is not None:
-            args += (self._secondary_context(action.secondary_context()),)
-        return args
-    
-    def _secondary_context(self, context):
+    def _cmd_context_action(self, action):
+        args = self._context_action_args(action)
+        kwargs = action.kwargs()
+        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
+        apply(action.handler(), args, kwargs)
+        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
+        # dualform.  Jinak refreshujeme jen sebe sama.
         dual = self._dualform()
         if dual:
-            if dual.active_form() is self:
-                form = dual.inactive_form()
-            else:
-                form = dual.active_form()
-            if context == ActionContext.CURRENT_ROW:
-                return form.current_row()
-            elif context == ActionContext.SELECTION:
-                return form.selected_rows()
-            else:
-                raise ProgramError("Invalid action secondary_context:", context)
+            dual.refresh()
         else:
-            return None
+            self.refresh()
+        return True
+
+    def _can_set_grouping_column(self, col=None):
+        if col is not None:
+            return self._columns[col].id() in self._sorting_columns()
+        else:
+            return bool(self._grouping)
+
+    # Metody volané pøímo z callbackových metod
+
+    def _set_grouping_column(self, col=None):
+        if col is not None:
+            cid = self._columns[col].id()
+            pos = self._sorting_position(cid)
+            if pos is not None:
+                cols = self._sorting_columns()
+                self._grouping = tuple(cols[:pos+1])
+            else:
+                log(OPERATIONAL, "Invalid grouping column:", cid)
+                return
+        else:
+            self._grouping = ()
+        self._set_state_param('grouping', self._grouping)
+        self._update_grid()
     
+    def _on_show_cell_codebook(self):
+        column, enumerator, codebook = self._current_codebook_info()
+        if codebook and enumerator:
+            value = self._table.row(self._current_cell()[0])[column.id()]
+            select_row = {enumerator.value_column(): value}
+            run_form(BrowseForm, codebook, select_row=select_row)
+
     def _on_incremental_search(self, full=False):
         row, col = self._current_cell()
         column = self._columns[col]
@@ -1602,12 +1599,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._on_line_rollback()
         return True
 
-    # Veøejné metody
-
-    def is_edited(self):
-        """Vra» pravdu, právì kdy¾ je List ve stavu øádkové editace."""
-        return self._table.editing()
-
 
     def _total_height(self):
         g = self._grid
@@ -1669,8 +1660,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._select_cell(row=row_number)
 
 
-    # Veøejné metody
-        
     def _refresh(self, reset=None, when=None):
         """Aktualizuj data seznamu z datového zdroje.
 
@@ -1759,12 +1748,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._show_data_status()
         return True
 
-    def status_fields(self):
-        # TODO: zatím je podoba statusbaru urèena specifikací, ale bylo by
-        # rozumné to celé pøedìlat, aby se statusbar dynamicky mìnil podle
-        # aktuálního formuláøe (s vyu¾itím této metody).
-        return (('list-position', 7),)
-
     def _update_colors(self):
         self._update_selection_colors()
         self._update_label_colors()
@@ -1805,8 +1788,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if coef != 1 and total != width and last is not None:
             g.SetColSize(last, g.GetColSize(last) + (width - total))
 
-    # wx metody
-
     def _on_size(self, event):
         size = event.GetSize()
         if size.width != self._grid.GetSize().width:
@@ -1834,6 +1815,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # v novém gridu.
         self._table.close()
 
+    # Veøejné metody
+        
+    def is_edited(self):
+        """Vra» pravdu, právì kdy¾ je List ve stavu øádkové editace."""
+        return self._table.editing()
+
+    def status_fields(self):
+        # TODO: zatím je podoba statusbaru urèena specifikací, ale bylo by
+        # rozumné to celé pøedìlat, aby se statusbar dynamicky mìnil podle
+        # aktuálního formuláøe (s vyu¾itím této metody).
+        return (('list-position', 7),)
+        
     # Ostatní veøejné metody
 
     def focus(self):
