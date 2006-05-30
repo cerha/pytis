@@ -23,6 +23,12 @@
 	Zpracování pøíkazù ve tøídì ListForm bylo pøevedeno na nový
 	zpùsob.  Vìt¹inu pøíkazù jsem otestoval, ale zmìn bylo dost, tak¾e
 	bych s nasazováním do ostrého provozu byl pokud mo¾no opatrný...
+
+	* BUGFIX: Pøi vyhledání øádku urèeného argumentem `select_row' je
+	brána v úvahu aktuální filtrovací podmínka.  Díky tomu je
+	u¾ivateli oznámeno nenalezení øádku pøi pøepnutí do existujícího
+	formuláøe ve kterém byl pøedtím zapnutý filter, pokud hledaný
+	øádek není mezi aktuálnì vyfiltrovanými øádky.
 	
 2006-05-29
 
