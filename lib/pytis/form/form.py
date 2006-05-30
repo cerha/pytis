@@ -1106,13 +1106,18 @@ class LookupForm(RecordForm):
                 elif result.isdigit():
                     self.select_row(int(result)-1)
                     break
-        
-    def _cmd_search(self, direction=None):
-        sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
-        condition = sf_dialog.condition()
-        if condition is None or direction is None:
+
+    def _cmd_search(self, next=False, back=False):
+        dlg = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
+        condition = dlg.condition()
+        if next and condition is not None:
+            if back:
+                direction = pytis.data.BACKWARD
+            else:
+                direction = pytis.data.FORWARD
+        else:
             condition, direction = \
-                block_refresh(lambda: run_dialog(sf_dialog, self.current_row(),
+                block_refresh(lambda: run_dialog(dlg, self.current_row(),
                                                  self.current_field()))
         if condition is not None:
             self._search(condition, direction)
@@ -1149,6 +1154,14 @@ class LookupForm(RecordForm):
         if perform and filter != self._lf_filter:
             self._lf_filter = filter
             self._filter(filter)
+
+    def _can_unfilter(self):
+        return self._lf_filter != self._lf_initial_condition
+        
+    def _cmd_unfilter(self):
+        self._lf_sf_dialog('_lf_filter_dialog', FilterDialog).reset_condition()
+        self._lf_filter = filter = self._lf_initial_condition
+        self._filter(filter)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
