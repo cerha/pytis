@@ -87,18 +87,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     hodnoty.  Programové nastavování hodnoty callback nevyvolává.
     
     """
-    CALL_NAVIGATE = 'CALL_NAVIGATE'
-    """Voláno, pokud má být provedena navigace na dal¹í prvek ve formuláøi.
-
-    Argumenty:
-
-      object -- ui prvek který má být pøeskoèen.
-      back -- smìr pohybu, boolean, pravda pøi pohybu vzad.
-
-    Políèka vyvolávají navigaci napøíklad k pøeskoèení neaktivních prvkù apod,
-    vlastní navigaci v¹ak zaji¹»uje nadøízený formuláø.
-
-    """
 
     _focused_field = None
     _last_focused_field = None
@@ -215,12 +203,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _skip_navigation_callback(self, widget):
         def cb(e):
             if not self._unregistered_widgets.has_key(widget):
-                self._run_callback(self.CALL_NAVIGATE, widget,
-                                   back=not e.GetDirection())
-                return True
+                EditForm.COMMAND_NAVIGATE.invoke(object=widget,
+                                                 back=not e.GetDirection())
             else:
                 e.Skip()
-                return True
         return cb
     
     def _init_ctrl(self):
@@ -701,7 +687,7 @@ class TextField(InputField):
             event.Skip()
         else:
             ctrl = event.GetEventObject()
-            self._run_callback(self.CALL_NAVIGATE, ctrl, back=False)
+            EditForm.COMMAND_NAVIGATE.invoke(object=ctrl, back=False)
 
     def _post_process_func(self):
         """Vra» funkci odpovídající specifikaci postprocessingu políèka.
