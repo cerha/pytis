@@ -1,5 +1,7 @@
 2006-05-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFDialog.reset_condition): Nová metoda.
+
 	* pytis/form/inputfield.py (CALL_NAVIGATE): Callback zru¹en.
 	(InputField._skip_navigation_callback.cb)
 	(TextField._on_enter_key): Namísto callbacku `CALL_NAVIGATE'
@@ -8,7 +10,8 @@
 	* pytis/form/command.py (Command.__init__): Aktualizace docstringu.
 
 	* pytis/form/commands_.py: `COMMAND_SORT_COLUMN' ->
-	`COMMAND_SORT'.
+	`COMMAND_SORT'.  V definicích pøíkazu `COMMAND_SORT' pou¾ívej nové
+	argumenty.  Nový pøíkaz `LookupForm.COMMAND_UNFILTER'.
 
 	* pytis/form/list.py (ListForm._filter_by_cell): Namísto volání
 	metody `_on_sort_column' vyvolej pøíkaz `COMMAND_SORT'.
@@ -36,6 +39,10 @@
 	(EditForm.on_command): Metoda zru¹ena.
 	(EditForm._create_form): Nenastavuj callback
 	`InputField.CALL_NAVIGATE'.
+	(LookupForm._cmd_search): Namísto argumentu `direction' pøebírej
+	dva boolean argumenty `next' a `back'.
+	(LookupForm._can_unfilter): Nová metoda.
+	(LookupForm._cmd_unfilter): Nová metoda.
 
 2006-05-29  Tomas Cerha  <cerha@brailcom.org>
 
