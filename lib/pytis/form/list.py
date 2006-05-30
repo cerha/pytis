@@ -1147,11 +1147,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             super(ListForm, self).select_row(position, quiet=quiet)
     
-    def _select_row(self, row):
+    def _select_row(self, row, quiet=False):
         if row:
             row_number = self._get_row_number(row)
             if row_number is None:
-                run_dialog(Warning, _("Záznam nenalezen"))
+                if not quiet:
+                    run_dialog(Warning, _("Záznam nenalezen"))
                 return
         else:
             row_number = -1
@@ -1238,9 +1239,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self.select_row(key, quiet=True)
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
             # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
-            if self._current_key() != key and \
-                   row < self._table.GetNumberRows() and row >= 0:
-                self._select_cell(row=row)
+            if self._current_key() != key:
+                if row < self._table.GetNumberRows() and row >= 0:
+                    self._select_cell(row=row)
+                else:
+                    self._select_cell(row=0)
         else:
             self._select_cell(row=row)
         self._show_data_status()
