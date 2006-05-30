@@ -1,5 +1,10 @@
 2006-05-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (CALL_NAVIGATE): Callback zru¹en.
+	(InputField._skip_navigation_callback.cb)
+	(TextField._on_enter_key): Namísto callbacku `CALL_NAVIGATE'
+	vyvolej rovnou pøíkaz `EditForm.COMMAND_NAVIGATE'.
+
 	* pytis/form/command.py (Command.__init__): Aktualizace docstringu.
 
 	* pytis/form/commands_.py: `COMMAND_SORT_COLUMN' ->
@@ -25,7 +30,12 @@
 	(LookupForm._on_filter): -> `_cmd_filter'.
 	(LookupForm._on_sort_column): -> `_cmd_sort'.
 	(LookupForm._can_sort_column): -> `_can_sort'.
-	(on_command): Metoda zru¹ena.
+	(LookupForm.on_command): Metoda zru¹ena.
+	(EditForm._navigate): -> `_cmd_navigate'.
+	(EditForm._cmd_commit_record): Nová metoda.
+	(EditForm.on_command): Metoda zru¹ena.
+	(EditForm._create_form): Nenastavuj callback
+	`InputField.CALL_NAVIGATE'.
 
 2006-05-29  Tomas Cerha  <cerha@brailcom.org>
 
