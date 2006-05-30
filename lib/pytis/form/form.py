@@ -629,7 +629,11 @@ class RecordForm(InnerForm):
             return None
     
     def _get_row_number(self, row):
-        """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'."""
+        """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'.
+
+        Pokud odpovídaící øádek není nalezen, vra» None.
+
+        """
         eqs = [pytis.data.EQ(c.id(), row[c.id()]) for c in self._data.key()]
         condition = pytis.data.AND(*eqs)
         data = self._data
@@ -638,7 +642,7 @@ class RecordForm(InnerForm):
         if not success:
             return None
         elif result == 0:
-            return 0
+            return None
         else:
             return result - 1
         
