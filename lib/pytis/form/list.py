@@ -450,10 +450,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                             self._selection_callback_tick = delay
                     self._position = row
                     # TODO: tady to zpùsobuje ¹patné zobrazování pozice v
-                    #       dualform. Nahrazeno voláním show_position v
+                    #       dualform. Nahrazeno voláním _show_position v
                     #       _post_selection_hook.
                     #       Jiné øe¹ení?
-                    # self.show_position()
+                    # self._show_position()
             elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
@@ -651,7 +651,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _post_selection_hook(self, the_row):
         if focused_window() is self:
             # TODO: viz poznámka v _select_cell.
-            self.show_position()
+            self._show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
             message('')
             column, enumerator, codebook = self._current_codebook_info()
@@ -957,7 +957,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             scrollTo = vsy - pxy / lines
         g.Scroll(-1, scrollTo)    
 
-    def show_position(self):
+    def _show_position(self):
         row = self._current_cell()[0]
         total = self._table.GetNumberRows()
         set_status('list-position', "%d/%d" % (row + 1, total))
@@ -1019,526 +1019,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         codebook = column.codebook(self._data)
         return (column, enumerator, codebook)
         
-    # Zpracování pøíkazù
-    
-    def can_command(self, command, **kwargs):
-        # Pøíkazy platné i bìhem editace, pokud není aktivní editor.
-        UNIVERSAL_COMMANDS = (ListForm.COMMAND_COPY_CELL,
-                              ListForm.COMMAND_SELECT_CELL,
-                              ListForm.COMMAND_RESIZE_COLUMN,
-                              ListForm.COMMAND_EDIT,
-                              ListForm.COMMAND_FIRST_COLUMN,
-                              ListForm.COMMAND_LAST_COLUMN)
-        # Pøíkazy platné pouze bìhem editace øádku.
-        EDIT_COMMANDS = (ListForm.COMMAND_LINE_COMMIT,
-                         ListForm.COMMAND_LINE_ROLLBACK,
-                         ListForm.COMMAND_FINISH_EDITING,
-                         ListForm.COMMAND_CELL_COMMIT,
-                         ListForm.COMMAND_CELL_ROLLBACK)
-        if self._table.editing():
-            allowed = EDIT_COMMANDS
-            if not self._grid.IsCellEditControlEnabled():
-                allowed += UNIVERSAL_COMMANDS
-            if command not in allowed:
-                return False
-        elif command in EDIT_COMMANDS:
-            return False
-        return super_(ListForm).can_command(self, command, **kwargs)
-    
-    def on_command(self, command, **kwargs):
-        # Univerzální pøíkazy
-        if command == ListForm.COMMAND_EDIT:
-            self._on_edit()
-        elif command == ListForm.COMMAND_SELECT_CELL:
-            self._select_cell(**kwargs)
-        elif command == ListForm.COMMAND_COPY_CELL:
-            self._on_copy_cell()
-        elif command == ListForm.COMMAND_RESIZE_COLUMN:
-            self._resize_column(**kwargs)
-        elif command == ListForm.COMMAND_FIRST_COLUMN:
-            self._select_cell(col=0)
-        elif command == ListForm.COMMAND_LAST_COLUMN:
-            self._select_cell(col=len(self._columns)-1)
-        # Pøíkazy bìhem editace øádku
-        elif command == ListForm.COMMAND_LINE_COMMIT:
-            self._on_line_commit()
-        elif command == ListForm.COMMAND_LINE_ROLLBACK:
-            self._on_line_rollback(**kwargs)
-        elif command == ListForm.COMMAND_FINISH_EDITING:
-            self._finish_editing()
-        elif command == ListForm.COMMAND_CELL_COMMIT:
-            self._on_cell_commit()
-        elif command == ListForm.COMMAND_CELL_ROLLBACK:
-            self._on_cell_rollback()
-        # Pøíkazy mimo editaci
-        elif command == ListForm.COMMAND_EXPORT_CSV:
-            self._on_export_csv()
-        elif command == ListForm.COMMAND_SET_GROUPING_COLUMN:
-            self._set_grouping_column(**kwargs)
-        elif command == ListForm.COMMAND_FILTER_BY_CELL:
-            self._filter_by_cell()
-        elif command == ListForm.COMMAND_ACTIVATE:
-            key = self._current_key()
-            self._run_callback(self.CALL_ACTIVATION, key, **kwargs)
-        elif command == ListForm.COMMAND_SHOW_CELL_CODEBOOK:
-            self._on_show_cell_codebook()
-        elif command == ListForm.COMMAND_INCREMENTAL_SEARCH:
-            self._on_incremental_search(**kwargs)
-        elif command == ListForm.COMMAND_INSERT_LINE:
-            self._on_insert_line(**kwargs)
-        elif command == ListForm.COMMAND_TOGGLE_COLUMN:
-            self._on_toggle_column(**kwargs)
-        else:
-            return super_(ListForm).on_command(self, command, **kwargs)
-        return True
-    
-    def _cmd_context_menu(self, position=None):
-        if self._table.editing():
-            menu = self._edit_menu()
-        else:
-            menu = self._context_menu()
-        if menu:
-            g = self._grid
-            if position is None:
-                row, col = self._current_cell()
-                rect = g.CellToRect(row, col)
-                pos = (rect.GetX() + rect.GetWidth()/3,
-                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
-                position = self._grid.CalcScrolledPosition(pos)
-            menu = Menu('', menu).create(g, self.keymap)
-            g.PopupMenu(menu, position)
-            menu.Destroy()
-
-    def _can_reload_form_state(self):
-        return not self._table.editing()
-
-    def _cmd_reset_columns(self):
-        self._update_grid(reset_columns=True)
-
-    def _can_move_column(self, diff=1):
-        col = self._grid.GetGridCursorCol()
-        return 0 <= col + diff < len(self._columns)
-        
-    def _cmd_move_column(self, diff=1):
-        col = self._grid.GetGridCursorCol()
-        newcol = col + diff
-        if 0 <= newcol < len(self._columns):
-            c = self._columns[col]
-            self._update_grid(delete_column=c, insert_column=c,
-                              inserted_column_index=newcol)
-            self._select_cell(col=newcol)
-        else:
-            log(OPERATIONAL, "Invalid column move command:", (col, newcol))
-
-    def _can_sort(self, **kwargs):
-        col = kwargs.get('col')
-        if col is not None:
-            kwargs['col'] = self._columns[col].id()
-        return super(ListForm, self)._can_sort(**kwargs)
-            
-    def _cmd_sort(self, col=None, direction=None, primary=False):
-        if not self._finish_editing():
-            return
-        if col is not None:
-            col = self._columns[col].id()
-        old_sorting = self._lf_sorting
-        sorting = super_(ListForm)._cmd_sort(self, col=col,
-                                                   direction=direction,
-                                                   primary=primary)
-        if sorting is not None and sorting != old_sorting:
-            # Update grouping first.
-            cols = self._sorting_columns()
-            l = min(len(cols), len(self._grouping))
-            self._grouping = tuple(cols[:l])
-            self._set_state_param('grouping', self._grouping)
-            # Make the changes visible.
-            self._refresh(reset={'condition': self._lf_condition,
-                                 'sorting': sorting},
-                          when=self.DOIT_IMMEDIATELY)
-        return sorting
-
-    def _can_line_commit(self):
-        return self._is_changed()
-
-    def _can_line_rollback(self):
-        return self._is_changed()
-
-    def _can_cell_commit(self):
-        return self._grid.IsCellEditControlEnabled()
-
-    def _can_cell_rollback(self):
-        return self._grid.IsCellEditControlEnabled()
-
-    def _can_show_cell_codebook(self):
-        column, enumerator, codebook = self._current_codebook_info()
-        return codebook and enumerator
-
-    def _can_context_action(self, action):
-        if action.context() == ActionContext.SELECTION and \
-           len(self._selected_rows()) < 1:
-            return False
-        if action.secondary_context() is not None and \
-               self._secondary_context(action.secondary_context()) is None:
-            return False
-        if not pytis.data.is_in_groups(action.access_groups()):
-            return False
-        enabled = action.enabled()
-        if callable(enabled):
-            args = self._context_action_args(action)
-            kwargs = action.kwargs()
-            return enabled(*args, **kwargs)
-        else:
-            return enabled
-
-    def _cmd_context_action(self, action):
-        args = self._context_action_args(action)
-        kwargs = action.kwargs()
-        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
-        apply(action.handler(), args, kwargs)
-        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
-        # dualform.  Jinak refreshujeme jen sebe sama.
-        dual = self._dualform()
-        if dual:
-            dual.refresh()
-        else:
-            self.refresh()
-        return True
-
-    def _can_set_grouping_column(self, col=None):
-        if col is not None:
-            return self._columns[col].id() in self._sorting_columns()
-        else:
-            return bool(self._grouping)
-
-    # Metody volané pøímo z callbackových metod
-
-    def _set_grouping_column(self, col=None):
-        if col is not None:
-            cid = self._columns[col].id()
-            pos = self._sorting_position(cid)
-            if pos is not None:
-                cols = self._sorting_columns()
-                self._grouping = tuple(cols[:pos+1])
-            else:
-                log(OPERATIONAL, "Invalid grouping column:", cid)
-                return
-        else:
-            self._grouping = ()
-        self._set_state_param('grouping', self._grouping)
-        self._update_grid()
-    
-    def _on_show_cell_codebook(self):
-        column, enumerator, codebook = self._current_codebook_info()
-        if codebook and enumerator:
-            value = self._table.row(self._current_cell()[0])[column.id()]
-            select_row = {enumerator.value_column(): value}
-            run_form(BrowseForm, codebook, select_row=select_row)
-
-    def _on_incremental_search(self, full=False):
-        row, col = self._current_cell()
-        column = self._columns[col]
-        if not isinstance(column.type(self._data), pytis.data.String):
-            message(_("V tomto sloupci nelze vyhledávat inkrementálnì"),
-                    beep_=True)
-            return
-        search_field = _grid.IncrementalSearch(self, full)
-        search_field.run()
-
-    def _on_copy_cell(self):
-        row, col = self._current_cell()
-        cid = self._columns[col].id()
-        clptext = self._table.row(row).format(cid)
-        # set_clipboard_text(clptext)
-        # TODO: wxClipboard nefunguje, jak má, tak to vyøe¹íme
-        #       hackem, kdy vyu¾ijeme toho, ¾e wxTextCtrl.Copy()
-        #       dìlá to, co má.
-        tc = wx.TextCtrl(self, -1, clptext)
-        tc.SetSelection(0,len(clptext))
-        tc.Copy()
-        tc.Destroy()
-
-    def _on_export_csv(self):
-        log(EVENT, 'Vyvolání CSV exportu')
-        data = self._data
-        # Kontrola poètu øádkù
-        number_rows = self._table.GetNumberRows()
-        if number_rows == 0:
-            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return
-        # Seznam sloupcù
-        column_list = [(c.id(), c.type(data)) for c in self._columns]
-        allowed = True
-        # Kontrola práv        
-        for cid, ctype in column_list:
-            if not data.accessible(cid, pytis.data.Permission.EXPORT):
-                allowed = False
-                break
-        if not allowed:
-            msg = _("Nemáte právo exportu k této tabulce.\n")
-            msg = msg + _("Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return            
-        export_dir = config.export_directory
-        export_encoding = config.export_encoding
-        db_encoding = config.db_encoding
-        try:
-            u"test".encode(export_encoding)
-        except:
-            msg = _("Kódování %s není podporováno.\n" % export_encoding)
-            msg = msg + _("Export se provede bez pøekódování.")
-            export_encoding = None
-            run_dialog(Error, msg)
-        try:
-            u"test".encode(db_encoding)
-        except:
-            msg = _("Kódování %s není podporováno.\n" % db_encoding)
-            msg = msg + _("Export se neprovede.")
-            run_dialog(Error, msg)
-            return
-        filename = pytis.form.run_dialog(pytis.form.FileDialog,
-                                       title="Zadat exportní soubor",
-                                       dir=export_dir, file='export.txt',
-                                       mode='SAVE',
-                                       wildcards=("Soubory TXT (*.txt)",
-                                                  "*.txt",
-                                                  "Soubory CSV (*.csv)",
-                                                  "*.csv"))
-        if not filename:
-            return
-        try:       
-            export_file = open(filename,'w')
-        except:
-            msg = _("Nepodaøilo se otevøít soubor " + filename + \
-                    " pro zápis!\n")
-            run_dialog(Error, msg)
-            return
-        def _process_table(update):
-            # Export labelù
-            for column in self._columns:
-                export_file.write(column.label()+'\t')
-            export_file.write('\n')
-            for r in range(0,number_rows):
-                if not update(int(float(r)/number_rows*100)):
-                    break
-                for cid, ctype in column_list:
-                    if isinstance(ctype, pytis.data.Float):
-                        s = self._table.row(r)[cid].export(locale_format=False)
-                    else:
-                        s = self._table.row(r)[cid].export()
-                    if export_encoding and export_encoding != db_encoding:
-                        if not is_unicode(s):
-                            s = unicode(s, db_encoding)
-                        s = s.encode(export_encoding)
-                    export_file.write(';'.join(s.split('\n'))+'\t')
-                export_file.write('\n')
-            export_file.close()
-        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
-        
-    def _on_edit(self):
-        if not self.editable:
-            log(EVENT, 'Pokus o editaci needitovatelné tabulky')
-            return False
-        table = self._table
-        if not table.editing():
-            if not self._lock_record(self._current_key()):
-                return False
-            table.edit_row(self._current_cell()[0])
-            self._update_selection_colors()
-        if not self._edit_cell():
-            self._on_line_rollback()
-        return True
-
-    def _on_insert_line(self, before=False, copy=False):
-        """Vlo¾ nový øádek do seznamu.
-
-        Argumenty:
-
-          before -- je-li pravda, nový øádek se vlo¾í pøed aktuální øádek, jinak
-            se vlo¾í za aktuální øádek
-          copy -- je-li pravda a seznam není prázdný, obsahem nového øádku bude
-            obsah aktuálního øádku, v opaèném pøípadì bude nový øádek prázdný
-
-        Vlo¾ení nového øádku do seznamu je mo¾né jen tehdy, pokud není zrovna
-        ¾ádný øádek editován, a» u¾ nový nebo stávající.  Pøi pokusu o vlo¾ení
-        nového øádku bìhem editace jiného øádku je chování metody nedefinováno.
-
-        Vlo¾ení nového øádku také není umo¾nìno, pokud mezi právì zobrazenými
-        sloupci chybí nìkterý NOT NULL sloupec.
-        
-        Po vlo¾ení nového øádku seznam automaticky pøejde do re¾imu editace
-        tohoto øádku a spustí editaci první editovatelné buòky øádku.
-
-        """
-        row = self._current_cell()[0]
-        log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))
-        if not self._data.accessible(None, pytis.data.Permission.INSERT):
-            message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
-                    'tabulky!', beep_=True)
-            return False
-        if not self.editable:
-            message('Needitovatelná tabulka!', beep_=True)
-            return False
-
-        cols = [c.id() for c in self._columns]
-        for col in self._data.columns():
-            if col.type().not_null() and col.id() not in cols:
-                msg = _('Povinný sloupec "%s" není zobrazen.\n'
-                        'Není mo¾né vkládat øádky v in-line editaci.\n'
-                        'Pøidejte sloupec nebo pou¾ijte editaèní formuláø.')
-                label = self._view.field(col.id()).column_label()
-                run_dialog(Warning, msg % label)
-                return False
-        table = self._table
-        if table.editing():
-            log(EVENT, 'Pokus o vlo¾ení nového øádku bìhem editace')
-            return False
-        self._last_insert_copy = copy
-        oldg = self._grid
-        oldempty = (oldg.GetNumberRows() == 0)
-        if not copy or oldempty:
-            inserted_row = None
-        else:
-            the_row = table.row(row)
-            inserted_row = PresentedRow(the_row.fields(), the_row.data(), None,
-                                        prefill=self._row_copy_prefill(the_row),
-                                        new=True)
-        if not before and not oldempty:
-            row = row + 1
-        if row == -1:
-            row = 0
-        self._update_grid(inserted_row_number=row, inserted_row=inserted_row)
-        self._select_cell(row=row, col=0, invoke_callback=False)
-        if not self._is_editable_cell(row, 0) \
-               and not self._find_next_editable_cell():
-            log(EVENT, '®ádný sloupec není editovatelný')
-            return False
-        self._edit_cell()
-        self._update_selection_colors()
-        log(EVENT, 'Øádek vlo¾en')
-        return True
-
-    def _on_line_commit(self):
-        # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _on_cell_commit.
-        log(EVENT, 'Pokus o ulo¾ení øádku seznamu do databáze')
-        # Vyta¾ení nových dat
-        table = self._table
-        editing = table.editing()
-        if not editing:
-            return False
-        row = editing.row
-        the_row = editing.the_row
-        # Ovìøení integrity záznamu (funkce check).
-        failed_id = self._check_record(the_row)
-        if failed_id:
-            col = find(failed_id, self._columns, key=lambda c: c.id())
-            if col is not None:
-                i = self._columns.index(col)
-                self._select_cell(row=row, col=i, invoke_callback=False)
-                self._edit_cell()
-            return True
-        # Urèení operace a klíèe
-        rdata = self._record_data(the_row)
-        kc = [c.id() for c in self._data.key()]
-        if editing.new:
-            if row > 0:
-                after = table.row(row-1).row().columns(kc)
-                before = None
-            elif row < table.GetNumberRows() - 1:
-                after = None
-                before = table.row(row+1).row().columns(kc)
-            else:
-                after = before = None
-            op = (self._data.insert, (rdata,), dict(after=after, before=before))
-        else:
-            key = editing.orig_content.row().columns(kc)
-            op = (self._data.update, (key, rdata))
-        # Provedení operace
-        success, result = db_operation(op)
-        if success and result[1]:
-            table.edit_row(None)
-            self._unlock_record()
-            message('Øádek ulo¾en do databáze', ACTION)
-            self.refresh()
-            self._run_callback(self.CALL_MODIFICATION)
-            on_line_commit = self._view.on_line_commit()
-            if on_line_commit is not None:
-                on_line_commit(the_row)
-            self.focus()
-        elif success:
-            log(EVENT, 'Zamítnuto pro chybu klíèe')
-            if editing.new:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
-                        "sousedního øádku")
-            else:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "
-                        "øádek ji¾ neexistuje")
-            run_dialog(Warning, msg)
-            return False
-        else:
-            log(EVENT, 'Chyba databázové operace')
-            return False
-        return True
-
-    def _on_line_rollback(self, soft=False):
-        log(EVENT, 'Zru¹ení editace øádku')
-        editing = self._table.editing()
-        if not editing:
-            return False
-        if soft and editing.changed:
-            return True
-        self._unlock_record()
-        row = editing.row
-        if editing.new:
-            self._update_grid()
-        else:
-            self._table.edit_row(None)
-            self._update_selection_colors()
-            # Tento SelectRow je zde nutný pro vynucení pøekreslení øádku se
-            # staronovými hodnotami.
-            self._grid.SelectRow(row)
-        self._select_cell(row=row, invoke_callback=False)
-        self.refresh()
-        return True
-
-    def _on_cell_commit(self):
-        row, col = self._current_cell()
-        log(EVENT, 'Odeslání obsahu políèka gridu', (row, col))
-        self._grid.DisableCellEditControl()
-        editing = self._table.editing()
-        if not editing:
-            return True
-        if editing.valid:
-            if not self._find_next_editable_cell():
-                if editing.new:
-                    q = _("Ulo¾it øádek?")
-                    if run_dialog(Question, q, True):
-                        log(EVENT, 'Kladná odpovìï na dotaz o ulo¾ení øádku')
-                        if self._on_line_commit():
-                            # TODO: voláním následující metody v tìle této
-                            # metody, která o¹etøuje pøíkaz, dojde k
-                            # zablokování zpracování pøíkazù v rámci jejího
-                            # zpracování.  Ne¾ bude následující volání opìt
-                            # odkomentováno, je tøeba zajistit neblokující
-                            # zpracování pøíkazù...
-                            # self._on_insert_line(copy=self._last_insert_copy)
-                            pass
-                        return True
-                    else:
-                        log(EVENT, 'Záporná odpovìï na dotaz o ulo¾ení øádku')
-                self._grid.SetGridCursor(row, 0)
-        if not editing.valid or editing.new:
-            log(EVENT, 'Návrat do editace políèka')
-            self._edit_cell()
-        return True
-        
-    def _on_cell_rollback(self):
-        log(EVENT, 'Opu¹tìní políèka gridu beze zmìny hodnoty')
-        self._current_editor.Reset()
-        self._grid.DisableCellEditControl()
-        self._current_editor = None
-        return True
-
     def _on_delete_record(self):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
@@ -1572,17 +1052,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 log(EVENT, 'Ulo¾ení zamítnuto')
                 self._on_line_rollback()
         return True
-
-
-    def _total_height(self):
-        g = self._grid
-        height = g.GetColLabelSize()
-        rows = self._grid.GetNumberRows()
-        if rows:
-            height += rows * g.GetRowSize(0)
-        if self._title_bar:
-            height += self._title_bar.GetSize().height
-        return height
 
     def _find_row_by_number(self, row_number):
         # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
@@ -1736,6 +1205,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             total += self._column_width(c)
         return total
 
+    def _total_height(self):
+        g = self._grid
+        height = g.GetColLabelSize()
+        rows = self._grid.GetNumberRows()
+        if rows:
+            height += rows * g.GetRowSize(0)
+        if self._title_bar:
+            height += self._title_bar.GetSize().height
+        return height
+
     def _resize_columns(self, size=None):
         g = self._grid
         if size is None:
@@ -1789,6 +1268,476 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # v novém gridu.
         self._table.close()
 
+    # Zpracování pøíkazù
+    
+    def can_command(self, command, **kwargs):
+        # Pøíkazy platné i bìhem editace, pokud není aktivní editor.
+        UNIVERSAL_COMMANDS = (ListForm.COMMAND_COPY_CELL,
+                              ListForm.COMMAND_SELECT_CELL,
+                              ListForm.COMMAND_RESIZE_COLUMN,
+                              ListForm.COMMAND_EDIT,
+                              ListForm.COMMAND_FIRST_COLUMN,
+                              ListForm.COMMAND_LAST_COLUMN)
+        # Pøíkazy platné pouze bìhem editace øádku.
+        EDIT_COMMANDS = (ListForm.COMMAND_LINE_COMMIT,
+                         ListForm.COMMAND_LINE_ROLLBACK,
+                         ListForm.COMMAND_FINISH_EDITING,
+                         ListForm.COMMAND_CELL_COMMIT,
+                         ListForm.COMMAND_CELL_ROLLBACK)
+        if self._table.editing():
+            allowed = EDIT_COMMANDS
+            if not self._grid.IsCellEditControlEnabled():
+                allowed += UNIVERSAL_COMMANDS
+            if command not in allowed:
+                return False
+        elif command in EDIT_COMMANDS:
+            return False
+        return super_(ListForm).can_command(self, command, **kwargs)
+    
+    def on_command(self, command, **kwargs):
+        # Univerzální pøíkazy
+        if command == ListForm.COMMAND_SELECT_CELL:
+            self._select_cell(**kwargs)
+        elif command == ListForm.COMMAND_RESIZE_COLUMN:
+            self._resize_column(**kwargs)
+        elif command == ListForm.COMMAND_FIRST_COLUMN:
+            self._select_cell(col=0)
+        elif command == ListForm.COMMAND_LAST_COLUMN:
+            self._select_cell(col=len(self._columns)-1)
+        # Pøíkazy bìhem editace øádku
+        elif command == ListForm.COMMAND_LINE_COMMIT:
+            self._on_line_commit()
+        elif command == ListForm.COMMAND_LINE_ROLLBACK:
+            self._on_line_rollback(**kwargs)
+        elif command == ListForm.COMMAND_FINISH_EDITING:
+            self._finish_editing()
+        # Pøíkazy mimo editaci
+        elif command == ListForm.COMMAND_FILTER_BY_CELL:
+            self._filter_by_cell()
+        elif command == ListForm.COMMAND_ACTIVATE:
+            key = self._current_key()
+            self._run_callback(self.CALL_ACTIVATION, key, **kwargs)
+        elif command == ListForm.COMMAND_TOGGLE_COLUMN:
+            self._on_toggle_column(**kwargs)
+        else:
+            return super_(ListForm).on_command(self, command, **kwargs)
+        return True
+    
+    def _cmd_context_menu(self, position=None):
+        if self._table.editing():
+            menu = self._edit_menu()
+        else:
+            menu = self._context_menu()
+        if menu:
+            g = self._grid
+            if position is None:
+                row, col = self._current_cell()
+                rect = g.CellToRect(row, col)
+                pos = (rect.GetX() + rect.GetWidth()/3,
+                       rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
+                position = self._grid.CalcScrolledPosition(pos)
+            menu = Menu('', menu).create(g, self.keymap)
+            g.PopupMenu(menu, position)
+            menu.Destroy()
+
+    def _can_reload_form_state(self):
+        return not self._table.editing()
+
+    def _cmd_reset_columns(self):
+        self._update_grid(reset_columns=True)
+
+    def _can_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        return 0 <= col + diff < len(self._columns)
+        
+    def _cmd_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        newcol = col + diff
+        if 0 <= newcol < len(self._columns):
+            c = self._columns[col]
+            self._update_grid(delete_column=c, insert_column=c,
+                              inserted_column_index=newcol)
+            self._select_cell(col=newcol)
+        else:
+            log(OPERATIONAL, "Invalid column move command:", (col, newcol))
+
+    def _can_sort(self, **kwargs):
+        col = kwargs.get('col')
+        if col is not None:
+            kwargs['col'] = self._columns[col].id()
+        return super(ListForm, self)._can_sort(**kwargs)
+            
+    def _cmd_sort(self, col=None, direction=None, primary=False):
+        if not self._finish_editing():
+            return
+        if col is not None:
+            col = self._columns[col].id()
+        old_sorting = self._lf_sorting
+        sorting = super_(ListForm)._cmd_sort(self, col=col,
+                                                   direction=direction,
+                                                   primary=primary)
+        if sorting is not None and sorting != old_sorting:
+            # Update grouping first.
+            cols = self._sorting_columns()
+            l = min(len(cols), len(self._grouping))
+            self._grouping = tuple(cols[:l])
+            self._set_state_param('grouping', self._grouping)
+            # Make the changes visible.
+            self._refresh(reset={'condition': self._lf_condition,
+                                 'sorting': sorting},
+                          when=self.DOIT_IMMEDIATELY)
+        return sorting
+
+    def _can_line_commit(self):
+        return self._is_changed()
+
+    def _can_line_rollback(self):
+        return self._is_changed()
+
+    def _can_show_cell_codebook(self):
+        column, enumerator, codebook = self._current_codebook_info()
+        return codebook and enumerator
+
+    def _cmd_show_cell_codebook(self):
+        column, enumerator, codebook = self._current_codebook_info()
+        if codebook and enumerator:
+            value = self._table.row(self._current_cell()[0])[column.id()]
+            select_row = {enumerator.value_column(): value}
+            run_form(BrowseForm, codebook, select_row=select_row)
+
+    def _can_context_action(self, action):
+        if action.context() == ActionContext.SELECTION and \
+           len(self._selected_rows()) < 1:
+            return False
+        if action.secondary_context() is not None and \
+               self._secondary_context(action.secondary_context()) is None:
+            return False
+        if not pytis.data.is_in_groups(action.access_groups()):
+            return False
+        enabled = action.enabled()
+        if callable(enabled):
+            args = self._context_action_args(action)
+            kwargs = action.kwargs()
+            return enabled(*args, **kwargs)
+        else:
+            return enabled
+
+    def _cmd_context_action(self, action):
+        args = self._context_action_args(action)
+        kwargs = action.kwargs()
+        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
+        apply(action.handler(), args, kwargs)
+        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
+        # dualform.  Jinak refreshujeme jen sebe sama.
+        dual = self._dualform()
+        if dual:
+            dual.refresh()
+        else:
+            self.refresh()
+        return True
+
+    def _can_set_grouping_column(self, col=None):
+        if col is not None:
+            return self._columns[col].id() in self._sorting_columns()
+        else:
+            return bool(self._grouping)
+
+    def _cmd_set_grouping_column(self, col=None):
+        if col is not None:
+            cid = self._columns[col].id()
+            pos = self._sorting_position(cid)
+            if pos is not None:
+                cols = self._sorting_columns()
+                self._grouping = tuple(cols[:pos+1])
+            else:
+                log(OPERATIONAL, "Invalid grouping column:", cid)
+                return
+        else:
+            self._grouping = ()
+        self._set_state_param('grouping', self._grouping)
+        self._update_grid()
+    
+    def _cmd_incremental_search(self, full=False):
+        row, col = self._current_cell()
+        column = self._columns[col]
+        if not isinstance(column.type(self._data), pytis.data.String):
+            message(_("V tomto sloupci nelze vyhledávat inkrementálnì"),
+                    beep_=True)
+            return
+        search_field = _grid.IncrementalSearch(self, full)
+        search_field.run()
+
+    def _cmd_copy_cell(self):
+        row, col = self._current_cell()
+        cid = self._columns[col].id()
+        clptext = self._table.row(row).format(cid)
+        # set_clipboard_text(clptext)
+        # TODO: wxClipboard nefunguje, jak má, tak to vyøe¹íme
+        #       hackem, kdy vyu¾ijeme toho, ¾e wxTextCtrl.Copy()
+        #       dìlá to, co má.
+        tc = wx.TextCtrl(self, -1, clptext)
+        tc.SetSelection(0,len(clptext))
+        tc.Copy()
+        tc.Destroy()
+        
+    def _cmd_edit(self):
+        if not self.editable:
+            log(EVENT, 'Pokus o editaci needitovatelné tabulky')
+            return False
+        table = self._table
+        if not table.editing():
+            if not self._lock_record(self._current_key()):
+                return False
+            table.edit_row(self._current_cell()[0])
+            self._update_selection_colors()
+        if not self._edit_cell():
+            self._on_line_rollback()
+        return True
+    
+    def _cmd_export_csv(self):
+        log(EVENT, 'Vyvolání CSV exportu')
+        data = self._data
+        # Kontrola poètu øádkù
+        number_rows = self._table.GetNumberRows()
+        if number_rows == 0:
+            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return
+        # Seznam sloupcù
+        column_list = [(c.id(), c.type(data)) for c in self._columns]
+        allowed = True
+        # Kontrola práv        
+        for cid, ctype in column_list:
+            if not data.accessible(cid, pytis.data.Permission.EXPORT):
+                allowed = False
+                break
+        if not allowed:
+            msg = _("Nemáte právo exportu k této tabulce.\n")
+            msg = msg + _("Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return            
+        export_dir = config.export_directory
+        export_encoding = config.export_encoding
+        db_encoding = config.db_encoding
+        try:
+            u"test".encode(export_encoding)
+        except:
+            msg = _("Kódování %s není podporováno.\n" % export_encoding)
+            msg = msg + _("Export se provede bez pøekódování.")
+            export_encoding = None
+            run_dialog(Error, msg)
+        try:
+            u"test".encode(db_encoding)
+        except:
+            msg = _("Kódování %s není podporováno.\n" % db_encoding)
+            msg = msg + _("Export se neprovede.")
+            run_dialog(Error, msg)
+            return
+        filename = pytis.form.run_dialog(pytis.form.FileDialog,
+                                       title="Zadat exportní soubor",
+                                       dir=export_dir, file='export.txt',
+                                       mode='SAVE',
+                                       wildcards=("Soubory TXT (*.txt)",
+                                                  "*.txt",
+                                                  "Soubory CSV (*.csv)",
+                                                  "*.csv"))
+        if not filename:
+            return
+        try:       
+            export_file = open(filename,'w')
+        except:
+            msg = _("Nepodaøilo se otevøít soubor " + filename + \
+                    " pro zápis!\n")
+            run_dialog(Error, msg)
+            return
+        def _process_table(update):
+            # Export labelù
+            for column in self._columns:
+                export_file.write(column.label()+'\t')
+            export_file.write('\n')
+            for r in range(0,number_rows):
+                if not update(int(float(r)/number_rows*100)):
+                    break
+                for cid, ctype in column_list:
+                    if isinstance(ctype, pytis.data.Float):
+                        s = self._table.row(r)[cid].export(locale_format=False)
+                    else:
+                        s = self._table.row(r)[cid].export()
+                    if export_encoding and export_encoding != db_encoding:
+                        if not is_unicode(s):
+                            s = unicode(s, db_encoding)
+                        s = s.encode(export_encoding)
+                    export_file.write(';'.join(s.split('\n'))+'\t')
+                export_file.write('\n')
+            export_file.close()
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
+
+    def _cmd_insert_line(self, before=False, copy=False):
+        row = self._current_cell()[0]
+        log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))
+        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+            message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
+                    'tabulky!', beep_=True)
+            return False
+        if not self.editable:
+            message('Needitovatelná tabulka!', beep_=True)
+            return False
+
+        cols = [c.id() for c in self._columns]
+        for col in self._data.columns():
+            if col.type().not_null() and col.id() not in cols:
+                msg = _('Povinný sloupec "%s" není zobrazen.\n'
+                        'Není mo¾né vkládat øádky v in-line editaci.\n'
+                        'Pøidejte sloupec nebo pou¾ijte editaèní formuláø.')
+                label = self._view.field(col.id()).column_label()
+                run_dialog(Warning, msg % label)
+                return False
+        table = self._table
+        if table.editing():
+            log(EVENT, 'Pokus o vlo¾ení nového øádku bìhem editace')
+            return False
+        self._last_insert_copy = copy
+        oldg = self._grid
+        oldempty = (oldg.GetNumberRows() == 0)
+        if not copy or oldempty:
+            inserted_row = None
+        else:
+            the_row = table.row(row)
+            inserted_row = PresentedRow(the_row.fields(), the_row.data(), None,
+                                        prefill=self._row_copy_prefill(the_row),
+                                        new=True)
+        if not before and not oldempty:
+            row = row + 1
+        if row == -1:
+            row = 0
+        self._update_grid(inserted_row_number=row, inserted_row=inserted_row)
+        self._select_cell(row=row, col=0, invoke_callback=False)
+        if not self._is_editable_cell(row, 0) \
+               and not self._find_next_editable_cell():
+            log(EVENT, '®ádný sloupec není editovatelný')
+            return False
+        self._edit_cell()
+        self._update_selection_colors()
+        log(EVENT, 'Øádek vlo¾en')
+        return True
+
+    def _on_line_commit(self):
+        # Zde zále¾í na návratové hodnotì, proto¾e ji vyu¾ívá _cmd_cell_commit.
+        log(EVENT, 'Pokus o ulo¾ení øádku seznamu do databáze')
+        # Vyta¾ení nových dat
+        table = self._table
+        editing = table.editing()
+        if not editing:
+            return False
+        row = editing.row
+        the_row = editing.the_row
+        # Ovìøení integrity záznamu (funkce check).
+        failed_id = self._check_record(the_row)
+        if failed_id:
+            col = find(failed_id, self._columns, key=lambda c: c.id())
+            if col is not None:
+                i = self._columns.index(col)
+                self._select_cell(row=row, col=i, invoke_callback=False)
+                self._edit_cell()
+            return True
+        # Urèení operace a klíèe
+        rdata = self._record_data(the_row)
+        kc = [c.id() for c in self._data.key()]
+        if editing.new:
+            if row > 0:
+                after = table.row(row-1).row().columns(kc)
+                before = None
+            elif row < table.GetNumberRows() - 1:
+                after = None
+                before = table.row(row+1).row().columns(kc)
+            else:
+                after = before = None
+            op = (self._data.insert, (rdata,), dict(after=after, before=before))
+        else:
+            key = editing.orig_content.row().columns(kc)
+            op = (self._data.update, (key, rdata))
+        # Provedení operace
+        success, result = db_operation(op)
+        if success and result[1]:
+            table.edit_row(None)
+            self._unlock_record()
+            message('Øádek ulo¾en do databáze', ACTION)
+            self.refresh()
+            self._run_callback(self.CALL_MODIFICATION)
+            on_line_commit = self._view.on_line_commit()
+            if on_line_commit is not None:
+                on_line_commit(the_row)
+            self.focus()
+        elif success:
+            log(EVENT, 'Zamítnuto pro chybu klíèe')
+            if editing.new:
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
+                        "sousedního øádku")
+            else:
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "
+                        "øádek ji¾ neexistuje")
+            run_dialog(Warning, msg)
+            return False
+        else:
+            log(EVENT, 'Chyba databázové operace')
+            return False
+        return True
+
+    def _on_line_rollback(self, soft=False):
+        log(EVENT, 'Zru¹ení editace øádku')
+        editing = self._table.editing()
+        if not editing:
+            return False
+        if soft and editing.changed:
+            return True
+        self._unlock_record()
+        row = editing.row
+        if editing.new:
+            self._update_grid()
+        else:
+            self._table.edit_row(None)
+            self._update_selection_colors()
+            # Tento SelectRow je zde nutný pro vynucení pøekreslení øádku se
+            # staronovými hodnotami.
+            self._grid.SelectRow(row)
+        self._select_cell(row=row, invoke_callback=False)
+        self.refresh()
+        return True
+
+    def _can_cell_commit(self):
+        return self._grid.IsCellEditControlEnabled()
+
+    def _cmd_cell_commit(self):
+        row, col = self._current_cell()
+        log(EVENT, 'Odeslání obsahu políèka gridu', (row, col))
+        self._grid.DisableCellEditControl()
+        editing = self._table.editing()
+        if not editing:
+            return
+        if editing.valid:
+            if not self._find_next_editable_cell():
+                if editing.new:
+                    q = _("Ulo¾it øádek?")
+                    if run_dialog(Question, q, True):
+                        log(EVENT, 'Kladná odpovìï na dotaz o ulo¾ení øádku')
+                        self._on_line_commit()
+                        return
+                    else:
+                        log(EVENT, 'Záporná odpovìï na dotaz o ulo¾ení øádku')
+                self._grid.SetGridCursor(row, 0)
+        if not editing.valid or editing.new:
+            log(EVENT, 'Návrat do editace políèka')
+            self._edit_cell()
+        
+    def _can_cell_rollback(self):
+        return self._grid.IsCellEditControlEnabled()
+
+    def _cmd_cell_rollback(self):
+        log(EVENT, 'Opu¹tìní políèka gridu beze zmìny hodnoty')
+        self._current_editor.Reset()
+        self._grid.DisableCellEditControl()
+        self._current_editor = None
+
     # Veøejné metody
         
     def is_edited(self):
@@ -1829,7 +1778,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def focus(self):
         super_(ListForm).focus(self)
-        self.show_position()
+        self._show_position()
         self._show_data_status()
         self._update_selection_colors()
         self._grid.SetFocus()
@@ -1838,8 +1787,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         super_(ListForm).defocus(self)
         self._update_selection_colors()
 
-
 
+
 class CodebookForm(PopupForm, ListForm, KeyHandler):
     """Formuláø pro zobrazení výbìrového seznamu (èíselníku).
 
@@ -1911,7 +1860,7 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
             col = find(col_id, self._columns, key=lambda c:c.id())
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))
-                self._on_incremental_search(full=False)
+                self.COMMAND_INCREMENTAL_SEARCH.invoke()
             else:
                 log(OPERATIONAL, "Invalid search column:", col_id)
 
