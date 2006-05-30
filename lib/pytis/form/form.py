@@ -1160,8 +1160,8 @@ class LookupForm(RecordForm):
         
     def _cmd_unfilter(self):
         self._lf_sf_dialog('_lf_filter_dialog', FilterDialog).reset_condition()
-        self._lf_filter = filter = self._lf_initial_condition
-        self._filter(filter)
+        self._lf_filter = None
+        self._filter(None)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
