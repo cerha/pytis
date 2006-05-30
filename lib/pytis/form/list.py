@@ -1134,7 +1134,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return prow.row()
         else:
             return None
-
+        
     def select_row(self, position, quiet=False):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
@@ -1148,10 +1148,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             super(ListForm, self).select_row(position, quiet=quiet)
     
     def _select_row(self, row):
-        if row is None:
-            row_number = -1
-        else:
+        if row:
             row_number = self._get_row_number(row)
+            if row_number is None:
+                run_dialog(Warning, _("Záznam nenalezen"))
+                return
+        else:
+            row_number = -1
         self._select_cell(row=row_number)
 
 
