@@ -24,6 +24,12 @@
 	zpùsob.  Vìt¹inu pøíkazù jsem otestoval, ale zmìn bylo dost, tak¾e
 	bych s nasazováním do ostrého provozu byl pokud mo¾no opatrný...
 
+	Kvùli ní¾e popsané opravì je nyní v metodì select_row hlá¹eno
+	nenalezení øádku i v nìkterých døíve ignorovaných situacích.
+	Teoreticky by to tak mìlo být správnì, ale nedá se vylouèit, ¾e v
+	nìkterých situacích teï bude dialog "Záznam nenalezen" vyskakovat
+	nechtìnì.  Takové situace je tøeba zaznamenat (napø. do TODO).
+
 	* BUGFIX: Pøi vyhledání øádku urèeného argumentem `select_row' je
 	brána v úvahu aktuální filtrovací podmínka.  Díky tomu je
 	u¾ivateli oznámeno nenalezení øádku pøi pøepnutí do existujícího

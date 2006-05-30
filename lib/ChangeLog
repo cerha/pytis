@@ -1,5 +1,12 @@
 2006-05-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py (GenericDialog._commit_dialog):
+	Pøejmnenováno na `_cmd_commit_dialog'.
+	(GenericDialog._close_dialog): Pøejmnenováno na
+	`_cmd_close_dialog'.
+	(GenericDialog._cmd_help): Nová metoda.
+	(GenericDialog.on_command): Metoda zru¹ena. 
+
 	* pytis/form/dualform.py (BrowseDualForm._on_main_activation):
 	Neoèekávej argument `key'.
 
@@ -86,6 +93,13 @@
 	Neoèekávej argument `key'.
 	(ListForm.can_command): Odstranìn zru¹ený pøíkaz
 	`COMMAND_SELECT_CELL'.
+	(BrowseForm._on_print): Pøevedeno na `_cmd_print'.
+	(BrowseForm.on_command): Metoda zru¹ena.
+	(ListForm._select_row): Nový nepovinný argument `quiet'.  Pokud
+	po¾adovaný øádek není nalezen a `quiet' není pravda, ohlas chybu a
+	výbìr neprovádìj.
+	(ListForm._refresh): Pokud není mo¾né vybrat øádak ani podle
+	èísla, vyber první øádek.
 
 	* pytis/form/form.py (LookupForm.SORTING_ASCENDENT)
 	(LookupForm.SORTING_DESCENDANT)
@@ -105,6 +119,11 @@
 	dva boolean argumenty `next' a `back'.
 	(LookupForm._can_unfilter): Nová metoda.
 	(LookupForm._cmd_unfilter): Nová metoda.
+	(RecordForm._get_row_number): Pokud odpovídaící øádek není
+	nalezen, vra» None.
+	(EditForm._select_row, BrowsableShowForm._select_row) 
+	(RecordForm._select_row): Nový nepovinný argument `quiet'.
+	(RecordForm.select_row): Pøedávej `quiet' volání `_select_row'.
 
 2006-05-29  Tomas Cerha  <cerha@brailcom.org>
 
