@@ -96,8 +96,6 @@ Command(ListForm, 'ACTIVATE',
         "Aktivaèní funkce pro aktuální øádek formuláøe") # arg. 'alternate'
 Command(ListForm, 'SHOW_CELL_CODEBOOK',
         "Vyvolání èíselníku aktivní buòky øádkového formuláøe")
-Command(ListForm, 'SELECT_CELL',
-        "Výbìr buòky seznamu")
 Command(ListForm, 'FIRST_COLUMN',
         "Pøechod na první sloupec tabulky")
 Command(ListForm, 'LAST_COLUMN',
@@ -115,7 +113,7 @@ Command(ListForm, 'EXPORT_CSV',
 Command(ListForm, 'LINE_COMMIT',
         "Dokonèení editace záznamu (ulo¾ení)")
 Command(ListForm, 'LINE_ROLLBACK',
-        "Kompletní zru¹ení editace záznamu") # arg. 'soft'
+        "Zru¹ení zmìn v editovaném záznamu") # arg. 'soft'
 Command(ListForm, 'FINISH_EDITING',
         "Opu¹tìní editace øádku")
 Command(ListForm, 'CELL_COMMIT',
