@@ -24,6 +24,7 @@
 	`COMMAND_SORT'.
 	(ListForm.on_command): Neo¹etøuj zde ``COMMAND_SORT_COLUMN',
 	`COMMAND_FILTER' a `COMMAND_MOVE_COLUMN'.
+	(ListForm._filter): `filter_flag' pøedávej jako boolean hodnotu.
 
 	* pytis/form/form.py (LookupForm.SORTING_ASCENDENT)
 	(LookupForm.SORTING_DESCENDANT)

@@ -12,11 +12,6 @@ CHYBY:
    dopoèítávané políèko (a také se tak v defsech dìje), ale není to
    systematické (problémy s údr¾bou).
 
- * Posun po zamítnutí mazání øádku.
-
-   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
-   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
-
  * Chyba v ukládání nastavení sloupeèkù.
 
    V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.  Pøes nabídku
@@ -30,12 +25,6 @@ CHYBY:
    Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
    kterého byla zmìna provedena.
 
- * Zobrazování nápovìdy polo¾ek menu ve stavové øádce.
-
-   Nepodaøilo se zatím zprovoznit v kontextovém menu vstupního políèka v re¾imu
-   inline editace, v kontextovém menu vstupního políèka v ShowFormu a v
-   kontextovém menu záhlaví sloupce.
-
  * Chybné zobrazení záznamu z jiné tabulky pøi zapnutém filtrování.
 
    Pøi zobrazení záznamu z jiné tabulky (napø. pøes kontextové menu øádku) je
@@ -44,6 +33,17 @@ CHYBY:
    záznam ve formuláøi nacházet.  To v¹ak není nijak indikováno a je zvýraznìn
    øádek, který pravdìpodobnì odpovídá poøadí záznamu v nevyfiltrované
    tabulce.  V takové situaci je tøeba ohlásit, ¾e záznam nebyl nalezen.
+
+ * Zobrazování nápovìdy polo¾ek menu ve stavové øádce.
+
+   Nepodaøilo se zatím zprovoznit v kontextovém menu vstupního políèka v re¾imu
+   inline editace, v kontextovém menu vstupního políèka v ShowFormu a v
+   kontextovém menu záhlaví sloupce.
+
+ * Posun po zamítnutí mazání øádku.
+
+   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
+   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
 
  * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
 
@@ -59,8 +59,6 @@ NOVÉ VLASTNOSTI:
 1) U¾ivatelské rozhraní
 
  * RELOAD_FORM_STATE pøidat do menu pod obnovu výchozích sloupcù.
-
- * Na klávesovou zkratku (a pøípadnì z menu) zru¹it filter.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
