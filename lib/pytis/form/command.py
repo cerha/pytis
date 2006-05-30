@@ -164,7 +164,7 @@ class Command(object):
         konstanta své obslu¾né tøídy (dané argumentem 'handler').  Název této
         konstanty je v¾dy COMMAND_ + 'name' ('name' je název pøíkazu zadaný v
         konstruktoru).  Naøíklad tedy 'Application.COMMAND_EXIT', nebo
-        'LookupForm.COMMAND_SORT_COLUMN'.
+        'LookupForm.COMMAND_SORT'.
 
         """
         assert issubclass(handler, CommandHandler), \
