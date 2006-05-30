@@ -4,8 +4,8 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2006-05-29
-
+2006-05-30
+	
 	Nový pøíkaz `LookupForm.COMMAND_UNFILTER', navázaný na klávesovou
 	zkratku `Ctrl-Shift-F4', zru¹í filter.  Chování je nyní takové, ¾e
 	stávající filtrovací podmínky zùstanou ve filtrovacím dialogu
@@ -19,6 +19,10 @@
 	má nápad, jak by se to mohlo chovat lépe, tak jej uvítám, ale
 	realizace mù¾e být pomìrnì komplikovaná kvùli souèasné
 	implementaci filtrovacích dialogù (dal¹í dùvod pro pøepis).
+
+	Zpracování pøíkazù ve tøídì ListForm bylo pøevedeno na nový
+	zpùsob.  Vìt¹inu pøíkazù jsem otestoval, ale zmìn bylo dost, tak¾e
+	bych s nasazováním do ostrého provozu byl pokud mo¾no opatrný...
 	
 2006-05-29
 

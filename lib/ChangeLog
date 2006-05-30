@@ -84,6 +84,8 @@
 	pøíkaz `COMMAND_ACTIVATE'.
 	(CodebookForm._on_activation, SelectRowsForm._on_activation):
 	Neoèekávej argument `key'.
+	(ListForm.can_command): Odstranìn zru¹ený pøíkaz
+	`COMMAND_SELECT_CELL'.
 
 	* pytis/form/form.py (LookupForm.SORTING_ASCENDENT)
 	(LookupForm.SORTING_DESCENDANT)
