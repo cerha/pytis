@@ -25,6 +25,44 @@
 	(ListForm.on_command): Neo¹etøuj zde ``COMMAND_SORT_COLUMN',
 	`COMMAND_FILTER' a `COMMAND_MOVE_COLUMN'.
 	(ListForm._filter): `filter_flag' pøedávej jako boolean hodnotu.
+	(ListForm._find_row_by_values): K vyhledávací podmínce pøidej
+	stávající filtrovací podmínku formuláøe.  Pøi nenalezení vracej
+	opravdu None.
+	(ListForm._on_right_click): Namísto volání `show_context_menu'
+	vyvolej pøíkaz `COMMAND_CONTEXT_MENU'.
+	(ListForm.show_context_menu): Metoda zru¹ena -- pøesunuto do
+	`_cmd_context_menu'.
+	(ListForm._cmd_context_menu): Provádìj v¹e pøímo zde.
+	(ListForm.on_command): Neo¹etøuj `COMMAND_CONTEXT_ACTION'.
+	(ListForm._on_context_action): Pøejmnenováno na
+	`_cmd_context_action'.
+	(ListForm): Metody pøeskupeny.
+	(ListForm._on_idle): Namísto volání `_on_reset_columns' vyvolej
+	pøíkaz `COMMAND_RESET_COLUMNS'.
+	(ListForm._on_reset_columns): Metoda zru¹ena.
+	(ListForm._cmd_reset_columns): Nová metoda.
+	(ListForm.on_command): Neo¹etøuj `COMMAND_RESET_COLUMNS'.
+	(ListForm.focus, ListForm._post_selection_hook)
+	(ListForm._select_cell): `show_position' -> `_show_position'.
+	(ListForm.show_position): Pøejmenováno na `_show_position'.
+	(ListForm.on_command): Neo¹etøuj `COMMAND_EDIT',
+	`COMMAND_COPY_CELL', `COMMAND_CELL_COMMIT',
+	`COMMAND_CELL_ROLLBACK', `COMMAND_EXPORT_CSV',
+	`COMMAND_SET_GROUPING_COLUMN', `COMMAND_SHOW_CELL_CODEBOOK',
+	`COMMAND_INCREMENTAL_SEARCH' a `COMMAND_INSERT_LINE'
+	(ListForm._on_show_cell_codebook): Pøejmenováno na
+	`_cmd_show_cell_codebook'.
+	(ListForm._set_grouping_column): Pøejmenováno na
+	`_cmd_set_grouping_column'.
+	(ListForm._on_incremental_search): Pøejmenováno na
+	`_cmd_incremental_search'.
+	(ListForm._on_copy_cell): Pøejmenováno na `_cmd_copy_cell'.
+	(ListForm._on_export_csv): Pøejmenováno na `_cmd_export_csv'.
+	(ListForm._on_edit): Pøejmenováno na `_cmd_edit'.
+	(ListForm._on_insert_line): Pøejmenováno na `_cmd_insert_line'.
+	(ListForm._on_cell_commit): Pøejmenováno na `_cmd_cell_commit'.
+	(ListForm._on_cell_rollback): Pøejmenováno na `_cmd_cell_rollback.
+	
 
 	* pytis/form/form.py (LookupForm.SORTING_ASCENDENT)
 	(LookupForm.SORTING_DESCENDANT)
