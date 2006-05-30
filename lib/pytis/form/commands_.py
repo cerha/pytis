@@ -80,7 +80,7 @@ Command(LookupForm, 'JUMP',
         "Skok na záznam")
 Command(LookupForm, 'SEARCH',
         "Hledání záznamu")
-Command(LookupForm, 'SORT_COLUMN',
+Command(LookupForm, 'SORT',
         "Setøídìní podle sloupce")
 Command(RecordForm, 'NEW_RECORD',
         "Vlo¾ení nového záznamu pomocí editaèního formuláøe")
@@ -198,9 +198,9 @@ DEFAULT_KEYMAP = (
     ('Alt-F6',        RecordForm.COMMAND_IMPORT_INTERACTIVE),
     ('F5',            RecordForm.COMMAND_EDIT_RECORD),
     ('F8',            RecordForm.COMMAND_DELETE_RECORD),
-    ('F4',            LookupForm.COMMAND_SORT_COLUMN),
     ('Ctrl-F4',       LookupForm.COMMAND_FILTER),
     ('F3',            LookupForm.COMMAND_SEARCH),
+    ('F4',            LookupForm.COMMAND_SORT),
     ('Ctrl-s',        LookupForm.COMMAND_SEARCH(direction=pytis.data.FORWARD)),
     ('Ctrl-r',        LookupForm.COMMAND_SEARCH(direction=pytis.data.BACKWARD)),
     ('Ctrl-j',        LookupForm.COMMAND_JUMP),
@@ -297,7 +297,7 @@ FORM_COMMAND_MENU = ((
     ),(#---------------
     (_("Tøídìní"),
      _("Urèit podmínky øazení záznamù."),
-     LookupForm.COMMAND_SORT_COLUMN),
+     LookupForm.COMMAND_SORT),
     (_("Filtrování"),
      _("Filtrovat záznamy podle zadaných podmínek."),
      LookupForm.COMMAND_FILTER),
