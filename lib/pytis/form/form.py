@@ -959,11 +959,11 @@ class LookupForm(RecordForm):
     """Formuláø s vyhledáváním a tøídìním."""
     
     SORTING_NONE = 'SORTING_NONE'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
     SORTING_ASCENDENT = 'SORTING_ASCENDENT'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT_COLUMN'."""
+    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
     
     def _init_attributes(self, sorting=None, condition=None,
@@ -1095,7 +1095,7 @@ class LookupForm(RecordForm):
         row = data.fetchone(direction=direction)
         self._select_row(row)
 
-    def _on_jump(self):
+    def _cmd_jump(self):
         if self._lf_select_count > 0:
             prompt = _("Záznam èíslo (1-%s):") % (self._lf_select_count)
             while True:
@@ -1107,7 +1107,7 @@ class LookupForm(RecordForm):
                     self.select_row(int(result)-1)
                     break
         
-    def _on_search(self, direction=None):
+    def _cmd_search(self, direction=None):
         sf_dialog = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
         condition = sf_dialog.condition()
         if condition is None or direction is None:
@@ -1137,7 +1137,7 @@ class LookupForm(RecordForm):
         self._init_select()
         self.select_row(self._current_key())
 
-    def _on_filter(self, show_dialog=True):
+    def _cmd_filter(self, show_dialog=True):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
         if show_dialog:
             perform, filter = run_dialog(sf_dialog, self._data,
@@ -1150,7 +1150,7 @@ class LookupForm(RecordForm):
             self._lf_filter = filter
             self._filter(filter)
 
-    def _on_sort_column(self, col=None, direction=None, primary=False):
+    def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
 
         Argumenty:
@@ -1211,7 +1211,7 @@ class LookupForm(RecordForm):
             self.select_row(self._current_key())
         return sorting
     
-    def _can_sort_column(self, col=None, direction=None, primary=False):
+    def _can_sort(self, col=None, direction=None, primary=False):
         # `col' je zde identifikátor sloupce.
         sorting_columns = tuple(self._sorting_columns())
         if direction == self.SORTING_NONE:
@@ -1246,20 +1246,6 @@ class LookupForm(RecordForm):
         """
         return self._lf_sorting
 
-    def on_command(self, command, **kwargs):
-        if command == LookupForm.COMMAND_JUMP:
-            self._on_jump()
-        elif command == LookupForm.COMMAND_SEARCH:
-            self._on_search(**kwargs)
-        elif command == LookupForm.COMMAND_FILTER:
-            self._on_filter()
-        elif command == LookupForm.COMMAND_SORT_COLUMN:
-            self._on_sort_column()
-        else:
-            return super_(LookupForm).on_command(self, command, **kwargs)
-        return True
-
-       
 
 ### Editaèní formuláø
 
