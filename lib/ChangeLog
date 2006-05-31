@@ -1,3 +1,61 @@
+2006-05-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._on_idle)
+	(ListForm._displayed_columns_menu): `COMMAND_RESET_COLUMNS' ->
+	`COMMAND_RESET_FORM_STATE'.
+	(ListForm._on_label_right_down, ListForm._cmd_context_menu):
+	Klávesovou mapu získej pomocí `self._get_keymap()'.
+	(ListForm._on_reload_form_state): -> `_on_form_state_change'
+	(ListForm._can_reload_form_state): Poèítej také s metodou pøedka.
+	(ListForm._can_reset_columns): -> `_can_reset_form_state'.
+	(ListForm._can_reload_form_state, ListForm._cmd_reset_columns):
+	Metody zru¹eny.
+	(ListForm._init_columns): Zru¹en argument `allow_user_settings'.
+	(ListForm._update_grid): Argumenty `reset_columns' a
+	`soft_reset_columns' nahrazeny argumentem `init_columns'.
+	`_init_columns()' volej bez `allow_user_settings'.  Zapamatování
+	nastavení sloupcù provádìj pouze pokud `init_columns' není
+	pravdivé.  Vyma¾ nastavení sloupcù, pokud je shodné s výchozím
+	nastavením.
+
+	* pytis/form/output.py (PrintForm): Buï potomkem `InnerForm', ne
+	`Form'.
+
+	* pytis/form/form.py (Form._create_print_menu)
+	(Form._on_print_menu): Pøesunuto do `TitledForm'.
+	(Form.__init__): Nevolej `_create_print_menu'.
+	(Form._on_reload_form_state): Pøejmenováno na
+	`_on_form_state_change'.
+	(Form._can_reload_form_state): Nová metoda.
+	(Form._cmd_reload_form_state): `_on_reload_form_state' ->
+	`_on_form_state_change'.  Nakonec volej refresh, pokud jde o
+	`Refreshable' formuláø.
+	(Form._can_reset_form_state, Form._cmd_reset_form_state): Nové
+	metody.
+	(TitledForm._create_title_bar): Volej `_create_print_menu'.
+	(LookupForm._init_attributes): Neoèekávej návratovou hodnotu z
+	`_init_sorting'.
+	(LookupForm._init_sorting): Nevracej hodnotu ale pøímo nastavuj
+	`self._lf_sorting'.
+	(LookupForm._on_reload_form_state): Metoda zru¹ena.
+	(LookupForm._on_form_state_change): Nová metoda.
+
+	* pytis/form/commands_.py: `Form.COMMAND_PRINT' ->
+	`InnerForm.COMMAND_PRINT'.  `Form.COMMAND_RELOAD_FORM_STATE ->
+	`InnerForm.COMMAND_RELOAD_FORM_STATE'.  Nový pøíkaz
+	`InnerForm.COMMAND_RESET_FORM_STATE'.  Zru¹en pøíkaz
+	`ListForm.RESET_COLUMNS'.
+	(DEFAULT_KEYMAP): Nová zkratka pro `COMMAND_RESET_FORM_STATE'.
+	(FORM_COMMAND_MENU): Zmìna poøadí polo¾ek.  Vypu¹tìny pøíkazy,
+	které jsou dostupné z kontextového menu øádku.  Nové pøíkazy
+	`InnerForm.COMMAND_RELOAD_FORM_STATE' a
+	`InnerForm.COMMAND_RESET_FORM_STATE'.
+	(WX_COMMAND_ICONS): Pøidána ikona pro `Form.COMMAND_HELP'.
+
+	* pytis/form/application.py (Application._create_command_menu): Ve
+	`FORM_COMMAND_MENU' oèekávej pøíkaz na prvním místì.
+	
+
 2006-05-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dialog.py (GenericDialog._commit_dialog):

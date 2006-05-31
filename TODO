@@ -1,9 +1,5 @@
 CHYBY:
 
- * Pøi obnovì výchozích sloupcù (podle defsu) není obnoveno tøídìní atd.
-
-   Chceme obnovit také tøídìní, seskupování atd.
-
  * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
 
    Tj. napø. kdy¾ je filter závislý na dopoèítávaném políèku, které je zmìnìno
@@ -12,6 +8,11 @@ CHYBY:
    dopoèítávané políèko (a také se tak v defsech dìje), ale není to
    systematické (problémy s údr¾bou).
 
+ * Aktualizace políèka `data-changed' ve stavové øádce.
+
+   Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
+   kterého byla zmìna provedena.
+
  * Chyba v ukládání nastavení sloupeèkù.
 
    V databázi ISASu jsem se vy¹krtl ze skupiny isas_admin.  Pøes nabídku
@@ -19,11 +20,6 @@ CHYBY:
    první dva sloupeèky.  Vyskoèil jsem z ISASu a pøidal se do skupiny
    isas_admin.  Spustil jsem si ISAS, napsal heslo a ke konci ke¹ování defsù to
    spadlo.  Pomáhá jedinì update bv_users_cfg set saved_config = NULL;
-
- * Aktualizace políèka `data-changed' ve stavové øádce.
-
-   Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
-   kterého byla zmìna provedena.
 
  * Zobrazování nápovìdy polo¾ek menu ve stavové øádce.
 
@@ -49,8 +45,6 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * RELOAD_FORM_STATE pøidat do menu pod obnovu výchozích sloupcù.
-
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
    Práce s výbìrem je nyní problematická, proto¾e výbìr je pou¾íván také k
@@ -65,8 +59,6 @@ NOVÉ VLASTNOSTI:
    Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
    by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
 
- * Oddìlit popup menu celého BrowseFormu a øádku (asi i buòky).
- 
  * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
  
  * Roz¹íøit øádek po dobu inline editace víceøádkového textu.
@@ -81,8 +73,6 @@ NOVÉ VLASTNOSTI:
 
    Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
    pøi vyvolání èíselníku.
-
- * Pravé tlaèítko nad prázdným BrowseFormem.
 
  * Filtr distinct hodnot (v kontextovém menu záhlaví sloupce).
 
