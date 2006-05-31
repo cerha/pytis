@@ -133,7 +133,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._result = None
         start_time = time.time()
         self._create_form()
-        self._create_print_menu()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
 
     def _init_attributes(self, spec_args={}):
@@ -193,32 +192,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _create_form_parts(self, sizer):
         pass
 
-    def _create_print_menu(self):
-        # Vra» tuple polo¾ek tiskového menu.
-        name = self._name
-        try:
-            print_spec = self._resolver.get(name, 'print_spec')
-        except ResolverSpecError:
-            print_spec = None
-        if not print_spec:
-            print_spec = ((_("Implicitní"), os.path.join('output', name)),)
-        self._print_menu = [MItem(title, command=Form.COMMAND_PRINT,
-                                  args=dict(print_spec_path=path,
-                                            _command_handler=self))
-                            for title, path in print_spec]
-    
-        
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
 
     def __repr__(self):
         return str(self)
-
-    def _on_print_menu(self, event):
-        button = event.GetEventObject()
-        menu = Menu('', self._print_menu).create(button, self.keymap)
-        button.PopupMenu(menu, (0, button.GetSize().y))
-        menu.Destroy()
 
     def _form_state_key(self):
         return self.__class__.__name__+'/'+self._name
@@ -237,16 +215,31 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         if self._form_state.has_key(name):
             del self._form_state[name]
 
-    def _on_reload_form_state(self):
+    def _on_form_state_change(self):
         pass
 
     # Zpracování pøíkazù
+
+    def _can_reload_form_state(self):
+        return self._form_state != self._initial_form_state
     
     def _cmd_reload_form_state(self):
         self._form_state = copy.copy(self._initial_form_state)
         config.form_state[self._form_state_key()] = self._form_state
-        self._on_reload_form_state()
+        self._on_form_state_change()
+        if isinstance(self, Refreshable):
+            self.refresh()
 
+    def _can_reset_form_state(self):
+        return self._form_state != {}
+        
+    def _cmd_reset_form_state(self):
+        self._form_state = {}
+        config.form_state[self._form_state_key()] = self._form_state
+        self._on_form_state_change()
+        if isinstance(self, Refreshable):
+            self.refresh()
+        
     def _cmd_help(self):
         help(self.help_name())
 
@@ -512,6 +505,26 @@ class TitledForm:
                           text=self._view.description(),
                           format=TextFormat.WIKI)
 
+    def _on_print_menu(self, event):
+        button = event.GetEventObject()
+        menu = Menu('', self._print_menu).create(button, self._get_keymap())
+        button.PopupMenu(menu, (0, button.GetSize().y))
+        menu.Destroy()
+        
+    def _create_print_menu(self):
+        # Vra» tuple polo¾ek tiskového menu.
+        name = self._name
+        try:
+            print_spec = self._resolver.get(name, 'print_spec')
+        except ResolverSpecError:
+            print_spec = None
+        if not print_spec:
+            print_spec = ((_("Výchozí"), os.path.join('output', name)),)
+        self._print_menu = [MItem(title, command=InnerForm.COMMAND_PRINT,
+                                  args=dict(print_spec_path=path,
+                                            _command_handler=self))
+                            for title, path in print_spec]
+
     def _create_title_bar(self, text, size=None, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
@@ -519,6 +532,7 @@ class TitledForm:
         bmp = wx.ArtProvider_GetBitmap(wx.ART_PRINT, wx.ART_TOOLBAR, (16,16))
         button = wx.BitmapButton(panel, -1, bmp, style=wx.NO_BORDER)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(), self._on_print_menu)
+        self._create_print_menu()
         box = wx.BoxSizer()
         box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
         box.Add(button)
@@ -985,11 +999,11 @@ class LookupForm(RecordForm):
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
-        self._lf_sorting = self._init_sorting(sorting)
-        self._lf_condition = condition
-        self._lf_indicate_filter = indicate_filter
+        self._init_sorting(sorting)
         self._lf_initial_sorting = self._lf_sorting
+        self._lf_condition = condition
         self._lf_initial_condition = self._lf_condition
+        self._lf_indicate_filter = indicate_filter
         self._lf_search_dialog = None
         self._lf_filter_dialog = None
         self._lf_select_count = None
@@ -998,7 +1012,7 @@ class LookupForm(RecordForm):
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
 
-    def _init_sorting(self, sorting):
+    def _init_sorting(self, sorting=None):
         if sorting is None:
             sorting = self._get_state_param('sorting', None, types.TupleType)
             if sorting is not None:
@@ -1009,7 +1023,7 @@ class LookupForm(RecordForm):
                         break
         if sorting is None:
             sorting = self._default_sorting()
-        return sorting
+        self._lf_sorting = sorting
         
     def _default_sorting(self):
         sorting = self._view.sorting()
@@ -1126,11 +1140,9 @@ class LookupForm(RecordForm):
         if condition is not None:
             self._search(condition, direction)
 
-    def _on_reload_form_state(self):
-        self._lf_sorting = self._lf_initial_sorting
-        if isinstance(self, Refreshable):
-            self.refresh()
-        super(LookupForm, self)._on_reload_form_state()
+    def _on_form_state_change(self):
+        super(LookupForm, self)._on_form_state_change()
+        self._init_sorting()
 
     def _is_searching(self):
         sd = self._lf_search_dialog
