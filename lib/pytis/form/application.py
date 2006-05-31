@@ -336,7 +336,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for group in FORM_COMMAND_MENU:
             if items:
                 items.append(MSeparator())
-            for title, help, cmd in group:
+            for cmd, title, help in group:
                 if is_sequence(cmd):
                     cmd, args = cmd
                 else:
