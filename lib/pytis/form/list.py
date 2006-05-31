@@ -131,14 +131,12 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _default_columns(self):
         return self._view.columns()
 
-    def _init_columns(self, columns=None, allow_user_settings=True):
+    def _init_columns(self, columns=None):
         if not columns:
-            columns = default = self._default_columns()
-            if allow_user_settings:
-                user_columns = self._get_state_param('columns', default,
-                                                     types.TupleType)
-                columns = [id for id in user_columns if self._view.field(id)] \
-                          or default
+            default = self._default_columns()
+            columns = [id for id in self._get_state_param('columns', default,
+                                                          types.TupleType)
+                       if self._view.field(id)] or default
         self._columns = [self._view.field(id) for id in columns]
     
     def _init_grouping(self, grouping=None):
@@ -229,8 +227,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     
     def _update_grid(self, data_init=False, inserted_row_number=None,
                      inserted_row=None, delete_column=None, insert_column=None,
-                     inserted_column_index=None, reset_columns=False,
-                     soft_reset_columns=False):
+                     inserted_column_index=None, init_columns=False):
         g = self._grid
         t = self._table
         def notify(id, *args):
@@ -251,9 +248,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
         g.BeginBatch()
-        if reset_columns or soft_reset_columns:
+        if init_columns:
             deleted = len(self._columns)
-            self._init_columns(allow_user_settings = not reset_columns)
+            self._init_columns()
             inserted = len(self._columns)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
@@ -268,12 +265,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._columns.insert(i, insert_column)
             notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
         new_columns = tuple([c.id() for c in self._columns])
-        if reset_columns:
-            self._unset_state_param('columns')
-            self._unset_state_param('default_columns')
-        elif new_columns != old_columns:
-            self._set_state_param('columns', new_columns)
-            self._set_state_param('default_columns', self._default_columns())
+        if new_columns != old_columns and not init_columns:
+            default_columns = self._default_columns()
+            if new_columns == default_columns:
+                self._unset_state_param('columns')
+                self._unset_state_param('default_columns')
+            else:
+                self._set_state_param('columns', new_columns)
+                self._set_state_param('default_columns', default_columns)
         t.update(columns=self._columns,
                  row_count=row_count, sorting=self._lf_sorting,
                  grouping=self._grouping,
@@ -287,14 +286,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         elif new_row_count > old_row_count:
             notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
         notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-        if new_columns != old_columns or reset_columns or soft_reset_columns:
+        if new_columns != old_columns or init_columns:
             self._init_col_attr()
         g.EndBatch()
         # Závìreèné úpravy
         self._update_colors()
         self._resize_columns()
         if new_row_count != old_row_count or new_columns != old_columns \
-               or reset_columns or soft_reset_columns:
+               or init_columns:
             # This is a workaround of a wxWidgets bug.  The scrollbars are not
             # shown or hidden properly, until a size event is received by the
             # grid.  Thus we generate one artificially...
@@ -701,7 +700,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                         "Va¹e u¾ivatelské nastavení sloupcù je ji¾ zastaralé.\n"
                         "Chcete pou¾ít nové výchozí nastavení sloupcù?")
                 if run_dialog(Question, msg):
-                    self.COMMAND_RESET_COLUMNS.invoke()
+                    self.COMMAND_RESET_FORM_STATE.invoke()
                 else:
                     self._set_state_param('default_columns', columns)
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
@@ -764,11 +763,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                                state=lambda c=c: c in self._columns)
                      for c in self._view.fields()] + \
                     [MSeparator(),
-                     MItem(_("Vrátit výchozí sloupce"),
-                           command=ListForm.COMMAND_RESET_COLUMNS),
-                     # TODO: Kam s ním, a jak to nazvat, aby to bylo jasné.
-                     #MItem(_("Zahodit zmìny nastavení sloupcù"),
-                     #      command=ListForm.COMMAND_RESET_COLUMNS)
+                     MItem(_("Vrátit výchozí nastavení formuláøe"),
+                           command=InnerForm.COMMAND_RESET_FORM_STATE),
                      ])
     
     def _column_context_menu(self, col):
@@ -824,7 +820,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             menu = self._displayed_columns_menu(None)
         else:
             menu = self._column_context_menu(col)
-        m = menu.create(g, self.keymap)
+        m = menu.create(g, self._get_keymap())
         g.PopupMenu(m)
         m.Destroy()
         event.Skip()
@@ -980,11 +976,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     dc.DrawPolygon(arrow(ax, height-2))
             x += width
 
-    def _on_reload_form_state(self):
+    def _on_form_state_change(self):
+        super(ListForm, self)._on_form_state_change()
         self._init_grouping()
         self._init_column_widths() 
-        self._update_grid(soft_reset_columns=True)
-        super(ListForm, self)._on_reload_form_state()
+        self._update_grid(init_columns=True)
         
     def _on_right_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
@@ -1360,12 +1356,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _cmd_last_column(self):
         self._select_cell(col=len(self._columns)-1)
     
-    def _can_reload_form_state(self):
-        return not self._table.editing()
-
-    def _cmd_reset_columns(self):
-        self._update_grid(reset_columns=True)
-
     def _can_move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
         return 0 <= col + diff < len(self._columns)
@@ -1463,7 +1453,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 pos = (rect.GetX() + rect.GetWidth()/3,
                        rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
                 position = self._grid.CalcScrolledPosition(pos)
-            menu = Menu('', menu).create(g, self.keymap)
+            menu = Menu('', menu).create(g, self._get_keymap())
             g.PopupMenu(menu, position)
             menu.Destroy()
 
