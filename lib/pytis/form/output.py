@@ -293,7 +293,7 @@ class PostscriptViewer(wx.ScrolledWindow):
         dc.EndDrawing()
     
 
-class PrintForm(Form):
+class PrintForm(InnerForm):
     """Formuláø zobrazující preview tisku s mo¾ností jeho provedení."""
     DESCR = "tisková sestava"
     
