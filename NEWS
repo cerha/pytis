@@ -4,6 +4,30 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-05-31
+
+	Nový pøíkaz RESET_FORM_STATE zahodí ve¹kerá u¾ivatelská nastavení
+	formuláøe (na rozdíl od existujícího pøíkazu RELOAD_FORM_STATE,
+	který zahodí pouze nastavení provedená bìhem posledního spu¹tìní
+	formuláøe).  Tento pøíkaz nahrazuje také pøíkaz RESET_COLUMNS,
+	který obnovil pouze zobrazené sloupce, ale ji¾ neobnovil tøídìní,
+	seskupování atd.  Pøíkaz RESET_FORM_STATE je dostupný pøes novou
+	klávesovou zkratku "Ctrl-Shift-Backspace" (pøíkaz
+	RELOAD_FORM_STATE má zkratku "Ctrl-Backspace").  Oba pøíkazy byly
+	doplnìny do hlavního menu pøíkazù a byly doplnìny metody, které
+	zabezpeèí, ¾e jsou aktivní pouze pokud k nìjakým zmìnám do¹lo.
+	Pøíkaz RESET_FORM_STATE je dále dostupný z kontextového menu
+	sloupce na místì, kde býval zru¹ený pøíkaz RESET_COLUMNS.
+
+	Z menu pøíkazù byly odstranìny nìkteré pøíkazy, které jsou
+	dostupné pøes kontextové menu øádku.
+
+	Byla pødána ikona pro pøíkaz Form.COMMAND_HELP.
+
+	* BUGFIX: Pøi zobrazování kontextového menu je nejprve
+	initializována klávesová mapa, tak¾e klávesové zkratky jsou v menu
+	nyní v¾dy viditelné.
+	
 2006-05-30
 	
 	Nový pøíkaz `LookupForm.COMMAND_UNFILTER', navázaný na klávesovou
