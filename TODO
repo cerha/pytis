@@ -267,3 +267,10 @@ INTERNÍ ZÁLE®ITOSTI:
    V¹ude je mo¾no pou¾ívat globální resolver získaný pomocí funkce
    `resolver()', tak¾e není dùvod se o nìj starat ve formuláøích.  Trochu
    slo¾itìj¹í to ov¹em asi bude s PrintResolvery.
+
+ * Konstanty ASC a DESC pøesunout do `pytis.presentation'.
+
+   Kvùli jejich pou¾ití je nyní nutné importovat `pytis.form' jak ve
+   specifikacích, tak v `pytis.presentation' (kvùli assertùm).  Pokud se ve
+   v¹ech aplikacích pou¾ívají jen konstanty ASC a DESC a `pytis.extensions',
+   nebude to problém.  To je v¹ak nejprve tøeba ovìøit.

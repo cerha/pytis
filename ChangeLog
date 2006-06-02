@@ -1,3 +1,9 @@
+2006-06-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* bin/pytis (run_application): Namísto funkce `run_application()'
+	po¾ívej pøímo `Application().run()'.  Pro nastaven9 resolveru
+	pou69vej funkci `set_resolver()'.
+	
 2006-05-25  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlTable.__init__): Doplnìna mo¾nost

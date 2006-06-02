@@ -6,6 +6,13 @@
 
 2006-06-02:
 
+	V modulu `pytis.util.resolver' pøibyly nové funkce `resolver()' a
+	`set_resolver()', které slou¾í k získání a nastavení globálního
+	resolveru.  Díky tomu bylo mo¾no odstranit správu resolveru z
+	tøídy `Application'.  Tím je práce s resolverem nezávislá na
+	modulu `pytis.form' a není jej tak nutno importovat napøíklad v
+	`pytis.presentation'.
+
 	* BUGFIX: Argument `side_binding_column' v `DualSpec' ji¾ není
 	vy¾adován.  None hodnota znamená stejný sloupec jako
 	`binding_column', co¾ odpovídá dokumentaci.
