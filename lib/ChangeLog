@@ -1,3 +1,20 @@
+2006-06-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (DualSpec.__init__): Nevy¾aduj
+	hodnotu u argumentu `side_binding_column'.
+
+	* pytis/form/list.py (ListForm._cmd_insert_line): Pokud políèko
+	není ve fields, nebo pokud je jeho hodnota urèená pomocí
+	prefill, nevy¾aduj jeho pøítomnost v columns.
+
+	* pytis/form/inputfield.py (EnumerationField._set_selection): Nová
+	metoda.
+	(EnumerationField._set_value): Vyu¾ívej ji.
+	(ChoiceField._set_selection): Nová metoda.
+
+	* pytis/form/application.py (Application.OnInit): Nevy¾aduj
+	specifikaci menu a doplò prázdný seznam jako výchozí hodnotu.
+
 2006-05-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._on_idle)
