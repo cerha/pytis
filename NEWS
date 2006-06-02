@@ -4,6 +4,28 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-06-02:
+
+	* BUGFIX: Argument `side_binding_column' v `DualSpec' ji¾ není
+	vy¾adován.  None hodnota znamená stejný sloupec jako
+	`binding_column', co¾ odpovídá dokumentaci.
+
+	* BUGFIX: Pokus o vlo¾ení øádku v inline editaci je zamítnut,
+	pokud chybí nìkterý NOT NULL sloupec.  Pokud v¹ak sloupec chybìl
+	ve fields, skonèila kontrola tracebackem.  Nyní jsou sloupce,
+	které nejsou ve fields tolerovány, proto¾e se dá pøedpokládat, ¾e
+	mají v databázi default hodnotu (Pokud by nemìly, tak je to chyba,
+	proto¾e by záznam ne¹el vlo¾it ani v editaèním formuláøi).  Dále
+	nejsou vy¾adovány ty sloupce, jejich¾ hodnota je urèena pomocí
+	prefill (typicky v SideFormu duálního formuláøe).
+
+	* BUGFIX: Pøi pou¾ití políèka typu CHOICE je po inicializaci
+	NULL hodnotou zobrazena první hodnota výbìru (NULL se ve výbìru
+	nevyskytuje).  Problém v¹ak byl v tom, ¾e pøi pøeètení hodnoty
+	byla vrácena prázdná hodnota, pøesto¾e u¾ivatel vidí první
+	hodnotu jako vybranou.  To je nyní opraveno tak, ¾e políèko v¾dy
+	vrací tu hodnotu, která je vidìt jako vybraná.
+	
 2006-05-31
 
 	Nový pøíkaz RESET_FORM_STATE zahodí ve¹kerá u¾ivatelská nastavení

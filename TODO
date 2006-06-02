@@ -177,12 +177,6 @@ INTERNÍ ZÁLE®ITOSTI:
    netabulkových formuláøích a je tøeba je mít na jednom místì, nezávisle na
    formuláøových tøídách.
 
- * Instance Value na rozhraní InputField.
-
-   InputField.get_value(), InputField.set_value() nech» pracují s instancemi
-   Value, ne se stringy.  Také by bylo vhodné, kdyby políèko mìlo pøístup pøímo
-   k PresentedRow.
-   
  * Pøepracování stavového øádku.
 
    Pole definovaná aplikací (message, list-position, ...) by mìla být pøítomna
@@ -191,6 +185,12 @@ INTERNÍ ZÁLE®ITOSTI:
    Je tøeba myslet také na obnovení stavu pøi pøepínání formuláøù
    (`Form.restore()').
 
+ * Instance Value na rozhraní InputField.
+
+   InputField.get_value(), InputField.set_value() nech» pracují s instancemi
+   Value, ne se stringy.  Také by bylo vhodné, kdyby políèko mìlo pøístup pøímo
+   k PresentedRow.
+   
  * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
 
  * Vyjasnìní práce s arguemntem prefill.
