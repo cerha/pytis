@@ -30,6 +30,30 @@ import imp
 
 from pytis.util import *
 
+global _current_resolver
+_current_resolver = None
+
+def resolver():
+    """Vra» resolver pro získání specifikaèních instancí na základì jména."""
+    global _current_resolver
+    _current_resolver
+    if _current_resolver is None:
+        import config
+        _current_resolver = FileResolver(config.def_dir)
+    return _current_resolver
+
+def set_resolver(resolver):
+    """Nastav výchozí resolver vracený funkcí 'resolver()'.
+
+    Výchozí resolver je vytvoøen automaticky jako instance 'FileResolver' nad
+    adresáøem daným konfiguraèní volbou 'def_dir'.  Pokud chceme pou¾ít jiný
+    resolver, je tøeba jej nastavit touto funkcí pøed inicializací aplikace.
+
+    """
+    assert isinstance(Resolver, resolver)
+    global _current_resolver
+    _current_resolver = resolver
+
 
 class ResolverError(Exception):
     """Chyba resolvace.
