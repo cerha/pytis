@@ -1,7 +1,13 @@
 2006-06-02  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/presentation/spec.py (DualSpec.__init__): Nevy¾aduj
-	hodnotu u argumentu `side_binding_column'.
+	* pytis/util/resolver.py (resolver, set_resolver): Nové funkce.
+
+	* pytis/presentation/spec.py: Neimportuj `pytis.form'.
+	(DualSpec.__init__): Nevy¾aduj hodnotu u argumentu
+	`side_binding_column'.
+	(ViewSpec.columns): Importuj `pytis.form'.
+	(DataSpec.__init__): Namísto `pytis.form.resolver()' pou¾ívej
+	`resolver()'.
 
 	* pytis/form/list.py (ListForm._cmd_insert_line): Pokud políèko
 	není ve fields, nebo pokud je jeho hodnota urèená pomocí
@@ -14,6 +20,18 @@
 
 	* pytis/form/application.py (Application.OnInit): Nevy¾aduj
 	specifikaci menu a doplò prázdný seznam jako výchozí hodnotu.
+	(run_application): Funkce zru¹ena.
+	(NullApplication.__init__): Zru¹en argument `resolver'
+	(NullApplication.resolver): Metoda zru¹ena.
+	(Application.__init__): Metoda zru¹ena.
+	(Application._spec, Application._cmd_run_form)
+	(Application._cmd_new_record, Application._cmd_run_procedure):
+	Namísto `self.resolver()' èi `self._resolver' pou¾ívej funkci
+	`resolver()'.
+	(Application.resolver): Metoda zru¹ena.
+	(resolver): Funkce zru¹ena.
+	(has_access): Namísto `_application.resolver()' pou¾ívej funkci
+	`resolver()'.
 
 2006-05-31  Tomas Cerha  <cerha@brailcom.org>
 

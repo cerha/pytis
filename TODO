@@ -98,6 +98,13 @@ NOVÉ VLASTNOSTI:
 
 2) Specifikace
 
+ * Nadstavba pro vytváøení specifikaèních souborù.
+
+   Nadstavba pro dal¹í zjednodu¹ení psaní defsù by mohla mít tyto vlastnosti:
+     - automatické generování DataSpec bez nutnosti oddìlené definice sloupcù 
+     - vyu¾ití OOP a dìdiènosti pro tvorbu variant
+     - automatické doplnìní computerù pøi existenci metod pøíslu¹ných názvù
+
  * Mo¾nost definovat seznam odskokù.
 
    Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
@@ -167,7 +174,7 @@ INTERNÍ ZÁLE®ITOSTI:
    vyu¾íváno k zamykání øádkù.  V Postgresu je v¹ak od verze 8.1 zamykání øádku
    vyøe¹eno, tak¾e mù¾eme závislost na pøítomnosti OID zru¹it a vyu¾ít pøímo
    Postgresového mechanismu zamykání.
-   
+
  * Mezivrstva pro práci s aktuálním selectem, kurzory apod.
 
    Je tøeba oddìlit ve¹kerý kód týkající se práce s aktuálním selectem,
@@ -255,4 +262,8 @@ INTERNÍ ZÁLE®ITOSTI:
    definovaných layoutech nemají neviditelná políèka co dìlat a je tøeba je
    odtamtud vyhodit.
 
-   
+ * Odstranit argument `resolver' z konstruktoru formuláøù.
+
+   V¹ude je mo¾no pou¾ívat globální resolver získaný pomocí funkce
+   `resolver()', tak¾e není dùvod se o nìj starat ve formuláøích.  Trochu
+   slo¾itìj¹í to ov¹em asi bude s PrintResolvery.
