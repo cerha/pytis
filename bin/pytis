@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -136,9 +136,7 @@ def run_application():
     except locale.Error:
         locale.setlocale(locale.LC_NUMERIC, 'C')
     server = config.server
-    if not server:
-        pytis.form.run_application()
-    else:
+    if server:
         import pytis.data, pytis.util
         class ClientResolver(pytis.util.FileResolver):
             def __init__(self, remote_resolver):
@@ -159,8 +157,8 @@ def run_application():
         #resolver_uri = ns.resolve(pytis.remote.NAME_RESOLVER)
         resolver_uri = 'PYROLOC://%s/%s' % (server, pytis.remote.NAME_RESOLVER)
         remote_resolver = Pyro.core.getProxyForURI(resolver_uri)
-        resolver = ClientResolver(remote_resolver)
-        pytis.form.run_application(resolver=resolver)
+        pytis.util.set_resolver(ClientResolver(remote_resolver))
+    pytis.form.Application().run()
 
 if __name__ == '__main__':
     sys.argv[0] = 'pytis'               # kvùli zpracování voleb pøíkazové øádky
