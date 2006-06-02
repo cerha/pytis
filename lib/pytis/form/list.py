@@ -1637,7 +1637,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
         cols = [c.id() for c in self._columns]
         for col in self._data.columns():
-            if col.type().not_null() and col.id() not in cols:
+            if col.type().not_null() and col.id() not in cols \
+                   and (self._prefill is None \
+                        or not self._prefill.has_key(col.id())) \
+                   and self._view.field(col.id()) is not None:
+                # We silently presume, that when a not null column is not in
+                # fields, it probably has a default value (if not, it would be
+                # an error anyway), so we can continue.
                 msg = _('Povinný sloupec "%s" není zobrazen.\n'
                         'Není mo¾né vkládat øádky v in-line editaci.\n'
                         'Pøidejte sloupec nebo pou¾ijte editaèní formuláø.')
