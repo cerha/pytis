@@ -1018,7 +1018,7 @@ class DualSpec(object):
         assert is_anystring(title) or title is None
         assert is_anystring(side_title) or side_title is None
         assert append_condition is None or callable(append_condition)
-        assert is_anystring(side_binding_column)
+        assert side_binding_column is None or is_anystring(side_binding_column)
         assert side_columns is None or is_sequence(side_columns)
         self._main_name = main_name
         self._side_name = side_name
