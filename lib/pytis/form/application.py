@@ -231,7 +231,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._recent_forms.append((title, args))
         config.application_state['recent_forms'] = self._recent_forms
         # Initialize the menubar.
-        menus = list(self._spec('menu'))
+        menus = list(self._spec('menu', ()))
         menus.append(Menu(self._WINDOW_MENU_TITLE, ()))
         self._create_command_menu(menus)
         self._create_help_menu(menus)
