@@ -161,13 +161,21 @@ NOVÉ VLASTNOSTI:
 
 INTERNÍ ZÁLE®ITOSTI:
 
+ * Zamykání a závislost na OID
+
+   Momentálnì musí být v¹echny tabulky vytváøeny s OID, které je pytisem
+   vyu¾íváno k zamykání øádkù.  V Postgresu je v¹ak od verze 8.1 zamykání øádku
+   vyøe¹eno, tak¾e mù¾eme závislost na pøítomnosti OID zru¹it a vyu¾ít pøímo
+   Postgresového mechanismu zamykání.
+   
  * Mezivrstva pro práci s aktuálním selectem, kurzory apod.
 
    Je tøeba oddìlit ve¹kerý kód týkající se práce s aktuálním selectem,
    získáváním dat podle èísla øádkù (práce s kurzorem) a cachování øádkù, který
-   je nyní pøedev¹ím v ListTable do speciální tøídy (nadstavba datového
-   rozhraní).  Podobné vìci se dìlají i v netabulkových formuláøích a je tøeba
-   je mít na jednom místì.
+   je nyní pøedev¹ím v ListTable, do speciální tøídy (nadstavba datového
+   rozhraní -- asi v modulu `presentation').  Podobné vìci se dìlají i v
+   netabulkových formuláøích a je tøeba je mít na jednom místì, nezávisle na
+   formuláøových tøídách.
 
  * Instance Value na rozhraní InputField.
 
