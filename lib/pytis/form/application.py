@@ -42,35 +42,15 @@ import wx.html
 
 _application = None
 
-def run_application(resolver=None):
-    """Vytvoø instanci tøídy 'defs.application.Application'.
-
-    Zavolej její metodu 'run()'.
-
-    Argumenty:
-
-      resolver -- instance tøídy 'FileResolver', která má být pou¾ita jako
-        resolver; mù¾e být té¾ 'None', v kterém¾to pøípadì bude vytvoøen
-        implicitní resolver
-
-    """
-    if resolver is None:
-        resolver = FileResolver(config.def_dir)
-    Application(resolver).run()
-
-    
 class NullApplication:
     # Toto je hack, který umo¾òuje natáhnout defsy bez toho, aby bì¾elo
     # u¾ivatelské rozhraní.  Defsy toti¾ èasto pou¾ívají globální funkce z
     # application.  Bude tøeba to zmìnit, abychom se tohoto mohli zbavit.
     # Proto¾e je to jen doèasný hack, nebyla ani snaha deklarovat spoleèné
     # vlastnosti obou aplikací v nadtøídì...
-    def __init__(self, resolver):
-        self._resolver = resolver
+    def __init__(self):
         global _application
         _application = self
-    def resolver(self):
-        return self._resolver
     def run_dialog(self, *args, **kwargs):
         log(OPERATIONAL, "Pokus o spu¹tìní dialogu:", (args, kwargs))
     def recent_forms_menu(self):
@@ -133,8 +113,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
       default_font_encoding -- implicitní kódování fontù jako odpovídající wx
         konstanta.
         
-    Ka¾dá z tìchto funkcí 
-        
     Start u¾ivatelského rozhraní spoèívá ve vytvoøení instance této tøídy a
     volání její metody 'run()'.
     
@@ -148,22 +126,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         global _application
         return _application
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
-    def __init__(self, resolver):
-        """Inicializuj aplikaci.
 
-        Zde se pouze volají konstruktory pøedkù, vìt¹ina inicializací se ve
-        skuteènosti provádí a¾ v metodì 'OnInit'.
-
-        Argumenty:
-
-          resolver -- resolver, který má aplikace pou¾ívat; instance tøídy
-            'pytis.util.Resolver'
-
-        """
-        self._resolver = resolver
-        wx.App.__init__(self)
-    
     def OnInit(self):
         init_colors()
         # Create the main application window.
@@ -294,7 +257,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _spec(self, name, default=None, **kwargs):
         try:
-            result = self._resolver.get('application', name, **kwargs)
+            result = resolver().get('application', name, **kwargs)
         except ResolverError, e:
             log(OPERATIONAL, str(e))
             result = default
@@ -686,7 +649,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 assert self._modals.empty()
                 kwargs['guardian'] = self
                 parent = self._frame
-            args = (parent, self.resolver(), name)
+            args = (parent, resolver(), name)
             form = catch('form-init-error', form_class, *args, **kwargs)
             if form is None:
                 self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit"))
@@ -739,7 +702,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_new_record(self, name, prefill=None, inserted_data=None,
                         block_on_new_record=False):
         # Dokumentace viz funkce new_record().
-        view = self._resolver.get(name, 'view_spec')
+        view = resolver().get(name, 'view_spec')
         on_new_record = view.on_new_record()
         if not block_on_new_record and on_new_record is not None:
             result = on_new_record(prefill=prefill)
@@ -763,7 +726,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # si ho ulo¾íme a pak zase obnovíme.
             focused = wx_focused_window()
             wx_yield_()
-            spec = self._resolver.get(spec_name, 'proc_spec')
+            spec = resolver().get(spec_name, 'proc_spec')
             assert is_dictionary(spec), \
                    _("Specifikace procedur 'proc_spec' musí vracet slovník!")
             assert spec.has_key(proc_name), \
@@ -948,10 +911,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """
         return self._statusbar.get_message(id)
 
-    def resolver(self):
-        """Vra» globání resolver aplikace jako instanci 'Resolver'."""
-        return self._resolver
-
     def save(self):
         """Ulo¾ stav aplikace."""
         form = self._windows.active()
@@ -1084,10 +1043,6 @@ def top_window():
     """Vra» aktivní okno aplikace (formuláø, nebo dialog)."""
     return _application.top_window()
 
-def resolver():
-    """Vra» resolver aplikace získaný pøes 'Application.resolver()'."""
-    return _application.resolver()
-
 def set_status(id, message, log_=True):
     """Nastav pole 'id' stavové øádky (viz 'Application.set_status()')."""
     return _application.set_status(id, message, log_=log_)
@@ -1169,7 +1124,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
 
     """
     try:
-        data_spec = _application.resolver().get(name, 'data_spec')
+        data_spec = resolver().get(name, 'data_spec')
     except ResolverError:
         return True
     rights = data_spec.access_rights()
