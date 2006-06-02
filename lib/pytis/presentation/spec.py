@@ -29,7 +29,6 @@ pova¾ovány za immutable, tudí¾ mohou být libovolnì sdíleny.
 
 """
 
-import pytis.form
 import pytis.data
 
 from pytis.util import *
@@ -818,6 +817,7 @@ class ViewSpec(object):
             assert is_sequence(sorting)
             if __debug__:
                 for id, dir in sorting:
+                    import pytis.form
                     assert self.field(id) is not None
                     assert dir in (pytis.form.LookupForm.SORTING_ASCENDENT,
                                    pytis.form.LookupForm.SORTING_DESCENDANT)
@@ -1800,7 +1800,7 @@ class DataSpec(pytis.data.DataFactory):
         for c in columns:
             e = c.enumerator()
             if e:
-                enumerator = pytis.form.resolver().get(e, 'data_spec')
+                enumerator = resolver().get(e, 'data_spec')
                 if isinstance(enumerator, DataSpec):
                     enumerator.set_origin(e)
             else:
