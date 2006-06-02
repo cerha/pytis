@@ -885,9 +885,12 @@ class EnumerationField(InputField):
     def get_value(self):
         return self._ctrl.GetStringSelection()
 
+    def _set_selection(self, value):
+        return self._ctrl.SetStringSelection(value)
+    
     def _set_value(self, value):
         assert isinstance(value, types.StringTypes), ('Invalid value', value)
-        result = self._ctrl.SetStringSelection(value)
+        result = self._set_selection(value)
         # _on_change musíme volat ruènì, proto¾e SetStringSelection() nevyvolá
         # událost.
         self._on_change()
@@ -903,6 +906,16 @@ class ChoiceField(EnumerationField):
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
 
+    def _set_selection(self, value):
+        result = super(ChoiceField, self)._set_selection(value)
+        if not result:
+            # If an invalid value is set, the control shows the first value as
+            # selected, but GetStringSelection() returns an empty string.  This
+            # is a problem on initialization, since the NULL initial value is
+            # set as an empty string, which is not in the list.
+            self._ctrl.SetSelection(0)
+        return result
+    
     
 class RadioBoxField(Unlabeled, EnumerationField):
     """Vstupní pole pro výètový typ reprezentované pomocí 'wx.RadioBox'.
