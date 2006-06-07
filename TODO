@@ -8,6 +8,10 @@ CHYBY:
    dopoèítávané políèko (a také se tak v defsech dìje), ale není to
    systematické (problémy s údr¾bou).
 
+ * Zkopírovat obsah buòky nefunguje s èe¹tinou.
+
+   Projevuje se pouze na Windowsech pøes Cygwin.
+
  * Aktualizace políèka `data-changed' ve stavové øádce.
 
    Po vlo¾ení záznamu je zobrazeno, ¾e data nejsou ok i ve formuláøi, ze
@@ -27,23 +31,21 @@ CHYBY:
    inline editace, v kontextovém menu vstupního políèka v ShowFormu a v
    kontextovém menu záhlaví sloupce.
 
- * Posun po zamítnutí mazání øádku.
-
-   Po odpovìdi "Ne" na otázku na smazání záznamu je posunut aktivní záznam na
-   dal¹í øádek.  Dìje se to ale jen nìkdy a teï nevíme kdy.
-
  * Vyhledávání nìkdy skoèí na záznam následující za hledaným.
 
    Popisovaný problém se bì¾nì neprojevuje.  Napøíklad v zakázkách pøi
    vyhledávání podle kódu zakázky v¹ak bylo toto chování hlá¹eno, ale po
    restartu aplikace ne¹lo zreprodukovat.
 
- * Zkopírovat obsah buòky nefunguje s èe¹tinou.
-
 
 NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
+
+ * V menu automaticky oèíslovat polo¾ky s mo¾ností rychlého výbìru polo¾ky pøes
+   èíslo (znak).
+
+ * Vertikálnì rozdìlený DualForm.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
@@ -59,16 +61,8 @@ NOVÉ VLASTNOSTI:
    Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
    by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
 
- * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
- 
  * Roz¹íøit øádek po dobu inline editace víceøádkového textu.
  
- * Detailnìj¹í kontrola nad rozli¹ením práv pøi UPDATE/INSERT
-
-   Pokud není na políèko právo UPDATE, zakázat jej i pøi INSERTU, ale umo¾nit
-   nìkterá políèka explicitnì povolit (pouze pro INSERT).  Nebo také povolit
-   úplnì v¹e, nehledì na práva pro UPDATE.
-
  * Automatický filter èíselníku pøi vyplnìní wildcard hodnoty.
 
    Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
@@ -76,13 +70,9 @@ NOVÉ VLASTNOSTI:
 
  * Filtr distinct hodnot (v kontextovém menu záhlaví sloupce).
 
- * Filtrovat aktuální hodnoty (v kontextovém menu buòky).
-
  * Pou¾ití externího PS prohlí¾eèe.
 
  * Správa pøístupových práv pøes databázi a formuláø, nikoli pøes specifikace.
-
- * Menu na pravé tlaèítko ve vstupních políèkách versus gtk menu.
 
  * Zarovnávání a atributy v InputFieldu.
 
@@ -95,8 +85,24 @@ NOVÉ VLASTNOSTI:
 
  * Pro datumová políèka umo¾nit display ukazující odpovídající den v týdnu.
 
+ * Detailnìj¹í kontrola nad rozli¹ením práv pøi UPDATE/INSERT
+
+   Pokud není na políèko právo UPDATE, zakázat jej i pøi INSERTU, ale umo¾nit
+   nìkterá políèka explicitnì povolit (pouze pro INSERT).  Nebo také povolit
+   úplnì v¹e, nehledì na práva pro UPDATE.
+
+ * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
 
 2) Specifikace
+
+ * Mo¾nost definovat seznam odskokù.
+
+   Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
+   celý øádek.  Parametrem je názav specifikace (nebo funkce row, která vrátí
+   název specifikace).  Druhým parametrem by mìl být název sloupce v odkazované
+   tabulce, na který se provede select_row.  Dále by mìlo být mo¾né zvolit v
+   jakém typu formuláøe bude øádek otevøen.  Vìt¹inou jde o BrowseForm (nebo
+   BrowseDualForm), ShowForm, nebo vytvoøení nového záznamu s prefillem.
 
  * Nadstavba pro vytváøení specifikaèních souborù.
 
@@ -104,17 +110,6 @@ NOVÉ VLASTNOSTI:
      - automatické generování DataSpec bez nutnosti oddìlené definice sloupcù 
      - vyu¾ití OOP a dìdiènosti pro tvorbu variant
      - automatické doplnìní computerù pøi existenci metod pøíslu¹ných názvù
-
- * Mo¾nost definovat seznam odskokù.
-
-   Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
-   celý øádek.  Parametrem je názav specifikace (nebo funkce row, která vrátí
-   název specifikace).  Druhým parametrem by mìl být select_row, jako funkce
-   row, která vrátí hodnotu pro argument select_row otevøeného formuláøe.  Dále
-   by mìlo být mo¾né zvolit v jakém typu formuláøe bude øádek otevøen, ale
-   mo¾ná by mìl mít u¾ivatel sám mo¾nost v¾dy urèit, jakým zpùsobem chce
-   odkazovaný záznam vidìt.  Vìt¹inou jde o BrowseForm (nebo BrowseDualForm),
-   ShowForm, nebo vytvoøení nového záznamu s prefillem.
 
  * Zmìny týkající se standardních konfiguraèních voleb.
 
@@ -213,6 +208,16 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
+ * Vyhodit side_columns a side_title z DualSpec.
+
+   Udr¾ování identifikátorù sloupcù pro 'side_columns' v defsu pro DualSpec je
+   velice nevhodné.  Èasto to vede k nekonzistenci a k následným chybám.
+   Namísto uvádìní sloupcù zde je lep¹í vytvoøit zvlá¹tní variantu.  Tím jsou
+   seznamy sloupcù pro rùzná pou¾ití formuláøe v¾dy pohromadì.  To samé platí
+   pro argumenty 'title' a 'side_title'.  Nebylo by v¹ak od vìci definovat
+   titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
+   pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
+
  * Nedostupnost pøíkazu vs. pøístupová práva.
 
    Pokud není pøíkaz dostupný z dùvodu nedostateèných pøístupových práv,
@@ -230,19 +235,7 @@ INTERNÍ ZÁLE®ITOSTI:
    Pro ka¾dou konfiguraèní volbu je nyní znám její datový typ, tak¾e by nebyl
    problém do metody `Option.set_value()' pøidat kontrolu, zda pøedaná hodnota
    skuteènì odpovídá deklarovanému typu volby.
-
- * Form._original_key by nemìlo být.  _current_key by mìl vracet pùvodní klíè.
-
- * Vyhodit side_columns a side_title z DualSpec.
-
-   Udr¾ování identifikátorù sloupcù pro 'side_columns' v defsu pro DualSpec je
-   velice nevhodné.  Èasto to vede k nekonzistenci a k následným chybám.
-   Namísto uvádìní sloupcù zde je lep¹í vytvoøit zvlá¹tní variantu.  Tím jsou
-   seznamy sloupcù pro rùzná pou¾ití formuláøe v¾dy pohromadì.  To samé platí
-   pro argumenty 'title' a 'side_title'.  Nebylo by v¹ak od vìci definovat
-   titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
-   pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
-   
+  
  * S groupingem pracovat jako s celým èíslem.
 
    Problém bude hlavnì v defsech, kde bývá grouping èasto specifikován jako
