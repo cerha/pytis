@@ -1,5 +1,11 @@
 2006-06-08  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (RecordForm._current_key): Vracej klíè z
+	`original_row' jen pokud nejde o nový øádek.
+
+	* pytis/presentation/field.py (PresentedRow._set_row): Nenastavuj
+	`self._original_row' na None ale v¾dy na výsledný øádek.
+
 	* pytis/presentation/spec.py (FieldSpec.type): Nech» je argument
 	`data' nepovinný.
 	(FieldSpec.codebook): Nech» je argument `data' nepovinný.
