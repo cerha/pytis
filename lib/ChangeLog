@@ -1,3 +1,17 @@
+2006-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec.type): Nech» je argument
+	`data' nepovinný.
+	(FieldSpec.codebook): Nech» je argument `data' nepovinný.
+
+	* pytis/form/application.py (NullApplication): Tøída zru¹ena.
+	(run_dialog): Pokud neexistuje aplikace, pokus loguj a pokraèuj,
+	jako by nic.
+	(recent_forms_menu): Pokud neexistuje aplikace, vra» prázdné menu.
+
+	* pytis/util/resolver.py (set_resolver): Oprava poøadí argumentù
+	`isinstance'.
+
 2006-06-08  Petr Malivanek  <malivanek@asellus.cz>
 
 	* pytis/form/commands_.py (FORM_COMMAND_MENU): Doèasné
