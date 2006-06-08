@@ -30,8 +30,7 @@ def data_object(spec):
     
     """
     if isinstance(spec, types.StringTypes):
-        resolver = pytis.form.resolver()
-        spec = resolver.get(spec, 'data_spec')
+        spec = pytis.util.resolver().get(spec, 'data_spec')
     op = lambda: spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
     #if not success:
@@ -181,7 +180,7 @@ def enum(name):
     specifikace, ze které bude získán datový objekt enumerátoru.
     
     """
-    data_spec = pytis.form.resolver().get(name, 'data_spec')
+    data_spec = pytis.util.resolver().get(name, 'data_spec')
     kwargs = dict(dbconnection_spec=config.dbconnection)
     return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
 
