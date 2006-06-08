@@ -129,6 +129,7 @@ class PresentedRow(object):
         self._row = self._init_row(row, prefill=prefill)
         if reset:
             self._original_row = copy.copy(self._row)
+            self._original_row_empty = row is None
         self._resolve_dependencies()
         
     def _process_fieldspec(self):
@@ -429,7 +430,7 @@ class PresentedRow(object):
         """Vra» seznam identifikátorù v¹ech políèek obsa¾ených v tomto øádku."""
         return self._columns.keys()
         
-    def original_row(self):
+    def original_row(self, empty_as_none=False):
         """Vra» øádek obsahující pùvodní hodnoty øádku pøed pøípadnými zmìnami.
 
         Vrácená hodnota je instance 'pytis.data.Row', ne nutnì toto¾ná (ve
@@ -440,7 +441,10 @@ class PresentedRow(object):
         'reset'.
         
         """
-        return self._original_row
+        if empty_as_none and self._original_row_empty:
+            return None
+        else:
+            return self._original_row
 
     def changed(self):
         """Vra» pravdu, právì kdy¾ byl øádek zmìnìn.
