@@ -2,9 +2,14 @@
 
 	* pytis/form/form.py (RecordForm._current_key): Vracej klíè z
 	`original_row' jen pokud nejde o nový øádek.
+	(RecordForm._current_key): Vyu¾ívej `empty_as_none' pøi volání
+	`PresentedRow.original_row()'.
 
 	* pytis/presentation/field.py (PresentedRow._set_row): Nenastavuj
 	`self._original_row' na None ale v¾dy na výsledný øádek.
+	(PresentedRow._set_row): Nastavuj `self._original_row_empty'.
+	(PresentedRow.original_row): Nový argument `empty_as_none'.
+	Vracej None pokud je pravdivý a pùvodní øádek je prázdný,
 
 	* pytis/presentation/spec.py (FieldSpec.type): Nech» je argument
 	`data' nepovinný.
