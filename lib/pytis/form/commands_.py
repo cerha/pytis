@@ -345,14 +345,12 @@ FORM_COMMAND_MENU = ((
      _("Zahodit ve¹keré u¾ivatelské nastavení formuláøe")),
      ))
 
-# Zakomentováno, je to obsa¾eno od libwxgtk2.6-0
-# TODO po updatování ovocnakkl odkomentovat
 WX_COMMAND_ICONS = {Application.COMMAND_HELP: wx.ART_HELP,
-                    #Application.COMMAND_EXIT: wx.ART_QUIT,
+                    Application.COMMAND_EXIT: wx.ART_QUIT,
                     InnerForm.COMMAND_PRINT:  wx.ART_PRINT,
                     Form.COMMAND_HELP:        wx.ART_HELP_BOOK,
-                    #InputField.COMMAND_RESET: wx.ART_UNDO,
-                    #TextField.COMMAND_CUT:    wx.ART_CUT,
-                    #TextField.COMMAND_COPY:   wx.ART_COPY,
-                    #TextField.COMMAND_PASTE:  wx.ART_PASTE,
+                    InputField.COMMAND_RESET: wx.ART_UNDO,
+                    TextField.COMMAND_CUT:    wx.ART_CUT,
+                    TextField.COMMAND_COPY:   wx.ART_COPY,
+                    TextField.COMMAND_PASTE:  wx.ART_PASTE,
                     }
