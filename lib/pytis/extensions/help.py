@@ -96,8 +96,7 @@ class ItemNode(lcg.ContentNode):
             if not issubclass(form, pytis.form.ConfigForm):
                 if issubclass(form, pytis.form.DualForm) and \
                        not issubclass(form, pytis.form.DescriptiveDualForm):
-                    resolver = pytis.form.resolver()
-                    dual = resolver.get(name, 'dual_spec')
+                    dual = pytis.util.resolver().get(name, 'dual_spec')
                     node_name = name + '-dual'
                     names = (node_name, dual.main_name(), dual.side_name())
                 else:
@@ -144,16 +143,14 @@ class MenuIndex(MenuNode):
 
     """
     def __init__(self, parent, id, *args, **kwargs):
-        resolver = pytis.util.FileResolver('../defs')
-        pytis.form.NullApplication(resolver)
+        pytis.util.set_resolver(pytis.util.FileResolver('../defs'))
         if '..' not in sys.path:
             sys.path.append('..')
-        item = pytis.form.Menu(_("Pøehled menu"),
-                               resolver.get('application', 'menu'))
+        menu = pytis.util.resolver().get('application', 'menu')
+        item = pytis.form.Menu(_("Pøehled menu"), menu)
         super(MenuIndex, self).__init__(parent, id, item, *args, **kwargs)
 
     
-        
 ################################################################################
 
         
@@ -161,8 +158,7 @@ class DescrNode(lcg.ContentNode):
     """Stránka s popisem náhledu."""
 
     def __init__(self, parent, id, *args, **kwargs):
-        resolver = pytis.form.resolver()
-        self._read_spec(resolver, id)
+        self._read_spec(pytis.util.resolver(), id)
         super(DescrNode, self).__init__(parent, id, *args, **kwargs)
 
     def _name(self, id):
@@ -216,6 +212,7 @@ class DescrNode(lcg.ContentNode):
         return self._view_spec.help() or self._view_spec.description() or \
                _("Popis není k dispozici.")
 
+
 class SingleDescrNode(DescrNode):
 
     def _create_content(self):
@@ -239,6 +236,7 @@ class SingleDescrNode(DescrNode):
                                    _fieldset(self, perms)))
         return content
     
+
 class DualDescrNode(DescrNode):
     """Stránka s popisem duálního náhledu."""
 
@@ -299,43 +297,4 @@ class DescrIndex(lcg.ContentNode):
               and DualDescrNode or SingleDescrNode
         return [self._create_child(cls(name), name, subdir='descr')
                 for name in _used_defs]
-
-
-def _split_menu_descriptions(text, dir, strayfile='_stray.txt'):
-    """Rozdìlí dokument s popisky formuláøù do jednotlivých souborù.
-
-    Jednotlivé sekce dokumnetu musí být pojmenovány jako odpovídající polo¾ky
-    menu.  Soubory budou ulo¾eny do daného adresáøe.
-
-    Nepøiøazené polo¾ky budou zapsány do souboru 
-    
-    """
-    global _menu_items
-    menu = {}
-    for name, items in _menu_items.items():
-        for item in items:
-            menu[item.title()] = (item, name)
-    import re
-    sections = re.split("(?m)^=+\s+(?:[\d\.]+\s+)?(.*)\s+=+$", text)
-    modeline = '# -*- coding: utf-8; mode: structured-text -*-\n'
-    stray = modeline
-    for title, text in zip(sections[1::2], sections[2::2]):
-        text = text.strip()
-        if menu.has_key(title):
-            item, name = menu[title]
-            filename = fn = os.path.join(dir, name+'.txt')
-            n = 0
-            while os.path.exists(fn):
-                n+=1
-                fn = '%s.%d' % (filename, n)
-            print "**", title, fn
-            #fh = file(fn, 'w')
-            #fh.write(modeline +"\n" + text.encode('utf-8'))
-            #fh.close()
-        else:
-            print "--", title
-            #stray += "\n== %s ==\n\n%s\n" % (title, text)
-    #sfh = file(strayfile, 'w')
-    #sfh.write(stray.encode('utf-8'))
-    #sfh.close()
 
