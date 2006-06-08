@@ -18,16 +18,13 @@
 
 """Nástroje pro generování HTML na základì dat z pytisu."""
 
-import pytis.form
 import pytis.data
 from pytis.util import *
-import config
-resolver = pytis.util.FileResolver(config.def_dir)
-pytis.form.NullApplication(resolver)
 import HyperText
 from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
-from pytis.extensions import dbselect, data_create
-
+from pytis.extensions import dbselect, data_object
+import config
+pytis.util.set_resolver(pytis.util.FileResolver(config.def_dir))
 
 class BaseDBTable(object):
 
@@ -55,8 +52,8 @@ class BaseDBTable(object):
         self._columns = columns
         self._condition = condition
         self._sort = sort
-        self._view = resolver.get(self._spec, 'view_spec')
-        self._data = data_create(self._spec)
+        self._view = pytis.util.resolver().get(self._spec, 'view_spec')
+        self._data = data_object(self._spec)
         self._fields = self._get_fields()
         self._klass = klass
         self._table = TABLE(**attrs)
@@ -207,7 +204,7 @@ def browsable_db_table(*args, **kwargs):
 
 def form_validate(spec, prefill):
     # Sestavíme datový objekt
-    data = data_create(spec)
+    data = data_object(spec)
     if not data:
         return None, None
     failed = []
