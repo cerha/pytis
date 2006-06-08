@@ -667,9 +667,10 @@ class RecordForm(InnerForm):
     def _current_key(self):        
         the_row = self.current_row()
         if the_row is not None:
-            data_row = the_row.original_row()
-            if data_row is None:
+            if the_row.new():
                 data_row = the_row.row()
+            else:
+                data_row = the_row.original_row()
             return data_row.columns([c.id() for c in self._data.key()])
         return None
 
