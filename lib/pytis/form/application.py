@@ -42,21 +42,6 @@ import wx.html
 
 _application = None
 
-class NullApplication:
-    # Toto je hack, který umo¾òuje natáhnout defsy bez toho, aby bì¾elo
-    # u¾ivatelské rozhraní.  Defsy toti¾ èasto pou¾ívají globální funkce z
-    # application.  Bude tøeba to zmìnit, abychom se tohoto mohli zbavit.
-    # Proto¾e je to jen doèasný hack, nebyla ani snaha deklarovat spoleèné
-    # vlastnosti obou aplikací v nadtøídì...
-    def __init__(self):
-        global _application
-        _application = self
-    def run_dialog(self, *args, **kwargs):
-        log(OPERATIONAL, "Pokus o spu¹tìní dialogu:", (args, kwargs))
-    def recent_forms_menu(self):
-        return Menu(Application._RECENT_FORMS_MENU_TITLE, ())
-    
-    
 class Application(wx.App, KeyHandler, CommandHandler):
     """Aplikace systému Pytis.
 
@@ -1033,7 +1018,10 @@ def exit():
 
 def run_dialog(*args, **kwargs):
     """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
-    return _application.run_dialog(*args, **kwargs)
+    if _application is not None:
+        return _application.run_dialog(*args, **kwargs)
+    else:
+        log(OPERATIONAL, "Pokus o spu¹tìní dialogu:", (args, kwargs))
 
 def current_form(inner=True):
     """Vra» právì aktivní formuláø (viz 'Application.currnt_form()')."""
@@ -1059,7 +1047,10 @@ def recent_forms_menu():
     pøidáme, bude jej aplikace dále obhospodaøovat.
         
     """
-    return _application.recent_forms_menu()
+    if _application is not None:
+        return _application.recent_forms_menu()
+    else:
+        return Menu(Application._RECENT_FORMS_MENU_TITLE, ())
 
 def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
