@@ -128,10 +128,7 @@ class PresentedRow(object):
     def _set_row(self, row, reset=True, prefill=None):
         self._row = self._init_row(row, prefill=prefill)
         if reset:
-            if row is None:
-                self._original_row = None
-            else:
-                self._original_row = copy.copy(self._row)
+            self._original_row = copy.copy(self._row)
         self._resolve_dependencies()
         
     def _process_fieldspec(self):
@@ -435,8 +432,8 @@ class PresentedRow(object):
     def original_row(self):
         """Vra» øádek obsahující pùvodní hodnoty øádku pøed pøípadnými zmìnami.
 
-        Vrácená hodnota je instance 'pytis.data.Row' nebo 'None', ne nutnì
-        toto¾ná (ve smyslu 'id()') s øádkem zadaným v konstruktoru.
+        Vrácená hodnota je instance 'pytis.data.Row', ne nutnì toto¾ná (ve
+        smyslu 'id()') s øádkem zadaným v konstruktoru.
 
         Pùvodními hodnotami jsou my¹leny hodnoty øádku pøedaného konstruktoru,
         nebo poslednímu volání metody 'set_row()', s pravdivým argumentem
