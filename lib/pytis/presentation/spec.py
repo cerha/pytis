@@ -1642,7 +1642,7 @@ class FieldSpec(object):
         """Vra» pravdu, má li být popisek pøimknut k hornímu okraji políèka."""
         return self._compact
         
-    def type(self, data):
+    def type(self, data=None):
         """Vra» datový typ ze specifikace, nebo z datového sloupce.
 
         Pokud byl typ explicitnì urèen v konstruktoru, bude vrácen tento typ,
@@ -1650,21 +1650,22 @@ class FieldSpec(object):
         argument.
         
         """
-        column = data.find_column(self.id())
-        if self._type is not None:
-            type = self._type
-            assert column is None or \
-                   isinstance(type, column.type().__class__)
-        elif isinstance(self._computer, CbComputer):
-            cb_column = data.find_column(self._computer.field())
-            enumerator = cb_column.type().enumerator()
-            type = enumerator.type(self._computer.column())
-        else:
-            assert column != None, \
-                   ('Data type not specified for virtual column ' + \
-                    '(column not found in data object is supposed virtual).',
-                    self.id())
-            type = column.type()
+        type = self._type
+        if data:
+            column = data.find_column(self.id())
+            if type is not None:
+                assert column is None or \
+                       isinstance(type, column.type().__class__)
+            elif isinstance(self._computer, CbComputer):
+                cb_column = data.find_column(self._computer.field())
+                enumerator = cb_column.type().enumerator()
+                type = enumerator.type(self._computer.column())
+            else:
+                assert column != None, \
+                     ('Data type not specified for virtual column ' + \
+                      '(column not found in data object is supposed virtual).',
+                        self.id())
+                type = column.type()
         return type
         
     def default(self):
@@ -1679,12 +1680,13 @@ class FieldSpec(object):
         """Vra» odddìlovaè øádkù zadaný v konstruktoru."""
         return self._line_separator
     
-    def codebook(self, data):
+    def codebook(self, data=None):
         """Vra» název specifikace navázaného èíselníku."""
-        enumerator = self.type(data).enumerator()
-        if isinstance(enumerator, pytis.data.DataEnumerator) and \
-               isinstance(enumerator.data_factory(), DataSpec):
-            return enumerator.data_factory().origin() or self._codebook
+        if data is not None:
+            enumerator = self.type(data).enumerator()
+            if isinstance(enumerator, pytis.data.DataEnumerator) and \
+                   isinstance(enumerator.data_factory(), DataSpec):
+                return enumerator.data_factory().origin() or self._codebook
         return self._codebook
 
     def display_size(self):
