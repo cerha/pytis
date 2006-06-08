@@ -50,7 +50,7 @@ def set_resolver(resolver):
     resolver, je tøeba jej nastavit touto funkcí pøed inicializací aplikace.
 
     """
-    assert isinstance(Resolver, resolver)
+    assert isinstance(resolver, Resolver)
     global _current_resolver
     _current_resolver = resolver
 
