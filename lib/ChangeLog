@@ -1,3 +1,8 @@
+2006-06-08  Petr Malivanek  <malivanek@asellus.cz>
+
+	* pytis/form/commands_.py (FORM_COMMAND_MENU): Doèasné
+	zakomentování, nutno updatotovat servery na libwxgtk2.6-0. 
+
 2006-06-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/resolver.py (resolver, set_resolver): Nové funkce.
