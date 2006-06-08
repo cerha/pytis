@@ -32,13 +32,12 @@ def flatten_menus():
         else:
             result = found                
         return result
-    resolver = pytis.form.resolver()
-    menus = resolver.get('application', 'menu')
+    menus = pytis.util.resolver().get('application', 'menu')
     return flatten(menus, [])
 
 
 def get_menu_defs(without_duals=False):
-    resolver = pytis.form.resolver()
+    resolver = pytis.util.resolver()
     RF = pytis.form.Application.COMMAND_RUN_FORM
     items = [item for item in flatten_menus()
              if isinstance(item, pytis.form.MItem) and item.command() == RF \
@@ -71,7 +70,7 @@ def get_menu_defs(without_duals=False):
 
 def menu_report():
     """Vytváøí pøehledný náhled na polo¾ky menu."""
-    resolver = pytis.form.resolver()
+    resolver = pytis.util.resolver()
     data_specs = []
     COMMAND_RUN_FORM = pytis.form.Application.COMMAND_RUN_FORM
     def spec(name):
@@ -159,7 +158,7 @@ def get_default_select(spec):
             log(EVENT, 'Selhání databázové operace')
             return None
         return select_count
-    resolver = pytis.form.resolver()
+    resolver = pytis.util.resolver()
     try:
         view = resolver.get(spec, 'view_spec')                
     except:
@@ -182,7 +181,7 @@ def get_default_select(spec):
         
 def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
-    resolver = pytis.form.resolver()
+    resolver = pytis.util.resolver()
     spec = pytis.form.run_dialog(pytis.form.InputDialog,
                                  message="Kontrola defsu",
                                  prompt="Specifikace",
@@ -231,7 +230,7 @@ def check_defs(seznam):
       seznam -- seznam názvù specifikací
 
     """
-    resolver = pytis.form.resolver()
+    resolver = pytis.util.resolver()
     errors = []
     dbconn = dbconnection_spec=config.dbconnection
     def check_spec(update, seznam):
@@ -291,7 +290,7 @@ cmd_check_menus_defs = (Application.COMMAND_HANDLED_ACTION,
                         dict(handler=check_menus_defs))
 
 def cache_spec(*args, **kwargs):
-    resolver = pytis.form.resolver()
+    resolver = pytis.util.resolver()
     def do(update, specs):
         total = len(specs)        
         last_status = 0
