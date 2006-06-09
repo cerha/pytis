@@ -1,3 +1,10 @@
+2006-06-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (CbComputer._compute): Doplòen assert
+	upøesòující pøíèinu chybné definice.
+	(FieldSpec.type): Doplòen assert upøesòující pøíèinu chybné
+	definice.
+
 2006-06-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (RecordForm._current_key): Vracej klíè z
