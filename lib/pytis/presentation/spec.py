@@ -1212,6 +1212,10 @@ class CbComputer(Computer):
         cbvalue = row[self._field]
         if cbvalue.value() is not None:
             e = cbvalue.type().enumerator()
+            assert e is not None, \
+              "CbComputer for '%s' refers to '%s', which has no enumerator." \
+              % (self._field, self.id())
+            id
             value = e.get(cbvalue.value(), self._column)
             if value:
                 return value.value()
@@ -1660,6 +1664,10 @@ class FieldSpec(object):
                 cb_column = data.find_column(self._computer.field())
                 enumerator = cb_column.type().enumerator()
                 type = enumerator.type(self._computer.column())
+                assert type is not None, \
+                     "Invalid enumerator column '%s' in CbComputer for '%s'." \
+                     % (self._computer.column(), self.id())
+                    
             else:
                 assert column != None, \
                      ('Data type not specified for virtual column ' + \
