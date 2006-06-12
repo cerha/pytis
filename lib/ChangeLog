@@ -1,3 +1,8 @@
+2006-06-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (BrowseForm._cmd_print): Nenastavuj
+	`print_spec_path' na `None'.
+
 2006-06-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (CbComputer._compute): Doplòen assert
