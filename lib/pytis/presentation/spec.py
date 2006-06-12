@@ -1660,6 +1660,8 @@ class FieldSpec(object):
             if type is not None:
                 assert column is None or \
                        isinstance(type, column.type().__class__)
+            elif column is not None:
+                type = column.type()
             elif isinstance(self._computer, CbComputer):
                 cb_column = data.find_column(self._computer.field())
                 enumerator = cb_column.type().enumerator()
@@ -1669,11 +1671,8 @@ class FieldSpec(object):
                      % (self._computer.column(), self.id())
                     
             else:
-                assert column != None, \
-                     ('Data type not specified for virtual column ' + \
-                      '(column not found in data object is supposed virtual).',
-                        self.id())
-                type = column.type()
+                raise ProgramError("Data type not specified "
+                                   "for virtual column '%s'." % self.id())
         return type
         
     def default(self):
