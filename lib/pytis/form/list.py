@@ -1985,7 +1985,6 @@ class BrowseForm(ListForm):
         return menu
 
     def _cmd_print(self, print_spec_path=None):
-        print_spec_path = None
         log(EVENT, 'Vyvolání tiskového formuláøe:', print_spec_path)
         name = self._name
         if not print_spec_path:
