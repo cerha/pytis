@@ -714,7 +714,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
             message('')
             column, enumerator, codebook = self._current_codebook_info()
-            if codebook:
+            if codebook and enumerator:
                 try:
                     cb_spec = resolver().get(codebook, 'cb_spec')
                 except ResolverError:
