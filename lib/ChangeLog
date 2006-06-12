@@ -1,7 +1,17 @@
 2006-06-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (FieldSpec.type): Pokud existuje
+	datový sloupeèek, pou¾ij jeho typ pøednostnì pøed typem z èíselníku.
+
 	* pytis/form/list.py (BrowseForm._cmd_print): Nenastavuj
 	`print_spec_path' na `None'.
+	(ListForm._post_selection_hook): Zobrazuj informace z èíselníku
+	pouze pokud `enumerator' není None.
+	(ListForm._current_codebook_info): Vracej pouze dvojici (`column',
+	`enumerator').
+	(ListForm._current_codebook_info)
+	(ListForm._can_show_cell_codebook) 
+	(ListForm._cmd_show_cell_codebook): Respektuj to.
 
 2006-06-09  Tomas Cerha  <cerha@brailcom.org>
 
