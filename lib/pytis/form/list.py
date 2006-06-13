@@ -1259,6 +1259,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             total += self._column_width(c)
         return total
 
+    def size(self):
+        return wx.Size(self._total_width(), self._total_height())
+
     def _total_height(self):
         g = self._grid
         height = g.GetColLabelSize()
