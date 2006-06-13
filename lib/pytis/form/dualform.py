@@ -88,15 +88,27 @@ class DualForm(Form):
         """
         super_(DualForm)._init_attributes(self)
         self._unprocessed_kwargs = kwargs
-        self._active_form = None        
-        self._sash_ratio = self._initial_sash_ratio()
+        self._active_form = None
+        self._orientation = self._initial_orientation()
+        self._splitter_position_initialized = False
 
-    def _initial_sash_ratio(self):
-        return self._view.sash_ratio()
-        
+    def _initial_orientation(self):
+        #return Orientation.VERTICAL
+        return self._view.orientation()
+
     def _create_view_spec(self):
-        spec = self._resolver.get(self._name, 'dual_spec')
-        assert isinstance(spec, DualSpec) 
+        name = self._name
+        if name.find('::') != -1:
+            main_name, side_name = name.split('::')
+            bindings = self._resolver.get(main_name, 'binding_spec')
+            b = bindings[side_name]
+            kwargs = dict([(a, getattr(b, a)())
+                           for a in public_attributes(BindingSpec)])
+            spec = DualSpec(main_name, side_name, **kwargs)
+        else:
+            # This is for backwards compatibility only!
+            spec = self._resolver.get(self._name, 'dual_spec')
+            assert isinstance(spec, DualSpec) 
         return spec
 
     def _create_data_object(self):
@@ -114,7 +126,20 @@ class DualForm(Form):
         main_form_kwargs = self._unprocessed_kwargs
         self._main_form = self._create_main_form(splitter, **main_form_kwargs)
         self._side_form = self._create_side_form(splitter)
-        splitter.SplitHorizontally(self._main_form, self._side_form)
+        if self._orientation == Orientation.HORIZONTAL:
+            splitter.SplitHorizontally(self._main_form, self._side_form)
+        else:
+            splitter.SplitVertically(self._main_form, self._side_form)
+        if isinstance(self._main_form, EditForm):
+            gravity = 0
+        elif isinstance(self._side_form, EditForm):
+            gravity = 1
+        elif self._orientation == Orientation.HORIZONTAL:
+            gravity = 0.5
+        else:
+            gravity = 0
+        splitter.SetSashGravity(gravity)
+        splitter.SetMinimumPaneSize(50)
         self._select_form(self._main_form)
         self._set_main_form_callbacks()
         self._set_side_form_callbacks()
@@ -204,18 +229,40 @@ class DualForm(Form):
         active = self._active_form
         if active:
             active.focus()
-        
-    def _sash_position(self, size):
-        return size.height * self._sash_ratio
-            
+
+    def _initial_sash_position(self, mode, size):
+        self._splitter_position_initialized = True
+        if isinstance(self._main_form, EditForm):
+            if mode == wx.SPLIT_HORIZONTAL:
+                return min(self._main_form.size().height, size.height - 200)
+            else:
+                return min(self._main_form.size().width, size.width - 200)
+        elif isinstance(self._side_form, EditForm):
+            if mode == wx.SPLIT_HORIZONTAL:
+                return max(size.height - self._side_form.size().height, 200)
+            else:
+                return max(size.width - self._side_form.size().width, 200)
+        elif mode == wx.SPLIT_HORIZONTAL:
+            return size.height * self._view.sash_ratio()
+        else:
+            return min(self._main_form.size().width, size.width - 200)
+
     def _on_sash_changed(self, event):
-        size = self._splitter.GetSize()
-        self._sash_ratio = event.GetSashPosition() / float(size.height)
+        splitter = self._splitter
+        size = splitter.GetSize()
+        mode = splitter.GetSplitMode()
+        position = event.GetSashPosition()
+        self._main_form.Refresh() # Sometimes it is not redrawn correctly...
+        self._active_form.focus()
+        event.Skip()
         
     def _on_size(self, event):
         size = event.GetSize()
+        mode = self._splitter.GetSplitMode()
         self._splitter.SetSize(size)
-        self._splitter.SetSashPosition(self._sash_position(size))
+        if not self._splitter_position_initialized:
+            position = self._initial_sash_position(mode, size)
+            self._splitter.SetSashPosition(position)
         event.Skip()
 
         
@@ -353,9 +400,9 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
         class _MainBrowseForm(BrowseForm):
             def title(self):
                 title = dualform._view.title()
-                if title is not None:
-                    return title
-                return super_(_MainBrowseForm).title(self)
+                if not title:
+                    title = super_(_MainBrowseForm).title(self)
+                return title
         return _MainBrowseForm(parent, self._resolver, self._view.main_name(),
                                guardian=self, **kwargs)
 
@@ -375,10 +422,10 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
     
     def _on_main_activation(self, alternate=False):
         if alternate:
-            f = DescriptiveDualForm
+            form, name = (DescriptiveDualForm, self._main_form.name())
         else:
-            f = ShowDualForm
-        run_form(f, self._name, select_row=self._main_form.current_key())
+            form, name = (ShowDualForm, self._name)
+        run_form(form, name, select_row=self._main_form.current_key())
 
     def _refresh(self, when=None):
         self._main_form.refresh()
@@ -418,8 +465,6 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
     def _refresh(self, when=None):
         self._side_form.refresh()
 
-    def _sash_position(self, size):
-        return min(self._main_form.size().height, size.height - 200)
 
 
 class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
@@ -455,10 +500,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
             self._side_form.Show(True)
             self._select_form(self._main_form, force=True)
         return True
-    
-    def _sash_position(self, size):
-        return max(size.height - self._side_form.size().height, 200)
-    
+
     def _refresh(self, when=None):
         self._main_form.refresh()
 
@@ -473,15 +515,16 @@ class DescriptiveDualForm(BrowseShowDualForm):
 
     """
     
-    def _init_attributes(self, **kwargs):
+    def _init_attributes(self, orientation=Orientation.HORIZONTAL, **kwargs):
         self._in_mainform_selection = False
+        self._orientation = orientation
         super_(DescriptiveDualForm)._init_attributes(self, **kwargs)
+        
+    def _initial_orientation(self):
+        return self._orientation
         
     def _create_view_spec(self):
         return None
-
-    def _initial_sash_ratio(self):
-        return None # V této tøídì se nepou¾ívá
 
     def _create_side_form(self, parent):
         return ShowForm(parent, self._resolver, self._name)
