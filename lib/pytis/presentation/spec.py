@@ -955,7 +955,24 @@ class ViewSpec(object):
 
     
 class BindingSpec(object):
-    """Specifikace vazby dvou náhledù do duálního formuláøe."""
+    """Specifikace vazby dvou náhledù pøi propojení do duálního formuláøe.
+
+    Tato specifikace definuje vlastnosti napojení dvou formuláøù pøi jejich
+    spojení do duálního formuláøe.  Definována je jak datová vazba, tak nìkteré
+    prezentaèní vlastnosti spojení.
+
+    Pou¾ití je následující:
+
+    Funkce 'binding_spec' ve specifikaci libovolného náhledu vrací slovník
+    v¹ech mo¾ných spojení tohoto náhledu s dal¹ími jinými náhledy.  Slovník je
+    klíèován názvy specifikací a hodnotou je právì instance 'BindingSpec'.
+
+    Kdy¾ je tedy napøíklad vytváøen duální formuláø 'A::B', bude ve specifikaci
+    náhledu 'A' (v roli hlavního formuláøe) získána z 'binding_spec' polo¾ka
+    pro náhled 'B' (v roli vedlej¹ího formuláøe).
+    
+
+    """
     
     def __init__(self, title, binding_column, side_binding_column=None,
                  hide_binding_column=True, description=None,
@@ -993,8 +1010,10 @@ class BindingSpec(object):
           sash_ratio -- pomìr rozdìlení plochy formuláøù jako desetinné èíslo v
             rozsahu od nuly do jedné.  Výchozí hodnota 0.5 znamená, ¾e
             rozdìlení bude pøesnì v polovinì a obìma formuláøùm tedy pøipadne
-            stejná plocha.  Men¹i hodnota znamená men¹í hlavní formuláø, vìt¹í
-            naopak.
+            stejná plocha.  Men¹i hodnota znamená men¹í horní formuláø, vìt¹í
+            naopak.  Uplatní se pouze pøi zobrazení dvou øádkových formuláøù v
+            horizontálním rozdìlení.  Pøi pøítomnosti editaèního formuláøe je
+            poloha oddìlovaèe øízena jeho ¹íøkou/vý¹kou.
             
           orientation -- výchozí orientace duálního formuláøe jako konstanta
             'Orientation'.  V horizonálním rozdìlení jsou formuláøe nad sebou,
