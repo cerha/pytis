@@ -6,6 +6,57 @@
 
 2006-06-13  Tomas Cerha  <cerha@brailcom.org>
 
+	Nová tøída `BindingSpec' umo¾òuje definovat zpùsob napojení dvou
+	formuláøù do duálního formuláøe.  Narozdíl od døívìj¹í `DualSpec'
+	v¹ak ji¾ nedefinuje název hlavního a vedlej¹ího formuláøe a
+	nepodporuje nìkteré zavr¾ené atributy, jako byly `side_cilumns' a
+	`side_title' a argument `title' je zde povinný.  I zpùsob pou¾ití
+	je odli¹ný a poèítá s novou notací názvu specifikace duálního
+	formuláøe.  Ten nyní obsahuje název specifikace hlavního i
+	vedlej¹ího formuláøe oddìlené dvojteèkou --
+	napø. `Faktury::Polozky'. Pøíslu¹ná specifikace napojení je potom
+	hledána jako `binding_spec' ve specifikaci hlavního formuláøe.
+	Více viz dokumentace `BindingSpec'.
+
+	V pøechodné fázi je mo¾né pou¾ívat jak starý zpùsob definice
+	duálních formuláøù pomocí `dual_spec', tak nový zpùsob s pou¾itím
+	`binding_spec'.  Na staré duální formuláøe se odkazujeme jako
+	døíve pouze jednoduchým názvem.  Jakmile se v¹ak chceme odkazovat
+	novým slo¾eným názvem, je tøeba `dual_spec' nahradit pomocí
+	`binding_spec'.  Funkènost tohoto kombinovaného zpùsobu v¹ak
+	doporuèuji nejdøíve otestovat -- zejména ovìøit zda fungují
+	nejrùznìj¹í pøechody z jednoho typu formuláøe do druhého.
+
+	Nový argument `orientation' (pou¾itelný jak v DualSpec tak v
+	BindingSpec) umo¾òuje urèit orientaci duálního formuláøe, tak¾e
+	kromì horizontálního rozdìlení, které je stále výchozí, je mo¾né
+	pro nìkteré formuláøe zvolit také vertikální rozdìlení.  Více viz
+	dokumentace konstruktoru `BindingSpec'.
+
+	Byl zdokonalen zpùsob urèení pozice oddìlovaèe v duálních
+	formuláøích pøi zmìnì rozmìrù okna.  Pokud je jedním z oken
+	editaèní formuláø, bude jeho velikost zachovávána.  Dva øádkové
+	formuláøe se v horizontálním rozlo¾ení rozpínají rovnomìrnì, ve
+	vertikálním je zachovávána velikost levého formuláøe.  Také urèení
+	poèáteèní polohy oddìlovaèe je pøi pøítomnosti editaèního
+	formuláøe øízeno jeho ¹íøkou/vý¹kou.
+	
+	* BUGFIX: Polo¾ky horizontální skupiny v LayoutSpec ji¾ nejsou
+	sdru¾ovány pod sebe.  Toto chybné chování døíve znemo¾òovalo
+	umístit políèka vedle sebe vertikálnì -- fungovalo pouze
+	vertikální spojení celých skupin, tak¾e to ¹lo obejít obalením
+	ka¾dého políèka do vlastní skupiny.  Nyní ji¾ nic takového není
+	potøeba.  Tato zmìna by v¹ak teoreticky mohla zpùsobit zmìnu
+	layoutu nìkterých existujících formuláøù, pokud se ve specifikaci
+	vyskytla horizontální skupina, která se sice vykreslila jako
+	vertikální, ale byla tak ponechána a následnì se s tímto
+	rozvr¾ením ji¾ poèítalo...
+	
+	* BUGFIX: Byla nastavena minimální velikost jednotlivých
+	podformuláøù v duálním formuláøi, díky èemu¾ ji¾ nelze jeden z
+	nich uzavøít pøeta¾ením oddìlovaèe a¾ na okraj a nebo dvojklikem
+	na oddìlovaèi.
+	
 	* BUGFIX: Po zmìnì pomìru formuláøù v duálním fomruláøi (pøeta¾ení
 	oddìlovaèe my¹í) je pøenastaven focus na aktivní formuláø, proto¾e
 	jinak formuláø pøestal reagovat na klávesy.

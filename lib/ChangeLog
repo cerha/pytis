@@ -30,6 +30,8 @@
 	(DualSpec): Buï potomkem `BindingSpec' a zaji¹»uj pouze ty
 	parametry, které jsou tøeba ke zpìtné kompatibilitì.
 	(FieldSpec.__init__): Pøidán assert na `orientation'.
+	(BindingSpec): Doplnìn docstring.
+	(BindingSpec.__init__): Doplnìn docstring.
 
 	* pytis/form/application.py (Application._can_run_form): Rozli¹uj
 	novou notaci názvu specifikace duálního formuláøe.
