@@ -578,9 +578,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return False
         if issubclass(form_class, DualForm) and \
                not issubclass(form_class, DescriptiveDualForm):
-            dual_spec = resolver().get(name, 'dual_spec')
-            result = has_access(dual_spec.main_name()) and \
-                     has_access(dual_spec.side_name())
+            if name.find('::') != -1:
+                main_name, side_name = name.split('::')
+            else:
+                dspec = resolver().get(name, 'dual_spec')
+                main_name, side_name = dspec.main_name(), dspec.side_name()
+            result = has_access(main_name) and has_access(side_name)
         else:
             result = has_access(name)
         return result
