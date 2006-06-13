@@ -4,7 +4,50 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2006-06-02:
+2006-06-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Po zmìnì pomìru formuláøù v duálním fomruláøi (pøeta¾ení
+	oddìlovaèe my¹í) je pøenastaven focus na aktivní formuláø, proto¾e
+	jinak formuláø pøestal reagovat na klávesy.
+
+2006-06-12  Tomas Cerha  <cerha@brailcom.org>
+	
+	* BUGFIX: Opravena priorita pøi urèení datového typu sloupce na
+	základì CbComputer.  Nyní má pøednost typ z datového objektu a
+	teprve pokud není sloupec v datovém objektu, je pou¾it datový typ
+	odpovídajícího sloupce v datovém objektu enumerátoru.  Tím 
+
+	* BUGFIX: Opravena chyba, která zpùsobovala tisk první polo¾ky
+	tiskového menu pøi výbìru libovolné jiné polo¾ky.
+	
+	* BUGFIX: Pokus o zobrazení informace z èíselníku ve stavovém
+	øádku je nyní podmínìn také existencí enumerátoru, nejen znalostí
+	názvu specifikace èíselníku.
+
+2006-06-09  Tomas Cerha  <cerha@brailcom.org>
+
+	Doplòeny asserty na správnost definice CbComputer, které mohou
+	pomoci odhalit pøíèinu chyby.
+
+2006-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	Výchozí chování metody `original_row' bylo vráceno na pùvodní
+	stav, kdy je prázdný záznam vrácen jako instance `PresentedRow'.
+	Chování, které potøebujeme v metodì `RecordForm._current_key()',
+	tedy ¾e je prázdný záznam vracen jako `None' lze vynutit novým
+	nepovinným argumentem `empty_as_none'.  Tím je zamezeno chybám,
+	které díky zmìnì chování vznikly v defsech, které s None, jako
+	návratovou hodnotou nepoèítaly.
+
+	Byla zru¹ena tøída NullApplication a upraveny nìkteré funkce v
+	application.py, aby se nehroutily i v pøípadì, ¾e zrovna ¾ádná
+	aplikace neexistuje.  Tím je mo¾né knihovny a zejména defsy naèíst
+	i v jiném kontextu ne¾ ze samostatné aplikace (napø. ve webovém
+	rozhraní, nebo pøi generování nápovìdy).
+	
+	* BUGFIX: Oprava assertu ve funkci `pytis.util.set_resolver()'
+	
+2006-06-02  Tomas Cerha  <cerha@brailcom.org>
 
 	V modulu `pytis.util.resolver' pøibyly nové funkce `resolver()' a
 	`set_resolver()', které slou¾í k získání a nastavení globálního
@@ -33,7 +76,7 @@
 	hodnotu jako vybranou.  To je nyní opraveno tak, ¾e políèko v¾dy
 	vrací tu hodnotu, která je vidìt jako vybraná.
 	
-2006-05-31
+2006-05-31  Tomas Cerha  <cerha@brailcom.org>
 
 	Nový pøíkaz RESET_FORM_STATE zahodí ve¹kerá u¾ivatelská nastavení
 	formuláøe (na rozdíl od existujícího pøíkazu RELOAD_FORM_STATE,
@@ -57,7 +100,7 @@
 	initializována klávesová mapa, tak¾e klávesové zkratky jsou v menu
 	nyní v¾dy viditelné.
 	
-2006-05-30
+2006-05-30  Tomas Cerha  <cerha@brailcom.org>
 	
 	Nový pøíkaz `LookupForm.COMMAND_UNFILTER', navázaný na klávesovou
 	zkratku `Ctrl-Shift-F4', zru¹í filter.  Chování je nyní takové, ¾e
@@ -89,7 +132,7 @@
 	formuláøe ve kterém byl pøedtím zapnutý filter, pokud hledaný
 	øádek není mezi aktuálnì vyfiltrovanými øádky.
 	
-2006-05-29
+2006-05-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi pokusu o výbìr neexistujícího øádku v ListFormu je
 	nyní korektnì zobrazena chybová zpráva.
@@ -108,7 +151,7 @@
 	zabránìno napø. tracebacku pøi pokusu o otevøení menu pøíkazù nad
 	ShowFormem nebo pøi pokusu o spu¹tìní pøíkazu ListFormu nad ShowFormem.
 	
-2006-05-25
+2006-05-25  Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions byly v kódu pro generování nápovìdy
 	implementovány nové funkce pro výpis pøehledu akcí kontextového
@@ -120,7 +163,7 @@
 	Aby se seznamy akcí v nápovìdì objevily, je nutné ji
 	pøegenerovat...
 	
-2006-05-24
+2006-05-24  Tomas Cerha  <cerha@brailcom.org>
 
 	Definice klávesové zkratky, obsahující prefix, který ji¾ je
 	pou¾it k vyvolání koncového pøíkazu (není prefixem), nyní není
@@ -128,7 +171,7 @@
 	
 	* BUGFIX: Opravena chyba znemo¾òující vyvolání èíselníku.
 	
-2006-05-23
+2006-05-23  Tomas Cerha  <cerha@brailcom.org>
 
 	Nápovìda Pytisu byla aktualizována (pøidán popis nových
 	vlastností).  Doporuèuji pøegenerovat soubory nápovìdy (spustit
@@ -136,14 +179,14 @@
 	výsledný soubor `pytis.zip' na v¹echny stroje, odkud je spou¹tìn
 	Pytis.
 	
-2006-05-22
+2006-05-22  Tomas Cerha  <cerha@brailcom.org>
 	
 	* BUGFIX: Pøi nastavování klávesových zkratek akcí v lokální
 	klávesové mapì `ListForm' je specifikace akcí pøevádìna na prostý
 	seznam.  Tím je zabránìno chybì pøi otevírání náhledu, který má
 	seznam akcí s vnoøenými seznamy a skupinami.
 	
-2006-05-19
+2006-05-19  Tomas Cerha  <cerha@brailcom.org>
 
         Byly implementovány nové pøíkazy cut, copy, paste a select-all pro
 	vstupní políèka.  Tyto pøíkazy byly pøidány do kontextového menu
