@@ -25,7 +25,10 @@
 	novým slo¾eným názvem, je tøeba `dual_spec' nahradit pomocí
 	`binding_spec'.  Funkènost tohoto kombinovaného zpùsobu v¹ak
 	doporuèuji nejdøíve otestovat -- zejména ovìøit zda fungují
-	nejrùznìj¹í pøechody z jednoho typu formuláøe do druhého.
+	nejrùznìj¹í pøechody z jednoho typu formuláøe do druhého.  Po
+	zru¹ení `dual_spec' je samozøejmì tøeba v¹echny odkazy na danou
+	specifikaci nahradit novou notací obsahující názvy hlavního a
+	vedlej¹ího náhledu.
 
 	Nový argument `orientation' (pou¾itelný jak v DualSpec tak v
 	BindingSpec) umo¾òuje urèit orientaci duálního formuláøe, tak¾e
