@@ -40,6 +40,16 @@
 
 	* pytis/form/form.py (EditForm._create_group): Polo¾ky
 	horizontální skupiny nesdru¾uj do souvislého sledu.
+	(TitledForm._create_title_bar): Kosmetická úprava.
+	(EditForm._create_form_parts): Vkládej obsah formuláøe do sizeru
+	bez mezery nahoøe a dole.
+	(EditForm._create_button.create_handler._handler): Neukládej
+	nepou¾itou návratovou hodnotu handleru.
+	(PopupEditForm._create_form_parts, ShowForm._create_form_parts):
+	Vkládej obsah formuláøe do sizeru bez mezery nahoøe a dole.
+	(EditForm._create_group): Oprava podmínky pro rozpoznání
+	vertikální skupiny.  Doplò také tlaèítka která nejsou souèástí
+	sledu.
 
 2006-06-12  Tomas Cerha  <cerha@brailcom.org>
 
