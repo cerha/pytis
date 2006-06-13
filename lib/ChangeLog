@@ -1,3 +1,44 @@
+2006-06-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (DualForm._init_attributes): Inicializuj
+	atributy `_orientation' a `_splitter_position_initialized'.
+	(DualForm._create_view_spec): Pokud název specifikace pou¾ívá
+	novou notaci, urèi názvy obou formuláøù pøímo a pøeèti ze
+	specifikace hlavního formuláøe pouze `binding_spec'.  Prozatím
+	`BindingSpec' pøevádìj na `DualSpec' a dále pracuj s ní.
+	(DualForm._create_form): Proveï horizontálná nebo vertikální
+	rozdìlení formuláøe podle specifikace.  Nastav vlastnosti
+	splitteru pøi zmìnì velikosti okna pomocí `SetSashGravity' v
+	závislosti na typu hlavního a vedlej¹ího formuláøe.
+	(DualForm._initial_orientation)
+	(DescriptiveDualForm._initial_orientation): Nové metody.
+	(DualForm._sash_position, ShowDualForm._sash_position)
+	(DescriptiveDualForm._sash_position): Metody zru¹eny.
+	(DualForm._initial_sash_ratio)
+	(DescriptiveDualForm._initial_sash_ratio): Metody zru¹eny.
+	(DualForm._initial_sash_position): Nová metoda.
+	(DualForm._on_size): Pokud zatím nebyla nastavena poèáteèní pozice
+	oddìlovaèe, volej nastav ji pomocí `_initial_sash_position'.
+	(BrowseDualForm._create_main_form._MainBrowseForm.title): Ignoguj
+	titulek z `DualSpec' i pokud je to prázdný øetìzec.
+	(BrowseDualForm._on_main_activation): Pøi vyvolání
+	DescriptiveDualForm nastavuj název specifikace podle názvu z
+	hlavního formuláøe.
+	(DualForm._init_attributes): Nový klíèový argument `orientation'.
+
+	* pytis/presentation/spec.py (BindingSpec): Nová tøída.
+	(DualSpec): Buï potomkem `BindingSpec' a zaji¹»uj pouze ty
+	parametry, které jsou tøeba ke zpìtné kompatibilitì.
+	(FieldSpec.__init__): Pøidán assert na `orientation'.
+
+	* pytis/form/application.py (Application._can_run_form): Rozli¹uj
+	novou notaci názvu specifikace duálního formuláøe.
+
+	* pytis/form/list.py (ListForm.size): Nová metoda.
+
+	* pytis/form/form.py (EditForm._create_group): Polo¾ky
+	horizontální skupiny nesdru¾uj do souvislého sledu.
+
 2006-06-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (FieldSpec.type): Pokud existuje
