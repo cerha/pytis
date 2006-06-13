@@ -512,7 +512,7 @@ class TitledForm:
         menu.Destroy()
         
     def _create_print_menu(self):
-        # Vra» tuple polo¾ek tiskového menu.
+        # Vra» seznam polo¾ek tiskového menu.
         name = self._name
         try:
             print_spec = self._resolver.get(name, 'print_spec')
@@ -1454,7 +1454,9 @@ class EditForm(LookupForm, TitledForm):
                 if self._view.field(item).width() == 0:
                     continue
                 item = self._field(item)
-            if isinstance(item, InputField) and not item.spec().compact() \
+            if isinstance(item, InputField) \
+               and orientation == Orientation.VERTICAL \
+               and not item.spec().compact() \
                    or isinstance(item, Button):
                 # This field will become a part of current pack
                 pack.append(item)
