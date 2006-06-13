@@ -1453,10 +1453,10 @@ class EditForm(LookupForm, TitledForm):
                 if self._view.field(item).width() == 0:
                     continue
                 item = self._field(item)
-            if isinstance(item, InputField) \
-               and orientation == Orientation.VERTICAL \
-               and not item.spec().compact() \
-                   or isinstance(item, Button):
+            if group.orientation() == Orientation.VERTICAL \
+                   and (isinstance(item, InputField)
+                        and not item.spec().compact() \
+                        or isinstance(item, Button)):
                 # This field will become a part of current pack
                 pack.append(item)
                 continue
@@ -1467,11 +1467,13 @@ class EditForm(LookupForm, TitledForm):
                 pack = []
             if isinstance(item, GroupSpec):
                 x = self._create_group(item)
-            else:
+            elif isinstance(item, InputField):
                 # This is a compact field (not a part of the pack)
                 x = wx.BoxSizer(wx.VERTICAL)
                 x.Add(item.label(), 0, wx.ALIGN_LEFT)
                 x.Add(item.widget())
+            else:
+                x = self._create_button(item)
             sizer.Add(x, 0, wx.ALIGN_TOP|border_style, border)
         if len(pack) != 0:
             # pøidej zbylý sled políèek (pokud nìjaký byl)
