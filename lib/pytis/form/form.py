@@ -179,7 +179,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         if not success:
             throw('form-init-error')
         return data_object
-    
+
     def _create_form(self):
         # Build the form from parts
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -536,8 +536,6 @@ class TitledForm:
         box = wx.BoxSizer()
         box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
         box.Add(button)
-        panel.SetSizer(box)
-        panel.SetAutoLayout(True)        
         if description:
             descbmp = wx.ArtProvider_GetBitmap(wx.ART_HELP_BOOK, wx.ART_TOOLBAR,
                                                (16,16))
@@ -546,7 +544,8 @@ class TitledForm:
                         self._on_show_description)
             descbutton.SetToolTipString(description)
             box.Add(descbutton)
-            # panel.SetToolTipString(description)
+        panel.SetSizer(box)
+        panel.SetAutoLayout(True)        
         box.Fit(panel)
         return panel
 
@@ -1386,7 +1385,7 @@ class EditForm(LookupForm, TitledForm):
         f = find(id, self._fields, key=lambda f: f.id())
         assert f is not None, (_("Unknown field:"), id)
         return f
-    
+
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
         layout = self._view.layout()
@@ -1395,7 +1394,7 @@ class EditForm(LookupForm, TitledForm):
         group = self._create_group(layout.group())
         # Add parts to the sizer.
         sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
-        sizer.Add(group,   0, wx.ALIGN_CENTER|wx.ALL, 8)
+        sizer.Add(group,   0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 6)
 
     def _create_button(self, item):
         b = wx.Button(self, -1, item.label())
@@ -1409,7 +1408,7 @@ class EditForm(LookupForm, TitledForm):
             b.SetToolTipString(item.tooltip())
         def create_handler(handler):
             def _handler(event):
-                refresh = handler(self._row)
+                handler(self._row)
                 busy_cursor(False)
                 self.set_row(self._row)
             return _handler
@@ -1706,7 +1705,7 @@ class PopupEditForm(PopupForm, EditForm):
         assert inserted_data is None or self._mode == self.MODE_INSERT
         self._inserted_data = inserted_data
         self._inserted_data_pointer = 0
-        
+
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
         layout = self._view.layout()
@@ -1717,7 +1716,7 @@ class PopupEditForm(PopupForm, EditForm):
         status_bar = self._create_status_bar()
         # Add parts to the sizer.
         sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
-        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.ALL, 6)
+        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 6)
         sizer.Add(buttons, 0, wx.ALIGN_CENTER)
         sizer.Add(status_bar, 0, wx.EXPAND)
 
@@ -1867,7 +1866,7 @@ class ShowForm(EditForm):
         group = self._create_group(self._view.layout().group())
         # Add parts to the sizer.
         sizer.Add(title, 0, wx.EXPAND|wx.FIXED_MINSIZE)
-        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.BOTTOM, 8)
+        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 6)
 
     def _on_size(self, event):
         step = 20
