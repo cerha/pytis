@@ -954,24 +954,20 @@ class ViewSpec(object):
         return self._row_style
 
     
-class DualSpec(object):
-    """Specifikace duálního formuláøe.
-
-
-    """
-    def __init__(self, main_name, side_name, binding_column,
-                 side_binding_column=None, side_columns=None,
-                 hide_binding_column=True, append_condition=None,
-                 title=None, side_title=None, description=None,
-                 sash_ratio=0.5):
+class BindingSpec(object):
+    """Specifikace vazby dvou náhledù do duálního formuláøe."""
+    
+    def __init__(self, title, binding_column, side_binding_column=None,
+                 hide_binding_column=True, description=None,
+                 append_condition=None, sash_ratio=0.5,
+                 orientation=Orientation.HORIZONTAL):
+        
         """Inicializuj instanci.
 
         Argumenty:
 
-          main_name -- jméno specifikace hlavního formuláøe; øetìzec.
-
-          side_name -- jméno specifikace vedlej¹ího formuláøe; øetìzec.
-
+          title -- titulek tohoto duálního spojení formuláøù jako øetìzec.
+                        
           binding_column -- identifikátor vazebního sloupce.  Tento sloupec
             bude pou¾it pro filtrování vedlej¹ího formuláøe pøi pohybu po
             záznamech v hlavním formuláøi.  Filtrovací podmínka je implicitnì
@@ -982,65 +978,59 @@ class DualSpec(object):
             `None' znamená, ¾e název vazebního sloupce je ve vedlej¹ím
             formuláøi stejný, jako v hlavním formuláøi.
             
-          side_columns -- sekvence identifikátorù sloupcù vedlej¹ího formuláøe.
-            Pokud je None, budou ve vedlej¹ím formuláøi zobrazeny v¹echny
-            sloupce dané jeho specifikací.
-            
           hide_binding_column -- vazební sloupec mù¾e být (a implicitnì je)
             ve vedlej¹ím formuláøi vypu¹tìn (jeho hodnota je pro v¹echny
             vyfiltrované záznamy shodná -- odpovídá hodnotì z hlavního
             formuláøe).
+
+          description -- textový popis daného duálního spojení formuláøù.
             
           append_condition -- None nebo funkce jednoho argumentu, kterým je
             aktuální øádek hlavního formuláøe. V tomto pøípadì musí funkce
             vrátit instanci Operator, která se pøipojí k implicitní
             podmínce provazující vazební sloupce.
-            
-          title -- titulek hlavního formuláøe jako øetìzec.  Pokud není
-            None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
-            ze specifikace hlavního formuláøe.
-            
-          side_title -- titulek vedlej¹ího formuláøe jako øetìzec.  Pokud není
-            None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
-            ze specifikace vedlej¹ího formuláøe.
 
-          POZOR: Argument 'side_columns' je velice nevhodný.  Udr¾ování
-          identifikátorù sloupcù v jiném defsu, ne¾ odkud pocházejí vede èasto
-          k nekonzistenci a k následným chybám.  Namísto uvádìní sloupcù zde je
-          lep¹í vytvoøit zvlá¹tní variantu.  Tím jsou seznamy sloupcù pro rùzná
-          pou¾ití formuláøe v¾dy hezky pohromadì.  To samé platí pro argumenty
-          'title' a 'side_title'.
+          sash_ratio -- pomìr rozdìlení plochy formuláøù jako desetinné èíslo v
+            rozsahu od nuly do jedné.  Výchozí hodnota 0.5 znamená, ¾e
+            rozdìlení bude pøesnì v polovinì a obìma formuláøùm tedy pøipadne
+            stejná plocha.  Men¹i hodnota znamená men¹í hlavní formuláø, vìt¹í
+            naopak.
             
+          orientation -- výchozí orientace duálního formuláøe jako konstanta
+            'Orientation'.  V horizonálním rozdìlení jsou formuláøe nad sebou,
+            ve vertikálním vedle sebe.
+
         """
-        assert is_anystring(main_name)
-        assert is_anystring(side_name)
-        assert is_anystring(binding_column)
-        assert is_anystring(title) or title is None
-        assert is_anystring(side_title) or side_title is None
+        assert isinstance(title, types.StringTypes)
+        assert isinstance(binding_column, types.StringTypes)
+        assert description is None or isinstance(description, types.StringTypes)
+        assert side_binding_column is None or \
+               isinstance(side_binding_column, types.StringTypes)
+        assert isinstance(hide_binding_column, types.BooleanType)
         assert append_condition is None or callable(append_condition)
-        assert side_binding_column is None or is_anystring(side_binding_column)
-        assert side_columns is None or is_sequence(side_columns)
-        self._main_name = main_name
-        self._side_name = side_name
+        assert orientation in public_attributes(Orientation)
+        assert isinstance(sash_ratio, types.FloatType) and 0 < sash_ratio < 1
+        self._title = title
         self._binding_column = binding_column
         if side_binding_column is None:
             side_binding_column = binding_column
-        self._side_columns = side_columns
         self._side_binding_column = side_binding_column
         self._hide_binding_column = hide_binding_column
+        self._description = description
         self._append_condition = append_condition
-        self._title = title
-        self._side_title = side_title
         self._sash_ratio = sash_ratio
+        self._orientation = orientation
+        
 
-    def main_name(self):
-        """Vra» název specifikace hlavního formuláøe jako øetìzec."""
-        return self._main_name
         
-    def side_name(self):
-        """Vra» název specifikace vedlej¹ího formuláøe jako øetìzec."""
-        return self._side_name
-        
+    def title(self):
+        """Vra» titulek duálního formuláøe jako øetìzec."""
+        return self._title
+
+    def description(self):
+        """Vra» nápovìdu pro formuláø."""
+        return self._description
+    
     def binding_column(self):
         """Vra» id vazebního sloupce hlavního formuláøe jako øetìzec."""
         return self._binding_column
@@ -1048,10 +1038,6 @@ class DualSpec(object):
     def side_binding_column(self):
         """Vra» id vazebního sloupce vedlej¹ího formuláøe jako øetìzec."""
         return self._side_binding_column
-
-    def side_columns(self):
-        """Vra» seznam id sloupcù, vedlej¹ího formuláøe."""
-        return self._side_columns
 
     def hide_binding_column(self):
         """Vra» pravdu, pokud má být vazební sloupec skryt ve vedlej¹ím fm."""
@@ -1061,16 +1047,72 @@ class DualSpec(object):
         """Vra» doplòující podmínku."""
         return self._append_condition
     
-    def title(self):
-        """Vra» titulek hlavního formuláøe jako øetìzec."""
-        return self._title
+    def sash_ratio(self):
+        return self._sash_ratio
+    
+    def orientation(self):
+        return self._orientation
 
+    
+class DualSpec(BindingSpec):
+    """Specifikace duálního formuláøe.
+    
+    POZOR: Tato tøída by ji¾ nemìla být pou¾ívána.  Namísto specifikaèní
+    funkce 'dual_spec' samostatné duální specifikaci nech» je nyní
+    pou¾ívána funkce 'binding_spec' ve specifikaci hlavního formuláøe.
+    Více také viz 'BindingSpec'.
+    
+    """
+    def __init__(self, main_name, side_name, binding_column, title="",
+                 side_title=None, side_columns=None, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          main_name -- jméno specifikace hlavního formuláøe; øetìzec.
+
+          side_name -- jméno specifikace vedlej¹ího formuláøe; øetìzec.
+
+          side_title -- titulek vedlej¹ího formuláøe jako øetìzec.  Pokud není
+            None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
+            ze specifikace vedlej¹ího formuláøe.
+
+          side_columns -- sekvence identifikátorù sloupcù vedlej¹ího formuláøe.
+            Pokud je None, budou ve vedlej¹ím formuláøi zobrazeny v¹echny
+            sloupce dané jeho specifikací.
+            
+        V¹echny ostatní argumenty jsou shodné jako u 'BindingSpec', pouze
+        argument 'title' zde není povinný.
+
+        """
+        assert is_anystring(main_name)
+        assert is_anystring(side_name)
+        assert side_title is None or is_anystring(side_title)
+        assert side_columns is None or is_sequence(side_columns)
+        self._main_name = main_name
+        self._side_name = side_name
+        self._side_title = side_title
+        self._side_columns = side_columns
+        super(DualSpec, self).__init__(title, binding_column, **kwargs)
+
+    def main_name(self):
+        """Vra» název specifikace hlavního formuláøe jako øetìzec."""
+        return self._main_name
+        
+    def side_name(self):
+        """Vra» název specifikace vedlej¹ího formuláøe jako øetìzec."""
+        return self._side_name
+        
     def side_title(self):
         """Vra» titulek vedlej¹ího formuláøe jako øetìzec."""
         return self._side_title
 
-    def sash_ratio(self):
-        return self._sash_ratio
+    def side_columns(self):
+        """Vra» seznam id sloupcù, vedlej¹ího formuláøe."""
+        return self._side_columns
+
+
+    
 
 class Editable(object):
     """Výètová tøída definující konstanty urèující editovatelnost políèka."""
@@ -1510,6 +1552,7 @@ class FieldSpec(object):
                or isinstance(codebook_runtime_filter, Computer)
         assert selection_type is None \
                or selection_type in public_attributes(SelectionType)
+        assert orientation in public_attributes(Orientation)
         assert post_process is None or callable(post_process) \
                or post_process in public_attributes(PostProcess)
         assert filter is None or filter in public_attributes(TextFilter)
