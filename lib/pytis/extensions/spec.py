@@ -105,39 +105,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
             assert isinstance(arg, types.StringType)
     return lambda row: run_procedure(spec_name, proc_name,
                                      *[row[key] for key in args], **kwargs)
-
-
-def cb_computer(codebook_field, column, default=None):
-    """Vra» 'Computer' dopoèítávající hodnotu ze sloupce èíselníku.
-
-    Vytvoø instanci 'Computer', její¾ dopoèítávací funkce vrací hodnotu sloupce
-    èíselníku.  Computer automaticky závisí na daném èíselníkovém políèku.
-
-    Argumenty:
-    
-      codebook_field -- id èíselníkového políèka, z jeho¾ èíselníku má být
-        hodnota pøevzata.
-
-      column -- id sloupce v datovém objektu èíselníku, jeho¾ hodnota má být
-        dopoèítávací funkcí vrácena.
-        
-      default -- implicitní hodnota pou¾itá pokud je hodnota zvoleného sloupce
-        v èíselníku nedefinována.
-    
-    """
-    assert isinstance(codebook_field, types.StringType)
-    assert isinstance(column, types.StringType)
-    log(OPERATIONAL, "Pou¾ita potlaèená funkce cb_computer. "
-        "Pou¾ijte radìji computer typu 'CbComputer'!", (codebook_field, column))
-    def func(row):
-        cbvalue = row[codebook_field]
-        if cbvalue.value() is None:
-            value = default
-        else:
-            value = cb2colvalue(cbvalue, column=column).value()
-        return value
-    return Computer(func, depends=(codebook_field,))
-    
+   
 
 def cb2colvalue(value, column=None):
     """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
