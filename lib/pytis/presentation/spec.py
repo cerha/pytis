@@ -1376,17 +1376,14 @@ class FieldSpec(object):
 
     """
     def __init__(self, id, label='', column_label=None, descr=None,
-                 width=None, column_width=None, fixed=False, height=None, 
-                 editable=None, compact=False, type_=None, 
-                 default=None, computer=None,
-                 line_separator='; ',
-                 codebook=None, display_size=None, related_codebook_field=None,
-                 allow_codebook_insert=False, codebook_insert_spec=None,
-                 codebook_runtime_filter=None, 
-                 selection_type=None,
-                 orientation=Orientation.VERTICAL,
-                 post_process=None, filter=None, filter_list=None,
-                 style=None):
+                 width=None, column_width=None, fixed=False, height=None,
+                 editable=None, compact=False, type_=None, default=None,
+                 computer=None, line_separator='; ', codebook=None,
+                 display_size=None, allow_codebook_insert=False,
+                 codebook_insert_spec=None, codebook_runtime_filter=None,
+                 selection_type=None, orientation=Orientation.VERTICAL,
+                 post_process=None, filter=None, filter_list=None, style=None):
+        
         """Inicializace a doplnìní výchozích hodnot atributù.
 
         Argumenty:
@@ -1470,9 +1467,6 @@ class FieldSpec(object):
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
             'cb_spec' ve specifikaci èíselníku.
 
-          related_codebook_field -- Potlaèený atribut.  Namísto nìj, nech» je
-            pou¾íván computer typu 'CbComputer'.
-            
           allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
             pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
             èíselníková políèka.
@@ -1585,15 +1579,6 @@ class FieldSpec(object):
                or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
-        if related_codebook_field is not None:
-            assert computer is None
-            if isinstance(related_codebook_field, types.StringType):
-                cb_field, cb_column = (related_codebook_field, id)
-            else:
-                cb_field, cb_column = related_codebook_field
-            computer = CbComputer(cb_field, cb_column)
-        else:
-            cb_field = cb_column = None
         self._id = id
         self._label = gettext_(label)
         self._descr = gettext_(descr)
