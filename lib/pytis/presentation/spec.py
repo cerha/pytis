@@ -770,8 +770,9 @@ class ViewSpec(object):
         self._fields = tuple(fields)
         # Initialize `layout' specification parameter
         if layout is None:
-            ids = tuple(map(lambda f: f.id(), self._fields))
-            layout = LayoutSpec(title, GroupSpec(ids))
+            group = GroupSpec([f.id() for f in self._fields],
+                              orientation=Orientation.VERTICAL)
+            layout = LayoutSpec(title, group)
         elif __debug__:
             assert isinstance(layout, LayoutSpec)
             def recourse_group(group):
