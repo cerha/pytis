@@ -159,11 +159,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._column_widths = {}
     
     def _create_form_parts(self, sizer):
-        title = self.title()
-        if title is not None:
+        if self.title() is not None:
             description = self._view.description()
-            self._title_bar = self._create_title_bar(title,
-                                                     description=description)
+            self._title_bar = self._create_title_bar(description=description)
             sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         else:
             self._title_bar = None
