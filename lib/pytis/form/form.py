@@ -184,9 +184,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         # Build the form from parts
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_form_parts(sizer)
-        self.SetAutoLayout(True)
         self.SetSizer(sizer)
-        self.Layout()
         sizer.Fit(self) # Set the size of window `self' to size of the sizer.
 
     def _create_form_parts(self, sizer):
@@ -449,7 +447,7 @@ class PopupForm:
         try:
             frame = self._popup_frame_
         except AttributeError:
-            style = wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE
+            style = wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE #|wx.RESIZE_BORDER
             frame = wx.Dialog(parent, style=style)
             self._popup_frame_ = frame
             wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
@@ -487,10 +485,12 @@ class TitledForm:
     """    
     _TITLE_BORDER_WIDTH = 3
     
-    def _create_caption(self, parent, text, size=None):
+    def _create_caption(self, parent=None, size=None):
         # Create the title text as 'wxStaticText' instance.
-        caption = wx.StaticText(parent, -1, text,
-                                style=wx.ALIGN_CENTER)
+        text = self.title()
+        if parent is None:
+            parent = self
+        caption = wx.StaticText(parent, -1, text, style=wx.ALIGN_CENTER)
         if size is None: 
             size = caption.GetFont().GetPointSize()
         font = wx.Font(size, wx.DEFAULT, wx.NORMAL, wx.BOLD,
@@ -525,10 +525,10 @@ class TitledForm:
                                             _command_handler=self))
                             for title, path in print_spec]
 
-    def _create_title_bar(self, text, size=None, description=None):
+    def _create_title_bar(self, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
-        caption = self._create_caption(panel, text, size=size)
+        caption = self._create_caption(panel)
         bmp = wx.ArtProvider_GetBitmap(wx.ART_PRINT, wx.ART_TOOLBAR, (16,16))
         button = wx.BitmapButton(panel, -1, bmp, style=wx.NO_BORDER)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(), self._on_print_menu)
@@ -1278,7 +1278,7 @@ class LookupForm(RecordForm):
 ### Editaèní formuláø
 
 
-class EditForm(LookupForm, TitledForm):
+class EditForm(LookupForm, TitledForm, Refreshable):
     """Formuláø pro editaci v¹ech vlastností jednoho záznamu.
 
     Formuláø je vytvoøen poskládáním jednotlivých vstupních políèek daných
@@ -1301,8 +1301,9 @@ class EditForm(LookupForm, TitledForm):
     """Mód formuláøe pro zobrazení záznamù bez mo¾nosti editace."""
     
     def __init__(self, *args, **kwargs):
-        super_(EditForm).__init__(self, *args, **kwargs)
-        self._size = self.GetSize() # Remember the original size.
+        super(EditForm, self).__init__(*args, **kwargs)
+        # Remember the original size.
+        self._size = self.GetSizer().GetMinSize() + wx.Size(2, 2)
         for f in self._fields:
             if self._mode == self.MODE_VIEW:
                 f.disable(change_appearance=False)
@@ -1360,7 +1361,14 @@ class EditForm(LookupForm, TitledForm):
                 f = self._fields[0]
         f.set_focus()
 
-    def _create_form(self):
+    def _create_form_parts(self, sizer):
+        # Create all parts and add them to top-level sizer.
+        sizer.Add(self._create_title_bar(), 0, wx.EXPAND)
+        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
+
+    def _create_form_controls(self):
+        # Create the actual form controls according to the layout.
+        panel = wx.ScrolledWindow(self)
         if self._mode == self.MODE_INSERT:
             permission = pytis.data.Permission.INSERT
         elif self._mode == self.MODE_EDIT:
@@ -1375,29 +1383,26 @@ class EditForm(LookupForm, TitledForm):
                     acc = self._data.accessible(id, permission)
                 else:
                     acc = True
-                f = InputField.create(self, spec, self._data, guardian=self,
+                f = InputField.create(panel, spec, self._data, guardian=self,
                                       accessible=acc)
                 f.set_callback(InputField.CALL_FIELD_CHANGE,self._on_field_edit)
                 self._fields.append(f)
-        super_(EditForm)._create_form(self)
+        # Now create the layout groups.
+        group = self._create_group(panel, self._view.layout().group())
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(group, 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
+        panel.SetScrollRate(20, 20)
+        panel.SetSizer(sizer)
+        sizer.Fit(panel)
+        return panel
 
     def _field(self, id):
         f = find(id, self._fields, key=lambda f: f.id())
         assert f is not None, (_("Unknown field:"), id)
         return f
 
-    def _create_form_parts(self, sizer):
-        # Create all parts and add them to top-level sizer.
-        layout = self._view.layout()
-        # Create the parts
-        caption = self._create_caption(self, self.title(), size=18)
-        group = self._create_group(layout.group())
-        # Add parts to the sizer.
-        sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
-        sizer.Add(group,   0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 6)
-
-    def _create_button(self, item):
-        b = wx.Button(self, -1, item.label())
+    def _create_button(self, parent, item):
+        b = wx.Button(parent, -1, item.label())
         b.Enable(item.active_in_popup_form() \
                  or not isinstance(self, PopupForm))
         if item.width() is not None:
@@ -1416,7 +1421,7 @@ class EditForm(LookupForm, TitledForm):
                     create_handler(item.handler()))
         return b
         
-    def _create_group(self, group):
+    def _create_group(self, parent, group):
         """Vytvoø skupinu vstupních políèek podle specifikace.
 
         Argumenty:
@@ -1436,7 +1441,7 @@ class EditForm(LookupForm, TitledForm):
         """
         orientation = orientation2wx(group.orientation())
         if group.label() is not None:
-            box = wx.StaticBox(self, -1, group.label())
+            box = wx.StaticBox(parent, -1, group.label())
             sizer = wx.StaticBoxSizer(box, orientation)
         else:
             sizer = wx.BoxSizer(orientation)
@@ -1444,9 +1449,9 @@ class EditForm(LookupForm, TitledForm):
         # poskládám metodou self._pack_fields() a vlo¾ím do sizeru této
         # skupiny
         pack = []
-        space = dlg2px(self, group.space())
-        gap = dlg2px(self, group.gap())
-        border = dlg2px(self, group.border())
+        space = dlg2px(parent, group.space())
+        gap = dlg2px(parent, group.gap())
+        border = dlg2px(parent, group.border())
         border_style = border_style2wx(group.border_style())
         for item in group.items():
             if is_string(item):
@@ -1462,32 +1467,32 @@ class EditForm(LookupForm, TitledForm):
                 continue
             if len(pack) != 0:
                 # pøidej poslední sled políèek (pokud nìjaký byl)
-                sizer.Add(self._pack_fields(pack, space, gap),
+                sizer.Add(self._pack_fields(parent, pack, space, gap),
                           0, wx.ALIGN_TOP|border_style, border)
                 pack = []
             if isinstance(item, GroupSpec):
-                x = self._create_group(item)
+                x = self._create_group(parent, item)
             elif isinstance(item, InputField):
                 # This is a compact field (not a part of the pack)
                 x = wx.BoxSizer(wx.VERTICAL)
                 x.Add(item.label(), 0, wx.ALIGN_LEFT)
                 x.Add(item.widget())
             else:
-                x = self._create_button(item)
+                x = self._create_button(parent, item)
             sizer.Add(x, 0, wx.ALIGN_TOP|border_style, border)
         if len(pack) != 0:
             # pøidej zbylý sled políèek (pokud nìjaký byl)
-            sizer.Add(self._pack_fields(pack, space, gap),
+            sizer.Add(self._pack_fields(parent, pack, space, gap),
                       0, wx.ALIGN_TOP|border_style, border)
         # pokud má skupina orámování, pøidáme ji je¹tì do sizeru s horním
         # odsazením, jinak je horní odsazení pøíli¹ malé.
         if group.label() is not None:
             s = wx.BoxSizer(orientation)
-            s.Add(sizer, 0, wx.TOP, 3)
+            s.Add(sizer, 0, wx.TOP, 2)
             sizer = s
         return sizer
 
-    def _pack_fields(self, items, space, gap):
+    def _pack_fields(self, parent, items, space, gap):
         """Sestav skupinu pod sebou umístìných políèek/tlaèítek do gridu.
 
         Argumenty:
@@ -1507,9 +1512,9 @@ class EditForm(LookupForm, TitledForm):
         grid = wx.FlexGridSizer(len(items), 2, gap, space)
         for item in items:
             if isinstance(item, Button):
-                button = self._create_button(item)
+                button = self._create_button(parent, item)
                 style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-                label = wx.StaticText(self, -1, "",
+                label = wx.StaticText(parent, -1, "",
                                       style=wx.ALIGN_RIGHT)
                 grid.Add(label, 0, style, 2)
                 grid.Add(button)                
@@ -1629,6 +1634,9 @@ class EditForm(LookupForm, TitledForm):
         field = find(True, self._fields, key=lambda f: f.is_modified())
         return field is not None
 
+    def refresh(self):
+        self.Refresh()
+
     def _on_field_edit(self, id, value):
         # Signalizace zmìny políèka z InputField
         self._row[id] = value
@@ -1683,6 +1691,7 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
+        self.SetSize(self.size())
         p = parent
         while not p.GetTitle() and p.GetParent():
             p = p.GetParent()
@@ -1710,15 +1719,13 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
-        layout = self._view.layout()
-        # Create the parts.
-        caption = self._create_caption(self, self.title(), size=18)
-        group = self._create_group(layout.group())
+        caption = self._create_caption(self, size=18)
+        panel = self._create_form_controls()
         buttons = self._create_buttons()
         status_bar = self._create_status_bar()
         # Add parts to the sizer.
         sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
-        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 6)
+        sizer.Add(panel, 1, wx.EXPAND)
         sizer.Add(buttons, 0, wx.ALIGN_CENTER)
         sizer.Add(status_bar, 0, wx.EXPAND)
 
@@ -1860,21 +1867,7 @@ class ShowForm(EditForm):
 
     def _init_attributes(self, mode=EditForm.MODE_VIEW, **kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, **kwargs)
-        wx_callback(wx.EVT_SIZE, self, self._on_size)
         
-    def _create_form_parts(self, sizer):
-        # Create all parts and add them to top-level sizer.
-        title = self._create_title_bar(self.title())
-        group = self._create_group(self._view.layout().group())
-        # Add parts to the sizer.
-        sizer.Add(title, 0, wx.EXPAND|wx.FIXED_MINSIZE)
-        sizer.Add(group, 1, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 6)
-
-    def _on_size(self, event):
-        step = 20
-        size = self.GetSize()
-        self.SetScrollbars(step, step, size.width/step, size.height/step)
-        event.Skip()
 
 class BrowsableShowForm(ShowForm):
     """Listovací formuláø pro zobrazení náhledu.
