@@ -1,3 +1,27 @@
+2006-06-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (cb_computer): Funkce zru¹ena.
+
+2006-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/www.py (BaseDBTable.__init__)
+	(form_validate): `data_create()' -> `data_object()'.  Nevytváøej
+	`NullAppication'.  Volej `pytis.util.set_resolver()'.
+
+	* lib/pytis/extensions/help.py (ItemNode._create_content)
+	(MenuIndex.__init__, DescrNode.__init__): `pytis.form.resolver()'
+	-> `pytis.util.resolver()'.
+	(_split_menu_descriptions): Funkce odstranìna.
+	(MenuIndex.__init__): Nevytváøej `NullAppication'.  Volej
+	`pytis.util.set_resolver()'.
+
+	* lib/pytis/extensions/defs.py (flatten_menus, get_menu_defs) 
+	(menu_report, get_default_select, check_form, check_defs) 
+	(cache_spec): `pytis.form.resolver()' -> `pytis.util.resolver()'.
+
+	* lib/pytis/extensions/dbutils.py (data_object, enum):
+	`pytis.form.resolver()' -> `pytis.util.resolver()'.
+
 2006-05-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py (DescrNode): Vyèlenìny pouze
