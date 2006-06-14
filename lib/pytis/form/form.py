@@ -1691,7 +1691,9 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
-        self.SetSize(self.size())
+        size = copy.copy(self.size())
+        size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
+        self.SetSize(size)
         p = parent
         while not p.GetTitle() and p.GetParent():
             p = p.GetParent()
