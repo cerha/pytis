@@ -1,5 +1,14 @@
 2006-06-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (DualForm._refresh): Buï potomkem
+	`Refreshable'.
+	(DualForm._refresh): Nová metoda.
+	(BrowseDualForm, ShowDualForm, BrowseShowDualForm): Nebuï potomkem
+	`Refreshable'.
+	(BrowseDualForm._refresh)
+	(ShowDualForm._refresh, BrowseShowDualForm._refresh): Metody
+	zru¹eny.
+
 	* pytis/form/form.py (Form._create_form): Nevolej `SetAutoLayout'
 	ani `Fit'.
 	(TitledForm._create_caption): Zru¹en argument `text'.  Argument
@@ -7,7 +16,6 @@
 	`parent' nech» má výchozí hodnotu `self'.
 	(TitledForm._create_title_bar): Zru¹eny argumenty `text' a `size'.
 	(EditForm) Buï také potomkem `Refreshable'.
-	(EditForm.refresh): Nová metoda.
 	(EditForm.__init__): `self._size' nastavuj podle minimálná
 	velikosti top-level sizeru.
 	(EditForm._create_form): Metoda zru¹ena.
@@ -26,6 +34,8 @@
 	správnému skrollování vnitøní plochy formuláøe.
 	(ShowForm._init_attributes): Zru¹en callback pøi zmìnì velikosti okna.
 	(ShowForm._create_form_parts, ShowForm._on_size): Metody zru¹eny.
+	(PopupEditForm.__init__): Omez velikost okna podle velikosti displeje.
+	(EditForm._refresh): Nová meotda.
 
 	* pytis/form/screen.py (Window, Window.__init__): Nebuï potomkem
 	`wx.ScrolledWindow', ale `wx.Panel'.
