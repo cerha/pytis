@@ -1005,7 +1005,7 @@ class Invocable(object, CommandHandler):
         button.SetToolTipString(self._INVOKE_SELECTION_MENU_TITLE)
         sizer = wx.BoxSizer()
         sizer.Add(widget, 0, wx.FIXED_MINSIZE)
-        sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
+        sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 1)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                     lambda e: self._on_invoke_selection())
         wx_callback(wx.EVT_NAVIGATION_KEY, button,
@@ -1177,7 +1177,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display,
                             self._skip_navigation_callback(display))
-                sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
+                sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 1)
         if spec.allow_codebook_insert():
             self._insert_button = button = wx.Button(self._parent, -1, "+")
             button.SetSize((dlg2px(button, 10), height))
@@ -1186,7 +1186,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                         self._on_codebook_insert)
             wx_callback(wx.EVT_NAVIGATION_KEY, button,
                         self._skip_navigation_callback(button))
-            sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 3)
+            sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 1)
         return sizer
 
     def _menu(self):
