@@ -171,7 +171,7 @@ class Restorable:
         pass
 
 
-class Window(wx.ScrolledWindow, Restorable):
+class Window(wx.Panel, Restorable):
     """Vymìnitelné okno.
 
     Tato tøída by mìla podporovat v¹echny akce, které jsou nutné k umístìní
@@ -190,7 +190,7 @@ class Window(wx.ScrolledWindow, Restorable):
         
         """
         assert isinstance(parent, wx.Window), parent
-        wx.ScrolledWindow.__init__(self, parent, wx.NewId())
+        wx.Panel.__init__(self, parent, wx.NewId())
         self._parent = parent
         
     def _exit_check(self):
