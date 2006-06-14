@@ -30,7 +30,7 @@ from pytis.form import *
 import wx
 
 
-class DualForm(Form):
+class DualForm(Form, Refreshable):
     """Formuláø slo¾ený ze dvou spolupracujících formuláøù.
 
     Duální formuláø je rozdìlen na dvì èásti umístìné nad sebou.  V horní èásti
@@ -255,7 +255,7 @@ class DualForm(Form):
         self._main_form.Refresh() # Sometimes it is not redrawn correctly...
         self._active_form.focus()
         event.Skip()
-        
+
     def _on_size(self, event):
         size = event.GetSize()
         mode = self._splitter.GetSplitMode()
@@ -265,6 +265,11 @@ class DualForm(Form):
             self._splitter.SetSashPosition(position)
         event.Skip()
 
+    def _refresh(self, when=None):
+        if isinstance(self._main_form, Refreshable):
+            self._main_form.refresh()
+        if isinstance(self._side_form, Refreshable):
+            self._side_form.refresh()
         
 class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
@@ -386,7 +391,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         super(SideBrowseDualForm, self)._cleanup()
 
 
-class BrowseDualForm(SideBrowseDualForm, Refreshable):
+class BrowseDualForm(SideBrowseDualForm):
     """Duální formuláø s hlavním formuláøem 'BrowseForm'.
     
     Hlavním formuláøem je instance tøídy 'BrowseForm', vedlej¹ím formuláøem je
@@ -427,19 +432,8 @@ class BrowseDualForm(SideBrowseDualForm, Refreshable):
             form, name = (ShowDualForm, self._name)
         run_form(form, name, select_row=self._main_form.current_key())
 
-    def _refresh(self, when=None):
-        self._main_form.refresh()
-        # Refresh sideformu by zde teoreticky být nemusel.  Ten by mìl být
-        # proveden automaticky po refreshi mainformu.  Nìkdy k tomu v¹ak z
-        # neznámých dùvodù nedojde, tak¾e jej zde pro jistotu pøidáme
-        # natvrdo... :-(  Problém je pravdìpodobnì nìkde ve zpracování idle
-        # eventù ve wx.  Projevuje se to dokonce i tak, ¾e to napø. v jednom
-        # formuláøi funguje a v jiném ne, nebo dokonce stejný formuláø na
-        # jednom poèítaèi funguje a na jiném ne...
-        self._side_form.refresh()
-
         
-class ShowDualForm(SideBrowseDualForm, Refreshable):
+class ShowDualForm(SideBrowseDualForm):
     """Duální formuláø s hlavním formuláøem 'BrowsableShowForm'.
 
     """
@@ -462,12 +456,8 @@ class ShowDualForm(SideBrowseDualForm, Refreshable):
         self._main_form.set_callback(BrowsableShowForm.CALL_SELECTION,
                                      self._on_main_selection)
 
-    def _refresh(self, when=None):
-        self._side_form.refresh()
 
-
-
-class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
+class BrowseShowDualForm(ImmediateSelectionDualForm):
     """Duální formuláø s øádkovým seznamem nahoøe a náhledem dole.
 
     Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a formuláøe s
@@ -500,9 +490,6 @@ class BrowseShowDualForm(ImmediateSelectionDualForm, Refreshable):
             self._side_form.Show(True)
             self._select_form(self._main_form, force=True)
         return True
-
-    def _refresh(self, when=None):
-        self._main_form.refresh()
 
         
 class DescriptiveDualForm(BrowseShowDualForm):
