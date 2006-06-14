@@ -228,7 +228,8 @@ INTERNÍ ZÁLE®ITOSTI:
  * Zpracování pøíkazù.
 
    Vyvolání handleru z on_command je nyní mo¾né nahradit metodu `_cmd_*', kde *
-   je název pøíkazu.
+   je název pøíkazu.  To u¾ skoro v¹ude je, ale nìkde mo¾ná je¹tì `on_command'
+   zbylo...
 
  * Validace hodnot konfiguraèních voleb.
 
@@ -254,6 +255,8 @@ INTERNÍ ZÁLE®ITOSTI:
    automaticky vytváøeného layoutu.  To v¹ak nic nemìní na tom, ¾e v explicitnì
    definovaných layoutech nemají neviditelná políèka co dìlat a je tøeba je
    odtamtud vyhodit.
+
+   Update: Ale¹ ve v¹ech defsech width=0 zru¹il.
 
  * Odstranit argument `resolver' z konstruktoru formuláøù.
 
