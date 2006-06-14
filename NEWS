@@ -30,6 +30,10 @@
 	chybì ve wx není správnì pøekreslováno orámování skupin a formuláø
 	je tak po chvíli pìknì zaneøádìný...
 
+	Byl zru¹en arguemnt `related_codebook_field' ve `FieldSpec' a
+	funkce `cb_computer' v pytis.extensions.  Obojí je nahrazeno
+	pomocí `CbComputer'.
+
 	* BUGFIX: Výchozí layout je nyní opìt vertikální.  Po vèerej¹í
 	opravì se toti¾ projevila chyba v jeho sestavování, která v¹ak
 	kvùli døívìj¹ímu nesprávnému chování dosud nevy¹la najevo.

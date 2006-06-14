@@ -49,6 +49,7 @@
 
 	* pytis/presentation/spec.py (BindingSpec.__init__): Výchozí
 	layout nech» je vertikální.
+	(FieldSpec.__init__): Zru¹en argument `related_codebook_field'.
 
 2006-06-13  Tomas Cerha  <cerha@brailcom.org>
 
