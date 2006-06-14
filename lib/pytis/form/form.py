@@ -1532,6 +1532,9 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         if isinstance(f, Refreshable):
             f.refresh()
 
+    def _refresh(self, when=None):
+        self.Refresh()
+
     def _validate_fields(self):
         # Postupná validace v¹ech políèek.
         for f in self._fields:
@@ -1633,9 +1636,6 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
         field = find(True, self._fields, key=lambda f: f.is_modified())
         return field is not None
-
-    def refresh(self):
-        self.Refresh()
 
     def _on_field_edit(self, id, value):
         # Signalizace zmìny políèka z InputField
