@@ -4,6 +4,37 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-06-14  Tomas Cerha  <cerha@brailcom.org>
+
+	Byl zásadnì pøepracován zpùsob sestavování editaèních formuláøù ve
+	snaze zlep¹it vlastnosti formuláøe pøi scrollování a implementovat
+	scrollování podle nového mechanismu wx.  První výsledek je ten, ¾e
+	nyní není scrollován celý formuláø vèetnì nadpisu a tlaèítek, ale
+	pouze vlastní plocha obsahující vstupní prvky.  Napøíklad v
+	DescriptiveDualFormu se tak náhledový formuláø chová z pohledu
+	scrollování stejnì, jako øádkový formuláø.  Druhý viditelný
+	výsledek je ten, ¾e pøi zobrazení popup editaèního formuláøe je
+	velikost jeho okna automaticky omezena, aby nepøekroèila velikost
+	obrazovky a obsah je automaticky scrollován, pokud je to potøeba.
+	
+	Doposud mají popup formuláøe (výbìr z èíselníku a editaèní
+	formuláø) pøednastavenu fixní velikost.  Nyní by bylo mo¾né
+	povolit interaktivní zmìnu velikosti u¾ivatelem (napø. pøeta¾ením
+	my¹í apod.).  Bude v¹ak tøeba otestovat jak se to chová ve spojení
+	s rùznými mana¾ery oken, tak¾e jsem to zatím ponechal zakázané.
+	Myslím ale, ¾e by to mohlo být praktické, zejména u èíselníkù.
+
+	I editaèní formuláøe nyní podporují metodu 'refresh()' a je tedy
+	mo¾né nad nimi vyvolat pøíkaz REFRESH (Ctrl-l) a vynutit tak
+	pøekreslení.  To se mù¾e hodit zejména pøi scrollování, kdy díky
+	chybì ve wx není správnì pøekreslováno orámování skupin a formuláø
+	je tak po chvíli pìknì zaneøádìný...
+
+	* BUGFIX: Výchozí layout je nyní opìt vertikální.  Po vèerej¹í
+	opravì se toti¾ projevila chyba v jeho sestavování, která v¹ak
+	kvùli døívìj¹ímu nesprávnému chování dosud nevy¹la najevo.
+	
+	
 2006-06-13  Tomas Cerha  <cerha@brailcom.org>
 
 	Nová tøída `BindingSpec' umo¾òuje definovat zpùsob napojení dvou
