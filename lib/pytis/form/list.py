@@ -396,7 +396,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def current_field(self):
         col = self._current_cell()[1]
         return self._columns[col].id()
-
+    
     def _selected_rows(self):
         g = self._grid
         # g.SelectedRows() nefunguje, proto následující hrùza...
@@ -711,7 +711,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
             message('')
-            column, enumerator, codebook = self._current_codebook_info()
+            current_field = self._columns[self._current_cell()[1]]
+            field, enumerator, codebook = self._codebook_info(current_field)
             if codebook and enumerator:
                 try:
                     cb_spec = resolver().get(codebook, 'cb_spec')
@@ -719,7 +720,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     pass
                 else:
                     if cb_spec.display():
-                        value = the_row[column.id()].value()
+                        value = the_row[field.id()].value()
                         try:
                             v = enumerator.get(value, cb_spec.display())
                             if v:
@@ -1055,15 +1056,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return None
     
-    def _current_codebook_info(self):
-        row, col = self._current_cell()
-        column = self._columns[col]
-        computer = column.computer()
+    def _codebook_info(self, field):
+        computer = field.computer()
         if computer and isinstance(computer, CbComputer):
-            column = self._view.field(computer.field())
-        enumerator = column.type(self._data).enumerator()
-        codebook = column.codebook(self._data)
-        return (column, enumerator, codebook)
+            field = self._view.field(computer.field())
+        enumerator = field.type(self._data).enumerator()
+        codebook = field.codebook(self._data)
+        return (field, enumerator, codebook)
         
     def _on_delete_record(self):
         if not self.editable:
@@ -1430,17 +1429,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
 
-    def _can_show_cell_codebook(self):
-        column, enumerator, codebook = self._current_codebook_info()
-        return codebook and enumerator
-
-    def _cmd_show_cell_codebook(self):
-        column, enumerator, codebook = self._current_codebook_info()
-        if codebook and enumerator:
-            value = self._table.row(self._current_cell()[0])[column.id()]
-            select_row = {enumerator.value_column(): value}
-            run_form(BrowseForm, codebook, select_row=select_row)
-            
     def _cmd_context_menu(self, position=None):
         if self._table.editing():
             menu = self._edit_menu()
@@ -1949,7 +1937,7 @@ class BrowseForm(ListForm):
     
     def _context_menu(self):
         # Sestav specifikaci kontextového menu
-        menu = super_(BrowseForm)._context_menu(self) + (
+        menu = list(super_(BrowseForm)._context_menu(self) + (
             MItem(_("Editovat buòku"),
                   command=ListForm.COMMAND_EDIT,
                   help=_("Upravit hodnotu v re¾imu inline editace")),
@@ -1975,15 +1963,33 @@ class BrowseForm(ListForm):
                   command=ListForm.COMMAND_ACTIVATE(alternate=True),
                   help=_("Otevøít formuláø s tabulkou nahoøe a náhledem "
                          "v dolní èásti.")),
-            MItem(_("Zobrazit související èíselník"),
-                  command=ListForm.COMMAND_SHOW_CELL_CODEBOOK,
-                  help=_("Otevøít náhled èíselníku, ze kterého pochází tato "
-                         "hodnota.")),
-            )
+            ))
         actions = self._action_mitems(self._view.actions())
         if actions:
-            menu += (MSeparator(),) + tuple(actions)
+            menu += [MSeparator()] + actions
+        links = [(field, Link(codebook, enumerator.value_column()))
+                 for field, enumerator, codebook in
+                 remove_duplicates([self._codebook_info(f)
+                                    for f in self._fields], keep_order=True)
+                 if enumerator and codebook]
+        links += [(f, f.link()) for f in self._fields if f.link()]
+        if links:
+            menu.append(MSeparator())
+        row = self.current_row()
+        menu += [MItem((_("Otevøít %s '%s'") % \
+                        (link.form().DESCR,
+                         resolver().get(link.name(), 'view_spec').title())),
+                       command=Application.COMMAND_RUN_FORM,
+                       args=dict(name=link.name(),
+                                 form_class=link.form(),
+                                 select_row={link.column(): row[f.id()]}),
+                       help=(_("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") %\
+                             (row.format(f.id()), f.column_label()))
+                       )
+                 for f, link in links]
         return menu
+
+        
 
     def _cmd_print(self, print_spec_path=None):
         log(EVENT, 'Vyvolání tiskového formuláøe:', print_spec_path)
