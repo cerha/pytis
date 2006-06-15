@@ -3,7 +3,30 @@
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
+2006-06-15  Tomas Cerha  <cerha@brailcom.org>
 
+	Nová tøída `Link' a argument `link' ve `FieldSpec' nyní umo¾òují
+	definovat odkazy do jiného náhledu souvisejícího s hodnotou
+	políèka.  V kontextovém menu øádku bude pro ka¾dý definovaný odkaz
+	vytvoøena jedna polo¾ka umo¾òující odskok do odkazovaného náhledu
+	s vyhledáním záznamu odpovídajícího aktuální hodnotì políèka.  Do
+	budoucna je mo¾né roz¹íøení o mo¾nost "výpoètu" názvu specifikace
+	podle obsahu aktuálního øádku a podobnì o "výpoèet" argumentu
+	`select_row' pøedáním funkce, která dostane aktuální øádek jako
+	argument.  Prozatím lze pøedat pouze statické hodnoty.
+
+	Byl zru¹en pøíkaz 'SHOW_CELL_CODEBOOK' a související polo¾ka menu
+	"Zobrazit související èíselník".  Namísto toho je nyní vytváøen
+	automaticky seznamem odskokù na v¹echny èíselníky v¹ech políèek.
+	Vyhoda je ta, ¾e odskoky mají stejnou formu, jako ostatní odkazy a
+	¾e jsou dostupné v¹echny naráz a není tedy nutné klikat zrovna nad
+	daným èíselníkovým sloupcem.  Døíve byl obsah menu v podstatì
+	závislý na aktuálním sloupci, co¾ nemuselo být z u¾ivatelského
+	hlediska zcela patrné.  Dal¹í výhoda je ta, ¾e odkazy na náhledy,
+	k nim¾ u¾ivatel nemá dostateèná práva, budou nyní automaticky
+	za¹edlé.
+
+	
 2006-06-14  Tomas Cerha  <cerha@brailcom.org>
 
 	Byl zásadnì pøepracován zpùsob sestavování editaèních formuláøù ve

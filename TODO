@@ -42,10 +42,12 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * V menu automaticky oèíslovat polo¾ky s mo¾ností rychlého výbìru polo¾ky pøes
-   èíslo (znak).
+ * Dynamické urèení parametrù odkazu.
 
- * Vertikálnì rozdìlený DualForm.
+   Prozatím lze specifikaci odkazu pøedat pouze statické hodnoty.  Jak název
+   odkazované specifikace, tak argument `select_row' by v¹ak bylo mo¾né urèit
+   dynamicky podle obsahu aktuálního øádku pomocí funkce, která dostane
+   aktuální øádek jako argument.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
@@ -69,6 +71,12 @@ NOVÉ VLASTNOSTI:
    pøi vyvolání èíselníku.
 
  * Filtr distinct hodnot (v kontextovém menu záhlaví sloupce).
+
+ * Automatické èíslování polo¾ek menu s mo¾ností rychlého výbìru.
+
+   Polo¾ky ve v¹ech menu by mohly být automaticky oèíslovány podobnì jako v
+   menu oken anebylo by tak tøeba vymý¹let klávesové zkratky.  Tato vlastnost
+   by v¹ak mìla být konfigurovatelná, proto¾e asi ne ka¾dému se to bude líbit.
 
  * Pou¾ití externího PS prohlí¾eèe.
 
@@ -95,14 +103,18 @@ NOVÉ VLASTNOSTI:
 
 2) Specifikace
 
- * Mo¾nost definovat seznam odskokù.
+ * Zmìny ohlednì u¾ivatelského pøizpùsobení sloupcù BrowseFromu.
 
-   Odskok se vá¾e v¾dy k jednomu FieldSpec, ale dostupný by potom mìl být pro
-   celý øádek.  Parametrem je názav specifikace (nebo funkce row, která vrátí
-   název specifikace).  Druhým parametrem by mìl být název sloupce v odkazované
-   tabulce, na který se provede select_row.  Dále by mìlo být mo¾né zvolit v
-   jakém typu formuláøe bude øádek otevøen.  Vìt¹inou jde o BrowseForm (nebo
-   BrowseDualForm), ShowForm, nebo vytvoøení nového záznamu s prefillem.
+   `width = 0' zakázat a v¹echna taková políèka vyøadit z layoutu (nejprve
+   logovat jako deprecated).
+   
+   `column_width = 0' nijak speciálnì neo¹etøovat (stejnì je ¹íøka minimálnì
+   taková, aby se ve¹el label)
+
+   Nový atribut `disabled' zcela zemezí takový sloupec zobrazit.
+
+   `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
+   bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné...
 
  * Nadstavba pro vytváøení specifikaèních souborù.
 
@@ -123,28 +135,6 @@ NOVÉ VLASTNOSTI:
     - zru¹it v¹e, co se týká bv_users_ui_cfg.
     - pøidat sloupeèek `saved_config' do bv_users_cfg.
    
- * Zmìny ohlednì u¾ivatelského pøizpùsobení sloupcù BrowseFromu.
-
-   `width = 0' zakázat a v¹echna taková políèka vyøadit z layoutu (nejprve
-   logovat jako deprecated).
-   
-   `column_width = 0' nijak speciálnì neo¹etøovat (stejnì je ¹íøka minimálnì
-   taková, aby se ve¹el label)
-
-   Nový atribut `disabled' zcela zemezí takový sloupec zobrazit.
-
-   `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
-   bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné...
-
- * Zjednodu¹ená definice pøíkazù a jejich argumentù.
-
-   Pokud instanci pøíkazu zavoláme s libovolnými klíèovými argumenty, je nyní
-   vrácena dvojice (COMMAND, ARGS).  Toho je nyní vyu¾ito jednak pøi
-   rozbalování FORM_COMMAND_MENU a DEFAULT_KEYMAP v application.py a jednak
-   konstruktoru MItem, který by argument `command' v pøípadì pøedání dvojice
-   rozbalí.  Bylo by dobré oddìlené pøedávání `args' úplnì zakázat a v¹ude
-   pøejít na nový zpùsob definice.
-   
  * V tiskovém menu umo¾nit definovat separátor a klávesové zkratky.
 
  * Práva view na jednotlivé sloupce.
@@ -152,13 +142,6 @@ NOVÉ VLASTNOSTI:
  * Formuláøový dialog.
 
  * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
-
- * Zru¹it 'allow_codebook_insert'???
-
-   Vlo¾ení nové hodnoty do èíselníku by mohlo být provádìno pøes pøíkaz z popup
-   menu èíselníkového políèka (pøes pravé tlaèítko my¹i).  To by mohlo být
-   povoleno pro v¹echny èíselníky a tlaèítko "+" ve formuláøi by tak bylo
-   zbyteèné.  Problém je, ¾e popup menu je nìkdy pøebito popup menu GTK...
    
 
 INTERNÍ ZÁLE®ITOSTI:
@@ -208,15 +191,9 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
- * Vyhodit side_columns a side_title z DualSpec.
+ * Pøechod z DualSpec na BindingSpec.
 
-   Udr¾ování identifikátorù sloupcù pro 'side_columns' v defsu pro DualSpec je
-   velice nevhodné.  Èasto to vede k nekonzistenci a k následným chybám.
-   Namísto uvádìní sloupcù zde je lep¹í vytvoøit zvlá¹tní variantu.  Tím jsou
-   seznamy sloupcù pro rùzná pou¾ití formuláøe v¾dy pohromadì.  To samé platí
-   pro argumenty 'title' a 'side_title'.  Nebylo by v¹ak od vìci definovat
-   titulek DualFormu jako celku a to dokonce jako povinný.  Ten by bylo mo¾né
-   pou¾ívat napøíklad v helpech, v titulcích polo¾ek menu, apod.
+   Více viz NEWS 2006-06-13.
 
  * Nedostupnost pøíkazu vs. pøístupová práva.
 
@@ -249,14 +226,11 @@ INTERNÍ ZÁLE®ITOSTI:
 
  * Zru¹it speciální o¹etøování políèek s nulovou ¹íøkou.
 
-   Momentálnì jsou políèka s nulovou ¹íøkou pøítomná v layoutu logována a
-   ignorována.  Správnì by nemìla být nulová ¹íøka nijak speciálnì o¹etøována,
-   ale bude tøeba mít mo¾nost urèit, ¾e nìkteré políèko nemá být zaøazeno do
-   automaticky vytváøeného layoutu.  To v¹ak nic nemìní na tom, ¾e v explicitnì
-   definovaných layoutech nemají neviditelná políèka co dìlat a je tøeba je
-   odtamtud vyhodit.
+   V layoutu v¹ech aplikací se ji¾ nevyskytují políèka s nulovou ¹íøkou a
+   jejich speciální o¹etøování pøi sestavování formuláøe je ji¾ mo¾né zru¹it.
 
-   Update: Ale¹ ve v¹ech defsech width=0 zru¹il.
+   Do budoucna by v¹ak mohlo být praktické mít mo¾nost nìkterá políèka vynechat
+   z automaticky vytváøeného layoutu.
 
  * Odstranit argument `resolver' z konstruktoru formuláøù.
 
@@ -270,3 +244,14 @@ INTERNÍ ZÁLE®ITOSTI:
    specifikacích, tak v `pytis.presentation' (kvùli assertùm).  Pokud se ve
    v¹ech aplikacích pou¾ívají jen konstanty ASC a DESC a `pytis.extensions',
    nebude to problém.  To je v¹ak nejprve tøeba ovìøit.
+
+ * Zjednodu¹ená definice pøíkazù a jejich argumentù.
+
+   Pokud instanci pøíkazu zavoláme s libovolnými klíèovými argumenty, je nyní
+   vrácena dvojice (COMMAND, ARGS).  Toho je nyní vyu¾ito jednak pøi
+   rozbalování FORM_COMMAND_MENU a DEFAULT_KEYMAP v application.py a jednak
+   konstruktoru MItem, který by argument `command' v pøípadì pøedání dvojice
+   rozbalí.  Bylo by dobré oddìlené pøedávání `args' úplnì zakázat a v¹ude
+   pøejít na nový zpùsob definice.
+   
+   
