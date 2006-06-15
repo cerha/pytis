@@ -588,28 +588,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
             result = has_access(name)
         return result
 
-    def _cmd_run_form(self, form_class, name, **kwargs):
+    def _cmd_run_form(self, form_class, name, select_row=None, **kwargs):
         # Dokumentace viz funkce run_form().
         # TODO: Toto je jen kvùli zpìtné kompatibilitì.  Argument 'key' je
         # tøeba ve v¹ech projektech pøejmenovat na 'select_row' a následující
         # øádky èasem zru¹it.
         if kwargs.has_key('key'):
-            kwargs['select_row'] = kwargs['key']
+            select_row = kwargs['key']
             del kwargs['key']
         if issubclass(form_class, EditForm):
             if kwargs.has_key('new'):
                 if kwargs['new']:
                     kwargs['mode'] = EditForm.MODE_INSERT
                 del kwargs['new']
-            if not kwargs.get('select_row') and not kwargs.has_key('mode'):
+            if select_row is None and not kwargs.has_key('mode'):
                 kwargs['mode'] = EditForm.MODE_INSERT
         # konec doèasného hacku
         result = None
-        post_init_kwargs = {}
-        for arg in ('select_row', ):
-            if kwargs.has_key(arg):
-                post_init_kwargs[arg] = kwargs[arg]
-                del kwargs[arg]
         try:
             if callable(name):
                 name = name()
@@ -628,7 +623,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._raise_form(form)
                 message(_('Formuláø "%s" nalezen na zásobníku oken.') % \
                         form.title())
-                self._post_init_form(form, **post_init_kwargs)
+                self._post_init_form(form, select_row=select_row)
                 return result
             if issubclass(form_class, PopupForm):
                 parent = self._modals.top() or self._frame
@@ -647,7 +642,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.push(form)
                     message('', root=True)
                     form.show()
-                    self._post_init_form(form, **post_init_kwargs)
+                    self._post_init_form(form, select_row=select_row)
                     try:
                         form_str = str(form) # Dead form doesn't speak...
                         result = form.run()
@@ -677,7 +672,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         item = (self._form_menu_item_title(form),
                                 dict(form_class=form_class, name=name))
                         self._update_recent_forms(item)
-                    self._post_init_form(form, **post_init_kwargs)
+                    self._post_init_form(form, select_row=select_row)
         except UserBreakException:
             pass
         except:
