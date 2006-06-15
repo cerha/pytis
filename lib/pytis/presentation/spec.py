@@ -1361,6 +1361,53 @@ class CodebookSpec(object):
         return self._begin_search
 
 
+class Link(object):
+    """Specifikace odkazu políèka do jiného náhledu.
+
+    Pou¾ívá se jako hodnota argumentu 'link' ve 'FieldSpec'.
+
+    """
+    def __init__(self, name, column, form=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          name -- název specifikace odkazovaného náhledu jako øetìzec.
+
+          column -- identifikátor sloupce v odkazovaném náhledu.  Slou¾í k
+            vyhledání záznamu v odkazovaném náhledu, který odpovídá aktuální
+            hodnotì odkazujícího políèka.
+
+          form -- typ formuláøe, ve kterém bude odkazovaný náhled otevøen
+            (instance tøídy 'Form').  Výchozím typem je buïto 'BrowseForm',
+            nebo 'DualBrowseForm' pro duální náhledy (name je slo¾ený název).
+
+        """
+        assert isinstance(name, types.StringType)
+        assert isinstance(column, types.StringType)
+        assert form is None or issubclass(form, Form)
+        if form is None:
+            if name.find('::') == -1:
+                form = BrowseForm
+            else:
+                form = BrowseDualForm
+        self._name = name
+        self._column = column
+        self._form = form
+                
+    def name(self):
+        """Vra» název specifikace odkazovaného náhledu."""
+        return self._name
+
+    def column(self):
+        """Vra» id odpovídajícího sloupce v odkazovaném náhledu."""
+        return self._column
+
+    def form(self):
+        """Vra» typ formuláøe, který má být otevøen."""
+        return self._form
+
+    
 class FieldSpec(object):
     """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
 
@@ -1382,7 +1429,8 @@ class FieldSpec(object):
                  display_size=None, allow_codebook_insert=False,
                  codebook_insert_spec=None, codebook_runtime_filter=None,
                  selection_type=None, orientation=Orientation.VERTICAL,
-                 post_process=None, filter=None, filter_list=None, style=None):
+                 post_process=None, filter=None, filter_list=None, style=None,
+                 link=None):
         
         """Inicializace a doplnìní výchozích hodnot atributù.
 
@@ -1518,6 +1566,12 @@ class FieldSpec(object):
             a aktuální datový øádek jako instance 'PresentedRow'.  Pokud je
             None, bude pou¾it výchozí styl øádku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
+
+          link -- specifikace odkazu do jiného náhledu souvisejícího s hodnotou
+            políèka.  Instance 'Link'.  V kontextovém menu øádku bude pro ka¾dý
+            odkaz vytvoøena jedna polo¾ka umo¾òující odskok do odkazovaného
+            náhledu s vyhledáním záznamu odpovídajícímu aktuální hodnotì
+            políèka.
             
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
         hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
@@ -1550,6 +1604,7 @@ class FieldSpec(object):
 
         """
         assert is_string(id)
+        self._id = id
         assert label is None or is_anystring(label)
         assert descr is None or is_anystring(descr)
         assert type_ is None or isinstance(type_, pytis.data.Type)
@@ -1579,7 +1634,7 @@ class FieldSpec(object):
                or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
-        self._id = id
+        assert link is None or isinstance(link, Link)
         self._label = gettext_(label)
         self._descr = gettext_(descr)
         self._width = width
@@ -1606,10 +1661,10 @@ class FieldSpec(object):
         self._filter = filter
         self._filter_list = filter_list
         self._style = style
+        self._link = link
 
     def __str__(self):
-        return "<FieldSpec: id='%s'; label='%s'>" % \
-               (self.id(), self.label())
+        return "<FieldSpec for '%s'>" % self.id()
         
     def id(self):
         """Vra» id pole zadané v konstruktoru jako string."""
@@ -1784,6 +1839,10 @@ class FieldSpec(object):
     def style(self):
         """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
         return self._style
+
+    def link(self):
+        """Vra» specifikaci odkazu zadanou v konstruktoru."""
+        return self._link
 
 
 
