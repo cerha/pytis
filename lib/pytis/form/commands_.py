@@ -96,8 +96,6 @@ Command(RecordForm, 'DELETE_RECORD',
         "Vymazání editovaného záznamu z databáze")
 Command(ListForm, 'ACTIVATE',
         "Aktivaèní funkce pro aktuální øádek formuláøe") # arg. 'alternate'
-Command(ListForm, 'SHOW_CELL_CODEBOOK',
-        "Vyvolání èíselníku aktivní buòky øádkového formuláøe")
 Command(ListForm, 'FIRST_COLUMN',
         "Pøechod na první sloupec tabulky")
 Command(ListForm, 'LAST_COLUMN',
