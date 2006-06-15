@@ -729,25 +729,36 @@ def rassoc(item, alist):
     return find(item, alist, key=(lambda x: x[1]))
 
 
-def remove_duplicates(list):
+def remove_duplicates(list, keep_order=False):
     """Vra» prvky 'list', av¹ak bez jejich násobných výskytù.
 
     Násobnost se testuje porovnáním prvkù pomocí operátoru '='.
     
-    Funkce nezachovává poøadí prvkù.
+    Argumenty:
+
+      keep_order -- pøi výchozí hodnotì funkce nezachovává poøadí prvkù, ale
+        algoritmus je optimalizován.  Pokud potøebujeme poøadí zachovat, musíme
+        oèekávat vy¹¹í nároènost algoritmu.
 
     """
     if not list:
         return list
-    result = copy.copy(list)
-    result.sort()
-    last = result[0]
-    i = 1
-    for x in result[1:]:
-        if x != last:
-            result[i] = last = x
-            i = i + 1
-    return result[:i]
+    if keep_order:
+        result = []
+        for x in list:
+            if x not in result:
+                result.append(x)
+        return result
+    else:
+        result = copy.copy(list)
+        result.sort()
+        last = result[0]
+        i = 1
+        for x in result[1:]:
+            if x != last:
+                result[i] = last = x
+                i = i + 1
+        return result[:i]
 
 
 def flatten(list):
