@@ -1570,7 +1570,7 @@ class FieldSpec(object):
           link -- specifikace odkazu do jiného náhledu souvisejícího s hodnotou
             políèka.  Instance 'Link'.  V kontextovém menu øádku bude pro ka¾dý
             odkaz vytvoøena jedna polo¾ka umo¾òující odskok do odkazovaného
-            náhledu s vyhledáním záznamu odpovídajícímu aktuální hodnotì
+            náhledu s vyhledáním záznamu odpovídajícího aktuální hodnotì
             políèka.
             
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
