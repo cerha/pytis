@@ -203,8 +203,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _skip_navigation_callback(self, widget):
         def cb(e):
             if not self._unregistered_widgets.has_key(widget):
-                EditForm.COMMAND_NAVIGATE.invoke(object=widget,
-                                                 back=not e.GetDirection())
+                e.Skip()
+                flag = e.GetDirection() and wx.NavigationKeyEvent.IsForward or 0
+                wx.CallAfter(lambda : widget.Navigate(flag))
             else:
                 e.Skip()
         return cb
@@ -484,7 +485,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if change_appearance:
             self._ctrl.Enable(False)
         else:
-            # Here we rely on a simple hack in InputField._on_change() that
+            # Here we rely on a simple hack in InputField._on_change() which
             # resets field value after each attempt to chnge it, so the field
             # is in fact editable, but it is not possible to change it
             # effectively.
@@ -686,8 +687,7 @@ class TextField(InputField):
         if self.height() > 1:
             event.Skip()
         else:
-            ctrl = event.GetEventObject()
-            EditForm.COMMAND_NAVIGATE.invoke(object=ctrl, back=False)
+            event.GetEventObject().Navigate()
 
     def _post_process_func(self):
         """Vra» funkci odpovídající specifikaci postprocessingu políèka.
@@ -1150,7 +1150,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z èíselníku")
     _INVOKE_SELECTION_MENU_HELP = _("Zobrazit èíselník pøípustných hodnot "
                                     "s mo¾ností výbìru.")
-    
+
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
         widget = Invocable._create_widget(self)
