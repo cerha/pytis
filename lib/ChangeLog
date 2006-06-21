@@ -1,3 +1,16 @@
+2006-06-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py
+	(InputField._skip_navigation_callback.cb): Namísto vyvolání
+	pøíkazu volej pøímo novou wx metodu `Navigate()'.
+	(TextField._on_enter_key): Namísto vyvolání pøíkazu volej pøímo
+	novou wx metodu `Navigate()'.
+
+	* pytis/form/form.py (EditForm._create_form_controls): Panelu
+	nastavuj styl `wx.TAB_TRAVERSAL'.
+	(EditForm._cmd_navigate): Namísto vytváøení a spou¹tìní události
+	jen volej novou wx metodu `Navigate()'.  Zru¹en argument `object'.
+
 2006-06-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._post_selection_hook): Namísto
