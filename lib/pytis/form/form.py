@@ -1368,7 +1368,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
 
     def _create_form_controls(self):
         # Create the actual form controls according to the layout.
-        panel = wx.ScrolledWindow(self)
+        panel = wx.ScrolledWindow(self, style=wx.TAB_TRAVERSAL)
         if self._mode == self.MODE_INSERT:
             permission = pytis.data.Permission.INSERT
         elif self._mode == self.MODE_EDIT:
@@ -1502,9 +1502,9 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             integer
           gap -- mezera mezi jednotlivými políèky v dlg units; integer
 
-        Pro ka¾dý prvek skupiny vytvoøí tlaèítko nebo políèko 'inputfield.InputField'
-        a pøidá jeho label a widget do vytvoøené instance
-        'wx.FlexGridSizer'.
+        Pro ka¾dý prvek skupiny vytvoøí tlaèítko nebo políèko
+        'inputfield.InputField' a pøidá jeho label a widget do vytvoøené
+        instance 'wx.FlexGridSizer'.
 
         Vrací: instanci 'wx.FlexGridSizer' naplnìnou políèky a tlaèítky.
 
@@ -1670,17 +1670,16 @@ class EditForm(LookupForm, TitledForm, Refreshable):
     def _cmd_commit_record(self):
         return self._commit_form()
 
-    def _cmd_navigate(self, object=None, back=False):
-        # Vygeneruj událost navigace mezi políèky.
+    def _cmd_navigate(self, back=False):
         if self._mode != self.MODE_VIEW:
-            nav = wx.NavigationKeyEvent()
-            nav.SetDirection(not back)
-            if object:
-                nav.SetEventObject(object)
-                nav.SetCurrentFocus(object)
-            else:
-                nav.SetCurrentFocus(self)
-            self.GetEventHandler().ProcessEvent(nav)
+            # Vygeneruj událost navigace mezi políèky.
+            w = wx_focused_window()
+            if not w:
+                self._fields[0].set_focus()
+                w = wx_focused_window()
+            if w:
+                flags = not back and wx.NavigationKeyEvent.IsForward or 0
+                w.Navigate(flags=flags)
 
     
 class PopupEditForm(PopupForm, EditForm):
