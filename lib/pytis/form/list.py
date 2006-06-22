@@ -1936,6 +1936,24 @@ class BrowseForm(ListForm):
 
     
     def _context_menu(self):
+        def link_title(name, form):
+            resolver().get(name, 'view_spec').title()
+            if issubclass(form, DualForm) and \
+                   not issubclass(form, DescriptiveDualForm):
+                if name.find('::') != -1:
+                    name1, name2 = name.split('::')
+                    title = resolver().get(name1, 'binding_spec')[name2].title()
+                else:
+                    dspec = resolver().get(name, 'dual_spec')
+                    name1, name2 = dspec.main_name(), dspec.side_name()
+                    title = resolver().get(name1, 'view_spec').title() +' :: '+\
+                            resolver().get(name2, 'view_spec').title()
+            else:
+                title = resolver().get(name, 'view_spec').title()
+            if issubclass(form, PopupEditForm):
+                return _("Editovat %s") % title
+            else:
+                return _("Odskok - %s") % title
         # Sestav specifikaci kontextového menu
         menu = list(super_(BrowseForm)._context_menu(self) + (
             MItem(_("Editovat buòku"),
@@ -1976,9 +1994,7 @@ class BrowseForm(ListForm):
         if links:
             menu.append(MSeparator())
         row = self.current_row()
-        menu += [MItem((_("Otevøít %s '%s'") % \
-                        (link.form().DESCR,
-                         resolver().get(link.name(), 'view_spec').title())),
+        menu += [MItem(link_title(link.name(), link.form()),
                        command=Application.COMMAND_RUN_FORM,
                        args=dict(name=link.name(),
                                  form_class=link.form(),
