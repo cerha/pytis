@@ -1,5 +1,10 @@
 CHYBY:
 
+ * Pomalé otevírání kontextového menu øádku v browseformu.
+
+   Zpomalilo se to po zavedení odkazù.  Bylo by dobré se pokusit sestavování
+   menu nìjak zrychlit.
+
  * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
 
    Tj. napø. kdy¾ je filter závislý na dopoèítávaném políèku, které je zmìnìno
@@ -41,6 +46,15 @@ CHYBY:
 NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
+
+ * Vylep¹ení odlazù
+
+   "Øádkový fromuláø" zmìnit na "Odskok do ...", editaèní formuláø zmìnit na
+   "Edituj v ...", vlo¾ení nového záznamu zmìnit na "Vlo¾it do ...."
+
+   Pokud je pro jeden cílový náhled více sloupeèkù (a tedy i hodnot, pøes které
+   se na nìj skáèe) sdru¾it tyto rùzné zpùsoby otevøení formuláøe do podmenu,
+   ve kterém budou názvy políèek v titulku jednotlivých polo¾ek.
 
  * Dynamické urèení parametrù odkazu.
 
@@ -195,6 +209,16 @@ INTERNÍ ZÁLE®ITOSTI:
 
    Více viz NEWS 2006-06-13.
 
+   V kódu je zatím v¹e o¹etøováno nadvakrát.  A¾ to nebude potøeba, je tøeba
+   proèistit:
+   
+   - DualForm._create_view_spec()
+   - Application._can_run_form()
+   - BrowseForm._context_menu()
+   - Link.__init__()
+   - generování nápovìdy
+   
+
  * Nedostupnost pøíkazu vs. pøístupová práva.
 
    Pokud není pøíkaz dostupný z dùvodu nedostateèných pøístupových práv,
@@ -254,4 +278,5 @@ INTERNÍ ZÁLE®ITOSTI:
    rozbalí.  Bylo by dobré oddìlené pøedávání `args' úplnì zakázat a v¹ude
    pøejít na nový zpùsob definice.
    
+
    

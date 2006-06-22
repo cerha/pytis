@@ -3,6 +3,21 @@
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
+
+
+2006-06-22  Tomas Cerha  <cerha@brailcom.org>
+
+        Automaticky generované titulky odskokù byly upraveny podle návrhù.
+	
+	* BUGFIX: Urèení titulku odskoku pøi sestavování kontextového menu
+	nyní funguje i pro duální formuláøe.
+	
+2006-06-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Opraveno procházení políèek v novém uspoøádání EditFormu
+	s vyu¾itím nových mo¾ností wx.
+	
+	
 2006-06-15  Tomas Cerha  <cerha@brailcom.org>
 
 	Nová tøída `Link' a argument `link' ve `FieldSpec' nyní umo¾òují

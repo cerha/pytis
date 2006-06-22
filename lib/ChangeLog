@@ -1,3 +1,9 @@
+2006-06-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (BrowseForm._context_menu.link_title): Nová
+	funkce.
+	(BrowseForm._context_menu): Vyu¾ívej ji.
+
 2006-06-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py
