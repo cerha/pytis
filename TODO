@@ -117,6 +117,13 @@ NOVÉ VLASTNOSTI:
 
 2) Specifikace
 
+ * after_new_record, after_edit_record apod.
+
+   Nyní je mo¾né pøidat kód, který se provede po vlo¾ení nového záznamu buïto
+   do cleanup, nebo definovat on_new_record, a v nìm nejprve zavolat výchozí
+   new_record s block_on_new_record.  Jednodu¹¹í a pøehlednìj¹í by bylo mít
+   pro tento pøípad explicitní podporu.
+
  * Zmìny ohlednì u¾ivatelského pøizpùsobení sloupcù BrowseFromu.
 
    `width = 0' zakázat a v¹echna taková políèka vyøadit z layoutu (nejprve
@@ -205,6 +212,8 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
+ * Odstraní BrowseDualForm._new_record_hook()
+   
  * Pøechod z DualSpec na BindingSpec.
 
    Více viz NEWS 2006-06-13.
@@ -279,4 +288,4 @@ INTERNÍ ZÁLE®ITOSTI:
    pøejít na nový zpùsob definice.
    
 
-   
+  
