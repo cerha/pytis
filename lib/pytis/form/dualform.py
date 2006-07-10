@@ -418,12 +418,14 @@ class BrowseDualForm(SideBrowseDualForm):
         f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
         f.set_callback(ListForm.CALL_ACTIVATION, self._on_main_activation)
         f.set_callback(BrowseForm.CALL_NEW_RECORD, self._new_record_hook)
-    
+
     def _new_record_hook(self, row):
+        # TODO: Je otázka, zda je to tu vùbec celé potøeba, kdy¾ u¾ nedìláme
+        # insert do sideformu.
         self._main_form.select_row(row.row())
         self._side_form.refresh(when=ListForm.DOIT_IMMEDIATELY)
-        self._select_form(self._side_form)
-        ListForm.COMMAND_INSERT_LINE.invoke()
+        #self._select_form(self._side_form)
+        #ListForm.COMMAND_INSERT_LINE.invoke()
     
     def _on_main_activation(self, alternate=False):
         if alternate:
