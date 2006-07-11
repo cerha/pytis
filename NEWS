@@ -4,7 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-07-10  Tomas Cerha  <cerha@brailcom.org>
 
+        Zru¹eno automatické vkládání øádkù do sideformu po vlo¾ení záznamu
+	v mainformu.
+	
 2006-06-22  Tomas Cerha  <cerha@brailcom.org>
 
         Automaticky generované titulky odskokù byly upraveny podle návrhù.
