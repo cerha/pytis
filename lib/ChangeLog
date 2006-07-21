@@ -1,3 +1,15 @@
+2006-07-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dialog.py (GenericDialog._cmd_commit_dialog): Testuj
+	`_COMMIT_BUTTON' na None.
+	(Question.__init__): Nastav `_COMMIT_BUTTON' podle `default'.  Na
+	konstanty odkazuj pøes `self'.
+
+2006-07-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (BrowseDualForm._new_record_hook):
+	Nevyvolávej vlo¾ení nového øádku nad sideformem.
+
 2006-06-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (BrowseForm._context_menu.link_title): Nová

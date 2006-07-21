@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-07-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi odesesílání 'Question' dialogu pomocí Ctrl+Enter ji¾
+	nedojde k tracebacku, ale je správnì pou¾ito tlaèítko výchozí
+	odpovìdi.
+	
 2006-07-10  Tomas Cerha  <cerha@brailcom.org>
 
         Zru¹eno automatické vkládání øádkù do sideformu po vlo¾ení záznamu
