@@ -263,7 +263,7 @@ class GenericDialog(Dialog):
         return self._dialog.ShowModal()
 
     def _cmd_commit_dialog(self, force=False):
-        if force:
+        if force and self._COMMIT_BUTTON is not None:
             id = self._button_id(self._COMMIT_BUTTON)
             widget = wx.FindWindowById(id, self._parent)
         else:
@@ -479,17 +479,17 @@ class Question(MultiQuestion):
             
         """
         if default:
-            default = Message.BUTTON_YES
+            default = self.BUTTON_YES
         else:
-            default = Message.BUTTON_NO
+            default = self.BUTTON_NO
+        self._COMMIT_BUTTON = default
         super_(Question).__init__(self, parent, message, title=title,
-                                  buttons=(Message.BUTTON_YES,
-                                           Message.BUTTON_NO),
+                                  buttons=(self.BUTTON_YES, self.BUTTON_NO),
                                   default=default, icon=icon,
                                   report=report, report_format=report_format)
         
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_YES:
+        if self._button_label(result) == self.BUTTON_YES:
             return True
         else:
             return False
