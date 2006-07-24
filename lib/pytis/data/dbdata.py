@@ -69,6 +69,7 @@ import thread
 import time
 import weakref
 import types as pytypes
+import Queue
 
 import mx.DateTime
 from pyPgSQL import libpq
@@ -194,6 +195,8 @@ class DBData(Data):
         self.close()
 
 
+
+        
 class _DBConnectionPool:
 
     def __init__(self, connection_creator):
@@ -219,7 +222,9 @@ class _DBConnectionPool:
 
     def get(self, connection_spec, data=None):
         pool = self._pool
-        spec_id = tuple(connection_spec.__dict__.values())
+        #spec_id = tuple(connection_spec.__dict__.values())
+        #log(EVENT, ">>>:", hash(connection_spec))
+        spec_id = hash(connection_spec)
         lock = self._lock
         lock.acquire()
         try:
@@ -240,7 +245,8 @@ class _DBConnectionPool:
 
     def put_back(self, connection_spec, connection):
         pool = self._pool
-        spec_id = tuple(connection_spec.__dict__.values())
+        #spec_id = tuple(connection_spec.__dict__.values())
+        spec_id = hash(connection_spec)
         lock = self._lock
         lock.acquire()
         try:
@@ -254,6 +260,30 @@ class _DBConnectionPool:
         if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
 
 
+class _SafeDBConnectionPool(Queue.Queue):
+    """Manage a fixed-size pool of reusable, identical objects."""
+
+    def __init__(self, connection_creator, poolsize=5):
+        Queue.Queue.__init__(self, poolsize)
+        self._connection_creator = connection_creator
+
+    def get(self, connection_spec, data=None):
+        """Get an object from the pool or a new one if empty."""
+        try:
+            return self.empty() and self.constructor() or \
+                   Queue.Queue.get(self)
+        except Queue.Empty:
+            return self._connection_creator(connection_spec, data)
+        
+    def put_back(self, connection_spec, connection):
+        """Put an object into the pool if it is not full. The caller must
+        not use the object after this."""
+        try:
+            return self.full() and None or Queue.Queue.put(self, connection)
+        except Queue.Full:
+            pass
+
+        
 
 ### Postgresové tøídy a funkce
 
@@ -1314,7 +1344,7 @@ def _pypg_new_connection(spec, data):
     # Toto musí být funkce, proto¾e nesmí být vázána na konkrétní instanci.
     if not isinstance(spec, DBConnection):
         spec = spec()
-    if __debug__: log(DEBUG, 'Vytváøím nové DB spojení', spec)
+    if __debug__: log(EVENT, 'Vytváøím nové DB spojení', spec)
     # Sestav connection string
     connection_string = ''
     for option, accessor in (('user', DBConnection.user),
