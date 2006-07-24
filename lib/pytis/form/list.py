@@ -1936,7 +1936,7 @@ class BrowseForm(ListForm):
             menu += (MSeparator(),) + tuple(actions)
         self._context_menu_static_part = menu
         # The dynamic part of the menu is created based on the links.
-        def link_title(name, form):
+        def link_title(form, name):
             resolver().get(name, 'view_spec').title()
             if issubclass(form, DualForm) and \
                    not issubclass(form, DescriptiveDualForm):
@@ -1954,16 +1954,37 @@ class BrowseForm(ListForm):
                 return _("Editovat %s") % title
             else:
                 return _("Odskok - %s") % title
-        links = [(f, link_title(link.name(), link.form()), link) for f, link in
-                 [(field, Link(codebook, enumerator.value_column()))
-                  for field, enumerator, codebook in
-                  remove_duplicates([self._codebook_info(f)
-                                     for f in self._fields],
-                                    keep_order=True)
-                  if enumerator and codebook]]
-        links += [(f, link_title(link.name(), link.form()), f.link())
-                  for f in self._fields if f.link()]
-        self._links = tuple(links)
+        # Create automatic links for codebook fields.
+        links = [(f, Link(cb, col))  for f, cb, col in
+                 remove_duplicates([(f, cb, e.value_column()) for f, e, cb in
+                                    [self._codebook_info(f)
+                                     for f in self._fields] if e and cb])]
+        # Add explicit links from FieldSpec.
+        links += [(f, f.link()) for f in self._fields if f.link()]
+        # Now we group all links by the target spec name.
+        linkdict = {}
+        for f, link in links:
+            key = (link.form(), link.name(),)
+            try:
+                a = linkdict[key]
+            except KeyError:
+                a = linkdict[key] = []
+            item = (f,link)
+            if item not in a:
+                a.append(item)
+        # Create the links list as accepted by _link_mitems()
+        self._links = []
+        linklist = linkdict.items()
+        linklist.sort()
+        for key, items in linklist:
+            title = link_title(*key)
+            if len(items) == 1:
+                f, link = items[0]
+                item = (title, f, link)
+            else:
+                item = (title, [(_("Pøes hodnotu sloupce '%s'") % f.label(),
+                                 f, link) for f, link in items])
+            self._links.append(item)
         
     def _formatter_parameters(self):
         name = self._name
@@ -1996,21 +2017,32 @@ class BrowseForm(ListForm):
             else:
                 raise ProgramError("Invalid action specification: %s" % x)
         return items
-    
+
+    def _link_mitems(self, row, spec):
+        items = []
+        for item in spec:
+            if len(item) == 2:
+                title, links = item
+                i = Menu(title, self._link_mitems(row, links))
+            else:
+                title, f, link = item
+                i = MItem(title, command=Application.COMMAND_RUN_FORM,
+                          args=dict(name=link.name(),
+                                    form_class=link.form(),
+                                    select_row={link.column(): row[f.id()]}),
+                          help=(_("Vyhledat záznam pro hodnotu '%s' "
+                                  "sloupce '%s'.") % \
+                                (row.format(f.id()), f.column_label())))
+            items.append(i)
+        return items
+                           
+        
     def _context_menu(self):
-        menu = list(self._context_menu_static_part)
+        menu = self._context_menu_static_part
         links = list(self._links)
         if links:
-            row = self.current_row()
-            menu.append(MSeparator())
-            menu += [MItem(title, command=Application.COMMAND_RUN_FORM,
-                           args=dict(name=link.name(),
-                                     form_class=link.form(),
-                                     select_row={link.column(): row[f.id()]}),
-                           help=(_("Vyhledat záznam pro hodnotu '%s' "
-                                   "sloupce '%s'.") % \
-                                 (row.format(f.id()), f.column_label())))
-                     for f, title, link in links]
+            menu += (MSeparator(),) + \
+                    tuple(self._link_mitems(self.current_row(), links))
         return menu
 
     def _cmd_print(self, print_spec_path=None):
