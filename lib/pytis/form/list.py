@@ -2023,17 +2023,21 @@ class BrowseForm(ListForm):
         for item in spec:
             if len(item) == 2:
                 title, links = item
-                i = Menu(title, self._link_mitems(row, links))
+                subitems = self._link_mitems(row, links)
+                if subitems:
+                    items.append(Menu(title, subitems))
             else:
                 title, f, link = item
-                i = MItem(title, command=Application.COMMAND_RUN_FORM,
-                          args=dict(name=link.name(),
-                                    form_class=link.form(),
-                                    select_row={link.column(): row[f.id()]}),
-                          help=(_("Vyhledat záznam pro hodnotu '%s' "
-                                  "sloupce '%s'.") % \
-                                (row.format(f.id()), f.column_label())))
-            items.append(i)
+                if row[f.id()].value() is not None:
+                    i = MItem(title, command=Application.COMMAND_RUN_FORM,
+                              args=dict(name=link.name(),
+                                        form_class=link.form(),
+                                        select_row={link.column():
+                                                    row[f.id()]}),
+                              help=(_("Vyhledat záznam pro hodnotu '%s' "
+                                      "sloupce '%s'.") % \
+                                    (row.format(f.id()), f.column_label())))
+                    items.append(i)
         return items
                            
         
