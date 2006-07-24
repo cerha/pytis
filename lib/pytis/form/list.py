@@ -2024,7 +2024,11 @@ class BrowseForm(ListForm):
             if len(item) == 2:
                 title, links = item
                 subitems = self._link_mitems(row, links)
-                if subitems:
+                if len(subitems) == 1:
+                    i = subitems[0]
+                    items.append(MItem(title, command=i.command(),
+                                       args=i.args(), help=i.help()))
+                elif subitems:
                     items.append(Menu(title, subitems))
             else:
                 title, f, link = item
