@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-07-24  Tomas Cerha  <cerha@brailcom.org>
+
+	Sestavování kontextového menu øádku bylo urychleno pøesunutím
+	èásti operací do konstruktoru.  Mírnì se tím zpomalí start
+	formuláøe, ale zobrazení kontextového menu je ji¾ rychlé.
+	
 2006-07-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi odesesílání 'Question' dialogu pomocí Ctrl+Enter ji¾

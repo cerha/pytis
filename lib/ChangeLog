@@ -1,3 +1,11 @@
+2006-07-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (BrowseForm._links.title): Nová metoda.
+	(BrowseForm._init_attributes): Nová metoda -- sestav zde statickou
+	èást menu a seznam odkazù.
+	(BrowseForm._context_menu): Nesestavuj menu a seznam odkazù zde --
+	vyu¾ívej atributù nastavených v konstruktoru.
+
 2006-07-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dialog.py (GenericDialog._cmd_commit_dialog): Testuj

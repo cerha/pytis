@@ -1,10 +1,5 @@
 CHYBY:
 
- * Pomalé otevírání kontextového menu øádku v browseformu.
-
-   Zpomalilo se to po zavedení odkazù.  Bylo by dobré se pokusit sestavování
-   menu nìjak zrychlit.
-
  * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
 
    Tj. napø. kdy¾ je filter závislý na dopoèítávaném políèku, které je zmìnìno
