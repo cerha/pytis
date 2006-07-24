@@ -5,6 +5,10 @@
 	èást menu a seznam odkazù.
 	(BrowseForm._context_menu): Nesestavuj menu a seznam odkazù zde --
 	vyu¾ívej atributù nastavených v konstruktoru.
+	(BrowseForm._init_attributes): Seskupuj odkazy na stejný defs do
+	podmenu.
+	(BrowseForm._link_mitems): Nová metoda.
+	(BrowseForm._context_menu): Vyu¾ívej ji.
 
 2006-07-21  Tomas Cerha  <cerha@brailcom.org>
 
