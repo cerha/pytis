@@ -1,5 +1,7 @@
 2006-07-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (MItem.help): Nová metoda.
+
 	* pytis/form/list.py (BrowseForm._links.title): Nová metoda.
 	(BrowseForm._init_attributes): Nová metoda -- sestav zde statickou
 	èást menu a seznam odkazù.
@@ -11,6 +13,8 @@
 	(BrowseForm._context_menu): Vyu¾ívej ji.
 	(BrowseForm._link_mitems): Vynech polo¾ky s NULL hodnotou v
 	odkazovaném sloupci..
+	(BrowseForm._link_mitems): Pøeveï podmenu s jednou polo¾kou na
+	samostatnou polo¾ku.
 
 2006-07-21  Tomas Cerha  <cerha@brailcom.org>
 
