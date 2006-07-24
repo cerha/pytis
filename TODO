@@ -42,15 +42,6 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * Vylep¹ení odlazù
-
-   "Øádkový fromuláø" zmìnit na "Odskok do ...", editaèní formuláø zmìnit na
-   "Edituj v ...", vlo¾ení nového záznamu zmìnit na "Vlo¾it do ...."
-
-   Pokud je pro jeden cílový náhled více sloupeèkù (a tedy i hodnot, pøes které
-   se na nìj skáèe) sdru¾it tyto rùzné zpùsoby otevøení formuláøe do podmenu,
-   ve kterém budou názvy políèek v titulku jednotlivých polo¾ek.
-
  * Dynamické urèení parametrù odkazu.
 
    Prozatím lze specifikaci odkazu pøedat pouze statické hodnoty.  Jak název
