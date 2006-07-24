@@ -1070,6 +1070,10 @@ class MItem(_TitledMenuObject):
         """
         return self._hotkey
 
+    def help(self):
+        """Vra» text nápovìdy polo¾ky zadaný v konstruktoru."""
+        return self._help
+
 
 class CheckItem(MItem):
     """Polo¾ka menu, která mù¾e být ve stavu ON/OFF."""
