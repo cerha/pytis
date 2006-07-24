@@ -9,6 +9,8 @@
 	podmenu.
 	(BrowseForm._link_mitems): Nová metoda.
 	(BrowseForm._context_menu): Vyu¾ívej ji.
+	(BrowseForm._link_mitems): Vynech polo¾ky s NULL hodnotou v
+	odkazovaném sloupci..
 
 2006-07-21  Tomas Cerha  <cerha@brailcom.org>
 

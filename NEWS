@@ -9,6 +9,14 @@
 	Sestavování kontextového menu øádku bylo urychleno pøesunutím
 	èásti operací do konstruktoru.  Mírnì se tím zpomalí start
 	formuláøe, ale zobrazení kontextového menu je ji¾ rychlé.
+
+	Polo¾ky odkazù v kontextovém menu øádku odkazující na stejný defs
+	jsou nyní seskupovány do podmenu.  Ka¾dé podmenu obsahuje odkazy
+	pøes v¹echny související sloupce.  Proto¾e v¹ak èasto více sloupcù
+	obsahuje stejnou hodnotu, stálo by za úvahu, zda není dostaèující
+	vytvoøit polo¾ky pouze pro rùzné cílové hodnoty.  Tím sice
+	u¾ivatel ztratí informaci o tom, ze kterého sloupce která hodnota
+	pochází, ale zase bude menu pøehlednìj¹í...
 	
 2006-07-21  Tomas Cerha  <cerha@brailcom.org>
 
