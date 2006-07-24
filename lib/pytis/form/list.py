@@ -1902,6 +1902,69 @@ class BrowseForm(ListForm):
                 result = self._Spec()
             return result
         
+    def _init_attributes(self, **kwargs):
+        super(BrowseForm, self)._init_attributes(**kwargs)
+        menu = (
+            MItem(_("Editovat buòku"),
+                  command=ListForm.COMMAND_EDIT,
+                  help=_("Upravit hodnotu v re¾imu inline editace")),
+            MItem(_("Filtrovat podle buòky"),
+                  command=ListForm.COMMAND_FILTER_BY_CELL,
+                  help=_("Vyfiltrovat øádky obsahující v tomto sloupci "
+                         "stejnou hodnotu")),
+            MItem(_("Zkopírovat obsah buòky"),
+                  command=ListForm.COMMAND_COPY_CELL,
+                  help=_("Zkopírovat hodnotu do schránky.")),
+            MSeparator(),
+            MItem(_("Editovat záznam"),
+                  command=BrowseForm.COMMAND_EDIT_RECORD,
+                  help=_("Otevøít editaèní formuláø pro tento záznam.")),
+            MItem(_("Smazat záznam"),
+                  command=RecordForm.COMMAND_DELETE_RECORD,
+                  help=_("Odstranit záznam z databáze.")),
+            MItem(_("Náhled"),
+                  command=ListForm.COMMAND_ACTIVATE,
+                  help=_("Otevøít náhledový formuláø s mo¾ností procházení "
+                         "záznamù")),
+            MItem(_("Duální náhled"),
+                  command=ListForm.COMMAND_ACTIVATE(alternate=True),
+                  help=_("Otevøít formuláø s tabulkou nahoøe a náhledem "
+                         "v dolní èásti.")),
+            )
+        actions = self._action_mitems(self._view.actions())
+        if actions:
+            menu += (MSeparator(),) + tuple(actions)
+        self._context_menu_static_part = menu
+        # The dynamic part of the menu is created based on the links.
+        def link_title(name, form):
+            resolver().get(name, 'view_spec').title()
+            if issubclass(form, DualForm) and \
+                   not issubclass(form, DescriptiveDualForm):
+                if name.find('::') != -1:
+                    name1, name2 = name.split('::')
+                    title = resolver().get(name1, 'binding_spec')[name2].title()
+                else:
+                    dspec = resolver().get(name, 'dual_spec')
+                    name1, name2 = dspec.main_name(), dspec.side_name()
+                    title = resolver().get(name1, 'view_spec').title() +' :: '+\
+                            resolver().get(name2, 'view_spec').title()
+            else:
+                title = resolver().get(name, 'view_spec').title()
+            if issubclass(form, PopupEditForm):
+                return _("Editovat %s") % title
+            else:
+                return _("Odskok - %s") % title
+        links = [(f, link_title(link.name(), link.form()), link) for f, link in
+                 [(field, Link(codebook, enumerator.value_column()))
+                  for field, enumerator, codebook in
+                  remove_duplicates([self._codebook_info(f)
+                                     for f in self._fields],
+                                    keep_order=True)
+                  if enumerator and codebook]]
+        links += [(f, link_title(link.name(), link.form()), f.link())
+                  for f in self._fields if f.link()]
+        self._links = tuple(links)
+        
     def _formatter_parameters(self):
         name = self._name
         return {(name+'/'+pytis.output.P_CONDITION):
@@ -1933,79 +1996,22 @@ class BrowseForm(ListForm):
             else:
                 raise ProgramError("Invalid action specification: %s" % x)
         return items
-
     
     def _context_menu(self):
-        def link_title(name, form):
-            resolver().get(name, 'view_spec').title()
-            if issubclass(form, DualForm) and \
-                   not issubclass(form, DescriptiveDualForm):
-                if name.find('::') != -1:
-                    name1, name2 = name.split('::')
-                    title = resolver().get(name1, 'binding_spec')[name2].title()
-                else:
-                    dspec = resolver().get(name, 'dual_spec')
-                    name1, name2 = dspec.main_name(), dspec.side_name()
-                    title = resolver().get(name1, 'view_spec').title() +' :: '+\
-                            resolver().get(name2, 'view_spec').title()
-            else:
-                title = resolver().get(name, 'view_spec').title()
-            if issubclass(form, PopupEditForm):
-                return _("Editovat %s") % title
-            else:
-                return _("Odskok - %s") % title
-        # Sestav specifikaci kontextového menu
-        menu = list(super_(BrowseForm)._context_menu(self) + (
-            MItem(_("Editovat buòku"),
-                  command=ListForm.COMMAND_EDIT,
-                  help=_("Upravit hodnotu v re¾imu inline editace")),
-            MItem(_("Filtrovat podle buòky"),
-                  command=ListForm.COMMAND_FILTER_BY_CELL,
-                  help=_("Vyfiltrovat øádky obsahující v tomto sloupci "
-                         "stejnou hodnotu")),
-            MItem(_("Zkopírovat obsah buòky"),
-                  command=ListForm.COMMAND_COPY_CELL,
-                  help=_("Zkopírovat hodnotu do schránky.")),
-            MSeparator(),
-            MItem(_("Editovat záznam"),
-                  command=BrowseForm.COMMAND_EDIT_RECORD,
-                  help=_("Otevøít editaèní formuláø pro tento záznam.")),
-            MItem(_("Smazat záznam"),
-                  command=RecordForm.COMMAND_DELETE_RECORD,
-                  help=_("Odstranit záznam z databáze.")),
-            MItem(_("Náhled"),
-                  command=ListForm.COMMAND_ACTIVATE,
-                  help=_("Otevøít náhledový formuláø s mo¾ností procházení "
-                         "záznamù")),
-            MItem(_("Duální náhled"),
-                  command=ListForm.COMMAND_ACTIVATE(alternate=True),
-                  help=_("Otevøít formuláø s tabulkou nahoøe a náhledem "
-                         "v dolní èásti.")),
-            ))
-        actions = self._action_mitems(self._view.actions())
-        if actions:
-            menu += [MSeparator()] + actions
-        links = [(field, Link(codebook, enumerator.value_column()))
-                 for field, enumerator, codebook in
-                 remove_duplicates([self._codebook_info(f)
-                                    for f in self._fields], keep_order=True)
-                 if enumerator and codebook]
-        links += [(f, f.link()) for f in self._fields if f.link()]
+        menu = list(self._context_menu_static_part)
+        links = list(self._links)
         if links:
+            row = self.current_row()
             menu.append(MSeparator())
-        row = self.current_row()
-        menu += [MItem(link_title(link.name(), link.form()),
-                       command=Application.COMMAND_RUN_FORM,
-                       args=dict(name=link.name(),
-                                 form_class=link.form(),
-                                 select_row={link.column(): row[f.id()]}),
-                       help=(_("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") %\
-                             (row.format(f.id()), f.column_label()))
-                       )
-                 for f, link in links]
+            menu += [MItem(title, command=Application.COMMAND_RUN_FORM,
+                           args=dict(name=link.name(),
+                                     form_class=link.form(),
+                                     select_row={link.column(): row[f.id()]}),
+                           help=(_("Vyhledat záznam pro hodnotu '%s' "
+                                   "sloupce '%s'.") % \
+                                 (row.format(f.id()), f.column_label())))
+                     for f, title, link in links]
         return menu
-
-        
 
     def _cmd_print(self, print_spec_path=None):
         log(EVENT, 'Vyvolání tiskového formuláøe:', print_spec_path)
