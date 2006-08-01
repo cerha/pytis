@@ -1,3 +1,10 @@
+2006-08-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField.__init__): Inicializuj
+	atribut `_callback_registered'.
+	(InputField._register_skip_navigation_callback): Nava¾ wx callback
+	pouze jednou.  Poznaè si to v `_callback_registered'.
+
 2006-07-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (MItem.help): Nová metoda.
