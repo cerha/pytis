@@ -4,6 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-08-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi inicializaci vstupních políèek byl za urèitých
+	okolností nastaven callback pøeskoèení políèka vícekrát.  To
+	zpùsobilo, ¾e nìkdy bylo pøi navigaci pøeskoèeno kromì
+	needitovatelného políèka je¹tì políèko následující.
+	
 2006-07-24  Tomas Cerha  <cerha@brailcom.org>
 
 	Sestavování kontextového menu øádku bylo urychleno pøesunutím
