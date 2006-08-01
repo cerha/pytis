@@ -186,6 +186,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._initialized = False
         self._accessible = self._enabled = accessible
         self._ctrl = self._create_ctrl()
+        self._callback_registered = False
         self._unregistered_widgets = {}
         if inline:
             self._widget = self._ctrl
@@ -328,15 +329,17 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     def _register_skip_navigation_callback(self):
         control = self._ctrl
-        wx_callback(wx.EVT_NAVIGATION_KEY, control,
-                    self._skip_navigation_callback(control))
+        if not self._callback_registered:
+            wx_callback(wx.EVT_NAVIGATION_KEY, control,
+                        self._skip_navigation_callback(control))
+            self._callback_registered = True
         if self._unregistered_widgets.has_key(control):
             del(self._unregistered_widgets[control])
 
     def _unregister_skip_navigation_callback(self):
         #self._ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
         # Vý¹e uvedený Disconnect nefunguje, tak¾e si to ubastlíme po svém...
-        self._unregistered_widgets[self._ctrl] = 1
+        self._unregistered_widgets[self._ctrl] = True
 
     def _on_change(self, event=None):
         """Event handler volaný pøi jakékoliv zmìnì hodnoty políèka.
