@@ -2617,6 +2617,13 @@ class DBConnection:
         self._port = port
         self._database = database
 
+    def __str__(self):
+        params = ["%s='%s'" % (k,v)
+                  for k,v in [(k, getattr(self, '_'+k))
+                              for k in ('user', 'host', 'port', 'database')]
+                  if v is not None]
+        return "<%s %s>" % (self.__class__.__name__, ", ".join(params))
+
     def user(self):
         """Vra» databázového u¾ivatele jako string nebo 'None'."""
         return self._user
