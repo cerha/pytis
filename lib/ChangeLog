@@ -1,3 +1,7 @@
+2006-08-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py (DBConnection.__str__): Nová metoda.
+
 2006-08-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField.__init__): Inicializuj
