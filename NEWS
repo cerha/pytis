@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-08-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi sestavování formuláøe jsou nyní správnì zpracovány
+	horizontální skupiny.  Døíve byla v¹echna políèka horizontální
+	skupiny pøidávána jako "kompaktní", aèkoliv pøíznak `compact'
+	nastaven nemìla.  Bude dobré zkontrolovat, zda se s tímto chybným
+	chováním v nìkterých formuláøích nepoèítalo.
+	
 2006-08-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi inicializaci vstupních políèek byl za urèitých
