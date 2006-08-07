@@ -1462,21 +1462,25 @@ class EditForm(LookupForm, TitledForm, Refreshable):
                    and (isinstance(item, InputField)
                         and not item.spec().compact() \
                         or isinstance(item, Button)):
-                # This field will become a part of current pack
+                # This field will become a part of current pack.
                 pack.append(item)
                 continue
             if len(pack) != 0:
-                # pøidej poslední sled políèek (pokud nìjaký byl)
+                # Add the latest pack into the sizer (if there was one).
                 sizer.Add(self._pack_fields(parent, pack, space, gap),
                           0, wx.ALIGN_TOP|border_style, border)
                 pack = []
             if isinstance(item, GroupSpec):
                 x = self._create_group(parent, item)
             elif isinstance(item, InputField):
-                # This is a compact field (not a part of the pack)
-                x = wx.BoxSizer(wx.VERTICAL)
-                x.Add(item.label(), 0, wx.ALIGN_LEFT)
-                x.Add(item.widget())
+                if  item.spec().compact():
+                    # This is a compact field (not a part of the pack).
+                    x = wx.BoxSizer(wx.VERTICAL)
+                    x.Add(item.label(), 0, wx.ALIGN_LEFT)
+                    x.Add(item.widget())
+                else:
+                    # This only happens in a HORIZONTAL group.
+                    x = self._pack_fields(parent, (item,), space, gap)
             else:
                 x = self._create_button(parent, item)
             sizer.Add(x, 0, wx.ALIGN_TOP|border_style, border)
