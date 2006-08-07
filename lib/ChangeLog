@@ -1,3 +1,8 @@
+2006-08-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (EditForm._create_group): Sestav správnì také
+	horizontální skupinu.
+
 2006-08-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/dbdata.py (DBConnection.__str__): Nová metoda.
