@@ -863,7 +863,7 @@ class _TitledMenuObject(_MenuObject):
           
         """
         assert isinstance(title, types.StringTypes)
-        self._title = gettext_(title)
+        self._title = title
         
     def title(self, raw=False):
         """Vra» titulek menu zadaný v konstruktoru jako string."""
