@@ -176,10 +176,10 @@ class Button(object):
         assert width is None or isinstance(width, types.IntType)
         assert tooltip is None or isinstance(tooltip, types.StringTypes)
         assert isinstance(active_in_popup_form, types.BooleanType)
-        self._label = gettext_(label)
+        self._label = label
         self._handler = handler
         self._width = width
-        self._tooltip = gettext_(tooltip)
+        self._tooltip = tooltip
         self._active_in_popup_form = active_in_popup_form
         
     def label(self):
@@ -450,7 +450,7 @@ class GroupSpec(object):
             assert isinstance(item, GroupSpec) or isinstance(item, Button) \
                    or is_anystring(item), (item, label)
         self._items = items
-        self._label = gettext_(label)
+        self._label = label
         self._orientation = orientation
         self._gap = gap
         self._space = space
@@ -570,7 +570,7 @@ class LayoutSpec(object):
         assert caption is None or is_anystring(caption)
         assert isinstance(group, GroupSpec)
         assert order is None or is_sequence(order)
-        self._caption = gettext_(caption)
+        self._caption = caption
         self._group = group
         def find_fields(group):
             # Extract field ids from group by recursing it.
@@ -841,7 +841,7 @@ class ViewSpec(object):
         assert isinstance(row_style, FieldStyle) or callable(row_style)
         assert description is None or isinstance(description, types.StringTypes)
         assert help is None or isinstance(help, types.StringTypes)
-        self._title = gettext_(title)
+        self._title = title
         self._columns = columns
         self._layout = layout
         self._actions = actions
@@ -1635,8 +1635,8 @@ class FieldSpec(object):
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
         assert link is None or isinstance(link, Link)
-        self._label = gettext_(label)
-        self._descr = gettext_(descr)
+        self._label = label
+        self._descr = descr
         self._width = width
         if column_width is None:
             column_width = width
