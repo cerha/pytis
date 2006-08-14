@@ -1,3 +1,15 @@
+2006-08-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (_TitledMenuObject.__init__): Nepou¾ívej `gettext_'
+	pro konverzi argumentu `title'.
+
+	* pytis/presentation/spec.py (Button.__init__) 
+	(GroupSpec.__init__, FieldSpec.__init__, Button.__init__) 
+	(LayoutSpec.__init__, ViewSpec.__init__): Nepou¾ívej `gettext_'
+	pro konverzi textových argumentù.
+
+	* pytis/util/util.py (gettext_): Funkce zru¹ena.
+
 2006-08-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (EditForm._create_group): Sestav správnì také
