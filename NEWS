@@ -4,6 +4,18 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-08-14  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla zru¹ena automatická konverze øetìzcù pocházejících z defsù
+	pomocí gettext.  V praxi by to bylo stejnì nepou¾itelné, proto¾e
+	by øetìzce nebylo podle èeho z defsù vyextrahovat.  Tam, kde se
+	pøedpokládá pøeklad, je nutné øetìzce pøímo v defsech oznaèit
+	obalením funkcí `_'.  Tato zmìna znamená také to, ¾e øetezce,
+	které takto obalené nejsou, nejsou v rámci Pytis typu `unicode',
+	ale `str'.  To by teoreticky nemìlo znamenat ¾ádné problémy, ale
+	pøesto bude vhodné chování nejprve otestovat a mít pøi pøípadných
+	problémech toto na pamìti.
+	
 2006-08-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi sestavování formuláøe jsou nyní správnì zpracovány
