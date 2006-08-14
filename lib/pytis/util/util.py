@@ -560,17 +560,6 @@ class XStack(Stack):
 
 ### Funkce
 
-def gettext_(text):
-    """Vra» pøelo¾ený text jako unicode øetìzec.
-
-    Funkce také zachovává hodnotu None, je-li pøedána na vstupu.
-    
-    """
-    if text is None:
-        return None
-    else:
-        return unicode(_(text))
-
 def identity(x):
     """Vra» 'x'."""
     return x
@@ -583,7 +572,6 @@ def is_(x, y):
 
     """
     return x is y
-
 
 def xor(x, y):
     """Vra» pravdivostní hodnotu exkluzivního OR výrazù 'x' a 'y'."""
