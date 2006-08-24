@@ -52,10 +52,16 @@ class DBConfig(object):
 
     """
 
-    def __init__(self, name):
+    def __init__(self, name, callback=None):
         """Inicializuj instanci.
 
-        Argument 'name' urèuje název specifikace datového objektu pro resolver.
+        Argumenty:
+
+          name -- urèuje název specifikace datového objektu pro resolver.
+
+          callback -- pokud není None, bude daná funkce volána pøi ka¾dé zmìnì
+            v datovém objektu.  Jde o funkci jednoho argumentu, kterým je
+            (aktualizovaná) instance 'DBConfig'.
 
         """
         global data_object_cache
@@ -74,6 +80,15 @@ class DBConfig(object):
         self._row = self._data.fetchone()
         self._key = [self._row[c.id()] for c in self._data.key()]
         self._data.close()
+        if callback:
+            self._callback = callback
+            self._data.add_callback_on_change(self._on_change)
+
+    def _on_change(self):
+        self._data.select()
+        self._row = self._data.fetchone()
+        self._data.close()
+        self._callback(self)
 
     def value(self, key):
         """Vra» hodnotu 'key' jako instanci 'pytis.data.Value'."""
