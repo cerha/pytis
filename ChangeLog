@@ -1,3 +1,11 @@
+2006-08-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/dbconfig.py (DBConfig.__init__): Nov7
+	argument `callback'.
+	(DBConfig._on_change): Nová metoda.
+
+	* lib/pytis/extensions/dbutils.py (nextval): Nová funkce.
+
 2006-06-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (cb_computer): Funkce zru¹ena.
