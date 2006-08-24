@@ -172,6 +172,17 @@ def dbfunction(name, *args, **kwargs):
     return result.value()
 
 
+def nextval(seq):
+    """Vra» funkci pro výpoèet výchozí hodnoty sloupce z dané sekvence.
+
+    Argumentem je název sekvence v databázi.  Vhodné pro zjednodu¹ení
+    specifikace 'default' ve fieldspec.
+    
+    """
+    counter = pytis.data.DBCounterDefault(seq, config.dbconnection)
+    return lambda: counter.next()
+
+
 def enum(name):
     """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
 
