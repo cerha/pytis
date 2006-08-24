@@ -269,7 +269,7 @@ class Action(_ActionItem):
             'context' urèujeme s èím se pracuje.  Specifikace ovlivní druhý
             pozièní argument pøedaný handleru akce.  Pokud je None, s ¾ádným
             dal¹ím kontextem se nepracuje a druhý pozièní argument se handleru
-            nepøadává.
+            nepøedává.
 
           enabled -- funkce, vracející pravdu, pokud je akce aktivní a nepravdu
             v opaèném pøípadì.  Funkci jsou pøadány stejné argumenty, jako

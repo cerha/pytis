@@ -6,6 +6,18 @@
 
 2006-08-14  Tomas Cerha  <cerha@brailcom.org>
 
+	V pytis-extensions pøibyla nová funkce `nextval', kterou je mo¾no
+	pou¾ívat pro zjednodu¹ení zápisu `default' hodnoty naèítané ze
+	sekvence.  Staèí uvést napøíklad:
+	
+	   default=nextval('zakazka_zakazka_id_seq')
+
+	Dále je v pytis-extensions novì mo¾nost v konstruktoru `DBConfig'
+	urèit callback, který bude zavolán pøi ka¾dé zmìnì v datovém
+	objektu.  Tím je mo¾no napøíklad aktualizovat pole stavové øádky...
+	
+2006-08-14  Tomas Cerha  <cerha@brailcom.org>
+
 	Byla zru¹ena automatická konverze øetìzcù pocházejících z defsù
 	pomocí gettext.  V praxi by to bylo stejnì nepou¾itelné, proto¾e
 	by øetìzce nebylo podle èeho z defsù vyextrahovat.  Tam, kde se
