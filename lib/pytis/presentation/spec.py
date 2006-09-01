@@ -252,16 +252,18 @@ class Action(_ActionItem):
 
           handler -- callable objekt o¹etøující danou akci.  Handleru jsou pøi
             vyvolání akce pøedány argumenty odpovídající danému kontextu.
-            První pozièní argument je instance 'PresentedRow' odpovídající
+            Pokud argument 'context' není None, bude pøedán první pozièní
+            argument.  Je to buïto instance 'PresentedRow' odpovídající
             aktuálnímu øádku, nebo sekvence vybraných øádkù, v závislosti na
-            argumentu 'context'.  Pokud je definován také argument
+            hodnotì argumentu 'context'.  Pokud je definován také argument
             'secondary_context', bude pøedán také druhý pozièní argument
             odpovídající kontextu ve druhém formuláøi duálního formuláøe.  Dále
             jsou handleru pøedány také ve¹keré zbylé klíèové argumenty.
         
           context -- Instance 'ActionContext' urèující v jakém kontextu mù¾e
             být akce vyvolána.  Tato hodnota ovlivòuje argumenty, které jsou
-            handleru akce pøedány pøi jejím vyvolání.
+            handleru akce pøedány pøi jejím vyvolání.  Mù¾e být také None, v
+            kterém¾to pøípadì nejsou handleru pøadávány ¾ádné argumenty.
         
           secondary_context -- Instance 'ActionContext', nebo None.  Nìkteré
             akce mohou v duálním formuláøi pracovat i s kontextovou informací z
@@ -293,7 +295,7 @@ class Action(_ActionItem):
         
         """
         assert callable(handler)
-        assert context in public_attributes(ActionContext)
+        assert context in (None,) + public_attributes(ActionContext)
         assert secondary_context in (None,) + public_attributes(ActionContext)
         assert callable(enabled) or isinstance(enabled, types.BooleanType)
         assert access_groups is None or \
@@ -1367,7 +1369,7 @@ class Link(object):
     Pou¾ívá se jako hodnota argumentu 'link' ve 'FieldSpec'.
 
     """
-    def __init__(self, name, column, form=None):
+    def __init__(self, name, column, form=None, label=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1382,10 +1384,16 @@ class Link(object):
             (instance tøídy 'Form').  Výchozím typem je buïto 'BrowseForm',
             nebo 'DualBrowseForm' pro duální náhledy (name je slo¾ený název).
 
+          label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
+            pojmenován automaticky a zaøazen mezi automaticky generované
+            odkazy.  Pokud je titulek uveden, bude v u¾ivatelském rozhraní
+            odkaz uveden samostatnì pøed v¹emi automaticky generovanými odkazy.
+            
         """
         assert isinstance(name, types.StringType)
         assert isinstance(column, types.StringType)
         assert form is None or issubclass(form, Form)
+        assert label is None or isinstance(label, types.StringTypes)
         if form is None:
             if name.find('::') == -1:
                 form = BrowseForm
@@ -1394,6 +1402,7 @@ class Link(object):
         self._name = name
         self._column = column
         self._form = form
+        self._label = label
                 
     def name(self):
         """Vra» název specifikace odkazovaného náhledu."""
@@ -1406,6 +1415,10 @@ class Link(object):
     def form(self):
         """Vra» typ formuláøe, který má být otevøen."""
         return self._form
+
+    def label(self):
+        """Vra» typ formuláøe, který má být otevøen."""
+        return self._label
 
     
 class FieldSpec(object):
@@ -1426,7 +1439,7 @@ class FieldSpec(object):
                  width=None, column_width=None, fixed=False, height=None,
                  editable=None, compact=False, type_=None, default=None,
                  computer=None, line_separator='; ', codebook=None,
-                 display_size=None, allow_codebook_insert=False,
+                 display=None, display_size=None, allow_codebook_insert=False,
                  codebook_insert_spec=None, codebook_runtime_filter=None,
                  selection_type=None, orientation=Orientation.VERTICAL,
                  post_process=None, filter=None, filter_list=None, style=None,
@@ -1511,6 +1524,13 @@ class FieldSpec(object):
             není tato informace aplikaci dostupná.  Potom je nutné název
             èíselníku urèit zde.
             
+          display -- identifikátor sloupeèku èíselníku, který má být pou¾it pro
+            zobrazení u¾ivatelské hodnoty.  Relevantní jen pro èíselníková
+            políèka.  Pokud je None, bude pou¾ita hodnota z 'cb_spec' ve
+            specifikaci èíselníku (co¾ by mìlo být také upøednostòováno).  Mù¾e
+            být také funkce jednoho argumentu (vnitøní Pythonová hodnota
+            èíselníku), která vrací u¾ivatelskou hodnotu (øetìzec).
+
           display_size -- velikost displeje èíselníku ve znacích.  Relevantní
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
             'cb_spec' ve specifikaci èíselníku.
@@ -1612,6 +1632,7 @@ class FieldSpec(object):
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, types.StringType)
+        assert display is None or isinstance(display, str) or callable(display)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert isinstance(allow_codebook_insert, types.BooleanType)
         assert codebook_insert_spec is None \
@@ -1651,6 +1672,7 @@ class FieldSpec(object):
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
+        self._display = display
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
@@ -1802,6 +1824,10 @@ class FieldSpec(object):
     def display_size(self):
         """Vra» velikost displeje èíselníku (poèet znakù)."""
         return self._display_size
+
+    def display(self):
+        """Vra» hodnotu `display' zadanou v konstruktoru."""
+        return self._display
 
     def allow_codebook_insert(self):
         """Vra» pravdu, má-li být  zobrazeno tlaèítko pøidání do èíselníku."""
