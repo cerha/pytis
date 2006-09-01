@@ -569,7 +569,6 @@ class DBDataPostgreSQL(DBData):
         
         """
         if __debug__: log(DEBUG, 'Vytváøím databázovou tabulku')
-        import config
         if isinstance(dbconnection_spec, DBConnection):
             self._pg_dbconnection_spec = lambda : dbconnection_spec
         else:
@@ -593,6 +592,7 @@ class DBDataPostgreSQL(DBData):
         # Pozor, config.cache_size je vyu¾íváno pøímo v _PgBuffer.
         # Zde tyto hodnoty zapamatujeme jako atributy objektu, proto¾e jsou
         # potøeba v kritických èástech kódu a ètení konfigurace pøeci jen trvá.
+        import config
         self._pg_initial_fetch_size = config.initial_fetch_size
         self._pg_fetch_size = config.fetch_size
         self._db_encoding = config.db_encoding
@@ -664,20 +664,21 @@ class DBDataPostgreSQL(DBData):
             template.append((id, typid, type))
         return template
     
-    def _pg_make_row_from_raw_data(self, data_):
+    def _pg_make_row_from_raw_data(self, data_, template=None):
         if not data_:
             return None
+        if not template:
+            template = self._pg_make_row_template
         row_data = []
         data_0 = data_[0]
         i = 0
-        for id, typid, type in self._pg_make_row_template:            
+        for id, typid, type in template:            
             dbvalue = data_0[i]
             i += 1
             if typid == 0:              # string
                 if dbvalue is None:
                     v = None
                 else:
-                    import config
                     v = unicode(dbvalue, self._db_encoding)
                 value = Value(type, v)
             elif typid == 2:            # time
@@ -740,7 +741,7 @@ class DBDataPostgreSQL(DBData):
     # Veøejné metody a jimi pøímo volané abstraktní metody
 
     def row(self, key):
-        log(EVENT, 'Zji¹tìní obsahu øádku:', key)
+        #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
         try:
             data = self._pg_row (self._pg_value(key))
         except Exception, e:
@@ -750,7 +751,7 @@ class DBDataPostgreSQL(DBData):
                 pass
             raise e
         result = self._pg_make_row_from_raw_data(data)
-        log(EVENT, 'Vrácený obsah øádku', result)
+        #log(EVENT, 'Vrácený obsah øádku', result)
         return result
 
     def _pg_row (self, value):
@@ -823,6 +824,18 @@ class DBDataPostgreSQL(DBData):
         assert error is None, error
         return result
         
+    def distinct(self, column, condition=None, sort=None):
+        """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
+
+        Argumenty:
+
+          column -- identifikátor sloupce.
+          condition -- podmínkový výraz nebo 'None'.
+          sort -- jedna z konstant  'ASCENDENT', 'DESCENDANT' nebo None.
+
+        """
+        return self._pg_distinct(column, condition, sort)
+        
     def _pg_select (self, condition, sort, operation=None):
         """Inicializuj select a vra» poèet øádkù v nìm nebo 'None'.
 
@@ -894,7 +907,6 @@ class DBDataPostgreSQL(DBData):
                         self._pg_is_in_select = False
                         raise e
             skip()
-            import config
             if self._pg_initial_select:
                 self._pg_initial_select = False
                 std_size = self._pg_initial_fetch_size
@@ -1555,9 +1567,8 @@ class DBDataPyPgSQL(DBDataPostgreSQL):
 
     def _pg_query(self, query, outside_transaction=False, backup=False,
                   group_update=True):
-        import config
         if type(query) is pytypes.UnicodeType:
-            query = query.encode(config.db_encoding)
+            query = query.encode(self._db_encoding)
         if group_update:
             data_arg = self
         else:
@@ -1879,6 +1890,9 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
           (first_key_column, table_list, relation)
+        self._pdbb_command_distinct = \
+          'select distinct %%s from %s where %%s and (%s) order by %%s' % \
+          (table_list, relation)
         self._pdbb_command_select = \
           ('declare %s scroll cursor for select %s, %s from %s '+\
            'where %%s and (%s) order by %%s %s') % \
@@ -2229,6 +2243,22 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_select_rows = result
         return result
 
+    def _pg_distinct (self, column, condition, sort):
+        cond_string = self._pdbb_condition2sql(condition)
+        if sort is None:
+            sort_spec = ()
+        else:
+            sort_spec = ((column, sort),)
+        sort_string = self._pdbb_sort2sql(sort_spec)
+        if sort_string.endswith(','):
+            sort_string = sort_string[:-1]
+        data = self._pg_query(self._pdbb_command_distinct % \
+                              (column, cond_string, sort_string))
+        tmpl = self._pg_create_make_row_template((self.find_column(column),))
+        result = [self._pg_make_row_from_raw_data([r], tmpl)[column].value()
+                  for r in data]
+        return result
+    
     def _pg_select_aggregate(self, operation, condition):
         cond_string = self._pdbb_condition2sql(condition)
         aggfun, colid = operation
