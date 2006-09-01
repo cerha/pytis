@@ -130,7 +130,7 @@ class LayoutForm(Form):
             ctrl = _html.select
             values = type.enumerator().values()
             user_value = self._codebook_user_value_func(f)
-            attr['options'] = [("", "")] + \
+            attr['options'] = [("&nbsp;", "")] + \
                               [(user_value(v), str(v)) for v in values]
             if str(value.value()) in [str(v) for v in values]:
                 attr['selected'] = str(value.value())
