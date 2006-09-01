@@ -1,0 +1,39 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pytis 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-08-30 08:47+0200\n"
+"PO-Revision-Date: 2006-08-30 08:47+0200\n"
+"Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
+"Language-Team: LANGUAGE <cs@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../lib/pytis/web/form.py:230 ../lib/pytis/web/form.py:294
+msgid "Yes"
+msgstr "Ano"
+
+#: ../lib/pytis/web/form.py:230 ../lib/pytis/web/form.py:294
+msgid "No"
+msgstr "Ne"
+
+#: ../lib/pytis/web/form.py:238
+msgid "reduced"
+msgstr "zkráceno"
+
+#: ../lib/pytis/web/form.py:278
+msgid "Submit"
+msgstr "Odeslat"
+
+#: ../lib/pytis/web/form.py:279
+msgid "Reset"
+msgstr "Vrátit pùvodní hodnoty"
+
+#: ../lib/pytis/web/form.py:310
+msgid "No records."
+msgstr "®ádné záznamy."
