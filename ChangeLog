@@ -1,3 +1,9 @@
+2006-09-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* translations/pytis.cs.po: New file.
+
+	* translations/Makefile: New file.
+
 2006-06-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* bin/pytis (run_application): Namísto funkce `run_application()'

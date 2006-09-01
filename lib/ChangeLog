@@ -1,3 +1,33 @@
+2006-09-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Umo¾ni pøedat
+	¹ablonu øádku jako argument `template'. 
+	(DBDataPostgreSQL.row): Zakomentováno logování výsledného øádku.
+	(DBDataPostgreSQL.distinct): Nová metoda.
+	(DBDataPostgreSQL._PgBuffer.fill, _pypg_new_connection) 
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Neimportuj `config'
+	(DBDataPyPgSQL._pg_query): Pou¾ívej `self._db_encoding' namísto `config.db_encoding'.
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands):
+	Vytvoø také ¹ablonu `self._pdbb_command_distinct'.
+	(PostgreSQLStandardBindingHandler._pg_distinct): Nová metoda.
+
+	* pytis/form/list.py (BrowseForm._init_attributes): Odkazy s
+	explicitnì definovaným `label' zaøaï pøed v¹echny ostatní odkazy a
+	tento label pou¾ij namísto výchozího.
+
+	* pytis/presentation/spec.py (Action.__init__): Umo¾ni také
+	`context' None.
+	(Link.__init__): Nový argument `label'.
+	(Link.label): Nová metoda.
+	(FieldSpec.__init__): Nový argument `display'.
+	(FieldSpec.display): Nová metoda.
+	
+
+	* pytis/web/form.py: New file.
+
+	* pytis/web/__init__.py: New file.
+
 2006-08-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (_TitledMenuObject.__init__): Nepou¾ívej `gettext_'
