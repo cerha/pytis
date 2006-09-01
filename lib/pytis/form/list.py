@@ -1963,7 +1963,11 @@ class BrowseForm(ListForm):
         links += [(f, f.link()) for f in self._fields if f.link()]
         # Now we group all links by the target spec name.
         linkdict = {}
+        self._links = []
         for f, link in links:
+            if link.label():
+                self._links.append((link.label(), f, link))
+                continue
             key = (link.form(), link.name(),)
             try:
                 a = linkdict[key]
@@ -1973,7 +1977,6 @@ class BrowseForm(ListForm):
             if item not in a:
                 a.append(item)
         # Create the links list as accepted by _link_mitems()
-        self._links = []
         linklist = linkdict.items()
         linklist.sort()
         for key, items in linklist:
