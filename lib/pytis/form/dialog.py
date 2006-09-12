@@ -770,7 +770,8 @@ class InputNumeric(InputDialog):
                 if self._decimal_width == 0:
                     return pytis.data.Value(pytis.data.Integer(), None)
                 else:
-                    return pytis.data.Value(pytis.data.Float(), None)
+                    return pytis.data.Value(
+                        pytis.data.Float(precision=self._decimal_width), None)
             if self._decimal_width == 0:
                 value = pytis.data.Value(pytis.data.Integer(),
                                        self._control.GetValue())
