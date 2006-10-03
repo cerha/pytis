@@ -822,8 +822,8 @@ class ViewSpec(object):
                 for id, dir in sorting:
                     import pytis.form
                     assert self.field(id) is not None
-                    assert dir in (pytis.form.LookupForm.SORTING_ASCENDENT,
-                                   pytis.form.LookupForm.SORTING_DESCENDANT)
+                    assert dir in (pytis.data.ASCENDENT,
+                                   pytis.data.DESCENDANT)
         if grouping is None:
             grouping = ()
         else:
