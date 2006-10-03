@@ -1021,13 +1021,16 @@ class LookupForm(RecordForm):
                         sorting = None
                         break
         if sorting is None:
-            sorting = self._default_sorting()
+            mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
+                       pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
+            sorting =  tuple([(cid, mapping[dir])
+                              for cid, dir in self._default_sorting()])
         self._lf_sorting = sorting
         
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
-            sorting = tuple([(k.id(), LookupForm.SORTING_DESCENDANT)
+            sorting = tuple([(k.id(), pytis.data.DESCENDANT)
                              for k in self._data.key()
                              if self._view.field(k.id()) is not None])
         return sorting
