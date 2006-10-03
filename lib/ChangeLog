@@ -1,3 +1,20 @@
+2006-10-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm._default_sorting): Pou¾ívej
+	`pytis.data.ASCENDENT' a `pytis.data.DESCENDANT' pøi konstrukci
+	výchozího tøídìní.
+	
+	* pytis/form/form.py (LookupForm._init_sorting): Pøevádìj
+	specifikaci tøídìní vrácenou metodou `_default_sorting' na
+	specifikaci pomocí konstant `pytis.form.LookupForm.SORTING_ASCENDENT' a
+	`pytis.form.LookupForm.SORTING_DESCENDANT'.
+	
+	* pytis/presentation/spec.py (ViewSpec.columns): Oèekávej
+	specifikaci tøídìní s pou¾itím konstant `pytis.data.ASCENDENT' a
+	`pytis.data.DESCENDANT', ne
+	`pytis.form.LookupForm.SORTING_ASCENDENT' a
+	`pytis.form.LookupForm.SORTING_DESCENDANT'.
+
 2006-09-12  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/dialog.py (InputNumeric._customize_result):
