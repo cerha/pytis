@@ -820,7 +820,6 @@ class ViewSpec(object):
             assert is_sequence(sorting)
             if __debug__:
                 for id, dir in sorting:
-                    import pytis.form
                     assert self.field(id) is not None
                     assert dir in (pytis.data.ASCENDENT,
                                    pytis.data.DESCENDANT)
@@ -1392,13 +1391,13 @@ class Link(object):
         """
         assert isinstance(name, types.StringType)
         assert isinstance(column, types.StringType)
-        assert form is None or issubclass(form, Form)
+        assert form is None or issubclass(form, pytis.form.Form)
         assert label is None or isinstance(label, types.StringTypes)
         if form is None:
             if name.find('::') == -1:
-                form = BrowseForm
+                form = pytis.form.BrowseForm
             else:
-                form = BrowseDualForm
+                form = pytis.form.BrowseDualForm
         self._name = name
         self._column = column
         self._form = form
