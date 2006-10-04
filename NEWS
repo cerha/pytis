@@ -4,6 +4,17 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-10-03  Tomas Cerha  <cerha@brailcom.org>
+
+	Specifikace tøídìní se nyní prování pomocí konstant
+	`pytis.data.ASCENDENT' a `pytis.data.DESCENDANT', ne
+	`pytis.form.LookupForm.SORTING_ASCENDENT' a
+	`pytis.form.LookupForm.SORTING_DESCENDANT'.  Zároveò byly zmìnìny
+	konstanty `ASC' a `DESC' v pytis.extensions, tak¾e v¹ude tam, kde
+	je pou¾íváno `ASC' a `DESC' by nemìlo být zapotøebí ¾ádných úprav
+	defsù.  Pøesto bude dobré ovìøit, zda se v nìkterých star¹ích
+	defsech konstanty `pytis.form.LookupForm.SORTING_*' nevyskytují.
+
 2006-08-14  Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions pøibyla nová funkce `nextval', kterou je mo¾no

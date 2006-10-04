@@ -14,6 +14,8 @@
 	`pytis.data.DESCENDANT', ne
 	`pytis.form.LookupForm.SORTING_ASCENDENT' a
 	`pytis.form.LookupForm.SORTING_DESCENDANT'.
+	(Link.__init__): Názvy formuláøù pou¾ívej vèetnì názvu mudulu.
+	
 
 2006-09-12  Pavel Hanak  <hanak@asellus.cz>
 
