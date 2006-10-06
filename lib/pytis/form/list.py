@@ -1936,24 +1936,17 @@ class BrowseForm(ListForm):
             menu += (MSeparator(),) + tuple(actions)
         self._context_menu_static_part = menu
         # The dynamic part of the menu is created based on the links.
-        def link_title(form, name):
-            resolver().get(name, 'view_spec').title()
-            if issubclass(form, DualForm) and \
-                   not issubclass(form, DescriptiveDualForm):
-                if name.find('::') != -1:
-                    name1, name2 = name.split('::')
-                    title = resolver().get(name1, 'binding_spec')[name2].title()
-                else:
-                    dspec = resolver().get(name, 'dual_spec')
-                    name1, name2 = dspec.main_name(), dspec.side_name()
-                    title = resolver().get(name1, 'view_spec').title() +' :: '+\
-                            resolver().get(name2, 'view_spec').title()
+        def link_title(type, name):
+            if name.find('::') != -1:
+                name1, name2 = name.split('::')
+                title = resolver().get(name1, 'binding_spec')[name2].title()
             else:
                 title = resolver().get(name, 'view_spec').title()
-            if issubclass(form, PopupEditForm):
-                return _("Editovat %s") % title
-            else:
-                return _("Odskok - %s") % title
+            mapping = {FormType.BROWSE: _("Odskok - %s"),
+                       FormType.EDIT:   _("Editovat %s"),
+                       FormType.VIEW:   _("Náhled %s"),
+                       FormType.INSERT: _("Nový záznam pro %s")}
+            return mapping[type] % title
         # Create automatic links for codebook fields.
         links = [(f, Link(cb, col))  for f, cb, col in
                  remove_duplicates([(f, cb, e.value_column()) for f, e, cb in
@@ -1968,7 +1961,7 @@ class BrowseForm(ListForm):
             if link.label():
                 self._links.append((link.label(), f, link))
                 continue
-            key = (link.form(), link.name(),)
+            key = (link.type(), link.name(),)
             try:
                 a = linkdict[key]
             except KeyError:
@@ -2033,18 +2026,29 @@ class BrowseForm(ListForm):
                                        args=i.args(), help=i.help()))
                 elif subitems:
                     items.append(Menu(title, subitems))
-            else:
-                title, f, link = item
-                if row[f.id()].value() is not None:
-                    i = MItem(title, command=Application.COMMAND_RUN_FORM,
-                              args=dict(name=link.name(),
-                                        form_class=link.form(),
-                                        select_row={link.column():
-                                                    row[f.id()]}),
-                              help=(_("Vyhledat záznam pro hodnotu '%s' "
-                                      "sloupce '%s'.") % \
-                                    (row.format(f.id()), f.column_label())))
-                    items.append(i)
+                continue
+            title, f, link = item
+            if row[f.id()].value() is not None:
+                type, name = link.type(), link.name()
+                pair = {link.column(): row[f.id()]}
+                if type == FormType.INSERT:
+                    cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
+                    hlp = _("Vlo¾it záznam pro hodnotu '%s' sloupce '%s'.") \
+                          % (row.format(f.id()), f.column_label())
+                else:
+                    if name.find('::') != -1:
+                        assert type == FormType.BROWSE
+                        cls = BrowseDualForm
+                    else:
+                        mapping = {FormType.BROWSE: BrowseForm,
+                                   FormType.EDIT:   PopupEditForm,
+                                   FormType.VIEW:   ShowForm}
+                        cls = mapping[type]
+                    cmd = Application.COMMAND_RUN_FORM(name=name,form_class=cls,
+                                                       select_row=pair)
+                    hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
+                          % (row.format(f.id()), f.column_label())
+                items.append(MItem(title, command=cmd, help=hlp))
         return items
                            
         
