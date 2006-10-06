@@ -1295,10 +1295,13 @@ def deepstr(obj):
         result = map(deepstr, obj)
         if isinstance(obj, tuple):
             result = tuple(result)
-        result = str(result)
+        result = unicode(result)
     else:
-        result = str(obj)
-    return result
+        result = unicode(obj)
+    try:
+        return str(result)
+    except UnicodeEncodeError:
+        return result.encode('unicode_escape')
 
 
 def format_traceback():
