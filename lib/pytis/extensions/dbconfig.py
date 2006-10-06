@@ -31,7 +31,6 @@ pythonového kódu ve specifikacích aplikace.
 
 from pytis.extensions import *
 
-import pytis.form
 import pytis.data
 
 import config
