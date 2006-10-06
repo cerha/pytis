@@ -1,5 +1,15 @@
 2006-10-06  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (BrowseForm._init_attributes.link_title):
+	Namísto formuláøové tøídy pracuj se specifikací `FormType'.
+	(BrowseForm._link_mitems): Automaticky urèi typ formuláøe podle
+	specifikace `FormType'.
+
+	* pytis/presentation/spec.py: Nová tøída.
+	(Link.__init__): Argument `form' nahrazen argumentem `type'.
+	(Link.form): Metoda zru¹ena.
+	(Link.type): Nová metoda.
+
 	* pytis/util/util.py (deepstr): Pøevádìj objekty na unicode a
 	teprve výsledek bezpeènì pøeveï na string.
 
