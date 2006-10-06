@@ -257,13 +257,6 @@ INTERNÍ ZÁLE®ITOSTI:
    `resolver()', tak¾e není dùvod se o nìj starat ve formuláøích.  Trochu
    slo¾itìj¹í to ov¹em asi bude s PrintResolvery.
 
- * Konstanty ASC a DESC pøesunout do `pytis.presentation'.
-
-   Kvùli jejich pou¾ití je nyní nutné importovat `pytis.form' jak ve
-   specifikacích, tak v `pytis.presentation' (kvùli assertùm).  Pokud se ve
-   v¹ech aplikacích pou¾ívají jen konstanty ASC a DESC a `pytis.extensions',
-   nebude to problém.  To je v¹ak nejprve tøeba ovìøit.
-
  * Zjednodu¹ená definice pøíkazù a jejich argumentù.
 
    Pokud instanci pøíkazu zavoláme s libovolnými klíèovými argumenty, je nyní
@@ -279,4 +272,12 @@ INTERNÍ ZÁLE®ITOSTI:
    zaruèit, ¾e akci nejsou pøedány ¾ádné argumenty.  Toho je v¹ak zatím
    vyu¾íváno jen ve webových formuláøích.  Bylo by dobré to samé
    doimplementovat i do GUI formuláøù.
-  
+
+ * Implementovat explicitní `display' pro FieldSpec.
+
+   Ve fieldspec mù¾e být nyní novì definován také `display'.  Ten by mìl být
+   pou¾it pøednostnì pøed displejem definovaným v èíselníku a navíc také
+   umo¾òuje definovat funkci.  To je nyní podporováno ve webových formuláøích a
+   je tøeba to doplnit do GUI formuláøù.
+
+   
