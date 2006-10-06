@@ -1367,7 +1367,7 @@ class _Value(object):
         self._value = state['_value']
         self._init()
     
-    def __str__(self):
+    def __unicode__(self):
         return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
                                             self.type(), self.value())
 
