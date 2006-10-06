@@ -30,7 +30,7 @@ LCG.
 """ 
 
 import sys, os
-import lcg, pytis.form, pytis.util
+import lcg, pytis.util 
 
 global _used_defs, _menu_items
 _used_defs = []
