@@ -270,12 +270,13 @@ def _pypg_query(connection, query, data=None, outside_transaction=True,
     def do_query(connection):
         try:
             return connection.query(query)
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 connection.finish()     # pro jistotu
             except:
                 pass
-            raise e
+            raise cls, e, tb
     try:
         result = do_query(connection)
     except libpq.InterfaceError, e:
@@ -744,12 +745,13 @@ class DBDataPostgreSQL(DBData):
         #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
         try:
             data = self._pg_row (self._pg_value(key))
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         result = self._pg_make_row_from_raw_data(data)
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
@@ -776,13 +778,14 @@ class DBDataPostgreSQL(DBData):
         self._pg_changed = False
         try:
             number_of_rows = self._pg_select (condition, sort)
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
             self._pg_is_in_select = False
-            raise e
+            raise cls, e, tb
         if use_cache and number_of_rows != self._pg_number_of_rows:
             use_cache = False
         if use_cache:
@@ -811,13 +814,14 @@ class DBDataPostgreSQL(DBData):
             close_select = True
         try:
             data = self._pg_select_aggregate(operation, condition)
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
             self._pg_is_in_select = False
-            raise e
+            raise cls, e, tb
         if close_select:
             self.close()
         result, error = t.validate(data[0][0])
@@ -899,13 +903,14 @@ class DBDataPostgreSQL(DBData):
                     try:
                         result = self._pg_skip(xcount, skip_direction,
                                                exact_count=True)
-                    except Exception, e:
+                    except:
+                        cls, e, tb = sys.exc_info()
                         try:
                             self._pg_rollback_transaction()
                         except:
                             pass
                         self._pg_is_in_select = False
-                        raise e
+                        raise cls, e, tb
             skip()
             if self._pg_initial_select:
                 self._pg_initial_select = False
@@ -934,13 +939,14 @@ class DBDataPostgreSQL(DBData):
                 skip()
             try:
                 data_ = self._pg_fetchmany(size, FORWARD)
-            except Exception, e:
+            except:
+                cls, e, tb = sys.exc_info()
                 try:
                     self._pg_rollback_transaction()
                 except:
                     pass
                 self._pg_is_in_select = False
-                raise e
+                raise cls, e, tb
             if data_:
                 row_data = [self._pg_make_row_from_raw_data([d]) for d in data_]
                 buffer.fill(row_data, FORWARD, len(row_data)!=size)
@@ -1009,13 +1015,14 @@ class DBDataPostgreSQL(DBData):
         else:
             try:
                 result = self._pg_search(row, condition, direction)
-            except Exception, e:
+            except:
+                cls, e, tb = sys.exc_info()
                 try:
                     self._pg_rollback_transaction()
                 except:
                     pass
                 self._pg_is_in_select = False
-                raise e
+                raise cls, e, tb
         if __debug__: log(DEBUG, 'Výsledek hledání:', result)
         return result
 
@@ -1064,12 +1071,13 @@ class DBDataPostgreSQL(DBData):
                 else:
                     r = self._pg_insert (row, after=after, before=before)
                     result = r, True
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         self._pg_commit_transaction ()
         self._pg_send_notifications()
         if result[1]:
@@ -1121,12 +1129,13 @@ class DBDataPostgreSQL(DBData):
                 msg = 'Øádek s daným klíèem neexistuje'
                 result = msg, False
                 log(ACTION, msg, key)
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         self._pg_commit_transaction ()
         self._pg_send_notifications()
         if result[1]:
@@ -1146,12 +1155,13 @@ class DBDataPostgreSQL(DBData):
                         new_row_items.append((k, v))
                 row = Row(new_row_items)
             result = self._pg_update (condition, row)
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         self._pg_commit_transaction ()
         self._pg_send_notifications()
         if result:
@@ -1172,12 +1182,13 @@ class DBDataPostgreSQL(DBData):
         self._pg_begin_transaction ()
         try:
             result = self._pg_delete (self._pg_key_condition(key))
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         self._pg_commit_transaction ()
         self._pg_send_notifications()
         log(ACTION, 'Øádek smazán', result)
@@ -1188,12 +1199,13 @@ class DBDataPostgreSQL(DBData):
         self._pg_begin_transaction ()
         try:
             result = self._pg_delete (condition)
-        except Exception, e:
+        except:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         self._pg_commit_transaction ()
         self._pg_send_notifications()
         log(ACTION, 'Øádky smazány', result)
@@ -1238,12 +1250,13 @@ class DBDataPostgreSQL(DBData):
                 lock_ids.append(data[0][0])
             self._pg_lock_ids = lock_ids
             self._pg_commit_transaction()
-        except DBException, e:
+        except DBException:
+            cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
             except:
                 pass
-            raise e
+            raise cls, e, tb
         DBDataPostgreSQL.__bases__[0].lock_row(self, key)
         update_commands = \
           map(lambda id, self=self: 'update %s set id = id where id = %s' % \
