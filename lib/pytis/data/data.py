@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1309,11 +1309,10 @@ class Row:
                 raise InvalidAccessError('Invalid row value', v)
         self._data = state
         
-    def __str__(self):
-        items = []
-        for i in range(len(self)):
-            items.append(self._data[i][0] + '==' + str(self[i]))
-        return '<Row: %s>' % string.join(items, ', ')
+    def __unicode__(self):
+        items = [self._data[i][0] + '==' + unicode(item)
+                 for i, item in enumerate(self)]
+        return '<Row: %s>' % ', '.join(items)
 
     def __cmp__(self, other):
         """Vrať 0, právě když 'self' a 'other' obsahují stejné názvy a hodnoty.
