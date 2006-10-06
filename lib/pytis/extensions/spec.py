@@ -26,6 +26,7 @@ nìjaké konstrukce vy¾aduje slo¾itìj¹í zápis, ale proto¾e se tato konstrukce
 """ 
 
 from pytis.extensions import *
+from pytis.presentation import *
 
 import config
 
@@ -33,8 +34,8 @@ import config
     
 Field = FieldSpec
 
-ASC = LookupForm.SORTING_ASCENDENT
-DESC = LookupForm.SORTING_DESCENDANT
+ASC = pytis.data.ASCENDENT
+DESC = pytis.data.DESCENDANT
 
 UPCASE = PostProcess.UPPER
 LOWER = PostProcess.LOWER
@@ -62,18 +63,21 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
         pytis.form.DescriptiveDualForm: "duální náhledový formuláø",
         }.get(form_class, "formuláø")
     help = _('Otevøít %s "%s"') % (descr, title.replace('&', ''))
-    return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
+    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
+                            help=help)
 
 def new_record_mitem(title, name, hotkey=None):
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
     args = dict(name=name)
     help = _('Otevøít vstupní formuláø "%s"') % title
-    return MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
+    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
+                            help=help)
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None):
-    return MItem(title, command=pytis.form.Application.COMMAND_RUN_PROCEDURE,
-                 args=dict(spec_name=name, proc_name=proc_name),
-                 hotkey=hotkey, help='Spustit proceduru "%s"' % title)
+    cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
+    return pytis.form.MItem(title, command=cmd, hotkey=hotkey,
+                            args=dict(spec_name=name, proc_name=proc_name),
+                            help='Spustit proceduru "%s"' % title)
 
 nr = new_record_mitem
 rp = run_procedure_mitem
@@ -181,9 +185,9 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
     
     """
     if multirow:
-        class_ = SelectRowsForm
+        class_ = pytis.form.SelectRowsForm
     else:    
-        class_ = CodebookForm
+        class_ = pytis.form.CodebookForm
     return run_form(class_, spec, columns=columns,
                     begin_search=begin_search,
                     condition=condition,
@@ -213,13 +217,13 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
         pytis.form.InfoWindow("Nápovìda", text=text, format=format)
         
 
-def run_any_form():
-    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
-    if result is not None:
-        pytis.form.run_form(*result)
-                                      
-cmd_run_any_form = (Application.COMMAND_HANDLED_ACTION,
-                    dict(handler=run_any_form,))
+if hasattr(pytis, 'form'):
+    def run_any_form():
+        result = pytis.form.run_dialog(pytis.form.RunFormDialog)
+        if result is not None:
+            pytis.form.run_form(*result)
+    cmd_run_any_form = \
+        pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
 def printdirect(resolver, spec, print_spec, row):
