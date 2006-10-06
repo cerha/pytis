@@ -944,11 +944,11 @@ class ViewSpec(object):
         return self._focus_field
 
     def description(self):
-        """Vra» nápovìdu pro formuláø."""
+        """Vra» struèný popis náhledu."""
         return self._description
 
     def help(self):
-        """Vrátí formát, ve kterém je psáno description."""
+        """Vra» podrobnou nápovìdu."""
         return self._help
     
     def row_style(self):
@@ -1362,13 +1362,38 @@ class CodebookSpec(object):
         return self._begin_search
 
 
+class FormType(object):
+    """Specifikace abstraktního typu formuláøe podle úèelu jeho otevøení.
+
+    Tyto konstanty slou¾í k urèení zpùsobu otevøení náhledu.  Díky této
+    abstrakci je specifikace nezávislá na pou¾itých tøídách u¾ivatelského
+    rozhraní.  Definujeme pouze úèel, za kterým je formuláø otevírán a necháme
+    u¾ivatelské rozhraní rozhodnout, který konkrétní formuláø je v dané situaci
+    nejvhodnìj¹í.
+
+    """
+    
+    BROWSE = 'BROWSE'
+    """Otevøení øádkového náhledu v podobì tabulky."""
+    
+    VIEW = 'VIEW'
+    """Otevøení needitovatelného náhledu jednoho záznamu."""
+    
+    EDIT = 'EDIT'
+    """Otevøení editaèního formuláøe jednoho záznamu."""
+    
+    INSERT = 'INSERT'
+    """Otevøení editaèního formuláøe pro vlo¾ení nového záznamu."""
+
+
 class Link(object):
     """Specifikace odkazu políèka do jiného náhledu.
 
     Pou¾ívá se jako hodnota argumentu 'link' ve 'FieldSpec'.
 
     """
-    def __init__(self, name, column, form=None, label=None):
+    
+    def __init__(self, name, column, type=FormType.BROWSE, label=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1379,9 +1404,8 @@ class Link(object):
             vyhledání záznamu v odkazovaném náhledu, který odpovídá aktuální
             hodnotì odkazujícího políèka.
 
-          form -- typ formuláøe, ve kterém bude odkazovaný náhled otevøen
-            (instance tøídy 'Form').  Výchozím typem je buïto 'BrowseForm',
-            nebo 'DualBrowseForm' pro duální náhledy (name je slo¾ený název).
+          type -- typ formuláøe, ve kterám bude odkazovaný náhled otevøen.
+            Jedna z konstant 'FormType'.  Výchozím typem je 'FormType.BROWSE'.
 
           label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
             pojmenován automaticky a zaøazen mezi automaticky generované
@@ -1391,16 +1415,11 @@ class Link(object):
         """
         assert isinstance(name, types.StringType)
         assert isinstance(column, types.StringType)
-        assert form is None or issubclass(form, pytis.form.Form)
+        assert type in public_attributes(FormType)
         assert label is None or isinstance(label, types.StringTypes)
-        if form is None:
-            if name.find('::') == -1:
-                form = pytis.form.BrowseForm
-            else:
-                form = pytis.form.BrowseDualForm
         self._name = name
         self._column = column
-        self._form = form
+        self._type = type
         self._label = label
                 
     def name(self):
@@ -1411,9 +1430,9 @@ class Link(object):
         """Vra» id odpovídajícího sloupce v odkazovaném náhledu."""
         return self._column
 
-    def form(self):
-        """Vra» typ formuláøe, který má být otevøen."""
-        return self._form
+    def type(self):
+        """Vra» konstantu typu formuláøe, který má být otevøen."""
+        return self._type
 
     def label(self):
         """Vra» typ formuláøe, který má být otevøen."""
@@ -1474,7 +1493,7 @@ class FieldSpec(object):
             èíslo.  Je-li 'None', je pou¾ita hodnota 'width'.
             
           fixed -- pokud bude pøadána pravdivá hodnota, nebude ¹íøka sloupce
-            automaticky pøepoèítávána pøi zmìnì valikosti tabulkového
+            automaticky pøepoèítávána pøi zmìnì velikosti tabulkového
             formuláøe.  Implicitnì jsou sloupce automaticky
             roztahovány/zu¾ovány tak, aby byla rovnomìrnì vyu¾ita plocha
             formuláøe.  Hodnota 'width/column_width' tak slou¾í pouze jako
