@@ -75,7 +75,7 @@ NOVÉ VLASTNOSTI:
  * Automatické èíslování polo¾ek menu s mo¾ností rychlého výbìru.
 
    Polo¾ky ve v¹ech menu by mohly být automaticky oèíslovány podobnì jako v
-   menu oken anebylo by tak tøeba vymý¹let klávesové zkratky.  Tato vlastnost
+   menu oken.  Nebylo by tak tøeba vymý¹let klávesové zkratky.  Tato vlastnost
    by v¹ak mìla být konfigurovatelná, proto¾e asi ne ka¾dému se to bude líbit.
 
  * Pou¾ití externího PS prohlí¾eèe.
@@ -209,8 +209,6 @@ INTERNÍ ZÁLE®ITOSTI:
    
    - DualForm._create_view_spec()
    - Application._can_run_form()
-   - BrowseForm._context_menu()
-   - Link.__init__()
    - generování nápovìdy
    
 
