@@ -222,8 +222,8 @@ INTERNÍ ZÁLE®ITOSTI:
  * Zpracování pøíkazù.
 
    Vyvolání handleru z on_command je nyní mo¾né nahradit metodu `_cmd_*', kde *
-   je název pøíkazu.  To u¾ skoro v¹ude je, ale nìkde mo¾ná je¹tì `on_command'
-   zbylo...
+   je název pøíkazu.  To u¾ skoro v¹ude je, ale na nìkolika místech je¹tì
+   `on_command' zbylo...
 
  * Validace hodnot konfiguraèních voleb.
 
