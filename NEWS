@@ -4,6 +4,20 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-10-06  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøi odchytávání výjimek v databázovém rozhraní je nyní pùvodní
+	výjimka pøedána vèetnì v¹ech informací.  Díky tomu je v bug-reportu
+	zobrazen skuteèný traceback pùvodní výjimky, ne jen traceback od
+	místa, kde byla odchycena.  To zásadnì usnadní ladìní.
+	
+	* BUGFIX: Pøevod instancí Row a Value na øetìzec nyní probìhne bez
+	chyb i pokud hodnoty obsahují unicode øetìzce nepøevoditelné do
+	systémového kódování.  Díky tomu je mo¾né v databázi pracovat se
+	v¹emi unicode znaky (pokud je správnì nastaveno také
+	db_encoding).  Døíve to ne¹lo, proto¾e operace zhavarovali na
+	logování.
+
 2006-10-03  Tomas Cerha  <cerha@brailcom.org>
 
 	Specifikace tøídìní se nyní prování pomocí konstant
@@ -14,6 +28,11 @@
 	je pou¾íváno `ASC' a `DESC' by nemìlo být zapotøebí ¾ádných úprav
 	defsù.  Pøesto bude dobré ovìøit, zda se v nìkterých star¹ích
 	defsech konstanty `pytis.form.LookupForm.SORTING_*' nevyskytují.
+
+	V pytis.extensions jsou nyní v¹echny identifikátory z pytis.form
+	importovány jen pokud byl ji¾ døíve modul pytis.form importován.
+	To nastává jen ve wx aplikaci, tak¾e v jiných pøípadech bude
+	pytis.extensions na pytis.form (a pota¾mo tedy i na wx) nezávislé.
 
 2006-08-14  Tomas Cerha  <cerha@brailcom.org>
 

@@ -1,3 +1,22 @@
+2006-10-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/util.py (deepstr): Pøevádìj objekty na unicode a
+	teprve výsledek bezpeènì pøeveï na string.
+
+	* pytis/data/types_.py (_Value.__str__): Pøevedeno na `__unicode__'.
+
+	* pytis/data/dbdata.py (_pypg_query.do_query) 
+	(DBDataPostgreSQL.row, DBDataPostgreSQL.select) 
+	(DBDataPostgreSQL.select_aggregate) 
+	(DBDataPostgreSQL.fetchone.skip, DBDataPostgreSQL.fetchone) 
+	(DBDataPostgreSQL.search, DBDataPostgreSQL.insert) 
+	(DBDataPostgreSQL.update, DBDataPostgreSQL.update_many) 
+	(DBDataPostgreSQL.delete, DBDataPostgreSQL.delete_many) 
+	(DBDataPostgreSQL.lock_row): Pøedávej pùvodní výjimku  vèetnì
+	ve¹kerých informací a pùvodního tracebacku.
+
+	* pytis/data/data.py (__str__): Pøevedeno na `__unicode__'.
+
 2006-10-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (LookupForm._default_sorting): Pou¾ívej
