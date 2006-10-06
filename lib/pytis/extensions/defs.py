@@ -82,7 +82,8 @@ def menu_report():
                 x = '------'
             elif isinstance(item, Menu):
                 x = item.title() + make_list(item.items())
-            elif isinstance(item, MItem) and item.command() == COMMAND_RUN_FORM:
+            elif isinstance(item, pytis.form.MItem) \
+                     and item.command() == COMMAND_RUN_FORM:
                 args = item.args()
                 form = args['form_class']
                 spec_name = args['name']
@@ -131,28 +132,17 @@ def menu_report():
     pytis.form.InfoWindow("Pøehled polo¾ek menu a názvù specifikací",
                           text=content, format=TextFormat.HTML)
 
-cmd_menu_report = (Application.COMMAND_HANDLED_ACTION,
+cmd_menu_report = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                    dict(handler=menu_report))
     
 
 def get_default_select(spec):
-    ASC = pytis.form.LookupForm.SORTING_ASCENDENT
-    DESC = pytis.form.LookupForm.SORTING_DESCENDANT
-    def default_sorting(view, data):
+    def init_select(view, data):
         sorting = view.sorting()
         if sorting is None:
-            sorting = tuple([(k.id(), LookupForm.SORTING_DESCENDANT)
-                             for k in data.key()
+            sorting = tuple([(k.id(), pytis.data.DESCENDANT) for k in data.key()
                              if view.field(k.id()) is not None])
-        return sorting
-    def data_sorting(view, data):
-        mapping = {ASC:  pytis.data.ASCENDENT,
-                   DESC: pytis.data.DESCENDANT}
-        return tuple([(cid, mapping[dir]) for cid, dir
-                      in default_sorting(view, data)])    
-    def init_select(view, data):
-        op = lambda : data.select(sort=data_sorting(view, data),
-                                  reuse=False)
+        op = lambda : data.select(sort=sorting, reuse=False)
         success, select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
@@ -219,7 +209,7 @@ def check_form():
                               "DEFS: %s" % spec,
                               report=obsah)
         
-cmd_check_form = (Application.COMMAND_HANDLED_ACTION,
+cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                   dict(handler=check_form))
 
 
@@ -286,7 +276,8 @@ def check_defs(seznam):
  
 def check_menus_defs():
     return check_defs(get_menu_defs(without_duals=True))
-cmd_check_menus_defs = (Application.COMMAND_HANDLED_ACTION,
+
+cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                         dict(handler=check_menus_defs))
 
 def cache_spec(*args, **kwargs):
