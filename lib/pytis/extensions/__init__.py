@@ -17,16 +17,30 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import pytis.data
-import pytis.form
-from pytis.form import *
 
 from dbconfig import *
 from dbutils import *
 from misc import *
 from types import *
 from spec import *
-from defs import *
 
-for file in (dbconfig, dbutils, misc, types, spec, defs):
+for file in (dbconfig, dbutils, misc, types, spec):
     file.__dict__.update(globals())
 
+if hasattr(pytis, 'form'):
+    # Star¹í defsy poèítají s tím, ¾e importem pytis.extensions jsou
+    # importovány i v¹echny identifikátory z pytis.form.  Proto¾e v¹ak
+    # nechceme, aby pytis.extensions závisely na pytis.form a tím pota¾mo na
+    # wx, importujeme tyto identifikátory jen pokud jsou pytis.extensions
+    # pou¾ívány z wx aplikace, v kterém¾to pøípadì by modul pytis.form ji¾ mìl
+    # být nata¾en.  Èasem by bylo dobré to nedìlat vùbec - defsy by na
+    # formuláøích nemìly záviset.  Pokud závisí (interaktivní obslu¾né rutiny
+    # pou¾ívající formuláøe èi dialogy), nech» si potøebné identifikátory
+    # importují vlastnoruènì.
+    from pytis.form import *
+    # Modul defs je také závislý na pytis.form, tak¾e jej chceme importovat
+    # jen v pøípadì bìhu wx aplikace.
+    from defs import *
+    defs.__dict__.update(globals())
+
+    
