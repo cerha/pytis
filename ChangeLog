@@ -1,3 +1,29 @@
+2006-10-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (run_form_mitem, new_record_mitem)
+	(run_procedure_mitem, run_cb, run_any_form): Identifikátory z
+	pytis.form pou¾ívej vèetnì názvu modulu.
+	(run_any_form, cmd_run_any_form): Definuj pouze pokud je pøítomen
+	modul `pytis.form'
+	(ASC, DESC): Ukazuj na `pytis.data.ASCENDENT' a
+	`pytis.data.DESCENDANT', ne na `LookupForm.SORTING_ASCENDENT' a
+	`LookupForm.SORTING_DESCENDANT'.
+
+	* lib/pytis/extensions/help.py (Module): Neimportuj `pytis.form'.
+
+	* lib/pytis/extensions/defs.py (menu_report.make_list) 
+	(cmd_menu_report, cmd_check_form, cmd_check_menus_defs):
+	Identifikátory z pytis.form pou¾ívej vèetnì názvu modulu.
+	(get_default_select.init_select): Namísto konstant
+	`pytis.form.LookupForm.SORTING_*' oèekávej ve specifikaci pøídìní
+	pøímo konstanty z `pytis.data'. 
+
+	* lib/pytis/extensions/dbconfig.py: Neimportuj pytis.form.
+
+	* lib/pytis/extensions/__init__.py: V¹echny identifikátory z
+	pytis.form importuj jen pokud byl ji¾ døíve modul pytis.form
+	importován.  Také modul defs importuj jen v tomto pøípadì.
+
 2006-08-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/dbconfig.py (DBConfig.__init__): Nov7
