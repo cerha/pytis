@@ -6,6 +6,21 @@
 
 2006-10-06  Tomas Cerha  <cerha@brailcom.org>
 
+	Ve specifikaci `Link' byl argument `form', kterým se specifikovala
+	pøímo formuláøová tøída, nahrazen argumentem `type', který je
+	konstantou nové tøídy `FormType'.  Typ otevíraného formuláøe je
+	tak urèen automaticky a specifikace tak abstrahuje od konkrétních
+	tøíd u¾ivatelského rozhraní.  Urèujeme pouze úèel, za kterým je
+	formuláø otevírán.  Momentálnì existují konstanty BROWSE, EDIT,
+	INSERT a SHOW.  Jako pøímý dùsledek této zmìny je mo¾nost
+	specifikovat odkaz pro vlo¾ení nového záznamu (konstanta INSERT).
+	Pro otevøení duálního formuláøe je tøeba jako parametr `name'
+	pou¾ít název duální specifikace v novém tvaru
+	"HlavniDefs::VedlejsiDefs" (s pou¾itím `BindingSpec' namísto
+	`DualSpec').  Pro duální specifikaci je prozatím povolen pouze
+	odkaz typu BROWSE.  Pokud nìkdo má nìjaký smysluplný pøíklad i pro
+	jiné typy, není problém to roz¹íøit. 
+
 	Pøi odchytávání výjimek v databázovém rozhraní je nyní pùvodní
 	výjimka pøedána vèetnì v¹ech informací.  Díky tomu je v bug-reportu
 	zobrazen skuteèný traceback pùvodní výjimky, ne jen traceback od
