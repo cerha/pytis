@@ -51,9 +51,9 @@ ONCE = Editable.ONCE
 NEVER = Editable.NEVER
 
 BROWSE_FORM = FormType.BROWSE
-EDIT_FORM = FormType.BROWSE
-INSERT_FORM = FormType.BROWSE
-SHOW_FORM = FormType.BROWSE
+EDIT_FORM = FormType.EDIT
+INSERT_FORM = FormType.INSERT
+VIEW_FORM = FormType.VIEW
 
 # Funkce pro zjednodu¹ení vytváøení polo¾ek menu.
 
@@ -193,10 +193,10 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
         class_ = pytis.form.SelectRowsForm
     else:    
         class_ = pytis.form.CodebookForm
-    return run_form(class_, spec, columns=columns,
-                    begin_search=begin_search,
-                    condition=condition,
-                    select_row=select_row)
+    return pytis.form.run_form(class_, spec, columns=columns,
+                               begin_search=begin_search,
+                               condition=condition,
+                               select_row=select_row)
 
 
 def help_window(inputfile=None, format=TextFormat.PLAIN):
