@@ -50,6 +50,11 @@ ALWAYS = Editable.ALWAYS
 ONCE = Editable.ONCE
 NEVER = Editable.NEVER
 
+BROWSE_FORM = FormType.BROWSE
+EDIT_FORM = FormType.BROWSE
+INSERT_FORM = FormType.BROWSE
+SHOW_FORM = FormType.BROWSE
+
 # Funkce pro zjednodu¹ení vytváøení polo¾ek menu.
 
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
