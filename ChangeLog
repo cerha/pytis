@@ -1,3 +1,8 @@
+2006-10-09  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/spec.py (BROWSE_FORM, EDIT_FORM,
+	INSERT_FORM, SHOW_FORM): Konstanty FormType.
+
 2006-10-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (run_form_mitem, new_record_mitem)
