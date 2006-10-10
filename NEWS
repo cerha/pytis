@@ -4,6 +4,21 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-10-10  Tomas Cerha  <cerha@brailcom.org>
+
+        Hodnota argumentu `display' ve `FieldSpec', nebo `CodeookSpec'
+	mù¾e nyní být i funkce jednoho argumentu.  V tom pøípadì je
+	zobrazená hodnota urèena voláním této funkce s vnitøní hodnotou
+	èíselníku jako argumentem.
+	
+	* BUGFIX: Ulo¾ené nastavení tøídìní je nyní ignorováno kdy¾
+	sloupeèky neexistují v datovém objektu.  Døíve byly chybnì
+	kontrolovány pouze oproti fields, èím¾ nebyly vyøazeny virtuální
+	sloupce.
+
+	* BUGFIX: Webový formuláø se nyní vypoøádá i s prázdnou hodnotou v
+	èíselníku.
+
 2006-10-06  Tomas Cerha  <cerha@brailcom.org>
 
 	Ve specifikaci `Link' byl argument `form', kterým se specifikovala
