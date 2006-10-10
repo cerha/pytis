@@ -83,7 +83,7 @@ class Form(lcg.Content):
             return display
         else:
             enum = field.type(self._data).enumerator()
-            return lambda value: enum.get(value, display).export()
+            return lambda value: value and enum.get(value, display).export() or ''
     
 
 class LayoutForm(Form):
