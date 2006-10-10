@@ -1016,7 +1016,7 @@ class LookupForm(RecordForm):
             sorting = self._get_state_param('sorting', None, types.TupleType)
             if sorting is not None:
                 for id, direction in sorting:
-                    if self._view.field(id) is None or direction not in \
+                    if self._data.find_column(id) is None or direction not in \
                            (self.SORTING_ASCENDENT, self.SORTING_DESCENDANT):
                         sorting = None
                         break
