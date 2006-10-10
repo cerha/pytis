@@ -1,3 +1,14 @@
+2006-10-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm._init_sorting): Ignoruj ulo¾ené
+	sloupeèky, které nejsou v datovém objektu, nejen ve fields.
+
+	* pytis/form/inputfield.py (CodebookField._on_change_hook): Pokud
+	je `display' funkce, pou¾ij ji k výpoètu hodnoty zobrazené displejem.
+
+	* pytis/web/form.py (Form._codebook_user_value_func): Return an
+	empty string when the enumerator value is None.
+
 2006-10-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (BrowseForm._init_attributes.link_title):
