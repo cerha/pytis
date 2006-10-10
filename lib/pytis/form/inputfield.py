@@ -1216,10 +1216,15 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         super_(CodebookField)._enable(self)        
 
     def _on_change_hook(self):
-        if not hasattr(self, '_display_column'):
+        try:
+            display = self._display_column
+        except AttributeError:
             return
         v = self._value()
-        dv = v and self._type.enumerator().get(v.value(), self._display_column)
+        if callable(display):
+            dv = display(v.value())
+        else:
+            dv = v and self._type.enumerator().get(v.value(), display)
         self._display.SetValue(dv and dv.export() or '')
 
     def _on_invoke_selection(self, alternate=False):
