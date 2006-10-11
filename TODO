@@ -42,12 +42,7 @@ NOVÉ VLASTNOSTI:
 
 1) U¾ivatelské rozhraní
 
- * Dynamické urèení parametrù odkazu.
-
-   Prozatím lze specifikaci odkazu pøedat pouze statické hodnoty.  Jak název
-   odkazované specifikace, tak argument `select_row' by v¹ak bylo mo¾né urèit
-   dynamicky podle obsahu aktuálního øádku pomocí funkce, která dostane
-   aktuální øádek jako argument.
+ * Ikony k pøíkazùm podle argumentù pøíkazu.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
@@ -102,6 +97,15 @@ NOVÉ VLASTNOSTI:
  * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
 
 2) Specifikace
+
+ * Více odkazù pro jeden FieldSpec.
+
+ * Dynamické urèení parametrù odkazu.
+
+   Prozatím lze specifikaci odkazu pøedat pouze statické hodnoty.  Jak název
+   odkazované specifikace, tak argument `select_row' by v¹ak bylo mo¾né urèit
+   dynamicky podle obsahu aktuálního øádku pomocí funkce, která dostane
+   aktuální øádek jako argument.
 
  * after_new_record, after_edit_record apod.
 
