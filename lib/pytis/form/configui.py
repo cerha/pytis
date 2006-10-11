@@ -86,7 +86,8 @@ def config_menu_items(hotkeys={}):
                    args=dict(form_class=ConfigForm, name=name),
                    hotkey=hotkeys.get(name),
                    help=(_('Otevøít konfiguraèní formuláø "%s"') % \
-                         layout.caption()))
+                         layout.caption()),
+                   icon='config-'+name)
              for name, layout in _LAYOUT]
     return tuple(items)
 
