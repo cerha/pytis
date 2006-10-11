@@ -1461,7 +1461,7 @@ class FieldSpec(object):
                  codebook_insert_spec=None, codebook_runtime_filter=None,
                  selection_type=None, orientation=Orientation.VERTICAL,
                  post_process=None, filter=None, filter_list=None, style=None,
-                 link=None):
+                 link=()):
         
         """Inicializace a doplnìní výchozích hodnot atributù.
 
@@ -1605,11 +1605,11 @@ class FieldSpec(object):
             None, bude pou¾it výchozí styl øádku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
 
-          link -- specifikace odkazu do jiného náhledu souvisejícího s hodnotou
-            políèka.  Instance 'Link'.  V kontextovém menu øádku bude pro ka¾dý
-            odkaz vytvoøena jedna polo¾ka umo¾òující odskok do odkazovaného
-            náhledu s vyhledáním záznamu odpovídajícího aktuální hodnotì
-            políèka.
+          link -- specifikace odkazu/odkazù do jiného náhledu souvisejícího s
+            hodnotou políèka.  Instance 'Link' nebo jejich sekvence.  V
+            kontextovém menu øádku bude pro ka¾dý odkaz vytvoøena jedna polo¾ka
+            umo¾òující odskok do odkazovaného náhledu s vyhledáním záznamu
+            odpovídajícího aktuální hodnotì políèka.
             
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
         hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
@@ -1673,7 +1673,10 @@ class FieldSpec(object):
                or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
-        assert link is None or isinstance(link, Link)
+        links = xtuple(link)
+        if __debug__:
+            for lnk in links:
+                assert isinstance(lnk, Link)
         self._label = label
         self._descr = descr
         self._width = width
@@ -1701,7 +1704,7 @@ class FieldSpec(object):
         self._filter = filter
         self._filter_list = filter_list
         self._style = style
-        self._link = link
+        self._links = links
 
     def __str__(self):
         return "<FieldSpec for '%s'>" % self.id()
@@ -1884,9 +1887,9 @@ class FieldSpec(object):
         """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
         return self._style
 
-    def link(self):
+    def links(self):
         """Vra» specifikaci odkazu zadanou v konstruktoru."""
-        return self._link
+        return self._links
 
 
 
