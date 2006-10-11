@@ -1953,7 +1953,8 @@ class BrowseForm(ListForm):
                                     [self._codebook_info(f)
                                      for f in self._fields] if e and cb])]
         # Add explicit links from FieldSpec.
-        links += [(f, f.link()) for f in self._fields if f.link()]
+        for  f in self._fields:
+            links.extend([(f, link) for link in f.links()])
         # Now we group all links by the target spec name.
         linkdict = {}
         self._links = []
