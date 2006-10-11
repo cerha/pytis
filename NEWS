@@ -13,6 +13,9 @@
 	Do CVS pøibyly nové ikony pøíkazù.  K jejich vyu¾ití je tøeba v
 	konfiguraèních souborech v¹ech projektù nastavit konfiguraèní
 	volbu `icon_dir' na absolutní cestu k adresáøi icons z CVS pytisu.
+
+	* BUGFIX: V pytis.extensions byly opraveny funkce pro naèítání
+	defsù s ohledem na nový zpùsob odkazování na duální formuláøe.
 	
 2006-10-10  Tomas Cerha  <cerha@brailcom.org>
 
