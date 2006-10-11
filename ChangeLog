@@ -3,6 +3,7 @@
 	* lib/pytis/extensions/spec.py (BROWSE_FORM, EDIT_FORM,
 	INSERT_FORM, SHOW_FORM): Konstanty FormType.
 	(run_cb): run_form -> pytis.form.run_form
+	(rp_handler): run_procedure -> pytis.form.run_procedure
 
 2006-10-06  Tomas Cerha  <cerha@brailcom.org>
 

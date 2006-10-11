@@ -112,8 +112,9 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     if __debug__:
         for arg in (spec_name, proc_name) + args:
             assert isinstance(arg, types.StringType)
-    return lambda row: run_procedure(spec_name, proc_name,
-                                     *[row[key] for key in args], **kwargs)
+    return lambda row: pytis.form.run_procedure(spec_name, proc_name,
+                                                *[row[key] for key in args],
+                                                **kwargs)
    
 
 def cb2colvalue(value, column=None):
