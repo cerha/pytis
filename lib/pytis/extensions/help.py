@@ -96,9 +96,13 @@ class ItemNode(lcg.ContentNode):
             if not issubclass(form, pytis.form.ConfigForm):
                 if issubclass(form, pytis.form.DualForm) and \
                        not issubclass(form, pytis.form.DescriptiveDualForm):
-                    dual = pytis.util.resolver().get(name, 'dual_spec')
-                    node_name = name + '-dual'
-                    names = (node_name, dual.main_name(), dual.side_name())
+                    if name.find('::') != -1:
+                        node_name = name
+                        names = (name,) + tuple(name.split('::'))
+                    else:
+                        dual = pytis.util.resolver().get(name, 'dual_spec')
+                        node_name = name + '-dual'
+                        names = (node_name, dual.main_name(), dual.side_name())
                 else:
                     node_name = name
                     names = (name,)
@@ -241,34 +245,46 @@ class DualDescrNode(DescrNode):
     """Stránka s popisem duálního náhledu."""
 
     def _name(self, id):
-        assert id.endswith('-dual')
-        return id[:-5]
+        if id.endswith('-dual'):
+            # A¾ se bude tato èást odstraòovat, je mo¾né odstranit celou metodu.
+            return id[:-5]
+        else:
+            assert id.find('::') != -1
+            return id
     
     def _read_spec(self, resolver, id):
-        self._dual_spec = dual = resolver.get(self._name(id), 'dual_spec')
-        self._main_spec = resolver.get(dual.main_name(), 'view_spec')
-        self._side_spec = resolver.get(dual.side_name(), 'view_spec')
+        if id.find('::') != -1:
+            main, side = id.split('::')
+            binding = resolver.get(main, 'binding_spec')
+        else:
+            binding = resolver.get(self._name(id), 'dual_spec')
+            main, side = (binding.main_name(), binding.side_name())
+        self._main_name = main
+        self._side_name = side
+        self._main_spec = resolver.get(main, 'view_spec')
+        self._side_spec = resolver.get(side, 'view_spec')
+        self._binding_column = binding.binding_column()
+        self._side_binding_column = binding.side_binding_column()
 
     def _title(self):
         return self._main_spec.title() +' / '+ self._side_spec.title()
 
     def _info(self):
         return super(DualDescrNode, self)._info() + \
-               ((_("Horní formuláø"), "[%s]" % self._dual_spec.main_name()),
-                (_("Dolní formuláø"), "[%s]" % self._dual_spec.side_name()))
+               ((_("Horní formuláø"), "[%s]" % self._main_name),
+                (_("Dolní formuláø"), "[%s]" % self._side_name))
     
     def _default_description_text(self):
         def clabel(cid, view):
             c = view.field(cid)
             return c and c.column_label() or cid
-        dual, main, side = (self._dual_spec, self._main_spec, self._side_spec)
         text = _("Hlavním formuláøem tohoto duálního formuláøe je '%s'.  "
                  "V dolní èásti ze zobrazují související záznamy formuláøe "
                  "'%s'.  Oba formuláøe jsou propojeny pøes shodu hodnot "
                  "sloupeèkù '%s' = '%s'.") % \
-                 (main.title(), side.title(),
-                  clabel(dual.binding_column(), main),
-                  clabel(dual.side_binding_column(), side))
+                 (self._main_spec.title(), self._side_spec.title(),
+                  clabel(self._binding_column, self._main_spec),
+                  clabel(self._side_binding_column, self._side_spec))
         return text
     
 
@@ -293,7 +309,7 @@ class DescrIndex(lcg.ContentNode):
         #_split_menu_descriptions(self._read_file('descr'), 'src/descr')
         global _used_defs
         _used_defs.sort()
-        cls = lambda name: name.endswith('-dual') \
+        cls = lambda name: (name.endswith('-dual') or name.find('::') != -1) \
               and DualDescrNode or SingleDescrNode
         return [self._create_child(cls(name), name, subdir='descr')
                 for name in _used_defs]
