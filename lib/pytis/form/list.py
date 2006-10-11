@@ -1925,11 +1925,11 @@ class BrowseForm(ListForm):
             MItem(_("Náhled"),
                   command=ListForm.COMMAND_ACTIVATE,
                   help=_("Otevøít náhledový formuláø s mo¾ností procházení "
-                         "záznamù")),
+                         "záznamù"), icon='show-record'),
             MItem(_("Duální náhled"),
                   command=ListForm.COMMAND_ACTIVATE(alternate=True),
                   help=_("Otevøít formuláø s tabulkou nahoøe a náhledem "
-                         "v dolní èásti.")),
+                         "v dolní èásti."), icon='show-record'),
             )
         actions = self._action_mitems(self._view.actions())
         if actions:
@@ -2022,7 +2022,7 @@ class BrowseForm(ListForm):
                 subitems = self._link_mitems(row, links)
                 if len(subitems) == 1:
                     i = subitems[0]
-                    items.append(MItem(title, command=i.command(),
+                    items.append(MItem(title, command=i.command(), icon='link',
                                        args=i.args(), help=i.help()))
                 elif subitems:
                     items.append(Menu(title, subitems))
@@ -2035,6 +2035,7 @@ class BrowseForm(ListForm):
                     cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
                     hlp = _("Vlo¾it záznam pro hodnotu '%s' sloupce '%s'.") \
                           % (row.format(f.id()), f.column_label())
+                    icon = 'link-new-record'
                 else:
                     if name.find('::') != -1:
                         assert type == FormType.BROWSE
@@ -2048,7 +2049,8 @@ class BrowseForm(ListForm):
                                                        select_row=pair)
                     hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
                           % (row.format(f.id()), f.column_label())
-                items.append(MItem(title, command=cmd, help=hlp))
+                    icon = 'link'
+                items.append(MItem(title, command=cmd, help=hlp, icon=icon))
         return items
                            
         
