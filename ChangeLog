@@ -1,5 +1,11 @@
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/help.py (ItemNode._create_content)
+	(DualDescrNode._name, DualDescrNode._read_spec)
+	(DualDescrNode._info, DualDescrNode._default_description_text)
+	(DescrIndex._create_children): Zohlednìna také nová notace
+	duálních formuláøù.
+
 	* lib/pytis/extensions/defs.py (get_menu_defs): Pøepsáno s ohledem
 	na nový zpùsob odkazování na duální formuláøe s `BindingSpec'.
 	(cache_spec.do): Pokou¹ej se naèíst také `binding_spec'.
