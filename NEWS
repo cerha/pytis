@@ -16,6 +16,16 @@
 
 	* BUGFIX: V pytis.extensions byly opraveny funkce pro naèítání
 	defsù s ohledem na nový zpùsob odkazování na duální formuláøe.
+
+	* BUGFIX: Také funkce pro generování nápovìdy nyní pracují s novou
+	notací zápisu názvu duálních formuláøù.  Je tøeba dbát, aby název
+	souboru s popisem duálního formuláøe odpovídal zpùsobu, jakým se
+	na formuláø odkazuji z menu.  Pokud se tedy odkazuji jako
+	'Hlavni::Vedlejsi', potom se soubor s nápovìdou musí jmenovat
+	'Hlavni::Vedlejsi.txt'.  Pøídavné oznaèení '-dual' ji¾ tedy není
+	potøeba.  Pokud se ale v aplikaci na specifikaci odkazuji starým
+	zpùsobem (Specifikace není pøevedena na `BindingSpec'), '-dual'
+	zùstává.
 	
 2006-10-10  Tomas Cerha  <cerha@brailcom.org>
 
