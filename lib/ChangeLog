@@ -1,7 +1,17 @@
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (BrowseForm._init_attributes): Nastavuj
+	explicitní ikonu.
+	(BrowseForm._link_mitems): Nastavuj
+	explicitní ikony.
+
+	* pytis/form/configui.py (config_menu_items): Nastav explicitní ikonu.
+
 	* pytis/form/screen.py (MItem.create): Pokud je specifikace ikony
 	øetìzec, hledej PNG soubor stejného jména v `config.icon_dir'.
+	(MItem.__init__): Nový argument `icon'.
+	(MItem.create): Pokud byla v konstruktoru definována explicitní
+	ikona, pou¾ij ji.
 
 	* pytis/form/commands_.py (WX_COMMAND_ICONS): Doplnìny nové ikony.
 

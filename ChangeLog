@@ -1,5 +1,9 @@
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* icons/config-export.png: New file.
+	* icons/config-ui.png: New file.
+	* icons/link-new-record.png: New file.
+	* icons/link.png: New file.
 	* icons/close.png: New file.
 	* close.png: New file.
 	* delete-record.png: New file.
