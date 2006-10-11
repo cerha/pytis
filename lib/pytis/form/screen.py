@@ -1049,8 +1049,17 @@ class MItem(_TitledMenuObject):
 
         icon_id = WX_COMMAND_ICONS.get(self._command)
         if icon_id:
-            bitmap = wx.ArtProvider_GetBitmap(icon_id, wx.ART_MENU, (16,16))
-            if bitmap.Ok():
+            if isinstance(icon_id, str):
+                imgfile = os.path.join(config.icon_dir, icon_id+'.png')
+                if os.path.exists(imgfile):
+                    img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
+                    bitmap = img.ConvertToBitmap()
+                else:
+                    log(OPERATIONAL, "Could not find icon file:", imgfile)
+                    bitmap = None
+            else:
+                bitmap = wx.ArtProvider_GetBitmap(icon_id, wx.ART_MENU, (16,16))
+            if bitmap and bitmap.Ok():
                 item.SetBitmap(bitmap)
         return item
         
