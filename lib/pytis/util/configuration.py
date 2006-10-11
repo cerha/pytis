@@ -452,7 +452,7 @@ class Configuration:
         _DESCR = _("Adresáø s obrázkovými soubory.")
         _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
                  "adresáøi.")
-        _DEFAULT = '../icons'
+        _DEFAULT = './icons'
 
     class _Option_tmp_dir(_StringOption):
         _DESCR = _("Adresáø pro doèasné pomocné soubory.")

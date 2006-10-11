@@ -1,3 +1,28 @@
+2006-10-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* icons/close.png: New file.
+	* close.png: New file.
+	* delete-record.png: New file.
+	* edit-cell.png: New file.
+	* edit-record.png: New file.
+	* export.png: New file.
+	* filter-by-cell.png: New file.
+	* filter.png: New file.
+	* help-book.png: New file.
+	* insert-line.png: New file.
+	* jump.png: New file.
+	* new-record.png: New file.
+	* next-form.png: New file.
+	* prev-form.png: New file.
+	* recent-form.png: New file.
+	* reload-form-state.png: New file.
+	* reset-form-state.png: New file.
+	* search-incremental.png: New file.
+	* search.png: New file.
+	* sort-asc.png: New file.
+	* sort-desc.png: New file.
+	* unfilter.png: New file.
+
 2006-09-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* translations/pytis.cs.po: New file.

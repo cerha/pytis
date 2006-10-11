@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-10-11  Tomas Cerha  <cerha@brailcom.org>
+
+	Do CVS pøibyly nové ikony pøíkazù.  K jejich vyu¾ití je tøeba v
+	konfiguraèních souborech v¹ech projektù nastavit konfiguraèní
+	volbu `icon_dir' na absolutní cestu k adresáøi icons z CVS pytisu.
+	
 2006-10-10  Tomas Cerha  <cerha@brailcom.org>
 
         Hodnota argumentu `display' ve `FieldSpec', nebo `CodeookSpec'

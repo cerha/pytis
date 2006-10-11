@@ -1,3 +1,10 @@
+2006-10-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (MItem.create): Pokud je specifikace ikony
+	øetìzec, hledej PNG soubor stejného jména v `config.icon_dir'.
+
+	* pytis/form/commands_.py (WX_COMMAND_ICONS): Doplnìny nové ikony.
+
 2006-10-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (LookupForm._init_sorting): Ignoruj ulo¾ené
