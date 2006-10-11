@@ -1,3 +1,9 @@
+2006-10-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/defs.py (get_menu_defs): Pøepsáno s ohledem
+	na nový zpùsob odkazování na duální formuláøe s `BindingSpec'.
+	(cache_spec.do): Pokou¹ej se naèíst také `binding_spec'.
+
 2006-10-09  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (BROWSE_FORM, EDIT_FORM,
