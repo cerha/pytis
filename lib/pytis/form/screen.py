@@ -997,22 +997,34 @@ class MItem(_TitledMenuObject):
     _WX_KIND = wx.ITEM_NORMAL
     _used_titles = {}
     
-    def __init__(self, title, command, args=None, help=None, hotkey=None):
+    def __init__(self, title, command, args=None, help=None, hotkey=None,
+                 icon=None):
         """Uschovej parametry.
 
         Argumenty:
 
           title -- titulek menu, neprázdný øetìzec
+          
           command -- instance tøídy 'Command' odpovídající pøíkazu, který má
             být pøi aktivaci této polo¾ky menu vyvolán.  Zde mù¾e být pøedána
             také dvojice (COMMAND, ARGS).  V tom pøípadì je instance pøíkazu
-            prvním prvkem této dvojice a druhý prvek nahrazuje argument
-            `args', který tímto ji¾ nesmí být pøedán.
+            prvním prvkem této dvojice a druhý prvek nahrazuje argument `args',
+            který tímto ji¾ nesmí být pøedán.
+            
           args -- dictionary argumentù pøíkazu 'command'.
-          help -- øetìzec obsahující jednoøádkovou nápovìdu, zobrazovaný
-            ve stavovém øádku pøi prùchodu pøes polo¾ku; mù¾e být prázdný
+          
+          help -- øetìzec obsahující jednoøádkovou nápovìdu, zobrazovaný ve
+            stavovém øádku pøi prùchodu pøes polo¾ku; mù¾e být prázdný
+            
           hotkey -- horká klávesa, která má být s daným pøíkazem a argumenty
-            spojena, string nebo sekvence stringù dle specifikace v modulu 'command'
+            spojena, string nebo sekvence stringù dle specifikace v modulu
+            'command'
+            
+          icon -- explicitnì definovaná ikona polo¾ky menu.  Jedná se o øetìzec
+            slou¾ící jako identifikátor ikony.  Pro tento identifikátor musí
+            existovat odpovídající soubor v adresáøi 'config.icon_dir'.  Pokud
+            není urèena, bude automaticky pou¾ita ikona podle typu pøíkazu
+            (je-li pro pøíkaz definována).
             
         Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
         'command' automaticky nastavena tato klávesa.
@@ -1031,10 +1043,12 @@ class MItem(_TitledMenuObject):
         assert hotkey is None or isinstance(hotkey, (types.StringTypes,
                                                      types.TupleType,
                                                      types.ListType))
+        assert icon is None or isinstance(icon, str)
         self._command = command
         self._args = args or {}
         self._help = help
         self._hotkey = xtuple(hotkey)
+        self._icon = icon
         super(MItem, self).__init__(title)
 
     def _on_ui_event(self, event):
@@ -1046,8 +1060,7 @@ class MItem(_TitledMenuObject):
         wx_callback(wx.EVT_MENU, parent, item.GetId(),
                     lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
-
-        icon_id = WX_COMMAND_ICONS.get(self._command)
+        icon_id = self._icon or WX_COMMAND_ICONS.get(self._command)
         if icon_id:
             if isinstance(icon_id, str):
                 imgfile = os.path.join(config.icon_dir, icon_id+'.png')
