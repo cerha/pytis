@@ -38,35 +38,37 @@ def flatten_menus():
 
 def get_menu_defs(without_duals=False):
     resolver = pytis.util.resolver()
-    RF = pytis.form.Application.COMMAND_RUN_FORM
-    items = [item for item in flatten_menus()
-             if isinstance(item, pytis.form.MItem) and item.command() == RF \
-             and not issubclass(item.args()['form_class'],
-                                pytis.form.ConfigForm)]
-    duals = [item for item in items
-             if issubclass(item.args()['form_class'], DualForm) \
-                and not issubclass(item.args()['form_class'], DescriptiveDualForm)]
-    notduals = [item for item in items if item not in duals]
-    subduals = []
-    for item in duals:
-        dual_spec = resolver.get(item.args()['name'], 'dual_spec')
-        subduals.append(dual_spec.main_name())
-        subduals.append(dual_spec.side_name())
-    specs = [item.args()['name'] for item in notduals] + subduals
-    if not without_duals:
-        specs = specs + [item.args()['name'] for m in duals]
+    specs = []
+    for item in flatten_menus():
+        if not isinstance(item, pytis.form.MItem) \
+               or item.command() != pytis.form.Application.COMMAND_RUN_FORM \
+               or issubclass(item.args()['form_class'], pytis.form.ConfigForm):
+            continue
+        args = item.args()
+        name = args['name']
+        if issubclass(args['form_class'], DualForm) \
+               and not issubclass(args['form_class'], DescriptiveDualForm):
+            if name.find('::') != -1:
+                specs.extend(name.split('::'))
+            else:
+                if not without_duals:
+                    specs.append(name)
+                dual_spec = resolver.get(name, 'dual_spec')
+                specs.append(dual_spec.main_name())
+                specs.append(dual_spec.side_name())
+        else:
+            specs.append(name)
     specs = remove_duplicates(specs)
     # Zjistíme i varianty podle konstanty VARIANTS
     variants = []
     for m in specs:
         try:
             vlist = resolver.get_object(m, 'VARIANTS')
-            vlist = ['%s:%s' % (m, v) for v in vlist
-                     if isinstance(v, types.StringType)]
-            variants = variants + list(vlist)
-        except Exception, e:
+        except:
             pass
-    return remove_duplicates(specs + variants)
+        else:
+            variants += ['%s:%s' % (m, v) for v in vlist if isinstance(v, str)]
+    return specs + remove_duplicates(variants)
 
 def menu_report():
     """Vytváøí pøehledný náhled na polo¾ky menu."""
@@ -293,7 +295,7 @@ def cache_spec(*args, **kwargs):
                 if not update(status*step):
                     break
             for spec in ('dual_spec', 'data_spec', 'view_spec',
-                         'cb_spec', 'proc_spec'):
+                         'cb_spec', 'proc_spec', 'binding_spec'):
                 try:
                     resolver.get(file, spec)
                 except ResolverError:
