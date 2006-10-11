@@ -6,6 +6,10 @@
 
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	Jako argument `link' ve `FieldSpec' je nyní mo¾no uvést i sekvenci
+	odkazù.  V tom pøípadì budou pou¾ity v¹echny tyto odkazy.  Jeden
+	odkaz je i nadále mo¾né uvést pøímo, bez obalování do tuplu.
+	
 	Do CVS pøibyly nové ikony pøíkazù.  K jejich vyu¾ití je tøeba v
 	konfiguraèních souborech v¹ech projektù nastavit konfiguraèní
 	volbu `icon_dir' na absolutní cestu k adresáøi icons z CVS pytisu.

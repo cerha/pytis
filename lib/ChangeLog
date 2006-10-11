@@ -1,9 +1,15 @@
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (FieldSpec.__init__): Umo¾ni jako
+	`link' uvést také sekvenci odkazù.
+	(FieldSpec.link): Metoda zru¹ena.
+	(FieldSpec.links): Nová metoda.
+
 	* pytis/form/list.py (BrowseForm._init_attributes): Nastavuj
 	explicitní ikonu.
-	(BrowseForm._link_mitems): Nastavuj
-	explicitní ikony.
+	(BrowseForm._link_mitems): Nastavuj explicitní ikony.
+	(BrowseForm._init_attributes): Pou¾ívej `Link.links()' namísto
+	`Link.link()'.
 
 	* pytis/form/configui.py (config_menu_items): Nastav explicitní ikonu.
 
