@@ -255,7 +255,7 @@ class DualDescrNode(DescrNode):
     def _read_spec(self, resolver, id):
         if id.find('::') != -1:
             main, side = id.split('::')
-            binding = resolver.get(main, 'binding_spec')
+            binding = resolver.get(main, 'binding_spec')[side]
         else:
             binding = resolver.get(self._name(id), 'dual_spec')
             main, side = (binding.main_name(), binding.side_name())
