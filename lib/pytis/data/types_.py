@@ -671,10 +671,11 @@ class Inet(String):
          VM_INET_ADDR: _("Chybná hodnota Inet adresy %s"),
          })
     
-    _INET_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
+    _INET4_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
     def _validate(self, string, *args, **kwargs):
-        if not self._INET_FORMAT.match(string):
+        # TODO: Doplnit i validaci pro IPv6 formát
+        if not self._INET4_FORMAT.match(string):
             raise self._validation_error(self.VM_INET_FORMAT)
         if string.find('/') != -1:
             addr, mask = string.split('/')
@@ -701,7 +702,7 @@ class Macaddr(String):
         {VM_MACADDR_FORMAT: _("Chybný formát MAC adresy."),
          })
     
-    _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}')
+    _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
     
     def _validate(self, string, *args, **kwargs):
         if not self._MACADDR_FORMAT.match(string):
