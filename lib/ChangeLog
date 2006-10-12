@@ -1,5 +1,10 @@
 2006-10-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/_test.py (DataEnumerator.test_validate): Pøidány nové
+	testy.
+	(_DBTest.setUp, TutorialTest.setUp, DBDataFetchBuffer.setUp):
+	Vytváøej tabulky s OID.
+
 	* pytis/data/types_.py (DataEnumerator.__init__): New argument
 	`validity_condition'.
 
