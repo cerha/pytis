@@ -1080,23 +1080,37 @@ class DataEnumerator(MutableEnumerator):
 
     """
         
-    def __init__(self, data_factory, data_factory_kwargs={},
-                 value_column=None, validity_column=None):
+    def __init__(self, data_factory, data_factory_kwargs={}, value_column=None,
+                 validity_column=None, validity_condition=None):
         """Inicializuj instanci.
         
         Argumenty:
         
           data_factory -- instance tøídy 'DataFactory' slou¾ící k vytvoøení
             datového objektu pou¾itého k získání výètových hodnot.
+            
           data_factory_kwargs -- dictionary klíèovaných argumentù pro metodu
             'DataFactory.create()'.
+            
           value_column -- id sloupce datového objektu poskytujícího hodnoty
             enumerátoru.  Je-li None, bude pou¾it klíèový sloupec.
+            
           validity_column -- id sloupce, urèujícího platnost øádkù datového
             zdroje.  Pokud je urèen (není None), budou za hodnoty výètu
             pova¾ovány pouze ty øádky, v nich¾ daný sloupec nabývá pravdivé
             hodnoty (musí jít o Boolean sloupec).
+            
+          validity_column -- id sloupce, urèujícího platnost øádkù datového
+            zdroje.  Pokud je urèen (není None), budou za hodnoty výètu
+            pova¾ovány pouze ty øádky, v nich¾ daný sloupec nabývá pravdivé
+            hodnoty (musí jít o Boolean sloupec).  Není mo¾no pou¾ít v
+            kombinaci s validity_condition.
           
+          validity_condition -- podmínka urèující platnost øádkù datového
+            zdroje.  Pokud je urèena, budou za hodnoty výètu pova¾ovány pouze
+            ty øádky, v nich¾ je podmínka pravdivá.  Jde o obecnìj¹í variantu
+            validity_column a nelze pou¾ít v kombinaci s tímto argumentem.
+            
         """
         super(DataEnumerator, self).__init__()
         assert isinstance(data_factory, DataFactory), data_factory
@@ -1106,6 +1120,9 @@ class DataEnumerator(MutableEnumerator):
                isinstance(value_column, types.StringType)
         assert validity_column is None or \
                isinstance(validity_column, types.StringType) 
+        assert validity_condition is None or \
+               isinstance(validity_condition, pytis.data.Operator) \
+               and validity_column is None
         # Store the arguments.
         self._data_factory = data_factory
         if type(data_factory_kwargs) == type(()):
@@ -1113,9 +1130,7 @@ class DataEnumerator(MutableEnumerator):
         self._data_factory_kwargs = data_factory_kwargs
         self._value_column_ = value_column
         self._validity_column = validity_column
-        if validity_column is None:
-            validity_condition = None
-        else:
+        if validity_column is not None:
             validity_condition = EQ(validity_column, Value(Boolean(), True))
         self._validity_condition = validity_condition
         # Initialize the runtime filter.

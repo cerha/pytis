@@ -1827,7 +1827,8 @@ class PostgreSQLStandardBindingHandler(object):
             if enumerator:
                 df_kwargs = {'dbconnection_spec': self._pg_dbconnection_spec()}
                 e_kwargs = {'data_factory_kwargs': df_kwargs}
-                for a in ('value_column', 'validity_column'):
+                for a in ('value_column', 'validity_column',
+                          'validity_condition'):
                     if kwargs.has_key(a):
                         e_kwargs[a] = kwargs[a]
                         del kwargs[a]
