@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -306,8 +306,10 @@ class DataEnumerator(unittest.TestCase):
         self._test_validate(self.cb2, 'b', 'b')
         self._test_validate(self.cb2, '',  None, invalid=True)
         self._test_validate(self.cb2, 'd', None, invalid=True)
+        self._test_validate(self.cb2, None, None, invalid=True)
         self._test_validate(self.cb3, '1', '1')
         self._test_validate(self.cb3, '3', None, invalid=True)
+        self._test_validate(self.cb3, None, None)
     def test_export(self):
         self._test_export(self.cb1, '2', '2')
         self._test_export(self.cb2, '8', '8')
@@ -606,10 +608,10 @@ class _DBTest(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
         c = self._connection
-        for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL)",
-                  "create table cosnova (synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE', PRIMARY KEY (synte,anal))",
-                  "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madsynte char(3) NOT NULL DEFAULT '100', madanal char(3) DEFAULT '007', FOREIGN KEY (madsynte,madanal) REFERENCES cosnova(synte,anal))",
-                  "create table xcosi(id int, popis varchar(12))",
+        for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL) with oids",
+                  "create table cosnova (synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE', PRIMARY KEY (synte,anal)) with oids",
+                  "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madsynte char(3) NOT NULL DEFAULT '100', madanal char(3) DEFAULT '007', FOREIGN KEY (madsynte,madanal) REFERENCES cosnova(synte,anal)) with oids",
+                  "create table xcosi(id int, popis varchar(12)) with oids",
                   "insert into cstat values('us', 'U.S.A.')",
                   "insert into cstat values('cz', 'Czech Republic')",
                   "insert into cosnova values('100', '007', 'abcd', 'X', 'us', 'FALSE')",
@@ -623,7 +625,7 @@ class _DBTest(_DBBaseTest):
                   "insert into xcosi values(3, 'zvlastni')",
                   "insert into xcosi values(5, 'nove')",
                   "insert into xcosi values(999, NULL)",
-                  "create table viewtest2 (x int)",
+                  "create table viewtest2 (x int) with oids",
                   "create view viewtest1 as select oid, * from viewtest2",
                   "create rule viewtest1_update as on update to viewtest1 do instead update viewtest2 set x=new.x;",
                   "insert into viewtest2 values (1)",
@@ -1154,12 +1156,12 @@ class DBDataFetchBuffer(_DBBaseTest):
         c = self._connection
         import config
         try:
-            c.query("create table big (x int)")
+            c.query("create table big (x int) with oids")
             table_size = config.initial_fetch_size + config.fetch_size + 10
             self._table_size = table_size
             for i in range(table_size):
                 c.query("insert into big values(%d)" % i)
-            c.query("create table small (x int)")
+            c.query("create table small (x int) with oids")
             for i in range(4):
                 c.query('insert into "small" values(%d)' % i)
         except:
@@ -1408,9 +1410,9 @@ tests.add(DBFunction)
 class TutorialTest(unittest.TestCase):
     def setUp(self):
         self._connection = c = libpq.PQconnectdb('dbname=test')
-        for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text)",
+        for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text) with oids",
                   "CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), "+\
-                  "c varchar(10) REFERENCES cis)",
+                  "c varchar(10) REFERENCES cis) with oids",
                   "INSERT INTO cis VALUES ('1', 'raz')",
                   "INSERT INTO cis VALUES ('2', 'dva')",
                   "INSERT INTO cis VALUES ('3', 'tri')",
