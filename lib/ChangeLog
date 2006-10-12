@@ -1,3 +1,12 @@
+2006-10-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (DataEnumerator.__init__): New argument
+	`validity_condition'.
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._db_bindings_to_column_spec):
+	Pass `validity_condition' to the enumerator constructor.
+
 2006-10-11  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/types_.py (Inet._validate): Doplnìno TODO.
