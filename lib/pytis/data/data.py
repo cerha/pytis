@@ -1217,11 +1217,11 @@ class ColumnSpec:
 
         """
         if sameclass(self, other):
-            res = compare_objects(self.type(), other.type())
+            res = compare_objects(self.id(), other.id())
             if res:
                 return res
             else:
-                return compare_objects(self.id(), other.id())
+                return compare_objects(self.type(), other.type())
         else:
             return compare_objects(self, other)
 
