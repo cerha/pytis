@@ -79,11 +79,15 @@ class Form(lcg.Content):
         if not display:
             # TODO: should be converted to Value and exported
             return str
-        elif callable(display):
-            return display
         else:
             enum = field.type(self._data).enumerator()
-            return lambda value: value and enum.get(value, display).export() or ''
+            if callable(display):
+                return display
+            elif isinstance(display, tuple):
+                f, col = display
+                return lambda v: v and f(enum.get(v, col).value()) or ''
+            else:
+                return lambda v: v and enum.get(v, display).export() or ''
     
 
 class LayoutForm(Form):

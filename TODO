@@ -40,11 +40,14 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
-1) U¾ivatelské rozhraní
 
  * Argument 'enabled' pro odkazy.
 
  * Ikony k pøíkazùm podle argumentù pøíkazu.
+
+ * Automaticke generovani seznamu fields z descr do helpu.
+
+ * Zobecnìní a pøesun èástí wikinga do pytisu.
 
  * Práce s Binary Large Objekty.
 
