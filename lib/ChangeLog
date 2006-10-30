@@ -1,3 +1,16 @@
+2006-10-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Umo¾ní také
+	pøedat dvojici (funkce, sloupec).
+
+	* pytis/form/dialog.py (db_operation): Pøíjmi i None jako
+	návratovou hodnotu pøihla¹ovacího dialogu.
+
+2006-10-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (Form._codebook_user_value_func): Podporuj
+	také dvojici (funkce, sloupec) jako hodnotu display.
+
 2006-10-17  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/data.py (ColumnSpec.__cmp__): Pøi porovnání sloupcù
