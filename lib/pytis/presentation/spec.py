@@ -1542,12 +1542,17 @@ class FieldSpec(object):
             není tato informace aplikaci dostupná.  Potom je nutné název
             èíselníku urèit zde.
             
-          display -- identifikátor sloupeèku èíselníku, který má být pou¾it pro
-            zobrazení u¾ivatelské hodnoty.  Relevantní jen pro èíselníková
-            políèka.  Pokud je None, bude pou¾ita hodnota z 'cb_spec' ve
-            specifikaci èíselníku (co¾ by mìlo být také upøednostòováno).  Mù¾e
-            být také funkce jednoho argumentu (vnitøní Pythonová hodnota
-            èíselníku), která vrací u¾ivatelskou hodnotu (øetìzec).
+          display -- urèuje zpùsob získání zobrazené u¾ivatelské hodnoty.
+            Relevantní jen pro políèka výètových typù (datový typ má definován
+            enumerátor).  Pokud je None, bude pou¾ita hodnota z 'cb_spec' ve
+            specifikaci èíselníku (co¾ by mìlo být také upøednostòováno).
+            Pokud je dispej urèen explicitnì, mù¾e to být buïto identifikátor
+            sloupeèku v datovém objektu enumerátoru (bude zobrazena hodnota
+            tohoto sloupeèku), nebo funkce jednoho argumentu (vnitøní Pythonová
+            hodnota enumerátoru), která vrací u¾ivatelskou hodnotu (øetìzec).
+            Mù¾e být pødána také dvojice (funkce, identifikátor sloupeèku).  V
+            tom pøípadì bude argumentem funkce hodnota daného sloupce, namísto
+            sloupce vnitøní hodnoty.
 
           display_size -- velikost displeje èíselníku ve znacích.  Relevantní
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
@@ -1650,7 +1655,9 @@ class FieldSpec(object):
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, types.StringType)
-        assert display is None or isinstance(display, str) or callable(display)
+        assert display is None or isinstance(display, str) or callable(display)\
+               or isinstance(display, tuple) and callable(display[0]) and \
+               isinstance(display[1], str)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert isinstance(allow_codebook_insert, types.BooleanType)
         assert codebook_insert_spec is None \
