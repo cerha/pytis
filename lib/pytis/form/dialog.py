@@ -1346,8 +1346,11 @@ def db_operation(operation, quiet=False):
         except pytis.data.DBLoginException, e:
             import config
             prompt = _("Zadejte heslo pro pøístup do databáze")
-            login, password = run_dialog(Login, prompt, login=config.dbuser)
-            if password == None:
+            login_and_password = run_dialog(Login, prompt, login=config.dbuser)
+	    if not login_and_password:
+                return FAILURE
+	    login, password = login_and_password
+            if password is None:
                 return FAILURE
             config.dbconnection = \
                    config.dbconnection.modified(user=login, password=password)
