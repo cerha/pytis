@@ -1,3 +1,7 @@
+2006-11-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* doc/Pytis.wiki (Module): Soubor smazán.
+
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py (ItemNode._create_content)
