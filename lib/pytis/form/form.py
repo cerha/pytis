@@ -1,7 +1,7 @@
 # -*- coding: iso-8859-2 -*-
 
 # Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
-#
+s#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -1014,12 +1014,12 @@ class LookupForm(RecordForm):
     def _init_sorting(self, sorting=None):
         if sorting is None:
             sorting = self._get_state_param('sorting', None, types.TupleType)
-            if sorting is not None:
-                for id, direction in sorting:
-                    if self._data.find_column(id) is None or direction not in \
-                           (self.SORTING_ASCENDENT, self.SORTING_DESCENDANT):
-                        sorting = None
-                        break
+        if sorting is not None:
+            for id, direction in sorting:
+                if self._data.find_column(id) is None or direction not in \
+                       (self.SORTING_ASCENDENT, self.SORTING_DESCENDANT):
+                    sorting = None
+                    break
         if sorting is None:
             mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
                        pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
