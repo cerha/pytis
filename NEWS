@@ -4,6 +4,20 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Platnost tøídících sloupcù je nyní kontrolována i pro
+	argumenty konstruktoru, tak¾e se ji¾ napø. nenastane chyba pøi
+	zobrazení formuláøe po pøesmìrování kdy¾ otvíraný formuláø
+	neobsahuje sloupce, podle kterých bylo v pùvodním formuláøi
+	tøídìno.
+
+	* BUGFIX: Závislosti pøi dopoèítávání editovatelnosti a runtime
+	filtrù jsou nyní procházeny rekurzivnì, tak¾e staèí uvádìt pouze
+	políèka, ze kterých je hodnota skuteènì vypoètena a ne i políèka
+	na kterých tato políèka závisí (skrze computer), jak tomu bylo
+	doposud.
+	
 2006-10-11  Tomas Cerha  <cerha@brailcom.org>
 
 	Jako argument `link' ve `FieldSpec' je nyní mo¾no uvést i sekvenci
