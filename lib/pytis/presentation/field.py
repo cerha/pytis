@@ -43,15 +43,14 @@ class PresentedRow(object):
 
     """
     class _Column:
-        def __init__(self, id_, type_, computer, line_separator,
-                     default, editable, codebook_runtime_filter):
-            self.id = id_
-            self.type = type_
-            self.computer = computer
-            self.line_separator = line_separator
-            self.default = default
-            self.editable = editable
-            self.codebook_runtime_filter = codebook_runtime_filter
+        def __init__(self, f, data):
+            self.id = f.id()
+            self.type = f.type(data)
+            self.computer = f.computer()
+            self.line_separator = f.line_separator()
+            self.default = f.default()
+            self.editable = f.editable()
+            self.codebook_runtime_filter = f.codebook_runtime_filter()
             
     def __init__(self, fieldspec, data, row, prefill=None, singleline=False,
                  change_callback=None, editability_change_callback=None,
@@ -119,7 +118,9 @@ class PresentedRow(object):
         self._singleline = singleline
         self._change_callback = change_callback
         self._editability_change_callback = editability_change_callback
-        self._process_fieldspec()
+        self._columns = dict([(f.id(), self._Column(f, data))
+                              for f in self._fieldspec])
+        self._init_dependencies()
         self._virtual = {}
         self._new = new
         self._cache = {}
@@ -131,9 +132,17 @@ class PresentedRow(object):
             self._original_row = copy.copy(self._row)
             self._original_row_empty = row is None
         self._resolve_dependencies()
+
+    def _all_deps(self, depends):
+        all = []
+        for key in depends:
+            all.append(key)
+            computer = self._columns[key].computer
+            if computer:
+                all.extend(self._all_deps(computer.depends()))
+        return all
         
-    def _process_fieldspec(self):
-        data = self._data
+    def _init_dependencies(self):
         # Pro ka¾dé políèko si zapamatuji seznam poèítaných políèek, která na
         # nìm závisí (obrácené mapování ne¾ ve specifikacích).
         self._dependent = {}
@@ -141,19 +150,13 @@ class PresentedRow(object):
         self._codebook_runtime_filter_dependent = {}
         # Pro v¹echna poèítaná políèka si pamatuji, zda potøebují pøepoèítat,
         # èi nikoliv (po pøepoèítání je políèko èisté, po zmìnì políèka na
-        # kterém závisí jiná políèka nastavím závislým políèkùm pøíznak dirty).
-        # Pøepoèítávání potom mohu provádìt a¾ pøi skuteèném po¾adavku na
-        # získání hodnoty políèka.
+        # kterém závisí jiná políèka, nastavím závislým políèkùm pøíznak
+        # dirty).  Pøepoèítávání potom mohu provádìt a¾ pøi skuteèném po¾adavku
+        # na získání hodnoty políèka.
         self._dirty = {}
         self._editability_dirty = {}
         self._editable = {}
-        self._columns = {}
-        for f in self._fieldspec:
-            key = f.id()
-            c = self._Column(key, f.type(data), f.computer(),
-                             f.line_separator(), f.default(), f.editable(),
-                             f.codebook_runtime_filter())
-            self._columns[key] = c
+        for key, c in self._columns.items():
             if c.computer is not None:
                 self._dirty[key] = True
                 for dep in c.computer.depends():
@@ -164,13 +167,13 @@ class PresentedRow(object):
             if isinstance(c.editable, Computer):
                 self._editable[key] = True
                 self._editability_dirty[key] = True
-                for dep in c.editable.depends():
+                for dep in self._all_deps(c.editable.depends()):
                     if self._editability_dependent.has_key(dep):
                         self._editability_dependent[dep].append(key)
                     else:
                         self._editability_dependent[dep] = [key]
             if c.codebook_runtime_filter is not None:
-                for dep in c.codebook_runtime_filter.depends():
+                for dep in self._all_deps(c.codebook_runtime_filter.depends()):
                     if self._codebook_runtime_filter_dependent.has_key(dep):
                         self._codebook_runtime_filter_dependent[dep].append(key)
                     else:
@@ -178,7 +181,7 @@ class PresentedRow(object):
                 provider = c.codebook_runtime_filter.function()
                 e = c.type.enumerator()
                 e.set_runtime_filter_provider(provider, (self,))
-                        
+                
     def _init_row(self, row, prefill=None):
         self._cache = {}
         if row is None:
@@ -298,10 +301,11 @@ class PresentedRow(object):
     
     def _resolve_dependencies(self, key=None):
         # Recompute dependencies for all fields when key is None or recompute
-        # just fields depending on a field specified by key (after its change).
+        # just fields depending on a given field (after its change).
         # TODO: Musí se to dìlat v¾dy?  Napø. i pøi set_row z BrowseFormu?
-        invoke_callbacks = False
-        if key:
+        if key is None:
+            invoke_callbacks = False
+        else:
             invoke_callbacks = self._mark_dependent_dirty(key)
         self._notify_runtime_filter_change(key)
         self._recompute_editability(key)
@@ -309,8 +313,8 @@ class PresentedRow(object):
             # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
             # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
             # pøepoèítána a callback byl zavolán bìhem pøepoèítávání
-            # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a musíme
-            # tedy jejich callback zavolat teï.
+            # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a
+            # musíme tedy jejich callback zavolat teï.
             dirty = [k for k in self._dirty.keys() if self._dirty[k]]
             for k in dirty:
                 self._change_callback(k)
