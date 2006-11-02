@@ -1,15 +1,34 @@
-* Pytis installation
+Pytis Installation Instructions
 
-Pytis is a pure Python program.  The installation is as simple as putting
-the contents of the `lib' subdirectory of this archive somewhere into your
-Python path.
+Requirements:
 
-* Requirements:
+  * Python 2.3 or later
+  * PostgreSQL 8.1 or later
+  * python-wxgtk2.6 or later
+  * egenix-mx-datetime Python library
+  * PyPgSQL Python library
 
-  - PostgreSQL 8.1 or above
+The following instructions assume, that you have downloaded Pytis and unpacked
+it somewhere on your system.  We will refer to the unpacked directory as `the
+installation directory'.  All the mentioned commands should be run from within
+this directory.
 
-  - python-wxgtk2.6 or above
+First you need to add Pytis Python libraries somewhere to your Python path.
+The recommended approach is to link the library to your site packages
+directory.  On a typical unix/linux system this can be:
 
-  - egenix-mx-datetime library
+ $ ln -s `pwd`/lib/pytis /usr/local/lib/python2.3/site-packages/pytis
+
+Replace `python2.3' with the Python version you use.
+
+Alternatively, you may add Pytis to your PYTHONPATH environment variable:
+
+ $ export PYTHONPATH=`pwd`/lib
+
+Note, that the recommended symlinked configuration is good when you checked
+Pytis out of CVS.  In this case you can check out a newer version at any time
+and no further effort is needed to start using it.
+
+
 
   

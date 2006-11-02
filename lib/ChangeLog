@@ -1,3 +1,41 @@
+2006-11-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/configuration.py (Configuration.__init__): Volby
+	`config_file' a `user_config_file' inicializuj jen pokud 
+	(Configuration._read_configuration_file): Set the name of the
+	module to `_config', not `config'.
+	(Configuration.__getattr__): Check `self._user_config_mtime' only
+	if `self._user_config_file' was defined.
+
+	* pytis/form/form.py (LookupForm._init_sorting): Kontroluj
+	platnost specifikace tøídìní i pokud bylo pøedáno jako argument
+	konstruktoru.
+
+	* pytis/presentation/_test.py (PresentedRow_.setUp.sum): Zohledni
+	None hodnotu argumentù.
+	(PresentedRow_.setUp.gt5): Vypoèítávej editovatelnost podle
+	hodnoty `sum'.
+	(PresentedRow_.setUp): Závislost dopoèítávání editovatelnosti
+	nech» je tranzitivní.
+	(PresentedRow_.test_has_key): Inicializuj øádek jako nový.
+	(PresentedRow_.test_editable): Inicializuj øádek jako nový.
+	Upraveny hodnoty.
+	(PresentedRow_.test_editability_callbacks): Aktualizováno.
+
+	* pytis/presentation/field.py (PresentedRow._Column.__init__):
+	Pøebírej pouze argumenty fieldspec a data a v¹e si z nich vykousej
+	a¾ zde.
+	(PresentedRow.__init__): Sestavuj `self._columns' zde a potom
+	volej `self._init_dependencies()'.
+	(PresentedRow._all_deps): Nová metoda.
+	(PresentedRow._process_fieldspec): Metoda zru¹ena.
+	(PresentedRow._init_dependencies): Nová metoda.
+	(PresentedRow._resolve_dependencies): Kosmetická úprava.
+
+	* pytis/data/dbdata.py
+	(DBDataPostgreSQL._pg_make_row_from_raw_data): Pøedávej validaèní
+	chybu jako argument assertu.
+
 2006-10-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): Umo¾ní také
