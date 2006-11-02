@@ -770,9 +770,13 @@ class Configuration:
             command_line_options = {}
         self.__dict__['command_line_options'] = command_line_options
         for o in ('config_file', 'user_config_file'):
-            opt = options[o]
-            opt.init_value()
-            self.__dict__['_' + o] = opt.value()
+            if options.has_key(o):
+                opt = options[o]
+                opt.init_value()
+                v = opt.value()
+            else:
+                v = None
+            self.__dict__['_' + o] = v
         self._read_configuration()
         for o in options.values():
             o.init_value(force=True)
@@ -819,7 +823,7 @@ class Configuration:
             raise Exception(_("Nebylo lze otevøít konfiguraèní soubor"),
                             filename)
         try:
-            confmodule = imp.load_module('config', f, filename,
+            confmodule = imp.load_module('_config', f, filename,
                                          ('.py','r',imp.PY_SOURCE))
         finally:
             f.close()
@@ -844,13 +848,16 @@ class Configuration:
         if __debug__ and self._config_file and \
                name not in ('config_file', 'user_config_file'):
             now = time.time()
-            if now > self._config_mtime or now > self._user_config_mtime:
+            if now > self._config_mtime or \
+                   self._user_config_file and now > self._user_config_mtime:
                 t = os.stat(self._config_file)[stat.ST_MTIME]
                 try:
                     ut = os.stat(self._user_config_file)[stat.ST_MTIME]
                 except:
                     ut = 0
-                if t > self._config_mtime or ut > self._user_config_mtime:
+                if t > self._config_mtime \
+                       or self._user_config_file \
+                       and ut > self._user_config_mtime:
                     self._read_configuration()
         try:
             return self._options[name].value()
