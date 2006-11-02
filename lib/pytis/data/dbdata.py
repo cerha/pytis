@@ -685,10 +685,10 @@ class DBDataPostgreSQL(DBData):
             elif typid == 2:            # time
                 value, err = type.validate(dbvalue, strict=False,
                                            format=type.SQL_FORMAT, local=False)
-                assert err is None
+                assert err is None, err
             else:
                 value, err = type.validate(dbvalue, strict=False)
-                assert err is None
+                assert err is None, err
             row_data.append((id, value))
         return Row(row_data)
 
