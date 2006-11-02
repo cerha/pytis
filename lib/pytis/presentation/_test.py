@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,26 +40,29 @@ class PresentedRow_(unittest.TestCase):
         def twice(row):
             return row['c'].value() * 2
         def sum(row):
-            return row['b'].value() + row['c'].value()
+            b, c = (row['b'].value(), row['c'].value())
+            if b is None or c is None:
+                return None
+            return b + c
         def inc(row):
             return row['sum'].value() + 1
         def gt5(row, key):
-            return row['a'].value() > 5
+            return row['sum'].value() > 5
         self._fields = (FieldSpec('a'),
                         FieldSpec('b'),
                         FieldSpec('c', default=lambda : 5),
                         FieldSpec('d', 
                                   computer=Computer(twice, depends=('c',)),
-                                  editable=Computer(gt5, depends=('a',))),
+                                  editable=Computer(gt5, depends=('sum',))),
                         FieldSpec('sum', type_=pytis.data.Integer(),
                                   computer=Computer(sum, depends=('b','c'))),
                         FieldSpec('inc', type_=pytis.data.Integer(),
                                   computer=Computer(inc, depends=('sum',))))
     def test_init(self):
-        row = PresentedRow(self._fields, self._data, None)
+        row = PresentedRow(self._fields, self._data, None, new=True)
         assert row['a'].value() == None
         assert row['b'].value() == None
-        assert row['c'].value() == 5
+        assert row['c'].value() == 5, repr(row['c'].value())
         assert row['d'].value() == 10
         data_row = pytis.data.Row((
             ('a', pytis.data.Value(pytis.data.Integer(), 'xx')),
@@ -72,22 +75,22 @@ class PresentedRow_(unittest.TestCase):
         assert row['c'].value() == 77
         assert row['d'].value() == 18
         row['c'] = pytis.data.Value(pytis.data.Integer(), 88)
-        row2 = PresentedRow(self._fields, self._data, row)
+        #row2 = PresentedRow(self._fields, self._data, row)
         assert row['a'].value() == 'xx'
         assert row['b'].value() == 100
         assert row['c'].value() == 88
         assert row['d'].value() == 176
         # TODO: dodìlat
     def test_prefill(self):
-        row = PresentedRow(self._fields, self._data, None,
+        row = PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'a': 'xx', 'b': 3, 'c': 99, 'd': 77})
         assert row['a'].value() == 'xx'
         assert row['b'].value() == 3
         assert row['c'].value() == 99
         assert row['d'].value() == 77
     def test_computer(self):
-        row = PresentedRow(self._fields, self._data, None,
-                                 prefill={'b': 3})
+        row = PresentedRow(self._fields, self._data, None, new=True,
+                           prefill={'b': 3})
         assert row['d'].value() == 10
         assert row['sum'].value() == 8
         assert row['inc'].value() == 9
@@ -99,7 +102,7 @@ class PresentedRow_(unittest.TestCase):
         changed = []
         def cb(id):
             changed.append(id)
-        row = PresentedRow(self._fields, self._data, None,
+        row = PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3}, change_callback=cb)
         assert row['d'].value() == 10
         assert row['sum'].value() == 8
@@ -113,26 +116,29 @@ class PresentedRow_(unittest.TestCase):
         assert 'd' in changed and 'sum' in changed and 'inc' in changed
     def test_editable(self):
         row = PresentedRow(self._fields, self._data, None,
-                                 prefill={'a': 3, 'b': 3})
+                           prefill={'b': 2, 'c': 1})
         assert row.editable('a')
         assert not row.editable('d')
-        row['a'] = pytis.data.Value(pytis.data.Integer(), 8)
-        row['a'] = pytis.data.Value(pytis.data.Integer(), 10)
+        row['b'] = pytis.data.Value(pytis.data.Integer(), 5)
         assert row.editable('d')
     def test_editability_callbacks(self):
         enabled = ['--'] # we need a mutable object...
         def editability_change(id, editable):
             enabled[0] = editable and 'yes' or 'no'
         row = PresentedRow(self._fields, self._data, None,
-                                 prefill={'a': 6},
-                                 editability_change_callback=editability_change)
-        assert enabled[0] == '--'
-        row['a'] = pytis.data.Value(pytis.data.Integer(), 7)
-        assert enabled[0] == '--'
-        row['a'] = pytis.data.Value(pytis.data.Integer(), 3)
-        assert enabled[0] == 'no'
+                           prefill={'a': 6},
+                           editability_change_callback=editability_change)
+        assert enabled[0] == 'no', enabled[0]
         row['a'] = pytis.data.Value(pytis.data.Integer(), 8)
+        assert enabled[0] == 'no', enabled[0]
+        row['c'] = pytis.data.Value(pytis.data.Integer(), 3)
+        assert enabled[0] == 'no'
+        row['b'] = pytis.data.Value(pytis.data.Integer(), 2)
+        assert enabled[0] == 'no'
+        row['b'] = pytis.data.Value(pytis.data.Integer(), 3)
         assert enabled[0] == 'yes'
+        row['c'] = pytis.data.Value(pytis.data.Integer(), 2)
+        assert enabled[0] == 'no'
         
     def test_has_key(self):
         row = PresentedRow(self._fields, self._data, None)
