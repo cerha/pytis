@@ -36,12 +36,12 @@ global _used_defs, _menu_items
 _used_defs = []
 _menu_items = {}
         
-def _fieldset(parent, pairs, title=None):
+def _fieldset(pairs, title=None):
     """Vra» instanci 'lcg.FieldSet' sestavenou ze seznamu dvojic øetìzcù."""
-    fields = [lcg.Field(parent, lcg.TextContent(parent, l),
+    fields = [lcg.Field(lcg.TextContent(l),
                         isinstance(v, lcg.Content) and v or \
-                        lcg.WikiText(parent, v)) for l,v in pairs]
-    return lcg.FieldSet(parent, fields, title=title)
+                        lcg.WikiText(v)) for l,v in pairs]
+    return lcg.FieldSet(fields, title=title)
 
 
 class ItemNode(lcg.ContentNode):
@@ -49,10 +49,9 @@ class ItemNode(lcg.ContentNode):
     
     def __init__(self, parent, id, item, **kwargs):
         self._item = item
-        super(ItemNode, self).__init__(parent, id, **kwargs)
-        
-    def _title(self):
-        return self._item.title()
+        super(ItemNode, self).__init__(parent, id, title=self._item.title(),
+                                       content=self._create_content(id),
+                                       **kwargs)
 
     def _menu_node_path(self):
         path = self._node_path()
@@ -64,14 +63,14 @@ class ItemNode(lcg.ContentNode):
         path = []
         for n in self._menu_node_path():
             if path:
-                path.append(lcg.TextContent(self, " -> "))
-            path.append(lcg.Link(self, n))
-        return lcg.Container(self, path)
+                path.append(lcg.TextContent(" -> "))
+            path.append(lcg.Link(n))
+        return lcg.Container(path)
         
     def menu_path_title(self):
         return ' -> '.join([n.title() for n in self._menu_node_path()])
 
-    def _create_content(self):
+    def _create_content(self, id):
         command, args = (self._item.command(), self._item.args())
         hotkey = self._item.hotkey()
         if hotkey and hotkey[0] is not None:
@@ -118,7 +117,7 @@ class ItemNode(lcg.ContentNode):
         else:
             a = ', '.join(['%s=%r' % x for x in args.items()])
             info.append(("Argumenty pøíkazu", a or _("®ádné")))
-        return _fieldset(self, info)
+        return _fieldset(info)
 
 
 class MenuNode(ItemNode):
@@ -128,13 +127,13 @@ class MenuNode(ItemNode):
     stránka obsahuje pouze seznam odkazù na jednotlivé polo¾ky podmenu.
     
     """
-    def _create_content(self):
-        return lcg.TableOfContents(self, depth=99)
+    def _create_content(self, id):
+        return lcg.TableOfNodes(depth=99)
 
     def _create_children(self):
-        return [self._create_child(isinstance(item, pytis.form.MItem) and \
-                                   ItemNode or MenuNode,
-                                   '%s-%d' % (self._id, n+1), item)
+        cls = lambda i: isinstance(i, pytis.form.MItem) \
+              and ItemNode or MenuNode
+        return [cls(item)(self, '%s-%d' % (self._id, n+1), item)
                 for n, item in enumerate(self._item.items())
                 if isinstance(item, (pytis.form.MItem, pytis.form.Menu))]
     
@@ -150,6 +149,8 @@ class MenuIndex(MenuNode):
         pytis.util.set_resolver(pytis.util.FileResolver('../defs'))
         if '..' not in sys.path:
             sys.path.append('..')
+        if kwargs.has_key('input_encoding'):
+            del kwargs['input_encoding']
         menu = pytis.util.resolver().get('application', 'menu')
         item = pytis.form.Menu(_("Pøehled menu"), menu)
         super(MenuIndex, self).__init__(parent, id, item, *args, **kwargs)
@@ -158,12 +159,22 @@ class MenuIndex(MenuNode):
 ################################################################################
 
         
-class DescrNode(lcg.ContentNode):
+class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
     """Stránka s popisem náhledu."""
 
-    def __init__(self, parent, id, *args, **kwargs):
+    def __init__(self, parent, id, subdir=None, input_encoding=None, **kwargs):
         self._read_spec(pytis.util.resolver(), id)
-        super(DescrNode, self).__init__(parent, id, *args, **kwargs)
+        global _menu_items
+        if _menu_items.has_key(id):
+            items = [i.menu_path_title() for i in _menu_items[id]]
+            descr = ", ".join(items)
+        else:
+            descr = None
+        lcg.FileNodeMixin._init(self, parent, subdir=subdir,
+                                input_encoding=input_encoding)
+        super_ = super(DescrNode, self).__init__
+        super_(parent, id, title=self._title(), descr=descr,
+               content=self._create_content(id), **kwargs)
 
     def _name(self, id):
         return id
@@ -171,45 +182,35 @@ class DescrNode(lcg.ContentNode):
     def _read_spec(self, resolver, id):
         self._view_spec = resolver.get(id, 'view_spec')
         self._data_spec = resolver.get(id, 'data_spec')
-        
+
+    
     def _title(self):
         return self._view_spec.title()
-
-    def _descr(self):
+    
+    def _info(self, id):
+        # Create a list of relevant menu items
         global _menu_items
-        if _menu_items.has_key(self._id):
-            items = [i.menu_path_title() for i in _menu_items[self._id]]
-            return ", ".join(items)
-        else:
-            return None
-
-    def output_file(self):
-        return self.id().replace(':', '-') + '.html'
-        
-    def _info(self):
-        # Create the list of relevant menu items
-        global _menu_items
-        if _menu_items.has_key(self._id):
-            links = [i.menu_path() for i in _menu_items[self._id]]
+        if _menu_items.has_key(id):
+            links = [i.menu_path() for i in _menu_items[id]]
             if len(links) > 1:
-                menu_items = lcg.ItemizedList(self, links)
+                menu_items = lcg.ItemizedList(links)
             else:
                 menu_items = links[0]
         else:
             menu_items = _("®ádné")
-        return ((_("Název specifikace"), self._name(self._id)),
+        return ((_("Název specifikace"), self._name(id)),
                 (_("Menu"), menu_items))
         
-    def _create_content(self):
-        content = [lcg.Section(self, "Základní informace",
-                               _fieldset(self, self._info()))]
-        if os.path.exists(self._input_file(self._id, ext='txt')):
-            descr = self.parse_wiki_file(self._id, ext='txt')
+    def _create_content(self, id):
+        content = [lcg.Section("Základní informace",
+                               _fieldset(self._info(id)))]
+        if os.path.exists(self._input_file(id, ext='txt')):
+            descr = self.parse_wiki_file(id, ext='txt')
         else:
             # The file does not exist.  Let's read the specification.
-            text = lcg.WikiText(self, self._default_description_text())
-            descr = lcg.Paragraph(self, text)
-        content.append(lcg.Section(self, "Popis", descr))
+            text = lcg.WikiText(self._default_description_text())
+            descr = lcg.Paragraph(text)
+        content.append(lcg.Section("Popis", descr))
         return content
             
     def _default_description_text(self):
@@ -219,13 +220,16 @@ class DescrNode(lcg.ContentNode):
 
 class SingleDescrNode(DescrNode):
 
-    def _create_content(self):
-        content = super(SingleDescrNode, self)._create_content()
-        actions = [lcg.Definition(self, lcg.TextContent(self, a.title()),
-                                  lcg.WikiText(self, a.descr() or ''))
+    def _create_content(self, id):
+        content = super(SingleDescrNode, self)._create_content(id)
+        actions = [lcg.Definition(lcg.TextContent(a.title()),
+                                  lcg.WikiText(a.descr() or ''))
                    for a in self._view_spec.actions(linear=True)]
-        content.append(lcg.Section(self, "Akce kontextového menu",
-                                   lcg.DefinitionList(self, actions)))
+        fields = [(f.label(), f.descr() or "") for f in self._view_spec.fields()]
+        content.append(lcg.Section("Akce kontextového menu",
+                                   actions and lcg.DefinitionList(actions) or \
+                                   lcg.TextContent("®ádné")))
+        content.append(lcg.Section("Políèka formuláøe", _fieldset(fields)))
         if not self._data_spec.access_rights():
             return content
         rights = self._data_spec.access_rights()
@@ -236,8 +240,7 @@ class SingleDescrNode(DescrNode):
                               pytis.data.Permission.UPDATE,
                               pytis.data.Permission.DELETE,
                               pytis.data.Permission.EXPORT)]
-        content.append(lcg.Section(self, "Pøístupová práva",
-                                   _fieldset(self, perms)))
+        content.append(lcg.Section("Pøístupová práva", _fieldset(perms)))
         return content
     
 
@@ -256,21 +259,24 @@ class DualDescrNode(DescrNode):
         if id.find('::') != -1:
             main, side = id.split('::')
             binding = resolver.get(main, 'binding_spec')[side]
+            title = binding.title()
         else:
             binding = resolver.get(self._name(id), 'dual_spec')
             main, side = (binding.main_name(), binding.side_name())
+            title = main.title() +' / '+ side.title()
         self._main_name = main
         self._side_name = side
+        self._spec_title = title
         self._main_spec = resolver.get(main, 'view_spec')
         self._side_spec = resolver.get(side, 'view_spec')
         self._binding_column = binding.binding_column()
         self._side_binding_column = binding.side_binding_column()
 
     def _title(self):
-        return self._main_spec.title() +' / '+ self._side_spec.title()
+        return self._spec_title
 
-    def _info(self):
-        return super(DualDescrNode, self)._info() + \
+    def _info(self, id):
+        return super(DualDescrNode, self)._info(id) + \
                ((_("Horní formuláø"), "[%s]" % self._main_name),
                 (_("Dolní formuláø"), "[%s]" % self._side_name))
     
@@ -288,7 +294,7 @@ class DualDescrNode(DescrNode):
         return text
     
 
-class DescrIndex(lcg.ContentNode):
+class DescrIndex(lcg.ContentNode, lcg.FileNodeMixin):
     """Koøenová stránka popisu pou¾itých náhledù aplikace.
 
     Tato stránka nápovìdy vytvoøí jednotlivé podøízené stránky s popisem v¹ech
@@ -299,11 +305,12 @@ class DescrIndex(lcg.ContentNode):
 
     """
 
-    def _title(self):
-        return "Nápovìda k jednotlivým náhledùm"
-    
-    def _create_content(self):
-        return lcg.TableOfContents(self, depth=1)
+    def __init__(self, parent, id, subdir=None, input_encoding=None, **kwargs):
+        lcg.FileNodeMixin._init(self, parent, subdir=subdir,
+                                input_encoding=input_encoding)
+        super_ = super(DescrIndex, self).__init__
+        super_(parent, id, title="Nápovìda k jednotlivým náhledùm",
+               content=lcg.TableOfNodes(depth=1), **kwargs)
 
     def _create_children(self):
         #_split_menu_descriptions(self._read_file('descr'), 'src/descr')
@@ -311,6 +318,5 @@ class DescrIndex(lcg.ContentNode):
         _used_defs.sort()
         cls = lambda name: (name.endswith('-dual') or name.find('::') != -1) \
               and DualDescrNode or SingleDescrNode
-        return [self._create_child(cls(name), name, subdir='descr')
-                for name in _used_defs]
+        return [cls(name)(self, name, subdir='descr') for name in _used_defs]
 
