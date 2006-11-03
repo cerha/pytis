@@ -225,7 +225,9 @@ class SingleDescrNode(DescrNode):
         actions = [lcg.Definition(lcg.TextContent(a.title()),
                                   lcg.WikiText(a.descr() or ''))
                    for a in self._view_spec.actions(linear=True)]
-        fields = [(f.label(), f.descr() or "") for f in self._view_spec.fields()]
+        fields = [(f.label(), f.descr() or "")
+                  for f in [self._view_spec.field(id)
+                            for id in self._view_spec.layout().order()]]
         content.append(lcg.Section("Akce kontextového menu",
                                    actions and lcg.DefinitionList(actions) or \
                                    lcg.TextContent("®ádné")))
