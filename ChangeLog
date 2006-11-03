@@ -3,6 +3,11 @@
 	* lib/pytis/extensions/help.py (Module): V¹e pøepsáno s ohledem na
 	nové API LCG.  Pøidáno generování seznamu políèek do informací o
 	náhledu.
+	(_refered_names): Nová funkce.
+	(ItemNode._create_content): Do `_used_names' pøidávej také názvy
+	defsù souvisejících pøes èíselníky a odkazy.
+	(SingleDescrNode._create_content): Vypi¹ také seznam v¹ech
+	souvisejících náhledù - èíselníkù a odkazù.
 
 2006-11-02  Tomas Cerha  <cerha@brailcom.org>
 
