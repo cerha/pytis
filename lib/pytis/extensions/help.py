@@ -43,6 +43,13 @@ def _fieldset(pairs, title=None):
                         lcg.WikiText(v)) for l,v in pairs]
     return lcg.FieldSet(fields, title=title)
 
+def _refered_names(view):
+    names = [f.codebook() for f in view.fields() if f.codebook()]
+    for  f in view.fields():
+        names.extend([link.name() for link in f.links()])
+    return tuple(pytis.util.remove_duplicates(names))
+    
+
 
 class ItemNode(lcg.ContentNode):
     """Stránka s popisem koncové polo¾ky menu."""
@@ -93,18 +100,22 @@ class ItemNode(lcg.ContentNode):
             info.append(("Typ formuláøe",
                          '%s (%s)' % (form.DESCR.capitalize(), form.__name__)))
             if not issubclass(form, pytis.form.ConfigForm):
+                def get(name, spec='view_spec'):
+                    return pytis.util.resolver().get(name, spec)
                 if issubclass(form, pytis.form.DualForm) and \
                        not issubclass(form, pytis.form.DescriptiveDualForm):
                     if name.find('::') != -1:
                         node_name = name
-                        names = (name,) + tuple(name.split('::'))
+                        main, side = name.split('::')
                     else:
-                        dual = pytis.util.resolver().get(name, 'dual_spec')
+                        dual = get(name, 'dual_spec')
                         node_name = name + '-dual'
-                        names = (node_name, dual.main_name(), dual.side_name())
+                        main, side = (dual.main_name(), dual.side_name())
+                    names = (node_name, main, side) + \
+                          _refered_names(get(main)) + _refered_names(get(side))
                 else:
                     node_name = name
-                    names = (name,)
+                    names = (name,) + _refered_names(get(name))
                 global _used_defs, _menu_items
                 for n in names:
                     if n not in _used_defs:
@@ -222,16 +233,19 @@ class SingleDescrNode(DescrNode):
 
     def _create_content(self, id):
         content = super(SingleDescrNode, self)._create_content(id)
+        view = self._view_spec
         actions = [lcg.Definition(lcg.TextContent(a.title()),
                                   lcg.WikiText(a.descr() or ''))
-                   for a in self._view_spec.actions(linear=True)]
+                   for a in view.actions(linear=True)]
         fields = [(f.label(), f.descr() or "")
-                  for f in [self._view_spec.field(id)
-                            for id in self._view_spec.layout().order()]]
-        content.append(lcg.Section("Akce kontextového menu",
-                                   actions and lcg.DefinitionList(actions) or \
-                                   lcg.TextContent("®ádné")))
-        content.append(lcg.Section("Políèka formuláøe", _fieldset(fields)))
+                  for f in [view.field(id) for id in view.layout().order()]]
+        links = [lcg.WikiText("[%s]" % name) for name in _refered_names(view)]
+        for (title, items, f) in (
+            ("Akce kontextového menu", actions, lcg.DefinitionList),
+            ("Políèka formuláøe",      fields,  _fieldset),
+            ("Související náhledy",    links,   lcg.ItemizedList)):
+            c = items and f(items) or lcg.TextContent("®ádné")
+            content.append(lcg.Section(title, c))
         if not self._data_spec.access_rights():
             return content
         rights = self._data_spec.access_rights()
@@ -265,17 +279,18 @@ class DualDescrNode(DescrNode):
         else:
             binding = resolver.get(self._name(id), 'dual_spec')
             main, side = (binding.main_name(), binding.side_name())
-            title = main.title() +' / '+ side.title()
+            title = None
         self._main_name = main
         self._side_name = side
-        self._spec_title = title
         self._main_spec = resolver.get(main, 'view_spec')
         self._side_spec = resolver.get(side, 'view_spec')
+        self._dual_title = title or self._main_spec.title() +' / '+ \
+                           self._side_spec.title()
         self._binding_column = binding.binding_column()
         self._side_binding_column = binding.side_binding_column()
 
     def _title(self):
-        return self._spec_title
+        return self._dual_title
 
     def _info(self, id):
         return super(DualDescrNode, self)._info(id) + \
