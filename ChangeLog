@@ -1,3 +1,9 @@
+2006-11-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (Module): V¹e pøepsáno s ohledem na
+	nové API LCG.  Pøidáno generování seznamu políèek do informací o
+	náhledu.
+
 2006-11-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* doc/Pytis.wiki (Module): Soubor smazán.
