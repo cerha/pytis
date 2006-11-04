@@ -642,22 +642,37 @@ class String(Type):
         return unicode(value)
 
 
-class Color(String):
-    """Barva reprezentovaná øetìzcem '#RRGGBB'."""
+class _RegexValidatedString(String):
 
-    VM_COLOR_FORMAT = 'VM_COLOR_FORMAT'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
+    VM_FORMAT = 'VM_FORMAT'
+    _VALIDATION_MESSAGES = String._VALIDATION_MESSAGES
     _VALIDATION_MESSAGES.update(
-        {VM_COLOR_FORMAT: _("Formát barvy neodpovídá masce '#RRGGBB'.")})
+        {VM_FORMAT: _("Neplatný formát.")})
     
-    _VALIDATION_REGEX = re.compile('^\#[0-9a-fA-F]{6,6}$')
-
     def _validate(self, string, *args, **kwargs):
-        value, error = super(Color, self)._validate(string, *args, **kwargs)
+        sup = super(_RegexValidatedString, self)
+        value, error = sup._validate(string, *args, **kwargs)
         if error is None and self._VALIDATION_REGEX.match(string) is None:
-            value, error = None, self._validation_error(self.VM_COLOR_FORMAT)
+            value, error = None, self._validation_error(self.VM_FORMAT)
         return value, error
 
+    
+class Color(_RegexValidatedString):
+    """Barva reprezentovaná øetìzcem '#RRGGBB'."""
+
+    _VALIDATION_MESSAGES = copy.copy(_RegexValidatedString._VALIDATION_MESSAGES)
+    _VALIDATION_MESSAGES.update(
+        {_RegexValidatedString.VM_FORMAT:
+         _("Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB').")})
+    
+    _VALIDATION_REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
+
+    
+class Identifier(_RegexValidatedString):
+    """Identifikátor."""
+    _VALIDATION_REGEX = re.compile('^[0-9a-zA-Z_-]+$')
+
+    
 class Inet(String):
     """IPv4 nebo IPv6 adresa."""
 
