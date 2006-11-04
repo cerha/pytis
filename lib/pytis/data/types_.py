@@ -670,7 +670,7 @@ class Color(_RegexValidatedString):
     
 class Identifier(_RegexValidatedString):
     """Identifikátor."""
-    _VALIDATION_REGEX = re.compile('^[0-9a-zA-Z_-]+$')
+    _VALIDATION_REGEX = re.compile('^[a-zA-Z][0-9a-zA-Z_-]*$')
 
     
 class Inet(String):
