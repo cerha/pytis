@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: Tomas Cerha <cerha@brailcom.org>\n"
 "POT-Creation-Date: 2006-11-04 20:59+0100\n"
-"PO-Revision-Date: 2006-11-06 13:38+0100\n"
+"PO-Revision-Date: 2006-11-06 13:45+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -29,11 +29,11 @@ msgstr "zredukowany"
 
 #: ../lib/pytis/web/form.py:304
 msgid "Submit"
-msgstr "Wy∂lij"
+msgstr "Wy≈õlij"
 
 #: ../lib/pytis/web/form.py:305
 msgid "Reset"
-msgstr "Od∂wieø"
+msgstr "Od≈õwie≈º"
 
 #: ../lib/pytis/web/form.py:349
 msgid "No records."

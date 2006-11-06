@@ -1,3 +1,9 @@
+2006-11-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (_RegexValidatedString): Nová tøída.
+	(Color): Buï jejím potomkem.
+	(Identifier): Nová tøída.
+
 2006-11-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py (Configuration.__init__): Volby
