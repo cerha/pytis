@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-30 08:47+0200\n"
+"POT-Creation-Date: 2006-11-04 20:59+0100\n"
 "PO-Revision-Date: 2006-08-30 08:47+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
@@ -14,26 +14,26 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:230 ../lib/pytis/web/form.py:294
+#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:320
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/form.py:230 ../lib/pytis/web/form.py:294
+#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:320
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/form.py:238
+#: ../lib/pytis/web/form.py:264
 msgid "reduced"
 msgstr "zkráceno"
 
-#: ../lib/pytis/web/form.py:278
+#: ../lib/pytis/web/form.py:304
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:279
+#: ../lib/pytis/web/form.py:305
 msgid "Reset"
 msgstr "Vrátit pùvodní hodnoty"
 
-#: ../lib/pytis/web/form.py:310
+#: ../lib/pytis/web/form.py:349
 msgid "No records."
 msgstr "®ádné záznamy."
