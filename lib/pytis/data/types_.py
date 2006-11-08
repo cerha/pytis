@@ -960,7 +960,7 @@ class Boolean(Type):
     
     """
 
-    _SPECIAL_VALUES = ((True, 'T'), (False, 'F'))
+    _SPECIAL_VALUES = ((True, 'T'), (False, 'F'), (None, ''))
     
     def __init__(self, not_null=True):
         e = FixedEnumerator((True, False))
