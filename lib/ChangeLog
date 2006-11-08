@@ -1,5 +1,8 @@
 2006-11-08  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py (Boolean._SPECIAL_VALUES): Pøidáno mapování
+	pro `None'.	
+
 	* pytis/form/screen.py (wx_text_view): Aktualizováno pro nové API
 	LCG.
 
