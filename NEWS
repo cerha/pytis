@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Opravena nekompatibilita s novou verzí LCG, která se
+	projevovala pøi zobrazení dialogù s formátovaným textem (napø. pøi
+	Alt-F6).
+
+	* BUGFIX: Datový typ Boolean nyní pracuje správnì i s NULL hodnotami.
+
 2006-11-03  Tomas Cerha  <cerha@brailcom.org>
 
 	Modul pro generování nápovìdy v pytis-extensions byl aktualizován
