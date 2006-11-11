@@ -1,13 +1,5 @@
 CHYBY:
 
- * Závislosti runtime_filterù (a asi i editability) nefungují tranzitivnì.
-
-   Tj. napø. kdy¾ je filter závislý na dopoèítávaném políèku, které je zmìnìno
-   na základì zmìny jiného políèka, není filter pøepoèítán.  Lze to obejít
-   uvedením závislosti na v¹ech políèkách, na kterých je závislé ono
-   dopoèítávané políèko (a také se tak v defsech dìje), ale není to
-   systematické (problémy s údr¾bou).
-
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
    Projevuje se pouze na Windowsech pøes Cygwin.
@@ -44,8 +36,6 @@ NOVÉ VLASTNOSTI:
  * Argument 'enabled' pro odkazy.
 
  * Ikony k pøíkazùm podle argumentù pøíkazu.
-
- * Automaticke generovani seznamu fields z descr do helpu.
 
  * Zobecnìní a pøesun èástí wikinga do pytisu.
 
