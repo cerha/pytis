@@ -1,3 +1,43 @@
+2006-11-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/_test.py (PresentedRow_.test_display): Nový test.
+
+	* pytis/form/list.py (ListForm._post_selection_hook): Namísto
+	vlastního výpoètu hodnoty displeje vyu¾ívej novou metodu
+	PresentedRow.display().
+	(_codebook_info): Metoda zru¹ena.
+	(BrowseForm._init_attributes): Nepou¾ívej ji.
+
+	* pytis/form/form.py (EditForm._create_form_controls) 
+	(EditForm._on_field_edit): Oèekávej instanci políèka jako
+	argument.  Novou hodnotu nejprve validuj a pouze validní hodnoty
+	pøedávej do PresentedRow.
+
+	* pytis/form/inputfield.py (InputField.CALL_FIELD_CHANGE):
+	Aktualizace docstringu.
+	(InputField.create): Nevytváøej display pro políèka typu CbComputer.
+	(InputField._on_idle): Volej callback v¾dy - i pokud hodnota není
+	validní.
+	(InputField._on_change): Aktualizace docstringu.
+	(InputField._on_change): Nevolej `self._on_change_hook()'.
+	(InputField._on_change_hook): Metoda zru¹ena.
+	(InputField.init): Nevolej `self._on_change_hook()', ale nastav
+	pøíznak zmìny.
+	(Invocable._create_widget, CodebookField._create_widget): Sázej
+	prvky vedle sebe bez mezery.
+	(CodebookField._on_change_hook): Metoda zru¹ena.
+	(CodebookField.set_display): Nová metoda.
+
+	* pytis/web/form.py:
+	(Form._codebook_user_value_func): Metoda zru¹ena
+	(LayoutForm._export_field): Pou¾ívej `PresentedRow.enumerate'.
+	(ShowForm._export_field): Pou¾ívej `PresentedRow.display'.
+
+	* pytis/presentation/field.py (PresentedRow._display_func) 
+	(PresentedRow.display, PresentedRow.enumerate): Nové metody.
+	(PresentedRow._Column.__init__): Zapamatuj si také specifikaèní
+	hodnoty `diaplay' a `codebook'.
+
 2006-11-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/types_.py (Boolean._SPECIAL_VALUES): Pøidáno mapování
