@@ -710,23 +710,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # TODO: viz poznámka v _select_cell.
             self._show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
-            message('')
-            current_field = self._columns[self._current_cell()[1]]
-            field, enumerator, codebook = self._codebook_info(current_field)
-            if codebook and enumerator:
-                try:
-                    cb_spec = resolver().get(codebook, 'cb_spec')
-                except ResolverError:
-                    pass
-                else:
-                    if cb_spec.display():
-                        value = the_row[field.id()].value()
-                        try:
-                            v = enumerator.get(value, cb_spec.display())
-                            if v:
-                                message(v.export())
-                        except pytis.data.DataAccessException:
-                            pass
+            row, col = self._current_cell()
+            message(self._table.row(row).display(self._columns[col].id()))
     
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
@@ -1056,14 +1041,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return None
     
-    def _codebook_info(self, field):
-        computer = field.computer()
-        if computer and isinstance(computer, CbComputer):
-            field = self._view.field(computer.field())
-        enumerator = field.type(self._data).enumerator()
-        codebook = field.codebook(self._data)
-        return (field, enumerator, codebook)
-        
     def _on_delete_record(self):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
@@ -1949,8 +1926,9 @@ class BrowseForm(ListForm):
             return mapping[type] % title
         # Create automatic links for codebook fields.
         links = [(f, Link(cb, col))  for f, cb, col in
-                 remove_duplicates([(f, cb, e.value_column()) for f, e, cb in
-                                    [self._codebook_info(f)
+                 remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
+                                    [(f, f.codebook(self._data),
+                                      f.type(self._data).enumerator())
                                      for f in self._fields] if e and cb])]
         # Add explicit links from FieldSpec.
         for  f in self._fields:
