@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -154,9 +154,16 @@ class Resolver(object):
 
     def _get_spec(self, key):
         module_name, spec_name, kwargs_items = key
-        obj = self.get_object(module_name, spec_name)
         kwargs = dict(kwargs_items)
-        return self._call_spec(obj, kwargs)
+        if module_name.find('.') != -1:
+            parts = module_name.split('.')
+            module_name = os.path.join(*parts[:-1])
+            class_name = parts[-1]
+            instance = self.get_instance(module_name, class_name)
+            return getattr(instance, spec_name)(**kwargs)
+        else:
+            obj = self.get_object(module_name, spec_name)
+            return self._call_spec(obj, kwargs)
 
     def _call_spec(self, obj, kwargs):
         return apply(obj, (self,), kwargs)        
@@ -182,7 +189,7 @@ class Resolver(object):
         return self._object_cache[key]
 
     def get_instance(self, module_name, spec_name, *args, **kwargs):
-        # Nestačí nám pouhé `get_object', protože třída jako taková obsahuje
+        # Nestačí nám pouhé 'get_object', protože třída jako taková obsahuje
         # svůj modul, což může činit potíže při vzdáleném přístupu přes Pyro.
         """Vrať instanci požadované třídy z daného specifikačního modulu.
 
@@ -210,13 +217,22 @@ class Resolver(object):
         Argumenty:
 
           module_name -- jméno specifikačního modulu.          
-          spec_name -- jméno specifikační funkce.  Jedná se o funkci ve
-            specifikačním modulu, která musí přijímat jeden argument (instanci
-            třídy 'Resolver') a vrací instanci specifikační třídy.  Pokud jsou
-            použity i klíčové argumenty ('kwargs'), musí funkce kromě argumentu
-            'resolver' přijímat i tyto klíčové argumenty.
-          kwargs -- klíčové argumenty, které jsou předány specifikační funkci
-            
+          spec_name -- jméno specifikační funkce/metoda.
+          kwargs -- klíčové argumenty specifikační funkce/metody.
+
+        Pokud 'module_name' neobsahuje tečky, jde přímo o jméno modulu.  V
+        tomto modulu je vyhledána funkce 'spec_name', ta je spuštěna s instancí
+        resolveru jako prvním pozičním argumentem a danými klíčovými argumenty
+        a výsledek je vrácen.
+
+        Pokud 'module_name' obsahuje tečky, jde o název modulu a třídy v něm
+        obsažené.  Název modulu může v tomto případě také obsahovat názvy
+        adresářů (oddělené rovněž tečkami).  Například název
+        'ucetnictvi.denik.UcetniDenik' znamená, že v adresáři 'ucetnictvi' bude
+        hledán soubor 'denik.py' a v něm třída 'UcetniDenik'.  Pokud je třída
+        nalezena, je zavolána její metoda 'spec_name', té jsou předány
+        dané klíčové argumenty a výsledek je vrácen.
+          
         Není-li modul 'module_name' nalezen, je vyvolána výjimka
         'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
         nalezena specifikace 'spec_name', je vyvolána výjimka
