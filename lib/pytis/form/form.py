@@ -1388,7 +1388,8 @@ class EditForm(LookupForm, TitledForm, Refreshable):
                     acc = True
                 f = InputField.create(panel, spec, self._data, guardian=self,
                                       accessible=acc)
-                f.set_callback(InputField.CALL_FIELD_CHANGE,self._on_field_edit)
+                f.set_callback(InputField.CALL_FIELD_CHANGE,
+                               self._on_field_edit)
                 self._fields.append(f)
         # Now create the layout groups.
         group = self._create_group(panel, self._view.layout().group())
@@ -1644,9 +1645,13 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         field = find(True, self._fields, key=lambda f: f.is_modified())
         return field is not None
 
-    def _on_field_edit(self, id, value):
+    def _on_field_edit(self, field):
         # Signalizace zmìny políèka z InputField
-        self._row[id] = value
+        value, error = field.validate(quiet=True)
+        if value:
+            self._row[field.id()] = value
+        if isinstance(field, CodebookField):
+            field.set_display(value and self._row.display(field.id()) or '')
 
     def _on_field_change(self, id):
         # Signalizace zmìny políèka z PresentedRow
