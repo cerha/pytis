@@ -1316,23 +1316,37 @@ class CodebookSpec(object):
             záznamy èíselníkového formuláøe setøídìny.  Pokud je 'None',
             bude pou¾ito tøídìní z ViewSpec.
             
-          display -- pokud není 'None', budou èíselníková políèka vázaná na
-            tento èíselník automaticky vybavena displejem, (viz
-            'CodebookField').  Hodnotou je identifikátor sloupce obsahujícího
-            hodnotu k zobrazení v displeji (tento sloupec musí být obsa¾en v
-            datové specifikaci èíselníku).
-            
+          display -- pokud není 'None', urèuje zpùsob zístání u¾ivatelské
+            hodnoty èíselníku (více o jejím vyu¾ití viz ní¾e).  Hodnotou mù¾e
+            být buïto identifikátor sloupeèku v datovém objektu enumerátoru
+            (bude zobrazena hodnota tohoto sloupeèku), nebo funkce jednoho
+            argumentu (vnitøní Pythonová hodnota enumerátoru), která vrací
+            u¾ivatelskou hodnotu (øetìzec).  Mù¾e být pødána také dvojice
+            (funkce, identifikátor sloupeèku).  V tom pøípadì bude argumentem
+            funkce hodnota daného sloupce, namísto sloupce vnitøní hodnoty.
+
           display_size -- ¹íøka políèka displeje ve znacích.  Lze také
             pøedefinovat stejnojmeným argumentem 'FieldSpec' pro konkrétní
             èíselníkové políèko.
           
           begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
             spustit automatické inkrementální vyhledávání.
-          
+
+        U¾ivatelská hodnota èíselníku je vyu¾ívána v nìkolika situacích.  U
+        bì¾ného èíselníkového plíèka typu `SelectionType.CODEBOOK' je pro její
+        zobrazení vytvoøen displej.  U ostatních èíselníkových políèek
+        (napø. CHOICE, RADIO apod.)  jsou u¾ivatelské hodnoty zobrazeny pøímo
+        ve výbìru.  U¾ivatel v tomto pøípadì vnitøní hodnotu vùbec nevidí, ta
+        je pou¾ívána pouze internì.  Dal¹ím pou¾itím u¾ivatelské hodnoty je
+        zobrazení související èíselníkové hodnoty ve stavové øádce gridu (pøi
+        aktivaci buòky její¾ hodnota pochází z èíselníku).
+                    
         """
         assert columns is None or is_sequence(columns)
         assert sorting is None or is_sequence(sorting)
-        assert display is None or isinstance(display, types.StringType)
+        assert display is None or isinstance(display, str) \
+               or callable(display) or isinstance(display, tuple) \
+               and callable(display[0]) and isinstance(display[1], str)
         assert display_size is None or isinstance(display_size, types.IntType)
         assert begin_search is None or isinstance(begin_search,types.StringType)
         self._columns = columns
@@ -1542,17 +1556,12 @@ class FieldSpec(object):
             není tato informace aplikaci dostupná.  Potom je nutné název
             èíselníku urèit zde.
             
-          display -- urèuje zpùsob získání zobrazené u¾ivatelské hodnoty.
-            Relevantní jen pro políèka výètových typù (datový typ má definován
-            enumerátor).  Pokud je None, bude pou¾ita hodnota z 'cb_spec' ve
-            specifikaci èíselníku (co¾ by mìlo být také upøednostòováno).
-            Pokud je dispej urèen explicitnì, mù¾e to být buïto identifikátor
-            sloupeèku v datovém objektu enumerátoru (bude zobrazena hodnota
-            tohoto sloupeèku), nebo funkce jednoho argumentu (vnitøní Pythonová
-            hodnota enumerátoru), která vrací u¾ivatelskou hodnotu (øetìzec).
-            Mù¾e být pødána také dvojice (funkce, identifikátor sloupeèku).  V
-            tom pøípadì bude argumentem funkce hodnota daného sloupce, namísto
-            sloupce vnitøní hodnoty.
+          display -- umo¾òuje definovat vlastní hodnotu displeje pro konkrétní
+            pou¾ití èíselníku.  Pokud je None, bude pou¾ita hodnota z 'cb_spec'
+            ve specifikaci èíselníku (co¾ by mìlo být také upøednostòováno).
+            Pokud je pou¾ito, je význam stejný jako u stejnojmenného argumentu
+            `CodebookSpec'.  Relevantní jen pro políèka výètových typù (datový
+            typ má definován enumerátor).
 
           display_size -- velikost displeje èíselníku ve znacích.  Relevantní
             jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
