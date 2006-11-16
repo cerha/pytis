@@ -74,21 +74,6 @@ class Form(lcg.Content):
                     valid[id] = value
         return valid
 
-    def _codebook_user_value_func(self, field):
-        display = field.display()
-        if not display:
-            # TODO: should be converted to Value and exported
-            return str
-        else:
-            enum = field.type(self._data).enumerator()
-            if callable(display):
-                return display
-            elif isinstance(display, tuple):
-                f, col = display
-                return lambda v: v and f(enum.get(v, col).value()) or ''
-            else:
-                return lambda v: v and enum.get(v, display).export() or ''
-    
 
 class LayoutForm(Form):
     
@@ -132,11 +117,10 @@ class LayoutForm(Form):
             attr['checked'] = value.value()
         elif type.enumerator():
             ctrl = _html.select
-            values = type.enumerator().values()
-            user_value = self._codebook_user_value_func(f)
             attr['options'] = [("&nbsp;", "")] + \
-                              [(user_value(v), str(v)) for v in values]
-            if str(value.value()) in [str(v) for v in values]:
+                              [(uv, str(v)) for v,uv
+                               in self._row.enumerate(f.id())]
+            if value.value() in type.enumerator().values():
                 attr['selected'] = str(value.value())
         else:
             if f.height() > 1:
@@ -251,13 +235,12 @@ class ShowForm(LayoutForm):
 
     def _export_field(self, f):
         type = f.type(self._data)
-        value = self._row[f.id()]
         if isinstance(type, pytis.data.Boolean):
-            value = value.value() and _("Yes") or _("No")
+            value = self._row[f.id()].value() and _("Yes") or _("No")
         elif type.enumerator():
-            value = self._codebook_user_value_func(f)(value.value())
+            value = self._row.display(f.id())
         else:
-            value = value.export()
+            value = self._row[f.id()].export()
         if len(value) > self._MAXLEN:
             end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
             value = concat(value[:(end != -1 and end or self._MAXLEN)],
