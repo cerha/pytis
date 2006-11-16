@@ -50,6 +50,8 @@ class PresentedRow(object):
             self.line_separator = f.line_separator()
             self.default = f.default()
             self.editable = f.editable()
+            self.display = f.display()
+            self.codebook = f.codebook(data)
             self.codebook_runtime_filter = f.codebook_runtime_filter()
             
     def __init__(self, fieldspec, data, row, prefill=None, singleline=False,
@@ -506,3 +508,78 @@ class PresentedRow(object):
     #    else:
     #        return None
 
+
+        
+    
+    def _display_func(self, column):
+        def getval(enum, value, col, func=None):
+            if not value:
+                return ''
+            try:
+                v = enum.get(value, col)
+            except pytis.data.DataAccessException:
+                return ''
+            if not v:
+                return ''
+            elif func:
+                return f(v.value())
+            else:
+                return v.export()
+        display = column.display
+        if not display and column.codebook:
+            try:
+                cb_spec = resolver().get(column.codebook, 'cb_spec')
+            except ResolverError:
+                pass
+            else:
+                display = cb_spec.display()
+        if not display:
+            return None
+        elif callable(display):
+            return display
+        enum = column.type.enumerator()
+        if isinstance(display, tuple):
+            f, col = display
+            return lambda v: getval(enum, v, col, f)
+        else:
+            return lambda v: getval(enum, v, display)
+
+    def display(self, key):
+        """Vra» hodnotu displeje èíselníku daného políèka.
+
+        Pokud dané políèko není èíselníkem, nebo tento èíselník nemá urèen
+        displej, nebo aktuální hodnota políèka není v èíselníku nalezena, nebo
+        k nejsou dostateèná práva k jejímu naètení, bude vrácen prázdný
+        øetìzec.
+        
+        """
+        column = self._columns[key]
+        computer = column.computer
+        if computer and isinstance(computer, CbComputer):
+            column = self._columns[computer.field()]
+        display = self._display_func(column)
+        if display:
+            return display(self[column.id].value())
+        else:
+            return ''
+    
+    def enumerate(self, key):
+        """Vta» výèet hodnot èíselníku daného políèka jako seznam dvojic.
+
+        Vrácený seznam obsahuje v¾dy vnitøní Pythonovou hodnotu èíselníku a k
+        ní odpovídající u¾ivatelskou hodnotu jako øetìzec.  U¾ivatelská hodnota
+        je urèena specifikací `display'.
+        
+        Vyvolání této metody pro políèko, které není èíselníkové je pova¾ováno
+        za chybu.
+       
+        """
+        column = self._columns[key]
+        display = self._display_func(column)
+        if display is None:
+            display = lambda v: pytis.data.Value(column.type, v).export()
+        return [(v, display(v)) for v in column.type.enumerator().values()]
+
+
+
+    
