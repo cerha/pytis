@@ -14,6 +14,21 @@
 	sloupce, tak libovolnou funkci, nebo také dvojici - funkce, název
 	sloupce.  Více viz dokumentace `CodebookSpec'.
 
+	Reslover nyní umo¾òuje pracovat i se specifikacemi, které namísto
+	prostých specifikaèních funkcí umo¾òují volat metody
+	specifikaèních tøíd.  Pokud název specifikaního modulu obsahuje
+	teèky, jde o název modulu a tøídy v nìm obsa¾ené.  Název modulu
+	mù¾e v tomto pøípadì také obsahovat názvy adresáøù (oddìlené
+	rovnì¾ teèkami).  Napøíklad název 'ucetnictvi.denik.UcetniDenik'
+	znamená, ¾e v adresáøi 'ucetnictvi' bude hledán soubor 'denik.py'
+	a v nìm tøída 'UcetniDenik'.  Pokud je tøída nalezena, je zavolána
+	její metoda 'spec_name', té jsou pøedány dané klíèové argumenty a
+	výsledek je vrácen.  Pokud v názvu teèky nejsou, jde o "starou"
+	specifikaci a v¹e funguje tak jako døíve.  Tato vymo¾enost by mìla
+	v budoucnu umo¾nit zjednodu¹ení specifikací a vyu¾ití dìdiènosti
+	pøi tvorbì variant.  Na základních tøídách, které to umo¾ní se
+	pracuje.
+
 2006-11-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Opravena nekompatibilita s novou verzí LCG, která se
