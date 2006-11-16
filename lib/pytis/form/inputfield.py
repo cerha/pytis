@@ -76,15 +76,11 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _DEFAULT_HEIGHT = 1
 
     CALL_FIELD_CHANGE = 'CALL_FIELD_CHANGE'
-    """Callback volaný pøi zmìnì políèka, pokud je nová hodnota validní.
-
-    Argumenty:
-
-      fid -- id políèka, string.
-      value -- nová hodnota políèka, instance 'pytis.data.Value'.
+    """Callback volaný pøi ka¾dé zmìnì hodnoty. Argumentem je instance políèka.
 
     Callback je volán pouze pøi interaktivní (u¾ivatelem vyvolané) zmìnì
-    hodnoty.  Programové nastavování hodnoty callback nevyvolává.
+    hodnoty a pøi inicializaci hodnoty políèka.  Ostatní programové nastavování
+    hodnoty callback nevyvolává.
     
     """
 
@@ -111,7 +107,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
         elif isinstance(type, (pytis.data.Number, pytis.data.String)) \
-                 and type.enumerator() is not None and codebook is not None:
+                 and type.enumerator() is not None and codebook is not None \
+                 and not isinstance(spec.computer(), CbComputer):
             if inline:
                 if codebook:
                     field = CodebookField
@@ -153,18 +150,23 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
           parent -- libovolná instance 'wx.Window', která má být pou¾ívána
             jako wx rodiè v¹ech vytváøených wx prvkù
+            
           spec -- specifikace prezentaèních vlastností, instance tøídy
             'spec.FieldSpec'
+            
           data -- datový objekt, instance tøídy 'pytis.data.Data'
+
           guardian -- nadøazený 'KeyHandler'.
+          
           inline -- pokud je pravda, bude vytvoøen pouze vlastní vstupní
             prvek.  Label a ve¹keré blbinky kolem budou vynechány.  To je
             vhodné pøi pou¾ití políèka pro in-line editaci v øádkovém
             formuláøi.
+            
           accessible -- pravda, pokud má u¾ivatel mít právo editace políèka.
             Takto znepøístupnìné políèko ji¾ nelze zpøístupnit a vzhled je
             jiný, ne¾ v pøípadì políèka zakázaného voláním metody 'disable()'.
-          
+
         Metodu '__init__()' nech» odvozené tøídy nepøedefinovávají. Nech»
         pøedefinovávají metody '_create_widget()' a '_create_label'.
 
@@ -290,9 +292,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _on_idle(self, event):
         if self._is_changed:
             # Pokud je hodnota validní, dej o zmìnì vìdìt formuláøi.
-            value = self._value()
-            if value:
-                self._run_callback(self.CALL_FIELD_CHANGE, self.id(), value)
+            self._run_callback(self.CALL_FIELD_CHANGE, self)
             self._is_changed = False
         if self._want_focus and not self.has_focus():
             self._set_focus()
@@ -342,13 +342,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._unregistered_widgets[self._ctrl] = True
 
     def _on_change(self, event=None):
-        """Event handler volaný pøi jakékoliv zmìnì hodnoty políèka.
-        
-        Odvozené tøídy by tuto metodu nemìly pøedefinovávat. Nech» radìji
-        pøedefiují metodu '_on_change_hook()'. Ka¾dá tøída by mìla zabezpeèit
-        o¹etøení editaèních událostí voláním této metody.
-
-        """
+        """Event handler volaný pøi jakékoliv zmìnì hodnoty políèka."""
         # Toto je hack aby bylo mo¾né vytváøet zakázaná políèka, která nejsou
         # za¹edivìna a vypadají tedy stejnì jako editovatelná, ale nelze je
         # zmìnit.  Zde tedy po ka¾dém pokusu o zmìnu vrátíme pùvodní hodnotu a
@@ -359,7 +353,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # je to zatím vyøazeno.  Nejlep¹í by bylo to vymyslet úplnì jinak...
         self._disable_event_handlers()
         self._post_process()
-        self._on_change_hook()
         self._is_changed = True
         if event:
             event.Skip()
@@ -376,15 +369,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """
         pass
     
-    def _on_change_hook(self):
-        """O¹etøi zmìny textu políèka.
-        
-        Pøedefinováním této metody lze provádìt libovolné doplòující akce
-        pøi ka¾dé zmìnì textu políèka.
-        
-        """
-        pass
-
     def has_focus(self):
         """Vra» pravdu právì kdy¾ je políèko zaostøeno pro u¾iv. vstup."""
         return InputField.focused() is self
@@ -530,7 +514,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._disable_event_handlers()
         self.set_value(value)
         self._initial_value = self.get_value()
-        self._on_change_hook()
+        self._is_changed = True
         self._enable_event_handlers()
         self._initialized = True
 
@@ -1008,7 +992,7 @@ class Invocable(object, CommandHandler):
         button.SetToolTipString(self._INVOKE_SELECTION_MENU_TITLE)
         sizer = wx.BoxSizer()
         sizer.Add(widget, 0, wx.FIXED_MINSIZE)
-        sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 1)
+        sizer.Add(button, 0, wx.FIXED_MINSIZE)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                     lambda e: self._on_invoke_selection())
         wx_callback(wx.EVT_NAVIGATION_KEY, button,
@@ -1160,6 +1144,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         self._insert_button = None
         spec = self.spec()
         cb_spec = self._cb_spec
+        self._display = None
         if self._inline or cb_spec.display() is None and \
                not spec.allow_codebook_insert():
             return widget
@@ -1171,7 +1156,6 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             if display_size is None:
                 display_size = cb_spec.display_size()
             if display_size:
-                self._display_column = cb_spec.display()
                 display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
                 size = char2px(display, display_size, 1)
                 size.SetHeight(height)
@@ -1180,7 +1164,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display,
                             self._skip_navigation_callback(display))
-                sizer.Add(display, 0, wx.LEFT|wx.FIXED_MINSIZE, 1)
+                sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
             self._insert_button = button = wx.Button(self._parent, -1, "+")
             button.SetSize((dlg2px(button, 10), height))
@@ -1189,7 +1173,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                         self._on_codebook_insert)
             wx_callback(wx.EVT_NAVIGATION_KEY, button,
                         self._skip_navigation_callback(button))
-            sizer.Add(button, 0, wx.LEFT|wx.FIXED_MINSIZE, 1)
+            sizer.Add(button, 0, wx.FIXED_MINSIZE)
         return sizer
 
     def _menu(self):
@@ -1215,17 +1199,9 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             self._insert_button.Enable(True)
         super_(CodebookField)._enable(self)        
 
-    def _on_change_hook(self):
-        try:
-            display = self._display_column
-        except AttributeError:
-            return
-        v = self._value()
-        if callable(display):
-            dv = display(v.value())
-        else:
-            dv = v and self._type.enumerator().get(v.value(), display)
-        self._display.SetValue(dv and dv.export() or '')
+    def set_display(self, value):
+        if self._display:
+            self._display.SetValue(value)
 
     def _on_invoke_selection(self, alternate=False):
         if alternate:
