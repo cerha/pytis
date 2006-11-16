@@ -1,5 +1,10 @@
 2006-11-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/resolver.py (Resolver._get_spec): Pokud je název
+	pou¾ívá teèkovou notaci, získej z modulu instanci a zavolej její
+	metodu.
+	(Resolver.get): Aktualizace docstringu.
+
 	* pytis/presentation/spec.py (CodebookSpec.__init__): Aktualizován
 	docstring.  Povoleny také roz¹íøené mo¾nosti specifikace `display'.
 	(FieldSpec.__init__): 
