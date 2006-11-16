@@ -139,7 +139,6 @@ class PresentedRow_(unittest.TestCase):
         assert enabled[0] == 'yes'
         row['c'] = pytis.data.Value(pytis.data.Integer(), 2)
         assert enabled[0] == 'no'
-        
     def test_has_key(self):
         row = PresentedRow(self._fields, self._data, None)
         assert row.has_key('a')
@@ -153,6 +152,33 @@ class PresentedRow_(unittest.TestCase):
     def test_keys(self):
         row = PresentedRow(self._fields, self._data, None)
         assert row.keys().sort() == map(lambda f: f.id(), self._fields).sort()
+    def test_display(self):
+        C = pytis.data.ColumnSpec
+        S = pytis.data.String
+        V = pytis.data.Value
+        rows = [pytis.data.Row((('x', V(S(), x)), ('y', V(S(), y))))
+                for x,y in (('1','FIRST'), ('2','SECOND'), ('3','THIRD'))]
+        edata = pytis.data.DataFactory(pytis.data.MemData,
+                                       (C('x', S()), C('y', S())), data=rows)
+        enum = pytis.data.DataEnumerator(edata)
+        key = C('a', pytis.data.Integer())
+        columns = (key,
+                   C('b', S(enumerator=enum)),
+                   C('c', S(enumerator=enum)),
+                   C('d', S(enumerator=enum)))
+        data = pytis.data.Data(columns, key)
+        fields = (FieldSpec('a'),
+                  FieldSpec('b', display='y'),
+                  FieldSpec('c', display=lambda x: '-'+x+'-'),
+                  FieldSpec('d', display=(lambda x: x.lower(), 'y')),
+                  )
+        row = PresentedRow(fields, data, None,
+                           prefill={'b': '2', 'c': '3', 'd': '1'})
+        assert row.display('a') == '', row.display('a')
+        assert row.display('b') == 'SECOND', row.display('b')
+        assert row.display('c') == '-3-', row.display('c')
+        assert row.display('d') == 'first', row.display('d')
+        
         
 tests.add(PresentedRow_)
 
