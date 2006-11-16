@@ -1,5 +1,9 @@
 2006-11-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (CodebookSpec.__init__): Aktualizován
+	docstring.  Povoleny také roz¹íøené mo¾nosti specifikace `display'.
+	(FieldSpec.__init__): 
+
 	* pytis/presentation/_test.py (PresentedRow_.test_display): Nový test.
 
 	* pytis/form/list.py (ListForm._post_selection_hook): Namísto

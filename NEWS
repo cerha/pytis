@@ -6,6 +6,16 @@
 
 2006-11-08  Tomas Cerha  <cerha@brailcom.org>
 
+	Bylo slouèeno zji¹»ování u¾ivatelské hodnoty èíselníku (displeje)
+	z nìkolika míst do tøídy PresentedRow.  Díky tomu jsou nyní ve
+	v¹ech pøípadech podporovány v¹echny mo¾nosti specifikace displeje
+	uvedené ve specifikaci.  Displej urèený v `cb_spec' lze
+	pøedefinovat ve `FieldSpec' a je mo¾né specifikovat jak název
+	sloupce, tak libovolnou funkci, nebo také dvojici - funkce, název
+	sloupce.  Více viz dokumentace `CodebookSpec'.
+
+2006-11-08  Tomas Cerha  <cerha@brailcom.org>
+
 	* BUGFIX: Opravena nekompatibilita s novou verzí LCG, která se
 	projevovala pøi zobrazení dialogù s formátovaným textem (napø. pøi
 	Alt-F6).
