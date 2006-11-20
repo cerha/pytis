@@ -139,6 +139,7 @@ class Resolver(object):
                                          validator=validator)
         self._object_cache = SimpleCache(self._get_object)
         self._spec_cache = SimpleCache(self._get_spec)
+        self._instance_cache = SimpleCache(self._get_instance)
     
     def _get_module(self, module_name):
         raise ResolverModuleError(module_name)
@@ -159,7 +160,7 @@ class Resolver(object):
             parts = module_name.split('.')
             module_name = os.path.join(*parts[:-1])
             class_name = parts[-1]
-            instance = self.get_instance(module_name, class_name)
+            instance = self.get_instance(module_name, class_name, self)
             return getattr(instance, spec_name)(**kwargs)
         else:
             obj = self.get_object(module_name, spec_name)
@@ -168,6 +169,12 @@ class Resolver(object):
     def _call_spec(self, obj, kwargs):
         return apply(obj, (self,), kwargs)        
 
+    def _get_instance(self, key):
+        module_name, spec_name, args, kwargs_items = key
+        class_ = self.get_object(module_name, spec_name)
+        return class_(*args, **dict(kwargs_items))
+
+        
     def get_object(self, module_name, spec_name):
         """Vra» po¾adovaný objekt z daného specifikaèního modulu.
 
@@ -208,8 +215,8 @@ class Resolver(object):
         podtr¾ítkem, je vyvolána výjimka 'ResolverSpecError'.
 
         """
-        class_ = self.get_object(module_name, spec_name)
-        return class_(*args, **kwargs)
+        key = (module_name, spec_name, tuple(args), tuple(kwargs.items()))
+        return self._instance_cache[key]
 
     def get(self, module_name, spec_name, **kwargs):
         """Vra» specifikaci 'spec_name' ze specifikaèního modulu 'module_name'.
@@ -230,8 +237,10 @@ class Resolver(object):
         adresáøù (oddìlené rovnì¾ teèkami).  Napøíklad název
         'ucetnictvi.denik.UcetniDenik' znamená, ¾e v adresáøi 'ucetnictvi' bude
         hledán soubor 'denik.py' a v nìm tøída 'UcetniDenik'.  Pokud je tøída
-        nalezena, je zavolána její metoda 'spec_name', té jsou pøedány
-        dané klíèové argumenty a výsledek je vrácen.
+        nalezena, je vytvoøena její instance (konstruktoru je pøedána instance
+        resolveru jako první pozièní argument) a nad ní zavolána metoda
+        'spec_name', té jsou pøedány dané klíèové argumenty a výsledek je
+        vrácen.
           
         Není-li modul 'module_name' nalezen, je vyvolána výjimka
         'ResolverModuleError'.  Je-li modul nalezen, av¹ak není v nìm
