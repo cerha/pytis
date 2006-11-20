@@ -4,7 +4,7 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2006-11-08  Tomas Cerha  <cerha@brailcom.org>
+2006-11-16  Tomas Cerha  <cerha@brailcom.org>
 
 	Bylo slouèeno zji¹»ování u¾ivatelské hodnoty èíselníku (displeje)
 	z nìkolika míst do tøídy PresentedRow.  Díky tomu jsou nyní ve
