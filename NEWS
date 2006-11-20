@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-20  Tomas Cerha  <cerha@brailcom.org>
+
+	Resolver nyní ke¹uje instance specifikaèních tøíd.  Pøi vytváøení
+	tìchto instancí je konstruktoru nyní navíc pøedáván resolver jako
+	první argument.
+
 2006-11-16  Tomas Cerha  <cerha@brailcom.org>
 
 	Bylo slouèeno zji¹»ování u¾ivatelské hodnoty èíselníku (displeje)
