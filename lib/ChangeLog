@@ -1,3 +1,23 @@
+2006-11-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Nový argument
+	'singular'.  Nové mo¾nosti urèení 'layout'.  Aktualizace docstringu.
+	(ViewSpec.singular): Nová metoda.
+	(CbComputer._compute): Oprava assertové hlá¹ky.
+	(FieldSpec.__init__): Nové argumenty `virtual', `dbcolumn' a
+	`type'.  Úpravu assertù.  Také ostatní klíèové argumenty zapamatuj
+	jako argumenty datového sloupce.
+	(FieldSpec.dbcolumn): Nová metoda.
+	(FieldSpec.virtual): Nová metoda.
+	(FieldSpec.dbcolumn_kwargs): Nová metoda.
+	(DataSpec): Aktualizace docstringu.
+	(Specification): Nová tøída.
+
+	* pytis/util/util.py (split_camel_case, camel_case_to_lower): Nové
+	funkce.
+
+	* pytis/web/form.py (Module): 
+
 2006-11-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/resolver.py (Resolver.__init__): Vytváøej cache instancí.
