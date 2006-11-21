@@ -161,7 +161,10 @@ class Resolver(object):
             module_name = os.path.join(*parts[:-1])
             class_name = parts[-1]
             instance = self.get_instance(module_name, class_name, self)
-            return getattr(instance, spec_name)(**kwargs)
+            try:
+                return getattr(instance, spec_name)(**kwargs)
+            except AttributeError:
+                raise ResolverSpecError(module_name, spec_name)
         else:
             obj = self.get_object(module_name, spec_name)
             return self._call_spec(obj, kwargs)
