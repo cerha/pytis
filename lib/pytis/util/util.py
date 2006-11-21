@@ -42,6 +42,7 @@ import gc
 import inspect
 import operator
 import os
+import re
 import string
 import sys
 import thread
@@ -1431,3 +1432,12 @@ def positive_id(obj):
             result += 1L << 64
             assert result >= 0 # else addresses are fatter than 64 bits
     return result
+
+_CAMEL_CASE_WORD = re.compile(r'[A-Z][a-z\d]+')
+def split_camel_case(string):
+    """Return a lowercase string using 'separator' to concatenate words."""
+    return _CAMEL_CASE_WORD.findall(string)
+
+def camel_case_to_lower(string, separator='-'):
+    """Return a lowercase string using 'separator' to concatenate words."""
+    return separator.join([w.lower() for w in split_camel_case(string)])
