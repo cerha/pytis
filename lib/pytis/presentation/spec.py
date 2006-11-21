@@ -629,25 +629,36 @@ class ViewSpec(object):
     pro nìj relevantní.
 
     """
-    def __init__(self, title, fields, layout=None, columns=None, actions=(),
-                 sorting=None, grouping=None, redirect=None,
-                 check=None, cleanup=None,
-                 on_new_record=None, on_edit_record=None, on_delete_record=None,
-                 on_line_commit=None,
-                 focus_field=None, description=None, help=None,
-                 row_style=FIELD_STYLE_DEFAULT):
+    
+    def __init__(self, title, fields, singular=None, layout=None, columns=None,
+                 actions=(), sorting=None, grouping=None, redirect=None,
+                 check=None, cleanup=None, on_new_record=None,
+                 on_edit_record=None, on_delete_record=None,
+                 on_line_commit=None, focus_field=None, description=None,
+                 help=None, row_style=FIELD_STYLE_DEFAULT):
+        
         """Inicializuj instanci.
 
         Argumenty:
 
-          title -- titulek záhlaví seznamových formuláøù jako øetìzec; mù¾e
-            být té¾ 'None', v kterém¾to pøípadì formuláø ¾ádné záhlaví nemá.
+          title -- název náhledu (øetìzec).  Název je pou¾íván jako titulek
+            záhlaví seznamových formuláøù a na dal¹ích místech, kde je
+            odkazováno na náhled jako celek, tedy celou mno¾ninu záznamù, proto
+            by mìlo být pou¾ito mno¾né èíslo, napø. Faktury.
             
-          fields -- specifikace políèek jednoho záznamu jako sekvence instancí
-            tøídy 'FieldSpec'.
+          singular -- název náhledu jedné polo¾ky (øetìzec).  Tento název je
+            pou¾íván v¹ude tam, kde jde o jednu polo¾ku náhledu (napø záhlaví
+            editaèního fotmuláøe), proto by mìl být v jednotném èísle,
+            napø. Faktura.  Pokud je None, bude pou¾it název daná argumentem
+            'title'.
+            
+          fields -- specifikace políèek jako sekvence instancí tøídy
+            'FieldSpec'.
             
           layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
-            instance tøídy 'LayoutSpec'.
+            instance tøídy 'GroupSpec'.  Pro zpìtnou kompatibilitu je mo¾né
+            pou¾ít také 'LayoutSpec', ale tento zpùsob definice je pova¾ován za
+            nevhodný a v budoucnu nebude podporován.
             
           columns -- specifikace sloupcù tabulkového formuláøe, sekvence
             indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
@@ -765,17 +776,25 @@ class ViewSpec(object):
 	soubor ve zdrojovém adresáøi nápovìdy (viz tutoriál Help).
 
         """
-        assert isinstance(title, types.StringTypes)
+        assert isinstance(title, (str, unicode))
+        if singular is None:
+            if isinstance(layout, LayoutSpec):
+                singular = layout.caption()
+            else:
+                singular = title
+        else:
+            assert isinstance(singular, (str, unicode))
         assert is_sequence(fields)
-        # Initialize field dictionary
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
-        # Initialize `layout' specification parameter
+        # Initialize the layout
         if layout is None:
-            group = GroupSpec([f.id() for f in self._fields],
-                              orientation=Orientation.VERTICAL)
-            layout = LayoutSpec(title, group)
-        elif __debug__:
+            layout = LayoutSpec(singular,
+                                GroupSpec([f.id() for f in self._fields],
+                                          orientation=Orientation.VERTICAL))
+        elif isinstance(layout, GroupSpec):
+            layout = LayoutSpec(singular, layout)
+        if __debug__:
             assert isinstance(layout, LayoutSpec)
             def recourse_group(group):
                 for item in group.items():
@@ -843,6 +862,7 @@ class ViewSpec(object):
         assert description is None or isinstance(description, types.StringTypes)
         assert help is None or isinstance(help, types.StringTypes)
         self._title = title
+        self._singular = singular
         self._columns = columns
         self._layout = layout
         self._actions = actions
@@ -859,6 +879,14 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
+
+    def title(self):
+        """Vra» název náhledu jako øetìzec."""
+        return self._title
+
+    def singular(self):
+        """Vra» název pro jednu polo¾ku náhledu jako øetìzec."""
+        return self._singular
 
     def fields(self):
         """Vra» tuple specifikací v¹ech políèek v layoutu."""
@@ -879,10 +907,6 @@ class ViewSpec(object):
     def columns(self):
         """Vra» tuple identifikátorù sloupcù pro tabulkový formuláø."""
         return self._columns
-
-    def title(self):        
-        """Vra» titulek tabulkového formuláøe jako string, nebo None."""
-        return self._title
 
     def actions(self, linear=False):
         """Vra» specifikaci akcí."""
@@ -1276,9 +1300,8 @@ class CbComputer(Computer):
         if cbvalue.value() is not None:
             e = cbvalue.type().enumerator()
             assert e is not None, \
-              "CbComputer for '%s' refers to '%s', which has no enumerator." \
-              % (self._field, self.id())
-            id
+                   "CbComputer refers to '%s', which has no enumerator." \
+                   % self._field
             value = e.get(cbvalue.value(), self._column)
             if value:
                 return value.value()
@@ -1468,22 +1491,21 @@ class FieldSpec(object):
 
     """
     def __init__(self, id, label='', column_label=None, descr=None,
+                 virtual=False, dbcolumn=None, type=None, type_=None,
                  width=None, column_width=None, fixed=False, height=None,
-                 editable=None, compact=False, type_=None, default=None,
+                 editable=None, compact=False, default=None,
                  computer=None, line_separator='; ', codebook=None,
                  display=None, display_size=None, allow_codebook_insert=False,
                  codebook_insert_spec=None, codebook_runtime_filter=None,
                  selection_type=None, orientation=Orientation.VERTICAL,
                  post_process=None, filter=None, filter_list=None, style=None,
-                 link=()):
-        
+                 link=(), **kwargs):
         """Inicializace a doplnìní výchozích hodnot atributù.
 
         Argumenty:
 
-          id -- textový identifikátor pole; neprázdný øetìzec.  Urèuje vazbu do
-            datového zdroje a slou¾í k pøístupu k hodnotì políèka v rámci celé
-            aplikace.
+          id -- textový identifikátor pole; neprázdný øetìzec.  Pod tímto
+            identifikátorem je potom pole pøístupné ve v¹ech operacích.
           
           label -- text nápisu u vstupního pole jako øetìzec.  Smí být uvádìn
             té¾ jako pozièní argument.  Poøadí je zaruèeno.
@@ -1493,6 +1515,30 @@ class FieldSpec(object):
             
           descr -- podrobnìj¹í popis v rozsahu cca jedné vìty vhodný napøíklad
             pro zobrazení bublinové nápovìdy.
+
+          virtual -- boolovský pøíznak.  Pokud je pravdivý, jde o virtuální
+            políèko bez vazby na datový objekt.  Hodnota virtuálního políèka je
+            nejèastìji vypoètena pomocí computeru (viz specifikaèní parametr
+            'computer'.  Vzhledem k tomu, ¾e datový typ virtuálního políèka
+            nelze urèit automaticky (z datového objektu), je výchozí typ
+            stanoven napevno na 'pytis.data.String()'.  Pokud to nevyhovuje, je
+            tøeba typ urèit explicitnì (viz specifikaèní parametr 'type').
+
+          dbcolumn -- název pøíslu¹ného databázového sloupce.  Pokud není
+            urèen, je název databázového sloupce shodný s identifikátorem
+            políèka.  Toho je také doporuèováno vyu¾ívat pokud není nìjaký
+            záva¾ný dùvod, aby byl název sloupce jiný, ne¾ identifikáor
+            políèka.
+          
+          type -- explicitní urèení typu hodnoty, se kterou pracuje toto
+            políèko; instance 'pytis.data.Type'.  Výchozí datový typ je urèen
+            podle odpovídajícího sloupeèku datového objektu.  Pokud je v¹ak
+            políèko virtuální (viz ní¾e), je nutné typ urèit explicitnì (s
+            výjimkou virtuálních políèek pou¾ívajících 'CbComputer').  Typ
+            mù¾eme také explicitnì pøedefinovat, pokud chceme pro prezentaci
+            hodnot pou¾ít jiný typ, ne¾ výchozí typ datového rozhraní (ten v¹ak
+            *musí* být kompatibilní s typem datového rozhraní).  Viz také
+            metoda 'type()'.
             
           width -- ¹íøka pole ve znacích; kladné celé èíslo, nebo 0,
             v kterém¾to pøípadì je pole skryté.  Je-li 'None', bude pou¾ita
@@ -1527,19 +1573,9 @@ class FieldSpec(object):
             (bude tedy nad políèkem).  V opaèném pøípadì (výchozí chování) je
             popisek vlevo od políèka.
             
-          type_ -- explicitní urèení typu hodnoty, se kterou pracuje toto
-            políèko; instance 'pytis.data.Type'.  Výchozí datový typ je urèen
-            podle odpovídajícího sloupeèku datového objektu.  Pokud je v¹ak
-            políèko virtuální (viz ní¾e), je nutné typ urèit explicitnì (s
-            výjimkou virtuálních políèek pou¾ívajících 'CbComputer').  Typ
-            mù¾eme také explicitnì pøedefinovat, pokud chceme pro prezentaci
-            hodnot pou¾ít jiný typ, ne¾ výchozí typ datového rozhraní (ten v¹ak
-            *musí* být kompatibilní s typem datového rozhraní).  Viz také
-            metoda 'type()'.
-            
           default -- funkce pro výpoèet výchozí hodnoty políèka.  Callable
             object vracející hodnotu kompatibilní s vnitøní hodnotou
-            odpovídajícího datového typu (viz argument 'type_').
+            odpovídajícího datového typu (viz argument 'type').
             
           computer -- 'instance tøídy 'Computer', nebo None.  Specifikuje
             dopoèítávané políèko (viz. také ní¾e).
@@ -1633,7 +1669,7 @@ class FieldSpec(object):
         (i novì vytvoøeného) záznamu.  Pou¾ití plnì virtuálních sloupcù není
         doporuèováno z dùvodu výkonnostních problémù v rozsáhlej¹ích
         tabulkových náhledech.  U plnì virtuálních políèek je také nutné urèit
-        explicitnì datový typ pomocí specifikátoru 'type_', proto¾e není mo¾né
+        explicitnì datový typ pomocí specifikátoru 'type', proto¾e není mo¾né
         jej pøevzít automaticky z datového objektu.  Jedinou výjimkou jsou
         dopoèítávaná virtuální políèka typu 'CbComputer', kde je typ pøevzat z
         datového objektu enumerátoru.
@@ -1655,23 +1691,30 @@ class FieldSpec(object):
         pomocí specifikátoru 'editable'.
 
         """
-        assert is_string(id)
+        assert isinstance(id, str)
+        assert dbcolumn is None or isinstance(dbcolumn, str)
         self._id = id
+        self._dbcolumn = dbcolumn or id
+        if type_ is not None:
+            assert type is None
+            type = type_
         assert label is None or is_anystring(label)
         assert descr is None or is_anystring(descr)
-        assert type_ is None or isinstance(type_, pytis.data.Type)
-        assert isinstance(fixed, types.BooleanType)
+        assert type is None or isinstance(type, pytis.data.Type)
+        assert isinstance(virtual, bool)
+        assert isinstance(fixed, bool)
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
-        assert codebook is None or isinstance(codebook, types.StringType)
-        assert display is None or isinstance(display, str) or callable(display)\
-               or isinstance(display, tuple) and callable(display[0]) and \
-               isinstance(display[1], str)
-        assert display_size is None or isinstance(display_size, types.IntType)
-        assert isinstance(allow_codebook_insert, types.BooleanType)
+        assert codebook is None or isinstance(codebook, str)
+        assert display is None or isinstance(display, str) \
+               or callable(display) or isinstance(display, tuple) \
+               and len(display) == 2 and callable(display[0]) \
+               and isinstance(display[1], str)
+        assert display_size is None or isinstance(display_size, int)
+        assert isinstance(allow_codebook_insert, bool)
         assert codebook_insert_spec is None \
-               or isinstance(codebook_insert_spec, types.StringType)
-        assert width is None or isinstance(width, types.IntType)
+               or isinstance(codebook_insert_spec, str)
+        assert width is None or isinstance(width, int)
         assert codebook_runtime_filter is None \
                or isinstance(codebook_runtime_filter, Computer)
         assert selection_type is None \
@@ -1693,6 +1736,9 @@ class FieldSpec(object):
         if __debug__:
             for lnk in links:
                 assert isinstance(lnk, Link)
+            for arg in kwargs.keys():
+                assert arg in ('not_null', 'value_column', 'validity_column',
+                               'validity_condition')
         self._label = label
         self._descr = descr
         self._width = width
@@ -1700,8 +1746,11 @@ class FieldSpec(object):
             column_width = width
         self._column_width = column_width
         self._column_label = column_label
+        if virtual and type is None:
+            type = pytis.data.String()
+        self._virtual = virtual
         self._fixed = fixed
-        self._type = type_
+        self._type = type
         self._compact = compact
         self._default = default
         self._computer = computer
@@ -1721,7 +1770,8 @@ class FieldSpec(object):
         self._filter_list = filter_list
         self._style = style
         self._links = links
-
+        self._dbcolumn_kwargs = kwargs
+        
     def __str__(self):
         return "<FieldSpec for '%s'>" % self.id()
         
@@ -1729,6 +1779,41 @@ class FieldSpec(object):
         """Vra» id pole zadané v konstruktoru jako string."""
         return self._id
 
+    def dbcolumn(self):
+        return self._dbcolumn
+    
+    def type(self, data=None):
+        """Vra» datový typ ze specifikace, nebo z datového sloupce.
+
+        Pokud byl typ explicitnì urèen v konstruktoru, bude vrácen tento typ,
+        jinak bude vrácen typ urèený sloupeèkem datového objektu pøedaného jako
+        argument.
+        
+        """
+        type = self._type
+        if data:
+            column = data.find_column(self.id())
+            if type is not None:
+                assert column is None or \
+                       isinstance(type, column.type().__class__)
+            elif column is not None:
+                type = column.type()
+            elif isinstance(self._computer, CbComputer):
+                cb_column = data.find_column(self._computer.field())
+                enumerator = cb_column.type().enumerator()
+                type = enumerator.type(self._computer.column())
+                assert type is not None, \
+                     "Invalid enumerator column '%s' in CbComputer for '%s'." \
+                     % (self._computer.column(), self.id())
+                    
+            else:
+                raise ProgramError("Data type not specified "
+                                   "for virtual column '%s'." % self.id())
+        return type
+
+    def virtual(self):
+        return self._virtual
+    
     def label(self):
         """Vra» textový popisek tohoto pole jako string."""
         return self._label
@@ -1807,36 +1892,7 @@ class FieldSpec(object):
     def compact(self):
         """Vra» pravdu, má li být popisek pøimknut k hornímu okraji políèka."""
         return self._compact
-        
-    def type(self, data=None):
-        """Vra» datový typ ze specifikace, nebo z datového sloupce.
 
-        Pokud byl typ explicitnì urèen v konstruktoru, bude vrácen tento typ,
-        jinak bude vrácen typ urèený sloupeèkem datového objektu pøedaného jako
-        argument.
-        
-        """
-        type = self._type
-        if data:
-            column = data.find_column(self.id())
-            if type is not None:
-                assert column is None or \
-                       isinstance(type, column.type().__class__)
-            elif column is not None:
-                type = column.type()
-            elif isinstance(self._computer, CbComputer):
-                cb_column = data.find_column(self._computer.field())
-                enumerator = cb_column.type().enumerator()
-                type = enumerator.type(self._computer.column())
-                assert type is not None, \
-                     "Invalid enumerator column '%s' in CbComputer for '%s'." \
-                     % (self._computer.column(), self.id())
-                    
-            else:
-                raise ProgramError("Data type not specified "
-                                   "for virtual column '%s'." % self.id())
-        return type
-        
     def default(self):
         """Vra» funkci pro výpoèet výchozí hodnoty."""
         return self._default
@@ -1907,6 +1963,9 @@ class FieldSpec(object):
         """Vra» specifikaci odkazu zadanou v konstruktoru."""
         return self._links
 
+    def dbcolumn_kwargs(self):
+        return self._dbcolumn_kwargs
+
 
 
 class DataSpec(pytis.data.DataFactory):
@@ -1919,6 +1978,11 @@ class DataSpec(pytis.data.DataFactory):
     tøídy nejen pøehlednìj¹í, ale také flexibilnìj¹í.
 
     Podrobný popis rozhraní viz. konstruktor tøídy.
+
+    POZOR: Namísto této tøídy je vhodnìj¹í pou¾ívat tøídu 'Specification' ní¾e.
+    Ta zajistí sestavení datové specifikace zcela automaticky, tak¾e samostatné
+    udr¾ování datových specifikací ji¾ není potøeba.  Pokud se tøída
+    'Specification' osvìdèí, je mo¾né ¾e tato tøída bude v budouvnu zru¹ena.
 
     """
     
@@ -2092,4 +2156,152 @@ class Column(object):
     def kwargs(self):
         """Vra» slovník klíèových argumentù konstruktoru datového typu."""
         return self._kwargs
+
+
+class Specification(object):
+    """Souhrnná specifikaèní tøída sestavující specifikace automaticky.
+
+    Tato tøída zjednodu¹uje vytváøení specifikací tím, ¾e definuje vlastní
+    pravidla pro sestavování jak prezentaèní tak datové specifikace pouze na
+    základì jediné specifikace políèek a nìkterých dal¹ích vlastností.
+
+    Pou¾ití: Specifikaci vytvoøíme odvozením specifikaèní tøídy náhledu od této
+    tøídy a pøedefinováním jejich veøejných atributù.  To ulehèuje tvorbu
+    variant náhledù s vyu¾itím dìdiènosti.
+
+    Význam atributù: Nìkteré atrubuty jsou definovány pøímo touto tøídou --
+    jejich význam je zdokumentován v rámci jejich dokumentaèních øetìzcù.
+    V¹echny ostatní veøejné atributy, které odvozená tøída definuje budou
+    pøedány jako stejnojmenné argumenty konstruktoru 'ViewSpec'.
+
+    """
+    
+    table = None
+    """Název datové tabulky jako øetìzec.
+
+    Pokud název není urèen, bude odvozen automaticky z názvu specifikaèní
+    tøídy.  Kapitálky jsou pøevedeny na slova oddìlená podtr¾ítkem, tak¾e
+    napø. pro specifikaèní tøídu 'UcetniOsnova' bude název tabulky
+    'ucetni_osnova'.  Z hlediska pøehlednosti je doporuèováno volit toto jmenné
+    schéma a vyhnout se tak explicitnímu urèování názvù tabulek.
+
+    """
+
+    key = None
+    """Identifikátor klíèového sloupce jako øetìzec, nebo jejich sekvence.
+
+    Pokud má tabulka vícenásobný klíè, udáme sekvenci identifikátorù
+    pøíslu¹ných sloupcù.  Vyjmenované sloupce se musí nacházet ve specifikaci
+    'fields'.  Pokud klíè není definován, bude automaticky za klíèový pova¾ován
+    první sloupec z 'fields'.
+
+    """
+
+    access_rights = None
+    """Pøístupová práva náhledu jako instance 'AccessRights'."""
+
+    data_cls = pytis.data.DBDataDefault
+    """Datová tøída pou¾itá pro vytvoøení datového objektu."""
+
+    fields = ()
+    """Specifikace políèek jako sekvence instancí 'FieldSpec'.
+    
+    Pokud nejde o sekvenci, ale o metodu, je tato metoda v okam¾ik sestavování
+    specifikace zavolána a sekvence políøèek je oèekávána jako její návratová
+    hodnota.
+    
+    """
+    
+    bindings = {}
+    """Specifikace vazeb pro pou¾ití v duálních formuláøích.
+    
+    Slovník, kde klíèem je název specifikace vedlej¹ího formuláøe a hodnotou je
+    instance 'BindingSpec' urèující jak se tento náhled vá¾e s danám vedlej¹ím
+    náhledem.
+    
+    """
+    
+    cb = CodebookSpec()
+    """Specifikace vlastností náhledu pøi jeho pou¾ití jako èíselkíku.
+    
+    Instance CodebookSpec.
+    """
+    
+    prints = None
+    """Specifikace tiskových náhledù.
+    
+    Sekvence dvojic (titulek, název tiskové specifikace).
+    
+    """
+    
+    def __init__(self, resolver):
+        self._resolver = resolver
+        if callable(self.fields):
+            self.fields = self.fields()
+        assert self.fields, 'No fields defined for %s.' % str(self)
+        assert isinstance(self.fields, (list, tuple))
+        self._view_spec_kwargs = {}
+        for attr in dir(self):
+            if not (attr.startswith('_') or attr.endswith('_spec') or \
+                    attr in ('table', 'key', 'access_rights',
+                             'data_cls', 'bindings', 'cb', 'prints')):
+                self._view_spec_kwargs[attr] = getattr(self, attr)
+                
+            
+    def _create_data_spec(self):
+        def e(name):
+            return name and self._resolver.get(name, 'data_spec')
+        table = self.table or \
+                camel_case_to_lower(self.__class__.__name__, '_')
+        bindings = [pytis.data.DBColumnBinding(f.id(), table, f.dbcolumn(),
+                                               enumerator=e(f.codebook()),
+                                               type_=f.type(),
+                                               **f.dbcolumn_kwargs())
+                    for f in self.fields if not f.virtual()]
+        if self.key:
+            bdict = dict([(b.column(), b) for b in bindings])
+            key = [bdict[k] for k in self.key]
+        else:
+            key = bindings[0]
+        access_rights = self.access_rights
+        if access_rights is None:
+            perm = pytis.data.Permission.ALL
+            access_rights = pytis.data.AccessRights((None, (None, perm)))
+        return pytis.data.DataFactory(self.data_cls, bindings, key,
+                                      access_rights=access_rights)
+
+    def _create_view_spec(self, title=None, **kwargs):
+        if not title:
+            title = ' '.join(split_camel_case(self.__name__))
+        return ViewSpec(title, **kwargs)
+
+    def view_spec(self):
+        """Vra» prezentaèní specifikaci jako instanci 'ViewSpec'."""
+        try:
+            spec = self._view_spec
+        except AttributeError:
+            kwargs = self._view_spec_kwargs
+            spec = self._view_spec = self._create_view_spec(**kwargs)
+        return spec
+        
+    def data_spec(self):
+        """Vra» datovou specifikaci jako instanci datové tøídy."""
+        try:
+            spec = self._data_spec
+        except AttributeError:
+            spec = self._data_spec = self._create_data_spec()
+        return spec
+        
+    def cb_spec(self):
+        """Vra» specifikaci èíselníku jako instanci 'CodebookSpec'."""
+        return self.cb
+    
+    def binding_spec(self):
+        """Vra» specifikaci navázání v duálním formuláøi jako slovník."""
+        return self.bindings
+
+    def print_spec(self):
+        """Vra» sekvenci specifikací tiskových náhledù."""
+        return self.prints
+
 
