@@ -4,6 +4,17 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dı
 ; uvozen "* BUGFIX:"
 
+2006-11-21  Tomas Cerha  <cerha@brailcom.org>
+
+	V `pytis.presentation' pøibyla nová tøída `Specification' pro
+	zjednodu¹ení tvorby specifikací.  Tøída sestavuje specifikace
+	automaticky na základì hodnot atributù, tak¾e lze snadno vytváøet
+	varianty specifikací pouhım pøedefinováním potøebnıch atributù v
+	odvozené tøídì.  Dal¹í podstatné zjednodu¹ení spoèívá v tom, ¾e
+	tøída automaticky vytváøí datovou specifikaci pouze na základì
+	fields, tak¾e by ji¾ vùbec nemìlo bıt potøeba datové specifikace
+	udr¾ovat.  Více viz dokumentace tøídy.
+	
 2006-11-20  Tomas Cerha  <cerha@brailcom.org>
 
 	Resolver nyní ke¹uje instance specifikaèních tøíd.  Pøi vytváøení
