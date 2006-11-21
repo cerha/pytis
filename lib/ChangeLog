@@ -1,5 +1,9 @@
 2006-11-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/util/resolver.py (Resolver._get_spec): Raise
+	`ResolverSpecError' when given method does not exist for the spec
+	class.
+
 	* pytis/presentation/spec.py (ViewSpec.__init__): Nový argument
 	'singular'.  Nové mo¾nosti urèení 'layout'.  Aktualizace docstringu.
 	(ViewSpec.singular): Nová metoda.
