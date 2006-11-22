@@ -1746,7 +1746,9 @@ class FieldSpec(object):
                 assert isinstance(lnk, Link)
             for arg in kwargs.keys():
                 assert arg in ('not_null', 'value_column', 'validity_column',
-                               'validity_condition')
+                               'validity_condition', 'constraints',
+                               'validation_messages', 'precision', 'maxlen',
+                               'format', 'mindate', 'maxdate')
         self._label = label
         self._descr = descr
         self._width = width
