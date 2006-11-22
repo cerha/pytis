@@ -1,3 +1,7 @@
+2006-11-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (ef): Pøedávej kwargs.
+
 2006-11-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py (Module): V¹e pøepsáno s ohledem na
