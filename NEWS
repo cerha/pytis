@@ -4,6 +4,19 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-22  Tomas Cerha  <cerha@brailcom.org>
+
+	Jako argument `layout' ve ViewSpec je nyní mo¾né pou¾ít také
+	prostý seznam identifikátorù políèek.  V tom pøípadì bude layout
+	sestaven vertikálním poskládáním vyjmenovaných políèek.
+
+	Vstupní políèka výètových typù nyní v¾dy zobrazují hodnotu danou
+	specifikací `display'.  Díky tomu je mo¾né ve výbìru zobrazit
+	textový popis a ne vnitøní kód èíselníku.  Tím je koneènì mo¾né
+	rozumné vyu¾ití políèek typu CHOICE, RADIO_BOX a SELECT_BOX
+	namísto obyèejných èíselníkových políèek.
+	
+	
 2006-11-21  Tomas Cerha  <cerha@brailcom.org>
 
 	V `pytis.presentation' pøibyla nová tøída `Specification' pro

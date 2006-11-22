@@ -163,6 +163,8 @@ INTERNÍ ZÁLE®ITOSTI:
    vyøe¹eno, tak¾e mù¾eme závislost na pøítomnosti OID zru¹it a vyu¾ít pøímo
    Postgresového mechanismu zamykání.
 
+ * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
+
  * Mezivrstva pro práci s aktuálním selectem, kurzory apod.
 
    Je tøeba oddìlit ve¹kerý kód týkající se práce s aktuálním selectem,
@@ -186,8 +188,6 @@ INTERNÍ ZÁLE®ITOSTI:
    Value, ne se stringy.  Také by bylo vhodné, kdyby políèko mìlo pøístup pøímo
    k PresentedRow.
    
- * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
-
  * Vyjasnìní práce s arguemntem prefill.
 
    Argument prefill je nyní pou¾íván k nìkolika pomìrnì rozlièným úèelùm
