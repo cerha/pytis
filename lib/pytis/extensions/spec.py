@@ -92,8 +92,9 @@ def df(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
 def ddf(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
-def ef(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey)
+def ef(title, name, hotkey=None, **kwargs):
+    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey,
+                          **kwargs)
 
 
 # Dal¹í funkce pro zjednodu¹ení èasto pou¾ívaných konstrukcí
