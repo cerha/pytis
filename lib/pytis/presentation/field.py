@@ -564,7 +564,7 @@ class PresentedRow(object):
             return ''
     
     def enumerate(self, key):
-        """Vta» výèet hodnot èíselníku daného políèka jako seznam dvojic.
+        """Vra» výèet hodnot èíselníku daného políèka jako seznam dvojic.
 
         Vrácený seznam obsahuje v¾dy vnitøní Pythonovou hodnotu èíselníku a k
         ní odpovídající u¾ivatelskou hodnotu jako øetìzec.  U¾ivatelská hodnota
