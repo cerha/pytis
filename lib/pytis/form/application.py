@@ -208,7 +208,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._frame.Show(True)
         # Run application specific initialization.
         self._spec('init')
-        self._panel.SetFocus()
+        if self._windows.empty():
+            self._panel.SetFocus()
         # Open the startup forms.
         if config.startup_forms:
             for name in config.startup_forms.split(','):
