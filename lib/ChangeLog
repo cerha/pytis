@@ -20,6 +20,8 @@
 
 	* pytis/presentation/spec.py (ViewSpec.__init__): Umo¾ni
 	specifikovat `layout' také jen jako sekvenci identifikátorù políèek.
+	(FieldSpec.type): U vybraných atributù pøevádìj hodnotu na
+	výsledek volání funkce, pokud je hodnotou funkce.
 
 	* pytis/presentation/field.py (PresentedRow.enumerate): Oprava docstringu.
 
