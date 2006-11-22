@@ -1,5 +1,15 @@
 CHYBY:
 
+ * Defs KontrolniNahledy nemá pøi startu ISASu focus.
+
+   U¾ivateli, který je veden v kontrolní náhledech se zobrazuje pøi startu
+   ISASu hlá¹ka, ¾e "Byly nalezeny kontrolní náhledy ...". Následnì se spustí
+   BrowseForm KontrolniNahledy, který nelze uzavøít pøes ESC, ale musí
+   se my¹í do nìj kliknout, aby získal focus a teprve pak lze pou¾ít ESC.
+
+ * Políèko pro poèet záznámù ve stavové øádce nezobrazuje celý údaj. Tj. je
+   pøíli¹ malé.
+
  * Zkopírovat obsah buòky nefunguje s èe¹tinou.
 
    Projevuje se pouze na Windowsech pøes Cygwin.
