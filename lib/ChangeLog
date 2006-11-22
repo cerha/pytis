@@ -1,5 +1,24 @@
 2006-11-22  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (InputField.__init__): Zapamatuj si
+	detový objekt.
+	(EnumerationField._choices): Nová metoda.
+	(EnumerationField._values): Metoda zru¹ena.
+	(ChoiceField._create_ctrl, RadioBoxField._create_ctrl)
+	(ListBoxField._create_ctrl): `self._values()' ->
+	`self._choices()'.
+	(EnumerationField.get_value): Získávej hodnotu podle jejího
+	indexu, ne podle øetìzce.
+	(EnumerationField._set_value): Nastavuj hodnotu podle jejího
+	indexu, ne podle øetìzce.  Nepou¾ívej `self._set_selection()'.
+	(EnumerationField._set_selection, ChoiceField._set_selection):
+	Metody zru¹eny.
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Umo¾ni
+	specifikovat `layout' také jen jako sekvenci identifikátorù políèek.
+
+	* pytis/presentation/field.py (PresentedRow.enumerate): Oprava docstringu.
+
 	* pytis/form/_grid.py (ListTable.update): Kosmetická úprava.
 
 2006-11-21  Tomas Cerha  <cerha@brailcom.org>
