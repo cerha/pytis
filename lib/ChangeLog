@@ -22,6 +22,8 @@
 	specifikovat `layout' také jen jako sekvenci identifikátorù políèek.
 	(FieldSpec.type): U vybraných atributù pøevádìj hodnotu na
 	výsledek volání funkce, pokud je hodnotou funkce.
+	(FieldSpec.__init__): Aktualizován seznam podporovaných argumentù
+	datových typù.
 
 	* pytis/presentation/field.py (PresentedRow.enumerate): Oprava docstringu.
 
