@@ -144,12 +144,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     def __init__(self, parent, spec, data, guardian=None, inline=False,
                  accessible=True):
-        """Vytvoø vstupní políèko, podle specifikace a typu dat.
+        """Vytvoø vstupní políèko, podle specifikace.
 
         Argumenty:
 
-          parent -- libovolná instance 'wx.Window', která má být pou¾ívána
-            jako wx rodiè v¹ech vytváøených wx prvkù
+          parent -- instance 'wx.Window', která má být pou¾ívána jako wx rodiè
+            v¹ech vytváøených wx prvkù
             
           spec -- specifikace prezentaèních vlastností, instance tøídy
             'spec.FieldSpec'
@@ -179,6 +179,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._parent = parent
         self._type = spec.type(data)
         self._spec = spec
+        self._data = data
         self._guardian = guardian
         self._id = id = spec.id()
         self._inline = inline
@@ -864,22 +865,29 @@ class EnumerationField(InputField):
     vstupní pole nad výètovým typem dat.
     
     """
-    def _values(self):
+    def _choices(self):
         # Return a sequence of string representations of all type's values.
-        t = self._type
-        return [t.export(v) for v in t.enumerator().values()]
+        # We don't have access to the PresentedRow here, so we create a fake
+        # one just for this field to be able to use its `enumerate' method.
+        r = PresentedRow((self._spec,), self._data, None)
+        return [x[1] for x in r.enumerate(self.id())]
 
     def get_value(self):
-        return self._ctrl.GetStringSelection()
+        i = self._ctrl.GetSelection()
+        value = self._type.enumerator().values()[i]
+        return self._type.export(value)
 
-    def _set_selection(self, value):
-        return self._ctrl.SetStringSelection(value)
-    
     def _set_value(self, value):
         assert isinstance(value, types.StringTypes), ('Invalid value', value)
-        result = self._set_selection(value)
-        # _on_change musíme volat ruènì, proto¾e SetStringSelection() nevyvolá
-        # událost.
+        t = self._type
+        values = [t.export(v) for v in t.enumerator().values()]
+        try:
+            i = values.index(value)
+        except ValueError:
+            i = wx.NOT_FOUND
+        result = self._ctrl.SetSelection(i)
+        # _on_change must be called here, because SetSelection() doesn't emit
+        # an event.
         self._on_change()
         return result
 
@@ -889,20 +897,10 @@ class ChoiceField(EnumerationField):
 
     def _create_ctrl(self):
         """Vra» instanci 'wx.Choice' podle specifikace."""
-        control = wx.Choice(self._parent, choices=self._values())
+        control = wx.Choice(self._parent, choices=self._choices())
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
 
-    def _set_selection(self, value):
-        result = super(ChoiceField, self)._set_selection(value)
-        if not result:
-            # If an invalid value is set, the control shows the first value as
-            # selected, but GetStringSelection() returns an empty string.  This
-            # is a problem on initialization, since the NULL initial value is
-            # set as an empty string, which is not in the list.
-            self._ctrl.SetSelection(0)
-        return result
-    
     
 class RadioBoxField(Unlabeled, EnumerationField):
     """Vstupní pole pro výètový typ reprezentované pomocí 'wx.RadioBox'.
@@ -932,7 +930,7 @@ class RadioBoxField(Unlabeled, EnumerationField):
         if label:
             label = label + ':'
         control = wx.RadioBox(self._parent, -1, label,
-                              choices=self._values(), style=style,
+                              choices=self._choices(), style=style,
                               majorDimension=dimension)
         wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
         return control
@@ -943,7 +941,7 @@ class ListBoxField(EnumerationField):
 
     def _create_ctrl(self):
         """Vra» instanci 'wx.ListBox' podle specifikace."""
-        control = wx.ListBox(self._parent, choices=self._values(),
+        control = wx.ListBox(self._parent, choices=self._choices(),
                              style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
         return control
