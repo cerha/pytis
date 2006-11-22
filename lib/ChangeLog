@@ -1,5 +1,9 @@
 2006-11-22  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application.OnInit): Nastavuj focus
+	jen pokud nebyly bìhem volání specifikaèní funkce init otevøeny
+	nìjaké formuláøe.
+
 	* pytis/form/inputfield.py (InputField.__init__): Zapamatuj si
 	detový objekt.
 	(EnumerationField._choices): Nová metoda.

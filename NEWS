@@ -15,7 +15,12 @@
 	textový popis a ne vnitøní kód èíselníku.  Tím je koneènì mo¾né
 	rozumné vyu¾ití políèek typu CHOICE, RADIO_BOX a SELECT_BOX
 	namísto obyèejných èíselníkových políèek.
-	
+
+	* BUGFIX: Nastavování focusu pøi inicializaci aplikace nyní
+	zohledòuje pøípadné formuláøe otevøené bìhem inicializace
+	aplikace.  Díky tomu se nestane, ¾e takto otevøené formuláøe po
+	startu aplikace nedostanou focus, jako tomu bylo napøíklad v isasu
+	pøi zobrazení kontrolních náhledù.
 	
 2006-11-21  Tomas Cerha  <cerha@brailcom.org>
 
