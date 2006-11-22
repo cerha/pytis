@@ -2254,7 +2254,14 @@ class Specification(object):
                     attr in ('table', 'key', 'access_rights',
                              'data_cls', 'bindings', 'cb', 'prints')):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
-                
+        for arg in ('layout', 'actions'):
+            try:
+                value = self._view_spec_kwargs[arg]
+            except:
+                continue
+            if callable(value):
+                self._view_spec_kwargs[arg] = value()
+            
             
     def _create_data_spec(self):
         def e(name):
