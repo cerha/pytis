@@ -656,9 +656,13 @@ class ViewSpec(object):
             'FieldSpec'.
             
           layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
-            instance tøídy 'GroupSpec'.  Pro zpìtnou kompatibilitu je mo¾né
-            pou¾ít také 'LayoutSpec', ale tento zpùsob definice je pova¾ován za
-            nevhodný a v budoucnu nebude podporován.
+            instance tøídy 'GroupSpec'.  Je mo¾né pøedat také sekvenci
+            identifikátorù políèek -- v tom pøípadì bude vytvoøena horizontální
+            skupina obsahující vyjmenovaná políèka.  Pokud je None, bude
+            výchozí rozlo¾ení sestaveno poskládáním v¹ech políèek definovaných
+            ve fields.  Pro zpìtnou kompatibilitu je mo¾né pou¾ít také
+            'LayoutSpec', ale tento zpùsob definice je pova¾ován za nevhodný a
+            v budoucnu nebude podporován.
             
           columns -- specifikace sloupcù tabulkového formuláøe, sekvence
             indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
@@ -794,6 +798,10 @@ class ViewSpec(object):
                                           orientation=Orientation.VERTICAL))
         elif isinstance(layout, GroupSpec):
             layout = LayoutSpec(singular, layout)
+        elif isinstance(layout, (list, tuple)):
+            layout = LayoutSpec(singular,
+                                GroupSpec(layout,
+                                          orientation=Orientation.VERTICAL))
         if __debug__:
             assert isinstance(layout, LayoutSpec)
             def recourse_group(group):
