@@ -1,3 +1,7 @@
+2006-11-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (ListTable.update): Kosmetická úprava.
+
 2006-11-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/resolver.py (Resolver._get_spec): Raise
