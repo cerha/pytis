@@ -36,6 +36,14 @@ CHYBY:
 NOVÉ VLASTNOSTI:
 
 
+ * Vyu¾ití Wikinga pro webové rozhraní k aplikacím.
+
+   Wiking ji¾ nyní umí pracovat s daty nad pytisovými specifikacemi.
+   Potøebujeme v¹ak umo¾nit napojit Wikinga na libovolnou stávající aplikaci a
+   zajistit mo¾nost volby náhledù, které budou skrze Wikinga pøístupné.  Aby to
+   bylo v praxi pou¾itelné, bude nutné zvolit zpùsob správy pøístupových práv k
+   tìmto náhledùm.
+
  * Práce s Binary Large Objekty.
 
  * Pou¾ití externího PS prohlí¾eèe.
