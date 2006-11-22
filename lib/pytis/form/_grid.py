@@ -341,8 +341,8 @@ class ListTable(wx.grid.PyGridTableBase):
         d = wx.NamedColor(config.grouping_background_downgrade)
         return (255-d.Red(), 255-d.Green(), 255-d.Blue())
     
-    def update(self, columns, row_count, sorting, grouping, inserted_row_number,
-               inserted_row, prefill):
+    def update(self, columns, row_count, sorting, grouping,
+               inserted_row_number, inserted_row, prefill):
         assert isinstance(grouping, types.TupleType)
         self._update_columns(columns)
         self._row_count = row_count
