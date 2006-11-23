@@ -828,7 +828,7 @@ class DBDataPostgreSQL(DBData):
         assert error is None, error
         return result
         
-    def distinct(self, column, condition=None, sort=None):
+    def distinct(self, column, condition=None, sort=ASCENDENT):
         """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
 
         Argumenty:
@@ -2257,7 +2257,7 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_select_rows = result
         return result
 
-    def _pg_distinct (self, column, condition, sort=ASCENDENT):
+    def _pg_distinct (self, column, condition, sort):
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(((column, sort),))
         if sort_string.endswith(','):
