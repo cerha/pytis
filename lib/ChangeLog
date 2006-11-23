@@ -1,9 +1,22 @@
 2006-11-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._column_context_menu): Pøidáno menu
+	autofiltru.
+	(ListForm._cmd_filter_by_cell): K vlastnímu provedení filtrace
+	vyu¾ívaj pøíkaz `LookupForm.COMMAND_FILTER_BY_VALUE'.
+
+	* pytis/form/form.py (LookupForm._cmd_filter_by_value): Nová metoda.
+
+	* pytis/form/commands_.py: Nový pøíkaz
+	`LookupForm.COMMAND_FILTER_BY_VALUE'.
+	(WX_COMMAND_ICONS): Nastav ikonu pro COMMAND_FILTER_BY_VALUE.
+
 	* pytis/data/dbdata.py
-	(PostgreSQLStandardBindingHandler._pg_distinct): 
-	Nech» je výchozí tøídìní automaticky vzestupné.  Vracej instance
-	Value, nikoliv vnitøní hodnoty.
+	(PostgreSQLStandardBindingHandler._pg_distinct): Poèítej s tím, ¾e
+	`sort' je v¾dy urèeno.  Vracej instance Value, nikoliv vnitøní
+	hodnoty.
+	(DBDataPostgreSQL.distinct): Nech» je výchozí hodnotou argumentu
+	`sort' `ASCENDENT'.
 
 2006-11-23  Petr Malivanek  <malivanek@asellus.cz>
 
