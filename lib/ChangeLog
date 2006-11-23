@@ -1,3 +1,10 @@
+2006-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py
+	(PostgreSQLStandardBindingHandler._pg_distinct): 
+	Nech» je výchozí tøídìní automaticky vzestupné.  Vracej instance
+	Value, nikoliv vnitøní hodnoty.
+
 2006-11-23  Petr Malivanek  <malivanek@asellus.cz>
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): Kosmetická úprava.

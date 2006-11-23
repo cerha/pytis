@@ -2260,7 +2260,7 @@ class PostgreSQLStandardBindingHandler(object):
     def _pg_distinct (self, column, condition, sort):
         cond_string = self._pdbb_condition2sql(condition)
         if sort is None:
-            sort_spec = ()
+            sort_spec = ((column, ASCENDENT),)
         else:
             sort_spec = ((column, sort),)
         sort_string = self._pdbb_sort2sql(sort_spec)
@@ -2269,7 +2269,7 @@ class PostgreSQLStandardBindingHandler(object):
         data = self._pg_query(self._pdbb_command_distinct % \
                               (column, cond_string, sort_string))
         tmpl = self._pg_create_make_row_template((self.find_column(column),))
-        result = [self._pg_make_row_from_raw_data([r], tmpl)[column].value()
+        result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
                   for r in data]
         return result
     
