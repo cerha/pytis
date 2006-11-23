@@ -761,11 +761,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         c = self._columns[col]
         if self._data.find_column(c.id()):
             cond = self._lf_condition
-            autofilter_values = self._data.distinct(c.id(), condition=cond)
-            if len(autofilter_values) > 100:
-                autofilter_values = ()
+            distinct = self._data.distinct(c.id(), condition=cond)
+            if len(distinct) > 60:
+                autofilter = (I(_("Pøili¹ mnoho polo¾ek pro autofiltr..."),
+                                command=Application.COMMAND_NOTHING),)
+            else:
+                autofilter = [I(v.export(),
+                                command=ListForm.COMMAND_FILTER_BY_VALUE,
+                                args=dict(column_id=c.id(), value=v))
+                              for v in distinct]
         else:
-            autofilter_values = ()
+            autofilter = (I("Nad tímto sloupcem nelze filtrovat...",
+                            command=Application.COMMAND_NOTHING),)
         items = (M(_("Primární øazení"),
                    (I(_("Øadit vzestupnì"),
                       command=LookupForm.COMMAND_SORT,
@@ -795,12 +802,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
                    args=dict(col=None)),
                  ________,
-                 M(_("Autofiltr"),
-                   [I(v.export(),
-                      command=ListForm.COMMAND_FILTER_BY_VALUE,
-                      args=dict(column_id=c.id(), value=v))
-                    for v in autofilter_values]
-                   ),
+                 M(_("Autofiltr"), autofilter),
                  I(_("Zru¹ filtr"), command=LookupForm.COMMAND_UNFILTER),
                  ________,
                  I(_("Skrýt tento sloupec"),
