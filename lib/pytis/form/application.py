@@ -753,6 +753,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_exit(self):
         self._frame.Close()
         
+    def _cmd_nothing(self):
+        pass
+        
     # Veøejné metody
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
