@@ -1181,6 +1181,13 @@ class LookupForm(RecordForm):
         self._lf_filter = None
         self._filter(None)
 
+    def _cmd_filter_by_value(self, column_id, value):
+        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
+        if sf_dialog.append_condition(column_id, value):
+            self.COMMAND_FILTER.invoke(show_dialog=False)
+        else:
+            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
+        
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
 
