@@ -1,3 +1,7 @@
+2006-11-23  Petr Malivanek  <malivanek@asellus.cz>
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Kosmetická úprava.
+
 2006-11-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.OnInit): Nastavuj focus
