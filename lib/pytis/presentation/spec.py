@@ -1748,7 +1748,7 @@ class FieldSpec(object):
                 assert arg in ('not_null', 'value_column', 'validity_column',
                                'validity_condition', 'constraints',
                                'validation_messages', 'precision', 'maxlen',
-                               'format', 'mindate', 'maxdate')
+                               'format', 'mindate', 'maxdate'), arg
         self._label = label
         self._descr = descr
         self._width = width
