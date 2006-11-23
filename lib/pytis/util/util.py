@@ -1433,7 +1433,7 @@ def positive_id(obj):
             assert result >= 0 # else addresses are fatter than 64 bits
     return result
 
-_CAMEL_CASE_WORD = re.compile(r'[A-Z][a-z\d]+')
+_CAMEL_CASE_WORD = re.compile(r'[A-Z][a-z\d]*')
 def split_camel_case(string):
     """Return a lowercase string using 'separator' to concatenate words."""
     return _CAMEL_CASE_WORD.findall(string)
