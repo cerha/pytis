@@ -1,15 +1,21 @@
 2006-11-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application._cmd_nothing): Nová metoda.
+
 	* pytis/form/list.py (ListForm._column_context_menu): Pøidáno menu
 	autofiltru.
 	(ListForm._cmd_filter_by_cell): K vlastnímu provedení filtrace
 	vyu¾ívaj pøíkaz `LookupForm.COMMAND_FILTER_BY_VALUE'.
+	(ListForm._column_context_menu): Pokud nelze sestavit menu
+	autofiltru, zobraz alespoò polo¾ku s udáním dùvodu.
 
 	* pytis/form/form.py (LookupForm._cmd_filter_by_value): Nová metoda.
 
 	* pytis/form/commands_.py: Nový pøíkaz
-	`LookupForm.COMMAND_FILTER_BY_VALUE'.
+	`LookupForm.COMMAND_FILTER_BY_VALUE'.  Nový pøíkaz
+	`Application.COMMAND_NOTHING'.
 	(WX_COMMAND_ICONS): Nastav ikonu pro COMMAND_FILTER_BY_VALUE.
+	
 
 	* pytis/data/dbdata.py
 	(PostgreSQLStandardBindingHandler._pg_distinct): Poèítej s tím, ¾e
