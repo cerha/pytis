@@ -80,6 +80,8 @@ Command(LookupForm, 'FILTER',
         "Filtrování záznamù")
 Command(LookupForm, 'UNFILTER',
         "Zru¹ení filtrování záznamù")
+Command(LookupForm, 'FILTER_BY_VALUE',
+        "Vyfiltrování formuláøe podle dané hodnoty") # arg. 'column_id', 'value'
 Command(LookupForm, 'JUMP',
         "Skok na záznam")
 Command(LookupForm, 'SEARCH',
@@ -369,6 +371,7 @@ WX_COMMAND_ICONS = {
     RecordForm.COMMAND_DELETE_RECORD:      'delete-record',
     LookupForm.COMMAND_SORT:               'sort-asc',
     LookupForm.COMMAND_FILTER:             'filter',
+    LookupForm.COMMAND_FILTER_BY_VALUE:      'filter-by-cell',
     LookupForm.COMMAND_UNFILTER:           'unfilter',
     LookupForm.COMMAND_SEARCH:             'search',
     LookupForm.COMMAND_JUMP:               'jump',
