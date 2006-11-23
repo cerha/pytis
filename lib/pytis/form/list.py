@@ -128,6 +128,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Parametry zobrazení.
         self._initial_position = self._position = 0
 
+
     def _default_columns(self):
         return self._view.columns()
 
@@ -757,7 +758,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         ________ = MSeparator()
         ASC = LookupForm.SORTING_ASCENDENT
         DESC = LookupForm.SORTING_DESCENDANT
-        #
+        c = self._columns[col]
+        if self._data.find_column(c.id()):
+            cond = self._lf_condition
+            autofilter_values = self._data.distinct(c.id(), condition=cond)
+            if len(autofilter_values) > 100:
+                autofilter_values = ()
+        else:
+            autofilter_values = ()
         items = (M(_("Primární øazení"),
                    (I(_("Øadit vzestupnì"),
                       command=LookupForm.COMMAND_SORT,
@@ -787,9 +795,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
                    args=dict(col=None)),
                  ________,
+                 M(_("Autofiltr"),
+                   [I(v.export(),
+                      command=ListForm.COMMAND_FILTER_BY_VALUE,
+                      args=dict(column_id=c.id(), value=v))
+                    for v in autofilter_values]
+                   ),
+                 I(_("Zru¹ filtr"), command=LookupForm.COMMAND_UNFILTER),
+                 ________,
                  I(_("Skrýt tento sloupec"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN,
-                   args=dict(column_id=self._columns[col].id())),
+                   args=dict(column_id=c.id())),
                  self._displayed_columns_menu(col=col)
                  )
         return Menu('', items)
@@ -1400,12 +1416,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _cmd_filter_by_cell(self):
         row, col = self._current_cell()
         id = self._columns[col].id()
-        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
-        if sf_dialog.append_condition(id, self._table.row(row)[id]):
-            self.COMMAND_FILTER.invoke(show_dialog=False)
-        else:
-            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
-
+        value = self._table.row(row)[id]
+        self.COMMAND_FILTER_BY_VALUE.invoke(column_id=id, value=value)
+            
     def _cmd_context_menu(self, position=None):
         if self._table.editing():
             menu = self._edit_menu()
