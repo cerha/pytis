@@ -2257,13 +2257,9 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_select_rows = result
         return result
 
-    def _pg_distinct (self, column, condition, sort):
+    def _pg_distinct (self, column, condition, sort=ASCENDENT):
         cond_string = self._pdbb_condition2sql(condition)
-        if sort is None:
-            sort_spec = ((column, ASCENDENT),)
-        else:
-            sort_spec = ((column, sort),)
-        sort_string = self._pdbb_sort2sql(sort_spec)
+        sort_string = self._pdbb_sort2sql(((column, sort),))
         if sort_string.endswith(','):
             sort_string = sort_string[:-1]
         data = self._pg_query(self._pdbb_command_distinct % \
