@@ -1069,7 +1069,6 @@ class ColorSelectionField(Invocable, TextField):
         button = wx.lib.colourselect.ColourSelect(self._parent, -1,
                                                   size=(height, height))
         return button
-
     def _set_value(self, value):
         self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
@@ -1202,8 +1201,12 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             self._display.SetValue(value)
 
     def _on_invoke_selection(self, alternate=False):
-        if alternate:
-            begin_search = self._type.enumerator().value_column()
+        value_column = self._type.enumerator().value_column()
+        if self._value() is None and self.get_value() \
+               and isinstance(self.type(), pytis.data.String):
+            begin_search = (value_column, self.get_value())
+        elif alternate:
+            begin_search = value_column
         else:
             begin_search = self._cb_spec.begin_search()
         self._run_codebook_form(begin_search=begin_search)
