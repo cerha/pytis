@@ -2295,7 +2295,7 @@ class Specification(object):
             if self.oid is None:
                 oid = ('oid',)
             else:
-                oid = xtuple(oid)
+                oid = xtuple(self.oid)
                 for c in oid:
                     assert isinstance(c, types.StringType)
             for o in oid:
