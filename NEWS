@@ -4,6 +4,28 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	Tøída `Specification' má nyní podporu také pro vytvoøení
+	virtuálního datového objektu.  Toho lze vyu¾ít napøíklad pro
+	zobrazení formuláøù, které nejsou vázány na databázovou tabulku (v
+	procedurách apod).  Proto¾e datové typy nelze urèit automaticky z
+	databáze, je výchozím datovým typem políèek v¾dy `String'.
+	Aktuální implementace má nyní nìkolik drobnìj¹ích omezení.
+	Napøíklad pokud je tøeba urèit typ èíselníkového políèka (je jiný
+	ne¾ String), je tøeba mu správnì pøedat v¹echny argumenty vèetnì
+	enumerátoru, tak¾e v tomto pøípadì nelze spoléhat na automatické
+	vytvoøení enumerátoru podle specifikace `codebook'.  Øe¹ení v¹ak
+	není triviální, tak¾e prozatím zkusme vystaèit s tímto omezením.
+	
+2006-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	V kontextovém menu záhlaví sloupce pøibyla nyní funkce
+	"Autofiltr".  Umo¾òuje vyfiltrovat tabulku podle výbìru z
+	"distinct" hodnot daného sloupce.  Funkce není dostupná pro
+	virtuální sloupce a pro sloupce obsahující více ne¾ 60 rùzných
+	hodnot.
+
 2006-11-22  Tomas Cerha  <cerha@brailcom.org>
 
 	Jako argument `layout' ve ViewSpec je nyní mo¾né pou¾ít také

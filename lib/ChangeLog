@@ -8,6 +8,7 @@
 	(FieldSpec.dbcolumn_kwargs): -> `type_kwargs'
 	(Specification._create_data_spec): Pøidána podpora pro vytvoøení
 	nedatabázového datového objektu (napø. MemData).
+	(Specification._create_data_spec): Pøidán assert.
 
 	* pytis/data/access.py (RestrictedMemData): Nová tøída.
 
