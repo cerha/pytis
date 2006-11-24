@@ -1668,6 +1668,14 @@ class FieldSpec(object):
             kontextovém menu øádku bude pro ka¾dý odkaz vytvoøena jedna polo¾ka
             umo¾òující odskok do odkazovaného náhledu s vyhledáním záznamu
             odpovídajícího aktuální hodnotì políèka.
+
+        V¹echny dal¹í argumenty, které budou konstruktoru pøedány jsou
+        pova¾ovány za argumenty konstruktoru datového typu.  Pøedání argumentù
+        konstruktoru tímto zpùsobem je preferováno pøed pøedáním instance typu.
+        Nìkteré argumenty takto ani pøedat nelze, jako napøíklad `enumerator'
+        který je vytváøen automaticky podle argumentu `codebook'.  To v¹ak
+        platí jen pøi pou¾ití tøídy `Specification' pro sestavení datové
+        specifikace.
             
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
         hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
@@ -1780,7 +1788,7 @@ class FieldSpec(object):
         self._filter_list = filter_list
         self._style = style
         self._links = links
-        self._dbcolumn_kwargs = kwargs
+        self._type_kwargs = kwargs
         
     def __str__(self):
         return "<FieldSpec for '%s'>" % self.id()
@@ -1973,8 +1981,8 @@ class FieldSpec(object):
         """Vra» specifikaci odkazu zadanou v konstruktoru."""
         return self._links
 
-    def dbcolumn_kwargs(self):
-        return self._dbcolumn_kwargs
+    def type_kwargs(self):
+        return self._type_kwargs
 
 
 
@@ -2263,29 +2271,54 @@ class Specification(object):
                 continue
             if callable(value):
                 self._view_spec_kwargs[arg] = value()
-            
-            
+
     def _create_data_spec(self):
         def e(name):
             return name and self._resolver.get(name, 'data_spec')
-        table = self.table or \
-                camel_case_to_lower(self.__class__.__name__, '_')
-        bindings = [pytis.data.DBColumnBinding(f.id(), table, f.dbcolumn(),
-                                               enumerator=e(f.codebook()),
-                                               type_=f.type(),
-                                               **f.dbcolumn_kwargs())
-                    for f in self.fields if not f.virtual()]
-        if self.key:
-            bdict = dict([(b.column(), b) for b in bindings])
-            key = [bdict[k] for k in self.key]
+        if issubclass(self.data_cls, pytis.data.DBData):
+            table = self.table or \
+                    camel_case_to_lower(self.__class__.__name__, '_')
+            bindings = [pytis.data.DBColumnBinding(f.id(), table, f.dbcolumn(),
+                                                   enumerator=e(f.codebook()),
+                                                   type_=f.type(),
+                                                   **f.type_kwargs())
+                        for f in self.fields if not f.virtual()]
+            if self.key:
+                bdict = dict([(b.column(), b) for b in bindings])
+                key = [bdict[k] for k in self.key]
+            else:
+                key = bindings[0]
+            args = (bindings, key,)
         else:
-            key = bindings[0]
+            # TODO: Pøevod datových typù má mnohá omezení, ale zaènìme
+            # nìèím jednodu¹¹ím a dodìlejme co bude potøeba a¾ se uká¾e,
+            # ¾e je to skuteènì potøeba...
+            columns = []
+            for f in self.fields:
+                if not f.virtual():
+                    type = f.type() or pytis.data.String()
+                    kwargs = copy.copy(f.type_kwargs())
+                    enum = e(f.codebook())
+                    if enum:
+                        df_kwargs = {'dbconnection_spec': config.dbconnection}
+                        e_kwargs = {'data_factory_kwargs': df_kwargs}
+                        for a in ('value_column', 'validity_column',
+                                  'validity_condition'):
+                            if kwargs.has_key(a):
+                                e_kwargs[a] = kwargs[a]
+                                del kwargs[a]
+                        enumerator = pytis.data.DataEnumerator(enum, **e_kwargs)
+                        kwargs['enumerator'] = enumerator
+                    if kwargs:
+                        type = type.__class__(**kwargs)
+                    columns.append(pytis.data.ColumnSpec(f.id(), type))
+            args = (columns,)
         access_rights = self.access_rights
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        return pytis.data.DataFactory(self.data_cls, bindings, key,
-                                      access_rights=access_rights)
+        return pytis.data.DataFactory(self.data_cls, *args, 
+                                      **dict(access_rights=access_rights))
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:
