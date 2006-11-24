@@ -802,10 +802,13 @@ class IncrementalSearch:
         self._selection_callback = cb
         self._listform.set_callback(ListForm.CALL_SELECTION, None)
             
-    def run(self):
+    def run(self, prefill=None):
         self._widget.Show(True)
         self._widget.Enable(True)
-
+        if prefill:
+            self._widget.SetValue(prefill)
+            self._widget.SetInsertionPoint(len(prefill))
+            
     def _on_key_down(self, event):
         key = self._key.event_key(event)
         if key == 'Enter':
