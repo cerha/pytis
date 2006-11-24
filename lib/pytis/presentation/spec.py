@@ -2215,6 +2215,15 @@ class Specification(object):
 
     """
 
+    oid = None
+    """Specifikace názvù OID sloupcù (tuple).
+
+    Pokud je None (výchozí hodnota), bude doplnìn jeden sloupec s názvem 'oid'.
+    Pro v¹echny uvedené sloupce budou automaticky pøidány pøíslu¹né vazby.
+    Pokud tabulka nemá ¾ádný mít ¾ádný oid sloupec, uvedeme prázdný seznam.
+    Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
+    """
+
     access_rights = None
     """Pøístupová práva náhledu jako instance 'AccessRights'."""
 
@@ -2261,7 +2270,7 @@ class Specification(object):
         self._view_spec_kwargs = {}
         for attr in dir(self):
             if not (attr.startswith('_') or attr.endswith('_spec') or \
-                    attr in ('table', 'key', 'access_rights',
+                    attr in ('table', 'key', 'access_rights', 'oid',
                              'data_cls', 'bindings', 'cb', 'prints')):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         for arg in ('layout', 'actions'):
@@ -2283,6 +2292,17 @@ class Specification(object):
                                                    type_=f.type(),
                                                    **f.type_kwargs())
                         for f in self.fields if not f.virtual()]
+            if self.oid is None:
+                oid = ('oid',)
+            else:
+                oid = xtuple(oid)
+                for c in oid:
+                    assert isinstance(c, types.StringType)
+            for o in oid:
+                oidcol = pytis.data.DBColumnBinding(o, table, o,
+                                                    type_=pytis.data.Oid()
+                                                    )
+                bindings.append(oidcol)
             if self.key:
                 bdict = dict([(b.column(), b) for b in bindings])
                 key = [bdict[k] for k in self.key]
