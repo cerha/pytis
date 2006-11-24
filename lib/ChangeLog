@@ -1,5 +1,24 @@
 2006-11-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._cmd_incremental_search): Nový
+	argument prefill.
+	(CodebookForm._on_idle): O¹etøi také pøedání `begin_search' jako
+	tuple, s pøedvyplnìnou vyhledávanou hodnotou.
+
+	* pytis/form/inputfield.py (CodebookField._on_invoke_selection):
+	Pokud je pøedvyplnìna èást hodnoty, která není validní, nastartuj
+	èíselník s inkrementálním vyhledáváním této hodnoty.
+
+	* pytis/form/_grid.py (IncrementalSearch.run): Nový nepovinný
+	argument prefill.
+
+	* pytis/form/dualform.py (DualForm._initial_sash_position.dim):
+	Nová funkce.
+	(DualForm._initial_sash_position): Naèítej poèáteèní polohu z
+	ulo¾ené stavové informace `sash_position'.
+	(DualForm._on_sash_changed): Ukládej aktuální pozici do stavové
+	informace `sash_position'.
+
 	* pytis/form/form.py (Form._create_data_object): Pokud není datová
 	tøída potomkem DBData, nepøedávej `dbconnection_spec'.
 
