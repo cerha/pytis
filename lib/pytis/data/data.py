@@ -881,7 +881,7 @@ class MemData(Data):
         else:
             ProgramError("Operator not supported:", condition)
         
-    def select(self, condition=None, reuse=False):
+    def select(self, condition=None, reuse=False, sort=None):
         """Inicializace vytahování záznamù.
 
         Bli¾¹í popis viz nadtøída.  Argumenty 'condition' a 'sort' jsou
@@ -1503,6 +1503,10 @@ class DataFactory(object):
             DataFactory._data_object_cache = \
               LimitedCache(DataFactory._get_data_object)        
 
+    def class_(self):
+        """Vra» tøídu datového objektu."""
+        return self._class_
+            
     def create(self, **kwargs):
         """Vytvoø a vra» novou instanci datového objektu.
 
