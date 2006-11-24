@@ -2299,6 +2299,9 @@ class Specification(object):
                     type = f.type() or pytis.data.String()
                     kwargs = copy.copy(f.type_kwargs())
                     enum = e(f.codebook())
+                    assert f.type() is None or not kwargs and not enum, \
+                           ("Nelze urèit zároveò typ a jeho argumenty.",
+                            f.id(), kwargs, enum)
                     if enum:
                         df_kwargs = {'dbconnection_spec': config.dbconnection}
                         e_kwargs = {'data_factory_kwargs': df_kwargs}
