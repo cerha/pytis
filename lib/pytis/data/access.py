@@ -310,6 +310,12 @@ class RestrictedData(object):
         return super(RestrictedData, self).delete_many(condition)
 
 
+class RestrictedMemData(MemData, RestrictedData):
+    def __init__(self, columns, access_rights, data=()):
+        MemData.__init__(self, columns, data=data)
+        RestrictedData.__init__(self, access_rights)
+        
+    
 class DataAccessException(Exception):
     """Výjimka vyvolaná pøi poru¹ení pøístupových práv."""
 
