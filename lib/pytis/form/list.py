@@ -1490,7 +1490,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._set_state_param('grouping', self._grouping)
         self._update_grid()
     
-    def _cmd_incremental_search(self, full=False):
+    def _cmd_incremental_search(self, full=False, prefill=None):
         row, col = self._current_cell()
         column = self._columns[col]
         if not isinstance(column.type(self._data), pytis.data.String):
@@ -1498,7 +1498,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                     beep_=True)
             return
         search_field = _grid.IncrementalSearch(self, full)
-        search_field.run()
+        search_field.run(prefill=prefill)
 
     def _cmd_copy_cell(self):
         row, col = self._current_cell()
@@ -1817,8 +1817,11 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
         if self._begin_search:
             begin_search = self._begin_search
             self._begin_search = None
-            if isinstance(begin_search, types.StringType):
+            prefill = None
+            if isinstance(begin_search, str):
                 col_id = begin_search
+            elif isinstance(begin_search, tuple):
+                col_id, prefill = begin_search
             else:
                 cols = self._sorting_columns()
                 if cols:
@@ -1830,7 +1833,7 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
             col = find(col_id, self._columns, key=lambda c:c.id())
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))
-                self.COMMAND_INCREMENTAL_SEARCH.invoke()
+                self.COMMAND_INCREMENTAL_SEARCH.invoke(prefill=prefill)
             else:
                 log(OPERATIONAL, "Invalid search column:", col_id)
 
