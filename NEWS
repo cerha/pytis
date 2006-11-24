@@ -19,9 +19,12 @@
 	pøípadì nelze spoléhat na automatické vytvoøení enumerátoru podle
 	specifikace `codebook'.  Øe¹ení v¹ak není triviální, tak¾e
 	prozatím zkusme vystaèit s tímto omezením.
-	
-2006-11-23  Tomas Cerha  <cerha@brailcom.org>
 
+	Nastavení pozice oddìlovaèe duálního formuláøe je nyní ukládáno
+	jako stavová informace o formuláøi.
+
+2006-11-23  Tomas Cerha  <cerha@brailcom.org>
+V CVS je ukl8d8n9 t0 pozice odd2lova4e v du8ln9m formul85i
 	V kontextovém menu záhlaví sloupce pøibyla nyní funkce
 	"Autofiltr".  Umo¾òuje vyfiltrovat tabulku podle výbìru z
 	"distinct" hodnot daného sloupce.  Funkce není dostupná pro
