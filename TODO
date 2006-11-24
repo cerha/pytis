@@ -58,11 +58,11 @@ NOVÉ VLASTNOSTI:
 
  * Práva view na jednotlivé sloupce.
 
+ * Ukládání pozice separátoru v duálním formuláøi.
+
  * Argument 'enabled' pro odkazy.
 
  * Ikony k pøíkazùm podle argumentù pøíkazu.
-
- * Zobecnìní a pøesun èástí wikinga do pytisu.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
@@ -84,8 +84,6 @@ NOVÉ VLASTNOSTI:
 
    Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
    pøi vyvolání èíselníku.
-
- * Filtr distinct hodnot (v kontextovém menu záhlaví sloupce).
 
  * Automatické èíslování polo¾ek menu s mo¾ností rychlého výbìru.
 
@@ -150,7 +148,16 @@ NOVÉ VLASTNOSTI:
    
  * V tiskovém menu umo¾nit definovat separátor a klávesové zkratky.
 
- * Formuláøový dialog.
+ * Sestavování pamì»ového datového objektu ve tøídì `Specification'.
+
+   Sestavování datových typù sloupeèkù pro nedatabázové datové objektu má
+   nìkolik omezení.  Napøíklad pokud je tøeba urèit typ èíselníkového políèka
+   (není to String), bude ve formuláøi dána pøednost takto explicitnì urèenému
+   typu.  To znamená, ¾e specifikovaný typ ji¾ musí mít pøíslu¹ný enumerátor a
+   nemù¾e být vyu¾ito mo¾nosti automatického pøiøazení enumerátoru na základì
+   specifikace `codebook'.  Øe¹ením by bylo zru¹it pravidlo o pøednostním
+   vyu¾ití datového typu z FieldSpec pøed typem z DataSpec.  Je ov¹em tøeba
+   ovìøit, jestli se toho nìkde nevyu¾ívá.
 
  * Kontrola práv pøi volání funkcí jako dbupdatemany apod.
    
@@ -197,6 +204,8 @@ INTERNÍ ZÁLE®ITOSTI:
    jednotlivé zpùsoby pou¾ití vzájemnì nekolidují.  Problém by mohl být zejména
    v tom, ¾e prefill není pou¾it jen k pøednastavení výchozích hodnot nového
    øádku, ale je formuláøem také zapamatován a pøedáván dále.
+
+ * Zobecnìní a pøesun èástí wikinga do pytisu.
 
    
    

@@ -1,4 +1,25 @@
+2006-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (Form._create_data_object): Pokud není datová
+	tøída potomkem DBData, nepøedávej `dbconnection_spec'.
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Doplnìn docstring.
+	`self._dbcolumn_kwarg' -> `self._type_kwargs'
+	(FieldSpec.dbcolumn_kwargs): -> `type_kwargs'
+	(Specification._create_data_spec): Pøidána podpora pro vytvoøení
+	nedatabázového datového objektu (napø. MemData).
+
+	* pytis/data/access.py (RestrictedMemData): Nová tøída.
+
+	* pytis/data/data.py (MemData.select): Nový argument `sort'.
+	(DataFactory.class_): Nová metoda.
+
+	* pytis/util/resolver.py (Resolver._get_spec): Vlastní volání
+	metody provádìj mimo `try' blok.
+
 2006-11-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/util.py (_CAMEL_CASE_WORD): Zohledni i jednopísmenné èásti.
 
 	* pytis/form/application.py (Application._cmd_nothing): Nová metoda.
 
