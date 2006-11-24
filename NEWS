@@ -9,14 +9,16 @@
 	Tøída `Specification' má nyní podporu také pro vytvoøení
 	virtuálního datového objektu.  Toho lze vyu¾ít napøíklad pro
 	zobrazení formuláøù, které nejsou vázány na databázovou tabulku (v
-	procedurách apod).  Proto¾e datové typy nelze urèit automaticky z
-	databáze, je výchozím datovým typem políèek v¾dy `String'.
-	Aktuální implementace má nyní nìkolik drobnìj¹ích omezení.
-	Napøíklad pokud je tøeba urèit typ èíselníkového políèka (je jiný
-	ne¾ String), je tøeba mu správnì pøedat v¹echny argumenty vèetnì
-	enumerátoru, tak¾e v tomto pøípadì nelze spoléhat na automatické
-	vytvoøení enumerátoru podle specifikace `codebook'.  Øe¹ení v¹ak
-	není triviální, tak¾e prozatím zkusme vystaèit s tímto omezením.
+	procedurách apod).  Virtuální specifikaci vytvoøíme tak, ¾e jako
+	argument `data_cls' uvedeme tøídu `RestrictedMemData'.  Proto¾e
+	datové typy nelze urèit automaticky z databáze, je výchozím
+	datovým typem políèek v¾dy `String'.  Aktuální implementace má
+	nyní nìkolik drobnìj¹ích omezení.  Napøíklad pokud je tøeba urèit
+	typ èíselníkového políèka (je jiný ne¾ String), je tøeba mu
+	správnì pøedat v¹echny argumenty vèetnì enumerátoru, tak¾e v tomto
+	pøípadì nelze spoléhat na automatické vytvoøení enumerátoru podle
+	specifikace `codebook'.  Øe¹ení v¹ak není triviální, tak¾e
+	prozatím zkusme vystaèit s tímto omezením.
 	
 2006-11-23  Tomas Cerha  <cerha@brailcom.org>
 
