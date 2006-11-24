@@ -231,28 +231,30 @@ class DualForm(Form, Refreshable):
             active.focus()
 
     def _initial_sash_position(self, mode, size):
+        def dim(size, mode):
+            if mode == wx.SPLIT_HORIZONTAL:
+                return size.height
+            else:
+                return size.width
         self._splitter_position_initialized = True
+        saved_position = self._get_state_param('sash_position', -1, int)
+        if saved_position > 0:
+            return min(saved_position, dim(size, mode))
         if isinstance(self._main_form, EditForm):
-            if mode == wx.SPLIT_HORIZONTAL:
-                return min(self._main_form.size().height, size.height - 200)
-            else:
-                return min(self._main_form.size().width, size.width - 200)
+            return min(dim(self._main_form.size(), mode), dim(size, mode) - 200)
         elif isinstance(self._side_form, EditForm):
-            if mode == wx.SPLIT_HORIZONTAL:
-                return max(size.height - self._side_form.size().height, 200)
-            else:
-                return max(size.width - self._side_form.size().width, 200)
+            return max(dim(size, mode) - dim(self._side_form.size(), mode), 200)
         elif mode == wx.SPLIT_HORIZONTAL:
             return size.height * self._view.sash_ratio()
         else:
             return min(self._main_form.size().width, size.width - 200)
 
     def _on_sash_changed(self, event):
-        splitter = self._splitter
-        size = splitter.GetSize()
-        mode = splitter.GetSplitMode()
         position = event.GetSashPosition()
-        self._main_form.Refresh() # Sometimes it is not redrawn correctly...
+        print "****", position
+        self._set_state_param('sash_position', position)
+        # Sometimes the form is not redrawn correctly...
+        self._main_form.Refresh()
         self._active_form.focus()
         event.Skip()
 
