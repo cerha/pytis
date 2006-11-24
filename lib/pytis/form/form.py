@@ -171,10 +171,13 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             import pytis.remote
         else:    
             import pytis.data    
-        assert isinstance(data_spec, pytis.data.DataFactory)
         assert isinstance(data_spec, pytis.data.DataFactory) or \
                isinstance(data_spec, pytis.remote.RemoteDataFactory)
-        op = lambda : data_spec.create(dbconnection_spec=config.dbconnection)
+        if issubclass(data_spec.class_(), pytis.data.DBData):
+            kwargs = dict(dbconnection_spec=config.dbconnection)
+        else:
+            kwargs = {}
+        op = lambda : data_spec.create(**kwargs)
         success, data_object = db_operation(op)
         if not success:
             throw('form-init-error')
