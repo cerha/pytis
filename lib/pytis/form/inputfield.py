@@ -1201,7 +1201,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _on_invoke_selection(self, alternate=False):
         value_column = self._type.enumerator().value_column()
-        if self._value() is None and self.get_value() \
+        if not self._is_valid() and self.get_value() and self.is_modified() \
                and isinstance(self.type(), pytis.data.String):
             begin_search = (value_column, self.get_value())
         elif alternate:
