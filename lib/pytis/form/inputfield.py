@@ -1017,7 +1017,7 @@ class Invocable(object, CommandHandler):
                  self._INVOKE_SELECTION_MENU_TITLE,
                  self._INVOKE_SELECTION_MENU_HELP))
     
-    def _on_invoke_selection(self):
+    def _on_invoke_selection(self, alternate=False):
         raise ProgramError("This method must be overriden!")
     
     def _cmd_invoke_selection(self, **kwargs):
@@ -1040,7 +1040,7 @@ class DateField(Invocable, TextField):
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z kalendáøe")
     _INVOKE_SELECTION_MENU_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
     
-    def _on_invoke_selection(self):
+    def _on_invoke_selection(self, alternate=False):
         value = self._value()
         if value is not None:
             d = value.value()
@@ -1059,7 +1059,7 @@ class ColorSelectionField(Invocable, TextField):
     _INVOKE_SELECTION_MENU_TITLE = _("Vybrat barvu")
     _INVOKE_SELECTION_MENU_HELP = _("Zobrazit dialog pro výbìr barev.")
     
-    def _on_invoke_selection(self):
+    def _on_invoke_selection(self, alternate=False):
         color = run_dialog(ColorSelector, self.get_value())
         if color != None:
             self.set_value(color)
