@@ -115,6 +115,10 @@ class Type(_TypeCheck):
     def test_noncmp(self):
         assert self._test_instance != pytis.data.Integer(), \
                'different types equal'
+        assert pytis.data.Integer(not_null=True) != pytis.data.Integer(), \
+               'different types equal'
+        assert pytis.data.String(maxlen=2) != pytis.data.String(maxlen=3), \
+               'different types equal'
 tests.add(Type)
 
 
