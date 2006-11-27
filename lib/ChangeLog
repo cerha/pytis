@@ -1,5 +1,11 @@
 2006-11-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (Invocable._on_invoke_selection)
+	(DateField._on_invoke_selection)
+	(ColorSelectionField._on_invoke_selection): Definuj klíèový
+	argument `alternate'
+
+
 	* pytis/data/types_.py (Type.__cmp__): Pokud není splnìna ¾ádná z
 	podmínek ekvivalentní, vracej rovnou -1, ne výsledek
 	`compare_objects'.
