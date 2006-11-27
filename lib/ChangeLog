@@ -7,7 +7,9 @@
 	(DateField._on_invoke_selection)
 	(ColorSelectionField._on_invoke_selection): Definuj klíèový
 	argument `alternate'
-
+	(InputField.create): Nezohledòuj CbComputer pøi urèování, zda je
+	políèko èíselníkového typu.
+	
 
 	* pytis/data/types_.py (Type.__cmp__): Pokud není splnìna ¾ádná z
 	podmínek ekvivalentní, vracej rovnou -1, ne výsledek
