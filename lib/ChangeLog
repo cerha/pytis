@@ -24,6 +24,12 @@
 	(Specification.__init__): Provádìj zde assert na `oid'.
 	(Specification._create_data_spec): Asserty na `oid' pøesunuty do
 	konstruktoru.
+	(FieldSpec.codebook): `DataSpec' -> `_DataFactoryWithOrigin'.
+	(_DataFactoryWithOrigin): Nová tøída.
+	(DataSpec): Nech» je odvozena z `_DataFactoryWithOrigin'.
+	(DataSpec.set_origin, DataSpec.origin): Metody zru¹eny.
+	(Specification._create_data_spec): `pytis.data.DataFactory' ->
+	`_DataFactoryWithOrigin'.
 
 2006-11-24  Pavel Hanak  <hanak@asellus.cz>
 
