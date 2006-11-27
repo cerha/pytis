@@ -5,8 +5,11 @@ CHYBY:
    se nabídka nezobrazí ji¾ vùbec. Klávesa Page Up atd. nefungují a nabídka
    menu Okna ¹patnì funguje, tj. za¹krtává ¹patnì zobrazené náhledy.
    
- * V ISASu se po startu objeví DescriptiveDualForm Nastenka, kde spodní
-   formuláø zabírá nepatrnou spodní èást.
+ * Zapamatovaná pozice oddìlovaèe dualformu.
+
+   Momentálnì se poèíátá se stejnou velikostí okna pøi dal¹ím startu aplikace.
+   Napø. pøi maximalizaci okna ale dojde k ulo¾ení pozice a pøi dal¹ím startu
+   je okno aplikace jinak veliké a oddìlovaè se zobrazí mimo... 
  
  * Políèko pro poèet záznámù ve stavové øádce nezobrazuje celý údaj. Tj. je
    pøíli¹ malé.

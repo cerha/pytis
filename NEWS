@@ -8,6 +8,12 @@
 
 	Inkrementální vyhledávání nevalidní hodnoty v èíselníku je nyní
 	automaticky nastartováno jen pokud byla hodnota políèka zmìnìna.
+
+	Hack, který umo¾òuje zji¹tìní názvu specifikace enumerátoru nyní
+	funguje i pro enumerátory jejich¾ datový objekt je definován
+	pomocí nové tøídy `Specification'.  Tím je umo¾òeno v pøechodném
+	období kombinovat "staré" defsy s defsy vyu¾ívajícími tøídu
+	`Specification'.
 	
 	* BUGFIX: Bylo odstranìno nechtìné omezení, které znemo¾òovalo
 	vytváøet èíselníková políèka s computerem typu CbComputer.
