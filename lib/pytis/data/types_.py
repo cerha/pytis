@@ -200,7 +200,11 @@ class Type(object):
                  and cmp(self._enumerator, other._enumerator) == 0:
             result = 0
         else:
-            result = compare_objects(self, other)
+            result = -1
+            #TODO: Volání compare_objects zpùsobuje rekurzi.  Existuje nìjaký
+            # pøípad, kdy by se instance mohly rovnat i pøes nesplnìní vý¹e
+            # uvedených podmínek?
+            #result = compare_objects(self, other)
         return result
 
     def __getstate__(self):
