@@ -19,7 +19,7 @@
 	* BUGFIX: Opravena rekurze pøi porovnávání typù, která napøíklad
 	vedla k pádu aplikace pøi otevøení DescriptiveDualForm (mezerník).
 
-2006-03-14  Pavel Hanak  <hanak@asellus.cz>
+2006-11-24  Pavel Hanak  <hanak@asellus.cz>
 
 	Tøída `Specification' nyní podporuje také urèení OID sloupce.  Viz
 	dokumentace `Specification.oid'.
