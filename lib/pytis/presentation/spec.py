@@ -1928,7 +1928,8 @@ class FieldSpec(object):
         if data is not None:
             enumerator = self.type(data).enumerator()
             if isinstance(enumerator, pytis.data.DataEnumerator) and \
-                   isinstance(enumerator.data_factory(), DataSpec):
+                   isinstance(enumerator.data_factory(),
+                              _DataFactoryWithOrigin):
                 return enumerator.data_factory().origin() or self._codebook
         return self._codebook
 
@@ -1985,8 +1986,43 @@ class FieldSpec(object):
         return self._type_kwargs
 
 
+class _DataFactoryWithOrigin(pytis.data.DataFactory):
+    """Factory na tvorbu datových objektù dle zadané specifikace.
+    
+    Celá tøída je velký hack, který umo¾òuje zjednodu¹ení ve specifikacích.
+    Pokud datový objekt sestavíme pomocí této tøídy a vyu¾ijeme jej pro
+    specifikaci enumerátoru, je potom mo¾né v u¾ivatelském rozhraní zjistit
+    název specifikace tohoto enumerátoru a pou¾ít ji pro zobrazení èíselníku.
 
-class DataSpec(pytis.data.DataFactory):
+    Jinak se tøída chová zcela shodnì jako její rodièovská tøída.
+
+    """
+
+    
+    def set_origin(self, name):
+        """Nastav pùvodce této specifikace.
+
+        Argumentem je název specifikace pro resolver.
+
+        Instance si takto mù¾e pamatovat ze které specifikace pochází a tato
+        infomace mù¾e být v aplikaci dále vyu¾ita.
+        
+        """
+        self._origin = name
+        
+    def origin(self):
+        """Vra» název specifikace, ze které tato instance pochází.
+
+        Pokud je pùvod znám, je vrácen název pro resolver, jinak None.
+ 
+        """
+        try:
+            return self._origin
+        except AttributeError:
+            return None
+
+    
+class DataSpec(_DataFactoryWithOrigin):
     """Tøída zjednodu¹ující tvorbu datové specifikace.
 
     Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává
@@ -2062,7 +2098,7 @@ class DataSpec(pytis.data.DataFactory):
             e = c.enumerator()
             if e:
                 enumerator = resolver().get(e, 'data_spec')
-                if isinstance(enumerator, DataSpec):
+                if isinstance(enumerator, _DataFactoryWithOrigin):
                     enumerator.set_origin(e)
             else:
                 enumerator = None
@@ -2076,30 +2112,6 @@ class DataSpec(pytis.data.DataFactory):
                                        access_rights=access_rights)
         self._origin = None
         
-    def set_origin(self, name):
-        """Nastav pùvodce této specifikace.
-
-          Argumentem je název specifikace pro resolver.
-
-        Instance si takto mù¾e pamatovat ze které specifikace pochází a tato
-        infomace mù¾e být v aplikaci dále vyu¾ita.  Je to trochu hack, ale
-        umo¾ní to velké zjednodu¹ení
-        
-        """
-        # TODO: Je to trochu hack, ale umo¾òuje to velké zjednodu¹ení ve
-        # specifikacích.  Pokud by ¹el název specifikace zjistit nìjak èistìji,
-        # tak by to urèitì nebylo na ¹kodu.  Takto jsme omezeni na pou¾ití této
-        # tøídy (s DataFactory tuto informaci nemáme).  Mo¾ná nìjaké roz¹íøení
-        # na úrovni resloveru?
-        self._origin = name
-        
-    def origin(self):
-        """Vra» název specifikace, ze které tato instance pochází.
-
-        Pokud je pùvod znám, je vrácen název pro resolver, jinak None.
- 
-        """
-        return self._origin
 
     
 class Column(object):
@@ -2338,7 +2350,7 @@ class Specification(object):
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        return pytis.data.DataFactory(self.data_cls, *args, 
+        return _DataFactoryWithOrigin(self.data_cls, *args, 
                                       **dict(access_rights=access_rights))
 
     def _create_view_spec(self, title=None, **kwargs):
