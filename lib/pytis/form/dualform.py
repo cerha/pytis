@@ -251,7 +251,6 @@ class DualForm(Form, Refreshable):
 
     def _on_sash_changed(self, event):
         position = event.GetSashPosition()
-        print "****", position
         self._set_state_param('sash_position', position)
         # Sometimes the form is not redrawn correctly...
         self._main_form.Refresh()
