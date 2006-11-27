@@ -1,3 +1,11 @@
+2006-11-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Specification.oid): Výchozí hodnota
+	nech» rovnou obsahuje sloupec `oid'.  Aktualizace docstringu.
+	(Specification.__init__): Provádìj zde assert na `oid'.
+	(Specification._create_data_spec): Asserty na `oid' pøesunuty do
+	konstruktoru.
+
 2006-11-24  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/presentation/spec.py (Specification.oid): Nový atribut.
