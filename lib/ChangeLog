@@ -1,5 +1,8 @@
 2006-11-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (DualForm._on_sash_changed): Odstranìn
+	zapomenutý print.
+
 	* pytis/form/inputfield.py (Invocable._on_invoke_selection)
 	(DateField._on_invoke_selection)
 	(ColorSelectionField._on_invoke_selection): Definuj klíèový
