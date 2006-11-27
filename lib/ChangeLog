@@ -1,5 +1,11 @@
 2006-11-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py (Type.__cmp__): Pokud není splnìna ¾ádná z
+	podmínek ekvivalentní, vracej rovnou -1, ne výsledek
+	`compare_objects'.
+
+	* pytis/data/_test.py (Type.test_noncmp): Nové testy.
+
 	* pytis/presentation/spec.py (Specification.oid): Výchozí hodnota
 	nech» rovnou obsahuje sloupec `oid'.  Aktualizace docstringu.
 	(Specification.__init__): Provádìj zde assert na `oid'.
