@@ -107,8 +107,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
         elif isinstance(type, (pytis.data.Number, pytis.data.String)) \
-                 and type.enumerator() is not None and codebook is not None \
-                 and not isinstance(spec.computer(), CbComputer):
+                 and type.enumerator() is not None and codebook is not None:
             if inline:
                 if codebook:
                     field = CodebookField
