@@ -1,5 +1,8 @@
 CHYBY:
 
+ * V ISASu se po startu objeví DescriptiveDualForm Nastenka, kde spodní
+   formuláø zabírá nepatrnou spodní èást.
+ 
  * Políèko pro poèet záznámù ve stavové øádce nezobrazuje celı údaj. Tj. je
    pøíli¹ malé.
 
