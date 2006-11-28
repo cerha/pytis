@@ -4,6 +4,20 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-28  Tomas Cerha  <cerha@brailcom.org>
+
+	Menu autofilteru nyní není souèástí kontextového menu záhlaví
+	sloupce, proto¾e jeho sestavování mù¾e trvat dlouho a to
+	zpùsobovalo problémy pøi násobném pokusu o vyvolání menu.  Namísto
+	toho je v kontextovém menu záhlaví sloupce zobrazena pouze
+	polo¾ka, která menu autofilteru sestaví a¾ na po¾ádání.  Výhodou
+	tohoto øe¹ení je napøíklad i to, ¾e je mo¾né menu autofilteru
+	vyvolat i jinak ne¾ z kontextového menu záhlaví sloupce --
+	napøíklad klávesovou zkratkou (zatím není definována).  Ka¾dopádnì
+	je tím vyøe¹en problém, který zpùsoboval podivné zamrznutí
+	zpracování událostí pøi dvojím kliknutí pravým tlaèítkem na
+	záhlaví sloupce.
+	
 2006-11-27  Tomas Cerha  <cerha@brailcom.org>
 
 	Inkrementální vyhledávání nevalidní hodnoty v èíselníku je nyní

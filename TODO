@@ -1,10 +1,5 @@
 CHYBY:
 
- * V ISASu podle mì v objemnìj¹ích náhledech (napø. Spolecnost) poté, co
-   dvakrát rychle kliknu pravých tlaè. my¹i na záhlaví jakéhokoliv sloupeèku,
-   se nabídka nezobrazí ji¾ vùbec. Klávesa Page Up atd. nefungují a nabídka
-   menu Okna ¹patnì funguje, tj. za¹krtává ¹patnì zobrazené náhledy.
-   
  * Zapamatovaná pozice oddìlovaèe dualformu.
 
    Momentálnì se poèíátá se stejnou velikostí okna pøi dal¹ím startu aplikace.
