@@ -112,6 +112,8 @@ Command(ListForm, 'COPY_CELL',
         "Zkopírování obsahu aktuální buòky do clipboardu")
 Command(ListForm, 'FILTER_BY_CELL',
         "Vyfiltrování formuláøe podle hodnoty aktuální buòky")
+Command(ListForm, 'AUTOFILTER',
+        "Zobrazení menu autofilteru") # arg 'col' a 'position'
 Command(ListForm, 'EXPORT_CSV',
         "Export øádkového formuláøe do csv souboru")
 Command(ListForm, 'LINE_COMMIT',
@@ -365,6 +367,7 @@ WX_COMMAND_ICONS = {
     ListForm.COMMAND_COPY_CELL:            wx.ART_COPY,
     ListForm.COMMAND_EDIT:                 'edit-cell',
     ListForm.COMMAND_FILTER_BY_CELL:       'filter-by-cell',
+    ListForm.COMMAND_AUTOFILTER:           'autofilter',
     ListForm.COMMAND_INCREMENTAL_SEARCH:   'search-incremental',
     ListForm.COMMAND_EXPORT_CSV:           'export',
     ListForm.COMMAND_INSERT_LINE:          'insert-line',
