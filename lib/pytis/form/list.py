@@ -739,18 +739,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _scroll_x_offset(self):
         g = self._grid
         return g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
-
+        
     def _displayed_columns_menu(self, col):
-        return Menu(_("Zobrazené sloupce"),
-                    [CheckItem(c.column_label(),
-                               command=ListForm.COMMAND_TOGGLE_COLUMN,
-                               args=dict(column_id=c.id(), col=col),
-                               state=lambda c=c: c in self._columns)
-                     for c in self._view.fields()] + \
-                    [MSeparator(),
-                     MItem(_("Vrátit výchozí nastavení formuláøe"),
-                           command=InnerForm.COMMAND_RESET_FORM_STATE),
-                     ])
+        return [CheckItem(c.column_label(),
+                          command=ListForm.COMMAND_TOGGLE_COLUMN,
+                          args=dict(column_id=c.id(), col=col),
+                          state=lambda c=c: c in self._columns)
+                for c in self._view.fields()] + \
+                [MSeparator(),
+                 MItem(_("Vrátit výchozí nastavení formuláøe"),
+                       command=InnerForm.COMMAND_RESET_FORM_STATE),
+                 ]
     
     def _column_context_menu(self, col):
         M = Menu
@@ -759,20 +758,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         ASC = LookupForm.SORTING_ASCENDENT
         DESC = LookupForm.SORTING_DESCENDANT
         c = self._columns[col]
-        if self._data.find_column(c.id()):
-            cond = self._lf_condition
-            distinct = self._data.distinct(c.id(), condition=cond)
-            if len(distinct) > 60:
-                autofilter = (I(_("Pøili¹ mnoho polo¾ek pro autofiltr..."),
-                                command=Application.COMMAND_NOTHING),)
-            else:
-                autofilter = [I(v.export(),
-                                command=ListForm.COMMAND_FILTER_BY_VALUE,
-                                args=dict(column_id=c.id(), value=v))
-                              for v in distinct]
-        else:
-            autofilter = (I("Nad tímto sloupcem nelze filtrovat...",
-                            command=Application.COMMAND_NOTHING),)
         items = (M(_("Primární øazení"),
                    (I(_("Øadit vzestupnì"),
                       command=LookupForm.COMMAND_SORT,
@@ -802,29 +787,27 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN,
                    args=dict(col=None)),
                  ________,
-                 M(_("Autofiltr"), autofilter),
+                 I(_("Autofiltr"), command=ListForm.COMMAND_AUTOFILTER,
+                   args=dict(col=col)),
                  I(_("Zru¹ filtr"), command=LookupForm.COMMAND_UNFILTER),
                  ________,
                  I(_("Skrýt tento sloupec"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN,
                    args=dict(column_id=c.id())),
-                 self._displayed_columns_menu(col=col)
+                 M(_("Zobrazené sloupce"),
+                   self._displayed_columns_menu(col=col))
                  )
-        return Menu('', items)
+        return items
     
     def _on_label_right_down(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
-        g = self._grid
-        col = g.XToCol(event.GetX() + self._scroll_x_offset())
-        # Menu musíme zkonstruovat a¾ zde, proto¾e argumentem pøíkazù je èíslo
-        # sloupce, které zjistím a¾ z eventu.
+        col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
+        # Menu musíme zkonstruovat a¾ zde, proto¾e je pro ka¾dý sloupec jiné.
         if col == -1:
             menu = self._displayed_columns_menu(None)
         else:
             menu = self._column_context_menu(col)
-        m = menu.create(g, self._get_keymap())
-        g.PopupMenu(m)
-        m.Destroy()
+        self._popup_menu(menu)
         event.Skip()
 
     def _on_label_left_down(self, event):
@@ -1421,22 +1404,49 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         value = self._table.row(row)[id]
         self.COMMAND_FILTER_BY_VALUE.invoke(column_id=id, value=value)
             
+    def _cmd_autofilter(self, col=None, position=None):
+        busy_cursor(True)
+        try:
+            if col is None:
+                col = self._current_cell()[1]
+            cid = self._columns[col].id()
+            cond = self._lf_condition
+            distinct = self._data.distinct(cid, condition=cond)
+            if len(distinct) > 60:
+                message(_("Pøíli¹ mnoho polo¾ek pro autofilter."), beep_=True)
+                return
+            items = [MItem(v.export(), command=ListForm.COMMAND_FILTER_BY_VALUE,
+                           args=dict(column_id=cid, value=v))
+                     for v in distinct]
+        finally:
+            busy_cursor(False)
+        self._popup_menu(items, position=position)
+
+    def _can_autofilter(self, col=None, position=None):
+        if col is None:
+            col = self._current_cell()[1]
+        return self._data.find_column(self._columns[col].id()) is not None
+        
+            
     def _cmd_context_menu(self, position=None):
         if self._table.editing():
             menu = self._edit_menu()
         else:
             menu = self._context_menu()
         if menu:
-            g = self._grid
             if position is None:
+                g = self._grid
                 row, col = self._current_cell()
                 rect = g.CellToRect(row, col)
                 pos = (rect.GetX() + rect.GetWidth()/3,
                        rect.GetY() + rect.GetHeight()/2 + g.GetColLabelSize())
                 position = self._grid.CalcScrolledPosition(pos)
-            menu = Menu('', menu).create(g, self._get_keymap())
-            g.PopupMenu(menu, position)
-            menu.Destroy()
+            self._popup_menu(menu, position=position)
+
+    def _popup_menu(self, items, position=None):
+        menu = Menu('', items).create(self._grid, self._get_keymap())
+        self._grid.PopupMenu(menu, position)
+        menu.Destroy()
 
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and \
