@@ -1,3 +1,19 @@
+2006-11-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._displayed_columns_menu): Nevacej
+	kompletní Menu, ale jen seznam polo¾ek.
+	(ListForm._column_context_menu): Namísto podmenu autofilteru zde
+	pou¾ij pouze polo¾ku vyvolávající pøikaz
+	`ListForm.COMMAND_AUTOFILTER'.  Nevacej kompletní Menu, ale jen
+	seznam polo¾ek.
+	(ListForm._popup_menu): Nová metoda.
+	(ListForm._cmd_context_menu, ListForm._on_label_right_down):
+	Vyu¾ívej ji.
+	(ListForm._cmd_autofilter): Nová metoda.
+
+	* pytis/form/commands_.py: Nový pøíkaz `ListForm.COMMAND_AUTOFILTER'.
+	(WX_COMMAND_ICONS): Pøiøazena icona autofilteru.
+
 2006-11-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (DualForm._on_sash_changed): Odstranìn
