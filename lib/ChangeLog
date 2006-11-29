@@ -1,5 +1,13 @@
 2006-11-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow.__init__): Nový
+	argument `resolver'.
+	(PresentedRow._display_func): Pokud byl konstruktoru pøedán
+	resolver, pou¾ij jej pøednosrnì pøed globálním resolverem.
+
+	* pytis/web/form.py (Form.__init__, EditForm.__init__) 
+	(BrowseForm.__init__): Nový argument `resolver'.
+
 	* pytis/presentation/spec.py (Specification): Aktualizován docstring.
 	(Specification.__init__): Pou¾ij dokumentaèní øetìzec tøídy jako
 	výchozí hodnotu pro `description'.
