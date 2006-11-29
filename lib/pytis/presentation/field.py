@@ -56,7 +56,7 @@ class PresentedRow(object):
             
     def __init__(self, fieldspec, data, row, prefill=None, singleline=False,
                  change_callback=None, editability_change_callback=None,
-                 new=False):
+                 new=False, resolver=None):
         """Inicializuj prezentaci øádku.
         
         Argumenty:
@@ -87,6 +87,12 @@ class PresentedRow(object):
             je-li 'None', není zmìna editovatelnosti oznamována.
           new -- flag urèující, zda se jedná o novì vytváøený záznam (nikoliv
             editaci záznamu ji¾ existujícího)
+          resolver -- instance 'Resolver', která má být pou¾ívána k naèítání
+            specifikací.  Pokud není urèen, je pou¾it globální resolver získaný
+            pomocí funkce 'pytis.util.resolver()'.  Globální resolver je
+            pou¾itelný v samostatnì bì¾ící aplikaci, ale napø. v prostøedí
+            webového serveru je tøeba pracovat s více resolvery souèasnì a ty
+            je potom nutné pøedávat jako argument.
 
         Prezentaèní podoba je vytvoøena z dat specifikovaných argumentem 'row',
         který mù¾e mít nìkterou z následujících hodnot:
@@ -115,6 +121,7 @@ class PresentedRow(object):
         assert prefill is None or isinstance(prefill, types.DictType)
         assert isinstance(singleline, types.BooleanType)
         assert isinstance(new, types.BooleanType)
+        assert resolver is None or isinstance(resolver, Resolver)
         self._fieldspec = fieldspec
         self._data = data
         self._singleline = singleline
@@ -126,6 +133,7 @@ class PresentedRow(object):
         self._virtual = {}
         self._new = new
         self._cache = {}
+        self._resolver = resolver or pytis.util.resolver()
         self._set_row(row, prefill=prefill)
 
     def _set_row(self, row, reset=True, prefill=None):
@@ -528,8 +536,8 @@ class PresentedRow(object):
         display = column.display
         if not display and column.codebook:
             try:
-                cb_spec = resolver().get(column.codebook, 'cb_spec')
-            except ResolverError:
+                cb_spec = self._resolver.get(column.codebook, 'cb_spec')
+            except ResolverError, e:
                 pass
             else:
                 display = cb_spec.display()
