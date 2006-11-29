@@ -2202,7 +2202,9 @@ class Specification(object):
     Význam atributù: Nìkteré atrubuty jsou definovány pøímo touto tøídou --
     jejich význam je zdokumentován v rámci jejich dokumentaèních øetìzcù.
     V¹echny ostatní veøejné atributy, které odvozená tøída definuje budou
-    pøedány jako stejnojmenné argumenty konstruktoru 'ViewSpec'.
+    pøedány jako stejnojmenné argumenty konstruktoru 'ViewSpec'.  Výchozí
+    hodnotou argumentu 'description' pro 'ViewSpec' je dokumentaèní øetìzec
+    specifikaèní tøídy.
 
     """
     
@@ -2287,7 +2289,7 @@ class Specification(object):
             else:
                 assert isinstance(self.oid, str)
 
-        self._view_spec_kwargs = {}
+        self._view_spec_kwargs = {'description': self.__class__.__doc__}
         for attr in dir(self):
             if not (attr.startswith('_') or attr.endswith('_spec') or \
                     attr in ('table', 'key', 'access_rights', 'oid',
