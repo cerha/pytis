@@ -50,15 +50,17 @@ _ = lcg.TranslatableTextFactory('pytis')
 
 class Form(lcg.Content):
 
-    def __init__(self, data, view, row=None, prefill=None, new=False):
+    def __init__(self, data, view, resolver, row=None, prefill=None,
+                 new=False):
         super(Form, self).__init__()
         assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
+        assert isinstance(resolver, pytis.util.Resolver), resolver
         assert row is None or isinstance(row, pytis.data.Row), row
         self._data = data
         self._view = view
         self._prefill = prefill or {}
-        self._row = PresentedRow(view.fields(), data, row,
+        self._row = PresentedRow(view.fields(), data, row, resolver=resolver,
                                  prefill=self._valid_prefill(), new=new)
         
     def _valid_prefill(self):
@@ -118,7 +120,7 @@ class LayoutForm(Form):
         elif type.enumerator():
             ctrl = _html.select
             attr['options'] = [("&nbsp;", "")] + \
-                              [(uv, str(v)) for v,uv
+                              [(uv, str(v)) for v, uv
                                in self._row.enumerate(f.id())]
             if value.value() in type.enumerator().values():
                 attr['selected'] = str(value.value())
@@ -250,9 +252,9 @@ class ShowForm(LayoutForm):
     
 class EditForm(LayoutForm):
     
-    def __init__(self, data, view, row, handler='#', action=None, errors=(),
-                 **kwargs):
-        super(EditForm, self).__init__(data, view, row, **kwargs)
+    def __init__(self, data, view, resolver, row, handler='#', action=None,
+                 errors=(), **kwargs):
+        super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
         assert isinstance(handler, str), handler
         assert action is None or isinstance(action, str), action
         assert isinstance(errors, (tuple, list, str, unicode)), errors
@@ -290,8 +292,8 @@ class EditForm(LayoutForm):
         
 class BrowseForm(Form):
 
-    def __init__(self, data, view, rows, link_provider=None):
-        super(BrowseForm, self).__init__(data, view)
+    def __init__(self, data, view, resolver, rows, link_provider=None):
+        super(BrowseForm, self).__init__(data, view, resolver)
         assert isinstance(rows, (list, tuple)), rows
         self._rows = rows
         self._columns = [view.field(id) for id in view.columns()]
