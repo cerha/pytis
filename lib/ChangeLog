@@ -1,3 +1,9 @@
+2006-11-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Specification): Aktualizován docstring.
+	(Specification.__init__): Pou¾ij dokumentaèní øetìzec tøídy jako
+	výchozí hodnotu pro `description'.
+
 2006-11-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._displayed_columns_menu): Nevacej

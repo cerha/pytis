@@ -4,6 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-11-29  Tomas Cerha  <cerha@brailcom.org>
+
+	Dokumentaèní øetìzec specifikaèní tøídy odvozené od
+	`Specification' je nyní pou¾it jako výchozí hodnota argumentu
+	`description' pro ViewSpec.  Pokud to není ¾ádoucí, je tøeba
+	vytvoøit atribut `description' jeho¾ hodnota má vy¹¹í prioritu.
+	
 2006-11-28  Tomas Cerha  <cerha@brailcom.org>
 
 	Menu autofilteru nyní není souèástí kontextového menu záhlaví
