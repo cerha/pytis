@@ -1964,8 +1964,15 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_command_get_last = \
           ('select %s, %s from %s where %s order by %s limit 1') % \
            (column_list, oidstrings, table_list, relation, oidordering)
+        update_from_tables = [t for t in table_names if t != main_table]
+        if update_from_tables:
+            update_from_clause = (' from ' +
+                                  string.join(update_from_tables, ', '))
+        else:
+            update_from_clause = ''
         self._pdbb_command_update = \
-          'update %s set %%s where (%s) and (%%s)' % (main_table, relation)
+          'update %s set %%s%s where (%s) and (%%s)' % \
+          (main_table, update_from_clause, relation)
         self._pdbb_command_broken_update_preselect = \
           'select count (%s) from %s where (%s) and (%%s)' % \
           (first_key_column, main_table, relation)
