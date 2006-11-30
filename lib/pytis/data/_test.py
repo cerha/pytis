@@ -874,8 +874,11 @@ class DBDataDefaultClass(_DBTest):
             eresult.append((c.id(), c.type().validate(v)[0]))
         eresult = pytis.data.Row(eresult)
         assert result[:-1] == eresult, 'insertion failed'
-        assert self.data.insert(row) == (None, False), \
-               'invalid insertion succeeded'
+        result2 = self.data.insert(row)
+        assert result2[1] is False, 'invalid insertion succeeded'
+        assert (result2[0] is None or type(result2[0]) == type('') or
+                type(result2[0]) == type(u'')),\
+               'invalid failed insertion result'
     def test_update(self):
         row = self.newrow
         row1 = []
@@ -891,10 +894,13 @@ class DBDataDefaultClass(_DBTest):
             eresult.append((c.id(), c.type().validate(v)[0]))
         eresult = pytis.data.Row(eresult)
         assert result[:-1] == eresult, 'update failed'
-        assert self.data.update(k1, row) == (None, False), \
-               'invalid update succeeded'
-        assert self.data.update(k2, row) == (None, False), \
-               'invalid update succeeded'
+        for k in k1, k2:
+            result2 = self.data.update(k, row)
+            assert result2[1] is False, 'invalid update succeeded'
+            assert (result2[0] is None or type(result2[0]) == type('') or
+                    type(result2[0]) == type(u'')),\
+                    'invalid failed update result'
+            result2 = self.data.update(k, row)
         assert self.data.update(row[0], row1)[0][:-1] == row1, 'update failed'
     def test_view_update(self):
         I = pytis.data.Integer()

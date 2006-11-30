@@ -1,5 +1,11 @@
 2006-11-30  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/_test.py (DBDataDefaultClass.test_insert): Pøidáno
+	uznání správného výsledku, je-li první vrácenou hodnotou øetìzec.
+	(DBDataDefaultClass.test_update): Nápodobnì.
+
+2006-11-30  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/dbdata.py
 	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands): Vlo¾
 	do UPDATE èást FROM, je-li to nutné.
