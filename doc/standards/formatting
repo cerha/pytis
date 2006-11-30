@@ -122,7 +122,7 @@ Pro importy _modulù_ pak platí:
 
   . Jde-li o import tøídy ze stejnojmenného modulu.
 
-  . Jde-li o import modulu =lib.util=.
+  . Jde-li o import modulu =pytis.util=.
 
 - Importy typu =from MODULE import SOMETHING= je dobré pou¾ívat pouze
   v pøípadì, ¾e SOMETHING se vyskytuje v kódu èasto.  Jinak by mìlo mít
@@ -130,7 +130,7 @@ Pro importy _modulù_ pak platí:
   je jasné, odkud =SOMETHING= pochází.
 
 - Ve¹keré importu balíku a z balíku =wxPython= jsou povoleny pouze v modulu
-  =lib.form= a musí být provádìny prostøednictvím obalovacích modulù,
+  =pytis.form= a musí být provádìny prostøednictvím obalovacích modulù,
   napøíklad:
   
   <example>
@@ -145,7 +145,7 @@ Pro importy _modulù_ pak platí:
 * Dal¹í pravidla týkající se Pythonu
 
 - Jazykovì závislé øetìzce jsou v èe¹tinì a jsou obaleny voláním funkce
-  =lib.util._=.
+  =pytis.util._=.
 
 - Vyu¾íváme pøíkazu =assert= a to jednak pro kontrolu typù argumentù funkcí a
   metod (kde to má význam) a jednak pro pøíle¾itostné kontroly dat.
@@ -178,8 +178,8 @@ Pro importy _modulù_ pak platí:
   argument není nutno identifikovat jeho jménem.
 
 - Pokud je na nìkterém místì zapotøebí provést návrat o nìkolik úrovní volání
-  vý¹e bez signalizace chyby, je k tomu urèena funkce =lib.util.throw=.
-  V cílovém místì musí být odpovídající kód obalen funkcí =lib.util.catch=.
+  vý¹e bez signalizace chyby, je k tomu urèena funkce =pytis.util.throw=.
+  V cílovém místì musí být odpovídající kód obalen funkcí =pytis.util.catch=.
 
 
 * Dokumentaèní øetìzce

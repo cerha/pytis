@@ -52,8 +52,8 @@ funkcí s co nejménì argumenty).
 
 * Pou¾ití
   
-Logování zaji¹»uje modul =lib.util.log=.  Vzhledem k charakteru tohoto modulu
-je explicitnì dovoleno jej importovat zpùsobem =from lib.util.log import *=.
+Logování zaji¹»uje modul =pytis.util.log=.  Vzhledem k charakteru tohoto modulu
+je explicitnì dovoleno jej importovat zpùsobem =from pytis.util.log import *=.
 
 Základní pou¾ití modulu je velmi jednoduché.  Modul definuje funkci =log=,
 která je v podstatì jediným rozhraním k logování.  Tato funkce má tøi
@@ -61,7 +61,7 @@ parametry: druh události, slovní popis události a libovolný pythonový objekt.
 Volání funkce =log= mù¾e vypadat napøíklad takto:
 
 <example>
-from lib.util.log import *
+from pytis.util.log import *
 ...
 log(OPERATIONAL, 'Pád systému', exception)
 </example>

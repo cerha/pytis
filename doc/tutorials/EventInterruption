@@ -89,7 +89,7 @@ Na kód u¾ivatelského rozhraní jsou kladeny následující po¾adavky:
 - Místo funkcí =wx.EVT_*= pro pøiøazení callbackù u¾ivatelským akcím (stisk
   klávesy, klik my¹i, ne v¹ak nutnì ji¾ zmìna velikosti, apod.) musí být
   callbacky pøiøazovány zásadnì prostøednictvím funkce
-  =lib.form.wx_callback=.
+  =pytis.form.wx_callback=.
 
 - Ve¹kerý kód musí dostateènì èasto logovat.  Pojem "dostateènì èasto" je
   mínìn z hlediska èasového.  Pokud toto *jednodu¹e* zajistit nelze, jako

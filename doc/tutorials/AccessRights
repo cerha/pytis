@@ -42,7 +42,7 @@ zpøístupòujících nebo modifikujících data pøístupová práva provìøují.  Pøi
 pøístupu k databázi pøes server se toto provìøování dìje na serveru.  Pøi
 pokusu o neoprávnìnı pøístup je vyvolána vıjimka.  Jsou ovìøována práva pøímá
 i nepøímá, napøíklad není dovoleno sloupec nepøístupnı pro ètení zmiòovat
-v podmínce metody =lib.data.Data.select= za úèelem vıbìru jinak pøístupnıch
+v podmínce metody =pytis.data.Data.select= za úèelem vıbìru jinak pøístupnıch
 datovıch sloupcù.
 
 
@@ -92,10 +92,10 @@ regulovat i prostøednictvím standardních mechanismù pøístupovıch práv
 PostgreSQL.
 
 Pro specifikaci pøístupovıch práv slou¾í parametr =access_rights=
-konstruktoru tøídy =lib.data.RestrictedData=, typicky pøedávanı
+konstruktoru tøídy =pytis.data.RestrictedData=, typicky pøedávanı
 prostøednictvím stejnojmenného volitelného argumentu konstruktoru tøídy
-=lib.data.DataFactory=.  Hodnotou tohoto argumentu je instance tøídy
-=lib.data.AccessRights=.  Není-li argument uveden, je dovoleno v¹em v¹echno.
+=pytis.data.DataFactory=.  Hodnotou tohoto argumentu je instance tøídy
+=pytis.data.AccessRights=.  Není-li argument uveden, je dovoleno v¹em v¹echno.
 V opaèném pøípadì jsou práva redukována pouze na ta v argumentu explicitnì
 uvedená, co není dovoleno, je zakázáno.
 
@@ -103,7 +103,7 @@ Pro pøístup k databázi rozli¹ujeme práva pøístupu pro ètení, vkládání novıch
 záznamù, modifikaci existujících záznamù a mazání záznamù.  Modifikaèní
 operace obvykle nelze provádìt bez práva ètení.
 
-Popis tøídy =lib.data.AccessRights= je k nalezení v její dokumentaci.  Zde
+Popis tøídy =pytis.data.AccessRights= je k nalezení v její dokumentaci.  Zde
 uvedeme pouze nìkolik pøíkladù.
 
 Implicitní pøístupová práva dovolující v¹echno v¹em mají následující podobu:

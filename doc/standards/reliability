@@ -121,7 +121,7 @@ definují následující pravidla:
 
 - Testy nemusí mít ¾ádné dokumentaèní øetìzce (nepøedstavují API).
 
-Modul =lib.util.test= obsahuje drobné pomùcky usnadòující definování testù.
+Modul =pytis.util.test= obsahuje drobné pomùcky usnadòující definování testù.
 Mìl by být vyu¾íván.
 
 ©ablona souboru =_test.py=:
@@ -131,10 +131,10 @@ Mìl by být vyu¾íván.
 
 import unittest
 
-import lib.util.test
+import pytis.util.test
 import types_
 
-tests = lib.util.test.TestSuite()
+tests = pytis.util.test.TestSuite()
 
 ...
 
@@ -197,7 +197,7 @@ Pro tvorbu interaktivních testù platí následující zásady:
   zaèínají prefixem =check_interactive_=.
 
 - Tøídy pro interaktivní testy dìdí tøídu
-  =lib.util.test.InteractiveTestCase=.  Pro interakci s obsluhou slou¾í
+  =pytis.util.test.InteractiveTestCase=.  Pro interakci s obsluhou slou¾í
   metoda =ask_user= této tøídy.
 
 - Instrukce pro obsluhu musí být naprosto pøesné a na otázku musí být
@@ -206,7 +206,7 @@ Pro tvorbu interaktivních testù platí následující zásady:
 Primitivní pøíklad interaktivního testu:
 
 <example>
-  class PrintTest(lib.util.test.InteractiveTestCase):
+  class PrintTest(pytis.util.test.InteractiveTestCase):
        def check_interactive_print(self):
            print '\nAhoj'
            self.ask_user('''Na prvním pøedchozím neprázdném øádku by

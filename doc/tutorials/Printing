@@ -51,11 +51,11 @@ formuláøù.  Ka¾dý formuláø mù¾e a nemusí na tento pøíkaz reagovat.
 Reaguje-li, zobrazí se tiskový náhled.  Z nìj pak lze stejným pøíkazem
 spustit tisk na tiskárnu.
 
-Pro zobrazení tiskového náhledu slou¾í formuláø =lib.form.PrintForm=, který
-je podobnì jako ostatní formuláøe potomkem =lib.form.Form= a ukládá se na
+Pro zobrazení tiskového náhledu slou¾í formuláø =pytis.form.PrintForm=, který
+je podobnì jako ostatní formuláøe potomkem =pytis.form.Form= a ukládá se na
 frame stack.  Tento formuláø umí vyvolat formátování výstupu dle zadané
-specifikace, formátování samotné pak má na starosti modul =lib.output=,
-konkrétnì tøída =lib.output.Formatter=.
+specifikace, formátování samotné pak má na starosti modul =pytis.output=,
+konkrétnì tøída =pytis.output.Formatter=.
 
 V souèasné dobì na pøíkaz tisku reagují øádkové formuláøe typu =BrowseForm=.
 Po vyvolání tiskového pøíkazu spustí formátování výstupu dle specifikace,
@@ -93,11 +93,11 @@ získávat obecné specifikace (napøíklad datové a prezentaèní specifikace tabulky
 pro urèení jejího formátování) a pøedané parametry (napøíklad pøedaný klíè
 aktuálního øádku od formuláøe).  Resolveru pøedané parametry nejsou
 specifikovány obecnì, jsou závislé na objektu, který je pøedává.  Resolver je
-instancí tøídy =lib.output.OutputResolver= a parametry lze získat jeho metodou
+instancí tøídy =pytis.output.OutputResolver= a parametry lze získat jeho metodou
 =p=.
 
 Ka¾dá z funkcí odpovídajících nìjaké èásti dokumentu vrací specifikaci této
-èásti v podobì znaèek definovaných v modulu =lib.output=.  K dispozici jsou
+èásti v podobì znaèek definovaných v modulu =pytis.output=.  K dispozici jsou
 jednak jednoduché formátovací znaèky (jako =Paragraph= nebo =Bold=) a jednak
 funkce vy¹¹í úrovnì vracející znaèkování pro urèitý prvek (jako napøíklad
 funkce pro zpøístupnìní dat: =data_table= nebo =data_item=).  Formátovací
@@ -132,12 +132,12 @@ vytvoøíme pythonový soubor s názvem odpovídajícím zvolenému formuláøi
 (napøíklad =VydFakturyPolozky.py=).
 
 Prakticky ve v¹ech výstupních sestavách je vhodné naimportovat modul
-=lib.output=, definující leccos týkající se výstupních sestav, nejlépe
+=pytis.output=, definující leccos týkající se výstupních sestav, nejlépe
 hvìzdièkovì, obsahující v¹echny formátovací znaèky a obecné formátovací funkce.
 Úvod na¹í specifikace tedy bude vypadat takto:
 
 <example>
-from lib.output import *
+from pytis.output import *
 </example>
 
 Bude-li jazykem faktury èe¹tina, je nutno tiskovému procesoru øíct, ¾e má
@@ -146,7 +146,7 @@ standardní specifikaèní funkce =coding=:
 
 <example>
 def coding(resolver):
-    return lib.output.Coding.LATIN2
+    return pytis.output.Coding.LATIN2
 </example>
 
 V¹echny specifikaèní funkce mají jeden argument, kterým je resolver jmenných
@@ -207,10 +207,10 @@ Na závìr si coby shrnutí uvedeme kompletní vytvoøenou specifikaci tisku na¹í
 prafaktury:
 
 <example>
-from lib.output import *
+from pytis.output import *
 
 def coding(resolver):
-    return lib.output.Coding.LATIN2
+    return pytis.output.Coding.LATIN2
 
 def page_footer(resolver):
     return Null()

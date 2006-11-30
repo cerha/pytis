@@ -27,7 +27,7 @@ s ohledem na následující po¾adavky:
 
 * Popis mechanismu
 
-Konfigurace je definována tøídou =lib.util.Configuration=.  Tato tøída
+Konfigurace je definována tøídou =pytis.util.Configuration=.  Tato tøída
 obsahuje definice standardních konfiguraèních parametrù spoleèných pro
 v¹echny aplikace vystavìném nad toolkitem EBASu.  Mno¾inu konfiguraèních
 parametrù lze roz¹íøit pro konkrétní aplikaci vytvoøením instance
@@ -35,21 +35,21 @@ odpovídajícího potomka této tøídy v definièních souborech aplikace a jeho
 ztoto¾nìním s modulem =config= (viz ní¾e).
 
 Ka¾dý konfiguraèní parametr je instancí tøídy
-=lib.util.Configuration.Option=.  Tato tøída definuje v¹echny specifikace
+=pytis.util.Configuration.Option=.  Tato tøída definuje v¹echny specifikace
 konfiguraèního parametru, zejména jeho název a popis, jemu odpovídající volbu
 pøíkazové øádky a promìnnou prostøedí (jsou-li jaké) a implicitní hodnotu.
 
 Pro definici nového konfiguraèního parametru není nutno vytváøet instanci
-tøídy =lib.util.Configuration.Option= pøímo, staèí definovat jejího potomka
-ve tøídì =lib.util.Configuration=.  Tento potomek musí mít jméno ve tvaru
+tøídy =pytis.util.Configuration.Option= pøímo, staèí definovat jejího potomka
+ve tøídì =pytis.util.Configuration=.  Tento potomek musí mít jméno ve tvaru
 =_Option_PARAMETER=, kde =PARAMETER= je název konfiguraèního parametru, tak
 jak se na nìj bude odkazovat kód.  Dokumentaèní øetìzec novì definované tøídy
 se automaticky stane dokumentací parametru ve vygenerovaném vzorovém
 konfiguraèním souboru.  S ohledem na tuto skuteènost mají dokumentaèní
 øetìzce tìchto tøíd nestandardní podobu, viz definované parametry ve tøídì
-=lib.form.Configuration=.
+=pytis.form.Configuration=.
 
-Tøída =lib.util.Configuration.Option= definuje implicitní hodnoty pro v¹echny
+Tøída =pytis.util.Configuration.Option= definuje implicitní hodnoty pro v¹echny
 specifikace parametrù, obvykle ve významu "nedefinováno".  V ideálním pøípadì
 tak není nutno v definici nové tøídy uvádìt nic kromì patøièného
 dokumentaèního øetìzce.  Pokud v¹ak má být napøíklad parametr pøístupný pøes
@@ -57,7 +57,7 @@ volbu pøíkazové øádky nebo mít jinou viditelnost v generovaném vzorovém
 konfiguraèním souboru, je nutno pøedefinovat odpovídající metody.
 
 Obvykle staèí v pøedefinovaných metodách pouze definovat správné návratové
-hodnoty a není nutno psát výkonný kód.  Tøída =lib.util.Configuration=
+hodnoty a není nutno psát výkonný kód.  Tøída =pytis.util.Configuration=
 zaji¹»uje na základì daných specifikací v¹e potøebné.  Výjimkou je uvedení
 popisu volby pøíkazové øádky ve výpisu pou¾ití, ve skriptu =ebas=.
 
@@ -77,7 +77,7 @@ metodou =Configuration.serial_number=.
 Pøi zji¹»ování hodnoty konfiguraèního parametru má nejvy¹¹í prioritu volba
 pøíkazové øádky, poté hodnoty promìnných prostøedí v jejich uvedeném poøadí
 ve specifikaci, poté hodnota v konfiguraèním souboru a nakonec hodnota daná
-metodou =lib.util.Configuration.Option.default=.
+metodou =pytis.util.Configuration.Option.default=.
 
 Hodnoty konfiguraèních parametrù mohou záviset na hodnotách jiných
 konfiguraèních parametrù.  Instanci tøídy =Option= je pøedávána instance
@@ -89,7 +89,7 @@ V závislostech parametrù v¹ak nesmí vzniknout cyklus.
 
 ** Pøíklad definice konfiguraèního parametru
 
-Ve tøídì =lib.util.Configuration= je definována následující vnitøní tøída:
+Ve tøídì =pytis.util.Configuration= je definována následující vnitøní tøída:
 
 <example>
     class _Option_dbuser(Option):
@@ -123,12 +123,12 @@ který tento soubor generoval.
 
 ** Jak pøistupovat k hodnotì konfiguraèního parametru
 
-Inicializaèní soubor modulu =lib.util= vytváøí instanci tøídy
-=lib.util.Configuration= a instaluje ji jako fiktivní globální modul
+Inicializaèní soubor modulu =pytis.util= vytváøí instanci tøídy
+=pytis.util.Configuration= a instaluje ji jako fiktivní globální modul
 =config=.  Pøístupy k modulu =config= jsou tak efektivnì pøístupy k této
 instanci.
 
-Tøída =lib.util.Configuration= definuje virtuální atributy odpovídající
+Tøída =pytis.util.Configuration= definuje virtuální atributy odpovídající
 jednotlivým konfiguraèním parametrùm.  Parametry tedy lze èíst teèkovou
 notací, jako kdyby se jednalo o atributy modulu =config=, napøíklad parametr
 =debug= je zpøístupnìn jako =config.debug=.  Do konfiguraèních parametrù lze
