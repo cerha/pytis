@@ -6,7 +6,7 @@ Cílem databázového rozhraní je poskytnout prostøedky pro nìkolik málo
 základních operací, které budeme provádìt nad databázovými daty.  Tento
 dokument poskytuje základní ideové informace o rozhraní a jednoduchý návod, jak
 s rozhraním zaèít pracovat.  Podrobný popis rozhraní naleznete v dokumentaci
-modulu =lib.data=.
+modulu =pytis.data=.
 
 V první øadì je nutno si uvìdomit dùvody[1], které pro zavedení tohoto rozhraní
 máme:
@@ -55,39 +55,48 @@ následujících principech:
 
 * Pou¾ití
 
-Rozhraní je implementováno v modulu =lib.data=.  Zde uvádíme základní pøíklady
-pou¾ití modulu, pro podrobnìj¹í popis viz dokumentace modulu.
+Rozhraní je implementováno v modulu =pytis.data=.  Zde uvádíme základní pøíklady
+pou¾ití modulu, pro podrobnìj¹í popis viz dokumentace modulu a doplòující
+vysvìtlivky ní¾e.
 
 Zaèneme jednoduchým pøíkladem.  Pøedstavme si, ¾e v databázi máme dvì tabulky
 vytvoøené tìmito SQL pøíkazy:
 
 <verbatim>
-CREATE TABLE cis (x int PRIMARY KEY, y text);
-CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), c int REFERENCES cis);
+CREATE TABLE cis (x int PRIMARY KEY, y text) WITH OIDS;
+CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), c int REFERENCES cis) WITH OIDS;
+
+INSERT INTO cis VALUES (1, 'jedna');
+INSERT INTO cis VALUES (4, 'ctyri');
+INSERT INTO cis VALUES (9, 'devet');
+INSERT INTO tab VALUES (1, 'text', 1);
 </verbatim>
 
 Nìkde v aplikaci budeme chtít pracovat s tabulkou =tab=.  To nám umo¾ní
-instance =tab_data= tøídy =lib.data.data.Data=, kterou vytvoøíme následujícím
+instance =tab_data= tøídy =pytis.data.data.Data=, kterou vytvoøíme následujícím
 zpùsobem:
 
 <example>
-  import lib.data as d
+  import pytis.data as d
 
   connection = d.dbdata.DBConnection(database='test', user='trpaslik')
 
   C = d.dbdata.DBColumnBinding
   D = d.dbdata.DBDataDefault
+  F = d.data.DataFactory
 
   cis_key = C('id', 'cis', 'x')
   cis_columns = (cis_key,
 		 C('popis', 'cis', 'y'))
-  cis_data = D(cis_columns, cis_key, connection)
+  cis_factory = F(D, cis_columns, cis_key)
+  cis_data = cis_factory.create(dbconnection_spec=connection)
 
   tab_key = C('klic', 'tab', 'a')
   tab_columns = (tab_key,
 		 C('popis', 'tab', 'b'),
-		 C('id', 'tab', 'c', related_to=cis_key, enumerator=cis_data))
-  tab_data = d.dbdata.DBDataDefault(tab_columns, tab_key, connection)
+		 C('id', 'tab', 'c', enumerator=cis_factory))
+  tab_factory = F(D, tab_columns, tab_key)
+  tab_data = tab_factory.create(dbconnection_spec=connection)
 </example>
 
 S =tab_data= pak mù¾eme provádìt základní datové operace:
@@ -95,7 +104,7 @@ S =tab_data= pak mù¾eme provádìt základní datové operace:
 <example>
   print 'øádky tabulky:'
   tab_data.select()
-  while 1:
+  while True:
       row = tab_data.fetchone()
       if not row:
 	  break
@@ -105,7 +114,7 @@ S =tab_data= pak mù¾eme provádìt základní datové operace:
   old_key = tab_data.columns()[0].type().validate('1')[0]
   new_key = tab_data.columns()[0].type().validate('9')[0]
   new_row_data = []
-  for c, v in zip(tab_data.columns(), ('9', 'pìkný øádek', 'devet')):
+  for c, v in zip(tab_data.columns(), ('9', u'pìkný øádek', '9')):
       new_row_data.append ((c.id(), c.type().validate(v)[0]))
   new_row = d.data.Row(new_row_data)
   
@@ -122,18 +131,18 @@ S =tab_data= pak mù¾eme provádìt základní datové operace:
 Rozebereme si nyní jednotlivé èásti pøíkladu.
 
 **Terminologická poznámka:** Hovoøíme-li o _datové tabulce_, máme tím na mysli
-instanci tøídy =lib.data.data.Data=.  Hovoøíme-li o _databázové tabulce_, máme
+instanci tøídy =pytis.data.data.Data=.  Hovoøíme-li o _databázové tabulce_, máme
 tím na mysli tabulku v databázi.
 
 ** Import modulu
 
-Pro kompletní práci s daty slou¾í modul =lib.data=.  Ten automaticky importuje
+Pro kompletní práci s daty slou¾í modul =pytis.data=.  Ten automaticky importuje
 své submoduly.
 
 ** Specifikace spojení do databáze
 
 Parametry pøipojení do databáze definujeme pomocí instance tøídy
-=lib.data.dbdata.DBConnection=.  V konstruktoru staèí specifikovat pouze
+=pytis.data.dbdata.DBConnection=.  V konstruktoru staèí specifikovat pouze
 neimplicitní hodnoty parametrù.
 
 Objekt definující spojení je pouze specifikaèní a je pova¾ován za immutable.
@@ -143,7 +152,7 @@ databázi, jej mù¾eme vyu¾ít v jedné instanci pro obì tabulky.
 ** Definice sloupcù
 
 Definice sloupcù je nejkomplikovanìj¹í èást celé zále¾itosti.  Ka¾dý sloupec je
-specifikován instancí tøídy =lib.data.dbdata.DBColumnBinding=, která definuje
+specifikován instancí tøídy =pytis.data.dbdata.DBColumnBinding=, která definuje
 mapování sloupce _datové_ tabulky do _databázových_ tabulek.  V nejjednodu¹¹ím
 pøípadì je sloupec definován tøemi parametry: svým identifikátorem (libovolný
 neprázdný øetìzec, pøes který se na nìj budeme odkazovat) a tabulkou a sloupcem
@@ -170,7 +179,7 @@ databázový sloupec je v relaci s jiným sloupcem databáze.  Relaci mù¾eme zavést
 pro libovolné dva sloupce dvou tabulek, její reálné vyu¾ití se v¹ak pøedpokládá
 pouze u vazeb na èíselníky.  Pomocí argumentu =enumerator= øíkáme, ¾e typ
 daného sloupce není zji¹»ován z databáze, nýbr¾ ¾e jím má být instance tøídy
-=lib.data.types.Ciselnik= obsahující zadanou _datovou_ tabulku.
+=pytis.data.types_.DataEnumerator= obsahující zadanou _datovou_ tabulku.
 
 Klíèové sloupce umis»ujeme do pomocných promìnných, proto¾e je vyu¾ijeme jak
 v seznamu sloupcù, tak ve specifikaci klíèù.
@@ -179,9 +188,15 @@ v seznamu sloupcù, tak ve specifikaci klíèù.
 
 Pokud ji¾ máme definovány klíèe, vytvoøen seznam specifikací sloupcù a
 definováno pøipojení do databáze, dostaneme ký¾ený datový objekt jednodu¹e
-vytvoøením instance tøídy =lib.data.dbdata.DBDataDefault=.  Pro pøístup do
+vytvoøením instance tøídy =pytis.data.dbdata.DBDataDefault=.  Pro pøístup do
 databáze pou¾íváme v¾dy právì tuto tøídu, která je potomkem abstraktní tøídy
-=lib.data.dbdata.DBData= a nestaráme se blí¾e o její pùvod.
+=pytis.data.dbdata.DBData= a nestaráme se blí¾e o její pùvod.
+
+V pøíkladu nevytváøíme instance tøídy =pytis.data.dbdata.DBData= pøímo.  Místo
+toho napøed definujeme továrnu se stejnými iniciálními argumenty, z ní¾ pak
+vytváøíme skuteèné datové objekty metodou =create=.  Tento postup je zde nutný
+proto, ¾e argument =related_to= po¾aduje jako svoji hodnotu právì instanci
+tøídy =pytis.data.dbdata.DataFactory=.
 
 ** Vytvoøení klíèù a nového øádku
 
@@ -192,7 +207,7 @@ zde demonstrován znaènì nemotorný low level postup.
 
 ** Operace nad daty
 
-Tøída =lib.data.data.Data= definuje nìkolik základních operací, vesmìs
+Tøída =pytis.data.data.Data= definuje nìkolik základních operací, vesmìs
 odpovídajících základním SQL operacím:
 
 - Metody pro výbìr dat: =row=, =select=, =fetchone=, =close=.
@@ -200,8 +215,11 @@ odpovídajících základním SQL operacím:
 - Metody pro modifikaci dat: =insert=, =update=, =delete=.
 
 Odkazujeme-li se na nìjaký øádek dat (v metodách =row=, =update= a =delete=),
-pou¾íváme klíè tabulky reprezentovaný instancí tøídy =lib.data.types.Value=.
-S øádky dat se pracuje v¾dy prostøednictvím instancí tøídy =lib.data.data.Row=.
+pou¾íváme klíè tabulky reprezentovaný instancí tøídy =pytis.data.types.Value=.
+S øádky dat se pracuje v¾dy prostøednictvím instancí tøídy
+=pytis.data.data.Row=.
+
+Øetìzcové hodnoty musí být typu Unicode.
 
 
 Footnotes: 
