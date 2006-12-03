@@ -90,6 +90,10 @@ Command(LookupForm, 'SEARCH',
         "Hledání záznamu")
 Command(LookupForm, 'SORT',
         "Setøídìní podle sloupce")
+Command(LookupForm, 'FIRST_RECORD',
+        "Skok na první záznam")
+Command(LookupForm, 'LAST_RECORD',
+        "Skok na poslední záznam")
 Command(RecordForm, 'NEW_RECORD',
         "Vlo¾ení nového záznamu pomocí editaèního formuláøe")
 Command(RecordForm, 'IMPORT_INTERACTIVE',
@@ -147,8 +151,6 @@ Command(EditForm, 'NAVIGATE',
         "Navigace mezi políèky editaèního formuláøe") # arg. 'back'
 Command(BrowsableShowForm, 'NEXT_RECORD',
         "Pøechod na dal¹í záznam vpøed/vzad") # arg. 'back'
-Command(BrowsableShowForm, 'LAST_RECORD',
-        "Pøechod na první/poslední záznam") # arg. 'back'
 Command(DualForm, 'OTHER_FORM',
         "Pøechod mezi podformuláøi duálního formuláøe")
 Command(PrintForm, 'NEXT_PAGE',
@@ -210,6 +212,8 @@ DEFAULT_KEYMAP = (
     ('Ctrl-s',        LookupForm.COMMAND_SEARCH(next=True)),
     ('Ctrl-r',        LookupForm.COMMAND_SEARCH(next=True, back=True)),
     ('Ctrl-j',        LookupForm.COMMAND_JUMP),
+    ('Ctrl-Home',     LookupForm.COMMAND_FIRST_RECORD),
+    ('Ctrl-End',      LookupForm.COMMAND_LAST_RECORD),
     ('Ctrl-F3',       ListForm.COMMAND_INCREMENTAL_SEARCH),
     ('Alt-F3',        ListForm.COMMAND_INCREMENTAL_SEARCH(full=True)),
     ('Enter',         ListForm.COMMAND_ACTIVATE),
@@ -240,8 +244,6 @@ DEFAULT_KEYMAP = (
     ('Shift-Tab',     EditForm.COMMAND_NAVIGATE(back=True)),
     ('Next',          BrowsableShowForm.COMMAND_NEXT_RECORD),
     ('Prior',         BrowsableShowForm.COMMAND_NEXT_RECORD(back=True)),
-    ('End',           BrowsableShowForm.COMMAND_LAST_RECORD),
-    ('Home',          BrowsableShowForm.COMMAND_LAST_RECORD(back=True)),
     ('Ctrl-Tab',      DualForm.COMMAND_OTHER_FORM),
     ('Next',          PrintForm.COMMAND_NEXT_PAGE),
     ('Prior',         PrintForm.COMMAND_PREVIOUS_PAGE),
