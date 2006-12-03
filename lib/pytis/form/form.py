@@ -1130,6 +1130,12 @@ class LookupForm(RecordForm):
                     self.select_row(int(result)-1)
                     break
 
+    def _cmd_first_record(self):
+        self.select_row(0)
+        
+    def _cmd_last_record(self):
+        self.select_row(self._lf_select_count-1)
+        
     def _cmd_search(self, next=False, back=False):
         dlg = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
         condition = dlg.condition()
@@ -1923,13 +1929,6 @@ class BrowsableShowForm(ShowForm):
                 return
             row_number -= 1
         self._select_row(self._find_row_by_number(row_number))
-
-    def _cmd_last_record(self, back=False):
-        if back:
-            row = 0
-        else:
-            row = self._lf_select_count - 1
-        self.select_row(row)
 
     def _select_row(self, row, quiet=False):
         super(BrowsableShowForm, self)._select_row(row, quiet=quiet)
