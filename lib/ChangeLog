@@ -3,8 +3,8 @@
 	* pytis/form/commands_.py: Nové pøíkazy
 	`LookupForm.COMMAND_FIRST_RECORD' a
 	`LookupForm.COMMAND_LAST_RECORD'.
-	(DEFAULT_KEYMAP): Pøidáno mapování `Ctrl-Home' a `Ctrl-End' na
-	`LookupForm.COMMAND_FIRST_RECORD' a
+	(DEFAULT_KEYMAP): Pøidáno mapování `Ctrl-Home', `Ctrl-Prior' a
+	`Ctrl-End', `Ctrl-Next' na `LookupForm.COMMAND_FIRST_RECORD' a
 	`LookupForm.COMMAND_LAST_RECORD'.
 
 	* pytis/form/form.py (LookupForm._cmd_first_record) 
