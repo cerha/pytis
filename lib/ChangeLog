@@ -1,3 +1,22 @@
+2006-12-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (Type._VALIDATION_MESSAGES)
+	(Integer._VALIDATION_MESSAGES, Float._VALIDATION_MESSAGES)
+	(String._VALIDATION_MESSAGES, Color._VALIDATION_MESSAGES)
+	(Inet._VALIDATION_MESSAGES, Macaddr._VALIDATION_MESSAGES)
+	(DateTime._VALIDATION_MESSAGES): Konstanty zru¹eny.
+	(Type.__init__): Aktualizován docstring.  Sestavuj
+	`self._validation_messages' automaticky na základì atributù
+	`_VM_*_MSG'.
+	(Type._VM_NULL_VALUE_MSG, Type._VM_INVALID_VALUE_MSG)
+	(Integer._VM_NONINTEGER_MSG, Float._VM_INVALID_NUMBER_MSG) 
+	(String._VM_STRING_TOO_LONG_MSG) 
+	(_RegexValidatedString._VM_FORMAT_MSG, Color._VALIDATION_REGEX) 
+	(Inet._VM_INET_FORMAT_MSG, Inet._VM_INET_MASK_MSG) 
+	(Inet._VM_INET_ADDR_MSG, Macaddr._VM_MACADDR_FORMAT_MSG) 
+	(DateTime._VM_DT_FORMAT_MSG, DateTime._VM_DT_VALUE_MSG) 
+	(DateTime._VM_DT_AGE_MSG): Nové konstanty.
+
 2006-12-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py: Nové pøíkazy
