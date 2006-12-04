@@ -352,8 +352,10 @@ class Type(object):
         assert isinstance(object, types.StringTypes)
         return WMValue(self, object), None
 
-    def _validation_error(self, id, *args):
-        message = self._validation_messages[id] % args
+    def _validation_error(self, id, **kwargs):
+        message = self._validation_messages[id]
+        if kwargs:
+            message %= kwargs
         return ValidationError(message)
         
     def _check_constraints(self, value):
@@ -585,7 +587,7 @@ class String(Type):
     """    
 
     VM_STRING_TOO_LONG = 'VM_STRING_TOO_LONG'
-    _VM_STRING_TOO_LONG_MSG = _("Øetìzec je pøíli¹ dlouhý: (%s, %s)")
+    _VM_STRING_TOO_LONG_MSG = _("Øetìzec pøesahuje maximální délku %(maxlen)s")
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
@@ -626,7 +628,7 @@ class String(Type):
         if value is not None and self._maxlen is not None \
                and len(value) > self._maxlen:
             raise self._validation_error(self.VM_STRING_TOO_LONG,
-                                         self._maxlen, value)
+                                         maxlen=self._maxlen)
         
     def _validate(self, string):
         """Vra» instanci tøídy 'Value' s hodnotou 'string'.
@@ -678,8 +680,8 @@ class Inet(String):
     VM_INET_MASK = 'VM_INET_MASK'
     VM_INET_ADDR = 'VM_INET_ADDR'
     _VM_INET_FORMAT_MSG = _("Chybný formát Inet adresy.")
-    _VM_INET_MASK_MSG = _("Chybná maska Inet adresy: %s")
-    _VM_INET_ADDR_MSG = _("Chybná hodnota Inet adresy %s")
+    _VM_INET_MASK_MSG = _("Chybná maska Inet adresy: %(mask)s")
+    _VM_INET_ADDR_MSG = _("Chybná hodnota Inet adresy %(addr)s")
     
     _INET4_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
@@ -690,13 +692,13 @@ class Inet(String):
         if string.find('/') != -1:
             addr, mask = string.split('/')
             if int(mask) > 32:
-                raise self._validation_error(self.VM_INET_MASK, mask)
+                raise self._validation_error(self.VM_INET_MASK, mask=mask)
         else:
             addr, mask = string, '32'
         numbers = addr.split('.')        
         for n in numbers:
             if n and int(n) > 255:
-                raise self._validation_error(self.VM_INET_ADDR, addr)
+                raise self._validation_error(self.VM_INET_ADDR, addr=addr)
         for i in range(len(numbers), 4):
             numbers.append('0')
         value = '%s/%s' % ('.'.join(numbers), mask)
