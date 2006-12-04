@@ -110,8 +110,8 @@ class Type(object):
 
     VM_NULL_VALUE = 'VM_NULL_VALUE'
     VM_INVALID_VALUE =  'VM_INVALID_VALUE'
-    _VALIDATION_MESSAGES = {VM_NULL_VALUE: _("Prázdná hodnota"),
-                            VM_INVALID_VALUE: _("Nesprávná hodnota")}
+    _VM_NULL_VALUE_MSG = _("Prázdná hodnota")
+    _VM_INVALID_VALUE_MSG = _("Nesprávná hodnota")
     
     _SPECIAL_VALUES = ()
 
@@ -141,18 +141,21 @@ class Type(object):
             libovolná jiná hodnota na None mapovaná (viz. konstanta
             _SPECIAL_VALUES).  Pokud tento argument pravdivý, neprojde prázdná
             hodnota validací.
+            
           enumerator -- specifikace enumerátoru, jako instance `Enumerator',
             nebo None.  Slou¾í k realizaci integritních omezení výètového
             typu.  Více viz dokumentace tøídy `Enumerator'.
+            
           constraints -- sekvence validaèních funkcí slou¾ících k realizaci
             libovolných integritních omezení.  Ka¾dá z tìchto funkcí je funkcí
             jednoho argumentu, kterým je vnitøní hodnota typu.  Funkce pro tuto
             hodnotu musí vrátit buï 'None', je-li hodnota správná, nebo
             chybovou hlá¹ku jako string v opaèném pøípadì.
+            
           validation_messages -- dictionary identifikátorù a validaèních
             hlá¹ek.  Klíèe jsou identifikátory validaèních hlá¹ek definované
             konstantami tøídy s názvy zaèínajícími prefixem 'VM_' a hodnoty
-            jsou hlá¹ky coby stringy.  Hlá¹ky z tohoto argumentu, jsou-li pro
+            jsou hlá¹ky coby øetìzce.  Hlá¹ky z tohoto argumentu, jsou-li pro
             daný identifikátor definovány, mají pøednost pøed implicitními
             hlá¹kami definovanými typem.
 
@@ -167,7 +170,9 @@ class Type(object):
         self._not_null = not_null
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
-        self._validation_messages = copy.copy(self._VALIDATION_MESSAGES)
+        vm = [(getattr(self, attr), getattr(self, '_'+attr+'_MSG'))
+              for attr in dir(self) if attr.startswith('VM_')]
+        self._validation_messages = dict(vm)
         if validation_messages is not None:
             self._validation_messages.update(validation_messages)
         self._fetched = True
@@ -422,8 +427,7 @@ class Integer(Number):
     """Libovolný integer."""
 
     VM_NONINTEGER = 'VM_NONINTEGER'
-    _VALIDATION_MESSAGES = Number._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update({VM_NONINTEGER: _("Není to celé èíslo")})
+    _VM_NONINTEGER_MSG = _("Není to celé èíslo")
     
     def _validate(self, string):
         """Pokus se pøevést 'string' na plain nebo long integer.
@@ -480,9 +484,7 @@ class Float(Number):
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
 
     VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
-    _VALIDATION_MESSAGES = Number._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update(
-        {VM_INVALID_NUMBER: _("Není to povolené èíslo")})
+    _VM_INVALID_NUMBER_MSG = _("Není to povolené èíslo")
     
     def __init__(self, precision=None, **kwargs):
         """Definuj typ reálného èísla.
@@ -583,9 +585,7 @@ class String(Type):
     """    
 
     VM_STRING_TOO_LONG = 'VM_STRING_TOO_LONG'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update(
-      {VM_STRING_TOO_LONG: _("Øetìzec je pøíli¹ dlouhý: (%s, %s)")})
+    _VM_STRING_TOO_LONG_MSG = _("Øetìzec je pøíli¹ dlouhý: (%s, %s)")
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
@@ -649,9 +649,7 @@ class String(Type):
 class _RegexValidatedString(String):
 
     VM_FORMAT = 'VM_FORMAT'
-    _VALIDATION_MESSAGES = String._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update(
-        {VM_FORMAT: _("Neplatný formát.")})
+    _VM_FORMAT_MSG = _("Neplatný formát.")
     
     def _validate(self, string, *args, **kwargs):
         sup = super(_RegexValidatedString, self)
@@ -664,12 +662,8 @@ class _RegexValidatedString(String):
 class Color(_RegexValidatedString):
     """Barva reprezentovaná øetìzcem '#RRGGBB'."""
 
-    _VALIDATION_MESSAGES = copy.copy(_RegexValidatedString._VALIDATION_MESSAGES)
-    _VALIDATION_MESSAGES.update(
-        {_RegexValidatedString.VM_FORMAT:
-         _("Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB').")})
-    
     _VALIDATION_REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
+    _VM_FORMAT_MSG = _("Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB').")
 
     
 class Identifier(_RegexValidatedString):
@@ -683,12 +677,9 @@ class Inet(String):
     VM_INET_FORMAT = 'VM_INET_FORMAT'
     VM_INET_MASK = 'VM_INET_MASK'
     VM_INET_ADDR = 'VM_INET_ADDR'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update(
-        {VM_INET_FORMAT: _("Chybný formát Inet adresy."),
-         VM_INET_MASK: _("Chybná maska Inet adresy: %s"),
-         VM_INET_ADDR: _("Chybná hodnota Inet adresy %s"),
-         })
+    _VM_INET_FORMAT_MSG = _("Chybný formát Inet adresy.")
+    _VM_INET_MASK_MSG = _("Chybná maska Inet adresy: %s")
+    _VM_INET_ADDR_MSG = _("Chybná hodnota Inet adresy %s")
     
     _INET4_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
@@ -716,10 +707,7 @@ class Macaddr(String):
     """MAC adresa."""
 
     VM_MACADDR_FORMAT = 'VM_MACADDR_FORMAT'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update(
-        {VM_MACADDR_FORMAT: _("Chybný formát MAC adresy."),
-         })
+    _VM_MACADDR_FORMAT_MSG = _("Chybný formát MAC adresy.")
     
     _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
     
@@ -746,11 +734,9 @@ class DateTime(Type):
     VM_DT_FORMAT = 'VM_DT_FORMAT'
     VM_DT_VALUE = 'VM_DT_VALUE'
     VM_DT_AGE = 'VM_DT_AGE'
-    _VALIDATION_MESSAGES = Type._VALIDATION_MESSAGES
-    _VALIDATION_MESSAGES.update(
-        {VM_DT_FORMAT: _("Chybný formát data nebo èasu"),
-         VM_DT_VALUE: _("Chybné datum nebo èas"),
-         VM_DT_AGE: _("Datum mimo povolený rozsah")})
+    _VM_DT_FORMAT_MSG = _("Chybný formát data nebo èasu")
+    _VM_DT_VALUE_MSG = _("Chybné datum nebo èas")
+    _VM_DT_AGE_MSG = _("Datum mimo povolený rozsah")
     
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
