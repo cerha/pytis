@@ -54,7 +54,7 @@ pd.Type._VM_NULL_VALUE_MSG = _("Empty value")
 pd.Type._VM_INVALID_VALUE_MSG = _("Invalid value")
 pd.Integer._VM_NONINTEGER_MSG = _("Not an integer")
 pd.Float._VM_INVALID_NUMBER_MSG = _("Invalid number")
-pd.String._VM_STRING_TOO_LONG_MSG = _("String too long: (%s, %s)")
+pd.String._VM_STRING_TOO_LONG_MSG = _("String exceeds max length %(maxlen)d")
 pd.Color._VM_FORMAT_MSG = _("Invalid color format ('#RGB' or '#RRGGBB')")
 pd.Identifier._VM_FORMAT_MSG = _("Invalid format")
 pd.DateTime._VM_DT_FORMAT_MSG = _("Invalid date or time format")
@@ -144,8 +144,13 @@ class LayoutForm(Form):
                 attr['rows'] = f.height()
                 attr['cols'] = f.width()
             else:
+                if isinstance(type, pytis.data.String):
+                    maxlen = type.maxlen()
+                else:
+                    maxlen = None
                 ctrl = _html.field
-                attr['size'] = f.width()
+                attr['size'] = f.width(maxlen)
+                attr['maxlength'] = maxlen
             attr['value'] = self._prefill.get(f.id()) or value.export()
         if not self._row.editable(f.id()):
             attr['disabled'] = True
