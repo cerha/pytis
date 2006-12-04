@@ -663,7 +663,7 @@ class Color(_RegexValidatedString):
     """Barva reprezentovaná øetìzcem '#RRGGBB'."""
 
     _VALIDATION_REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
-    _VM_FORMAT_MSG = _("Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB').")
+    _VM_FORMAT_MSG = _("Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')")
 
     
 class Identifier(_RegexValidatedString):
