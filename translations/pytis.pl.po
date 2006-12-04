@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
-"Report-Msgid-Bugs-To: Tomas Cerha <cerha@brailcom.org>\n"
-"POT-Creation-Date: 2006-11-04 20:59+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-12-04 12:34+0100\n"
 "PO-Revision-Date: 2006-11-06 13:45+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -15,26 +15,67 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:320
+#: ../lib/pytis/web/form.py:53
+msgid "Empty value"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:54
+msgid "Invalid value"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:55
+msgid "Not an integer"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:56
+msgid "Invalid number"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:57
+#, python-format
+msgid "String too long: (%s, %s)"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:58
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:59
+msgid "Invalid format"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:60
+msgid "Invalid date or time format"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:61
+msgid "Invalid date or time"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:62
+msgid "Date outside the allowed range"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:255 ../lib/pytis/web/form.py:319
 msgid "Yes"
 msgstr "Tak"
 
-#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:320
+#: ../lib/pytis/web/form.py:255 ../lib/pytis/web/form.py:319
 msgid "No"
 msgstr "Nie"
 
-#: ../lib/pytis/web/form.py:264
+#: ../lib/pytis/web/form.py:263
 msgid "reduced"
 msgstr "zredukowany"
 
-#: ../lib/pytis/web/form.py:304
+#: ../lib/pytis/web/form.py:303
 msgid "Submit"
 msgstr "Wy¶lij"
 
-#: ../lib/pytis/web/form.py:305
+#: ../lib/pytis/web/form.py:304
 msgid "Reset"
 msgstr "Od¶wie¿"
 
-#: ../lib/pytis/web/form.py:349
+#: ../lib/pytis/web/form.py:348
 msgid "No records."
 msgstr "Nie ma wpisu."

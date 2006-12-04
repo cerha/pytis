@@ -7,34 +7,75 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-04 20:59+0100\n"
-"PO-Revision-Date: 2006-11-11 11:04+0100\n"
+"POT-Creation-Date: 2006-12-04 12:34+0100\n"
+"PO-Revision-Date: 2006-12-04 12:35+0100\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:320
+#: ../lib/pytis/web/form.py:53
+msgid "Empty value"
+msgstr "Prázdná hodnota."
+
+#: ../lib/pytis/web/form.py:54
+msgid "Invalid value"
+msgstr "Neplatná hodnota"
+
+#: ../lib/pytis/web/form.py:55
+msgid "Not an integer"
+msgstr "Není to celé èíslo"
+
+#: ../lib/pytis/web/form.py:56
+msgid "Invalid number"
+msgstr "Není to povolené èíslo"
+
+#: ../lib/pytis/web/form.py:57
+#, python-format
+msgid "String too long: (%s, %s)"
+msgstr "Øetìzec je pøíli¹ dlouhý: (%s, %s)"
+
+#: ../lib/pytis/web/form.py:58
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
+
+#: ../lib/pytis/web/form.py:59
+msgid "Invalid format"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/web/form.py:60
+msgid "Invalid date or time format"
+msgstr "Chybný formát data nebo èasu"
+
+#: ../lib/pytis/web/form.py:61
+msgid "Invalid date or time"
+msgstr "Chybné datum nebo èas"
+
+#: ../lib/pytis/web/form.py:62
+msgid "Date outside the allowed range"
+msgstr "Datum mimo povolený rozsah"
+
+#: ../lib/pytis/web/form.py:255 ../lib/pytis/web/form.py:319
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:320
+#: ../lib/pytis/web/form.py:255 ../lib/pytis/web/form.py:319
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/form.py:264
+#: ../lib/pytis/web/form.py:263
 msgid "reduced"
 msgstr "zkráceno"
 
-#: ../lib/pytis/web/form.py:304
+#: ../lib/pytis/web/form.py:303
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:305
+#: ../lib/pytis/web/form.py:304
 msgid "Reset"
 msgstr "Vrátit pùvodní hodnoty"
 
-#: ../lib/pytis/web/form.py:349
+#: ../lib/pytis/web/form.py:348
 msgid "No records."
 msgstr "®ádné záznamy."

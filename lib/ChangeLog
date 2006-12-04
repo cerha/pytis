@@ -1,5 +1,8 @@
 2006-12-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py: Pøidán hack umo¾òující pøeklad chybovách
+	hlá¹ek datových typù.
+
 	* pytis/data/types_.py (Type._VALIDATION_MESSAGES)
 	(Integer._VALIDATION_MESSAGES, Float._VALIDATION_MESSAGES)
 	(String._VALIDATION_MESSAGES, Color._VALIDATION_MESSAGES)
@@ -16,6 +19,7 @@
 	(Inet._VM_INET_ADDR_MSG, Macaddr._VM_MACADDR_FORMAT_MSG) 
 	(DateTime._VM_DT_FORMAT_MSG, DateTime._VM_DT_VALUE_MSG) 
 	(DateTime._VM_DT_AGE_MSG): Nové konstanty.
+	(Color._VM_FORMAT_MSG): Drobná oprava hlá¹ky.
 
 2006-12-03  Tomas Cerha  <cerha@brailcom.org>
 
