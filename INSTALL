@@ -4,9 +4,15 @@ Requirements:
 
   * Python 2.3 or later
   * PostgreSQL 8.1 or later
-  * python-wxgtk2.6 or later
-  * egenix-mx-datetime Python library
   * PyPgSQL Python library
+  * egenix-mx-datetime Python library
+  * python-wxgtk2.6 or later (only for GUI apps)
+
+The simplest installation can be done using the provided Makefile.  Just run
+"make install" within the package root directory.  Feel free to edit the
+Makefile and setup your own installation paths.
+
+You can also setup Pytis manually.
 
 The following instructions assume, that you have downloaded Pytis and unpacked
 it somewhere on your system.  We will refer to the unpacked directory as `the
@@ -30,5 +36,3 @@ Pytis out of CVS.  In this case you can check out a newer version at any time
 and no further effort is needed to start using it.
 
 
-
-  
