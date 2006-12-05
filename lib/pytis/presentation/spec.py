@@ -667,7 +667,8 @@ class ViewSpec(object):
           columns -- specifikace sloupcù tabulkového formuláøe, sekvence
             indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
             výchozí seznam sloupcù obsahovat v¹echna políèka z fields, která
-            nemají 'column_width' nastaveno na nulu.
+            nemají 'column_width' nastaveno na nulu nebo 'disable_column' na
+            True.
             
           actions -- specifikace dostupných u¾ivatelských akcí jako sekvence
             instancí 'Action', vnoøených sekvencí, nebo instancí 'ActionGroup'.
@@ -767,10 +768,6 @@ class ViewSpec(object):
         implicitní layout a seznam sloupcù, odpovídající poøadí políèek ve
         'fields'.
         
-        Klíèové atributy 'layout' a 'columns' mohou být uvádìny bez
-        identifikátoru a tudí¾ by mìlo být zaruèeno, ¾e budou v budoucnu
-        zachovány vèetnì poøadí.
-
 	Argument `help' nech» je vyu¾íván pro rozsáhlej¹í popis formuláøe,
 	který vy¾aduje formátování.  Jednoduchý popis v rozsahu jedné a¾ dvou
 	vìt nech» je uvádìn jako `description'.  Proto¾e se oba popisy
@@ -827,14 +824,16 @@ class ViewSpec(object):
                                "'%s' specification of '%s'.") % (dep, s, f.id())
         # Initialize `columns' specification parameter
         if columns is None:
-            columns = tuple([f.id() for f in self._fields if f.column_width()])
+            columns = tuple([f.id() for f in self._fields
+                             if f.column_width() and not f.disable_column()])
         else:
             if __debug__:
                 assert is_sequence(columns)
-                for id in columns:
-                    assert is_string(id)
-                    assert self._field_dict.has_key(id), \
-                       (_("Unknown column id in 'columns' specification:"), id)
+                for c in columns:
+                    assert isinstance(c, str) and self._field_dict.has_key(c),\
+                        (_("Unknown column id in 'columns' specification:"), c)
+                    f = self._field_dict[c]
+                    assert not f.disable_column()
         # Initialize other specification parameters
         if __debug__:
             for x in actions:
@@ -1500,14 +1499,14 @@ class FieldSpec(object):
     """
     def __init__(self, id, label='', column_label=None, descr=None,
                  virtual=False, dbcolumn=None, type=None, type_=None,
-                 width=None, column_width=None, fixed=False, height=None,
-                 editable=None, compact=False, default=None,
-                 computer=None, line_separator='; ', codebook=None,
-                 display=None, display_size=None, allow_codebook_insert=False,
-                 codebook_insert_spec=None, codebook_runtime_filter=None,
-                 selection_type=None, orientation=Orientation.VERTICAL,
-                 post_process=None, filter=None, filter_list=None, style=None,
-                 link=(), **kwargs):
+                 width=None, column_width=None, disable_column=False,
+                 fixed=False, height=None, editable=None, compact=False,
+                 default=None, computer=None, line_separator='; ',
+                 codebook=None, display=None, display_size=None,
+                 allow_codebook_insert=False, codebook_insert_spec=None,
+                 codebook_runtime_filter=None, selection_type=None,
+                 orientation=Orientation.VERTICAL, post_process=None,
+                 filter=None, filter_list=None, style=None, link=(), **kwargs):
         """Inicializace a doplnìní výchozích hodnot atributù.
 
         Argumenty:
@@ -1559,6 +1558,12 @@ class FieldSpec(object):
           
           column_width -- ¹íøka sloupce v tabulce ve znacích, kladné celé
             èíslo.  Je-li 'None', je pou¾ita hodnota 'width'.
+
+          disable_column -- Pokud je udána pravdivá hodnota, políèko nebude mo¾né
+            zobrazit jako sloupec -- tj. nebude se vyskytovat ve výbìru
+            sloupcù, které je mo¾no zobrazit.  Pokus o umístìní takového
+            políèka do výchozích sloupcù (argument 'columns' ve 'ViewSpec')
+            bude pova¾ován za chybu a ohlá¹en.
             
           fixed -- pokud bude pøadána pravdivá hodnota, nebude ¹íøka sloupce
             automaticky pøepoèítávána pøi zmìnì velikosti tabulkového
@@ -1718,6 +1723,7 @@ class FieldSpec(object):
         assert descr is None or is_anystring(descr)
         assert type is None or isinstance(type, pytis.data.Type)
         assert isinstance(virtual, bool)
+        assert isinstance(disable_column, bool)
         assert isinstance(fixed, bool)
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
@@ -1760,7 +1766,7 @@ class FieldSpec(object):
         self._label = label
         self._descr = descr
         self._width = width
-        if column_width is None:
+        if column_width is None and width != 0:
             column_width = width
         self._column_width = column_width
         self._column_label = column_label
@@ -1768,6 +1774,7 @@ class FieldSpec(object):
             type = pytis.data.String()
         self._virtual = virtual
         self._fixed = fixed
+        self._disable_column = disable_column
         self._type = type
         self._compact = compact
         self._default = default
@@ -1885,6 +1892,10 @@ class FieldSpec(object):
         else:
             return self._column_width
 
+    def disable_column(self):
+        """Vra» pravdu, pokud políèko není zobrazitelné jako slopec."""
+        return self._disable_column
+        
     def fixed(self):
         """Vra» pravdu, pokud jde o sloupec s fixní ¹íøkou."""
         return self._fixed
