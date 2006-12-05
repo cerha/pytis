@@ -1,5 +1,16 @@
 2006-12-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._displayed_columns_menu): Zahrò
+	pouze sloupce, které nemají nastaveno `disable_column'.
+
+	* pytis/presentation/spec.py (Specification.__init__): Povol
+	pou¾ití metody také pro `columns'.
+	(ViewSpec.__init__): Aktualizace docstringu.  Ujisti se, ¾e
+	sloupec v `columns' nemá nastaveno `disable_column'.
+	(FieldSpec.__init__): Nový argument `disable_column'.  Nastavuj
+	výchozí `column_width' podle `width' jen pokud je nenulová.
+	(FieldSpec.disable_column): Nová metoda.
+
 	* pytis/util/configuration.py (Configuration): Derive from
 	`object'.
 	(Configuration._HiddenOption): Derive from `Option'.
