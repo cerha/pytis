@@ -37,7 +37,7 @@ import copy
 from pytis.util import *
 import pytis.data
 
-class Configuration:
+class Configuration(object):
     """Definice konfigurace a její konkrétní parametry."""
 
     class Option(object):
@@ -323,7 +323,7 @@ class Configuration:
                 value = os.path.join(os.getcwd(), value)
             return value
 
-    class _HiddenOption(object):
+    class _HiddenOption(Option):
         """Mix-in tøída pro skryté volby."""
         _VISIBLE = False
         
@@ -421,7 +421,7 @@ class Configuration:
                    "testy.")
         _DOC = _("Týká se pouze regresivního testování.")
 
-    class _Option_custom_debug(Option, _HiddenOption):
+    class _Option_custom_debug(_HiddenOption):
         _DESCR = _("Zvlá¹tní ladící funkce, napojená na pøíkaz "
                    "'COMMAND_CUSTOM_DEBUG'.")
         _DEFAULT = (lambda: None)
@@ -507,7 +507,7 @@ class Configuration:
         _DESCR = _("Port databázového serveru.")
         _DEFAULT = None
     
-    class _Option_dbconnection(Option, _HiddenOption):
+    class _Option_dbconnection(_HiddenOption):
         _DESCR = _("Instance specifikace spojení do databáze "
                    "('pytis.data.DBConnection').")
         _DOC = _("Implicitnì se vytváøí z vý¹e uvedených databázových voleb.")
@@ -680,11 +680,11 @@ class Configuration:
                    "aplikace.")
         _DEFAULT = None
 
-    class _Option_form_state(Option, _HiddenOption):
+    class _Option_form_state(_HiddenOption):
         _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu formuláøù.")
         _DEFAULT = {}
 
-    class _Option_application_state(Option, _HiddenOption):
+    class _Option_application_state(_HiddenOption):
         _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu aplikace.")
         _DEFAULT = {}
 
@@ -907,10 +907,11 @@ class Configuration:
         'stream' musí být otevøený stream s mo¾ností zápisu.
 
         """
-        stream.write('# -*- coding: iso-8859-2 -*-\n\n')
+        #stream.write('# -*- coding: iso-8859-2 -*-\n\n')
+        from textwrap import wrap
         for name, option in self._options.items():
             if option.visible():
-                for line in string.split(option.__doc__, '\n'):
+                for line in wrap(option.description(full=True), 77):
                     stream.write('# %s\n' % string.strip(line))
                 stream.write('#%s = %s\n\n' % (name, option.default_string()))
 
