@@ -1,3 +1,17 @@
+2006-12-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/configuration.py (Configuration): Derive from
+	`object'.
+	(Configuration._HiddenOption): Derive from `Option'.
+	(Configuration._Option_custom_debug)
+	(Configuration._Option_dbconnection)
+	(Configuration._Option_form_state)
+	(Configuration._Option_application_state): Derive just from
+	`_HiddenOption.
+	(Configuration.dump_config_template): Wrap the description texts.
+
+	* pytis/__init__.py (__version__): Changed to `0.1.0'.
+
 2006-12-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Pøidán hack umo¾òující pøeklad chybovách
