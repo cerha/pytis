@@ -12,27 +12,24 @@ The simplest installation can be done using the provided Makefile.  Just run
 "make install" within the package root directory.  Feel free to edit the
 Makefile and setup your own installation paths.
 
-You can also setup Pytis manually.
+You can also setup Pytis manually.  This is recommended when you checked Pytis
+out of CVS.  The two options described below will allow you to run the CVS
+version directly.  You will be able to check out a newer version at any time
+and this new version will be used automatically.
 
-The following instructions assume, that you have downloaded Pytis and unpacked
-it somewhere on your system.  We will refer to the unpacked directory as `the
-installation directory'.  All the mentioned commands should be run from within
-this directory.
+You need to add Pytis libraries somewhere to your Python path.  The recommended
+approach is to link the library to your site packages directory.  On a
+unix/linux system invoke the following commands from the package root
+directory:
 
-First you need to add Pytis Python libraries somewhere to your Python path.
-The recommended approach is to link the library to your site packages
-directory.  On a typical unix/linux system this can be:
+ $ ln -s `pwd`/lib/pytis /usr/local/lib/python2.4/site-packages/pytis
 
- $ ln -s `pwd`/lib/pytis /usr/local/lib/python2.3/site-packages/pytis
-
-Replace `python2.3' with the Python version you use.
+Replace `python2.4' with the Python version you use.
 
 Alternatively, you may add Pytis to your PYTHONPATH environment variable:
 
  $ export PYTHONPATH=`pwd`/lib
 
-Note, that the recommended symlinked configuration is good when you checked
-Pytis out of CVS.  In this case you can check out a newer version at any time
-and no further effort is needed to start using it.
-
+You will probably want to set PYTHONPATH from within your shell startup file to
+make it available permanently.
 
