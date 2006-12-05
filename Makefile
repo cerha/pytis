@@ -9,6 +9,9 @@ translations:
 install: translations $(SHARE)/pytis
 	cp -ruv translations $(SHARE)/pytis
 	cp -ruv lib/pytis $(LIB)
+	@# Create the *.pyc and *.pyo files
+	PYTHONPATH=$(LIB) python -c "from pytis import data, presentation, web"
+	PYTHONPATH=$(LIB) python -OO -c "from pytis import data, presentation, web"
 
 uninstall:
 	rm -rf $(SHARE)/pytis
@@ -28,6 +31,6 @@ release: translations
 	@echo "Generating $(file)..."
 	@(cd releases; tar --exclude "CVS" --exclude "*~" --exclude "#*" \
 	     --exclude ".#*" --exclude "*.pyc" --exclude "*.pyo" \
-	     --exclude "demo" --exclude releases --exclude site \
+	     --exclude demo --exclude releases --exclude extensions \
 	     -czhf $(file) $(dir))
 	@rm releases/$(dir)
