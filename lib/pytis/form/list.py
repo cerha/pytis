@@ -745,7 +745,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                           command=ListForm.COMMAND_TOGGLE_COLUMN,
                           args=dict(column_id=c.id(), col=col),
                           state=lambda c=c: c in self._columns)
-                for c in self._view.fields()] + \
+                for c in self._view.fields() if not c.disable_column()] + \
                 [MSeparator(),
                  MItem(_("Vrátit výchozí nastavení formuláøe"),
                        command=InnerForm.COMMAND_RESET_FORM_STATE),
