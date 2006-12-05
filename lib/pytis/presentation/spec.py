@@ -2295,7 +2295,7 @@ class Specification(object):
                     attr in ('table', 'key', 'access_rights', 'oid',
                              'data_cls', 'bindings', 'cb', 'prints')):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
-        for arg in ('layout', 'actions'):
+        for arg in ('layout', 'actions', 'columns'):
             try:
                 value = self._view_spec_kwargs[arg]
             except:
