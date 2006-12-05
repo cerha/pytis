@@ -9,6 +9,9 @@
 	Tøída `Specifications' nyní umo¾nuje pou¾ití metody namísto
 	atributu také pro `columns'.
 
+	Nový argument `disable_column' zcela znemo¾ní pou¾ití políèka jako
+	sloupce v tabulkovém formuláøi.
+
 2006-12-03  Tomas Cerha  <cerha@brailcom.org>
 
 	Byly implementovány nové pøíkazy `LookupForm.COMMAND_FIRST_RECORD'
