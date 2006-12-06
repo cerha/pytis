@@ -2289,8 +2289,10 @@ class Specification(object):
     
     def __init__(self, resolver):
         self._resolver = resolver
-        if callable(self.fields):
-            self.fields = self.fields()
+        for attr in ('fields', 'access_rights', 'bindings', 'cb'):
+            value = getattr(self, attr)
+            if callable(value):
+                setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
         assert isinstance(self.fields, (list, tuple))
         if __debug__:
