@@ -807,9 +807,10 @@ class ViewSpec(object):
                         recourse_group(item)
                     elif not isinstance(item, Button):
                         assert self._field_dict.has_key(item), \
-                               (_("Unknown field id in 'layout' spec.:"), item)
+                            _("Unknown field id in 'layout' spec.: %r") % item
                         if self._field_dict[item].width() == 0:
-                            log(OPERATIONAL, "Zero width field in layout:",item)
+                            log(OPERATIONAL,
+                                "Zero width field in layout:", item)
             recourse_group(layout.group())
             for f in fields:
                 assert isinstance(f, FieldSpec)
@@ -820,8 +821,9 @@ class ViewSpec(object):
                     if isinstance(c, Computer):
                         for dep in c.depends():
                             assert self._field_dict.has_key(dep), \
-                              ("Unknown field id '%s' in dependencies for " + \
-                               "'%s' specification of '%s'.") % (dep, s, f.id())
+                                   _("Unknown field id '%s' in dependencies "
+                                     "for '%s' specification of '%s'.") % \
+                                     (dep, s, f.id())
         # Initialize `columns' specification parameter
         if columns is None:
             columns = tuple([f.id() for f in self._fields
@@ -831,9 +833,10 @@ class ViewSpec(object):
                 assert is_sequence(columns)
                 for c in columns:
                     assert isinstance(c, str) and self._field_dict.has_key(c),\
-                        (_("Unknown column id in 'columns' specification:"), c)
+                       _("Unknown column id in 'columns' specification: %r" % c
                     f = self._field_dict[c]
-                    assert not f.disable_column()
+                    assert not f.disable_column(), \
+                         _("Disabled column in columns: %s" % c
         # Initialize other specification parameters
         if __debug__:
             for x in actions:
