@@ -833,10 +833,10 @@ class ViewSpec(object):
                 assert is_sequence(columns)
                 for c in columns:
                     assert isinstance(c, str) and self._field_dict.has_key(c),\
-                       _("Unknown column id in 'columns' specification: %r" % c
+                      _("Unknown column id in 'columns' specification: %r") % c
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
-                         _("Disabled column in columns: %s" % c
+                         _("Disabled column in columns: %s") % c
         # Initialize other specification parameters
         if __debug__:
             for x in actions:
