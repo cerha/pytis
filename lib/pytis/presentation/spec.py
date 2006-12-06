@@ -836,7 +836,7 @@ class ViewSpec(object):
                       _("Unknown column id in 'columns' specification: %r") % c
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
-                         _("Disabled column in columns: %s") % c
+                           _("Disabled column in columns: %s") % c
         # Initialize other specification parameters
         if __debug__:
             for x in actions:
