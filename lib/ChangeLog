@@ -2,6 +2,8 @@
 
 	* pytis/presentation/spec.py (Specification.__init__): Povol
 	pou¾ití metody také pro `bindings', `cb' a `access_rights'.
+	(ViewSpec.__init__): Pøidána pøívìtivìj¹í hlá¹ka assertu.
+	(ViewSpec.recourse_group): Upraveny assertové hlá¹ky.
 
 2006-12-05  Tomas Cerha  <cerha@brailcom.org>
 
