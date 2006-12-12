@@ -674,24 +674,7 @@ class RecordForm(InnerForm):
                 data_row = the_row.row()
             return data_row.columns([c.id() for c in self._data.key()])
         return None
-
-    def _redirected_name(self, key):
-        redirect = self._view.redirect()
-        if redirect is not None:
-            success, row = db_operation(lambda : self._data.row(key))
-            if not success:
-                raise ProgramError('Row read failure')
-            name = redirect(row)
-            if name is not None:
-                assert isinstance(name, types.StringType)
-                return name
-        return None
     
-    def _run_form(self, form, key):
-        name = self._redirected_name(key) or self._name
-        kwargs = self._new_form_kwargs()
-        run_form(form, name, select_row=key, **kwargs)
-
     def _new_form_kwargs(self):
         return {}
 
@@ -763,9 +746,10 @@ class RecordForm(InnerForm):
     def _on_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
             return
+        row = self.current_row()
         on_edit_record = self._view.on_edit_record()
         if on_edit_record is not None:
-            on_edit_record(row=self.current_row())
+            on_edit_record(row=row)
             # TODO: _signal_update vyvolá refresh.  To je tu jen pro pøípad, ¾e
             # byla u¾ivatelská procedura o¹etøena jinak ne¾ vyvoláním
             # formuláøe.  Proto¾e to samo u¾ je hack, tak a» si radìji také
@@ -773,7 +757,15 @@ class RecordForm(InnerForm):
             # ostatních pøípadech zbyteènì a zdr¾uje.
             self._signal_update()
         else:
-            self._run_form(PopupEditForm, self._current_key())
+            name = self._name
+            redirect = self._view.redirect()
+            if redirect is not None:
+                redirected_name = redirect(row)
+                if redirected_name is not None:
+                    assert isinstance(redirected_name, str)
+                    name = redirected_name
+            kwargs = self._new_form_kwargs()
+            run_form(PopupEditForm, name, select_row=row.row(), **kwargs)
 
     def _can_delete_record(self):
         return self.check_permission(pytis.data.Permission.DELETE)
