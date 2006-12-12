@@ -3,6 +3,19 @@
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
+
+2006-12-12  Tomas Cerha  <cerha@brailcom.org>
+
+	Byl upraven algoritmus urèení typu políèka.  Nyní by mìl mimo jiné
+	napøíklad zohlednit argument `selection_type' i pro políèka typu
+	`Boolean'.  V kombinaci s `display' funkcí tak napø. lze snadno
+	udìlat výbìr boolean hodnoty pomocí RadioBox èudlíkù.
+	
+	Pøesmìrování pomocí `redirect' je nyní respektováno pouze pøi
+	editaci záznamu.  Pøi otevøení `BrowsableShowForm' nebo
+	`DescriptiveDualForm' k pøesmìrování nedochází.
+
+	Vylep¹ení assertové hlá¹ky pøi kontrole parametrù FieldSpec.
 	
 2006-12-05  Tomas Cerha  <cerha@brailcom.org>
 
