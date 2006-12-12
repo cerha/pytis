@@ -99,29 +99,22 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         
         """
         type = spec.type(data)
-        codebook = spec.codebook(data)
-        if isinstance(type, pytis.data.Date):
-            field = DateField
-        elif isinstance(type, pytis.data.Boolean):
-            field = CheckBoxField
-        elif isinstance(type, pytis.data.Color):
-            field = ColorSelectionField
-        elif isinstance(type, (pytis.data.Number, pytis.data.String)) \
-                 and type.enumerator() is not None and codebook is not None:
-            if inline:
+        if type.enumerator() is not None:
+            codebook = spec.codebook(data)
+            selection_type = spec.selection_type()
+            if isinstance(type, pytis.data.Boolean) and selection_type is None:
+                field = CheckBoxField
+            elif inline:
                 if codebook:
                     field = CodebookField
                 else:
                     field = ChoiceField 
             else:
-                selection_type = spec.selection_type()
                 if selection_type is None:
                     if codebook is not None:
                         selection_type = SelectionType.CODEBOOK
                     else:
                         selection_type = SelectionType.CHOICE
-                #cbtypes = (SelectionType.CODEBOOK, SelectionType.LIST)
-                #assert selection_type not in cbtypes or codebook is not None
                 mapping = {
                     SelectionType.CODEBOOK:  CodebookField,
                     SelectionType.LIST:      ListField,
@@ -130,6 +123,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                     SelectionType.RADIO_BOX: RadioBoxField,
                     }
                 field = mapping[selection_type]
+        elif isinstance(type, pytis.data.Date):
+            field = DateField
+        elif isinstance(type, pytis.data.Color):
+            field = ColorSelectionField
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
