@@ -631,11 +631,11 @@ class ViewSpec(object):
     """
     
     def __init__(self, title, fields, singular=None, layout=None, columns=None,
-                 actions=(), sorting=None, grouping=None, redirect=None,
-                 check=None, cleanup=None, on_new_record=None,
-                 on_edit_record=None, on_delete_record=None,
-                 on_line_commit=None, focus_field=None, description=None,
-                 help=None, row_style=FIELD_STYLE_DEFAULT):
+                 actions=(), sorting=None, grouping=None, check=None,
+                 cleanup=None, on_new_record=None, on_edit_record=None,
+                 on_delete_record=None, on_line_commit=None, redirect=None,
+                 focus_field=None, description=None, help=None,
+                 row_style=FIELD_STYLE_DEFAULT):
         
         """Inicializuj instanci.
 
@@ -693,14 +693,6 @@ class ViewSpec(object):
             seskupovacích sloupcù.  To má význam pouze u sloupcù, podle kterých
             je zároveò øazeno.
             
-          redirect -- pøesmìrování formuløe pro zobrazení/editaci jednoho
-            záznamu.  Jedná se o funkci jednoho argumentu, jím¾ je instance
-            'PresentedRow' reprezentující øádek dat, pro který je
-            pøesmìrování po¾adováno.  Vrácenou hodnotou musí být název
-            specifikace, nad kterou bude vytváøený formuláø sestaven.  Pokud
-            funkce vrátí None, nebo není ¾ádná funkce specifikována, k ¾ádnému
-            pøesmìrování nedojde.
-            
           check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
             funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
             reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
@@ -749,6 +741,17 @@ class ViewSpec(object):
             `PresentedRow', lze vyvolat doplòující akce po editaci inline
             záznamu.
              
+          redirect -- pøesmìrování formuløe pro editaci jednoho záznamu.  Jedná
+            se o funkci jednoho argumentu, jím¾ je instance 'PresentedRow'
+            reprezentující øádek dat, pro který je pøesmìrování po¾adováno.
+            Vrácenou hodnotou musí být název specifikace, nad kterou bude
+            vytváøený formuláø sestaven.  Pokud funkce vrátí None, nebo není
+            ¾ádná funkce specifikována, k ¾ádnému pøesmìrování nedojde.
+            Stejného efektu by ¹lo dosáhnout také pomocí 'on_edit_record', ale
+            pou¾ití 'redirect' je v podstatì zjednodu¹ená varianta
+            'on_edit_record'.  Pokud je v¹ak 'on_edit_record' pou¾it, je
+            'redirect' ignorován!
+            
           focus_field -- øetìzcová hodnota identifikátoru políèka urèující,
             které políèko má po otevøení formuláøe fokus, nebo funkce jednoho
             argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
@@ -859,13 +862,13 @@ class ViewSpec(object):
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None
-        assert redirect is None or callable(redirect)
         assert check is None or callable(check)
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
         assert on_delete_record is None or callable(on_delete_record)
         assert on_line_commit is None or callable(on_line_commit)
+        assert redirect is None or callable(redirect)
         assert focus_field is None or callable(focus_field) or \
                isinstance(focus_field, types.StringTypes)
         assert isinstance(row_style, FieldStyle) or callable(row_style)
@@ -878,13 +881,13 @@ class ViewSpec(object):
         self._actions = actions
         self._sorting = sorting
         self._grouping = grouping
-        self._redirect = redirect
         self._check = check
         self._cleanup = cleanup
         self._on_new_record = on_new_record
         self._on_edit_record = on_edit_record
         self._on_delete_record = on_delete_record
         self._on_line_commit = on_line_commit
+        self._redirect = redirect
         self._focus_field = focus_field
         self._description = description
         self._help = help
@@ -945,10 +948,6 @@ class ViewSpec(object):
         """Vra» tuple id sloupcù výchozího vizuálního seskupování."""
         return self._grouping
 
-    def redirect(self):
-        """Vra» funkci zaji¹»ující pøesmìrování na jiný název specifikace."""
-        return self._redirect
-        
     def cleanup(self):
         """Vra» funkci provádìjící akce pøi uzavøení formuláøe."""
         return self._cleanup
@@ -973,6 +972,10 @@ class ViewSpec(object):
         """Vra» funkci volanou po ulo¾ení inline øádku."""
         return self._on_line_commit
 
+    def redirect(self):
+        """Vra» funkci zaji¹»ující pøesmìrování na jiný název specifikace."""
+        return self._redirect
+        
     def focus_field(self):
         """Vra» øetìzec nebo funkci, urèující políèko formuláøe s fokusem."""
         return self._focus_field
