@@ -1765,7 +1765,8 @@ class FieldSpec(object):
                 assert arg in ('not_null', 'value_column', 'validity_column',
                                'validity_condition', 'constraints',
                                'validation_messages', 'precision', 'maxlen',
-                               'format', 'mindate', 'maxdate'), arg
+                               'format', 'mindate', 'maxdate'), \
+                    "Invalid FieldSpec argument for field '%s': %r" % (id,arg)
         self._label = label
         self._descr = descr
         self._width = width
