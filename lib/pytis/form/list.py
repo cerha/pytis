@@ -734,7 +734,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             f = DescriptiveDualForm
         else:
             f = BrowsableShowForm
-        self._run_form(f, self._current_key())
+        kwargs = self._new_form_kwargs()
+        run_form(f, self._name, select_row=self._current_key(), **kwargs)
 
     def _scroll_x_offset(self):
         g = self._grid
