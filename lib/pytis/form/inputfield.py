@@ -288,9 +288,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     def _on_idle(self, event):
         if self._is_changed:
-            # Pokud je hodnota validní, dej o zmìnì vìdìt formuláøi.
-            self._run_callback(self.CALL_FIELD_CHANGE, self)
             self._is_changed = False
+            # Dej o zmìnì vìdìt formuláøi.
+            self._run_callback(self.CALL_FIELD_CHANGE, self)
         if self._want_focus and not self.has_focus():
             self._set_focus()
         if hasattr(self, '_call_on_idle') and self._call_on_idle is not None:
@@ -511,7 +511,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._disable_event_handlers()
         self.set_value(value)
         self._initial_value = self.get_value()
-        self._is_changed = True
         self._enable_event_handlers()
         self._initialized = True
 
