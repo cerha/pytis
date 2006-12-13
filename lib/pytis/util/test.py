@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2004, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -146,3 +146,32 @@ def transform_args():
                     a.append('%s.%s' % (argv[i], m))
             argv[i:i+1] = a
     return argv
+
+
+def run_tests(module, tests=None, verbosity=2):
+    """Spusť \"interaktivně\" testy modulu 'module'.
+
+    Argumenty:
+
+      module -- testovaný modul, např. 'pytis.data'
+      tests -- sekvence požadovaných testů nebo 'None', každý člen sekvence je
+        string obsahující jméno třídy (bez modulu) nebo jméno metody třídy (bez
+        modulu, ale včetně jména třídy); je-li argument 'None', spustí se
+        všechny testy daného modulu
+      verbosity -- argument pro 'unittest.TextTestRunner', integer
+
+    """
+    test_module = getattr(module, '_test')
+    suite = unittest.TestSuite()
+    if tests is None:
+        test_case = getattr(test_module, 'get_tests')()
+        suite.addTest(test_case)
+    else:
+        for t in tests:
+            class_method = t.split('.')
+            test_class = getattr(test_module, class_method[0])
+            if len(class_method) == 1:
+                suite.addTest(unittest.makeSuite(test_class))
+            else:
+                suite.addTest(test_class(class_method[1]))
+    unittest.TextTestRunner(verbosity=verbosity).run(suite)
