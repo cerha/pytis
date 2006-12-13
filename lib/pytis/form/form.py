@@ -765,7 +765,8 @@ class RecordForm(InnerForm):
                     assert isinstance(redirected_name, str)
                     name = redirected_name
             kwargs = self._new_form_kwargs()
-            run_form(PopupEditForm, name, select_row=row.row(), **kwargs)
+            key = self._current_key()
+            run_form(PopupEditForm, name, select_row=key, **kwargs)
 
     def _can_delete_record(self):
         return self.check_permission(pytis.data.Permission.DELETE)
