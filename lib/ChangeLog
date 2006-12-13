@@ -1,3 +1,8 @@
+2006-12-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (RecordForm._on_edit_record): Vyber øádek
+	pøes klíè, ne pøes celou instanci `Row'.
+
 2006-12-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField.create): Upraven algoritmus
