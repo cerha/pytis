@@ -1628,7 +1628,10 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
         super_(EditForm).set_row(self, row)
         for f in self._fields:
-            f.init(row[f.id()].export())
+            v = row[f.id()]
+            f.init(v.export())
+            if isinstance(f, CodebookField):
+                f.set_display(row.display(f.id()))
             if self._mode != self.MODE_VIEW:
                 if row.editable(f.id()):
                     f.enable()
