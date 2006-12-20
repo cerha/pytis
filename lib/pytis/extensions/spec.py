@@ -78,10 +78,11 @@ def new_record_mitem(title, name, hotkey=None):
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
                             help=help)
 
-def run_procedure_mitem(title, name, proc_name, hotkey=None):
+def run_procedure_mitem(title, name, proc_name, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
     return pytis.form.MItem(title, command=cmd, hotkey=hotkey,
-                            args=dict(spec_name=name, proc_name=proc_name),
+                            args=dict(spec_name=name, proc_name=proc_name,
+                                      **kwargs),
                             help='Spustit proceduru "%s"' % title)
 
 nr = new_record_mitem
