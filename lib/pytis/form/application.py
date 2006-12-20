@@ -698,8 +698,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                               prefill=prefill, inserted_data=inserted_data)
         return result
 
+    def _can_run_procedure(self, spec_name, proc_name, args=(),
+                           block_refresh_=False, enabled=None, **kwargs):
+        return enabled is None and True or enabled(**kwargs)
+    
     def _cmd_run_procedure(self, spec_name, proc_name, args=(),
-                           block_refresh_=False, **kwargs):
+                           block_refresh_=False, enabled=None, **kwargs):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
