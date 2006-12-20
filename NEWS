@@ -4,6 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-12-20  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøíkaz `Application.RUN_PROCEDURE' nyní pøijímá také nepovinný
+	argument `enabled'.  Podobnì jako u pøíkazu
+	`Application.HANDLED_ACTION' je tak nyní mo¾no pøedat funkci,
+	která urèí dostupnost pøíkazu (a tím také pøíslu¹né polo¾ky menu).
+	
 2006-12-12  Tomas Cerha  <cerha@brailcom.org>
 
 	Byl upraven algoritmus urèení typu políèka.  Nyní by mìl mimo jiné

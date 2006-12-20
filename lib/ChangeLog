@@ -1,3 +1,9 @@
+2006-12-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application._cmd_run_procedure): Nový
+	argument `enabled'.
+	(Application._can_run_procedure): Nová metoda.
+
 2006-12-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField._on_idle): Aktualizace komentáøe.
