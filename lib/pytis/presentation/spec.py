@@ -702,7 +702,9 @@ class ViewSpec(object):
             sluèitelnosti tìchto hodnot.  Tato funkce vrací None, pokud je
             v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
             id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.  Formuláø
-            by potom mìl u¾ivatele vrátit do editace daného polèka.
+            by potom mìl u¾ivatele vrátit do editace daného polèka.  Je mo¾né
+            vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová zpráva,
+            která má být zobrazena u¾ivateli.
             
           cleanup -- funkce provádìjící závìreèné akce pøi uzavøení formuláøe.
             Jedná se o funkci dvou argumentù.  Prvním je výsledný ulo¾ený øádek
