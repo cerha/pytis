@@ -6,7 +6,7 @@ SHARE = /usr/local/share
 translations:
 	make -C translations
 
-install: translations $(SHARE)/pytis
+install: $(SHARE)/pytis
 	cp -ruv translations $(SHARE)/pytis
 	cp -ruv lib/pytis $(LIB)
 
