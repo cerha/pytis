@@ -324,7 +324,7 @@ class BrowseForm(Form):
             value = row[col.id()].value() and _("Yes") or _("No")
         else:
             value = row[col.id()].value()
-            if not isinstance(value, lcg.TranslatableText):
+            if not isinstance(value, lcg.Localizable):
                 value = _html.escape(row.format(col.id()))
         if self._link_provider:
             uri = self._link_provider(row, col)
