@@ -645,7 +645,7 @@ class String(Type):
         # pøi zmìnì zde je nutná zmìna i tam.
         assert isinstance(value, types.StringTypes), \
                ('Value not a string', value)
-        return unicode(value)
+        return isinstance(value, unicode) and value or unicode(value)
 
 
 class _RegexValidatedString(String):
@@ -1451,7 +1451,8 @@ class Value(_Value):
 
     def _init(self):
         if self._type.__class__ == String:    # pozor, nebezpeèná vìc!
-            self._exported = unicode(self._value or '')
+            e = self._value or ''
+            self._exported = isinstance(e, unicode) and e or unicode(e)
         else:
             self._exported = self._VOID
         
