@@ -1,3 +1,14 @@
+2006-12-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (String._export, Value._init): Provádìj
+	konverzi na unicode pouze pokud jiø objekt není typu unicode.
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Aktualizace
+	docstringu.
+
+	* pytis/web/form.py (BrowseForm._export_field):
+	`lcg.TranslatableText' -> `lcg.Localizable'.
+
 2006-12-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application._cmd_run_procedure): Nový
