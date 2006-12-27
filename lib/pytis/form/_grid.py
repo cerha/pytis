@@ -838,7 +838,7 @@ class IncrementalSearch:
             
     def _exit(self, rollback):
         self._exiting = True
-        if rollback and self._rows:
+        if rollback and self._rows and self._listform:
             self._set_row(self._rows[0][0])
         w = self._widget
         w.Enable(False)
