@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-12-27  Tomas Cerha  <cerha@brailcom.org>
+
+	O¹etøení situace, kdy dojde k uzavøení formuláøe pøi aktivním
+	inkrementálním vyhledávání, co¾ zpùsobovalo pád aplikace.
+
 2006-12-20  Tomas Cerha  <cerha@brailcom.org>
 
 	Pøíkaz `Application.RUN_PROCEDURE' nyní pøijímá také nepovinný
