@@ -206,9 +206,11 @@ tohoto nástroje, lépe vyhovující na¹im potøebám, je k dispozici v adresáøi
 Formátování se obecnì øídí pravidly pro [[http://www.python.org/sigs/doc-sig/stext.html][Structured Text]], není-li ní¾e uvedeno
 jinak.  Upøesòující, modifikovaná a doplòující pravidla jsou:
 
-- Polo¾ky seznamu argumentù funkcí se neoddìlují prázdnými øádky, proto¾e by
-  to mnohdy znamenalo zbyteèné roztahování u¾ tak dlouhého dokumentaèního
-  øetìzce.
+- Polo¾ky seznamu argumentù funkcí je mo¾né oddìlovat prázdnými øádky, pokud
+  jsou jednotlivé popisy víceøádkové.  V tom pøípadì oddìlení usnadní
+  formátování (mo¾nost vyu¾ití Emacsových pøíkazù pro práci s odstavci).  Tam
+  kde toto není dùle¾ité se doporuèuje prázdné øádky vynechávat a zamezit tak
+  zbyteènému roztahování u¾ tak dlouhého dokumentaèního øetìzce.
 
 - Návratová hodnota je popsána v samostatném odstavci uvozeném úderným
   výrazem =Vrací:=.  Popis návratové hodnoty za "Vrací" pokraèuje na tém¾e
