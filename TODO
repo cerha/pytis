@@ -6,10 +6,6 @@ CHYBY:
    Napø. pøi maximalizaci okna ale dojde k ulo¾ení pozice a pøi dal¹ím startu
    je okno aplikace jinak veliké a oddìlovaè se zobrazí mimo... 
  
- * Práva ve virtuálních formuláøích.
-
-   Nastavení AccessRights pro RestrictedMemData objekt nefunguje.
- 
  * Políèko pro poèet záznámù ve stavové øádce nezobrazuje celý údaj. Tj. je
    pøíli¹ malé.
 
