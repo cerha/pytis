@@ -123,11 +123,6 @@ class Resolver(object):
     objektù modulu, resolver je schopen vracet pøímo tyto objekty (metoda
     'get_object()') nebo jimi vytvoøené instance (metoda 'get()').
 
-    Je-li nastavena konfiguraèní volba 'config.auto_reload_defs' na pravdu,
-    resolver kontroluje pøed ka¾dým vrácením specifikace její modul na zmìny,
-    v opaèném pøípadì je po prvním získání specifikace tato pod daným jménem
-    vracena ji¾ neustále, bez ohledu na pøípadné zmìny jejího modulu.
-
     """
     def __init__(self):
         """Inicializuj resolver."""
