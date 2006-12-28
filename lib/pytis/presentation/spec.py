@@ -2371,6 +2371,9 @@ class Specification(object):
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
         access_rights = self.access_rights
+        assert access_rights is None or not issubclass(self.data_cls,
+                                                       pytis.data.MemData), \
+               "Cannot set `access_rights' for a MemData data object."
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
