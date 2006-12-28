@@ -86,12 +86,6 @@
 # reprezentována øetìzcem '#RRGGBB'.
 #field_inaccessible_color = '#e0e4f0'
 
-# Pøíznak automatického pøenaèítání zmìnìných definièních souborù. Je-li
-# zapnut, je zaruèeno pøenaètení definièních souborù aplikace v pøípadì jejich
-# zmìny.  Nìkdy to mù¾e zpomalovat bìh aplikace.  Implicitnì má tato volba
-# stejnou hodnotu jako volba 'debug'.
-#auto_reload_defs = False
-
 # Pøíznak profilování. Je-li zapnut, aplikace se spustí v profilovacím re¾imu a
 # ukládá informace o trvání jednotlivých volání do souboru. Zapnutí této volby
 # velmi výraznì zpomaluje bìh aplikace.
