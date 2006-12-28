@@ -185,7 +185,7 @@ class DualForm(Form, Refreshable):
 
     def help_name(self):
         name = super(DualForm, self).help_name()
-        if isinstance(self._view, DualSpec):
+        if self._name.find('::') == -1:
             name += '-dual'
         return name
         
