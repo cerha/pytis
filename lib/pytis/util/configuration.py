@@ -406,16 +406,6 @@ class Configuration(object):
                  "Zapnutí této volby velmi výraznì zpomaluje bìh aplikace.")
         _DEFAULT = False
         
-    class _Option_auto_reload_defs(_BooleanOption):
-        _DESCR = _("Pøíznak automatického pøenaèítání zmìnìných definièních "
-                   "souborù.")
-        _DOC = _("Je-li zapnut, je zaruèeno pøenaètení definièních souborù "
-                 "aplikace v pøípadì jejich zmìny.  Nìkdy to mù¾e zpomalovat "
-                 "bìh aplikace.  Implicitnì má tato volba stejnou hodnotu jako "
-                 "volba 'debug'.")
-        def default(self):
-            return self._configuration.debug
-
     class _Option_test_run_interactive(_BooleanOption, _HiddenOption):
         _DESCR = _("Pøíznak urèující, zda mají být spou¹tìny i interaktivní "
                    "testy.")
