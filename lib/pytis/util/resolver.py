@@ -131,12 +131,7 @@ class Resolver(object):
     """
     def __init__(self):
         """Inicializuj resolver."""
-        # TODO: Validace by mìla být provádìna dle èasu poslední modifikace
-        # souboru nebo nìèeho takového.
-        import config
-        validator = lambda key: not config.auto_reload_defs
-        self._module_cache = SimpleCache(self._get_module,
-                                         validator=validator)
+        self._module_cache = SimpleCache(self._get_module)
         self._object_cache = SimpleCache(self._get_object)
         self._spec_cache = SimpleCache(self._get_spec)
         self._instance_cache = SimpleCache(self._get_instance)
