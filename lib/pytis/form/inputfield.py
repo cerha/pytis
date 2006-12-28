@@ -864,7 +864,10 @@ class EnumerationField(InputField):
         # Return a sequence of string representations of all type's values.
         # We don't have access to the PresentedRow here, so we create a fake
         # one just for this field to be able to use its `enumerate' method.
-        r = PresentedRow((self._spec,), self._data, None)
+        s = self._spec
+        fieldspec = FieldSpec(s.id(), type=s.type(), codebook=s.codebook(),
+                              display=s.display())
+        r = PresentedRow((fieldspec,), self._data, None)
         return [x[1] for x in r.enumerate(self.id())]
 
     def get_value(self):
