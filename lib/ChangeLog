@@ -1,5 +1,9 @@
 2006-12-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* ChangeLog.3: New file.
+
+	* ChangeLog: Records prior to 2006-12-13 saved to `ChangeLog.3'.
+
 	* pytis/form/dualform.py (DualForm.help_name): Condition for
 	adding the `-dual' suffix fixed.
 
