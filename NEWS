@@ -4,10 +4,19 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-12-28  Tomas Cerha  <cerha@brailcom.org>
+
+	Konfiguraèní volba `auto_reload_defs' je nyní zcela ignorována,
+	proto¾e pokud byla zapnuta, zpùsobovala problémy s dìdièností mezi
+	tøídami pocházejícími ze stejného souboru.  Pøi ladìní stejnì
+	vìt¹inou bylo potøeba aplikaci restartovat po ka¾dé zmìnì, tak¾e
+	její pùvodní urèení ji¾ stejnì ztratilo na významu a bude tøeba se
+	pokusit pøenaèítání specifikací o¹etøit nìjakým jiným zpùsobem.
+
 2006-12-27  Tomas Cerha  <cerha@brailcom.org>
 
-	O¹etøení situace, kdy dojde k uzavøení formuláøe pøi aktivním
-	inkrementálním vyhledávání, co¾ zpùsobovalo pád aplikace.
+	* BUGFIX: O¹etøení situace, kdy dojde k uzavøení formuláøe pøi
+	aktivním inkrementálním vyhledávání, co¾ zpùsobovalo pád aplikace.
 
 2006-12-20  Tomas Cerha  <cerha@brailcom.org>
 

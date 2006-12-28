@@ -1,3 +1,7 @@
+2006-12-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* config/config.py: Soubor pøegenerován.
+
 2006-12-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* Makefile (install): Don't depend on translations.
