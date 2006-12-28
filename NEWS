@@ -16,6 +16,9 @@
 	* BUGFIX: O¹etøena chyba, která vyvolávala neplatné asserty pøi
 	pou¾ití dopoèítávaného `editable' u výètového políèka, které má
 	zároveò definován `display'.
+
+	* BUGFIX: Zobrazování nápovìdy pro duální formuláøe definvané
+	pomocí `BindingSpec'.
 	
 2006-12-27  Tomas Cerha  <cerha@brailcom.org>
 
