@@ -979,8 +979,7 @@ class LookupForm(RecordForm):
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
     
-    def _init_attributes(self, sorting=None, condition=None,
-                         indicate_filter=False, **kwargs):
+    def _init_attributes(self, sorting=None, condition=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
@@ -989,19 +988,19 @@ class LookupForm(RecordForm):
             'sort' metody 'pytis.data.Data.select()'
           condition -- podmínka výbìru dat, viz argument 'condition' metody
             'pytis.data.Data.select()'
-          indicate_filter -- ???
           kwargs -- argumenty pøedané konstruktoru pøedka
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
         self._init_sorting(sorting)
         self._lf_initial_sorting = self._lf_sorting
-        self._lf_condition = condition
-        self._lf_initial_condition = self._lf_condition
-        self._lf_indicate_filter = indicate_filter
         self._lf_search_dialog = None
         self._lf_filter_dialog = None
         self._lf_select_count = None
+        # _lf_condition reprezentuje statickou podmínku danou argumentem
+        # konstruktoru, naproti tomu _lf_filter reprezentuje aktuální podmínku
+        # u¾ivatelského filtru. 
+        self._lf_condition = condition
         self._lf_filter = None
 
     def _new_form_kwargs(self):
@@ -1031,15 +1030,16 @@ class LookupForm(RecordForm):
                              if self._view.field(k.id()) is not None])
         return sorting
 
-    def _init_select(self):
-        data = self._data
+    def _current_condition(self):
         if self._lf_condition and self._lf_filter:
             condition = pytis.data.AND(self._lf_condition, self._lf_filter)
         else:
             condition = self._lf_condition or self._lf_filter
-        if self._lf_initial_condition:
-            condition = pytis.data.AND(condition, self._lf_initial_condition)
-        op = lambda : data.select(condition=condition,
+        return condition
+    
+    def _init_select(self):
+        data = self._data
+        op = lambda : data.select(condition=self._current_condition(),
                                   sort=self._data_sorting(), reuse=False)
         success, self._lf_select_count = db_operation(op)
         if not success:
@@ -1158,7 +1158,7 @@ class LookupForm(RecordForm):
     def _can_search_previous(self, **kwargs):
         return self._is_searching()
             
-    def _filter(self, condition):
+    def _filter(self):
         self._init_select()
         self.select_row(self._current_key())
 
@@ -1166,14 +1166,14 @@ class LookupForm(RecordForm):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
         if show_dialog:
             perform, filter = run_dialog(sf_dialog, self._data,
-                                         self._lf_initial_condition,
+                                         self._lf_condition,
                                          self.current_row(),
                                          self.current_field())
         else:
             perform, filter = (True, sf_dialog.condition())
         if perform and filter != self._lf_filter:
             self._lf_filter = filter
-            self._filter(filter)
+            self._filter()
 
     def _can_unfilter(self):
         return self._lf_filter is not None
@@ -1181,7 +1181,7 @@ class LookupForm(RecordForm):
     def _cmd_unfilter(self):
         self._lf_sf_dialog('_lf_filter_dialog', FilterDialog).reset_condition()
         self._lf_filter = None
-        self._filter(None)
+        self._filter()
 
     def _cmd_filter_by_value(self, column_id, value):
         sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
@@ -1275,7 +1275,7 @@ class LookupForm(RecordForm):
         metody 'pytis.data.Data.select()'.
 
         """
-        return self._lf_condition
+        return self._current_condition()
     
     def sorting(self):
         """Vra» specifikaci aktuálního tøídìní seznamu.
