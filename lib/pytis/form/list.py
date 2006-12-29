@@ -334,7 +334,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._grid.SetColAttr(i, attr)
         
     def _update_label_colors(self):
-        color = self._lf_indicate_filter and config.filter_color or \
+        color = self._lf_filter is not None and config.filter_color or \
                 self._TITLE_FOREGROUND_COLOR
         self._grid.SetLabelBackgroundColour(color)
 
@@ -647,11 +647,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._table.rewind(position=new_row)
         self._select_cell(row=new_row)
 
-    def _filter(self, condition):
-        log(EVENT, 'U¾ivatelský filtr:', condition)
-        self._refresh(reset={'condition': condition,
-                             'filter_flag': bool(condition)},
-                      when=self.DOIT_IMMEDIATELY)
+    def _filter(self):
+        self._refresh(when=self.DOIT_IMMEDIATELY)
 
     # Callbacky
 
@@ -1091,7 +1088,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         values = xtuple(values)
         assert len(cols) == len(values)
         cond = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
-        condition = pytis.data.AND(cond, self._lf_condition)
+        condition = pytis.data.AND(cond, self._current_condition())
         data = self._data
         data.rewind()
         success, result = db_operation(lambda: data.search(condition))
@@ -1146,9 +1143,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             hodnotou prázdné dictionary, jsou naopak v¹echny tyto parametry
             resetovány na své poèáteèní hodnoty.  Jinak jsou resetovány právì
             ty parametry, pro nì¾ v dictionary existuje klíè (jeden z øetìzcù
-            'sorting', 'condition', 'position' a 'filter_flag'), a to na
-            hodnotou z dictionary pro daný klíè.  Parametr 'filter_flag' udává,
-            zda má být zobrazena indikace filtru.
+            'sorting', 'filter' a 'position'), a to na hodnotou z dictionary
+            pro daný klíè.
 
           when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
             jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
@@ -1171,9 +1167,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             reset = {}
         elif reset == {}:
             reset = {'sorting': self._lf_initial_sorting,
-                     'condition': self._lf_initial_condition,
-                     'position': self._initial_position,
-                     'filter_flag': False}
+                     'filter': None,
+                     'position': self._initial_position}
         # Jdeme na to
         if __debug__: log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
         if when is self.DOIT_IFNEEDED:
@@ -1191,22 +1186,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         # Refresh nyní bude skuteènì proveden
         for k, v in reset.items():
-            if k == 'condition':
-                self._lf_condition = v
+            if k == 'filter':
+                self._lf_filter = v
             elif k == 'sorting':
                 self._lf_sorting = v
             elif k == 'position':
                 self._position = v
-            elif k == 'filter_flag':
-                self._lf_indicate_filter = v
             else:
                 raise ProgramError('Invalid refresh parameter', k)
         key = self._current_key()
         row = max(0, self._current_cell()[0])
         self._last_reshuffle_request = self._reshuffle_request = time.time()
-        
         self._update_grid(data_init=True)
-        
         if key is not None:
             self.select_row(key, quiet=True)
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
@@ -1394,8 +1385,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._grouping = tuple(cols[:l])
             self._set_state_param('grouping', self._grouping)
             # Make the changes visible.
-            self._refresh(reset={'condition': self._lf_condition,
-                                 'sorting': sorting},
+            self._refresh(reset={'sorting': sorting},
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
@@ -1411,7 +1401,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if col is None:
                 col = self._current_cell()[1]
             cid = self._columns[col].id()
-            cond = self._lf_condition
+            cond = self._current_condition()
             distinct = self._data.distinct(cid, condition=cond)
             if len(distinct) > 60:
                 message(_("Pøíli¹ mnoho polo¾ek pro autofilter."), beep_=True)
@@ -1988,7 +1978,7 @@ class BrowseForm(ListForm):
     def _formatter_parameters(self):
         name = self._name
         return {(name+'/'+pytis.output.P_CONDITION):
-                pytis.data.AND(self._lf_initial_condition, self._lf_condition),
+                pytis.data.AND(self._current_condition()),
                 (name+'/'+pytis.output.P_SORTING):
                 self._data_sorting(),
                 (name+'/'+pytis.output.P_KEY):
@@ -2149,8 +2139,8 @@ class FilteredBrowseForm(BrowseForm):
             condition = self._condition(data)
         else:
             condition = self._condition
-        self._lf_initial_condition = condition
-        self._refresh(reset={'condition': None})
+        self._lf_condition = condition
+        self._refresh(reset={'filter': None})
 
 
 class SideBrowseForm(FilteredBrowseForm):
