@@ -1794,13 +1794,11 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
                     lambda e: self.COMMAND_ACTIVATE.invoke())
 
-    def _init_attributes(self, condition=None, begin_search=None, **kwargs):
+    def _init_attributes(self, begin_search=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
 
-          condition -- podmínka filtrující øádky èíselníku jako instance
-            'pytis.data.Operator'.
           begin_search -- Pokud není None, bude po otevøení formuláøe
             automaticky nastartováno inkrementální vyhledávání. Pokud
             je hodnota øetìzec, je chápán jako identifikátor
@@ -1814,11 +1812,8 @@ class CodebookForm(PopupForm, ListForm, KeyHandler):
             self._cb_spec = self._resolver.get(self._name, 'cb_spec')
         except ResolverError:
             self._cb_spec = CodebookSpec()
-        super(CodebookForm, self)._init_attributes(**kwargs)
         self._begin_search = begin_search
-        if condition is not None:
-            condition = pytis.data.AND(self._lf_initial_condition, condition)
-            self._lf_initial_condition = condition
+        super(CodebookForm, self)._init_attributes(**kwargs)
           
     def _on_idle(self, event):
         ListForm._on_idle(self, event)
