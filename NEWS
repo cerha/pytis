@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2006-12-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Autofilter nad èíselníkem ji¾ respektuje aktuálnì
+	nastavený `runtime_filter'.  Bude dobré pozorovat, jestli se
+	chování èíselníkù vzhledem k filtraci nìjak nezmìní...
+	
 2006-12-28  Tomas Cerha  <cerha@brailcom.org>
 
 	Konfiguraèní volba `auto_reload_defs' je nyní zcela ignorována,
