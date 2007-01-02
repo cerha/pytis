@@ -1,7 +1,7 @@
 # Pytis translations
 # Copyright (C) 2006 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
-# Pawel Loba <ploba@rogers.com>, 2006
+# Pawe³ Loba <ploba@rogers.com>, 2006
 #
 msgid ""
 msgstr ""
@@ -17,44 +17,44 @@ msgstr ""
 
 #: ../lib/pytis/web/form.py:53
 msgid "Empty value"
-msgstr ""
+msgstr "Pusta warto¶æ"
 
 #: ../lib/pytis/web/form.py:54
 msgid "Invalid value"
-msgstr ""
+msgstr "Niepoprawna warto¶æ"
 
 #: ../lib/pytis/web/form.py:55
 msgid "Not an integer"
-msgstr ""
+msgstr "To nie jest liczba ca³kowita"
 
 #: ../lib/pytis/web/form.py:56
 msgid "Invalid number"
-msgstr ""
+msgstr "Niepoprawny numer"
 
 #: ../lib/pytis/web/form.py:57
 #, python-format
 msgid "String exceeds max length %(maxlen)d"
-msgstr ""
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
 
 #: ../lib/pytis/web/form.py:58
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr ""
+msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
 
 #: ../lib/pytis/web/form.py:59
 msgid "Invalid format"
-msgstr ""
+msgstr "Niew³a¶ciwy format"
 
 #: ../lib/pytis/web/form.py:60
 msgid "Invalid date or time format"
-msgstr ""
+msgstr "Niew³a¶ciwy format daty lub czasu"
 
 #: ../lib/pytis/web/form.py:61
 msgid "Invalid date or time"
-msgstr ""
+msgstr "Niew³a¶ciwy format daty lub czasu"
 
 #: ../lib/pytis/web/form.py:62
 msgid "Date outside the allowed range"
-msgstr ""
+msgstr "Data poza dopuszczalnym obrêbem"
 
 #: ../lib/pytis/web/form.py:260 ../lib/pytis/web/form.py:324
 msgid "Yes"
