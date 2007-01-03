@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -717,13 +717,23 @@ class RecordForm(InnerForm):
         return pytis.data.Row(rdata)
 
     def _row_copy_prefill(self, the_row):
-        # Jde o to vytvořit kopii řádku, ale klíč nekopírovat.
+        # Create a copy of the row, but exclude key columns and computed
+        # columns which depend on key columns.
         if the_row:
             keys = [c.id() for c in the_row.data().key()]
-            prefill = [(k, the_row[k]) for k in the_row.keys() if k not in keys]
+            prefill = {}
+            for cid in the_row.keys():
+                if cid in keys:
+                    continue
+                computer = self._spec.field(cid).computer()
+                if computer:
+                    for dep in computer.depends():
+                        if dep in keys:
+                            continue
+            prefill[cid] = the_row[cid]
         else:
             prefill = {}
-        return dict(prefill)
+        return prefill
 
     # Zpracování příkazů.
     
