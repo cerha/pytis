@@ -725,7 +725,7 @@ class RecordForm(InnerForm):
             for cid in the_row.keys():
                 if cid in keys:
                     continue
-                computer = self._spec.field(cid).computer()
+                computer = self._view.field(cid).computer()
                 if computer:
                     for dep in computer.depends():
                         if dep in keys:
