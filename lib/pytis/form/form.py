@@ -727,10 +727,14 @@ class RecordForm(InnerForm):
                     continue
                 computer = self._view.field(cid).computer()
                 if computer:
+                    skip = False
                     for dep in computer.depends():
                         if dep in keys:
-                            continue
-            prefill[cid] = the_row[cid]
+                            skip = True
+                            break
+                    if skip:
+                        continue
+                prefill[cid] = the_row[cid]
         else:
             prefill = {}
         return prefill
