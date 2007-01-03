@@ -1,3 +1,8 @@
+2007-01-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (RecordForm._row_copy_prefill): Also exclude
+	computed fields which depend on key columns.
+
 2006-12-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (LookupForm._init_attributes): Removed
