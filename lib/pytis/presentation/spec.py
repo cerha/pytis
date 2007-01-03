@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1509,7 +1509,7 @@ class FieldSpec(object):
                  virtual=False, dbcolumn=None, type=None, type_=None,
                  width=None, column_width=None, disable_column=False,
                  fixed=False, height=None, editable=None, compact=False,
-                 default=None, computer=None, line_separator='; ',
+                 nocopy=False, default=None, computer=None, line_separator=';',
                  codebook=None, display=None, display_size=None,
                  allow_codebook_insert=False, codebook_insert_spec=None,
                  codebook_runtime_filter=None, selection_type=None,
@@ -1593,6 +1593,12 @@ class FieldSpec(object):
             v editačním formuláři přimknut k hornímu okraji vstupního prvku
             (bude tedy nad políčkem).  V opačném případě (výchozí chování) je
             popisek vlevo od políčka.
+
+          nocopy -- příznak umožňující zakázat kopírování hodnoty políčka při
+            kopírování záznamu.  Standardně nejsou kopírovány klíčové sloupce a
+            dopočítávaná políčka na nich závisející.  Někdy je však třeba
+            zamezit také kopírování některých dalších hodnot.  V tom případě je
+            nutno předat pravdivou hodnotu tomuto argumentu.
             
           default -- funkce pro výpočet výchozí hodnoty políčka.  Callable
             object vracející hodnotu kompatibilní s vnitřní hodnotou
@@ -1733,6 +1739,8 @@ class FieldSpec(object):
         assert isinstance(virtual, bool)
         assert isinstance(disable_column, bool)
         assert isinstance(fixed, bool)
+        assert isinstance(compact, bool)
+        assert isinstance(nocopy, bool)
         assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, str)
@@ -1786,6 +1794,7 @@ class FieldSpec(object):
         self._disable_column = disable_column
         self._type = type
         self._compact = compact
+        self._nocopy = nocopy
         self._default = default
         self._computer = computer
         self._height = height
@@ -1930,6 +1939,10 @@ class FieldSpec(object):
     def compact(self):
         """Vrať pravdu, má li být popisek přimknut k hornímu okraji políčka."""
         return self._compact
+
+    def nocopy(self):
+        """Vrať pravdu, pokud má být políčko vynecháno při kopii záznamu."""
+        return self._nocopy
 
     def default(self):
         """Vrať funkci pro výpočet výchozí hodnoty."""
