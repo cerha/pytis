@@ -723,9 +723,10 @@ class RecordForm(InnerForm):
             keys = [c.id() for c in the_row.data().key()]
             prefill = {}
             for cid in the_row.keys():
-                if cid in keys:
+                fspec = self._view.field(cid)
+                if cid in keys or fspec.nocopy():
                     continue
-                computer = self._view.field(cid).computer()
+                computer = fspec.computer()
                 if computer:
                     skip = False
                     for dep in computer.depends():
