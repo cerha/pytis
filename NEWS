@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-01-03 Tomas Cerha  <cerha@brailcom.org>
+
+	Nový argument `nocopy' ve `FieldSpec' umo¾òuje explicitnì zakázat
+	kopírování hodnoty vybraných políèek pøi kopírování záznamu.
+	
+	* BUGFIX: Pøi kopírování záznamu jsou nyní automaticky vynechávána
+	také dopoèítávaná políèka, která závisí na klíèi.
+	
 2006-12-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Autofilter nad èíselníkem ji¾ respektuje aktuálnì
