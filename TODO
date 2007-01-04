@@ -64,8 +64,6 @@ NOVÉ VLASTNOSTI:
 
  * Práva view na jednotlivé sloupce.
 
- * Ukládání pozice separátoru v duálním formuláøi.
-
  * Argument 'enabled' pro odkazy.
 
  * Ikony k pøíkazùm podle argumentù pøíkazu.
@@ -78,9 +76,6 @@ NOVÉ VLASTNOSTI:
 
  * Ulo¾ené filtrovací podmínky.
 
-   K tomu bude nejprve tøeba nìjak zpøehlednit v¹e, co se týká práce s rùznými
-   typy filtrovacích podmínek uplatnìných v rùzných formuláøích.
-
    Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
    by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
 
@@ -91,15 +86,7 @@ NOVÉ VLASTNOSTI:
    Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
    pøi vyvolání èíselníku.
 
- * Automatické èíslování polo¾ek menu s mo¾ností rychlého výbìru.
-
-   Polo¾ky ve v¹ech menu by mohly být automaticky oèíslovány podobnì jako v
-   menu oken.  Nebylo by tak tøeba vymý¹let klávesové zkratky.  Tato vlastnost
-   by v¹ak mìla být konfigurovatelná, proto¾e asi ne ka¾dému se to bude líbit.
-
- * Zarovnávání a atributy v InputFieldu.
-
- * Masky políèek.
+ * Zarovnávání, atributy a masky vstupních políèek.
 
  * Pøepoèítání závislých políèek pøi výbìru z ListField.
 
@@ -127,7 +114,7 @@ NOVÉ VLASTNOSTI:
    new_record s block_on_new_record.  Jednodu¹¹í a pøehlednìj¹í by bylo mít
    pro tento pøípad explicitní podporu.
 
- * Zmìny ohlednì u¾ivatelského pøizpùsobení sloupcù BrowseFromu.
+ * Zmìny ohlednì nastavení ¹íøky sloupcù/políèek.
 
    `width = 0' zakázat a v¹echna taková políèka vyøadit z layoutu (nejprve
    logovat jako deprecated).
@@ -135,23 +122,6 @@ NOVÉ VLASTNOSTI:
    `column_width = 0' nijak speciálnì neo¹etøovat (stejnì je ¹íøka minimálnì
    taková, aby se ve¹el label)
 
-   Nový atribut `disabled' zcela zemezí takový sloupec zobrazit.
-
-   `columns' zùstává, jen je tøeba jej sestavovat nìjak algoritmicky, aby to
-   bylo pro danou situaci pokud mo¾no pøehledné a snadno udr¾ovatelné...
-
- * Zmìny týkající se standardních konfiguraèních voleb.
-
-   V defsech v¹ech projektù:
-    - zru¹it celý defs NastaveniUIUser.
-    - v NastaveniUser pøidat sloupeèek `saved_config'.
-    - v application.py pøidat podporu pro ukládání konfigurace do saved_config.
-   
-   V databázi v¹ech projektù:
-    - zru¹it sloupeèky `export_directory' a `export_encoding'
-    - zru¹it v¹e, co se týká bv_users_ui_cfg.
-    - pøidat sloupeèek `saved_config' do bv_users_cfg.
-   
  * V tiskovém menu umo¾nit definovat separátor a klávesové zkratky.
 
  * Sestavování pamì»ového datového objektu ve tøídì `Specification'.
@@ -255,19 +225,6 @@ INTERNÍ ZÁLE®ITOSTI:
    Problém bude hlavnì v defsech, kde bývá grouping èasto specifikován jako
    název sloupce.
    
- * Zru¹it pøenastavování argumentù v metodì `Application.run_form'.
-
-   Jde o o¹etøení zpìtné kompatibility pøi pou¾ití starých argumentù 'key' a
-   'new'.  Ty je tøeba nejprve ve v¹ech projektech pøestat pou¾ívat.
-
- * Zru¹it speciální o¹etøování políèek s nulovou ¹íøkou.
-
-   V layoutu v¹ech aplikací se ji¾ nevyskytují políèka s nulovou ¹íøkou a
-   jejich speciální o¹etøování pøi sestavování formuláøe je ji¾ mo¾né zru¹it.
-
-   Do budoucna by v¹ak mohlo být praktické mít mo¾nost nìkterá políèka vynechat
-   z automaticky vytváøeného layoutu.
-
  * Odstranit argument `resolver' z konstruktoru formuláøù.
 
    V¹ude je mo¾no pou¾ívat globální resolver získaný pomocí funkce
