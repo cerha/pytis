@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -591,20 +591,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _cmd_run_form(self, form_class, name, select_row=None, **kwargs):
         # Dokumentace viz funkce run_form().
-        # TODO: Toto je jen kvůli zpětné kompatibilitě.  Argument 'key' je
-        # třeba ve všech projektech přejmenovat na 'select_row' a následující
-        # řádky časem zrušit.
-        if kwargs.has_key('key'):
-            select_row = kwargs['key']
-            del kwargs['key']
-        if issubclass(form_class, EditForm):
-            if kwargs.has_key('new'):
-                if kwargs['new']:
-                    kwargs['mode'] = EditForm.MODE_INSERT
-                del kwargs['new']
-            if select_row is None and not kwargs.has_key('mode'):
-                kwargs['mode'] = EditForm.MODE_INSERT
-        # konec dočasného hacku
         result = None
         try:
             if callable(name):

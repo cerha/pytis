@@ -1,3 +1,8 @@
+2007-01-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application._cmd_run_form): Removed
+	hack for backwards compatibility of arguments.
+
 2007-01-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): New argument

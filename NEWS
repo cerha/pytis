@@ -6,6 +6,15 @@
 
 2007-01-03 Tomas Cerha  <cerha@brailcom.org>
 
+	Byl odstranìn hack, který zabezpeèoval zpìtnou kompatibilitu
+	argumentù funkce `run_form'.  Nyní ji¾ tedy není mo¾né pøedávat
+	argumenty `key' a `new'.  Namísto key je `select_row' a namísto
+	`new' je `mode'.  Také ji¾ neplatí, ¾e pokud není pøedán argument
+	`select_row', tak ¾e bude formuláø otevøen ve vkládacím re¾imu.
+	Pro vkládání nech» je pou¾ívána funkce `new_record()'.
+	
+2007-01-03 Tomas Cerha  <cerha@brailcom.org>
+
 	Nový argument `nocopy' ve `FieldSpec' umo¾òuje explicitnì zakázat
 	kopírování hodnoty vybraných políèek pøi kopírování záznamu.
 	
