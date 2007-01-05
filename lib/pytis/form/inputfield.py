@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -304,7 +304,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         last = InputField._last_focused()
         # TODO: Zkusit to přes `wx.Window.SetFocusFromKbd()'
         if last is not None and last is not self and last.enabled() \
-               and last.is_modified():
+               and last.is_modified() and last._parent == self._parent:
             value, error = last.validate(interactive=False)
             if error:
                 last.set_focus()
@@ -1217,7 +1217,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         else:
             prefill = {}
         spec = self.spec().codebook_insert_spec() or self._codebook_name
-        result = run_form(PopupEditForm, spec, prefill=prefill)
+        result = new_record(spec, prefill=prefill)
         if result and result.has_key(value_column):
             self.set_value(result[value_column].export())
         return True
