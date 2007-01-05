@@ -1,5 +1,8 @@
 2007-01-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow.display): Try to use
+	columns own display prior to using CbComputer's display.
+
 	* pytis/form/inputfield.py (InputField._on_set_focus): Validate
 	last focused field only if it has the same parent -- is from the
 	same form.

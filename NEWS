@@ -6,6 +6,9 @@
 
 2007-01-05 Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: Vlastní display èíselníku má nyní pøednost pøed
+	pøevzatým displejem z `CbComputer'.
+
 	* BUGFIX: Tlaèítko pro pøidání do èíselníku nyní správnì vyvolává
 	`new_record' ne `run_form'.
 
