@@ -4,7 +4,17 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2007-01-03 Tomas Cerha  <cerha@brailcom.org>
+2007-01-05 Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Tlaèítko pro pøidání do èíselníku nyní správnì vyvolává
+	`new_record' ne `run_form'.
+
+	* BUGFIX: Validace pøede¹lého políèka je provádìna jen pokud je
+	dané políèko ze stejného formuláøe, tak¾e se nestane, ¾e napø. pøi
+	pøidání záznamu do èíselníku je zobrazena validaèní hlá¹ka, která
+	nále¾ela formuláøi, ze kterého bylo vlo¾ení vyvoláno.
+
+2007-01-04 Tomas Cerha  <cerha@brailcom.org>
 
 	Byl odstranìn hack, který zabezpeèoval zpìtnou kompatibilitu
 	argumentù funkce `run_form'.  Nyní ji¾ tedy není mo¾né pøedávat
