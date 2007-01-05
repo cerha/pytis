@@ -2,7 +2,7 @@
 
 # Prezentace dat v políèkách.
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -562,10 +562,12 @@ class PresentedRow(object):
         
         """
         column = self._columns[key]
-        computer = column.computer
-        if computer and isinstance(computer, CbComputer):
-            column = self._columns[computer.field()]
         display = self._display_func(column)
+        if not display:
+            computer = column.computer
+            if computer and isinstance(computer, CbComputer):
+                column = self._columns[computer.field()]
+                display = self._display_func(column)
         if display:
             return display(self[column.id].value())
         else:
