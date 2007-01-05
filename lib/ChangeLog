@@ -1,3 +1,11 @@
+2007-01-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField._on_set_focus): Validate
+	last focused field only if it has the same parent -- is from the
+	same form.
+	(CodebookField._on_codebook_insert): Use `new_record' instead of
+	`run_form'.
+
 2007-01-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application._cmd_run_form): Removed
