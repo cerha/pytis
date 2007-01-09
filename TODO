@@ -187,6 +187,13 @@ INTERNÍ ZÁLE®ITOSTI:
    
 ÈI©TÌNÍ:
 
+ * Odstraní argumentu `key' funkcí `on_new_record()'.
+
+   Tento argument je tam patrnì z historických dùvodù, kdy se tak øe¹ilo
+   kopírování záznamu.  To je dnes provádìno pøes `prefill', tak¾e funkce
+   `on_new_record()' aggument `key' nikdy nedostane.  V nìkterých defsech se s
+   ním v¹ak stále poèítá.
+   
  * Odstraní BrowseDualForm._new_record_hook()
    
  * Pøechod z DualSpec na BindingSpec.
