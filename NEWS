@@ -4,7 +4,7 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2007-01-09 Tomas Cerha  <cerha@brailcom.org>
+2007-01-05 Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Argument `prefill' nyní akceptuje ve v¹ech pøípadech jak
 	instance Value, tak pøímo pythonové hodnoty odpovídajícího typu.
