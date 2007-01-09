@@ -193,10 +193,11 @@ class PresentedRow(object):
                 e.set_runtime_filter_provider(provider, (self,))
                 
     def _init_row(self, row, prefill=None):
-        prefill = dict([(k, pytis.data.Value(self._columns[k].type,
-                                             isinstance(v, pytis.data.Value) \
-                                             and v.value() or v))
-                         for k, v in prefill.items()])
+        if prefill is not None:
+            V = pytis.data.Value
+            prefill = dict([(k, V(self._columns[k].type,
+                                  isinstance(v, V) and v.value() or v))
+                            for k, v in prefill.items()])
         self._cache = {}
         if row is None:
             def genval(c):
