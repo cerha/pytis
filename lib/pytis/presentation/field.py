@@ -193,17 +193,16 @@ class PresentedRow(object):
                 e.set_runtime_filter_provider(provider, (self,))
                 
     def _init_row(self, row, prefill=None):
+        prefill = dict([(k, pytis.data.Value(self._columns[k].type,
+                                             isinstance(v, pytis.data.Value) \
+                                             and v.value() or v))
+                         for k, v in prefill.items()])
         self._cache = {}
         if row is None:
             def genval(c):
                 key = c.id()
-                if prefill is not None and prefill.has_key(key):
+                if prefill and prefill.has_key(key):
                     value = prefill[key]
-                    # Radìji vytvoøíme novou instanci
-                    if not isinstance(value, pytis.data.Value):
-                        value = pytis.data.Value(c.type(), value)
-                    else:
-                        value = pytis.data.Value(c.type(), value.value())
                     if self._dirty.has_key(key):
                         # Prefill má pøednost pøed computerem, proto¾e nìkdy
                         # chceme v procedurách mít mo¾nost ve formuláøi za
@@ -235,7 +234,7 @@ class PresentedRow(object):
                 row = copy.copy(row._row)
             else:
                 raise Exception('Invalid argument row:', row)
-            if prefill is not None:
+            if prefill:
                 row.update(prefill)
             for key in self._dirty.keys():
                 self._dirty[key] = not row.has_key(key)
