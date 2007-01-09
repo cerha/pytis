@@ -1,3 +1,14 @@
+2007-01-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (RecordForm._init_attributes): Docstring
+	updated.
+
+	* pytis/presentation/field.py (PresentedRow._init_row): Create a
+	copy of the `prefill' dict with all values as new
+	`pytis.data.Value' instances.  Use the same values regardless if
+	`row' was None or not.
+	(PresentedRow.__init__): Docstring updated.
+
 2007-01-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py (PresentedRow.display): Try to use
