@@ -65,28 +65,32 @@ class PresentedRow(object):
             'FieldSpec'
           data -- odpovídající datový objekt, instance tøídy 'pytis.data.Data'
           row -- data øádku, viz ní¾e
+          
           prefill -- slovník hodnot pro inicializaci øádku namísto výchozích
             hodnot. Slovník je klíèovaný pøes textový identifikátor sloupce.
-            Hodnotami jsou instance tøídy Value, v pøípadì nového záznamu
-            (argument 'row' je 'None') mohou být pou¾ity i u¾ivatelské hodnoty.
+            Hodnotami jsou instance tøídy Value, nebo pøímo vnitøní hodnoty.
             Takto lze pøedvyplòit pouze políèka, k nim¾ existuje odpovídající
             sloupec v datovém objektu -- plnì virtuální políèka mají hodnotu
-            v¾dy urèenou pomocí computeru (viz. argument 'computer'
-            konstruktoru tøídy 'FieldSpec').
+            v¾dy urèenou pomocí computeru.
+            
           singleline -- právì kdy¾ je pravdivé, stringové hodnoty v¹ech políèek
             budou zformátovány jako jednoøádkové
+            
           change_callback -- funkce jednoho argumentu (id políèka) volaná pøi
             nepøímé zmìnì políèka (tj. pøi pøepoèítávání hodnot), která
             oznamuje \"neèekané\" zmìny políèek v prezentovaném row; je-li
             'None', není ¾ádná taková funkce volána
+            
           editability_change_callback -- funkce dvou argumentù (id políèka,
             pøíznak editovatelnosti) volaná pøi nepøímé zmìnì editovatelnosti
             políèka.  Voláním této funkce øádek oznamuje, ¾e v dùsledku zmìny v
             jiných políèkách se dané políèko stalo editovatelným (druhý
             argument je pravdivý), èi naopak (druhý argument je nepravdivý);
             je-li 'None', není zmìna editovatelnosti oznamována.
+            
           new -- flag urèující, zda se jedná o novì vytváøený záznam (nikoliv
             editaci záznamu ji¾ existujícího)
+            
           resolver -- instance 'Resolver', která má být pou¾ívána k naèítání
             specifikací.  Pokud není urèen, je pou¾it globální resolver získaný
             pomocí funkce 'pytis.util.resolver()'.  Globální resolver je
