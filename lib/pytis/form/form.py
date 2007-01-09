@@ -575,8 +575,10 @@ class RecordForm(InnerForm):
 
         Argumenty:
 
-          prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
-            pøedvyplnìny pøi inicializaci formuláøe.
+          prefill -- slovník hodnot, které mají být pøedvyplnìny pøi
+            inicializaci formuláøe.  Mohou být pøadány jak instance
+            'pytis.data.Value', tak pøímo vnitøní hodnoty, pokud odpovídají
+            datovému typu pøíslu¹ného sloupce.
             
           kwargs -- argumenty pøedané pøedkovi
 
