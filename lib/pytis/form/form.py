@@ -753,8 +753,9 @@ class RecordForm(InnerForm):
             prefill.update(self._row_copy_prefill(self.current_row()))
         result = new_record(self._name, prefill=prefill)
         if result:
-            self.select_row(result.row())
-            self._run_callback(self.CALL_NEW_RECORD, result)
+            if not self.select_row(result.row(), quiet=True):
+                msg = _("Vlo¾ený záznam se neobjevil v aktuálním náhledu.")
+                run_dialog(Warning, msg)
     
     def _can_edit_record(self):
         return self._current_key() is not None \
@@ -906,13 +907,17 @@ class RecordForm(InnerForm):
             zobrazen odpovídající øádek.  Instance musí být kompatibilní
             s datovým objektem formuláøe.
         
-        Pokud takový záznam neexistuje, zobraz chybový dialog a jinak nic.
-        Argumentem 'quiet' lze zobrazení chybového dialogu potlaèit, tak¾e
-        nenalezení øádku je ti¹e ignorováno.
+        Pokud takový záznam neexistuje, zobraz chybový dialog.  Argumentem
+        'quiet' lze zobrazení chybového dialogu potlaèit.  Tím lze nenalezení
+        øádku ti¹e ignorovat, nebo o¹etøit vlastním zpùsobem na základì
+        návratové hodnoty.
 
         Výbìrem je my¹lena akce relevantní pro daný typ formuláøe (odvozené
         tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
         náhledovém formuláøi apod.
+
+        Vrací: Pravdu, pokud byl záznam úspì¹nì nalezen a vybrán, nepravdu v
+        opaèném pøípadì.
         
         """
         if position is None or isinstance(position, pytis.data.Row):
@@ -927,8 +932,8 @@ class RecordForm(InnerForm):
             raise ProgramError("Invalid 'position':", position)
         if not quiet and position is not None and row is None:
             run_dialog(Warning, _("Záznam nenalezen"))
-            return
-        self._select_row(row, quiet=quiet)
+            return False
+        return self._select_row(row, quiet=quiet)
 
     def set_row(self, row):
         """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
@@ -1640,6 +1645,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
                             change_callback=self._on_field_change,
                         editability_change_callback=self._on_editability_change)
         self.set_row(prow)
+        return True
 
     def set_row(self, row):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
@@ -1944,11 +1950,12 @@ class BrowsableShowForm(ShowForm):
         self._select_row(self._find_row_by_number(row_number))
 
     def _select_row(self, row, quiet=False):
-        super(BrowsableShowForm, self)._select_row(row, quiet=quiet)
+        result = super(BrowsableShowForm, self)._select_row(row, quiet=quiet)
         current_row = self.current_row()
         total = self._lf_select_count
         if current_row and total:
             position = "%d/%d" % (self._get_row_number(current_row) + 1, total)
             set_status('list-position', position)
+        return result
                      
 

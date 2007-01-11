@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1122,10 +1122,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if row_number is None:
                 if not quiet:
                     run_dialog(Warning, _("Záznam nenalezen"))
-                return
+                return False
         else:
             row_number = -1
         self._select_cell(row=row_number)
+        return True
 
 
     def _refresh(self, reset=None, when=None):
