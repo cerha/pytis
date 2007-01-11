@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -176,7 +176,7 @@ class DualForm(Form, Refreshable):
 
     def select_row(self, *args, **kwargs):
         if hasattr(self._main_form, 'select_row'):
-            self._main_form.select_row(*args, **kwargs)
+            return self._main_form.select_row(*args, **kwargs)
         else:
             log(EVENT, "Hlavní formulář nepodporuje metodu `select_row()'!")
         
@@ -414,11 +414,11 @@ class BrowseDualForm(SideBrowseDualForm):
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(ListForm.CALL_USER_INTERACTION,
+        f.set_callback(f.CALL_USER_INTERACTION,
                        lambda : self._select_form(self._main_form))
-        f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
-        f.set_callback(ListForm.CALL_ACTIVATION, self._on_main_activation)
-        f.set_callback(BrowseForm.CALL_NEW_RECORD, self._new_record_hook)
+        f.set_callback(f.CALL_SELECTION, self._on_main_selection)
+        f.set_callback(f.CALL_ACTIVATION, self._on_main_activation)
+        #f.set_callback(BrowseForm.CALL_NEW_RECORD, self._new_record_hook)
 
     def _new_record_hook(self, row):
         # TODO: Je otázka, zda je to tu vůbec celé potřeba, když už neděláme

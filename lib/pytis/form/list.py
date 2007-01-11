@@ -1113,8 +1113,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # Pro èíslo voláme rovnou _select_cell a nezdr¾ujeme se pøevodem na
             # row a zpìt, který probíhá v rodièovské metodì...
             self._select_cell(row=position)
+            return True
         else:
-            super(ListForm, self).select_row(position, quiet=quiet)
+            return super(ListForm, self).select_row(position, quiet=quiet)
     
     def _select_row(self, row, quiet=False):
         if row:
@@ -1127,7 +1128,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             row_number = -1
         self._select_cell(row=row_number)
         return True
-
 
     def _refresh(self, reset=None, when=None):
         """Aktualizuj data seznamu z datového zdroje.
