@@ -113,7 +113,7 @@ class DBConfig(object):
         return tuple([(key, self[key]) for key in self._row.keys()])
 
 
-def cfg_param(column, cfgspec='Nastaveni', value_column=None):
+def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None):
     """Vrací instanci Value pro konfiguraèní parametr.
 
     Argumenty:
