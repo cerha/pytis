@@ -277,7 +277,7 @@ class Action(_ActionItem):
             v opaèném pøípadì.  Funkci jsou pøadány stejné argumenty, jako
             handleru.  Není-li uvedeno, je akce aktivní v závislosti na
             'access_groups'.  Namísto funkce mù¾e být pøedána té¾ pøímo boolean
-            hodnota, které dostupnost akce urèuje staticky.
+            hodnota, která dostupnost akce urèuje staticky.
 
           access_groups -- seznam u¾ivatelských skupin, které mají právo akci
             vyvolat.  Akce se pro ostatní u¾ivatele stane automaticky
