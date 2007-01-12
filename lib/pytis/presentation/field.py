@@ -198,10 +198,12 @@ class PresentedRow(object):
                 
     def _init_row(self, row, prefill=None):
         if prefill is not None:
-            V = pytis.data.Value
-            prefill = dict([(k, V(self._columns[k].type,
-                                  isinstance(v, V) and v.value() or v))
-                            for k, v in prefill.items()])
+            new_prefill = {}
+            for k, v in prefill.items():
+                if isinstance(v, pytis.data.Value):
+                    v = v.value()
+                new_prefill[k] = pytis.data.Value(self._columns[k].type, v)
+                prefill = new_prefill
         self._cache = {}
         if row is None:
             def genval(c):
