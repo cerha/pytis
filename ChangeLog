@@ -1,3 +1,8 @@
+2007-01-12  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (end_date_value): Pøejmenování
+	specifikace NastaveniUser na Nastaveni.BvUsersCfg. 
+
 2007-01-09  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/dbconfig.py (cfg_param): Defaultní cfgspec
