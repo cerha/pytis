@@ -1,3 +1,27 @@
+2007-01-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Action.__init__): Docstring typo fix.
+
+	* pytis/presentation/field.py (PresentedRow._init_row): Fixed bug
+	in prefill initialization.
+
+2007-01-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (DualForm.select_row): Pass the return
+	value of the main form's method.
+
+	* pytis/form/list.py (ListForm._select_row): Return `True' on
+	success, `False' otherwise.
+	(ListForm.select_row): Pass the return value of the
+	parent class's method. 
+
+	* pytis/form/form.py (RecordForm._on_new_record): Don't run
+	callback `CALL_NEW_RECORD'.
+	(RecordForm.select_row): Return `True' on success, `False' otherwise.
+	(EditForm._select_row): Return `True'.
+	(BrowsableShowForm._select_row): Pass the return value of the
+	parent class's method.
+
 2007-01-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (RecordForm._init_attributes): Docstring
