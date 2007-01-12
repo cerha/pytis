@@ -237,7 +237,7 @@ def session_date(*args):
 
 def session_date_value():
     """Vra» nastavené pracovní datum pøihlá¹eného u¾ivatele."""
-    return cfg_param('datum', 'NastaveniUser')
+    return cfg_param('datum', 'Nastaveni.BvUsersCfg')
 
 def start_date(*args):
     """Vra» vnitøní hodnotu nastaveného 'datumu od'."""
@@ -245,7 +245,7 @@ def start_date(*args):
 
 def start_date_value():
     """Vra» nastavené 'datum od' pøihlá¹eného u¾ivatele."""
-    return cfg_param('datum_od', 'NastaveniUser')
+    return cfg_param('datum_od', 'Nastaveni.BvUsersCfg')
 
 def end_date(*args):
     """Vra» vnitøní hodnotu nastaveného 'datumu do'."""
@@ -253,5 +253,5 @@ def end_date(*args):
 
 def end_date_value():
     """Vra» nastavené 'datum do' pøihlá¹eného u¾ivatele."""
-    return cfg_param('datum_do', 'NastaveniUser')
+    return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
 
