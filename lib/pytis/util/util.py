@@ -1297,6 +1297,13 @@ def deepstr(obj):
         if isinstance(obj, tuple):
             result = tuple(result)
         result = unicode(result)
+    elif type(obj) is type(object) or type(obj) is pytypes.ClassType:
+        try:
+            result = unicode(obj)
+        except:
+            # If the class defines __unicode__ method, the call above throws an
+            # exception
+            result = '%s.%s' % (obj.__module__, obj.__name__,)
     else:
         result = unicode(obj)
     try:
