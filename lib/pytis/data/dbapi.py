@@ -84,11 +84,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
-            raise DBUserException(None, e, query)
+            raise DBUserException(None, e, e.args, query)
         except dbapi.ProgrammingError, e:
-            raise DBUserException(None, e, query)
+            raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
-            raise DBUserException(None, e, query)
+            raise DBUserException(None, e, e.args, query)
         except dbapi.OperationalError, e:
             if not restartable:
                 raise DBSystemException(_("Database operational error"),
