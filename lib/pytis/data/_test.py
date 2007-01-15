@@ -1378,16 +1378,22 @@ class DBFunction(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
         c = self._connection
-        for q in ("foo1(int) returns int as 'select $1+1'",
-                  "foo2(text,text) returns text as 'select $1 || $2'"):
-            try:
+        try:
+            c.query("create table tab (x int)")
+            for q in ("foo1(int) returns int as 'select $1+1'",
+                      "foo2(text,text) returns text as 'select $1 || $2'",
+                      "foo3() returns int as 'select min(x) from tab'"):
                 c.query("create function %s language sql " % q)
-            except:
-                self.tearDown()
-                raise
+        except:
+            self.tearDown()
+            raise
     def tearDown(self):
         c = self._connection
-        for q in ("foo1(int)", "foo2(text,text)"):
+        try:
+            c.query("drop table tab")
+        except:
+            pass
+        for q in ("foo1(int)", "foo2(text,text)", "foo3()"):
             try:
                 c.query("drop function %s" % q)
             except:
@@ -1407,7 +1413,12 @@ class DBFunction(_DBBaseTest):
                             ('arg2',
                              pytis.data.String().validate('bar')[0])))
         result = function.call(row)[0][0].value()
-        assert result == 'foobar', ('Invalid result', result)        
+        assert result == 'foobar', ('Invalid result', result)
+    def test_empty(self):
+        function = pytis.data.DBFunctionDefault('foo3', self._dconnection)
+        row = pytis.data.Row(())
+        result = function.call(row)[0][0].value()
+        assert result is None, ('Invalid result', result)
 tests.add(DBFunction)
 
 

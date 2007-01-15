@@ -115,12 +115,15 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 row = cursor.fetchone()
                 row_data = []
                 for col in row:
-                    if col is True:
-                        row_data.append('T')
+                    if col is None:
+                        coldata = col
+                    elif col is True:
+                        coldata = 'T'
                     elif col is False:
-                        row_data.append('F')
+                        coldata = 'F'
                     else:
-                        row_data.append(str(col))
+                        coldata = str(col)
+                    row_data.append(coldata)
                 data.append(row_data)
         else:
             data.append([cursor.rowcount])
