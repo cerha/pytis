@@ -1479,3 +1479,9 @@ class Value(_Value):
 
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
+
+
+# TODO: Temporary type specific to PostgreSQL, currently heavily used in
+# applications.  It should be completely removed in the future.
+class Oid(Integer):
+    """Typ sloupce oid v PostgreSQL."""

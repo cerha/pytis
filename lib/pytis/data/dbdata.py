@@ -562,11 +562,3 @@ class DBLoginException(DBException):
         """Inicializuj databázovou výjimku s patøiènými argumenty."""
         super_(DBLoginException).__init__\
           (self, _("Chybné u¾ivatelské jméno nebo heslo"))
-
-
-
-### Jiné tøídy 
-
-
-class Oid(Integer):
-    """Typ sloupce oid v PostgreSQL."""
