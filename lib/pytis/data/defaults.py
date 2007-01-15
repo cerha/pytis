@@ -67,6 +67,10 @@ DBFunctionDefault = DBPyPgFunction
 """Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
 
 def _postgresql_access_groups(connection_data):
-    return PostgreSQLUserGroups(connection_data).access_groups()
+    import pytis.data.pgsql
+    class PgUserGroups(pytis.data.pgsql._PgsqlAccessor,
+                       PostgreSQLUserGroups):
+        pass
+    return PgUserGroups(connection_data).access_groups()
 default_access_groups = _postgresql_access_groups
 """Funkce vracející seznam skupin u¾ivatele specifikovaného spojení."""
