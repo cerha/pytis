@@ -2,7 +2,7 @@
 
 # Cache
 # 
-# Copyright (C) 2002, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2006 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -107,13 +107,14 @@ class LimitedCache(_Cache):
         return result
 
     def __setitem__(self, key, value):
-        self._lock.acquire()
-        try:
-            if self._counter.next() > self._limit:
-                self._collect()
-            super(LimitedCache, self).__setitem__(key, value)
-        finally:
-            self._lock.release()
+        if self._limit > 0:
+            self._lock.acquire()
+            try:
+                if self._counter.next() > self._limit:
+                    self._collect()
+                super(LimitedCache, self).__setitem__(key, value)
+            finally:
+                self._lock.release()
 
     def reset(self):
         super(LimitedCache, self).reset()

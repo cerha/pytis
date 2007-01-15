@@ -1,3 +1,8 @@
+2007-01-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/util/caching.py (LimitedCache.__setitem__): Don't cache
+	data in LimitedCache if the limit is 0.
+
 2007-01-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (Action.__init__): Docstring typo fix.
