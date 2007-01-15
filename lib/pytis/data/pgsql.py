@@ -144,8 +144,9 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
 
     class _PgNotifier(_PgsqlAccessor, PostgreSQLNotifier._PgNotifier):
 
-        def __init__(self, connection_data):
-            PostgreSQLNotifier._PgNotifier.__init__(self, connection_data)
+        def __init__(self, connection_data, **kwargs):
+            super(DBDataPyPgSQL._PgNotifier, self).__init__(
+                connection_data=connection_data, **kwargs)
             self._pgnotif_connection = None
 
         def _notif_do_registration(self, notification):
