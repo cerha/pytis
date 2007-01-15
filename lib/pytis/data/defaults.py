@@ -63,6 +63,6 @@ DBFunctionDefault = DBPyPgFunction
 """Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
 
 def _postgresql_access_groups(connection_data):
-    PostgreSQLUserGroups(connection_data).access_groups()
+    return PostgreSQLUserGroups(connection_data).access_groups()
 default_access_groups = _postgresql_access_groups
 """Funkce vracející seznam skupin u¾ivatele specifikovaného spojení."""
