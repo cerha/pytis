@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,6 +114,8 @@ class Type(object):
     _VM_INVALID_VALUE_MSG = _("Nesprávná hodnota")
     
     _SPECIAL_VALUES = ()
+    
+    _VALIDATION_CACHE_LIMIT = 1000
 
     def _make(class_, *args, **kwargs):
         result = Type._type_table.get_instance(class_, *args, **kwargs)
@@ -178,7 +180,9 @@ class Type(object):
         self._fetched = True
         # Cachujeme na úrovni instancí, proto¾e ty jsou stejnì sdílené, viz
         # `__new__'.
-        self._validation_cache = cache = LimitedCache(self._validating_provider)
+        self._validation_cache = cache = \
+            LimitedCache(self._validating_provider,
+                         limit=self._VALIDATION_CACHE_LIMIT)
         if isinstance(enumerator, MutableEnumerator):
             # TODO: Jak se to bude chovat po smrti instance typu?
             enumerator.add_hook_on_update(lambda : cache.reset())
@@ -979,6 +983,37 @@ class Boolean(Type):
     
     def default_value(self):
         return Value(self, False)
+
+
+class Binary(Type):
+    """Binary data.
+
+    All input and output values of this type are either Python 'buffer' objects
+    or 'None' (representing a null value).  Usage of binary data is limited
+    only to certain situations.  They may be used only in non-key columns, they
+    can be retrieved from a database (but they may not be used in search
+    conditions with the exception of testing for NULL value) and they can be
+    used as non-key values in insertions and updates.
+
+    Values of this type are not cached as they may be large and their
+    validation is trivial.
+
+    """
+    
+    _VALIDATION_CACHE_LIMIT = 0
+
+    def __init__(self, enumerator=None, **kwargs):
+        assert enumerator is None, ("Enumerators may not be used "+
+                                    "in binary data types")
+        super(Binary, self).__init__(**kwargs)
+        
+    def _validate(self, object, **kwargs):
+        assert isinstance(object, buffer) or object is None, \
+            ('Not a buffer object', object)
+        return Value(self, object), None
+
+    def _export(self, value):
+        return value
 
 
 # Pomocné tøídy

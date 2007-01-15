@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import string
 import time
 
 from mx import DateTime as DT
@@ -26,7 +27,8 @@ from pytis.util import *
 import pytis.data
 import dbdata
 
-_connection_data = {'database': 'test'}
+_connection_data = {'database': 'test', 'host': 'test', 'user': 'pdm', 'password': 'pdmpdm'}
+#_connection_data = {'database': 'test'}
 
 tests = TestSuite()
 
@@ -626,6 +628,7 @@ class _DBTest(_DBBaseTest):
                   "create table cosnova (synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE', PRIMARY KEY (synte,anal)) with oids",
                   "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madsynte char(3) NOT NULL DEFAULT '100', madanal char(3) DEFAULT '007', FOREIGN KEY (madsynte,madanal) REFERENCES cosnova(synte,anal)) with oids",
                   "create table xcosi(id int, popis varchar(12)) with oids",
+                  "create table bin(id int, data bytea) with oids",
                   "insert into cstat values('us', 'U.S.A.')",
                   "insert into cstat values('cz', 'Czech Republic')",
                   "insert into cosnova values('100', '007', 'abcd', 'X', 'us', 'FALSE')",
@@ -657,7 +660,7 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % t)
             except:
                 pass            
-        for t in ('xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2'):
+        for t in ('bin', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2'):
             try:
                 self._sql_command('drop table %s' % t)
             except:
@@ -740,6 +743,13 @@ class DBDataDefault(_DBTest):
              B('popis', 'xcosi', 'popis')),
             key,
             conn)
+        # bin
+        key = B('id', 'bin', 'id')
+        dbin = pytis.data.DBDataDefault(
+            (key,
+             B('data', 'bin', 'data'),),
+            key,
+            conn)
         # view
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -750,6 +760,7 @@ class DBDataDefault(_DBTest):
         self.dstat1 = dstat1
         self.dosnova = dosnova
         self.dcosi = dcosi
+        self.dbin = dbin
         self.view = view
         #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
@@ -984,6 +995,32 @@ class DBDataDefault(_DBTest):
         assert self.data.delete_many(pytis.data.EQ('castka', x3000)) == 1, \
                'row not deleted'
         lines((3,))
+    def test_binary(self):
+        B = pytis.data.Binary()
+        I = pytis.data.Integer()
+        R = pytis.data.Row
+        data = [chr(i) for i in range(256)]
+        data1, error = B.validate(buffer(string.join(data, '')))
+        assert not error, ('Binary validation failed', error,)
+        data.reverse()
+        data2, error = B.validate(buffer(string.join(data, '')))
+        assert not error, ('Binary validation failed', error,)
+        key, _error = I.validate('1')
+        row1 = R([('id', key,), ('data', data1,)])
+        row2 = R([('id', key,), ('data', data2,)])
+        result, success = self.dbin.insert(row1)
+        assert success, 'Binary insertion failed'
+        assert str(result[1].value()) == str(data1.value()), \
+            ('Invalid inserted binary data', str(result[1].value()),)
+        result = str(self.dbin.row(key)[1].value())
+        assert result == str(data1.value()), ('Invalid binary data', result,)
+        result, succes = self.dbin.update(key, row2)
+        assert success, 'Binary update failed'
+        assert str(result[1].value()) == str(data2.value()), \
+            ('Invalid updated binary data', str(result[1].value()),)
+        result = str(self.dbin.row(key)[1].value())
+        assert result == str(data2.value()), ('Invalid binary data', result,)
+        assert self.dbin.delete(key) == 1, 'Binary deletion failed'
     def _test_lock(self):
         us = pytis.data.String().validate('us')[0]
         cz = pytis.data.String().validate('cz')[0]
@@ -1350,6 +1387,7 @@ class DBDataNotification(DBDataDefault):
              ('nazev', d.columns()[1].type().validate('Austria')[0]))))
         self._ddn_check_result()
         assert d.change_number() == 1
+        assert self.data.change_number() == 1
 tests.add(DBDataNotification)
 
 

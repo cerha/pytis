@@ -67,12 +67,17 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_close_connection(self, connection):
         connection.connection().close()
     
-    def _postgresql_query(self, connection, query, restartable):
+    def _postgresql_query(self, connection, query, restartable, query_args=()):
         result = None
         def do_query(raw_connection):
             try:
                 cursor = raw_connection.cursor()
-                cursor.execute(query)
+                # query_args shouldn't be used when empty to prevent mistaken
+                # '%' processing in `query'
+                if query_args:
+                    cursor.execute(query, query_args)
+                else:
+                    cursor.execute(query)
                 return cursor
             except:
                 cls, e, tb = sys.exc_info()
@@ -115,7 +120,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 row = cursor.fetchone()
                 row_data = []
                 for col in row:
-                    if col is None:
+                    if col is None or isinstance(col, buffer):
                         coldata = col
                     elif col is True:
                         coldata = 'T'
@@ -157,8 +162,13 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             connection = self._pgnotif_connection
             query = 'listen %s' % (notification,)
             # TODO: Allow reconnection with re-registrations
-            _result, self._pgnotif_connection = \
-                self._postgresql_query(connection, query, False)
+            lock = self._pg_query_lock
+            lock.acquire()
+            try:
+                _result, self._pgnotif_connection = \
+                    self._postgresql_query(connection, query, False)
+            finally:
+                lock.release()
         
         def _notif_listen_loop(self):
             connection_ = self._pgnotif_connection
@@ -166,9 +176,15 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             while True:
                 if __debug__:
                     log(DEBUG, 'Hlídám vstup', connection)
-                cursor = connection.cursor()
+                lock = self._pg_query_lock
+                lock.acquire()
                 try:
-                    select.select([cursor], [], [], None)
+                    cursor = connection.cursor()
+                    fileno = cursor.fileno()
+                finally:
+                    lock.release()
+                try:
+                    select.select([fileno], [], [], None)
                 except Exception, e:
                     if __debug__:
                         log(DEBUG, 'Chyba na socketu', e.args)
@@ -178,15 +194,20 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 lock = self._notif_connection_lock
                 lock.acquire()
                 try:
-                    notifications = []
-                    if cursor.isready():
-                        notifies = connection.notifies
-                        if notifies:
-                            if __debug__:
-                                log(DEBUG, 'Zaregistrována zmìna dat')
-                            notifications = []
-                            while notifies:
-                                notifications.append(notifies.pop()[1])
+                    query_lock = self._pg_query_lock
+                    query_lock.acquire()
+                    try:
+                        notifications = []
+                        if cursor.isready():
+                            notifies = connection.notifies
+                            if notifies:
+                                if __debug__:
+                                    log(DEBUG, 'Zaregistrována zmìna dat')
+                                notifications = []
+                                while notifies:
+                                    notifications.append(notifies.pop()[1])
+                    finally:
+                        query_lock.release()
                 finally:
                     lock.release()
                 if __debug__:

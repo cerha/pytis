@@ -57,7 +57,10 @@ class _PgsqlAccessor(PostgreSQLAccessor):
     def _postgresql_close_connection(self, connection):
         connection.connection().finish()
     
-    def _postgresql_query(self, connection, query, restartable):
+    def _postgresql_query(self, connection, query, restartable, query_args=None):
+        if query_args:
+            raise Exception(_("Query arguments unsupported by " +
+                              "the pgsql backend"))
         result = None
         def do_query(connection):
             try:
@@ -157,7 +160,12 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
             connection = self._pgnotif_connection
             query = 'listen %s' % (notification,)
             # TODO: Allow reconnection with re-registrations
-            self._postgresql_query(connection, query, False)
+            lock = self._pg_query_lock
+            lock.acquire()
+            try:
+                self._postgresql_query(connection, query, False)
+            finally:
+                lock.release()
         
         def _notif_listen_loop(self):
             connection_ = self._pgnotif_connection
@@ -176,21 +184,26 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                 lock = self._notif_connection_lock
                 lock.acquire()
                 try:
+                    query_lock = self._pg_query_lock
+                    query_lock.acquire()
                     try:
-                        connection.consumeInput()
-                        notice = connection.notifies()
-                    except Exception, e:
-                        if __debug__:
-                            log(DEBUG, 'Databázová chyba', e.args)
-                        break
-                    notifications = []
-                    if notice:
-                        if __debug__:
-                            log(DEBUG, 'Zaregistrována zmìna dat')
-                    while notice:
-                        n = notice.relname.lower()
-                        notifications.append(n)
-                        notice = connection.notifies()
+                        try:
+                            connection.consumeInput()
+                            notice = connection.notifies()
+                        except Exception, e:
+                            if __debug__:
+                                log(DEBUG, 'Databázová chyba', e.args)
+                            break
+                        notifications = []
+                        if notice:
+                            if __debug__:
+                                log(DEBUG, 'Zaregistrována zmìna dat')
+                        while notice:
+                            n = notice.relname.lower()
+                            notifications.append(n)
+                            notice = connection.notifies()
+                    finally:
+                        query_lock.release()
                 finally:
                     lock.release()
                 if __debug__:

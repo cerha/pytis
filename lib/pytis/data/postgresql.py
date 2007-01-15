@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -241,35 +241,49 @@ class PostgreSQLAccessor(object):
         """Nastav způsob provádění transakcí pro konkrétní backend."""
         # Nastavujeme serializované transakce, abychom v rámci jedné transakce
         # nemohli dostat různé výsledky pro opakované selecty.
-        self._postgresql_query(connection,
-                               ('set session characteristics as transaction '+
-                                'isolation level serializable'),
-                               False)
+        lock = self._pg_query_lock
+        lock.acquire()
+        try:
+            self._postgresql_query(connection,
+                                   ('set session characteristics as transaction '+
+                                    'isolation level serializable'),
+                                   False)
+        finally:
+            lock.release()
 
     def _postgresql_initialize_coding(self, connection):
         encoding = self._pg_encoding
         query = 'set client_encoding to "%s"' % (encoding,)
-        self._postgresql_query(connection, query, False)
+        lock = self._pg_query_lock
+        lock.acquire()
+        try:
+            self._postgresql_query(connection, query, False)
+        finally:
+            lock.release()
         
-    def _postgresql_query(self, connection, query, restartable):
-        """Proveď SQL příkaz 'query' a vrať výsledek.
+    def _postgresql_query(self, connection, query, restartable, query_args=()):
+        """Perform SQL 'query' and return the result.
 
-        Argumenty:
+        Arguments:
 
-          connection -- instance '_postgresql_Connection'
-          query -- string obsahující finální podobu SQL příkazu, který se má
-            provést
-          restartable -- právě když je pravda, je povoleno pokusit se o restart
-            spojení v případě chyby
+          connection -- '_postgresql_Connection' instance
+          query -- string containing the final form of the SQL command to be
+            performed
+          restartable -- iff this is true, the method may try to restart the
+            database connection in case of error
+          query_args -- formatting arguments corresponding to 'query'
+            containing '%s' formatting marks; this argument should be only used
+            when absolutely necessary (such as when working with binary data
+            types)
 
-        Návratovou hodnotou je dvojice ('result', 'connection'), kde 'result'
-        je instance '_postgresql_Result' a 'connection' je instance
-        '_postgresql_Connection' použitého spojení.
+        The return value is a pair ('result', 'connection'), where 'result' is
+        a '_postgresql_Result' result and 'connection' a
+        '_postgresql_Connection' of the connection that returned the result.
 
-        Tato metoda musí být předefinována v podtřídě.
+        This method is required to be redefined in a subclass.
 
         """
-        raise ProgramError(_("Volána neimplementovaná metoda"))
+        raise ProgramError(_("Unimplemented method"))
 
     def _postgresql_transform_query_result(self, result):
         """Vrať instanci 'PostgreSQLResult' odpovídající výsledku 'result'.
@@ -320,6 +334,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             connection_data = _lambda
         self._pg_connection_data_ = connection_data
         self._pg_connections_ = []
+        self._pg_query_lock = thread.allocate_lock()
         super(PostgreSQLConnector, self).__init__(
             connection_data=connection_data, **kwargs)
 
@@ -344,20 +359,25 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         pool = self._pg_connection_pool()
         pool.put_back(connection.connection_data(), connection)
 
-    def _pg_query(self, query, outside_transaction=False, backup=False):
-        """Proveď SQL příkaz 'query' a vrať výsledek.
+    def _pg_query(self, query, outside_transaction=False, backup=False,
+                  query_args=()):
+        """Call the SQL 'query' and return the result.
 
-        Argumenty:
+        Arguments:
         
-          query -- SQL příkaz PostgreSQL jako string
-          outside_transaction -- právě když je pravda, je query provedeno mimo
-            aktuálně prováděnou transakci, je-li jaká
-          backup -- právě když je pravda, zaloguj provedený SQL příkaz
-          
-        Návratovou hodnotou je instance třídy 'PostgreSQLResult'.
-        
-        Metoda musí řádně ošetřovat výjimky a v případě jejich výskytu nahodit
-        výjimku 'DBException' nebo některého jejího potomka.
+          query -- PostgreSQL SQL command as a string
+          outside_transaction -- iff it is true, the query is performed outside
+            the current transaction (if there is any)
+          backup -- iff it is true, write the completed SQL command into log
+          query_args -- formatting arguments corresponding to 'query'
+            containing '%s' formatting marks; this argument should be only used
+            when absolutely necessary (such as when working with binary data
+            types)
+
+        The return value is a 'PostgreSQLResult' instance.
+
+        The method must properly handle database exception and in case any is
+        caught the corresponding 'DBException' must be raised.
         
         """
         if type(query) is pytypes.UnicodeType:
@@ -365,27 +385,33 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         connection = self._pg_get_connection(outside_transaction)
         # Proveď dotaz
         if __debug__:
-            log(DEBUG, 'SQL dotaz', query)
+            log(DEBUG, 'SQL query', query)
+        lock = self._pg_query_lock
+        lock.acquire()
         try:
-            result, connection = self._postgresql_query(connection, query,
-                                                        outside_transaction)
+            try:
+                result, connection = self._postgresql_query(connection, query,
+                                                            outside_transaction,
+                                                            query_args=query_args)
+            finally:
+                # Vrať DB spojení zpět
+                if connection and outside_transaction:
+                    self._pg_return_connection(connection)
+            if backup and self._pdbb_logging_command:
+                assert not outside_transaction, \
+                    ('Backed up SQL command outside transaction', query)
+                # Zde nemůže dojít k významné záměně pořadí zalogovaných
+                # příkazů, protože všechny DML příkazy jsou uzavřeny
+                # v transakcích a ty konfliktní jsou díky serializaci
+                # automaticky správně řazeny.
+                self._pg_query(self._pdbb_logging_command % pg_escape(query),
+                               outside_transaction=False, backup=False)
+            # Získej a vrať data
+            data = self._postgresql_transform_query_result(result)
         finally:
-            # Vrať DB spojení zpět
-            if connection and outside_transaction:
-                self._pg_return_connection(connection)
-        if backup and self._pdbb_logging_command:
-            assert not outside_transaction, \
-                ('Backed up SQL command outside transaction', query)
-            # Zde nemůže dojít k významné záměně pořadí zalogovaných
-            # příkazů, protože všechny DML příkazy jsou uzavřeny
-            # v transakcích a ty konfliktní jsou díky serializaci
-            # automaticky správně řazeny.
-            self._pg_query(self._pdbb_logging_command % pg_escape(query),
-                           outside_transaction=False, backup=False)
-        # Získej a vrať data
-        data = self._postgresql_transform_query_result(result)
+            lock.release()
         if __debug__:
-            log(DEBUG, 'Výsledek SQL dotazu', data)
+            log(DEBUG, 'SQL query result', data)
         return data
 
 
@@ -733,7 +759,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'timestamptz': DateTime,
                         'varchar': String,
                         'inet': Inet,
-                        'macaddr': Macaddr
+                        'macaddr': Macaddr,
+                        'bytea': Binary,
                         }
         try:
             type_class_ = TYPE_MAPPING[type_]
@@ -792,6 +819,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
+                assert not isinstance(t, Binary), ("Binary types may not be "+
+                                                   "used as keys")
                 key.append(colspec)
         assert key, DBUserException('data key column not found')
         # Přidej oid
@@ -957,6 +986,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                kwargs['ignore_case'] and \
                                isinstance(value.type(), String)
             t = self.find_column(colid).type()
+            assert (not isinstance(t, Binary) or
+                    (relop == '=' and value.value() is None)), \
+                    "Binary data can only be compared with NULL values"
             btabcols = self._pdbb_btabcol(col)
             val = xtuple(self._pg_value(value))
             items = []
@@ -1314,10 +1346,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 row[ocol] = oval
             except KeyError:
                 row.append(ocol, oval)
-        cols, vals = self._pdbb_table_row_lists(row)
+        cols, vals_ = self._pdbb_table_row_lists(row)
+        vals = []
+        query_args = []
+        for v in vals_:
+            if isinstance(v, buffer):
+                vals.append('%s')
+                query_args.append(v)
+            else:
+                vals.append(v)
         self._pg_query(self._pdbb_command_insert % \
                        (string.join(cols, ','), string.join(vals, ',')),
-                       backup=True)
+                       backup=True, query_args=query_args)
         # Pokud data nemají klíč (protože je generován, např. jako SERIAL),
         # nezbývá, než se řídit oid.  Tento postup pak lze použít obecně, snad
         # v PostgreSQL funguje.  Je to založeno na předpokladu, že každý nově
@@ -1337,7 +1377,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # jakýsi hack, který nějakým způsobem ošetří alespoň některé situace,
         # aby nebyl signalizován neúspěch UPDATE v případě jeho úspěchu.
         cols, vals = self._pdbb_table_row_lists(row)
-        s = map(lambda c, v: "%s=%s" % (c, v), cols, vals)
+        query_args = []
+        s = []
+        for c, v in zip(cols, vals):
+            if isinstance(v, buffer):
+                item = "%s=%%s" % c
+                query_args.append(v)
+            else:
+                item = "%s=%s" % (c, v,)
+            s.append(item)
         settings = ','.join(s)
         cond_string = self._pdbb_condition2sql(condition)
         def extract_result(d):
@@ -1355,7 +1403,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                cond_string)
             result = extract_result(d)
         d = self._pg_query(self._pdbb_command_update % (settings, cond_string),
-                           backup=True)
+                           backup=True, query_args=query_args)
         if not broken:
             result = extract_result(d)
         if result >= 0:
@@ -1722,7 +1770,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         row_data = []
         data_0 = data_[0]
         i = 0
-        for id, typid, type in template:            
+        for id, typid, type_ in template:            
             dbvalue = data_0[i]
             i += 1
             if typid == 0:              # string
@@ -1730,13 +1778,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     v = None
                 else:
                     v = unicode(dbvalue, self._pg_encoding)  #TODO: patří jinam
-                value = Value(type, v)
+                value = Value(type_, v)
             elif typid == 2:            # time
-                value, err = type.validate(dbvalue, strict=False,
-                                           format=type.SQL_FORMAT, local=False)
+                value, err = type_.validate(dbvalue, strict=False,
+                                            format=type_.SQL_FORMAT, local=False)
                 assert err is None, err
             else:
-                value, err = type.validate(dbvalue, strict=False)
+                value, err = type_.validate(dbvalue, strict=False)
                 assert err is None, err
             row_data.append((id, value))
         return Row(row_data)

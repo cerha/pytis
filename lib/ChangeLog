@@ -1,5 +1,9 @@
 2007-01-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data: New database API merged in.
+
+2007-01-15  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/dbdata.py (DBConnectionPool.put_back): Use the right
 	exception name when accessing the pool.
 
