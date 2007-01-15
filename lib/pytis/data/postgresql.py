@@ -380,8 +380,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             # pøíkazù, proto¾e v¹echny DML pøíkazy jsou uzavøeny
             # v transakcích a ty konfliktní jsou díky serializaci
             # automaticky správnì øazeny.
-            self._pg_query(connection,
-                           self._pdbb_logging_command % pg_escape(query),
+            self._pg_query(self._pdbb_logging_command % pg_escape(query),
                            outside_transaction=False, backup=False)
         # Získej a vra» data
         data = self._postgresql_transform_query_result(result)
