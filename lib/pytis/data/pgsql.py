@@ -204,7 +204,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                 if __debug__:
                     log(DEBUG, 'Napichuji se na nové spojení')
                 connection_ = self._connection = pool.get(spec)
-                connection = connection.connection()
+                connection = connection_.connection()
                 notiflist = reduce(lambda x, y: x + y,
                                    self._data_objects.values(), [])
                 if __debug__:
@@ -308,7 +308,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
         try:
             notifier = DBDataPostgreSQL.NOTIFIERS[spec]
         except KeyError:
-            notifier = DBDataPostgresSQL.NOTIFIERS[spec] = \
-              DBDataPostgreSQL._PgNotifier(self._pg_connection_pool(), s)
+            notifier = DBDataPostgreSQL.NOTIFIERS[spec] = \
+              self._PgNotifier(self._pg_connection_pool(), s)
         for n in notifications:
             notifier.register(self, n)

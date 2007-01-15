@@ -43,6 +43,11 @@ class DBDataDefaultClass(RestrictedData,
         DBDataPyPgSQL.__init__(self, bindings, key, dbconnection_spec,
                                ordering)
         PostgreSQLStandardBindingHandler.__init__(self)
+        # TODO: Následující hack je tu proto, ¾e ve voláních konstruktorù vý¹e
+        # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
+        # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat
+        # tøídy týkající se notifikací.
+        self._pg_add_notifications()
 
 
 ### Exportované promìnné/tøídy
