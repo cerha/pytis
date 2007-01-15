@@ -457,11 +457,8 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
 
     # TODO: Temporary compatibility hack:
     def class_access_groups(connection_data):
-        import pytis.data.pgsql
-        class PgUserGroups(pytis.data.pgsql._PgsqlAccessor,
-                           PostgreSQLUserGroups):
-            pass
-        return PgUserGroups(connection_data).access_groups()
+        import pytis.data
+        return pytis.data.default_access_groups(connection_data)
     class_access_groups = staticmethod(class_access_groups)
     
 
