@@ -408,29 +408,20 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         
     def _pgg_retrieve_access_groups(self, data):
         if __debug__:
-            log(DEBUG, 'Updatuji seznam skupin u¾ivatelù')
-        d = data._pg_query("select groname, grolist from pg_group",
+            log(DEBUG, "Retrieving list of user groups")
+        user = data._pg_connection_data().user()
+        if not user:
+            return []
+        d = data._pg_query("select distinct pg_roles2.rolname from "+
+                           "pg_auth_members, pg_roles as pg_roles1, "+
+                           "pg_roles as pg_roles2 where "+
+                           "pg_auth_members.member = pg_roles1.oid and "+
+                           ("pg_roles1.rolname = '%s' and " % (user,))+
+                           "pg_roles2.oid = pg_auth_members.roleid",
                            outside_transaction=True)
-        regexp = None
-        the_user = data._pg_connection_data().user()
-        groups = []
-        for group, uid_string in d:
-            if uid_string is not None and regexp is None:
-                if uid_string != '{}':
-                    uids = uid_string[1:-1].split(',')
-                    for u in uids:
-                        d1 = data._pg_query("select pg_get_userbyid(%s)" % u,
-                                            outside_transaction=True)
-                        user = d1[0][0]
-                        if user == the_user:
-                            regexp = re.compile('[^0-9]%s[^0-9]' % u)
-                            groups.append(group)
-                            break
-            else:
-                if uid_string is not None and regexp.search(uid_string):
-                    groups.append(group)
+        groups = [row[0] for row in d]
         if __debug__:
-            log(DEBUG, 'Seznam skupin u¾ivatelù updatován')
+            log(DEBUG, "List of user groups retrieved")
         return groups
 
     def access_groups(self):
