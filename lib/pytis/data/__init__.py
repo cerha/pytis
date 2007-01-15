@@ -36,6 +36,6 @@ from types_ import *
 from data import *
 from access import *
 from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException, DBSystemException, DBUserException, DBLoginException
-from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault
+from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, default_access_groups
 
 types_.__dict__.update(globals())
