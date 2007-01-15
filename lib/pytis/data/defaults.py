@@ -24,4 +24,4 @@ the corresponding source file.
 
 """
 
-from pgsql import *
+from dbapi import *
