@@ -459,6 +459,11 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                 self._pgg_retrieve_access_groups(groups)
         return groups
 
+    # TODO: Temporary compatibility function:
+    def class_access_groups(connection_spec):
+        return PostgreSQLUserGroups(connection_data).access_groups()
+    class_access_groups = staticmethod(class_access_groups)
+    
 
 class DBDataPostgreSQL(PostgreSQLUserGroups, DBData):
     """Datová tabulka s napojením do PostgreSQL.
