@@ -761,7 +761,7 @@ class Data(object):
             c()
 
 
-class Counter:
+class Counter(object):
     """Abstrakce pøístupu ke generátoru tickets.
 
     Jedná se o jednoduchý èítaè vracející postupnì sekvenci unikátních
@@ -777,7 +777,7 @@ class Counter:
         raise NotImplementedException()
 
 
-class Function:
+class Function(object):
     """Abstrakce databázových funkcí.
 
     Podporovány jsou pouze jednoduché funkce, pøijímající pevný (ale libovolný)

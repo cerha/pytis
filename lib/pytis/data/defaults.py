@@ -27,7 +27,7 @@ from dbdata import *
 from pgsql import *
 
 
-class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData,
+class DBDataDefaultClass(RestrictedData,
                          PostgreSQLStandardBindingHandler,
                          DBDataPyPgSQL):
     """Datová tøída, kterou v na¹ich aplikacích standardnì pou¾íváme.
@@ -43,11 +43,6 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData,
         DBDataPyPgSQL.__init__(self, bindings, key, dbconnection_spec,
                                ordering)
         PostgreSQLStandardBindingHandler.__init__(self)
-        # Registrace notifikací sem jaksi nepatøí, ale kam jinam ji dát, kdy¾
-        # má být provedena a¾ po uskuteènìní v¹ech inicializací?
-        import config
-        if config.dblisten:
-            self._pypg_add_notifications()
 
 
 ### Exportované promìnné/tøídy
@@ -61,3 +56,8 @@ DBCounterDefault = DBPyPgCounter
 
 DBFunctionDefault = DBPyPgFunction
 """Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
+
+def _postgresql_access_groups(connection_data):
+    PostgreSQLUserGroups(connection_data).access_groups()
+default_access_groups = _postgresql_access_groups
+"""Funkce vracející seznam skupin u¾ivatele specifikovaného spojení."""

@@ -179,11 +179,12 @@ class DBData(Data):
 
 class DBConnectionPool:
 
-    def __init__(self, connection_creator):
+    def __init__(self, connection_creator, connection_closer):
         if __debug__: log(DEBUG, 'Vytváøím nový pool')
         self._lock = thread.allocate_lock()
         self._pool = {}
         self._connection_creator = connection_creator
+        self._connection_closer = connection_closer
 
     def __del__(self):
         # Pro jistotu uzavíráme v¹echna spojení, pøesto¾e by to mìlo být
@@ -194,13 +195,13 @@ class DBConnectionPool:
         try:
             for c in flatten(self._pool.values()):
                 try:
-                    c.finish()
+                    self._connection_closer(c)
                 except:
                     pass
         finally:
             self._lock.release()
 
-    def get(self, connection_spec, data=None):
+    def get(self, connection_spec):
         pool = self._pool
         spec_id = tuple(connection_spec.__dict__.values())
         lock = self._lock
@@ -214,7 +215,7 @@ class DBConnectionPool:
                 if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
                 c = connections.pop()
             else:
-                c = self._connection_creator(connection_spec, data)
+                c = self._connection_creator(connection_spec)
                 if __debug__: log(DEBUG, 'Vytvoøeno nové spojení:', c)
         finally:
             lock.release()

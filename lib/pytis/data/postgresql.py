@@ -42,16 +42,434 @@ from dbdata import *
 # je jméno modifikované tabulky.
 
 
-class DBDataPostgreSQL(DBData):
+def pg_escape(string_):
+    return string_.replace("\\", "\\\\").replace("'", "\\'")
+
+
+def pg_encoding(enc):
+    ENCODING_MAPPING = {'utf-8': 'unicode',
+                        'iso-8859-1': 'latin1',
+                        'iso-8859-2': 'latin2',
+                        'iso-8859-3': 'latin3',
+                        'iso-8859-4': 'latin4',
+                        'iso-8859-9': 'latin5',
+                        'iso-8859-10': 'latin6',
+                        'iso-8859-13': 'latin7',
+                        'iso-8859-14': 'latin8',
+                        'iso-8859-15': 'latin9',
+                        'iso-8859-16': 'latin10',
+                        'iso-8859-5': 'iso_8859_5',
+                        'iso-8859-6': 'iso_8859_6',
+                        'iso-8859-7': 'iso_8859_7',
+                        'iso-8859-8': 'iso_8859_8',
+                        'iso8859-1': 'latin1',
+                        'iso8859-2': 'latin2',
+                        'iso8859-3': 'latin3',
+                        'iso8859-4': 'latin4',
+                        'iso8859-9': 'latin5',
+                        'iso8859-10': 'latin6',
+                        'iso8859-13': 'latin7',
+                        'iso8859-14': 'latin8',
+                        'iso8859-15': 'latin9',
+                        'iso8859-16': 'latin10',
+                        'iso8859-5': 'iso_8859_5',
+                        'iso8859-6': 'iso_8859_6',
+                        'iso8859-7': 'iso_8859_7',
+                        'iso8859-8': 'iso_8859_8',
+                        'ascii': 'sql_ascii',
+                        }
+    enc = enc.lower().strip()
+    if ENCODING_MAPPING.has_key(enc):
+        return ENCODING_MAPPING[enc]
+    else:
+        return enc
+
+
+class PostgreSQLResult(object):
+    """Na pou¾itém backendu nezávislá reprezentace výsledku SQL pøíkazu.
+
+    Pøedpokládá se pøedefinování této tøídy v potomcích PostgreSQLAccessor dle
+    potøeb konkrétního pou¾itého backendu.
+
+    """
+    def __init__(self, data):
+        """
+        
+        Argumenty:
+
+          data -- datový objekt odpovídající výsledku; jedná-li se o sekvenci
+            sekvencí stringù, fungují standardní metody v této tøídì, v opaèném
+            pøípadì je nutno tyto metody pøedefinovat
+        
+        Pøíklady standardních hodnot 'data':
+        
+          (('1', 'prvni'), ('2', 'druhy'), ('3', 'treti'))
+          ()
+          [['42']]
+
+        """
+        # Poznámka ke specifikaci: Reprezentace dat øetìzci se mù¾e zdát
+        # ponìkud nevhodná, proto¾e u nìkterých rozhraní to mù¾e znamenat
+        # konverzi dat na nìjaký typ a pak zpìt na øetìzec.  To je ov¹em cena,
+        # kterou rádi zaplatíme za srozumitelnost celé zále¾itosti.  Problémem
+        # není ani mrhání CPU cykly, proto¾e kód pobì¾í na klientech, kteøí
+        # se stejnì vesmìs flákají.
+        self._data = data
+        
+    def __getitem__(self, row):
+        """Vra» hodnotu výsledku z øádku 'row'.
+
+        Návratovou hodnotou je reprezentace dat øádku jako indexovatelný objekt
+        s hodnotami typu string odpovídajícími jednotlivým sloupcùm výsledku.
+        """
+        return self._data[row]
+
+    def __nonzero__(self):
+        """Vra» True právì kdy¾ objekt obsahuje nìjaká data.
+        """
+        return len(self) > 0
+
+    def __len__(self):
+        """Vra» poèet øádkù dat.
+        """
+        return len(self._data)
+    
+
+class PostgreSQLAccessor(object):
+    """Tøída pro low-level pøístup k PostgreSQL.
+
+    Tato tøída je zodpovìdná za komunikaci s PostgreSQL realizovanou
+    prostøednictvím konkrétní backendové knihovny.  Konkrétnì má na starosti
+    tyto vìci: otevírání a uzavírání spojení do databáze, zasílání SQL pøíkazù
+    databázovému stroji, pøevod výsledkù SQL pøíkazù do obecné na pou¾itém
+    backendu nezávislé podoby.
+
+    Pøístup k PostgreSQL prostøednictvím konkrétního backendu se realizuje
+    podìdìním této tøídy a pøedefinováním jejích metod.
+
+    """
+
+    class _postgresql_Connection(object):
+        """Spojení do databáze.
+        """
+        def __init__(self, connection, connection_data):
+            """
+
+            Argumenty:
+
+              connection -- spojení do databázového stroje
+              connection_data -- specifikace parametrù spojení
+              
+            """
+            self._connection = connection
+            self._connection_data = connection_data
+
+        def connection(self):
+            return self._connection
+
+        def connection_data(self):
+            return self._connection_data
+
+    class _postgresql_Result(object):
+        """Výsledek SQL pøíkazu.
+        """
+        def __init__(self, result):
+            """
+
+            Argumenty:
+
+              result -- výsledek SQL pøíkazu v podobì závislé na pou¾itém
+               backendu
+               
+            """
+            self._result = result
+
+        def result(self):
+            return self._result
+    
+    def _postgresql_new_connection(class_, connection_data):
+        """Vytvoø, inicializuj a vra» nové spojení do databáze.
+
+        Návratovou hodnotou je instance '_postgresql_Connection'.
+
+        Argumenty:
+
+          connection_data -- dictionary obsahující pøihla¹ovací údaje jako
+            stroj, port, u¾ivatel, heslo, atd.
+            
+        """
+        connection = class_._postgresql_open_connection(connection_data)
+        class_._postgresql_initialize_connection(connection)
+        return connection
+    #_postgresql_new_connection = classmethod(_postgresql_new_connection)
+        
+    def _postgresql_open_connection(class_, connection_data):
+        """Vytvoø a vra» nové spojení do databáze.
+
+        Návratovou hodnotou je instance '_postgresql_Connection'.
+
+        Argumenty:
+
+          connection_data -- dictionary obsahující pøihla¹ovací údaje jako
+            stroj, port, u¾ivatel, heslo, atd.
+
+        Tato metoda musí být pøedefinována v podtøídì.
+
+        """
+        raise ProgramError(_("Volána neimplementovaná metoda"))
+    #_postgresql_open_connection = classmethod(_postgresql_open_connection)
+
+    def _postgresql_close_connection(class_, connection):
+        """Uzavøi spojení do databáze.
+
+        Argumenty:
+
+          connection -- spojení, které má být uzavøeno, instance
+            '_postgresql_Connection'
+
+        V této tøídì metoda nedìlá nic.
+        
+        """
+        pass
+    #_postgresql_close_connection = classmethod(_postgresql_close_connection)
+    
+    def _postgresql_initialize_connection(self, connection):
+        """Proveï potøebné inicializace nového spojení 'connection'.
+        """
+        self._postgresql_initialize_transactions(connection)
+        self._postgresql_initialize_coding(connection)
+    #_postgresql_initialize_connection = \
+    #    classmethod(_postgresql_initialize_connection)
+
+    def _postgresql_initialize_transactions(self, connection):
+        """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
+        # Nastavujeme serializované transakce, abychom v rámci jedné transakce
+        # nemohli dostat rùzné výsledky pro opakované selecty.
+        self._postgresql_query(connection,
+                               ('set session characteristics as transaction '+
+                                'isolation level serializable'),
+                               False)
+    #_postgresql_initialize_transactions = \
+    #    classmethod(_postgresql_initialize_transactions)
+
+    def _postgresql_initialize_coding(class_, connection):
+        encoding = class_._pg_encoding
+        query = 'set client_encoding to "%s"' % (encoding,)
+        class_._postgresql_query(connection, query, False)
+    #_postgresql_initialize_coding = classmethod(_postgresql_initialize_coding)
+        
+    def _postgresql_query(class_, connection, query, restartable):
+        """Proveï SQL pøíkaz 'query' a vra» výsledek.
+
+        Argumenty:
+
+          connection -- instance '_postgresql_Connection'
+          query -- string obsahující finální podobu SQL pøíkazu, který se má
+            provést
+          restartable -- právì kdy¾ je pravda, je povoleno pokusit se o restart
+            spojení v pøípadì chyby
+
+        Návratovou hodnotou je dvojice ('result', 'connection'), kde 'result'
+        je instance '_postgresql_Result' a 'connection' je instance
+        '_postgresql_Connection' pou¾itého spojení.
+
+        Tato metoda musí být pøedefinována v podtøídì.
+
+        """
+        raise ProgramError(_("Volána neimplementovaná metoda"))
+    #_postgresql_query = classmethod(_postgresql_query)
+
+    def _postgresql_transform_query_result(class_, result):
+        """Vra» instanci 'PostgreSQLResult' odpovídající výsledku 'result'.
+
+        Argumenty:
+
+          result -- instance '_postgresql_Result'
+
+        Tato metoda musí být pøedefinována v podtøídì.
+        
+        """
+        raise ProgramError(_("Volána neimplementovaná metoda"))
+    #_postgresql_transform_query_result = \
+    #    classmethod(_postgresql_transform_query_result)
+
+
+class PostgreSQLConnector(PostgreSQLAccessor):
+    """Tøída pro pøístup k PostgreSQL na vy¹¹í úrovni.
+
+    Tøída roz¹iøuje funkce nadtøídy o funkce vy¹¹í úrovnì jako jsou správa
+    spojení, SQL inicializace pøi otevírání spojení nebo zpracování výsledkù
+    SQL pøíkazù.
+
+    """
+    
+    def __init__(self, connection_data):
+        import config
+        # Kódování
+        self._pg_encoding = config.db_encoding
+        # Logování
+        if config.dblogtable:
+            self._pdbb_logging_command = \
+                "insert into %s (command) values ('%%s')" % config.dblogtable
+        else:
+            self._pdbb_logging_command = None
+        # Správa spojení
+        PostgreSQLConnector._pg_connection_pool_ = \
+            DBConnectionPool(self._postgresql_new_connection,
+                             self._postgresql_close_connection)
+        self._pg_connection_data_ = connection_data
+        self._pg_connections_ = []
+
+    def _pg_connection_pool(self):
+        return PostgreSQLConnector._pg_connection_pool_
+
+    def _pg_connection_data(self):
+        return self._pg_connection_data_
+
+    def _pg_connections(self):
+        return self._pg_connections_
+    
+    def _pg_get_connection(self, outside_transaction=False):
+        connections = self._pg_connections()
+        if outside_transaction or not connections:
+            pool = self._pg_connection_pool()
+            return pool.get(self._pg_connection_data())
+        else:
+            return connections[-1]
+        
+    def _pg_return_connection(self, connection):
+        pool = self._pg_connection_pool()
+        pool.put_back(connection.connection_data(), connection)
+
+    def _pg_query(self, query, outside_transaction=False, backup=False):
+        """Proveï SQL pøíkaz 'query' a vra» výsledek.
+
+        Argumenty:
+        
+          query -- SQL pøíkaz PostgreSQL jako string
+          outside_transaction -- právì kdy¾ je pravda, je query provedeno mimo
+            aktuálnì provádìnou transakci, je-li jaká
+          backup -- právì kdy¾ je pravda, zaloguj provedený SQL pøíkaz
+          
+        Návratovou hodnotou je instance tøídy 'PostgreSQLResult'.
+        
+        Metoda musí øádnì o¹etøovat výjimky a v pøípadì jejich výskytu nahodit
+        výjimku 'DBException' nebo nìkterého jejího potomka.
+
+        **Pozor**: Metoda mù¾e být volána ji¾ z konstruktoru nebo nìkteré z jím
+        volaných metod.  Jediná inicializace, na kterou se v instancích této
+        tøídy mù¾e spolehnout, je nastavení '_dbconnection_spec', v¹e ostatní
+        mù¾e být je¹tì neinicializováno.
+        
+        """
+        if type(query) is pytypes.UnicodeType:
+            query = query.encode(self._pg_encoding)
+        connection = self._pg_get_connection(outside_transaction)
+        # Proveï dotaz
+        if __debug__:
+            log(DEBUG, 'SQL dotaz', query)
+        try:
+            result, connection = self._postgresql_query(connection, query,
+                                                        outside_transaction)
+        finally:
+            # Vra» DB spojení zpìt
+            if connection and outside_transaction:
+                self._pg_return_connection(connection)
+        if backup and self._pdbb_logging_command:
+            assert not outside_transaction, \
+                ('Backed up SQL command outside transaction', query)
+            # Zde nemù¾e dojít k významné zámìnì poøadí zalogovaných
+            # pøíkazù, proto¾e v¹echny DML pøíkazy jsou uzavøeny
+            # v transakcích a ty konfliktní jsou díky serializaci
+            # automaticky správnì øazeny.
+            self._pg_query(connection,
+                           self._pdbb_logging_command % pg_escape(query),
+                           outside_transaction=False, backup=False)
+        # Získej a vra» data
+        data = self._postgresql_transform_query_result(result)
+        if __debug__:
+            log(DEBUG, 'Výsledek SQL dotazu', data)
+        return data
+
+
+class PostgreSQLUserGroups(PostgreSQLConnector):
+    """Tøída pro zji¹»ování skupin u¾ivatele."""
+    
+    _access_groups = {}
+
+    def _postgresql_initialize_connection(self, connection):
+        superclass = super(PostgreSQLUserGroups, self)
+        superclass._postgresql_initialize_connection(connection)
+        self._pgg_update_user_groups(connection)
+
+    def _pgg_update_user_groups(self, connection):
+        key = self._pgg_connection_key(connection.connection_data())
+        PostgreSQLUserGroups._access_groups[key] = self
+
+    def _pgg_connection_key(self, connection_data):
+        return connection_data.user(), connection_data.password()
+        
+    def _pgg_retrieve_access_groups(self, data):
+        if __debug__:
+            log(DEBUG, 'Updatuji seznam skupin u¾ivatelù')
+        d = data._pg_query("select groname, grolist from pg_group",
+                           outside_transaction=True)
+        regexp = None
+        the_user = data._pg_dbconnection_spec().user()
+        groups = []
+        for group, uid_string in d:
+            if uid_string is not None and regexp is None:
+                if uid_string != '{}':
+                    uids = uid_string[1:-1].split(',')
+                    for u in uids:
+                        d1 = data._pg_query("select pg_get_userbyid(%s)" % u,
+                                            outside_transaction=True,
+                                            update_user_groups=False)
+                        user = d1[0][0]
+                        if user == the_user:
+                            regexp = re.compile('[^0-9]%s[^0-9]' % u)
+                            groups.append(group)
+                            break
+            else:
+                if uid_string is not None and regexp.search(uid_string):
+                    groups.append(group)
+        if __debug__:
+            log(DEBUG, 'Seznam skupin u¾ivatelù updatován')
+        return groups
+
+    def access_groups(self):
+        """Vra» sekvenci jmen skupin, do kterých patøí pøihlá¹ený u¾ivatel.
+
+        Nejsou-li skupiny u¾ivatele známy, vra» 'None'.
+
+        Argumenty:
+
+          connection_data -- specifikace spojení, jeho¾ skupiny mají být
+            vráceny
+
+        Sekvence jmen skupin je updatována pøi ka¾dém vytvoøení nového
+        spojení.  Jména skupin jsou strings.
+
+        """
+        connection_data = self._pg_dbconnection_data()
+        key = self._pgg_connection_key(connection_data)
+        groups = PostgreSQLUserGroups._access_groups.get(key)
+        if isinstance(groups, Data):
+            groups = PostgreSQLUserGroups._access_groups[key] = \
+                self._pgg_retrieve_access_groups(groups)
+        return groups
+
+
+class DBDataPostgreSQL(PostgreSQLUserGroups, DBData):
     """Datová tabulka s napojením do PostgreSQL.
 
     Tato tøída pøekládá po¾adavky do SQL, není v¹ak implementaènì závislá na
     konkrétním pou¾itém postgresovém modulu pro Python.
     
     """
-    # Pro funkènost s konkrétním databázovým rozhraním k PostgreSQL je nutno
-    # pøedefinovat metodu '_pg_query'.  Dále je nutno dodefinovat metodu
-    # '_db_bindings_to_column_spec' a metody oznaèené komentáøem '#redefine'.
+    # TODO: Tato tøída je mamut a mìla by být rozdìlena na nìkolik men¹ích èástí
+
+    NOTIFIERS = {}
 
     _PG_LOCK_TABLE = '_rowlocks'
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
@@ -146,7 +564,6 @@ class DBDataPostgreSQL(DBData):
                 # TODO: zde by mohlo být dobré nastavit pozici tak, aby byla
                 # naètena je¹tì nìjaká data proti smìru bufferu.  Jak to ale
                 # udìlat èistì?
-                #print "  *", self._dbpointer, self._dbposition, pointer, pos
                 if pos >= 0:
                     pos = min(pos, number_of_rows)
                 else:
@@ -304,11 +721,14 @@ class DBDataPostgreSQL(DBData):
           ordering -- stejné jako v pøedkovi
         
         """
-        if __debug__: log(DEBUG, 'Vytváøím databázovou tabulku')
+        if __debug__:
+            log(DEBUG, 'Vytváøím databázovou tabulku')
         if isinstance(dbconnection_spec, DBConnection):
-            self._pg_dbconnection_spec = lambda : dbconnection_spec
-        else:
-            self._pg_dbconnection_spec = dbconnection_spec
+            def _lambda(dbconnection_spec=dbconnection_spec):
+                return dbconnection_spec
+            dbconnection_spec = _lambda
+        self._pg_dbconnection_spec = dbconnection_spec
+        PostgreSQLUserGroups.__init__(self, dbconnection_spec())
         if is_sequence(key):
             self._key_binding = tuple(key)
         else:
@@ -331,58 +751,33 @@ class DBDataPostgreSQL(DBData):
         import config
         self._pg_initial_fetch_size = config.initial_fetch_size
         self._pg_fetch_size = config.fetch_size
-        self._db_encoding = config.db_encoding
-        
-        
-    # Abstraktní metody pro potomky
-    
-    def _pg_query(self, query, outside_transaction=False):
-        """Proveï SQL pøíkaz 'query' a vra» výsledek.
-
-        Argumenty:
-        
-          query -- SQL pøíkaz PostgreSQL jako string
-          outside_transaction -- právì kdy¾ je pravda, je query provedeno mimo
-            aktuálnì provádìnou transakci, je-li jaká
-
-        Návratovou hodnotou je sekvence sekvencí jako tabulka vrácených øádkù a
-        sloupcù.  Prvky vnitøních sekvencí jsou prostá data ve formì strings.
-        Pøíklady návratových hodnot:
-        
-          (('1', 'prvni'), ('2', 'druhy'), ('3', 'treti'))
-          ()
-          [['42']]
-
-        Metoda musí øádnì o¹etøovat výjimky a v pøípadì jejich výskytu nahodit
-        výjimku 'DBException' nebo nìkterého jejího potomka.
-
-        **Pozor**: Metoda mù¾e být volána ji¾ z konstruktoru nebo nìkteré z jím
-        volaných metod.  Jediná inicializace, na kterou se v instancích této
-        tøídy mù¾e spolehnout, je nastavení '_dbconnection_spec', v¹e ostatní
-        mù¾e být je¹tì neinicializováno.
-
-        V této tøídì je tato metoda abstraktní a musí být v nìkterém z potomkù
-        pøedefinována.
-        
-        """
-        # Poznámka ke specifikaci: Reprezentace dat øetìzci se mù¾e zdát
-        # ponìkud nevhodná, proto¾e u nìkterých rozhraní to mù¾e znamenat
-        # konverzi dat na nìjaký typ a pak zpìt na øetìzec.  To je ov¹em cena,
-        # kterou rádi zaplatíme za srozumitelnost celé zále¾itosti.  Problémem
-        # není ani mrhání CPU cykly, proto¾e kód pobì¾í na klientech, kteøí
-        # se stejnì vesmìs flákají.
-        pass
 
     # Metody pro transakce
 
+    def _pg_allocate_connection(self):
+        connections = self._pg_connections()
+        if __debug__:
+            if len(connections) >= 3:
+                if __debug__:
+                    log(DEBUG, 'Podezøele velká hloubka spojení:',
+                        len(connections))
+        connection = self._pg_get_connection(outside_transaction=True)
+        connections.append(connection)
+        
+    def _pg_deallocate_connection(self):
+        self._pg_return_connection(self._pg_connections().pop())
+
     def _pg_begin_transaction (self):
+        self._pg_allocate_connection()
         self._pg_query ('begin')
         
     def _pg_commit_transaction (self):
         self._pg_query ('commit')
+        self._pg_deallocate_connection()
         
     def _pg_rollback_transaction (self):
         self._pg_query ('rollback')
+        self._pg_deallocate_connection()
 
     # Pomocné metody
 
@@ -415,7 +810,7 @@ class DBDataPostgreSQL(DBData):
                 if dbvalue is None:
                     v = None
                 else:
-                    v = unicode(dbvalue, self._db_encoding)
+                    v = unicode(dbvalue, self._pg_encoding)  #TODO: patøí jinam
                 value = Value(type, v)
             elif typid == 2:            # time
                 value, err = type.validate(dbvalue, strict=False,
@@ -473,6 +868,11 @@ class DBDataPostgreSQL(DBData):
         condition = apply(AND, ands)
         if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
         return condition
+
+    def _pg_connection_maker(self):
+        def maker():
+            self._pg_new_connection(self._pg_dbconnection_spec(), self)
+        return maker
 
     # Veøejné metody a jimi pøímo volané abstraktní metody
 
@@ -813,7 +1213,7 @@ class DBDataPostgreSQL(DBData):
             except:
                 pass
             raise cls, e, tb
-        self._pg_commit_transaction ()
+        self._pg_commit_transaction()
         self._pg_send_notifications()
         if result[1]:
             log(ACTION, 'Øádek vlo¾en', result)
@@ -1030,49 +1430,31 @@ class DBDataPostgreSQL(DBData):
             if __debug__: log(DEBUG, 'Zámek updatován')
 
 
-def pg_escape(string_):
-    return string_.replace("\\", "\\\\").replace("'", "\\'")
 
+class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
+    """Èítaè ulo¾ený v PostgreSQL."""
+    
+    def __init__(self, name, connection_data):
+        """Inicializuj èítaè.
 
-def pg_encoding(enc):
-    ENCODING_MAPPING = {'utf-8': 'unicode',
-                        'iso-8859-1': 'latin1',
-                        'iso-8859-2': 'latin2',
-                        'iso-8859-3': 'latin3',
-                        'iso-8859-4': 'latin4',
-                        'iso-8859-9': 'latin5',
-                        'iso-8859-10': 'latin6',
-                        'iso-8859-13': 'latin7',
-                        'iso-8859-14': 'latin8',
-                        'iso-8859-15': 'latin9',
-                        'iso-8859-16': 'latin10',
-                        'iso-8859-5': 'iso_8859_5',
-                        'iso-8859-6': 'iso_8859_6',
-                        'iso-8859-7': 'iso_8859_7',
-                        'iso-8859-8': 'iso_8859_8',
-                        'iso8859-1': 'latin1',
-                        'iso8859-2': 'latin2',
-                        'iso8859-3': 'latin3',
-                        'iso8859-4': 'latin4',
-                        'iso8859-9': 'latin5',
-                        'iso8859-10': 'latin6',
-                        'iso8859-13': 'latin7',
-                        'iso8859-14': 'latin8',
-                        'iso8859-15': 'latin9',
-                        'iso8859-16': 'latin10',
-                        'iso8859-5': 'iso_8859_5',
-                        'iso8859-6': 'iso_8859_6',
-                        'iso8859-7': 'iso_8859_7',
-                        'iso8859-8': 'iso_8859_8',
-                        'ascii': 'sql_ascii',
-                        }
-    enc = enc.lower().strip()
-    if ENCODING_MAPPING.has_key(enc):
-        return ENCODING_MAPPING[enc]
-    else:
-        return enc
+        Argumenty:
 
+          name -- identifikátor èítaèe v databázi, string
+          connection_data -- instance tøídy 'DBConnection' definující
+            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+            instanci 'DBConnection'
+
+        """
+        assert is_string(name)
+        PostgreSQLConnector.__init__(self, connection_data)
+        self._name = name
+        self._query = "select nextval('%s')" % name
         
+    def next(self):
+        result = self._pg_query(self._query)
+        return result[0][0]
+
+
 class PostgreSQLStandardBindingHandler(object):
     """Interpretace sémantiky specifikace napojení do databáze.
 
@@ -1410,12 +1792,6 @@ class PostgreSQLStandardBindingHandler(object):
         self._pdbb_command_notify = \
           'notify MODIF_%s' % main_table
         self._pg_notifications = map(lambda t: 'MODIF_%s' % t, table_names)
-        import config
-        if config.dblogtable:
-            self._pdbb_logging_command = \
-              "insert into %s (command) values ('%%s')" % config.dblogtable
-        else:
-            self._pdbb_logging_command = None
 
     def _pdbb_condition2sql(self, condition):
         if condition == None:
@@ -1729,12 +2105,7 @@ class PostgreSQLStandardBindingHandler(object):
             self._pg_query(self._pdbb_command_move_forward % count)
         elif direction == BACKWARD:
             answer = self._pg_query(self._pdbb_command_move_backward % count)
-            if is_sequence(answer):
-                # Result type has changed with PostgreSQL 7.4 interface library.
-                # This hack seems to help now.
-                answer_count = answer[0][0]
-            else:
-                answer_count = int(string.split(answer, ' ')[1])
+            answer_count = answer[0][0]
             if exact_count and answer_count != count:
                 log(OPERATIONAL, "Neèekaný výsledek kurzorové operace MOVE:",
                     (answer_count, count))
@@ -1845,74 +2216,68 @@ class PostgreSQLStandardBindingHandler(object):
         self._pg_query(self._pdbb_command_notify, outside_transaction=True)
 
 
-class PostgreSQLUserGroups:
-    """Tøída pro zji¹»ování skupin u¾ivatele."""
-    
-    _access_groups = {}
+class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
+                           PostgreSQLStandardBindingHandler):
+    """Implementace tøídy 'Function' pro PostgreSQL.
 
-    def _pgg_connection_key(connection_spec):
-        return connection_spec.user(), connection_spec.password()
-    _pgg_connection_key = staticmethod(_pgg_connection_key)
-    
-    def _pgg_retrieve_access_groups(data):
-        if __debug__: log(DEBUG, 'Updatuji seznam skupin u¾ivatelù')
-        d = data._pg_query("select groname, grolist from pg_group",
-                           outside_transaction=True)
-        regexp = None
-        the_user = data._pg_dbconnection_spec().user()
-        groups = []
-        for group, uid_string in d:
-            if uid_string is not None and regexp is None:
-                if uid_string != '{}':
-                    uids = uid_string[1:-1].split(',')
-                    for u in uids:
-                        d1 = data._pg_query("select pg_get_userbyid(%s)" % u,
-                                            outside_transaction=True,
-                                            group_update=False)
-                        user = d1[0][0]
-                        if user == the_user:
-                            regexp = re.compile('[^0-9]%s[^0-9]' % u)
-                            groups.append(group)
-                            break
-            else:
-                if uid_string is not None and regexp.search(uid_string):
-                    groups.append(group)
-        if __debug__: log(DEBUG, 'Seznam skupin u¾ivatelù updatován')
-        return groups
-    _pgg_retrieve_access_groups = staticmethod(_pgg_retrieve_access_groups)
+    Podporovány jsou pouze funkce vracející jedinou hodnotu.
 
-    def access_groups(self):
-        """Stejné jako 'class_access_groups()', av¹ak bez specifikace spojení.
-
-        Spojení je pøevzato automaticky ze specifikace spojení instance.
-
-        """
-        connection_spec = self._pg_dbconnection_spec()
-        return PostgreSQLUserGroups.class_access_groups(connection_spec)
-    
-    def update_access_groups(self, connection_spec):
-        """Aktualizuj informace o skupinách u¾ivatele."""
-        key = PostgreSQLUserGroups._pgg_connection_key(connection_spec)
-        PostgreSQLUserGroups._access_groups[key] = self
-    
-    def class_access_groups(connection_spec):
-        """Vra» sekvenci jmen skupin, do kterých patøí pøihlá¹ený u¾ivatel.
-
-        Nejsou-li skupiny u¾ivatele známy, vra» 'None'.
+    """
+    def __init__(self, name, connection_data):
+        """Inicializuj instanci.
 
         Argumenty:
 
-          connection_spec -- specifikace spojení, jeho¾ skupiny mají být
-            vráceny
-
-        Sekvence jmen skupin je updatována pøi ka¾dém vytvoøení nového
-        spojení.  Jména skupin jsou strings.
+          name -- jméno funkce jako neprázdný string
+          connection_data -- instance tøídy 'DBConnection' definující
+            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+            instanci 'DBConnection'
 
         """
-        key = PostgreSQLUserGroups._pgg_connection_key(connection_spec)
-        groups = PostgreSQLUserGroups._access_groups.get(key)
-        if isinstance(groups, Data):
-            groups = PostgreSQLUserGroups._access_groups[key] = \
-              PostgreSQLUserGroups._pgg_retrieve_access_groups(groups)
-        return groups
-    class_access_groups = staticmethod(class_access_groups)
+        assert is_string(name)
+        self._name = name
+        bindings = ()
+        DBDataPostgreSQL.__init__(self, bindings, bindings, connection_data)
+        PostgreSQLStandardBindingHandler.__init__(self)
+        arg_query = "select pronargs from pg_proc where proname='%s'" % name
+        data = self._pg_query(arg_query, outside_transaction=True)
+        narg = int(data[0][0])
+        arguments = string.join(('%s',)*narg, ', ')
+        self._pdbb_function_call = 'select %s(%s)' % (name, arguments)
+        
+    def _db_bindings_to_column_spec(self, __bindings):
+        type_query = ("select proretset, prorettype, proargtypes from pg_proc"+
+                      " where proname = '%s'") % self._name
+        self._pg_begin_transaction()
+        try:
+            data = self._pg_query(type_query)
+            assert data, ('No such function', self._name)
+            assert len(data) == 1, ('Overloaded functions not supported',
+                                    self._name)
+            r_set, r_type, arg_types = data[0]
+            assert r_set == 'F', \
+                   ('Multiset functions not supported', self._name)
+            def type_instance(tnum):
+                query = ("select typname, typlen from pg_type "+
+                         "where oid = '%s'") % tnum
+                data = self._pg_query(query)
+                type_, size_string = data[0]
+                t = self._pdbb_get_type(type_, size_string, False, False)
+                return t
+            r_type_instance = type_instance(r_type)
+            columns = [ColumnSpec('', r_type_instance)]
+        finally:
+            self._pg_commit_transaction()
+        return columns, ()
+
+    def _pdbb_create_sql_commands(self):
+        self._pg_notifications = []
+    
+    def call(self, row):
+        log(EVENT, ('Volání funkce `%s\'' % self._name))
+        arguments = tuple(map(self._pg_value, row))
+        data = self._pg_query(self._pdbb_function_call % arguments,
+                              outside_transaction=True)
+        result = self._pg_make_row_from_raw_data(data)
+        log(EVENT, ('Výsledek volání funkce `%s\':' % self._name), result)
+        return [result]

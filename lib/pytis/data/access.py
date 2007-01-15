@@ -346,7 +346,7 @@ def is_in_groups(access_groups):
     
     """
     import config
-    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
+    groups = pytis.data.default_access_groups(config.dbconnection)
     if groups is None or access_groups is None\
            or some(lambda g: g in groups, xtuple(access_groups)):
         return True
