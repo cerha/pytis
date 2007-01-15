@@ -33,6 +33,7 @@ import types as pytypes
 import psycopg2 as dbapi
 
 from pytis.util import *
+from dbdata import *
 from postgresql import *
 
 
@@ -188,3 +189,55 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 if __debug__:
                     log(DEBUG, 'Naèteny notifikace:', notifications)
                 self._notif_invoke_callbacks(notifications)
+
+
+### Defaults
+
+
+class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
+    """Datová tøída, kterou v na¹ich aplikacích standardnì pou¾íváme.
+
+    Je utvoøena pouhým slo¾ením existujících tøíd a nezavádí ¾ádnou dal¹í novou
+    funkcionalitu kromì konstruktoru.
+
+    """    
+    def __init__(self, bindings, key, connection_data=None, ordering=None,
+                 access_rights=AccessRights((None, (None, Permission.ALL))),
+                 dbconnection_spec=None, **kwargs):
+        # TODO: Vyøadit dbconnection_spec ze seznamu argumentù po konverzi
+        # aplikací.
+        if dbconnection_spec is not None:
+            if connection_data is not None:
+                raise Exception("Programming error: " +
+                                "Both connection_data and dbconnection_spec given")
+            connection_data = dbconnection_spec
+        super(DBDataDefaultClass, self).__init__(
+            bindings=bindings, key=key, connection_data=connection_data,
+            ordering=ordering, access_rights=access_rights, **kwargs)
+        # TODO: Následující hack je tu proto, ¾e ve voláních konstruktorù vý¹e
+        # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
+        # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat
+        # tøídy týkající se notifikací.
+        self._pg_add_notifications()
+
+
+### Exportované promìnné/tøídy
+
+
+DBDataDefault = DBDataDefaultClass
+"""Podtøída 'DBData', kterou pou¾íváme pro pøístup k databázi."""
+
+DBCounterDefault = DBAPICounter
+"""Podtøída tøídy 'Counter', která je standardnì pou¾ívána."""
+
+DBFunctionDefault = DBAPIFunction
+"""Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
+
+def _postgresql_access_groups(connection_data):
+    import pytis.data.dbapi
+    class PgUserGroups(pytis.data.dbapi._DBAPIAccessor,
+                       PostgreSQLUserGroups):
+        pass
+    return PgUserGroups(connection_data).access_groups()
+default_access_groups = _postgresql_access_groups
+"""Funkce vracející seznam skupin u¾ivatele specifikovaného spojení."""

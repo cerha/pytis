@@ -16,61 +16,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""Definice tøíd urèujících konkrétní pou¾ité pøístupové metody do databáze.
 
-Aplikace by mìly pro pøístup do databáze pou¾ívat výhradnì instance zde
-definovaných tøíd.
+"""Setting default database access classes.
+
+This effectively selects particular database backend to be used by importing
+the corresponding source file.
 
 """
 
-from dbdata import *
 from pgsql import *
-
-
-class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBDataPyPgSQL):
-    """Datová tøída, kterou v na¹ich aplikacích standardnì pou¾íváme.
-
-    Je utvoøena pouhým slo¾ením existujících tøíd a nezavádí ¾ádnou dal¹í novou
-    funkcionalitu kromì konstruktoru.
-
-    """    
-    def __init__(self, bindings, key, connection_data=None, ordering=None,
-                 access_rights=AccessRights((None, (None, Permission.ALL))),
-                 dbconnection_spec=None, **kwargs):
-        # TODO: Vyøadit dbconnection_spec ze seznamu argumentù po konverzi
-        # aplikací.
-        if dbconnection_spec is not None:
-            if connection_data is not None:
-                raise Exception("Programming error: " +
-                                "Both connection_data and dbconnection_spec given")
-            connection_data = dbconnection_spec
-        super(DBDataDefaultClass, self).__init__(
-            bindings=bindings, key=key, connection_data=connection_data,
-            ordering=ordering, access_rights=access_rights, **kwargs)
-        # TODO: Následující hack je tu proto, ¾e ve voláních konstruktorù vý¹e
-        # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
-        # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat
-        # tøídy týkající se notifikací.
-        self._pg_add_notifications()
-
-
-### Exportované promìnné/tøídy
-
-
-DBDataDefault = DBDataDefaultClass
-"""Podtøída 'DBData', kterou pou¾íváme pro pøístup k databázi."""
-
-DBCounterDefault = DBPyPgCounter
-"""Podtøída tøídy 'Counter', která je standardnì pou¾ívána."""
-
-DBFunctionDefault = DBPyPgFunction
-"""Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
-
-def _postgresql_access_groups(connection_data):
-    import pytis.data.pgsql
-    class PgUserGroups(pytis.data.pgsql._PgsqlAccessor,
-                       PostgreSQLUserGroups):
-        pass
-    return PgUserGroups(connection_data).access_groups()
-default_access_groups = _postgresql_access_groups
-"""Funkce vracející seznam skupin u¾ivatele specifikovaného spojení."""
