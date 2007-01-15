@@ -1452,7 +1452,11 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         
     def next(self):
         result = self._pg_query(self._query)
-        return result[0][0]
+        try:
+            number = int(result[0][0])
+        except Exception, e:
+            raise DBException(_("Chybná hodnota èítaèe z databáze"), e)
+        return number
 
 
 class PostgreSQLStandardBindingHandler(object):
