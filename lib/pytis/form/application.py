@@ -1113,7 +1113,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
     rights = data_spec.access_rights()
     if not rights:
         return True
-    groups = pytis.data.DBDataDefault.class_access_groups(config.dbconnection)
+    groups = pytis.data.default_access_groups(config.dbconnection)
     return rights.permitted(perm, groups)
 
 def wx_yield_(full=False):

@@ -1,5 +1,10 @@
 2007-01-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/form/application.py (has_access): Use
+	default_access_groups instead of class_access_groups.
+
+2007-01-15  Milan Zamazal  <pdm@brailcom.org>
+	
 	* pytis/util/caching.py (LimitedCache.__setitem__): Don't cache
 	data in LimitedCache if the limit is 0.
 
