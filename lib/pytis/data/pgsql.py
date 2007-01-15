@@ -147,7 +147,7 @@ class DBPyPgFunction(_PgsqlAccessor, DBPostgreSQLFunction):
     pass
 
 
-class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL, PostgreSQLNotifier):
+class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
 
     class _PgNotifier(_PgsqlAccessor, PostgreSQLNotifier._PgNotifier):
 
@@ -202,8 +202,3 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL, PostgreSQLNotifier):
                 if __debug__:
                     log(DEBUG, 'Naèteny notifikace:', notifications)
                 self._notif_invoke_callbacks(notifications)
-
-    def __init__(self, bindings, key, dbconnection_spec, ordering=None):
-        DBDataPostgreSQL.__init__(self, bindings, key, dbconnection_spec,
-                                  ordering)
-

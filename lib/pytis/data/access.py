@@ -156,10 +156,12 @@ class AccessRights:
         return permsets.get(column, ())
 
 
-class RestrictedData(object):
+class RestrictedData(Data):
     """Datový objekt s omezeným pøístupem ke svým operacím."""
     
-    def __init__(self, access_rights):
+    def __init__(self,
+                 access_rights=AccessRights((None, (None, Permission.ALL))),
+                 **kwargs):
         """Inicializuj objekt.
 
         Argumenty:
@@ -168,6 +170,8 @@ class RestrictedData(object):
             práva k objektu
           
         """
+        super(RestrictedData, self).__init__(access_rights=access_rights,
+                                             **kwargs)
         self._access_rights = access_rights
 
     def access_groups(self):

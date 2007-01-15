@@ -27,22 +27,26 @@ from dbdata import *
 from pgsql import *
 
 
-class DBDataDefaultClass(RestrictedData,
-                         PostgreSQLStandardBindingHandler,
-                         DBDataPyPgSQL):
+class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBDataPyPgSQL):
     """Datová tøída, kterou v na¹ich aplikacích standardnì pou¾íváme.
 
     Je utvoøena pouhým slo¾ením existujících tøíd a nezavádí ¾ádnou dal¹í novou
     funkcionalitu kromì konstruktoru.
 
     """    
-    def __init__(self, bindings, key, dbconnection_spec, ordering=None,
-                 access_rights=AccessRights((None, (None, Permission.ALL)))):
-        """Stejné jako u 'DBDataPyPgSQL', volá v¹ak konstruktory pøedkù."""
-        RestrictedData.__init__(self, access_rights)
-        DBDataPyPgSQL.__init__(self, bindings, key, dbconnection_spec,
-                               ordering)
-        PostgreSQLStandardBindingHandler.__init__(self)
+    def __init__(self, bindings, key, connection_data=None, ordering=None,
+                 access_rights=AccessRights((None, (None, Permission.ALL))),
+                 dbconnection_spec=None, **kwargs):
+        # TODO: Vyøadit dbconnection_spec ze seznamu argumentù po konverzi
+        # aplikací.
+        if dbconnection_spec is not None:
+            if connection_data is not None:
+                raise Exception("Programming error: " +
+                                "Both connection_data and dbconnection_spec given")
+            connection_data = dbconnection_spec
+        super(DBDataDefaultClass, self).__init__(
+            bindings=bindings, key=key, connection_data=connection_data,
+            ordering=ordering, access_rights=access_rights, **kwargs)
         # TODO: Následující hack je tu proto, ¾e ve voláních konstruktorù vý¹e
         # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
         # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat

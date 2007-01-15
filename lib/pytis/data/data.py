@@ -185,7 +185,7 @@ class Data(object):
     class UnsupportedOperation(Exception):
         """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
     
-    def __init__(self, columns, key, ordering=None):
+    def __init__(self, columns, key, ordering=None, **kwargs):
         """Inicializuj datový zdroj.
 
         Argumenty:
@@ -202,8 +202,11 @@ class Data(object):
             který musí být typu `types_.Integer'.  Pokud je argumentem tuple,
             je poøadí udr¾ováno v¾dy pouze v rámci øádkù, které mají stejné
             hodnoty v druhém a¾ posledním z uvedených sloupcù.
+          kwargs -- pøedáno pøedkovi
             
         """
+        super(Data,self).__init__(columns=columns, key=key, ordering=ordering,
+                                  **kwargs)
         assert not filter(lambda c: not isinstance(c, ColumnSpec),
                           columns), \
                           'Invalid column specification'

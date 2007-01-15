@@ -304,7 +304,14 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
     """
     
-    def __init__(self, connection_data):
+    def __init__(self, connection_data, **kwargs):
+        """
+        Arguments:
+
+          connection_data -- 'DBConnection' instance
+          kwargs -- propagated to superclass constructors
+
+        """
         import config
         # Kódování
         self._pg_encoding = config.db_encoding
@@ -318,14 +325,20 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         PostgreSQLConnector._pg_connection_pool_ = \
             DBConnectionPool(self._postgresql_new_connection,
                              self._postgresql_close_connection)
+        if isinstance(connection_data, DBConnection):
+            def _lambda(connection_data=connection_data):
+                return connection_data
+            connection_data = _lambda
         self._pg_connection_data_ = connection_data
         self._pg_connections_ = []
+        super(PostgreSQLConnector, self).__init__(
+            connection_data=connection_data, **kwargs)
 
     def _pg_connection_pool(self):
         return PostgreSQLConnector._pg_connection_pool_
 
     def _pg_connection_data(self):
-        return self._pg_connection_data_
+        return self._pg_connection_data_()
 
     def _pg_connections(self):
         return self._pg_connections_
@@ -356,11 +369,6 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         
         Metoda musí øádnì o¹etøovat výjimky a v pøípadì jejich výskytu nahodit
         výjimku 'DBException' nebo nìkterého jejího potomka.
-
-        **Pozor**: Metoda mù¾e být volána ji¾ z konstruktoru nebo nìkteré z jím
-        volaných metod.  Jediná inicializace, na kterou se v instancích této
-        tøídy mù¾e spolehnout, je nastavení '_dbconnection_spec', v¹e ostatní
-        mù¾e být je¹tì neinicializováno.
         
         """
         if type(query) is pytypes.UnicodeType:
@@ -416,7 +424,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         d = data._pg_query("select groname, grolist from pg_group",
                            outside_transaction=True)
         regexp = None
-        the_user = data._pg_dbconnection_spec().user()
+        the_user = data._pg_connection_data().user()
         groups = []
         for group, uid_string in d:
             if uid_string is not None and regexp is None:
@@ -424,8 +432,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                     uids = uid_string[1:-1].split(',')
                     for u in uids:
                         d1 = data._pg_query("select pg_get_userbyid(%s)" % u,
-                                            outside_transaction=True,
-                                            update_user_groups=False)
+                                            outside_transaction=True)
                         user = d1[0][0]
                         if user == the_user:
                             regexp = re.compile('[^0-9]%s[^0-9]' % u)
@@ -452,17 +459,21 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         spojení.  Jména skupin jsou strings.
 
         """
-        connection_data = self._pg_dbconnection_data()
+        connection_data = self._pg_connection_data()
         key = self._pgg_connection_key(connection_data)
         groups = PostgreSQLUserGroups._access_groups.get(key)
-        if isinstance(groups, Data):
+        if isinstance(groups, PostgreSQLConnector):
             groups = PostgreSQLUserGroups._access_groups[key] = \
                 self._pgg_retrieve_access_groups(groups)
         return groups
 
-    # TODO: Temporary compatibility function:
-    def class_access_groups(connection_spec):
-        return PostgreSQLUserGroups(connection_data).access_groups()
+    # TODO: Temporary compatibility hack:
+    def class_access_groups(connection_data):
+        import pytis.data.pgsql
+        class PgUserGroups(pytis.data.pgsql._PgsqlAccessor,
+                           PostgreSQLUserGroups):
+            pass
+        return PgUserGroups(connection_data).access_groups()
     class_access_groups = staticmethod(class_access_groups)
     
 
@@ -571,14 +582,16 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             if __debug__:
                 log(DEBUG, 'Notifikace zaregistrována')
 
-    def __init__(self, connection_data):
+    def __init__(self, connection_data, **kwargs):
         """
         Argumenty:
 
           connection_data -- údaje o spojení, stejné jako ve tøídì 'PostgreSQLConnector'
+          kwargs -- k pøedání pøedkovi
         
         """
-        PostgreSQLConnector.__init__(self, connection_data)
+        super(PostgreSQLNotifier, self).__init__(connection_data=connection_data,
+                                                 **kwargs)
         self._pg_changed = False
         # Pozor, notifikace smí být registrovány a¾ nakonec po provedení v¹ech
         # inicializací!  Pozor na potomky!
@@ -599,7 +612,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         notifications = self._pg_notifications
         if not notifications:
             return
-        spec = self._pg_dbconnection_spec()
+        spec = self._pg_connection_data()
         key = self._pg_notifier_key(spec)
         try:
             notifier = PostgreSQLNotifier.NOTIFIERS[spec]
@@ -610,1005 +623,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             notifier.register_notification(self, n)
 
 
-class DBDataPostgreSQL(PostgreSQLUserGroups, PostgreSQLNotifier, DBData):
-    """Datová tabulka s napojením do PostgreSQL.
-
-    Tato tøída pøekládá po¾adavky do SQL, není v¹ak implementaènì závislá na
-    konkrétním pou¾itém postgresovém modulu pro Python.
-    
-    """
-    # TODO: Tato tøída je mamut a mìla by být rozdìlena na nìkolik men¹ích èástí
-
-    _PG_LOCK_TABLE = '_rowlocks'
-    _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
-    _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
-
-    class _PgBuffer:
-        # Døíve to býval buffer, nyní se pøemìòuje na "buffer-cache".
-
-        def __init__(self):
-            if __debug__: log(DEBUG, 'Nový buffer')
-            self.reset()
-            
-        def reset(self):
-            """Kompletnì resetuj buffer."""
-            if __debug__: log(DEBUG, 'Resetuji buffer')
-            self._buffer = []
-            # _dbpointer ... pozice ukazovátka kursoru v databázi, na který
-            #   prvek kursoru poèínaje od 0 ukazuje
-            # _dbposition ... pozice zaèátku bufferu v databázi, èíslo prvku
-            #   kurzoru poèínaje 0, který odpovídá prvnímu prvku bufferu
-            # _pointer ... pozice ukazovátka v bufferu, ukazuje na poslední
-            #   pøeètený prvek, nemusí v¾dy ukazovat dovnitø bufferu
-            self._dbposition = 0
-            self._dbpointer = self._pointer = -1
-
-        def current(self):
-            """Vra» aktuální øádek a jeho pozici v databázi poèínaje od 0.
-
-            Výsledek je vrácen jako dvojice (ROW, POSITION).  Je-li aktuální
-            øádek mimo buffer, je ROW 'None'.  Je-li aktuální pozice mimo
-            buffer, je POSITION je -1 nebo poèet øádkù selectu.
-
-            """
-            buffer = self._buffer
-            pointer = self._pointer
-            position = self._dbposition + pointer
-            if pointer < 0 or pointer >= len(buffer):
-                row = None
-            else:
-                row = buffer[pointer]
-            return row, position
-
-        def fetch(self, direction, number_of_rows):
-            """Vra» øádek nebo 'None' a updatuj ukazovátka.
-
-            Pokud øádek není v bufferu, je vráceno 'None' a pøedpokládá se
-            následné volání metod 'correction()' a 'fill()'.
-
-            """
-            buffer = self._buffer
-            pointer = self._pointer
-            if direction == FORWARD:
-                pointer += 1
-            elif direction == BACKWARD:
-                pointer -= 1
-            else:
-                raise ProgramError('Invalid direction', direction)
-            if pointer < 0 or pointer >= len(buffer):
-                if __debug__: log(DEBUG, 'Buffer miss:', pointer)
-                pos = self._dbposition + pointer
-                # Interní ukazovátko po obyèejném minutí neupdatujeme, proto¾e
-                # pøijde fill a pokus o znovuvyta¾ení hodnoty, s novým updatem
-                # ukazovátka.  Av¹ak pokud jsme kompletnì mimo rozsah dat, není
-                # tato zdr¾enlivost namístì a je nutno ukazovátko posunout na
-                # správnou pozici, tj. mimo rozsah dat.
-                if pos < 0:
-                    self._pointer = -1 - self._dbposition
-                elif pos >= number_of_rows:
-                    self._pointer = number_of_rows - self._dbposition
-                return None
-            self._pointer = pointer
-            result = buffer[pointer]
-            if __debug__: log(DEBUG, 'Buffer hit:', pointer) #, str(result))
-            return result
-
-        def correction(self, direction, number_of_rows):
-            """Vra» argument pro DB operaci SKIP pøed naplnìním bufferu.
-
-            Kladná návratová hodnota odpovídá posunu vpøed, záporná posunu
-            zpìt.
-            
-            Databázové ukazovátko je updatováno jako kdyby SKIP byl proveden.
-
-            """
-            if __debug__: log(DEBUG, '®ádost o korekci:',
-                (self._dbpointer, self._dbposition, self._pointer, direction))
-            pointer = self._pointer
-            buflen = len(self._buffer)
-            pos = self._dbposition + pointer
-            if pointer > buflen or pointer < -1:
-                # Dostali jsme se daleko za buffer, je nutno provést DB skip.
-                # TODO: zde by mohlo být dobré nastavit pozici tak, aby byla
-                # naètena je¹tì nìjaká data proti smìru bufferu.  Jak to ale
-                # udìlat èistì?
-                if pos >= 0:
-                    pos = min(pos, number_of_rows)
-                else:
-                    pos = max(pos, -1)
-                correction = pos - self._dbpointer
-                self._buffer = []
-                self._pointer = -1
-                self._dbpointer = self._dbpointer + correction
-                self._dbposition = self._dbpointer + 1
-            elif (direction == FORWARD and pointer >= buflen - 1) or \
-                 (direction == BACKWARD and pointer <= 1):
-                # Jsme u hranice bufferu, provedeme DB skip bez mazání bufferu.
-                # Rozsah v podmínce je zvolen tak, aby o¹etøil i pøedchozí
-                # buffer miss.
-                correction = pos - self._dbpointer
-                self._dbpointer = self._dbpointer + correction
-            else:
-                # Jsme uvnitø bufferu, ¾ádný DB skip se nekoná.
-                correction = 0
-            if __debug__: log(DEBUG, 'Urèená korekce:', correction)
-            return correction
-
-        def goto(self, position):
-            """Updatuj databázovou pozici nastavenou bez vìdomí bufferu.
-
-            Argumenty:
-
-              position -- èíslo prvku cursoru zaèínajícího od 0, na který
-                ukazovátko databázového kurzoru právì ukazuje
-
-            """
-            self._pointer = position - self._dbposition
-            self._dbpointer = position
-            
-        def skip(self, count, direction, number_of_rows):
-            """Proveï skip.
-
-            Argumenty:
-
-              count -- poèet øádkù, o kolik se má skok provést
-              direction -- jedna ze smìrových konstant modulu
-              number_of_rows -- poèet øádkù v aktuálním selectu
-
-            Vrací: Poèet skuteènì pøeskoèených øádkù ve smìru 'direction'.
-            
-            """
-            pointer = self._pointer
-            if direction == FORWARD:
-                pointer = pointer + count
-            elif direction == BACKWARD:
-                pointer = pointer - count
-            else:
-                raise ProgramError('Invalid direction', direction)
-            pos = self._dbposition + pointer
-            if pos < -1:
-                pointer = -1 - self._dbposition
-            elif pos > number_of_rows:
-                pointer = number_of_rows - self._dbposition
-            result = pointer - self._pointer
-            if direction == BACKWARD:
-                result = -result
-            self._pointer = pointer
-            return result
-        
-        def fill(self, rows, direction, extra_move=False):
-            """Naplò se daty 'rows' a updatuj ukazovátka."""
-            # extra_move je tu kvùli tomu, ¾e pokud dojde ve fetchmany
-            # k pøekroèení hranic dat je¹tì pøed získáním po¾adovaného poètu
-            # øádkù, musí být dbpointer pøesunut je¹tì o jednu pozici dál (mimo
-            # data).
-            if __debug__: log(DEBUG, 'Plním buffer:', direction)            
-            n = len(rows)
-            buffer = self._buffer
-            buflen = len(buffer)
-            dbpointer = self._dbpointer
-            dbposition = self._dbposition
-            pointer = self._pointer + dbposition
-            import config
-            retain = max(config.cache_size - n, 0)
-            cutoff = max(buflen - retain, 0)
-            if direction == FORWARD:
-                if dbposition + buflen - 1 == dbpointer:
-                    buffer = buffer[cutoff:] + rows
-                    dbposition = dbposition + cutoff
-                else:
-                    buffer = rows
-                    dbposition = dbpointer + 1
-                dbpointer = dbpointer + n
-                if extra_move:
-                    dbpointer = dbpointer + 1
-            elif direction == BACKWARD:
-                rows.reverse()
-                if dbposition == dbpointer:
-                    buffer = rows + buffer[:retain]
-                else:
-                    buffer = rows
-                dbpointer = dbpointer - n
-                dbposition = dbpointer
-                if extra_move:
-                    dbpointer = dbpointer - 1
-            else:
-                raise ProgramError('Invalid direction', direction)
-            self._pointer = pointer - dbposition
-            self._dbpointer = dbpointer
-            self._dbposition = dbposition
-            self._buffer = buffer
-
-        def copy(self):
-            """Vra» \"rozumnou\" kopii instance."""
-            # Nepou¾íváme postupy modulu `copy', proto¾e potøebujeme nìco mezi
-            # hlubokou a mìlkou kopií.
-            copy_ = self.__class__()
-            copy_._buffer = copy.copy(self._buffer)
-            copy_._pointer = self._pointer
-            copy_._dpointer = self._dpointer
-            copy_._dbposition = self._dbposition
-            return copy_
-
-        def __str__(self):
-            buffer = self._buffer
-            pointer = self._pointer
-            max = len(buffer) - 1
-            if max < 0:
-                bufstr = ''
-            elif max == 0:
-                bufstr = str(buffer[0])
-            elif max == 1:
-                bufstr = '%s\n%s' % (buffer[0], buffer[1])
-            elif pointer <= 0 or pointer >= max:
-                bufstr = '%s\n...\n%s' % (buffer[0], buffer[-1])
-            elif max == 2:
-                bufstr = '%s\n%s\n%s' % (buffer[0], buffer[1], buffer[2])
-            elif pointer == 1:
-                bufstr = '%s\n%s\n...\n%s' % (buffer[0], buffer[1], buffer[-1])
-            elif pointer == max - 1:
-                bufstr = '%s\n...\n%s\n%s' % \
-                         (buffer[0], buffer[-2], buffer[-1])
-            else:
-                bufstr = '%s\n...\n%s\n...\n%s' % \
-                         (buffer[0], buffer[pointer], buffer[-1])
-            return '<PgBuffer: db=%d, start=%d, index=%d\n%s>' % \
-                   (self._dbpointer, self._dbposition, self._pointer, bufstr)
-
-    def __init__(self, bindings, key, dbconnection_spec, ordering=None):
-        """Inicializuj databázovou tabulku dle uvedených specifikací.
-
-        Argumenty:
-        
-          bindings -- stejné jako v pøedkovi
-          key -- binding klíèového sloupce datové tabulky, musí být jeden
-            z prvkù 'bindings' nebo sekvence prvkù z 'bindings'
-          dbconnection_spec -- instance tøídy 'DBConnection' definující
-            parametry pøipojení, nebo funkce bez argumentù vracející takovou
-            instanci 'DBConnection'
-          ordering -- stejné jako v pøedkovi
-        
-        """
-        if __debug__:
-            log(DEBUG, 'Vytváøím databázovou tabulku')
-        if isinstance(dbconnection_spec, DBConnection):
-            def _lambda(dbconnection_spec=dbconnection_spec):
-                return dbconnection_spec
-            dbconnection_spec = _lambda
-        self._pg_dbconnection_spec = dbconnection_spec
-        # TODO: Avoid duplicate call of the base class
-        PostgreSQLUserGroups.__init__(self, dbconnection_spec())
-        PostgreSQLNotifier.__init__(self, dbconnection_spec())
-        if is_sequence(key):
-            self._key_binding = tuple(key)
-        else:
-            self._key_binding = (key,)
-        DBData.__init__(self, bindings, ordering)
-        self._pg_is_in_select = False
-        self._pg_buffer = self._PgBuffer()
-        self._pg_number_of_rows = None
-        self._pg_initial_select = False
-        self._pg_make_row_template = \
-            self._pg_create_make_row_template(self._columns)
-        # NASTAVENÍ CACHE
-        # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
-        # velikost pamìti atd.), je vhodné rùzné nastavení cache,
-        # budeme parametry nastavovat z konfiguraèního souboru.
-        # Pozor, config.cache_size je vyu¾íváno pøímo v _PgBuffer.
-        # Zde tyto hodnoty zapamatujeme jako atributy objektu, proto¾e jsou
-        # potøeba v kritických èástech kódu a ètení konfigurace pøeci jen trvá.
-        import config
-        self._pg_initial_fetch_size = config.initial_fetch_size
-        self._pg_fetch_size = config.fetch_size
-
-    # Metody pro transakce
-
-    def _pg_allocate_connection(self):
-        connections = self._pg_connections()
-        if __debug__:
-            if len(connections) >= 3:
-                if __debug__:
-                    log(DEBUG, 'Podezøele velká hloubka spojení:',
-                        len(connections))
-        connection = self._pg_get_connection(outside_transaction=True)
-        connections.append(connection)
-        
-    def _pg_deallocate_connection(self):
-        self._pg_return_connection(self._pg_connections().pop())
-
-    def _pg_begin_transaction (self):
-        self._pg_allocate_connection()
-        self._pg_query ('begin')
-        
-    def _pg_commit_transaction (self):
-        self._pg_query ('commit')
-        self._pg_deallocate_connection()
-        
-    def _pg_rollback_transaction (self):
-        self._pg_query ('rollback')
-        self._pg_deallocate_connection()
-
-    # Pomocné metody
-
-    def _pg_create_make_row_template(self, columns):
-        template = []
-        for c in columns:
-            id = c.id()
-            type = c.type()
-            if isinstance(type, String):
-                typid = 0
-            elif isinstance(type, (Time, DateTime)):
-                typid = 2
-            else:
-                typid = 99
-            template.append((id, typid, type))
-        return template
-    
-    def _pg_make_row_from_raw_data(self, data_, template=None):
-        if not data_:
-            return None
-        if not template:
-            template = self._pg_make_row_template
-        row_data = []
-        data_0 = data_[0]
-        i = 0
-        for id, typid, type in template:            
-            dbvalue = data_0[i]
-            i += 1
-            if typid == 0:              # string
-                if dbvalue is None:
-                    v = None
-                else:
-                    v = unicode(dbvalue, self._pg_encoding)  #TODO: patøí jinam
-                value = Value(type, v)
-            elif typid == 2:            # time
-                value, err = type.validate(dbvalue, strict=False,
-                                           format=type.SQL_FORMAT, local=False)
-                assert err is None, err
-            else:
-                value, err = type.validate(dbvalue, strict=False)
-                assert err is None, err
-            row_data.append((id, value))
-        return Row(row_data)
-
-    def _pg_already_present(self, row):
-        key = []
-        for k in self.key():
-            try:
-                id = k.id()
-            except:
-                return False
-            try:
-                key.append(row[id])
-            except KeyError:
-                return False
-        return self.row(key)
-    
-    _pg_dt = type(mx.DateTime.DateTimeFrom('2001-01-01'))
-    def _pg_value(self, value):
-        if is_sequence(value):
-            return tuple(map(self._pg_value, value))
-        v = value.value()
-        if v == None:
-            result = 'NULL'
-        elif isinstance(value.type(), Boolean):
-            result = "'%s'" % value.type().export(v)
-        elif is_anystring(v):
-            result = "'%s'" % pg_escape(v)
-        elif type(v) == self._pg_dt:
-            if isinstance(value.type(), Date):
-                result = "'%s'" % v.strftime('%Y-%m-%d')
-            elif isinstance(value.type(), Time):
-                result = "'%s'" % v.strftime('%H:%M:%S')
-            else:                       # DateTime
-                result = "'%s'" % v.strftime('%Y-%m-%d %H:%M:%S')
-        elif isinstance(value.type(), Float):
-            result = value.type().export(v, locale_format=False)
-        else:
-            result = value.type().export(v)
-        return result
-
-    def _pg_key_condition(self, key):
-        if __debug__: log(DEBUG, 'Vytváøím podmínku z klíèe:', key)
-        key = xtuple(key)
-        keycols = map(lambda b: b.id(), self._key_binding)
-        assert len(keycols) == len(key), ('Invalid key length', key, keycols)
-        ands = map(EQ, keycols, key)
-        condition = apply(AND, ands)
-        if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
-        return condition
-
-    def _pg_connection_maker(self):
-        def maker():
-            self._pg_new_connection(self._pg_dbconnection_spec(), self)
-        return maker
-
-    # Veøejné metody a jimi pøímo volané abstraktní metody
-
-    def row(self, key):
-        #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
-        try:
-            data = self._pg_row (self._pg_value(key))
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        result = self._pg_make_row_from_raw_data(data)
-        #log(EVENT, 'Vrácený obsah øádku', result)
-        return result
-
-    def _pg_row (self, value):
-        """Vytáhni a vra» raw data odpovídající klíèové hodnotì 'value'."""
-        #redefine
-        return None
-        
-    def select(self, condition=None, sort=(), reuse=False):
-        if __debug__: log(DEBUG, 'Zahájení selectu:', condition)
-        if reuse and not self._pg_changed and self._pg_number_of_rows and \
-               condition == self._pg_last_select_condition and \
-               sort == self._pg_last_select_sorting:
-            use_cache = True
-        else:
-            use_cache = False
-        self.close()
-        self._pg_begin_transaction ()
-        self._pg_is_in_select = True
-        self._pg_last_select_condition = condition
-        self._pg_last_select_sorting = sort
-        self._pg_last_fetch_row = None
-        self._pg_changed = False
-        try:
-            number_of_rows = self._pg_select (condition, sort)
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            self._pg_is_in_select = False
-            raise cls, e, tb
-        if use_cache and number_of_rows != self._pg_number_of_rows:
-            use_cache = False
-        if use_cache:
-            self._pg_buffer.goto(-1)
-        else:
-            self._pg_buffer.reset()
-            self._pg_initial_select = True
-        self._pg_number_of_rows = number_of_rows
-        return number_of_rows
-
-    def select_aggregate(self, operation, condition=None):
-        opid = operation[0]
-        t = self.find_column(operation[1]).type()
-        if opid == self.AGG_COUNT:
-            t = Integer()
-        elif opid == self.AGG_AVG:
-            if not isinstance(t, Number):
-                return None
-            t = Float()
-        else:
-            if not isinstance(t, Number):
-                return None
-        close_select = False
-        if not self._pg_is_in_select:
-            self.select(condition=condition)
-            close_select = True
-        try:
-            data = self._pg_select_aggregate(operation, condition)
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            self._pg_is_in_select = False
-            raise cls, e, tb
-        if close_select:
-            self.close()
-        result, error = t.validate(data[0][0])
-        assert error is None, error
-        return result
-        
-    def distinct(self, column, condition=None, sort=ASCENDENT):
-        """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
-
-        Argumenty:
-
-          column -- identifikátor sloupce.
-          condition -- podmínkový výraz nebo 'None'.
-          sort -- jedna z konstant  'ASCENDENT', 'DESCENDANT' nebo None.
-
-        """
-        return self._pg_distinct(column, condition, sort)
-        
-    def _pg_select (self, condition, sort, operation=None):
-        """Inicializuj select a vra» poèet øádkù v nìm nebo 'None'.
-
-        Argumenty:
-
-          condition -- nezpracovaný podmínkový výraz nebo 'None'
-          sort -- nezpracovaná specifikace tøídìní nebo 'None'
-          operation -- nezpracovaná specifikace agregaèní funkce
-          
-        """
-        #redefine
-        return None
-
-    def fetchone(self, direction=FORWARD):
-        """Stejné jako v nadtøídì.
-
-        Metoda automaticky nereaguje na notifikace o zmìnì dat souvisejících
-        tabulek a pokraèuje (nedojde-li k pøeru¹ení transakce) v dodávce
-        starých dat.  Automatické pøenaèítání dat pøi zmìnì by mohlo vést
-        k výkonnostním problémùm, jeho provádìní je tedy ponecháno na uvá¾ení
-        aplikace, která se mù¾e nechat o zmìnách informovat registrací
-        prostøednictvím metody 'add_callback_on_change()'.
-
-        """
-        if __debug__:
-            log(DEBUG, 'Vyta¾ení øádku ze selectu ve smìru:', direction)
-        assert direction in(FORWARD, BACKWARD), \
-               ('Invalid direction', direction)
-        if not self._pg_is_in_select:
-            # Pokusy o rekonstrukci fetche nevedou k nièemu dobrému.  Pùvodnì
-            # tu bylo provedení nového selectu a hledání pùvodního øádku
-            # v nìm.  Pomineme-li mo¾né sémantické problémy této operace,
-            # nepomù¾e nám toto ani výkonnostnì, proto¾e musíme prohledat celá
-            # data a¾ po ký¾ené místo -- to u¾ je ov¹em mù¾eme rovnou znovu
-            # naèíst.
-            #
-            # Lep¹í je pou¾ívat explicitní nový select s argumentem `reuse'
-            # v kombinaci s metodou `skip'.  Pøi "pokraèování" selectu nám více
-            # ne¾ o ten samý øádek jde spí¹e o tu samou pozici v datech, co¾
-            # tento postup podporuje.  Pøi vhodném mechanismu bufferování
-            # odpadnou i nejzáva¾nìj¹í výkonnostní problémy.
-            raise ProgramError('Not within select')
-        # Tady zaèíná opravdové vyta¾ení aktuálních dat
-        buffer = self._pg_buffer
-        row = buffer.fetch(direction, self._pdbb_select_rows)
-        if row:
-            result = row
-        else:
-            # Kurzory v PostgreSQL mají spoustu chyb.  Napøíklad èasto
-            # kolabují pøi pøekroèení hranic dat a mnohdy správnì nefunguje
-            # FETCH BACKWARD.  V následujícím kódu se sna¾íme nìkteré
-            # nejèastìj¹í chyby PostgreSQL obejít.
-            def skip():
-                xcount = buffer.correction(FORWARD, self._pg_number_of_rows)
-                if xcount < 0:
-                    xcount = -xcount
-                    skip_direction = BACKWARD
-                else:
-                    skip_direction = FORWARD
-                if xcount > 0:
-                    try:
-                        result = self._pg_skip(xcount, skip_direction,
-                                               exact_count=True)
-                    except:
-                        cls, e, tb = sys.exc_info()
-                        try:
-                            self._pg_rollback_transaction()
-                        except:
-                            pass
-                        self._pg_is_in_select = False
-                        raise cls, e, tb
-            skip()
-            if self._pg_initial_select:
-                self._pg_initial_select = False
-                std_size = self._pg_initial_fetch_size
-            else:
-                std_size = self._pg_fetch_size
-            current_row_number = buffer.current()[1]
-            last_row_number = min(current_row_number + 1,
-                                  self._pg_number_of_rows)
-            if direction == FORWARD:
-                size = min(self._pg_number_of_rows-last_row_number, std_size)
-            else:
-                if current_row_number <= 0:
-                    if current_row_number == 0:
-                        skipped = buffer.skip(1, BACKWARD,
-                                              self._pg_number_of_rows)
-                        assert skipped == 1, skipped
-                        skip()
-                    return None
-                size = min(self._pg_number_of_rows, std_size)
-            assert size >= 0 and size <= self._pg_number_of_rows
-            if direction == FORWARD:
-                xskip = None
-            else:
-                xskip = buffer.skip(size, BACKWARD, self._pg_number_of_rows)
-                skip()
-            try:
-                data_ = self._pg_fetchmany(size, FORWARD)
-            except:
-                cls, e, tb = sys.exc_info()
-                try:
-                    self._pg_rollback_transaction()
-                except:
-                    pass
-                self._pg_is_in_select = False
-                raise cls, e, tb
-            if data_:
-                row_data = [self._pg_make_row_from_raw_data([d]) for d in data_]
-                buffer.fill(row_data, FORWARD, len(row_data)!=size)
-                if xskip:
-                    buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
-                result = buffer.fetch(direction, self._pdbb_select_rows)
-            else:
-                result = None
-        self._pg_last_fetch_row = result
-        if __debug__: log(DEBUG, 'Vrácený øádek', str(result))
-        return result
-
-    def _pg_fetchmany (self, count, direction):
-        """Vra» 'count' øádkù selectu jako raw data."""
-        #redefine
-        return []
-    
-    def last_row_number(self):
-        return self._pg_buffer.current()[1]
-
-    def last_select_condition(self):
-        return self._pg_last_select_condition
-
-    def last_select_condition_sql(self):
-        return self._pdbb_condition2sql(self._pg_last_select_condition)
-
-    def skip(self, count, direction=FORWARD):
-        if __debug__: log(DEBUG, 'Pøeskoèení øádkù:', (direction, count))
-        assert type(count) == type(0) and count >= 0, \
-               ('Invalid count', count)
-        assert direction in (FORWARD, BACKWARD), \
-               ('Invalid direction', direction)
-        result = self._pg_buffer.skip(count, direction,
-                                      self._pg_number_of_rows)
-        if count > 0:
-            self._pg_last_fetch_row = None
-        if __debug__: log(DEBUG, 'Pøeskoèeno øádkù:', result)
-        return result
-
-    def _pg_skip(self, count, direction, exact_count=False):
-        """Pøeskoè 'count' øádkù v 'direction' a vra» jejich poèet nebo 'None'.
-        """
-        #redefine
-        return None
-
-    def rewind(self):
-        if not self._pg_is_in_select:
-            raise ProgramError('Not within select')
-        __, pos = self._pg_buffer.current()
-        if pos >= 0:
-            self.skip(pos+1, BACKWARD)
-        
-    def search(self, condition, direction=FORWARD):
-        if __debug__: log(DEBUG, 'Hledání øádku:', (condition, direction))
-        assert direction in (FORWARD, BACKWARD), \
-               ('Invalid direction', direction)
-        if not self._pg_is_in_select:
-            raise ProgramError('Not within select')
-        row, pos = self._pg_buffer.current()
-        if not row and pos >= 0 and pos < self._pg_number_of_rows:
-            self.skip(1, BACKWARD)
-            row = self.fetchone()
-        if not row and (pos < 0 and direction == BACKWARD or \
-                        pos >= 0 and direction == FORWARD):
-            result = 0
-        else:
-            try:
-                result = self._pg_search(row, condition, direction)
-            except:
-                cls, e, tb = sys.exc_info()
-                try:
-                    self._pg_rollback_transaction()
-                except:
-                    pass
-                self._pg_is_in_select = False
-                raise cls, e, tb
-        if __debug__: log(DEBUG, 'Výsledek hledání:', result)
-        return result
-
-    def _pg_search(self, row, condition, direction):
-        """Vyhledej ve smìru 'direction' první øádek od 'row' dle 'condition'.
-
-        Vrací: Vzdálenost od øádku 'row' jako kladný integer nebo 0, pokud
-        takový øádek neexistuje.
-
-        """
-        #redefine
-        return None
-
-    def close(self):
-        if __debug__: log(DEBUG, 'Explicitní ukonèení selectu')
-        if self._pg_is_in_select:
-            self._pg_commit_transaction()
-            self._pg_is_in_select = False
-
-    def insert(self, row, after=None, before=None):
-        assert after is None or before is None, \
-               'Both after and before specified'
-        log(ACTION, 'Vlo¾ení øádku', (row, after, before))
-        self._pg_begin_transaction ()
-        try:
-            # Jestli¾e je definováno ordering, které je souèástí klíèe, bude
-            # novì vlo¾ený øádek nutnì unikátní.
-            if (not self._ordering or \
-                (self._ordering[0] not in map(lambda c: c.id(), self.key()))
-                ) and \
-               self._pg_already_present(row):
-                msg = 'Øádek s tímto klíèem ji¾ existuje'
-                result = msg, False
-                log(ACTION, msg)
-            else:
-                positioned = after or before
-                if after:
-                    neighbor = after = self.row(after)
-                elif before:
-                    neighbor = before = self.row(before)
-                if positioned and (not neighbor):
-                    msg = 'Zadaný sousední øádek nenalezen'
-                    log(ACTION, msg,
-                        (after, before))
-                    result = msg, False
-                else:
-                    r = self._pg_insert (row, after=after, before=before)
-                    result = r, True
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        self._pg_commit_transaction()
-        self._pg_send_notifications()
-        if result[1]:
-            log(ACTION, 'Øádek vlo¾en', result)
-        return result
-
-    def _pg_insert(self, row, after=None, before=None):
-        """Vlo¾ 'row' a vra» jej jako nová raw data nebo vra» 'None'."""
-        #redefine
-        return None
-    
-    def update(self, key, row):
-        key = xtuple(key)
-        log(ACTION, 'Update øádku:', key)
-        log(ACTION, 'Nová data', str(row))
-        self._pg_begin_transaction ()
-        try:
-            origrow = self.row(key)
-            if origrow:
-                ordering = self._ordering
-                if ordering:
-                    row = copy.copy(row)
-                    for id in ordering:
-                        try:
-                            row[id] = origrow[id]
-                        except KeyError:
-                            row.append(id, origrow[id])
-                keys = map(ColumnSpec.id, self.key())
-                new_key = []
-                for i in range(len(keys)):
-                    try:
-                        v = row[keys[i]]
-                    except KeyError:
-                        v = key[i]
-                    new_key.append(v)
-                new_key = tuple(new_key)
-                if new_key != key and self._pg_already_present(row):
-                    msg = 'Øádek s tímto klíèem ji¾ existuje'
-                    result = msg, False
-                    log(ACTION, msg, key)
-                else:
-                    n = self._pg_update(self._pg_key_condition(key), row)
-                    if n == 0:
-                        result = None, False
-                    else:
-                        new_row = self.row(new_key)
-                        result = new_row, True
-            else: # not origrow
-                msg = 'Øádek s daným klíèem neexistuje'
-                result = msg, False
-                log(ACTION, msg, key)
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
-        if result[1]:
-            log(ACTION, 'Øádek updatován', result)
-        return result
-    
-    def update_many(self, condition, row):
-        log(ACTION, 'Update øádkù:', condition)
-        log(ACTION, 'Nová data', str(row))
-        self._pg_begin_transaction ()
-        try:
-            ordering = self._ordering
-            if ordering:
-                new_row_items = []
-                for k, v in row.items():
-                    if k not in ordering:
-                        new_row_items.append((k, v))
-                row = Row(new_row_items)
-            result = self._pg_update (condition, row)
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
-        if result:
-            log(ACTION, 'Øádky updatovány:', result)
-        return result
-        
-    def _pg_update(self, condition, row):
-        """Updatuj øádky identifikované 'condition'.
-
-        Vrací: Poèet updatovaných øádkù.
-
-        """
-        #redefine
-        return None
-
-    def delete(self, key):
-        log(ACTION, 'Mazání øádku:', key)
-        self._pg_begin_transaction ()
-        try:
-            result = self._pg_delete (self._pg_key_condition(key))
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
-        log(ACTION, 'Øádek smazán', result)
-        return result
-    
-    def delete_many(self, condition):
-        log(ACTION, 'Mazání øádkù:', condition)
-        self._pg_begin_transaction ()
-        try:
-            result = self._pg_delete (condition)
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
-        log(ACTION, 'Øádky smazány', result)
-        return result
-
-    def _pg_delete (self, condition):
-        """Sma¾ øádek identifikovaný podmínkou 'condition'.
-
-        Vrací: Poèet smazaných øádkù.
-
-        """
-        #redefine
-        return 0
-
-    def lock_row(self, key):
-        # Pro zamykání je vy¾adována existence zamykací tabulky se speciálními
-        # vlastnostmi, která je definována v souboru `db.sql'.
-        log(EVENT, 'Zamykám øádek:', map(str, xtuple(key)))
-        self._pg_begin_transaction();
-        try:
-            self._pg_query('lock table %s' % self._PG_LOCK_TABLE_LOCK)
-            row = self.row(key)
-            if not row:
-                self._pg_rollback_transaction()
-                return 'Záznam neexistuje'
-            oidcols = filter(lambda c: isinstance(c.type(), Oid),
-                             self.columns())
-            cids = map(lambda c: c.id(), oidcols)
-            oids = map(lambda i, row=row: row[i].value(), cids)
-            for oid in oids:
-                data = self._pg_query('select usename from %s where row = %d'\
-                                      % (self._PG_LOCK_TABLE, oid))
-                if data:
-                    self._pg_rollback_transaction()
-                    return 'u¾ivatel `%s\'' % data[0][0]
-            lock_ids = []
-            for oid in oids:
-                self._pg_query('insert into %s (row) values (%d)' % \
-                               (self._PG_LOCK_TABLE, oid))
-                data = self._pg_query('select id from %s where row = %d' % \
-                                      (self._PG_LOCK_TABLE, oid))
-                lock_ids.append(data[0][0])
-            self._pg_lock_ids = lock_ids
-            self._pg_commit_transaction()
-        except DBException:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        DBDataPostgreSQL.__bases__[0].lock_row(self, key)
-        update_commands = \
-          map(lambda id, self=self: 'update %s set id = id where id = %s' % \
-              (self._PG_LOCK_TABLE, id),
-              lock_ids)
-        thread.start_new_thread(self._pg_locking_process,
-                                (key, update_commands))
-        log(EVENT, 'Øádek zamèen')
-        return None
-
-    def unlock_row(self):
-        log(EVENT, 'Odemykám øádek')
-        DBDataPostgreSQL.__bases__[0].unlock_row(self)
-        for id in self._pg_lock_ids:
-            try:
-                self._pg_query('delete from %s where id = %s' % \
-                               (self._PG_LOCK_TABLE, id),
-                               outside_transaction=True)
-            except DBException:
-                pass
-        self._pg_lock_ids = None
-        log(EVENT, 'Øádek odemèen')
-
-    def _pg_locking_process(self, locked_row, update_commands):
-        if __debug__: log(DEBUG, 'Nastartován zamykací proces')
-        while True:
-            time.sleep(self._PG_LOCK_TIMEOUT)
-            if self._locked_row != locked_row:
-                return
-            for command in update_commands:
-                try:
-                    self._pg_query(command, outside_transaction=True)
-                except DBException, e:
-                    if __debug__:
-                        log(DEBUG, 'Chyba pøíkazu obnovy øádku', (e, command))
-            if __debug__: log(DEBUG, 'Zámek updatován')
-
-
-
-class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
-    """Èítaè ulo¾ený v PostgreSQL."""
-    
-    def __init__(self, name, connection_data):
-        """Inicializuj èítaè.
-
-        Argumenty:
-
-          name -- identifikátor èítaèe v databázi, string
-          connection_data -- instance tøídy 'DBConnection' definující
-            parametry pøipojení, nebo funkce bez argumentù vracející takovou
-            instanci 'DBConnection'
-
-        """
-        assert is_string(name)
-        PostgreSQLConnector.__init__(self, connection_data)
-        self._name = name
-        self._query = "select nextval('%s')" % name
-        
-    def next(self):
-        result = self._pg_query(self._query)
-        try:
-            number = int(result[0][0])
-        except Exception, e:
-            raise DBException(_("Chybná hodnota èítaèe z databáze"), e)
-        return number
-
-
-class PostgreSQLStandardBindingHandler(object):
+class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     """Interpretace sémantiky specifikace napojení do databáze.
 
     Tato tøída øe¹í problematiku naplnìní významu specifikace napojení sloupcù
@@ -1644,7 +659,9 @@ class PostgreSQLStandardBindingHandler(object):
     """
     _PDBB_CURSOR_NAME = 'selection'
 
-    def __init__(self):
+    def __init__(self, bindings=None, ordering=None, **kwargs):
+        super(PostgreSQLStandardBindingHandler, self).__init__(
+            bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_create_sql_commands()
         
     def _pdbb_tabcol(self, table_name, column_name):
@@ -1783,7 +800,7 @@ class PostgreSQLStandardBindingHandler(object):
                 continue
             enumerator, kwargs = b.enumerator(), copy.copy(b.kwargs())
             if enumerator:
-                df_kwargs = {'dbconnection_spec': self._pg_dbconnection_spec()}
+                df_kwargs = {'connection_data': self._pg_connection_data()}
                 e_kwargs = {'data_factory_kwargs': df_kwargs}
                 for a in ('value_column', 'validity_column',
                           'validity_condition'):
@@ -2121,6 +1138,7 @@ class PostgreSQLStandardBindingHandler(object):
         return columns, values
 
     def _pg_row (self, value):
+        """Vytáhni a vra» raw data odpovídající klíèové hodnotì 'value'."""
         return self._pg_query(self._pdbb_command_row % value)
     
     def _pg_search(self, row, condition, direction):
@@ -2204,6 +1222,15 @@ class PostgreSQLStandardBindingHandler(object):
         return result
 
     def _pg_select (self, condition, sort):
+        """Inicializuj select a vra» poèet øádkù v nìm nebo 'None'.
+
+        Argumenty:
+
+          condition -- nezpracovaný podmínkový výraz nebo 'None'
+          sort -- nezpracovaná specifikace tøídìní nebo 'None'
+          operation -- nezpracovaná specifikace agregaèní funkce
+          
+        """
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
         data = self._pg_query(self._pdbb_command_count % cond_string)
@@ -2245,6 +1272,7 @@ class PostgreSQLStandardBindingHandler(object):
                               (function, colid, cond_string))
     
     def _pg_fetchmany (self, count, direction):
+        """Vra» 'count' øádkù selectu jako raw data."""
         if direction == FORWARD:
             query = self._pdbb_command_fetch_forward % count
         elif direction == BACKWARD:
@@ -2254,6 +1282,8 @@ class PostgreSQLStandardBindingHandler(object):
         return self._pg_query(query)
 
     def _pg_skip(self, count, direction, exact_count=False):
+        """Pøeskoè 'count' øádkù v 'direction' a vra» jejich poèet nebo 'None'.
+        """
         if direction == FORWARD:
             self._pg_query(self._pdbb_command_move_forward % count)
         elif direction == BACKWARD:
@@ -2267,6 +1297,7 @@ class PostgreSQLStandardBindingHandler(object):
         return None
         
     def _pg_insert(self, row, after=None, before=None):
+        """Vlo¾ 'row' a vra» jej jako nová raw data nebo vra» 'None'."""
         ordering = self._ordering
         if ordering:
             ocol = self._ordering[0]
@@ -2319,6 +1350,11 @@ class PostgreSQLStandardBindingHandler(object):
         return self._pg_make_row_from_raw_data(data)
     
     def _pg_update(self, condition, row):
+        """Updatuj øádky identifikované 'condition'.
+
+        Vrací: Poèet updatovaných øádkù.
+
+        """
         # TODO: Pøi pou¾ití RULEs v PostgreSQL UPDATE vrací v¾dy 0.  Toto
         # chování je sporné, nicménì v tuto chvíli PostgreSQL nenabízí ¾ádné
         # pøímé øe¹ení, jak výsledek UPDATE zjistit.  Proto zde aplikujeme
@@ -2352,6 +1388,11 @@ class PostgreSQLStandardBindingHandler(object):
             raise DBSystemException('Unexpected UPDATE value', None, result)
 
     def _pg_delete (self, condition):
+        """Sma¾ øádek identifikovaný podmínkou 'condition'.
+
+        Vrací: Poèet smazaných øádkù.
+
+        """
         sql_condition = self._pdbb_condition2sql(condition)
         d = self._pg_query(self._pdbb_command_delete % sql_condition,
                            backup=True)
@@ -2369,6 +1410,942 @@ class PostgreSQLStandardBindingHandler(object):
         self._pg_query(self._pdbb_command_notify, outside_transaction=True)
 
 
+class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
+    """Datová tabulka s napojením do PostgreSQL.
+
+    Tato tøída pøekládá po¾adavky do SQL, není v¹ak implementaènì závislá na
+    konkrétním pou¾itém postgresovém modulu pro Python.
+    
+    """
+    # TODO: Tato tøída je mamut a mìla by být rozdìlena na nìkolik men¹ích èástí
+
+    _PG_LOCK_TABLE = '_rowlocks'
+    _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
+    _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
+
+    class _PgBuffer:
+        # Døíve to býval buffer, nyní se pøemìòuje na "buffer-cache".
+
+        def __init__(self):
+            if __debug__: log(DEBUG, 'Nový buffer')
+            self.reset()
+            
+        def reset(self):
+            """Kompletnì resetuj buffer."""
+            if __debug__: log(DEBUG, 'Resetuji buffer')
+            self._buffer = []
+            # _dbpointer ... pozice ukazovátka kursoru v databázi, na který
+            #   prvek kursoru poèínaje od 0 ukazuje
+            # _dbposition ... pozice zaèátku bufferu v databázi, èíslo prvku
+            #   kurzoru poèínaje 0, který odpovídá prvnímu prvku bufferu
+            # _pointer ... pozice ukazovátka v bufferu, ukazuje na poslední
+            #   pøeètený prvek, nemusí v¾dy ukazovat dovnitø bufferu
+            self._dbposition = 0
+            self._dbpointer = self._pointer = -1
+
+        def current(self):
+            """Vra» aktuální øádek a jeho pozici v databázi poèínaje od 0.
+
+            Výsledek je vrácen jako dvojice (ROW, POSITION).  Je-li aktuální
+            øádek mimo buffer, je ROW 'None'.  Je-li aktuální pozice mimo
+            buffer, je POSITION je -1 nebo poèet øádkù selectu.
+
+            """
+            buffer = self._buffer
+            pointer = self._pointer
+            position = self._dbposition + pointer
+            if pointer < 0 or pointer >= len(buffer):
+                row = None
+            else:
+                row = buffer[pointer]
+            return row, position
+
+        def fetch(self, direction, number_of_rows):
+            """Vra» øádek nebo 'None' a updatuj ukazovátka.
+
+            Pokud øádek není v bufferu, je vráceno 'None' a pøedpokládá se
+            následné volání metod 'correction()' a 'fill()'.
+
+            """
+            buffer = self._buffer
+            pointer = self._pointer
+            if direction == FORWARD:
+                pointer += 1
+            elif direction == BACKWARD:
+                pointer -= 1
+            else:
+                raise ProgramError('Invalid direction', direction)
+            if pointer < 0 or pointer >= len(buffer):
+                if __debug__: log(DEBUG, 'Buffer miss:', pointer)
+                pos = self._dbposition + pointer
+                # Interní ukazovátko po obyèejném minutí neupdatujeme, proto¾e
+                # pøijde fill a pokus o znovuvyta¾ení hodnoty, s novým updatem
+                # ukazovátka.  Av¹ak pokud jsme kompletnì mimo rozsah dat, není
+                # tato zdr¾enlivost namístì a je nutno ukazovátko posunout na
+                # správnou pozici, tj. mimo rozsah dat.
+                if pos < 0:
+                    self._pointer = -1 - self._dbposition
+                elif pos >= number_of_rows:
+                    self._pointer = number_of_rows - self._dbposition
+                return None
+            self._pointer = pointer
+            result = buffer[pointer]
+            if __debug__: log(DEBUG, 'Buffer hit:', pointer) #, str(result))
+            return result
+
+        def correction(self, direction, number_of_rows):
+            """Vra» argument pro DB operaci SKIP pøed naplnìním bufferu.
+
+            Kladná návratová hodnota odpovídá posunu vpøed, záporná posunu
+            zpìt.
+            
+            Databázové ukazovátko je updatováno jako kdyby SKIP byl proveden.
+
+            """
+            if __debug__: log(DEBUG, '®ádost o korekci:',
+                (self._dbpointer, self._dbposition, self._pointer, direction))
+            pointer = self._pointer
+            buflen = len(self._buffer)
+            pos = self._dbposition + pointer
+            if pointer > buflen or pointer < -1:
+                # Dostali jsme se daleko za buffer, je nutno provést DB skip.
+                # TODO: zde by mohlo být dobré nastavit pozici tak, aby byla
+                # naètena je¹tì nìjaká data proti smìru bufferu.  Jak to ale
+                # udìlat èistì?
+                if pos >= 0:
+                    pos = min(pos, number_of_rows)
+                else:
+                    pos = max(pos, -1)
+                correction = pos - self._dbpointer
+                self._buffer = []
+                self._pointer = -1
+                self._dbpointer = self._dbpointer + correction
+                self._dbposition = self._dbpointer + 1
+            elif (direction == FORWARD and pointer >= buflen - 1) or \
+                 (direction == BACKWARD and pointer <= 1):
+                # Jsme u hranice bufferu, provedeme DB skip bez mazání bufferu.
+                # Rozsah v podmínce je zvolen tak, aby o¹etøil i pøedchozí
+                # buffer miss.
+                correction = pos - self._dbpointer
+                self._dbpointer = self._dbpointer + correction
+            else:
+                # Jsme uvnitø bufferu, ¾ádný DB skip se nekoná.
+                correction = 0
+            if __debug__: log(DEBUG, 'Urèená korekce:', correction)
+            return correction
+
+        def goto(self, position):
+            """Updatuj databázovou pozici nastavenou bez vìdomí bufferu.
+
+            Argumenty:
+
+              position -- èíslo prvku cursoru zaèínajícího od 0, na který
+                ukazovátko databázového kurzoru právì ukazuje
+
+            """
+            self._pointer = position - self._dbposition
+            self._dbpointer = position
+            
+        def skip(self, count, direction, number_of_rows):
+            """Proveï skip.
+
+            Argumenty:
+
+              count -- poèet øádkù, o kolik se má skok provést
+              direction -- jedna ze smìrových konstant modulu
+              number_of_rows -- poèet øádkù v aktuálním selectu
+
+            Vrací: Poèet skuteènì pøeskoèených øádkù ve smìru 'direction'.
+            
+            """
+            pointer = self._pointer
+            if direction == FORWARD:
+                pointer = pointer + count
+            elif direction == BACKWARD:
+                pointer = pointer - count
+            else:
+                raise ProgramError('Invalid direction', direction)
+            pos = self._dbposition + pointer
+            if pos < -1:
+                pointer = -1 - self._dbposition
+            elif pos > number_of_rows:
+                pointer = number_of_rows - self._dbposition
+            result = pointer - self._pointer
+            if direction == BACKWARD:
+                result = -result
+            self._pointer = pointer
+            return result
+        
+        def fill(self, rows, direction, extra_move=False):
+            """Naplò se daty 'rows' a updatuj ukazovátka."""
+            # extra_move je tu kvùli tomu, ¾e pokud dojde ve fetchmany
+            # k pøekroèení hranic dat je¹tì pøed získáním po¾adovaného poètu
+            # øádkù, musí být dbpointer pøesunut je¹tì o jednu pozici dál (mimo
+            # data).
+            if __debug__: log(DEBUG, 'Plním buffer:', direction)            
+            n = len(rows)
+            buffer = self._buffer
+            buflen = len(buffer)
+            dbpointer = self._dbpointer
+            dbposition = self._dbposition
+            pointer = self._pointer + dbposition
+            import config
+            retain = max(config.cache_size - n, 0)
+            cutoff = max(buflen - retain, 0)
+            if direction == FORWARD:
+                if dbposition + buflen - 1 == dbpointer:
+                    buffer = buffer[cutoff:] + rows
+                    dbposition = dbposition + cutoff
+                else:
+                    buffer = rows
+                    dbposition = dbpointer + 1
+                dbpointer = dbpointer + n
+                if extra_move:
+                    dbpointer = dbpointer + 1
+            elif direction == BACKWARD:
+                rows.reverse()
+                if dbposition == dbpointer:
+                    buffer = rows + buffer[:retain]
+                else:
+                    buffer = rows
+                dbpointer = dbpointer - n
+                dbposition = dbpointer
+                if extra_move:
+                    dbpointer = dbpointer - 1
+            else:
+                raise ProgramError('Invalid direction', direction)
+            self._pointer = pointer - dbposition
+            self._dbpointer = dbpointer
+            self._dbposition = dbposition
+            self._buffer = buffer
+
+        def copy(self):
+            """Vra» \"rozumnou\" kopii instance."""
+            # Nepou¾íváme postupy modulu `copy', proto¾e potøebujeme nìco mezi
+            # hlubokou a mìlkou kopií.
+            copy_ = self.__class__()
+            copy_._buffer = copy.copy(self._buffer)
+            copy_._pointer = self._pointer
+            copy_._dpointer = self._dpointer
+            copy_._dbposition = self._dbposition
+            return copy_
+
+        def __str__(self):
+            buffer = self._buffer
+            pointer = self._pointer
+            max = len(buffer) - 1
+            if max < 0:
+                bufstr = ''
+            elif max == 0:
+                bufstr = str(buffer[0])
+            elif max == 1:
+                bufstr = '%s\n%s' % (buffer[0], buffer[1])
+            elif pointer <= 0 or pointer >= max:
+                bufstr = '%s\n...\n%s' % (buffer[0], buffer[-1])
+            elif max == 2:
+                bufstr = '%s\n%s\n%s' % (buffer[0], buffer[1], buffer[2])
+            elif pointer == 1:
+                bufstr = '%s\n%s\n...\n%s' % (buffer[0], buffer[1], buffer[-1])
+            elif pointer == max - 1:
+                bufstr = '%s\n...\n%s\n%s' % \
+                         (buffer[0], buffer[-2], buffer[-1])
+            else:
+                bufstr = '%s\n...\n%s\n...\n%s' % \
+                         (buffer[0], buffer[pointer], buffer[-1])
+            return '<PgBuffer: db=%d, start=%d, index=%d\n%s>' % \
+                   (self._dbpointer, self._dbposition, self._pointer, bufstr)
+
+    def __init__(self, bindings, key, connection_data, **kwargs):
+        """Inicializuj databázovou tabulku dle uvedených specifikací.
+
+        Argumenty:
+        
+          bindings -- stejné jako v pøedkovi
+          key -- binding klíèového sloupce datové tabulky, musí být jeden
+            z prvkù 'bindings' nebo sekvence prvkù z 'bindings'
+          connection_data -- instance tøídy 'DBConnection' definující
+            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+            instanci 'DBConnection'
+          ordering -- stejné jako v pøedkovi
+        
+        """
+        if __debug__:
+            log(DEBUG, 'Vytváøím databázovou tabulku')
+        if is_sequence(key):
+            self._key_binding = tuple(key)
+        else:
+            self._key_binding = (key,)
+        super(DBDataPostgreSQL, self).__init__(
+            bindings=bindings, key=key, connection_data=connection_data,
+            **kwargs)
+        self._pg_is_in_select = False
+        self._pg_buffer = self._PgBuffer()
+        self._pg_number_of_rows = None
+        self._pg_initial_select = False
+        self._pg_make_row_template = \
+            self._pg_create_make_row_template(self._columns)
+        # NASTAVENÍ CACHE
+        # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
+        # velikost pamìti atd.), je vhodné rùzné nastavení cache,
+        # budeme parametry nastavovat z konfiguraèního souboru.
+        # Pozor, config.cache_size je vyu¾íváno pøímo v _PgBuffer.
+        # Zde tyto hodnoty zapamatujeme jako atributy objektu, proto¾e jsou
+        # potøeba v kritických èástech kódu a ètení konfigurace pøeci jen trvá.
+        import config
+        self._pg_initial_fetch_size = config.initial_fetch_size
+        self._pg_fetch_size = config.fetch_size
+
+    # Metody pro transakce
+
+    def _pg_allocate_connection(self):
+        connections = self._pg_connections()
+        if __debug__:
+            if len(connections) >= 3:
+                if __debug__:
+                    log(DEBUG, 'Podezøele velká hloubka spojení:',
+                        len(connections))
+        connection = self._pg_get_connection(outside_transaction=True)
+        connections.append(connection)
+        
+    def _pg_deallocate_connection(self):
+        self._pg_return_connection(self._pg_connections().pop())
+
+    def _pg_begin_transaction (self):
+        self._pg_allocate_connection()
+        self._pg_query ('begin')
+        
+    def _pg_commit_transaction (self):
+        self._pg_query ('commit')
+        self._pg_deallocate_connection()
+        
+    def _pg_rollback_transaction (self):
+        self._pg_query ('rollback')
+        self._pg_deallocate_connection()
+
+    # Pomocné metody
+
+    def _pg_create_make_row_template(self, columns):
+        template = []
+        for c in columns:
+            id = c.id()
+            type = c.type()
+            if isinstance(type, String):
+                typid = 0
+            elif isinstance(type, (Time, DateTime)):
+                typid = 2
+            else:
+                typid = 99
+            template.append((id, typid, type))
+        return template
+    
+    def _pg_make_row_from_raw_data(self, data_, template=None):
+        if not data_:
+            return None
+        if not template:
+            template = self._pg_make_row_template
+        row_data = []
+        data_0 = data_[0]
+        i = 0
+        for id, typid, type in template:            
+            dbvalue = data_0[i]
+            i += 1
+            if typid == 0:              # string
+                if dbvalue is None:
+                    v = None
+                else:
+                    v = unicode(dbvalue, self._pg_encoding)  #TODO: patøí jinam
+                value = Value(type, v)
+            elif typid == 2:            # time
+                value, err = type.validate(dbvalue, strict=False,
+                                           format=type.SQL_FORMAT, local=False)
+                assert err is None, err
+            else:
+                value, err = type.validate(dbvalue, strict=False)
+                assert err is None, err
+            row_data.append((id, value))
+        return Row(row_data)
+
+    def _pg_already_present(self, row):
+        key = []
+        for k in self.key():
+            try:
+                id = k.id()
+            except:
+                return False
+            try:
+                key.append(row[id])
+            except KeyError:
+                return False
+        return self.row(key)
+    
+    _pg_dt = type(mx.DateTime.DateTimeFrom('2001-01-01'))
+    def _pg_value(self, value):
+        if is_sequence(value):
+            return tuple(map(self._pg_value, value))
+        v = value.value()
+        if v == None:
+            result = 'NULL'
+        elif isinstance(value.type(), Boolean):
+            result = "'%s'" % value.type().export(v)
+        elif is_anystring(v):
+            result = "'%s'" % pg_escape(v)
+        elif type(v) == self._pg_dt:
+            if isinstance(value.type(), Date):
+                result = "'%s'" % v.strftime('%Y-%m-%d')
+            elif isinstance(value.type(), Time):
+                result = "'%s'" % v.strftime('%H:%M:%S')
+            else:                       # DateTime
+                result = "'%s'" % v.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(value.type(), Float):
+            result = value.type().export(v, locale_format=False)
+        else:
+            result = value.type().export(v)
+        return result
+
+    def _pg_key_condition(self, key):
+        if __debug__: log(DEBUG, 'Vytváøím podmínku z klíèe:', key)
+        key = xtuple(key)
+        keycols = map(lambda b: b.id(), self._key_binding)
+        assert len(keycols) == len(key), ('Invalid key length', key, keycols)
+        ands = map(EQ, keycols, key)
+        condition = apply(AND, ands)
+        if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
+        return condition
+
+    def _pg_connection_maker(self):
+        def maker():
+            self._pg_new_connection(self._pg_connection_data(), self)
+        return maker
+
+    # Veøejné metody a jimi pøímo volané abstraktní metody
+
+    def row(self, key):
+        #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
+        try:
+            data = self._pg_row (self._pg_value(key))
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        result = self._pg_make_row_from_raw_data(data)
+        #log(EVENT, 'Vrácený obsah øádku', result)
+        return result
+        
+    def select(self, condition=None, sort=(), reuse=False):
+        if __debug__: log(DEBUG, 'Zahájení selectu:', condition)
+        if reuse and not self._pg_changed and self._pg_number_of_rows and \
+               condition == self._pg_last_select_condition and \
+               sort == self._pg_last_select_sorting:
+            use_cache = True
+        else:
+            use_cache = False
+        self.close()
+        self._pg_begin_transaction ()
+        self._pg_is_in_select = True
+        self._pg_last_select_condition = condition
+        self._pg_last_select_sorting = sort
+        self._pg_last_fetch_row = None
+        self._pg_changed = False
+        try:
+            number_of_rows = self._pg_select (condition, sort)
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            self._pg_is_in_select = False
+            raise cls, e, tb
+        if use_cache and number_of_rows != self._pg_number_of_rows:
+            use_cache = False
+        if use_cache:
+            self._pg_buffer.goto(-1)
+        else:
+            self._pg_buffer.reset()
+            self._pg_initial_select = True
+        self._pg_number_of_rows = number_of_rows
+        return number_of_rows
+
+    def select_aggregate(self, operation, condition=None):
+        opid = operation[0]
+        t = self.find_column(operation[1]).type()
+        if opid == self.AGG_COUNT:
+            t = Integer()
+        elif opid == self.AGG_AVG:
+            if not isinstance(t, Number):
+                return None
+            t = Float()
+        else:
+            if not isinstance(t, Number):
+                return None
+        close_select = False
+        if not self._pg_is_in_select:
+            self.select(condition=condition)
+            close_select = True
+        try:
+            data = self._pg_select_aggregate(operation, condition)
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            self._pg_is_in_select = False
+            raise cls, e, tb
+        if close_select:
+            self.close()
+        result, error = t.validate(data[0][0])
+        assert error is None, error
+        return result
+        
+    def distinct(self, column, condition=None, sort=ASCENDENT):
+        """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
+
+        Argumenty:
+
+          column -- identifikátor sloupce.
+          condition -- podmínkový výraz nebo 'None'.
+          sort -- jedna z konstant  'ASCENDENT', 'DESCENDANT' nebo None.
+
+        """
+        return self._pg_distinct(column, condition, sort)
+
+    def fetchone(self, direction=FORWARD):
+        """Stejné jako v nadtøídì.
+
+        Metoda automaticky nereaguje na notifikace o zmìnì dat souvisejících
+        tabulek a pokraèuje (nedojde-li k pøeru¹ení transakce) v dodávce
+        starých dat.  Automatické pøenaèítání dat pøi zmìnì by mohlo vést
+        k výkonnostním problémùm, jeho provádìní je tedy ponecháno na uvá¾ení
+        aplikace, která se mù¾e nechat o zmìnách informovat registrací
+        prostøednictvím metody 'add_callback_on_change()'.
+
+        """
+        if __debug__:
+            log(DEBUG, 'Vyta¾ení øádku ze selectu ve smìru:', direction)
+        assert direction in(FORWARD, BACKWARD), \
+               ('Invalid direction', direction)
+        if not self._pg_is_in_select:
+            # Pokusy o rekonstrukci fetche nevedou k nièemu dobrému.  Pùvodnì
+            # tu bylo provedení nového selectu a hledání pùvodního øádku
+            # v nìm.  Pomineme-li mo¾né sémantické problémy této operace,
+            # nepomù¾e nám toto ani výkonnostnì, proto¾e musíme prohledat celá
+            # data a¾ po ký¾ené místo -- to u¾ je ov¹em mù¾eme rovnou znovu
+            # naèíst.
+            #
+            # Lep¹í je pou¾ívat explicitní nový select s argumentem `reuse'
+            # v kombinaci s metodou `skip'.  Pøi "pokraèování" selectu nám více
+            # ne¾ o ten samý øádek jde spí¹e o tu samou pozici v datech, co¾
+            # tento postup podporuje.  Pøi vhodném mechanismu bufferování
+            # odpadnou i nejzáva¾nìj¹í výkonnostní problémy.
+            raise ProgramError('Not within select')
+        # Tady zaèíná opravdové vyta¾ení aktuálních dat
+        buffer = self._pg_buffer
+        row = buffer.fetch(direction, self._pdbb_select_rows)
+        if row:
+            result = row
+        else:
+            # Kurzory v PostgreSQL mají spoustu chyb.  Napøíklad èasto
+            # kolabují pøi pøekroèení hranic dat a mnohdy správnì nefunguje
+            # FETCH BACKWARD.  V následujícím kódu se sna¾íme nìkteré
+            # nejèastìj¹í chyby PostgreSQL obejít.
+            def skip():
+                xcount = buffer.correction(FORWARD, self._pg_number_of_rows)
+                if xcount < 0:
+                    xcount = -xcount
+                    skip_direction = BACKWARD
+                else:
+                    skip_direction = FORWARD
+                if xcount > 0:
+                    try:
+                        result = self._pg_skip(xcount, skip_direction,
+                                               exact_count=True)
+                    except:
+                        cls, e, tb = sys.exc_info()
+                        try:
+                            self._pg_rollback_transaction()
+                        except:
+                            pass
+                        self._pg_is_in_select = False
+                        raise cls, e, tb
+            skip()
+            if self._pg_initial_select:
+                self._pg_initial_select = False
+                std_size = self._pg_initial_fetch_size
+            else:
+                std_size = self._pg_fetch_size
+            current_row_number = buffer.current()[1]
+            last_row_number = min(current_row_number + 1,
+                                  self._pg_number_of_rows)
+            if direction == FORWARD:
+                size = min(self._pg_number_of_rows-last_row_number, std_size)
+            else:
+                if current_row_number <= 0:
+                    if current_row_number == 0:
+                        skipped = buffer.skip(1, BACKWARD,
+                                              self._pg_number_of_rows)
+                        assert skipped == 1, skipped
+                        skip()
+                    return None
+                size = min(self._pg_number_of_rows, std_size)
+            assert size >= 0 and size <= self._pg_number_of_rows
+            if direction == FORWARD:
+                xskip = None
+            else:
+                xskip = buffer.skip(size, BACKWARD, self._pg_number_of_rows)
+                skip()
+            try:
+                data_ = self._pg_fetchmany(size, FORWARD)
+            except:
+                cls, e, tb = sys.exc_info()
+                try:
+                    self._pg_rollback_transaction()
+                except:
+                    pass
+                self._pg_is_in_select = False
+                raise cls, e, tb
+            if data_:
+                row_data = [self._pg_make_row_from_raw_data([d]) for d in data_]
+                buffer.fill(row_data, FORWARD, len(row_data)!=size)
+                if xskip:
+                    buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
+                result = buffer.fetch(direction, self._pdbb_select_rows)
+            else:
+                result = None
+        self._pg_last_fetch_row = result
+        if __debug__: log(DEBUG, 'Vrácený øádek', str(result))
+        return result
+    
+    def last_row_number(self):
+        return self._pg_buffer.current()[1]
+
+    def last_select_condition(self):
+        return self._pg_last_select_condition
+
+    def last_select_condition_sql(self):
+        return self._pdbb_condition2sql(self._pg_last_select_condition)
+
+    def skip(self, count, direction=FORWARD):
+        if __debug__: log(DEBUG, 'Pøeskoèení øádkù:', (direction, count))
+        assert type(count) == type(0) and count >= 0, \
+               ('Invalid count', count)
+        assert direction in (FORWARD, BACKWARD), \
+               ('Invalid direction', direction)
+        result = self._pg_buffer.skip(count, direction,
+                                      self._pg_number_of_rows)
+        if count > 0:
+            self._pg_last_fetch_row = None
+        if __debug__: log(DEBUG, 'Pøeskoèeno øádkù:', result)
+        return result
+
+    def rewind(self):
+        if not self._pg_is_in_select:
+            raise ProgramError('Not within select')
+        __, pos = self._pg_buffer.current()
+        if pos >= 0:
+            self.skip(pos+1, BACKWARD)
+        
+    def search(self, condition, direction=FORWARD):
+        """Vyhledej ve smìru 'direction' první øádek od 'row' dle 'condition'.
+
+        Vrací: Vzdálenost od øádku 'row' jako kladný integer nebo 0, pokud
+        takový øádek neexistuje.
+
+        """
+        if __debug__: log(DEBUG, 'Hledání øádku:', (condition, direction))
+        assert direction in (FORWARD, BACKWARD), \
+               ('Invalid direction', direction)
+        if not self._pg_is_in_select:
+            raise ProgramError('Not within select')
+        row, pos = self._pg_buffer.current()
+        if not row and pos >= 0 and pos < self._pg_number_of_rows:
+            self.skip(1, BACKWARD)
+            row = self.fetchone()
+        if not row and (pos < 0 and direction == BACKWARD or \
+                        pos >= 0 and direction == FORWARD):
+            result = 0
+        else:
+            try:
+                result = self._pg_search(row, condition, direction)
+            except:
+                cls, e, tb = sys.exc_info()
+                try:
+                    self._pg_rollback_transaction()
+                except:
+                    pass
+                self._pg_is_in_select = False
+                raise cls, e, tb
+        if __debug__: log(DEBUG, 'Výsledek hledání:', result)
+        return result
+
+    def close(self):
+        if __debug__: log(DEBUG, 'Explicitní ukonèení selectu')
+        if self._pg_is_in_select:
+            self._pg_commit_transaction()
+            self._pg_is_in_select = False
+
+    def insert(self, row, after=None, before=None):
+        assert after is None or before is None, \
+               'Both after and before specified'
+        log(ACTION, 'Vlo¾ení øádku', (row, after, before))
+        self._pg_begin_transaction ()
+        try:
+            # Jestli¾e je definováno ordering, které je souèástí klíèe, bude
+            # novì vlo¾ený øádek nutnì unikátní.
+            if (not self._ordering or \
+                (self._ordering[0] not in map(lambda c: c.id(), self.key()))
+                ) and \
+               self._pg_already_present(row):
+                msg = 'Øádek s tímto klíèem ji¾ existuje'
+                result = msg, False
+                log(ACTION, msg)
+            else:
+                positioned = after or before
+                if after:
+                    neighbor = after = self.row(after)
+                elif before:
+                    neighbor = before = self.row(before)
+                if positioned and (not neighbor):
+                    msg = 'Zadaný sousední øádek nenalezen'
+                    log(ACTION, msg,
+                        (after, before))
+                    result = msg, False
+                else:
+                    r = self._pg_insert (row, after=after, before=before)
+                    result = r, True
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        self._pg_commit_transaction()
+        self._pg_send_notifications()
+        if result[1]:
+            log(ACTION, 'Øádek vlo¾en', result)
+        return result
+    
+    def update(self, key, row):
+        key = xtuple(key)
+        log(ACTION, 'Update øádku:', key)
+        log(ACTION, 'Nová data', str(row))
+        self._pg_begin_transaction ()
+        try:
+            origrow = self.row(key)
+            if origrow:
+                ordering = self._ordering
+                if ordering:
+                    row = copy.copy(row)
+                    for id in ordering:
+                        try:
+                            row[id] = origrow[id]
+                        except KeyError:
+                            row.append(id, origrow[id])
+                keys = map(ColumnSpec.id, self.key())
+                new_key = []
+                for i in range(len(keys)):
+                    try:
+                        v = row[keys[i]]
+                    except KeyError:
+                        v = key[i]
+                    new_key.append(v)
+                new_key = tuple(new_key)
+                if new_key != key and self._pg_already_present(row):
+                    msg = 'Øádek s tímto klíèem ji¾ existuje'
+                    result = msg, False
+                    log(ACTION, msg, key)
+                else:
+                    n = self._pg_update(self._pg_key_condition(key), row)
+                    if n == 0:
+                        result = None, False
+                    else:
+                        new_row = self.row(new_key)
+                        result = new_row, True
+            else: # not origrow
+                msg = 'Øádek s daným klíèem neexistuje'
+                result = msg, False
+                log(ACTION, msg, key)
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        self._pg_commit_transaction ()
+        self._pg_send_notifications()
+        if result[1]:
+            log(ACTION, 'Øádek updatován', result)
+        return result
+    
+    def update_many(self, condition, row):
+        log(ACTION, 'Update øádkù:', condition)
+        log(ACTION, 'Nová data', str(row))
+        self._pg_begin_transaction ()
+        try:
+            ordering = self._ordering
+            if ordering:
+                new_row_items = []
+                for k, v in row.items():
+                    if k not in ordering:
+                        new_row_items.append((k, v))
+                row = Row(new_row_items)
+            result = self._pg_update (condition, row)
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        self._pg_commit_transaction ()
+        self._pg_send_notifications()
+        if result:
+            log(ACTION, 'Øádky updatovány:', result)
+        return result
+
+    def delete(self, key):
+        log(ACTION, 'Mazání øádku:', key)
+        self._pg_begin_transaction ()
+        try:
+            result = self._pg_delete (self._pg_key_condition(key))
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        self._pg_commit_transaction ()
+        self._pg_send_notifications()
+        log(ACTION, 'Øádek smazán', result)
+        return result
+    
+    def delete_many(self, condition):
+        log(ACTION, 'Mazání øádkù:', condition)
+        self._pg_begin_transaction ()
+        try:
+            result = self._pg_delete (condition)
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        self._pg_commit_transaction ()
+        self._pg_send_notifications()
+        log(ACTION, 'Øádky smazány', result)
+        return result
+
+    def lock_row(self, key):
+        # Pro zamykání je vy¾adována existence zamykací tabulky se speciálními
+        # vlastnostmi, která je definována v souboru `db.sql'.
+        log(EVENT, 'Zamykám øádek:', map(str, xtuple(key)))
+        self._pg_begin_transaction();
+        try:
+            self._pg_query('lock table %s' % self._PG_LOCK_TABLE_LOCK)
+            row = self.row(key)
+            if not row:
+                self._pg_rollback_transaction()
+                return 'Záznam neexistuje'
+            oidcols = filter(lambda c: isinstance(c.type(), Oid),
+                             self.columns())
+            cids = map(lambda c: c.id(), oidcols)
+            oids = map(lambda i, row=row: row[i].value(), cids)
+            for oid in oids:
+                data = self._pg_query('select usename from %s where row = %d'\
+                                      % (self._PG_LOCK_TABLE, oid))
+                if data:
+                    self._pg_rollback_transaction()
+                    return 'u¾ivatel `%s\'' % data[0][0]
+            lock_ids = []
+            for oid in oids:
+                self._pg_query('insert into %s (row) values (%d)' % \
+                               (self._PG_LOCK_TABLE, oid))
+                data = self._pg_query('select id from %s where row = %d' % \
+                                      (self._PG_LOCK_TABLE, oid))
+                lock_ids.append(data[0][0])
+            self._pg_lock_ids = lock_ids
+            self._pg_commit_transaction()
+        except DBException:
+            cls, e, tb = sys.exc_info()
+            try:
+                self._pg_rollback_transaction()
+            except:
+                pass
+            raise cls, e, tb
+        DBDataPostgreSQL.__bases__[0].lock_row(self, key)
+        update_commands = \
+          map(lambda id, self=self: 'update %s set id = id where id = %s' % \
+              (self._PG_LOCK_TABLE, id),
+              lock_ids)
+        thread.start_new_thread(self._pg_locking_process,
+                                (key, update_commands))
+        log(EVENT, 'Øádek zamèen')
+        return None
+
+    def unlock_row(self):
+        log(EVENT, 'Odemykám øádek')
+        DBDataPostgreSQL.__bases__[0].unlock_row(self)
+        for id in self._pg_lock_ids:
+            try:
+                self._pg_query('delete from %s where id = %s' % \
+                               (self._PG_LOCK_TABLE, id),
+                               outside_transaction=True)
+            except DBException:
+                pass
+        self._pg_lock_ids = None
+        log(EVENT, 'Øádek odemèen')
+
+    def _pg_locking_process(self, locked_row, update_commands):
+        if __debug__: log(DEBUG, 'Nastartován zamykací proces')
+        while True:
+            time.sleep(self._PG_LOCK_TIMEOUT)
+            if self._locked_row != locked_row:
+                return
+            for command in update_commands:
+                try:
+                    self._pg_query(command, outside_transaction=True)
+                except DBException, e:
+                    if __debug__:
+                        log(DEBUG, 'Chyba pøíkazu obnovy øádku', (e, command))
+            if __debug__: log(DEBUG, 'Zámek updatován')
+
+
+
+class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
+    """Èítaè ulo¾ený v PostgreSQL."""
+    
+    def __init__(self, name, connection_data):
+        """Inicializuj èítaè.
+
+        Argumenty:
+
+          name -- identifikátor èítaèe v databázi, string
+          connection_data -- instance tøídy 'DBConnection' definující
+            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+            instanci 'DBConnection'
+
+        """
+        assert is_string(name)
+        PostgreSQLConnector.__init__(self, connection_data)
+        self._name = name
+        self._query = "select nextval('%s')" % name
+        
+    def next(self):
+        result = self._pg_query(self._query)
+        try:
+            number = int(result[0][0])
+        except Exception, e:
+            raise DBException(_("Chybná hodnota èítaèe z databáze"), e)
+        return number
+
+
 class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                            PostgreSQLStandardBindingHandler):
     """Implementace tøídy 'Function' pro PostgreSQL.
@@ -2376,7 +2353,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
     Podporovány jsou pouze funkce vracející jedinou hodnotu.
 
     """
-    def __init__(self, name, connection_data):
+    def __init__(self, name, connection_data, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -2385,13 +2362,15 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
           connection_data -- instance tøídy 'DBConnection' definující
             parametry pøipojení, nebo funkce bez argumentù vracející takovou
             instanci 'DBConnection'
+          kwargs -- k pøedání pøedkùm
 
         """
         assert is_string(name)
         self._name = name
         bindings = ()
-        DBDataPostgreSQL.__init__(self, bindings, bindings, connection_data)
-        PostgreSQLStandardBindingHandler.__init__(self)
+        super(DBPostgreSQLFunction, self).__init__(
+            bindings=bindings, key=bindings, connection_data=connection_data,
+            **kwargs)
         arg_query = "select pronargs from pg_proc where proname='%s'" % name
         data = self._pg_query(arg_query, outside_transaction=True)
         narg = int(data[0][0])

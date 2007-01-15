@@ -683,12 +683,12 @@ class DBDataDefault(_DBTest):
             pytis.data.DBDataDefault,
             (key, (B('nazev', 'cstat', 'nazev'))),
             key)
-        dstat = dstat_spec.create(dbconnection_spec=conn)
+        dstat = dstat_spec.create(connection_data=conn)
         dstat1_spec = pytis.data.DataFactory(
             pytis.data.DBDataDefault,
             (key, (B('nazev', 'cstat', 'nazev'))),
             key)
-        dstat1 = dstat_spec.create(dbconnection_spec=conn)
+        dstat1 = dstat_spec.create(connection_data=conn)
         # osnova
         key = (B('synt', 'cosnova', 'synte'), B('anal', 'cosnova', 'anal'))
         dosnova_spec = pytis.data.DataFactory(
@@ -699,7 +699,7 @@ class DBDataDefault(_DBTest):
              B('stat', 'cosnova', 'stat', enumerator=dstat_spec),
              B('danit', 'cosnova', 'danit')),
             key)
-        dosnova = dosnova_spec.create(dbconnection_spec=conn)
+        dosnova = dosnova_spec.create(connection_data=conn)
         # denik
         cosi = B('', 'xcosi', 'id')
         key = B('cislo', 'denik', 'id', related_to=cosi)
@@ -1446,7 +1446,7 @@ class TutorialTest(unittest.TestCase):
         cis_columns = (cis_key,
                        C('popis', 'cis', 'y'))
         cis_data_spec = pytis.data.DataFactory(D, cis_columns, cis_key)
-        cis_data = cis_data_spec.create(dbconnection_spec=connection)
+        cis_data = cis_data_spec.create(connection_data=connection)
         tab_key = C('klic', 'tab', 'a')
         tab_columns = (tab_key,
                        C('popis', 'tab', 'b'),
