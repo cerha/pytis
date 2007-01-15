@@ -1558,7 +1558,7 @@ class ThreadTest(_DBBaseTest):
             else:
                 end = True
             time.sleep(1)
-tests.add(ThreadTest)
+#tests.add(ThreadTest)
 
 
 ################
