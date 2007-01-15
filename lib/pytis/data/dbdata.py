@@ -236,7 +236,7 @@ class DBConnectionPool:
         try:
             try:
                 connections = pool[spec_id]
-            except IndexError:
+            except KeyError:
                 pool[spec_id] = connections = []
             connections.append(connection)
         finally:

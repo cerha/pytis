@@ -1,5 +1,10 @@
 2007-01-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/dbdata.py (DBConnectionPool.put_back): Use the right
+	exception name when accessing the pool.
+
+2007-01-15  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/form/application.py (has_access): Use
 	default_access_groups instead of class_access_groups.
 
