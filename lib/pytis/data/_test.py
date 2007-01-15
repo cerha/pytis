@@ -27,8 +27,7 @@ from pytis.util import *
 import pytis.data
 import dbdata
 
-_connection_data = {'database': 'test', 'host': 'test', 'user': 'pdm', 'password': 'pdmpdm'}
-#_connection_data = {'database': 'test'}
+_connection_data = {'database': 'test'}
 
 tests = TestSuite()
 
