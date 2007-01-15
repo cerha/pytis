@@ -38,4 +38,9 @@ from access import *
 from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException, DBSystemException, DBUserException, DBLoginException
 from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, default_access_groups
 
+# TODO: The following import serves for backward compatibility of applications
+# and should be removed once applications switch to using the
+# default_access_groups function.
+from postgresql import PostgreSQLUserGroups
+
 types_.__dict__.update(globals())
