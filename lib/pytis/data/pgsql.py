@@ -111,8 +111,6 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                         value = result.getvalue(row, col)                    
                     except libpq.InterfaceError, e:
                         raise DBUserException(None, e)
-                    except libpq.TypeError, e:
-                        raise DBUserException(None, e)
                     if value is libpq.PG_True:
                         value = 'T'
                     elif value is libpq.PG_False:
