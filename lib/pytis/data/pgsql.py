@@ -82,7 +82,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
             cdata = connection.connection_data()
             connection = self._postgresql_new_connection(cdata)
             try:
-                result = do_query(connection)
+                result = do_query(connection.connection())
             except Exception, e:
                 raise DBSystemException(_("Database operational error"),
                                         e, e.args, query)
