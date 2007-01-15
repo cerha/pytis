@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,20 +77,20 @@ class _PgsqlAccessor(PostgreSQLAccessor):
             raise DBUserException(None, e, query)
         except libpq.OperationalError, e:
             if not restartable:
-                raise DBSystemException(_("Operační chyba v databázi"), e,
-                                        query)
+                raise DBSystemException(_("Database operational error"),
+                                        e, e.args, query)
             cdata = connection.connection_data()
             connection = self._postgresql_new_connection(cdata)
             try:
                 result = do_query(connection)
             except Exception, e:
-                raise DBSystemException(_("Operační chyba v databázi"), e,
-                                        query)
+                raise DBSystemException(_("Database operational error"),
+                                        e, e.args, query)
         except libpq.InternalError, e:
             raise DBException(None, e, query)
         except libpq.IntegrityError, e:
-            raise DBUserException(_("Pokus o porušení integrity dat"),
-                                  e, query)
+            raise DBUserException(_("Database integrity violation"),
+                                  e, e.args, query)
         return self._postgresql_Result(result), connection
 
     def _postgresql_transform_query_result(self, result_):
