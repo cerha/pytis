@@ -1,0 +1,63 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+"""Definice tøíd urèujících konkrétní pou¾ité pøístupové metody do databáze.
+
+Aplikace by mìly pro pøístup do databáze pou¾ívat výhradnì instance zde
+definovaných tøíd.
+
+"""
+
+from dbdata import *
+from pgsql import *
+
+
+class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData,
+                         PostgreSQLStandardBindingHandler,
+                         DBDataPyPgSQL):
+    """Datová tøída, kterou v na¹ich aplikacích standardnì pou¾íváme.
+
+    Je utvoøena pouhým slo¾ením existujících tøíd a nezavádí ¾ádnou dal¹í novou
+    funkcionalitu kromì konstruktoru.
+
+    """    
+    def __init__(self, bindings, key, dbconnection_spec, ordering=None,
+                 access_rights=AccessRights((None, (None, Permission.ALL)))):
+        """Stejné jako u 'DBDataPyPgSQL', volá v¹ak konstruktory pøedkù."""
+        RestrictedData.__init__(self, access_rights)
+        DBDataPyPgSQL.__init__(self, bindings, key, dbconnection_spec,
+                               ordering)
+        PostgreSQLStandardBindingHandler.__init__(self)
+        # Registrace notifikací sem jaksi nepatøí, ale kam jinam ji dát, kdy¾
+        # má být provedena a¾ po uskuteènìní v¹ech inicializací?
+        import config
+        if config.dblisten:
+            self._pypg_add_notifications()
+
+
+### Exportované promìnné/tøídy
+
+
+DBDataDefault = DBDataDefaultClass
+"""Podtøída 'DBData', kterou pou¾íváme pro pøístup k databázi."""
+
+DBCounterDefault = DBPyPgCounter
+"""Podtøída tøídy 'Counter', která je standardnì pou¾ívána."""
+
+DBFunctionDefault = DBPyPgFunction
+"""Podtøída tøídy 'Function', která je standardnì pou¾ívána."""

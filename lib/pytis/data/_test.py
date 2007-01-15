@@ -25,7 +25,7 @@ import unittest
 
 from pytis.util import *
 import pytis.data
-
+import dbdata
 
 tests = TestSuite()
 
@@ -655,18 +655,18 @@ class _DBTest(_DBBaseTest):
         _DBBaseTest.tearDown(self)        
 
 class DBDataPostgreSQL(_DBTest):
-    # Testujeme v rámci testování potomka 'DBDataDefaultClass'.
+    # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
 
 class DBDataPyPgSQL(_DBTest):
-    # Testujeme v rámci testování potomka 'DBDataDefaultClass'.
+    # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
 
 class PostgreSQLStandardBindingHandler(_DBTest):
-    # Testujeme v rámci testování potomka 'DBDataDefaultClass'.
+    # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
 
-class DBDataDefaultClass(_DBTest):
+class DBDataDefault(_DBTest):
     ROW1 = (2, DT.DateTimeFrom('2001-01-02'), 1000.0, 'U.S.A.', 'specialni')
     ROW2 = (3, DT.DateTimeFrom('2001-01-02'), 2000.0, 'Czech Republic',
             'zvlastni')
@@ -680,19 +680,19 @@ class DBDataDefaultClass(_DBTest):
         # stat
         key = B('stat', 'cstat', 'stat')
         dstat_spec = pytis.data.DataFactory(
-            pytis.data.DBDataDefaultClass,
+            pytis.data.DBDataDefault,
             (key, (B('nazev', 'cstat', 'nazev'))),
             key)
         dstat = dstat_spec.create(dbconnection_spec=conn)
         dstat1_spec = pytis.data.DataFactory(
-            pytis.data.DBDataDefaultClass,
+            pytis.data.DBDataDefault,
             (key, (B('nazev', 'cstat', 'nazev'))),
             key)
         dstat1 = dstat_spec.create(dbconnection_spec=conn)
         # osnova
         key = (B('synt', 'cosnova', 'synte'), B('anal', 'cosnova', 'anal'))
         dosnova_spec = pytis.data.DataFactory(
-            pytis.data.DBDataDefaultClass,
+            pytis.data.DBDataDefault,
             (key[0], key[1],
              B('popis', 'cosnova', 'popis'),
              B('druh', 'cosnova', 'druh'),
@@ -706,7 +706,7 @@ class DBDataDefaultClass(_DBTest):
         madatis = B('', 'cosnova', 'synte')
         madatia = B('', 'cosnova', 'anal')
         stat = B('', 'cstat', 'stat')
-        d = pytis.data.DBDataDefaultClass(
+        d = pytis.data.DBDataDefault(
             (key,
              B('datum', 'denik', 'datum',
                type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
@@ -725,14 +725,14 @@ class DBDataDefaultClass(_DBTest):
             key,
             conn)
         key = B('id', 'xcosi', 'id')
-        dcosi = pytis.data.DBDataDefaultClass(
+        dcosi = pytis.data.DBDataDefault(
             (key,
              B('popis', 'xcosi', 'popis')),
             key,
             conn)
         # view
         key = B('x', 'viewtest1', 'x')
-        view = pytis.data.DBDataDefaultClass((key,), key, conn)
+        view = pytis.data.DBDataDefault((key,), key, conn)
         # atributy
         self.data = d
         #self.mdata = md
@@ -995,10 +995,10 @@ class DBDataDefaultClass(_DBTest):
         assert t1.locked_row() is None, 'lock present'
         assert t2.lock_row(us) is None, 'lock failed'
         t2.unlock_row()
-tests.add(DBDataDefaultClass)
+tests.add(DBDataDefault)
 
 
-class DBMultiData(DBDataDefaultClass):
+class DBMultiData(DBDataDefault):
     ROW1 = (2, DT.DateTimeFrom('2001-01-02'), 1000.0, ('100','007'),
             'U.S.A.', 'specialni')
     ROW2 = (3, DT.DateTimeFrom('2001-01-02'), 2000.0, ('100','008'),
@@ -1179,10 +1179,10 @@ class DBDataFetchBuffer(_DBBaseTest):
             raise
         key = pytis.data.DBColumnBinding('x', 'big', 'x')
         self.data = \
-          pytis.data.DBDataDefaultClass((key,), key, self._dconnection)
+          pytis.data.DBDataDefault((key,), key, self._dconnection)
         key2 = pytis.data.DBColumnBinding('x', 'small', 'x')
         self.data2 = \
-          pytis.data.DBDataDefaultClass((key2,), key2, self._dconnection)
+          pytis.data.DBDataDefault((key2,), key2, self._dconnection)
     def tearDown(self):
         try:
             self.data.sleep()
@@ -1269,7 +1269,7 @@ class DBDataOrdering(_DBTest):
         super_(DBDataOrdering).setUp(self)
         B = pytis.data.DBColumnBinding
         key = B('id', 'xcosi', 'id')
-        self.data = pytis.data.DBDataDefaultClass(
+        self.data = pytis.data.DBDataDefault(
             (key, B('popis', 'xcosi', 'popis')),
             key,
             self._dconnection,
@@ -1311,9 +1311,9 @@ class DBDataOrdering(_DBTest):
 tests.add(DBDataOrdering)
 
 
-class DBDataNotification(DBDataDefaultClass):
+class DBDataNotification(DBDataDefault):
     def setUp(self):
-        DBDataDefaultClass.setUp(self)
+        DBDataDefault.setUp(self)
         self.data.add_callback_on_change(self._ddn_callback_1)
         self.data.add_callback_on_change(self._ddn_callback_2)
         self.data.add_callback_on_change(self._ddn_callback_3)
@@ -1441,7 +1441,7 @@ class TutorialTest(unittest.TestCase):
         def get_connection(connection=connection):
             return connection
         C = pytis.data.DBColumnBinding
-        D = pytis.data.DBDataDefaultClass
+        D = pytis.data.DBDataDefault
         cis_key = C('id', 'cis', 'x')
         cis_columns = (cis_key,
                        C('popis', 'cis', 'y'))
