@@ -20,12 +20,13 @@
 import time
 
 from mx import DateTime as DT
-from pyPgSQL import libpq
 import unittest
 
 from pytis.util import *
 import pytis.data
 import dbdata
+
+_connection_data = {'database': 'test'}
 
 tests = TestSuite()
 
@@ -597,21 +598,30 @@ tests.add(DBData)
     
 
 class _DBBaseTest(unittest.TestCase):
-    # Natvrdo vy¾adujeme databázi `test' s bezheslovým pøístupem a neo¹etøeným
-    # èímkoliv.
-    def setUp(self):
-        self._connection = libpq.PQconnectdb('dbname=test')
-        self._dconnection = pytis.data.DBConnection(database='test')
-    def tearDown(self):
+    def __init__(self, *args, **kwargs):
+        super(_DBBaseTest, self).__init__(*args, **kwargs)
+        self._dconnection = pytis.data.DBConnection(**_connection_data)
+        import psycopg2
+        self._connector = psycopg2.connect(**_connection_data)
+    def _sql_command(self, command):
+        cursor = self._connector.cursor()
+        cursor.execute(command)
         try:
-            self._connection.finish()
+            result = cursor.fetchall()
         except:
-            pass
+            result = ()
+        cursor.execute('commit')
+        cursor.close()
+        return result
+    def setUp(self):
+        pass
+    def tearDown(self):
+        pass
 
 class _DBTest(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connection
+        c = self._connector
         for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL) with oids",
                   "create table cosnova (synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE', PRIMARY KEY (synte,anal)) with oids",
                   "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madsynte char(3) NOT NULL DEFAULT '100', madanal char(3) DEFAULT '007', FOREIGN KEY (madsynte,madanal) REFERENCES cosnova(synte,anal)) with oids",
@@ -636,20 +646,20 @@ class _DBTest(_DBBaseTest):
                   "insert into viewtest2 values (2)",
                   ):
             try:
-                c.query(q)
+                self._sql_command(q)
             except:
                 self.tearDown()
                 raise 
     def tearDown(self):
-        c = self._connection
+        c = self._connector
         for t in ('viewtest1',):
             try:
-                c.query('drop view %s' % t)
+                self._sql_command('drop view %s' % t)
             except:
                 pass            
         for t in ('xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2'):
             try:
-                c.query('drop table %s' % t)
+                self._sql_command('drop table %s' % t)
             except:
                 pass
         _DBBaseTest.tearDown(self)        
@@ -933,12 +943,10 @@ class DBDataDefault(_DBTest):
     def test_delete(self):
         def lines(keys, self=self):
             n = len(keys)
-            result = \
-                   self._connection.query('select id from denik order by id')
-            assert result.ntuples == n, \
-                   ('invalid number of rows', result.ntuples, n)
+            result = self._sql_command('select id from denik order by id')
+            assert len(result) == n, ('invalid number of rows', len(result), n)
             for i in range(n):
-                v = result.getvalue(i, 0)
+                v = result[i][0]
                 assert keys[i] == v, ('nonmatching key', keys[i], v)
         I = pytis.data.Integer()
         assert self.data.delete(I.validate('0')[0]) == 0, \
@@ -956,12 +964,10 @@ class DBDataDefault(_DBTest):
     def test_delete_many(self):
         def lines(keys, self=self):
             n = len(keys)
-            result = \
-                   self._connection.query('select id from denik order by id')
-            assert result.ntuples == n, \
-                   ('invalid number of rows', result.ntuples, n)
+            result = self._sql_command('select id from denik order by id')
+            assert len(result) == n, ('invalid number of rows', len(result), n)
             for i in range(n):
-                v = result.getvalue(i, 0)
+                v = result[i][0]
                 assert keys[i] == v, ('nonmatching key', keys[i], v)
         x999 = pytis.data.Float().validate('999')[0]
         x1000 = pytis.data.Float().validate('1000')[0]
@@ -1138,12 +1144,10 @@ class DBMultiData(DBDataDefault):
         d = self.mdata
         def lines(keys, self=self):
             n = len(keys)
-            result = \
-                   self._connection.query('select id from denik order by id')
-            assert result.ntuples == n, \
-                   ('invalid number of rows', result.ntuples, n)
+            result = self._sql_command('select id from denik order by id')
+            assert len(result) == n, ('invalid number of rows', len(result), n)
             for i in range(n):
-                v = result.getvalue(i, 0)
+                v = result[i][0]
                 assert keys[i] == v, ('nonmatching key', keys[i], v)
         assert d.delete(pytis.data.Integer().validate('0')[0]) == 0, \
                'nonexistent column deleted'
@@ -1163,17 +1167,17 @@ class DBMultiData(DBDataDefault):
 class DBDataFetchBuffer(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connection
+        c = self._connector
         import config
         try:
-            c.query("create table big (x int) with oids")
+            self._sql_command("create table big (x int) with oids")
             table_size = config.initial_fetch_size + config.fetch_size + 10
             self._table_size = table_size
             for i in range(table_size):
-                c.query("insert into big values(%d)" % i)
-            c.query("create table small (x int) with oids")
+                self._sql_command("insert into big values(%d)" % i)
+            self._sql_command("create table small (x int) with oids")
             for i in range(4):
-                c.query('insert into "small" values(%d)' % i)
+                self._sql_command('insert into "small" values(%d)' % i)
         except:
             self.tearDown()
             raise
@@ -1189,8 +1193,8 @@ class DBDataFetchBuffer(_DBBaseTest):
         except:
             pass
         try:
-            self._connection.query('drop table "big"')
-            self._connection.query('drop table "small"')
+            self._sql_command('drop table "big"')
+            self._sql_command('drop table "small"')
         except:
             pass
         _DBBaseTest.tearDown(self)
@@ -1352,19 +1356,19 @@ tests.add(DBDataNotification)
 class DBCounter(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connection
+        c = self._connector
         for q in ("create sequence foo",):
             try:
-                c.query(q)
+                self._sql_command(q)
             except:
                 self.tearDown()
                 raise
         self._counter = pytis.data.DBCounterDefault('foo', self._dconnection)
     def tearDown(self):
-        c = self._connection
+        c = self._connector
         for q in ("drop sequence foo",):
             try:
-                c.query(q)
+                self._sql_command(q)
             except:
                 pass
         _DBBaseTest.tearDown(self)
@@ -1377,25 +1381,25 @@ tests.add(DBCounter)
 class DBFunction(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connection
+        c = self._connector
         try:
-            c.query("create table tab (x int)")
+            self._sql_command("create table tab (x int)")
             for q in ("foo1(int) returns int as 'select $1+1'",
                       "foo2(text,text) returns text as 'select $1 || $2'",
                       "foo3() returns int as 'select min(x) from tab'"):
-                c.query("create function %s language sql " % q)
+                self._sql_command("create function %s language sql " % q)
         except:
             self.tearDown()
             raise
     def tearDown(self):
-        c = self._connection
+        c = self._connector
         try:
-            c.query("drop table tab")
+            self._sql_command("drop table tab")
         except:
             pass
         for q in ("foo1(int)", "foo2(text,text)", "foo3()"):
             try:
-                c.query("drop function %s" % q)
+                self._sql_command("drop function %s" % q)
             except:
                 pass
         _DBBaseTest.tearDown(self)
@@ -1428,9 +1432,8 @@ tests.add(DBFunction)
 ###################
 
 
-class TutorialTest(unittest.TestCase):
+class TutorialTest(_DBBaseTest):
     def setUp(self):
-        self._connection = c = libpq.PQconnectdb('dbname=test')
         for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text) with oids",
                   "CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), "+\
                   "c varchar(10) REFERENCES cis) with oids",
@@ -1441,14 +1444,14 @@ class TutorialTest(unittest.TestCase):
                   "INSERT INTO tab VALUES (1, 'one', '1')",
                   "INSERT INTO tab VALUES (2, 'two', '2')",
                   ):
-            c.query(q)
+            self._sql_command(q)
     def tearDown(self):
-        c = self._connection
-        c.query("DROP TABLE tab")
-        c.query("DROP TABLE cis")
+        c = self._connector
+        self._sql_command("DROP TABLE tab")
+        self._sql_command("DROP TABLE cis")
     def test_it(self):
         # set up
-        connection = pytis.data.DBConnection(database='test')
+        connection = pytis.data.DBConnection(**_connection_data)
         def get_connection(connection=connection):
             return connection
         C = pytis.data.DBColumnBinding
@@ -1502,16 +1505,16 @@ class ThreadTest(_DBBaseTest):
     # insufficient thread safety
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connection
+        c = self._connector
         try:
-            c.query("create table tab (x int, y int) with oids")
+            self._sql_command("create table tab (x int, y int) with oids")
         except:
             self.tearDown()
             raise
     def tearDown(self):
-        c = self._connection
+        c = self._connector
         try:
-            c.query("drop table tab")
+            self._sql_command("drop table tab")
         except:
             pass
         _DBBaseTest.tearDown(self)
@@ -1523,7 +1526,7 @@ class ThreadTest(_DBBaseTest):
             pytis.data.DBDataDefault,
             (key, (B('y', 'tab', 'y'))),
             key)
-        c = pytis.data.DBConnection(database='test')
+        c = pytis.data.DBConnection(**_connection_data)
         d1 = d.create(connection_data=c)
         d2 = d.create(connection_data=c)
         I = pytis.data.Integer()
