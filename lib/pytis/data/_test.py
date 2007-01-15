@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1495,6 +1495,70 @@ class TutorialTest(unittest.TestCase):
             cis_data.sleep()
             tab_data.sleep()
 tests.add(TutorialTest)
+
+
+class ThreadTest(_DBBaseTest):
+    # This is a non-regular test trying to detect bugs resulting from
+    # insufficient thread safety
+    def setUp(self):
+        _DBBaseTest.setUp(self)
+        c = self._connection
+        try:
+            c.query("create table tab (x int, y int) with oids")
+        except:
+            self.tearDown()
+            raise
+    def tearDown(self):
+        c = self._connection
+        try:
+            c.query("drop table tab")
+        except:
+            pass
+        _DBBaseTest.tearDown(self)
+    def test_it(self):
+        import thread
+        B = pytis.data.DBColumnBinding
+        key = B('x', 'tab', 'x')
+        d = pytis.data.DataFactory(
+            pytis.data.DBDataDefault,
+            (key, (B('y', 'tab', 'y'))),
+            key)
+        c = pytis.data.DBConnection(database='test')
+        d1 = d.create(connection_data=c)
+        d2 = d.create(connection_data=c)
+        I = pytis.data.Integer()
+        yvalue = I.validate('1')[0]
+        nrepeat = 100
+        thr = []
+        for i in xrange(10):
+            thr.append(False)
+        def go1(n, startx, thr=thr):
+            for i in xrange(nrepeat):
+                key = I.validate('%d' % (i+startx,))[0]
+                row = pytis.data.Row([('x', key), ('y', yvalue)])
+                d1.insert(row)
+                d1.delete(key)
+            thr[n] = True
+        def go2(n, startx, thr=thr):
+            for i in xrange(nrepeat):
+                key = I.validate('%d' % (i+startx,))[0]
+                row = pytis.data.Row([('x', key), ('y', yvalue)])
+                d2.insert(row)
+                d2.delete(key)
+            thr[n] = True
+        for i in xrange(5):
+            thread.start_new_thread(go1, (i, i*nrepeat,))
+        for i in xrange(5):
+            thread.start_new_thread(go2, (i+5, (i+5)*nrepeat,))
+        end = False
+        while not end:
+            for i in xrange(10):
+                if thr[i] == False:
+                    break
+            else:
+                end = True
+            time.sleep(1)
+tests.add(ThreadTest)
 
 
 ################
