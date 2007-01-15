@@ -325,7 +325,8 @@ class Type(object):
             value = Value(self, None)
         else:
             value, error = apply(self._validate, (object,), kwargs)
-            if error: raise error
+            if error:
+                raise error
         if strict:
             self._check_constraints(value.value())
         return value
