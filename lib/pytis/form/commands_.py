@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -181,6 +181,13 @@ Command(ListField, 'SHOW_SELECTED',
         "Výbìr aktuálního záznamu")
 Command(ListField, 'INVOKE_EDIT_FORM',
         "Vyvolání editaèního formuláøe nad akt. záznamem")
+Command(FileField, 'LOAD',
+        "Nahrání soubodu jako nové hodnoty políèka.")
+Command(FileField, 'SAVE',
+        "Ulo¾ení objektu z databáze do soborového systému.")
+Command(FileField, 'CLEAR',
+        "Vynulování nastavené hodnoty políèka.")
+
 Command(Dialog, 'CLOSE_DIALOG',
         "Opu¹tìní dialogu bez potvrzení")
 Command(Dialog, 'COMMIT_DIALOG',
@@ -368,6 +375,9 @@ WX_COMMAND_ICONS = {
     TextField.COMMAND_CUT:                 wx.ART_CUT,
     TextField.COMMAND_COPY:                wx.ART_COPY,
     TextField.COMMAND_PASTE:               wx.ART_PASTE,
+    FileField.COMMAND_LOAD:                wx.ART_FILE_OPEN,
+    FileField.COMMAND_SAVE:                wx.ART_FILE_SAVE,
+    FileField.COMMAND_CLEAR:               wx.ART_DELETE,
     ListForm.COMMAND_COPY_CELL:            wx.ART_COPY,
     ListForm.COMMAND_EDIT:                 'edit-cell',
     ListForm.COMMAND_FILTER_BY_CELL:       'filter-by-cell',

@@ -123,6 +123,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                     SelectionType.RADIO_BOX: RadioBoxField,
                     }
                 field = mapping[selection_type]
+        elif isinstance(type, pytis.data.Binary):
+            field = FileField
         elif isinstance(type, pytis.data.Date):
             field = DateField
         elif isinstance(type, pytis.data.Color):
@@ -365,6 +367,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         
         """
         pass
+
+    def _px_size(self, ctrl, width, height):
+        return dlg2px(ctrl, 4*(width+1)+2, 8*height+4.5)
     
     def has_focus(self):
         """Vra» pravdu právì kdy¾ je políèko zaostøeno pro u¾iv. vstup."""
@@ -643,8 +648,7 @@ class TextField(InputField):
         control = wx.TextCtrl(self._parent, -1, '', style=style)
         wxid = control.GetId()
         if not self._inline:
-            width, height = self.width(), self.height()
-            size = dlg2px(control, 4*(width+1)+2, 8*height+4.5)
+            size = self._px_size(control, self.width(), self.height())
             control.SetMinSize(size)
             control.SetSize(size)
         maxlen = self._maxlen()
@@ -1397,4 +1401,92 @@ class ListField(GenericCodebookField):
         return self._selected_item is not None
 
 
+class FileField(InputField):
+    """Input field for manipulating generic binary data."""
     
+    def __init__(self, *args, **kwargs):
+        self._buffer = None
+        super(FileField, self).__init__(*args, **kwargs)
+        
+    def _create_ctrl(self):
+        ctrl = wx.TextCtrl(self._parent, -1, '')
+        if not self._inline:
+            ctrl.SetMinSize(self._px_size(ctrl, 10, 1))
+        ctrl.SetEditable(False)
+        ctrl.SetBackgroundColour(config.field_disabled_color)
+        return ctrl
+
+    def get_value(self):
+        return self._buffer
+
+    def _set_value(self, value):
+        assert value is None or isinstance(value, buffer)
+        self._buffer = value
+        if value is None:
+            display = ""
+        else:
+            display = "%dB" % len(value)
+        self._ctrl.SetValue(display)
+        self._on_change()
+        return True
+
+    def _enable(self):
+        pass
+
+    def _disable(self, change_appearance):
+        pass
+        
+    def _menu(self):
+        return super(FileField, self)._menu() + \
+               ((None,),
+                (FileField.COMMAND_LOAD,
+                 _("Nastavit ze souboru"),
+                 _("Nahradit hodnotu políèka daty ze souboru. ")),
+                (FileField.COMMAND_SAVE,
+                 _("Ulo¾it do souboru"),
+                 _("Ulo¾it objekt z databáze jako soubor.")),
+                (FileField.COMMAND_CLEAR,
+                 _("Vynulovat"),
+                 _("Nastavit prázdnou hodnotu.")),
+                )
+
+    def _cmd_load(self):
+        dlg = wx.FileDialog(self._parent, message=_("Vyberte soubor"),
+                            style=wx.OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            try:
+                f = open(dlg.GetPath(), 'rb')
+                try:
+                    data = buffer(f.read())
+                finally:
+                    f.close()
+                self.set_value(data)
+            except IOError, e:
+                message(_("Chyba pøi ètení souboru:")+' '+str(e), beep_=True)
+            else:
+                message(_("Soubor naèten."))
+        
+    def _can_save(self):
+        return self._buffer is not None 
+        
+    def _cmd_save(self):
+        msg = _("Ulo¾it hodnotu políèka '%s'") % self.spec().label()
+        dlg = wx.FileDialog(self._parent, style=wx.SAVE, message=msg)
+        if dlg.ShowModal() == wx.ID_OK:
+            try:
+                f = open(dlg.GetPath(), 'wb')
+                try:
+                    f.write(self._buffer)
+                finally:
+                    f.close()
+            except IOError, e:
+                message(_("Chyba pøi zápisu souboru:")+' '+str(e), beep_=True)
+            else:
+                message(_("Soubor ulo¾en."))
+        
+    def _can_clear(self):
+        return self._buffer is not None
+        
+    def _cmd_clear(self):
+        self._set_value(None)
+        
