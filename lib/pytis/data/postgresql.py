@@ -31,6 +31,7 @@ import re
 import string
 import thread
 import time
+import weakref
 
 import mx.DateTime
 
@@ -465,7 +466,151 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     class_access_groups = staticmethod(class_access_groups)
     
 
-class DBDataPostgreSQL(PostgreSQLUserGroups, DBData):
+class PostgreSQLNotifier(PostgreSQLConnector):
+    """Class with notification about table contents changes.
+
+    The class runs a thread watching for notification defined in the
+    `_pg_notifications' attribute and sets the `_pg_changed' attribute to True
+    whenever any of the given object gets changed and calls registered
+    callbacks.
+
+    """
+
+    NOTIFIERS = {}
+
+    class _PgNotifier(PostgreSQLConnector):
+
+        # Jsou tu dva zámky -- pozor na uváznutí!
+
+        def __init__(self, connection_data):
+            if __debug__:
+                log(DEBUG, 'Vytvoøení notifikátoru')
+            PostgreSQLConnector.__init__(self, connection_data)
+            self._notif_data_lock = thread.allocate_lock()
+            self._notif_data_objects = weakref.WeakKeyDictionary()
+            self._notif_connection_lock = thread.allocate_lock()
+            thread.start_new_thread(self._notif_listen, ())
+
+        def _notif_do_registration(self, notification):
+            self._pg_query('listen %s' % notification)
+            
+        def _notif_register(self, notification):
+            # Zamykáme zde kvùli mo¾nosti souèasného vyvolání této metody
+            # z `register' i naslouchacího threadu.
+            if __debug__:
+                log(DEBUG, 'Registruji notifikaci:', notification)
+            lock = self._notif_connection_lock
+            lock.acquire()
+            try:
+                self._notif_do_registration(notification)
+            finally:
+                lock.release()
+            if __debug__:
+                log(DEBUG, 'Notifikace zaregistrována:', notification)
+
+        def _notif_listen(self):
+            if __debug__:
+                log(DEBUG, 'Nový listener')
+            error_pause = 1
+            while True:
+                if __debug__:
+                    log(DEBUG, 'Napichuji se na nové spojení')
+                notiflist = []
+                for d in self._notif_data_objects.values():
+                    notiflist = notiflist + d
+                if __debug__:
+                    log(DEBUG, 'Notifikace k registraci:', notiflist)                    
+                notiflist = reduce(lambda x, y: x + y,
+                                   self._notif_data_objects.values(), [])
+                try:
+                    # connection do poolu nikdy nevracíme, tak¾e na nìj mù¾eme
+                    # navìsit, co je nám libo.
+                    for n in remove_duplicates(notiflist):
+                        self._notif_register(n)
+                except DBException, e:
+                    time.sleep(error_pause)
+                    error_pause = error_pause * 2
+                    continue
+                self._notif_listen_loop()
+
+        def _notif_listen_loop(self):
+            raise Exception("Volána neimplementovaná metoda")
+
+        def _notif_invoke_callbacks(self, notifications):
+            if __debug__:
+                log(DEBUG, 'Volám callbacky')
+            lock = self._notif_data_lock
+            lock.acquire()
+            try:
+                data_objects = copy.copy(self._notif_data_objects)
+            finally:
+                lock.release()
+            for d, ns in data_objects.items():
+                for n in ns:
+                    if n in notifications:
+                        if __debug__:
+                            log(DEBUG, 'Volám callbacky datového objektu:', d)
+                        d._call_on_change_callbacks()
+                        break
+
+        def register_notification(self, data, notification):
+            if __debug__:
+                log(DEBUG, 'Registruji notifikaci:', notification)
+            lock = self._notif_data_lock
+            lock.acquire()
+            try:
+                try:
+                    notifications = self._notif_data_objects[data]
+                except KeyError:
+                    self._notif_data_objects[data] = notifications = []
+                notification = notification.lower()
+                notifications.append(notification)
+            finally:
+                lock.release()
+            self._notif_register(notification)
+            if __debug__:
+                log(DEBUG, 'Notifikace zaregistrována')
+
+    def __init__(self, connection_data):
+        """
+        Argumenty:
+
+          connection_data -- údaje o spojení, stejné jako ve tøídì 'PostgreSQLConnector'
+        
+        """
+        PostgreSQLConnector.__init__(self, connection_data)
+        self._pg_changed = False
+        # Pozor, notifikace smí být registrovány a¾ nakonec po provedení v¹ech
+        # inicializací!  Pozor na potomky!
+        self._pg_notifications = []
+        import config
+        if config.dblisten:
+            self._pg_add_notifications()
+            
+    def _call_on_change_callbacks(self):
+        self._pg_changed = True
+        super(PostgreSQLNotifier, self)._call_on_change_callbacks()
+
+    def _pg_notifier_key(self, connection_data):
+        d = connection_data
+        return (d.host(), d.port(), d.database())
+                
+    def _pg_add_notifications(self):
+        notifications = self._pg_notifications
+        if not notifications:
+            return
+        spec = self._pg_dbconnection_spec()
+        key = self._pg_notifier_key(spec)
+        try:
+            notifier = PostgreSQLNotifier.NOTIFIERS[spec]
+        except KeyError:
+            notifier = PostgreSQLNotifier.NOTIFIERS[spec] = \
+              self._PgNotifier(spec)
+        for n in notifications:
+            notifier.register_notification(self, n)
+
+
+class DBDataPostgreSQL(PostgreSQLUserGroups, PostgreSQLNotifier, DBData):
     """Datová tabulka s napojením do PostgreSQL.
 
     Tato tøída pøekládá po¾adavky do SQL, není v¹ak implementaènì závislá na
@@ -473,8 +618,6 @@ class DBDataPostgreSQL(PostgreSQLUserGroups, DBData):
     
     """
     # TODO: Tato tøída je mamut a mìla by být rozdìlena na nìkolik men¹ích èástí
-
-    NOTIFIERS = {}
 
     _PG_LOCK_TABLE = '_rowlocks'
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
@@ -733,7 +876,9 @@ class DBDataPostgreSQL(PostgreSQLUserGroups, DBData):
                 return dbconnection_spec
             dbconnection_spec = _lambda
         self._pg_dbconnection_spec = dbconnection_spec
+        # TODO: Avoid duplicate call of the base class
         PostgreSQLUserGroups.__init__(self, dbconnection_spec())
+        PostgreSQLNotifier.__init__(self, dbconnection_spec())
         if is_sequence(key):
             self._key_binding = tuple(key)
         else:
@@ -742,7 +887,6 @@ class DBDataPostgreSQL(PostgreSQLUserGroups, DBData):
         self._pg_is_in_select = False
         self._pg_buffer = self._PgBuffer()
         self._pg_number_of_rows = None
-        self._pg_changed = False
         self._pg_initial_select = False
         self._pg_make_row_template = \
             self._pg_create_make_row_template(self._columns)

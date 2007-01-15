@@ -18,12 +18,7 @@
 
 "Implementace datového rozhraní pro PostgreSQL prostøednictvím pyPgSQL."
 
-import copy
 import select
-import string
-import thread
-import time
-import weakref
 import types as pytypes
 
 from pyPgSQL import libpq
@@ -152,163 +147,63 @@ class DBPyPgFunction(_PgsqlAccessor, DBPostgreSQLFunction):
     pass
 
 
-class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
+class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL, PostgreSQLNotifier):
 
-    # TODO: Jediné, co tato tøída sama implementuje, jsou notifikace.  Ty by
-    # pøitom mìly patøit jinam, ale není jasné, jak v nich rozumnì zajistit
-    # pøístup k databázi.
+    class _PgNotifier(_PgsqlAccessor, PostgreSQLNotifier._PgNotifier):
 
-    class _PgNotifier:
+        def __init__(self, connection_data):
+            PostgreSQLNotifier._PgNotifier.__init__(self, connection_data)
+            self._pgnotif_connection = None
 
-        # Jsou tu dva zámky -- pozor na uváznutí!
-
-        def __init__(self, connection_pool, connection_spec):
-            if __debug__:
-                log(DEBUG, 'Vytvoøení')
-            self._data_lock = thread.allocate_lock()
-            self._data_objects = weakref.WeakKeyDictionary()
-            self._connection_lock = thread.allocate_lock()
-            self._connection = None
-            thread.start_new_thread(self._listen,
-                                    (connection_pool, connection_spec))
-
-        def _register(self, notification):
-            # Zamykáme zde kvùli mo¾nosti souèasného vyvolání této metody
-            # z `register' i naslouchacího threadu.
-            if __debug__:
-                log(DEBUG, 'Registruji notifikaci:', notification)
-            lock = self._connection_lock
-            if self._connection:
-                connection = self._connection.connection()
+        def _notif_do_registration(self, notification):
+            if self._pgnotif_connection is None:
+                connection_data = self._pg_connection_data()
+                self._pgnotif_connection = \
+                    self._postgresql_new_connection(connection_data)
+            connection = self._pgnotif_connection
+            query = 'listen %s' % (notification,)
+            # TODO: Allow reconnection with re-registrations
+            self._postgresql_query(connection, query, False)
+        
+        def _notif_listen_loop(self):
+            connection_ = self._pgnotif_connection
+            connection = connection_.connection()
+            while True:
+                if __debug__:
+                    log(DEBUG, 'Hlídám vstup', connection)
+                try:
+                    select.select([connection.socket], [], [], None)
+                except Exception, e:
+                    if __debug__:
+                        log(DEBUG, 'Chyba na socketu', e.args)
+                    break
+                if __debug__:
+                    log(DEBUG, 'Pøi¹el vstup')
+                lock = self._notif_connection_lock
                 lock.acquire()
                 try:
                     try:
-                        connection.query('listen %s' % notification)
+                        connection.consumeInput()
+                        notice = connection.notifies()
                     except Exception, e:
-                        try:
-                            connection.finish() # pro jistotu
-                        except:
-                            pass
-                        raise DBSystemException(
-                            _("Databázová chyba listen"), e)
+                        if __debug__:
+                            log(DEBUG, 'Databázová chyba', e.args)
+                        break
+                    notifications = []
+                    if notice:
+                        if __debug__:
+                            log(DEBUG, 'Zaregistrována zmìna dat')
+                    while notice:
+                        n = notice.relname.lower()
+                        notifications.append(n)
+                        notice = connection.notifies()
                 finally:
                     lock.release()
-            if __debug__:
-                log(DEBUG, 'Notifikace zaregistrována:', notification)
-
-        def _listen(self, pool, spec):
-            if __debug__:
-                log(DEBUG, 'Nový listener')
-            error_pause = 1
-            while True:
                 if __debug__:
-                    log(DEBUG, 'Napichuji se na nové spojení')
-                connection_ = self._connection = pool.get(spec)
-                connection = connection_.connection()
-                notiflist = reduce(lambda x, y: x + y,
-                                   self._data_objects.values(), [])
-                if __debug__:
-                    log(DEBUG, 'Notifikace k registraci:', notiflist)
-                try:
-                    # connection do poolu nikdy nevracíme, tak¾e na nìj mù¾eme
-                    # navìsit, co je nám libo.
-                    for n in remove_duplicates(notiflist):
-                        self._register(n)
-                except DBException, e:
-                    time.sleep(error_pause)
-                    error_pause = error_pause * 2
-                    continue
-                while True:
-                    if __debug__:
-                        log(DEBUG, 'Hlídám vstup', connection)
-                    try:
-                        select.select([connection.socket], [], [], None)
-                    except Exception, e:
-                        if __debug__:
-                            log(DEBUG, 'Chyba na socketu', e.args)
-                        break
-                    if __debug__:
-                        log(DEBUG, 'Pøi¹el vstup')
-                    lock = self._connection_lock
-                    lock.acquire()
-                    try:
-                        try:
-                            connection.consumeInput()
-                            notice = connection.notifies()
-                        except Exception, e:
-                            if __debug__:
-                                log(DEBUG, 'Databázová chyba', e.args)
-                            break
-                        notifications = []
-                        if notice:
-                            self._pg_changed = True
-                            if __debug__:
-                                log(DEBUG, 'Zaregistrována zmìna dat')
-                        while notice:
-                            n = string.lower(notice.relname)
-                            notifications.append(n)
-                            notice = connection.notifies()
-                    finally:
-                        lock.release()
-                    if __debug__:
-                        log(DEBUG, 'Naèteny notifikace:', notifications)
-                    self._invoke_callbacks(notifications)
-
-        def _invoke_callbacks(self, notifications):
-            if __debug__:
-                log(DEBUG, 'Volám callbacky')
-            lock = self._data_lock
-            lock.acquire()
-            try:
-                data_objects = copy.copy(self._data_objects)
-            finally:
-                lock.release()
-            for d, ns in data_objects.items():
-                for n in ns:
-                    if n in notifications:
-                        if __debug__:
-                            log(DEBUG, 'Volám callbacky datového objektu:', d)
-                        d._call_on_change_callbacks()
-                        break
-
-        def register(self, data, notification):
-            if __debug__:
-                log(DEBUG, 'Registruji notifikaci:', notification)
-            lock = self._data_lock
-            lock.acquire()
-            try:
-                try:
-                    notifications = self._data_objects[data]
-                except KeyError:
-                    self._data_objects[data] = notifications = []
-                notification = string.lower(notification)
-                notifications.append(notification)
-            finally:
-                lock.release()
-            self._register(notification)
-            if __debug__:
-                log(DEBUG, 'Notifikace zaregistrována')
+                    log(DEBUG, 'Naèteny notifikace:', notifications)
+                self._notif_invoke_callbacks(notifications)
 
     def __init__(self, bindings, key, dbconnection_spec, ordering=None):
         DBDataPostgreSQL.__init__(self, bindings, key, dbconnection_spec,
                                   ordering)
-        # Pozor, notifikace smí být registrovány a¾ nakonec po provedení v¹ech
-        # inicializací!  Pozor na potomky!
-        self._pg_notifications = []
-        import config
-        if config.dblisten:
-            self._pg_add_notifications()
-                
-    def _pg_add_notifications(self):
-        notifications = self._pg_notifications
-        if not notifications:
-            return
-        s = self._pg_dbconnection_spec()
-        spec = (s.host(), s.port(), s.database())
-        try:
-            notifier = DBDataPostgreSQL.NOTIFIERS[spec]
-        except KeyError:
-            notifier = DBDataPostgreSQL.NOTIFIERS[spec] = \
-              self._PgNotifier(self._pg_connection_pool(), s)
-        for n in notifications:
-            notifier.register(self, n)
+
