@@ -19,7 +19,6 @@
 "Implementace datového rozhraní pro PostgreSQL prostøednictvím pyPgSQL."
 
 import select
-import types as pytypes
 
 from pyPgSQL import libpq
 
@@ -29,7 +28,7 @@ from postgresql import *
 
 class _PgsqlAccessor(PostgreSQLAccessor):
     
-    def _postgresql_open_connection(class_, connection_data):
+    def _postgresql_open_connection(self, connection_data):
         # Sestav connection string
         connection_string = ''
         for option, accessor in (('user', DBConnection.user),
@@ -52,14 +51,12 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
             raise DBException(_("Nelze se pøipojit k databázi"), e)
-        return class_._postgresql_Connection(connection, connection_data)
-    #_postgresql_open_connection = classmethod(_postgresql_open_connection)
+        return self._postgresql_Connection(connection, connection_data)
     
-    def _postgresql_close_connection(class_, connection):
+    def _postgresql_close_connection(self, connection):
         connection.connection().finish()
-    #_postgresql_close_connection = classmethod(_postgresql_close_connection)
     
-    def _postgresql_query(class_, connection, query, restartable):
+    def _postgresql_query(self, connection, query, restartable):
         result = None
         def do_query(connection):
             try:
@@ -82,7 +79,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                 raise DBSystemException(_("Operaèní chyba v databázi"), e,
                                         query)
             cdata = connection.connection_data()
-            connection = class_._postgresql_new_connection(cdata)
+            connection = self._postgresql_new_connection(cdata)
             try:
                 result = do_query(connection)
             except Exception, e:
@@ -93,10 +90,9 @@ class _PgsqlAccessor(PostgreSQLAccessor):
         except libpq.IntegrityError, e:
             raise DBUserException(_("Pokus o poru¹ení integrity dat"),
                                   e, query)
-        return class_._postgresql_Result(result), connection
-    #_postgresql_query = classmethod(_postgresql_query)
+        return self._postgresql_Result(result), connection
 
-    def _postgresql_transform_query_result(class_, result_):
+    def _postgresql_transform_query_result(self, result_):
         result = result_.result()
         if result.resultType == libpq.RESULT_DML:
             if result.cmdTuples:
@@ -135,8 +131,6 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                     row_data.append(value)
                 data.append(row_data)
         return PostgreSQLResult(data)
-#     _postgresql_transform_query_result = \
-#         classmethod(_postgresql_transform_query_result)
 
     
 class DBPyPgCounter(_PgsqlAccessor, DBPostgreSQLCounter):

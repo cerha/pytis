@@ -188,7 +188,7 @@ class PostgreSQLAccessor(object):
         def result(self):
             return self._result
     
-    def _postgresql_new_connection(class_, connection_data):
+    def _postgresql_new_connection(self, connection_data):
         """Vytvoø, inicializuj a vra» nové spojení do databáze.
 
         Návratovou hodnotou je instance '_postgresql_Connection'.
@@ -199,12 +199,11 @@ class PostgreSQLAccessor(object):
             stroj, port, u¾ivatel, heslo, atd.
             
         """
-        connection = class_._postgresql_open_connection(connection_data)
-        class_._postgresql_initialize_connection(connection)
+        connection = self._postgresql_open_connection(connection_data)
+        self._postgresql_initialize_connection(connection)
         return connection
-    #_postgresql_new_connection = classmethod(_postgresql_new_connection)
         
-    def _postgresql_open_connection(class_, connection_data):
+    def _postgresql_open_connection(self, connection_data):
         """Vytvoø a vra» nové spojení do databáze.
 
         Návratovou hodnotou je instance '_postgresql_Connection'.
@@ -218,9 +217,8 @@ class PostgreSQLAccessor(object):
 
         """
         raise ProgramError(_("Volána neimplementovaná metoda"))
-    #_postgresql_open_connection = classmethod(_postgresql_open_connection)
 
-    def _postgresql_close_connection(class_, connection):
+    def _postgresql_close_connection(self, connection):
         """Uzavøi spojení do databáze.
 
         Argumenty:
@@ -232,15 +230,12 @@ class PostgreSQLAccessor(object):
         
         """
         pass
-    #_postgresql_close_connection = classmethod(_postgresql_close_connection)
     
     def _postgresql_initialize_connection(self, connection):
         """Proveï potøebné inicializace nového spojení 'connection'.
         """
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
-    #_postgresql_initialize_connection = \
-    #    classmethod(_postgresql_initialize_connection)
 
     def _postgresql_initialize_transactions(self, connection):
         """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
@@ -250,16 +245,13 @@ class PostgreSQLAccessor(object):
                                ('set session characteristics as transaction '+
                                 'isolation level serializable'),
                                False)
-    #_postgresql_initialize_transactions = \
-    #    classmethod(_postgresql_initialize_transactions)
 
-    def _postgresql_initialize_coding(class_, connection):
-        encoding = class_._pg_encoding
+    def _postgresql_initialize_coding(self, connection):
+        encoding = self._pg_encoding
         query = 'set client_encoding to "%s"' % (encoding,)
-        class_._postgresql_query(connection, query, False)
-    #_postgresql_initialize_coding = classmethod(_postgresql_initialize_coding)
+        self._postgresql_query(connection, query, False)
         
-    def _postgresql_query(class_, connection, query, restartable):
+    def _postgresql_query(self, connection, query, restartable):
         """Proveï SQL pøíkaz 'query' a vra» výsledek.
 
         Argumenty:
@@ -278,9 +270,8 @@ class PostgreSQLAccessor(object):
 
         """
         raise ProgramError(_("Volána neimplementovaná metoda"))
-    #_postgresql_query = classmethod(_postgresql_query)
 
-    def _postgresql_transform_query_result(class_, result):
+    def _postgresql_transform_query_result(self, result):
         """Vra» instanci 'PostgreSQLResult' odpovídající výsledku 'result'.
 
         Argumenty:
@@ -291,8 +282,6 @@ class PostgreSQLAccessor(object):
         
         """
         raise ProgramError(_("Volána neimplementovaná metoda"))
-    #_postgresql_transform_query_result = \
-    #    classmethod(_postgresql_transform_query_result)
 
 
 class PostgreSQLConnector(PostgreSQLAccessor):
