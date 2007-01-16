@@ -264,6 +264,8 @@ DEFAULT_KEYMAP = (
     ('Ctrl-v',        TextField.COMMAND_PASTE),
     ('F2',            Invocable.COMMAND_INVOKE_SELECTION),
     ('Ctrl-F2',       Invocable.COMMAND_INVOKE_SELECTION(alternate=True)),
+    ('Backspace',     FileField.COMMAND_CLEAR),
+    ('Delete',        FileField.COMMAND_CLEAR),
     ('Backspace',     ListField.COMMAND_SHOW_SELECTED),
     ('Escape',        Dialog.COMMAND_CLOSE_DIALOG),
     ('Enter',         Dialog.COMMAND_COMMIT_DIALOG),
