@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,9 +80,8 @@ class Form(lcg.Content):
     def _valid_prefill(self):
         # Return a dictionary of Python values for the prefill argument.
         valid = {}
-        kc = [c.id() for c in self._data.key()]
         for id in self._view.layout().order():
-            if id not in kc and self._prefill.has_key(id):
+            if self._prefill.has_key(id):
                 f = self._view.field(id)
                 type = f.type(self._data)
                 value, error = type.validate(self._prefill[id], strict=False)
@@ -209,41 +208,36 @@ class LayoutForm(Form):
 #             s.Add(sizer, 0, wx.TOP, 2)
 #             sizer = s
 #         return sizer
-
-    def _pack_fields(self, parent, items, space, gap):
-        """Sestav skupinu pod sebou umístěných políček/tlačítek do gridu.
-
-        Argumenty:
-
-          items -- sekvence identifikátorů políček nebo instancí Button.
-          space -- mezera mezi ovládacím prvkem a labelem políčka v dlg units;
-            integer
-          gap -- mezera mezi jednotlivými políčky v dlg units; integer
-
-        Pro každý prvek skupiny vytvoří tlačítko nebo políčko
-        'inputfield.InputField' a přidá jeho label a widget do vytvořené
-        instance 'wx.FlexGridSizer'.
-
-        Vrací: instanci 'wx.FlexGridSizer' naplněnou políčky a tlačítky.
-
-        """
-        grid = wx.FlexGridSizer(len(items), 2, gap, space)
-        for item in items:
-            if isinstance(item, Button):
-                button = self._create_button(parent, item)
-                style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-                label = wx.StaticText(parent, -1, "",
-                                      style=wx.ALIGN_RIGHT)
-                grid.Add(label, 0, style, 2)
-                grid.Add(button)                
-            else:    
-                if item.height() > 1:
-                    style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
-                else:
-                    style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-                grid.Add(item.label(), 0, style, 2)
-                grid.Add(item.widget())
-        return grid
+#
+#     def _pack_fields(self, parent, items, space, gap):
+#         """Sestav skupinu pod sebou umístěných políček/tlačítek.
+#
+#         Argumenty:
+#
+#           items -- sekvence identifikátorů políček nebo instancí Button.
+#           space -- mezera mezi ovládacím prvkem a labelem políčka v dlg units;
+#             integer
+#           gap -- mezera mezi jednotlivými políčky v dlg units; integer
+#
+#         """
+#         pass
+#         grid = wx.FlexGridSizer(len(items), 2, gap, space)
+#         for item in items:
+#             if isinstance(item, Button):
+#                 button = self._create_button(parent, item)
+#                 style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+#                 label = wx.StaticText(parent, -1, "",
+#                                       style=wx.ALIGN_RIGHT)
+#                 grid.Add(label, 0, style, 2)
+#                 grid.Add(button)                
+#             else:    
+#                 if item.height() > 1:
+#                     style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
+#                 else:
+#                     style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+#                 grid.Add(item.label(), 0, style, 2)
+#                 grid.Add(item.widget())
+#         return grid
 
 
 class ShowForm(LayoutForm):
@@ -285,7 +279,8 @@ class EditForm(LayoutForm):
         if isinstance(self._errors, (str, unicode)):
             errors = concat("<p>", self._errors, "</p>")
         else:
-            errors = [concat("<p>", self._view.field(id).label(), ": ",
+            errors = [concat("<p>", self._view.field(id) and
+                                    self._view.field(id).label() or id, ": ",
                              msg, "</p>\n")
                       for id, msg in self._errors]
         if errors:
