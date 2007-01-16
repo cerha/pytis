@@ -360,7 +360,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         pool.put_back(connection.connection_data(), connection)
 
     def _pg_query(self, query, outside_transaction=False, backup=False,
-                  query_args=()):
+                  query_args=(), _lock=True):
         """Call the SQL 'query' and return the result.
 
         Arguments:
@@ -387,7 +387,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         if __debug__:
             log(DEBUG, 'SQL query', query)
         lock = self._pg_query_lock
-        lock.acquire()
+        if _lock:
+            lock.acquire()
         try:
             try:
                 result, connection = self._postgresql_query(connection, query,
@@ -405,11 +406,13 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 # v transakcích a ty konfliktní jsou díky serializaci
                 # automaticky správnì øazeny.
                 self._pg_query(self._pdbb_logging_command % pg_escape(query),
-                               outside_transaction=False, backup=False)
+                               outside_transaction=False, backup=False,
+                               _lock=False)
             # Získej a vra» data
             data = self._postgresql_transform_query_result(result)
         finally:
-            lock.release()
+            if _lock:
+                lock.release()
         if __debug__:
             log(DEBUG, 'SQL query result', data)
         return data

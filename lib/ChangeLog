@@ -1,3 +1,9 @@
+2007-01-16  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py (PostgreSQLConnector._pg_query): When
+	calling the logging command, avoid duplicate locking resulting in
+	deadlock.
+
 2007-01-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField._on_set_focus): Only
