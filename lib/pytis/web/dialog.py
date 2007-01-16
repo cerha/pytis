@@ -1,0 +1,71 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2007 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Web dialogs.
+
+This module implements web-based dialogs.
+
+"""
+
+from pytis.web import *
+from lcg.export import _html
+
+_ = lcg.TranslatableTextFactory('pytis')
+
+class Dialog(lcg.Content):
+
+    def __init__(self, hidden=(), handler='#', action=None):
+        assert isinstance(hidden, (tuple, list))
+        assert isinstance(handler, (str, unicode))
+        assert isinstance(action, (str, unicode)) or action is None
+        super(Dialog, self).__init__()
+        self._hidden = list(hidden)
+        self._handler = handler
+        self._action = action
+    
+    def _export_content(self, exporter):
+        return ()
+
+    def export(self, exporter):
+        content = self._export_content(exporter)
+        hidden = self._hidden
+        if self._action:
+            hidden += [('action', self._action)]
+        content += tuple([_html.hidden(k, v) for k, v in hidden]) + \
+                   (_html.submit(_("Submit")),)
+        return _html.form(content, action=self._handler, cls="dialog") + "\n"
+
+
+class SelectionDialog(Dialog):
+    
+    def __init__(self, id, label, values, selected=None, **kwargs):
+        super(SelectionDialog, self).__init__(**kwargs)
+        assert isinstance(id, str)
+        assert isinstance(label, (str, unicode))
+        assert isinstance(values, (tuple, list))
+        assert selected is None or selected in [v for v, uv in values]
+        self._id = id
+        self._label = label
+        self._values = values
+        self._selected = selected
+        
+    def _export_content(self, exporter):
+        label = _html.label(self._label, self._id)
+        ctrl = _html.select(self._id, [(uv, str(v)) for v, uv in self._values],
+                            id=self._id, selected=self._selected)
+        return (label, ": ", ctrl)
