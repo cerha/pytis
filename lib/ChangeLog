@@ -1,5 +1,50 @@
 2007-01-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (InputField._on_set_focus): Only
+	validate the previous field if it is from the same form.
+	(Invocable._INVOKE_TITLE, Invocable._INVOKE_HELP)
+	(Invocable._INVOKE_ICON): New constants.
+	(Invocable._INVOKE_SELECTION_MENU_HELP)
+	(Invocable._INVOKE_SELECTION_MENU_TITLE): Constants removed.
+	(_call_next_method): Method removed.
+	(Invocable._create_widget): Use `super()' instead of
+	`_call_next_method()'.
+	(Invocable._create_widget): `_INVOKE_SELECTION_MENU_TITLE' ->
+	`_INVOKE_TITLE'.
+	(Invocable._create_button): Use `wx.BitmapButton' when
+	`self._INVOKE_ICON' is defined.
+	(Invocable._disable, Invocable._enable): Use `super()' instead of
+	`_call_next_method()'.
+	(Invocable._menu): `_INVOKE_SELECTION_MENU_TITLE' ->
+	`_INVOKE_TITLE'.  Use `super()' to get the parent class menu, not
+	hardcoded `TextField' as the parent.
+	(DateField._INVOKE_SELECTION_MENU_TITLE): -> `_INVOKE_TITLE'
+	(DateField._INVOKE_SELECTION_MENU_HELP): -> `_INVOKE_HELP'
+	(CodebookField._on_codebook_insert): Don't return anything.
+	(ColorSelectionField._INVOKE_SELECTION_MENU_TITLE): ->
+	`_INVOKE_TITLE'
+	(ColorSelectionField._INVOKE_SELECTION_MENU_HELP): ->
+	`_INVOKE_HELP'
+	(CodebookField._INVOKE_SELECTION_MENU_TITLE): -> `_INVOKE_TITLE'
+	(CodebookField._INVOKE_SELECTION_MENU_HELP): -> `_INVOKE_HELP'
+	(CodebookField._create_widget): Use `super()' to create the base
+	widget.  Use a 'new-record' icon instead of the plus sign on the
+	codebook insertion button.
+	(CodebookField._menu): Use `super()' to get the base menu.
+	(FileField): Derive also from `Invocable'.
+	(FileField._INVOKE_TITLE, FileField._INVOKE_HELP) 
+	(FileField._INVOKE_ICON): New constants.
+	(FileField._on_invoke_selection): New method.
+	(FileField._menu): Use `Invocable's super class menu as base menu.
+
+	* pytis/form/screen.py
+	(get_icon): New function.
+	(MItem.create): Use it.
+	(MItem.__init__): Docstring updated.
+
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): Added keys for
+	`FileField.COMMAND_CLEAR'.
+
 	* pytis/web/__init__.py: Import `dialog'.
 
 	* pytis/web/form.py (Form._valid_prefill): Don't omit key columns.
