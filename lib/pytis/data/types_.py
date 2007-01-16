@@ -795,7 +795,7 @@ class DateTime(Type):
         try:
             matcher = self._check_matcher[format]
         except KeyError:
-            special = {'%Y': r'\d\d\d\d', ' ': '\s+'}
+            special = {'%Y': r'\d\d\d\d', ' ': '\s+', '%p': '[AP]M'}
             def subst(match):
                 m = match.group(1)
                 try:
