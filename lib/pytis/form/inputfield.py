@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -306,7 +306,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         last = InputField._last_focused()
         # TODO: Zkusit to přes `wx.Window.SetFocusFromKbd()'
         if last is not None and last is not self and last.enabled() \
-               and last.is_modified() and last._parent == self._parent:
+               and last.is_modified():
             value, error = last.validate(interactive=False)
             if error:
                 last.set_focus()
@@ -962,21 +962,13 @@ class Invocable(object, CommandHandler):
     'Invocable.COMMAND_INVOKE_SELECTION'.
 
     """
-    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat hodnotu")
-    _INVOKE_SELECTION_MENU_HELP = None
+    _INVOKE_TITLE = _("Vybrat hodnotu")
+    _INVOKE_HELP = None
+    _INVOKE_ICON = 'invoke-selection'
     
     def _get_command_handler_instance(cls):
         return InputField._get_command_handler_instance()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
-    def _call_next_method(self, name, *args, **kwargs):
-        # Will not work in derived classes!
-        for base in self.__class__.__bases__:
-            if hasattr(base, name) and base != Invocable:
-                method = getattr(base, name)
-                return method(self, *args, **kwargs)
-        else:
-            raise ProgramError(repr(self) + " has no next method '%s'" % name)
     
     def _create_widget(self):
         """Zavolej '_create_widget()' odvozené třídy a přidej tlačítko.
@@ -984,12 +976,12 @@ class Invocable(object, CommandHandler):
         Více informací viz. dokumentace třídy 'Invocable'.
         
         """
-        widget = self._call_next_method('_create_widget')
+        widget = super(Invocable, self)._create_widget()
         if self._inline:
             return widget
         height = self._ctrl.GetSize().GetHeight()
         self._invocation_button = button = self._create_button(height)
-        button.SetToolTipString(self._INVOKE_SELECTION_MENU_TITLE)
+        button.SetToolTipString(self._INVOKE_TITLE)
         sizer = wx.BoxSizer()
         sizer.Add(widget, 0, wx.FIXED_MINSIZE)
         sizer.Add(button, 0, wx.FIXED_MINSIZE)
@@ -1000,24 +992,28 @@ class Invocable(object, CommandHandler):
         return sizer
 
     def _create_button(self, height):
-        button = wx.Button(self._parent, -1, "...")
-        button.SetSize((dlg2px(button, 12), height))
+        icon = get_icon(self._INVOKE_ICON)
+        size = (height+2, height)
+        if icon:
+            button = wx.BitmapButton(self._parent, -1, size=size, bitmap=icon)
+        else:
+            button = wx.Button(self._parent, -1, size=size)
+        button.SetToolTipString(self._INVOKE_TITLE)
         return button
 
     def _disable(self, change_appearance):
         self._invocation_button.Enable(False)
-        self._call_next_method('_disable', change_appearance)
+        super(Invocable, self)._disable(change_appearance)
     
     def _enable(self):
         self._invocation_button.Enable(True)
-        self._call_next_method('_enable')
+        super(Invocable, self)._enable()
     
     def _menu(self):
-        return TextField._menu(self) + \
+        return super(Invocable, self)._menu() + \
                ((None,),
                 (self.COMMAND_INVOKE_SELECTION,
-                 self._INVOKE_SELECTION_MENU_TITLE,
-                 self._INVOKE_SELECTION_MENU_HELP))
+                 self._INVOKE_TITLE, self._INVOKE_HELP))
     
     def _on_invoke_selection(self, alternate=False):
         raise ProgramError("This method must be overriden!")
@@ -1039,8 +1035,8 @@ class DateField(Invocable, TextField):
     """
 
     _DEFAULT_WIDTH = 10
-    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z kalendáře")
-    _INVOKE_SELECTION_MENU_HELP = _("Zobrazit kalendář pro výběr datumu.")
+    _INVOKE_TITLE = _("Vybrat z kalendáře")
+    _INVOKE_HELP = _("Zobrazit kalendář pro výběr datumu.")
     
     def _on_invoke_selection(self, alternate=False):
         value = self._value()
@@ -1051,21 +1047,19 @@ class DateField(Invocable, TextField):
         date = run_dialog(Calendar, d)
         if date != None:
             self.set_value(self._type.export(date))
-        return True
 
 
 class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výběr barvy."""
 
     _DEFAULT_WIDTH = 7
-    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat barvu")
-    _INVOKE_SELECTION_MENU_HELP = _("Zobrazit dialog pro výběr barev.")
+    _INVOKE_TITLE = _("Vybrat barvu")
+    _INVOKE_HELP = _("Zobrazit dialog pro výběr barev.")
     
     def _on_invoke_selection(self, alternate=False):
         color = run_dialog(ColorSelector, self.get_value())
         if color != None:
             self.set_value(color)
-        return True
 
     def _create_button(self, height):
         button = wx.lib.colourselect.ColourSelect(self._parent, -1,
@@ -1133,13 +1127,12 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     popisu vybrané (aktuální) hodnoty číselníku. 
 
     """
-    _INVOKE_SELECTION_MENU_TITLE = _("Vybrat z číselníku")
-    _INVOKE_SELECTION_MENU_HELP = _("Zobrazit číselník přípustných hodnot "
-                                    "s možností výběru.")
+    _INVOKE_TITLE = _("Vybrat z číselníku")
+    _INVOKE_HELP = _("Zobrazit číselník hodnot s možností výběru.")
 
     def _create_widget(self):
         """Zavolej '_create_widget()' třídy Invocable a přidej displej."""
-        widget = Invocable._create_widget(self)
+        widget = super(CodebookField, self)._create_widget()
         self._insert_button = None
         spec = self.spec()
         cb_spec = self._cb_spec
@@ -1165,18 +1158,19 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                             self._skip_navigation_callback(display))
                 sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
-            self._insert_button = button = wx.Button(self._parent, -1, "+")
-            button.SetSize((dlg2px(button, 10), height))
+            button = wx.BitmapButton(self._parent, size=(height+2, height),
+                                     bitmap=get_icon('new-record'))
             button.SetToolTipString(_("Vložit nový záznam do číselníku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                         self._on_codebook_insert)
             wx_callback(wx.EVT_NAVIGATION_KEY, button,
                         self._skip_navigation_callback(button))
             sizer.Add(button, 0, wx.FIXED_MINSIZE)
+            self._insert_button = button
         return sizer
 
     def _menu(self):
-        return Invocable._menu(self) + \
+        return super(CodebookField, self)._menu() + \
                ((self.COMMAND_INVOKE_SELECTION(alternate=True),
                  _("Vyhledávat v číselníku"),
                  _("Zobrazit číselník se zapnutým inkrementálním "
@@ -1212,7 +1206,6 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         else:
             begin_search = self._cb_spec.begin_search()
         self._run_codebook_form(begin_search=begin_search)
-        return True
 
     def _on_codebook_insert(self, event):
         value_column = self._type.enumerator().value_column()
@@ -1401,8 +1394,12 @@ class ListField(GenericCodebookField):
         return self._selected_item is not None
 
 
-class FileField(InputField):
+class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
+    
+    _INVOKE_TITLE = _("Vybrat soubor")
+    _INVOKE_HELP = _("Zobrazit kalendář pro výběr datumu.")
+    _INVOKE_ICON = wx.ART_FILE_OPEN
     
     def __init__(self, *args, **kwargs):
         self._buffer = None
@@ -1436,8 +1433,13 @@ class FileField(InputField):
     def _disable(self, change_appearance):
         pass
         
+    def _on_invoke_selection(self, alternate=False):
+        FileField.COMMAND_LOAD.invoke(_command_handler=self)
+
     def _menu(self):
-        return super(FileField, self)._menu() + \
+        # We really want to use Invocable's super method, since we don't
+        # want the Invocable menu items.
+        return super(Invocable, self)._menu() + \
                ((None,),
                 (FileField.COMMAND_LOAD,
                  _("Nastavit ze souboru"),
