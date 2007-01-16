@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1020,11 +1020,10 @@ class MItem(_TitledMenuObject):
             spojena, string nebo sekvence stringů dle specifikace v modulu
             'command'
             
-          icon -- explicitně definovaná ikona položky menu.  Jedná se o řetězec
-            sloužící jako identifikátor ikony.  Pro tento identifikátor musí
-            existovat odpovídající soubor v adresáři 'config.icon_dir'.  Pokud
-            není určena, bude automaticky použita ikona podle typu příkazu
-            (je-li pro příkaz definována).
+          icon -- explicitně definovaná ikona položky menu.  Jedná se o
+            identifikátor ikony použitelný jako argument funkce 'get_icon'.
+            Pokud není určena, bude automaticky použita ikona podle typu
+            příkazu (je-li pro příkaz definována).
             
         Je-li uveden argument 'hotkey' a nejsou předávány žádné 'args', je
         'command' automaticky nastavena tato klávesa.
@@ -1060,20 +1059,9 @@ class MItem(_TitledMenuObject):
         wx_callback(wx.EVT_MENU, parent, item.GetId(),
                     lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
-        icon_id = self._icon or WX_COMMAND_ICONS.get(self._command)
-        if icon_id:
-            if isinstance(icon_id, str):
-                imgfile = os.path.join(config.icon_dir, icon_id+'.png')
-                if os.path.exists(imgfile):
-                    img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
-                    bitmap = img.ConvertToBitmap()
-                else:
-                    log(OPERATIONAL, "Could not find icon file:", imgfile)
-                    bitmap = None
-            else:
-                bitmap = wx.ArtProvider_GetBitmap(icon_id, wx.ART_MENU, (16,16))
-            if bitmap and bitmap.Ok():
-                item.SetBitmap(bitmap)
+        icon = get_icon(self._icon or WX_COMMAND_ICONS.get(self._command))
+        if icon:
+            item.SetBitmap(icon)
         return item
         
     def command(self):
@@ -1398,8 +1386,38 @@ def dlg2px(window, x, y=None):
         return pxsize.GetWidth()
     else:
         return pxsize
-        
+    
+def get_icon(icon_id):
+    """Najdi vrať požadovanou ikonu jako instanci 'wx.Bitmap'.
 
+    Argumenty:
+
+      icon_id -- může to být buďto jedna z konstant 'wx.ART_*' nebo řetězec.
+        Pokud jde o wx konstantu, je vrácena příslušná systémová ikona
+        odpovídající aktuálně zvolenému tématu.  Pokud jde o řetězec, je
+        vyhledávána ikona stejného jména (k němuž je automaticky připojena
+        přípona '.png') v adresáři určeném konfigurační volbou
+        'config.icon_dir'.
+
+    Pokud ikona není nalezena, vrací None.
+
+    """
+    
+    bitmap = None
+    if isinstance(icon_id, str):
+        imgfile = os.path.join(config.icon_dir, icon_id + '.png')
+        if os.path.exists(imgfile):
+            img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
+            bitmap = img.ConvertToBitmap()
+        else:
+            log(OPERATIONAL, "Could not find icon file:", imgfile)
+    elif icon_id is not None:
+        bitmap = wx.ArtProvider_GetBitmap(icon_id, wx.ART_MENU, (16,16))
+    if bitmap and bitmap.Ok():
+        return bitmap
+    else:
+        return None
+    
 def orientation2wx(orientation):
     """Převeď konstantu třídy 'Orientation' na wx reprezentaci."""
     if orientation == spec.Orientation.VERTICAL:
