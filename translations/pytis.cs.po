@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-04 14:49+0100\n"
+"POT-Creation-Date: 2007-01-14 07:36+0100\n"
 "PO-Revision-Date: 2006-12-04 13:59+0100\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
@@ -56,26 +56,26 @@ msgstr "Chybné datum nebo èas"
 msgid "Date outside the allowed range"
 msgstr "Datum mimo povolený rozsah"
 
-#: ../lib/pytis/web/form.py:260 ../lib/pytis/web/form.py:324
+#: ../lib/pytis/web/form.py:254 ../lib/pytis/web/form.py:319
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/form.py:260 ../lib/pytis/web/form.py:324
+#: ../lib/pytis/web/form.py:254 ../lib/pytis/web/form.py:319
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/form.py:268
+#: ../lib/pytis/web/form.py:262
 msgid "reduced"
 msgstr "zkráceno"
 
-#: ../lib/pytis/web/form.py:308
+#: ../lib/pytis/web/form.py:303 ../lib/pytis/web/dialog.py:52
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:309
+#: ../lib/pytis/web/form.py:304
 msgid "Reset"
 msgstr "Vrátit pùvodní hodnoty"
 
-#: ../lib/pytis/web/form.py:353
+#: ../lib/pytis/web/form.py:348
 msgid "No records."
 msgstr "®ádné záznamy."
