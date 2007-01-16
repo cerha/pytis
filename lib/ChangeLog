@@ -1,3 +1,16 @@
+2007-01-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/__init__.py: Import `dialog'.
+
+	* pytis/web/form.py (Form._valid_prefill): Don't omit key columns.
+	(EditForm.export): Just print the identifier if the corresponding
+	field does not exist.
+
+	* pytis/web/dialog.py: New module.
+
+	* pytis/data/types_.py (DateTime._check_format): Added regexps for
+	`%p' format.
+
 2007-01-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data: New database API merged in.
