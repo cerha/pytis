@@ -1068,11 +1068,18 @@ def with_lock(lock, function):
     - This function may perform additional checks for deadlock prevention, etc.
 
     """
+    if __debug__:
+        from log import log, DEBUG
+        log(DEBUG, 'Acquiring lock:', lock)
     lock.acquire()
     try:
+        if __debug__:
+            log(DEBUG, 'Lock acquired:', lock)
         return function()
     finally:
         lock.release()
+        if __debug__:
+            log(DEBUG, 'Lock released:', lock)
 
 def with_locks(locks, function):
     """The same as 'with_lock' except multiple locks are given.
