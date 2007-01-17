@@ -606,12 +606,20 @@ class _DBBaseTest(unittest.TestCase):
         self._connector = psycopg2.connect(**_connection_data)
     def _sql_command(self, command):
         cursor = self._connector.cursor()
-        cursor.execute(command)
+        try:
+            cursor.execute(command)
+        except Exception, e:
+            try:
+                self._connector.rollback()
+                cursor.close()
+            except:
+                pass
+            raise e
         try:
             result = cursor.fetchall()
         except:
             result = ()
-        cursor.execute('commit')
+        self._connector.commit()
         cursor.close()
         return result
     def setUp(self):
