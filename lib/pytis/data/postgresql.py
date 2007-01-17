@@ -241,25 +241,19 @@ class PostgreSQLAccessor(object):
         """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
         # Nastavujeme serializované transakce, abychom v rámci jedné transakce
         # nemohli dostat rùzné výsledky pro opakované selecty.
-        lock = self._pg_query_lock
-        lock.acquire()
-        try:
+        def lfunction():
             self._postgresql_query(connection,
                                    ('set session characteristics as transaction '+
                                     'isolation level serializable'),
                                    False)
-        finally:
-            lock.release()
+        with_lock(self._pg_query_lock, lfunction)
 
     def _postgresql_initialize_coding(self, connection):
         encoding = self._pg_encoding
         query = 'set client_encoding to "%s"' % (encoding,)
-        lock = self._pg_query_lock
-        lock.acquire()
-        try:
+        def lfunction():
             self._postgresql_query(connection, query, False)
-        finally:
-            lock.release()
+        with_lock(self._pg_query_lock, lfunction)
         
     def _postgresql_query(self, connection, query, restartable, query_args=()):
         """Perform SQL 'query' and return the result.
@@ -515,12 +509,9 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             # z `register' i naslouchacího threadu.
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
-            lock = self._notif_connection_lock
-            lock.acquire()
-            try:
+            def lfunction():
                 self._notif_do_registration(notification)
-            finally:
-                lock.release()
+            with_lock(self._notif_connection_lock, lfunction)
             if __debug__:
                 log(DEBUG, 'Notifikace zaregistrována:', notification)
 
@@ -555,12 +546,9 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def _notif_invoke_callbacks(self, notifications):
             if __debug__:
                 log(DEBUG, 'Volám callbacky')
-            lock = self._notif_data_lock
-            lock.acquire()
-            try:
-                data_objects = copy.copy(self._notif_data_objects)
-            finally:
-                lock.release()
+            def lfunction():
+                return copy.copy(self._notif_data_objects)
+            data_objects = with_lock(self._notif_data_lock, lfunction)
             for d, ns in data_objects.items():
                 for n in ns:
                     if n in notifications:
@@ -572,17 +560,14 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def register_notification(self, data, notification):
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
-            lock = self._notif_data_lock
-            lock.acquire()
-            try:
+            notification = notification.lower()
+            def lfunction():
                 try:
                     notifications = self._notif_data_objects[data]
                 except KeyError:
                     self._notif_data_objects[data] = notifications = []
-                notification = notification.lower()
                 notifications.append(notification)
-            finally:
-                lock.release()
+            with_lock(self._notif_data_lock, lfunction)
             self._notif_register(notification)
             if __debug__:
                 log(DEBUG, 'Notifikace zaregistrována')

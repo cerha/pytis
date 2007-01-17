@@ -160,12 +160,9 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
             connection = self._pgnotif_connection
             query = 'listen %s' % (notification,)
             # TODO: Allow reconnection with re-registrations
-            lock = self._pg_query_lock
-            lock.acquire()
-            try:
+            def lfunction():
                 self._postgresql_query(connection, query, False)
-            finally:
-                lock.release()
+            with_lock(self._pg_query_lock, lfunction)
         
         def _notif_listen_loop(self):
             connection_ = self._pgnotif_connection
@@ -181,31 +178,28 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                     break
                 if __debug__:
                     log(DEBUG, 'Pøi¹el vstup')
-                lock = self._notif_connection_lock
-                lock.acquire()
-                try:
-                    query_lock = self._pg_query_lock
-                    query_lock.acquire()
+                def lfunction():
                     try:
-                        try:
-                            connection.consumeInput()
-                            notice = connection.notifies()
-                        except Exception, e:
-                            if __debug__:
-                                log(DEBUG, 'Databázová chyba', e.args)
-                            break
-                        notifications = []
-                        if notice:
-                            if __debug__:
-                                log(DEBUG, 'Zaregistrována zmìna dat')
-                        while notice:
-                            n = notice.relname.lower()
-                            notifications.append(n)
-                            notice = connection.notifies()
-                    finally:
-                        query_lock.release()
-                finally:
-                    lock.release()
+                        connection.consumeInput()
+                        notice = connection.notifies()
+                    except Exception, e:
+                        if __debug__:
+                            log(DEBUG, 'Databázová chyba', e.args)
+                        return None
+                    notifications = []
+                    if notice:
+                        if __debug__:
+                            log(DEBUG, 'Zaregistrována zmìna dat')
+                    while notice:
+                        n = notice.relname.lower()
+                        notifications.append(n)
+                        notice = connection.notifies()
+                    return notifications
+                notifications = with_locks((self._notif_connection_lock,
+                                            self._pg_query_lock,),
+                                           lfunction)
+                if notifications is None:
+                    break
                 if __debug__:
                     log(DEBUG, 'Naèteny notifikace:', notifications)
                 self._notif_invoke_callbacks(notifications)

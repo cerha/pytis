@@ -161,14 +161,11 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection.connection().set_isolation_level(0)
             connection = self._pgnotif_connection
             query = 'listen %s' % (notification,)
-            # TODO: Allow reconnection with re-registrations
-            lock = self._pg_query_lock
-            lock.acquire()
-            try:
-                _result, self._pgnotif_connection = \
-                    self._postgresql_query(connection, query, False)
-            finally:
-                lock.release()
+            # TODO: Allow reconnection with re-registrations            
+            def lfunction():
+                return self._postgresql_query(connection, query, False)
+            _result, self._pgnotif_connection = \
+                with_lock(self._pg_query_lock, lfunction)
         
         def _notif_listen_loop(self):
             connection_ = self._pgnotif_connection
@@ -176,13 +173,11 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             while True:
                 if __debug__:
                     log(DEBUG, 'Hlídám vstup', connection)
-                lock = self._pg_query_lock
-                lock.acquire()
-                try:
+                def lfunction():
                     cursor = connection.cursor()
                     fileno = cursor.fileno()
-                finally:
-                    lock.release()
+                    return cursor, fileno
+                cursor, fileno = with_lock(self._pg_query_lock, lfunction)
                 try:
                     select.select([fileno], [], [], None)
                 except Exception, e:
@@ -191,25 +186,20 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     break
                 if __debug__:
                     log(DEBUG, 'Pøi¹el vstup')
-                lock = self._notif_connection_lock
-                lock.acquire()
-                try:
-                    query_lock = self._pg_query_lock
-                    query_lock.acquire()
-                    try:
-                        notifications = []
-                        if cursor.isready():
-                            notifies = connection.notifies
-                            if notifies:
-                                if __debug__:
-                                    log(DEBUG, 'Zaregistrována zmìna dat')
-                                notifications = []
-                                while notifies:
-                                    notifications.append(notifies.pop()[1])
-                    finally:
-                        query_lock.release()
-                finally:
-                    lock.release()
+                def lfunction():
+                    notifications = []
+                    if cursor.isready():
+                        notifies = connection.notifies
+                        if notifies:
+                            if __debug__:
+                                log(DEBUG, 'Zaregistrována zmìna dat')
+                            notifications = []
+                            while notifies:
+                                notifications.append(notifies.pop()[1])
+                    return notifications
+                notifications = with_locks((self._notif_connection_lock,
+                                            self._pg_query_lock,),
+                                           lfunction)
                 if __debug__:
                     log(DEBUG, 'Naèteny notifikace:', notifications)
                 self._notif_invoke_callbacks(notifications)

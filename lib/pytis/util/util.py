@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -192,8 +192,7 @@ class Pipe:
         """
         if self._closed:
             raise ValueError, "I/O operation on closed file"
-        self._buffer_lock.acquire()
-        try:
+        def lfunction():
             buffer = self._buffer
             if not buffer or len(buffer[-1]) > 4096:
                 buffer.append(string_)
@@ -202,13 +201,11 @@ class Pipe:
             self._free_empty_lock()
             for s in self._cc:
                 s.write(string_)
-        finally:
-            self._buffer_lock.release()
+        with_lock(self._buffer_lock, lfunction)
 
     def read(self, size=-1):
         """Stejné jako v případě třídy 'file'."""
-        self._read_lock.acquire()
-        try:
+        def lfunction():
             result = ''
             buffer = self._buffer
             while True:
@@ -238,8 +235,7 @@ class Pipe:
                 return None
             else:
                 return result
-        finally:
-            self._read_lock.release()
+        return with_lock(self._read_lock, lfunction)
 
     def close(self):
         """Stejné jako v případě třídy 'file'.
@@ -1049,6 +1045,48 @@ def ecase(value, *settings):
     if s is None:
         raise ProgramError('Invalid ecase value', value)
     return s[1]
+
+
+def with_lock(lock, function):
+    """Call 'function' as protected by 'lock'.
+
+    Arguments:
+
+      lock -- 'thread.lock' instance to be used for locking
+      function -- function of no arguments, the function to be called
+
+    The return value is the return value of the function call.
+
+    It is recommended to use this function instead of direct locking for the
+    following reasons:
+
+    - The calling locking code is somewhat shorter and safer.
+
+    - It is possible to wrap locking with other code in this function, as is
+      useful e.g. when debugging.
+
+    - This function may perform additional checks for deadlock prevention, etc.
+
+    """
+    lock.acquire()
+    try:
+        return function()
+    finally:
+        lock.release()
+
+def with_locks(locks, function):
+    """The same as 'with_lock' except multiple locks are given.
+
+    'locks' is a sequence of locks to be applied in the given order.
+    """
+    if not locks:
+        return_value = function()
+    else:
+        lock = locks[0]
+        def lfunction():
+            return with_locks(locks[1:], function)
+        return_value = with_lock(lock, lfunction)
+    return return_value
 
     
 class _Throw(Exception):

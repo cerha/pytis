@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -197,22 +197,18 @@ class DBConnectionPool:
         # zbytečné a zajištěno automaticky v pyPgSQL; třeba to pomůže
         # problému pozůstalých spojení.  Navíc pro jistotu zamykáme, co
         # kdyby ...
-        self._lock.acquire()
-        try:
+        def lfunction():
             for c in flatten(self._pool.values()):
                 try:
                     self._connection_closer(c)
                 except:
                     pass
-        finally:
-            self._lock.release()
+        with_lock(self._lock, lfunction)
 
     def get(self, connection_spec):
         pool = self._pool
         spec_id = tuple(connection_spec.__dict__.values())
-        lock = self._lock
-        lock.acquire()
-        try:
+        def lfunction():
             try:
                 connections = pool[spec_id]
             except KeyError:
@@ -223,24 +219,21 @@ class DBConnectionPool:
             else:
                 c = self._connection_creator(connection_spec)
                 if __debug__: log(DEBUG, 'Vytvořeno nové spojení:', c)
-        finally:
-            lock.release()
+            return c
+        c = with_lock(self._lock, lfunction)
         if __debug__: log(DEBUG, 'Předávám spojení:', c)
         return c
 
     def put_back(self, connection_spec, connection):
         pool = self._pool
         spec_id = tuple(connection_spec.__dict__.values())
-        lock = self._lock
-        lock.acquire()
-        try:
+        def lfunction():
             try:
                 connections = pool[spec_id]
             except KeyError:
                 pool[spec_id] = connections = []
             connections.append(connection)
-        finally:
-            lock.release()        
+        with_lock(self._lock, lfunction)
         if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
 
 

@@ -1,3 +1,12 @@
+2007-01-17  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data: Use new locking functions.
+	
+	* pytis/output/formatter.py (LoutFormatter._lout): Use new locking
+	functions.
+
+	* pytis/util/util.py (with_lock, with_locks): New functions.
+
 2007-01-16  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/postgresql.py (PostgreSQLConnector._pg_query): When

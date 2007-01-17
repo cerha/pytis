@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1009,8 +1009,7 @@ class LoutFormatter(Tmpdir):
 
     def _lout(self, lout_args, stream):
         command = 'lout %s -' % string.join(lout_args, ' ')
-        self._lout_run_lock.acquire()
-        try:
+        def lfunction():
             log(EVENT, 'Start Lout')
             process = Popen(command, from_child=stream,
                             directory=self._tmpdir)
@@ -1050,8 +1049,7 @@ class LoutFormatter(Tmpdir):
                     process.wait()
                 except:
                     pass
-        finally:
-            self._lout_run_lock.release()
+        with_lock(self._lout_run_lock, lfunction)
         errors = ''
         log(EVENT, 'Konec formátování pøes Lout')
         return errors
