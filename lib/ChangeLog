@@ -1,5 +1,10 @@
 2007-01-17  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/postgresql.py (PostgreSQLConnector._pg_query):
+	Logging locking simplified.
+
+2007-01-17  Milan Zamazal  <pdm@brailcom.org>
+	
 	* pytis/data: Use new locking functions.
 	
 	* pytis/output/formatter.py (LoutFormatter._lout): Use new locking

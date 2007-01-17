@@ -354,7 +354,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         pool.put_back(connection.connection_data(), connection)
 
     def _pg_query(self, query, outside_transaction=False, backup=False,
-                  query_args=(), _lock=True):
+                  query_args=()):
         """Call the SQL 'query' and return the result.
 
         Arguments:
@@ -380,10 +380,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         # Proveï dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query)
-        lock = self._pg_query_lock
-        if _lock:
-            lock.acquire()
-        try:
+        def lfunction(connection=connection):
             try:
                 result, connection = self._postgresql_query(connection, query,
                                                             outside_transaction,
@@ -399,14 +396,13 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 # pøíkazù, proto¾e v¹echny DML pøíkazy jsou uzavøeny
                 # v transakcích a ty konfliktní jsou díky serializaci
                 # automaticky správnì øazeny.
-                self._pg_query(self._pdbb_logging_command % pg_escape(query),
-                               outside_transaction=False, backup=False,
-                               _lock=False)
+                self._postgresql_query(connection,
+                                       (self._pdbb_logging_command %
+                                        (pg_escape(query),)),
+                                       False)
             # Získej a vra» data
-            data = self._postgresql_transform_query_result(result)
-        finally:
-            if _lock:
-                lock.release()
+            return self._postgresql_transform_query_result(result)
+        data = with_lock(self._pg_query_lock, lfunction)
         if __debug__:
             log(DEBUG, 'SQL query result', data)
         return data
