@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,10 +104,7 @@ class _ConfigData(pytis.data.RestrictedData):
     """Falešná datová třída."""
     
     def __init__(self, columns):
-        AR = pytis.data.AccessRights
-        access_rights = AR((None, (None, pytis.data.Permission.ALL)))
-        pytis.data.RestrictedData.__init__(self, access_rights)
-        pytis.data.Data.__init__(self, columns, columns[0])
+        super(_ConfigData, self).__init__(columns=columns, key=columns[0])
         self._giveone = False
 
     def select(self, condition=None, sort=None, reuse=False):
