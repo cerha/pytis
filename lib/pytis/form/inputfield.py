@@ -1099,7 +1099,7 @@ class GenericCodebookField(InputField):
                           begin_search=begin_search,
                           select_row=self._select_row_arg(),
                           condition=enumerator.validity_condition())
-        if result != None:
+        if result: # may be None or False!
             self.set_value(result.format(enumerator.value_column()))
         self.set_focus()
 
