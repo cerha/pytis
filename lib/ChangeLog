@@ -1,5 +1,8 @@
 2007-01-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py (LayoutForm._export_field): Unset `name' for
+	disabled fields.
+
 	* pytis/form/configui.py (_ConfigData.__init__): Konstruktor
 	pøedka volej pomocí `super()'.
 
