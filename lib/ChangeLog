@@ -1,3 +1,8 @@
+2007-01-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/data.py (MemData.__init__): Accept and propagate
+	kwargs.
+
 2007-01-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (LayoutForm._export_field): Unset `name' for

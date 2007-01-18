@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -814,7 +814,7 @@ class MemData(Data):
     Modifikační metody nevolají žádné callbacky.
     
     """
-    def __init__(self, columns, data=()):
+    def __init__(self, columns, data=(), **kwargs):
         """Inicializuj datový zdroj dle specifikace 'columns'.
 
         'columns' jsou stejné jako v předkovi.  Klíčem je vždy první sloupec
@@ -824,7 +824,7 @@ class MemData(Data):
         inicializován datový objekt.
         
         """
-        Data.__init__(self, columns, columns[0])
+        super(MemData, self).__init__(columns, columns[0], **kwargs)
         self._mem_data = []
         self._mem_cursor = -1
         for row in data:
