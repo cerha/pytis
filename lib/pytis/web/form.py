@@ -153,6 +153,7 @@ class LayoutForm(Form):
             attr['value'] = self._prefill.get(f.id()) or value.export()
         if not self._row.editable(f.id()):
             attr['disabled'] = True
+            attr['name'] = None # w3m bug workaround (sends disabled fields)
         return (_html.label(f.label(), attr['id']) + ":", ctrl(**attr))
 
     def _export_packed_field(self, field, label, ctrl):
