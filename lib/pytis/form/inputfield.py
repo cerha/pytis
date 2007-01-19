@@ -979,9 +979,10 @@ class Invocable(object, CommandHandler):
         widget = super(Invocable, self)._create_widget()
         if self._inline:
             return widget
-        height = self._ctrl.GetSize().GetHeight()
-        self._invocation_button = button = self._create_button(height)
+        button = self._create_button('...', icon=self._INVOKE_ICON,
+                                     height=self._ctrl.GetSize().GetHeight())
         button.SetToolTipString(self._INVOKE_TITLE)
+        self._invocation_button = button
         sizer = wx.BoxSizer()
         sizer.Add(widget, 0, wx.FIXED_MINSIZE)
         sizer.Add(button, 0, wx.FIXED_MINSIZE)
@@ -991,14 +992,14 @@ class Invocable(object, CommandHandler):
                     self._skip_navigation_callback(button))
         return sizer
 
-    def _create_button(self, height):
-        icon = get_icon(self._INVOKE_ICON)
-        size = (height+2, height)
+    def _create_button(self, label, icon=None, width=None, height=22):
+        icon = get_icon(icon)
+        size = (width or height+2, height)
         if icon:
-            button = wx.BitmapButton(self._parent, -1, size=size, bitmap=icon)
+            button = wx.BitmapButton(self._parent, size=size, bitmap=icon)
         else:
-            button = wx.Button(self._parent, -1, size=size)
-        button.SetToolTipString(self._INVOKE_TITLE)
+            button = wx.Button(self._parent, size=size, label=label,
+                               style=wx.BU_EXACTFIT)
         return button
 
     def _disable(self, change_appearance):
@@ -1061,10 +1062,10 @@ class ColorSelectionField(Invocable, TextField):
         if color != None:
             self.set_value(color)
 
-    def _create_button(self, height):
-        button = wx.lib.colourselect.ColourSelect(self._parent, -1,
-                                                  size=(height, height))
-        return button
+    def _create_button(self, label, height=22, **kwargs):
+        return wx.lib.colourselect.ColourSelect(self._parent, -1,
+                                                size=(height, height))
+    
     def _set_value(self, value):
         self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
@@ -1158,8 +1159,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                             self._skip_navigation_callback(display))
                 sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
-            button = wx.BitmapButton(self._parent, size=(height+2, height),
-                                     bitmap=get_icon('new-record'))
+            button = self._create_button('+', icon='new-record', height=height)
             button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                         self._on_codebook_insert)
