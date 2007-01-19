@@ -15,9 +15,11 @@
 	(ColorSelectionField._create_button): Accept the new arguemnts.
 	(CodebookField._create_widget): Use `_create_button' also for
 	creating the codebook insert button.
-	(FileField._last_save_dir, FileField._last_load_dir): New constants.
+	(FileField._last_save_dir, FileField._last_load_dir): New
+	constants.
 	(FileField._set_value): Improved file size formatting.
-	(FileField._cmd_load, FileField._cmd_save): Set and save the default directory.
+	(FileField._cmd_load, FileField._cmd_save): Set and save the
+	default directory.
 
 2007-01-18  Milan Zamazal  <pdm@brailcom.org>
 
@@ -33,8 +35,8 @@
 	* pytis/web/form.py (LayoutForm._export_field): Unset `name' for
 	disabled fields.
 
-	* pytis/form/configui.py (_ConfigData.__init__): Konstruktor
-	pøedka volej pomocí `super()'.
+	* pytis/form/configui.py (_ConfigData.__init__): Use `super()' to
+	call the parent constructor.
 
 2007-01-17  Milan Zamazal  <pdm@brailcom.org>
 
