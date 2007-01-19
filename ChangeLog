@@ -1,3 +1,7 @@
+2007-01-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* Makefile (tags): New target.
+
 2007-01-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* icons/invoke-selection.png: New file

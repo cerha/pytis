@@ -1,9 +1,29 @@
+2007-01-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/access.py (RestrictedMemData): Added docstring.
+	Inheritance order swapped.
+	(RestrictedMemData.__init__): Use super.  Pass all arguments as
+	keywords to parent constructor.
+
+	* pytis/form/inputfield.py (Invocable._create_button):
+	Generalized.  New arguments `label', `icon', `width'.  Don't set
+	the tooltip here.
+	(Invocable._create_widget): Pass the new arguments to
+	`_create_button'.
+	(ColorSelectionField._create_button): Accept the new arguemnts.
+	(CodebookField._create_widget): Use `_create_button' also for
+	creating the codebook insert button.
+
 2007-01-18  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/data.py (MemData.__init__): Accept and propagate
 	kwargs.
 
 2007-01-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py
+	(GenericCodebookField._run_codebook_form): Expect `False' as a
+	possible `run_form()' return value.
 
 	* pytis/web/form.py (LayoutForm._export_field): Unset `name' for
 	disabled fields.
