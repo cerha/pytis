@@ -1,5 +1,7 @@
 2007-01-19  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._can_edit): New method.
+
 	* pytis/data/access.py (RestrictedMemData): Added docstring.
 	Inheritance order swapped.
 	(RestrictedMemData.__init__): Use super.  Pass all arguments as
@@ -13,6 +15,9 @@
 	(ColorSelectionField._create_button): Accept the new arguemnts.
 	(CodebookField._create_widget): Use `_create_button' also for
 	creating the codebook insert button.
+	(FileField._last_save_dir, FileField._last_load_dir): New constants.
+	(FileField._set_value): Improved file size formatting.
+	(FileField._cmd_load, FileField._cmd_save): Set and save the default directory.
 
 2007-01-18  Milan Zamazal  <pdm@brailcom.org>
 
