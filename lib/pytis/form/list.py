@@ -1514,6 +1514,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         tc.SetSelection(0,len(clptext))
         tc.Copy()
         tc.Destroy()
+
+    def _can_edit(self):
+        self._current_key() is not None
         
     def _cmd_edit(self):
         if not self.editable:
