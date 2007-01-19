@@ -2,7 +2,7 @@
 
 # Pøístupová práva
 # 
-# Copyright (C) 2002, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -314,10 +314,17 @@ class RestrictedData(Data):
         return super(RestrictedData, self).delete_many(condition)
 
 
-class RestrictedMemData(MemData, RestrictedData):
-    def __init__(self, columns, access_rights, data=()):
-        MemData.__init__(self, columns, data=data)
-        RestrictedData.__init__(self, access_rights)
+class RestrictedMemData(RestrictedData, MemData):
+    """Pamì»ová datová tøída s podporou pøístupových práv.
+
+    Úèelem tøídy není ani tak omezení pøístupových práv k pamì»ovým datùm, jako
+    spí¹e podpora protokolu jejich ovìøení, díky èemu¾ lze pamì»ový datový
+    objekt pou¾ít ve formuláøích (jako tzv. virtuální formuláø, který není
+    vázán na databázovou tabulku).
+    
+    """
+    def __init__(self, columns, **kwargs):
+        super(RestrictedMemData, self).__init__(columns=columns, **kwargs)
         
     
 class DataAccessException(Exception):
