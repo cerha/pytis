@@ -1400,7 +1400,10 @@ class FileField(Invocable, InputField):
     _INVOKE_TITLE = _("Vybrat soubor")
     _INVOKE_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
-    
+
+    _last_load_dir = None
+    _last_save_dir = None
+
     def __init__(self, *args, **kwargs):
         self._buffer = None
         super(FileField, self).__init__(*args, **kwargs)
@@ -1422,7 +1425,16 @@ class FileField(Invocable, InputField):
         if value is None:
             display = ""
         else:
-            display = "%dB" % len(value)
+            size = float(len(value))
+            unit = 'B'
+            units = ('B', 'kB', 'MB', 'GB')
+            i = 0
+            while size > 1024 and i < len(units)-1:
+                size = size/1024
+                i += 1
+                unit = units[i]
+            f = size >= 100 and '%d' or size >= 10 and '%.1f' or '%.2f'
+            display = f % size + unit
         self._ctrl.SetValue(display)
         self._on_change()
         return True
@@ -1453,11 +1465,15 @@ class FileField(Invocable, InputField):
                 )
 
     def _cmd_load(self):
-        dlg = wx.FileDialog(self._parent, message=_("Vyberte soubor"),
-                            style=wx.OPEN)
+        msg = _("Vyberte soubor pro políèko '%s'") % self.spec().label()
+        dir = FileField._last_load_dir or FileField._last_save_dir or ''
+        dlg = wx.FileDialog(self._parent, message=msg, style=wx.OPEN,
+                            defaultDir=dir)
         if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            FileField._last_load_dir = os.path.dirname(path)
             try:
-                f = open(dlg.GetPath(), 'rb')
+                f = open(path, 'rb')
                 try:
                     data = buffer(f.read())
                 finally:
@@ -1473,10 +1489,14 @@ class FileField(Invocable, InputField):
         
     def _cmd_save(self):
         msg = _("Ulo¾it hodnotu políèka '%s'") % self.spec().label()
-        dlg = wx.FileDialog(self._parent, style=wx.SAVE, message=msg)
+        dir = FileField._last_save_dir or FileField._last_load_dir or ''
+        dlg = wx.FileDialog(self._parent, style=wx.SAVE, message=msg,
+                            defaultDir=dir)
         if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            FileField._last_save_dir = os.path.dirname(path)
             try:
-                f = open(dlg.GetPath(), 'wb')
+                f = open(path, 'wb')
                 try:
                     f.write(self._buffer)
                 finally:
