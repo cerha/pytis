@@ -17,12 +17,15 @@ uninstall:
 $(SHARE)/pytis:
 	mkdir $(SHARE)/pytis
 
+compile:
+	python -c "import compileall; compileall.compile_dir('lib')"
+
+tags:
+	./tools/make-tags.sh
+
 version = $(shell echo 'import pytis; print pytis.__version__' | python)
 dir = pytis-$(version)
 file = pytis-$(version).tar.gz
-
-compile:
-	python -c "import compileall; compileall.compile_dir('lib')"
 
 release: compile translations
 	@ln -s .. releases/$(dir)
