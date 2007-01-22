@@ -631,7 +631,7 @@ class ViewSpec(object):
     """
     
     def __init__(self, title, fields, singular=None, layout=None, columns=None,
-                 actions=(), sorting=None, grouping=None, check=None,
+                 actions=(), sorting=None, grouping=None, check=(),
                  cleanup=None, on_new_record=None, on_edit_record=None,
                  on_delete_record=None, on_line_commit=None, redirect=None,
                  focus_field=None, description=None, help=None,
@@ -695,16 +695,18 @@ class ViewSpec(object):
             
           check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
             funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
-            reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Na rozdíl
-            od validace hodnot políèek, která závisí na datovém typu a má k
-            dispozici pouze vlastní obsah políèka, má tato funkce k dispozici i
-            hodnoty ostatních políèek, tak¾e je vhodná pro ovìøení vzájemné
-            sluèitelnosti tìchto hodnot.  Tato funkce vrací None, pokud je
-            v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán, nebo
-            id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.  Formuláø
-            by potom mìl u¾ivatele vrátit do editace daného polèka.  Je mo¾né
-            vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová zpráva,
-            která má být zobrazena u¾ivateli.
+            reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Namísto
+            jediné funkce lze pøedat také seznam takových funkcí -- v tom
+            pøípadì budou funkce volány v poøadí, ve kterém jsou uvedeny.  Na
+            rozdíl od validace hodnot políèek, která závisí na datovém typu a
+            má k dispozici pouze vlastní obsah políèka, má tato funkce k
+            dispozici i hodnoty ostatních políèek, tak¾e je vhodná pro ovìøení
+            vzájemné sluèitelnosti tìchto hodnot.  Tato funkce vrací None,
+            pokud je v¹e v poøádku a formuláø mù¾e být v tomto stavu odeslán,
+            nebo id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.
+            Formuláø by potom mìl u¾ivatele vrátit do editace daného polèka.
+            Je mo¾né vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová
+            zpráva, která má být zobrazena u¾ivateli.
             
           cleanup -- funkce provádìjící závìreèné akce pøi uzavøení formuláøe.
             Jedná se o funkci dvou argumentù.  Prvním je výsledný ulo¾ený øádek
@@ -864,7 +866,11 @@ class ViewSpec(object):
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None
-        assert check is None or callable(check)
+        assert callable(check) or isinstance(check, (list, tuple))
+        check = xtuple(check)
+        if __debug__:
+            for f in check:
+                assert callable(f)
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -955,7 +961,7 @@ class ViewSpec(object):
         return self._cleanup
 
     def check(self):
-        """Vra» funkci provádìjící kontrolu integrity záznamu."""
+        """Vra» tuple funkcí provádìjících kontrolu integrity záznamu."""
         return self._check
 
     def on_new_record(self):

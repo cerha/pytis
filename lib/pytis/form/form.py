@@ -696,8 +696,7 @@ class RecordForm(InnerForm):
 
     def _check_record(self, row):
         # Proveï kontrolu integrity dané instance PresentedRow.
-        check = self._view.check()
-        if check is not None:
+        for check in self._view.check():
             result = check(row)
             if result is not None:
                 if is_sequence(result):
