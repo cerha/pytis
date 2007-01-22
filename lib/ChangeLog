@@ -1,3 +1,13 @@
+2007-01-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (ViewSpec.__init__): Allow a sequence
+	of functions as `check'.  Convert a single function to a one-item
+	tuple.
+	(ViewSpec.check): Docstring updated.
+
+	* pytis/form/form.py (RecordForm._check_record): Process `check'
+	as a sequence of functions.
+
 2007-01-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._can_edit): New method.
