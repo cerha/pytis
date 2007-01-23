@@ -30,6 +30,7 @@ Vytvoøení patøièné tøídy.
 import pytis.data
 from pytis.form import *
 import wx.lib.colourselect
+from cStringIO import StringIO
 #from wxPython.pytis.maskededit import wxMaskedTextCtrl
 
 
@@ -123,6 +124,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                     SelectionType.RADIO_BOX: RadioBoxField,
                     }
                 field = mapping[selection_type]
+        elif isinstance(type, pytis.data.Image):
+            field = ImageField
         elif isinstance(type, pytis.data.Binary):
             field = FileField
         elif isinstance(type, pytis.data.Date):
@@ -368,8 +371,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """
         pass
 
-    def _px_size(self, ctrl, width, height):
-        return dlg2px(ctrl, 4*(width+1)+2, 8*height+4.5)
+    def _px_size(self, width, height):
+        return dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
     
     def has_focus(self):
         """Vra» pravdu právì kdy¾ je políèko zaostøeno pro u¾iv. vstup."""
@@ -645,12 +648,12 @@ class TextField(InputField):
         style = wx.TE_PROCESS_ENTER
         if self.height() > 1:
             style |= wx.TE_MULTILINE
-        control = wx.TextCtrl(self._parent, -1, '', style=style)
-        wxid = control.GetId()
         if not self._inline:
-            size = self._px_size(control, self.width(), self.height())
-            control.SetMinSize(size)
-            control.SetSize(size)
+            size = self._px_size(self.width(), self.height())
+        else:
+            size = None
+        control = wx.TextCtrl(self._parent, -1, '', style=style, size=size)
+        wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None:
             control.SetMaxLength(maxlen)
@@ -979,8 +982,7 @@ class Invocable(object, CommandHandler):
         widget = super(Invocable, self)._create_widget()
         if self._inline:
             return widget
-        button = self._create_button('...', icon=self._INVOKE_ICON,
-                                     height=self._ctrl.GetSize().GetHeight())
+        button = self._create_button('...', icon=self._INVOKE_ICON)
         button.SetToolTipString(self._INVOKE_TITLE)
         self._invocation_button = button
         sizer = wx.BoxSizer()
@@ -992,9 +994,13 @@ class Invocable(object, CommandHandler):
                     self._skip_navigation_callback(button))
         return sizer
 
-    def _create_button(self, label, icon=None, width=None, height=22):
+    def _button_size(self):
+        x = self._px_size(1, 1)[1]
+        return (x, x)
+
+    def _create_button(self, label, icon=None):
         icon = get_icon(icon)
-        size = (width or height+2, height)
+        size = self._button_size()
         if icon:
             button = wx.BitmapButton(self._parent, size=size, bitmap=icon)
         else:
@@ -1062,9 +1068,9 @@ class ColorSelectionField(Invocable, TextField):
         if color != None:
             self.set_value(color)
 
-    def _create_button(self, label, height=22, **kwargs):
-        return wx.lib.colourselect.ColourSelect(self._parent, -1,
-                                                size=(height, height))
+    def _create_button(self, label, **kwargs):
+        size = self._button_size()
+        return wx.lib.colourselect.ColourSelect(self._parent, -1, size=size)
     
     def _set_value(self, value):
         self._invocation_button.SetColour(value)
@@ -1143,23 +1149,21 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             return widget
         sizer = wx.BoxSizer()
         sizer.Add(widget, 0, wx.FIXED_MINSIZE)
-        height = self._ctrl.GetSize().GetHeight()
         if cb_spec.display():
             display_size = spec.display_size()
             if display_size is None:
                 display_size = cb_spec.display_size()
             if display_size:
-                display = wx.TextCtrl(self._parent, style=wx.TE_READONLY)
-                size = char2px(display, display_size, 1)
-                size.SetHeight(height)
-                display.SetSize(size)
+                size = self._px_size(display_size, 1)
+                display = wx.TextCtrl(self._parent, style=wx.TE_READONLY,
+                                      size=size)
                 display.SetBackgroundColour(wx.Colour(213, 213, 213))
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display,
                             self._skip_navigation_callback(display))
                 sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
-            button = self._create_button('+', icon='new-record', height=height)
+            button = self._create_button('+', icon='new-record')
             button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                         self._on_codebook_insert)
@@ -1409,36 +1413,45 @@ class FileField(Invocable, InputField):
         super(FileField, self).__init__(*args, **kwargs)
         
     def _create_ctrl(self):
-        ctrl = wx.TextCtrl(self._parent, -1, '')
-        if not self._inline:
-            ctrl.SetMinSize(self._px_size(ctrl, 10, 1))
+        ctrl = wx.TextCtrl(self._parent, -1, '',
+                           size=self._px_size(8, 1))
         ctrl.SetEditable(False)
         ctrl.SetBackgroundColour(config.field_disabled_color)
         return ctrl
 
+    def _button_size(self):
+        x = self._px_size(1, 1)[1]
+        return (x+5, x+2)
+    
     def get_value(self):
         return self._buffer
 
     def _set_value(self, value):
         assert value is None or isinstance(value, buffer)
         self._buffer = value
-        if value is None:
-            display = ""
-        else:
-            size = float(len(value))
-            unit = 'B'
-            units = ('B', 'kB', 'MB', 'GB')
-            i = 0
-            while size > 1024 and i < len(units)-1:
-                size = size/1024
-                i += 1
-                unit = units[i]
-            f = size >= 100 and '%d' or size >= 10 and '%.1f' or '%.2f'
-            display = f % size + unit
-        self._ctrl.SetValue(display)
+        self._on_set_value()
         self._on_change()
         return True
 
+    def _on_set_value(self):
+        if self._buffer is None:
+            display = ""
+        else:
+            display = self._formatted_size(self._buffer)
+        self._ctrl.SetValue(display)
+
+    def _formatted_size(self, value):
+        size = float(len(value))
+        unit = 'B'
+        units = ('B', 'kB', 'MB', 'GB')
+        i = 0
+        while size > 1024 and i < len(units)-1:
+            size = size/1024
+            i += 1
+            unit = units[i]
+        f = size >= 100 and '%d' or size >= 10 and '%.1f' or '%.2f'
+        return f % size + unit
+    
     def _enable(self):
         pass
 
@@ -1464,6 +1477,13 @@ class FileField(Invocable, InputField):
                  _("Nastavit prázdnou hodnotu.")),
                 )
 
+    def _save_file(self, path):
+        f = open(path, 'wb')
+        try:
+            f.write(self._buffer)
+        finally:
+            f.close()
+
     def _cmd_load(self):
         msg = _("Vyberte soubor pro políèko '%s'") % self.spec().label()
         dir = FileField._last_load_dir or FileField._last_save_dir or ''
@@ -1478,11 +1498,16 @@ class FileField(Invocable, InputField):
                     data = buffer(f.read())
                 finally:
                     f.close()
-                self.set_value(data)
             except IOError, e:
                 message(_("Chyba pøi ètení souboru:")+' '+str(e), beep_=True)
             else:
-                message(_("Soubor naèten."))
+                # Binary data are always validated immediately.
+                value, error = self._type.validate(data)
+                if not error:
+                    self.set_value(data)
+                    message(_("Soubor naèten."))
+                else:
+                    message(error.message(), beep_=True)
         
     def _can_save(self):
         return self._buffer is not None 
@@ -1496,11 +1521,7 @@ class FileField(Invocable, InputField):
             path = dlg.GetPath()
             FileField._last_save_dir = os.path.dirname(path)
             try:
-                f = open(path, 'wb')
-                try:
-                    f.write(self._buffer)
-                finally:
-                    f.close()
+                self._save_file(path)
             except IOError, e:
                 message(_("Chyba pøi zápisu souboru:")+' '+str(e), beep_=True)
             else:
@@ -1511,4 +1532,55 @@ class FileField(Invocable, InputField):
         
     def _cmd_clear(self):
         self._set_value(None)
+
+
+class ImageField(FileField):
+    """Input field for bitmap images showing a thumbnail within the control."""
+
+    _DEFAULT_WIDTH = _DEFAULT_HEIGHT = 80
+    
+    def _create_ctrl(self):
+        button = wx.BitmapButton(self._parent, bitmap=self._bitmap(),
+                                 size=(self.width()+10, self.height()+10))
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(),
+                    lambda e: self._on_button())
+        return button
+
+    def _button_size(self):
+        x = self._px_size(1, 1)[1]
+        return (x+4, x+2)
+    
+    def _bitmap(self):
+        if self._buffer is not None:
+            size = (self.width(), self.height())
+            thumbnail = self._type.thumbnail(self._buffer, "PNG", size)
+            if thumbnail:
+                img = wx.EmptyImage()
+                img.LoadStream(StringIO(thumbnail), type=wx.BITMAP_TYPE_PNG)
+                return wx.BitmapFromImage(img)
+        return wx.EmptyBitmap(1, 1, depth=1)
+    
+    def _on_button(self):
+        if self.COMMAND_VIEW.enabled():
+            self.COMMAND_VIEW.invoke()
+    
+    def _on_set_value(self):
+        self._ctrl.SetBitmapLabel(self._bitmap())
+    
+    def _can_view(self):
+        return self._buffer is not None 
         
+    def _cmd_view(self):
+        path = os.tempnam()+"."+self._type.format(self._buffer).lower()
+        command = config.image_viewer
+        if command.find('%f') != -1:
+            command = command.replace('%f', path)
+        else:
+            command += " "+path
+        log(OPERATIONAL, "Running external viewer:", command)
+        try:
+            self._save_file(path)
+            os.system('ls -la '+path)
+            os.system(command)
+        finally:
+            os.remove(path)

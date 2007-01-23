@@ -2,7 +2,7 @@
 
 # Prostøedky pro definici a zpracování konfigurace bìhu aplikace
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -581,6 +581,13 @@ class Configuration(object):
     class _Option_sendmail_command(_StringOption):
         _DESCR = _("Shellový pøíkaz sendmail vèetnì celé cesty.")
         _DEFAULT = '/usr/lib/sendmail'
+        
+    class _Option_image_viewer(_StringOption):
+        _DESCR = _("Shellový pøíkaz pro spu¹tìní prohlí¾eèe obrázkù.  Pokud "
+                   "pøíkaz obsahuje øetìzec %f, bude tento nahrazen názvem "
+                   "otevíraného souboru, jinak je soubor pøipojen na konec "
+                   "pøíkazu.")
+        _DEFAULT = 'run-mailcap'
         
     # Ostatní konfiguraèní volby
 

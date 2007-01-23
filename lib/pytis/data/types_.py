@@ -40,6 +40,7 @@ instancemi samostatné tøídy 'Value'.
 import math
 import re
 import thread
+from cStringIO import StringIO
 
 from mx import DateTime as DT
 
@@ -1015,6 +1016,73 @@ class Binary(Type):
     def _export(self, value):
         return value
 
+class Image(Binary):
+    """Bitmap image.
+
+    This class is just a prototype.  It Currently supports validation of image
+    data, thumbnail generation and format recognition.
+
+    """
+    VM_IMAGE_FORMAT = 'VM_IMAGE_FORMAT'
+    _VM_IMAGE_FORMAT_MSG = _("Nepodporovaný grafický formát")
+
+    _SUPPORTED_FORMATS = ('BMP', 'GIF', 'IM', 'JPEG', 'PCX', 'PNG', 'PPM',
+                          'TIFF', 'XBM')
+    
+    def _validate(self, object, formats=None, **kwargs):
+        img = self._image(object)
+        if formats is None:
+            formats = self._SUPPORTED_FORMATS
+        if img is None or img.format not in formats:
+            return None, self._validation_error(self.VM_IMAGE_FORMAT)
+        else:
+            return super(Image, self)._validate(object, **kwargs)
+
+    def _image(self, data):
+        assert isinstance(data, buffer), ('Not a buffer object', data)
+        import PIL.Image
+        f = StringIO(data)
+        try:
+            return PIL.Image.open(f)
+        except IOError:
+            return None
+
+    def thumbnail(self, data, format, size):
+        """Return a thumbnail of given size as binary data in given format.
+
+        Arguments:
+
+          data -- binary image data as a buffer.
+          size -- a tuple of two integers (width, height) in pixels.
+          
+          format -- output format as a string, one of the formats in
+            '_SUPPORTED_FORMATS' such as `PNG', `JPEG', `TIFF', etc.,
+          
+        """
+        image = self._image(data)
+        if image is None:
+            return None
+        import PIL.Image
+        image.thumbnail(size, PIL.Image.ANTIALIAS)
+        stream = StringIO()
+        try:
+            image.save(stream, format)
+            return stream.getvalue()
+        finally:
+            stream.close()
+
+    def format(self, data):
+        """Return the image format as a string.
+        
+        Arguments:
+
+          data -- binary image data as a buffer.
+
+        The returned string is one of the formats in '_SUPPORTED_FORMATS' such
+        as `PNG', `JPEG', `TIFF', etc.
+          
+        """
+        return self._image(data).format
 
 # Pomocné tøídy
 

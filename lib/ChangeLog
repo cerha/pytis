@@ -1,3 +1,43 @@
+2007-01-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (Image): New class.
+
+	* pytis/form/commands_.py (Module): New command
+	`ImageField.COMMAND_VIEW'.
+
+	* pytis/form/inputfield.py (InputField.create): Use `ImageField'
+	for the `Image' type.
+	(InputField._px_size): Argument `ctrl' removed.
+	(TextField._create_ctrl): Pass size to the `wx.TextCtrl'
+	constructor instead of calling `SetSize()' and `SetMinSize()'.
+	(Invocable._create_widget): Don't pass height to
+	`_create_button()'.
+	(Invocable._button_size): New method.
+	(Invocable._create_button, ColorSelectionField._create_button):
+	Use it.
+	(CodebookField._create_widget): Pass size to the `wx.TextCtrl'
+	constructor instead of calling `SetSize()'.
+	(CodebookField._create_widget): Don't pass `height' to
+	`_create_button()'.
+	(FileField._create_ctrl): Pass size to the `wx.TextCtrl'
+	constructor instead of calling `SetSize()' and `SetMinSize()'.
+	(FileField._button_size): New method.
+	(FileField._set_value): Don't set the displayed text, jus call
+	`_on_set_value()' here.
+	(FileField._on_set_value): New method.
+	(FileField._formatted_size): New method.
+	(FileField._save_file): New method.
+	(FileField._cmd_save): Use it.
+	(ImageField): New class.
+	(FileField._cmd_load): Validate the file immediately and ignore it
+	if not valid.
+
+	* pytis/form/screen.py (get_icon): Use `wx.BitmapFromImage()'
+	instead of `wx.Image.ConvertToBitmap()'.
+
+	* pytis/util/configuration.py
+	(Configuration._Option_image_viewer): New option.
+
 2007-01-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (ViewSpec.__init__): Allow a sequence

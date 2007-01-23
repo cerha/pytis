@@ -187,6 +187,8 @@ Command(FileField, 'SAVE',
         "Ulo¾ení objektu z databáze do soborového systému.")
 Command(FileField, 'CLEAR',
         "Vynulování nastavené hodnoty políèka.")
+Command(ImageField, 'VIEW',
+        "Otevøení náhledu obrázku v prohlí¾eèi.")
 
 Command(Dialog, 'CLOSE_DIALOG',
         "Opu¹tìní dialogu bez potvrzení")

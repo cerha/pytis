@@ -1408,7 +1408,7 @@ def get_icon(icon_id):
         imgfile = os.path.join(config.icon_dir, icon_id + '.png')
         if os.path.exists(imgfile):
             img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
-            bitmap = img.ConvertToBitmap()
+            bitmap = wx.BitmapFromImage(img)
         else:
             log(OPERATIONAL, "Could not find icon file:", imgfile)
     elif icon_id is not None:
