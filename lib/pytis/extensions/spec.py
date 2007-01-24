@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -225,13 +225,12 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
         pytis.form.InfoWindow("Nápověda", text=text, format=format)
         
 
-if hasattr(pytis, 'form'):
-    def run_any_form():
-        result = pytis.form.run_dialog(pytis.form.RunFormDialog)
-        if result is not None:
-            pytis.form.run_form(*result)
-    cmd_run_any_form = \
-        pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
+def run_any_form():
+    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
+    if result is not None:
+        pytis.form.run_form(*result)
+cmd_run_any_form = \
+           pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
 def printdirect(resolver, spec, print_spec, row):
