@@ -1,3 +1,28 @@
+2007-01-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (ItemNode.__init__)
+	(DescrNode.__init__): Store the identifier as `self._name' rather
+	than passing it arround to `_create_content()' etc.
+	(ItemNode._create_content, MenuNode._create_content)
+	(DescrNode._info, DescrNode._create_content)
+	(SingleDescrNode._create_content, DualDescrNode._info): Removed
+	argument `id'.  Use `self._name' instead.
+	(ItemNode._create_content, DualDescrNode._read_spec): Don't care
+	about `DualSpec', always count with `BindingSpec'.
+	(DescrNode._name, DualDescrNode._name): Method removed.
+	(DescrNode._read_spec, DualDescrNode._read_spec): Argument `id'
+	renamed to `name'
+	(DescrIndex.__init__, MenuNode._create_content): `TableOfNodes' ->
+	`NodeIndex'.
+	(DescrIndex._create_children): DualForm recognition simplified.
+
+	* lib/pytis/extensions/spec.py (run_any_form): Odstraòen hack s
+	podmínìnou definicí nìkterých identifikátorù.
+
+	* lib/pytis/extensions/__init__.py: Pøidán hack s nastavením
+	výchozího kódování pøed importem `pytis.form'.  Odstraòen hack s
+	podmínìným importem nìkterých modulù.
+
 2007-01-12  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/misc.py (end_date_value): Pøejmenování
