@@ -1,5 +1,19 @@
 2007-01-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/defs.py (flatten_menus): Pøesunuto do
+	`get_menu_defs()'.
+	(get_menu_defs): Zru¹en argument `without_duals' a o¹etøování
+	dvojího typu duálních specifikací.
+	(menu_report, cmd_menu_report): Zru¹eno.
+	(get_default_select.init_select): ->
+	`_get_default_select.init_select'.
+	(check_form): `get_default_select.init_select' ->
+	`_get_default_select.init_select'.
+	(check_defs): Slouèeno do `check_menus_defs()'
+	(check_menus_defs.check_spec): Opravena chyba v pøidání chybové
+	zprávy.
+	(cache_spec.do): Vynechávej `data_spec'.
+
 	* lib/pytis/extensions/help.py (ItemNode.__init__)
 	(DescrNode.__init__): Store the identifier as `self._name' rather
 	than passing it arround to `_create_content()' etc.
