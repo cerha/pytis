@@ -1,3 +1,36 @@
+2007-01-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (_create_view_spec): Don't consider the
+	`DualSpec' case.
+	(DualForm.title): Return the `BindingSpec' title.
+	(help_name): Method removed.
+	(SideBrowseDualForm.title): Method removed.
+	(SideBrowseDualForm._create_side_form): Don't pass `title' and
+	`side_columns'.  Use `self._main_name' and `self._side_name'.
+	(BrowseDualForm): Docstring updated.
+	(BrowseDualForm._create_main_form): Use `self._main_name'.
+	(BrowseDualForm._set_main_form_callbacks): Don't set
+	`BrowseForm.CALL_NEW_RECORD'.
+	(BrowseDualForm._new_record_hook): Method removed.
+	(ShowDualForm._create_main_form)
+	(BrowseShowDualForm._create_side_form): Use `self._main_name' and
+	`self._side_name'.
+	(DescriptiveDualForm.title): New method.
+
+	* pytis/form/application.py (Application._can_run_form): Don't
+	consider the `DualSpec' case.
+
+	* pytis/form/form.py (Form._cmd_help): Don't use `help_name()'.
+	(Form.help_name): Method removed.
+	(RecordForm.CALL_NEW_RECORD): Constant removed.
+
+	* pytis/form/list.py (SideBrowseForm._init_attributes): Removed
+	argument `title'.
+	(title): Method removed.
+
+	* pytis/presentation/spec.py (BindingSpec.__init__): Docstring updated.
+	(DualSpec): Class removed.
+
 2007-01-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/types_.py (Image): New class.
