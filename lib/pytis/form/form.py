@@ -242,7 +242,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self.refresh()
         
     def _cmd_help(self):
-        help(self.help_name())
+        help(self._name.replace(':','-'))
 
     def _cmd_leave_form(self):
         return self.close()
@@ -252,9 +252,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def name(self):
         """Vra» název specifikace formuláøe."""
         return self._name
-
-    def help_name(self):
-        return self._name.replace(':','-')
 
     def descr(self):
         """Vra» textový popis typu formuláøe jako øetìzec."""
@@ -274,7 +271,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def check_permission(self, perm, quiet=True):
         """Vra» pravdu, pokud má u¾ivatel daná práva k datovému objektu.
 
-        Argumentem je konstanta  tøídy 'pytis.data.Permission::'.
+        Argumentem je konstanta  tøídy 'pytis.data.Permission'.
 
         """
         VIEW   = pytis.data.Permission.VIEW
@@ -561,12 +558,6 @@ class RecordForm(InnerForm):
 
     Argumentem callbackové funkce je novì vybraný záznam jako instance
     'PresentedRow'.
-    
-    """
-    CALL_NEW_RECORD = 'CALL_NEW_RECORD'
-    """Voláno po vlo¾ení nového záznamu.
-    
-    Argumentem callbackové funkce je nový záznam jako instance 'PresentedRow'.
     
     """
 
