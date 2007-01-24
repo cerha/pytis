@@ -97,19 +97,8 @@ class DualForm(Form, Refreshable):
         return self._view.orientation()
 
     def _create_view_spec(self):
-        name = self._name
-        if name.find('::') != -1:
-            main_name, side_name = name.split('::')
-            bindings = self._resolver.get(main_name, 'binding_spec')
-            b = bindings[side_name]
-            kwargs = dict([(a, getattr(b, a)())
-                           for a in public_attributes(BindingSpec)])
-            spec = DualSpec(main_name, side_name, **kwargs)
-        else:
-            # This is for backwards compatibility only!
-            spec = self._resolver.get(self._name, 'dual_spec')
-            assert isinstance(spec, DualSpec) 
-        return spec
+        self._main_name, self._side_name = main, side = self._name.split('::')
+        return self._resolver.get(main, 'binding_spec')[side]
 
     def _create_data_object(self):
         # Hlavní i vedlej¹í formuláø mají svùj datový objekt.
@@ -172,7 +161,7 @@ class DualForm(Form, Refreshable):
 
     def title(self):
         """Vra» název formuláøe jako øetìzec."""
-        return self._main_form.title()
+        return self._view.title()
 
     def select_row(self, *args, **kwargs):
         if hasattr(self._main_form, 'select_row'):
@@ -183,12 +172,6 @@ class DualForm(Form, Refreshable):
     def _cmd_other_form(self):
         self._select_form(self._other_form(self._active_form))
 
-    def help_name(self):
-        name = super(DualForm, self).help_name()
-        if self._name.find('::') == -1:
-            name += '-dual'
-        return name
-        
     def active_form(self):
         """Vra» aktivní formuláø tohoto duálního formuláøe."""
         return self._active_form
@@ -328,23 +311,17 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
 class SideBrowseDualForm(PostponedSelectionDualForm):
     """Duální formuláø s vedlej¹ím formuláøem 'SideBrowseForm'."""
         
-    def title(self):
-        """Vra» název formuláøe jako øetìzec."""
-        return self._main_form.title() + " :: " + self._side_form.title()
-
     def _create_side_form(self, parent):
         view = self._view
         self._binding_column = bcol = view.binding_column()
         self._side_binding_column = sbcol = view.side_binding_column()
-        f = SideBrowseForm(parent, self._resolver, view.side_name(),
-                           sibling_name=view.main_name(),
+        f = SideBrowseForm(parent, self._resolver, self._side_name,
+                           sibling_name=self._main_name,
                            sibling_row=lambda : self._selection_data,
                            sibling_binding_column=bcol,
                            binding_column=sbcol,
                            hide_binding_column=view.hide_binding_column(),
                            append_condition=view.append_condition(),
-                           title=view.side_title(),
-                           columns=view.side_columns(),
                            guardian=self)
         self._sbcol_type = f._data.find_column(sbcol).type()
         return f
@@ -397,7 +374,7 @@ class BrowseDualForm(SideBrowseDualForm):
     
     Hlavním formuláøem je instance tøídy 'BrowseForm', vedlej¹ím formuláøem je
     instance tøídy 'SideBrowseForm'.  Formuláøe jsou vzájemnì propojeny
-    prostøednictvím vazebních sloupcù daných specifikací `DualSpec'.
+    prostøednictvím vazebních sloupcù daných specifikací `BindingSpec'.
     
     """
 
@@ -409,7 +386,7 @@ class BrowseDualForm(SideBrowseDualForm):
                 if not title:
                     title = super_(_MainBrowseForm).title(self)
                 return title
-        return _MainBrowseForm(parent, self._resolver, self._view.main_name(),
+        return _MainBrowseForm(parent, self._resolver, self._main_name,
                                guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
@@ -418,15 +395,6 @@ class BrowseDualForm(SideBrowseDualForm):
                        lambda : self._select_form(self._main_form))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
         f.set_callback(f.CALL_ACTIVATION, self._on_main_activation)
-        #f.set_callback(BrowseForm.CALL_NEW_RECORD, self._new_record_hook)
-
-    def _new_record_hook(self, row):
-        # TODO: Je otázka, zda je to tu vùbec celé potøeba, kdy¾ u¾ nedìláme
-        # insert do sideformu.
-        self._main_form.select_row(row.row())
-        self._side_form.refresh(when=ListForm.DOIT_IMMEDIATELY)
-        #self._select_form(self._side_form)
-        #ListForm.COMMAND_INSERT_LINE.invoke()
     
     def _on_main_activation(self, alternate=False):
         if alternate:
@@ -452,7 +420,7 @@ class ShowDualForm(SideBrowseDualForm):
         
     def _create_main_form(self, parent, **kwargs):
         return BrowsableShowForm(parent, self._resolver,
-                                 self._view.main_name(),
+                                 self._main_name,
                                  guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
@@ -482,8 +450,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
         f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
 
     def _create_side_form(self, parent):
-        name = self._view.side_name()
-        return ShowForm(parent, self._resolver, name)
+        return ShowForm(parent, self._resolver, self._side_name)
 
     def _do_selection(self, row):
         if self._side_form is not None:
@@ -535,3 +502,8 @@ class DescriptiveDualForm(BrowseShowDualForm):
     def _on_side_selection(self, row):
         if self._main_form is not None and not self._in_mainform_selection:
             self._main_form.select_row(row.row())
+
+    def title(self):
+        return self._main_form.title()
+
+            
