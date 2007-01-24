@@ -1004,9 +1004,9 @@ class ViewSpec(object):
 class BindingSpec(object):
     """Specifikace vazby dvou náhledù pøi propojení do duálního formuláøe.
 
-    Tato specifikace definuje vlastnosti napojení dvou formuláøù pøi jejich
-    spojení do duálního formuláøe.  Definována je jak datová vazba, tak nìkteré
-    prezentaèní vlastnosti spojení.
+    Definuje vlastnosti napojení dvou formuláøù pøi jejich spojení do duálního
+    formuláøe.  Definována je jak datová vazba, tak nìkteré prezentaèní
+    vlastnosti spojení.
 
     Pou¾ití je následující:
 
@@ -1030,7 +1030,7 @@ class BindingSpec(object):
 
         Argumenty:
 
-          title -- titulek tohoto duálního spojení formuláøù jako øetìzec.
+          title -- titulek daného duálního spojení formuláøù jako øetìzec.
                         
           binding_column -- identifikátor vazebního sloupce.  Tento sloupec
             bude pou¾it pro filtrování vedlej¹ího formuláøe pøi pohybu po
@@ -1119,66 +1119,6 @@ class BindingSpec(object):
     def orientation(self):
         return self._orientation
 
-    
-class DualSpec(BindingSpec):
-    """Specifikace duálního formuláøe.
-    
-    POZOR: Tato tøída by ji¾ nemìla být pou¾ívána.  Namísto specifikaèní
-    funkce 'dual_spec' samostatné duální specifikaci nech» je nyní
-    pou¾ívána funkce 'binding_spec' ve specifikaci hlavního formuláøe.
-    Více také viz 'BindingSpec'.
-    
-    """
-    def __init__(self, main_name, side_name, binding_column, title="",
-                 side_title=None, side_columns=None, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          main_name -- jméno specifikace hlavního formuláøe; øetìzec.
-
-          side_name -- jméno specifikace vedlej¹ího formuláøe; øetìzec.
-
-          side_title -- titulek vedlej¹ího formuláøe jako øetìzec.  Pokud není
-            None, bude v duálním formuløi pou¾it tento titulek, namísto titulku
-            ze specifikace vedlej¹ího formuláøe.
-
-          side_columns -- sekvence identifikátorù sloupcù vedlej¹ího formuláøe.
-            Pokud je None, budou ve vedlej¹ím formuláøi zobrazeny v¹echny
-            sloupce dané jeho specifikací.
-            
-        V¹echny ostatní argumenty jsou shodné jako u 'BindingSpec', pouze
-        argument 'title' zde není povinný.
-
-        """
-        assert is_anystring(main_name)
-        assert is_anystring(side_name)
-        assert side_title is None or is_anystring(side_title)
-        assert side_columns is None or is_sequence(side_columns)
-        self._main_name = main_name
-        self._side_name = side_name
-        self._side_title = side_title
-        self._side_columns = side_columns
-        super(DualSpec, self).__init__(title, binding_column, **kwargs)
-
-    def main_name(self):
-        """Vra» název specifikace hlavního formuláøe jako øetìzec."""
-        return self._main_name
-        
-    def side_name(self):
-        """Vra» název specifikace vedlej¹ího formuláøe jako øetìzec."""
-        return self._side_name
-        
-    def side_title(self):
-        """Vra» titulek vedlej¹ího formuláøe jako øetìzec."""
-        return self._side_title
-
-    def side_columns(self):
-        """Vra» seznam id sloupcù, vedlej¹ího formuláøe."""
-        return self._side_columns
-
-
-    
 
 class Editable(object):
     """Výètová tøída definující konstanty urèující editovatelnost políèka."""
