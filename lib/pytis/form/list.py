@@ -2163,12 +2163,11 @@ class SideBrowseForm(FilteredBrowseForm):
     def _init_attributes(self, sibling_name, sibling_row,
                          sibling_binding_column, binding_column,
                          hide_binding_column, append_condition=None,
-                         title=None, **kwargs):
+                         **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
         
         Argumenty:
 
-          title -- ???
           sibling_name -- jméno specifikace hlavního formuláøe; øetìzec
           sibling_row -- funkce bez argumentù, která vrátí aktuální datový
             øádek hlavního formuláøe.
@@ -2193,7 +2192,6 @@ class SideBrowseForm(FilteredBrowseForm):
             condition = column_condition
         self._sibling_name = sibling_name
         self._sibling_row = sibling_row
-        self._title = title
         self._hide_binding_column = hide_binding_column
         self._binding_column = binding_column
         super_(SideBrowseForm)._init_attributes(self, condition, **kwargs)
@@ -2208,11 +2206,6 @@ class SideBrowseForm(FilteredBrowseForm):
     def _init_filter(self):
         self.filter({})
 
-    def title(self):
-        if self._title is not None:
-            return self._title
-        return super_(SideBrowseForm).title(self)
-        
     def _formatter_parameters(self):
         parameters = FilteredBrowseForm._formatter_parameters(self)
         extra_parameters = {self._sibling_name+'/'+pytis.output.P_ROW:
