@@ -4,7 +4,36 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2007-01-05 Tomas Cerha  <cerha@brailcom.org>
+
+2007-01-24 Tomas Cerha  <cerha@brailcom.org>
+
+	Bylo zru¹eno v¹e co se týkalo dvojího o¹etøování duálních
+	formuláøù.  Tøída `DualSpec' ji¾ neexistuje a je tedy tøeba
+	vyu¾ívat u¾ jen novou formu s `BindingSpec'.
+
+	V pytis-extensions byly funkce pro kontrolu defsù a generování
+	nápovìdy upraveny aby poèítaly u¾ jen s duálními formuláøi
+	urèenými pomocí `BindinSpec'.  Zároveò byly zru¹eny nìkteré
+	nepou¾ívané funkce, jako napø. `menu_report'.  Více viz ChangeLog.
+	
+	V pytis-extensions byly také upraveny nìkteré ji¾ nepotøebné
+	hacky, tak¾e pøi jejich importu je nyní v¾dy importován modul
+	`pytis.forms'.  Pokud ji¾ tak nebylo provedeno, je také
+	automaticky pøenastaveno výchozí kódování.  Díky poslední zmìnì
+	ji¾ není nutno tento hack provádìt pøed importem pytis.extensions
+	v souborech pro generování nápovìdy.  Ten jsem také ve v¹ech
+	projektech také odstranil.
+
+	Dále jsem provedl aktualizaci kódu v pytis.extensions.help pro
+	poslední verzi LCG, tak¾e pøed generováním nápovìdy je nyní tøeba
+	aktualizovat LCG.	
+	
+2007-01-23 Tomas Cerha  <cerha@brailcom.org>
+
+	Nový datový typ a vstupní políèko pro obrázky.  Ukázka v
+	pytis-demo.
+	
+2007-01-09 Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Argument `prefill' nyní akceptuje ve v¹ech pøípadech jak
 	instance Value, tak pøímo pythonové hodnoty odpovídajícího typu.
