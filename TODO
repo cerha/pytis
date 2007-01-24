@@ -193,20 +193,6 @@ INTERNÍ ZÁLE®ITOSTI:
    kopírování záznamu.  To je dnes provádìno pøes `prefill', tak¾e funkce
    `on_new_record()' aggument `key' nikdy nedostane.  V nìkterých defsech se s
    ním v¹ak stále poèítá.
-   
- * Odstraní BrowseDualForm._new_record_hook()
-   
- * Pøechod z DualSpec na BindingSpec.
-
-   Více viz NEWS 2006-06-13.
-
-   V kódu je zatím v¹e o¹etøováno nadvakrát.  A¾ to nebude potøeba, je tøeba
-   proèistit:
-   
-   - DualForm._create_view_spec()
-   - Application._can_run_form()
-   - generování nápovìdy
-   - cachování a kontrolu defsù
 
  * Nedostupnost pøíkazu vs. pøístupová práva.
 
@@ -232,12 +218,6 @@ INTERNÍ ZÁLE®ITOSTI:
    Problém bude hlavnì v defsech, kde bývá grouping èasto specifikován jako
    název sloupce.
    
- * Odstranit argument `resolver' z konstruktoru formuláøù.
-
-   V¹ude je mo¾no pou¾ívat globální resolver získaný pomocí funkce
-   `resolver()', tak¾e není dùvod se o nìj starat ve formuláøích.  Trochu
-   slo¾itìj¹í to ov¹em asi bude s PrintResolvery (?).
-
  * Implementovat také None context pro spou¹tìní akcí.
 
    Specifikace kontextu akce nyní umo¾òuje také hodnotu None, která by mìla
