@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@ LCG.
 
 """ 
 
-import sys, os
-import lcg, pytis.util 
+import sys, os, lcg, pytis.form, pytis.util
 
 global _used_defs, _menu_items
 _used_defs = []
@@ -55,9 +54,10 @@ class ItemNode(lcg.ContentNode):
     """Stránka s popisem koncové položky menu."""
     
     def __init__(self, parent, id, item, **kwargs):
+        self._name = id
         self._item = item
         super(ItemNode, self).__init__(parent, id, title=self._item.title(),
-                                       content=self._create_content(id),
+                                       content=self._create_content(),
                                        **kwargs)
 
     def _menu_node_path(self):
@@ -77,7 +77,7 @@ class ItemNode(lcg.ContentNode):
     def menu_path_title(self):
         return ' -> '.join([n.title() for n in self._menu_node_path()])
 
-    def _create_content(self, id):
+    def _create_content(self):
         command, args = (self._item.command(), self._item.args())
         hotkey = self._item.hotkey()
         if hotkey and hotkey[0] is not None:
@@ -104,27 +104,20 @@ class ItemNode(lcg.ContentNode):
                     return pytis.util.resolver().get(name, spec)
                 if issubclass(form, pytis.form.DualForm) and \
                        not issubclass(form, pytis.form.DescriptiveDualForm):
-                    if name.find('::') != -1:
-                        node_name = name
-                        main, side = name.split('::')
-                    else:
-                        dual = get(name, 'dual_spec')
-                        node_name = name + '-dual'
-                        main, side = (dual.main_name(), dual.side_name())
-                    names = (node_name, main, side) + \
+                    main, side = name.split('::')
+                    names = (name, main, side) + \
                           _refered_names(get(main)) + _refered_names(get(side))
                 else:
-                    node_name = name
                     names = (name,) + _refered_names(get(name))
                 global _used_defs, _menu_items
                 for n in names:
                     if n not in _used_defs:
                         _used_defs.append(n)
-                if _menu_items.has_key(node_name):
-                    _menu_items[node_name].append(self)
+                if _menu_items.has_key(name):
+                    _menu_items[name].append(self)
                 else:
-                    _menu_items[node_name] = [self]
-                info.append(("Náhled", "[%s] (%s)" % (node_name, name)))
+                    _menu_items[name] = [self]
+                info.append(("Náhled", "[%s] (%s)" % (name, name)))
         else:
             a = ', '.join(['%s=%r' % x for x in args.items()])
             info.append(("Argumenty příkazu", a or _("Žádné")))
@@ -138,8 +131,8 @@ class MenuNode(ItemNode):
     stránka obsahuje pouze seznam odkazů na jednotlivé položky podmenu.
     
     """
-    def _create_content(self, id):
-        return lcg.TableOfNodes(depth=99)
+    def _create_content(self):
+        return lcg.NodeIndex(depth=99)
 
     def _create_children(self):
         cls = lambda i: isinstance(i, pytis.form.MItem) \
@@ -183,40 +176,38 @@ class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
             descr = None
         lcg.FileNodeMixin._init(self, parent, subdir=subdir,
                                 input_encoding=input_encoding)
+        self._name = id
         super_ = super(DescrNode, self).__init__
         super_(parent, id, title=self._title(), descr=descr,
-               content=self._create_content(id), **kwargs)
+               content=self._create_content(), **kwargs)
 
-    def _name(self, id):
-        return id
-
-    def _read_spec(self, resolver, id):
-        self._view_spec = resolver.get(id, 'view_spec')
-        self._data_spec = resolver.get(id, 'data_spec')
+    def _read_spec(self, resolver, name):
+        self._view_spec = resolver.get(name, 'view_spec')
+        self._data_spec = resolver.get(name, 'data_spec')
 
     
     def _title(self):
         return self._view_spec.title()
     
-    def _info(self, id):
+    def _info(self):
         # Create a list of relevant menu items
         global _menu_items
-        if _menu_items.has_key(id):
-            links = [i.menu_path() for i in _menu_items[id]]
+        if _menu_items.has_key(self._name):
+            links = [i.menu_path() for i in _menu_items[self._name]]
             if len(links) > 1:
                 menu_items = lcg.ItemizedList(links)
             else:
                 menu_items = links[0]
         else:
             menu_items = _("Žádné")
-        return ((_("Název specifikace"), self._name(id)),
+        return ((_("Název specifikace"), self._name),
                 (_("Menu"), menu_items))
         
-    def _create_content(self, id):
+    def _create_content(self):
         content = [lcg.Section("Základní informace",
-                               _fieldset(self._info(id)))]
-        if os.path.exists(self._input_file(id, ext='txt')):
-            descr = self.parse_wiki_file(id, ext='txt')
+                               _fieldset(self._info()))]
+        if os.path.exists(self._input_file(self._name, ext='txt')):
+            descr = self.parse_wiki_file(self._name, ext='txt')
         else:
             # The file does not exist.  Let's read the specification.
             text = lcg.WikiText(self._default_description_text())
@@ -231,14 +222,14 @@ class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
 
 class SingleDescrNode(DescrNode):
 
-    def _create_content(self, id):
-        content = super(SingleDescrNode, self)._create_content(id)
+    def _create_content(self):
+        content = super(SingleDescrNode, self)._create_content()
         view = self._view_spec
         actions = [lcg.Definition(lcg.TextContent(a.title()),
                                   lcg.WikiText(a.descr() or ''))
                    for a in view.actions(linear=True)]
         fields = [(f.label(), f.descr() or "")
-                  for f in [view.field(id) for id in view.layout().order()]]
+                  for f in [view.field(cid) for cid in view.layout().order()]]
         links = [lcg.WikiText("[%s]" % name) for name in _refered_names(view)]
         for (title, items, f) in (
             ("Akce kontextového menu", actions, lcg.DefinitionList),
@@ -263,51 +254,33 @@ class SingleDescrNode(DescrNode):
 class DualDescrNode(DescrNode):
     """Stránka s popisem duálního náhledu."""
 
-    def _name(self, id):
-        if id.endswith('-dual'):
-            # Až se bude tato část odstraňovat, je možné odstranit celou metodu.
-            return id[:-5]
-        else:
-            assert id.find('::') != -1
-            return id
-    
-    def _read_spec(self, resolver, id):
-        if id.find('::') != -1:
-            main, side = id.split('::')
-            binding = resolver.get(main, 'binding_spec')[side]
-            title = binding.title()
-        else:
-            binding = resolver.get(self._name(id), 'dual_spec')
-            main, side = (binding.main_name(), binding.side_name())
-            title = None
-        self._main_name = main
-        self._side_name = side
+    def _read_spec(self, resolver, name):
+        main, side = name.split('::')
         self._main_spec = resolver.get(main, 'view_spec')
         self._side_spec = resolver.get(side, 'view_spec')
-        self._dual_title = title or self._main_spec.title() +' / '+ \
-                           self._side_spec.title()
-        self._binding_column = binding.binding_column()
-        self._side_binding_column = binding.side_binding_column()
+        self._binding = resolver.get(main, 'binding_spec')[side]
 
     def _title(self):
-        return self._dual_title
+        return self._binding.title()
 
-    def _info(self, id):
-        return super(DualDescrNode, self)._info(id) + \
-               ((_("Horní formulář"), "[%s]" % self._main_name),
-                (_("Dolní formulář"), "[%s]" % self._side_name))
+    def _info(self):
+        main, side = self._name.split('::')
+        return super(DualDescrNode, self)._info() + \
+               ((_("Horní formulář"), "[%s]" % main),
+                (_("Dolní formulář"), "[%s]" % side))
     
     def _default_description_text(self):
         def clabel(cid, view):
             c = view.field(cid)
             return c and c.column_label() or cid
+        b = self._binding
         text = _("Hlavním formulářem tohoto duálního formuláře je '%s'.  "
                  "V dolní části ze zobrazují související záznamy formuláře "
                  "'%s'.  Oba formuláře jsou propojeny přes shodu hodnot "
                  "sloupečků '%s' = '%s'.") % \
                  (self._main_spec.title(), self._side_spec.title(),
-                  clabel(self._binding_column, self._main_spec),
-                  clabel(self._side_binding_column, self._side_spec))
+                  clabel(b.binding_column(), self._main_spec),
+                  clabel(b.side_binding_column(), self._side_spec))
         return text
     
 
@@ -327,13 +300,13 @@ class DescrIndex(lcg.ContentNode, lcg.FileNodeMixin):
                                 input_encoding=input_encoding)
         super_ = super(DescrIndex, self).__init__
         super_(parent, id, title="Nápověda k jednotlivým náhledům",
-               content=lcg.TableOfNodes(depth=1), **kwargs)
+               content=lcg.NodeIndex(depth=1), **kwargs)
 
     def _create_children(self):
         #_split_menu_descriptions(self._read_file('descr'), 'src/descr')
         global _used_defs
         _used_defs.sort()
-        cls = lambda name: (name.endswith('-dual') or name.find('::') != -1) \
+        cls = lambda name: name.find('::') != -1 \
               and DualDescrNode or SingleDescrNode
         return [cls(name)(self, name, subdir='descr') for name in _used_defs]
 
