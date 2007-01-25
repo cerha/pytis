@@ -1874,28 +1874,41 @@ class BrowseForm(ListForm):
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
         class _Spec:
-            def body(self, resolver, variant=None):
-                table_id = resolver.p(BrowseForm._PrintResolver.P_NAME)
-                result = pytis.output.data_table(resolver, table_id)
+            # This class has to emulete a specification module as well as a
+            # (new style) specification class.
+            def __init__(self, resolver):
+                self._resolver = resolver
+            def body(self, resolver=None, variant=None):
+                table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
+                result = pytis.output.data_table(self._resolver, table_id)
                 return result
-            def doc_header(self, resolver, variant=None):
+            def doc_header(self, resolver=None, variant=None):
                 return None
-            def doc_footer(self, resolver, variant=None):
+            def doc_footer(self, resolver=None, variant=None):
                 return None
-            def coding(self, resolver, variant=None):
+            def coding(self, resolver=None, variant=None):
                 if wx.Font_GetDefaultEncoding() == \
                    wx.FONTENCODING_ISO8859_2:
                     result = pytis.output.Coding.LATIN2
                 else:
                     result = pytis.output.Coding.ASCII
                 return result
-        def _get_module(self, module_name):
+            
+        def _get_module(self, name):
+            # Supply a default specification module (old style spec).
             try:
-                result = pytis.output.OutputResolver._get_module(self,
-                                                                 module_name)
+                x = super(BrowseForm._PrintResolver, self)._get_module(name)
             except ResolverModuleError:
-                result = self._Spec()
-            return result
+                x = self._Spec(self)
+            return x
+
+        def _get_instance(self, key):
+            # Supply a default specification class (new style spec).
+            try:
+                x = super(BrowseForm._PrintResolver, self)._get_instance(key)
+            except ResolverSpecError:
+                x = self._Spec(self)
+            return x
         
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
@@ -2064,8 +2077,12 @@ class BrowseForm(ListForm):
         name = self._name
         if not print_spec_path:
             try:
-                print_spec_path = self._resolver.get(name, 'print_spec')[0][1]
+                spec = self._resolver.get(name, 'print_spec')
             except ResolverError:
+                spec = None
+            if spec:
+                print_spec_path = spec[0][1]
+            else:
                 print_spec_path = os.path.join('output', name)
         P = self._PrintResolver
         parameters = self._formatter_parameters()
