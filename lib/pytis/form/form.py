@@ -528,17 +528,17 @@ class TitledForm:
     def _create_title_bar(self, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
-        caption = self._create_caption(panel)
         self._create_print_menu()
         box = wx.BoxSizer()
-        box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
+        box.Add(self._create_caption(panel), 1,
+                wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
         box.Add(wx_button(panel, icon=wx.ART_PRINT, noborder=True,
                           tooltip=_("Zobrazit tiskové menu"),
                           callback=self._on_print_menu))
-        if description:
-            box.Add(wx_button(panel, icon=wx.ART_HELP_BOOK, noborder=True,
-                              tooltip=_("Zobrazit popis náhledu"),
-                              callback=self._on_show_description))
+        box.Add(wx_button(panel, icon='describe', noborder=True,
+                          tooltip=_("Zobrazit popis náhledu"),
+                          callback=self._on_show_description,
+                          enabled=description is not None))
         panel.SetSizer(box)
         panel.SetAutoLayout(True)        
         box.Fit(panel)
