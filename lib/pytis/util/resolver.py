@@ -158,16 +158,12 @@ class Resolver(object):
             return method(**kwargs)
         else:
             obj = self.get_object(module_name, spec_name)
-            return self._call_spec(obj, kwargs)
-
-    def _call_spec(self, obj, kwargs):
-        return apply(obj, (self,), kwargs)        
+            return obj(self, **kwargs)
 
     def _get_instance(self, key):
         module_name, spec_name, args, kwargs_items = key
         class_ = self.get_object(module_name, spec_name)
         return class_(*args, **dict(kwargs_items))
-
         
     def get_object(self, module_name, spec_name):
         """Vra» po¾adovaný objekt z daného specifikaèního modulu.
