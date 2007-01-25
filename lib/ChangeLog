@@ -1,5 +1,15 @@
 2007-01-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFSDialog._create_button): Use
+	`wx_button()'.
+	(SFSDialog._FIELD_HEIGHT): Set to 26.
+
+	* pytis/form/inputfield.py (Invocable._create_button)
+	(ImageField._create_ctrl): Use `wx_button()'.
+
+	* pytis/form/screen.py (get_icon): New arguments `type' and `size'.
+	(wx_button): New method.
+
 	* pytis/util/resolver.py (Resolver._call_spec): Method removed.
 	(Resolver._get_spec): Don't use `_call_spec'.
 	
@@ -20,6 +30,10 @@
 
 	* pytis/form/form.py (EditForm._on_field_edit): Don't operate on
 	`self._row' if it is None.
+	(TitledForm._on_show_description): Add a heading to the
+	description text.
+	(TitledForm._create_title_bar): Use `wx_button()'.  Don't use the
+	description as button tooltip string.
 
 2007-01-24  Tomas Cerha  <cerha@brailcom.org>
 
