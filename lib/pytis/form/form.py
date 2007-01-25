@@ -501,9 +501,9 @@ class TitledForm:
         return caption
 
     def _on_show_description(self, event):
-        return InfoWindow(_("Nápovìda pro %s") % self._view.title(),
-                          text=self._view.description(),
-                          format=TextFormat.WIKI)
+        title = _("Popis náhledu %s") % self._view.title()
+        text = "= "+self._view.title()+" =\n\n" + self._view.description()
+        return InfoWindow(title, text=text, format=TextFormat.WIKI)
 
     def _on_print_menu(self, event):
         button = event.GetEventObject()
@@ -529,21 +529,16 @@ class TitledForm:
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel)
-        bmp = wx.ArtProvider_GetBitmap(wx.ART_PRINT, wx.ART_TOOLBAR, (16,16))
-        button = wx.BitmapButton(panel, -1, bmp, style=wx.NO_BORDER)
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(), self._on_print_menu)
         self._create_print_menu()
         box = wx.BoxSizer()
         box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
-        box.Add(button)
+        box.Add(wx_button(panel, icon=wx.ART_PRINT, noborder=True,
+                          tooltip=_("Zobrazit tiskové menu"),
+                          callback=self._on_print_menu))
         if description:
-            descbmp = wx.ArtProvider_GetBitmap(wx.ART_HELP_BOOK, wx.ART_TOOLBAR,
-                                               (16,16))
-            descbutton = wx.BitmapButton(panel, -1, descbmp, style=wx.NO_BORDER)
-            wx_callback(wx.EVT_BUTTON, descbutton, descbutton.GetId(),
-                        self._on_show_description)
-            descbutton.SetToolTipString(description)
-            box.Add(descbutton)
+            box.Add(wx_button(panel, icon=wx.ART_HELP_BOOK, noborder=True,
+                              tooltip=_("Zobrazit popis náhledu"),
+                              callback=self._on_show_description))
         panel.SetSizer(box)
         panel.SetAutoLayout(True)        
         box.Fit(panel)
