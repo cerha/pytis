@@ -1387,7 +1387,7 @@ def dlg2px(window, x, y=None):
     else:
         return pxsize
     
-def get_icon(icon_id):
+def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
     """Najdi vra» po¾adovanou ikonu jako instanci 'wx.Bitmap'.
 
     Argumenty:
@@ -1399,7 +1399,9 @@ def get_icon(icon_id):
         pøípona '.png') v adresáøi urèeném konfiguraèní volbou
         'config.icon_dir'.
 
-    Pokud ikona není nalezena, vrací None.
+      type, size -- only relevant when icon_id as a 'wx.ART_*' constant.
+
+    If the icon is not found, returns None.
 
     """
     
@@ -1412,11 +1414,54 @@ def get_icon(icon_id):
         else:
             log(OPERATIONAL, "Could not find icon file:", imgfile)
     elif icon_id is not None:
-        bitmap = wx.ArtProvider_GetBitmap(icon_id, wx.ART_MENU, (16,16))
+        bitmap = wx.ArtProvider_GetBitmap(icon_id, type, size)
     if bitmap and bitmap.Ok():
         return bitmap
     else:
         return None
+
+def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False, 
+              callback=None, tooltip=None, size=None, height=None):
+    """Create and setup a button.
+
+    This is just a convenience helper to allow button creation and setup in one
+    step.
+
+    Arguments:
+    
+      parent -- wx parent window
+      label -- button label.  This label will only be used when no bitmap is
+        given and when the icon is not found (or not specified).
+      icon -- button icon identifier as used with 'get_icon'.  It the icon is
+        found, the label is ignored.
+      bitmap -- button bitmap.  This overrided both label and icon.
+      size -- button size in pixels as a two-tuple (width, height).
+      noborder -- If true, the button will not have the visible border.
+      callback -- If specified, the given function will be associated with
+        button press event.  The function will be called with `wx.Event'
+        instance as first argument.
+      tooltip -- tooltip string.
+      height -- height in pixels, overrides the height given by size.
+
+    Returns a 'wx.Button' or 'wx.BitmapButton' instance.
+      
+    """
+    if not bitmap and icon:
+        bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
+    style = wx.BU_EXACTFIT
+    if noborder:
+        style |= wx.NO_BORDER
+    if bitmap:
+        button = wx.BitmapButton(parent, -1, bitmap, size=size, style=style)
+    else:
+        button = wx.Button(parent, -1, label=label, size=size, style=style)
+    if tooltip and config.show_tooltips:
+        button.SetToolTipString(tooltip)
+    if callback:
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
+    if height:
+        button.SetMinSize((button.GetSize().width, height))
+    return button
     
 def orientation2wx(orientation):
     """Pøeveï konstantu tøídy 'Orientation' na wx reprezentaci."""
