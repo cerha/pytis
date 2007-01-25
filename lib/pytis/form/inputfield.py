@@ -999,14 +999,8 @@ class Invocable(object, CommandHandler):
         return (x, x)
 
     def _create_button(self, label, icon=None):
-        icon = get_icon(icon)
-        size = self._button_size()
-        if icon:
-            button = wx.BitmapButton(self._parent, size=size, bitmap=icon)
-        else:
-            button = wx.Button(self._parent, size=size, label=label,
-                               style=wx.BU_EXACTFIT)
-        return button
+        return wx_button(self._parent, label=label, icon=icon,
+                         size=self._button_size())
 
     def _disable(self, change_appearance):
         self._invocation_button.Enable(False)
@@ -1540,11 +1534,9 @@ class ImageField(FileField):
     _DEFAULT_WIDTH = _DEFAULT_HEIGHT = 80
     
     def _create_ctrl(self):
-        button = wx.BitmapButton(self._parent, bitmap=self._bitmap(),
-                                 size=(self.width()+10, self.height()+10))
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(),
-                    lambda e: self._on_button())
-        return button
+        return wx_button(self._parent, bitmap=self._bitmap(),
+                         size=(self.width()+10, self.height()+10),
+                         callback=lambda e: self._on_button())
 
     def _button_size(self):
         x = self._px_size(1, 1)[1]
