@@ -1,3 +1,26 @@
+2007-01-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/resolver.py (Resolver._call_spec): Method removed.
+	(Resolver._get_spec): Don't use `_call_spec'.
+	
+	* pytis/form/list.py (BrowseForm._PrintResolver._Spec.__init__):
+	New constructor.
+	(BrowseForm._PrintResolver._Spec.body)
+	(BrowseForm._PrintResolver._Spec.doc_header)
+	(BrowseForm._PrintResolver._Spec.doc_footer)
+	(BrowseForm._PrintResolver._Spec.coding): Make the `resolver'
+	argument optional.
+	(BrowseForm._PrintResolver._Spec.body): Use `self._resolver'
+	instead the one given by the argument.
+	(BrowseForm._PrintResolver._get_module): Pass `self' to
+	`BrowseForm._PrintResolver._Spec' constructor.
+	(BrowseForm._PrintResolver._get_instance): New method.
+	(BrowseForm._cmd_print): Consider also None as valid `print_spec'
+	value since this is returned by the new `Specification' class.
+
+	* pytis/form/form.py (EditForm._on_field_edit): Don't operate on
+	`self._row' if it is None.
+
 2007-01-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (_create_view_spec): Don't consider the
