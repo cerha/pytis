@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2006 Brailcom, o.p.s.
+# Copyright (C) 2001-2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,15 +67,11 @@ class SFSColumn:
 class SFSDialog(GenericDialog):
     """Spoleèný základ v¹ech vyhledávacích, filtrovacích a tøídících dialogù."""
 
-    _FIELD_HEIGHT = 24
+    _FIELD_HEIGHT = 26
 
     def _create_button(self, label, callback, tip=None):
-        b = wx.Button(self._dialog, -1, unicode(label))
-        b.SetMinSize((b.GetSize().width, self._FIELD_HEIGHT))
-        wx_callback(wx.EVT_BUTTON, self._dialog, b.GetId(), callback)
-        if tip is not None and config.show_tooltips:
-            b.SetToolTipString(unicode(tip))
-        return b
+        return wx_button(self._dialog, label=label, callback=callback,
+                         tooltip=tip, height=self._FIELD_HEIGHT)
         
     def _create_choice(self, choices, tip=None, enlarge=True):
         ch = wx.Choice(self._dialog, -1, choices=choices)
