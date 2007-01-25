@@ -86,6 +86,8 @@ NOVÉ VLASTNOSTI:
 
  * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
 
+ * Zamezit výpoètu editovatelnosti políèek v ShowFormu - je to zbyteèné...
+
 
 2) Specifikace
 
