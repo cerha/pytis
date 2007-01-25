@@ -1421,7 +1421,8 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
         return None
 
 def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False, 
-              callback=None, tooltip=None, size=None, height=None):
+              callback=None, enabled=True, tooltip=None,
+              size=None, height=None):
     """Create and setup a button.
 
     This is just a convenience helper to allow button creation and setup in one
@@ -1440,6 +1441,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
       callback -- If specified, the given function will be associated with
         button press event.  The function will be called with `wx.Event'
         instance as first argument.
+      enabled -- if false, the button will be disabled.  
       tooltip -- tooltip string.
       height -- height in pixels, overrides the height given by size.
 
@@ -1461,6 +1463,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
         wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
     if height:
         button.SetMinSize((button.GetSize().width, height))
+    if not enabled:
+        button.Enable(False)
     return button
     
 def orientation2wx(orientation):

@@ -33,7 +33,9 @@
 	(TitledForm._on_show_description): Add a heading to the
 	description text.
 	(TitledForm._create_title_bar): Use `wx_button()'.  Don't use the
-	description as button tooltip string.
+	description as button tooltip string.  Always create the
+	description button, but disable it when no description is
+	available...
 
 2007-01-24  Tomas Cerha  <cerha@brailcom.org>
 
