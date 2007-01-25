@@ -7,6 +7,15 @@
 
 2007-01-24 Tomas Cerha  <cerha@brailcom.org>
 
+	* BUGFIX: Tiskový resolver BrowseFormu nyní správnì vrací výchozí
+	hodnoty i pro specifikace nového typu (tøídy odvozené od
+	`Specification').  Díky tomu tisk z nových defsù nefungoval.
+
+	* BUGFIX: O¹etøení pøípadu nastavení políèka v neinicializovaném
+	formuláøi.
+	
+2007-01-24 Tomas Cerha  <cerha@brailcom.org>
+
 	Bylo zru¹eno v¹e co se týkalo dvojího o¹etøování duálních
 	formuláøù.  Tøída `DualSpec' ji¾ neexistuje a je tedy tøeba
 	vyu¾ívat u¾ jen novou formu s `BindingSpec'.
