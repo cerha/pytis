@@ -1672,11 +1672,13 @@ class EditForm(LookupForm, TitledForm, Refreshable):
 
     def _on_field_edit(self, field):
         # Signalizace zmìny políèka z InputField
-        value, error = field.validate(quiet=True)
-        if value:
-            self._row[field.id()] = value
-        if isinstance(field, CodebookField):
-            field.set_display(value and self._row.display(field.id()) or '')
+        if self._row is not None:
+            value, error = field.validate(quiet=True)
+            if value:
+                self._row[field.id()] = value
+            if isinstance(field, CodebookField):
+                display = value and self._row.display(field.id()) or ''
+                field.set_display(display)
 
     def _on_field_change(self, id):
         # Signalizace zmìny políèka z PresentedRow
