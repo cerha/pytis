@@ -535,7 +535,7 @@ class TitledForm:
         box.Add(wx_button(panel, icon=wx.ART_PRINT, noborder=True,
                           tooltip=_("Zobrazit tiskové menu"),
                           callback=self._on_print_menu))
-        box.Add(wx_button(panel, icon='describe', noborder=True,
+        box.Add(wx_button(panel, '?', icon='describe', noborder=True,
                           tooltip=_("Zobrazit popis náhledu"),
                           callback=self._on_show_description,
                           enabled=description is not None))
