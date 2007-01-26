@@ -1448,6 +1448,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
     Returns a 'wx.Button' or 'wx.BitmapButton' instance.
       
     """
+    assert not isinstance(icon, str) or label is not None, \
+           "Button with non-system icon must have a fallback label."
     if not bitmap and icon:
         bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
     style = wx.BU_EXACTFIT
