@@ -430,6 +430,23 @@ class Number(Type):
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
+
+class Big(Type):
+    """Mixin class denoting types with big values.
+
+    Instances of this type are sometimes handled in Pytis in a special way,
+    e.g. they are not printed to the terminal log.
+    
+    """
+
+class Large(Big):
+    """Mixin class denoting types with really large values.
+
+    Instances of this type may be handled in a special way not only inside
+    Pytis, but possibly inside databases as well.
+
+    """
+
     
 class Integer(Number):
     """Libovolný integer."""
@@ -1495,8 +1512,12 @@ class _Value(object):
         self._init()
     
     def __unicode__(self):
+        type = self.type()
+        value = unicode (self.value())
+        if isinstance(type, Big) and len(value) > 40:
+            value = '%s...<<big value>>...' % (value[:10],)
         return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
-                                            self.type(), self.value())
+                                            type, value)
 
     def __cmp__(self, other):
         """Vra» 0, právì kdy¾ 'self' a 'other' jsou shodné.

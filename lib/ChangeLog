@@ -1,3 +1,8 @@
+2007-01-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/types_.py (Big, Large): New types.
+	(_Value.__unicode__): Don't insert big values.
+
 2007-01-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (Module): Added assert to require a
