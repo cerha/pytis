@@ -1,3 +1,11 @@
+2007-01-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (Module): Added assert to require a
+	fallback label for non-system icons.
+
+	* pytis/form/form.py (TitledForm._create_title_bar): Pass also
+	label to "Show description" button.
+
 2007-01-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py (SFSDialog._create_button): Use
