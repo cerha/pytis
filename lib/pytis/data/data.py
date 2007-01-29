@@ -262,7 +262,7 @@ class Data(object):
         """
         return None
     
-    def select(self, condition=None, reuse=False, sort=()):
+    def select(self, condition=None, reuse=False, sort=(), columns=None):
         """Inicializuj nata¾ení v¹ech sloupcù z datového zdroje.
 
         Metoda sama nemusí je¹tì je¹tì ¾ádná data natahovat, pouze tento pøenos
@@ -285,7 +285,9 @@ class Data(object):
             ID nebo (ID, DIRECTION), kde ID je id tøídìného sloupce a DIRECTION
             je jedna z konstant modulu 'ASCENDENT' a 'DESCENDANT', implicitní
             hodnota je 'ASCENDENT'
-
+          columns -- sequence of IDs of columns to select; if not given, all
+            columns are selected
+          
         Je-li 'condition' rùzné od 'None', specifikuje podmínku pro výbìr
         øádkù.  Podtøídy nejsou povinny podmínky implementovat (mohou je
         neimplementovat vùbec nebo mohou implementovat pouze nìkteré podmínky),

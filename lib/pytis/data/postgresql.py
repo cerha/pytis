@@ -645,6 +645,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     """
     _PDBB_CURSOR_NAME = 'selection'
 
+    class _SQLCommandTemplate(object):
+        def __init__(self, template, arguments=()):
+            self._template = template
+            self._arguments = arguments
+        def format(self, optional_arguments, arguments):
+            if not optional_arguments:
+                optional_arguments = self._arguments
+            return self._template % (optional_arguments + arguments)
+        
     def __init__(self, bindings=None, ordering=None, **kwargs):
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
@@ -813,6 +822,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Hotovo
         return columns, tuple(key)
 
+    def _pdbb_sql_column_list_from_names(self, column_names):
+        bindings = [self._db_column_binding(name) for name in column_names]
+        return self._pdbb_sql_column_list(bindings)
+        
+    def _pdbb_sql_column_list(self, bindings):
+        visible_bindings = [b for b in bindings if b.id()]
+        column_names = []
+        for b in visible_bindings:
+            column_names = column_names + self._pdbb_btabcol(b)
+        column_list = string.join(column_names, ', ')
+        return column_list
+        
     def _pdbb_create_sql_commands(self):
         """Vytvoø ¹ablony SQL pøíkazù pou¾ívané ve veøejných metodách."""
         bindings = self._bindings
@@ -820,10 +841,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert isinstance(b, DBColumnBinding), \
                    ('Unsupported binding specification', b)
         # Pøiprav parametry
-        visible_bindings = filter(lambda b: b.id(), bindings)
-        column_names = map(lambda b: self._pdbb_btabcol(b), visible_bindings)
-        column_names = reduce(lambda x, y: x + y, column_names, [])
-        column_list = string.join(column_names, ', ')
+        column_list = self._pdbb_sql_column_list(bindings)
         table_names = map(lambda b: b.table(), bindings)
         table_names = remove_duplicates(table_names)
         table_list = string.join(table_names, ', ')
@@ -872,10 +890,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'select distinct %%s from %s where %%s and (%s) order by %%s' % \
           (table_list, relation)
         self._pdbb_command_select = \
-          ('declare %s scroll cursor for select %s, %s from %s '+\
-           'where %%s and (%s) order by %%s %s') % \
-          (self._PDBB_CURSOR_NAME, column_list, oidstrings, table_list,
-           relation, ordering)
+          self._SQLCommandTemplate(
+            (('declare %s scroll cursor for select %%s, %s from %s '+
+              'where %%s and (%s) order by %%s %s') %
+             (self._PDBB_CURSOR_NAME, oidstrings, table_list,
+              relation, ordering)),
+            (column_list,))
         self._pdbb_command_select_agg = \
           ('select %%s(%%s) from %s where %%s and (%s)' %
            (table_list, relation))
@@ -1213,21 +1233,27 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Unexpected result', data_)
         return result
 
-    def _pg_select (self, condition, sort):
-        """Inicializuj select a vra» poèet øádkù v nìm nebo 'None'.
+    def _pg_select (self, condition, sort, columns):
+        """Initiate select and return the number of its lines or 'None'.
 
-        Argumenty:
+        Arguments:
 
-          condition -- nezpracovaný podmínkový výraz nebo 'None'
-          sort -- nezpracovaná specifikace tøídìní nebo 'None'
-          operation -- nezpracovaná specifikace agregaèní funkce
+          condition -- unprocessed conditional expression or 'None'
+          sort -- unprocessed sorting specification or 'None'
+          operation -- unprocessed specification of an aggregation function
+          columns -- sequence of IDs of columns to select
           
         """
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
         data = self._pg_query(self._pdbb_command_count % cond_string)
-        self._pg_query(self._pdbb_command_select %
-                       (cond_string, sort_string))
+        if columns:
+            column_list = (self._pdbb_sql_column_list_from_names(columns),)
+        else:
+            column_list = None
+        query = self._pdbb_command_select.format(
+            column_list, (cond_string, sort_string,))
+        self._pg_query(query)
         try:
             result = int(data[0][0])
         except:
@@ -1692,6 +1718,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_initial_select = False
         self._pg_make_row_template = \
             self._pg_create_make_row_template(self._columns)
+        self._pg_make_row_template_limited = None
         # NASTAVENÍ CACHE
         # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
         # velikost pamìti atd.), je vhodné rùzné nastavení cache,
@@ -1745,12 +1772,17 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 typid = 99
             template.append((id, typid, type))
         return template
+
+    def _pg_limited_make_row_template(self, columns):
+        return [item for item in self._pg_make_row_template
+                if item[0] in columns]
     
     def _pg_make_row_from_raw_data(self, data_, template=None):
         if not data_:
             return None
         if not template:
-            template = self._pg_make_row_template
+            template = (self._pg_make_row_template_limited or
+                        self._pg_make_row_template)
         row_data = []
         data_0 = data_[0]
         i = 0
@@ -1842,8 +1874,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
         
-    def select(self, condition=None, sort=(), reuse=False):
-        if __debug__: log(DEBUG, 'Zahájení selectu:', condition)
+    def select(self, condition=None, sort=(), reuse=False, columns=None):
+        if __debug__:
+            log(DEBUG, 'Select started:', condition)
         if reuse and not self._pg_changed and self._pg_number_of_rows and \
                condition == self._pg_last_select_condition and \
                sort == self._pg_last_select_sorting:
@@ -1857,8 +1890,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_select_sorting = sort
         self._pg_last_fetch_row = None
         self._pg_changed = False
+        if columns:
+            self._pg_make_row_template_limited = \
+                self._pg_limited_make_row_template(columns)
+        else:
+            self._pg_make_row_template_limited = None
         try:
-            number_of_rows = self._pg_select (condition, sort)
+            number_of_rows = self._pg_select (condition, sort, columns)
         except:
             cls, e, tb = sys.exc_info()
             try:

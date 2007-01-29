@@ -808,6 +808,18 @@ class DBDataDefault(_DBTest):
         assert self.data.fetchone() == None, 'too many lines'
         assert self.data.fetchone() == None, 'data reincarnation'
         self.data.close()
+    def test_select_fetch_limited(self):
+        self.data.select(columns=('castka', 'stat-nazev',))
+        for r in (self.ROW1, self.ROW2):
+            result = self.data.fetchone()
+            assert result != None, 'missing lines'
+            for orig_col, result_col in ((2, 0,), (3, 1,),):
+                assert r[orig_col] == result[result_col].value(), \
+                       ('invalid value', r[orig_col],
+                        result[result_col].value())
+        assert self.data.fetchone() == None, 'too many lines'
+        assert self.data.fetchone() == None, 'data reincarnation'
+        self.data.close()
     def test_select_map(self):
         result = self.data.select_map(lambda row: (row, 'foo'))
         for r, x in zip((self.ROW1, self.ROW2), result):
@@ -870,6 +882,27 @@ class DBDataDefault(_DBTest):
                   (('101', '   '), ('100', '007'), ('100', '008'))])
         for spec, result in TESTS:
             d.select(sort=spec)
+            for r in result:
+                row = d.fetchone()
+                assert row, 'missing lines'
+                k1, k2 = r
+                synt, anal = row['synt'].value(), row['anal'].value()
+                assert synt == k1, ('bad value', synt, k1, spec)
+                assert anal == k2, ('bad value', anal, k2, spec)
+            assert not d.fetchone(), 'too many lines'
+    def test_select_sorting_limited(self):
+        A = pytis.data.ASCENDENT
+        D = pytis.data.DESCENDANT
+        d = self.dosnova
+        limited_columns=('synt', 'anal', 'popis', 'stat',)
+        TESTS = ([(('synt', D), ('stat',A)),
+                  (('101', '   '), ('100', '008'), ('100', '007'))],
+                 [(('stat', A), 'synt'),
+                  (('100', '008'), ('100', '007'), ('101', '   '))],
+                 [('anal', 'synt'),
+                  (('101', '   '), ('100', '007'), ('100', '008'))])
+        for spec, result in TESTS:
+            d.select(sort=spec, columns=limited_columns)
             for r in result:
                 row = d.fetchone()
                 assert row, 'missing lines'
