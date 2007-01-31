@@ -1861,6 +1861,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def row(self, key):
         #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
+        self._pg_make_row_template_limited = None
         try:
             data = self._pg_row (self._pg_value(key))
         except:
