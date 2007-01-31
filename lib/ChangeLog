@@ -1,3 +1,17 @@
+2007-01-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (Application.OnInit): Use
+	`has_access', not `self._can_run_form' to test spec validity.
+	(Application._can_run_form): Don't care about dual forms here.
+	Ignore resolver errors here.
+	(Application._can_new_record): Ignore resolver errors here.
+	(has_access): If the name is a dual spec name containing `::',
+	split it and check the perms of both parts.  Don't ignore resover
+	errors here.
+
+	* pytis/util/util.py (Pipe.read): Pass `size' to `lfunction' as a
+	keyword argument.
+
 2007-01-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/types_.py (Big, Large): New types.
