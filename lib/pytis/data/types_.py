@@ -487,6 +487,9 @@ class Limited(Type):
         """
         return self._maxlen
 
+    def _format_maxlen(self):
+        return str(self._maxlen)
+
     def _check_constraints(self, value):
         super(Limited, self)._check_constraints(value)
         self._check_maxlen(value)
@@ -495,7 +498,7 @@ class Limited(Type):
         if value is not None and self._maxlen is not None \
                and len(value) > self._maxlen:
             raise self._validation_error(self.VM_MAXLEN_EXCEEDED,
-                                         maxlen=self._maxlen)
+                                         maxlen=self._format_maxlen())
 
     
 class Integer(Number):
@@ -1028,7 +1031,7 @@ class Binary(Limited):
     """
     
     _VALIDATION_CACHE_LIMIT = 0
-    _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální velikost %(maxlen)sB")
+    _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální velikost %(maxlen)s")
 
     def __init__(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators may not be used "+
@@ -1040,6 +1043,15 @@ class Binary(Limited):
             ('Not a buffer object', object)
         return Value(self, object), None
 
+    def _format_maxlen(self):
+        maxlen = float(self._maxlen)
+        units = ('B', 'kB', 'MB', 'GB')
+        i = 0
+        while maxlen >= 1024 and i < len(units)-1:
+            maxlen /= 1024
+            i += 1
+        return '%.4g ' % maxlen + units[i]
+    
     def _export(self, value):
         return value
     
