@@ -159,6 +159,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         except ValueError:
             self._column_widths = {}
     
+    def _select_columns(self):
+        return [c.id() for c in self._data.columns() 
+                if not isinstance(c.type(), pytis.data.Big)]
+    
     def _create_form_parts(self, sizer):
         if self.title() is not None:
             description = self._view.description()
@@ -235,15 +239,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             msg = wx.grid.GridTableMessage(t, id, *args)
             g.ProcessTableMessage(msg)
         current_row = self._table.current_row()
-        if data_init:
-            row_count = self._init_select()
-        else:
-            row_count = self._lf_select_count
-            self._data.rewind()
-        if inserted_row_number is not None:
-            row_count = row_count + 1
-        old_row_count = self._table.GetNumberRows()
-        new_row_count = row_count
         old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
         g.BeginBatch()
@@ -272,6 +267,15 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             else:
                 self._set_state_param('columns', new_columns)
                 self._set_state_param('default_columns', default_columns)
+        if data_init:
+            row_count = self._init_select()
+        else:
+            row_count = self._lf_select_count
+            self._data.rewind()
+        if inserted_row_number is not None:
+            row_count = row_count + 1
+        old_row_count = self._table.GetNumberRows()
+        new_row_count = row_count
         t.update(columns=self._columns,
                  row_count=row_count, sorting=self._lf_sorting,
                  grouping=self._grouping,
