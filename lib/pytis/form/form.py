@@ -617,7 +617,7 @@ class RecordForm(InnerForm):
         condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
         data = self._data
         def find_row(condition):
-            n = data.select(condition)
+            n = data.select(condition, columns=self._select_columns())
             return data.fetchone()
         success, result = db_operation((find_row, (condition,)))
         return result
@@ -1044,10 +1044,15 @@ class LookupForm(RecordForm):
             condition = self._lf_condition or self._lf_filter
         return condition
     
+    def _select_columns(self):
+        return None
+
     def _init_select(self):
         data = self._data
         op = lambda : data.select(condition=self._current_condition(),
-                                  sort=self._data_sorting(), reuse=False)
+                                  columns=self._select_columns(),
+                                  sort=self._data_sorting(),
+                                  reuse=False)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
