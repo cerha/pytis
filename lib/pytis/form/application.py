@@ -172,7 +172,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                        'Not a valid form class: %s' % args['form_class']
                 # This is a simple way to test whether the specification
                 # still exists.
-                self._can_run_form(**args)
+                has_access(args['name'])
             except Exception, e:
                 log(OPERATIONAL, "Ignoring recent form:", (args, e))
                 continue
@@ -577,13 +577,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if isinstance(self.current_form(), PopupForm) \
            and not issubclass(form_class, PopupForm):
             return False
-        if issubclass(form_class, DualForm) and \
-               not issubclass(form_class, DescriptiveDualForm):
-            main_name, side_name = name.split('::')
-            result = has_access(main_name) and has_access(side_name)
-        else:
-            result = has_access(name)
-        return result
+        try:
+            return has_access(name)
+        except ResolverError:
+            # The spec is invalid, but we want the crash on attempt to run it.
+            return True
 
     def _cmd_run_form(self, form_class, name, select_row=None, **kwargs):
         # Dokumentace viz funkce run_form().
@@ -663,7 +661,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def _can_new_record(self, name, **kwargs):
-        return has_access(name, perm=pytis.data.Permission.INSERT)
+        try:
+            return has_access(name, perm=pytis.data.Permission.INSERT)
+        except ResolverError:
+            # The spec is invalid, but we want the crash on attempt to run it.
+            return True
     
     def _cmd_new_record(self, name, prefill=None, inserted_data=None,
                         block_on_new_record=False):
@@ -1103,10 +1105,12 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
 
     """
     try:
-        data_spec = resolver().get(name, 'data_spec')
-    except ResolverError:
-        return True
-    rights = data_spec.access_rights()
+        main, side = name.split('::')
+    except ValueError:
+        pass
+    else:
+        return has_access(main, perm=perm) and has_access(side, perm=perm)
+    rights = resolver().get(name, 'data_spec').access_rights()
     if not rights:
         return True
     groups = pytis.data.default_access_groups(config.dbconnection)
