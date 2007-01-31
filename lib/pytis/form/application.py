@@ -1096,12 +1096,16 @@ def block_refresh(function, *args, **kwargs):
     return Refreshable.block_refresh(function, *args, **kwargs)
 
 def has_access(name, perm=pytis.data.Permission.VIEW):
-    """Vra» pravdu, pokud má pøihlá¹ený u¾ivatel práva k danému náhledu.
+    """Return true if the current user has given permition for given spec.
 
     Argumenty:
     
-      name -- název specifikace jako øetìzec.
-      perm -- právo jako jedna z konstant `pytis.data.Permission'.
+      name -- sepcification name as a string.  May also be a dual name
+        (containing `::').  In such a case, the permition is checked for both
+        names.
+      perm -- access permition as one of `pytis.data.Permission' constants.
+
+    Raises 'ResolverError' if given specification name can not be found.
 
     """
     try:
