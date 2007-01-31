@@ -1,9 +1,26 @@
 2007-01-31  Pavel Hanak  <hanak@asellus.cz>
 
-	* pytis/form/list.py (ListForm._can_edit): Doplnìn zapomenutý
-	return. 
+	* pytis/form/list.py (ListForm._can_edit): Added forgotten `return'. 
 
 2007-01-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (Limited): New class.
+	(String): Derive from `Limited'.
+	(String.VM_STRING_TOO_LONG, String._VM_STRING_TOO_LONG_MSG):
+	Constants removed. 
+	(String.__init__, String.__cmp__, String.maxlen)
+	(String._check_constraints, String._check_maxlen): Methods removed.
+	(String._VM_MAXLEN_EXCEEDED_MSG): New constant.
+	(Binary): Derive from `Limited'.
+	(Binary._VM_MAXLEN_EXCEEDED_MSG): New constant.
+	(Image): Derive also from `Big'.
+
+	* pytis/form/form.py (RecordForm._find_row_by_values.find_row):
+	Pass `columns' to `data.select()'.
+	(LookupForm._select_columns): New method.
+	(LookupForm._init_select): Pass `columns' to `data.select()'.
+
+	* pytis/form/list.py (ListForm._select_columns): New method.
 
 	* pytis/form/application.py (Application.OnInit): Use
 	`has_access', not `self._can_run_form' to test spec validity.
@@ -13,6 +30,7 @@
 	(has_access): If the name is a dual spec name containing `::',
 	split it and check the perms of both parts.  Don't ignore resover
 	errors here.
+	(has_access): Docstring updated.
 
 	* pytis/util/util.py (Pipe.read): Pass `size' to `lfunction' as a
 	keyword argument.
