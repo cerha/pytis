@@ -447,6 +447,56 @@ class Large(Big):
 
     """
 
+class Limited(Type):
+    """Mixin class for types with possibly limited maximal lenght.
+
+    Maximal length of a value of this type can be limited by passing the
+    `maxled' constructor argument.
+    
+    """
+
+    VM_MAXLEN_EXCEEDED = 'VM_MAXLEN_EXCEEDED'
+    _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální délka %(maxlen)s")
+
+    def __init__(self, maxlen=None, **kwargs):
+        """Initialize the instance.
+        
+        Arguments:
+        
+          maxlen -- maximal length of a value of this type as integer or
+            'None'; 'None' denotes unlimited lenght.
+             
+        Other arguments are passed to the parent constructor.
+
+        """
+        self._maxlen = maxlen
+        super(Limited, self).__init__(**kwargs)
+
+    def __cmp__(self, other):
+        """Return 0 if 'self' and 'other' are of the same class and maxlen."""
+        result = super(Limited, self).__cmp__(other)
+        if not result:
+            result = cmp(self.maxlen(), other.maxlen())
+        return result
+
+    def maxlen(self):
+        """Return the maximal lenght of the value as an integer or 'None'.
+
+        'None' denotes unlimited lenght.
+        
+        """
+        return self._maxlen
+
+    def _check_constraints(self, value):
+        super(Limited, self)._check_constraints(value)
+        self._check_maxlen(value)
+
+    def _check_maxlen(self, value):
+        if value is not None and self._maxlen is not None \
+               and len(value) > self._maxlen:
+            raise self._validation_error(self.VM_MAXLEN_EXCEEDED,
+                                         maxlen=self._maxlen)
+
     
 class Integer(Number):
     """Libovolný integer."""
@@ -601,7 +651,7 @@ class Float(Number):
             return unicode(self._format_string % value)
 
         
-class String(Type):
+class String(Limited):
     """Libovolný string.
 
     Lze také specifikovat, ¾e øetìzec mù¾e mít pouze omezenou délku, blí¾e viz
@@ -609,50 +659,9 @@ class String(Type):
 
     """    
 
-    VM_STRING_TOO_LONG = 'VM_STRING_TOO_LONG'
-    _VM_STRING_TOO_LONG_MSG = _("Øetìzec pøesahuje maximální délku %(maxlen)s")
-
+    _VM_MAXLEN_EXCEEDED_MSG = _("Øetìzec pøesahuje maximální délku %(maxlen)s")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
-    def __init__(self, maxlen=None, **kwargs):
-        """Definuj stringový typ maximální délky.
-
-        Argumenty:
-        
-          maxlen -- maximální délka stringu jako integer, nebo 'None';
-            pokud je 'None', délka stringu není omezena
-             
-        Ostatní klíèové argumenty jsou shodné, jako v pøedkovi.
-
-        """
-        super(String, self).__init__(**kwargs)
-        self._maxlen = maxlen
-
-    def __cmp__(self, other):
-        """Vra» 0, právì kdy¾ 'self' a 'other' jsou té¾e tøídy a max. délky."""
-        result = super(String, self).__cmp__(other)
-        if not result:
-            result = cmp (self.maxlen(), other.maxlen())
-        return result
-
-    def maxlen(self):
-        """Vra» maximální povolenou délku stringu jako integer, nebo 'None'.
-
-        'None' znaèí, ¾e délka øetìzce není omezená.
-        
-        """
-        return self._maxlen
-
-    def _check_constraints(self, value):
-        super(String, self)._check_constraints(value)
-        self._check_maxlen(value)
-
-    def _check_maxlen(self, value):
-        if value is not None and self._maxlen is not None \
-               and len(value) > self._maxlen:
-            raise self._validation_error(self.VM_STRING_TOO_LONG,
-                                         maxlen=self._maxlen)
-        
     def _validate(self, string):
         """Vra» instanci tøídy 'Value' s hodnotou 'string'.
 
@@ -1003,7 +1012,7 @@ class Boolean(Type):
         return Value(self, False)
 
 
-class Binary(Type):
+class Binary(Limited):
     """Binary data.
 
     All input and output values of this type are either Python 'buffer' objects
@@ -1019,6 +1028,7 @@ class Binary(Type):
     """
     
     _VALIDATION_CACHE_LIMIT = 0
+    _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální velikost %(maxlen)sB")
 
     def __init__(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators may not be used "+
@@ -1032,8 +1042,9 @@ class Binary(Type):
 
     def _export(self, value):
         return value
+    
 
-class Image(Binary):
+class Image(Binary, Big):
     """Bitmap image.
 
     This class is just a prototype.  It Currently supports validation of image
