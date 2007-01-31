@@ -205,7 +205,8 @@ class Pipe:
 
     def read(self, size=-1):
         """Stejné jako v pøípadì tøídy 'file'."""
-        def lfunction():
+        # TODO: Z nepochopitelných dùvodù je zde pøedávání size nutné.
+        def lfunction(size=size):
             result = ''
             buffer = self._buffer
             while True:
