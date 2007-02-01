@@ -908,13 +908,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_move_backward = \
           'move backward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_search_first = \
-          ('select %s, %s from %s where (%s) and %%s order by %%s %s '+\
-           'limit 1') % \
-           (column_list, oidstrings, main_table, relation, ordering)
+          self._SQLCommandTemplate(
+            (('select %%ss, %s from %s where (%s) and %%s order by %%s %s '+
+              'limit 1') %
+             (oidstrings, main_table, relation, ordering,)),
+            (column_list,))
         self._pdbb_command_search_last = \
-          ('select %s, %s from %s where (%s) and %%s order by %%s %s '+\
-           'limit 1') % \
-           (column_list, oidstrings, main_table, relation, rordering)
+          self._SQLCommandTemplate(
+            (('select %%s, %s from %s where (%s) and %%s order by %%s %s '+
+              'limit 1') %
+             (oidstrings, main_table, relation, rordering,)),
+            (column_list,))
         self._pdbb_command_search_distance = \
           'select count(%s) from %s where (%s) and %%s' % \
           (first_key_column, main_table, relation)
@@ -1216,11 +1220,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             sql_command = self._pdbb_command_search_last
         else:
             raise ProgramError('Unknown direction', direction)
-        data_ = self._pg_query(sql_command % (cond_string, sort_string))
+        query = sql_command.format(self._pdbb_select_column_list,
+                                   (cond_string, sort_string,))
+        data_ = self._pg_query(query)
         if not data_:
             return 0
         # Zjisti vzdálenost mezi aktuálním a vyhledaným øádkem
-        row_found = self._pg_make_row_from_raw_data(data_)
+        row_found = self._pg_make_row_from_raw_data(
+            data_, template=self._pg_make_row_template_limited)
         search_cond = AND(common_cond,
                           sorting_condition(sorting, False,
                                             row_found, True))
@@ -1251,6 +1258,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             column_list = (self._pdbb_sql_column_list_from_names(columns),)
         else:
             column_list = None
+        self._pdbb_select_column_list = column_list
         query = self._pdbb_command_select.format(
             column_list, (cond_string, sort_string,))
         self._pg_query(query)
@@ -1781,8 +1789,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if not data_:
             return None
         if not template:
-            template = (self._pg_make_row_template_limited or
-                        self._pg_make_row_template)
+            template = self._pg_make_row_template
         row_data = []
         data_0 = data_[0]
         i = 0
@@ -1861,7 +1868,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def row(self, key):
         #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
-        self._pg_make_row_template_limited = None
         try:
             data = self._pg_row (self._pg_value(key))
         except:
@@ -2055,7 +2061,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_is_in_select = False
                 raise cls, e, tb
             if data_:
-                row_data = [self._pg_make_row_from_raw_data([d]) for d in data_]
+                row_data = [self._pg_make_row_from_raw_data(
+                        [d], template=self._pg_make_row_template_limited)
+                            for d in data_]
                 buffer.fill(row_data, FORWARD, len(row_data)!=size)
                 if xskip:
                     buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
