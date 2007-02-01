@@ -788,15 +788,21 @@ class DBDataDefault(_DBTest):
         # Ji¾ otestováno v setUp
         pass
     def test_row(self):
+        I = pytis.data.Integer()
         for x in ('0', '1'):
-            assert self.data.row(pytis.data.Integer().validate(x)[0]) \
-                   is None, \
+            assert self.data.row((I.validate(x)[0],)) is None,\
                    'nonselectable row selected'
         for x, r in (('2', self.ROW1), ('3', self.ROW2)):
-            result = self.data.row(pytis.data.Integer().validate(x)[0])
+            result = self.data.row((I.validate(x)[0],))
             for i in range(len(result) - 1):
                 v = result[i].value()
                 assert v == r[i], ('row doesn\'t match', v, r[i])
+        result = self.data.row((I.validate('2')[0],),
+                               columns=('castka', 'stat-nazev',))
+        assert len(result) == 2, ('invalid number of columns', len(result),)
+        for i, j in ((0, 2,), (1, 3,)):
+            assert result[i] != self.ROW1[j],\
+                ('invalid response', i, result[i], self.ROW1[j])
     def test_select_fetch(self):
         self.data.select()
         for r in (self.ROW1, self.ROW2):

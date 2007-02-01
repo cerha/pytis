@@ -880,9 +880,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         oidstrings = string.join(oidnames, ', ')
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
-          'select %s, %s from %s where %s order by %s' % \
-          (column_list, oidstrings, table_list, relation_and_condition,
-           ordering)
+          self._SQLCommandTemplate(
+            ('select %%s, %s from %s where %s order by %s' %
+             (oidstrings, table_list, relation_and_condition, ordering,)),
+            (column_list,))
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
           (first_key_column, table_list, relation)
@@ -1153,9 +1154,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 values.append(value)
         return columns, values
 
-    def _pg_row (self, value):
-        """Vytáhni a vra» raw data odpovídající klíèové hodnotì 'value'."""
-        return self._pg_query(self._pdbb_command_row % value)
+    def _pg_row (self, key_value, columns):
+        """Retrieve and return raw data corresponding to 'key_value'."""
+        if columns:
+            column_list = (self._pdbb_sql_column_list_from_names(columns),)
+        else:
+            column_list = None
+        query = self._pdbb_command_row.format(column_list, key_value)
+        return self._pg_query(query)
     
     def _pg_search(self, row, condition, direction):
         sorting = self._pg_last_select_sorting
@@ -1866,10 +1872,20 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Veøejné metody a jimi pøímo volané abstraktní metody
 
-    def row(self, key):
+    def row(self, key, columns=None):
         #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
+        # TODO: Temporary compatibility hack.  The current internal db code
+        # uses multikeys, but user code does not anymore.  Before we rewrite
+        # the internal parts to use single keys only, we should allow both
+        # kinds of keys.
+        if not is_sequence(key):
+            key = (key,)
+        if columns:
+            template = self._pg_limited_make_row_template(columns)
+        else:
+            template = None
         try:
-            data = self._pg_row (self._pg_value(key))
+            data = self._pg_row (self._pg_value(key), columns)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -1877,7 +1893,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except:
                 pass
             raise cls, e, tb
-        result = self._pg_make_row_from_raw_data(data)
+        result = self._pg_make_row_from_raw_data(data, template=template)
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
         

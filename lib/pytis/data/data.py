@@ -244,20 +244,22 @@ class Data(object):
         """Vra» hodnoty klíèe z 'row' jako tuple instancí 'Value'."""
         return row.columns([c.id() for c in self.key()])
         
-    def row(self, key):
-        """Vra» øádek identifikovaný 'key' jako instanci 'Row'.
+    def row(self, key, columns=None):
+        """Return row instance 'Row' identified by 'key'.
 
-        Pokud takový øádek neexistuje, vra» 'None'.
+        If there is no such row, return 'None'.
 
-        Argumenty:
-        
-          key -- instance nebo sekvence instancí tøídy 'types_.Value'
-            odpovídajících sloupcùm klíèe reprezentující hodnoty klíèe
-            po¾adovaného øádku
+        Arguments:
 
-        Délka 'key' musí odpovídat poètu klíèových sloupcù.
-        
-        V této tøídì metoda v¾dy pouze vrací 'None'.
+          key -- instance or a sequence of instances of the class
+            'types_.Value' corresponding to the columns of the key,
+            representing key values of the row being looked for
+          columns -- sequence of IDs of columns to retrieve; if not given, all
+            columns are retrieved
+
+        Length of 'key' must correspond to the number of key columns.
+
+        The method always returns 'None' in this class.
         
         """
         return None
