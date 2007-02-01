@@ -1048,6 +1048,9 @@ def ecase(value, *settings):
     return s[1]
 
 
+if __debug__:
+    _active_locks = None
+    _with_lock_lock = thread.allocate_lock()
 def with_lock(lock, function):
     """Call 'function' as protected by 'lock'.
 
@@ -1072,6 +1075,19 @@ def with_lock(lock, function):
     if __debug__:
         from log import log, DEBUG
         log(DEBUG, 'Acquiring lock:', lock)
+        _with_lock_lock.acquire()
+        try:
+            thread_id = thread.get_ident()
+            global _active_locks
+            if _active_locks is None:
+                _active_locks = {}
+            locks = _active_locks.get(thread_id, [])
+            if lock in locks:
+                raise Exception ('Deadlock detected')
+            locks.append(lock)
+            _active_locks[thread_id] = locks
+        finally:
+            _with_lock_lock.release()
     lock.acquire()
     try:
         if __debug__:
@@ -1081,6 +1097,12 @@ def with_lock(lock, function):
         lock.release()
         if __debug__:
             log(DEBUG, 'Lock released:', lock)
+            _with_lock_lock.acquire()
+            try:
+                _active_locks[thread_id].remove(lock)
+            finally:
+                _with_lock_lock.release()
+            
 
 def with_locks(locks, function):
     """The same as 'with_lock' except multiple locks are given.
