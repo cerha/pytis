@@ -254,8 +254,9 @@ class Data(object):
           key -- instance or a sequence of instances of the class
             'types_.Value' corresponding to the columns of the key,
             representing key values of the row being looked for
-          columns -- sequence of IDs of columns to retrieve; if not given, all
-            columns are retrieved
+          columns -- sequence of names of the columns to retrieve; if not
+            given, all columns are retrieved; if given, all key columns must be
+            included
 
         Length of 'key' must correspond to the number of key columns.
 

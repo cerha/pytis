@@ -814,7 +814,7 @@ class DBDataDefault(_DBTest):
         assert self.data.fetchone() == None, 'too many lines'
         assert self.data.fetchone() == None, 'data reincarnation'
         self.data.close()
-    def test_select_fetch_limited(self):
+    def test_limited_select(self):
         self.data.select(columns=('castka', 'stat-nazev',))
         for r in (self.ROW1, self.ROW2):
             result = self.data.fetchone()
@@ -825,6 +825,19 @@ class DBDataDefault(_DBTest):
                         result[result_col].value())
         assert self.data.fetchone() == None, 'too many lines'
         assert self.data.fetchone() == None, 'data reincarnation'
+        self.data.close()
+        # Search in limited select OK?
+        self.dosnova.select(columns=('synt', 'anal', 'danit',))
+        result = self.dosnova.search(pytis.data.EQ(
+                'popis', pytis.data.Value(pytis.data.String(), 'efgh')))
+        assert result == 3, ('Invalid search result', result)
+        self.dosnova.close()
+        # .row in limited search still working?
+        self.data.select(columns=('castka', 'stat-nazev',))
+        result = self.data.row((pytis.data.Integer().validate('2')[0],))
+        for i in range(len(result) - 1):
+            v = result[i].value()
+            assert v == self.ROW1[i], ('row doesn\'t match', v, r[i])
         self.data.close()
     def test_select_map(self):
         result = self.data.select_map(lambda row: (row, 'foo'))

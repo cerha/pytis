@@ -910,7 +910,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'move backward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
-            (('select %%ss, %s from %s where (%s) and %%s order by %%s %s '+
+            (('select %%s, %s from %s where (%s) and %%s order by %%s %s '+
               'limit 1') %
              (oidstrings, main_table, relation, ordering,)),
             (column_list,))
