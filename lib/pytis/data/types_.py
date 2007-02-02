@@ -1018,12 +1018,19 @@ class Boolean(Type):
 class Binary(Limited):
     """Binary data.
 
-    All input and output values of this type are either Python 'buffer' objects
-    or 'None' (representing a null value).  Usage of binary data is limited
-    only to certain situations.  They may be used only in non-key columns, they
-    can be retrieved from a database (but they may not be used in search
-    conditions with the exception of testing for NULL value) and they can be
-    used as non-key values in insertions and updates.
+    External representation of a value of this type is either a Python 'buffer'
+    object or 'None' (representing a null value).  Internal representation is
+    an instance of the 'Buffer' class.  This is in general a wrapper of the
+    Python buffer, which can add certain extended features, depending on the
+    actual type of binary data contained within the buffer (such as report
+    format or pixel size of an image, etc).  Thus each subclass of this type
+    may define it's own 'Buffer' subclass with such extended features.
+
+    Usage of binary data is limited only to certain situations.  They may be
+    used only in non-key columns, they can be retrieved from a database (but
+    they may not be used in search conditions with the exception of testing for
+    NULL value) and they can be used as non-key values in insertions and
+    updates.
 
     Values of this type are not cached as they may be large and their
     validation is trivial.
@@ -1032,97 +1039,165 @@ class Binary(Limited):
     
     _VALIDATION_CACHE_LIMIT = 0
     _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální velikost %(maxlen)s")
+    
+    class Buffer(object):
+        """Wrapper of a buffer for internal representation of binary values.
 
+        The primary purpose of this class is to provide further validation of
+        binary data depending on their content.  This class accepts any data,
+        but subclasses may exist, which only accept certain binary formats,
+        such as images, documents, audio files etc.
+
+        Methods for loading binary data from files or saving them are also
+        provided, but these are mostly here for convenience.
+        
+        """
+        def __init__(self, data=None, path=None):
+            """Initialize a new buffer instance and validate the input data.
+
+            Arguemnts:
+            
+              data -- a Python buffer instance or None.  If used, 'path' must
+                be None.
+              path -- string path to an input file or None.  If used, 'data'
+                must be None.
+
+            The input data may be passed as a Python buffer instance or loaded
+            from a file.  Just one of these methods may be used.
+
+            The argument 'data' may be used as positional.
+            
+            Raises 'ValidationError' if the data don't conform to the binary
+            format in use (depending on the actual 'Buffer' subclass).
+            
+            Raises 'IOError' if path is given and the file can not be read.
+            
+            """
+            if data:
+                assert path is None
+                self._validate(data)
+                self._buffer = data
+            else:
+                assert path is not None
+                self.load(path)
+
+        def __len__(self):
+            return len(self._buffer)
+
+        def _validate(self, data):
+            if not isinstance(data, buffer):
+                raise ValidationError(_("Not a buffer object: %r") % data)
+            
+        def buffer(self):
+            """Return the binary data as a Python buffer instance."""
+            return self._buffer
+
+        def save(self, path):
+            """Save the buffer data into a file.
+
+            Arguemnts:
+            
+              path -- string path to the output file.
+            
+            Raises 'IOError' if the file can not be written.
+
+            """
+            f = open(path, 'wb')
+            try:
+                f.write(self._buffer)
+            finally:
+                f.close()
+                
+        def load(self, path):
+            """Try to load the buffer from a file replacing the current data.
+
+            Arguemnts:
+            
+              path -- string path to the input file.
+            
+            Raises 'IOError' if the file can not be read.
+
+            Raises 'ValidationError' if the data format is invalid.
+
+            The original buffer contents remains unchanged in case of any
+            error.
+            
+            """
+            f = open(path, 'rb')
+            try:
+                data = buffer(f.read())
+            finally:
+                f.close()
+            self._validate(data)
+            self._buffer = data
+            
+                
     def __init__(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators may not be used "+
                                     "in binary data types")
         super(Binary, self).__init__(**kwargs)
         
     def _validate(self, object, **kwargs):
-        assert isinstance(object, buffer) or object is None, \
-            ('Not a buffer object', object)
-        return Value(self, object), None
+        return Value(self, self.Buffer(object)), None
+
+    def _export(self, value):
+        return value and value.buffer()
 
     def _format_maxlen(self):
-        maxlen = float(self._maxlen)
+        return self.__class__.format_byte_size(self._maxlen)
+        
+    def format_byte_size(size):
+        """Return a human readable string representing given int bytesize."""
+        size = float(size)
         units = ('B', 'kB', 'MB', 'GB')
         i = 0
-        while maxlen >= 1024 and i < len(units)-1:
-            maxlen /= 1024
+        while size >= 1024 and i < len(units)-1:
+            size /= 1024
             i += 1
-        return '%.4g ' % maxlen + units[i]
-    
-    def _export(self, value):
-        return value
-    
+        return '%.4g ' % size + units[i]
+    format_byte_size = staticmethod(format_byte_size)
 
+    
 class Image(Binary, Big):
-    """Bitmap image.
+    """Binary type for generic bitmap images.
 
-    This class is just a prototype.  It Currently supports validation of image
-    data, thumbnail generation and format recognition.
-
-    """
-    VM_IMAGE_FORMAT = 'VM_IMAGE_FORMAT'
-    _VM_IMAGE_FORMAT_MSG = _("Nepodporovanı grafickı formát")
-
-    _SUPPORTED_FORMATS = ('BMP', 'GIF', 'IM', 'JPEG', 'PCX', 'PNG', 'PPM',
-                          'TIFF', 'XBM')
+    The binary data of this type are represented by an 'Image.Buffer' instance.
     
-    def _validate(self, object, formats=None, **kwargs):
-        img = self._image(object)
-        if formats is None:
-            formats = self._SUPPORTED_FORMATS
-        if img is None or img.format not in formats:
-            return None, self._validation_error(self.VM_IMAGE_FORMAT)
-        else:
-            return super(Image, self)._validate(object, **kwargs)
+    'Image.Buffer' validates the binary data to conform to one of
+    'Image.Buffer.FORMATS'.  In addition, it provides the `image()' method,
+    which returns the 'PIL.Image' instance corresponding to the image contained
+    within the data.
 
-    def _image(self, data):
-        assert isinstance(data, buffer), ('Not a buffer object', data)
-        import PIL.Image
-        f = StringIO(data)
-        try:
-            return PIL.Image.open(f)
-        except IOError:
-            return None
+    The Python Imaging Library (PIL) is needed when using this class.
+    
+    """
+    class Buffer(Binary.Buffer):
+        """A bufer for internal representation of bitmap image data.
 
-    def thumbnail(self, data, format, size):
-        """Return a thumbnail of given size as binary data in given format.
+        See the documentation of the 'Image' type for more information.
 
-        Arguments:
-
-          data -- binary image data as a buffer.
-          size -- a tuple of two integers (width, height) in pixels.
-          
-          format -- output format as a string, one of the formats in
-            '_SUPPORTED_FORMATS' such as `PNG', `JPEG', `TIFF', etc.,
-          
         """
-        image = self._image(data)
-        if image is None:
-            return None
-        import PIL.Image
-        image.thumbnail(size, PIL.Image.ANTIALIAS)
-        stream = StringIO()
-        try:
-            image.save(stream, format)
-            return stream.getvalue()
-        finally:
-            stream.close()
-
-    def format(self, data):
-        """Return the image format as a string.
+        FORMATS = ('BMP', 'GIF', 'IM', 'JPEG', 'PCX', 'PNG', 'PPM', 'TIFF',
+                   'XBM')
+        """All supported bitmap image formats"""
         
-        Arguments:
+        def _validate(self, data):
+            super(Image.Buffer, self)._validate(data)
+            import PIL.Image
+            # The stream must stay open for the whole life of the Image object.
+            f = StringIO(data)
+            try:
+                image = PIL.Image.open(f)
+            except IOError:
+                raise ValidationError(_("Neplatnı formát obrázku"))
+            if image.format not in self.FORMATS:
+                raise ValidationError(_("Neplatnı formát obrázku"))
+            self._image = image
+    
+        def image(self):
+            """Return the image as a 'PIL.Image' instance."""
+            return self._image
 
-          data -- binary image data as a buffer.
-
-        The returned string is one of the formats in '_SUPPORTED_FORMATS' such
-        as `PNG', `JPEG', `TIFF', etc.
-          
-        """
-        return self._image(data).format
 
 # Pomocné tøídy
 
