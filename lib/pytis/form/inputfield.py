@@ -1396,7 +1396,7 @@ class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
     
     _INVOKE_TITLE = _("Vybrat soubor")
-    _INVOKE_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
+    _INVOKE_HELP = _("Zobrazit dialog pro procházení systému souborù.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
 
     _last_load_dir = None
@@ -1418,11 +1418,11 @@ class FileField(Invocable, InputField):
         return (x+5, x+2)
     
     def get_value(self):
-        return self._buffer
+        return self._buffer and self._buffer.buffer()
 
     def _set_value(self, value):
         assert value is None or isinstance(value, buffer)
-        self._buffer = value
+        self._buffer = value and self._type.Buffer(value) or None
         self._on_set_value()
         self._on_change()
         return True
@@ -1431,21 +1431,9 @@ class FileField(Invocable, InputField):
         if self._buffer is None:
             display = ""
         else:
-            display = self._formatted_size(self._buffer)
+            display = pytis.data.Binary.format_byte_size(len(self._buffer))
         self._ctrl.SetValue(display)
 
-    def _formatted_size(self, value):
-        size = float(len(value))
-        unit = 'B'
-        units = ('B', 'kB', 'MB', 'GB')
-        i = 0
-        while size > 1024 and i < len(units)-1:
-            size = size/1024
-            i += 1
-            unit = units[i]
-        f = size >= 100 and '%d' or size >= 10 and '%.1f' or '%.2f'
-        return f % size + unit
-    
     def _enable(self):
         pass
 
@@ -1471,13 +1459,6 @@ class FileField(Invocable, InputField):
                  _("Nastavit prázdnou hodnotu.")),
                 )
 
-    def _save_file(self, path):
-        f = open(path, 'wb')
-        try:
-            f.write(self._buffer)
-        finally:
-            f.close()
-
     def _cmd_load(self):
         msg = _("Vyberte soubor pro políèko '%s'") % self.spec().label()
         dir = FileField._last_load_dir or FileField._last_save_dir or ''
@@ -1487,21 +1468,18 @@ class FileField(Invocable, InputField):
             path = dlg.GetPath()
             FileField._last_load_dir = os.path.dirname(path)
             try:
-                f = open(path, 'rb')
-                try:
-                    data = buffer(f.read())
-                finally:
-                    f.close()
+                if self._buffer:
+                    self._buffer.load(path)
+                else:
+                    self._buffer = self._type.Buffer(path=path)
+            except pytis.data.ValidationError, e:
+                message(e.message(), beep_=True)
             except IOError, e:
                 message(_("Chyba pøi ètení souboru:")+' '+str(e), beep_=True)
             else:
-                # Binary data are always validated immediately.
-                value, error = self._type.validate(data)
-                if not error:
-                    self.set_value(data)
-                    message(_("Soubor naèten."))
-                else:
-                    message(error.message(), beep_=True)
+                self._on_set_value()
+                self._on_change()
+                message(_("Soubor naèten."))
         
     def _can_save(self):
         return self._buffer is not None 
@@ -1515,7 +1493,7 @@ class FileField(Invocable, InputField):
             path = dlg.GetPath()
             FileField._last_save_dir = os.path.dirname(path)
             try:
-                self._save_file(path)
+                self._buffer.save(path)
             except IOError, e:
                 message(_("Chyba pøi zápisu souboru:")+' '+str(e), beep_=True)
             else:
@@ -1544,12 +1522,15 @@ class ImageField(FileField):
     
     def _bitmap(self):
         if self._buffer is not None:
-            size = (self.width(), self.height())
-            thumbnail = self._type.thumbnail(self._buffer, "PNG", size)
-            if thumbnail:
-                img = wx.EmptyImage()
-                img.LoadStream(StringIO(thumbnail), type=wx.BITMAP_TYPE_PNG)
-                return wx.BitmapFromImage(img)
+            import PIL.Image
+            img = self._buffer.image().copy()
+            img.thumbnail((self.width(), self.height()), PIL.Image.ANTIALIAS)
+            stream = StringIO()
+            img.save(stream, 'PNG')
+            stream.seek(0)
+            wximg = wx.EmptyImage()
+            wximg.LoadStream(stream, type=wx.BITMAP_TYPE_PNG)
+            return wx.BitmapFromImage(wximg)
         return wx.EmptyBitmap(1, 1, depth=1)
     
     def _on_button(self):
@@ -1563,7 +1544,7 @@ class ImageField(FileField):
         return self._buffer is not None 
         
     def _cmd_view(self):
-        path = os.tempnam()+"."+self._type.format(self._buffer).lower()
+        path = os.tempnam()+"."+self._buffer.image().format.lower()
         command = config.image_viewer
         if command.find('%f') != -1:
             command = command.replace('%f', path)
@@ -1571,8 +1552,7 @@ class ImageField(FileField):
             command += " "+path
         log(OPERATIONAL, "Running external viewer:", command)
         try:
-            self._save_file(path)
-            os.system('ls -la '+path)
+            self._buffer.save(path)
             os.system(command)
         finally:
             os.remove(path)
