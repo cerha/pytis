@@ -22,6 +22,7 @@
 	`key' to be `None'.  Don't convert it to a tuple.
 	(RecordForm.select_row): Convert the key to a tuple before calling
 	`_find_row_by_key'.  Pass `columns' to `data.row()'.
+	(PopupForm._on_frame_close): Test whether `self' is alive.
 
 	* pytis/data/types_.py (Binary): Docstring updated.
 	(Binary.Buffer): New class.
