@@ -623,10 +623,8 @@ class RecordForm(InnerForm):
         return result
 
     def _find_row_by_key(self, key):
-        """Vra» datový øádek odpovídající danému datovému klíèi."""
-        if key is None:
-            return None
-        success, row = db_operation(lambda : self._data.row(xtuple(key)))
+        cols = self._select_columns()
+        success, row = db_operation(lambda : self._data.row(key, columns=cols))
         if success and row:
             return row
         else:
@@ -909,8 +907,8 @@ class RecordForm(InnerForm):
             row = position
         elif isinstance(position, types.IntType):
             row = self._find_row_by_number(position)
-        elif isinstance(position, (types.TupleType, pytis.data.Value)):
-            row = self._find_row_by_key(position)
+        elif isinstance(position, (tuple, pytis.data.Value)):
+            row = self._find_row_by_key(xtuple(position))
         elif isinstance(position, types.DictType):
             row = self._find_row_by_values(position.keys(), position.values())
         else:            
