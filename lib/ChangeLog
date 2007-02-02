@@ -1,3 +1,46 @@
+2007-02-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (FileField._INVOKE_TITLE): Text fixed.
+	(FileField.get_value): Convert the `Buffer' instance to its
+	`buffer'.
+	(FileField._set_value): Convert a `buffer' to a `Buffer' instance.
+	(_formatted_size): Method removed.
+	(_save_file): Method removed.
+	(FileField._cmd_load): Use `Buffer' methods to load the file.  Let
+	the validation to the `Buffer' class and just catch the exceptions
+	here.
+	(FileField._cmd_save): Use `Buffer.save()' instead of
+	`self._save_file'.
+	(ImageField._bitmap): Create the thumbnail here using the
+	`PIL.Image' method instead of using `Image.thumbnail()'.
+	(ImageField._cmd_view): Use `PIL.Image' methods instead of using
+	`Image.format()'.
+	(ImageField._cmd_view): Use `Buffer.save()' instead of
+	`self._save_file'.  Don't invoke forgotten `ls -l' here.
+
+	* pytis/form/form.py (RecordForm._find_row_by_key): Don't expect
+	`key' to be `None'.  Don't convert it to a tuple.
+	(RecordForm.select_row): Convert the key to a tuple before calling
+	`_find_row_by_key'.  Pass `columns' to `data.row()'.
+
+	* pytis/data/types_.py (Binary): Docstring updated.
+	(Binary.Buffer): New class.
+	(Binary._validate): Wrap the `buffer' into a `Buffer' instance.
+	(Binary._export): Turn a `Buffer' instance into a `buffer'.
+	(Binary.format_byte_size): New method.
+	(Binary._format_maxlen): Use it.
+	(Image): Docstring updated.
+	(Image._image, Image.thumbnail, Image.format): Methods removed.
+	(Image._SUPPORTED_FORMATS): Costant removed.
+	(Image.Buffer): New class.
+
+2007-01-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (Limited._format_maxlen): New method.
+	(Limited._check_maxlen): Use it.
+	(Binary._format_maxlen): New method.
+	(Binary._VM_MAXLEN_EXCEEDED_MSG): Don't presume units here.
+
 2007-01-31  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/list.py (ListForm._can_edit): Added forgotten `return'. 
