@@ -1144,19 +1144,8 @@ class Binary(Limited):
         return value and value.buffer()
 
     def _format_maxlen(self):
-        return self.__class__.format_byte_size(self._maxlen)
+        return format_byte_size(self._maxlen)
         
-    def format_byte_size(size):
-        """Return a human readable string representing given int bytesize."""
-        size = float(size)
-        units = ('B', 'kB', 'MB', 'GB')
-        i = 0
-        while size >= 1024 and i < len(units)-1:
-            size /= 1024
-            i += 1
-        return '%.4g ' % size + units[i]
-    format_byte_size = staticmethod(format_byte_size)
-
     
 class Image(Binary, Big):
     """Binary type for generic bitmap images.
