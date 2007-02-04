@@ -1431,7 +1431,7 @@ class FileField(Invocable, InputField):
         if self._buffer is None:
             display = ""
         else:
-            display = pytis.data.Binary.format_byte_size(len(self._buffer))
+            display = format_byte_size(len(self._buffer))
         self._ctrl.SetValue(display)
 
     def _enable(self):
