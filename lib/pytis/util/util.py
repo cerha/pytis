@@ -1282,6 +1282,28 @@ def in_x():
     return os.getenv('DISPLAY')
 
 
+def format_byte_size(size):
+    """Return a human readable string representing given int bytesize."""
+    size = float(size)
+    units = ('B', 'kB', 'MB', 'GB')
+    i = 0
+    while size >= 1024 and i < len(units)-1:
+        size /= 1024
+        i += 1
+    return '%.4g ' % size + units[i]
+
+
+_CAMEL_CASE_WORD = re.compile(r'[A-Z][a-z\d]*')
+def split_camel_case(string):
+    """Return a lowercase string using 'separator' to concatenate words."""
+    return _CAMEL_CASE_WORD.findall(string)
+
+
+def camel_case_to_lower(string, separator='-'):
+    """Return a lowercase string using 'separator' to concatenate words."""
+    return separator.join([w.lower() for w in split_camel_case(string)])
+
+
 
 # Rùzné
 
@@ -1508,11 +1530,3 @@ def positive_id(obj):
             assert result >= 0 # else addresses are fatter than 64 bits
     return result
 
-_CAMEL_CASE_WORD = re.compile(r'[A-Z][a-z\d]*')
-def split_camel_case(string):
-    """Return a lowercase string using 'separator' to concatenate words."""
-    return _CAMEL_CASE_WORD.findall(string)
-
-def camel_case_to_lower(string, separator='-'):
-    """Return a lowercase string using 'separator' to concatenate words."""
-    return separator.join([w.lower() for w in split_camel_case(string)])
