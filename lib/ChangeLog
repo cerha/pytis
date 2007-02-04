@@ -1,3 +1,14 @@
+2007-02-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/util.py (format_byte_size): New function.
+	
+	* pytis/data/types_.py (format_byte_size): Method removed.
+	(Binary._format_maxlen): `Binary.format_byte_size()' ->
+	`format_byte_size()'.
+
+	* pytis/form/inputfield.py (FileField._on_set_value):
+	`Binary.format_byte_size()' -> `format_byte_size()'
+
 2007-02-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (FileField._INVOKE_TITLE): Text fixed.
