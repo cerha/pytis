@@ -455,7 +455,7 @@ class PopupForm:
 
     def _on_frame_close(self, event):
         if self:
-            if and self._exit_check():
+            if self._exit_check():
                 self.defocus()
                 event.Skip()
             else:
