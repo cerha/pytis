@@ -2317,13 +2317,20 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         # Pro zamykání je vy¾adována existence zamykací tabulky se speciálními
         # vlastnostmi, která je definována v souboru `db.sql'.
         log(EVENT, 'Zamykám øádek:', map(str, xtuple(key)))
-        self._pg_begin_transaction();
+        self._pg_begin_transaction()
+        self._pg_query('lock table %s' % self._PG_LOCK_TABLE_LOCK)
+        table_locked = True
         try:
-            self._pg_query('lock table %s' % self._PG_LOCK_TABLE_LOCK)
+            log(EVENT, 'Lock table locked')
             row = self.row(key)
             if not row:
                 self._pg_rollback_transaction()
+                table_locked = False
+                if __debug__:
+                    log(DEBUG, 'Non-existent record')
                 return 'Záznam neexistuje'
+            if __debug__:
+                log(DEBUG, 'Looking for a row lock')
             oidcols = filter(lambda c: isinstance(c.type(), Oid),
                              self.columns())
             cids = map(lambda c: c.id(), oidcols)
@@ -2333,7 +2340,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                       % (self._PG_LOCK_TABLE, oid))
                 if data:
                     self._pg_rollback_transaction()
-                    return 'u¾ivatel `%s\'' % data[0][0]
+                    table_locked = False
+                    user = data[0][0]
+                    if __debug__:
+                        log(DEBUG, 'Row locked by user `%s\'' % (user,))
+                    return 'u¾ivatel `%s\'' % (user,)
+            if __debug__:
+                log(DEBUG, 'Row free, locking it')
             lock_ids = []
             for oid in oids:
                 self._pg_query('insert into %s (row) values (%d)' % \
@@ -2342,15 +2355,20 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                       (self._PG_LOCK_TABLE, oid))
                 lock_ids.append(data[0][0])
             self._pg_lock_ids = lock_ids
+            if __debug__:
+                log(DEBUG, 'Row locked')
             self._pg_commit_transaction()
-        except DBException:
-            cls, e, tb = sys.exc_info()
-            try:
-                self._pg_rollback_transaction()
-            except:
-                pass
-            raise cls, e, tb
-        DBDataPostgreSQL.__bases__[0].lock_row(self, key)
+            table_locked = False
+            log(EVENT, 'Lock table unlocked')
+        finally:
+            if table_locked:
+                try:
+                    self._pg_rollback_transaction()
+                    log(EVENT, 'Lock table unlocked')
+                except:
+                    pass
+                log(EVENT, '(emergency unlock)')
+        super(DBDataPostgreSQL, self).lock_row(key)
         update_commands = \
           map(lambda id, self=self: 'update %s set id = id where id = %s' % \
               (self._PG_LOCK_TABLE, id),
