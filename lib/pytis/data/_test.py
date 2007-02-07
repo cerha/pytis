@@ -1058,27 +1058,36 @@ class DBDataDefault(_DBTest):
         B = pytis.data.Binary()
         I = pytis.data.Integer()
         R = pytis.data.Row
+        null_data, error = B.validate(None)
+        assert not error, ('Null Binary validation failed', error,)
+        assert null_data.value() is None, \
+               ('Invalid null binary value', null_data.value())
         data = [chr(i) for i in range(256)]
         data1, error = B.validate(buffer(string.join(data, '')))
         assert not error, ('Binary validation failed', error,)
+        assert isinstance(data1.value(), pytis.data.Binary.Buffer), \
+               ('Invalid binary value', data1.value(),)
         data.reverse()
         data2, error = B.validate(buffer(string.join(data, '')))
         assert not error, ('Binary validation failed', error,)
+        assert isinstance(data2.value(), pytis.data.Binary.Buffer), \
+               ('Invalid binary value', data2.value(),)
         key, _error = I.validate('1')
         row1 = R([('id', key,), ('data', data1,)])
         row2 = R([('id', key,), ('data', data2,)])
         result, success = self.dbin.insert(row1)
         assert success, 'Binary insertion failed'
-        assert str(result[1].value()) == str(data1.value()), \
-            ('Invalid inserted binary data', str(result[1].value()),)
-        result = str(self.dbin.row(key)[1].value())
-        assert result == str(data1.value()), ('Invalid binary data', result,)
+        assert str(result[1].value().buffer()) == str(data1.value().buffer()), \
+              ('Invalid inserted binary data', str(result[1].value().buffer()))
+        result = str(self.dbin.row(key)[1].value().buffer())
+        assert result == str(data1.value().buffer()), ('Invalid binary data', result,)
         result, succes = self.dbin.update(key, row2)
         assert success, 'Binary update failed'
-        assert str(result[1].value()) == str(data2.value()), \
-            ('Invalid updated binary data', str(result[1].value()),)
-        result = str(self.dbin.row(key)[1].value())
-        assert result == str(data2.value()), ('Invalid binary data', result,)
+        assert str(result[1].value().buffer()) == str(data2.value().buffer()),\
+            ('Invalid updated binary data', str(result[1].value().buffer()),)
+        result = str(self.dbin.row(key)[1].value().buffer())
+        assert result == str(data2.value().buffer()), \
+               ('Invalid binary data', result,)
         assert self.dbin.delete(key) == 1, 'Binary deletion failed'
     def _test_lock(self):
         us = pytis.data.String().validate('us')[0]
