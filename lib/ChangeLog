@@ -1,5 +1,8 @@
 2007-02-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (LookupForm._search): Report the warning in
+	the statusline instead of popping up a dialog.
+
 	* pytis/data/_test.py (DBDataDefault.test_binary): Fixed for the
 	new Binary interface.
 
