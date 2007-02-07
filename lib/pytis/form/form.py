@@ -1105,7 +1105,7 @@ class LookupForm(RecordForm):
         if skip == 0:
             log(EVENT, 'Záznam nenalezen')
             if report_failure:
-                run_dialog(Warning, _("Záznam nenalezen"))
+                message(_("Záznam nenalezen"), beep_=True)
             result = None
         else:
             result = skip
