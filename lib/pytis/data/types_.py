@@ -265,55 +265,49 @@ class Type(object):
             raise AttributeError(name)
 
     def validate(self, object, strict=True, **kwargs):
-        """Zvaliduj 'object' a vra» instanci tøídy 'Value' a popis chyby.
+        """Validate the 'object' and return a 'Value' instance and an error.
 
-        Argumenty:
+        Arguments:
         
-          object -- objekt, který má být pøeveden na hodnotu
-          strict -- pokud úèelem validace není kontrola dat, ale pouhé
-            pøevedení hodnoty na instanci Value, mù¾e být tento boolean pøíznak
-            nastaven na nepravdivou hodnotu a validace tak bude tolerantnìj¹í.
-            Nebodou napøíklad probíhat konroly constraintù apod.
-          kwargs -- klíèové argumenty specifické pro konkrétní typ
+          object -- an object to be converted to a value
+          strict -- passing 'False' leads to a ``tolerant'' validation.  No
+            constraints are checked and the method does its best to convert
+            anything reasonable to a value.  It may be useful when the
+            reason is not validation, but the conversion.
+          kwargs -- type specific keyword arguments
 
-        Vrací: dvojici (VALUE, ERROR).  VALUE je instance tøídy 'Value' (je-li
-        'object' správný) nebo je 'None' (je-li 'object' nesprávný).  Je-li
-        'object' správný, je ERROR 'None', v opaèném pøípadì je instancí tøídy
-        'ValidationError', která obsahuje popis chyby.
+        Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
+        valid 'object') or 'None' (for an invalid 'object').  ERROR is 'None'
+        for a valid 'object' and a 'ValidationError' instance for an invalid
+        'object'.
 
-        Vìt¹ina typù vy¾aduje, aby 'object' byl string, obvykle reprezentující
-        vstup u¾ivatele nebo hodnotu získanou ze souboru nebo od procesu.
-        Nìkteré sofistikovanìj¹í typy v¹ak akceptují nebo vy¾adují 'object'
-        jiného typu.  V¹echny typy by mìly, pokud mo¾no, akceptovat string a
-        pokud to nelze (napøíklad kvùli zbyteèným komplikacím), mìly by
-        akceptovat objekt, který lze snadno zkonstruovat z dat pøevzatých
-        z u¾ivatelského rozhraní.  Pokud 'object' není string ani jiný typ
-        explicitnì povolený v dokumentaci pøíslu¹né typové tøídy, je chování
-        této metody nedefinováno.
+        Most types require the 'object' to be a string, most often representing
+        user input or a value loaded from a file or process.  Certain more
+        sophisticated types, however, may accept or require an 'object' of a
+        different type.  All types should, if possible, accept a string and if
+        not (eg. for excessive complications), they should accept an object,
+        which may be simply constructed from data picked up from the user
+        interface.  If the 'object' is not a string or another type explicitely
+        allowed in the documentation of the corresponding type class, the
+        behavior of this method is undefined.
 
-        Argument 'kwargs' umo¾òuje konkrétnímu typu nabízet parametrizaci
-        validace.  Napøíklad typ reprezentující reálná èísla mù¾e umo¾nit
-        specifikovat parametry zaokrouhlení.  Takto lze upravovat validaci
-        u¾ivatelských vstupù rùznými parametry, které nejsou souèástí
-        specifikace typu.
+        The 'kwargs' argument allows parametrized validation for particular
+        types.  Each type may specify its set of options, which control the way
+        how the user input is treated.
 
-        V této tøídì metoda vrací v¾dy dvojici (VALUE, None), kde VALUE má za
-        svoji hodnotu 'None'.  Potomci tøídy nech» tuto metodu
-        nepøedefinovávají, nebo» metoda mù¾e provádìt i rùzné doplòující akce;
-        nech» potomci pøedefinovávají metodu `_validate()'.
+        Most types should validate an empty string to a 'Value' instance, which
+        has 'None' as its value.
 
-        Není-li v dokumentaci konkrétního typu øeèeno jinak, akceptuje prázdný
-        string stejnì jako 'None' jako speciální prázdnou hodnotu, pro kterou
-        vrací dvojici (VALUE, None), kde VALUE má za svoji hodnotu 'None'.
+        Derived classes should not override this method.  They should override
+        '_validate()' instead.
         
         """
         # Tato metoda je zároveò pou¾ívána i pro pøevod hodnot získaných
         # z databázového rozhraní.  To není úplnì ideální, ale je to zatím
         # postaèující a rozli¹ení tìchto dvou pou¾ití nestojí za komplikace
-        # s tím spojené (pou¾ití pro databáze je omezeno na modul `dbdata').
-        # Pokud by bylo potøeba v budoucnu toto rozli¹it, lze pøidat dal¹í
-        # metodu nebo argument.  Nyní je to èásteènì øe¹eno argumentem
-        # 'strict'.
+        # s tím spojené.  Pokud by bylo potøeba v budoucnu toto rozli¹it, lze
+        # pøidat dal¹í metodu nebo argument.  Nyní je to èásteènì øe¹eno
+        # argumentem 'strict'.
         try:
             key = (object, strict, tuple(kwargs.items()))
             result = self._validation_cache[key], None
@@ -455,8 +449,8 @@ class Limited(Type):
     
     """
 
-    VM_MAXLEN_EXCEEDED = 'VM_MAXLEN_EXCEEDED'
-    _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální délka %(maxlen)s")
+    VM_MAXLEN = 'VM_MAXLEN'
+    _VM_MAXLEN_MSG = _("Pøekroèena maximální délka %(maxlen)s")
 
     def __init__(self, maxlen=None, **kwargs):
         """Initialize the instance.
@@ -497,7 +491,7 @@ class Limited(Type):
     def _check_maxlen(self, value):
         if value is not None and self._maxlen is not None \
                and len(value) > self._maxlen:
-            raise self._validation_error(self.VM_MAXLEN_EXCEEDED,
+            raise self._validation_error(self.VM_MAXLEN,
                                          maxlen=self._format_maxlen())
 
     
@@ -662,7 +656,7 @@ class String(Limited):
 
     """    
 
-    _VM_MAXLEN_EXCEEDED_MSG = _("Øetìzec pøesahuje maximální délku %(maxlen)s")
+    _VM_MAXLEN_MSG = _("Øetìzec pøesahuje maximální délku %(maxlen)s")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
     def _validate(self, string):
@@ -1038,7 +1032,7 @@ class Binary(Limited):
     """
     
     _VALIDATION_CACHE_LIMIT = 0
-    _VM_MAXLEN_EXCEEDED_MSG = _("Pøekroèena maximální velikost %(maxlen)s")
+    _VM_MAXLEN_MSG = _("Pøekroèena maximální velikost %(maxlen)s")
     
     class Buffer(object):
         """Wrapper of a buffer for internal representation of binary values.
@@ -1152,24 +1146,35 @@ class Image(Binary, Big):
 
     The binary data of this type are represented by an 'Image.Buffer' instance.
     
-    'Image.Buffer' validates the binary data to conform to one of
-    'Image.Buffer.FORMATS'.  In addition, it provides the `image()' method,
-    which returns the 'PIL.Image' instance corresponding to the image contained
-    within the data.
+    'Image.Buffer' validates the binary data to conform to one of input image
+    formats supported by the Python Imaging Library.  It also provides the
+    `image()' method, which returns the 'PIL.Image' instance corresponding to
+    the image contained within the data.
 
-    The Python Imaging Library (PIL) is needed when using this class.
+    Image type can be further restricted to a list of allowed formats.  You may
+    also restrict minimal/maximal pixel size of the image.
+
+    Supported input formats include the most widely used formats such as 'PNG',
+    'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX', 'PPM', 'XBM' or 'IM'.  See Python
+    Imaging Library documentation for the full list.
+
+    The Python Imaging Library (PIL) must be installed when using this class.
     
     """
+    
+    VM_MAXSIZE = 'VM_MAXSIZE'
+    _VM_MAXSIZE_MSG = _("Pøekroèena maximální velikost %(maxsize)s pixelù")
+    VM_MINSIZE = 'VM_MINSIZE'
+    _VM_MINSIZE_MSG = _("Nedodr¾ena minimální velikost %(minsize)s pixelù")
+    VM_FORMAT = 'VM_FORMAT'
+    _VM_FORMAT_MSG = _("Nepovolený formát %(format)s; povoleno: %(formats)s")
+    
     class Buffer(Binary.Buffer):
         """A bufer for internal representation of bitmap image data.
 
         See the documentation of the 'Image' type for more information.
 
         """
-        FORMATS = ('BMP', 'GIF', 'IM', 'JPEG', 'PCX', 'PNG', 'PPM', 'TIFF',
-                   'XBM')
-        """All supported bitmap image formats"""
-        
         def _validate(self, data):
             super(Image.Buffer, self)._validate(data)
             import PIL.Image
@@ -1178,15 +1183,95 @@ class Image(Binary, Big):
             try:
                 image = PIL.Image.open(f)
             except IOError:
-                raise ValidationError(_("Neplatný formát obrázku"))
-            if image.format not in self.FORMATS:
-                raise ValidationError(_("Neplatný formát obrázku"))
+                raise ValidationError(_("Neplatný grafický formát"))
             self._image = image
     
         def image(self):
             """Return the image as a 'PIL.Image' instance."""
             return self._image
 
+    def __init__(self, minsize=(None, None), maxsize=(None, None),
+                 formats=None, **kwargs):
+        """Initialize the instance.
+        
+        Arguments:
+        
+          minsize -- maximal image size in pixels as a sequence of two integers
+            (WIDTH, HEIGHT).  'None' in either value indicates an unlimited
+            size in the corresponding direction...
+          maxsize -- maximal image size in pixels; same rules as for 'minsize'
+          formats -- list of allowed input formats as a sequence of strings,
+            each string being one of PIL supported file formats, such as 'PNG',
+            'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX' etc.  Full list of the
+            supported formats depends upon your PIL version.  If None, all
+            formats supported by the Python Imaging Library are allowed.
+          
+        Other arguments are passed to the parent constructor.
+
+        """
+        if __debug__:
+            for size in minsize, maxsize:
+                assert isinstance(size, (tuple, list)) and len(size) == 2 and \
+                       size[0] is None or isinstance(size[0], int) and \
+                       size[1] is None or isinstance(size[1], int), size
+            if formats is not None:
+                assert isinstance(formats, (tuple, list)), formats
+                for f in formats:
+                    assert isinstance(f, str)
+                    if f not in ('PNG', 'JPEG', 'TIFF', 'GIF', 'BMP',
+                                 'PCX', 'PPM', 'XBM', 'IM'):
+                        log(OPERATIONAL, "Suspicious image format:", f)
+        self._minsize = tuple(minsize)
+        self._maxsize = tuple(maxsize)
+        self._formats = formats and tuple(formats)
+        super(Image, self).__init__(**kwargs)
+
+    def __cmp__(self, other):
+        result = super(Image, self).__cmp__(other)
+        if not result:
+            result = cmp(self._minsize, other._minsize)
+            if not result:
+                result = cmp(self._maxsize, other._maxsize)
+                if not result:
+                    result = cmp(self._formats, other._formats)
+        return result
+
+    def minsize(self):
+        """Return the minimal image size in pixels as a pair (WIDTH, HEIGHT).
+
+        WIDTH and HEIGHT are integers or 'None' (denoting no limit).
+        
+        """
+        return self._minsize
+
+    def maxsize(self):
+        """Return the maximal image size in pixels as a pair (WIDTH, HEIGHT).
+
+        WIDTH and HEIGHT are integers or 'None' (denoting no limit).
+        
+        """
+        return self._maxsize
+    
+    def formats(self):
+        """Return the tuple of allowed input formats or None."""
+        return self._formats
+    
+    def _check_constraints(self, value):
+        super(Image, self)._check_constraints(value)
+        if value is not None:
+            image = value.image()
+            for min,max,size in zip(self._minsize, self._maxsize, image.size):
+                if min is not None and size < min:
+                    raise self._validation_error(self.VM_MINSIZE,
+                                               minsize='%sx%s' % self._minsize)
+                if max is not None and size > max:
+                    raise self._validation_error(self.VM_MAXSIZE,
+                                               maxsize='%sx%s' % self._maxsize)
+            if self._formats is not None and image.format not in self._formats:
+                raise self._validation_error(self.VM_FORMAT,
+                                             format=image.format,
+                                             formats=', '.join(self._formats))
+        
 
 # Pomocné tøídy
 
