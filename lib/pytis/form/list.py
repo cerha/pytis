@@ -373,7 +373,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _lf_sfs_columns(self):
         shown = tuple(self._columns)
-        hidden = tuple([c for c in self._view.fields()
+        hidden = tuple([c for c in self._fields
                         if c not in shown and c.column_label()])
         def labelfunc(c):
             label = c.column_label()
@@ -401,7 +401,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def current_field(self):
         col = self._current_cell()[1]
         return self._columns[col].id()
-    
+
     def _selected_rows(self):
         g = self._grid
         # g.SelectedRows() nefunguje, proto následující hrùza...
@@ -743,11 +743,16 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         return g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
         
     def _displayed_columns_menu(self, col):
+        select_columns = self._select_columns()
+        if select_columns is None:
+            columns = self._fields
+        else:
+            columns = [self._view.field(cid) for cid in select_columns]
         return [CheckItem(c.column_label(),
                           command=ListForm.COMMAND_TOGGLE_COLUMN,
                           args=dict(column_id=c.id(), col=col),
                           state=lambda c=c: c in self._columns)
-                for c in self._view.fields() if not c.disable_column()] + \
+                for c in columns if c and not c.disable_column()] + \
                 [MSeparator(),
                  MItem(_("Vrátit výchozí nastavení formuláøe"),
                        command=InnerForm.COMMAND_RESET_FORM_STATE),
