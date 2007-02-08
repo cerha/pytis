@@ -1596,7 +1596,6 @@ class _Value(object):
                                      type)
         self._type = type
         self._value = state['_value']
-        self._init()
     
     def __unicode__(self):
         type = self.type()
@@ -1661,6 +1660,10 @@ class Value(_Value):
         _Value.__init__(self, type, value)
         self._init()
 
+    def __setstate__(self, state):
+        super(Value, self).__setstate__(state)
+        self._init()
+        
     def _init(self):
         if self._type.__class__ == String:    # pozor, nebezpeèná vìc!
             e = self._value or ''
