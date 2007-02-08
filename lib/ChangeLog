@@ -1,3 +1,9 @@
+2007-02-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (_Value.__setstate__): Don't call
+	`self._init()' here.
+	(Value.__setstate__): New method.  Call `self._init()' here.
+
 2007-02-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (LookupForm._search): Report the warning in
