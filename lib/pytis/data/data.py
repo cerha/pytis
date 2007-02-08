@@ -864,11 +864,17 @@ class MemData(Data):
             pairs.append((id, val))
         return Row(pairs)
 
-    def row(self, key):
+    def _restrict_row_columns(self, row, columns):
+        if columns is None:
+            return row
+        else:
+            return Row([(cid, row[cid]) for cid in columns])
+
+    def row(self, key, columns=None):
         index = self._mem_find_index(key)
         if index == None:
             return None
-        return self._mem_data[index]
+        return self._restrict_row_columns(self._mem_data[index], columns)
 
     def rewind(self):
         self._mem_cursor = -1
@@ -888,21 +894,19 @@ class MemData(Data):
             return lambda row: reduce(lambda r, f: r and f(row), fctns, True)
         else:
             ProgramError("Operator not supported:", condition)
-        
-    def select(self, condition=None, reuse=False, sort=None):
+
+    def select(self, condition=None, reuse=False, sort=None, columns=None):
         """Inicializace vytahování záznamù.
 
         Bli¾¹í popis viz nadtøída.  Argumenty 'condition' a 'sort' jsou
         ignorovány.
         
         """
-        self._mem_cursor = -1
-        self._mem_select = data = []
         cond = self._condition2pyfunc(condition)
-        for row in self._mem_data:
-            if cond(row):
-                data.append(row)
-        return len(data)
+        self._mem_cursor = -1
+        self._mem_select = [self._restrict_row_columns(row, columns)
+                            for row in self._mem_data if cond(row)]
+        return len(self._mem_select)
 
     def close(self):
         self._mem_select = []
