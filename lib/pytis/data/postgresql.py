@@ -1467,7 +1467,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     """
     # TODO: Tato tøída je mamut a mìla by být rozdìlena na nìkolik men¹ích èástí
 
-    _PG_LOCK_TABLE = '_rowlocks'
+    _PG_LOCK_TABLE = '_rowlocks_real'
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
     _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
 
@@ -2335,6 +2335,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                              self.columns())
             cids = map(lambda c: c.id(), oidcols)
             oids = map(lambda i, row=row: row[i].value(), cids)
+            self._pg_query('delete from %s where expires < now()' %
+                           (self._PG_LOCK_TABLE,))
             for oid in oids:
                 data = self._pg_query('select usename from %s where row = %d'\
                                       % (self._PG_LOCK_TABLE, oid))
@@ -2349,10 +2351,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 log(DEBUG, 'Row free, locking it')
             lock_ids = []
             for oid in oids:
-                self._pg_query('insert into %s (row) values (%d)' % \
-                               (self._PG_LOCK_TABLE, oid))
-                data = self._pg_query('select id from %s where row = %d' % \
-                                      (self._PG_LOCK_TABLE, oid))
+                self._pg_query('insert into %s (row) values (%d)' %
+                               (self._PG_LOCK_TABLE, oid,))
+                data = self._pg_query('select id from %s where row = %d' %
+                                      (self._PG_LOCK_TABLE, oid,))
                 lock_ids.append(data[0][0])
             self._pg_lock_ids = lock_ids
             if __debug__:
@@ -2370,8 +2372,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 log(EVENT, '(emergency unlock)')
         super(DBDataPostgreSQL, self).lock_row(key)
         update_commands = \
-          map(lambda id, self=self: 'update %s set id = id where id = %s' % \
-              (self._PG_LOCK_TABLE, id),
+          map(lambda id, self=self:
+                  ('update %s set expires = now() + \'00:01\' where id = %s and expires > now()' %
+                   (self._PG_LOCK_TABLE, id,)),
               lock_ids)
         thread.start_new_thread(self._pg_locking_process,
                                 (key, update_commands))
