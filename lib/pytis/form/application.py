@@ -724,7 +724,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
                     "Zkontrolujte zda je cesta správná\n"
                     "a zda adresáø obsahuje soubory nápovìdy.")
-            run_dialog(Warning, msg % config.help_dir)
+            self.run_dialog(Warning, msg % config.help_dir)
             return
         if self._help_controller is None:
             self._help_controller = controller = wx.html.HtmlHelpController()
