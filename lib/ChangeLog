@@ -1,8 +1,33 @@
 2007-02-08  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql.relop):
+	Check `rel', not `relop' for binary operator restrictions.
+
+	* pytis/data/data.py (MemData._restrict_row_columns): New method.
+	(MemData.row, MemData.select): New argument `columns'.
+
+	* pytis/form/configui.py (_ConfigData.select): New keyword
+	argument `columns'
+
 	* pytis/data/types_.py (_Value.__setstate__): Don't call
 	`self._init()' here.
 	(Value.__setstate__): New method.  Call `self._init()' here.
+	(Type.validate): Docstring rewritten.
+	(Limited.VM_MAXLEN_EXCEEDED): -> `VM_MAXLEN'.
+	(Limited._VM_MAXLEN_EXCEEDED_MSG): -> `_VM_MAXLEN_MSG'.
+	(Limited._check_maxlen): `VM_MAXLEN_EXCEEDED' -> `VM_MAXLEN'.
+	(String._VM_MAXLEN_EXCEEDED_MSG): -> `_VM_MAXLEN_MSG'.
+	(Binary._VM_MAXLEN_EXCEEDED_MSG): -> `_VM_MAXLEN_MSG'.
+	(Image): Docstring updated.
+	(Image.VM_MAXSIZE, Image._VM_MAXSIZE_MSG, Image._VM_MINSIZE_MSG)
+	(Image.VM_FORMAT, Image._VM_FORMAT_MSG, Image.VM_MINSIZE): New
+	constants.
+	(Buffer.FORMATS): Constant removed.
+	(Image.Buffer._validate): Don't validate against `self.FORMATS'.
+	(Image.__init__): New method.
+	(Image.__cmp__, Image.formats, Image.minsize, Image.maxsize)
+	(Image._check_constraints): New methods.
 
 2007-02-07  Tomas Cerha  <cerha@brailcom.org>
 
