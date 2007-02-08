@@ -996,7 +996,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                isinstance(value.type(), String)
             t = self.find_column(colid).type()
             assert (not isinstance(t, Binary) or
-                    (relop == '=' and value.value() is None)), \
+                    (rel == '=' and value.value() is None)), \
                     "Binary data can only be compared with NULL values"
             btabcols = self._pdbb_btabcol(col)
             val = xtuple(self._pg_value(value))
