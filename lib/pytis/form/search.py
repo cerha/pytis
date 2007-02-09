@@ -69,485 +69,35 @@ class SFSDialog(GenericDialog):
 
     _FIELD_HEIGHT = 26
 
-    def _create_button(self, label, callback, tip=None):
+    def _create_button(self, label, callback, tooltip=None, **kwargs):
         return wx_button(self._dialog, label=label, callback=callback,
-                         tooltip=tip, height=self._FIELD_HEIGHT)
+                         tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
         
-    def _create_choice(self, choices, tip=None, enlarge=True):
-        ch = wx.Choice(self._dialog, -1, choices=choices)
+    def _create_choice(self, choices, tooltip=None, label=identity,
+                       selected=None, on_change=None):
+        ch = wx.Choice(self._dialog, -1, choices=[label(x) for x in choices])
         ch.SetSelection(0)
-        correction = enlarge and 22 or 0 # longer texts may not fit...
-        ch.SetMinSize((ch.GetSize().width+correction, self._FIELD_HEIGHT))
-        if tip is not None and config.show_tooltips:
-            ch.SetToolTipString(unicode(tip))
+        ch.SetMinSize((ch.GetSize().width, self._FIELD_HEIGHT))
+        if tooltip is not None and config.show_tooltips:
+            ch.SetToolTipString(unicode(tooltip))
+        if selected:
+            ch.SetSelection(list(choices).index(selected))
+        if on_change:
+            wx_callback(wx.EVT_CHOICE, ch, ch.GetId(), on_change)
         return ch
 
-    def _create_text_ctrl(self, size, value=None, tip=None, readonly=False):
+    def _create_text_ctrl(self, size, value=None, tooltip=None,
+                          readonly=False, enabled=None):
         style = readonly and wx.TE_READONLY or 0
         t = wx.TextCtrl(self._dialog, -1, style=style)
         t.SetMinSize((dlg2px(t, 4*size), self._FIELD_HEIGHT))
         if value is not None:
             t.SetValue(value)
-        if tip is not None and config.show_tooltips:
-            t.SetToolTipString(unicode(tip))
+        if tooltip is not None and config.show_tooltips:
+            t.SetToolTipString(unicode(tooltip))
+        if enabled is not None:
+            t.Enable(enabled)
         return t
-
-    
-class SFDialog(SFSDialog):
-    """Spoleèný základ v¹ech vyhledávacích a filtrovacích dialogù."""
-
-    _NO_COLUMN = '---'
-    _OPERATORS = (('=',   pytis.data.WM, pytis.data.EQ),
-                  ('=<',  pytis.data.LE, pytis.data.LE),
-                  ('>=',  pytis.data.GE, pytis.data.GE),
-                  ('<',   pytis.data.LT, pytis.data.LT),
-                  ('>',   pytis.data.GT, pytis.data.GT),
-                  ('=/=', pytis.data.NW, pytis.data.NE))
-    _LOGICAL_OPERATORS = ((_("a zároveò"), pytis.data.AND),
-                          (_("nebo"), pytis.data.OR))
-
-    _TITLE = ''
-    _BUTTONS = (_("Zavøít"),)
-
-    def __init__(self, parent, columns):
-        """Inicializuj dialog.
-
-        Dialog není zobrazen ihned voláním konstruktoru, nýbr¾ a¾ metodou
-        'run()'.  Pokud mají být zohlednìny pøedchozí zadané hodnoty, je nutno
-        opakovanì volat metodu 'run()' jedné a té¾e instance.
-
-        Argumenty:
-
-          parent -- rodiè dialogu
-          columns -- sekvence instancí tøídy 'SFSColumn'
-
-        """
-        # Argumenty
-        self._row = None
-        self._columns = columns
-        # Ostatní atributy
-        self._selectors = {}
-        self._logical_selectors = {}
-        self._default_item = (-1, 0, '', 0)
-        self._defaults = {}
-        self._condition = None
-        self._number_of_conditions = 1
-        # Pøedek
-        super_(SFDialog).__init__(self, parent, self._TITLE, self._BUTTONS)
-
-    def _create_content(self, number_of_conditions=None):
-        self._selectors = {}
-        self._logical_selectors = {}
-        if number_of_conditions is None:
-            number_of_conditions = self._number_of_conditions
-        parent = self._dialog
-        # Prvky
-        def condition(id):
-            column = self._create_choice([c.label() for c in self._columns],
-                                         tip=_("Zvolte sloupec tabulky"))
-            try:
-                wcol, wop, wval, __ = self._defaults[id]
-            except KeyError:
-                wcol, wop, wval, __ = self._defaults[id] = self._default_item
-            if wcol == -1 and self._field_id:
-                c = find(self._field_id, self._columns, key=lambda c: c.id())
-                if c is not None:
-                    wcol = self._columns.index(c)
-            if wcol == -1:
-                if id > 0 and self._defaults[id-1][0] != -1:
-                    wcol = self._defaults[id-1][0]
-                else:
-                    wcol = 0
-            column.SetSelection(wcol)
-            op = self._create_choice(map(lambda o: o[0], self._OPERATORS),
-                                     tip=_("Zvolte operátor"), enlarge=False)
-            op.SetSelection(wop)
-            value = self._create_text_ctrl(18, wval,
-                                   tip=_("Zapi¹te hodnotu podmínkového výrazu"))
-            self._selectors[id] = (column, op, value)
-            buttons = [self._create_button(label, handler, tip=tooltip)
-                       for label, tooltip, handler in
-                       ((_("Smazat"), _("Vymazat obsah podmínky"),
-                         lambda e: self._on_clear(e, id)),
-                        (_("Nasát"), _("Naèíst hodnotu aktivní buòky"),
-                         lambda e: self._on_suck(e, id)),
-                        (_("Odebrat"), _("Zru¹it tuto podmínku"),
-                         lambda e: self._on_remove(e, id)))]
-            sizer = wx.BoxSizer()
-            for x in (column, op, value) + tuple(buttons):
-                sizer.Add(x)
-            return sizer
-        def and_or_separator(id):
-            try:
-                defaults = self._defaults[id]
-            except KeyError:
-                selection = 0
-            else:
-                selection = defaults[3]
-            op = self._create_choice(map(lambda o: o[0],
-                                         self._LOGICAL_OPERATORS),
-                                     tip=_("Zvolte typ spojení podmínek"))
-            op.SetSelection(selection)
-            self._logical_selectors[id] = op
-            return op
-        # Vytvoøení prvkù a sizerù
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(condition(0))
-        for i in range(1, number_of_conditions):
-            and_sizer = wx.BoxSizer()
-            and_sizer.Add(and_or_separator(i-1))
-            sizer.Add(and_sizer)
-            sizer.Add(condition(i))
-        b1 = self._create_button(_('Pøidat "a zároveò"'), self._on_add,
-                                 tip=_("Pøidat novou podmínku v konjunkci"))
-        b2 = self._create_button(_('Pøidat "nebo"'), self._on_add_or_,
-                                 tip=_("Pøidat novou podmínku v disjunkci"))
-        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_sizer.Add(b1)
-        button_sizer.Add(b2, 0, wx.LEFT, 20)
-        # Hotovo
-        return (sizer, button_sizer)
-
-    def _selected_condition(self):
-        condition = None
-        selectors = self._selectors
-        logical_selectors = self._logical_selectors
-        keys = selectors.keys()
-        keys.sort()
-        for k in keys:
-            wcol, wop, wval = selectors[k]
-            column = self._columns[wcol.GetSelection()]
-            vop = wop.GetStringSelection()
-            vval = wval.GetValue()
-            for o in self._OPERATORS:
-                if o[0] == vop:
-                    if (o[1] is not o[2] and
-                        vval.find('*') >= 0 or vval.find('?') >= 0):
-                        op = o[1]
-                        value, err = column.type().wm_validate(vval)
-                    elif isinstance(column.type(), pytis.data.Boolean):
-                        op = o[2]
-                        value, err = column.type().validate(vval, extended=True)
-                    else:
-                        op = o[2]
-                        value, err = column.type().validate(vval, strict=False)
-                    if err:
-                        msg = _("Chybná hodnota v podmínce %d:\n%s") % \
-                              (k+1, err.message())
-                        run_dialog(Error, msg)
-                        raise err
-                    break
-            else:
-                raise ProgramError('Operator disappeared', vop)
-            subcondition = op(column.id(), value)
-            if k > 0:
-                lopindex = logical_selectors[k-1].GetSelection()
-                lop = self._LOGICAL_OPERATORS[lopindex][1]
-                condition = lop(condition, subcondition)
-            else:
-                condition = subcondition
-        return condition
-
-    def _on_clear(self, event, id):
-        column, op, value = self._selectors[id]
-        column.SetSelection(0)
-        op.SetSelection(0)
-        value.SetValue('')
-
-    def _on_suck(self, event, id):
-        wcol, __, value = self._selectors[id]
-        column = self._columns[wcol.GetSelection()]
-        v = self._row[column.id()].export()
-        if is_sequence(v):
-            v = v[0]
-        value.SetValue(v)
-
-    def _on_add(self, event, logical_selection=0):
-        self._number_of_conditions = self._number_of_conditions + 1
-        self._save_values(logical_selection=logical_selection)
-        self.rebuild()
-    
-    def _on_add_or_(self, event):
-        self._on_add(event, logical_selection=1)
-    
-    def _on_remove(self, event, id):
-        if self._number_of_conditions > 1:
-            self._number_of_conditions = self._number_of_conditions - 1
-            self._save_values(exclude=id)
-            self.rebuild()
-    
-    def _on_cancel(self, event):
-        self._condition = None
-        self._widget.EndModal(0)
-
-    def _customize_result(self, button_wid):
-        self._condition = None
-        return self._condition
-
-    def _save_values(self, logical_selection=0, exclude=None):
-        # _logical_selectors[i] vá¾e _selectors[i] a _selectors[i+1]
-        self._defaults = {}
-        for k, v in self._selectors.items():
-            if exclude is not None:
-                if k == exclude:
-                    del self._selectors[k]
-                    try:
-                        del self._logical_selectors[k]
-                    except KeyError:
-                        pass
-                    continue
-                elif k > exclude:
-                    self._selectors[k-1] = v
-                    del self._selectors[k]
-                    try:
-                        self._logical_selectors[k-1] = \
-                          self._logical_selectors[k]
-                        del self._logical_selectors[k]
-                    except KeyError:
-                        pass
-                    k = k - 1
-            wcol, wop, wval = v
-            try:
-                logsel = self._logical_selectors[k].GetSelection()
-            except KeyError:
-                logsel = logical_selection
-            defaults = (wcol.GetSelection(), wop.GetSelection(),
-                        wval.GetValue(), logsel)
-            self._defaults[k] = defaults
-        keys = self._defaults.keys()
-        if len(keys) == 1 and self._defaults[keys[0]][2] == '':
-            # We don't want to remember an empty condition.
-            self._defaults = {}
-            
-    def _finish_dialog(self):
-        self._save_values()
-
-    def append_condition(self, col_id, value):
-        """Pøidej filtrovací podmínku neinteraktivnì.
-
-        Metoda neinteraktivnì pøidá do dialogu podmínku rovnosti sloupce
-        'col_id' na hodnotu 'value'.  Podmínka je pøidána v¾dy v konjunkci se
-        stávajícími podmínkami.
-
-        Metoda je urèena k pou¾ití ve chvíli, kdy není zobrazen dialog.  Pøi
-        jiném pou¾ití je chování nedefinováno.
-        
-        """
-        c = find(col_id, self._columns, key=lambda c: c.id())
-        if c is None:
-            return False
-        condition = pytis.data.EQ(col_id, value)
-        if self._condition is None:
-            self._condition = condition
-        else:
-            self._condition = pytis.data.AND(self._condition, condition)
-        # Proto¾e celý zpùsob ukládání defaults je dost èuòárna (vázaný na
-        # widgety), tak i toto je èuòárna...
-        defaults = (self._columns.index(c), 0, value.export(), 0)
-        if self._number_of_conditions != 1 or len(self._defaults.keys()) != 0:
-            self._number_of_conditions += 1
-        self._defaults[self._number_of_conditions-1] = defaults
-        if self._number_of_conditions > 1:
-            d = self._defaults[self._number_of_conditions-2]
-            d = d[:3] + (0,)
-            self._defaults[self._number_of_conditions-2] = d
-        return True
-            
-    def reset_condition(self):
-        """Neinteraktivnì zru¹ stávající filtrovací podmínku.
-
-        Pozor, podmínka se pøestane uplatòovat pouze pro v¹echny následující
-        operace bez otevøení dialogu (append_condition).  Pøi následném
-        otevøení dialogu jsou v¹ak pøedchozí podmínky stále pøítomné a pøi
-        novém vyfiltrování se uplatní.  Zru¹ení podmínek z dialogu je nutno
-        provést ruènì.
-
-        """
-        self._condition = None
-        
-    def condition(self):
-        """Vra» aktuální podmínku nebo 'None', pokud ¾ádná není."""
-        return self._condition
-
-    def run(self, current_row, current_field):
-        """Zobraz formuláø a po jeho ukonèení vra» zvolenou podmínku.
-
-        Argumenty:
-        
-          current_row -- aktuální øádek formuláøe jako instance tøídy
-            'pytis.data.Row'; pokud ve formuláøi není zvolen ¾ádný øádek, tak
-            'None'
-          current_field -- identifikátor aktuálního políèka/sloupce.  Je-li
-            'None', bude vybrán nìjaký implicitní sloupec.
-
-        Vrácená podmínka je instance podmínkového operátoru pou¾ívaného
-        metodami tøídy 'pytis.data.Data'.  Pokud je dialog opu¹tìn bez zadání
-        podmínky (typicky stiskem tlaèítka \"Zru¹it\"), vra» 'None'.
-
-        """
-        self._row = current_row
-        self._field_id = current_field
-        return super_(SFDialog).run(self)
-
-
-class SearchDialog(SFDialog):
-    """Dialog pro vyhledávání v øádkových seznamech."""
-
-    _NEXT_BUTTON = _("Dal¹í")
-    _PREVIOUS_BUTTON = _("Pøedchozí")
-    _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFDialog._BUTTONS
-    _COMMIT_BUTTON = _NEXT_BUTTON    
-    _TITLE = _("Hledání")
-    _HELP_TOPIC = 'searching'
-    
-    def _search(self, direction):
-        try:
-            self._condition = self._selected_condition()
-        except pytis.data.ValidationError, e:
-            return False
-        self._direction = direction
-        return True
-
-    def _on_button(self, event):
-        label = self._button_label(event.GetId())
-        if label == self._NEXT_BUTTON:
-            direction = pytis.data.FORWARD
-        elif label == self._PREVIOUS_BUTTON:
-            direction = pytis.data.BACKWARD
-        else:
-            direction = None
-        if direction is None or self._search(direction):
-            return super(SearchDialog, self)._on_button(event)
-
-    def _customize_result(self, button_wid):
-        label = self._button_label(button_wid)
-        if label in (self._NEXT_BUTTON, self._PREVIOUS_BUTTON):
-            return self._condition, self._direction
-        else:
-            return None, None
-
-    def run(self, current_row, current_field):
-        """Zobraz formuláø a po jeho ukonèení vra» zvolené parametry hledání.
-
-        Argumenty:
-        
-          row -- aktuální øádek formuláøe jako instance tøídy 'pytis.data.Row';
-            pokud ve formuláøi není zvolen ¾ádný øádek, tak 'None'
-          current_field -- identifikátor aktuálního políèka/sloupce.  Je-li
-            'None', bude vybrán nìjaký implicitní sloupec.
-
-        Vrací: Dvojici (CONDITION, DIRECTION).  CONDITION je instance
-        podmínkového operátoru pou¾ívaného metodami tøídy 'pytis.data.Data'.
-        DIRECTION je po¾adovaný smìr hledání, jedna z konstant
-        'pytis.data.FORWARD' a 'pytis.data.BACKWARD'.  Pokud je dialog opu¹tìn bez
-        zadání podmínky (typicky stiskem tlaèítka \"Zru¹it\"), je CONDITION
-        'None' a hodnota DIRECTION je nedefinována.
-
-        """
-        self._direction = None
-        return super_(SearchDialog).run(self, current_row, current_field)
-
-
-class FilterDialog(SFDialog):
-    """Dialog pro filtrování v øádkových seznamech."""
-
-    _FILTER_BUTTON = _("Filtrovat")
-    _UNFILTER_BUTTON = _("Zru¹it filtr")
-    _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFDialog._BUTTONS
-    _COMMIT_BUTTON = _FILTER_BUTTON
-    _AGG_OPERATORS = ((_("Poèet"), pytis.data.Data.AGG_COUNT),
-                      (_("Minimum"), pytis.data.Data.AGG_MIN),
-                      (_("Maximum"), pytis.data.Data.AGG_MAX),
-                      (_("Souèet"), pytis.data.Data.AGG_SUM),
-                      (_("Prùmìr"), pytis.data.Data.AGG_AVG))
-    _TITLE = _("Filtrování")
-    _HELP_TOPIC = 'filtering'
-
-    def _create_content(self, **kwargs):
-        content = super_(FilterDialog)._create_content(self, **kwargs)
-        column_choices = map(SFSColumn.label, self._columns)
-        op_choices = map(lambda o: o[0], self._AGG_OPERATORS)
-        self._agg_column = self._create_choice(column_choices,
-                                          tip=_("Zvolte sloupec pro agregaci"))
-        self._agg_operator = self._create_choice(op_choices,
-                                          tip=_("Zvolte agregaèní funkci"))
-        self._agg_result = self._create_text_ctrl(24, readonly=True,
-                                   tip=_("Zobrazení výsledku agregaèní funkce"))
-        go = self._create_button(_("Zjistit"), self._on_compute_aggregate,
-                                 _("Zobraz výsledek zvolené agrekaèní funkce"))
-        computer = wx.BoxSizer(wx.HORIZONTAL)
-        for w in self._agg_column, self._agg_operator, self._agg_result, go:
-            computer.Add(w)
-        return content + (computer,)
-
-    def _on_filter(self):
-        try:
-            self._condition = self._selected_condition()
-        except pytis.data.ValidationError, e:
-            return False
-        self._perform = True
-        return True
-
-    def _on_button(self, event):
-        label = self._button_label(event.GetId())
-        if label == self._FILTER_BUTTON:
-            if not self._on_filter():
-                return False
-        elif label == self._UNFILTER_BUTTON:
-            self._on_reset_filter()
-        return super(FilterDialog, self)._on_button(event)
-        
-    def _on_reset_filter(self):
-        self._condition = None
-        self._perform = True
-
-    def _on_compute_aggregate(self, event):
-        operator = self._AGG_OPERATORS[self._agg_operator.GetSelection()][1]
-        colvalue = self._agg_column.GetSelection()
-        column = self._columns[colvalue].id()
-        operation = (operator, column)
-        self._on_filter()
-        condition = self._condition
-        if self._data_filter is not None:
-            condition = pytis.data.AND(condition, self._data_filter)
-        result = self._data.select_aggregate(operation, condition)
-        if result is not None:
-            self._agg_result.SetValue(result.export())
-
-    def _customize_result(self, button_wid):
-        label = self._button_label(button_wid)
-        if label in (self._FILTER_BUTTON, self._UNFILTER_BUTTON):
-            return self._perform, self._condition
-        else:
-            return None, None
-
-    def run(self, data, filter, current_row, current_field):
-        """Zobraz formuláø a po jeho ukonèení vra» parametry filtrování.
-        
-        Argumenty:
-
-          data -- datový objekt nad ním¾ budou provádìny pøípadné agregaèní
-            funkce.
-          filter -- pøípadná doplòující podmínka filtrující data datového
-            objektu pøi výpoètu agregaèních funkcí.  Tato podmínka bude
-            uplatnìja souèasnì s aktuální podmínkou nastavenou v dialogu.
-            Instance pytis.data.Operator, nebo None.
-          current_row -- aktuální øádek formuláøe jako instance tøídy
-            'pytis.data.Row'; pokud ve formuláøi není zvolen ¾ádný øádek, tak
-            'None'
-          current_field -- identifikátor aktuálního políèka/sloupce.  Je-li
-            'None', bude vybrán nìjaký implicitní sloupec.
-
-        Vrací: Dvojici (FILTER, CONDITION).  CONDITION je instance
-        podmínkového operátoru pou¾ívaného metodami tøídy 'pytis.data.Data'.
-        FILTER je flag udávající, zda má být filtrování provedeno nebo zda byl
-        dialog u¾ivatelem zru¹en bez po¾adavku na nové filtrování.
-
-        """
-        self._data = data
-        self._data_filter = filter
-        self._perform = False
-        return super_(FilterDialog).run(self, current_row, current_field)
 
 
 class SortingDialog(SFSDialog):
@@ -603,13 +153,13 @@ class SortingDialog(SFSDialog):
             for col, dir in self._sorting:
                 # Sloupce
                 colsel = self._create_choice(column_choices,
-                     tip=_("Zvolte sloupec tabulky, podle nìj¾ chcete tøídit"))
+                 tooltip=_("Zvolte sloupec tabulky, podle nìj¾ chcete tøídit"))
                 colpos = position(col, columns, key=lambda c: c.id())
                 if colpos:
                     colsel.SetSelection(colpos)
                 # Smìr tøídìní
                 dirsel = self._create_choice(direction_choices,
-                                             tip=_("Zvolte smìr tøídìní"))
+                                             tooltip=_("Zvolte smìr tøídìní"))
                 if dir == LookupForm.SORTING_DESCENDANT:
                     dirsel.SetSelection(1)
                 self._selections.append((colsel, dirsel))
@@ -621,7 +171,7 @@ class SortingDialog(SFSDialog):
         else:
             # Sloupce
             colsel = self._create_choice(column_choices,
-                     tip=_("Zvolte sloupec tabulky, podle nìj¾ chcete tøídit"))
+                 tooltip=_("Zvolte sloupec tabulky, podle nìj¾ chcete tøídit"))
             col = self._col
             if col is not None:
                 for i in range(len(columns)):
@@ -630,7 +180,7 @@ class SortingDialog(SFSDialog):
                         break
             # Smìr tøídìní
             dirsel = self._create_choice(direction_choices,
-                                         tip=_("Zvolte smìr tøídìní"))
+                                         tooltip=_("Zvolte smìr tøídìní"))
             if self._direction == LookupForm.SORTING_DESCENDANT:
                 dirsel.SetSelection(1)
             self._selections.append((colsel, dirsel))
@@ -639,9 +189,9 @@ class SortingDialog(SFSDialog):
             for w in colsel, dirsel:
                 sizer.Add(w)
             big_sizer.Add(sizer)
-        add_button = self._create_button(_("Pøidat"), self._on_add,
-                                  tip=_("Pøidat sloupec sekundárního tøídìní"))
-        big_sizer.Add(add_button)
+        button = self._create_button(_("Pøidat"), self._on_add,
+                                     _("Pøidat sloupec sekundárního tøídìní"))
+        big_sizer.Add(button)
         return big_sizer
 
     def _customize_result(self, button_wid):
@@ -675,6 +225,408 @@ class SortingDialog(SFSDialog):
         new = (self._columns[0].id(), LookupForm.SORTING_DESCENDANT)
         self._sorting = self._customize_result_sorting() + (new,)
         self.rebuild()
+
+    
+class SFDialog(SFSDialog):
+    """Spoleèný základ v¹ech vyhledávacích a filtrovacích dialogù."""
+
+    _OPERATORS = (pytis.data.EQ,
+                  pytis.data.LE,
+                  pytis.data.GE,
+                  pytis.data.LT,
+                  pytis.data.GT,
+                  pytis.data.NE)
+    _LOGICAL_OPERATORS = (pytis.data.AND, pytis.data.OR)
+    _WM_OPERATORS = {pytis.data.EQ: pytis.data.WM,
+                     pytis.data.NE: pytis.data.NW}
+    _LABELS = {pytis.data.EQ: '=',
+               pytis.data.LE: '=<',
+               pytis.data.GE: '>=',
+               pytis.data.LT: '<',
+               pytis.data.GT: '>',
+               pytis.data.NE: '=/=',
+               pytis.data.AND: _("a zároveò"),
+               pytis.data.OR:  _("nebo")}
+    _TITLE = ''
+    _BUTTONS = (_("Zavøít"),)
+    _TEXT_CTRL_SIZE = 18
+    _NO_COLUMN = SFSColumn('--sfs-dialog-no-column--', pytis.data.String(), 
+                           '- '+ _("zvolte sloupec") +' -')
+
+    class SFConditionError(Exception):
+        pass
+
+    def __init__(self, parent, columns, row, condition=None):
+        """Initialize the dialog.
+
+        Arguments:
+
+          parent -- wx parent of the dialog window
+          columns -- a sequence of 'SFSColumn' instances
+          row -- current row as a 'pytis.data.Row' instance or 'None'
+          condition -- search/filtering condition as a 'pytis.data.Operator'
+            instance.  This condition will be preselected in the dialog.  The
+            current implementation, however, can only display a certainly
+            structured condition.  It is safe to use a condition obtained from
+            the previous dialog call.
+
+        """
+        self._columns = (self._NO_COLUMN,) + tuple(columns)
+        self._row = row
+        self._condition = condition
+        super_(SFDialog).__init__(self, parent, self._TITLE, self._BUTTONS)
+
+    def _create_content(self):
+        # Construct the ui controls based on the current condition.
+        def decompose_condition(operator, logical_operation=None):
+            # Decompose nested conditions into a list of corresponding operator
+            # functions and their logical pairing.
+            def maybe_NE(operator):
+                # Convert NOT(EQ(...)) or NOT(WM(...)) to NE(...)
+                # WM and EQ have the same UI ctrl, so we ignore the difference.
+                args = operator.args()
+                if operator.name() == 'NOT' and len(args) == 1 \
+                       and args[0].name() in ('EQ', 'WM'):
+                    return pytis.data.NE, args[0].args(), args[0].kwargs()
+            def maybe_LE(operator):
+                # Convert OR(LT(...), EQ(...)) to LE(...)
+                args = operator.args()
+                if operator.name() == 'OR' and len(args) == 2 \
+                       and args[0].name() == 'LT' and args[1].name() == 'EQ' \
+                       and args[0].args() == args[1].args() \
+                       and args[0].kwargs() == args[1].kwargs():
+                    return pytis.data.LE, args[0].args(), args[0].kwargs()
+            def maybe_GT(operator):
+                # Convert AND(NOT(EQ(...)), NOT(LT(...))) to GT(...)
+                if operator.name() == 'AND' and len(operator.args()) == 2:
+                    a1, a2 = operator.args()[0], operator.args()[1]
+                    if a1.name() == 'NOT' and a2.name() == 'NOT' \
+                           and len(a1.args()) == 1 and len(a2.args()) == 1:
+                        o1, o2 = a1.args()[0], a2.args()[0]
+                        if o1.name() == 'EQ' and o2.name() == 'LT' \
+                               and o1.args() == o2.args() \
+                               and o1.kwargs() == o2.kwargs():
+                            return pytis.data.GT, o1.args(), o1.kwargs()
+            def maybe_GE(operator):
+                # Convert OR(GT(...), EQ(...)) to GE(...)
+                name, args = operator.name(), operator.args()
+                if name == 'OR' and len(args) == 2 and args[1].name() == 'EQ':
+                    gt = maybe_GT(args[0])
+                    eq = args[1]
+                    if gt:
+                        args, kwargs = gt[1:]
+                        if args == eq.args() and kwargs == eq.kwargs():
+                            return pytis.data.GE, args, kwargs
+                
+            # Try to convert the known compound operators first.
+            for f in (maybe_NE, maybe_LE, maybe_GT, maybe_GE):
+                result = f(operator)
+                if result:
+                    op, args, kwargs = result
+                    break
+            else:
+                # Resolve logical operators (must be done after compound op.)
+                if operator.name() in ('AND', 'OR'):
+                    args = operator.args()
+                    assert len(args) == 2
+                    log_op = {'AND': pytis.data.AND,
+                              'OR': pytis.data.OR}[operator.name()]
+                    return decompose_condition(args[0], logical_operation) + \
+                           decompose_condition(args[1], log_op)
+                # Finally check for primitive operators.
+                # WM and EQ have the same UI ctrl, so we ignore the difference.
+                primitive_operators = {'EQ': pytis.data.EQ,
+                                       'WM': pytis.data.EQ,
+                                       'LT': pytis.data.LT}
+                try:
+                    op = primitive_operators[operator.name()]
+                except KeyError:
+                    raise Exception("Unrecognized operator: "+ str(operator))
+                args, kwargs = operator.args(), operator.kwargs()
+            col_id, value = args
+            return ((logical_operation, op, col_id, value), )
+        def create_controls(i, n, logical_operator, operator, col_id, value):
+            logical_operator, operator, col_id, value = items
+            col = find(col_id, self._columns, key=lambda c: c.id())
+            choice, field, button = self._create_choice, \
+                                    self._create_text_ctrl, self._create_button
+            return (
+                logical_operator and \
+                choice(self._LOGICAL_OPERATORS, selected=logical_operator,
+                       label=lambda o: self._LABELS[o],
+                  tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
+                choice(self._columns, selected=col,
+                       label=lambda c: c.label(),
+                       tooltip=_("Zvolte sloupec tabulky"),
+                       on_change=lambda e: self._on_column_change(i)),
+                choice(self._OPERATORS, selected=operator,
+                       label=lambda o: self._LABELS[o],
+                       tooltip=_("Zvolte operátor")),
+                field(self._TEXT_CTRL_SIZE,
+                      isinstance(value, pytis.data.WMValue) \
+                      and value.value() or value.export(),
+                      tooltip=_("Zapi¹te hodnotu podmínkového výrazu")),
+                button(_("Vymazat"), lambda e: self._on_clear(i),
+                       _("Vymazat obsah podmínky")),
+                button(_("Nasát"), lambda e: self._on_suck(i),
+                       _("Naèíst hodnotu aktivní buòky")),
+                button(_("Odebrat"), lambda e: self._on_remove(i),
+                       _("Zru¹it tuto podmínku"), enabled=n > 1))
+            
+        condition = self._condition
+        if condition is None:
+            c = self._NO_COLUMN
+            condition = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
+        conditions = decompose_condition(condition)
+        self._controls = []
+        for i, items in enumerate(conditions):
+            self._controls.append(create_controls(i, len(conditions), *items))
+            self._on_column_change(i)
+        b1 = self._create_button(_('Pøidat "a zároveò"'),
+                                 lambda e: self._on_add(),
+                                 _("Pøidat novou podmínku v konjunkci"))
+        b2 = self._create_button(_('Pøidat "nebo"'),
+                                 lambda e: self._on_add(or_=True),
+                                 _("Pøidat novou podmínku v disjunkci"))
+
+        # Put all the controlls into sizers.
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        for ctrls in self._controls:
+            row = wx.BoxSizer()
+            for x in ctrls:
+                if x:
+                    row.Add(x)
+            sizer.Add(row, 0, wx.ALIGN_RIGHT)
+        bsizer = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer.Add(b1)
+        bsizer.Add(b2, 0, wx.LEFT, 20)
+        # Hotovo
+        return (sizer, bsizer)
+
+    def _selected_condition(self, omit=None, allow_no_column=False):
+        # Construct the operator from the current dialog ui controls.
+        def quit(i, ctrl, msg):
+            msg = _("Chyba v podmínce è. %d: %s") % (i+1, msg)
+            run_dialog(Error, msg)
+            #ctrl.SetFocus()
+            #self.focus()
+            raise self.SFConditionError(msg)
+        condition = None
+        for i, controls in enumerate(self._controls):
+            if i == omit:
+                continue
+            wlop, wcol, wop, wval, b1, b2, b3 = controls
+            lop = wlop and self._LOGICAL_OPERATORS[wlop.GetSelection()]
+            col = self._columns[wcol.GetSelection()]
+            op = self._OPERATORS[wop.GetSelection()]
+            val = wval.GetValue()
+            if col is self._NO_COLUMN and not allow_no_column:
+                quit(i, wcol, _("Není zvolen sloupec"))
+            if self._WM_OPERATORS.has_key(op) and \
+                   (val.find('*') >= 0 or val.find('?') >= 0):
+                op = self._WM_OPERATORS[op]
+                value, err = col.type().wm_validate(val)
+            else:
+                kwargs = dict(strict=False)
+                if isinstance(col.type(), pytis.data.Binary):
+                    if val:
+                        quit(i, wval, _("Binární sloupec lze testovat pouze "
+                                        "na prázdnou hodnotu"))
+                    else:
+                        val = None
+                elif isinstance(col.type(), pytis.data.Boolean):
+                    kwargs = dict(extended=True)
+                value, err = col.type().validate(val, **kwargs)
+            if err:
+                quit(i, wval, err.message())
+            subcondition = op(col.id(), value)
+            if condition is None:
+                condition = subcondition
+            else:
+                condition = lop(condition, subcondition)
+        return condition
+
+    def _on_column_change(self, i):
+        wcol, wop, wval, bclear, bsuck = self._controls[i][1:6]
+        enabled = wcol.GetSelection() != 0
+        for ctrl in (wop, wval, bclear, bsuck):
+            ctrl.Enable(enabled)
+        
+    def _on_clear(self, i):
+        wcol, wop, wval = self._controls[i][1:4]
+        wcol.SetSelection(0)
+        wop.SetSelection(0)
+        wval.SetValue('')
+        self._on_column_change(i)
+
+    def _on_suck(self, i):
+        wcol, wop, wval = self._controls[i][1:4]
+        col = self._columns[self._controls[i][1].GetSelection()]
+        v = self._row[col.id()].export()
+        if is_sequence(v):
+            v = v[0]
+        wval.SetValue(v)
+
+    def _on_remove(self, i):
+        try:
+            condition = self._selected_condition(omit=i, allow_no_column=True)
+        except self.SFConditionError:
+            pass
+        else:
+            self._condition = condition
+            self.rebuild()
+    
+    def _on_add(self, or_=False):
+        try:
+            condition = self._selected_condition(allow_no_column=True)
+        except self.SFConditionError:
+            pass
+        else:
+            op = or_ and pytis.data.OR or pytis.data.AND
+            c = self._NO_COLUMN
+            v = pytis.data.Value(c.type(), None)
+            self._condition = op(condition, pytis.data.EQ(c.id(), v))
+            self.rebuild()
+
+
+class SearchDialog(SFDialog):
+    """Dialog for manipulation of the current searching condition.
+
+    The 'run()' method of this dialog returns a pair (DIRECTION, CONDITION).
+    
+    DIRECTION is the selected search direction.  The value can be either
+    'pytis.data.FORWARD', 'pytis.data.BACKWARD' or 'None'.  'None' means that
+    the search should not be performed (the dialog was escaped), the other two
+    values indicate, that next record should be located in given direction.
+    
+    CONDITION is the selected search condition as a 'pytis.data.Operator'
+    instance.
+
+    """
+    _NEXT_BUTTON = _("Dal¹í")
+    _PREVIOUS_BUTTON = _("Pøedchozí")
+    _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFDialog._BUTTONS
+    _COMMIT_BUTTON = _NEXT_BUTTON    
+    _TITLE = _("Hledání")
+    _HELP_TOPIC = 'searching'
+
+    def __init__(self, *args, **kwargs):
+        self._direction = None
+        return super(SearchDialog, self).__init__(*args, **kwargs)
+    
+    def _on_button(self, event):
+        mapping = {self._NEXT_BUTTON: pytis.data.FORWARD,
+                   self._PREVIOUS_BUTTON: pytis.data.BACKWARD}
+        direction = mapping.get(self._button_label(event.GetId()))
+        if direction is not None:
+            try:
+                self._condition = self._selected_condition()
+            except self.SFConditionError:
+                return
+        if direction is not None:
+            self._direction = direction
+        return super(SearchDialog, self)._on_button(event)
+        
+    def _customize_result(self, button_wid):
+        return self._direction, self._condition
+
+
+class FilterDialog(SFDialog):
+    """Dialog for manipulation of the filtering condition and aggregations.
+
+    This dialog edits the current filtering condition.  In addition it has a
+    simple aggregation panel, where the user can display the result of a
+    selected aggregation function.  These aggregations work with the data
+    filtered by the current selected condition without the need to actually
+    perform the filter to the underlying form.
+
+    The 'run()' method of this dialog returns a pair (PERFORM, CONDITION).
+    
+    PERFORM is a boolean flag indicating whether the CONDITION should be
+    applied to the underlying form or not.  It is True when the user presses
+    the ``Filter'' or ``Unfilter'' button and False if the user cancels the
+    dialog.
+    
+    CONDITION is the current selected search condition as a
+    'pytis.data.Operator' instance or None.  'None' is used when the user
+    wishes to unfilter the underlying form.
+
+    """
+    _FILTER_BUTTON = _("Filtrovat")
+    _UNFILTER_BUTTON = _("Zru¹it filtr")
+    _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFDialog._BUTTONS
+    _COMMIT_BUTTON = _FILTER_BUTTON
+    _AGG_OPERATORS = (pytis.data.Data.AGG_COUNT,
+                      pytis.data.Data.AGG_MIN,
+                      pytis.data.Data.AGG_MAX,
+                      pytis.data.Data.AGG_SUM,
+                      pytis.data.Data.AGG_AVG)
+    _AGG_LABELS = {pytis.data.Data.AGG_COUNT: _("Poèet"),
+                   pytis.data.Data.AGG_MIN:   _("Minimum"),
+                   pytis.data.Data.AGG_MAX:   _("Maximum"),
+                   pytis.data.Data.AGG_SUM:   _("Souèet"), 
+                   pytis.data.Data.AGG_AVG:   _("Prùmìr")}
+    _TITLE = _("Filtrování")
+    _HELP_TOPIC = 'filtering'
+
+    def __init__(self, parent, columns, row, compute_aggregate, **kwargs):
+        self._compute_aggregate = compute_aggregate
+        self._perform = False
+        super(FilterDialog, self).__init__(parent, columns, row, **kwargs)
+
+    def _create_content(self):
+        content = super_(FilterDialog)._create_content(self)
+        choice, field, button = self._create_choice, \
+                                self._create_text_ctrl, self._create_button
+        self._agg_controls = (
+            choice(self._columns[1:], label=lambda c: c.label(),
+                   tooltip=_("Zvolte sloupec pro agregaci")),
+            choice(self._AGG_OPERATORS, label=lambda o: self._AGG_LABELS[o],
+                   tooltip=_("Zvolte agregaèní funkci")),
+            field(24, readonly=True,
+                  tooltip=_("Zobrazení výsledku agregaèní funkce")),
+            button(_("Zjistit"), self._on_compute_aggregate,
+                   tooltip=_("Zobraz výsledek zvolené agrekaèní funkce")))
+        box = wx.StaticBox(self._dialog, -1, _("Agregaèní funkce:"))
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        for w in self._agg_controls:
+            sizer.Add(w)
+        return content + (sizer,)
+
+    def _on_compute_aggregate(self, event):
+        if self._on_filter():
+            wcol, wop, wresult, wbutton = self._agg_controls
+            op = self._AGG_OPERATORS[wop.GetSelection()]
+            col = self._columns[wcol.GetSelection()+1]
+            result = self._compute_aggregate(op, col.id(), self._condition)
+            if result is not None:
+                wresult.SetValue(result.export())
+
+    def _on_filter(self):
+        try:
+            condition = self._selected_condition()
+        except self.SFConditionError:
+            return False
+        else:
+            self._condition = condition
+            self._perform = True
+            return True
+
+    def _on_unfilter(self):
+        self._perform = True
+        self._condition = None
+
+    def _on_button(self, event):
+        label = self._button_label(event.GetId())
+        if label == self._FILTER_BUTTON:
+            if not self._on_filter():
+                return False
+        elif label == self._UNFILTER_BUTTON:
+            self._on_unfilter()
+        return super(FilterDialog, self)._on_button(event)
+        
+    def _customize_result(self, button_wid):
+        return self._perform, self._condition
 
 
 def sfs_columns(columns, data, labelfunc=FieldSpec.label):
