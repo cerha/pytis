@@ -214,8 +214,8 @@ DEFAULT_KEYMAP = (
     ('Alt-F6',        RecordForm.COMMAND_IMPORT_INTERACTIVE),
     ('F5',            RecordForm.COMMAND_EDIT_RECORD),
     ('F8',            RecordForm.COMMAND_DELETE_RECORD),
-    ('Ctrl-F4',       LookupForm.COMMAND_FILTER),
-    ('Ctrl-Shift-F4', LookupForm.COMMAND_UNFILTER),
+    ('Ctrl-f',        LookupForm.COMMAND_FILTER),
+    ('Ctrl-Shift-f',  LookupForm.COMMAND_UNFILTER),
     ('F4',            LookupForm.COMMAND_SORT),
     ('F3',            LookupForm.COMMAND_SEARCH),
     ('Ctrl-s',        LookupForm.COMMAND_SEARCH(next=True)),
@@ -272,6 +272,10 @@ DEFAULT_KEYMAP = (
     ('Escape',        Dialog.COMMAND_CLOSE_DIALOG),
     ('Enter',         Dialog.COMMAND_COMMIT_DIALOG),
     ('Ctrl-Enter',    Dialog.COMMAND_COMMIT_DIALOG(force=True)),
+
+    # Just for backwards compatibility
+    ('Ctrl-F4',       LookupForm.COMMAND_FILTER),
+
     )
 
 
@@ -340,16 +344,16 @@ FORM_COMMAND_MENU = ((
      _("Smazat aktuální záznam.")),
     ),(#---------------
     (ListForm.COMMAND_INSERT_LINE,
-     _("Vlo¾it øádku pod"),
+     _("Vlo¾it øádek pod"),
      _("Vlo¾it nový záznam v re¾imu inline editace.")),
     (ListForm.COMMAND_INSERT_LINE(before=True),
-     _("Vlo¾it øádku nad"),
+     _("Vlo¾it øádek nad"),
      _("Vlo¾it nový záznam v re¾imu inline editace.")),
     (ListForm.COMMAND_INSERT_LINE(copy=True),
-     _("Kopírovat øádku pod"),
+     _("Kopírovat øádek pod"),
      _("Vlo¾it nový záznam v re¾imu inline editace jako kopii souèasného.")),
     (ListForm.COMMAND_INSERT_LINE(copy=True, before=True),
-     _("Kopírovat øádku nad"),
+     _("Kopírovat øádek nad"),
      _("Vlo¾it nový záznam v re¾imu inline editace jako kopii souèasného.")),
     ),(#---------------
     (ListForm.COMMAND_EXPORT_CSV,
