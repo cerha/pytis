@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -225,12 +225,7 @@ class GenericDialog(Dialog):
         nav.SetCurrentFocus(self._dialog)
         self._dialog.GetEventHandler().ProcessEvent(nav)
 
-    def _finish_dialog(self):
-        # Využíváno v 'search.py'
-        pass
-    
     def _end_modal(self, result):
-        self._finish_dialog()
         self._dialog.EndModal(result)
     
     def _on_button(self, event):
