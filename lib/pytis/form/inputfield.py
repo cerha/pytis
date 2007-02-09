@@ -1431,12 +1431,6 @@ class FileField(Invocable, InputField):
             display = format_byte_size(len(self._buffer))
         self._ctrl.SetValue(display)
 
-    def _enable(self):
-        pass
-
-    def _disable(self, change_appearance):
-        pass
-        
     def _on_invoke_selection(self, alternate=False):
         FileField.COMMAND_LOAD.invoke(_command_handler=self)
 
