@@ -527,7 +527,7 @@ class PresentedRow(object):
     
     def _display_func(self, column):
         def getval(enum, value, col, func=None):
-            if not value:
+            if value is None:
                 return ''
             try:
                 v = enum.get(value, col)
