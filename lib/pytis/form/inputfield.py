@@ -547,6 +547,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         metodu '_set_value()'.
 
         """
+        # TODO: Is this really what we want?  Why do we ignore None values?
+        # This requires a workaround in FileField, where None is a correct
+        # value.
         if value is not None:
             return self._set_value(value)
         else:
@@ -1417,6 +1420,10 @@ class FileField(Invocable, InputField):
     def get_value(self):
         return self._buffer and self._buffer.buffer()
 
+    def set_value(self, value):
+        # This is a workargound. None values are ignored in the parent method!
+        return self._set_value(value)
+        
     def _set_value(self, value):
         assert value is None or isinstance(value, buffer)
         self._buffer = value and self._type.Buffer(value) or None
@@ -1494,7 +1501,7 @@ class FileField(Invocable, InputField):
         return self._buffer is not None
         
     def _cmd_clear(self):
-        self._set_value(None)
+        self.set_value(None)
 
 
 class ImageField(FileField):
