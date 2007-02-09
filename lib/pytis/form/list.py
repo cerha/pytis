@@ -398,10 +398,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         else:
             return self._table.row(row)
 
-    def current_field(self):
-        col = self._current_cell()[1]
-        return self._columns[col].id()
-
     def _selected_rows(self):
         g = self._grid
         # g.SelectedRows() nefunguje, proto následující hrùza...
@@ -651,7 +647,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._table.rewind(position=new_row)
         self._select_cell(row=new_row)
 
-    def _filter(self):
+    def _filter_refresh(self):
         self._refresh(when=self.DOIT_IMMEDIATELY)
 
     # Callbacky
