@@ -1,3 +1,47 @@
+2007-02-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/search.py: Completely rewritten...
+
+	* pytis/form/list.py (ListForm.current_field): Method removed.
+	(ListForm._filter): -> `_filter_refresh'.
+
+	* pytis/form/form.py (RecordForm.current_field): Method removed.
+	(LookupForm._init_attributes): Load `self._lf_search_condition'
+	and `self._lf_last_filter' from saved cofig.  Attributes
+	`self._lf_search_dialog' and `self._lf_filter_dialog' removed.
+	(LookupForm._cleanup): Method removed.
+	(LookupForm._lf_sf_dialog): Method removed.
+	(LookupForm._cmd_search): Use the new `SearchDialog' interface.
+	(LookupForm._is_searching, LookupForm._can_search_next)
+	(LookupForm._can_search_previous): Methods removed.
+	(LookupForm._filter): New argument `condition'.  Just setup the
+	attributes here and call `self._filter_refresh' to perform the
+	filter.
+	(LookupForm._filter_refresh): New method.
+	(LookupForm._cmd_filter): Removed argument `show_dialog'.  New
+	argument `condition'.  Use the new `FilterDialog' interface.
+	(LookupForm._cmd_unfilter): Just call `self._filter(None)'.
+	(LookupForm._cmd_filter_by_value): Don't operate on the dialog
+	here, just update the current filter condition.
+	(LookupForm._cmd_sort): Pass just the class and constructur
+	argument to `run_dialog()'.
+	(EditForm._validate_fields): Don't log the value.
+
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): Filtering remapped to
+	`Ctrl-f' (`Ctrl-F4' kept for backwards compatibility).
+
+	* pytis/form/dialog.py (GenericDialog._finish_dialog): Method
+	removed.
+	(GenericDialog._end_modal): Don't call it.
+
+	* pytis/presentation/field.py (_display_func.getval): Compare the
+	value to `None', not just its value in the boolean context.
+
+	* pytis/form/inputfield.py (FileField._enable,
+	FileField._disable): Methods removed.
+	(FileField.set_value): New method.
+	
+
 2007-02-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._displayed_columns_menu): Take
