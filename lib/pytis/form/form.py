@@ -586,6 +586,9 @@ class RecordForm(InnerForm):
     def _signal_update(self):
         pass
 
+    def _select_columns(self):
+        return None
+
     def _find_row_by_number(self, row_number):
         # row_number zaèíná od 0
         def get_it():
@@ -941,10 +944,6 @@ class RecordForm(InnerForm):
         """
         return self._current_key()
 
-    def current_field(self):
-        """Vra» identifikátor aktuálnì vybraného políèka/sloupeèku."""
-        return None
-
     def prefill(self):
         """Vra» data pro pøedvyplnìní nového záznamu."""
         return self._prefill
@@ -998,17 +997,19 @@ class LookupForm(RecordForm):
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
+        self._lf_select_count = None
         self._init_sorting(sorting)
         self._lf_initial_sorting = self._lf_sorting
-        self._lf_search_dialog = None
-        self._lf_filter_dialog = None
-        self._lf_select_count = None
         # _lf_condition reprezentuje statickou podmínku danou argumentem
         # konstruktoru, naproti tomu _lf_filter reprezentuje aktuální podmínku
         # u¾ivatelského filtru. 
         self._lf_condition = condition
         self._lf_filter = None
-
+        self._lf_last_filter = self._get_state_param('filter', None,
+                                                     pytis.data.Operator)
+        self._lf_search_condition = self._get_state_param('search', None,
+                                                          pytis.data.Operator)
+        
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
 
@@ -1043,9 +1044,6 @@ class LookupForm(RecordForm):
             condition = self._lf_condition or self._lf_filter
         return condition
     
-    def _select_columns(self):
-        return None
-
     def _init_select(self):
         data = self._data
         op = lambda : data.select(condition=self._current_condition(),
@@ -1058,13 +1056,6 @@ class LookupForm(RecordForm):
             throw('form-init-error')
         return self._lf_select_count
 
-    def _cleanup(self):
-        super(LookupForm, self)._cleanup()
-        if self._lf_search_dialog:
-            self._lf_search_dialog = None
-        if self._lf_filter_dialog:
-            self._lf_filter_dialog = None
-    
     def _data_sorting(self):
         mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
                    self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
@@ -1086,17 +1077,9 @@ class LookupForm(RecordForm):
         else:
             return None
         
-
     def _lf_sfs_columns(self):
         return sfs_columns(self._view.fields(), self._data)
-    
-    def _lf_sf_dialog(self, attr, class_):
-        dialog = getattr(self, attr)
-        if not dialog:
-            dialog = class_(self._parent, self._lf_sfs_columns())
-            setattr(self, attr, dialog)
-        return dialog
-        
+
     def _search(self, condition, direction, row_number=None,
                 report_failure=True):
         self._search_adjust_data_position(row_number)
@@ -1141,65 +1124,64 @@ class LookupForm(RecordForm):
         self.select_row(self._lf_select_count-1)
         
     def _cmd_search(self, next=False, back=False):
-        dlg = self._lf_sf_dialog('_lf_search_dialog', SearchDialog)
-        condition = dlg.condition()
-        if next and condition is not None:
-            if back:
-                direction = pytis.data.BACKWARD
-            else:
-                direction = pytis.data.FORWARD
+        condition = self._lf_search_condition
+        if condition is not None and next:
+            direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
-            condition, direction = \
-                block_refresh(lambda: run_dialog(dlg, self.current_row(),
-                                                 self.current_field()))
-        if condition is not None:
+            direction, condition = block_refresh(lambda:
+                             run_dialog(SearchDialog, self._lf_sfs_columns(),
+                                        self.current_row(),
+                                        condition=self._lf_search_condition))
+        if direction is not None:
+            self._lf_search_condition = condition
             self._search(condition, direction)
+            self._set_state_param('search', condition)
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
         self._init_sorting()
 
-    def _is_searching(self):
-        sd = self._lf_search_dialog
-        return bool(sd and sd._condition)
-            
-    def _can_search_next(self, **kwargs):
-        return self._is_searching()
+    def _compute_aggregate(self, operation, column_id, condition):
+        if self._lf_condition is not None:
+            condition = pytis.data.AND(condition, self._lf_condition)
+        return self._data.select_aggregate((operation, column_id), condition)
 
-    def _can_search_previous(self, **kwargs):
-        return self._is_searching()
-            
-    def _filter(self):
+    def _filter(self, condition):
+        self._lf_last_filter = self._lf_filter
+        self._lf_filter = condition
+        self._filter_refresh()
+        
+    def _filter_refresh(self):
         self._init_select()
         self.select_row(self._current_key())
 
-    def _cmd_filter(self, show_dialog=True):
-        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
-        if show_dialog:
-            perform, filter = run_dialog(sf_dialog, self._data,
-                                         self._lf_condition,
-                                         self.current_row(),
-                                         self.current_field())
+    def _cmd_filter(self, condition=None):
+        if condition:
+            perform = True
         else:
-            perform, filter = (True, sf_dialog.condition())
-        if perform and filter != self._lf_filter:
-            self._lf_filter = filter
-            self._filter()
+            perform, condition = \
+                     run_dialog(FilterDialog, self._lf_sfs_columns(),
+                                self.current_row(), self._compute_aggregate,
+                                condition=(self._lf_filter or
+                                           self._lf_last_filter))
+        if perform and condition != self._lf_filter:
+            self._filter(condition)
+            self._set_state_param('filter', condition)
+        
 
     def _can_unfilter(self):
         return self._lf_filter is not None
         
     def _cmd_unfilter(self):
-        self._lf_sf_dialog('_lf_filter_dialog', FilterDialog).reset_condition()
-        self._lf_filter = None
-        self._filter()
+        self._filter(None)
 
     def _cmd_filter_by_value(self, column_id, value):
-        sf_dialog = self._lf_sf_dialog('_lf_filter_dialog', FilterDialog)
-        if sf_dialog.append_condition(column_id, value):
-            self.COMMAND_FILTER.invoke(show_dialog=False)
-        else:
+        if column_id not in [c.id() for c in self._lf_sfs_columns()]:
             message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
+        condition = pytis.data.EQ(column_id, value)
+        if self._lf_filter is not None:
+            condition = pytis.data.AND(self._lf_filter, condition)
+        self.COMMAND_FILTER.invoke(condition=condition)
         
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
@@ -1227,9 +1209,8 @@ class LookupForm(RecordForm):
             columns = self._lf_sfs_columns()
             if col is None and self._lf_sorting: 
                 col = self._sorting_columns()[0]
-            d = SortingDialog(self._parent, columns, self._lf_sorting,
-                              col=col, direction=direction)
-            sorting = run_dialog(d)
+            sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
+                                 col=col, direction=direction)
             if sorting is None:
                 return None
             elif sorting is ():
@@ -1569,7 +1550,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             if self._mode == self.MODE_INSERT or f.is_modified():
                 value, error = f.validate()
                 if error:
-                    log(EVENT, 'Validace selhala:', (f.id(), f.get_value()))
+                    log(EVENT, 'Validace selhala:', f.id())
                     f.set_focus()
                     return False
         return True
