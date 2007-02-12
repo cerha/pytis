@@ -2386,9 +2386,20 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         super(DBDataPostgreSQL, self).unlock_row()
         for id in self._pg_lock_ids:
             try:
-                self._pg_query('delete from %s where id = %s' % \
-                               (self._PG_LOCK_TABLE, id),
-                               outside_transaction=True)
+                self._pg_begin_transaction()
+                locked = True
+                try:
+                    self._pg_query('lock table %s' % self._PG_LOCK_TABLE)
+                    self._pg_query(('delete from %s where id = %s' %
+                                    (self._PG_LOCK_TABLE, id,)))
+                    self._pg_commit_transaction()
+                    locked = False
+                finally:
+                    if locked:
+                        try:
+                            self._pg_rollback_transaction()
+                        except DBException:
+                            pass
             except DBException:
                 pass
         self._pg_lock_ids = None
