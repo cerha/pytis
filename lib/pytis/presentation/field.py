@@ -63,15 +63,18 @@ class PresentedRow(object):
 
           fieldspec -- sekvence specifikací políèek, instancí tøídy
             'FieldSpec'
+            
           data -- odpovídající datový objekt, instance tøídy 'pytis.data.Data'
+          
           row -- data øádku, viz ní¾e
           
           prefill -- slovník hodnot pro inicializaci øádku namísto výchozích
-            hodnot. Slovník je klíèovaný pøes textový identifikátor sloupce.
+            hodnot.  Slovník je klíèovaný pøes textový identifikátor sloupce.
             Hodnotami jsou instance tøídy Value, nebo pøímo vnitøní hodnoty.
-            Takto lze pøedvyplòit pouze políèka, k nim¾ existuje odpovídající
-            sloupec v datovém objektu -- plnì virtuální políèka mají hodnotu
-            v¾dy urèenou pomocí computeru.
+            Takto pøedvyplnìné hodnoty mají pøednost nejen pøed výchozími
+            hodnotami urèenými specifikací 'default' pøíslu¹ného políèka, ale
+            také pøed hodnotami dopoètenými pomocí jeho dopoèítávací funkce
+            ('computer').
             
           singleline -- právì kdy¾ je pravdivé, stringové hodnoty v¹ech políèek
             budou zformátovány jako jednoøádkové
@@ -122,23 +125,30 @@ class PresentedRow(object):
         assert change_callback is None or callable(change_callback)
         assert editability_change_callback is None or \
                callable(editability_change_callback)
-        assert prefill is None or isinstance(prefill, types.DictType)
-        assert isinstance(singleline, types.BooleanType)
-        assert isinstance(new, types.BooleanType)
+        assert prefill is None or isinstance(prefill, dict)
+        assert isinstance(singleline, bool)
+        assert isinstance(new, bool)
         assert resolver is None or isinstance(resolver, Resolver)
         self._fieldspec = fieldspec
         self._data = data
         self._singleline = singleline
         self._change_callback = change_callback
         self._editability_change_callback = editability_change_callback
-        self._columns = dict([(f.id(), self._Column(f, data))
-                              for f in self._fieldspec])
-        self._init_dependencies()
-        self._virtual = {}
         self._new = new
         self._cache = {}
         self._resolver = resolver or pytis.util.resolver()
+        self._columns = columns = dict([(f.id(), self._Column(f, data))
+                                        for f in self._fieldspec])
+        self._init_dependencies()
+        if prefill:
+            V = pytis.data.Value
+            prefill = dict([(k, V(columns[k].type,
+                                  isinstance(v, V) and v.value() or v))
+                            for k, v in prefill.items()])
         self._set_row(row, prefill=prefill)
+        self._virtual = dict([(k, self._default(k, prefill=prefill))
+                              for k in columns.keys()
+                              if data.find_column(k) is None])
 
     def _set_row(self, row, reset=True, prefill=None):
         self._row = self._init_row(row, prefill=prefill)
@@ -197,42 +207,12 @@ class PresentedRow(object):
                 e.set_runtime_filter_provider(provider, (self,))
                 
     def _init_row(self, row, prefill=None):
-        if prefill is not None:
-            new_prefill = {}
-            for k, v in prefill.items():
-                if isinstance(v, pytis.data.Value):
-                    v = v.value()
-                new_prefill[k] = pytis.data.Value(self._columns[k].type, v)
-                prefill = new_prefill
         self._cache = {}
         if row is None:
-            def genval(c):
-                key = c.id()
-                if prefill and prefill.has_key(key):
-                    value = prefill[key]
-                    if self._dirty.has_key(key):
-                        # Prefill má pøednost pøed computerem, proto¾e nìkdy
-                        # chceme v procedurách mít mo¾nost ve formuláøi za
-                        # nìjakých okolností pøednastavit jinou hodnotu, ne¾
-                        # jaká by byla computerem normálnì vypoètena.
-                        self._dirty[key] = False
-                else:
-                    if self._columns.has_key(key):
-                        col = self._columns[key]
-                        default = col.default
-                        t = col.type
-                        if self._new and default is not None:
-                            value = pytis.data.Value(t, default())
-                            if self._dirty.has_key(key):
-                                self._dirty[key] = False
-                        else:
-                            value = t.default_value()
-                    else:
-                        value = c.type().default_value()
-                return key, value
             for key in self._dirty.keys():
                 self._dirty[key] = True
-            row_data = map(genval, self._data.columns())
+            row_data = [(c.id(), self._default(c.id(), prefill=prefill))
+                        for c in self._data.columns()]
             row = pytis.data.Row(row_data)
         else:
             if isinstance(row, pytis.data.Row):
@@ -247,6 +227,30 @@ class PresentedRow(object):
                 self._dirty[key] = not row.has_key(key)
         return row
 
+    def _default(self, key, prefill=None):
+        if prefill and prefill.has_key(key):
+            value = prefill[key]
+            if self._dirty.has_key(key):
+                # Prefill má pøednost pøed computerem, proto¾e nìkdy
+                # chceme v procedurách mít mo¾nost ve formuláøi za
+                # nìjakých okolností pøednastavit jinou hodnotu, ne¾
+                # jaká by byla computerem normálnì vypoètena.
+                self._dirty[key] = False
+        elif self._columns.has_key(key):
+            col = self._columns[key]
+            default = col.default
+            if self._new and default is not None:
+                if callable(default):
+                    default = default()
+                value = pytis.data.Value(col.type, default)
+                if self._dirty.has_key(key):
+                    self._dirty[key] = False
+            else:
+                value = col.type.default_value()
+        else:
+            value = self._data.find_column(key).type().default_value()
+        return value
+
     def __getitem__(self, key):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
         
@@ -257,20 +261,16 @@ class PresentedRow(object):
         if self._row.has_key(key):
             value = self._row[key]
         else:
-            value = self._virtual.get(key)
-        if value is None or self._dirty.has_key(key) and self._dirty[key]:
+            value = self._virtual[key]
+        if self._dirty.has_key(key) and self._dirty[key]:
             column = self._columns[key]
             # Nastavením dirty na False u¾ zde zamezíme rekurzi v pøípadì, ¾e
             # se kód computeru ptá na vlastní hodnotu a umo¾níme mu tak zjistit
             # pùvodní hodnotu (pøed pøepoèítáním).
             self._dirty[key] = False
-            if column.computer:
-                func = column.computer.function()
-                v = func(self)
-            else:
-                v = None
-            new_value = pytis.data.Value(column.type, v)
-            if value is None or new_value.value() != value.value():
+            func = column.computer.function()
+            new_value = pytis.data.Value(column.type, func(self))
+            if new_value.value() != value.value():
                 value = new_value
                 if self._row.has_key(key):
                     self._row[key] = value
