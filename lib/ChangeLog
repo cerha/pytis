@@ -1,3 +1,30 @@
+2007-02-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/_test.py (PresentedRow_.setUp): Added new
+	virtual column with default value.
+	(PresentedRow_._check_values): New method.
+	(PresentedRow_.test_init, PresentedRow_.test_prefill)
+	(PresentedRow_.test_computer)
+	(PresentedRow_.test_callback): Use it.
+	(PresentedRow_.test_prefill_computer): New method.
+
+	* pytis/presentation/field.py (PresentedRow.__init__): Updated
+	docstring.  Compute default values of all virtual columns.
+	Normalize 'prefill' here.
+	(PresentedRow._init_row): Don't normalize 'prefill' here.
+	(PresentedRow._init_row.genval): Function removed.
+	(PresentedRow._default): New method.
+	(PresentedRow._init_row): Use it instead of 'genval()'.
+	(PresentedRow.__getitem__): Expect `self._virtual' to contain all
+	virtual columns.
+	(PresentedRow.__init__): Init virtual columns before the row.
+	(PresentedRow._init_row): Don't mark all computed fields dirty
+	when the row is None.
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Allow the
+	'default' to be directly the internal value, not just a callable
+	object.
+
 2007-02-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py: Completely rewritten...
