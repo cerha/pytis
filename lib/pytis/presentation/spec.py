@@ -1546,9 +1546,11 @@ class FieldSpec(object):
             zamezit také kopírování nìkterých dal¹ích hodnot.  V tom pøípadì je
             nutno pøedat pravdivou hodnotu tomuto argumentu.
             
-          default -- funkce pro výpoèet výchozí hodnoty políèka.  Callable
-            object vracející hodnotu kompatibilní s vnitøní hodnotou
-            odpovídajícího datového typu (viz argument 'type').
+          default -- funkce pro výpoèet výchozí hodnoty políèka.  Mù¾e být
+            buïto pøímo hodnota kompatibilní s vnitøní hodnotou odpovídajícího
+            datového typu, nebo callable objekt (bez argumentù) tuto hodnotu
+            vracející.  Pokud je 'None' bude pou¾ita výchozí hodnota urèená
+            datovým typem.
             
           computer -- 'instance tøídy 'Computer', nebo None.  Specifikuje
             dopoèítávané políèko (viz. také ní¾e).
@@ -1687,7 +1689,6 @@ class FieldSpec(object):
         assert isinstance(fixed, bool)
         assert isinstance(compact, bool)
         assert isinstance(nocopy, bool)
-        assert default is None or callable(default)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, str)
         assert display is None or isinstance(display, str) \
@@ -1891,7 +1892,7 @@ class FieldSpec(object):
         return self._nocopy
 
     def default(self):
-        """Vra» funkci pro výpoèet výchozí hodnoty."""
+        """Vra» výchozí hodnotu zadanou v konstruktoru."""
         return self._default
 
     def computer(self):
