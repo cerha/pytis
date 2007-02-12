@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,65 +54,79 @@ class PresentedRow_(unittest.TestCase):
                         FieldSpec('d', 
                                   computer=Computer(twice, depends=('c',)),
                                   editable=Computer(gt5, depends=('sum',))),
-                        FieldSpec('sum', type_=pytis.data.Integer(),
+                        FieldSpec('e', type=pytis.data.Integer(),
+                                  default=88),
+                        FieldSpec('sum', type=pytis.data.Integer(),
                                   computer=Computer(sum, depends=('b','c'))),
-                        FieldSpec('inc', type_=pytis.data.Integer(),
+                        FieldSpec('inc', type=pytis.data.Integer(),
                                   computer=Computer(inc, depends=('sum',))))
+        
+    def _check_values(self, row, pairs):
+        for k, v in pairs:
+            assert row[k].value() == v, (k, v, row[k].value())
     def test_init(self):
         row = PresentedRow(self._fields, self._data, None, new=True)
-        assert row['a'].value() == None
-        assert row['b'].value() == None
-        assert row['c'].value() == 5, repr(row['c'].value())
-        assert row['d'].value() == 10
+        self._check_values(row, (('a', None),
+                                 ('b', None),
+                                 ('c', 5),
+                                 ('d', 10),
+                                 ('e', 88)))
         data_row = pytis.data.Row((
             ('a', pytis.data.Value(pytis.data.Integer(), 'xx')),
             ('b', pytis.data.Value(pytis.data.Integer(), 100)),
             ('c', pytis.data.Value(pytis.data.Integer(), 77)),
             ('d', pytis.data.Value(pytis.data.Integer(), 18))))
         row = PresentedRow(self._fields, self._data, data_row)
-        assert row['a'].value() == 'xx'
-        assert row['b'].value() == 100
-        assert row['c'].value() == 77
-        assert row['d'].value() == 18
+        self._check_values(row, (('a', 'xx'),
+                                 ('b', 100),
+                                 ('c', 77),
+                                 ('d', 18)))
         row['c'] = pytis.data.Value(pytis.data.Integer(), 88)
         #row2 = PresentedRow(self._fields, self._data, row)
-        assert row['a'].value() == 'xx'
-        assert row['b'].value() == 100
-        assert row['c'].value() == 88
-        assert row['d'].value() == 176
+        self._check_values(row, (('a', 'xx'),
+                                 ('b', 100),
+                                 ('c', 88),
+                                 ('d', 176)))
         # TODO: dodìlat
     def test_prefill(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
-                           prefill={'a': 'xx', 'b': 3, 'c': 99, 'd': 77})
-        assert row['a'].value() == 'xx'
-        assert row['b'].value() == 3
-        assert row['c'].value() == 99
-        assert row['d'].value() == 77
+                           prefill={'a': 'xx', 'b': 3, 'd': 77})
+        self._check_values(row, (('a', 'xx'),
+                                 ('b', 3),
+                                 ('c', 5),
+                                 ('d', 77),
+                                 ('e', 88)))
+    def test_prefill_default(self):
+        row = PresentedRow(self._fields, self._data, None, new=True,
+                           prefill={'b': 22, 'c': 33, 'd': 44, 'e': 55})
+        self._check_values(row, (('b', 22),
+                                 ('c', 33),
+                                 ('d', 44),
+                                 ('e', 55)))
     def test_computer(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3})
-        assert row['d'].value() == 10
-        assert row['sum'].value() == 8
-        assert row['inc'].value() == 9
+        self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
         row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
-        assert row['d'].value() == 200
-        assert row['sum'].value() == 103
-        assert row['inc'].value() == 104
+        self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
+    def test_prefill_computer(self):
+        row = PresentedRow(self._fields, self._data, None, new=True,
+                           prefill={'b': 2, 'c': 2, 'sum': 88})
+        self._check_values(row, (('b', 2),
+                                 ('c', 2),
+                                 ('sum', 88),
+                                 ('inc', 89)))
     def test_callback(self):
         changed = []
         def cb(id):
             changed.append(id)
         row = PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3}, change_callback=cb)
-        assert row['d'].value() == 10
-        assert row['sum'].value() == 8
-        assert row['inc'].value() == 9
+        self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
         assert 'd' in changed and 'sum' in changed and 'inc' in changed
         del changed[0:len(changed)]
         row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
-        assert row['d'].value() == 200
-        assert row['sum'].value() == 103
-        assert row['inc'].value() == 104
+        self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
         assert 'd' in changed and 'sum' in changed and 'inc' in changed
     def test_editable(self):
         row = PresentedRow(self._fields, self._data, None,
