@@ -62,6 +62,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
             raise DBException(_("Can't connect to database"), e)
+        # Close initial implicit transaction
+        connection.commit()
         return self._postgresql_Connection(connection, connection_data)
     
     def _postgresql_close_connection(self, connection):
