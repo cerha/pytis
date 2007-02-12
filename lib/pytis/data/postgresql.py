@@ -2383,7 +2383,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def unlock_row(self):
         log(EVENT, 'Odemykám øádek')
-        DBDataPostgreSQL.__bases__[0].unlock_row(self)
+        super(DBDataPostgreSQL, self).unlock_row()
         for id in self._pg_lock_ids:
             try:
                 self._pg_query('delete from %s where id = %s' % \
