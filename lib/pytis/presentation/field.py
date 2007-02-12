@@ -145,10 +145,10 @@ class PresentedRow(object):
             prefill = dict([(k, V(columns[k].type,
                                   isinstance(v, V) and v.value() or v))
                             for k, v in prefill.items()])
-        self._set_row(row, prefill=prefill)
         self._virtual = dict([(k, self._default(k, prefill=prefill))
                               for k in columns.keys()
                               if data.find_column(k) is None])
+        self._set_row(row, prefill=prefill)
 
     def _set_row(self, row, reset=True, prefill=None):
         self._row = self._init_row(row, prefill=prefill)
@@ -209,8 +209,6 @@ class PresentedRow(object):
     def _init_row(self, row, prefill=None):
         self._cache = {}
         if row is None:
-            for key in self._dirty.keys():
-                self._dirty[key] = True
             row_data = [(c.id(), self._default(c.id(), prefill=prefill))
                         for c in self._data.columns()]
             row = pytis.data.Row(row_data)
