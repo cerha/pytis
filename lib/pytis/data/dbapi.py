@@ -67,17 +67,21 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_close_connection(self, connection):
         connection.connection().close()
     
-    def _postgresql_query(self, connection, query, restartable, query_args=()):
+    def _postgresql_query(self, connection, query, outside_transaction, query_args=()):
         result = None
         def do_query(raw_connection):
             try:
                 cursor = raw_connection.cursor()
                 # query_args shouldn't be used when empty to prevent mistaken
                 # '%' processing in `query'
-                if query_args:
-                    cursor.execute(query, query_args)
-                else:
-                    cursor.execute(query)
+                try:
+                    if query_args:
+                        cursor.execute(query, query_args)
+                    else:
+                        cursor.execute(query)
+                finally:
+                    if outside_transaction:
+                        raw_connection.commit()
                 return cursor
             except:
                 cls, e, tb = sys.exc_info()
@@ -95,7 +99,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.OperationalError, e:
-            if not restartable:
+            if not outside_transaction:
                 raise DBSystemException(_("Database operational error"),
                                         e, e.args, query)
             cdata = connection.connection_data()
