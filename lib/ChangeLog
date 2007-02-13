@@ -1,5 +1,16 @@
 2007-02-13  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFSColumn.label): Neq argument `default'
+	(SFDialog._NO_COLUMN): Label set to None.
+	(SFDialog._create_content): Added support for selecting the type
+	of the second operator -- value or column.
+	(SFDialog._selected_condition, SFDialog._on_selection_change)
+	(SFDialog._on_clear, SFDialog._on_suck): Expect the new control
+	for second arg selection in `self._controls'.
+	(SFDialog._selected_condition): Support second argument selection.
+	(SFDialog._on_selection_change): Disable value controls when the
+	second argument is a column.
+
 	* pytis/data/dbdata.py (DBBinding.__init__)
 	(DBColumnBinding.__init__): Assert against `str', not
 	`types.StringType'.
