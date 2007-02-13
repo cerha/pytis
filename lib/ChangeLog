@@ -1,3 +1,35 @@
+2007-02-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbdata.py (DBBinding.__init__)
+	(DBColumnBinding.__init__): Assert against `str', not
+	`types.StringType'.
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_btabcol): Don't consider
+	multicolumn bindings and return always just a string, not a
+	sequence.
+	(PostgreSQLStandardBindingHandler._pdbb_get_table_type):
+	Cosmetical change.
+	(PostgreSQLStandardBindingHandler._pdbb_sql_column_list)
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands)
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql.relop)
+	(PostgreSQLStandardBindingHandler._pdbb_sort2sql.item2sql): Expect
+	just one columns from `self._pdbb_get_table_type()'
+	(PostgreSQLStandardBindingHandler._pdbb_table_row_lists): Don't
+	consider multicolumn bindings.
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql.relop):
+	Allow the second operand to be another column identifier, not only
+	a Value instance.
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql): Removed
+	the commented-out region dealing with
+	`pytis.data.xtypes.Codebook'.
+	(DBDataPostgreSQL._pg_value): Don't unpack sequences
+	automatically, work just with atomic values.
+	(DBDataPostgreSQL.row): Call `_pg_value()' on each item of `key'.
+	(DBPostgreSQLFunction.call): Call `_pg_value()' on each item of
+	`row'.
+	(PostgreSQLStandardBindingHandler._pg_insert): Cosmetic change.
+
 2007-02-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/_test.py (PresentedRow_.setUp): Added new
