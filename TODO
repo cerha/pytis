@@ -35,8 +35,13 @@ NOVÉ VLASTNOSTI:
    Podmínka by mìla být definovatelná jednak ve specifikaci a jednak by mìla
    jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
 
+ * Omezení mo¾ností porovnávání sloupcù v závislosti na typech
 
- * Vyu¾ití Wikinga pro webové rozhraní k aplikacím.
+   Pøi naklikání filtrovací podmínky, která porovnává napø. bool sloupec s
+   øetìzcovým, dojde ke zhroucení selectu.  To by mìlo být nìjak o¹etøeno pøi
+   vyhodnocování naklikané podmínky.
+
+ * Vyu¾ití Wikinga pro webové rozhraní k aplikacím
 
    Wiking ji¾ nyní umí pracovat s daty nad pytisovými specifikacemi.
    Potøebujeme v¹ak umo¾nit napojit Wikinga na libovolnou stávající aplikaci a
