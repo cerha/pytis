@@ -462,9 +462,47 @@ tests.add(Data)
 
 
 class MemData(unittest.TestCase):
-    # Proto¾e tuto tøídu (zatím?) nepou¾íváme na nic jiného ne¾ testy (jiných
-    # objektù), s tvorbou testù pro ni se neobtì¾ujeme.
-    pass
+    def setUp(self):
+        columns = (pytis.data.ColumnSpec('a', pytis.data.String()),
+                   pytis.data.ColumnSpec('b', pytis.data.String()),
+                   pytis.data.ColumnSpec('x', pytis.data.Integer()),
+                   pytis.data.ColumnSpec('y', pytis.data.Integer()))
+        data = [pytis.data.Row([(c.id(), pytis.data.Value(c.type(), v))
+                                for c,v in zip(columns, values)])
+                for values in (('aa','Bob',   1, 10),
+                               ('bb','John',  5, 27),
+                               ('cc','Will',  3, 2),
+                               ('dd','Bill',  3, 42),
+                               ('ee','John',  5, 12),
+                               ('ff','Joe',   5, 31),
+                               ('gg','Eddie', 12, 10))]
+        d = pytis.data.DataFactory(pytis.data.MemData, columns, data=data)
+        self._data = d.create()
+    def _check_condition(self, cond, count):
+        c = self._data.select(condition=cond)
+        assert c == count, "Expected %d, got %d" % (count, c)
+    def test_conditions(self):
+        i = lambda v: pytis.data.Value(pytis.data.Integer(), v)
+        s = lambda v: pytis.data.Value(pytis.data.String(), v)
+        self._check_condition(pytis.data.EQ('a', s('AA')), 0)
+        self._check_condition(pytis.data.EQ('a', s('AA'), ignore_case=True), 1)
+        self._check_condition(pytis.data.NE('x', i(5)), 4)
+        self._check_condition(pytis.data.GT('x', i(3)), 4)
+        self._check_condition(pytis.data.LE('x', i(3)), 3)
+        self._check_condition(pytis.data.GE('x', 'y'), 2)
+    def test_fetch(self):
+        v = pytis.data.Value(pytis.data.Integer(), 3)
+        c = self._data.select(pytis.data.EQ('x', v))
+        assert c == 2, c
+        rows = []
+        while True:
+            row = self._data.fetchone()
+            if row is None:
+                break
+            rows.append(row)
+        assert len(rows) == 2, len(rows)
+        assert rows[0]['b'].value() == 'Will', rows[0]['b'].value()
+        assert rows[1]['b'].value() == 'Bill', rows[1]['b'].value()
 tests.add(MemData)
 
 
@@ -867,9 +905,8 @@ class DBDataDefault(_DBTest):
             n = n + 1
         self.data.close()
     def test_select_condition(self):
-        condition = pytis.data.AND(pytis.data.EQ('cislo',
-                                  pytis.data.Value(pytis.data.Integer(),
-                                                 2)))
+        v = pytis.data.Value(pytis.data.Integer(), 2)
+        condition = pytis.data.AND(pytis.data.EQ('cislo', v))
         self.data.select(condition)
         for r in (self.ROW1,):
             result = self.data.fetchone()
@@ -880,6 +917,15 @@ class DBDataDefault(_DBTest):
         assert self.data.fetchone() == None, 'too many lines'
         assert self.data.fetchone() == None, 'data reincarnation'
         self.data.close()
+        self.data.select(pytis.data.GT('castka', 'cislo'))
+        rows = []
+        while True:
+            row = self.data.fetchone()
+            if row is None:
+                break
+            rows.append(row)
+        self.data.close()
+        assert len(rows) == 2, len(rows)
         # NULL test
         condition = pytis.data.EQ('popis',
                                 pytis.data.Value(pytis.data.String(), None))
@@ -937,7 +983,7 @@ class DBDataDefault(_DBTest):
         result = d.select_aggregate((d.AGG_MAX, 'castka')).value()
         assert result == 2000, result
         condition = pytis.data.GT('castka',
-                                pytis.data.Value(pytis.data.Float(), 1500))
+                                  pytis.data.Value(pytis.data.Float(), 1500))
         result = d.select_aggregate((d.AGG_AVG, 'castka'),
                                     condition=condition).value()
         assert result == 2000, result
@@ -1138,9 +1184,8 @@ class DBMultiData(DBDataDefault):
         d.close()
     def test_select_condition(self):
         d = self.mdata
-        condition = pytis.data.AND(pytis.data.EQ('cislo',
-                                     pytis.data.Value(pytis.data.Integer(),
-                                                    2)))
+        v = pytis.data.Value(pytis.data.Integer(), 2)
+        condition = pytis.data.AND(pytis.data.EQ('cislo', v))
         d.select(condition)
         for r in (self.ROW1,):
             result = d.fetchone()
