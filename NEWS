@@ -4,7 +4,60 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-13 Tomas Cerha  <cerha@brailcom.org>
 
+	V datovém rozhraní byla zru¹ena podpora vícesloupcových vazeb.
+	Tato vlastnost nebyla vyu¾ívána a významnì komplikovala nìkteré
+	èásti kódu.  V¹echny testy po zru¹ení pro¹ly beze zmìn a základní
+	operace v aplikaci se zdají fungovat.  Pøesto doporuèuji tuto
+	verzi nìjakou dobu pou¾ívat v testovacím prostøedí pøed nasazením
+	do ostrého provozu.
+
+	V datovém rozhraní byla implementována podpora pro dvojí mo¾né
+	zpracování druhého operandu relaèních operátorù.  Doposud byla
+	podporována pouze instance `Value' urèující hodnotu, se kterou má
+	být porovnáváno.  Nyní je mo¾né zadat také identifikátor sloupce,
+	èím¾ je mo¾né porovnávat mezi sebou hodnoty ve dvou databázových
+	sloupcích.
+
+	Vý¹e popsané nové vlastnosti bylo vyu¾ito ve filtrovacích a
+	vyhledávacích dialozích.  Po volbì operátoru následuje novì také
+	výbìr druhého operandu.  Pøedvyplnìná volba je "* hodnota *".  Pøi
+	této volbì je mo¾né zadat pøímo hodnotu do vedlej¹ího vstupního
+	pole.  Namísto "* hodnota *" lze ale vybrat také sloupec, který
+	bude pou¾it jako druhý operand.  Vstupní pole hodnoty se tím stane
+	neaktivní...
+	
+2007-02-12 Tomas Cerha  <cerha@brailcom.org>
+
+	Novì byla implementována mo¾nost pou¾ití `default' a `prefill' pro
+	virtuální sloupce.  Nejvy¹¹í prioritu má tedy `prefill', potom
+	`default' a potom teprve `computer' (stejnì jako u jiných
+	sloupcù).  Tato nová vlastnost vy¾adovala zásadnìj¹í zmìny, tak¾e
+	doporuèuju otestovat nìjaké slo¾itìj¹í formuláøe s computery,
+	default hodnotami, virtuálními sloupci apod.
+	
+	Specifikace `default' ve `FieldSpec' nyní umo¾òuje zadat pøímo
+	vnitøní hodnotu.  Pokud je pøedána funkce, je tato funkce
+	vyhodnocena, ale pokud je zadána pøímo hodnota, je tato rovnou
+	pou¾ita.  Tak¾e staèí napsat napø. `default=8' namísto
+	`default=lambda: 8'.
+
+2007-02-09  Tomas Cerha  <cerha@brailcom.org>
+
+	V souvislosti s rozsáhlej¹ími zmìnami byl tento soubor po jistou
+	dobu neudr¾ován, proto zde mnohé opravy i nové vlastnosti
+	provedené v minulých nìkolika týdnech nejsou zaznamenány.
+
+	Novì bylo kompletnì pøepsáno v¹e, co se týká vyhledávacích a
+	filtrovacích dialogù.  Dialogy jsou nyní schopny se pøednastavit
+	podle pøedaného podmínkového výrazu, co¾ by mìlo v budoucnu
+	umo¾nit nahrávání ulo¾ených nebo pøeddefinovaných filtrù apod.
+	Nyní je podporováno pouze ukládání poslední aktivní filtrovací a
+	vyhledávací podmínky pøi opu¹tìní formuláøe, tak¾e pøi pøí¹tím
+	spu¹tìní aplikace je mo¾né s døíve navoleným filtrem dále
+	pracovat.
+	
 2007-01-24 Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Tiskový resolver BrowseFormu nyní správnì vrací výchozí
