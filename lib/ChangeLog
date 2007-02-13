@@ -34,6 +34,8 @@
 	(SFDialog.__init__): New argument `col'.
 	(SFDialog._create_content.create_controls): Consider also
 	`WMValue' instances as the second operator.
+	(SFDialog._create_content): Recover gracefuly if the condition can
+	not be decomposed.
 
 	* pytis/data/dbdata.py (DBBinding.__init__)
 	(DBColumnBinding.__init__): Assert against `str', not

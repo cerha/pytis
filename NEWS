@@ -46,6 +46,10 @@
 	* BUGFIX: Ve vyhledávacím a filtrovacím dialogu je nyní správnì
 	obnovena také hodnota pro wildcard match.
 	
+	* BUGFIX: Vyhledávací a filtrovací dialog se pøi pokusu zobrazit
+	neplatnou podmínku nezhroutí, ale zobrazí varování a inicializuje
+	dialog prázdnou podmínkou.
+	
 2007-02-12 Tomas Cerha  <cerha@brailcom.org>
 
 	Novì byla implementována mo¾nost pou¾ití `default' a `prefill' pro

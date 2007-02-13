@@ -30,6 +30,11 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
+ * Ulo¾ené filtrovací podmínky
+
+   Podmínka by mìla být definovatelná jednak ve specifikaci a jednak by mìla
+   jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
+
 
  * Vyu¾ití Wikinga pro webové rozhraní k aplikacím.
 
@@ -62,11 +67,6 @@ NOVÉ VLASTNOSTI:
    Práce s výbìrem je nyní problematická, proto¾e výbìr je pou¾íván také k
    vysvícení aktuálního øádku.  Je tøeba nejprve vymyslet, jak se to má
    chovat.  Více viz news 2006-02-27.
-
- * Ulo¾ené filtrovací podmínky.
-
-   Filtrovací podmínka by mìla být definovatelná jednak ve specifikaci a jednak
-   by mìla jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
 
  * Roz¹íøit øádek po dobu inline editace víceøádkového textu.
  
@@ -179,7 +179,7 @@ INTERNÍ ZÁLE®ITOSTI:
 
    Tento argument je tam patrnì z historických dùvodù, kdy se tak øe¹ilo
    kopírování záznamu.  To je dnes provádìno pøes `prefill', tak¾e funkce
-   `on_new_record()' aggument `key' nikdy nedostane.  V nìkterých defsech se s
+   `on_new_record()' arument `key' nikdy nedostane.  V nìkterých defsech se s
    ním v¹ak stále poèítá.
 
  * Nedostupnost pøíkazu vs. pøístupová práva.
