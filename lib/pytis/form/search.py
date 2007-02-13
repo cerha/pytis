@@ -247,6 +247,17 @@ class SFDialog(SFSDialog):
                pytis.data.NE: '=/=',
                pytis.data.AND: _("a zároveò"),
                pytis.data.OR:  _("nebo")}
+    # WM and EQ have the same UI ctrl, so we ignore the difference.
+    _RELATIONAL_OPERATORS_MAP = {'EQ': pytis.data.EQ,
+                                 'NE': pytis.data.NE,
+                                 'WM': pytis.data.EQ,
+                                 'NW': pytis.data.NE,
+                                 'LT': pytis.data.LT,
+                                 'LE': pytis.data.LE,
+                                 'GT': pytis.data.GT,
+                                 'GE': pytis.data.GE}
+    _LOGICAL_OPERATORS_MAP = {'AND': pytis.data.AND,
+                              'OR': pytis.data.OR}
     _TITLE = ''
     _BUTTONS = (_("Zavøít"),)
     _TEXT_CTRL_SIZE = 18
@@ -255,7 +266,7 @@ class SFDialog(SFSDialog):
     class SFConditionError(Exception):
         pass
 
-    def __init__(self, parent, columns, row, condition=None):
+    def __init__(self, parent, columns, row, col=None, condition=None):
         """Initialize the dialog.
 
         Arguments:
@@ -263,6 +274,7 @@ class SFDialog(SFSDialog):
           parent -- wx parent of the dialog window
           columns -- a sequence of 'SFSColumn' instances
           row -- current row as a 'pytis.data.Row' instance or 'None'
+          col -- current column identifier as a string
           condition -- search/filtering condition as a 'pytis.data.Operator'
             instance.  This condition will be preselected in the dialog.  The
             current implementation, however, can only display a certainly
@@ -272,6 +284,7 @@ class SFDialog(SFSDialog):
         """
         self._columns = (self._NO_COLUMN,) + tuple(columns)
         self._row = row
+        self._col = col
         self._condition = condition
         super_(SFDialog).__init__(self, parent, self._TITLE, self._BUTTONS)
 
@@ -280,80 +293,30 @@ class SFDialog(SFSDialog):
         def decompose_condition(operator, logical_operation=None):
             # Decompose nested conditions into a list of corresponding operator
             # functions and their logical pairing.
-            def maybe_NE(operator):
-                # Convert NOT(EQ(...)) or NOT(WM(...)) to NE(...)
-                # WM and EQ have the same UI ctrl, so we ignore the difference.
-                args = operator.args()
-                if operator.name() == 'NOT' and len(args) == 1 \
-                       and args[0].name() in ('EQ', 'WM'):
-                    return pytis.data.NE, args[0].args(), args[0].kwargs()
-            def maybe_LE(operator):
-                # Convert OR(LT(...), EQ(...)) to LE(...)
-                args = operator.args()
-                if operator.name() == 'OR' and len(args) == 2 \
-                       and args[0].name() == 'LT' and args[1].name() == 'EQ' \
-                       and args[0].args() == args[1].args() \
-                       and args[0].kwargs() == args[1].kwargs():
-                    return pytis.data.LE, args[0].args(), args[0].kwargs()
-            def maybe_GT(operator):
-                # Convert AND(NOT(EQ(...)), NOT(LT(...))) to GT(...)
-                if operator.name() == 'AND' and len(operator.args()) == 2:
-                    a1, a2 = operator.args()[0], operator.args()[1]
-                    if a1.name() == 'NOT' and a2.name() == 'NOT' \
-                           and len(a1.args()) == 1 and len(a2.args()) == 1:
-                        o1, o2 = a1.args()[0], a2.args()[0]
-                        if o1.name() == 'EQ' and o2.name() == 'LT' \
-                               and o1.args() == o2.args() \
-                               and o1.kwargs() == o2.kwargs():
-                            return pytis.data.GT, o1.args(), o1.kwargs()
-            def maybe_GE(operator):
-                # Convert OR(GT(...), EQ(...)) to GE(...)
-                name, args = operator.name(), operator.args()
-                if name == 'OR' and len(args) == 2 and args[1].name() == 'EQ':
-                    gt = maybe_GT(args[0])
-                    eq = args[1]
-                    if gt:
-                        args, kwargs = gt[1:]
-                        if args == eq.args() and kwargs == eq.kwargs():
-                            return pytis.data.GE, args, kwargs
-                
-            # Try to convert the known compound operators first.
-            for f in (maybe_NE, maybe_LE, maybe_GT, maybe_GE):
-                result = f(operator)
-                if result:
-                    op, args, kwargs = result
-                    break
-            else:
-                # Resolve logical operators (must be done after compound op.)
-                if operator.name() in ('AND', 'OR'):
-                    args = operator.args()
-                    assert len(args) == 2
-                    log_op = {'AND': pytis.data.AND,
-                              'OR': pytis.data.OR}[operator.name()]
-                    return decompose_condition(args[0], logical_operation) + \
-                           decompose_condition(args[1], log_op)
-                # Finally check for primitive operators.
-                # WM and EQ have the same UI ctrl, so we ignore the difference.
-                primitive_operators = {'EQ': pytis.data.EQ,
-                                       'WM': pytis.data.EQ,
-                                       'LT': pytis.data.LT}
-                try:
-                    op = primitive_operators[operator.name()]
-                except KeyError:
-                    raise Exception("Unrecognized operator: "+ str(operator))
-                args, kwargs = operator.args(), operator.kwargs()
+            name, args = operator.name(), operator.args()
             if len(args) != 2:
+                # This really applies also for logical operators!
                 raise Exception("Wrong number of arguments: "+ str(args))
             arg1, arg2 = args
-            return ((logical_operation, op, arg1, arg2), )
+            if self._LOGICAL_OPERATORS_MAP.has_key(name):
+                op = self._LOGICAL_OPERATORS_MAP[name]
+                return decompose_condition(arg1, logical_operation) + \
+                       decompose_condition(arg2, op)
+            elif self._RELATIONAL_OPERATORS_MAP.has_key(name):
+                op = self._RELATIONAL_OPERATORS_MAP[name]
+                return ((logical_operation, op, arg1, arg2), )
+            else:
+                raise Exception("Unsupported operator: "+ name)
         def create_controls(i, n, logical_operator, operator, arg1, arg2):
             col1 = find(arg1, self._columns, key=lambda c: c.id())
-            if isinstance(arg2, pytis.data.Value):
+            if isinstance(arg2, (pytis.data.Value, pytis.data.WMValue)):
                 col2 = None
                 value = isinstance(arg2, pytis.data.WMValue) \
                         and arg2.value() or arg2.export()
             else:
                 col2 = find(arg2, self._columns, key=lambda c: c.id())
+                if col2 is None:
+                    raise Exception("Invalid operand: "+ repr(arg2))
                 value = None
             choice, field, button = self._create_choice, \
                                     self._create_text_ctrl, self._create_button
