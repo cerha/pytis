@@ -309,15 +309,15 @@ class SFDialog(SFSDialog):
                 raise Exception("Unsupported operator: "+ name)
         def create_controls(i, n, logical_operator, operator, arg1, arg2):
             col1 = find(arg1, self._columns, key=lambda c: c.id())
-            if isinstance(arg2, (pytis.data.Value, pytis.data.WMValue)):
-                col2 = None
-                value = isinstance(arg2, pytis.data.WMValue) \
-                        and arg2.value() or arg2.export()
-            else:
+            if isinstance(arg2, str):
                 col2 = find(arg2, self._columns, key=lambda c: c.id())
                 if col2 is None:
                     raise Exception("Invalid operand: "+ repr(arg2))
                 value = None
+            else:
+                col2 = None
+                value = isinstance(arg2, pytis.data.WMValue) \
+                        and arg2.value() or arg2.export()
             choice, field, button = self._create_choice, \
                                     self._create_text_ctrl, self._create_button
             return (
