@@ -1,5 +1,20 @@
 2007-02-13  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/data.py (MemData._condition2pyfunc): Added support
+	for `LT'.  Added support for `ignote_case'.  Added support for
+	comparing two columns.  Use operator's translation if it is not
+	supported directly.
+	(NE, NW, LE, GT, GE): Always create the `Operator' instance.  Pass
+	the transformation to primitive operators as `translation' to
+	the operator constructor.
+	(OR, AND): Cosmetic changes.
+
+	* pytis/data/_test.py (MemData.setUp, MemData._check_condition):
+	New metohds.
+	(MemData.test_conditions, MemData.test_fetch): New tests.
+	(DBDataDefault.test_select_condition): Test also comparing column
+	to column.
+
 	* pytis/form/search.py (SFSColumn.label): Neq argument `default'
 	(SFDialog._NO_COLUMN): Label set to None.
 	(SFDialog._create_content): Added support for selecting the type
@@ -40,6 +55,9 @@
 	(DBPostgreSQLFunction.call): Call `_pg_value()' on each item of
 	`row'.
 	(PostgreSQLStandardBindingHandler._pg_insert): Cosmetic change.
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql): Added
+	support for all known operators without translation to primitive
+	operators.
 
 2007-02-12  Tomas Cerha  <cerha@brailcom.org>
 
