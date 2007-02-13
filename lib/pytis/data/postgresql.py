@@ -998,10 +998,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if rel == '=' and a2null:
                 rel = 'IS'
             return '(%s %s %s)' % (fix_case(a1), rel, fix_case(a2))
-        if op_name == 'EQ':
-            expression = relop('=', op_args, op_kwargs)
-        elif op_name == 'LT':
-            expression = relop('<', op_args, op_kwargs)
+        operators = {'EQ': '=',
+                     'NE': '!=',
+                     'LT': '<',
+                     'GT': '>',
+                     'LE': '<=',
+                     'GE': '>=',
+                     }
+        if operators.has_key(op_name):
+            expression = relop(operators[op_name], op_args, op_kwargs)
         elif op_name == 'WM':
             cid, spec = op_args[0], op_args[1].value()
             for old, new in (('%', '\%'), ('_', '\_')):
