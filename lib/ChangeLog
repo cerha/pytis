@@ -25,6 +25,15 @@
 	(SFDialog._selected_condition): Support second argument selection.
 	(SFDialog._on_selection_change): Disable value controls when the
 	second argument is a column.
+	(SFDialog._RELATIONAL_OPERATORS_MAP)
+	(SFDialog._LOGICAL_OPERATORS_MAP): New constants.
+	(SFDialog._create_content.decompose_condition): Removed functions
+	for operator analysis.  Rely on all operators to be expressed by
+	their own `Operator' instance.  Use `self._RELATIONAL_OPERATORS_MAP'
+	and `self._LOGICAL_OPERATORS_MAP' to recognize them.
+	(SFDialog.__init__): New argument `col'.
+	(SFDialog._create_content.create_controls): Consider also
+	`WMValue' instances as the second operator.
 
 	* pytis/data/dbdata.py (DBBinding.__init__)
 	(DBColumnBinding.__init__): Assert against `str', not
