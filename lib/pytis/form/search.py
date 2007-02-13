@@ -59,9 +59,9 @@ class SFSColumn:
         """Vra» type zadaný v konstruktoru."""
         return self._type
 
-    def label(self):
-        """Vra» label zadané v konstruktoru."""
-        return self._label
+    def label(self, default=""):
+        """Vra» label zadaný v konstruktoru."""
+        return self._label or default
 
     
 class SFSDialog(GenericDialog):
@@ -250,9 +250,8 @@ class SFDialog(SFSDialog):
     _TITLE = ''
     _BUTTONS = (_("Zavøít"),)
     _TEXT_CTRL_SIZE = 18
-    _NO_COLUMN = SFSColumn('--sfs-dialog-no-column--', pytis.data.String(), 
-                           '- '+ _("zvolte sloupec") +' -')
-
+    _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(), None)
+    
     class SFConditionError(Exception):
         pass
 
@@ -343,11 +342,19 @@ class SFDialog(SFSDialog):
                 except KeyError:
                     raise Exception("Unrecognized operator: "+ str(operator))
                 args, kwargs = operator.args(), operator.kwargs()
-            col_id, value = args
-            return ((logical_operation, op, col_id, value), )
-        def create_controls(i, n, logical_operator, operator, col_id, value):
-            logical_operator, operator, col_id, value = items
-            col = find(col_id, self._columns, key=lambda c: c.id())
+            if len(args) != 2:
+                raise Exception("Wrong number of arguments: "+ str(args))
+            arg1, arg2 = args
+            return ((logical_operation, op, arg1, arg2), )
+        def create_controls(i, n, logical_operator, operator, arg1, arg2):
+            col1 = find(arg1, self._columns, key=lambda c: c.id())
+            if isinstance(arg2, pytis.data.Value):
+                col2 = None
+                value = isinstance(arg2, pytis.data.WMValue) \
+                        and arg2.value() or arg2.export()
+            else:
+                col2 = find(arg2, self._columns, key=lambda c: c.id())
+                value = None
             choice, field, button = self._create_choice, \
                                     self._create_text_ctrl, self._create_button
             return (
@@ -355,24 +362,25 @@ class SFDialog(SFSDialog):
                 choice(self._LOGICAL_OPERATORS, selected=logical_operator,
                        label=lambda o: self._LABELS[o],
                   tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
-                choice(self._columns, selected=col,
-                       label=lambda c: c.label(),
-                       tooltip=_("Zvolte sloupec tabulky"),
-                       on_change=lambda e: self._on_column_change(i)),
+                choice(self._columns, selected=col1,
+                       label=lambda c: c.label('- '+_("zvolte sloupec")+' -'),
+                       on_change=lambda e: self._on_selection_change(i),
+                       tooltip=_("Zvolte sloupec tabulky")),
                 choice(self._OPERATORS, selected=operator,
                        label=lambda o: self._LABELS[o],
                        tooltip=_("Zvolte operátor")),
-                field(self._TEXT_CTRL_SIZE,
-                      isinstance(value, pytis.data.WMValue) \
-                      and value.value() or value.export(),
+                choice(self._columns, selected=col2,
+                       label=lambda c: c.label('* '+_("hodnota")+' *'),
+                       on_change=lambda e: self._on_selection_change(i),
+                       tooltip=_("Zvolte s èím má být hodnota porovnávána")),
+                field(self._TEXT_CTRL_SIZE, value,
                       tooltip=_("Zapi¹te hodnotu podmínkového výrazu")),
-                button(_("Vymazat"), lambda e: self._on_clear(i),
-                       _("Vymazat obsah podmínky")),
                 button(_("Nasát"), lambda e: self._on_suck(i),
                        _("Naèíst hodnotu aktivní buòky")),
+                button(_("Vymazat"), lambda e: self._on_clear(i),
+                       _("Vymazat obsah podmínky")),
                 button(_("Odebrat"), lambda e: self._on_remove(i),
                        _("Zru¹it tuto podmínku"), enabled=n > 1))
-            
         condition = self._condition
         if condition is None:
             c = self._NO_COLUMN
@@ -381,7 +389,7 @@ class SFDialog(SFSDialog):
         self._controls = []
         for i, items in enumerate(conditions):
             self._controls.append(create_controls(i, len(conditions), *items))
-            self._on_column_change(i)
+            self._on_selection_change(i)
         b1 = self._create_button(_('Pøidat "a zároveò"'),
                                  lambda e: self._on_add(),
                                  _("Pøidat novou podmínku v konjunkci"))
@@ -415,52 +423,61 @@ class SFDialog(SFSDialog):
         for i, controls in enumerate(self._controls):
             if i == omit:
                 continue
-            wlop, wcol, wop, wval, b1, b2, b3 = controls
+            wlop, wcol1, wop, wcol2, wval, b1, b2, b3 = controls
             lop = wlop and self._LOGICAL_OPERATORS[wlop.GetSelection()]
-            col = self._columns[wcol.GetSelection()]
+            col1 = self._columns[wcol1.GetSelection()]
             op = self._OPERATORS[wop.GetSelection()]
-            val = wval.GetValue()
-            if col is self._NO_COLUMN and not allow_no_column:
-                quit(i, wcol, _("Není zvolen sloupec"))
-            if self._WM_OPERATORS.has_key(op) and \
-                   (val.find('*') >= 0 or val.find('?') >= 0):
-                op = self._WM_OPERATORS[op]
-                value, err = col.type().wm_validate(val)
+            col2 = self._columns[wcol2.GetSelection()]
+            if col1 is self._NO_COLUMN and not allow_no_column:
+                quit(i, wcol1, _("Není zvolen sloupec"))
+            if col2 is not self._NO_COLUMN:
+                arg2 = col2.id()
             else:
-                kwargs = dict(strict=False)
-                if isinstance(col.type(), pytis.data.Binary):
-                    if val:
-                        quit(i, wval, _("Binární sloupec lze testovat pouze "
-                                        "na prázdnou hodnotu"))
-                    else:
-                        val = None
-                elif isinstance(col.type(), pytis.data.Boolean):
-                    kwargs = dict(extended=True)
-                value, err = col.type().validate(val, **kwargs)
-            if err:
-                quit(i, wval, err.message())
-            subcondition = op(col.id(), value)
+                val = wval.GetValue()
+                if self._WM_OPERATORS.has_key(op) and \
+                       (val.find('*') >= 0 or val.find('?') >= 0):
+                    op = self._WM_OPERATORS[op]
+                    value, err = col1.type().wm_validate(val)
+                else:
+                    kwargs = dict(strict=False)
+                    if isinstance(col1.type(), pytis.data.Binary):
+                        if val:
+                            quit(i, wval, _("Binární sloupec lze testovat "
+                                            "pouze na prázdnou hodnotu"))
+                        else:
+                            val = None
+                    elif isinstance(col1.type(), pytis.data.Boolean):
+                        kwargs = dict(extended=True)
+                    value, err = col1.type().validate(val, **kwargs)
+                if err:
+                    quit(i, wval, err.message())
+                arg2 = value
+            subcondition = op(col1.id(), arg2)
             if condition is None:
                 condition = subcondition
             else:
                 condition = lop(condition, subcondition)
         return condition
 
-    def _on_column_change(self, i):
-        wcol, wop, wval, bclear, bsuck = self._controls[i][1:6]
-        enabled = wcol.GetSelection() != 0
-        for ctrl in (wop, wval, bclear, bsuck):
+    def _on_selection_change(self, i):
+        wcol1, wop, wcol2, wval, bsuck, bclear = self._controls[i][1:7]
+        enabled = wcol1.GetSelection() != 0
+        for ctrl in (wop, wcol2,wval, bclear, bsuck):
             ctrl.Enable(enabled)
+        if enabled:
+            e2 = wcol2.GetSelection() == 0
+            for ctrl in (wval, bsuck):
+                ctrl.Enable(e2)
         
     def _on_clear(self, i):
-        wcol, wop, wval = self._controls[i][1:4]
-        wcol.SetSelection(0)
+        wcol1, wop, wcol2, wval = self._controls[i][1:5]
+        wcol1.SetSelection(0)
         wop.SetSelection(0)
         wval.SetValue('')
-        self._on_column_change(i)
+        self._on_selection_change(i)
 
     def _on_suck(self, i):
-        wcol, wop, wval = self._controls[i][1:4]
+        wcol1, wop, wcol2, wval = self._controls[i][1:5]
         col = self._columns[self._controls[i][1].GetSelection()]
         v = self._row[col.id()].export()
         if is_sequence(v):
