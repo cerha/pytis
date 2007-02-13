@@ -31,6 +31,20 @@
 	pole.  Namísto "* hodnota *" lze ale vybrat také sloupec, který
 	bude pou¾it jako druhý operand.  Vstupní pole hodnoty se tím stane
 	neaktivní...
+
+	V¹echny operátorové funkce v `pytis.data' (`EQ', `NE', `LT', `LE'
+	atd.) nyní vytváøí instanci `Operator' stejného jména.  Pøevod
+	operátoru na primitivní operátory je této instanci pøedán, tak¾e
+	mù¾e být pou¾it na vy¾ádání, ale informace o pùvodním operátoru se
+	neztrácí.  Toho je vyu¾ito v datovém rozhraní k PostgreSQL, které
+	nyní implementuje v¹echny operátory.  Díky tomu jsou podmínkové
+	výrazy zasílané serveru pdstatnì pøehlednìj¹í.  Dal¹ím vyu¾itím
+	této vlastnosti je podstatné zjednodu¹ení filtrovacích a
+	vyhledávacích dialogù, které døíve musely kvùli rozpoznání
+	operátorù provádìt slo¾itou analýzu.  Ta nyní zcela odpadla.
+
+	* BUGFIX: Ve vyhledávacím a filtrovacím dialogu je nyní správnì
+	obnovena také hodnota pro wildcard match.
 	
 2007-02-12 Tomas Cerha  <cerha@brailcom.org>
 
