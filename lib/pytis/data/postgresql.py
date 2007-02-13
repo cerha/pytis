@@ -665,9 +665,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_btabcol(self, binding):
         """Vra» seznam sloupcù z 'binding' zformátovaných pro SQL."""
-        return [self._pdbb_tabcol(binding.table(), c) for c in 
-                xtuple(binding.column())]
-        
+        cols = xtuple(binding.column())
+        return map(lambda c, tc=self._pdbb_tabcol, t=binding.table(): \
+                   tc(t, c),
+                   cols)
+
     def _pdbb_coalesce(self, ctype, value):
         """Vra» string 'value' zabezpeèený pro typ sloupce 'ctype' v SQL."""
         if ctype is None or isinstance(ctype, String) or value == 'NULL':
@@ -981,36 +983,51 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         op_name, op_args, op_kwargs = \
                  condition.name(), condition.args(), condition.kwargs()
         def relop(rel, args, kwargs):
-            def colarg(colid):
-                assert isinstance(colid, str), ('Invalid column name type', colid)
-                col = self._db_column_binding(colid)
-                assert col, ('Invalid column name', colid)
-                a = self._pdbb_btabcol(col)[0]
-                t = self.find_column(colid).type()
-                return a, t
             assert len(args) == 2, ('Invalid number or arguments', args)
-            arg1, arg2 = args
-            a1, t1 = colarg(arg1)
-            if isinstance(arg2, str):
-                a2, t2 = colarg(arg2)
-                a2null = False
+            colid, value = args
+            assert is_string(colid), \
+                   ('Invalid column name type', colid)
+            assert isinstance(value, Value), \
+                   ('Invalid value type', value)
+            col = self._db_column_binding(colid)
+            assert col, ('Invalid column name', colid)
+            case_insensitive = kwargs.has_key('ignore_case') and \
+                               kwargs['ignore_case'] and \
+                               isinstance(value.type(), String)
+            t = self.find_column(colid).type()
+            assert (not isinstance(t, Binary) or
+                    (rel == '=' and value.value() is None)), \
+                    "Binary data can only be compared with NULL values"
+            btabcols = self._pdbb_btabcol(col)
+            val = xtuple(self._pg_value(value))
+            items = []
+            for i in range(len(btabcols)):
+                tabcol = btabcols[i]
+                dbvalue = self._pdbb_coalesce(t, val[i])
+                if case_insensitive:
+                    tabcol = 'lower(%s)' % tabcol
+                    dbvalue = 'lower(%s)' % dbvalue
+                items.append((tabcol, dbvalue))
+            def itemize(item, val):
+                colid, dbval = item
+                if val is 'NULL':       # fuj
+                    op = 'IS'
+                else:
+                    op = '='
+                return '%s %s %s' % (colid, op, dbval)
+            if rel == '=':
+                eqs = map(itemize, items, val)
+                result = '(%s)' % string.join(eqs, ' AND ')
             else:
-                assert isinstance(arg2, Value), ('Invalid value type', arg2)
-                assert (not isinstance(t1, Binary) or
-                        (rel == '=' and arg2.value() is None)), \
-                        "Binary data can only be compared with NULL values"
-                val = self._pg_value(arg2)
-                a2 = self._pdbb_coalesce(t1, val)
-                t2 = arg2.type()
-                a2null = val is 'NULL' # fuj
-            if kwargs.has_key('ignore_case') and kwargs['ignore_case'] and \
-                   isinstance(t1, String) and isinstance(t2, String):
-                fix_case = lambda x: 'lower(%s)' % x
-            else:
-                fix_case = lambda x: x
-            if rel == '=' and a2null:
-                rel = 'IS'
-            return '(%s %s %s)' % (fix_case(a1), rel, fix_case(a2))
+                eqs = []
+                for i in range(len(items)):
+                    ii = items[:i+1]
+                    minieqs = ['(%s %s %s)' % (ii[-1][0], rel, ii[-1][1])]
+                    for j in ii[:-1]:
+                        minieqs.append('(%s = %s)' % j)
+                    eqs.append('(%s)' % string.join(minieqs, ' AND '))
+                result = '(%s)' % string.join(eqs, ' OR ')
+            return result
         if op_name == 'EQ':
             expression = relop('=', op_args, op_kwargs)
         elif op_name == 'LT':
@@ -1031,6 +1048,34 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if (i-j) % 2 == 1:
                         spec = spec[:i] + new + spec[i+1:]
             spec = Value(String(), spec)
+            c = self.find_column(cid)
+            t = c.type()
+            # TODO:
+            # provìøit, zda po pøechodu na novou podobu ValueCodebooks, toto
+            # ji¾ opravdu není zapotøebí.
+            #
+            # if (isinstance(t, pytis.data.xtypes.Codebook) and
+            #   t.strict()):
+            #    def cformat(data, colid):
+            #        binding = data._db_column_binding(colid)
+            #        return data._pdbb_btabcol(binding)[0]
+            #    cname = cformat(self, cid)
+            #    cdata = pytis.data.xtypes._codebook_data(t)
+            #    ccid = cdata.key()[0].id()
+            #    ccname = cformat(cdata, ccid)
+            #    tname = cdata._db_column_binding(ccid).table()
+            #    vcname = t.value_column()
+            #    cuname = cformat(cdata, vcname)
+            #    spec = self._pg_value(spec)
+            #    if op_kwargs.get('ignore_case'):
+            #       def lower(x):
+            #            return "lower(%s)" % x
+            #        cuname = lower(cuname)
+            #        spec = lower(spec)
+            #    expression = ("%s IN (SELECT %s FROM %s WHERE %s LIKE %s)" %
+            #                  (cname, ccname, tname, cuname, spec))
+            #else:
+            #    expression = relop('LIKE', (cid, spec), op_kwargs)
             expression = relop('LIKE', (cid, spec), op_kwargs)
         elif op_name == 'NOT':
             assert len(op_args) == 1, ('Invalid number or arguments', op_args)
