@@ -18,7 +18,11 @@
 	podporována pouze instance `Value' urèující hodnotu, se kterou má
 	být porovnáváno.  Nyní je mo¾né zadat také identifikátor sloupce,
 	èím¾ je mo¾né porovnávat mezi sebou hodnoty ve dvou databázových
-	sloupcích.
+	sloupcích.  Ve v¹ech podmínkových výrazech tedy nyní lze pou¾ít
+	sloupec jako druhý operand.  Napø.
+	"validity_condition=pytis.data.GE('zustatek', 'zustatek_min')"
+	První operand je v¾dy identifikátor sloupce, druhý mù¾e být
+	identifikátor sloupce nebo instance 'Value'.
 
 	Vý¹e popsané nové vlastnosti bylo vyu¾ito ve filtrovacích a
 	vyhledávacích dialozích.  Po volbì operátoru následuje novì také
