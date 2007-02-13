@@ -664,12 +664,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return '%s.%s' % (table_name, column_name)
 
     def _pdbb_btabcol(self, binding):
-        """Vra» seznam sloupcù z 'binding' zformátovaných pro SQL."""
-        cols = xtuple(binding.column())
-        return map(lambda c, tc=self._pdbb_tabcol, t=binding.table(): \
-                   tc(t, c),
-                   cols)
-
+        """Vra» sloupec z 'binding' zformátovaný pro SQL."""
+        return self._pdbb_tabcol(binding.table(), binding.column())
+        
     def _pdbb_coalesce(self, ctype, value):
         """Vra» string 'value' zabezpeèený pro typ sloupce 'ctype' v SQL."""
         if ctype is None or isinstance(ctype, String) or value == 'NULL':
@@ -698,22 +695,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
         d = self._pg_query(
-            ("select pg_type.typname, pg_attribute.atttypmod, "+\
-             "pg_attribute.attnotnull "+\
-             "from pg_class, pg_attribute, pg_type "+\
-             "where pg_class.oid = pg_attribute.attrelid and "+\
-             "pg_class.relname = '%s' and "+\
-             "pg_attribute.attname = '%s' and "+\
+            ("select pg_type.typname, pg_attribute.atttypmod, "
+             "pg_attribute.attnotnull "
+             "from pg_class, pg_attribute, pg_type "
+             "where pg_class.oid = pg_attribute.attrelid and "
+             "pg_class.relname = '%s' and "
+             "pg_attribute.attname = '%s' and "
              "pg_attribute.atttypid = pg_type.oid") % \
             (table, column),
             outside_transaction=True)
         d1 = self._pg_query(
-            ("select pg_attrdef.adsrc "+\
-             "from pg_class, pg_attribute, pg_attrdef "+\
-             "where pg_class.oid = pg_attrdef.adrelid and "+\
-             "pg_class.oid = pg_attribute.attrelid and "+\
-             "pg_class.relname = '%s' and "+\
-             "pg_attribute.attname = '%s' and "+\
+            ("select pg_attrdef.adsrc "
+             "from pg_class, pg_attribute, pg_attrdef "
+             "where pg_class.oid = pg_attrdef.adrelid and "
+             "pg_class.oid = pg_attribute.attrelid and "
+             "pg_class.relname = '%s' and "
+             "pg_attribute.attname = '%s' and "
              "pg_attribute.attnum = pg_attrdef.adnum") % \
             (table, column),
             outside_transaction=True)
@@ -827,12 +824,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return self._pdbb_sql_column_list(bindings)
         
     def _pdbb_sql_column_list(self, bindings):
-        visible_bindings = [b for b in bindings if b.id()]
-        column_names = []
-        for b in visible_bindings:
-            column_names = column_names + self._pdbb_btabcol(b)
-        column_list = string.join(column_names, ', ')
-        return column_list
+        column_names = [self._pdbb_btabcol(b) for b in bindings if b.id()]
+        return string.join(column_names, ', ')
         
     def _pdbb_create_sql_commands(self):
         """Vytvoø ¹ablony SQL pøíkazù pou¾ívané ve veøejných metodách."""
@@ -848,20 +841,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if len(table_names) <= 1:
             relation = 'true'
         else:
-            rels = []
-            for b in bindings:
-                related = b.related_to()
-                if related:
-                    next_rels = map (lambda c, r: '%s=%s' % (c, r),
-                                     self._pdbb_btabcol(b),
-                                     self._pdbb_btabcol(related))
-                    rels = rels + next_rels
-            relation = string.join(rels, ' and ')
+            rels = ['%s=%s' % (self._pdbb_btabcol(b),
+                               self._pdbb_btabcol(b.related_to()))
+                    for b in bindings if b.related_to()]
+            relation = ' and '.join(rels)
         main_table = self._key_binding[0].table()
-        keytabcols = map(self._pdbb_btabcol, self._key_binding)
-        keytabcols = reduce(operator.add, keytabcols, [])
-        key_eqs = map(lambda k: '%s=%%s' % k, keytabcols)
-        key_cond = string.join(key_eqs, ' and ')
+        keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
+        key_cond = ' and '.join(['%s=%%s' % k for k in keytabcols])
         first_key_column = keytabcols[0]
         def sortspec(dir, self=self, keytabcols=keytabcols):
             items = []
@@ -926,19 +912,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_insert = \
           'insert into %s (%%s) values (%%s)' % main_table
         if self._ordering:
-            ordering = ()
+            ordering = []
             for o in self._ordering:
                 for b in self._bindings:
                     if b.id() == o:
-                        c = xtuple(b.column())
+                        ordering.append(b.column())
                         break
                 else:
                     raise ProgramError('Invalid ordering id', o)
-                ordering = ordering + c
             ocol = ordering[0]
-            eqs = map(lambda o: '%s=%%s' % o, ordering[1:])
+            eqs = ['%s=%%s' % o for o in ordering[1:]]
             if eqs:
-                eqstring = string.join(eqs, ' AND ')                
+                eqstring = ' AND '.join(eqs)
                 xeqstring = ' AND ' + eqstring
             else:
                 eqstring = xeqstring = ''
@@ -983,51 +968,36 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         op_name, op_args, op_kwargs = \
                  condition.name(), condition.args(), condition.kwargs()
         def relop(rel, args, kwargs):
+            def colarg(colid):
+                assert isinstance(colid, str), ('Invalid column name type', colid)
+                col = self._db_column_binding(colid)
+                assert col, ('Invalid column name', colid)
+                a = self._pdbb_btabcol(col)
+                t = self.find_column(colid).type()
+                return a, t
             assert len(args) == 2, ('Invalid number or arguments', args)
-            colid, value = args
-            assert is_string(colid), \
-                   ('Invalid column name type', colid)
-            assert isinstance(value, Value), \
-                   ('Invalid value type', value)
-            col = self._db_column_binding(colid)
-            assert col, ('Invalid column name', colid)
-            case_insensitive = kwargs.has_key('ignore_case') and \
-                               kwargs['ignore_case'] and \
-                               isinstance(value.type(), String)
-            t = self.find_column(colid).type()
-            assert (not isinstance(t, Binary) or
-                    (rel == '=' and value.value() is None)), \
-                    "Binary data can only be compared with NULL values"
-            btabcols = self._pdbb_btabcol(col)
-            val = xtuple(self._pg_value(value))
-            items = []
-            for i in range(len(btabcols)):
-                tabcol = btabcols[i]
-                dbvalue = self._pdbb_coalesce(t, val[i])
-                if case_insensitive:
-                    tabcol = 'lower(%s)' % tabcol
-                    dbvalue = 'lower(%s)' % dbvalue
-                items.append((tabcol, dbvalue))
-            def itemize(item, val):
-                colid, dbval = item
-                if val is 'NULL':       # fuj
-                    op = 'IS'
-                else:
-                    op = '='
-                return '%s %s %s' % (colid, op, dbval)
-            if rel == '=':
-                eqs = map(itemize, items, val)
-                result = '(%s)' % string.join(eqs, ' AND ')
+            arg1, arg2 = args
+            a1, t1 = colarg(arg1)
+            if isinstance(arg2, str):
+                a2, t2 = colarg(arg2)
+                a2null = False
             else:
-                eqs = []
-                for i in range(len(items)):
-                    ii = items[:i+1]
-                    minieqs = ['(%s %s %s)' % (ii[-1][0], rel, ii[-1][1])]
-                    for j in ii[:-1]:
-                        minieqs.append('(%s = %s)' % j)
-                    eqs.append('(%s)' % string.join(minieqs, ' AND '))
-                result = '(%s)' % string.join(eqs, ' OR ')
-            return result
+                assert isinstance(arg2, Value), ('Invalid value type', arg2)
+                assert (not isinstance(t1, Binary) or
+                        (rel == '=' and arg2.value() is None)), \
+                        "Binary data can only be compared with NULL values"
+                val = self._pg_value(arg2)
+                a2 = self._pdbb_coalesce(t1, val)
+                t2 = arg2.type()
+                a2null = val is 'NULL' # fuj
+            if kwargs.has_key('ignore_case') and kwargs['ignore_case'] and \
+                   isinstance(t1, String) and isinstance(t2, String):
+                fix_case = lambda x: 'lower(%s)' % x
+            else:
+                fix_case = lambda x: x
+            if rel == '=' and a2null:
+                rel = 'IS'
+            return '(%s %s %s)' % (fix_case(a1), rel, fix_case(a2))
         if op_name == 'EQ':
             expression = relop('=', op_args, op_kwargs)
         elif op_name == 'LT':
@@ -1048,34 +1018,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if (i-j) % 2 == 1:
                         spec = spec[:i] + new + spec[i+1:]
             spec = Value(String(), spec)
-            c = self.find_column(cid)
-            t = c.type()
-            # TODO:
-            # provìøit, zda po pøechodu na novou podobu ValueCodebooks, toto
-            # ji¾ opravdu není zapotøebí.
-            #
-            # if (isinstance(t, pytis.data.xtypes.Codebook) and
-            #   t.strict()):
-            #    def cformat(data, colid):
-            #        binding = data._db_column_binding(colid)
-            #        return data._pdbb_btabcol(binding)[0]
-            #    cname = cformat(self, cid)
-            #    cdata = pytis.data.xtypes._codebook_data(t)
-            #    ccid = cdata.key()[0].id()
-            #    ccname = cformat(cdata, ccid)
-            #    tname = cdata._db_column_binding(ccid).table()
-            #    vcname = t.value_column()
-            #    cuname = cformat(cdata, vcname)
-            #    spec = self._pg_value(spec)
-            #    if op_kwargs.get('ignore_case'):
-            #       def lower(x):
-            #            return "lower(%s)" % x
-            #        cuname = lower(cuname)
-            #        spec = lower(spec)
-            #    expression = ("%s IN (SELECT %s FROM %s WHERE %s LIKE %s)" %
-            #                  (cname, ccname, tname, cuname, spec))
-            #else:
-            #    expression = relop('LIKE', (cid, spec), op_kwargs)
             expression = relop('LIKE', (cid, spec), op_kwargs)
         elif op_name == 'NOT':
             assert len(op_args) == 1, ('Invalid number or arguments', op_args)
@@ -1107,22 +1049,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_sort2sql(self, sort):
         def item2sql(item, self=self):
-            if type(item) == type(()):
+            if isinstance(item, tuple):
                 id, dirspec = item
-                if dirspec == ASCENDENT:
-                    dir = 'ASC'
-                elif dirspec == DESCENDANT:
-                    dir = 'DESC'
-                else:
-                    raise ProgramError('Invalid sorting direction', dirspec)
+                dir = {ASCENDENT: 'ASC', DESCENDANT: 'DESC'}[dirspec]
             else:
                 id, dir = item, 'ASC'
             b = self._db_column_binding(id)
-            return map(lambda bt: '%s %s' % (bt, dir), self._pdbb_btabcol(b))
-        items = map(item2sql, sort)
-        sort_string = string.join(reduce(operator.add, items, []), ',')
+            return '%s %s' % (self._pdbb_btabcol(b), dir)
+        sort_string = ','.join([item2sql(item) for item in sort])
         if sort_string:
-            sort_string = sort_string + ','
+            sort_string += ','
         return sort_string
         
     # Metody související s exportovanými metodami DB operací
@@ -1143,15 +1079,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert colspec, ('Column not found', colid)
             if isinstance(colspec.type(), Oid):
                 continue
-            column = b.column()
-            if is_sequence(column):
-                columns = columns + list(column)
-            else:                
-                columns.append(column)
-            if is_sequence(value):
-                values = values + list(value)
-            else:
-                values.append(value)
+            columns.append(b.column())
+            values.append(value)
         return columns, values
 
     def _pg_row (self, key_value, columns):
@@ -1343,8 +1272,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 neighbor = row
                 n = -1
             try:
-                params = map(lambda o, s=self, n=neighbor: s._pg_value(n[o]),
-                             self._ordering[1:])
+                params = [self._pg_value(neighbor[o])
+                          for o in self._ordering[1:]]
             except KeyError:
                 raise ProgramError('Invalid column id in ordering',
                                    self._ordering, row)
@@ -1833,8 +1762,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     
     _pg_dt = type(mx.DateTime.DateTimeFrom('2001-01-01'))
     def _pg_value(self, value):
-        if is_sequence(value):
-            return tuple(map(self._pg_value, value))
         v = value.value()
         if v == None:
             result = 'NULL'
@@ -1885,7 +1812,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             template = None
         try:
-            data = self._pg_row (self._pg_value(key), columns)
+            data = self._pg_row(tuple([self._pg_value(k) for k in key]),
+                                columns)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -2510,7 +2438,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
     
     def call(self, row):
         log(EVENT, ('Volání funkce `%s\'' % self._name))
-        arguments = tuple(map(self._pg_value, row))
+        arguments = tuple([self._pg_value(item) for item in row])
         data = self._pg_query(self._pdbb_function_call % arguments,
                               outside_transaction=True)
         result = self._pg_make_row_from_raw_data(data)
