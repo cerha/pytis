@@ -883,9 +883,21 @@ class MemData(Data):
         if condition is None:
             return lambda row: True
         op_name = condition.name()
-        if op_name == 'EQ':
-            col, value = condition.args()
-            return lambda row: row[col] == value
+        relational_operators = {'EQ': operator.eq,
+                                'LT': operator.lt}
+        if op_name in relational_operators.keys():
+            def relop(row, op, args, kwargs):
+                def arg(a, ignore_case=False):
+                    if isinstance(a, str):
+                        v = row[a].value()
+                    else:
+                        v = a.value()
+                    if ignore_case and isinstance(v, (str, unicode)):
+                        v = v.lower()
+                    return v
+                return op(*[arg(a, **kwargs) for a in args])
+            return lambda row: relop(row, relational_operators[op_name],
+                                     condition.args(), condition.kwargs())
         elif op_name == 'NOT':
             func = self._condition2pyfunc(condition.args()[0])
             return lambda row: not func(row)
@@ -893,7 +905,11 @@ class MemData(Data):
             fctns = [self._condition2pyfunc(c) for c in condition.args()]
             return lambda row: reduce(lambda r, f: r and f(row), fctns, True)
         else:
-            ProgramError("Operator not supported:", condition)
+            t = condition.translation()
+            if t is not None:
+                return self._condition2pyfunc(t)
+            else:
+                raise ProgramError("Operator not supported:", op_name)
 
     def select(self, condition=None, reuse=False, sort=None, columns=None):
         """Inicializace vytahování záznamù.
@@ -1010,7 +1026,8 @@ def NE(x, y, ignore_case=False):
     Tento operátor je vyjádøený pomocí jiných operátorù.
       
     """
-    return NOT(EQ(x, y, ignore_case=ignore_case))
+    t = NOT(EQ(x, y, ignore_case=ignore_case))
+    return Operator('NE', x, y, ignore_case=ignore_case, translation=t)
     
 def WM(x, y, ignore_case=True):
     """Podmínkový operátor 'WM' (\"wildcard matches\") porovnání dle vzoru.
@@ -1043,7 +1060,8 @@ def NW(x, y, ignore_case=True):
     Tento operátor je vyjádøený pomocí jiných operátorù.
       
     """
-    return NOT(WM(x, y, ignore_case=ignore_case))
+    t = NOT(WM(x, y, ignore_case=ignore_case))
+    return Operator('WM', x, y, ignore_case=ignore_case, translation=t)
 
 def LT(x, y, ignore_case=False):
     """Podmínkový operátor 'LT' relace '<'.
@@ -1073,8 +1091,10 @@ def LE(x, y, ignore_case=False):
     Tento operátor je vyjádøený pomocí jiných operátorù.
       
     """
-    return OR(LT(x, y, ignore_case=ignore_case),
-              EQ(x, y, ignore_case=ignore_case))
+    t = OR(LT(x, y, ignore_case=ignore_case),
+           EQ(x, y, ignore_case=ignore_case))
+    return Operator('LE', x, y, ignore_case=ignore_case, translation=t)
+    
 
 def GT(x, y, ignore_case=False):
     """Podmínkový operátor relace '>'.
@@ -1089,15 +1109,16 @@ def GT(x, y, ignore_case=False):
     Tento operátor je vyjádøený pomocí jiných operátorù.
 
     """
-    return AND(NOT(EQ(x, y, ignore_case=ignore_case)),
-               NOT(LT(x, y, ignore_case=ignore_case)))
+    t = AND(NOT(EQ(x, y, ignore_case=ignore_case)),
+            NOT(LT(x, y, ignore_case=ignore_case)))
+    return Operator('GT', x, y, ignore_case=ignore_case, translation=t)
 
 def GE(x, y, ignore_case=False):
     """Podmínkový operátor relace '>='.
 
     Argumenty:
-
-      x -- identifikátor sloupce, string
+    
+    x -- identifikátor sloupce, string
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1105,8 +1126,9 @@ def GE(x, y, ignore_case=False):
     Tento operátor je vyjádøený pomocí jiných operátorù.
 
     """
-    return OR(GT(x, y, ignore_case=ignore_case),
-              EQ(x, y, ignore_case=ignore_case))
+    t = OR(GT(x, y, ignore_case=ignore_case),
+                     EQ(x, y, ignore_case=ignore_case))
+    return Operator('GE', x, y, ignore_case=ignore_case, translation=t)
 
 def NOT(x):
     """Podmínkový operátor 'NOT' negace.
@@ -1132,7 +1154,7 @@ def AND(*args):
     Tento operátor je primitivní.
       
     """
-    return Operator(*(('AND',) + tuple(args)))
+    return Operator('AND', *args)
 
 def OR(*args):
     """Podmínkový operátor disjunkce.
@@ -1146,8 +1168,8 @@ def OR(*args):
     Tento operátor je vyjádøený pomocí jiných operátorù.
 
     """
-    translation = NOT(apply(AND, map(NOT, args)))
-    return Operator(*(('OR',) + tuple(args)), **{'translation': translation})
+    t = NOT(apply(AND, map(NOT, args)))
+    return Operator('OR', *args, **{'translation': t})
 
 def IN(column_id, data, table_column_id, table_condition):
     """Podmínkový operátor pøíslu¹nosti.
