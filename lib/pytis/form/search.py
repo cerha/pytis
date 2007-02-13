@@ -304,25 +304,29 @@ class SFDialog(SFSDialog):
                        decompose_condition(arg2, op)
             elif self._RELATIONAL_OPERATORS_MAP.has_key(name):
                 op = self._RELATIONAL_OPERATORS_MAP[name]
-                return ((logical_operation, op, arg1, arg2), )
+                col1 = find(arg1, self._columns, key=lambda c: c.id())
+                if col1 is None:
+                    raise Exception("Invalid column: "+ arg1)
+                if isinstance(arg2, str):
+                    col2 = find(arg2, self._columns, key=lambda c: c.id())
+                    if col2 is None:
+                        raise Exception("Invalid column: "+ arg2)
+                    value = None
+                elif isinstance(arg2, (pytis.data.WMValue, pytis.data.Value)):
+                    col2 = None
+                    value = isinstance(arg2, pytis.data.WMValue) \
+                            and arg2.value() or arg2.export()
+                else:
+                    raise Exception("Invalid operand type: "+ repr(arg))
+                return ((logical_operation, op, col1, col2, value), )
             else:
                 raise Exception("Unsupported operator: "+ name)
-        def create_controls(i, n, logical_operator, operator, arg1, arg2):
-            col1 = find(arg1, self._columns, key=lambda c: c.id())
-            if isinstance(arg2, str):
-                col2 = find(arg2, self._columns, key=lambda c: c.id())
-                if col2 is None:
-                    raise Exception("Invalid operand: "+ repr(arg2))
-                value = None
-            else:
-                col2 = None
-                value = isinstance(arg2, pytis.data.WMValue) \
-                        and arg2.value() or arg2.export()
+        def create_controls(i, n, log_op, operator, col1, col2, value):
             choice, field, button = self._create_choice, \
                                     self._create_text_ctrl, self._create_button
             return (
-                logical_operator and \
-                choice(self._LOGICAL_OPERATORS, selected=logical_operator,
+                log_op and \
+                choice(self._LOGICAL_OPERATORS, selected=log_op,
                        label=lambda o: self._LABELS[o],
                   tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
                 choice(self._columns, selected=col1,
@@ -344,11 +348,14 @@ class SFDialog(SFSDialog):
                        _("Vymazat obsah podmínky")),
                 button(_("Odebrat"), lambda e: self._on_remove(i),
                        _("Zru¹it tuto podmínku"), enabled=n > 1))
-        condition = self._condition
-        if condition is None:
-            c = self._NO_COLUMN
-            condition = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
-        conditions = decompose_condition(condition)
+        c = self._NO_COLUMN
+        empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
+        try:
+            conditions = decompose_condition(self._condition  or empty)
+        except Exception, e:
+            run_dialog(Warning, (_("Nepdaøilo se rozlo¾it podmínkový výraz:")+
+                                 " "+str(e)))
+            conditions = decompose_condition(empty)
         self._controls = []
         for i, items in enumerate(conditions):
             self._controls.append(create_controls(i, len(conditions), *items))
