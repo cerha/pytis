@@ -1,3 +1,15 @@
+2007-02-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py: Added support for SFS dialog default column
+	selection.
+	
+	* pytis/form/form.py: Added support for SFS dialog default column
+	selection.  Transform sorting spec for passing it to and from the
+	sorting dialog.
+
+	* pytis/form/search.py: Heavilly refactored.  Added default column
+	selection.
+
 2007-02-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/data.py (MemData._condition2pyfunc): Added support
