@@ -1,5 +1,7 @@
 2007-02-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py: Fixed prefill bug.
+
 	* pytis/data/postgresql.py: Fixed "IS NOT NULL" operator conversion.
 
 	* pytis/form/list.py: Added support for SFS dialog default column
@@ -11,7 +13,8 @@
 
 	* pytis/form/search.py: Heavilly refactored.  Added default column
 	selection.  Use data sorting constants instead of form sorting
-	constants on input and output.
+	constants on input and output.  Focus the value entry field.
+	Enlarge choice widgets.
 
 2007-02-13  Tomas Cerha  <cerha@brailcom.org>
 
