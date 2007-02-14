@@ -59,9 +59,9 @@ class SFSColumn:
         """Vra» type zadaný v konstruktoru."""
         return self._type
 
-    def label(self, default=""):
+    def label(self):
         """Vra» label zadaný v konstruktoru."""
-        return self._label or default
+        return self._label
 
     
 class SFSDialog(GenericDialog):
@@ -248,7 +248,7 @@ class SFDialog(SFSDialog):
                               'OR': pytis.data.OR}
     _TEXT_CTRL_SIZE = 18
     _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(),
-                           None)
+                           '* '+_("hodnota")+' *')
     
     class SFConditionError(Exception):
         pass
@@ -318,14 +318,14 @@ class SFDialog(SFSDialog):
                        label=lambda o: self._LABELS[o],
                   tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
                 choice(self._columns, selected=col1,
-                       label=lambda c: c.label('- '+_("zvolte sloupec")+' -'),
+                       label=lambda c: c.label(),
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte sloupec tabulky")),
                 choice(self._OPERATORS, selected=operator,
                        label=lambda o: self._LABELS[o],
                        tooltip=_("Zvolte operátor")),
                 choice(self._col2_columns, selected=col2,
-                       label=lambda c: c.label('* '+_("hodnota")+' *'),
+                       label=lambda c: c.label(),
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte s èím má být hodnota porovnávána")),
                 field(self._TEXT_CTRL_SIZE, value,
