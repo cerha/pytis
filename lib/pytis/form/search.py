@@ -97,7 +97,7 @@ class SFSDialog(GenericDialog):
                        selected=None, on_change=None):
         ch = wx.Choice(self._dialog, -1, choices=[label(x) for x in choices])
         ch.SetSelection(0)
-        ch.SetMinSize((ch.GetSize().width, self._FIELD_HEIGHT))
+        ch.SetMinSize((ch.GetSize().width+20, self._FIELD_HEIGHT))
         if tooltip is not None and config.show_tooltips:
             ch.SetToolTipString(unicode(tooltip))
         if selected:
@@ -347,6 +347,9 @@ class SFDialog(SFSDialog):
         for i, items in enumerate(conditions):
             self._controls.append(create_controls(i, len(conditions), *items))
             self._on_selection_change(i)
+        wval = self._controls[0][4]
+        if wval.IsEnabled():
+            self._want_focus = wval
 
     def _create_content(self):
         b1 = self._create_button(_('Pøidat "a zároveò"'),
@@ -567,38 +570,32 @@ class FilterDialog(SFDialog):
         return super_(FilterDialog)._create_content(self) + (sizer,)
 
     def _on_compute_aggregate(self, event):
-        if self._on_filter():
+        try:
+            condition = self._selected_condition()
+        except self.SFConditionError:
+            pass
+        else:
             wcol, wop, wresult, wbutton = self._agg_controls
             op = self._AGG_OPERATORS[wop.GetSelection()]
             col = self._columns[wcol.GetSelection()]
-            result = self._compute_aggregate(op, col.id(), self._condition)
+            result = self._compute_aggregate(op, col.id(), condition)
             if result is not None:
                 v = result.export()
             else:
                 v = ''
             wresult.SetValue(v)
 
-    def _on_filter(self):
-        try:
-            condition = self._selected_condition()
-        except self.SFConditionError:
-            return False
-        else:
-            self._condition = condition
-            self._perform = True
-            return True
-
-    def _on_unfilter(self):
-        self._perform = True
-        self._condition = None
-
     def _on_button(self, event):
         label = self._button_label(event.GetId())
         if label == self._FILTER_BUTTON:
-            if not self._on_filter():
-                return False
+            try:
+                self._condition = self._selected_condition()
+            except self.SFConditionError:
+                return
+            self._perform = True
         elif label == self._UNFILTER_BUTTON:
-            self._on_unfilter()
+            self._perform = True
+            self._condition = None
         return super(FilterDialog, self)._on_button(event)
         
     def _customize_result(self, button_wid):
