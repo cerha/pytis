@@ -141,9 +141,12 @@ class PresentedRow(object):
                                         for f in self._fieldspec])
         self._init_dependencies()
         if prefill:
-            V = pytis.data.Value
-            prefill = dict([(k, V(columns[k].type,
-                                  isinstance(v, V) and v.value() or v))
+            def value(v):
+                if isinstance(v, pytis.data.Value):
+                    return v.value()
+                else:
+                    return v
+            prefill = dict([(k, pytis.data.Value(columns[k].type, value(v)))
                             for k, v in prefill.items()])
         self._virtual = dict([(k, self._default(k, prefill=prefill))
                               for k in columns.keys()
