@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-14 Tomas Cerha  <cerha@brailcom.org>
+
+	Drobné úpravy ve filtrovacím dialogu umo¾òují automaticky
+	pøedvolit aktuální sloupec pøi pøidávání podmínek a ru¹í polo¾ku
+	"- zvolte sloupec -" (v¾dy je nìkterý sloupec pøedvolen).
+	
 2007-02-13 Tomas Cerha  <cerha@brailcom.org>
 
 	V datovém rozhraní byla zru¹ena podpora vícesloupcových vazeb.
