@@ -9,6 +9,8 @@
 	Drobné úpravy ve filtrovacím dialogu umo¾òují automaticky
 	pøedvolit aktuální sloupec pøi pøidávání podmínek a ru¹í polo¾ku
 	"- zvolte sloupec -" (v¾dy je nìkterý sloupec pøedvolen).
+
+	* BUGFIX: Opravena SQL konverze pro operátor "IS NOT NULL".
 	
 2007-02-13 Tomas Cerha  <cerha@brailcom.org>
 

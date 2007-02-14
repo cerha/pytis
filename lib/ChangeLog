@@ -1,5 +1,7 @@
 2007-02-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/postgresql.py: Fixed "IS NOT NULL" operator conversion.
+
 	* pytis/form/list.py: Added support for SFS dialog default column
 	selection.
 	
