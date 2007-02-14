@@ -650,6 +650,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _filter_refresh(self):
         self._refresh(when=self.DOIT_IMMEDIATELY)
 
+    def _current_column_id(self):
+        col = self._current_cell()[1]
+        return self._columns[col].id()
+    
     # Callbacky
 
     def on_data_change(self):
