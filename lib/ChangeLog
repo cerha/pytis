@@ -8,7 +8,8 @@
 	sorting dialog.
 
 	* pytis/form/search.py: Heavilly refactored.  Added default column
-	selection.
+	selection.  Use data sorting constants instead of form sorting
+	constants on input and output.
 
 2007-02-13  Tomas Cerha  <cerha@brailcom.org>
 
