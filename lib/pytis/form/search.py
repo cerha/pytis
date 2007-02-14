@@ -65,10 +65,30 @@ class SFSColumn:
 
     
 class SFSDialog(GenericDialog):
-    """Spoleèný základ v¹ech vyhledávacích, filtrovacích a tøídících dialogù."""
+    """Common ancestor of all sorting/filtering/searching dialogs."""
 
     _FIELD_HEIGHT = 26
+    _TITLE = None
+    _ESCAPE_BUTTON = _("Zavøít")
+    _BUTTONS = (_ESCAPE_BUTTON,)
+    def __init__(self, parent, columns, col=None):
+        """Initialize the dialog.
 
+        Arguments:
+
+          parent -- wx parent of the dialog window
+          columns -- a sequence of 'SFSColumn' instances
+          col -- current column identifier as a string
+
+        """
+        self._parent = parent
+        self._columns = tuple(columns)
+        self._col = col
+        super(SFSDialog, self).__init__(parent, self._TITLE, self._BUTTONS)
+
+    def _find_column(self, cid):
+        return find(cid, self._columns, key=lambda c: c.id())
+    
     def _create_button(self, label, callback, tooltip=None, **kwargs):
         return wx_button(self._dialog, label=label, callback=callback,
                          tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
@@ -99,7 +119,22 @@ class SFSDialog(GenericDialog):
             t.Enable(enabled)
         return t
 
+    def _create_content(self):
+        self._controls = []
+        self._create_controls()
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        for ctrls in self._controls:
+            row = wx.BoxSizer()
+            for x in ctrls:
+                if x:
+                    row.Add(x)
+            sizer.Add(row, 0, wx.ALIGN_RIGHT)
+        return (sizer,)
 
+    def _create_controls(self):
+        pass
+    
+    
 class SortingDialog(SFSDialog):
     """Dialog pro volbu parametrù tøídìní.
 
@@ -109,121 +144,74 @@ class SortingDialog(SFSDialog):
 
     """
 
-    _OK_BUTTON = _("Setøídit")
-    _CANCEL_BUTTON = _("Resetovat tøídìní")
-    _ESCAPE_BUTTON = _("Zavøít")
-
-    _COMMIT_BUTTON = _OK_BUTTON
+    _TITLE = _("Tøídìní")
+    _SORT_BUTTON = _("Setøídit")
+    _RESET_BUTTON = _("Resetovat tøídìní")
+    _BUTTONS = (_SORT_BUTTON, _RESET_BUTTON) + SFSDialog._BUTTONS
+    _COMMIT_BUTTON = _SORT_BUTTON
     
-    _ASCENDENT = _("Vzestupnì")
-    _DESCENDANT = _("Sestupnì")
-    _NOSORTING = _("Netøídit")
+    _DIRECTIONS = (pytis.data.ASCENDENT, pytis.data.DESCENDANT, None)
+    _LABELS = {pytis.data.ASCENDENT: _("Vzestupnì"),
+               pytis.data.DESCENDANT: _("Sestupnì"),
+               None: _("Netøídit")}
+    
     _HELP_TOPIC = 'sorting'
     
-    def __init__(self, parent, columns, sorting, col=None, direction=None):
-        """Inicializuj dialog.
+    def __init__(self, parent, columns, sorting, direction=None, **kwargs):
+        """Initialize the dialog.
 
-        Argumenty:
+        Arguments:
 
-          parent -- rodiè dialogu
-          columns -- sekvence instancí tøídy 'SFSColumn'
-          sorting -- specifikace aktuálního tøídìní, ve tvaru argumentu 'sort'
-            metody 'pytis.data.Data.select()'
-          col -- id implicitního sloupce jako string
-          direction -- implicitní smìr tøídìní, jedna ze smìrových konstant
-            modulu 'pytis.data'
+          parent -- wx parent of the dialog window
+          columns -- a sequence of 'SFSColumn' instances
+          sorting -- current sorting specification in the form of the `sort'
+            argument of 'pytis.data.Data.select()'
+          direction -- default sorting direction, one of
+            'pytis.data.ASCENDENT', 'pytis.data.DESCENDANT'
+          kwargs -- passed to the parent class constructor
 
         """
-        self._parent = parent
-        self._columns = columns
         self._sorting = sorting
-        self._col = col
         self._direction = direction
-        buttons = (self._OK_BUTTON, self._CANCEL_BUTTON, self._ESCAPE_BUTTON)
-        super_(SortingDialog).__init__(self, parent, _("Tøídìní"), buttons)
+        super(SortingDialog, self).__init__(parent, columns, **kwargs)
+
+    def _create_controls(self):
+        choice = self._create_choice
+        for cid, dir in self._sorting or ((self._col, self._direction),):
+            # Sloupce
+            self._controls.append((
+                choice(self._columns, selected=self._find_column(cid),
+                       label=lambda c: c.label(),
+                       tooltip=_("Zvolte sloupec, podle nìj¾ chcete tøídit")),
+                choice(self._DIRECTIONS, selected=dir,
+                       label=lambda d: self._LABELS[d],
+                       tooltip=_("Zvolte smìr tøídìní"))))
 
     def _create_content(self):
-        columns = self._columns
-        column_choices = map(lambda c: c.label(), columns)
-        direction_choices = [self._ASCENDENT, self._DESCENDANT,
-                             self._NOSORTING]
-        self._selections = []
-        big_sizer = wx.BoxSizer(wx.VERTICAL)
-        if self._sorting:
-            for col, dir in self._sorting:
-                # Sloupce
-                colsel = self._create_choice(column_choices,
-                 tooltip=_("Zvolte sloupec tabulky, podle nìj¾ chcete tøídit"))
-                colpos = position(col, columns, key=lambda c: c.id())
-                if colpos:
-                    colsel.SetSelection(colpos)
-                # Smìr tøídìní
-                dirsel = self._create_choice(direction_choices,
-                                             tooltip=_("Zvolte smìr tøídìní"))
-                if dir == LookupForm.SORTING_DESCENDANT:
-                    dirsel.SetSelection(1)
-                self._selections.append((colsel, dirsel))
-                # Sizer
-                sizer = wx.BoxSizer()
-                for w in colsel, dirsel:
-                    sizer.Add(w)
-                big_sizer.Add(sizer)
-        else:
-            # Sloupce
-            colsel = self._create_choice(column_choices,
-                 tooltip=_("Zvolte sloupec tabulky, podle nìj¾ chcete tøídit"))
-            col = self._col
-            if col is not None:
-                for i in range(len(columns)):
-                    if columns[i].id() == col:
-                        colsel.SetSelection(i)
-                        break
-            # Smìr tøídìní
-            dirsel = self._create_choice(direction_choices,
-                                         tooltip=_("Zvolte smìr tøídìní"))
-            if self._direction == LookupForm.SORTING_DESCENDANT:
-                dirsel.SetSelection(1)
-            self._selections.append((colsel, dirsel))
-            # Sizer
-            sizer = wx.BoxSizer()
-            for w in colsel, dirsel:
-                sizer.Add(w)
-            big_sizer.Add(sizer)
         button = self._create_button(_("Pøidat"), self._on_add,
                                      _("Pøidat sloupec sekundárního tøídìní"))
-        big_sizer.Add(button)
-        return big_sizer
+        return super(SortingDialog, self)._create_content() + (button,)
 
     def _customize_result(self, button_wid):
         label = self._button_label(button_wid)
-        if label == self._CANCEL_BUTTON:
+        if label == self._RESET_BUTTON:
             return ()
-        elif label != self._OK_BUTTON:
+        elif label != self._SORT_BUTTON:
             return None
-        return self._customize_result_sorting()
+        return self._selected_sorting()
 
-    def _customize_result_sorting(self):
+    def _selected_sorting(self):
         sorting = []
-        for colsel, dirsel in self._selections:
-            # Sloupec
-            colvalue = colsel.GetSelection()
-            colid = self._columns[colvalue].id()
-            # Smìr
-            dirvalue = dirsel.GetSelection()
-            if dirvalue == 0:
-                direction = LookupForm.SORTING_ASCENDENT
-            elif dirvalue == 1:
-                direction = LookupForm.SORTING_DESCENDANT
-            elif dirvalue == 2:
-                continue
-            else:
-                raise ProgramError('Invalid direction selection', dirvalue)
-            sorting.append((colid, direction))
+        for colsel, dirsel in self._controls:
+            cid = self._columns[colsel.GetSelection()].id()
+            direction = self._DIRECTIONS[dirsel.GetSelection()]
+            if direction is not None:
+                sorting.append((cid, direction))
         return tuple(sorting)
 
     def _on_add(self, event):
-        new = (self._columns[0].id(), LookupForm.SORTING_DESCENDANT)
-        self._sorting = self._customize_result_sorting() + (new,)
+        new = (self._columns[0].id(), pytis.data.DESCENDANT)
+        self._sorting = self._selected_sorting() + (new,)
         self.rebuild()
 
     
@@ -258,15 +246,14 @@ class SFDialog(SFSDialog):
                                  'GE': pytis.data.GE}
     _LOGICAL_OPERATORS_MAP = {'AND': pytis.data.AND,
                               'OR': pytis.data.OR}
-    _TITLE = ''
-    _BUTTONS = (_("Zavøít"),)
     _TEXT_CTRL_SIZE = 18
-    _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(), None)
+    _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(),
+                           None)
     
     class SFConditionError(Exception):
         pass
 
-    def __init__(self, parent, columns, row, col=None, condition=None):
+    def __init__(self, parent, columns, row, condition=None, **kwargs):
         """Initialize the dialog.
 
         Arguments:
@@ -274,25 +261,26 @@ class SFDialog(SFSDialog):
           parent -- wx parent of the dialog window
           columns -- a sequence of 'SFSColumn' instances
           row -- current row as a 'pytis.data.Row' instance or 'None'
-          col -- current column identifier as a string
           condition -- search/filtering condition as a 'pytis.data.Operator'
             instance.  This condition will be preselected in the dialog.  The
             current implementation, however, can only display a certainly
             structured condition.  It is safe to use a condition obtained from
             the previous dialog call.
+          kwargs -- passed to the parent class constructor
 
         """
-        self._columns = (self._NO_COLUMN,) + tuple(columns)
         self._row = row
-        self._col = col
         self._condition = condition
-        super_(SFDialog).__init__(self, parent, self._TITLE, self._BUTTONS)
+        self._col2_columns = (self._NO_COLUMN,) + tuple(columns)
+        super(SFDialog, self).__init__(parent, columns, **kwargs)
 
-    def _create_content(self):
+    def _create_controls(self):
         # Construct the ui controls based on the current condition.
         def decompose_condition(operator, logical_operation=None):
             # Decompose nested conditions into a list of corresponding operator
             # functions and their logical pairing.
+            if not isinstance(operator, pytis.data.Operator):
+                raise Exception("Invalid condition: "+ repr(operator))
             name, args = operator.name(), operator.args()
             if len(args) != 2:
                 # This really applies also for logical operators!
@@ -304,11 +292,11 @@ class SFDialog(SFSDialog):
                        decompose_condition(arg2, op)
             elif self._RELATIONAL_OPERATORS_MAP.has_key(name):
                 op = self._RELATIONAL_OPERATORS_MAP[name]
-                col1 = find(arg1, self._columns, key=lambda c: c.id())
+                col1 = self._find_column(arg1)
                 if col1 is None:
                     raise Exception("Invalid column: "+ arg1)
                 if isinstance(arg2, str):
-                    col2 = find(arg2, self._columns, key=lambda c: c.id())
+                    col2 = self._find_column(arg2)
                     if col2 is None:
                         raise Exception("Invalid column: "+ arg2)
                     value = None
@@ -336,7 +324,7 @@ class SFDialog(SFSDialog):
                 choice(self._OPERATORS, selected=operator,
                        label=lambda o: self._LABELS[o],
                        tooltip=_("Zvolte operátor")),
-                choice(self._columns, selected=col2,
+                choice(self._col2_columns, selected=col2,
                        label=lambda c: c.label('* '+_("hodnota")+' *'),
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte s èím má být hodnota porovnávána")),
@@ -348,7 +336,7 @@ class SFDialog(SFSDialog):
                        _("Vymazat obsah podmínky")),
                 button(_("Odebrat"), lambda e: self._on_remove(i),
                        _("Zru¹it tuto podmínku"), enabled=n > 1))
-        c = self._NO_COLUMN
+        c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
         try:
             conditions = decompose_condition(self._condition  or empty)
@@ -356,32 +344,23 @@ class SFDialog(SFSDialog):
             run_dialog(Warning, (_("Nepdaøilo se rozlo¾it podmínkový výraz:")+
                                  " "+str(e)))
             conditions = decompose_condition(empty)
-        self._controls = []
         for i, items in enumerate(conditions):
             self._controls.append(create_controls(i, len(conditions), *items))
             self._on_selection_change(i)
+
+    def _create_content(self):
         b1 = self._create_button(_('Pøidat "a zároveò"'),
                                  lambda e: self._on_add(),
                                  _("Pøidat novou podmínku v konjunkci"))
         b2 = self._create_button(_('Pøidat "nebo"'),
                                  lambda e: self._on_add(or_=True),
                                  _("Pøidat novou podmínku v disjunkci"))
+        buttons = wx.BoxSizer(wx.HORIZONTAL)
+        buttons.Add(b1)
+        buttons.Add(b2, 0, wx.LEFT, 20)
+        return super(SFDialog, self)._create_content() + (buttons,)
 
-        # Put all the controlls into sizers.
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        for ctrls in self._controls:
-            row = wx.BoxSizer()
-            for x in ctrls:
-                if x:
-                    row.Add(x)
-            sizer.Add(row, 0, wx.ALIGN_RIGHT)
-        bsizer = wx.BoxSizer(wx.HORIZONTAL)
-        bsizer.Add(b1)
-        bsizer.Add(b2, 0, wx.LEFT, 20)
-        # Hotovo
-        return (sizer, bsizer)
-
-    def _selected_condition(self, omit=None, allow_no_column=False):
+    def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
         def quit(i, ctrl, msg):
             msg = _("Chyba v podmínce è. %d: %s") % (i+1, msg)
@@ -397,9 +376,7 @@ class SFDialog(SFSDialog):
             lop = wlop and self._LOGICAL_OPERATORS[wlop.GetSelection()]
             col1 = self._columns[wcol1.GetSelection()]
             op = self._OPERATORS[wop.GetSelection()]
-            col2 = self._columns[wcol2.GetSelection()]
-            if col1 is self._NO_COLUMN and not allow_no_column:
-                quit(i, wcol1, _("Není zvolen sloupec"))
+            col2 = self._col2_columns[wcol2.GetSelection()]
             if col2 is not self._NO_COLUMN:
                 arg2 = col2.id()
             else:
@@ -431,24 +408,20 @@ class SFDialog(SFSDialog):
 
     def _on_selection_change(self, i):
         wcol1, wop, wcol2, wval, bsuck, bclear = self._controls[i][1:7]
-        enabled = wcol1.GetSelection() != 0
-        for ctrl in (wop, wcol2,wval, bclear, bsuck):
+        enabled = wcol2.GetSelection() == 0
+        for ctrl in (wval, bsuck):
             ctrl.Enable(enabled)
-        if enabled:
-            e2 = wcol2.GetSelection() == 0
-            for ctrl in (wval, bsuck):
-                ctrl.Enable(e2)
         
     def _on_clear(self, i):
         wcol1, wop, wcol2, wval = self._controls[i][1:5]
-        wcol1.SetSelection(0)
         wop.SetSelection(0)
+        wcol2.SetSelection(0)
         wval.SetValue('')
         self._on_selection_change(i)
 
     def _on_suck(self, i):
         wcol1, wop, wcol2, wval = self._controls[i][1:5]
-        col = self._columns[self._controls[i][1].GetSelection()]
+        col = self._columns[wcol1.GetSelection()]
         v = self._row[col.id()].export()
         if is_sequence(v):
             v = v[0]
@@ -456,7 +429,7 @@ class SFDialog(SFSDialog):
 
     def _on_remove(self, i):
         try:
-            condition = self._selected_condition(omit=i, allow_no_column=True)
+            condition = self._selected_condition(omit=i)
         except self.SFConditionError:
             pass
         else:
@@ -465,12 +438,12 @@ class SFDialog(SFSDialog):
     
     def _on_add(self, or_=False):
         try:
-            condition = self._selected_condition(allow_no_column=True)
+            condition = self._selected_condition()
         except self.SFConditionError:
             pass
         else:
             op = or_ and pytis.data.OR or pytis.data.AND
-            c = self._NO_COLUMN
+            c = self._find_column(self._col) or self._columns[0]
             v = pytis.data.Value(c.type(), None)
             self._condition = op(condition, pytis.data.EQ(c.id(), v))
             self.rebuild()
@@ -492,7 +465,7 @@ class SearchDialog(SFDialog):
     """
     _NEXT_BUTTON = _("Dal¹í")
     _PREVIOUS_BUTTON = _("Pøedchozí")
-    _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFDialog._BUTTONS
+    _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _NEXT_BUTTON    
     _TITLE = _("Hledání")
     _HELP_TOPIC = 'searching'
@@ -541,7 +514,7 @@ class FilterDialog(SFDialog):
     """
     _FILTER_BUTTON = _("Filtrovat")
     _UNFILTER_BUTTON = _("Zru¹it filtr")
-    _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFDialog._BUTTONS
+    _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _FILTER_BUTTON
     _AGG_OPERATORS = (pytis.data.Data.AGG_COUNT,
                       pytis.data.Data.AGG_MIN,
@@ -557,16 +530,29 @@ class FilterDialog(SFDialog):
     _HELP_TOPIC = 'filtering'
 
     def __init__(self, parent, columns, row, compute_aggregate, **kwargs):
+        """Initialize the dialog.
+
+        Arguments:
+
+          parent -- wx parent of the dialog window
+          columns -- a sequence of 'SFSColumn' instances
+          row -- current row as a 'pytis.data.Row' instance or 'None'
+          compute_aggregate -- a callable object which takes three arguments
+            (OPERATION, COLUMN_ID, CONDITION) and returns the result of the
+            aggregation OPERATION on COLUMN_ID with given CONDITION as a
+            'pytis.data.Value' instance.
+          kwargs -- passed to the parent class constructor
+
+        """
         self._compute_aggregate = compute_aggregate
         self._perform = False
         super(FilterDialog, self).__init__(parent, columns, row, **kwargs)
 
     def _create_content(self):
-        content = super_(FilterDialog)._create_content(self)
         choice, field, button = self._create_choice, \
                                 self._create_text_ctrl, self._create_button
         self._agg_controls = (
-            choice(self._columns[1:], label=lambda c: c.label(),
+            choice(self._columns, label=lambda c: c.label(),
                    tooltip=_("Zvolte sloupec pro agregaci")),
             choice(self._AGG_OPERATORS, label=lambda o: self._AGG_LABELS[o],
                    tooltip=_("Zvolte agregaèní funkci")),
@@ -578,16 +564,19 @@ class FilterDialog(SFDialog):
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
         for w in self._agg_controls:
             sizer.Add(w)
-        return content + (sizer,)
+        return super_(FilterDialog)._create_content(self) + (sizer,)
 
     def _on_compute_aggregate(self, event):
         if self._on_filter():
             wcol, wop, wresult, wbutton = self._agg_controls
             op = self._AGG_OPERATORS[wop.GetSelection()]
-            col = self._columns[wcol.GetSelection()+1]
+            col = self._columns[wcol.GetSelection()]
             result = self._compute_aggregate(op, col.id(), self._condition)
             if result is not None:
-                wresult.SetValue(result.export())
+                v = result.export()
+            else:
+                v = ''
+            wresult.SetValue(v)
 
     def _on_filter(self):
         try:
