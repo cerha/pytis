@@ -665,6 +665,9 @@ class RecordForm(InnerForm):
             return data_row.columns([c.id() for c in self._data.key()])
         return None
     
+    def _current_column_id(self):
+        return None
+    
     def _new_form_kwargs(self):
         return {}
 
@@ -1131,6 +1134,7 @@ class LookupForm(RecordForm):
             direction, condition = block_refresh(lambda:
                              run_dialog(SearchDialog, self._lf_sfs_columns(),
                                         self.current_row(),
+                                        col=self._current_column_id(),
                                         condition=self._lf_search_condition))
         if direction is not None:
             self._lf_search_condition = condition
@@ -1162,6 +1166,7 @@ class LookupForm(RecordForm):
             perform, condition = \
                      run_dialog(FilterDialog, self._lf_sfs_columns(),
                                 self.current_row(), self._compute_aggregate,
+                                col=self._current_column_id(),
                                 condition=(self._lf_filter or
                                            self._lf_last_filter))
         if perform and condition != self._lf_filter:
@@ -1209,12 +1214,20 @@ class LookupForm(RecordForm):
             columns = self._lf_sfs_columns()
             if col is None and self._lf_sorting: 
                 col = self._sorting_columns()[0]
-            sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
+            if direction is not None:
+                mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
+                           self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
+                direction = mapping[direction]
+            sorting = run_dialog(SortingDialog, columns, self._data_sorting(),
                                  col=col, direction=direction)
             if sorting is None:
                 return None
             elif sorting is ():
                 sorting = self._lf_initial_sorting
+            else:
+                mapping = {pytis.data.ASCENDENT:  self.SORTING_ASCENDENT,
+                           pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
+                sorting = tuple([(cid, mapping[dir]) for cid, dir in sorting])
         elif col is not None:
             if not self._data.find_column(col):
                 message(_("Podle tohoto sloupce nelze tøídit"),
@@ -1269,15 +1282,6 @@ class LookupForm(RecordForm):
         """
         return self._current_condition()
     
-    def sorting(self):
-        """Vra» specifikaci aktuálního tøídìní seznamu.
-
-        Podmínka je vrácena v podobì po¾adované argumentem 'sort'
-        metody 'pytis.data.Data.select()'.
-
-        """
-        return self._lf_sorting
-
 
 ### Editaèní formuláø
 
