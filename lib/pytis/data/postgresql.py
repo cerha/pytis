@@ -995,8 +995,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 fix_case = lambda x: 'lower(%s)' % x
             else:
                 fix_case = lambda x: x
-            if rel == '=' and a2null:
-                rel = 'IS'
+            if rel in ('=', '!=') and a2null:
+                rel = 'IS' + (rel == '!=' and ' NOT' or '')
             return '(%s %s %s)' % (fix_case(a1), rel, fix_case(a2))
         operators = {'EQ': '=',
                      'NE': '!=',
