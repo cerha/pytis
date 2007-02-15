@@ -413,6 +413,14 @@ class SFDialog(SFSDialog):
             col2 = self._col2_columns[wcol2.GetSelection()]
             if col2 is not self._NO_COLUMN:
                 arg2 = col2.id()
+                for basetype in (pytis.data.String, pytis.data.Number,
+                                 pytis.data.DateTime, pytis.data.Boolean,
+                                 pytis.data.Binary):
+                    if isinstance(col1.type(), basetype) \
+                           and not isinstance(col2.type(), basetype):
+                        quit(i, wcol2, _("Nesluèitelné typy %s a %s") %
+                             (col1.type().__class__.__name__,
+                              col2.type().__class__.__name__))
             else:
                 val = wval.GetValue()
                 if self._WM_OPERATORS.has_key(op) and \
