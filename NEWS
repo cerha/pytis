@@ -16,6 +16,10 @@
 	je políèko needitovatelné a umo¾òuje otevøení a ulo¾ení obrázku.
 	Neproti tomu neumo¾òuje smazání a pøenastavení hodnoty v
 	needitovatelném stavu.
+
+	Pøi zadání podmínky, která porovnává dva sloupce, je kontrolována
+	kompatibilita typù tìchto sloupcù a porovnání nesluèitelných typù
+	je odmítnuto.
 	
 	* BUGFIX: Opravena SQL konverze pro operátor "NW".
 	
