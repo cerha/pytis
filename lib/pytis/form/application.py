@@ -403,7 +403,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _read_config(self):
         name = self._config_name()
-        log(OPERATIONAL, "Naèítám konfiguraci výchozí metodou:", name)
+        log(OPERATIONAL, "Loading saved configuration:", name)
         wxconfig = wx.Config(name)
         mapping = ((pytis.data.String,  wxconfig.Read),
                    (pytis.data.Integer, wxconfig.ReadInt),
@@ -414,6 +414,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             for type, read in mapping:
                 if isinstance(t, type):
                     value = read(option)
+                    break
             else:
                 value = pickle.loads(str(wxconfig.Read(option)))
             items.append((option, value))
@@ -421,7 +422,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             
     def _write_config(self, items):
         name = self._config_name()
-        log(OPERATIONAL, "Ukládám konfiguraci výchozí metodou:", name)
+        log(OPERATIONAL, "Saving configuration:", name)
         wxconfig = wx.Config(name)
         to_delete = self._stored_options(wxconfig)
         mapping = ((pytis.data.String,  wxconfig.Write),
@@ -435,6 +436,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 #TODO: Co None hodnoty???
                 if isinstance(t, type):
                     write(option, value)
+                    break
             else:
                 wxconfig.Write(option, pickle.dumps(value))
         for option in to_delete:
