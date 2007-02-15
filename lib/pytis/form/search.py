@@ -33,13 +33,13 @@ from pytis.presentation import *
 import wx
 
 
-class SFSColumn:
-    """Pomocná tøída pro specifikaci sloupcù do selectoru."""
+class SFSColumn(object):
+    """Column specification for dialog selectors."""
 
     def __init__(self, id, type, label):
-        """Inicializuj specifikaci sloupce.
+        """Initialize column specification.
 
-        Argumenty:
+        Arguments:
 
           id -- datový identifikátor sloupce jako string
           type -- datový typ sloupce jako instance tøídy
@@ -97,7 +97,7 @@ class SFSDialog(GenericDialog):
                        selected=None, on_change=None):
         ch = wx.Choice(self._dialog, -1, choices=[label(x) for x in choices])
         ch.SetSelection(0)
-        ch.SetMinSize((ch.GetSize().width+20, self._FIELD_HEIGHT))
+        ch.SetMinSize((ch.GetSize().width, self._FIELD_HEIGHT))
         if tooltip is not None and config.show_tooltips:
             ch.SetToolTipString(unicode(tooltip))
         if selected:
@@ -233,8 +233,8 @@ class SFDialog(SFSDialog):
                pytis.data.LT: '<',
                pytis.data.GT: '>',
                pytis.data.NE: '=/=',
-               pytis.data.AND: _("a zároveò"),
-               pytis.data.OR:  _("nebo")}
+               pytis.data.AND: _("AND"),
+               pytis.data.OR:  _("OR")}
     # WM and EQ have the same UI ctrl, so we ignore the difference.
     _RELATIONAL_OPERATORS_MAP = {'EQ': pytis.data.EQ,
                                  'NE': pytis.data.NE,
@@ -253,7 +253,8 @@ class SFDialog(SFSDialog):
     class SFConditionError(Exception):
         pass
 
-    def __init__(self, parent, columns, row, condition=None, **kwargs):
+    def __init__(self, parent, columns, row, condition=None,
+                 conditions=(), **kwargs):
         """Initialize the dialog.
 
         Arguments:
@@ -261,16 +262,22 @@ class SFDialog(SFSDialog):
           parent -- wx parent of the dialog window
           columns -- a sequence of 'SFSColumn' instances
           row -- current row as a 'pytis.data.Row' instance or 'None'
-          condition -- search/filtering condition as a 'pytis.data.Operator'
-            instance.  This condition will be preselected in the dialog.  The
-            current implementation, however, can only display a certainly
-            structured condition.  It is safe to use a condition obtained from
-            the previous dialog call.
+          condition -- current condition as a 'pytis.data.Operator' instance.
+            This condition will be preselected in the dialog.  The current
+            implementation, can only display a certainly structured condition.
+            It is safe to use a condition obtained from the previous dialog
+            call.
+          conditions -- predefined search/filtering conditions as a sequence of
+            'Condition' instances which may be loaded into a dialog.  Same
+            limitations as for 'condition' apply.
           kwargs -- passed to the parent class constructor
 
         """
+        assert isinstance(conditions, tuple)
         self._row = row
         self._condition = condition
+        self._conditions = list(conditions)
+        self._loaded_condition = None
         self._col2_columns = (self._NO_COLUMN,) + tuple(columns)
         super(SFDialog, self).__init__(parent, columns, **kwargs)
 
@@ -347,21 +354,45 @@ class SFDialog(SFSDialog):
         for i, items in enumerate(conditions):
             self._controls.append(create_controls(i, len(conditions), *items))
             self._on_selection_change(i)
-        wval = self._controls[0][4]
+        wval = self._controls[-1][4]
         if wval.IsEnabled():
             self._want_focus = wval
 
     def _create_content(self):
-        b1 = self._create_button(_('Pøidat "a zároveò"'),
-                                 lambda e: self._on_add(),
-                                 _("Pøidat novou podmínku v konjunkci"))
-        b2 = self._create_button(_('Pøidat "nebo"'),
-                                 lambda e: self._on_add(or_=True),
-                                 _("Pøidat novou podmínku v disjunkci"))
-        buttons = wx.BoxSizer(wx.HORIZONTAL)
-        buttons.Add(b1)
-        buttons.Add(b2, 0, wx.LEFT, 20)
-        return super(SFDialog, self)._create_content() + (buttons,)
+        choice, button = self._create_choice, self._create_button
+        buttons = [
+            button(_("Pøidat AND"), lambda e: self._on_add(),
+                   tooltip=_("Pøidat novou podmínku v konjunkci")),
+            button(_("Pøidat OR"), lambda e: self._on_add(or_=True),
+                   tooltip=_("Pøidat novou podmínku v disjunkci")),
+            button(_("Zru¹it v¹e"), lambda e: self._on_reset(),
+                   tooltip=_("Pøidat novou podmínku v disjunkci"))]
+        if self._conditions:
+            buttons.append(
+                button(_("Ulo¾it"), lambda e: self._on_save(),
+                       tooltip=_("Ulo¾it stávající výbìr jako pojmenovanou "
+                                 "podmínku")))
+            self._saved_condition_controls = (
+                choice(self._conditions, label=lambda c: c.name(),
+                       selected=self._loaded_condition,
+                       on_change=lambda e: self._on_saved_selection_change(),
+                       tooltip=_("Vyberte jednu z pojmenovaných podmínek.")),
+                button(_("Naèíst"), lambda e: self._on_load(),
+                       tooltip=_("Nahradit stávající výbìr zvolenou "
+                                 "podmínkou")),
+                button(_("Smazat"), lambda e: self._on_remove_saved(),
+                       tooltip=_("Smazat zvolenou podmínkou")),
+                button(_("Aktualizovat"), lambda e: self._on_update_saved(),
+                       tooltip=_("Ulo¾it stávající výbìr pod zvoleným názvem")))
+            self._on_saved_selection_change()
+        else:
+            self._saved_condition_controls = ()
+        bsizer = wx.BoxSizer(wx.HORIZONTAL)
+        for b in buttons:
+            bsizer.Add(b, 0, wx.RIGHT, 10)
+        for x in self._saved_condition_controls:
+            bsizer.Add(x)
+        return super(SFDialog, self)._create_content() + (bsizer,)
 
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
@@ -451,11 +482,65 @@ class SFDialog(SFSDialog):
             self._condition = op(condition, pytis.data.EQ(c.id(), v))
             self.rebuild()
 
+    def _on_reset(self):
+        self._condition = None
+        self._loaded_condition = None
+        self.rebuild()
 
+    def _on_save(self):
+        try:
+            self._condition = condition = self._selected_condition()
+        except SFConditionError:
+            return
+        name = run_dialog(InputDialog, title=_("Ulo¾it podmínku pod jménem"),
+                          prompt="Název:", input_width=40)
+        if name:
+            self._conditions.append(Condition(name, condition, fixed=False))
+            self._loaded_condition = self._conditions[-1]
+            self.rebuild()
+        
+    def _on_saved_selection_change(self):
+        sel, bload, bremove, bupdate = self._saved_condition_controls
+        cond = self._conditions[sel.GetSelection()]
+        for b in (bremove, bupdate):
+            b.Enable(not cond.fixed())
+        
+    def _on_load(self):
+        i = self._saved_condition_controls[0].GetSelection()
+        self._loaded_condition = cond = self._conditions[i]
+        self._condition = cond.condition()
+        self.rebuild()
+
+    def _on_remove_saved(self):
+        i = self._saved_condition_controls[0].GetSelection()
+        cond = self._conditions[i]
+        if not cond.fixed():
+            msg = _("Opravdu chcete smazat ulo¾enou podmínku '%s'?") \
+                  % cond.name()
+            if run_dialog(Question, msg, title=_("Mazání ulo¾ené podmínky")):
+                self._loaded_condition = None
+                del self._conditions[i]
+                self.rebuild()
+        
+    def _on_update_saved(self):
+        i = self._saved_condition_controls[0].GetSelection()
+        cond = self._conditions[i]
+        if cond.fixed():
+            return
+        try:
+            self._condition = condition = self._selected_condition()
+        except SFConditionError:
+            return
+        self._conditions[i] = Condition(cond.name(), condition, fixed=False)
+        self._loaded_condition = self._conditions[i]
+        self.rebuild()
+        
+            
 class SearchDialog(SFDialog):
     """Dialog for manipulation of the current searching condition.
 
-    The 'run()' method of this dialog returns a pair (DIRECTION, CONDITION).
+    The 'run()' method of this dialog returns a triple
+    (DIRECTION, CONDITION, CONDITIONS).
     
     DIRECTION is the selected search direction.  The value can be either
     'pytis.data.FORWARD', 'pytis.data.BACKWARD' or 'None'.  'None' means that
@@ -465,6 +550,11 @@ class SearchDialog(SFDialog):
     CONDITION is the selected search condition as a 'pytis.data.Operator'
     instance.
 
+    CONDITIONS is the sequence of named conditions as 'Condition' instances.
+    This list may have been modified by the user and thus may be different than
+    the list passed to the constructor.  Passing it back allows the application
+    to save it.
+    
     """
     _NEXT_BUTTON = _("Dal¹í")
     _PREVIOUS_BUTTON = _("Pøedchozí")
@@ -491,7 +581,7 @@ class SearchDialog(SFDialog):
         return super(SearchDialog, self)._on_button(event)
         
     def _customize_result(self, button_wid):
-        return self._direction, self._condition
+        return self._direction, self._condition, self._conditions
 
 
 class FilterDialog(SFDialog):
@@ -503,7 +593,8 @@ class FilterDialog(SFDialog):
     filtered by the current selected condition without the need to actually
     perform the filter to the underlying form.
 
-    The 'run()' method of this dialog returns a pair (PERFORM, CONDITION).
+    The 'run()' method of this dialog returns a triple
+    (PERFORM, CONDITION, CONDITIONS).
     
     PERFORM is a boolean flag indicating whether the CONDITION should be
     applied to the underlying form or not.  It is True when the user presses
@@ -513,6 +604,11 @@ class FilterDialog(SFDialog):
     CONDITION is the current selected search condition as a
     'pytis.data.Operator' instance or None.  'None' is used when the user
     wishes to unfilter the underlying form.
+    
+    CONDITIONS is the sequence of named conditions as 'Condition' instances.
+    This list may have been modified byt the user and thus may be different
+    than the list passed to the constructor.  Passing it back allows the
+    application to save it.
 
     """
     _FILTER_BUTTON = _("Filtrovat")
@@ -599,7 +695,7 @@ class FilterDialog(SFDialog):
         return super(FilterDialog, self)._on_button(event)
         
     def _customize_result(self, button_wid):
-        return self._perform, self._condition
+        return self._perform, self._condition, self._conditions
 
 
 def sfs_columns(columns, data, labelfunc=FieldSpec.label):
