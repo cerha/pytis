@@ -1007,7 +1007,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      }
         if operators.has_key(op_name):
             expression = relop(operators[op_name], op_args, op_kwargs)
-        elif op_name == 'WM':
+        elif op_name in ('WM', 'NW'):
             cid, spec = op_args[0], op_args[1].value()
             for old, new in (('%', '\%'), ('_', '\_')):
                 spec = string.replace(spec, old, new)
@@ -1023,7 +1023,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if (i-j) % 2 == 1:
                         spec = spec[:i] + new + spec[i+1:]
             spec = Value(String(), spec)
-            expression = relop('LIKE', (cid, spec), op_kwargs)
+            rel = (op_name == 'NW' and 'NOT ' or '') + 'LIKE'
+            expression = relop(rel, (cid, spec), op_kwargs)
         elif op_name == 'NOT':
             assert len(op_args) == 1, ('Invalid number or arguments', op_args)
             arg = op_args[0]
@@ -1040,7 +1041,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                              ('Invalid suboperator', op_args)
                 exps = map(self._pdbb_condition2sql, op_args)
                 sqlop = (' %s ' % (op_name == 'AND' and 'and' or 'or'))
-                expression = string.join(exps, sqlop)
+                expression = sqlop.join(exps)
         elif op_name == 'IN':
             assert len(op_args) == 4, ('Invalid number or arguments', op_args)
             col, data, table_col, cond = op_args
