@@ -515,12 +515,12 @@ class SFDialog(SFSDialog):
         i = self._saved_condition_controls[0].GetSelection()
         cond = self._conditions[i]
         if not cond.fixed():
-            msg = _("Opravdu chcete smazat ulo¾enou podmínku '%s'?") \
-                  % cond.name()
-            if run_dialog(Question, msg, title=_("Mazání ulo¾ené podmínky")):
-                self._loaded_condition = None
-                del self._conditions[i]
-                self.rebuild()
+            return
+        msg = _("Opravdu chcete smazat ulo¾enou podmínku '%s'?") % cond.name()
+        if run_dialog(Question, msg, title=_("Mazání ulo¾ené podmínky")):
+            self._loaded_condition = None
+            del self._conditions[i]
+            self.rebuild()
         
     def _on_update_saved(self):
         i = self._saved_condition_controls[0].GetSelection()
@@ -528,12 +528,15 @@ class SFDialog(SFSDialog):
         if cond.fixed():
             return
         try:
-            self._condition = condition = self._selected_condition()
+            self._condition = self._selected_condition()
         except SFConditionError:
             return
-        self._conditions[i] = Condition(cond.name(), condition, fixed=False)
-        self._loaded_condition = self._conditions[i]
-        self.rebuild()
+        msg = _("Opravdu pøepsat ulo¾enou podmínku\n"
+                "'%s' aktuálním výbìrem?") % cond.name()
+        if run_dialog(Question, msg, title=_("Pøepis ulo¾ené podmínky")):
+            self._conditions[i] = self._loaded_condition = \
+                     Condition(cond.name(), self._condition, fixed=False)
+            self.rebuild()
         
             
 class SearchDialog(SFDialog):
