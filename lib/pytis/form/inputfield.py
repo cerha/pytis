@@ -1457,6 +1457,9 @@ class FileField(Invocable, InputField):
                  _("Nastavit prázdnou hodnotu.")),
                 )
 
+    def _can_load(self):
+        return self._enabled
+        
     def _cmd_load(self):
         msg = _("Vyberte soubor pro políèko '%s'") % self.spec().label()
         dir = FileField._last_load_dir or FileField._last_save_dir or ''
@@ -1498,7 +1501,7 @@ class FileField(Invocable, InputField):
                 message(_("Soubor ulo¾en."))
         
     def _can_clear(self):
-        return self._buffer is not None
+        return self._enabled and self._buffer is not None
         
     def _cmd_clear(self):
         self.set_value(None)
@@ -1514,6 +1517,10 @@ class ImageField(FileField):
                          size=(self.width()+10, self.height()+10),
                          callback=lambda e: self._on_button())
 
+    def _disable(self, change_appearance):
+        super_(ImageField)._disable(self, change_appearance)
+        self._ctrl.Enable(True)
+        
     def _button_size(self):
         x = self._px_size(1, 1)[1]
         return (x+4, x+2)
