@@ -24,7 +24,7 @@
 	conditions marked as persistent.
 
 	* pytis/form/search.py: Added support for manipulation of named
-	conditions.
+	conditions.  Added type compatibility check for column comparisons.
 
 2007-02-14  Tomas Cerha  <cerha@brailcom.org>
 
