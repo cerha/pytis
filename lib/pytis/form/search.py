@@ -67,7 +67,7 @@ class SFSColumn(object):
 class SFSDialog(GenericDialog):
     """Common ancestor of all sorting/filtering/searching dialogs."""
 
-    _FIELD_HEIGHT = 26
+    _FIELD_HEIGHT = 27
     _TITLE = None
     _ESCAPE_BUTTON = _("Zavøít")
     _BUTTONS = (_ESCAPE_BUTTON,)
