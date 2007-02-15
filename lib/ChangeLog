@@ -1,5 +1,8 @@
 2007-02-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Only pickle saved/loaded params when
+	needed.
+
 	* pytis/form/inputfield.py: Make the image button enabled even if
 	the field is disabled.  Allow load a nd reset only for an enabled
 	field.
@@ -16,6 +19,9 @@
 	* pytis/form/form.py: Added support for loading and saving user
 	defined named conditions as well as named conditions defined in
 	the specification.
+	Added support for persistent state params, which don't get
+	reloaded by RESET_FORM_STATE/RELOAD_FORM_STATE commands.  Saved
+	conditions marked as persistent.
 
 	* pytis/form/search.py: Added support for manipulation of named
 	conditions.
