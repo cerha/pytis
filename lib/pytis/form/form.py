@@ -202,11 +202,18 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _form_state_key(self):
         return self.__class__.__name__+'/'+self._name
     
-    def _get_state_param(self, name, default=None, cls=None):
+    def _get_state_param(self, name, default=None, cls=None, item_cls=None):
         param = self._form_state.get(name, default)
         if cls is not None and not isinstance(param, cls):
             log(OPERATIONAL, "Invalid saved form attribute value:", name)
             return default
+        if item_cls is not None:
+            assert cls is tuple
+            for item in param:
+                if not isinstance(item, item_cls):
+                    log(OPERATIONAL, "Invalid saved form attribute value:",
+                        name)
+                    return default
         return param
 
     def _set_state_param(self, name, value):
@@ -1018,7 +1025,7 @@ class LookupForm(RecordForm):
 
     def _init_sorting(self, sorting=None):
         if sorting is None:
-            sorting = self._get_state_param('sorting', None, types.TupleType)
+            sorting = self._get_state_param('sorting', None, tuple, str)
         if sorting is not None:
             for id, direction in sorting:
                 if self._data.find_column(id) is None or direction not in \
@@ -1131,11 +1138,10 @@ class LookupForm(RecordForm):
         if condition is not None and next:
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
-            direction, condition = block_refresh(lambda:
-                             run_dialog(SearchDialog, self._lf_sfs_columns(),
-                                        self.current_row(),
-                                        col=self._current_column_id(),
-                                        condition=self._lf_search_condition))
+            direction, condition, conditions = block_refresh(lambda:
+                 run_dialog(SearchDialog, self._lf_sfs_columns(),
+                            self.current_row(), col=self._current_column_id(),
+                            condition=self._lf_search_condition))
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)
@@ -1151,8 +1157,10 @@ class LookupForm(RecordForm):
         return self._data.select_aggregate((operation, column_id), condition)
 
     def _filter(self, condition):
-        self._lf_last_filter = self._lf_filter
         self._lf_filter = condition
+        if condition is not None:
+            self._lf_last_filter = condition
+            self._set_state_param('filter', condition)
         self._filter_refresh()
         
     def _filter_refresh(self):
@@ -1163,16 +1171,20 @@ class LookupForm(RecordForm):
         if condition:
             perform = True
         else:
-            perform, condition = \
+            filters = (Condition(_("Poslední aplikovaný filtr"),
+                                 self._lf_last_filter),
+                       ) + self._view.conditions() + \
+                       self._get_state_param('filters', (), tuple, Condition)
+            perform, condition, conditions = \
                      run_dialog(FilterDialog, self._lf_sfs_columns(),
                                 self.current_row(), self._compute_aggregate,
                                 col=self._current_column_id(),
-                                condition=(self._lf_filter or
-                                           self._lf_last_filter))
+                                condition=self._lf_filter,
+                                conditions=filters)
+            self._set_state_param('filters', tuple([c for c in conditions
+                                                    if not c.fixed()]))
         if perform and condition != self._lf_filter:
             self._filter(condition)
-            self._set_state_param('filter', condition)
-        
 
     def _can_unfilter(self):
         return self._lf_filter is not None
@@ -1822,7 +1834,6 @@ class PopupEditForm(PopupForm, EditForm):
         i = self._inserted_data_pointer
         message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
         self._init_inserted_row()
-
     
     def _buttons(self):
         buttons = ({'id': wx.ID_OK,
