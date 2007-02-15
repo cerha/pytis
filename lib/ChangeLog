@@ -1,5 +1,9 @@
 2007-02-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py: Make the image button enabled even if
+	the field is disabled.  Allow load a nd reset only for an enabled
+	field.
+	
 	* pytis/data/data.py: Fixed 'NW' operator creation.
 
 	* pytis/data/postgresql.py
