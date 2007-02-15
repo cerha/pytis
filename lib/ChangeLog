@@ -1,5 +1,11 @@
 2007-02-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/data.py: Fixed 'NW' operator creation.
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_condition2sql): Added
+	explicit support for 'NW' operator.
+
 	* pytis/presentation/spec.py: New class for specification of named
 	conditions and a new option to pass them to ViewSpec.
 
