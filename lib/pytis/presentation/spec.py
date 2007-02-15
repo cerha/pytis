@@ -380,6 +380,36 @@ class ActionGroup(_ActionItem):
     def actions(self):
         """Vra» seznam akcí jako tuple."""
         return self._actions
+
+    
+class Condition(object):
+    """Saved searching/filtering condition specification."""
+    def __init__(self, name, condition, fixed=True):
+        """Initialize condition specification.
+
+        Arguments:
+
+          name -- condition name as a string
+          condition -- condition as a 'pytis.data.Operator' instance.
+          fixed -- indicates, whether the user is allowed to manipulate the
+            condition.  
+
+        """
+        self._name = name
+        self._condition = condition
+        self._fixed = fixed
+        
+    def name(self):
+        """Return the name passed to the constructor."""
+        return self._name
+
+    def condition(self):
+        """Return the condition passed to the constructor."""
+        return self._condition
+    
+    def fixed(self):
+        """Return True if the user is allowed to manipulate this condition."""
+        return self._fixed
     
     
 class GroupSpec(object):
@@ -635,7 +665,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None,
                  on_delete_record=None, on_line_commit=None, redirect=None,
                  focus_field=None, description=None, help=None,
-                 row_style=FIELD_STYLE_DEFAULT):
+                 row_style=FIELD_STYLE_DEFAULT, conditions=()):
         
         """Inicializuj instanci.
 
@@ -770,6 +800,9 @@ class ViewSpec(object):
           row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
             spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
             (instance 'PresentedRow') vracející instanci tøídy 'FieldStyle'.
+
+          conditions -- a sequence of 'Condition' instances, which may be used
+            for filtering/searching records in this view.
            
         Pokud není argument 'layout' nebo 'columns' uveden, bude vygenerován
         implicitní layout a seznam sloupcù, odpovídající poøadí políèek ve
@@ -868,9 +901,13 @@ class ViewSpec(object):
                     assert self.field(id) is not None
         assert callable(check) or isinstance(check, (list, tuple))
         check = xtuple(check)
+        assert isinstance(conditions, tuple)
         if __debug__:
             for f in check:
                 assert callable(f)
+            for c in conditions:
+                assert isinstance(c, Condition)
+                assert c.fixed()
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -900,6 +937,7 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
+        self._conditions = tuple(conditions)
 
     def title(self):
         """Vra» název náhledu jako øetìzec."""
@@ -999,6 +1037,10 @@ class ViewSpec(object):
     def row_style(self):
         """Vra» výchozí styl øádku, nebo funkci, která jej vypoète."""
         return self._row_style
+
+    def conditions(self):
+        """Vra» tuple pøeddefinovaných filtraèních/vyhledávacích podmínek."""
+        return self._conditions
 
     
 class BindingSpec(object):
