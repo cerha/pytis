@@ -1061,7 +1061,7 @@ def NW(x, y, ignore_case=True):
       
     """
     t = NOT(WM(x, y, ignore_case=ignore_case))
-    return Operator('WM', x, y, ignore_case=ignore_case, translation=t)
+    return Operator('NW', x, y, ignore_case=ignore_case, translation=t)
 
 def LT(x, y, ignore_case=False):
     """Podmínkový operátor 'LT' relace '<'.
