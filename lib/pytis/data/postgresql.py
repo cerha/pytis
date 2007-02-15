@@ -291,6 +291,15 @@ class PostgreSQLAccessor(object):
         """
         raise ProgramError(_("Volána neimplementovaná metoda"))
 
+    def _postgresql_begin_transaction(self):
+        self._pg_query ('begin')
+        
+    def _postgresql_commit_transaction(self):
+        self._pg_query ('commit')
+        
+    def _postgresql_rollback_transaction(self):
+        self._pg_query ('rollback')
+
 
 class PostgreSQLConnector(PostgreSQLAccessor):
     """Tøída pro pøístup k PostgreSQL na vy¹¹í úrovni.
@@ -1696,14 +1705,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def _pg_begin_transaction (self):
         self._pg_allocate_connection()
-        self._pg_query ('begin')
+        self._postgresql_begin_transaction()
         
     def _pg_commit_transaction (self):
-        self._pg_query ('commit')
+        self._postgresql_commit_transaction()
         self._pg_deallocate_connection()
         
     def _pg_rollback_transaction (self):
-        self._pg_query ('rollback')
+        self._postgresql_rollback_transaction()
         self._pg_deallocate_connection()
 
     # Pomocné metody

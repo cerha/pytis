@@ -62,8 +62,6 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
             raise DBException(_("Can't connect to database"), e)
-        # Close initial implicit transaction
-        connection.commit()
         return self._postgresql_Connection(connection, connection_data)
     
     def _postgresql_close_connection(self, connection):
@@ -139,6 +137,20 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         else:
             data.append([cursor.rowcount])
         return PostgreSQLResult(data)
+
+    def _postgresql_begin_transaction(self):
+        # In psycopg2 `begin' is called automatically.
+        # By disabling its explicit call we avoid PostgreSQL warnings about
+        # transactions in progress.
+        pass
+    
+    def _postgresql_commit_transaction(self):
+        connection = self._pg_get_connection().connection()
+        connection.commit()
+        
+    def _postgresql_rollback_transaction(self):
+        connection = self._pg_get_connection().connection()
+        connection.rollback()
 
     
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
