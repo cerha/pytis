@@ -59,6 +59,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     """
     _STATUS_FIELDS = ()
+    _PERSISTENT_FORM_PARAMS = ()
     DESCR = None
 
     def _get_command_handler_instance(cls):
@@ -154,7 +155,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """
         key = self._form_state_key()
         self._form_state = config.form_state.get(key)
-        if not isinstance(self._form_state, types.DictType):
+        if not isinstance(self._form_state, dict):
             self._form_state = config.form_state[key] = {}
         self._initial_form_state = copy.copy(self._form_state)
 
@@ -226,23 +227,33 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _on_form_state_change(self):
         pass
 
-    # Zpracování pøíkazù
+    def _persistent_form_params(self):
+        keys = self._PERSISTENT_FORM_PARAMS
+        return dict([(k,v) for k,v in self._form_state.items() if k in keys])
 
+    # Zpracování pøíkazù
+   
     def _can_reload_form_state(self):
-        return self._form_state != self._initial_form_state
+        def nonp(state):
+            return dict([(k,v) for k,v in state.items()
+                         if k not in self._PERSISTENT_FORM_PARAMS])
+        return nonp(self._form_state) != nonp(self._initial_form_state)
     
     def _cmd_reload_form_state(self):
+        persistent = self._persistent_form_params()
         self._form_state = copy.copy(self._initial_form_state)
+        self._form_state.update(persistent)
         config.form_state[self._form_state_key()] = self._form_state
         self._on_form_state_change()
         if isinstance(self, Refreshable):
             self.refresh()
 
     def _can_reset_form_state(self):
-        return self._form_state != {}
+        persistent = self._PERSISTENT_FORM_PARAMS
+        return [k for k in self._form_state.keys() if k not in persistent]
         
     def _cmd_reset_form_state(self):
-        self._form_state = {}
+        self._form_state = self._persistent_form_params()
         config.form_state[self._form_state_key()] = self._form_state
         self._on_form_state_change()
         if isinstance(self, Refreshable):
@@ -919,11 +930,11 @@ class RecordForm(InnerForm):
         """
         if position is None or isinstance(position, pytis.data.Row):
             row = position
-        elif isinstance(position, types.IntType):
+        elif isinstance(position, int):
             row = self._find_row_by_number(position)
         elif isinstance(position, (tuple, pytis.data.Value)):
             row = self._find_row_by_key(xtuple(position))
-        elif isinstance(position, types.DictType):
+        elif isinstance(position, dict):
             row = self._find_row_by_values(position.keys(), position.values())
         else:            
             raise ProgramError("Invalid 'position':", position)
@@ -993,6 +1004,8 @@ class LookupForm(RecordForm):
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
+    _PERSISTENT_FORM_PARAMS = RecordForm._PERSISTENT_FORM_PARAMS + \
+                              ('conditions', 'filter', 'search')
     
     def _init_attributes(self, sorting=None, condition=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -1174,15 +1187,15 @@ class LookupForm(RecordForm):
             filters = (Condition(_("Poslední aplikovaný filtr"),
                                  self._lf_last_filter),
                        ) + self._view.conditions() + \
-                       self._get_state_param('filters', (), tuple, Condition)
+                       self._get_state_param('conditions', (), tuple, Condition)
             perform, condition, conditions = \
                      run_dialog(FilterDialog, self._lf_sfs_columns(),
                                 self.current_row(), self._compute_aggregate,
                                 col=self._current_column_id(),
                                 condition=self._lf_filter,
                                 conditions=filters)
-            self._set_state_param('filters', tuple([c for c in conditions
-                                                    if not c.fixed()]))
+            self._set_state_param('conditions', tuple([c for c in conditions
+                                                       if not c.fixed()]))
         if perform and condition != self._lf_filter:
             self._filter(condition)
 
@@ -1619,7 +1632,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         else:
             msg = _("Ulo¾ení záznamu se nezdaøilo")
             if type(result) == type(()) and \
-               isinstance(result[0], types.StringTypes):
+               isinstance(result[0], (str, unicode)):
                 msg = "%s\n\n%s" % (result[0], msg)
             run_dialog(Error, msg)
             return False
