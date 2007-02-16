@@ -1169,6 +1169,18 @@ class LookupForm(RecordForm):
             condition = pytis.data.AND(condition, self._lf_condition)
         return self._data.select_aggregate((operation, column_id), condition)
 
+    def _filtered_columns(self):
+        columns = []
+        def analyze(operator):
+            for a in operator.args():
+                if isinstance(a, pytis.data.Operator):
+                    analyze(a)
+                elif isinstance(a, str) and a not in columns:
+                    columns.append(a)
+        if self._lf_filter is not None:
+            analyze(self._lf_filter)
+        return columns
+        
     def _filter(self, condition):
         self._lf_filter = condition
         if condition is not None:
