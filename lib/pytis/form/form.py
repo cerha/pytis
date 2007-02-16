@@ -228,8 +228,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         pass
 
     def _persistent_form_params(self):
-        keys = self._PERSISTENT_FORM_PARAMS
-        return dict([(k,v) for k,v in self._form_state.items() if k in keys])
+        state, keys = self._form_state, self._PERSISTENT_FORM_PARAMS
+        return dict([(k, state[k]) for k in keys if state.has_key(k)])
 
     # Zpracování pøíkazù
    
@@ -524,13 +524,7 @@ class TitledForm:
         text = "= "+self._view.title()+" =\n\n" + self._view.description()
         return InfoWindow(title, text=text, format=TextFormat.WIKI)
 
-    def _on_print_menu(self, event):
-        button = event.GetEventObject()
-        menu = Menu('', self._print_menu).create(button, self._get_keymap())
-        button.PopupMenu(menu, (0, button.GetSize().y))
-        menu.Destroy()
-        
-    def _create_print_menu(self):
+    def _print_menu(self):
         # Vra» seznam polo¾ek tiskového menu.
         name = self._name
         try:
@@ -539,25 +533,39 @@ class TitledForm:
             print_spec = None
         if not print_spec:
             print_spec = ((_("Výchozí"), os.path.join('output', name)),)
-        self._print_menu = [MItem(title, command=InnerForm.COMMAND_PRINT,
-                                  args=dict(print_spec_path=path,
-                                            _command_handler=self))
-                            for title, path in print_spec]
+        return [MItem(title, command=InnerForm.COMMAND_PRINT,
+                      args=dict(print_spec_path=path,
+                                _command_handler=self))
+                for title, path in print_spec]
+
+    def _filter_menu(self):
+        return None
+    
+    def _on_menu_button(self, event, items):
+        popup_menu(event.GetEventObject(), items, self._get_keymap())
 
     def _create_title_bar(self, description=None):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
-        self._create_print_menu()
+        caption = self._create_caption(panel)
+        print_menu = self._print_menu()
+        buttons = (
+            wx_button(panel, icon='filter', label=_("Filtr"),
+                      tooltip=_("Zobrazit menu filtrace"), noborder=True,
+                      callback=lambda e:
+                            self._on_menu_button(e, self._filter_menu()),
+                      enabled=lambda e: self._filter_menu() is not None),
+            wx_button(panel, icon=wx.ART_PRINT, noborder=True,
+                      tooltip=_("Zobrazit tiskové menu"),
+                      callback=lambda e: self._on_menu_button(e, print_menu)),
+            wx_button(panel, '?', icon='describe', noborder=True,
+                      tooltip=_("Zobrazit popis náhledu"),
+                      callback=self._on_show_description,
+                      enabled=description is not None))
         box = wx.BoxSizer()
-        box.Add(self._create_caption(panel), 1,
-                wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
-        box.Add(wx_button(panel, icon=wx.ART_PRINT, noborder=True,
-                          tooltip=_("Zobrazit tiskové menu"),
-                          callback=self._on_print_menu))
-        box.Add(wx_button(panel, '?', icon='describe', noborder=True,
-                          tooltip=_("Zobrazit popis náhledu"),
-                          callback=self._on_show_description,
-                          enabled=description is not None))
+        box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
+        for b in buttons:
+            box.Add(b)
         panel.SetSizer(box)
         panel.SetAutoLayout(True)        
         box.Fit(panel)
@@ -1192,20 +1200,45 @@ class LookupForm(RecordForm):
         self._init_select()
         self.select_row(self._current_key())
 
-    def _cmd_filter(self, condition=None):
+    def _filter_conditions(self):
+        return (Condition(_("Poslední aplikovaný filtr"),
+                          self._lf_last_filter),
+                ) + self._view.conditions() + \
+                self._get_state_param('conditions', (), tuple, Condition)
+
+    def _filter_menu(self):
+        # Vra» seznam polo¾ek filtraèního menu.
+        items = [MItem(_("Otevøít filtraèní formuláø"),
+                       command=self.COMMAND_FILTER),
+                 MItem(_("Zru¹it filtr"),
+                       command=self.COMMAND_UNFILTER),
+                 MItem(_("Poslední aplikovaný filtr"),
+                       command=self.COMMAND_FILTER(last=True)),
+                 MSeparator()]
+        conditions = self._filter_conditions()[1:]
+        for i, c in enumerate(conditions):
+            if i > 0 and  c.fixed() != conditions[i-1].fixed():
+                items.append(MSeparator())
+            items.append(MItem(c.name(), command=self.COMMAND_FILTER,
+                               args=dict(condition=c.condition()),
+                               icon='filter'))
+        return items
+
+    def _can_filter(self, condition=None, last=False):
+        return not last or self._lf_last_filter is not None
+        
+    def _cmd_filter(self, condition=None, last=False):
+        if last:
+            condition = self._lf_last_filter
         if condition:
             perform = True
         else:
-            filters = (Condition(_("Poslední aplikovaný filtr"),
-                                 self._lf_last_filter),
-                       ) + self._view.conditions() + \
-                       self._get_state_param('conditions', (), tuple, Condition)
             perform, condition, conditions = \
                      run_dialog(FilterDialog, self._lf_sfs_columns(),
                                 self.current_row(), self._compute_aggregate,
                                 col=self._current_column_id(),
                                 condition=self._lf_filter,
-                                conditions=filters)
+                                conditions=self._filter_conditions())
             self._set_state_param('conditions', tuple([c for c in conditions
                                                        if not c.fixed()]))
         if perform and condition != self._lf_filter:
