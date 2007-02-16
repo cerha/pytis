@@ -7,6 +7,15 @@
 2007-02-16 Tomas Cerha  <cerha@brailcom.org>
 	
 	Pøidána podpora pro indikaci filtrovaných sloupcù.
+
+	Pøidána podpora pro pøiøazení ikon pøíkaz; nejen podle pøíkazu,
+	ale také podle jeho argumentù.  Díky tomu nyní mù¾e být pou¾itá
+	napø. jiná ikona pro vzestupné tøídìní, jiná pro sestupné a jiná
+	pro zru¹ení tøídìní.  Byly pøidány nové ikony s vyu¾itím tìchto
+	vlastností.
+
+	V záhlaví formuláøe se nyní zobrazuje filtaèní menu, které
+	umo¾òuje rychlý pøístup k pøeddefinovaným a ulo¾eným filtrùm.
 	
 2007-02-15 Tomas Cerha  <cerha@brailcom.org>
 
