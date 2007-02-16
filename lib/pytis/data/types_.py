@@ -241,10 +241,11 @@ class Type(object):
         else:
             remote_table = Type._remote_type_table
             if remote_table is None:
-                import config, pytis.remote, Pyro.core
+                import config
                 server = config.server
                 if server is None:
                     raise AttributeError(name)
+                import pytis.remote, Pyro.core
                 uri = 'PYROLOC://%s/%s' % (server, pytis.remote.NAME_TYPE_TABLE)
                 remote_table = Type._remote_type_table = \
                                Pyro.core.getProxyForURI(uri)
