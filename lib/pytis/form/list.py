@@ -800,7 +800,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                  ________,
                  I(_("Skrýt tento sloupec"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN,
-                   args=dict(column_id=c.id())),
+                   args=dict(column_id=c.id(), col=None)),
                  M(_("Zobrazené sloupce"),
                    self._displayed_columns_menu(col=col))
                  )
@@ -1454,9 +1454,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             self._popup_menu(menu, position=position)
 
     def _popup_menu(self, items, position=None):
-        menu = Menu('', items).create(self._grid, self._get_keymap())
-        self._grid.PopupMenu(menu, position)
-        menu.Destroy()
+        popup_menu(self._grid, items, keymap=self._get_keymap(),
+                   position=position)
 
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and \
