@@ -1,5 +1,12 @@
 2007-02-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py: Deny filter menu in
+	DescriptiveDualForm's sideform.
+
+	* pytis/form/application.py: Log errors while closing application.
+
+	* pytis/data/types_.py: Only import Pyro in remote mode.
+
 	* pytis/form/search.py: Minor fix.
 
 	* pytis/form/screen.py: Find out the command icom by command and
