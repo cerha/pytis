@@ -446,10 +446,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
-        try:
-            log(ACTION, 'Voláno ukonèení aplikace')
-        except:
-            pass
+        def safelog(msg, *args):
+            try:
+                log(ACTION, msg, *args)
+            except:
+                print msg, args
+        safelog('Voláno ukonèení aplikace')
         try:
             if not self._modals.empty():
                 log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
@@ -460,18 +462,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
                       "Opravdu chcete ukonèit aplikaci?")
                 if not self.run_dialog(Question, q):
                     return False
-        except:
-            pass
+        except Exception, e:
+            safelog(str(e))
         try:
             for form in self._windows.items():
                 try:
                     self._raise_form(form)
                     if not form.close():
                         return False
-                except:
-                    continue
-        except:
-            pass
+                except Exception, e:
+                    safelog(str(e))
+        except Exception, e:
+            safelog(str(e))
         try:
             items = tuple([(o, getattr(config, o))
                            for o in configurable_options() + \
@@ -481,15 +483,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             write_config(items)
             log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))
         except Exception, e:
-            try:
-                log(EVENT, "Saving changed configuration failed:", str(e))
-            except:
-                pass
+            safelog("Saving changed configuration failed:", str(e))
         try:
             if self._help_controller is not None:
                 self._help_controller.GetFrame().Close()
-        except:
-            pass
+        except Exception, e:
+            safelog(str(e))
         return True
 
     # Callbacky
@@ -1013,7 +1012,7 @@ def run_dialog(*args, **kwargs):
     if _application is not None:
         return _application.run_dialog(*args, **kwargs)
     else:
-        log(OPERATIONAL, "Pokus o spu¹tìní dialogu:", (args, kwargs))
+        log(OPERATIONAL, "Attempt to run a dialog:", (args, kwargs))
 
 def current_form(inner=True):
     """Vra» právì aktivní formuláø (viz 'Application.currnt_form()')."""
@@ -1025,7 +1024,10 @@ def top_window():
 
 def set_status(id, message, log_=True):
     """Nastav pole 'id' stavové øádky (viz 'Application.set_status()')."""
-    return _application.set_status(id, message, log_=log_)
+    if _application is not None:
+        return _application.set_status(id, message, log_=log_)
+    else:
+        log(OPERATIONAL, "Attempt to set status-line:", (id, message))
 
 def get_status(id):
     """Vra» text pole 'id' stavové øádky. (viz 'Application.get_status()')"""
