@@ -522,7 +522,7 @@ class SFDialog(SFSDialog):
     def _on_remove_saved(self):
         i = self._saved_condition_controls[0].GetSelection()
         cond = self._conditions[i]
-        if not cond.fixed():
+        if cond.fixed():
             return
         msg = _("Opravdu chcete smazat ulo¾enou podmínku '%s'?") % cond.name()
         if run_dialog(Question, msg, title=_("Mazání ulo¾ené podmínky")):
