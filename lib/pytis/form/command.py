@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -250,3 +250,43 @@ class Command(object):
         
     def __str__(self):
         return '<Command: %s>' % self._id
+
+
+_command_icons = None
+def command_icon(command, args):
+    """Return the icon identifier for given command and its arguments.
+
+    Arguments:
+
+      command -- 'Command' instance.
+      args -- command arguemnts as a dictionary.
+
+    The icon which best matches with given command and arguments is searched
+    within 'COMMAND_ICONS' specification (see the 'commands_' module).
+
+    The returned value is the icon identifier as accepted by 'get_icon()'.
+    
+    """
+    global _command_icons
+    if _command_icons is None:
+        _command_icons = {}
+        for item, icon in COMMAND_ICONS:
+            if isinstance(item, tuple):
+                cmd, iargs = item
+            else:
+                cmd, iargs = item, {}
+            icons = _command_icons[cmd] = _command_icons.get(cmd, [])
+            icons.append((iargs, icon))
+            
+    try:
+        icons = _command_icons[command]
+    except KeyError:
+        pass
+    else:
+        for iargs, icon in icons:
+            for k, v in iargs.items():
+                if not args.has_key(k) or args[k] != v:
+                    break
+            else:
+                return icon
+    return None
