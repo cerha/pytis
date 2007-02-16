@@ -95,7 +95,7 @@ class Operator:
 
         """
         self._name = name
-        self._translation = kwargs.get('translation')
+        self._translation = kwargs.pop('translation', None)
         self._args = args
         self._kwargs = kwargs
 
