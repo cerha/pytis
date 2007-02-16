@@ -1,3 +1,12 @@
+2007-02-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* icons/filter-form.png: New file.
+	* icons/hide-column.png: New file. 
+	* icons/search-backwards.png: New file. 
+	* icons/search-forward.png: New file. 
+	* icons/sort.png: New file. 
+	* icons/unsort.png: New file. 
+
 2007-02-08  Petr Malivanek  <malivanek@asellus.cz>
 
 	* tools/gensql.py (_gsql_format_type.MAPPING): Nový typ -

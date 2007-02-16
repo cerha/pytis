@@ -16,6 +16,9 @@
 
 	V záhlaví formuláøe se nyní zobrazuje filtaèní menu, které
 	umo¾òuje rychlý pøístup k pøeddefinovaným a ulo¾eným filtrùm.
+
+	Nový pøíkaz navázaný na klávesu Ctrl-Alt-F umo¾òuje zapnutí
+	posledního aplikovaného filtru.
 	
 2007-02-15 Tomas Cerha  <cerha@brailcom.org>
 
