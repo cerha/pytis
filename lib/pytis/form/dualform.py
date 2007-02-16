@@ -471,6 +471,9 @@ class DescriptiveDualForm(BrowseShowDualForm):
     formuláøi je dán stejnou specifikací, jako horní formuláø.
 
     """
+    class _SideForm(ShowForm):
+        def _filter_menu(self):
+            return None
     
     def _init_attributes(self, orientation=Orientation.HORIZONTAL, **kwargs):
         self._in_mainform_selection = False
@@ -484,7 +487,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
         return None
 
     def _create_side_form(self, parent):
-        return ShowForm(parent, self._resolver, self._name)
+        return self._SideForm(parent, self._resolver, self._name)
 
     def _set_side_form_callbacks(self):
         self._side_form.set_callback(ShowForm.CALL_SELECTION,
