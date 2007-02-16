@@ -918,12 +918,17 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             # Return polygon coordinates for an arrow.
             return ((x, y), (x-r, y-r), (x-r/2, y-r), (x-r/2, y-r-l),
                     (x+r/2, y-r-l), (x+r/2, y-r), (x+r, y-r))
+        def funnel(x, y, r=3, l=8):
+            # Return polygon coordinates for a funnel.
+            return ((x, y), (x+r, y+r), (x+r, y+l), (x+r+2, y+l),
+                    (x+r+2, y+r), (x+r*2+2, y), (x, y))
         g = self._grid
         #t = self._table
         dc = wx.PaintDC(g.GetGridColLabelWindow())
         x = - self._scroll_x_offset()
         y = 0
         height = g.GetColLabelSize()
+        filtered_columns = self._filtered_columns()
         for col, c in enumerate(self._columns):
             id = c.id()
             width = g.GetColSize(col)
@@ -966,6 +971,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 if ax is not None:
                     dc.SetBrush(wx.Brush("GREEN", wx.SOLID))
                     dc.DrawPolygon(arrow(ax, height-2))
+            # Draw the filter sign.
+            if id in filtered_columns:
+                dc.SetBrush(wx.Brush('GOLD', wx.SOLID))
+                dc.DrawPolygon(funnel(x+2, y+3))
             x += width
 
     def _on_form_state_change(self):
