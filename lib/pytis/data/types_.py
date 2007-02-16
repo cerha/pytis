@@ -39,7 +39,6 @@ instancemi samostatné tøídy 'Value'.
 
 import math
 import re
-import thread
 from cStringIO import StringIO
 
 from mx import DateTime as DT
@@ -1395,12 +1394,7 @@ class DataEnumerator(MutableEnumerator):
             
           value_column -- id sloupce datového objektu poskytujícího hodnoty
             enumerátoru.  Je-li None, bude pou¾it klíèový sloupec.
-            
-          validity_column -- id sloupce, urèujícího platnost øádkù datového
-            zdroje.  Pokud je urèen (není None), budou za hodnoty výètu
-            pova¾ovány pouze ty øádky, v nich¾ daný sloupec nabývá pravdivé
-            hodnoty (musí jít o Boolean sloupec).
-            
+
           validity_column -- id sloupce, urèujícího platnost øádkù datového
             zdroje.  Pokud je urèen (není None), budou za hodnoty výètu
             pova¾ovány pouze ty øádky, v nich¾ daný sloupec nabývá pravdivé
