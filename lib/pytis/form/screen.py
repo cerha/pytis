@@ -1059,7 +1059,7 @@ class MItem(_TitledMenuObject):
         wx_callback(wx.EVT_MENU, parent, item.GetId(),
                     lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
-        icon = get_icon(self._icon or WX_COMMAND_ICONS.get(self._command))
+        icon = get_icon(self._icon or command_icon(self._command, self._args))
         if icon:
             item.SetBitmap(icon)
         return item
@@ -1387,6 +1387,37 @@ def dlg2px(window, x, y=None):
     else:
         return pxsize
     
+def orientation2wx(orientation):
+    """Pøeveï konstantu tøídy 'Orientation' na wx reprezentaci."""
+    if orientation == spec.Orientation.VERTICAL:
+        return wx.VERTICAL
+    elif orientation == spec.Orientation.HORIZONTAL:
+        return wx.HORIZONTAL
+    else:
+        raise ProgramError("Neplatná hodnota Orientation:", orientation)
+
+def border_style2wx(style):
+    """Pøeveï konstantu tøídy 'BorderStyle' na wx reprezentaci."""
+    mapping = {
+        spec.BorderStyle.ALL: wx.ALL,
+        spec.BorderStyle.TOP: wx.TOP,
+        spec.BorderStyle.BOTTOM: wx.BOTTOM,
+        spec.BorderStyle.LEFT: wx.LEFT,
+        spec.BorderStyle.RIGHT: wx.RIGHT,
+        }        
+    try:
+        return mapping[style]
+    except KeyError:
+        raise ProgramError("Neplatná hodnota BorderStyle:", orientation)
+
+# Pomocné funkce
+
+def popup_menu(parent, items, keymap=None, position=None):
+    menu = Menu('', items).create(parent, keymap)
+    parent.PopupMenu(menu, position)
+    menu.Destroy()
+
+
 def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
     """Najdi vra» po¾adovanou ikonu jako instanci 'wx.Bitmap'.
 
@@ -1468,32 +1499,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
     if not enabled:
         button.Enable(False)
     return button
+
     
-def orientation2wx(orientation):
-    """Pøeveï konstantu tøídy 'Orientation' na wx reprezentaci."""
-    if orientation == spec.Orientation.VERTICAL:
-        return wx.VERTICAL
-    elif orientation == spec.Orientation.HORIZONTAL:
-        return wx.HORIZONTAL
-    else:
-        raise ProgramError("Neplatná hodnota Orientation:", orientation)
-
-
-def border_style2wx(style):
-    """Pøeveï konstantu tøídy 'BorderStyle' na wx reprezentaci."""
-    mapping = {
-        spec.BorderStyle.ALL: wx.ALL,
-        spec.BorderStyle.TOP: wx.TOP,
-        spec.BorderStyle.BOTTOM: wx.BOTTOM,
-        spec.BorderStyle.LEFT: wx.LEFT,
-        spec.BorderStyle.RIGHT: wx.RIGHT,
-        }        
-    try:
-        return mapping[style]
-    except KeyError:
-        raise ProgramError("Neplatná hodnota BorderStyle:", orientation)
-
-
 def wx_focused_window():
     """Vra» aktuálnì zaostøené wx okno, jako instanci 'wx.Window'."""
     return wx.Window_FindFocus()
