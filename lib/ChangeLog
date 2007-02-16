@@ -1,10 +1,22 @@
 2007-02-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py: Minor fix.
+
+	* pytis/form/screen.py: Find out the command icom by command and
+	arguments.
+
+	* pytis/form/command.py: Added support to find an icon according
+	to a command and its arguments.
+
+	* pytis/form/commands_.py: Aded new command icons.  New shortcut
+	for invoking last filter.
+
 	* pytis/form/form.py: Added support for finding out the list of
-	filtered columns.
+	filtered columns.  Show filter menu in the titlebar.
 
 	* pytis/form/list.py: Indicate filtered columns by a small funnel
 	sign at column heading.
+	(Module): 
 
 2007-02-15  Tomas Cerha  <cerha@brailcom.org>
 
