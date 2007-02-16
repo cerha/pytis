@@ -204,7 +204,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return self.__class__.__name__+'/'+self._name
     
     def _get_state_param(self, name, default=None, cls=None, item_cls=None):
-        param = self._form_state.get(name, default)
+        try:
+            param = self._form_state[name]
+        except KeyError:
+            return default
         if cls is not None and not isinstance(param, cls):
             log(OPERATIONAL, "Invalid saved form attribute value:", name)
             return default
@@ -554,7 +557,7 @@ class TitledForm:
                       tooltip=_("Zobrazit menu filtrace"), noborder=True,
                       callback=lambda e:
                             self._on_menu_button(e, self._filter_menu()),
-                      enabled=lambda e: self._filter_menu() is not None),
+                      enabled=self._filter_menu() is not None),
             wx_button(panel, icon=wx.ART_PRINT, noborder=True,
                       tooltip=_("Zobrazit tiskové menu"),
                       callback=lambda e: self._on_menu_button(e, print_menu)),
@@ -1213,11 +1216,10 @@ class LookupForm(RecordForm):
                  MItem(_("Zru¹it filtr"),
                        command=self.COMMAND_UNFILTER),
                  MItem(_("Poslední aplikovaný filtr"),
-                       command=self.COMMAND_FILTER(last=True)),
-                 MSeparator()]
+                       command=self.COMMAND_FILTER(last=True))]
         conditions = self._filter_conditions()[1:]
         for i, c in enumerate(conditions):
-            if i > 0 and  c.fixed() != conditions[i-1].fixed():
+            if i==0 or i > 0 and  c.fixed() != conditions[i-1].fixed():
                 items.append(MSeparator())
             items.append(MItem(c.name(), command=self.COMMAND_FILTER,
                                args=dict(condition=c.condition()),
