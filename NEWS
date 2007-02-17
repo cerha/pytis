@@ -4,6 +4,10 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-16  Milan Zamazal  <pdm@brailcom.org>
+
+	Zru¹ena podpora pro vícesloupcové klíèe.
+
 2007-02-16 Tomas Cerha  <cerha@brailcom.org>
 	
 	Pøidána podpora pro indikaci filtrovaných sloupcù.

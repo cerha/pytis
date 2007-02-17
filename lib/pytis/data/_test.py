@@ -670,19 +670,19 @@ class _DBTest(_DBBaseTest):
         _DBBaseTest.setUp(self)
         c = self._connector
         for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL) with oids",
-                  "create table cosnova (synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE', PRIMARY KEY (synte,anal)) with oids",
-                  "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madsynte char(3) NOT NULL DEFAULT '100', madanal char(3) DEFAULT '007', FOREIGN KEY (madsynte,madanal) REFERENCES cosnova(synte,anal)) with oids",
+                  "create table cosnova (id serial PRIMARY KEY, synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE') with oids",
+                  "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madati int NOT NULL DEFAULT 1 REFERENCES cosnova) with oids",
                   "create table xcosi(id int, popis varchar(12)) with oids",
                   "create table bin(id int, data bytea) with oids",
                   "insert into cstat values('us', 'U.S.A.')",
                   "insert into cstat values('cz', 'Czech Republic')",
-                  "insert into cosnova values('100', '007', 'abcd', 'X', 'us', 'FALSE')",
-                  "insert into cosnova values('100', '008', 'ijkl', 'X', 'cz', 'FALSE')",
-                  "insert into cosnova values('101', '   ', 'efgh', 'Y', 'us')",
-                  "insert into denik (id, datum, castka, madsynte, madanal) values(1, '2001-01-02', '1000.00', '100', '007')",
-                  "insert into denik (id, datum, castka, madsynte, madanal) values(2, '2001-01-02', '1000.00', '100', '007')",
-                  "insert into denik (id, datum, castka, madsynte, madanal) values(3, '2001-01-02', '2000.00', '100', '008')",
-                  "insert into denik (id, datum, castka, madsynte, madanal) values(4, '2001-01-04', '3000.00', '101', '   ')",
+                  "insert into cosnova values(1, '100', '007', 'abcd', 'X', 'us', 'FALSE')",
+                  "insert into cosnova values(2, '100', '008', 'ijkl', 'X', 'cz', 'FALSE')",
+                  "insert into cosnova values(3, '101', '   ', 'efgh', 'Y', 'us')",
+                  "insert into denik (id, datum, castka, madati) values(1, '2001-01-02', '1000.00', 1)",
+                  "insert into denik (id, datum, castka, madati) values(2, '2001-01-02', '1000.00', 1)",
+                  "insert into denik (id, datum, castka, madati) values(3, '2001-01-02', '2000.00', 2)",
+                  "insert into denik (id, datum, castka, madati) values(4, '2001-01-04', '3000.00', 3)",
                   "insert into xcosi values(2, 'specialni')",
                   "insert into xcosi values(3, 'zvlastni')",
                   "insert into xcosi values(5, 'nove')",
@@ -748,10 +748,11 @@ class DBDataDefault(_DBTest):
             key)
         dstat1 = dstat_spec.create(connection_data=conn)
         # osnova
-        key = (B('synt', 'cosnova', 'synte'), B('anal', 'cosnova', 'anal'))
+        key = B('id', 'cosnova', 'id')
         dosnova_spec = pytis.data.DataFactory(
             pytis.data.DBDataDefault,
-            (key[0], key[1],
+            (key,
+             B('synt', 'cosnova', 'synte'), B('anal', 'cosnova', 'anal'),
              B('popis', 'cosnova', 'popis'),
              B('druh', 'cosnova', 'druh'),
              B('stat', 'cosnova', 'stat', enumerator=dstat_spec),
@@ -761,23 +762,19 @@ class DBDataDefault(_DBTest):
         # denik
         cosi = B('', 'xcosi', 'id')
         key = B('cislo', 'denik', 'id', related_to=cosi)
-        madatis = B('', 'cosnova', 'synte')
-        madatia = B('', 'cosnova', 'anal')
+        madati = B('', 'cosnova', 'id')
         stat = B('', 'cstat', 'stat')
         d = pytis.data.DBDataDefault(
             (key,
              B('datum', 'denik', 'datum',
                type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
              B('castka', 'denik', 'castka'),
-             B('', 'denik', 'madsynte',
-               related_to=madatis, enumerator=dosnova_spec),
-             B('', 'denik', 'madanal',
-               related_to=madatia, enumerator=dosnova_spec),
+             B('', 'denik', 'madati',
+               related_to=madati, enumerator=dosnova_spec),
              B('', 'cosnova', 'stat', related_to=stat, enumerator=dstat_spec),
              B('stat-nazev', 'cstat', 'nazev'),
              B('cosi-popis', 'xcosi', 'popis'),
-             madatis,
-             madatia,
+             madati,
              stat,
              cosi),
             key,
@@ -865,7 +862,7 @@ class DBDataDefault(_DBTest):
         assert self.data.fetchone() == None, 'data reincarnation'
         self.data.close()
         # Search in limited select OK?
-        self.dosnova.select(columns=('synt', 'anal', 'danit',))
+        self.dosnova.select(columns=('id', 'synt', 'anal', 'danit',))
         result = self.dosnova.search(pytis.data.EQ(
                 'popis', pytis.data.Value(pytis.data.String(), 'efgh')))
         assert result == 3, ('Invalid search result', result)

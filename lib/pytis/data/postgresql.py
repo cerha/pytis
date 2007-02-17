@@ -658,10 +658,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def __init__(self, template, arguments=()):
             self._template = template
             self._arguments = arguments
-        def format(self, optional_arguments, arguments):
-            if not optional_arguments:
-                optional_arguments = self._arguments
-            return self._template % (optional_arguments + arguments)
+        def format(self, arguments):
+            args = copy.copy(arguments)
+            for k, v in self._arguments.items():
+                if not args.has_key(k):
+                    args[k] = v
+            return self._template % args
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
         super(PostgreSQLStandardBindingHandler, self).__init__(
@@ -856,8 +858,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             relation = ' and '.join(rels)
         main_table = self._key_binding[0].table()
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
-        key_cond = ' and '.join(['%s=%%s' % k for k in keytabcols])
+        assert len (keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
+        key_cond = '%s=%%(key)s' % (first_key_column,)
         def sortspec(dir, self=self, keytabcols=keytabcols):
             items = []
             for i in range(len(keytabcols)):
@@ -876,9 +879,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
-            ('select %%s, %s from %s where %s order by %s' %
+            ('select %%(columns)s, %s from %s where %s order by %s' %
              (oidstrings, table_list, relation_and_condition, ordering,)),
-            (column_list,))
+            {'columns': column_list})
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
           (first_key_column, table_list, relation)
@@ -887,11 +890,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           (table_list, relation)
         self._pdbb_command_select = \
           self._SQLCommandTemplate(
-            (('declare %s scroll cursor for select %%s, %s from %s '+
-              'where %%s and (%s) order by %%s %s') %
+            (('declare %s scroll cursor for select %%(columns)s, %s from %s '+
+              'where %%(condition)s and (%s) order by %%(ordering)s %s') %
              (self._PDBB_CURSOR_NAME, oidstrings, table_list,
               relation, ordering)),
-            (column_list,))
+            {'columns': column_list})
         self._pdbb_command_select_agg = \
           ('select %%s(%%s) from %s where %%s and (%s)' %
            (table_list, relation))
@@ -905,16 +908,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'move backward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
-            (('select %%s, %s from %s where (%s) and %%s order by %%s %s '+
-              'limit 1') %
+            (('select %%(columns)s, %s from %s where (%s) and %%(condition)s '+
+              'order by %%(ordering)s %s limit 1') %
              (oidstrings, main_table, relation, ordering,)),
-            (column_list,))
+            {'columns': column_list})
         self._pdbb_command_search_last = \
           self._SQLCommandTemplate(
-            (('select %%s, %s from %s where (%s) and %%s order by %%s %s '+
-              'limit 1') %
+            (('select %%(columns)s, %s from %s where (%s) and %%(condition)s '+
+              'order by %%(ordering)s %s limit 1') %
              (oidstrings, main_table, relation, rordering,)),
-            (column_list,))
+            {'columns': column_list})
         self._pdbb_command_search_distance = \
           'select count(%s) from %s where (%s) and %%s' % \
           (first_key_column, main_table, relation)
@@ -1100,11 +1103,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pg_row (self, key_value, columns):
         """Retrieve and return raw data corresponding to 'key_value'."""
+        args = {'key': key_value}
         if columns:
-            column_list = (self._pdbb_sql_column_list_from_names(columns),)
-        else:
-            column_list = None
-        query = self._pdbb_command_row.format(column_list, key_value)
+            args['columns'] = self._pdbb_sql_column_list_from_names(columns)
+        query = self._pdbb_command_row.format(args)
         return self._pg_query(query)
     
     def _pg_search(self, row, condition, direction):
@@ -1170,8 +1172,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             sql_command = self._pdbb_command_search_last
         else:
             raise ProgramError('Unknown direction', direction)
-        query = sql_command.format(self._pdbb_select_column_list,
-                                   (cond_string, sort_string,))
+        qargs = {'condition': cond_string, 'ordering': sort_string}
+        if self._pdbb_select_column_list:
+            qargs['columns'] = self._pdbb_select_column_list
+        query = sql_command.format(qargs)
         data_ = self._pg_query(query)
         if not data_:
             return 0
@@ -1204,13 +1208,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
         data = self._pg_query(self._pdbb_command_count % cond_string)
+        args = {'condition': cond_string, 'ordering': sort_string}
         if columns:
-            column_list = (self._pdbb_sql_column_list_from_names(columns),)
+            args['columns'] = self._pdbb_select_column_list = \
+                self._pdbb_sql_column_list_from_names(columns)
         else:
-            column_list = None
-        self._pdbb_select_column_list = column_list
-        query = self._pdbb_command_select.format(
-            column_list, (cond_string, sort_string,))
+            self._pdbb_select_column_list = None
+        query = self._pdbb_command_select.format(args)
         self._pg_query(query)
         try:
             result = int(data[0][0])
@@ -1827,8 +1831,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             template = None
         try:
-            data = self._pg_row(tuple([self._pg_value(k) for k in key]),
-                                columns)
+            data = self._pg_row(self._pg_value(key[0]), columns)
         except:
             cls, e, tb = sys.exc_info()
             try:
