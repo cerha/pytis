@@ -136,24 +136,24 @@ class SFSDialog(GenericDialog):
     
     
 class SortingDialog(SFSDialog):
-    """Dialog pro volbu parametrù tøídìní.
+    """Dialog pro volbu parametrù øazení.
 
-    Metoda 'run()' vrací specifikaci tøídìní, kterou pou¾ívá formuláø
+    Metoda 'run()' vrací specifikaci øazení, kterou pou¾ívá formuláø
     `pytis.form.LookupForm'.  Je-li dialog opu¹tìn jiným zpùsobem ne¾ stiskem
     tlaèítka, je vráceno 'None'.
 
     """
 
-    _TITLE = _("Tøídìní")
-    _SORT_BUTTON = _("Setøídit")
-    _RESET_BUTTON = _("Resetovat tøídìní")
+    _TITLE = _("Øazení")
+    _SORT_BUTTON = _("Seøadit")
+    _RESET_BUTTON = _("Obnovit výchozí øazení")
     _BUTTONS = (_SORT_BUTTON, _RESET_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _SORT_BUTTON
     
     _DIRECTIONS = (pytis.data.ASCENDENT, pytis.data.DESCENDANT, None)
     _LABELS = {pytis.data.ASCENDENT: _("Vzestupnì"),
                pytis.data.DESCENDANT: _("Sestupnì"),
-               None: _("Netøídit")}
+               None: _("Neøadit")}
     
     _HELP_TOPIC = 'sorting'
     
@@ -182,14 +182,14 @@ class SortingDialog(SFSDialog):
             self._controls.append((
                 choice(self._columns, selected=self._find_column(cid),
                        label=lambda c: c.label(),
-                       tooltip=_("Zvolte sloupec, podle nìj¾ chcete tøídit")),
+                       tooltip=_("Zvolte sloupec, podle nìj¾ chcete øadit")),
                 choice(self._DIRECTIONS, selected=dir,
                        label=lambda d: self._LABELS[d],
-                       tooltip=_("Zvolte smìr tøídìní"))))
+                       tooltip=_("Zvolte smìr øazení"))))
 
     def _create_content(self):
         button = self._create_button(_("Pøidat"), self._on_add,
-                                     _("Pøidat sloupec sekundárního tøídìní"))
+                                     _("Pøidat sloupec sekundárního øazení"))
         return super(SortingDialog, self)._create_content() + (button,)
 
     def _customize_result(self, button_wid):
