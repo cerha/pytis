@@ -301,10 +301,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         DELETE = pytis.data.Permission.DELETE
         EXPORT = pytis.data.Permission.EXPORT
         if perm == DELETE:
-            result = self._data.accessible(None, perm)
+            result = self._data.permitted(None, perm)
         else:
             for col in self._data.columns():
-                if self._data.accessible(col.id(), perm):
+                if self._data.permitted(col.id(), perm):
                     result = True
                     break
             else:
@@ -837,7 +837,7 @@ class RecordForm(InnerForm):
             return False
 
     def _on_import_interactive(self):
-        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+        if not self._data.permitted(None, pytis.data.Permission.INSERT):
             msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
             message(msg, beep_=True)
             return False
@@ -1530,11 +1530,11 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             spec = self._view.field(id)
             if spec.width() != 0:
                 if id in data_columns:
-                    acc = self._data.accessible(id, permission)
+                    denied = not self._data.permitted(id, permission)
                 else:
-                    acc = True
+                    denied = False
                 f = InputField.create(panel, spec, self._data, guardian=self,
-                                      accessible=acc)
+                                      denied=denied)
                 f.set_callback(InputField.CALL_FIELD_CHANGE,
                                self._on_field_edit)
                 self._fields.append(f)

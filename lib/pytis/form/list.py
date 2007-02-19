@@ -1563,7 +1563,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         allowed = True
         # Kontrola práv        
         for cid, ctype in column_list:
-            if not data.accessible(cid, pytis.data.Permission.EXPORT):
+            if not data.permitted(cid, pytis.data.Permission.EXPORT):
                 allowed = False
                 break
         if not allowed:
@@ -1630,7 +1630,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _cmd_insert_line(self, before=False, copy=False):
         row = self._current_cell()[0]
         log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))
-        if not self._data.accessible(None, pytis.data.Permission.INSERT):
+        if not self._data.permitted(None, pytis.data.Permission.INSERT):
             message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
                     'tabulky!', beep_=True)
             return False

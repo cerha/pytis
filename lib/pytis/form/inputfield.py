@@ -93,7 +93,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def create(cls, parent, spec, data, guardian=None, inline=False,
-               accessible=True):
+               denied=False):
         """Vra» instanci políèka odpovídajícího typu.
         
         Argumewnty jsou toto¾né, jako u metody 'InputField.__init__()'.
@@ -139,12 +139,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         else:
             field = TextField
         return field(parent, spec, data, guardian=guardian, inline=inline,
-                     accessible=accessible)
+                     denied=denied)
 
     create = classmethod(create)
 
     def __init__(self, parent, spec, data, guardian=None, inline=False,
-                 accessible=True):
+                 denied=False):
         """Vytvoø vstupní políèko, podle specifikace.
 
         Argumenty:
@@ -164,9 +164,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             vhodné pøi pou¾ití políèka pro in-line editaci v øádkovém
             formuláøi.
             
-          accessible -- pravda, pokud má u¾ivatel mít právo editace políèka.
-            Takto znepøístupnìné políèko ji¾ nelze zpøístupnit a vzhled je
-            jiný, ne¾ v pøípadì políèka zakázaného voláním metody 'disable()'.
+          denied -- pøíznak nepøístupnosti políèka z dùvodu nedostateèných
+            pøistupových práv.  Takto znepøístupnìné políèko ji¾ nelze
+            zpøístupnit a vzhled je jiný, ne¾ v pøípadì políèka zakázaného
+            voláním metody 'disable()'.
 
         Metodu '__init__()' nech» odvozené tøídy nepøedefinovávají. Nech»
         pøedefinovávají metody '_create_widget()' a '_create_label'.
@@ -188,7 +189,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._want_focus = False
         self._is_changed = False
         self._initialized = False
-        self._accessible = self._enabled = accessible
+        self._denied = denied
+        self._enabled = not denied
         self._ctrl = self._create_ctrl()
         self._callback_registered = False
         self._unregistered_widgets = {}
@@ -449,7 +451,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     
     def enable(self):
         """Povol u¾ivatelský vstup do políèka."""
-        if self._accessible:
+        if not self._denied:
             self._enabled = True
             self._enable()
             self._unregister_skip_navigation_callback()
@@ -468,7 +470,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         pøedefinují metodu '_disable()'.
 
         """
-        if self._accessible:
+        if not self._denied:
             self._enabled = False
             self._disable(change_appearance)
             self._register_skip_navigation_callback()
@@ -484,10 +486,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             pass
 
     def _set_disabled_color(self):
-        if self._accessible:
-            color = config.field_disabled_color 
+        if self._denied:
+            color = config.field_denied_color
         else:
-            color = config.field_inaccessible_color
+            color = config.field_disabled_color 
         self._ctrl.SetOwnBackgroundColour(color)
         self._ctrl.Refresh()
             

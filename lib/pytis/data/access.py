@@ -249,7 +249,7 @@ class RestrictedData(Data):
             raise DataAccessException(permission, table=table)
         return pytis.data.Row(filtered_items)
 
-    def accessible(self, column_id, permission):
+    def permitted(self, column_id, permission):
         """Vra» pravdu, právì kdy¾ má u¾ivatel právo pøístupu k danému sloupci.
 
         Argumenty:

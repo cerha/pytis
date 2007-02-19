@@ -505,7 +505,7 @@ class PresentedRow(object):
 
     # Nakonec to není nikde potøeba, ale kdyby, staèí odkomentovat a dopsat
     # test...
-    #def accessible(self, key, permission):
+    #def permitted(self, key, permission):
     #    """Vra» pravdu, právì kdy¾ má u¾ivatel právo pøístupu k danému políèku.
     #
     #    Argumenty:
@@ -519,7 +519,7 @@ class PresentedRow(object):
     #        
     #    """
     #    if self._row.has_key(key):
-    #        return self._data.accessible(key, permission)
+    #        return self._data.permitted(key, permission)
     #    else:
     #        return None
 
