@@ -730,7 +730,7 @@ class Configuration(object):
 
     class _Option_field_disabled_color(_ColorOption):
         _DESCR = _("Barva pozadí needitovatelného vstupního políèka.")
-        _DEFAULT = '#c0c0c0'
+        _DEFAULT = '#d8d8d8'
 
     class _Option_field_inaccessible_color(_ColorOption):
         _DESCR = _("Pozadí políèka needitovatelného kvùli pøístupovým právùm.")
