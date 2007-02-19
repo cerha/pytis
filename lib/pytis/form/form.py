@@ -1048,7 +1048,7 @@ class LookupForm(RecordForm):
 
     def _init_sorting(self, sorting=None):
         if sorting is None:
-            sorting = self._get_state_param('sorting', None, tuple, str)
+            sorting = self._get_state_param('sorting', None, tuple)
         if sorting is not None:
             for id, direction in sorting:
                 if self._data.find_column(id) is None or direction not in \
