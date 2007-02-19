@@ -1,9 +1,23 @@
 2007-02-19  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/access.py: Avoid the missleading usage of `accessible'
+	in the context of permissions.
+
+	* pytis/form/list.py, pytis/form/form.py: Respect the above
+	changes.
+
+	* pytis/util/configuration.py: Disabled background color default
+	value made a little lighter.  The option
+	`field_inaccessible_color' renamed to `field_denied_color'
+
+	* pytis/form/inputfield.py: Fixed nasty background setting which
+	caused invisible selection in some GTK themes.  Avoid the
+	missleading usage of `accessible' in the context of permissions.
+
 	* pytis/form/search.py: Wording unified.
 
 	* pytis/form/form.py: Save conditions in a custom format
-	consisting just of basic python types.
+	consisting just of basic python types.  
 
 2007-02-17  Milan Zamazal  <pdm@brailcom.org>
 
