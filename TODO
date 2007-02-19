@@ -30,17 +30,6 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
- * Ulo¾ené filtrovací podmínky
-
-   Podmínka by mìla být definovatelná jednak ve specifikaci a jednak by mìla
-   jít ulo¾it u¾ivatelem definovaná (naklikaná) podmínka.
-
- * Omezení mo¾ností porovnávání sloupcù v závislosti na typech
-
-   Pøi naklikání filtrovací podmínky, která porovnává napø. bool sloupec s
-   øetìzcovým, dojde ke zhroucení selectu.  To by mìlo být nìjak o¹etøeno pøi
-   vyhodnocování naklikané podmínky.
-
  * Vyu¾ití Wikinga pro webové rozhraní k aplikacím
 
    Wiking ji¾ nyní umí pracovat s daty nad pytisovými specifikacemi.

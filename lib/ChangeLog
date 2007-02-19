@@ -1,5 +1,7 @@
 2007-02-19  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py: Wording unified.
+
 	* pytis/form/form.py: Save conditions in a custom format
 	consisting just of basic python types.
 
@@ -775,3 +777,11 @@
 	argument `enabled'.
 	(Application._can_run_procedure): New method.
 
+Traceback (most recent call last):
+  File "/home/cerha/bin/denik.py", line 98, in ?
+    period, n = process(projects, changelog)
+  File "/home/cerha/bin/denik.py", line 72, in process
+    for date, text in split(DAY_SPLITTER, changelog.strip(), 2):
+  File "/home/cerha/bin/denik.py", line 30, in split
+    raise Exception("Invalid syntax:", seq[0].splitlines()[0] + '...')
+Exception: ('Invalid syntax:', u'2007-02-19  Tomas Cerha  <cerha@brailcom.org>...')
