@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-19 Tomas Cerha  <cerha@brailcom.org>
+
+	Pøidána podpora ukládání podmínek ve vlastním formátu skládajícím
+	se pouze ze základních Pythonových typù.
+	
 2007-02-16  Milan Zamazal  <pdm@brailcom.org>
 
 	Zru¹ena podpora pro vícesloupcové klíèe.

@@ -1,3 +1,8 @@
+2007-02-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py: Save conditions in a custom format
+	consisting just of basic python types.
+
 2007-02-17  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/postgresql.py: PostgreSQL command template mechanism
