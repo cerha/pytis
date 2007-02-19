@@ -488,7 +488,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             color = config.field_disabled_color 
         else:
             color = config.field_inaccessible_color
-        self._ctrl.SetBackgroundColour(color)
+        self._ctrl.SetOwnBackgroundColour(color)
         self._ctrl.Refresh()
             
     def set_focus(self):
@@ -657,7 +657,8 @@ class TextField(InputField):
         maxlen = self._maxlen()
         if maxlen is not None:
             control.SetMaxLength(maxlen)
-            wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid, self._on_maxlen)
+            wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid,
+               lambda e: message(_("Pøekroèena maximální délka."), beep_=True))
         filter = self._filter()
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
@@ -668,11 +669,6 @@ class TextField(InputField):
         """Vra» maximální délku zadaného textu."""
         return None
 
-    def _on_maxlen(self, event):
-        # User tried to enter more text into the control than the limit
-        beep()
-        message(_("Pøekroèena maximální délka."))
-    
     def _on_enter_key(self, event):
         if self.height() > 1:
             event.Skip()
@@ -735,7 +731,7 @@ class TextField(InputField):
     def _enable(self):
         control = self._ctrl
         control.SetEditable(True)
-        control.SetBackgroundColour(wx.WHITE)
+        control.SetOwnBackgroundColour(None)
         control.SetValidator(_TextValidator(control, filter=self._filter()))
 
     def _post_process(self):
@@ -1151,7 +1147,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 size = self._px_size(display_size, 1)
                 display = wx.TextCtrl(self._parent, style=wx.TE_READONLY,
                                       size=size)
-                display.SetBackgroundColour(wx.Colour(213, 213, 213))
+                display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display,
                             self._skip_navigation_callback(display))
@@ -1283,7 +1279,7 @@ class ListField(GenericCodebookField):
     #def _on_kill_focus(self, event):
     #    if self._selected_item is not None:
     #        self._list.EnsureVisible(self._selected_item)
-    #    super(ListField, self)._on_kill_focus(event)
+    #    return super(ListField, self)._on_kill_focus(event)
         
     def _load_list_data(self):
         current = self.get_value()
@@ -1410,7 +1406,7 @@ class FileField(Invocable, InputField):
         ctrl = wx.TextCtrl(self._parent, -1, '',
                            size=self._px_size(8, 1))
         ctrl.SetEditable(False)
-        ctrl.SetBackgroundColour(config.field_disabled_color)
+        ctrl.SetOwnBackgroundColour(config.field_disabled_color)
         return ctrl
 
     def _button_size(self):
