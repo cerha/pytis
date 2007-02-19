@@ -1039,10 +1039,9 @@ class LookupForm(RecordForm):
         # u¾ivatelského filtru. 
         self._lf_condition = condition
         self._lf_filter = None
-        self._lf_last_filter = self._get_state_param('filter', None,
-                                                     pytis.data.Operator)
-        self._lf_search_condition = self._get_state_param('search', None,
-                                                          pytis.data.Operator)
+        self._lf_last_filter = self._load_condition('filter')
+        self._lf_search_condition = self._load_condition('search')
+        self._user_conditions = self._load_conditions('conditions')
         
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
@@ -1062,7 +1061,78 @@ class LookupForm(RecordForm):
             sorting =  tuple([(cid, mapping[dir])
                               for cid, dir in self._default_sorting()])
         self._lf_sorting = sorting
+
+    def _pack_condition(self, condition):
+        # We prefer saving the condition in our custom format, since its safer
+        # to pickle Python builtin types than instances of application defined
+        # classes.
+        def pack(something):
+            if isinstance(something, pytis.data.Operator):
+                args = tuple([pack(arg) for arg in something.args()])
+                return (something.name(), args, something.kwargs())
+            elif isinstance(something, pytis.data.Value):
+                return [something.export()]
+            elif isinstance(something, pytis.data.WMValue):
+                return [something.value()]
+            elif isinstance(something, str):
+                return something
+            else:
+                raise ProgramError("Invalid object to pack:", something)
+        assert isinstance(condition, pytis.data.Operator)
+        return pack(condition)
+
+    def _unpack_condition(self, packed):
+        OPERATORS = ('AND','OR','NOT','EQ','NE','WM','NW','LT','LE','GT','GE')
+        def unpack(packed):
+            name, packed_args, kwargs = packed
+            assert name in OPERATORS
+            op = getattr(pytis.data, name)
+            if name in ('AND', 'OR', 'NOT'):
+                args = [unpack(arg) for arg in packed_args]
+            elif isinstance(packed_args[1], list):
+                col, val = packed_args[0], packed_args[1][0]
+                type = self._data.find_column(col).type()
+                if name in ('WM', 'NW'):
+                    value, err = type.wm_validate(val)
+                else:
+                    value, err = type.validate(val, strict=False)
+                if err is not None:
+                    raise ProgramError("Invalid operand value:", err)
+                args = col, value
+            else:
+                args = packed_args
+                assert len(args) == 2
+                assert isinstance(args[0], str)
+                assert isinstance(args[1], str)
+            return op(*args, **kwargs)
+        try:
+            return unpack(packed)
+        except Exception, e:
+            log(OPERATIONAL, "Unable to restore packed condition:",
+                (packed, str(e)))
+            return None
         
+    def _load_condition(self, key):
+        packed = self._get_state_param(key, None, tuple)
+        return packed and self._unpack_condition(packed)
+    
+    def _save_condition(self, key, condition):
+        self._set_state_param(key, self._pack_condition(condition))
+        
+    def _load_conditions(self, key):
+        packed = self._get_state_param(key, None, tuple, tuple)
+        if packed:
+            unpacked = [(n, self._unpack_condition(c)) for n,c in packed]
+            return tuple([Condition(name, cond, fixed=False)
+                          for name, cond in unpacked if cond])
+        else:
+            return ()
+
+    def _save_conditions(self, key, conditions):
+        packed = [(c.name(), self._pack_condition(c.condition()))
+                  for c in conditions]
+        self._set_state_param(key, tuple(packed))
+    
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
@@ -1169,7 +1239,7 @@ class LookupForm(RecordForm):
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)
-            self._set_state_param('search', condition)
+            self._save_condition('search', condition)
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
@@ -1196,7 +1266,7 @@ class LookupForm(RecordForm):
         self._lf_filter = condition
         if condition is not None:
             self._lf_last_filter = condition
-            self._set_state_param('filter', condition)
+            self._save_condition('filter', condition)
         self._filter_refresh()
         
     def _filter_refresh(self):
@@ -1206,8 +1276,7 @@ class LookupForm(RecordForm):
     def _filter_conditions(self):
         return (Condition(_("Poslední aplikovaný filtr"),
                           self._lf_last_filter),
-                ) + self._view.conditions() + \
-                self._get_state_param('conditions', (), tuple, Condition)
+                ) + self._view.conditions() + self._user_conditions
 
     def _filter_menu(self):
         # Vra» seznam polo¾ek filtraèního menu.
@@ -1241,8 +1310,9 @@ class LookupForm(RecordForm):
                                 col=self._current_column_id(),
                                 condition=self._lf_filter,
                                 conditions=self._filter_conditions())
-            self._set_state_param('conditions', tuple([c for c in conditions
-                                                       if not c.fixed()]))
+            self._user_conditions = tuple([c for c in conditions
+                                           if not c.fixed()])
+            self._save_conditions('conditions', self._user_conditions)
         if perform and condition != self._lf_filter:
             self._filter(condition)
 
