@@ -8,6 +8,10 @@
 
 	Pøidána podpora ukládání podmínek ve vlastním formátu skládajícím
 	se pouze ze základních Pythonových typù.
+
+	* BUGFIX: Opraven zpùsob nastavování barvy pozadí vstupních
+	políèek, díky èemu¾ ji¾ nevzniká problém s neviditelným obsahem
+	políèka v nìkterých GTK tématech (napø. Clearlooks).
 	
 2007-02-16  Milan Zamazal  <pdm@brailcom.org>
 
