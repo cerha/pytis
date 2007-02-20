@@ -811,7 +811,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
         # Menu musíme zkonstruovat a¾ zde, proto¾e je pro ka¾dý sloupec jiné.
         if col == -1:
-            menu = self._displayed_columns_menu(None)
+            menu = self._displayed_columns_menu(len(self._columns))
         else:
             menu = self._column_context_menu(col)
         self._popup_menu(menu)
