@@ -137,6 +137,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._logo.Show(False)
             else:
                 log(OPERATIONAL, "Unable to read logo:", logo_file)
+        icons = wx.IconBundle()
+        for name in ('pytis', 'pytis-mini'):
+            icon_bmp = get_icon(name)
+            if icon_bmp:
+                icon = wx.EmptyIcon()
+                icon.CopyFromBitmap(icon_bmp)
+                icons.AddIcon(icon)
+        frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
