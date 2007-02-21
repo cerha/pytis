@@ -1,3 +1,11 @@
+2007-02-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py: Fixed `DescriptiveDualForm' side
+	selection to work also with side form fields not present in main
+	form row (such as big binary fields).
+
+	* pytis/form/search.py: Improved button label.
+
 2007-02-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py: Fixed column selection popup menu outside

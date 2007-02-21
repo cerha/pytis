@@ -4,7 +4,19 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2007-02-19 Tomas Cerha  <cerha@brailcom.org>
+2007-02-21 Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Opraven zpùsob pøednastavení spodního formuláøe v
+	`DescriptiveDualForm', aby fungoval i pokud dolní formuláø
+	obsahuje políèka neobsa¾ená v øádku horního formuláøe (jako je
+	tomu napø. u vìt¹ích binárních dat).  Pro jednoduchost jsou
+	v¹echny hodnoty naèteny v¾dy z databáze podle klíèe, co¾ by mohlo
+	být o nìco pomalej¹í ne¾ døíve, kdy se rovnou pou¾ily hodnoty
+	horního øádku.  Z praktického hlediska se v¹ak zpo¾dìní zdá
+	neznatelné.  U formuláøù s vìt¹ími binárními daty je samozøejmì
+	nutno s urèitým zpo¾dìním poèítat.
+
+2007-02-20 Tomas Cerha  <cerha@brailcom.org>
 
 	Byly pøidány nové ikony pro nìkteré pøíkazy a také ikony hlavního
 	aplikaèního okna.
