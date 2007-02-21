@@ -603,7 +603,6 @@ class KeyHandler:
         self._wx_key = WxKey()
         self._prefix_key_sequence = []
         self._commands = None
-        self._temporary_keymap = []
         if not hasattr(self, 'keymap'):
             self.keymap = None
         self._current_keymap = self.keymap
@@ -623,7 +622,6 @@ class KeyHandler:
     def _init_commands(self):
         # Nemù¾eme `_commands' inicializovat hned v konstruktoru, proto¾e
         # tou dobou je¹tì nemusí být v¹echny pøíkazy ve tøídì definovány.
-        keymap = self._get_keymap()
         commands = []
         for attrname in public_attributes(self.__class__):
             if starts_with(attrname, 'COMMAND_'):
@@ -631,8 +629,6 @@ class KeyHandler:
                 if isinstance(command, Command):
                     commands.append(command)
         # Do atributu pøiøazujeme a¾ nyní, aby to bylo odolnìj¹í vláknùm
-        for key, command, args in self._temporary_keymap:
-            self.keymap.define_key(key, command, args)
         self._commands = commands
 
     def _maybe_invoke_command(self, key_commands):
@@ -676,11 +672,8 @@ class KeyHandler:
         Argumenty jsou shodé jako v metodì 'Keymap.define_key()'.
         
         """
-        if self._commands is None:
-            # `_init_commands()' was not yet called.
-            self._temporary_keymap.append((key, command, args))
-        else:
-            self.keymap.define_key(key, command, args)
+        keymap = self._get_keymap()
+        keymap.define_key(key, command, args)
         
     def on_key_down(self, event, dont_skip=False):
         """Zpracuj klávesovou událost 'event'.
