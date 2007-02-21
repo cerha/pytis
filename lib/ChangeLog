@@ -1,5 +1,8 @@
 2007-02-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py: Use `Shift' in shortcut key definitions
+	even for letters.
+
 	* pytis/form/dualform.py: Fixed `DescriptiveDualForm' side
 	selection to work also with side form fields not present in main
 	form row (such as big binary fields).
