@@ -7,7 +7,7 @@ Requirements:
   * python-psycopg2 library (for older versions - PyPgSQL Python library)
   * egenix-mx-datetime Python library
   * python-wxgtk2.6 or later (only for GUI apps)
-  * python-imaging (to support Image data types)  
+  * python-imaging (only when using Image data types)  
 
 The simplest installation can be done using the provided Makefile.  Just run
 "make install" within the package root directory.  Feel free to edit the
