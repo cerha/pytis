@@ -496,7 +496,8 @@ class DescriptiveDualForm(BrowseShowDualForm):
     def _do_selection(self, row):
         if self._side_form is not None:
             self._in_mainform_selection = True
-            self._side_form.select_row(row.row())
+            key = tuple([row[c.id()] for c in row.data().key()])
+            self._side_form.select_row(key)
             self._side_form.Show(True)
             self._select_form(self._main_form, force=True)
             self._in_mainform_selection = False
