@@ -365,7 +365,7 @@ class SFDialog(SFSDialog):
                    tooltip=_("Pøidat novou podmínku v konjunkci")),
             button(_("Pøidat OR"), lambda e: self._on_add(or_=True),
                    tooltip=_("Pøidat novou podmínku v disjunkci")),
-            button(_("Zru¹it v¹e"), lambda e: self._on_reset(),
+            button(_("Odebrat v¹e"), lambda e: self._on_reset(),
                    tooltip=_("Pøidat novou podmínku v disjunkci"))]
         if self._conditions:
             buttons.append(
