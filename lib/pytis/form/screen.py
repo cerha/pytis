@@ -274,46 +274,41 @@ class WxKey:
     _M_CTRL = 'CTRL'
 
     _TRANS_TABLE = None
-    def _make_dictionary(self, items):
-        dict = {}
-        for i in items:
-            dict[i[0]] = i[1]
-        return dict
     _RTRANS_TABLE = None
 
     def __init__(self):
+        # Musí to být a¾ tady, kvùli (ne)importùm wx na serveru
+        table = (('Insert',    wx.WXK_INSERT),
+                 ('Delete',    wx.WXK_DELETE),
+                 ('Backspace', wx.WXK_BACK),
+                 ('Home',      wx.WXK_HOME),
+                 ('End',       wx.WXK_END),
+                 ('Prior',     wx.WXK_PRIOR),
+                 ('Next',      wx.WXK_NEXT),
+                 ('Up',        wx.WXK_UP),
+                 ('Down',      wx.WXK_DOWN),
+                 ('Left',      wx.WXK_LEFT),
+                 ('Right',     wx.WXK_RIGHT),
+                 ('Enter',     wx.WXK_NUMPAD_ENTER),
+                 ('Enter',     wx.WXK_RETURN),
+                 ('Escape',    wx.WXK_ESCAPE),
+                 ('Tab',       wx.WXK_TAB),
+                 ('F1',  wx.WXK_F1),
+                 ('F2',  wx.WXK_F2),
+                 ('F3',  wx.WXK_F3),
+                 ('F4',  wx.WXK_F4),
+                 ('F5',  wx.WXK_F5),
+                 ('F6',  wx.WXK_F6),
+                 ('F7',  wx.WXK_F7),
+                 ('F8',  wx.WXK_F8),
+                 ('F9',  wx.WXK_F9),
+                 ('F10', wx.WXK_F10),
+                 ('F11', wx.WXK_F11),
+                 ('F12', wx.WXK_F12),
+                 )
         if self._TRANS_TABLE is None:
-            # Musí to být a¾ tady, kvùli (ne)importùm wx na serveru
-            self.__class__._TRANS_TABLE = {'Insert'   : wx.WXK_INSERT,
-                                           'Delete'   : wx.WXK_DELETE,
-                                           'Backspace': wx.WXK_BACK,
-                                           'Home'     : wx.WXK_HOME,
-                                           'End'      : wx.WXK_END,
-                                           'Prior'    : wx.WXK_PRIOR,
-                                           'Next'     : wx.WXK_NEXT,
-                                           'Up'       : wx.WXK_UP,
-                                           'Down'     : wx.WXK_DOWN,
-                                           'Left'     : wx.WXK_LEFT,
-                                           'Right'    : wx.WXK_RIGHT,
-                                           'Enter'    : wx.WXK_RETURN,
-                                           'Escape'   : wx.WXK_ESCAPE,
-                                           'Tab'      : wx.WXK_TAB,
-                                           'F1':  wx.WXK_F1,
-                                           'F2':  wx.WXK_F2,
-                                           'F3':  wx.WXK_F3,
-                                           'F4':  wx.WXK_F4,
-                                           'F5':  wx.WXK_F5,
-                                           'F6':  wx.WXK_F6,
-                                           'F7':  wx.WXK_F7,
-                                           'F8':  wx.WXK_F8,
-                                           'F9':  wx.WXK_F9,
-                                           'F10': wx.WXK_F10,
-                                           'F11': wx.WXK_F11,
-                                           'F12': wx.WXK_F12,
-                                           }
-            self.__class__._RTRANS_TABLE = \
-              self._make_dictionary(map(lambda x: (x[1], x[0]),
-                                        self._TRANS_TABLE.items()))
+            self.__class__._TRANS_TABLE = dict(table)
+            self.__class__._RTRANS_TABLE = dict([(v,k) for k,v in table])
         self._cache = {}
         
     def _key2wx(self, key):
@@ -389,25 +384,20 @@ class WxKey:
             prefix = 'Ctrl-'
         if event.AltDown():
             prefix = prefix + 'Alt-'
+        if event.ShiftDown():
+            prefix = prefix + 'Shift-'
         code = event.GetKeyCode()
         try:
-            body = self._RTRANS_TABLE[code]
-            if event.ShiftDown():
-                prefix = prefix + 'Shift-'
+            key = self._RTRANS_TABLE[code]
         except KeyError:
-            if code == 13 or code == 372: # RETURN or KeyPad RETURN
-                body = 'Enter'
+            if code >= 1 and code <= 26:
+                key = chr(code + 96)
             else:
-                if code >= 1 and code <= 26:
-                    body = chr(code + 96)
-                else:
-                    try:
-                        body = chr(code).lower()
-                    except:
-                        body = '???'
-                if event.ShiftDown():
-                    body = body.upper()
-        return prefix + body
+                try:
+                    key = chr(code).lower()
+                except:
+                    key = '???'
+        return prefix + key
     
 
 class WxColor(wx.Colour):
@@ -520,9 +510,7 @@ class Keymap:
         - Klávesa s modifikátorem Alt je zapsána ve formátu 'Alt-<KEY>', kde
           '<KEY>' je zápis klávesy bez tohoto modifikátoru.
 
-        - Klávesa s modifikátorem Shift je zapsána ve formátu 'Shift-<KEY>',
-          pokud <KEY> není znak anglické abecedy -- ten je zapsán jako
-          odpovídající velké písmeno.
+        - Klávesa s modifikátorem Shift je zapsána ve formátu 'Shift-<KEY>'.
           
         - Lze pou¾ívat více modifikátorù souèasnì.  Potom jsou modifikátory
           zapisovány v¾dy v poøadí Ctrl, Alt, Shift (napø. tedy Ctrl-Alt-s nebo
