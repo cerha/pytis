@@ -1,3 +1,14 @@
+2007-02-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added basic support for Binary data types.
+
+	* pytis/form/inputfield.py: Respect the change in `Binary.Buffer'
+	constructor.
+
+	* pytis/data/types_.py: Added support for passing an open file to
+	`Binary.Buffer' constructor, as well as passing the original file
+	name and MIME type.
+
 2007-02-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py: Use `Shift' in shortcut key definitions
