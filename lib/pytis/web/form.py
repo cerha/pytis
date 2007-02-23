@@ -65,8 +65,8 @@ pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
 class Form(lcg.Content):
 
     def __init__(self, data, view, resolver, row=None, prefill=None,
-                 new=False):
-        super(Form, self).__init__()
+                 new=False, **kwargs):
+        super(Form, self).__init__(**kwargs)
         assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
         assert isinstance(resolver, pytis.util.Resolver), resolver
@@ -130,6 +130,8 @@ class LayoutForm(Form):
             ctrl = _html.checkbox
             attr['value'] = 'T'
             attr['checked'] = value.value()
+        elif isinstance(type, pytis.data.Binary):
+            ctrl = _html.upload
         elif type.enumerator():
             ctrl = _html.select
             attr['options'] = [("&nbsp;", "")] + \
@@ -251,7 +253,14 @@ class ShowForm(LayoutForm):
 
     def _export_field(self, f):
         type = f.type(self._data)
-        if isinstance(type, pytis.data.Boolean):
+        if isinstance(type, pytis.data.Binary):
+            buf = self._row[f.id()].value()
+            if buf:
+                size = format_byte_size(len(buf))
+                value = buf.filename() + ' (%s)' % size or size
+            else:
+                value = ""
+        elif isinstance(type, pytis.data.Boolean):
             value = self._row[f.id()].value() and _("Yes") or _("No")
         elif type.enumerator():
             value = self._row.display(f.id())
@@ -290,7 +299,10 @@ class EditForm(LayoutForm):
         content = concat(errors,
                          _html.fieldset(group, cls='body'),
                          self._export_buttons())
+        binary = [id for id in self._view.layout().order()
+                  if isinstance(self._row[id].type(), pytis.data.Binary)]
         return _html.form(content, action=self._handler, method='POST',
+                          enctype=(binary and 'multipart/form-data' or None),
                           cls="edit-form") + "\n"
 
     def _export_buttons(self):
@@ -307,8 +319,9 @@ class EditForm(LayoutForm):
         
 class BrowseForm(Form):
 
-    def __init__(self, data, view, resolver, rows, link_provider=None):
-        super(BrowseForm, self).__init__(data, view, resolver)
+    def __init__(self, data, view, resolver, rows, link_provider=None,
+                 **kwargs):
+        super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         assert isinstance(rows, (list, tuple)), rows
         self._rows = rows
         self._columns = [view.field(id) for id in view.columns()]
@@ -318,6 +331,8 @@ class BrowseForm(Form):
         type = col.type(self._data)
         if isinstance(type, pytis.data.Boolean):
             value = row[col.id()].value() and _("Yes") or _("No")
+        elif isinstance(type, pytis.data.Binary):
+            value = "--"
         else:
             value = row[col.id()].value()
             if not isinstance(value, lcg.Localizable):
