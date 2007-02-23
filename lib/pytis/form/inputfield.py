@@ -1470,7 +1470,7 @@ class FileField(Invocable, InputField):
                 if self._buffer:
                     self._buffer.load(path)
                 else:
-                    self._buffer = self._type.Buffer(path=path)
+                    self._buffer = self._type.Buffer(path)
             except pytis.data.ValidationError, e:
                 message(e.message(), beep_=True)
             except IOError, e:
