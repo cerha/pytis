@@ -1046,34 +1046,44 @@ class Binary(Limited):
         provided, but these are mostly here for convenience.
         
         """
-        def __init__(self, data=None, path=None):
+        def __init__(self, data, filename=None, type=None):
             """Initialize a new buffer instance and validate the input data.
 
             Arguemnts:
             
-              data -- a Python buffer instance or None.  If used, 'path' must
-                be None.
-              path -- string path to an input file or None.  If used, 'data'
-                must be None.
+              data -- The buffer data.  It can be a Python 'buffer' object,
+                input file path as a string or an open file-like object.  A
+                buffer object is used directly, file path is opened and read
+                and file-like object is just read.
 
-            The input data may be passed as a Python buffer instance or loaded
-            from a file.  Just one of these methods may be used.
+              filename -- Original file name as a string or None.  This may be
+                a completely different filename than the input file name passed
+                to 'data'.  This name just refers to the original name of the
+                file before it was uploaded as a form value.  It is optional
+                and its usage may be application specific.
+                
+              type -- MIME type of buffer data as a string or None.  It is
+                optional and its usage may be application specific.
 
-            The argument 'data' may be used as positional.
-            
             Raises 'ValidationError' if the data don't conform to the binary
             format in use (depending on the actual 'Buffer' subclass).
             
-            Raises 'IOError' if path is given and the file can not be read.
+            Raises 'IOError' if the input file can not be read.
             
             """
-            if data:
-                assert path is None
+            if isinstance(data, buffer):
                 self._validate(data)
                 self._buffer = data
+            elif isinstance(data, (str, unicode)):
+                self.load(data)
+            elif isinstance(data, file):
+                self._load(data)
             else:
-                assert path is not None
-                self.load(path)
+                ProgramError("Invalid Buffer data:", data)
+            assert filename is None or isinstance(filename, (str, unicode))
+            assert type is None or isinstance(type, str)
+            self._filename = filename
+            self._type = type
 
         def __len__(self):
             return len(self._buffer)
@@ -1085,6 +1095,12 @@ class Binary(Limited):
         def buffer(self):
             """Return the binary data as a Python buffer instance."""
             return self._buffer
+
+        def filename(self):
+            return self._filename
+
+        def type(self):
+            return self._type
 
         def save(self, path):
             """Save the buffer data into a file.
@@ -1101,6 +1117,13 @@ class Binary(Limited):
                 f.write(self._buffer)
             finally:
                 f.close()
+                
+        def _load(self, f):
+            # Load and validate data from a file-like object.
+            data = buffer(f.read())
+            self._validate(data)
+            self._buffer = data
+            
                 
         def load(self, path):
             """Try to load the buffer from a file replacing the current data.
@@ -1119,11 +1142,9 @@ class Binary(Limited):
             """
             f = open(path, 'rb')
             try:
-                data = buffer(f.read())
+                self._load(f)
             finally:
                 f.close()
-            self._validate(data)
-            self._buffer = data
             
                 
     def __init__(self, enumerator=None, **kwargs):
@@ -1131,8 +1152,9 @@ class Binary(Limited):
                                     "in binary data types")
         super(Binary, self).__init__(**kwargs)
         
-    def _validate(self, object, **kwargs):
-        return Value(self, self.Buffer(object)), None
+    def _validate(self, object, filename=None, type=None, **kwargs):
+        value = Value(self, self.Buffer(object, filename=filename, type=type))
+        return value, None
 
     def _export(self, value):
         return value and value.buffer()
