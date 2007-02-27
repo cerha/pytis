@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -153,11 +153,13 @@ class ListTable(wx.grid.PyGridTableBase):
         
     def __init__(self, frame, data, fields, columns, row_count,
                  sorting=(), grouping=(), inserted_row_number=None,
-                 inserted_row=None, prefill=None, row_style=None):
+                 inserted_row=None, prefill=None, row_style=None,
+                 transaction=None):
         assert isinstance(grouping, types.TupleType)
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
         self._data = data
+        self._transaction = transaction
         self._fields = fields
         self._row_count = row_count
         self._sorting = sorting
@@ -238,7 +240,8 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _retrieve_row(self, row):
         def fetch(row, direction=pytis.data.FORWARD):
-            result = self._data.fetchone(direction=direction)
+            result = self._data.fetchone(direction=direction,
+                                         transaction=self._transaction)
             assert result, ('Missing row', row)
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
@@ -370,6 +373,7 @@ class ListTable(wx.grid.PyGridTableBase):
         # Tato metoda je nutná kvůli jistému podivnému chování wxWindows,
         # kdy wxWindows s tabulkou pracuje i po jejím zrušení.
         self._data = None
+        self._transaction = None
         # TODO: Následující (a možná i ta předcházející) operace jsou
         # jsou v principu zbytečné, ale protože z neznámých důvodů
         # nedochází při uzavření formuláře k likvidaci nějakých blíže

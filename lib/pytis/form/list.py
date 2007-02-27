@@ -538,15 +538,19 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 before = table.row(row+1).row().columns(kc)
             else:
                 after = before = None
-            op = (self._data.insert, (rdata,), dict(after=after, before=before))
+            op = (self._data.insert,
+                  (rdata,),
+                  dict(after=after, before=before,
+                       transaction=self._transaction))
         else:
             key = editing.orig_content.row().columns(kc)
-            op = (self._data.update, (key, rdata))
+            op = (self._data.update,
+                  (key, rdata,),
+                  dict(transaction=self._transaction))
         # Provedení operace
         success, result = db_operation(op)
         if success and result[1]:
             table.edit_row(None)
-            self._unlock_record()
             message('Øádek ulo¾en do databáze', ACTION)
             self.refresh()
             self._run_callback(self.CALL_MODIFICATION)
@@ -576,7 +580,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         if soft and editing.changed:
             return True
-        self._unlock_record()
         row = editing.row
         if editing.new:
             self._update_grid()
@@ -1109,7 +1112,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         condition = pytis.data.AND(cond, self._current_condition())
         data = self._data
         data.rewind()
-        success, result = db_operation(lambda: data.search(condition))
+        def dbop():
+            return data.search(condition, transaction=self._transaction)
+        success, result = db_operation(dbop)
         if not success:
             row = -1
         elif result == 0:
@@ -1421,7 +1426,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 col = self._current_cell()[1]
             cid = self._columns[col].id()
             cond = self._current_condition()
-            distinct = self._data.distinct(cid, condition=cond)
+            distinct = self._data.distinct(cid, condition=cond,
+                                           transaction=self._transaction)
             if len(distinct) > 60:
                 message(_("Pøíli¹ mnoho polo¾ek pro autofilter."), beep_=True)
                 return
@@ -1540,13 +1546,18 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             log(EVENT, 'Pokus o editaci needitovatelné tabulky')
             return False
         table = self._table
-        if not table.editing():
-            if not self._lock_record(self._current_key()):
-                return False
-            table.edit_row(self._current_cell()[0])
-            self._update_selection_colors()
-        if not self._edit_cell():
-            self._on_line_rollback()
+        self._transaction = self._data.begin_transaction()
+        try:
+            if not table.editing():
+                if not self._lock_record(self._current_key()):
+                    return False
+                table.edit_row(self._current_cell()[0])
+                self._update_selection_colors()
+            if not self._edit_cell():
+                self._on_line_rollback()
+        finally:
+            self._data.commit_transaction(self._transaction)
+            self._transaction = None
         return True
     
     def _cmd_export_csv(self):
@@ -1666,7 +1677,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             the_row = table.row(row)
             inserted_row = PresentedRow(the_row.fields(), the_row.data(), None,
                                         prefill=self._row_copy_prefill(the_row),
-                                        new=True)
+                                        new=True, transaction=self._transaction)
         if not before and not oldempty:
             row = row + 1
         if row == -1:

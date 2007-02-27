@@ -4,6 +4,10 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-22  Milan Zamazal  <pdm@brailcom.org>
+
+	Update formuláøù pro nový zpùsob zamykání záznamù.
+
 2007-02-21  Milan Zamazal  <pdm@brailcom.org>
 
 	Podpora pro èásteèný rollback transakcí, viz metody

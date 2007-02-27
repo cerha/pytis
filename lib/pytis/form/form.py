@@ -132,6 +132,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
         self._init_attributes(**kwargs)
         self._result = None
+        self._transaction = None
         start_time = time.time()
         self._create_form()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
@@ -486,13 +487,23 @@ class PopupForm:
         # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
         return self._popup_frame_.Close(force=force)
         
-    def run(self):
+    def run(self, lock_key=None):
         """Zobraz formuláø jako modální dialog."""
-        unlock_callbacks()
-        frame = self._parent
-        frame.SetTitle(self.title())
-        frame.SetClientSize(self.GetSize())
-        frame.ShowModal()
+        if lock_key is not None:
+            self._transaction = self._data.begin_transaction()
+        try:
+            if lock_key is not None:
+                if not self._lock_record(lock_key):
+                    return None
+            unlock_callbacks()
+            frame = self._parent
+            frame.SetTitle(self.title())
+            frame.SetClientSize(self.GetSize())
+            frame.ShowModal()
+        finally:
+            if lock_key is not None:
+                self._data.commit_transaction(self._transaction)
+                self._transaction = None
         result = self._result
         self._close(force=True)
         return result
@@ -624,7 +635,7 @@ class RecordForm(InnerForm):
             data = self._data
             data.rewind()
             data.skip(row_number)
-            return data.fetchone()
+            return data.fetchone(transaction=self._transaction)
         success, row = db_operation(get_it)
         if not success or not row:
             return None
@@ -650,14 +661,18 @@ class RecordForm(InnerForm):
         condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
         data = self._data
         def find_row(condition):
-            n = data.select(condition, columns=self._select_columns())
-            return data.fetchone()
+            n = data.select(condition, columns=self._select_columns(),
+                            transaction=self._transaction)
+            return data.fetchone(transaction=self._transaction)
         success, result = db_operation((find_row, (condition,)))
         return result
 
     def _find_row_by_key(self, key):
         cols = self._select_columns()
-        success, row = db_operation(lambda : self._data.row(key, columns=cols))
+        def dbop():
+            return self._data.row(key, columns=cols,
+                                  transaction=self._transaction)
+        success, row = db_operation(dbop)
         if success and row:
             return row
         else:
@@ -673,7 +688,9 @@ class RecordForm(InnerForm):
         condition = pytis.data.AND(*eqs)
         data = self._data
         data.rewind()
-        success, result = db_operation(lambda: data.search(condition))
+        def dbop():
+            return data.search(condition, transaction=self._transaction)
+        success, result = db_operation(dbop)
         if not success:
             return None
         elif result == 0:
@@ -701,18 +718,15 @@ class RecordForm(InnerForm):
         return {}
 
     def _lock_record(self, key):
-        success, locked = db_operation(lambda : self._data.lock_row(key),
-                                       quiet=True)
+        def dbop():
+            return self._data.lock_row(key, transaction=self._transaction)
+        success, locked = db_operation(dbop, quiet=True)
         if success and locked != None:
             log(EVENT, 'Záznam je zamèen', locked)
             run_dialog(Message, _("Záznam je zamèen: %s") % locked)
             return False
         else:
             return True
-
-    def _unlock_record(self):
-        if self._data.locked_row():
-            db_operation(lambda : self._data.unlock_row(), quiet=True)
 
     def _check_record(self, row):
         # Proveï kontrolu integrity dané instance PresentedRow.
@@ -818,7 +832,8 @@ class RecordForm(InnerForm):
             if condition is None:
                 return True
             assert isinstance(condition, pytis.data.Operator)
-            op = lambda : self._data.delete_many(condition)
+            op = lambda : self._data.delete_many(condition,
+                                                 transaction=self._transaction)
             log(EVENT, 'Mazání záznamu:', condition)
         else:
             msg = _("Opravdu chcete záznam zcela vymazat?")        
@@ -826,7 +841,7 @@ class RecordForm(InnerForm):
                 log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
                 return False
             key = self._current_key()
-            op = lambda : self._data.delete(key)
+            op = lambda : self._data.delete(key, transaction=self._transaction)
             log(EVENT, 'Mazání záznamu:', key)
         success, result = db_operation(op)
         if success:
@@ -1153,7 +1168,8 @@ class LookupForm(RecordForm):
         op = lambda : data.select(condition=self._current_condition(),
                                   columns=self._select_columns(),
                                   sort=self._data_sorting(),
-                                  reuse=False)
+                                  reuse=False,
+                                  transaction=self._transaction)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
@@ -1188,7 +1204,8 @@ class LookupForm(RecordForm):
                 report_failure=True):
         self._search_adjust_data_position(row_number)
         data = self._data
-        skip = data.search(condition, direction=direction)
+        skip = data.search(condition, direction=direction,
+                           transaction=self._transaction)
         if skip == 0:
             log(EVENT, 'Záznam nenalezen')
             if report_failure:
@@ -1206,7 +1223,7 @@ class LookupForm(RecordForm):
     def _search_skip(self, skip, direction):
         data = self._data
         data.skip(skip-1, direction=direction)
-        row = data.fetchone(direction=direction)
+        row = data.fetchone(direction=direction, transaction=self._transaction)
         self._select_row(row)
 
     def _cmd_jump(self):
@@ -1248,7 +1265,8 @@ class LookupForm(RecordForm):
     def _compute_aggregate(self, operation, column_id, condition):
         if self._lf_condition is not None:
             condition = pytis.data.AND(condition, self._lf_condition)
-        return self._data.select_aggregate((operation, column_id), condition)
+        return self._data.select_aggregate((operation, column_id), condition,
+                                           transaction=self._transaction)
 
     def _filtered_columns(self):
         columns = []
@@ -1714,10 +1732,14 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         rdata = self._record_data(self._row)
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Vlo¾ení øádku')
-            op = (self._data.insert, (rdata,))
+            op = (self._data.insert,
+                  (rdata,),
+                  dict(transaction=self._transaction),)
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            op = (self._data.update, (self._current_key(), rdata))
+            op = (self._data.update,
+                  (self._current_key(), rdata,),
+                  dict(transaction=self._transaction),)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
@@ -1997,7 +2019,6 @@ class PopupEditForm(PopupForm, EditForm):
         return sizer
 
     def _cleanup(self):
-        self._unlock_record()
         super(PopupEditForm, self)._cleanup()
 
     def can_command(self, command, **kwargs):
@@ -2006,10 +2027,11 @@ class PopupEditForm(PopupForm, EditForm):
         return super(PopupEditForm, self).can_command(command, **kwargs)
         
     def run(self):
-        key = self._current_key()
-        if self._mode == self.MODE_EDIT and key and not self._lock_record(key):
-            return None
-        return PopupForm.run(self)
+        if self._mode == self.MODE_EDIT:
+            key = self._current_key()
+        else:
+            key = None
+        return PopupForm.run(self, lock_key=key)
 
     def set_status(self, field, message):
         if self._status_fields.has_key(field):
