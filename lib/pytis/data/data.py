@@ -219,7 +219,6 @@ class Data(object):
         self._columns = tuple(columns)
         self._key = key
         self._ordering = ordering
-        self._locked_row = None
         self._change_number = pytis.util.Counter()
         self._on_change_callbacks = []
         self._select_last_row_number = None
@@ -667,57 +666,6 @@ class Data(object):
 
         """
         return 0
-        
-    def lock_row(self, key):
-        """Zamèi øádek odpovídající 'key' pro editaci a mazání.
-
-        Argumenty:
-
-          key -- klíè øádku, který má být zamèen
-
-        Jestli¾e 'key' neodpovídá ¾ádnému existujícímu øádku, je chování metody
-        nedefinováno.
-
-        Zamykání je neblokující, pokud je ji¾ po¾adovaný øádek zamèen, metoda
-        okam¾itì skonèí, bez toho ani¾ by se sama pokou¹ela o jeho dal¹í
-        zamykání.
-
-        Vrací: 'None', jestli¾e byl øádek zamèen, slovní popis existujícího
-        zámku, jestli¾e øádek je ji¾ zamèen.  Slovní popis obsahuje opravdu jen
-        popis zámku, ne tedy napøíklad informaci o tom ¾e záznam je zamèen,
-        zaèíná malým písmenem a není ukonèen ¾ádným interpunkèním znaménkem.
-
-        Cílem zamykání je informovat ostatní klienty, ¾e pøíslu¹ný záznam je
-        editován a ¾e by s ním nemìli manipulovat.  Zamykání nemusí technicky
-        zabraòovat modifikacím u zdroje dat, ke kterému se pøistupuje jinak ne¾
-        instancí této tøídy.  Není také nutno zaji¹»ovat o¹etøení pøístupu
-        k datùm z více threadù, jestli¾e tøída samotná není thread safe.
-
-        V ka¾dý okam¾ik mù¾e být zamèen nejvý¹e jeden øádek jedné instance této
-        tøídy.  Pøi pokusu o zamèení dal¹ího øádku je chování metody
-        nedefinováno.
-
-        """
-        if self._locked_row:
-            raise ProgramError('Attempt to lock more than one row')
-        self._locked_row = key
-        return None
-
-    def unlock_row(self):
-        """Odemèi aktuálnì zamèený øádek.
-
-        Jestli¾e není zamèen ¾ádný øádek, nedìlej nic.
-
-        """
-        self._locked_row = None
-
-    def locked_row(self):
-        """Vra» klíè aktuálnì zamèeného øádku.
-
-        Jestli¾e momentálnì není zamèený ¾ádný øádek, vra» 'None'.
-
-        """
-        return self._locked_row
 
     def change_number(self):
         """Vra» poèet dosud zaregistrovaných zmìn dat.

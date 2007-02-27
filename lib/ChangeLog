@@ -1,3 +1,22 @@
+2007-02-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added basic support for Binary data types.
+
+	* pytis/form/inputfield.py: Respect the change in `Binary.Buffer'
+	constructor.
+
+	* pytis/data/types_.py: Added support for passing an open file to
+	`Binary.Buffer' constructor, as well as passing the original file
+	name and MIME type.
+
+2007-02-21  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/data.py: pytis.data.Data.*lock*_row removed.
+	
+	* pytis/data/dbdata.py: See above.
+	
+	* pytis/data/_test.py: See above.
+
 2007-02-20  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/postgresql.py: Support for user transaction and
@@ -15,16 +34,13 @@
 
 	* pytis/data/access.py: **kwargs added to several methods.
 	
-2007-02-23  Tomas Cerha  <cerha@brailcom.org>
+2007-02-21  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/form.py: Added basic support for Binary data types.
+	* pytis/form/dualform.py: Fixed `DescriptiveDualForm' side
+	selection to work also with side form fields not present in main
+	form row (such as big binary fields).
 
-	* pytis/form/inputfield.py: Respect the change in `Binary.Buffer'
-	constructor.
-
-	* pytis/data/types_.py: Added support for passing an open file to
-	`Binary.Buffer' constructor, as well as passing the original file
-	name and MIME type.
+	* pytis/form/search.py: Improved button label.
 
 2007-02-20  Tomas Cerha  <cerha@brailcom.org>
 

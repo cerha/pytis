@@ -1773,7 +1773,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           
         """
         transaction.dbdata()._pg_commit_transaction()
-        self.unlock_row()
         for dbdata in transaction.notifications():
             dbdata._pg_send_notifications()
 
@@ -1786,7 +1785,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
         """
         transaction.dbdata()._pg_rollback_transaction()
-        self.unlock_row()
 
     # Pomocné metody
 
@@ -2379,6 +2377,18 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     # Locking
 
     def lock_row(self, key, transaction):
+        """Lock row with the given key.
+
+        Arguments:
+
+          key -- key of the row to lock
+          transaction -- transaction object representing the transaction in
+            which the row is locked
+
+        The lock is automatically released when the transaction is closed
+        (whether by commit or rollback).
+        
+        """
         if is_sequence(key):
             key = key[0]
         log(EVENT, 'Locking row:', str (key))
@@ -2392,7 +2402,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(EVENT, 'Row already locked by another process')
             self._pg_query('rollback to _lock', transaction=transaction)
             return "Record locked by another process"
-        super(DBDataPostgreSQL, self).lock_row(key)
         log(EVENT, 'Row locked')
         return None
 

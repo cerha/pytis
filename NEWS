@@ -4,6 +4,10 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-21  Milan Zamazal  <pdm@brailcom.org>
+
+	Zru¹eny metody pytis.data.Data.*lock*_row.
+
 2007-02-20  Milan Zamazal  <pdm@brailcom.org>
 
 	V db rozhraní pøidána podpora pro u¾ivatelské transakce.

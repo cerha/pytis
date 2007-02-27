@@ -1139,9 +1139,7 @@ class DBDataDefault(_DBTest):
         transaction_1 = t1.begin_transaction()
         transaction_2 = t2.begin_transaction()
         try:
-            assert t1.locked_row() is None, 'lock present'
             assert t1.lock_row(us, transaction_1) is None, 'lock failed'
-            assert t1.locked_row() is us, 'locked row missing'
             result = t2.lock_row(us, transaction_2)
             assert type(result) == type(''), 'unlocked record locked'
             assert t2.lock_row(cz, transaction_2) is None, 'lock failed'
@@ -1151,7 +1149,6 @@ class DBDataDefault(_DBTest):
                 'unlocked record locked'
             t1.commit_transaction(transaction_1)
             transaction_1 = t1.begin_transaction()
-            assert t1.locked_row() is None, 'lock present'
             assert t2.lock_row(us, transaction_2) is None, 'lock failed'
             t1.rollback_transaction(transaction_1)
             t2.commit_transaction(transaction_2)
