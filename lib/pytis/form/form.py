@@ -489,6 +489,9 @@ class PopupForm:
         
     def run(self, lock_key=None):
         """Zobraz formuláø jako modální dialog."""
+        if (lock_key is not None and
+            not isinstance(self._data, pytis.data.DBDataDefault)):
+            lock_key = None
         if lock_key is not None:
             self._transaction = self._data.begin_transaction()
         try:
