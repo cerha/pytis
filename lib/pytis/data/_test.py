@@ -1225,6 +1225,26 @@ class DBDataDefault(_DBTest):
                 assert result is not None, ('value not present', k,)
                 assert result['nazev'].value() == v, \
                     ('invalid value', k, result['nazev'].value(),)
+    def test_partial_transaction(self):
+        d = self.dstat
+        def v(s):
+            return pytis.data.String().validate(s)[0]
+        row1 = pytis.data.Row((('stat', v('xx'),), ('nazev', v('Xaxa'),),))
+        row2 = pytis.data.Row((('stat', v('yy'),), ('nazev', v('Yaya'),),))
+        row3 = pytis.data.Row((('stat', v('zz'),), ('nazev', v('Zaza'),),))
+        transaction = d.begin_transaction()
+        d.set_transaction_point(transaction, 'xxx')
+        d.insert(row1, transaction=transaction)
+        d.set_transaction_point(transaction, 'yyy')
+        d.insert(row2, transaction=transaction)
+        d.set_transaction_point(transaction, 'zzz')
+        d.cut_transaction(transaction, 'yyy')
+        d.insert(row3, transaction=transaction)
+        d.set_transaction_point(transaction, 'ooo')
+        d.commit_transaction(transaction=transaction)
+        assert d.row(row1['stat']), 'missing row'
+        assert d.row(row2['stat']) is None, 'extra row'
+        assert d.row(row3['stat']), 'missing row'
 tests.add(DBDataDefault)
 
 

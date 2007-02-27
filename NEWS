@@ -6,6 +6,12 @@
 
 2007-02-21  Milan Zamazal  <pdm@brailcom.org>
 
+	Podpora pro èásteèný rollback transakcí, viz metody
+	set_transaction_point a cut_transaction v postgresovém db
+	rozhraní.
+	
+2007-02-21  Milan Zamazal  <pdm@brailcom.org>
+
 	Zru¹eny metody pytis.data.Data.*lock*_row.
 
 2007-02-20  Milan Zamazal  <pdm@brailcom.org>

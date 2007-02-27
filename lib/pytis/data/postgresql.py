@@ -1786,6 +1786,32 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         """
         transaction.dbdata()._pg_rollback_transaction()
 
+    def set_transaction_point(self, transaction, point):
+        """Set transaction point for possible future partial rollback.
+
+        Arguments:
+
+          transaction -- transaction object returned by 'begin_transaction'
+          point -- string containing only lowercase English letters defining
+            the transaction point
+            
+        """
+        assert re.match('^[a-z]+$', point)
+        self._pg_query('savepoint %s' % (point,), transaction=transaction)
+
+    def cut_transaction(self, transaction, point):
+        """Rollback the given transaction to the point.
+
+        Arguments:
+
+          transaction -- transaction object returned by 'begin_transaction'
+          point -- string containing only lowercase English letters defining
+            the transaction point to which the rollback should be performed
+            
+        """
+        assert re.match('^[a-z]+$', point)
+        self._pg_query('rollback to %s' % (point,), transaction=transaction)
+
     # Pomocné metody
 
     def _pg_create_make_row_template(self, columns):
