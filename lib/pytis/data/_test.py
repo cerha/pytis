@@ -1233,15 +1233,17 @@ class DBDataDefault(_DBTest):
         row2 = pytis.data.Row((('stat', v('yy'),), ('nazev', v('Yaya'),),))
         row3 = pytis.data.Row((('stat', v('zz'),), ('nazev', v('Zaza'),),))
         transaction = d.begin_transaction()
-        d.set_transaction_point(transaction, 'xxx')
-        d.insert(row1, transaction=transaction)
-        d.set_transaction_point(transaction, 'yyy')
-        d.insert(row2, transaction=transaction)
-        d.set_transaction_point(transaction, 'zzz')
-        d.cut_transaction(transaction, 'yyy')
-        d.insert(row3, transaction=transaction)
-        d.set_transaction_point(transaction, 'ooo')
-        d.commit_transaction(transaction=transaction)
+        try:
+            d.set_transaction_point(transaction, 'xxx')
+            d.insert(row1, transaction=transaction)
+            d.set_transaction_point(transaction, 'yyy')
+            d.insert(row2, transaction=transaction)
+            d.set_transaction_point(transaction, 'zzz')
+            d.cut_transaction(transaction, 'yyy')
+            d.insert(row3, transaction=transaction)
+            d.set_transaction_point(transaction, 'ooo')
+        finally:
+            d.commit_transaction(transaction=transaction)
         assert d.row(row1['stat']), 'missing row'
         assert d.row(row2['stat']) is None, 'extra row'
         assert d.row(row3['stat']), 'missing row'
