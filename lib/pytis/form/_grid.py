@@ -153,13 +153,11 @@ class ListTable(wx.grid.PyGridTableBase):
         
     def __init__(self, frame, data, fields, columns, row_count,
                  sorting=(), grouping=(), inserted_row_number=None,
-                 inserted_row=None, prefill=None, row_style=None,
-                 transaction=None):
+                 inserted_row=None, prefill=None, row_style=None):
         assert isinstance(grouping, types.TupleType)
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
         self._data = data
-        self._transaction = transaction
         self._fields = fields
         self._row_count = row_count
         self._sorting = sorting
@@ -240,8 +238,7 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _retrieve_row(self, row):
         def fetch(row, direction=pytis.data.FORWARD):
-            result = self._data.fetchone(direction=direction,
-                                         transaction=self._transaction)
+            result = self._data.fetchone(direction=direction)
             assert result, ('Missing row', row)
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
@@ -373,7 +370,6 @@ class ListTable(wx.grid.PyGridTableBase):
         # Tato metoda je nutná kvùli jistému podivnému chování wxWindows,
         # kdy wxWindows s tabulkou pracuje i po jejím zru¹ení.
         self._data = None
-        self._transaction = None
         # TODO: Následující (a mo¾ná i ta pøedcházející) operace jsou
         # jsou v principu zbyteèné, ale proto¾e z neznámých dùvodù
         # nedochází pøi uzavøení formuláøe k likvidaci nìjakých blí¾e

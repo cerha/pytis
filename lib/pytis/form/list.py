@@ -549,6 +549,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                   dict(transaction=self._transaction))
         # Provedení operace
         success, result = db_operation(op)
+        if self._transaction is not None:
+            self._data.commit_transaction(self._transaction)
+            self._transaction = None
         if success and result[1]:
             table.edit_row(None)
             message('Øádek ulo¾en do databáze', ACTION)
@@ -575,6 +578,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _on_line_rollback(self, soft=False):
         log(EVENT, 'Zru¹ení editace øádku')
+        if self._transaction is not None:
+            self._data.rollback_transaction(self._transaction)
+            self._transaction = None
         editing = self._table.editing()
         if not editing:
             return False
@@ -1113,7 +1119,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         data = self._data
         data.rewind()
         def dbop():
-            return data.search(condition, transaction=self._transaction)
+            return data.search(condition)
         success, result = db_operation(dbop)
         if not success:
             row = -1
@@ -1426,8 +1432,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 col = self._current_cell()[1]
             cid = self._columns[col].id()
             cond = self._current_condition()
-            distinct = self._data.distinct(cid, condition=cond,
-                                           transaction=self._transaction)
+            distinct = self._data.distinct(cid, condition=cond)
             if len(distinct) > 60:
                 message(_("Pøíli¹ mnoho polo¾ek pro autofilter."), beep_=True)
                 return
@@ -1547,17 +1552,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
         table = self._table
         self._transaction = self._data.begin_transaction()
-        try:
-            if not table.editing():
-                if not self._lock_record(self._current_key()):
-                    return False
-                table.edit_row(self._current_cell()[0])
-                self._update_selection_colors()
-            if not self._edit_cell():
-                self._on_line_rollback()
-        finally:
-            self._data.commit_transaction(self._transaction)
-            self._transaction = None
+        if not table.editing():
+            if not self._lock_record(self._current_key()):
+                self._data.rollback_transaction(self._transaction)
+                return False
+            table.edit_row(self._current_cell()[0])
+            self._update_selection_colors()
+        if not self._edit_cell():
+            self._on_line_rollback()
         return True
     
     def _cmd_export_csv(self):
@@ -1677,7 +1679,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             the_row = table.row(row)
             inserted_row = PresentedRow(the_row.fields(), the_row.data(), None,
                                         prefill=self._row_copy_prefill(the_row),
-                                        new=True, transaction=self._transaction)
+                                        new=True)
         if not before and not oldempty:
             row = row + 1
         if row == -1:

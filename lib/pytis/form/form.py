@@ -635,7 +635,7 @@ class RecordForm(InnerForm):
             data = self._data
             data.rewind()
             data.skip(row_number)
-            return data.fetchone(transaction=self._transaction)
+            return data.fetchone()
         success, row = db_operation(get_it)
         if not success or not row:
             return None
@@ -661,17 +661,15 @@ class RecordForm(InnerForm):
         condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
         data = self._data
         def find_row(condition):
-            n = data.select(condition, columns=self._select_columns(),
-                            transaction=self._transaction)
-            return data.fetchone(transaction=self._transaction)
+            n = data.select(condition, columns=self._select_columns())
+            return data.fetchone()
         success, result = db_operation((find_row, (condition,)))
         return result
 
     def _find_row_by_key(self, key):
         cols = self._select_columns()
         def dbop():
-            return self._data.row(key, columns=cols,
-                                  transaction=self._transaction)
+            return self._data.row(key, columns=cols)
         success, row = db_operation(dbop)
         if success and row:
             return row
@@ -689,7 +687,7 @@ class RecordForm(InnerForm):
         data = self._data
         data.rewind()
         def dbop():
-            return data.search(condition, transaction=self._transaction)
+            return data.search(condition)
         success, result = db_operation(dbop)
         if not success:
             return None
@@ -1168,8 +1166,7 @@ class LookupForm(RecordForm):
         op = lambda : data.select(condition=self._current_condition(),
                                   columns=self._select_columns(),
                                   sort=self._data_sorting(),
-                                  reuse=False,
-                                  transaction=self._transaction)
+                                  reuse=False)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
@@ -1204,8 +1201,7 @@ class LookupForm(RecordForm):
                 report_failure=True):
         self._search_adjust_data_position(row_number)
         data = self._data
-        skip = data.search(condition, direction=direction,
-                           transaction=self._transaction)
+        skip = data.search(condition, direction=direction)
         if skip == 0:
             log(EVENT, 'Záznam nenalezen')
             if report_failure:
@@ -1223,7 +1219,7 @@ class LookupForm(RecordForm):
     def _search_skip(self, skip, direction):
         data = self._data
         data.skip(skip-1, direction=direction)
-        row = data.fetchone(direction=direction, transaction=self._transaction)
+        row = data.fetchone(direction=direction)
         self._select_row(row)
 
     def _cmd_jump(self):
@@ -1265,8 +1261,7 @@ class LookupForm(RecordForm):
     def _compute_aggregate(self, operation, column_id, condition):
         if self._lf_condition is not None:
             condition = pytis.data.AND(condition, self._lf_condition)
-        return self._data.select_aggregate((operation, column_id), condition,
-                                           transaction=self._transaction)
+        return self._data.select_aggregate((operation, column_id), condition)
 
     def _filtered_columns(self):
         columns = []
