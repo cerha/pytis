@@ -1811,7 +1811,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         """
         assert re.match('^[a-z]+$', point)
         self._pg_query('rollback to %s' % (point,), transaction=transaction)
-
+        self._pg_query('release %s' % (point,), transaction=transaction)
+        
     # Pomocné metody
 
     def _pg_create_make_row_template(self, columns):
