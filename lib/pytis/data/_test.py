@@ -1132,23 +1132,102 @@ class DBDataDefault(_DBTest):
         assert result == str(data2.value().buffer()), \
                ('Invalid binary data', result,)
         assert self.dbin.delete(key) == 1, 'Binary deletion failed'
-    def _test_lock(self):
+    def test_lock(self):
         us = pytis.data.String().validate('us')[0]
         cz = pytis.data.String().validate('cz')[0]
         t1, t2 = self.dstat, self.dstat1
-        assert t1.locked_row() is None, 'lock present'
-        assert t1.lock_row(us) is None, 'lock failed'
-        assert t1.locked_row() is us, 'locked row missing'
-        result = t2.lock_row(us)
-        assert type(result) == type(''), 'unlocked record locked'
-        assert t2.lock_row(cz) is None, 'lock failed'
-        t2.unlock_row()
-        time.sleep(65)
-        assert type(t2.lock_row(us)) == type(''), 'unlocked record locked'
-        t1.unlock_row()
-        assert t1.locked_row() is None, 'lock present'
-        assert t2.lock_row(us) is None, 'lock failed'
-        t2.unlock_row()
+        transaction_1 = t1.begin_transaction()
+        transaction_2 = t2.begin_transaction()
+        try:
+            assert t1.locked_row() is None, 'lock present'
+            assert t1.lock_row(us, transaction_1) is None, 'lock failed'
+            assert t1.locked_row() is us, 'locked row missing'
+            result = t2.lock_row(us, transaction_2)
+            assert type(result) == type(''), 'unlocked record locked'
+            assert t2.lock_row(cz, transaction_2) is None, 'lock failed'
+            t2.rollback_transaction(transaction_2)
+            transaction_2 = t2.begin_transaction()
+            assert type(t2.lock_row(us, transaction_2)) == type(''), \
+                'unlocked record locked'
+            t1.commit_transaction(transaction_1)
+            transaction_1 = t1.begin_transaction()
+            assert t1.locked_row() is None, 'lock present'
+            assert t2.lock_row(us, transaction_2) is None, 'lock failed'
+            t1.rollback_transaction(transaction_1)
+            t2.commit_transaction(transaction_2)
+        finally:
+            try:
+                t1.rollback_transaction(transaction_1)
+            except:
+                pass
+            try:
+                t2.rollback_transaction(transaction_2)
+            except:
+                pass
+    def _perform_transaction(self, transaction):
+        d = self.dstat
+        d1 = self.dstat1
+        def v(s):
+            return pytis.data.String().validate(s)[0]
+        i_row0 = pytis.data.Row((('stat', v('cs'),), ('nazev', v('Cesko'),)))
+        i_row00 = pytis.data.Row((('stat', v('cc'),), ('nazev', v('CC'),)))
+        d.insert(i_row0)
+        d.insert(i_row00)
+        i_row1 = pytis.data.Row((('stat', v('xx'),), ('nazev', v('Xaxa'),)))
+        i_row2 = pytis.data.Row((('stat', v('yy'),), ('nazev', v('Yaya'),)))
+        u_key1 = i_row2[0]
+        u_row1 = pytis.data.Row((('nazev', v('Gaga'),),))
+        u_condition_2 = pytis.data.EQ('stat', v('cz'))
+        u_row2 = pytis.data.Row((('nazev', v ('Plesko'),),))
+        d_key = i_row1[0]
+        d_condition = pytis.data.EQ('nazev', v('CC'))
+        d.insert(i_row1, transaction=transaction)
+        d1.insert(i_row2, transaction=transaction)
+        d.lock_row(u_key1, transaction)
+        d.update(u_key1, u_row1, transaction=transaction)
+        d1.update_many(u_condition_2, u_row2, transaction=transaction)
+        d.delete(d_key, transaction=transaction)
+        d1.delete_many(d_condition, transaction=transaction)
+        d.select(sort=('stat',), transaction=transaction)
+        for k in ('cs', 'cz', 1, 'yy',):
+            if type(k) == type(0):
+                d.skip(k)
+            else:
+                value = d.fetchone(transaction=transaction)[0].value()
+                assert value == k, ('invalid select value', k, value,)
+        d.close()
+    def test_transaction_commit(self):
+        d = self.dstat
+        transaction = d.begin_transaction()
+        try:
+            self._perform_transaction(transaction)
+        finally:
+            d.commit_transaction(transaction)
+        for k, v in (('cs', 'Cesko',), ('xx', None,), ('yy', 'Gaga',),
+                     ('cz', 'Plesko',), ('cc', None,),):
+            result = d.row(pytis.data.String().validate(k)[0])
+            if v is None:
+                assert result is None, ('deleted value present', k,)
+            else:
+                assert result is not None, ('value not present', k,)
+                assert result['nazev'].value() == v, \
+                    ('invalid value', k, result['nazev'].value(),)
+    def test_transaction_rollback(self):
+        d = self.dstat
+        transaction = d.begin_transaction()
+        try:
+            self._perform_transaction(transaction)
+        finally:
+            d.rollback_transaction(transaction)
+        for k, v in (('cs', 'Cesko',), ('xx', None,), ('yy', None,),
+                     ('cz', 'Czech Republic',), ('cc', 'CC',),):
+            result = d.row(pytis.data.String().validate(k)[0])
+            if v is None:
+                assert result is None, ('deleted value present', k,)
+            else:
+                assert result is not None, ('value not present', k,)
+                assert result['nazev'].value() == v, \
+                    ('invalid value', k, result['nazev'].value(),)
 tests.add(DBDataDefault)
 
 

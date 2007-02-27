@@ -63,15 +63,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                               "the pgsql backend"))
         result = None
         def do_query(connection):
-            try:
-                return connection.query(query)
-            except:
-                cls, e, tb = sys.exc_info()
-                try:
-                    connection.finish()     # pro jistotu
-                except:
-                    pass
-                raise cls, e, tb
+            return connection.query(query)
         try:
             result = do_query(connection.connection())
         except libpq.InterfaceError, e:
@@ -79,6 +71,8 @@ class _PgsqlAccessor(PostgreSQLAccessor):
         except libpq.ProgrammingError, e:
             raise DBUserException(None, e, query)
         except libpq.OperationalError, e:
+            if e.args and e.args[0].find('could not obtain lock') != -1:
+                raise DBLockException()
             if not restartable:
                 raise DBSystemException(_("Database operational error"),
                                         e, e.args, query)

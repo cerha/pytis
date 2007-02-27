@@ -363,7 +363,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         pool.put_back(connection.connection_data(), connection)
 
     def _pg_query(self, query, outside_transaction=False, backup=False,
-                  query_args=()):
+                  query_args=(), transaction=None):
         """Call the SQL 'query' and return the result.
 
         Arguments:
@@ -376,6 +376,10 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             containing '%s' formatting marks; this argument should be only used
             when absolutely necessary (such as when working with binary data
             types)
+          transaction -- transaction object containing the connection to be
+            used for performing the query or 'None' (in which case the
+            connection is selected automatically); this argument may not be
+            used when 'outside_transaction' is true
 
         The return value is a 'PostgreSQLResult' instance.
 
@@ -385,7 +389,12 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         """
         if type(query) is pytypes.UnicodeType:
             query = query.encode(self._pg_encoding)
-        connection = self._pg_get_connection(outside_transaction)
+        assert transaction is None or not outside_transaction, \
+            'Connection given to a query to be performed outside transaction'
+        if transaction is None:
+            connection = self._pg_get_connection(outside_transaction)
+        else:
+            connection = transaction.connection()
         # Proveï dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query)
@@ -396,7 +405,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                                                             query_args=query_args)
             finally:
                 # Vra» DB spojení zpìt
-                if connection and outside_transaction:
+                if connection and transaction is None and outside_transaction:
                     self._pg_return_connection(connection)
             if backup and self._pdbb_logging_command:
                 assert not outside_transaction, \
@@ -879,9 +888,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
-            ('select %%(columns)s, %s from %s where %s order by %s' %
+            ('select %%(columns)s, %s from %s where %s order by %s %%(supplement)s' %
              (oidstrings, table_list, relation_and_condition, ordering,)),
-            {'columns': column_list})
+            {'columns': column_list, 'supplement': ''})
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
           (first_key_column, table_list, relation)
@@ -1101,15 +1110,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             values.append(value)
         return columns, values
 
-    def _pg_row (self, key_value, columns):
+    def _pg_row (self, key_value, columns, transaction=None, supplement=''):
         """Retrieve and return raw data corresponding to 'key_value'."""
-        args = {'key': key_value}
+        args = {'key': key_value, 'supplement': supplement}
         if columns:
             args['columns'] = self._pdbb_sql_column_list_from_names(columns)
         query = self._pdbb_command_row.format(args)
-        return self._pg_query(query)
+        return self._pg_query(query, transaction=transaction)
     
-    def _pg_search(self, row, condition, direction):
+    def _pg_search(self, row, condition, direction, transaction=None):
         sorting = self._pg_last_select_sorting
         if direction == FORWARD:
             pass
@@ -1176,7 +1185,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pdbb_select_column_list:
             qargs['columns'] = self._pdbb_select_column_list
         query = sql_command.format(qargs)
-        data_ = self._pg_query(query)
+        data_ = self._pg_query(query, transaction=transaction)
         if not data_:
             return 0
         # Zjisti vzdálenost mezi aktuálním a vyhledaným øádkem
@@ -1186,15 +1195,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                           sorting_condition(sorting, False,
                                             row_found, True))
         cond_string = self._pdbb_condition2sql(search_cond)
-        data_ = self._pg_query(self._pdbb_command_search_distance % \
-                               cond_string)
+        data_ = self._pg_query((self._pdbb_command_search_distance %
+                                (cond_string,)),
+                               transaction=transaction)
         try:
             result = int(data_[0][0])
         except:
             raise ProgramError('Unexpected result', data_)
         return result
 
-    def _pg_select (self, condition, sort, columns):
+    def _pg_select (self, condition, sort, columns, transaction=None):
         """Initiate select and return the number of its lines or 'None'.
 
         Arguments:
@@ -1203,6 +1213,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           sort -- unprocessed sorting specification or 'None'
           operation -- unprocessed specification of an aggregation function
           columns -- sequence of IDs of columns to select
+          transaction -- transaction object
           
         """
         cond_string = self._pdbb_condition2sql(condition)
@@ -1215,7 +1226,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             self._pdbb_select_column_list = None
         query = self._pdbb_command_select.format(args)
-        self._pg_query(query)
+        self._pg_query(query, transaction=transaction)
         try:
             result = int(data[0][0])
         except:
@@ -1223,19 +1234,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_select_rows = result
         return result
 
-    def _pg_distinct (self, column, condition, sort):
+    def _pg_distinct (self, column, condition, sort, transaction=None):
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(((column, sort),))
         if sort_string.endswith(','):
             sort_string = sort_string[:-1]
         data = self._pg_query(self._pdbb_command_distinct % \
-                              (column, cond_string, sort_string))
+                              (column, cond_string, sort_string),
+                              transaction=transaction)
         tmpl = self._pg_create_make_row_template((self.find_column(column),))
         result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
                   for r in data]
         return result
     
-    def _pg_select_aggregate(self, operation, condition):
+    def _pg_select_aggregate(self, operation, condition, transaction=None):
         cond_string = self._pdbb_condition2sql(condition)
         aggfun, colid = operation
         FMAPPING = {self.AGG_MIN: 'min',
@@ -1249,9 +1261,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Invalid aggregate function identifier',
                                operation)
         return self._pg_query(self._pdbb_command_select_agg %
-                              (function, colid, cond_string))
+                              (function, colid, cond_string),
+                              transaction=transaction)
     
-    def _pg_fetchmany (self, count, direction):
+    def _pg_fetchmany (self, count, direction, transaction=None):
         """Vra» 'count' øádkù selectu jako raw data."""
         if direction == FORWARD:
             query = self._pdbb_command_fetch_forward % count
@@ -1259,15 +1272,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             query = self._pdbb_command_fetch_backward % count
         else:
             raise ProgramError('Invalid direction', direction)
-        return self._pg_query(query)
+        return self._pg_query(query, transaction=transaction)
 
-    def _pg_skip(self, count, direction, exact_count=False):
+    def _pg_skip(self, count, direction, exact_count=False, transaction=None):
         """Pøeskoè 'count' øádkù v 'direction' a vra» jejich poèet nebo 'None'.
         """
         if direction == FORWARD:
             self._pg_query(self._pdbb_command_move_forward % count)
         elif direction == BACKWARD:
-            answer = self._pg_query(self._pdbb_command_move_backward % count)
+            answer = self._pg_query((self._pdbb_command_move_backward %
+                                     (count,)),
+                                    transaction=transaction)
             answer_count = answer[0][0]
             if exact_count and answer_count != count:
                 log(OPERATIONAL, "Neèekaný výsledek kurzorové operace MOVE:",
@@ -1276,7 +1291,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Invalid direction', direction)
         return None
         
-    def _pg_insert(self, row, after=None, before=None):
+    def _pg_insert(self, row, after=None, before=None, transaction=None):
         """Vlo¾ 'row' a vra» jej jako nová raw data nebo vra» 'None'."""
         ordering = self._ordering
         if ordering:
@@ -1301,10 +1316,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             params = tuple(params)
             if n >= 0:
                 self._pg_query(self._pdbb_command_insert_shift % params,
-                               backup=True)
+                               backup=True, transaction=transaction)
             else:
-                result = self._pg_query(self._pdbb_command_insert_newpos % \
-                                        params)
+                result = self._pg_query((self._pdbb_command_insert_newpos %
+                                         (params,)),
+                                        transaction=transaction)
                 if result:
                     raw = result[0][0]
                     if raw is None:
@@ -1327,17 +1343,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 query_args.append(v)
             else:
                 vals.append(v)
-        self._pg_query(self._pdbb_command_insert % \
-                       (string.join(cols, ','), string.join(vals, ',')),
-                       backup=True, query_args=query_args)
+        self._pg_query((self._pdbb_command_insert %
+                        (string.join(cols, ','), string.join(vals, ','),)),
+                       backup=True, query_args=query_args,
+                       transaction=transaction)
         # Pokud data nemají klíè (proto¾e je generován, napø. jako SERIAL),
         # nezbývá, ne¾ se øídit oid.  Tento postup pak lze pou¾ít obecnì, snad
         # v PostgreSQL funguje.  Je to zalo¾eno na pøedpokladu, ¾e ka¾dý novì
         # vlo¾ený záznam má nejvy¹¹í oid v tabulce.
-        data = self._pg_query(self._pdbb_command_get_last)
+        data = self._pg_query(self._pdbb_command_get_last,
+                              transaction=transaction)
         return self._pg_make_row_from_raw_data(data)
     
-    def _pg_update(self, condition, row):
+    def _pg_update(self, condition, row, transaction=None):
         """Updatuj øádky identifikované 'condition'.
 
         Vrací: Poèet updatovaných øádkù.
@@ -1369,13 +1387,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             broken = self._pdbb_broken_update_result
         except AttributeError:
             broken = self._pdbb_broken_update_result = \
-                     self._pg_query(self._pdbb_command_test_broken_update)
+                     self._pg_query(self._pdbb_command_test_broken_update,
+                                    transaction=transaction)
         if broken:
             d = self._pg_query(self._pdbb_command_broken_update_preselect % \
                                cond_string)
             result = extract_result(d)
-        d = self._pg_query(self._pdbb_command_update % (settings, cond_string),
-                           backup=True, query_args=query_args)
+        d = self._pg_query(self._pdbb_command_update % (settings, cond_string,),
+                           backup=True, query_args=query_args,
+                           transaction=transaction)
         if not broken:
             result = extract_result(d)
         if result >= 0:
@@ -1383,7 +1403,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             raise DBSystemException('Unexpected UPDATE value', None, result)
 
-    def _pg_delete (self, condition):
+    def _pg_delete (self, condition, transaction=None):
         """Sma¾ øádek identifikovaný podmínkou 'condition'.
 
         Vrací: Poèet smazaných øádkù.
@@ -1391,7 +1411,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """
         sql_condition = self._pdbb_condition2sql(condition)
         d = self._pg_query(self._pdbb_command_delete % sql_condition,
-                           backup=True)
+                           backup=True, transaction=transaction)
         try:
             result = int(d[0][0])
         except:
@@ -1719,6 +1739,55 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._postgresql_rollback_transaction()
         self._pg_deallocate_connection()
 
+    # PostgreSQL specific transaction functionality
+
+    class _Transaction(object):
+
+        def __init__(self, dbdata):
+            self._dbdata = dbdata
+            self._notifications = []
+
+        def dbdata(self):
+            return self._dbdata
+
+        def connection(self):
+            return self.dbdata()._pg_get_connection()
+
+        def notify(self, dbdata):
+            self._notifications.append(dbdata)
+
+        def notifications(self):
+            return self._notifications
+        
+    def begin_transaction(self):
+        """Open new transaction and return an object representing it."""
+        self._pg_begin_transaction()
+        return self._Transaction(self)
+
+    def commit_transaction(self, transaction):
+        """Commit the given transaction.
+
+        Arguments:
+
+          transaction -- transaction object returned by 'begin_transaction'
+          
+        """
+        transaction.dbdata()._pg_commit_transaction()
+        self.unlock_row()
+        for dbdata in transaction.notifications():
+            dbdata._pg_send_notifications()
+
+    def rollback_transaction(self, transaction):
+        """Rollback the given transaction.
+
+        Arguments:
+
+          transaction -- transaction object returned by 'begin_transaction'
+
+        """
+        transaction.dbdata()._pg_rollback_transaction()
+        self.unlock_row()
+
     # Pomocné metody
 
     def _pg_create_make_row_template(self, columns):
@@ -1766,7 +1835,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_data.append((id, value))
         return Row(row_data)
 
-    def _pg_already_present(self, row):
+    def _pg_already_present(self, row, transaction=None):
         key = []
         for k in self.key():
             try:
@@ -1777,7 +1846,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 key.append(row[id])
             except KeyError:
                 return False
-        return self.row(key)
+        return self.row(key, transaction=transaction)
     
     _pg_dt = type(mx.DateTime.DateTimeFrom('2001-01-01'))
     def _pg_value(self, value):
@@ -1818,7 +1887,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Veøejné metody a jimi pøímo volané abstraktní metody
 
-    def row(self, key, columns=None):
+    def row(self, key, columns=None, transaction=None):
         #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
         # TODO: Temporary compatibility hack.  The current internal db code
         # uses multikeys, but user code does not anymore.  Before we rewrite
@@ -1831,7 +1900,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             template = None
         try:
-            data = self._pg_row(self._pg_value(key[0]), columns)
+            data = self._pg_row(self._pg_value(key[0]), columns,
+                                transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -1843,20 +1913,24 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
         
-    def select(self, condition=None, sort=(), reuse=False, columns=None):
+    def select(self, condition=None, sort=(), reuse=False, columns=None,
+               transaction=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
-        if reuse and not self._pg_changed and self._pg_number_of_rows and \
-               condition == self._pg_last_select_condition and \
-               sort == self._pg_last_select_sorting:
+        if (reuse and not self._pg_changed and self._pg_number_of_rows and
+            condition == self._pg_last_select_condition and
+            sort == self._pg_last_select_sorting and
+            transaction is self._pg_last_select_transaction):
             use_cache = True
         else:
             use_cache = False
         self.close()
-        self._pg_begin_transaction ()
-        self._pg_is_in_select = True
+        if transaction is None:
+            self._pg_begin_transaction ()
+        self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
+        self._pg_last_select_transaction = transaction
         self._pg_last_fetch_row = None
         self._pg_changed = False
         if columns:
@@ -1865,11 +1939,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             self._pg_make_row_template_limited = None
         try:
-            number_of_rows = self._pg_select (condition, sort, columns)
+            number_of_rows = self._pg_select (condition, sort, columns,
+                                              transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             self._pg_is_in_select = False
@@ -1884,7 +1960,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_number_of_rows = number_of_rows
         return number_of_rows
 
-    def select_aggregate(self, operation, condition=None):
+    def select_aggregate(self, operation, condition=None, transaction=None):
         opid = operation[0]
         t = self.find_column(operation[1]).type()
         if opid == self.AGG_COUNT:
@@ -1898,14 +1974,16 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 return None
         close_select = False
         if not self._pg_is_in_select:
-            self.select(condition=condition)
+            self.select(condition=condition, transaction=transaction)
             close_select = True
         try:
-            data = self._pg_select_aggregate(operation, condition)
+            data = self._pg_select_aggregate(operation, condition,
+                                             transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             self._pg_is_in_select = False
@@ -1916,7 +1994,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert error is None, error
         return result
         
-    def distinct(self, column, condition=None, sort=ASCENDENT):
+    def distinct(self, column, condition=None, sort=ASCENDENT,
+                 transaction=None):
         """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
 
         Argumenty:
@@ -1924,11 +2003,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           column -- identifikátor sloupce.
           condition -- podmínkový výraz nebo 'None'.
           sort -- jedna z konstant  'ASCENDENT', 'DESCENDANT' nebo None.
+          transaction -- transaction object to be used when running the SQL
+            commands
 
         """
-        return self._pg_distinct(column, condition, sort)
+        return self._pg_distinct(column, condition, sort,
+                                 transaction=transaction)
 
-    def fetchone(self, direction=FORWARD):
+    def fetchone(self, direction=FORWARD, transaction=None):
         """Stejné jako v nadtøídì.
 
         Metoda automaticky nereaguje na notifikace o zmìnì dat souvisejících
@@ -1977,11 +2059,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if xcount > 0:
                     try:
                         result = self._pg_skip(xcount, skip_direction,
-                                               exact_count=True)
+                                               exact_count=True,
+                                               transaction=transaction)
                     except:
                         cls, e, tb = sys.exc_info()
                         try:
-                            self._pg_rollback_transaction()
+                            if transaction is None:
+                                self._pg_rollback_transaction()
                         except:
                             pass
                         self._pg_is_in_select = False
@@ -2013,11 +2097,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 xskip = buffer.skip(size, BACKWARD, self._pg_number_of_rows)
                 skip()
             try:
-                data_ = self._pg_fetchmany(size, FORWARD)
+                data_ = self._pg_fetchmany(size, FORWARD,
+                                           transaction=transaction)
             except:
                 cls, e, tb = sys.exc_info()
                 try:
-                    self._pg_rollback_transaction()
+                    if transaction is None:
+                        self._pg_rollback_transaction()
                 except:
                     pass
                 self._pg_is_in_select = False
@@ -2065,7 +2151,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if pos >= 0:
             self.skip(pos+1, BACKWARD)
         
-    def search(self, condition, direction=FORWARD):
+    def search(self, condition, direction=FORWARD, transaction=None):
         """Vyhledej ve smìru 'direction' první øádek od 'row' dle 'condition'.
 
         Vrací: Vzdálenost od øádku 'row' jako kladný integer nebo 0, pokud
@@ -2086,11 +2172,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             result = 0
         else:
             try:
-                result = self._pg_search(row, condition, direction)
+                result = self._pg_search(row, condition, direction,
+                                         transaction=transaction)
             except:
                 cls, e, tb = sys.exc_info()
                 try:
-                    self._pg_rollback_transaction()
+                    if transaction is None:
+                        self._pg_rollback_transaction()
                 except:
                     pass
                 self._pg_is_in_select = False
@@ -2099,23 +2187,25 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def close(self):
-        if __debug__: log(DEBUG, 'Explicitní ukonèení selectu')
-        if self._pg_is_in_select:
+        if __debug__:
+            log(DEBUG, 'Explicitly closing current select')
+        if self._pg_is_in_select is True: # do nothing on user transactions
             self._pg_commit_transaction()
-            self._pg_is_in_select = False
+        self._pg_is_in_select = False
 
-    def insert(self, row, after=None, before=None):
+    def insert(self, row, after=None, before=None, transaction=None):
         assert after is None or before is None, \
                'Both after and before specified'
         log(ACTION, 'Vlo¾ení øádku', (row, after, before))
-        self._pg_begin_transaction ()
+        if transaction is None:
+            self._pg_begin_transaction ()
         try:
             # Jestli¾e je definováno ordering, které je souèástí klíèe, bude
             # novì vlo¾ený øádek nutnì unikátní.
             if (not self._ordering or \
                 (self._ordering[0] not in map(lambda c: c.id(), self.key()))
                 ) and \
-               self._pg_already_present(row):
+               self._pg_already_present(row, transaction=transaction):
                 msg = 'Øádek s tímto klíèem ji¾ existuje'
                 result = msg, False
                 log(ACTION, msg)
@@ -2131,26 +2221,32 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         (after, before))
                     result = msg, False
                 else:
-                    r = self._pg_insert (row, after=after, before=before)
+                    r = self._pg_insert (row, after=after, before=before,
+                                         transaction=transaction)
                     result = r, True
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             raise cls, e, tb
-        self._pg_commit_transaction()
-        self._pg_send_notifications()
+        if transaction is None:
+            self._pg_commit_transaction()
+            self._pg_send_notifications()
+        else:
+            transaction.notify(self)
         if result[1]:
             log(ACTION, 'Øádek vlo¾en', result)
         return result
     
-    def update(self, key, row):
+    def update(self, key, row, transaction=None):
         key = xtuple(key)
         log(ACTION, 'Update øádku:', key)
         log(ACTION, 'Nová data', str(row))
-        self._pg_begin_transaction ()
+        if transaction is None:
+            self._pg_begin_transaction ()
         try:
             origrow = self.row(key)
             if origrow:
@@ -2176,11 +2272,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     result = msg, False
                     log(ACTION, msg, key)
                 else:
-                    n = self._pg_update(self._pg_key_condition(key), row)
+                    n = self._pg_update(self._pg_key_condition(key), row,
+                                        transaction=transaction)
                     if n == 0:
                         result = None, False
                     else:
-                        new_row = self.row(new_key)
+                        new_row = self.row(new_key, transaction=transaction)
                         result = new_row, True
             else: # not origrow
                 msg = 'Øádek s daným klíèem neexistuje'
@@ -2189,20 +2286,25 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
+        if transaction is None:
+            self._pg_commit_transaction ()
+            self._pg_send_notifications()
+        else:
+            transaction.notify(self)
         if result[1]:
             log(ACTION, 'Øádek updatován', result)
         return result
     
-    def update_many(self, condition, row):
+    def update_many(self, condition, row, transaction=None):
         log(ACTION, 'Update øádkù:', condition)
         log(ACTION, 'Nová data', str(row))
-        self._pg_begin_transaction ()
+        if transaction is None:
+            self._pg_begin_transaction ()
         try:
             ordering = self._ordering
             if ordering:
@@ -2211,160 +2313,88 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     if k not in ordering:
                         new_row_items.append((k, v))
                 row = Row(new_row_items)
-            result = self._pg_update (condition, row)
+            result = self._pg_update (condition, row, transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
+        if transaction is None:
+            self._pg_commit_transaction ()
+            self._pg_send_notifications()
+        else:
+            transaction.notify(self)
         if result:
             log(ACTION, 'Øádky updatovány:', result)
         return result
 
-    def delete(self, key):
+    def delete(self, key, transaction=None):
         log(ACTION, 'Mazání øádku:', key)
-        self._pg_begin_transaction ()
+        if transaction is None:
+            self._pg_begin_transaction ()
         try:
-            result = self._pg_delete (self._pg_key_condition(key))
+            result = self._pg_delete (self._pg_key_condition(key),
+                                      transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
+        if transaction is None:
+            self._pg_commit_transaction ()
+            self._pg_send_notifications()
+        else:
+            transaction.notify(self)
         log(ACTION, 'Øádek smazán', result)
         return result
     
-    def delete_many(self, condition):
+    def delete_many(self, condition, transaction=None):
         log(ACTION, 'Mazání øádkù:', condition)
-        self._pg_begin_transaction ()
+        if transaction is None:
+            self._pg_begin_transaction ()
         try:
-            result = self._pg_delete (condition)
+            result = self._pg_delete (condition, transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
-                self._pg_rollback_transaction()
+                if transaction is None:
+                    self._pg_rollback_transaction()
             except:
                 pass
             raise cls, e, tb
-        self._pg_commit_transaction ()
-        self._pg_send_notifications()
+        if transaction is None:
+            self._pg_commit_transaction ()
+            self._pg_send_notifications()
+        else:
+            transaction.notify(self)
         log(ACTION, 'Øádky smazány', result)
         return result
 
-    def lock_row(self, key):
-        # Pro zamykání je vy¾adována existence zamykací tabulky se speciálními
-        # vlastnostmi, která je definována v souboru `db.sql'.
-        log(EVENT, 'Zamykám øádek:', map(str, xtuple(key)))
-        self._pg_begin_transaction()
-        self._pg_query('lock table %s' % self._PG_LOCK_TABLE_LOCK)
-        table_locked = True
+    # Locking
+
+    def lock_row(self, key, transaction):
+        if is_sequence(key):
+            key = key[0]
+        log(EVENT, 'Locking row:', str (key))
+        self._pg_query('savepoint _lock', transaction=transaction)
         try:
-            log(EVENT, 'Lock table locked')
-            row = self.row(key)
-            if not row:
-                self._pg_rollback_transaction()
-                table_locked = False
-                if __debug__:
-                    log(DEBUG, 'Non-existent record')
-                return 'Záznam neexistuje'
-            if __debug__:
-                log(DEBUG, 'Looking for a row lock')
-            oidcols = filter(lambda c: isinstance(c.type(), Oid),
-                             self.columns())
-            cids = map(lambda c: c.id(), oidcols)
-            oids = map(lambda i, row=row: row[i].value(), cids)
-            self._pg_query('delete from %s where expires < now()' %
-                           (self._PG_LOCK_TABLE,))
-            for oid in oids:
-                data = self._pg_query('select usename from %s where row = %d'\
-                                      % (self._PG_LOCK_TABLE, oid))
-                if data:
-                    self._pg_rollback_transaction()
-                    table_locked = False
-                    user = data[0][0]
-                    if __debug__:
-                        log(DEBUG, 'Row locked by user `%s\'' % (user,))
-                    return 'u¾ivatel `%s\'' % (user,)
-            if __debug__:
-                log(DEBUG, 'Row free, locking it')
-            lock_ids = []
-            for oid in oids:
-                self._pg_query('insert into %s (row) values (%d)' %
-                               (self._PG_LOCK_TABLE, oid,))
-                data = self._pg_query('select id from %s where row = %d' %
-                                      (self._PG_LOCK_TABLE, oid,))
-                lock_ids.append(data[0][0])
-            self._pg_lock_ids = lock_ids
-            if __debug__:
-                log(DEBUG, 'Row locked')
-            self._pg_commit_transaction()
-            table_locked = False
-            log(EVENT, 'Lock table unlocked')
-        finally:
-            if table_locked:
-                try:
-                    self._pg_rollback_transaction()
-                    log(EVENT, 'Lock table unlocked')
-                except:
-                    pass
-                log(EVENT, '(emergency unlock)')
+            if not self._pg_row(self._pg_value(key), None,
+                                transaction=transaction,
+                                supplement='for update nowait'):
+                return "No such record"
+        except DBLockException:
+            log(EVENT, 'Row already locked by another process')
+            self._pg_query('rollback to _lock', transaction=transaction)
+            return "Record locked by another process"
         super(DBDataPostgreSQL, self).lock_row(key)
-        update_commands = \
-          map(lambda id, self=self:
-                  ('update %s set expires = now() + \'00:01\' where id = %s and expires > now()' %
-                   (self._PG_LOCK_TABLE, id,)),
-              lock_ids)
-        thread.start_new_thread(self._pg_locking_process,
-                                (key, update_commands))
-        log(EVENT, 'Øádek zamèen')
+        log(EVENT, 'Row locked')
         return None
-
-    def unlock_row(self):
-        log(EVENT, 'Odemykám øádek')
-        super(DBDataPostgreSQL, self).unlock_row()
-        for id in self._pg_lock_ids:
-            try:
-                self._pg_begin_transaction()
-                locked = True
-                try:
-                    self._pg_query('lock table %s' % self._PG_LOCK_TABLE)
-                    self._pg_query(('delete from %s where id = %s' %
-                                    (self._PG_LOCK_TABLE, id,)))
-                    self._pg_commit_transaction()
-                    locked = False
-                finally:
-                    if locked:
-                        try:
-                            self._pg_rollback_transaction()
-                        except DBException:
-                            pass
-            except DBException:
-                pass
-        self._pg_lock_ids = None
-        log(EVENT, 'Øádek odemèen')
-
-    def _pg_locking_process(self, locked_row, update_commands):
-        if __debug__: log(DEBUG, 'Nastartován zamykací proces')
-        while True:
-            time.sleep(self._PG_LOCK_TIMEOUT)
-            if self._locked_row != locked_row:
-                return
-            for command in update_commands:
-                try:
-                    self._pg_query(command, outside_transaction=True)
-                except DBException, e:
-                    if __debug__:
-                        log(DEBUG, 'Chyba pøíkazu obnovy øádku', (e, command))
-            if __debug__: log(DEBUG, 'Zámek updatován')
-
 
 
 class DBPostgreSQLCounter(PostgreSQLConnector, Counter):

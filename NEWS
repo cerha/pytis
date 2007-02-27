@@ -4,6 +4,30 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-20  Milan Zamazal  <pdm@brailcom.org>
+
+	V db rozhraní pøidána podpora pro u¾ivatelské transakce.
+
+	Nekompatibilní zmìny:
+
+	- Metoda pytis.data.DBDataPostgreSQL.lock_row má nyní povinný
+	  argument `transaction'.
+
+	- Metoda pytis.data.DBDataPostgreSQL.unlock_row byla zru¹ena.
+	  K odemèení øádku dojde automaticky pøi uzavøení u¾ivatelské
+	  transakce.
+
+	S u¾ivatelskými transakcemi se pracuje prostøednictvím metod
+	begin_transaction, commit_transaction a rollback_transaction tøídy
+	pytis.data.DBDataPostgreSQL.  Øada veøejných metod této tøídy má
+	nový klíèový argument `transaction'.
+
+	Zamykání øádkù nyní nevrací informaci o u¾ivateli a vrací místo
+	toho hlá¹ky v angliètinì.
+
+	V db backendech se automaticky neuzavírá spojení pøi ka¾dé
+	výjimce.
+
 2007-02-21 Tomas Cerha  <cerha@brailcom.org>
 
 	Klávesové zkratky by ji¾ nemìly pou¾ívat velká písmena, resp

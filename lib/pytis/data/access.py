@@ -292,26 +292,26 @@ class RestrictedData(Data):
         resrow, result = super(RestrictedData, self).insert(row, **kwargs)
         return self._access_filter_row(resrow), result
 
-    def update(self, key, row):
+    def update(self, key, row, **kwargs):
         self._check_access_key()
         row = self._access_filter_row(row, Permission.UPDATE)
-        resrow, result = super(RestrictedData, self).update(key, row)
+        resrow, result = super(RestrictedData, self).update(key, row, **kwargs)
         return self._access_filter_row(resrow), result
 
-    def update_many(self, condition, row):
+    def update_many(self, condition, row, **kwargs):
         self._check_access_condition(condition)
         row = self._access_filter_row(row, Permission.UPDATE)
-        return super(RestrictedData, self).update_many(condition, row)
+        return super(RestrictedData, self).update_many(condition, row, **kwargs)
 
-    def delete(self, key):
+    def delete(self, key, **kwargs):
         self._check_access_key()
         self._check_access_delete()
-        return super(RestrictedData, self).delete(key)
+        return super(RestrictedData, self).delete(key, **kwargs)
 
-    def delete_many(self, condition):
+    def delete_many(self, condition, **kwargs):
         self._check_access_condition(condition)
         self._check_access_delete()
-        return super(RestrictedData, self).delete_many(condition)
+        return super(RestrictedData, self).delete_many(condition, **kwargs)
 
 
 class RestrictedMemData(RestrictedData, MemData):

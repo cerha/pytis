@@ -70,31 +70,25 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_query(self, connection, query, outside_transaction, query_args=()):
         result = None
         def do_query(raw_connection):
+            cursor = raw_connection.cursor()
+            # query_args shouldn't be used when empty to prevent mistaken
+            # '%' processing in `query'
             try:
-                cursor = raw_connection.cursor()
-                # query_args shouldn't be used when empty to prevent mistaken
-                # '%' processing in `query'
-                try:
-                    if query_args:
-                        cursor.execute(query, query_args)
-                    else:
-                        cursor.execute(query)
-                finally:
-                    if outside_transaction:
-                        raw_connection.commit()
-                return cursor
-            except:
-                cls, e, tb = sys.exc_info()
-                try:
-                    raw_connection.close() # just to be sure
-                except:
-                    pass
-                raise cls, e, tb
+                if query_args:
+                    cursor.execute(query, query_args)
+                else:
+                    cursor.execute(query)
+            finally:
+                if outside_transaction:
+                    raw_connection.commit()
+            return cursor
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.ProgrammingError, e:
+            if e.args and e.args[0].find('could not obtain lock') != -1:
+                raise DBLockException()
             raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)

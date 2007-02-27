@@ -1,3 +1,20 @@
+2007-02-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py: Support for user transaction and
+	PostgreSQL locking.
+	
+	* pytis/data/dbdata.py: See above.
+
+	* pytis/data/dbapi.py: See above.  Don't close connections on
+	exceptions.
+	
+	* pytis/data/pgsql.py: See above.
+
+	* pytis/data/_test.py: Locking test enabled and updated.  User
+	transaction tests added.
+
+	* pytis/data/access.py: **kwargs added to several methods.
+	
 2007-02-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added basic support for Binary data types.
@@ -8,18 +25,6 @@
 	* pytis/data/types_.py: Added support for passing an open file to
 	`Binary.Buffer' constructor, as well as passing the original file
 	name and MIME type.
-
-2007-02-21  Tomas Cerha  <cerha@brailcom.org>
-
-	* pytis/form/screen.py: Use `Shift' in shortcut key definitions
-	even for letters.  Don't wait with keymap initialization until the
-	commands are initialized.
-
-	* pytis/form/dualform.py: Fixed `DescriptiveDualForm' side
-	selection to work also with side form fields not present in main
-	form row (such as big binary fields).
-
-	* pytis/form/search.py: Improved button label.
 
 2007-02-20  Tomas Cerha  <cerha@brailcom.org>
 

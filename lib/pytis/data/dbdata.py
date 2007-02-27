@@ -561,3 +561,10 @@ class DBLoginException(DBException):
         """Inicializuj databázovou výjimku s patøiènými argumenty."""
         super_(DBLoginException).__init__\
           (self, _("Chybné u¾ivatelské jméno nebo heslo"))
+
+
+class DBLockException(DBException):
+    """Exception thrown when trying to lock an already locked record.
+    """
+    def __init__(self):
+        super_(DBLockException).__init__(self, None)
