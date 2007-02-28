@@ -155,6 +155,10 @@ class DBAPIFunction(_DBAPIAccessor, DBPostgreSQLFunction):
     pass
 
 
+class DBAPITransaction(_DBAPIAccessor, DBPostgreSQLTransaction):
+    pass
+
+
 class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
 
     # This part is psycopg specific
@@ -258,6 +262,9 @@ DBCounterDefault = DBAPICounter
 
 DBFunctionDefault = DBAPIFunction
 """Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
+
+DBTransactionDefault = DBAPITransaction
+"""Standard transaction class."""
 
 def _postgresql_access_groups(connection_data):
     import pytis.data.dbapi

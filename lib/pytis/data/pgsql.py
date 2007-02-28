@@ -137,6 +137,10 @@ class DBPyPgFunction(_PgsqlAccessor, DBPostgreSQLFunction):
     pass
 
 
+class DBPyPgTransaction(_PgsqlAccessor, DBPostgreSQLTransaction):
+    pass
+
+
 class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
 
     class _PgNotifier(_PgsqlAccessor, PostgreSQLNotifier._PgNotifier):
@@ -240,6 +244,9 @@ DBCounterDefault = DBPyPgCounter
 
 DBFunctionDefault = DBPyPgFunction
 """Podtøída tøídy 'Function', která je standardnì pou¾ívána."""
+
+DBTransactionDefault = DBPyPgTransaction
+"""Standard transaction class."""
 
 def _postgresql_access_groups(connection_data):
     import pytis.data.pgsql

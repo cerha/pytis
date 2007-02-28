@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ from types_ import *
 from data import *
 from access import *
 from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException, DBSystemException, DBUserException, DBLoginException
-from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, default_access_groups
+from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault, default_access_groups
 
 # TODO: The following import serves for backward compatibility of applications
 # and should be removed once applications switch to using the

@@ -394,7 +394,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         if transaction is None:
             connection = self._pg_get_connection(outside_transaction)
         else:
-            connection = transaction.connection()
+            connection = transaction._trans_connection()
         # Proveï dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query)
@@ -1739,80 +1739,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._postgresql_rollback_transaction()
         self._pg_deallocate_connection()
 
-    # PostgreSQL specific transaction functionality
-
-    class _Transaction(object):
-
-        def __init__(self, dbdata):
-            self._dbdata = dbdata
-            self._notifications = []
-
-        def dbdata(self):
-            return self._dbdata
-
-        def connection(self):
-            return self.dbdata()._pg_get_connection()
-
-        def notify(self, dbdata):
-            self._notifications.append(dbdata)
-
-        def notifications(self):
-            return self._notifications
-        
-    def begin_transaction(self):
-        """Open new transaction and return an object representing it."""
-        self._pg_begin_transaction()
-        return self._Transaction(self)
-
-    def commit_transaction(self, transaction):
-        """Commit the given transaction.
-
-        Arguments:
-
-          transaction -- transaction object returned by 'begin_transaction'
-          
-        """
-        transaction.dbdata()._pg_commit_transaction()
-        for dbdata in transaction.notifications():
-            dbdata._pg_send_notifications()
-
-    def rollback_transaction(self, transaction):
-        """Rollback the given transaction.
-
-        Arguments:
-
-          transaction -- transaction object returned by 'begin_transaction'
-
-        """
-        transaction.dbdata()._pg_rollback_transaction()
-
-    def set_transaction_point(self, transaction, point):
-        """Set transaction point for possible future partial rollback.
-
-        Arguments:
-
-          transaction -- transaction object returned by 'begin_transaction'
-          point -- string containing only lowercase English letters defining
-            the transaction point
-            
-        """
-        assert re.match('^[a-z]+$', point)
-        self._pg_query('savepoint %s' % (point,), transaction=transaction)
-
-    def cut_transaction(self, transaction, point):
-        """Rollback the given transaction to the point.
-
-        Arguments:
-
-          transaction -- transaction object returned by 'begin_transaction'
-          point -- string containing only lowercase English letters defining
-            the transaction point to which the rollback should be performed
-            
-        """
-        assert re.match('^[a-z]+$', point)
-        self._pg_query('rollback to %s' % (point,), transaction=transaction)
-        self._pg_query('release %s' % (point,), transaction=transaction)
-        
     # Pomocné metody
 
     def _pg_create_make_row_template(self, columns):
@@ -2261,7 +2187,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_commit_transaction()
             self._pg_send_notifications()
         else:
-            transaction.notify(self)
+            transaction._trans_notify(self)
         if result[1]:
             log(ACTION, 'Øádek vlo¾en', result)
         return result
@@ -2320,7 +2246,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_commit_transaction ()
             self._pg_send_notifications()
         else:
-            transaction.notify(self)
+            transaction._trans_notify(self)
         if result[1]:
             log(ACTION, 'Øádek updatován', result)
         return result
@@ -2351,7 +2277,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_commit_transaction ()
             self._pg_send_notifications()
         else:
-            transaction.notify(self)
+            transaction._trans_notify(self)
         if result:
             log(ACTION, 'Øádky updatovány:', result)
         return result
@@ -2375,7 +2301,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_commit_transaction ()
             self._pg_send_notifications()
         else:
-            transaction.notify(self)
+            transaction._trans_notify(self)
         log(ACTION, 'Øádek smazán', result)
         return result
     
@@ -2397,7 +2323,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_commit_transaction ()
             self._pg_send_notifications()
         else:
-            transaction.notify(self)
+            transaction._trans_notify(self)
         log(ACTION, 'Øádky smazány', result)
         return result
 
@@ -2528,3 +2454,74 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         result = self._pg_make_row_from_raw_data(data)
         log(EVENT, ('Výsledek volání funkce `%s\':' % self._name), result)
         return [result]
+
+
+class DBPostgreSQLTransaction(DBDataPostgreSQL):
+    """User transaction.
+
+    By creating an instance of this class new transaction is started.  You can
+    tell 'DBDataPostgreSQL' methods to be invoked inside the transaction by
+    giving the instance as their 'transaction' argument.
+
+    The transaction is finished by calling one of its 'commit' or 'rollback'
+    methods.  After that the transaction may not be used any longer.
+
+    You can also use partial rollbacks by setting transaction points with the
+    'set_point' method and calling the 'cut' method to rollback to a previously
+    set transaction point.
+    
+    """
+
+    def __init__(self, connection_data, **kwargs):
+        super(DBPostgreSQLTransaction, self).__init__(
+            bindings=(), key=(), connection_data=connection_data,
+            **kwargs)
+        self._trans_notifications = []
+        self._pg_begin_transaction()
+        
+    def _db_bindings_to_column_spec(self, __bindings):
+        return (), ()
+    
+    def _pdbb_create_sql_commands(self):
+        pass
+
+    def _trans_connection(self):
+        return self._pg_get_connection()
+
+    def _trans_notify(self, dbdata):
+        self._trans_notifications.append(dbdata)
+
+    def commit(self):
+        """Commit the transaction."""
+        self._pg_commit_transaction()
+        for dbdata in self._trans_notifications:
+            dbdata._pg_send_notifications()
+
+    def rollback(self):
+        """Rollback the transaction."""
+        self._pg_rollback_transaction()
+
+    def set_point(self, point):
+        """Set transaction point for possible future partial rollback.
+
+        Arguments:
+
+          point -- string containing only lowercase English letters defining
+            the transaction point
+            
+        """
+        assert re.match('^[a-z]+$', point)
+        self._pg_query('savepoint %s' % (point,), transaction=self)
+
+    def cut(self, point):
+        """Rollback the transaction to the given point.
+
+        Arguments:
+
+          point -- string containing only lowercase English letters defining
+            the transaction point to which the rollback should be performed
+            
+        """
+        assert re.match('^[a-z]+$', point)
+        self._pg_query('rollback to %s' % (point,), transaction=self)
+        self._pg_query('release %s' % (point,), transaction=self)

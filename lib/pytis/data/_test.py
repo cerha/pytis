@@ -1136,29 +1136,33 @@ class DBDataDefault(_DBTest):
         us = pytis.data.String().validate('us')[0]
         cz = pytis.data.String().validate('cz')[0]
         t1, t2 = self.dstat, self.dstat1
-        transaction_1 = t1.begin_transaction()
-        transaction_2 = t2.begin_transaction()
+        transaction_1 = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
+        transaction_2 = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
         try:
             assert t1.lock_row(us, transaction_1) is None, 'lock failed'
             result = t2.lock_row(us, transaction_2)
             assert type(result) == type(''), 'unlocked record locked'
             assert t2.lock_row(cz, transaction_2) is None, 'lock failed'
-            t2.rollback_transaction(transaction_2)
-            transaction_2 = t2.begin_transaction()
+            transaction_2.rollback()
+            transaction_2 = \
+                pytis.data.DBTransactionDefault(
+                connection_data=self._dconnection)
             assert type(t2.lock_row(us, transaction_2)) == type(''), \
                 'unlocked record locked'
             t1.commit_transaction(transaction_1)
             transaction_1 = t1.begin_transaction()
             assert t2.lock_row(us, transaction_2) is None, 'lock failed'
-            t1.rollback_transaction(transaction_1)
-            t2.commit_transaction(transaction_2)
+            transaction_1.rollback()
+            transaction_2.commit()
         finally:
             try:
-                t1.rollback_transaction(transaction_1)
+                transaction_1.rollback()
             except:
                 pass
             try:
-                t2.rollback_transaction(transaction_2)
+                transaction_2.rollback()
             except:
                 pass
     def _perform_transaction(self, transaction):
@@ -1195,11 +1199,12 @@ class DBDataDefault(_DBTest):
         d.close()
     def test_transaction_commit(self):
         d = self.dstat
-        transaction = d.begin_transaction()
+        transaction = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
         try:
             self._perform_transaction(transaction)
         finally:
-            d.commit_transaction(transaction)
+            transaction.commit()
         for k, v in (('cs', 'Cesko',), ('xx', None,), ('yy', 'Gaga',),
                      ('cz', 'Plesko',), ('cc', None,),):
             result = d.row(pytis.data.String().validate(k)[0])
@@ -1211,11 +1216,12 @@ class DBDataDefault(_DBTest):
                     ('invalid value', k, result['nazev'].value(),)
     def test_transaction_rollback(self):
         d = self.dstat
-        transaction = d.begin_transaction()
+        transaction = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
         try:
             self._perform_transaction(transaction)
         finally:
-            d.rollback_transaction(transaction)
+            transaction.rollback()
         for k, v in (('cs', 'Cesko',), ('xx', None,), ('yy', None,),
                      ('cz', 'Czech Republic',), ('cc', 'CC',),):
             result = d.row(pytis.data.String().validate(k)[0])
