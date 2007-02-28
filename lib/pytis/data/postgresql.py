@@ -35,8 +35,8 @@ import weakref
 
 import mx.DateTime
 
-from pytis.data import *
 from dbdata import *
+from pytis.data import *
 
 
 # Modifikace tabulek se oznamuje zasláním notifikace `MODIF_table', kde `table'
