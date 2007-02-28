@@ -37,6 +37,7 @@ import mx.DateTime
 
 from dbdata import *
 from pytis.data import *
+import pytis.data
 
 
 # Modifikace tabulek se oznamuje zasláním notifikace `MODIF_table', kde `table'
@@ -548,7 +549,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                     # navìsit, co je nám libo.
                     for n in remove_duplicates(notiflist):
                         self._notif_register(n)
-                except DBException, e:
+                except pytis.data.DBException, e:
                     time.sleep(error_pause)
                     error_pause = error_pause * 2
                     continue
@@ -737,7 +738,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         try:
             type_, size_string, not_null = d[0]
         except:
-            raise DBException(_("Není mo¾no zjistit typ sloupce"), None,
+            raise pytis.data.DBException(_("Není mo¾no zjistit typ sloupce"), None,
                               table, column, d)
         try:
             default = d1[0][0]
@@ -775,7 +776,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         try:
             type_class_ = TYPE_MAPPING[type_]
         except KeyError:
-            raise DBException('Unhandled database type', None, type_)
+            raise pytis.data.DBException('Unhandled database type', None, type_)
         if ctype is None:
             if type_kwargs is None:
                 type_kwargs = {}
@@ -2383,7 +2384,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         try:
             number = int(result[0][0])
         except Exception, e:
-            raise DBException(_("Chybná hodnota èítaèe z databáze"), e)
+            raise pytis.data.DBException(_("Chybná hodnota èítaèe z databáze"), e)
         return number
 
 
