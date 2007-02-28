@@ -2034,12 +2034,12 @@ class PopupEditForm(PopupForm, EditForm):
             return False
         return super(PopupEditForm, self).can_command(command, **kwargs)
         
-    def run(self):
+    def run(self, transaction=None):
         if self._mode == self.MODE_EDIT:
             key = self._current_key()
         else:
             key = None
-        return PopupForm.run(self, lock_key=key)
+        return PopupForm.run(self, lock_key=key, transaction=transaction)
 
     def set_status(self, field, message):
         if self._status_fields.has_key(field):
