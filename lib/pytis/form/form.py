@@ -487,12 +487,21 @@ class PopupForm:
         # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
         return self._popup_frame_.Close(force=force)
         
-    def run(self, lock_key=None):
-        """Zobraz formuláø jako modální dialog."""
+    def run(self, lock_key=None, transaction=None):
+        """Show the form as a modal dialog.
+
+        Arguments:
+
+          lock_key -- lock the row with the given key
+          transaction -- transaction to use when manipulating data
+
+        """
         if (lock_key is not None and
             not isinstance(self._data, pytis.data.DBDataDefault)):
             lock_key = None
-        if lock_key is not None:
+        if transaction is not None:
+            self._transaction = transaction
+        elif lock_key is not None:
             self._transaction = self._data.begin_transaction()
         try:
             if lock_key is not None:
@@ -504,9 +513,9 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if lock_key is not None:
+            if transaction is None and lock_key is not None:
                 self._data.commit_transaction(self._transaction)
-                self._transaction = None
+            self._transaction = None
         result = self._result
         self._close(force=True)
         return result
