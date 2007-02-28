@@ -4,6 +4,16 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-02-28  Milan Zamazal  <pdm@brailcom.org>
+
+	Pro u¾ivatelské transakce zøízena speciální tøída
+	`DBTransactionDefault'.
+
+2007-02-28  Milan Zamazal  <pdm@brailcom.org>
+
+	Metody pytis.form.PopupForm.run a pytis.form.PopupEditForm.run
+	mají nový argument `transaction'.
+	
 2007-02-22  Milan Zamazal  <pdm@brailcom.org>
 
 	Update formuláøù pro nový zpùsob zamykání záznamù.

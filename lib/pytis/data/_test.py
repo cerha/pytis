@@ -1151,8 +1151,10 @@ class DBDataDefault(_DBTest):
                 connection_data=self._dconnection)
             assert type(t2.lock_row(us, transaction_2)) == type(''), \
                 'unlocked record locked'
-            t1.commit_transaction(transaction_1)
-            transaction_1 = t1.begin_transaction()
+            transaction_1.commit()
+            transaction_1 = \
+                pytis.data.DBTransactionDefault(
+                connection_data=self._dconnection)
             assert t2.lock_row(us, transaction_2) is None, 'lock failed'
             transaction_1.rollback()
             transaction_2.commit()
@@ -1238,18 +1240,19 @@ class DBDataDefault(_DBTest):
         row1 = pytis.data.Row((('stat', v('xx'),), ('nazev', v('Xaxa'),),))
         row2 = pytis.data.Row((('stat', v('yy'),), ('nazev', v('Yaya'),),))
         row3 = pytis.data.Row((('stat', v('zz'),), ('nazev', v('Zaza'),),))
-        transaction = d.begin_transaction()
+        transaction = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
         try:
-            d.set_transaction_point(transaction, 'xxx')
+            transaction.set_point('xxx')
             d.insert(row1, transaction=transaction)
-            d.set_transaction_point(transaction, 'yyy')
+            transaction.set_point('yyy')
             d.insert(row2, transaction=transaction)
-            d.set_transaction_point(transaction, 'zzz')
-            d.cut_transaction(transaction, 'yyy')
+            transaction.set_point('zzz')
+            transaction.cut('yyy')
             d.insert(row3, transaction=transaction)
-            d.set_transaction_point(transaction, 'ooo')
+            transaction.set_point('ooo')
         finally:
-            d.commit_transaction(transaction=transaction)
+            transaction.commit()
         assert d.row(row1['stat']), 'missing row'
         assert d.row(row2['stat']) is None, 'extra row'
         assert d.row(row3['stat']), 'missing row'

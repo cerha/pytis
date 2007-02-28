@@ -550,7 +550,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         # Provedení operace
         success, result = db_operation(op)
         if self._transaction is not None:
-            self._data.commit_transaction(self._transaction)
+            self._transaction.commit()
             self._transaction = None
         if success and result[1]:
             table.edit_row(None)
@@ -579,7 +579,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_line_rollback(self, soft=False):
         log(EVENT, 'Zru¹ení editace øádku')
         if self._transaction is not None:
-            self._data.rollback_transaction(self._transaction)
+            self._transaction.rollback()
             self._transaction = None
         editing = self._table.editing()
         if not editing:
@@ -1554,7 +1554,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
         if not table.editing():
             if not self._lock_record(self._current_key()):
-                self._data.rollback_transaction(self._transaction)
+                self._transaction.rollback()
                 return False
             table.edit_row(self._current_cell()[0])
             self._update_selection_colors()
