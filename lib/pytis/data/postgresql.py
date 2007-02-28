@@ -2199,7 +2199,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if transaction is None:
             self._pg_begin_transaction ()
         try:
-            origrow = self.row(key)
+            origrow = self.row(key, transaction=transaction)
             if origrow:
                 ordering = self._ordering
                 if ordering:
