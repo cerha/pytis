@@ -1551,7 +1551,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             log(EVENT, 'Pokus o editaci needitovatelné tabulky')
             return False
         table = self._table
-        self._transaction = self._data.begin_transaction()
+        self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
         if not table.editing():
             if not self._lock_record(self._current_key()):
                 self._data.rollback_transaction(self._transaction)

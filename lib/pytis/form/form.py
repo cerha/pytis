@@ -502,7 +502,8 @@ class PopupForm:
         if transaction is not None:
             self._transaction = transaction
         elif lock_key is not None:
-            self._transaction = self._data.begin_transaction()
+            self._transaction = \
+                pytis.data.DBTransactionDefault(config.dbconnection)
         try:
             if lock_key is not None:
                 if not self._lock_record(lock_key):
@@ -514,7 +515,7 @@ class PopupForm:
             frame.ShowModal()
         finally:
             if transaction is None and lock_key is not None:
-                self._data.commit_transaction(self._transaction)
+                self._transaction.commit()
             self._transaction = None
         result = self._result
         self._close(force=True)
