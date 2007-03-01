@@ -1893,7 +1893,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_make_row_template_limited = None
         try:
             number_of_rows = self._pg_select (condition, sort, columns,
-                                              transaction=transaction)
+                                              transaction=transaction)            
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -2448,11 +2448,17 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
     def _pdbb_create_sql_commands(self):
         self._pg_notifications = []
     
-    def call(self, row):
+    def call(self, row, transaction=None):
         log(EVENT, ('Volání funkce `%s\'' % self._name))
         arguments = tuple([self._pg_value(item) for item in row])
+        if transaction is None:
+            outside_transaction = True
+        else:
+            outside_transaction = False
         data = self._pg_query(self._pdbb_function_call % arguments,
-                              outside_transaction=True)
+                              transaction=transaction,
+                              outside_transaction=outside_transaction,
+                              )
         result = self._pg_make_row_from_raw_data(data)
         log(EVENT, ('Výsledek volání funkce `%s\':' % self._name), result)
         return [result]
