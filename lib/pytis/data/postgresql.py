@@ -1279,7 +1279,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """Pøeskoè 'count' øádkù v 'direction' a vra» jejich poèet nebo 'None'.
         """
         if direction == FORWARD:
-            self._pg_query(self._pdbb_command_move_forward % count)
+            self._pg_query((self._pdbb_command_move_forward % (count,)),
+                           transaction=transaction)
         elif direction == BACKWARD:
             answer = self._pg_query((self._pdbb_command_move_backward %
                                      (count,)),
