@@ -252,7 +252,7 @@ class PresentedRow(object):
             value = self._data.find_column(key).type().default_value()
         return value
 
-    def __getitem__(self, key):
+    def __getitem__(self, key, lazy=False):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
         
         'key' je id políèka (øetìzec) identifikující existující políèko, jinak
@@ -263,7 +263,7 @@ class PresentedRow(object):
             value = self._row[key]
         else:
             value = self._virtual[key]
-        if self._dirty.has_key(key) and self._dirty[key]:
+        if not lazy and self._dirty.has_key(key) and self._dirty[key]:
             column = self._columns[key]
             # Nastavením dirty na False u¾ zde zamezíme rekurzi v pøípadì, ¾e
             # se kód computeru ptá na vlastní hodnotu a umo¾níme mu tak zjistit
@@ -371,7 +371,23 @@ class PresentedRow(object):
             return
         for c in columns:
             c.type.enumerator().notify_runtime_filter_change()
- 
+
+    def get(self, key, default=None, lazy=False):
+        """Return the value for the KEY if it exists or the DEFAULT otherwise.
+
+          Arguments:
+            default -- the default value returned when the key does not exist.
+            lazy -- if true, the value will not be computed even if it should
+              be.  This may result in returning an invalid value, but prevents
+              the computer from being invoked.  Does nothing for fields without
+              a computer.
+          
+        """
+        try:
+            return self.__getitem__(key, lazy=lazy)
+        except KeyError:
+            return default
+
     def row(self):
         """Vra» aktuální datový øádek, jako instanci 'pytis.data.Row'.
 
@@ -478,6 +494,10 @@ class PresentedRow(object):
 
     def field_changed(self, key):
         """Vra» pravdu, právì kdy¾ bylo políèko dané 'key' zmìnìno.
+
+        Pozor: Pro plnì virtuální políèka vrací v¾dy nepravdu!  Ani pro
+        nevirtuální dopoèítávaná políèka není pravdivist výsledku zaruèena,
+        nebo» k výpoètu skuteèné hodnoty nemuselo nikdy dojít.
 
         """
         return self._row.has_key(key) and \
