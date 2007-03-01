@@ -106,6 +106,9 @@ class PresentedRow_(unittest.TestCase):
     def test_computer(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3})
+        assert row.get('sum', lazy=True).value() == None
+        assert row['sum'].value() == 8
+        assert row.get('sum', lazy=True).value() == 8
         self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
         row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
         self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
@@ -163,6 +166,16 @@ class PresentedRow_(unittest.TestCase):
         assert not row.changed()
         row['b'] = pytis.data.Value(pytis.data.Integer(), 333)
         assert row.changed()
+    def test_field_changed(self):
+        row = PresentedRow(self._fields, self._data, None,
+                           prefill={'b': 3, 'c': 8})
+        assert not row.field_changed('a')
+        assert not row.field_changed('b')
+        assert not row.field_changed('c')
+        row['b'] = pytis.data.Value(pytis.data.Integer(), 333)
+        assert not row.field_changed('a')
+        assert row.field_changed('b')
+        assert not row.field_changed('c')
     def test_keys(self):
         row = PresentedRow(self._fields, self._data, None)
         assert row.keys().sort() == map(lambda f: f.id(), self._fields).sort()
