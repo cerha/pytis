@@ -65,7 +65,7 @@ pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
 class Form(lcg.Content):
 
     def __init__(self, data, view, resolver, row=None, prefill=None,
-                 new=False, **kwargs):
+                 new=False, link_provider=None, **kwargs):
         super(Form, self).__init__(**kwargs)
         assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
@@ -74,8 +74,15 @@ class Form(lcg.Content):
         self._data = data
         self._view = view
         self._prefill = prefill or {}
+        self._link_provider = link_provider
         self._row = PresentedRow(view.fields(), data, row, resolver=resolver,
                                  prefill=self._valid_prefill(), new=new)
+
+    def _uri(self, row, cid):
+        if self._link_provider:
+            return self._link_provider(row, cid)
+        else:
+            return None
         
     def _valid_prefill(self):
         # Return a dictionary of Python values for the prefill argument.
@@ -252,12 +259,26 @@ class ShowForm(LayoutForm):
                           cls="show-form") + "\n"
 
     def _export_field(self, f):
-        type = f.type(self._data)
+        type = self._row[f.id()].type()
         if isinstance(type, pytis.data.Binary):
             buf = self._row[f.id()].value()
             if buf:
-                size = format_byte_size(len(buf))
-                value = buf.filename() + ' (%s)' % size or size
+                size = ' (%s)' % format_byte_size(len(buf))
+                uri = self._uri(self._row, f.id())
+
+                label = buf.filename() or isinstance(type, pd.Image) \
+                        and _("image") or _("file")
+                if isinstance(type, pd.Image) and f.thumbnail():
+                    src = self._uri(self._row, f.thumbnail())
+                    if src:
+                        label = _html.img(src, alt=label+size)
+                        size = ''
+                        if uri == src:
+                            uri = None
+                if uri:
+                    value = _html.link(label, uri) + size
+                else:
+                    value = label
             else:
                 value = ""
         elif isinstance(type, pytis.data.Boolean):
@@ -266,10 +287,10 @@ class ShowForm(LayoutForm):
             value = self._row.display(f.id())
         else:
             value = self._row[f.id()].export()
-        if len(value) > self._MAXLEN:
-            end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
-            value = concat(value[:(end != -1 and end or self._MAXLEN)],
-                           ' ... (', _("reduced"), ')')
+            if len(value) > self._MAXLEN:
+                end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
+                value = concat(value[:(end != -1 and end or self._MAXLEN)],
+                               ' ... (', _("reduced"), ')')
         return (_html.label(f.label(), f.id()) + ":", value)
 
     
@@ -319,13 +340,11 @@ class EditForm(LayoutForm):
         
 class BrowseForm(Form):
 
-    def __init__(self, data, view, resolver, rows, link_provider=None,
-                 **kwargs):
+    def __init__(self, data, view, resolver, rows, **kwargs):
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         assert isinstance(rows, (list, tuple)), rows
         self._rows = rows
         self._columns = [view.field(id) for id in view.columns()]
-        self._link_provider = link_provider
 
     def _export_field(self, row, col):
         type = col.type(self._data)
@@ -337,10 +356,9 @@ class BrowseForm(Form):
             value = row[col.id()].value()
             if not isinstance(value, lcg.Localizable):
                 value = _html.escape(row.format(col.id()))
-        if self._link_provider:
-            uri = self._link_provider(row, col)
-            if uri:
-                value = _html.link(value, uri)
+        uri = self._uri(row, col.id())
+        if uri:
+            value = _html.link(value, uri)
         #cb = col.codebook(self._row.data())
         #if cb:
         #    value += " (%s)" % cb
