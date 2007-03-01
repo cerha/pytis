@@ -1,3 +1,8 @@
+2007-03-01  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/form/form.py (RecordForm._lock_record.dbop): Don't run
+	locking quietly.
+
 2007-03-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added support for displaying image thumbnails.

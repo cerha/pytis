@@ -731,7 +731,7 @@ class RecordForm(InnerForm):
     def _lock_record(self, key):
         def dbop():
             return self._data.lock_row(key, transaction=self._transaction)
-        success, locked = db_operation(dbop, quiet=True)
+        success, locked = db_operation(dbop)
         if success and locked != None:
             log(EVENT, 'Record is locked')
             run_dialog(Message, _("Záznam je zamèen"))
