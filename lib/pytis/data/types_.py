@@ -1052,15 +1052,17 @@ class Binary(Limited):
             Arguemnts:
             
               data -- The buffer data.  It can be a Python 'buffer' object,
-                input file path as a string or an open file-like object.  A
-                buffer object is used directly, file path is opened and read
-                and file-like object is just read.
+                input file path as a string or an open stream (a file-like
+                object).  A buffer object is used directly, file path is opened
+                and read and file-like object is just read (the caller is
+                responsible for closing it).
 
-              filename -- Original file name as a string or None.  This may be
-                a completely different filename than the input file name passed
-                to 'data'.  This name just refers to the original name of the
-                file before it was uploaded as a form value.  It is optional
-                and its usage may be application specific.
+              filename -- Filename for the buffer data as a string or None.
+                This name does not include directory and does not refer to any
+                actual file (has nothing to do with the input file for reading
+                the data).  It may be used to suggest what the contents of the
+                buffer is.  It is optional and its usage may be application
+                specific.
                 
               type -- MIME type of buffer data as a string or None.  It is
                 optional and its usage may be application specific.
@@ -1071,6 +1073,7 @@ class Binary(Limited):
             Raises 'IOError' if the input file can not be read.
             
             """
+            self._path = None
             if isinstance(data, buffer):
                 self._validate(data)
                 self._buffer = data
@@ -1097,10 +1100,27 @@ class Binary(Limited):
             return self._buffer
 
         def filename(self):
+            """Return the suggested filename as passed to the constructor."""
             return self._filename
 
         def type(self):
+            """Return the suggested filename as passed to the constructor."""
             return self._type
+
+        def path(self):
+            """Return the path to the input file or None.
+            
+            If the buffer was loaded from a file, the input path is returned as
+            a string.  None is returned if the buffer was loaded from an input
+            stream or buffer.  The application should not rely on the path to
+            still exist nor should it operate the file.  The returned value may
+            be used for preselecting the path in a dialog for saving the file
+            or a similar purpos.  Note, that in the client-server environment,
+            the path refers to the server filesystem, so might not be usable
+            for the client at all.
+            
+            """
+            return self._path
 
         def save(self, path):
             """Save the buffer data into a file.
@@ -1140,6 +1160,7 @@ class Binary(Limited):
             error.
             
             """
+            self._path = path
             f = open(path, 'rb')
             try:
                 self._load(f)
