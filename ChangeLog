@@ -1,3 +1,7 @@
+2007-03-02  Tomáš Cerha  <cerha@brailcom.org>
+
+	* Makefile: Added the `cvs-install' option.
+
 2007-02-21  Pavel Hanak  <hanak@asellus.cz>
 
 	* INSTALL (Requirements): Added `python-imaging' and `psycopg2'
