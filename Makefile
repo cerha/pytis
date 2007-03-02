@@ -14,6 +14,15 @@ uninstall:
 	rm -rf $(SHARE)/pytis
 	rm -rf $(LIB)/pytis
 
+cvs-install: compile translations $(SHARE)/pytis
+	ln -s $(CURDIR)/lib/pytis $(LIB)/pytis
+	ln -s $(CURDIR)/translations $(SHARE)/pytis
+
+cvs-update: do-cvs-update compile translations
+
+do-cvs-update:
+	cvs update
+
 $(SHARE)/pytis:
 	mkdir $(SHARE)/pytis
 
