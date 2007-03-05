@@ -4,6 +4,16 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2007-03-05 Tomas Cerha  <cerha@brailcom.org>
+
+	Byla pøidána kontrola pøeddefinovaných filtrovacích podmínek v
+	defsech, tak¾e nyní je pøi pøedání podmínky, kterou nelze zobrazit
+	ve filtraèním dialogu vyhozena chyba.  Pravidla pro tvorbu
+	"správných" podmínek viz dokumentace konstruktoru tøídy
+	`Condition'.  Doporuèuji spustit kontrolu v¹ech defsù pro odhalení
+	pøípadných neodpovídajících podmínek ve stávajících defsech.
+	
 2007-02-28  Milan Zamazal  <pdm@brailcom.org>
 
 	Pro u¾ivatelské transakce zøízena speciální tøída

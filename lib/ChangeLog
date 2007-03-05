@@ -1,3 +1,8 @@
+2007-03-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py Refuse stored conditions, which are
+	not displayable in the search/filtering dialog.
+
 2007-03-01  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/form.py (RecordForm._lock_record.dbop): Don't run

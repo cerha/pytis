@@ -388,13 +388,39 @@ class Condition(object):
         """Initialize condition specification.
 
         Arguments:
-
           name -- condition name as a string
-          condition -- condition as a 'pytis.data.Operator' instance.
+          condition -- condition as a 'pytis.data.Operator' instance.  The
+            condition must be displayable in the serach/filtering dialog, thus
+            certain restrictions apply.  It is not possible to use the logical
+            operator 'NOT', logical operators 'AND' and 'OR' must always have
+            exactly two operands and only the first of the two may be a nested
+            logical operator.  For example instead of AND(a, b, c) use
+            AND(AND(a, b), c), insteda of NOT(EQ(x, y)) use NE(x, y), etc.
           fixed -- indicates, whether the user is allowed to manipulate the
             condition.  
 
         """
+        def check(cond):
+            assert isinstance(cond, pytis.data.Operator), \
+               ('Not an Operator instance:', str(cond))
+            assert len(cond.args()) == 2, \
+               ('Operator must have just two arguments:', str(cond.args()))
+            arg1, arg2 = cond.args()
+            if cond.logical():
+                check(arg1)
+                check(arg1)
+                assert not arg2.logical(), \
+                   ('Nested conditions only allowed as first operand:',
+                    str(arg2))
+            else:
+                assert isinstance(arg1, str), \
+                   ('First operand must be column id:', str(arg1))
+                assert isinstance(arg2, (str, pytis.data.Value,
+                                         pytis.data.WMValue)), \
+                   ('Second operand must be column id or Value instance:',
+                    str(arg2))
+        if __debug__:
+            check(condition)
         self._name = name
         self._condition = condition
         self._fixed = fixed
