@@ -420,7 +420,9 @@ class Condition(object):
                    ('Second operand must be column id or Value instance:',
                     str(arg2))
         if __debug__:
-            check(condition)
+            assert isinstance(name, (str, unicode)), name
+            if condition is not None:
+                check(condition)
         self._name = name
         self._condition = condition
         self._fixed = fixed
