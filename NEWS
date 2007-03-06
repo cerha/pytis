@@ -4,6 +4,10 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-03-06  Milan Zamazal  <pdm@brailcom.org>
+
+	Zamykání by nyní mìlo fungovat i pro vìt¹inu views.
+
 
 2007-03-05 Tomas Cerha  <cerha@brailcom.org>
 

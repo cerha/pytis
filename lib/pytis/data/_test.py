@@ -1167,6 +1167,26 @@ class DBDataDefault(_DBTest):
                 transaction_2.rollback()
             except:
                 pass
+    def test_lock_view(self):
+        v = self.view
+        v.select()
+        row = v.fetchone()
+        key = row[0]
+        transaction = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
+        transaction_2 = \
+            pytis.data.DBTransactionDefault(connection_data=self._dconnection)
+        try:
+            result = v.lock_row(key, transaction=transaction)
+            assert result is None, 'lock failed'
+            result = v.lock_row(key, transaction=transaction_2)
+            assert type(result) == type(''), 'locked record locked'
+        finally:
+            for t in transaction, transaction_2:
+                try:
+                    t.rollback()
+                except:
+                    pass
     def _perform_transaction(self, transaction):
         d = self.dstat
         d1 = self.dstat1

@@ -886,6 +886,39 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                       map(str, self.columns()))
         oidnames = map(lambda c, m=main_table: '%s.%s' % (m, c.id()), oids)
         oidstrings = string.join(oidnames, ', ')
+        qresult = self._pg_query(
+            "select relkind from pg_class where relname='%s'" %
+            (main_table,))
+        if qresult[0][0] == 'r':
+            self._pdbb_command_lock = None
+        else:
+            qresult = self._pg_query(
+                ("select definition from pg_views where viewname = '%s'" %
+                 (main_table,)))
+            lock_query = qresult[0][0]
+            if lock_query[-1] == ';':
+                lock_query = lock_query[:-1]
+            qresult = self._pg_query(
+                ("select distinct target.relname from "+
+                 "pg_class as target join pg_depend on (target.oid = pg_depend.refobjid) join "+
+                 "pg_rewrite on (pg_depend.objid = pg_rewrite.oid) join "+
+                 "pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
+                 "where pg_class.relname = '%s' and "+
+                 "target.relname != pg_class.relname and "+
+                 "target.relkind = 'r'") % (main_table,))
+            def check_candidate(candidate_table):
+                try:
+                    self._pg_query("%s for update of %s nowait limit 1" %
+                                   (lock_query, candidate_table,))
+                    return True
+                except DBUserException:
+                    return False
+            lock_candidates = [row[0] for row in qresult]
+            lock_tables = [c for c in lock_candidates if check_candidate(c)]
+            lock_tables_string = string.join(lock_tables, ', ')
+            self._pdbb_command_lock = \
+                ("%s for update of %s nowait limit 1" %
+                 (lock_query, lock_tables_string,))
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
@@ -2349,9 +2382,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         log(EVENT, 'Locking row:', str (key))
         self._pg_query('savepoint _lock', transaction=transaction)
         try:
-            if not self._pg_row(self._pg_value(key), None,
-                                transaction=transaction,
-                                supplement='for update nowait'):
+            if self._pdbb_command_lock is None:
+                result = self._pg_row(self._pg_value(key), None,
+                                      transaction=transaction,
+                                      supplement='for update nowait')
+            else:
+                result = self._pg_query(self._pdbb_command_lock,
+                                        transaction=transaction)
+            if not result:
                 return "No such record"
         except DBLockException:
             log(EVENT, 'Row already locked by another process')
