@@ -1,3 +1,8 @@
+2007-03-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/form/form.py (PopupForm.run): Ignore errors on the commit
+	call.
+
 2007-03-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py Refuse stored conditions, which are

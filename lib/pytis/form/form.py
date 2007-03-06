@@ -515,7 +515,10 @@ class PopupForm:
             frame.ShowModal()
         finally:
             if transaction is None and lock_key is not None:
-                self._transaction.commit()
+                try:
+                    self._transaction.commit()
+                except:
+                    pass
             self._transaction = None
         result = self._result
         self._close(force=True)
