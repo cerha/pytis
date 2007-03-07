@@ -764,7 +764,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'numeric': Float,
                         'float4': Float,
                         'float8': Float,
-                        'oid': Oid,
                         'name': String,
                         'text': String,
                         'timestamp': DateTime,
@@ -773,6 +772,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'inet': Inet,
                         'macaddr': Macaddr,
                         'bytea': Binary,
+                        'oid': pytis.data.Oid, # for backward compatibility
                         }
         try:
             type_class_ = TYPE_MAPPING[type_]
@@ -835,9 +835,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                                    "used as keys")
                 key.append(colspec)
         assert key, DBUserException('data key column not found')
-        # Pøidej oid
-        if not some(lambda c: isinstance(c.type(), Oid), columns):
-            columns.append(ColumnSpec('oid', Oid()))
         # Hotovo
         return columns, tuple(key)
 
@@ -882,11 +879,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         rordering = sortspec('DESC')
         condition = key_cond
         relation_and_condition = '(%s) and (%s)' % (relation, condition)
-        oids = filter(lambda c: isinstance(c.type(), Oid), self.columns())
-        assert oids, ('No oids in the data object columns',
-                      map(str, self.columns()))
-        oidnames = map(lambda c, m=main_table: '%s.%s' % (m, c.id()), oids)
-        oidstrings = string.join(oidnames, ', ')
         qresult = self._pg_query(
             "select relkind from pg_class where relname='%s'" %
             (main_table,))
@@ -931,8 +923,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
-            ('select %%(columns)s, %s from %s where %s order by %s %%(supplement)s' %
-             (oidstrings, table_list, relation_and_condition, ordering,)),
+            ('select %%(columns)s from %s where %s order by %s %%(supplement)s' %
+             (table_list, relation_and_condition, ordering,)),
             {'columns': column_list, 'supplement': ''})
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
@@ -942,10 +934,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           (table_list, relation)
         self._pdbb_command_select = \
           self._SQLCommandTemplate(
-            (('declare %s scroll cursor for select %%(columns)s, %s from %s '+
+            (('declare %s scroll cursor for select %%(columns)s from %s '+
               'where %%(condition)s and (%s) order by %%(ordering)s %s') %
-             (self._PDBB_CURSOR_NAME, oidstrings, table_list,
-              relation, ordering)),
+             (self._PDBB_CURSOR_NAME, table_list, relation, ordering)),
             {'columns': column_list})
         self._pdbb_command_select_agg = \
           ('select %%s(%%s) from %s where %%s and (%s)' %
@@ -960,21 +951,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'move backward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
-            (('select %%(columns)s, %s from %s where (%s) and %%(condition)s '+
+            (('select %%(columns)s from %s where (%s) and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (oidstrings, main_table, relation, ordering,)),
+             (main_table, relation, ordering,)),
             {'columns': column_list})
         self._pdbb_command_search_last = \
           self._SQLCommandTemplate(
-            (('select %%(columns)s, %s from %s where (%s) and %%(condition)s '+
+            (('select %%(columns)s from %s where (%s) and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (oidstrings, main_table, relation, rordering,)),
+             (main_table, relation, rordering,)),
             {'columns': column_list})
         self._pdbb_command_search_distance = \
           'select count(%s) from %s where (%s) and %%s' % \
           (first_key_column, main_table, relation)
         self._pdbb_command_insert = \
-          'insert into %s (%%s) values (%%s)' % main_table
+          ('insert into %s (%%s) values (%%s) returning %s' %
+           (main_table, first_key_column,))
         if self._ordering:
             ordering = []
             for o in self._ordering:
@@ -997,11 +989,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pdbb_command_insert_newpos = \
               ('select max(%s) from %s where %s' % \
                (ocol, main_table, eqstring))
-        oidordering = string.join(map(lambda o: '%s DESC' % o, oidnames),
-                                  ', ')
-        self._pdbb_command_get_last = \
-          ('select %s, %s from %s where %s order by %s limit 1') % \
-           (column_list, oidstrings, table_list, relation, oidordering)
         update_from_tables = [t for t in table_names if t != main_table]
         if update_from_tables:
             update_from_clause = (' from ' +
@@ -1147,8 +1134,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             colid = b.id()
             colspec = self.find_column(colid)
             assert colspec, ('Column not found', colid)
-            if isinstance(colspec.type(), Oid):
-                continue
             columns.append(b.column())
             values.append(value)
         return columns, values
@@ -1387,17 +1372,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 query_args.append(v)
             else:
                 vals.append(v)
-        self._pg_query((self._pdbb_command_insert %
-                        (string.join(cols, ','), string.join(vals, ','),)),
-                       backup=True, query_args=query_args,
-                       transaction=transaction)
-        # Pokud data nemají klíè (proto¾e je generován, napø. jako SERIAL),
-        # nezbývá, ne¾ se øídit oid.  Tento postup pak lze pou¾ít obecnì, snad
-        # v PostgreSQL funguje.  Je to zalo¾eno na pøedpokladu, ¾e ka¾dý novì
-        # vlo¾ený záznam má nejvy¹¹í oid v tabulce.
-        data = self._pg_query(self._pdbb_command_get_last,
-                              transaction=transaction)
-        return self._pg_make_row_from_raw_data(data)
+        key_data = self._pg_query(
+            (self._pdbb_command_insert %
+             (string.join(cols, ','), string.join(vals, ','),)),
+            backup=True, query_args=query_args, transaction=transaction)
+        key = self._pg_make_row_from_raw_data(
+            key_data, template=(self._pg_make_row_template[0],))
+        return self.row(key[0], transaction=transaction)
     
     def _pg_update(self, condition, row, transaction=None):
         """Updatuj øádky identifikované 'condition'.

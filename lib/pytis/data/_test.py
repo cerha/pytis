@@ -669,11 +669,11 @@ class _DBTest(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
         c = self._connector
-        for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL) with oids",
-                  "create table cosnova (id serial PRIMARY KEY, synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE') with oids",
-                  "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madati int NOT NULL DEFAULT 1 REFERENCES cosnova) with oids",
-                  "create table xcosi(id int, popis varchar(12)) with oids",
-                  "create table bin(id int, data bytea) with oids",
+        for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL)",
+                  "create table cosnova (id serial PRIMARY KEY, synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE')",
+                  "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madati int NOT NULL DEFAULT 1 REFERENCES cosnova)",
+                  "create table xcosi(id int, popis varchar(12))",
+                  "create table bin(id int, data bytea)",
                   "insert into cstat values('us', 'U.S.A.')",
                   "insert into cstat values('cz', 'Czech Republic')",
                   "insert into cosnova values(1, '100', '007', 'abcd', 'X', 'us', 'FALSE')",
@@ -687,8 +687,8 @@ class _DBTest(_DBBaseTest):
                   "insert into xcosi values(3, 'zvlastni')",
                   "insert into xcosi values(5, 'nove')",
                   "insert into xcosi values(999, NULL)",
-                  "create table viewtest2 (x int) with oids",
-                  "create view viewtest1 as select oid, * from viewtest2",
+                  "create table viewtest2 (x int)",
+                  "create view viewtest1 as select * from viewtest2",
                   "create rule viewtest1_update as on update to viewtest1 do instead update viewtest2 set x=new.x;",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
@@ -996,7 +996,7 @@ class DBDataDefault(_DBTest):
         for c, v in zip(self.data.columns(), self.ROW3):
             eresult.append((c.id(), c.type().validate(v)[0]))
         eresult = pytis.data.Row(eresult)
-        assert result[:-1] == eresult, 'insertion failed'
+        assert result == eresult, 'insertion failed'
         result2 = self.data.insert(row)
         assert result2[1] is False, 'invalid insertion succeeded'
         assert (result2[0] is None or type(result2[0]) == type('') or
@@ -1016,7 +1016,7 @@ class DBDataDefault(_DBTest):
         for c, v in zip(self.data.columns(), self.ROW3):
             eresult.append((c.id(), c.type().validate(v)[0]))
         eresult = pytis.data.Row(eresult)
-        assert result[:-1] == eresult, 'update failed'
+        assert result == eresult, 'update failed'
         for k in k1, k2:
             result2 = self.data.update(k, row)
             assert result2[1] is False, 'invalid update succeeded'
@@ -1024,7 +1024,7 @@ class DBDataDefault(_DBTest):
                     type(result2[0]) == type(u'')),\
                     'invalid failed update result'
             result2 = self.data.update(k, row)
-        assert self.data.update(row[0], row1)[0][:-1] == row1, 'update failed'
+        assert self.data.update(row[0], row1)[0] == row1, 'update failed'
     def test_view_update(self):
         I = pytis.data.Integer()
         key = I.validate('2')[0]
@@ -1444,12 +1444,12 @@ class DBDataFetchBuffer(_DBBaseTest):
         c = self._connector
         import config
         try:
-            self._sql_command("create table big (x int) with oids")
+            self._sql_command("create table big (x int)")
             table_size = config.initial_fetch_size + config.fetch_size + 10
             self._table_size = table_size
             for i in range(table_size):
                 self._sql_command("insert into big values(%d)" % i)
-            self._sql_command("create table small (x int) with oids")
+            self._sql_command("create table small (x int)")
             for i in range(4):
                 self._sql_command('insert into "small" values(%d)' % i)
         except:
@@ -1709,9 +1709,9 @@ tests.add(DBFunction)
 
 class TutorialTest(_DBBaseTest):
     def setUp(self):
-        for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text) with oids",
+        for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text)",
                   "CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), "+\
-                  "c varchar(10) REFERENCES cis) with oids",
+                  "c varchar(10) REFERENCES cis)",
                   "INSERT INTO cis VALUES ('1', 'raz')",
                   "INSERT INTO cis VALUES ('2', 'dva')",
                   "INSERT INTO cis VALUES ('3', 'tri')",
@@ -1782,7 +1782,7 @@ class ThreadTest(_DBBaseTest):
         _DBBaseTest.setUp(self)
         c = self._connector
         try:
-            self._sql_command("create table tab (x int, y int) with oids")
+            self._sql_command("create table tab (x int, y int)")
         except:
             self.tearDown()
             raise

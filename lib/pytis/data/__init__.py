@@ -37,6 +37,7 @@ from data import *
 from access import *
 from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException, DBSystemException, DBUserException, DBLoginException
 from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault, default_access_groups
+from deprecated import Oid
 
 # TODO: The following import serves for backward compatibility of applications
 # and should be removed once applications switch to using the

@@ -2101,8 +2101,10 @@ class DataSpec(_DataFactoryWithOrigin):
 
     """
     
-    def __init__(self, table, columns, key, oid=None, access_rights=None,
-                 data_class_=pytis.data.DBDataDefault):
+    def __init__(self, table, columns, key, access_rights=None,
+                 data_class_=pytis.data.DBDataDefault,
+                 oid=() # temporary backward compatibility argument, ignored
+                 ):
         """Inicializuj specifikaci.
 
         Argumenty:
@@ -2115,45 +2117,24 @@ class DataSpec(_DataFactoryWithOrigin):
           key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
             identifikátorem musí být pøítomný v 'columns'.
             
-          oid -- seznam názvù OID sloupcù (tuple).  Pokud je None (výchozí
-            hodnota), bude doplnìn jeden sloupec s názvem 'oid'.  Pro v¹echny
-            uvedené sloupce budou automaticky pøidány pøíslu¹né vazby.  Pokud
-            tabulka nemá ¾ádný mít ¾ádný oid sloupec, uvedeme prázdný seznam.
-            Pokud je sloupec jen jeden, není nutno jej obalovat do tuplu.
-            
           access_rights -- práva jako instance 'pytis.data.AccessRights' nebo
             None, pokud mají být práva neomezená.
             
           data_class_ -- tøída datového objektu, odvozená od `Data'.
-            
-        Pokud 'columns' neobsahují sloupec s identifikátorem 'oid', bude
-        automaticky doplnìn sloupec 'oid' typu 'pytis.data.Oid'.
 
         """
         assert isinstance(table, types.StringType)
         assert isinstance(columns, (types.ListType, types.TupleType))
         assert isinstance(key, types.StringType)
-        assert isinstance(key, (types.StringType, types.ListType,
-                                types.TupleType)) or oid is None
         assert isinstance(access_rights, pytis.data.AccessRights) \
                or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
         if __debug__:
             for c in columns:
                 assert isinstance(c, Column)
-        if oid is None:
-            if find('oid', columns, key=lambda c: c.id()):
-                oid = ()
-            else:    
-                oid = ('oid',)
-        else:
-            oid = xtuple(oid)
-            for c in oid:
-                assert isinstance(c, types.StringType)
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        columns += tuple([Column(c, type=pytis.data.Oid()) for c in oid])
         bindings = []
         for c in columns:
             e = c.enumerator()
@@ -2290,16 +2271,6 @@ class Specification(object):
 
     """
 
-    oid = ('oid',)
-    """Specifikace názvù OID sloupcù (tuple øetìzcù).
-
-    Výchozím nastavením je jeden sloupec s názvem 'oid'.  Pokud tabulka nemá
-    mít ¾ádný oid sloupec, uvedeme prázdný seznam.  Pokud je sloupec jen
-    jeden, není nutno jej obalovat do tuplu.  Pro v¹echny uvedené sloupce budou
-    automaticky pøidány pøíslu¹né vazby.
-
-    """
-
     access_rights = None
     """Pøístupová práva náhledu jako instance 'AccessRights'."""
 
@@ -2345,18 +2316,13 @@ class Specification(object):
                 setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
         assert isinstance(self.fields, (list, tuple))
-        if __debug__:
-            if isinstance(self.oid, (list, tuple)):
-                for c in self.oid:
-                    assert isinstance(c, str)
-            else:
-                assert isinstance(self.oid, str)
-
         self._view_spec_kwargs = {'description': self.__class__.__doc__}
         for attr in dir(self):
             if not (attr.startswith('_') or attr.endswith('_spec') or \
-                    attr in ('table', 'key', 'access_rights', 'oid',
-                             'data_cls', 'bindings', 'cb', 'prints')):
+                    attr in ('table', 'key', 'access_rights',
+                             'data_cls', 'bindings', 'cb', 'prints',
+                             'oid', # for backward compatibility 
+                             )):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         for arg in ('layout', 'actions', 'columns'):
             try:
@@ -2376,8 +2342,6 @@ class Specification(object):
             bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(),
                           enumerator=e(f.codebook()), **f.type_kwargs())
                         for f in self.fields if not f.virtual()]
-            for o in xtuple(self.oid):
-                bindings.append(B(o, table, o, type_=pytis.data.Oid()))
             if self.key:
                 bdict = dict([(b.column(), b) for b in bindings])
                 key = [bdict[k] for k in self.key]

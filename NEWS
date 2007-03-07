@@ -4,10 +4,17 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-03-07  Milan Zamazal  <pdm@brailcom.org>
+
+	Zru¹eno pou¾ívání oids.  V databázích schématech ji¾ není nutno
+	pou¾ívat `with oids'.  Pokud nìjaké aplikace oids jakýmkoliv
+	zpùsobem pou¾ívají, je nutno je aktualizovat.
+	POZOR: Tato zmìna vy¾aduje PostgreSQL verze minimálnì 8.2!
+	Zmìna obsahu databáze není nutná.
+
 2007-03-06  Milan Zamazal  <pdm@brailcom.org>
 
 	Zamykání by nyní mìlo fungovat i pro vìt¹inu views.
-
 
 2007-03-05 Tomas Cerha  <cerha@brailcom.org>
 
