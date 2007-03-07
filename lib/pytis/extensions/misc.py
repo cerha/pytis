@@ -49,7 +49,7 @@ def smssend(tel, message, server='192.168.1.55'):
     if len(message) > MAX_LENGTH:
         return "Zpráva je del¹í ne¾ %s. SMS nebude odeslána." % (MAX_LENGTH)
     if len(tel) not in (14,9):
-	return ("©patný fromát telefoního èísla %s.\n\n"
+	return ("©patný formát telefoního èísla %s.\n\n"
 	        "Èíslo musí mít tvar:\nPPPPPxxxxxxxxx - (pìt znakù pøedvolba "
                 "- devìt znakù èíslo)\nxxxxxxxxx - (devìt znakù èíslo)") % (tel)
     message.replace('"','')
@@ -83,6 +83,92 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
         print 'ERROR: e-mail se nepodaøilo odeslat'
         return 1
     
+
+class SimpleEmail(object):
+    """Tøída pro vytvoøení a odeslaní jednoduchého mailu."""
+
+    DEFAULT_CHARSET = 'iso-8859-2'
+    DEFAULT_CONTENT_TYPE = 'text/html'
+
+    def __init__(self, to, from_, subject, content,
+                 bcc=None,  smtp='localhost'):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          to -- adresa pøíjemce nebo sekvence pøíjemcù
+          from_ -- adresa odesílatele
+          subject -- pøedmìt zprávy (mù¾e obsahovat buï ascii øetìzec
+            nebo unicode øetìzec nebo øetìzec v kódování iso-8859-2)
+          content -- obsah zprávy
+          bcc -- adresa pøíjemce pro bcc nebo sekvence adres
+          smtp -- adresa odesílacího serveru
+        """  
+          
+        assert isinstance(to, types.StringTypes) or \
+               isinstance(to, types.TupleType) or \
+               isinstance(to, types.ListType) 
+        assert bcc is None or \
+               isinstance(bcc, types.StringTypes) or \
+               isinstance(bcc, types.TupleType) or \
+               isinstance(bcc, types.ListType) 
+        assert isinstance(from_, types.StringTypes)
+        assert isinstance(subject, types.StringTypes)
+        assert isinstance(subject, types.StringTypes)
+        self.to = to
+        self.from_ = from_
+        self.bcc = bcc
+        self.subject = subject
+        self.content = content
+        self.smtp = smtp
+
+    def create_message(self):
+        """Return instance of email.Message."""
+        from email.Message import Message
+        self.msg = Message()
+        self.create_headers()
+        self.create_content()      
+
+    def _flatten_for_header(self, header):
+        if not isinstance(header, types.StringTypes):
+            return ', '.join(header)
+        else:
+            return header
+        
+    def create_headers(self):
+        from email.Header import Header
+        from_ = Header(self._from, self.DEFAULT_CHARSET)
+        _to = self._flatten_for_header(self.to)
+        to = Header(_to, self.DEFAULT_CHARSET)        
+        subject = Header(self.subject, self.DEFAULT_CHARSET)
+        self.msg['From'] = from_
+        self.msg['To'] = to        
+        self.msg['Subject'] = subject
+        if self.bcc:
+            _bcc = self._flatten_for_header(self.bcc)
+            bcc = Header(_bcc, self.DEFAULT_CHARSET)
+            self.msg['Bcc'] = bcc                    
+
+    def create_content(self):
+        self.msg.set_payload(self.content)        
+
+    def __str__(self):
+        self.create_message()
+        return self.msg.as_string()
+
+    def send(self):
+        self.create_message()
+        message = self.msg.as_string()
+        success = False
+        try:
+            import smtplib
+            server = smtplib.SMTP(self.smtp)
+            server.sendmail(self.to, self.address, nessage)
+            success = True
+        finally:    
+            server.quit()
+        return success              
+
 
 def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
               html=False, key=None, gpg_options=('--always-trust',)):

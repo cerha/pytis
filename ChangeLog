@@ -1,3 +1,10 @@
+2007-03-07  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/misc.py (SimpleEmail): Nová tøída.
+
+	* lib/pytis/extensions/dbutils.py: Zohlednìní
+	argumentu transactions z nového datového rozhraní.
+
 2007-01-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/defs.py (flatten_menus): Pøesunuto do

@@ -34,30 +34,32 @@ def data_object(spec):
     op = lambda: spec.create(dbconnection_spec=config.dbconnection)
     success, data = pytis.form.db_operation(op)
     #if not success:
-    #    raise "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
+    #    errmsg = "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
+    #    raise ProgramError(errmsg)
     return data
 
 # Alias
 data_create = data_object
 
 
-def dbselect(spec, condition=None, sort=()):
+def dbselect(spec, condition=None, sort=(), transaction=None):
     """Vra» øádky dané db tabulky jako sekvenci.
 
     Argumenty:
 
       spec -- název specifikace datového objektu nebo pøímo instance tøídy
         'pytis.data.DataFactory'
-      condition, sort -- argumenty volání 'pytis.data.select()'.
+      condition, sort, transaction -- argumenty volání
+        'pytis.data.postgresql.select()'.
         
     Vrací v¹echny øádky vrácené z databáze jako list.
     
     """
     data = data_object(spec)
-    data.select(condition=condition, sort=sort)
+    data.select(condition=condition, sort=sort, transaction=transaction)
     result = []
     while True:
-        row = data.fetchone()
+        row = data.fetchone(transaction=transaction)
         if row is None:
             data.close()
             break
@@ -65,7 +67,7 @@ def dbselect(spec, condition=None, sort=()):
     return result
 
 
-def dbinsert(spec, row):
+def dbinsert(spec, row, transaction=None):
     """Provede insert do tabulky dané specifikací.
 
     Argumenty:
@@ -74,29 +76,33 @@ def dbinsert(spec, row):
         insert.
       row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
         pytis.data.Row
+      transaction -- instance pytis.data.DBTransactionDefault  
         
     Vrací poèet vlo¾ených øádkù.
     
     """
     assert isinstance(row, pytis.data.Row) or is_sequence(row), \
-           _("Argument must be a sequence or Row instance.")
+           _("Argument must be a sequence or Row instance.", row)
     if is_sequence(row):
         for item in row:
-            if not is_sequence(item) or len(item) != 2:
-                raise 'Column definition must be (ID, VALUE) pair.'
+            if not is_sequence(item) or len(item) != 2:                
+                errmsg = 'Column definition must be (ID, VALUE) pair.'
+                raise ProgramError(errmsg)
             k, v = item
             if not is_string(k):
-                raise 'Invalid column id %s' % k
+                errmsg =  'Invalid column id %s' % k
+                raise ProgramError(errmsg)
             if not isinstance(v, pytis.data.Value):
-                raise 'Invalid column value %s' % v
+                errmsg = 'Invalid column value %s' % v
+                raise ProgramError(errmsg)
         row = pytis.data.Row(row)
     data = data_object(spec)
-    op = lambda: data.insert(row)
+    op = lambda: data.insert(row, transaction=transaction)
     success, result = pytis.form.db_operation(op)
     return result
 
 
-def dbupdate(row, values=()):
+def dbupdate(row, values=(), transaction=None):
     """Provede update nad pøedaným øádkem.
 
     Argumenty:
@@ -105,6 +111,7 @@ def dbupdate(row, values=()):
       values -- sekvence dvouprvkových sekvencí ('id', value) ,
         kde 'id' je øetìzcový identifikátor políèka a value je
         instance, kterou se bude políèko aktualizovat
+      transaction -- instance pytis.data.DBTransactionDefault  
     """
     data = row.data()
     updaterow = row.row()
@@ -113,14 +120,16 @@ def dbupdate(row, values=()):
         key = key[0]
     for col, val in values:
         updaterow[col] = val
-    op = lambda: data.update(row[key.id()], updaterow)
+    op = lambda: data.update(row[key.id()], updaterow,
+                             transaction=transaction)
     return pytis.form.db_operation(op)
 
 # Alias
 row_update = dbupdate
 
 
-def dbupdate_many(spec, condition=None, update_row=None):
+def dbupdate_many(spec, condition=None, update_row=None,
+                  transaction=None):
     """Provede update nad tabulkou danou specifikací.
 
     Argumenty:
@@ -128,15 +137,18 @@ def dbupdate_many(spec, condition=None, update_row=None):
       spec -- specifikace datového objektu nad kterým má být proveden
         select; string'
       condition -- podmínka updatovaní.
-      update_row -- øádek kterým se provede update, 
+      update_row -- øádek kterým se provede update,
+      transaction -- instance pytis.data.DBTransactionDefault        
         
     Vrací poèet updatovaných øádkù.
     
     """
     if not isinstance(condition, pytis.data.Operator):
-        raise "Nebyla pøedána podmínka pro update_many."
+        errmsg = "Nebyla pøedána podmínka pro update_many."
+        raise ProgramError(errmsg)        
     if not isinstance(update_row, pytis.data.Row):
-        raise "Nebyl pøedán øádek pro update_many."
+        errmsg = "Nebyl pøedán øádek pro update_many."
+        raise ProgramError(errmsg)
     data = data_object(spec)
     return data.update_many(condition, update_row) 
 
@@ -156,18 +168,25 @@ def dbfunction(name, *args, **kwargs):
         databázové funkce.  To znamená úsporu pokud je tato funkce pou¾ita v
         computeru políèka, které je závislé na jiných políèkách, která je¹tì
         nejsou vyplnìna.
-
+      transaction -- instance pytis.data.DBTransactionDefault        
     """
-    def proceed_with_empty_values(proceed_with_empty_values=False):
-        return proceed_with_empty_values
-    if not proceed_with_empty_values(**kwargs):
+    if kwargs.has_key('proceed_with_empty_values'):
+        proceed_with_empty_values = kwargs['proceed_with_empty_values']
+    else:
+        proceed_with_empty_values = False
+    if kwargs.has_key('transaction'):
+        transaction = kwargs['transaction']
+    else:
+        transaction = None
+    if not proceed_with_empty_values:
         for id, v in args:
             value = v.value()
             if value is None or value == '':
                 return None
     op = lambda: pytis.data.DBFunctionDefault(name, config.dbconnection)
     success, function = pytis.form.db_operation(op)
-    op = lambda: function.call(pytis.data.Row(args))[0][0]
+    op = lambda: function.call(pytis.data.Row(args),
+                               transaction=transaction)[0][0]
     success, result = pytis.form.db_operation(op)
     return result.value()
 
