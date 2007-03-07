@@ -36,6 +36,7 @@ import weakref
 import mx.DateTime
 
 from dbdata import *
+from evaction import *
 from pytis.data import *
 import pytis.data
 
@@ -898,14 +899,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             lock_query = qresult[0][0]
             if lock_query[-1] == ';':
                 lock_query = lock_query[:-1]
+            # There are some issues with locking views:
+            # - There is a PostgreSQL bug preventing locking views which are
+            #   built on top of other views.
+            # - It's not possible to lock views using LEFT OUTER JOIN (this is
+            #   a PostgreSQL feature).
+            # Both the problems can be solved by using FOR UPDATE OF version of
+            # the locking clause.  But first we need to know what may be put
+            # after OF without causing a database error.
             qresult = self._pg_query(
-                ("select distinct target.relname from "+
-                 "pg_class as target join pg_depend on (target.oid = pg_depend.refobjid) join "+
-                 "pg_rewrite on (pg_depend.objid = pg_rewrite.oid) join "+
-                 "pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
-                 "where pg_class.relname = '%s' and "+
-                 "target.relname != pg_class.relname and "+
-                 "target.relkind = 'r'") % (main_table,))
+                ("select ev_action from "+
+                 "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
+                 "where relname='%s'") % (main_table,))
+            ev_action_string = qresult[0][0]
+            ev_action = pg_parse_ev_action(ev_action_string)
+            ev_rtable = ev_action[0]['rtable']
+            lock_candidates = [table['eref']['aliasname']
+                               for table in ev_rtable if table['inFromCl']]
             def check_candidate(candidate_table):
                 try:
                     self._pg_query("%s for update of %s nowait limit 1" %
@@ -913,7 +923,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     return True
                 except DBUserException:
                     return False
-            lock_candidates = [row[0] for row in qresult]
             lock_tables = [c for c in lock_candidates if check_candidate(c)]
             lock_tables_string = string.join(lock_tables, ', ')
             self._pdbb_command_lock = \
