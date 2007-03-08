@@ -56,6 +56,8 @@ def _evparse(text):
             return _evparse_number(text)
         elif text[:4] == 'true' or text[:5] == 'false':
             return _evparse_boolean(text)
+        elif char == '[':
+            return _evparse_array(text[1:])
         else:
             return _evparse_identifier(text)
     except IndexError:
@@ -85,7 +87,10 @@ def _evparse_structure(text):
         text = text[i:]
         if text[0] == '}':
             return True, text[1:]
-        if text[0] != ':':
+        if text[0] == '[':
+            __ignore, text = _evparse_array(text[1:])
+            return parse(text)
+        elif text[0] != ':':
             raise EvparseException('structure slot name', text)
         ident, text_1 = _evparse_identifier(text[1:])
         value, new_text = _evparse(text_1)
@@ -137,3 +142,9 @@ def _evparse_number(text):
     while text[i] in string.digits:
         i = i + 1
     return sign * int(text[:i]), text[i:]
+
+def _evparse_array(text):
+    i = 0
+    while text[i] != ']':
+        i = i + 1
+    return None, text[i+1:]
