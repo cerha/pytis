@@ -913,6 +913,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     self._pg_query("%s for update of %s nowait limit 1" %
                                    (lock_query, candidate_table,))
                     return True
+                except DBLockException:
+                    return True
                 except DBUserException:
                     return False
             lock_tables = [c for c in lock_candidates if check_candidate(c)]
