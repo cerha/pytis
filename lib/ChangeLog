@@ -1,3 +1,11 @@
+2007-03-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Use LCG's generator instead of the `_html'
+	module.
+
+	* pytis/web/dialog.py: Use LCG's generator instead of the `_html'
+	module.
+
 2007-03-06  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/form.py (PopupForm.run): Ignore errors on the commit
