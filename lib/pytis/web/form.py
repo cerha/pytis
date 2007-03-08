@@ -43,7 +43,6 @@ import pytis.data
 from pytis.presentation import *
 
 import lcg
-from lcg.export import _html
 from lcg import concat
 
 _ = lcg.TranslatableTextFactory('pytis')
@@ -87,7 +86,8 @@ class Form(lcg.Content):
     def _valid_prefill(self):
         # Return a dictionary of Python values for the prefill argument.
         valid = {}
-        for id in self._view.layout().order():
+        for f in self._view.fields():
+            id = f.id()
             if self._prefill.has_key(id):
                 f = self._view.field(id)
                 type = f.type(self._data)
@@ -99,7 +99,7 @@ class Form(lcg.Content):
 
 class LayoutForm(Form):
     
-    def _export_group(self, group):
+    def _export_group(self, exporter, group):
         #orientation = orientation2wx(group.orientation())
         #space = dlg2px(parent, group.space())
         #gap = dlg2px(parent, group.gap())
@@ -118,29 +118,30 @@ class LayoutForm(Form):
             if item.width() == 0:
                 continue
             if isinstance(item, FieldSpec):
-                label, ctrl = self._export_field(item)
+                label, ctrl = self._export_field(exporter, item)
                 result.append((item, label, ctrl))
         if group.orientation() == Orientation.VERTICAL:
             x = self._export_pack(result)
         else:
             x = None
         if group.label():
-            x = _html.fieldset(x, label=group.label())
+            x = exporter.generator().fieldset(x, label=group.label())
         return x
         
-    def _export_field(self, f):
+    def _export_field(self, exporter, f):
+        g = exporter.generator()
         value = self._row[f.id()]
         type = f.type(self._data)
         attr = {'name': f.id(),
-                'id': "%x-%s" % (positive_id(self), f.id())}
+                'id': "f%x-%s" % (positive_id(self), f.id())}
         if isinstance(type, pytis.data.Boolean):
-            ctrl = _html.checkbox
+            ctrl = g.checkbox
             attr['value'] = 'T'
             attr['checked'] = value.value()
         elif isinstance(type, pytis.data.Binary):
-            ctrl = _html.upload
+            ctrl = g.upload
         elif type.enumerator():
-            ctrl = _html.select
+            ctrl = g.select
             attr['options'] = [("&nbsp;", "")] + \
                               [(uv, str(v)) for v, uv
                                in self._row.enumerate(f.id())]
@@ -148,7 +149,7 @@ class LayoutForm(Form):
                 attr['selected'] = str(value.value())
         else:
             if f.height() > 1:
-                ctrl = _html.textarea
+                ctrl = g.textarea
                 attr['rows'] = f.height()
                 attr['cols'] = f.width()
             else:
@@ -156,14 +157,14 @@ class LayoutForm(Form):
                     maxlen = type.maxlen()
                 else:
                     maxlen = None
-                ctrl = _html.field
+                ctrl = g.field
                 attr['size'] = f.width(maxlen)
                 attr['maxlength'] = maxlen
             attr['value'] = self._prefill.get(f.id()) or value.export()
         if not self._row.editable(f.id()):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
-        return (_html.label(f.label(), attr['id']) + ":", ctrl(**attr))
+        return (g.label(f.label(), attr['id']) + ":", ctrl(**attr))
 
     def _export_packed_field(self, field, label, ctrl):
         if field.compact():
@@ -254,11 +255,12 @@ class ShowForm(LayoutForm):
     _MAXLEN = 100
     
     def export(self, exporter):
-        group = self._export_group(self._view.layout().group())
-        return _html.form(_html.fieldset(group, cls='body'),
-                          cls="show-form") + "\n"
+        g = exporter.generator()
+        group = self._export_group(exporter, self._view.layout().group())
+        return g.form(g.fieldset(group, cls='body'), cls="show-form") + "\n"
 
-    def _export_field(self, f):
+    def _export_field(self, exporter, f):
+        g = exporter.generator()
         type = self._row[f.id()].type()
         if isinstance(type, pytis.data.Binary):
             buf = self._row[f.id()].value()
@@ -271,12 +273,12 @@ class ShowForm(LayoutForm):
                 if isinstance(type, pd.Image) and f.thumbnail():
                     src = self._uri(self._row, f.thumbnail())
                     if src:
-                        label = _html.img(src, alt=label+size)
+                        label = g.img(src, alt=label+size)
                         size = ''
                         if uri == src:
                             uri = None
                 if uri:
-                    value = _html.link(label, uri) + size
+                    value = g.link(label, uri) + size
                 else:
                     value = label
             else:
@@ -288,25 +290,30 @@ class ShowForm(LayoutForm):
         else:
             value = self._row[f.id()].export()
             if len(value) > self._MAXLEN:
-                end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
-                value = concat(value[:(end != -1 and end or self._MAXLEN)],
-                               ' ... (', _("reduced"), ')')
-        return (_html.label(f.label(), f.id()) + ":", value)
+                value = g.textarea(f.id(), value=value, readonly=True,
+                                       rows=min(f.height(), 5), cols=80)
+                #end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
+                #value = concat(value[:(end != -1 and end or self._MAXLEN)],
+                #               ' ... (', _("reduced"), ')')
+        return (g.label(f.label(), f.id()) + ":", value)
 
     
 class EditForm(LayoutForm):
     
     def __init__(self, data, view, resolver, row, handler='#', action=None,
-                 errors=(), **kwargs):
+                 errors=(), hidden=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
         assert isinstance(handler, str), handler
         assert action is None or isinstance(action, str), action
         assert isinstance(errors, (tuple, list, str, unicode)), errors
+        assert isinstance(hidden, (tuple, list)), hidden
         self._handler = handler
         self._action = action
         self._errors = errors
+        self._hidden = list(hidden)
 
     def export(self, exporter):
+        g = exporter.generator()
         if isinstance(self._errors, (str, unicode)):
             errors = concat("<p>", self._errors, "</p>")
         else:
@@ -315,28 +322,31 @@ class EditForm(LayoutForm):
                              msg, "</p>\n")
                       for id, msg in self._errors]
         if errors:
-            errors = _html.div(errors, cls='errors')
-        group = self._export_group(self._view.layout().group())
+            errors = g.div(errors, cls='errors')
+        group = self._export_group(exporter, self._view.layout().group())
         content = concat(errors,
-                         _html.fieldset(group, cls='body'),
-                         self._export_buttons())
+                         g.fieldset(group, cls='body'),
+                         self._export_buttons(exporter))
         binary = [id for id in self._view.layout().order()
                   if isinstance(self._row[id].type(), pytis.data.Binary)]
-        return _html.form(content, action=self._handler, method='POST',
+        return g.form(content, action=self._handler, method='POST',
                           enctype=(binary and 'multipart/form-data' or None),
                           cls="edit-form") + "\n"
 
-    def _export_buttons(self):
-        hidden = []
+    def _export_buttons(self, exporter):
+        g = exporter.generator()
+        key = self._data.key()[0].id()
+        order = self._view.layout().order()
+        hidden = self._hidden
+        hidden += [(k, v) for k, v in self._prefill.items()
+                   if self._view.field(k) and not k in order and k!= key]
+        #if not self._row.new():
+        #    hidden += [(key,  self._row.format(key))]
         if self._action:
             hidden += [('action', self._action)]
-        if not self._row.new():
-            hidden += [(c.id(),  self._row.format(c.id()))
-                       for c in self._row.data().key()]
-        result = [_html.hidden(k, v) for k, v in hidden] + \
-                 [_html.submit(_("Submit")),
-                  _html.reset(_("Reset"))]
-        return _html.fieldset(result, cls="submit")
+        result = [g.hidden(k, v) for k, v in hidden] + \
+                 [g.submit(_("Submit")), g.reset(_("Reset"))]
+        return g.fieldset(result, cls="submit")
         
 class BrowseForm(Form):
 
@@ -346,7 +356,8 @@ class BrowseForm(Form):
         self._rows = rows
         self._columns = [view.field(id) for id in view.columns()]
 
-    def _export_field(self, row, col):
+    def _export_field(self, exporter, row, col):
+        g = exporter.generator()
         type = col.type(self._data)
         if isinstance(type, pytis.data.Boolean):
             value = row[col.id()].value() and _("Yes") or _("No")
@@ -355,23 +366,24 @@ class BrowseForm(Form):
         else:
             value = row[col.id()].value()
             if not isinstance(value, lcg.Localizable):
-                value = _html.escape(row.format(col.id()))
+                value = g.escape(row.format(col.id()))
         uri = self._uri(row, col.id())
         if uri:
-            value = _html.link(value, uri)
+            value = g.link(value, uri)
         #cb = col.codebook(self._row.data())
         #if cb:
         #    value += " (%s)" % cb
         return value
         
-    def _export_cell(self, row, col):
-        return concat('<td>', self._export_field(row, col), '</td>')
+    def _export_cell(self, exporter, row, col):
+        return concat('<td>', self._export_field(exporter, row, col), '</td>')
 
     def _export_row(self, exporter, row):
-        cells = concat([self._export_cell(row, c) for c in self._columns])
+        cells = concat([self._export_cell(exporter, row, c)
+                        for c in self._columns])
         return concat('<tr>', cells, '</tr>')
         
-    def _wrap_exported_rows(self, rows):
+    def _wrap_exported_rows(self, exporter, rows):
         th = [concat('<th>', c.column_label(), '</th>') for c in self._columns]
         return concat('<table border="1" class="browse-form">',
                       concat('<tr>', th, '</tr>'), rows,
@@ -379,12 +391,12 @@ class BrowseForm(Form):
 
     def export(self, exporter):
         if not self._rows:
-            return _html.strong(_("No records."))
+            return exporter.generator().strong(_("No records."))
         rows = []
         row = self._row
         for r in self._rows:
             row.set_row(r)
             rows.append(self._export_row(exporter, row))
-        return self._wrap_exported_rows(rows)
+        return self._wrap_exported_rows(exporter, rows)
         
 

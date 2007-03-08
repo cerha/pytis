@@ -23,7 +23,6 @@ This module implements web-based dialogs.
 """
 
 from pytis.web import *
-from lcg.export import _html
 
 _ = lcg.TranslatableTextFactory('pytis')
 
@@ -42,13 +41,14 @@ class Dialog(lcg.Content):
         return ()
 
     def export(self, exporter):
+        g = exporter.generator()
         content = self._export_content(exporter)
         hidden = self._hidden
         if self._action:
             hidden += [('action', self._action)]
-        content += tuple([_html.hidden(k, v) for k, v in hidden]) + \
-                   (_html.submit(_("Submit")),)
-        return _html.form(content, action=self._handler, cls="dialog") + "\n"
+        content += tuple([g.hidden(k, v) for k, v in hidden]) + \
+                   (g.submit(_("Submit")),)
+        return g.form(content, action=self._handler, cls="dialog") + "\n"
 
 
 class SelectionDialog(Dialog):
@@ -65,7 +65,8 @@ class SelectionDialog(Dialog):
         self._selected = selected
         
     def _export_content(self, exporter):
-        label = _html.label(self._label, self._id)
-        ctrl = _html.select(self._id, [(uv, str(v)) for v, uv in self._values],
+        g = exporter.generator()
+        label = g.label(self._label, self._id)
+        ctrl = g.select(self._id, [(uv, str(v)) for v, uv in self._values],
                             id=self._id, selected=self._selected)
         return (label, ": ", ctrl)
