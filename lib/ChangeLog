@@ -1,3 +1,8 @@
+2007-03-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/evaction.py (_evparse): Don't handle all identifiers
+	starting with `f' or `t' as booleans.
+
 2007-03-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Use LCG's generator instead of the `_html'

@@ -52,10 +52,10 @@ def _evparse(text):
             return _evparse_identifier(text[1:], skip_whitespace=False)
         elif char == '"':
             return _evparse_string(text[1:])
-        elif char in ('t', 'f',):
-            return _evparse_boolean(text)
         elif char in string.digits + '-':
             return _evparse_number(text)
+        elif text[:4] == 'true' or text[:5] == 'false':
+            return _evparse_boolean(text)
         else:
             return _evparse_identifier(text)
     except IndexError:
