@@ -20,7 +20,6 @@
 """Parsing of the PostgreSQL pg_rewrite.ev_action.structure."""
 
 
-import re
 import string
 
 
@@ -109,14 +108,22 @@ def _evparse_empty(text):
         raise EvparseException('empty', text)
 
 def _evparse_identifier(text, skip_whitespace=True):
-    regexp = '([a-zA-Z0-9_*]+)'
     if skip_whitespace:
-        regexp = ' *' + regexp
-    match = re.match(regexp, text)
-    if not match:
+        while text[0] == ' ':
+            text = text[1:]
+    i = 0
+    letters = string.ascii_letters + string.digits + '_*'
+    while True:
+        char = text[i]
+        if char == '\\':
+            i = i + 2
+        elif char in letters:
+            i = i + 1
+        else:
+            break
+    if i == 0:
         raise EvparseException('identifier', text)
-    n = match.end(1)
-    return text[:n], text[n:]
+    return text[:i], text[i:]
 
 def _evparse_string(text):
     i = 0
