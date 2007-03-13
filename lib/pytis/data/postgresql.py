@@ -881,49 +881,50 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         rordering = sortspec('DESC')
         condition = key_cond
         relation_and_condition = '(%s) and (%s)' % (relation, condition)
-        qresult = self._pg_query(
-            "select relkind from pg_class where relname='%s'" %
-            (main_table,))
-        if qresult[0][0] == 'r':
-            self._pdbb_command_lock = None
-        else:
+        def make_lock_command():
             qresult = self._pg_query(
-                ("select definition from pg_views where viewname = '%s'" %
-                 (main_table,)))
-            lock_query = qresult[0][0]
-            if lock_query[-1] == ';':
-                lock_query = lock_query[:-1]
-            # There are some issues with locking views:
-            # - There is a PostgreSQL bug preventing locking views which are
-            #   built on top of other views.
-            # - It's not possible to lock views using LEFT OUTER JOIN (this is
-            #   a PostgreSQL feature).
-            # Both the problems can be solved by using FOR UPDATE OF version of
-            # the locking clause.  But first we need to know what may be put
-            # after OF without causing a database error.
-            qresult = self._pg_query(
-                ("select ev_action from "+
-                 "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
-                 "where relname='%s'") % (main_table,))
-            ev_action_string = qresult[0][0]
-            ev_action = pg_parse_ev_action(ev_action_string)
-            ev_rtable = ev_action[0]['rtable']
-            lock_candidates = [table['eref']['aliasname']
-                               for table in ev_rtable if table['inFromCl']]
-            def check_candidate(candidate_table):
-                try:
-                    self._pg_query("%s for update of %s nowait limit 1" %
-                                   (lock_query, candidate_table,))
-                    return True
-                except DBLockException:
-                    return True
-                except DBUserException:
-                    return False
-            lock_tables = [c for c in lock_candidates if check_candidate(c)]
-            lock_tables_string = string.join(lock_tables, ', ')
-            self._pdbb_command_lock = \
-                ("%s for update of %s nowait limit 1" %
-                 (lock_query, lock_tables_string,))
+                "select relkind from pg_class where relname='%s'" %
+                (main_table,))
+            if qresult[0][0] == 'r':
+                return ''
+            else:
+                qresult = self._pg_query(
+                    ("select definition from pg_views where viewname = '%s'" %
+                     (main_table,)))
+                lock_query = qresult[0][0]
+                if lock_query[-1] == ';':
+                    lock_query = lock_query[:-1]
+                # There are some issues with locking views:
+                # - There is a PostgreSQL bug preventing locking views which are
+                #   built on top of other views.
+                # - It's not possible to lock views using LEFT OUTER JOIN (this is
+                #   a PostgreSQL feature).
+                # Both the problems can be solved by using FOR UPDATE OF version of
+                # the locking clause.  But first we need to know what may be put
+                # after OF without causing a database error.
+                qresult = self._pg_query(
+                    ("select ev_action from "+
+                     "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
+                     "where relname='%s'") % (main_table,))
+                ev_action_string = qresult[0][0]
+                ev_action = pg_parse_ev_action(ev_action_string)
+                ev_rtable = ev_action[0]['rtable']
+                lock_candidates = [table['eref']['aliasname']
+                                   for table in ev_rtable if table['inFromCl']]
+                def check_candidate(candidate_table):
+                    try:
+                        self._pg_query("%s for update of %s nowait limit 1" %
+                                       (lock_query, candidate_table,))
+                        return True
+                    except DBLockException:
+                        return True
+                    except DBUserException:
+                        return False
+                lock_tables = [c for c in lock_candidates if check_candidate(c)]
+                lock_tables_string = string.join(lock_tables, ', ')
+                return ("%s for update of %s nowait limit 1" %
+                        (lock_query, lock_tables_string,))
+        self._pdbb_command_lock = self._SQLCommandTemplate(make_lock_command)
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
@@ -2376,13 +2377,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         log(EVENT, 'Locking row:', str (key))
         self._pg_query('savepoint _lock', transaction=transaction)
         try:
-            if self._pdbb_command_lock is None:
+            command = self._pdbb_command_lock.format({})
+            if command:         # special locking command necessary
+                result = self._pg_query(command, transaction=transaction)
+            else:
                 result = self._pg_row(self._pg_value(key), None,
                                       transaction=transaction,
                                       supplement='for update nowait')
-            else:
-                result = self._pg_query(self._pdbb_command_lock,
-                                        transaction=transaction)
             if not result:
                 return "No such record"
         except DBLockException:
