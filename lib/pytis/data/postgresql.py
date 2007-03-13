@@ -884,13 +884,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def make_lock_command():
             qresult = self._pg_query(
                 "select relkind from pg_class where relname='%s'" %
-                (main_table,))
+                (main_table,),
+                outside_transaction=True)
             if qresult[0][0] == 'r':
                 return ''
             else:
                 qresult = self._pg_query(
                     ("select definition from pg_views where viewname = '%s'" %
-                     (main_table,)))
+                     (main_table,)),
+                    outside_transaction=True)
                 lock_query = qresult[0][0]
                 if lock_query[-1] == ';':
                     lock_query = lock_query[:-1]
@@ -905,7 +907,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 qresult = self._pg_query(
                     ("select ev_action from "+
                      "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
-                     "where relname='%s'") % (main_table,))
+                     "where relname='%s'") % (main_table,),
+                    outside_transaction=True)
                 ev_action_string = qresult[0][0]
                 ev_action = pg_parse_ev_action(ev_action_string)
                 ev_rtable = ev_action[0]['rtable']
@@ -914,7 +917,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 def check_candidate(candidate_table):
                     try:
                         self._pg_query("%s for update of %s nowait limit 1" %
-                                       (lock_query, candidate_table,))
+                                       (lock_query, candidate_table,),
+                                       outside_transaction=True)
                         return True
                     except DBLockException:
                         return True
