@@ -666,7 +666,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     _PDBB_CURSOR_NAME = 'selection'
 
     class _SQLCommandTemplate(object):
-        def __init__(self, template, arguments=()):
+        def __init__(self, template, arguments={}):
             self._template = template
             self._arguments = arguments
         def format(self, arguments):
