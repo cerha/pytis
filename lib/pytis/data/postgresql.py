@@ -674,6 +674,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for k, v in self._arguments.items():
                 if not args.has_key(k):
                     args[k] = v
+            if callable(self._template):
+                self._template = self._template()
             return self._template % args
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
