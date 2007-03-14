@@ -1,5 +1,14 @@
 2007-03-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/postgresql.py: Be more cautious about views when
+	retrieving INSERT results.
+
+	* pytis/data/dbdata.py (DBInsertException): See above.
+	
+	* pytis/data/_test.py (DBDataDefault): See above.
+
+2007-03-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/postgresql.py: Build SQL locking commands only on
 	demand.
 

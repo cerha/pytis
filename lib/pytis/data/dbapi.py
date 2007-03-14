@@ -87,8 +87,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.InterfaceError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.ProgrammingError, e:
-            if e.args and e.args[0].find('could not obtain lock') != -1:
-                raise DBLockException()
+            if e.args:
+                if e.args[0].find('could not obtain lock') != -1:
+                    raise DBLockException()
+                elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
+                    raise DBInsertException()
             raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)

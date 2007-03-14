@@ -568,3 +568,10 @@ class DBLockException(DBException):
     """
     def __init__(self):
         super_(DBLockException).__init__(self, None)
+
+
+class DBInsertException(DBException):
+    """Exception thrown when INSERT ... RETURNING can't be performed.
+    """
+    def __init__(self):
+        super_(DBLockException).__init__(self, None)

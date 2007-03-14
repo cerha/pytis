@@ -688,10 +688,20 @@ class _DBTest(_DBBaseTest):
                   "insert into xcosi values(5, 'nove')",
                   "insert into xcosi values(999, NULL)",
                   "create table viewtest2 (x int)",
-                  "create view viewtest1 as select * from viewtest2",
-                  "create rule viewtest1_update as on update to viewtest1 do instead update viewtest2 set x=new.x;",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
+                  "create view viewtest1 as select * from viewtest2",
+                  "create rule viewtest1_update as on update to viewtest1 do instead update viewtest2 set x=new.x;",
+                  "create view viewtest3 as select * from viewtest1",
+                  "create rule viewtest3_insert as on insert to viewtest3 do instead insert into viewtest2 values (new.x)",
+                  "create table viewtest0 (x int, y int) with oids",
+                  "create view viewtest4 as select * from viewtest0",
+                  "create rule viewtest4_insert as on insert to viewtest4 do instead insert into viewtest0 values (new.x)",
+                  "create view viewtest7 as select *, oid from viewtest0",
+                  "create rule viewtest7_insert as on insert to viewtest7 do instead insert into viewtest0 (y) values (new.y)",
+                  "create table viewtest6 (x serial primary key, y int)",
+                  "create view viewtest5 as select * from viewtest6",
+                  "create rule viewtest5_insert as on insert to viewtest5 do instead insert into viewtest6 (y) values (new.y)"
                   ):
             try:
                 self._sql_command(q)
@@ -700,12 +710,14 @@ class _DBTest(_DBBaseTest):
                 raise 
     def tearDown(self):
         c = self._connector
-        for t in ('viewtest1',):
+        for t in ('viewtest3', 'viewtest4', 'viewtest5', 'viewtest7',
+                  'viewtest1',):
             try:
                 self._sql_command('drop view %s' % t)
             except:
                 pass            
-        for t in ('bin', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2'):
+        for t in ('bin', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
+                  'viewtest0', 'viewtest6',):
             try:
                 self._sql_command('drop table %s' % t)
             except:
@@ -792,9 +804,19 @@ class DBDataDefault(_DBTest):
              B('data', 'bin', 'data'),),
             key,
             conn)
-        # view
+        # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
+        key = B('x', 'viewtest3', 'x')
+        view3 = pytis.data.DBDataDefault((key,), key, conn)
+        key = B('x', 'viewtest4', 'x')
+        view4 = pytis.data.DBDataDefault((key,), key, conn)
+        key = B('x', 'viewtest5', 'x')
+        col = B('y', 'viewtest5', 'y')
+        view5 = pytis.data.DBDataDefault((key, col,), key, conn)
+        key = B('x', 'viewtest7', 'x')
+        col = B('y', 'viewtest7', 'y')
+        view7 = pytis.data.DBDataDefault((key, col,), key, conn)
         # atributy
         self.data = d
         #self.mdata = md
@@ -804,6 +826,10 @@ class DBDataDefault(_DBTest):
         self.dcosi = dcosi
         self.dbin = dbin
         self.view = view
+        self.view3 = view3
+        self.view4 = view4
+        self.view5 = view5
+        self.view7 = view7
         #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
@@ -1002,6 +1028,24 @@ class DBDataDefault(_DBTest):
         assert (result2[0] is None or type(result2[0]) == type('') or
                 type(result2[0]) == type(u'')),\
                'invalid failed insertion result'
+    def test_insert_view(self):
+        I = pytis.data.Integer()
+        row = pytis.data.Row((('x', pytis.data.Value(I, '5'),),))
+        result, success = self.view3.insert(row)
+        assert success
+        assert result['x'].value() == 5, \
+            ('unexpected insert result', result['x'].value(),)
+        result, success = self.view4.insert(row)
+        assert success
+        assert result['x'].value() == 5, \
+            ('unexpected insert result', result['x'].value(),)
+        row = pytis.data.Row((('y', pytis.data.Value(I, '5'),),))
+        result, success = self.view7.insert(row)
+        assert success
+        assert result is None, ('unexpected insert result', result,)
+        result, success = self.view5.insert(row)
+        assert success
+        assert result is None, ('unexpected insert result', result,)
     def test_update(self):
         row = self.newrow
         row1 = []

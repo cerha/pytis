@@ -976,6 +976,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_insert = \
           ('insert into %s (%%s) values (%%s) returning %s' %
            (main_table, first_key_column,))
+        self._pdbb_command_insert_alternative = \
+          ('insert into %s (%%s) values (%%s)' % (main_table,))
+        self._pdbb_command_insert_get_last = \
+          ('select %s from %s order by %s desc limit 1' %
+           (first_key_column, main_table, first_key_column,))
         if self._ordering:
             ordering = []
             for o in self._ordering:
@@ -1381,13 +1386,40 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 query_args.append(v)
             else:
                 vals.append(v)
-        key_data = self._pg_query(
-            (self._pdbb_command_insert %
-             (string.join(cols, ','), string.join(vals, ','),)),
-            backup=True, query_args=query_args, transaction=transaction)
-        key = self._pg_make_row_from_raw_data(
-            key_data, template=(self._pg_make_row_template[0],))
-        return self.row(key[0], transaction=transaction)
+        self._pg_query("savepoint _insert", transaction=transaction)
+        try:
+            key_data = self._pg_query(
+                (self._pdbb_command_insert %
+                 (string.join(cols, ','), string.join(vals, ','),)),
+                backup=True, query_args=query_args, transaction=transaction)
+            key_row = self._pg_make_row_from_raw_data(
+                key_data, template=(self._pg_make_row_template[0],))
+            key = key_row[0]
+        except DBInsertException:
+            self._pg_query("rollback to _insert", transaction=transaction)
+            self._pg_query(
+                (self._pdbb_command_insert_alternative %
+                 (string.join(cols, ','), string.join(vals, ','),)),
+                backup=True, query_args=query_args, transaction=transaction)
+            try:
+                key = row[self._key_binding[0].id()]
+            except KeyError:
+                key = None
+                if isinstance(self._key_binding[0].type(), Serial):
+                    try:
+                        key_data = self._pg_query(
+                            self._pdbb_command_insert_get_last,
+                            transaction=transaction)
+                        key_row = self._pg_make_row_from_raw_data(
+                            key_data, template=(self._pg_make_row_template[0],))
+                        key = key_row[0]
+                    except DBException:
+                        pass
+        if key is None:
+            result = None
+        else:
+            result = self.row(key, transaction=transaction)
+        return result
     
     def _pg_update(self, condition, row, transaction=None):
         """Updatuj øádky identifikované 'condition'.
