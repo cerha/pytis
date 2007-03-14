@@ -1111,12 +1111,14 @@ class LookupForm(RecordForm):
         return pack(condition)
 
     def _unpack_condition(self, packed):
-        OPERATORS = ('AND','OR','NOT','EQ','NE','WM','NW','LT','LE','GT','GE')
+        # NOT is not allowed!
+        OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
         def unpack(packed):
             name, packed_args, kwargs = packed
-            assert name in OPERATORS
+            assert name in OPERATORS, name
+            assert len(packed_args) == 2, len(packed_args)
             op = getattr(pytis.data, name)
-            if name in ('AND', 'OR', 'NOT'):
+            if name in ('AND', 'OR'):
                 args = [unpack(arg) for arg in packed_args]
             elif isinstance(packed_args[1], list):
                 col, val = packed_args[0], packed_args[1][0]
@@ -1130,7 +1132,6 @@ class LookupForm(RecordForm):
                 args = col, value
             else:
                 args = packed_args
-                assert len(args) == 2
                 assert isinstance(args[0], str)
                 assert isinstance(args[1], str)
             return op(*args, **kwargs)
