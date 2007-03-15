@@ -676,6 +676,29 @@ class String(Limited):
                ('Value not a string', value)
         return isinstance(value, unicode) and value or unicode(value)
 
+    
+class Password(String):
+    """String specialization for password fields.
+
+    The user interface should handle password input differently from ordinary
+    string input.  The typed characters should not be visible and it should be
+    required to type the password twice to change it.  Thus the validation
+    method requires the 'verify' argument to supply the second value.
+
+    """
+    VM_PASSWORD = 'VM_PASSWORD'
+    _VM_PASSWORD_MSG = _("Zadejte heslo dvakrát pro vylouèení pøeklepù")
+    VM_PASSWORD_VERIFY = 'VM_PASSWORD_VERIFY'
+    _VM_PASSWORD_VERIFY_MSG = _("Kontrolní zadání hesla neodpovídá")
+    
+    def _validate(self, string, verify=None, **kwargs):
+        if verify is None:
+            return None, self._validation_error(self.VM_PASSWORD)
+        if string != verify:
+            return None, self._validation_error(self.VM_PASSWORD_VERIFY)
+        return super(Password, self)._validate(string, **kwargs)
+
+
 
 class _RegexValidatedString(String):
 
