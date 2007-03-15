@@ -486,6 +486,56 @@ class TableView(object):
         self.kwargs = kwargs
 
 
+class _GsqlType(_GsqlSpec):
+    """Specifikace SQL typu."""
+
+    def __init__(self, name, columns, **kwargs):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          name -- název typu
+          columns -- specifikace sloupcù a jejich typù, sekvence instancí
+            tøídy Column
+        """    
+        super(_GsqlType, self).__init__(name, **kwargs)
+        self._name = name
+        self._columns = columns
+        
+    def _column_column(self, column):        
+        return _gsql_column_table_column(column.name)[1]
+
+    def _format_column(self, column):
+        result = '%s %s' % (self._column_column(column),
+                            _gsql_format_type(column.type))
+        return result
+
+    def output(self):
+        columns = [self._format_column(c) for c in self._columns]
+        columns = string.join(columns, ',\n        ')
+        result = ('CREATE TYPE %s AS (\n%s);\n' %
+                  (self._name, columns))
+        return result
+        
+
+class ReturnType(object):
+    """Úlo¾ná tøída specifikace návratového typu.
+
+    Tato tøída se vyu¾ívá pouze ve specifikaci tøídy '_GsqlFunction'.
+
+    """
+    def __init__(self, name, setof=False):
+        """Nastav atributy.
+
+        Argumenty:
+        
+          name -- název typu, instance pytis.data.Type nebo _GsqlType.
+          setof -- je-li True, jde o návratový typ SETOF
+        """
+        self.name = name
+        self.setof = setof
+    
+
 class _GsqlTable(_GsqlSpec):
     """Specifikace SQL tabulky."""
     
@@ -1041,7 +1091,7 @@ class Select(_GsqlSpec):
                 aliases.append(c.alias)
                 vcolumns.append(c)
             else:
-                raise ProgramError('Duplicate column name', c.alias)
+                raise ProgramError('Duplicate column name', c.alias, aliases)
             self._columns = vcolumns
         return self._columns
 
@@ -1712,8 +1762,8 @@ class _GsqlFunction(_GsqlSpec):
           input_types -- sekvence typù argumentù funkce ve správném poøadí;
             ka¾dý prvek sekvence je buï instance tøídy 'pytis.data.Type', nebo
             SQL string
-          output_type -- typ návratové hodnoty funkce; buï instance tøídy
-            'pytis.data.Type', nebo SQL string
+          output_type -- typ návratové hodnoty funkce; instance tøídy
+            'pytis.data.Type', SQL string, nebo instance tøídy ReturnType
           use_functions -- sekvence pythonových funkcí, jejich¾ definice mají
             být pøidány pøed definici funkce samotné
           body -- definice funkce; mù¾e být buï SQL string obsahující tìlo
@@ -1763,11 +1813,21 @@ class _GsqlFunction(_GsqlSpec):
             source_text = string.join(source_list, '')
             result = "'%s' LANGUAGE plpythonu" % source_text
         return result
+
+    def _format_output_type(self):
+        if isinstance(self._output_type, ReturnType):
+            output_type = self._output_type.name
+            if self._output_type.setof:
+                output_type = 'SETOF ' + output_type
+        else:
+            output_type = _gsql_format_type(self._output_type)
+        return output_type    
         
     def output(self):
         input_types = string.join(map(_gsql_format_type, self._input_types),
                                   ',')
-        output_type = _gsql_format_type(self._output_type)
+        # output_type = _gsql_format_type(self._output_type)
+        output_type = self._format_output_type()
         body = self._format_body(self._body)
         result = 'CREATE OR REPLACE FUNCTION %s (%s) RETURNS %s AS %s;\n' % \
                  (self._name, input_types, output_type, body)
@@ -2195,6 +2255,9 @@ def _gsql_process(class_, args, kwargs):
     _gsql_defs.add(spec)
     return spec
 
+def sqltype(*args, **kwargs):
+    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlType."""
+    return _gsql_process(_GsqlType, args, kwargs)
 
 def table(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlTable."""

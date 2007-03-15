@@ -1,3 +1,11 @@
+2007-03-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlType): Nová tøída.
+	(ReturnType): Nová tøída.
+	(_GsqlFunction._format_output_type): Nová metoda.
+	(_GsqlFunction.output): Zohledni output type.
+	(sqltype): Nová funkce.
+
 2007-03-02  TomÃ¡Å¡ Cerha  <cerha@brailcom.org>
 
 	* Makefile: Added the `cvs-install' option.
