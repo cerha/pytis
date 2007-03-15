@@ -51,14 +51,21 @@ _ = lcg.TranslatableTextFactory('pytis')
 pd = pytis.data
 pd.Type._VM_NULL_VALUE_MSG = _("Empty value")
 pd.Type._VM_INVALID_VALUE_MSG = _("Invalid value")
+pd.Limited._VM_MAXLEN_MSG = _("Maximal length %(maxlen)d exceeded")
 pd.Integer._VM_NONINTEGER_MSG = _("Not an integer")
 pd.Float._VM_INVALID_NUMBER_MSG = _("Invalid number")
-pd.String._VM_STRING_TOO_LONG_MSG = _("String exceeds max length %(maxlen)d")
+pd.String._VM_MAXLEN_MSG = _("String exceeds max length %(maxlen)d")
+pd.String._VM_PASSWORD_MSG = _("Enter the password twice to eliminate typos")
+pd.String._VM_PASSWORD_VERIFY_MSG = _("Passwords don't match")
 pd.Color._VM_FORMAT_MSG = _("Invalid color format ('#RGB' or '#RRGGBB')")
 pd.Identifier._VM_FORMAT_MSG = _("Invalid format")
 pd.DateTime._VM_DT_FORMAT_MSG = _("Invalid date or time format")
 pd.DateTime._VM_DT_VALUE_MSG = _("Invalid date or time")
 pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
+pd.Binary._VM_MAXLEN_MSG = _("Maximal size %(maxlen)s exceeded")
+pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
+pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(maxsize)s exceeded")
+pd.Image._VM_FORMAT_MSG = _("Unsupported format %(format)s; valid formats: %(formats)s")
 
 
 class Form(lcg.Content):
@@ -118,8 +125,9 @@ class LayoutForm(Form):
             if item.width() == 0:
                 continue
             if isinstance(item, FieldSpec):
-                label, ctrl = self._export_field(exporter, item)
-                result.append((item, label, ctrl))
+                field = self._export_field(exporter, item)
+                if field is not None:
+                    result.append((item,) + field)
         if group.orientation() == Orientation.VERTICAL:
             x = self._export_pack(result)
         else:
@@ -160,11 +168,19 @@ class LayoutForm(Form):
                 ctrl = g.field
                 attr['size'] = f.width(maxlen)
                 attr['maxlength'] = maxlen
-            attr['value'] = self._prefill.get(f.id()) or value.export()
+            if isinstance(type, pytis.data.Password):
+                attr['password'] = True
+            else:
+                attr['value'] = self._prefill.get(f.id()) or value.export()
         if not self._row.editable(f.id()):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
-        return (g.label(f.label(), attr['id']) + ":", ctrl(**attr))
+        label = g.label(f.label(), attr['id']) + ":"
+        field = ctrl(**attr)
+        if isinstance(type, pytis.data.Password):
+            attr['id'] = attr['id'] + '-verify-pasword'
+            field = field + g.br() + ctrl(**attr)
+        return (label, field)
 
     def _export_packed_field(self, field, label, ctrl):
         if field.compact():
@@ -262,7 +278,9 @@ class ShowForm(LayoutForm):
     def _export_field(self, exporter, f):
         g = exporter.generator()
         type = self._row[f.id()].type()
-        if isinstance(type, pytis.data.Binary):
+        if isinstance(type, pytis.data.Password):
+            return None
+        elif isinstance(type, pytis.data.Binary):
             buf = self._row[f.id()].value()
             if buf:
                 size = ' (%s)' % format_byte_size(len(buf))
