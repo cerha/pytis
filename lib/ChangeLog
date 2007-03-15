@@ -1,3 +1,8 @@
+2007-03-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added new validation messages.  Added support
+	for password validation and hiding.
+
 2007-03-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (LookupForm._unpack_condition): Make
