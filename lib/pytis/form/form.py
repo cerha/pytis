@@ -733,7 +733,10 @@ class RecordForm(InnerForm):
 
     def _lock_record(self, key):
         def dbop():
-            return self._data.lock_row(key, transaction=self._transaction)
+            if self._transaction:
+                return self._data.lock_row(key, transaction=self._transaction)
+            else:
+                return self._data.lock_row(key)                
         success, locked = db_operation(dbop)
         if success and locked != None:
             log(EVENT, 'Record is locked')
@@ -841,13 +844,17 @@ class RecordForm(InnerForm):
             return False
         # O¹etøení u¾ivatelské funkce pro mazání
         on_delete_record = self._view.on_delete_record()
+        transaction = self._transaction
         if on_delete_record is not None:
             condition = on_delete_record(row=self.current_row())
             if condition is None:
-                return True
+                return False
             assert isinstance(condition, pytis.data.Operator)
-            op = lambda : self._data.delete_many(condition,
-                                                 transaction=self._transaction)
+            if transaction:
+                op = lambda : self._data.delete_many(condition,
+                                                     transaction=transaction)
+            else:
+                op = lambda : self._data.delete_many(condition)
             log(EVENT, 'Mazání záznamu:', condition)
         else:
             msg = _("Opravdu chcete záznam zcela vymazat?")        
@@ -855,7 +862,10 @@ class RecordForm(InnerForm):
                 log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
                 return False
             key = self._current_key()
-            op = lambda : self._data.delete(key, transaction=self._transaction)
+            if transaction:
+                op = lambda : self._data.delete(key, transaction=transaction)
+            else:
+                op = lambda : self._data.delete(key)                
             log(EVENT, 'Mazání záznamu:', key)
         success, result = db_operation(op)
         if success:
@@ -1742,16 +1752,21 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             return False
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row)
+        transaction = self._transaction
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Vlo¾ení øádku')
-            op = (self._data.insert,
-                  (rdata,),
-                  dict(transaction=self._transaction),)
+            if transaction:
+                op = lambda : self._data.insert(rdata,
+                                                transaction=transaction)
+            else:
+                op = lambda : self._data.insert(rdata)
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            op = (self._data.update,
-                  (self._current_key(), rdata,),
-                  dict(transaction=self._transaction),)
+            if transaction:
+                op = lambda : self._data.update(self._current_key(), rdata,
+                                                transaction=transaction)
+            else:
+                op = lambda : self._data.update(self._current_key(), rdata)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace

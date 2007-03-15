@@ -1,3 +1,11 @@
+2007-03-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/form.py: 
+	(RecordForm): Do not pass argument `transaction' to the methods of
+	self._data, if `self._transaction' is None. Thus we can avoid
+	passing this argument to the methods of classes other than
+	DBDataPostgreSQL (e.g. RestrictedMemData).
+
 2007-03-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added new validation messages.  Added support
