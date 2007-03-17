@@ -701,7 +701,8 @@ class _DBTest(_DBBaseTest):
                   "create rule viewtest7_insert as on insert to viewtest7 do instead insert into viewtest0 (y) values (new.y)",
                   "create table viewtest6 (x serial primary key, y int)",
                   "create view viewtest5 as select * from viewtest6",
-                  "create rule viewtest5_insert as on insert to viewtest5 do instead insert into viewtest6 (y) values (new.y)"
+                  "create rule viewtest5_insert as on insert to viewtest5 do instead insert into viewtest6 (y) values (new.y)",
+                  "create view rudeview as select * from viewtest2 union select * from viewtest2",
                   ):
             try:
                 self._sql_command(q)
@@ -711,7 +712,7 @@ class _DBTest(_DBBaseTest):
     def tearDown(self):
         c = self._connector
         for t in ('viewtest3', 'viewtest4', 'viewtest5', 'viewtest7',
-                  'viewtest1',):
+                  'viewtest1', 'rudeview',):
             try:
                 self._sql_command('drop view %s' % t)
             except:
@@ -817,6 +818,8 @@ class DBDataDefault(_DBTest):
         key = B('x', 'viewtest7', 'x')
         col = B('y', 'viewtest7', 'y')
         view7 = pytis.data.DBDataDefault((key, col,), key, conn)
+        key = B('x', 'rudeview', 'x')
+        rudeview = pytis.data.DBDataDefault((key,), key, conn)
         # atributy
         self.data = d
         #self.mdata = md
@@ -830,6 +833,7 @@ class DBDataDefault(_DBTest):
         self.view4 = view4
         self.view5 = view5
         self.view7 = view7
+        self.rudeview = rudeview
         #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
@@ -1216,6 +1220,12 @@ class DBDataDefault(_DBTest):
         v.select()
         row = v.fetchone()
         key = row[0]
+        v.close()
+        v2 = self.rudeview
+        v2.select()
+        row2 = v2.fetchone()
+        key2 = row2[0]
+        v2.close()
         transaction = \
             pytis.data.DBTransactionDefault(connection_data=self._dconnection)
         transaction_2 = \
@@ -1225,6 +1235,10 @@ class DBDataDefault(_DBTest):
             assert result is None, 'lock failed'
             result = v.lock_row(key, transaction=transaction_2)
             assert type(result) == type(''), 'locked record locked'
+            result = v2.lock_row(key2, transaction=transaction)
+            assert result is None, 'lock failed'
+            result = v2.lock_row(key2, transaction=transaction_2)
+            assert result is None, 'unlockable view locked'
         finally:
             for t in transaction, transaction_2:
                 try:

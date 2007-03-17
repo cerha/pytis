@@ -925,9 +925,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     except DBUserException:
                         return False
                 lock_tables = [c for c in lock_candidates if check_candidate(c)]
-                lock_tables_string = string.join(lock_tables, ', ')
-                return ("%s for update of %s nowait limit 1" %
-                        (lock_query, lock_tables_string,))
+                if lock_tables:
+                    lock_tables_string = string.join(lock_tables, ', ')
+                    result = ("%s for update of %s nowait limit 1" %
+                              (lock_query, lock_tables_string,))
+                else:
+                    log(EVENT, "Unlockable view, won't be locked:", main_table)
+                    result = '%s limit 1' % (lock_query,)
+                return result
         self._pdbb_command_lock = self._SQLCommandTemplate(make_lock_command)
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
