@@ -700,29 +700,29 @@ class Password(String):
 
 
 
-class _RegexValidatedString(String):
+class RegexString(String):
 
     VM_FORMAT = 'VM_FORMAT'
     _VM_FORMAT_MSG = _("Neplatný formát.")
+    _REGEX = None
+    
+    def __init__(self, regex=None, **kwargs):
+        super(RegexString, self).__init__(**kwargs)
+        self._regex = re.compile(regex or self._REGEX)
     
     def _validate(self, string, *args, **kwargs):
-        sup = super(_RegexValidatedString, self)
-        value, error = sup._validate(string, *args, **kwargs)
-        if error is None and self._VALIDATION_REGEX.match(string) is None:
+        value, error = super(RegexString, self)._validate(string, *args,
+                                                          **kwargs)
+        if error is None and self._regex.match(string) is None:
             value, error = None, self._validation_error(self.VM_FORMAT)
         return value, error
 
     
-class Color(_RegexValidatedString):
+class Color(RegexString):
     """Barva reprezentovaná øetìzcem '#RRGGBB'."""
 
-    _VALIDATION_REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
     _VM_FORMAT_MSG = _("Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')")
-
-    
-class Identifier(_RegexValidatedString):
-    """Identifikátor."""
-    _VALIDATION_REGEX = re.compile('^[a-zA-Z][0-9a-zA-Z_-]*$')
+    _REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     
 class Inet(String):
