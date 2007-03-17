@@ -1,5 +1,5 @@
 # Pytis translations.
-# Copyright (C) 2006 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007 Brailcom, o.p.s.
 # This file is distributed under the same license as the Wiking package.
 # Tomas Cerha <cerha@brailcom.org>, 2006.
 #
@@ -7,21 +7,26 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-14 07:36+0100\n"
-"PO-Revision-Date: 2006-12-04 13:59+0100\n"
+"POT-Creation-Date: 2007-03-17 13:40+0100\n"
+"PO-Revision-Date: 2007-03-17 13:43+0100\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:53
+#: ../lib/pytis/web/form.py:52
 msgid "Empty value"
 msgstr "Prázdná hodnota."
 
-#: ../lib/pytis/web/form.py:54
+#: ../lib/pytis/web/form.py:53
 msgid "Invalid value"
 msgstr "Neplatná hodnota"
+
+#: ../lib/pytis/web/form.py:54
+#, python-format
+msgid "Maximal length %(maxlen)d exceeded"
+msgstr "Øetìzec pøesahuje maximální délku %(maxlen)d"
 
 #: ../lib/pytis/web/form.py:55
 msgid "Not an integer"
@@ -37,45 +42,77 @@ msgid "String exceeds max length %(maxlen)d"
 msgstr "Øetìzec pøesahuje maximální délku %(maxlen)d"
 
 #: ../lib/pytis/web/form.py:58
-msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
+msgid "Enter the password twice to eliminate typos"
+msgstr "Zadejte heslo dvakrát pro eliminování pøeklepù"
 
 #: ../lib/pytis/web/form.py:59
+msgid "Passwords don't match"
+msgstr "Kontrolní zadání hesla neodpovídá"
+
+#: ../lib/pytis/web/form.py:60
 msgid "Invalid format"
 msgstr "Neplatný formát"
 
-#: ../lib/pytis/web/form.py:60
+#: ../lib/pytis/web/form.py:61
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
+
+#: ../lib/pytis/web/form.py:62
 msgid "Invalid date or time format"
 msgstr "Chybný formát data nebo èasu"
 
-#: ../lib/pytis/web/form.py:61
+#: ../lib/pytis/web/form.py:63
 msgid "Invalid date or time"
 msgstr "Chybné datum nebo èas"
 
-#: ../lib/pytis/web/form.py:62
+#: ../lib/pytis/web/form.py:64
 msgid "Date outside the allowed range"
 msgstr "Datum mimo povolený rozsah"
 
-#: ../lib/pytis/web/form.py:254 ../lib/pytis/web/form.py:319
+#: ../lib/pytis/web/form.py:65
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr "Maximální velikost %(maxlen)s pøekroèena"
+
+#: ../lib/pytis/web/form.py:66
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr "Maximální rozmìr %(maxsize)s pixelù pøekroèen"
+
+#: ../lib/pytis/web/form.py:67
+#, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr "Minimální rozmìr %(minsize)s pixelù nedodr¾en"
+
+#: ../lib/pytis/web/form.py:68
+#, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
+
+#: ../lib/pytis/web/form.py:241
+msgid "image"
+msgstr "obrázek"
+
+#: ../lib/pytis/web/form.py:241
+msgid "file"
+msgstr "soubor"
+
+#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:330
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/form.py:254 ../lib/pytis/web/form.py:319
+#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:330
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/form.py:262
-msgid "reduced"
-msgstr "zkráceno"
-
-#: ../lib/pytis/web/form.py:303 ../lib/pytis/web/dialog.py:52
+#: ../lib/pytis/web/form.py:315 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:304
+#: ../lib/pytis/web/form.py:315
 msgid "Reset"
 msgstr "Vrátit pùvodní hodnoty"
 
-#: ../lib/pytis/web/form.py:348
+#: ../lib/pytis/web/form.py:358
 msgid "No records."
 msgstr "®ádné záznamy."
