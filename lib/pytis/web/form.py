@@ -55,16 +55,16 @@ pd.Limited._VM_MAXLEN_MSG = _("Maximal length %(maxlen)d exceeded")
 pd.Integer._VM_NONINTEGER_MSG = _("Not an integer")
 pd.Float._VM_INVALID_NUMBER_MSG = _("Invalid number")
 pd.String._VM_MAXLEN_MSG = _("String exceeds max length %(maxlen)d")
-pd.String._VM_PASSWORD_MSG = _("Enter the password twice to eliminate typos")
-pd.String._VM_PASSWORD_VERIFY_MSG = _("Passwords don't match")
+pd.Password._VM_PASSWORD_MSG = _("Enter the password twice to eliminate typos")
+pd.Password._VM_PASSWORD_VERIFY_MSG = _("Passwords don't match")
+pd.RegexString._VM_FORMAT_MSG = _("Invalid format")
 pd.Color._VM_FORMAT_MSG = _("Invalid color format ('#RGB' or '#RRGGBB')")
-pd.Identifier._VM_FORMAT_MSG = _("Invalid format")
 pd.DateTime._VM_DT_FORMAT_MSG = _("Invalid date or time format")
 pd.DateTime._VM_DT_VALUE_MSG = _("Invalid date or time")
 pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
 pd.Binary._VM_MAXLEN_MSG = _("Maximal size %(maxlen)s exceeded")
 pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
-pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(maxsize)s exceeded")
+pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(minsize)s exceeded")
 pd.Image._VM_FORMAT_MSG = _("Unsupported format %(format)s; valid formats: %(formats)s")
 
 
@@ -105,36 +105,42 @@ class Form(lcg.Content):
 
 
 class LayoutForm(Form):
+
+    def __init__(self, *args, **kwargs):
+        self._allow_table_layout = kwargs.pop('allow_table_layout', True)
+        super(LayoutForm, self).__init__(*args, **kwargs)
     
     def _export_group(self, exporter, group):
-        #orientation = orientation2wx(group.orientation())
-        #space = dlg2px(parent, group.space())
-        #gap = dlg2px(parent, group.gap())
-        #border = dlg2px(parent, group.border())
-        #border_style = border_style2wx(group.border_style())
-        if group.label() is not None:
-            pass
-        else:
-            pass
-        pack = []
+        g = exporter.generator()
         result = []
+        fields = []
+        wrap = False
         for item in group.items():
             if isinstance(item, Button):
                 continue
-            item = self._view.field(item)
-            if item.width() == 0:
-                continue
-            if isinstance(item, FieldSpec):
-                field = self._export_field(exporter, item)
-                if field is not None:
-                    result.append((item,) + field)
-        if group.orientation() == Orientation.VERTICAL:
-            x = self._export_pack(result)
+            if isinstance(item, GroupSpec):
+                if fields:
+                    result.append(self._export_fields(g, fields))
+                fields = []
+                result.append(self._export_group(exporter, item))
+            else:
+                field = self._view.field(item)
+                if field.width() == 0:
+                    continue
+                items = self._export_field(exporter, field)
+                if items:
+                    fields.append((field,) + items)
+                    wrap = True
+        if fields:
+            result.append(self._export_fields(g, fields))
+        if wrap or group.label():
+            result = exporter.generator().fieldset(result,
+                                                   legend=group.label(),
+                                                   cls='body')
         else:
-            x = None
-        if group.label():
-            x = exporter.generator().fieldset(x, label=group.label())
-        return x
+            result = concat(result, separator="\n")
+        #if group.orientation() == Orientation.VERTICAL:
+        return result
         
     def _export_field(self, exporter, f):
         g = exporter.generator()
@@ -176,104 +182,49 @@ class LayoutForm(Form):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
         label = g.label(f.label(), attr['id']) + ":"
-        field = ctrl(**attr)
+        if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
+               (self._row.new() or not isinstance(type, (pytis.data.Password,
+                                                         pytis.data.Binary))):
+            sign = '&nbsp;'+ g.sup("*", cls="not-null")
+        else:
+            sign = ''
+        field = ctrl(**attr) + sign
         if isinstance(type, pytis.data.Password):
             attr['id'] = attr['id'] + '-verify-pasword'
-            field = field + g.br() + ctrl(**attr)
-        return (label, field)
+            field += g.br() + ctrl(**attr) + sign
+        help = f.descr() and g.div(f.descr(), cls="help") or ''
+        return (label, field, help)
 
-    def _export_packed_field(self, field, label, ctrl):
-        if field.compact():
-            return concat('<tr><td colspan="2">', label, '<br/>', ctrl,
-                          '</td></tr>')
+    def _export_packed_field(self, g, field, label, ctrl, help):
+        if self._allow_table_layout:
+            if help is not None:
+                ctrl += help
+            if field.compact():
+                td = '<td colspan="2">'+ label + g.br() +"\n"+ ctrl +'</td>'
+            else:
+                td = '<td valign="top" align="right" class="label">'+ label + \
+                     '</td><td width="100%" class="ctrl" >'+ ctrl +'</td>'
+            return '<tr>'+ td +'</tr>'
         else:
-            return concat('<tr><td valign="top" align="right" class="label">',
-                          label,
-                          '</td><td width="100%" class="ctrl">',
-                          ctrl,
-                          '</td></tr>')
+            rows = (concat(label, g.br()), concat(ctrl, g.br()))
+            if help:
+                rows += (help,)
+            return g.div(rows, cls="field")
         
-    def _export_pack(self, pack):
-        rows = [self._export_packed_field(field, label, ctrl)
-                for field, label, ctrl in pack]
-        return concat("<table>", rows, "</table>", separator="\n")
+    def _export_fields(self, g, fields):
+        rows = [self._export_packed_field(g, field, label, ctrl, help)
+                for field, label, ctrl, help in fields]
+        if self._allow_table_layout:
+            rows = ["<table>"] + rows + ["</table>"]
+        return concat(rows, separator="\n")
     
-#             if group.orientation() == Orientation.VERTICAL \
-#                    and (isinstance(item, InputField)
-#                         and not item.spec().compact() \
-#                         or isinstance(item, Button)):
-#                 # This field will become a part of current pack.
-#                 pack.append(item)
-#                 continue
-#             if len(pack) != 0:
-#                 # Add the latest pack into the sizer (if there was one).
-#                 sizer.Add(self._pack_fields(parent, pack, space, gap),
-#                           0, wx.ALIGN_TOP|border_style, border)
-#                 pack = []
-#             if isinstance(item, GroupSpec):
-#                 x = self._create_group(parent, item)
-#             elif isinstance(item, InputField):
-#                 if  item.spec().compact():
-#                     # This is a compact field (not a part of the pack).
-#                     x = wx.BoxSizer(wx.VERTICAL)
-#                     x.Add(item.label(), 0, wx.ALIGN_LEFT)
-#                     x.Add(item.widget())
-#                 else:
-#                     # This only happens in a HORIZONTAL group.
-#                     x = self._pack_fields(parent, (item,), space, gap)
-#             else:
-#                 x = self._create_button(parent, item)
-#             sizer.Add(x, 0, wx.ALIGN_TOP|border_style, border)
-#         if len(pack) != 0:
-#             # pøidej zbylý sled políèek (pokud nìjaký byl)
-#             sizer.Add(self._pack_fields(parent, pack, space, gap),
-#                       0, wx.ALIGN_TOP|border_style, border)
-#         # pokud má skupina orámování, pøidáme ji je¹tì do sizeru s horním
-#         # odsazením, jinak je horní odsazení pøíli¹ malé.
-#         if group.label() is not None:
-#             s = wx.BoxSizer(orientation)
-#             s.Add(sizer, 0, wx.TOP, 2)
-#             sizer = s
-#         return sizer
-#
-#     def _pack_fields(self, parent, items, space, gap):
-#         """Sestav skupinu pod sebou umístìných políèek/tlaèítek.
-#
-#         Argumenty:
-#
-#           items -- sekvence identifikátorù políèek nebo instancí Button.
-#           space -- mezera mezi ovládacím prvkem a labelem políèka v dlg units;
-#             integer
-#           gap -- mezera mezi jednotlivými políèky v dlg units; integer
-#
-#         """
-#         pass
-#         grid = wx.FlexGridSizer(len(items), 2, gap, space)
-#         for item in items:
-#             if isinstance(item, Button):
-#                 button = self._create_button(parent, item)
-#                 style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-#                 label = wx.StaticText(parent, -1, "",
-#                                       style=wx.ALIGN_RIGHT)
-#                 grid.Add(label, 0, style, 2)
-#                 grid.Add(button)                
-#             else:    
-#                 if item.height() > 1:
-#                     style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
-#                 else:
-#                     style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-#                 grid.Add(item.label(), 0, style, 2)
-#                 grid.Add(item.widget())
-#         return grid
-
 
 class ShowForm(LayoutForm):
     _MAXLEN = 100
     
     def export(self, exporter):
-        g = exporter.generator()
         group = self._export_group(exporter, self._view.layout().group())
-        return g.form(g.fieldset(group, cls='body'), cls="show-form") + "\n"
+        return exporter.generator().form(group, cls="show-form") + "\n"
 
     def _export_field(self, exporter, f):
         g = exporter.generator()
@@ -313,7 +264,7 @@ class ShowForm(LayoutForm):
                 #end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
                 #value = concat(value[:(end != -1 and end or self._MAXLEN)],
                 #               ' ... (', _("reduced"), ')')
-        return (g.label(f.label(), f.id()) + ":", value)
+        return (g.label(f.label(), f.id()) + ":", value, None)
 
     
 class EditForm(LayoutForm):
@@ -333,24 +284,22 @@ class EditForm(LayoutForm):
     def export(self, exporter):
         g = exporter.generator()
         if isinstance(self._errors, (str, unicode)):
-            errors = concat("<p>", self._errors, "</p>")
+            errors = g.p(self._errors)
         else:
-            errors = [concat("<p>", self._view.field(id) and
-                                    self._view.field(id).label() or id, ": ",
-                             msg, "</p>\n")
+            errors = [g.p(self._view.field(id) and
+                          self._view.field(id).label() or id, ": ",
+                          msg) +"\n"
                       for id, msg in self._errors]
         if errors:
             errors = g.div(errors, cls='errors')
         group = self._export_group(exporter, self._view.layout().group())
-        content = concat(errors,
-                         g.fieldset(group, cls='body'),
-                         self._export_buttons(exporter))
+        content = concat(errors, group, self._export_buttons(exporter))
         binary = [id for id in self._view.layout().order()
                   if isinstance(self._row[id].type(), pytis.data.Binary)]
         return g.form(content, action=self._handler, method='POST',
-                          enctype=(binary and 'multipart/form-data' or None),
-                          cls="edit-form") + "\n"
-
+                      enctype=(binary and 'multipart/form-data' or None),
+                      cls="edit-form") + "\n"
+                      
     def _export_buttons(self, exporter):
         g = exporter.generator()
         key = self._data.key()[0].id()
@@ -374,7 +323,7 @@ class BrowseForm(Form):
         self._rows = rows
         self._columns = [view.field(id) for id in view.columns()]
 
-    def _export_field(self, exporter, row, col):
+    def _export_cell(self, exporter, row, col):
         g = exporter.generator()
         type = col.type(self._data)
         if isinstance(type, pytis.data.Boolean):
@@ -382,7 +331,7 @@ class BrowseForm(Form):
         elif isinstance(type, pytis.data.Binary):
             value = "--"
         else:
-            value = row[col.id()].value()
+            value = row[col.id()].export()
             if not isinstance(value, lcg.Localizable):
                 value = g.escape(row.format(col.id()))
         uri = self._uri(row, col.id())
@@ -391,11 +340,8 @@ class BrowseForm(Form):
         #cb = col.codebook(self._row.data())
         #if cb:
         #    value += " (%s)" % cb
-        return value
+        return concat('<td>', value, '</td>')
         
-    def _export_cell(self, exporter, row, col):
-        return concat('<td>', self._export_field(exporter, row, col), '</td>')
-
     def _export_row(self, exporter, row):
         cells = concat([self._export_cell(exporter, row, c)
                         for c in self._columns])
