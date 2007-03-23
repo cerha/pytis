@@ -1,5 +1,13 @@
 CHYBY:
 
+ * Kontrola specifikací nefunguje správnì.
+ 
+   Pokud je v application.py takto definovám duální formuláø:
+   Uzivatel.TUzivatel::Pocitac.TPocitac. Pak pokud vyma¾u v Uzivatel.TUzivatel
+   v bindings spojení tìchto formuláøù a v application.py ponechám tuto
+   definici, tak kontrola specifikací si toho nevsimne. Samozrejmne pri
+   explicitnim vyvolani dualniho formulare to vyhodi chybu. 
+ 
  * Zapamatovaná pozice oddìlovaèe dualformu.
 
    Momentálnì se poèíátá se stejnou velikostí okna pøi dal¹ím startu aplikace.
