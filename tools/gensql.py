@@ -516,7 +516,25 @@ class _GsqlType(_GsqlSpec):
         result = ('CREATE TYPE %s AS (\n%s);\n' %
                   (self._name, columns))
         return result
+
+
+class ArgumentType(object):
+    """Úlo¾ná tøída specifikace typu argumentu pro funkce.
+
+    Tato tøída se vyu¾ívá pouze ve specifikaci tøídy '_GsqlFunction'.
+    """
+    def __init__(self, typ, name='', out=False):
+        """Nastav atributy.
+
+        Argumenty:
         
+          typ -- název typu, instance pytis.data.Type nebo _GsqlType.
+          name -- volitelné jméno argumentu
+          out -- je-li True, jde o výstupní argument
+        """
+        self.typ = typ
+        self.name = name
+        self.out = out
 
 class ReturnType(object):
     """Úlo¾ná tøída specifikace návratového typu.
@@ -535,7 +553,6 @@ class ReturnType(object):
         self.name = name
         self.setof = setof
     
-
 class _GsqlTable(_GsqlSpec):
     """Specifikace SQL tabulky."""
     
@@ -1751,7 +1768,7 @@ class _GsqlFunction(_GsqlSpec):
 
     _SQL_NAME = 'FUNCTION'
     
-    def __init__(self, name, input_types, output_type, body=None,
+    def __init__(self, name, arguments, output_type, body=None,
                  use_functions=(), **kwargs):
         """Inicializuj instanci.
 
@@ -1759,11 +1776,13 @@ class _GsqlFunction(_GsqlSpec):
 
           name -- jméno funkce, SQL string nebo pythonová funkce (v kterém¾to
             pøípadì je jméno SQL funkce shodné s jejím)
-          input_types -- sekvence typù argumentù funkce ve správném poøadí;
-            ka¾dý prvek sekvence je buï instance tøídy 'pytis.data.Type', nebo
-            SQL string
+          arguments -- sekvence argumentù funkce ve správném poøadí;
+            ka¾dý prvek sekvence je buï instance tøídy 'pytis.data.Type',
+            SQL string nebo instance tøídy ArgumentType
           output_type -- typ návratové hodnoty funkce; instance tøídy
             'pytis.data.Type', SQL string, nebo instance tøídy ReturnType
+            nebo None (poèítá-li se se specifikováním návratové hodnoty pomocí
+            modifikátoru 'out' v 'arguments')
           use_functions -- sekvence pythonových funkcí, jejich¾ definice mají
             být pøidány pøed definici funkce samotné
           body -- definice funkce; mù¾e být buï SQL string obsahující tìlo
@@ -1779,7 +1798,7 @@ class _GsqlFunction(_GsqlSpec):
         else:
             the_name = name.__name__
         super(_GsqlFunction, self).__init__(name, **kwargs)
-        self._input_types = input_types
+        self._ins, self._outs = self._split_arguments(arguments)
         self._output_type = output_type
         self._use_functions = use_functions
         if body is None:
@@ -1788,10 +1807,23 @@ class _GsqlFunction(_GsqlSpec):
         if self._doc is None and not isinstance(body, str):
             self._doc = body.__doc__
 
+    def _split_arguments(self, arguments):
+        ins = []
+        outs = []
+        for a in arguments:
+            if isinstance(a, ArgumentType):
+                if a.out:
+                    outs.append(a)
+                else:
+                    ins.append(a)
+            else:
+                ins.append(ArgumentType(a))
+        return ins, outs        
+
     def _format_body(self, body):
         if isinstance(body, str):
             if self._use_functions:
-                GensqlError(
+                raise GensqlError(
                     "Non-empty use-function list for a non-Python function",
                     self._name)
             result = "'%s' LANGUAGE SQL" % body
@@ -1814,26 +1846,77 @@ class _GsqlFunction(_GsqlSpec):
             result = "'%s' LANGUAGE plpythonu" % source_text
         return result
 
+    def _format_arguments(self):
+        args = []
+        for a in self._ins:
+            typ = _gsql_format_type(a.typ)
+            arg = "in %s %s" % (a.name, typ)
+            args.append(arg.replace('  ',' '))
+        for a in self._outs:
+            typ = _gsql_format_type(a.typ)
+            arg = "out %s %s" % (a.name, typ)
+            args.append(arg.replace('  ',' '))
+        return ', '.join(args)
+
     def _format_output_type(self):
-        if isinstance(self._output_type, ReturnType):
+        if isinstance(self._output_type, ReturnType):            
             output_type = self._output_type.name
             if self._output_type.setof:
                 output_type = 'SETOF ' + output_type
         else:
             output_type = _gsql_format_type(self._output_type)
         return output_type    
+
+    def _format_returns(self):
+        if self._output_type is None:
+            # Output type must be present in OUT arguments
+            if len(self._outs) == 0:
+                raise GensqlError(
+                    "No output type or output arguments  specified for `%s'" %
+                    self._name)
+            else:
+                returns = ''
+        elif isinstance(self._output_type, ReturnType):
+            if len(self._outs) > 0:
+                # We can have both output_type and out arguments,
+                # only to specify "SETOF RECORD" type                
+                if not (self._output_type.setof and
+                        self._output_type.name.upper() == 'RECORD'):
+                    raise GensqlError(
+                        "For out arguments only 'SETOF RECORD' output type "
+                        "can be specified in `%s'" % self._name)
+                else:
+                    returns = 'RETURNS SETOF RECORD'
+            else:    
+                output_type = self._output_type.name
+                if self._output_type.setof:
+                    output_type = 'SETOF ' + output_type
+        else:
+            if len(self._outs) > 0:
+                raise GensqlError(
+                    "For out arguments only 'SETOF RECORD' output type "
+                    "can be specified in `%s'" % self._name)
+            output_type = _gsql_format_type(self._output_type)
+            returns = 'RETURNS %s' % output_type
+        return returns
         
     def output(self):
-        input_types = string.join(map(_gsql_format_type, self._input_types),
-                                  ',')
+        # input_types = string.join(map(_gsql_format_type, self._input_types),
+        #                          ',')
         # output_type = _gsql_format_type(self._output_type)
-        output_type = self._format_output_type()
+        arguments = self._format_arguments()
+        # output_type = self._format_output_type()
+        returns = self._format_returns()
         body = self._format_body(self._body)
-        result = 'CREATE OR REPLACE FUNCTION %s (%s) RETURNS %s AS %s;\n' % \
-                 (self._name, input_types, output_type, body)
+        # result = 'CREATE OR REPLACE FUNCTION %s (%s) RETURNS %s AS %s;\n' % \
+        #         (self._name, input_types, output_type, body)
+        result = 'CREATE OR REPLACE FUNCTION %s (%s) %s\nAS %s;\n' % \
+                 (self._name, arguments, returns, body)
         if self._doc:
+        #    doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
+        #          (self._name, input_types, _gsql_escape(self._doc))
             doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
-                  (self._name, input_types, _gsql_escape(self._doc))
+                  (self._name, arguments, _gsql_escape(self._doc))
             result = result + doc
         return result
 

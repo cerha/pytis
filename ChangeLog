@@ -1,3 +1,13 @@
+2007-03-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (ArgumentType): Nová tøída.
+	(_GsqlFunction.__init__): Zmìna argumentu `input_types'
+	na `arguments'.
+	(_GsqlFunction._split_arguments): Nová metoda.
+	(_GsqlFunction._format_arguments): Nová metoda.
+	(_GsqlFunction._format_returns): Nová metoda.
+	(output): Zohledni pøedchozí zmìny.
+
 2007-03-15  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlType): Nová tøída.
