@@ -171,11 +171,11 @@ class Button(object):
             modálním formuláøem mo¾né.
         
         """
-        assert isinstance(label, types.StringTypes)
+        assert isinstance(label, (str, unicode))
         assert callable(handler)
-        assert width is None or isinstance(width, types.IntType)
-        assert tooltip is None or isinstance(tooltip, types.StringTypes)
-        assert isinstance(active_in_popup_form, types.BooleanType)
+        assert width is None or isinstance(width, int)
+        assert tooltip is None or isinstance(tooltip, (str, unicode))
+        assert isinstance(active_in_popup_form, bool)
         self._label = label
         self._handler = handler
         self._width = width
@@ -219,7 +219,7 @@ class ActionContext(object):
 class _ActionItem(object):
     
     def __init__(self, title):
-        assert isinstance(title, types.StringTypes)
+        assert isinstance(title, (str, unicode))
         self._title = title
 
     def title(self, raw=False):
@@ -297,13 +297,13 @@ class Action(_ActionItem):
         assert callable(handler)
         assert context in (None,) + public_attributes(ActionContext)
         assert secondary_context in (None,) + public_attributes(ActionContext)
-        assert callable(enabled) or isinstance(enabled, types.BooleanType)
+        assert callable(enabled) or isinstance(enabled, bool)
         assert access_groups is None or \
                isinstance(access_groups,
-                          (types.StringType, types.TupleType, types.ListType))
-        assert descr is None or isinstance(descr, types.StringTypes)
-        assert hotkey is None or isinstance(hotkey, (types.StringType,
-                                                     types.TupleType))
+                          (str, tuple, list))
+        assert descr is None or isinstance(descr, (str, unicode))
+        assert hotkey is None or isinstance(hotkey, (str,
+                                                     tuple))
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
@@ -366,10 +366,10 @@ class ActionGroup(_ActionItem):
             jako pro stejnojmennný argument konstruktoru ViesSpec.
 
         """
-        assert isinstance(actions, (types.ListType, types.TupleType))
+        assert isinstance(actions, (list, tuple))
         if __debug__:
             for x in actions:
-                if isinstance(x, (types.TupleType, types.ListType)):
+                if isinstance(x, (tuple, list)):
                     for y in x:
                         assert isinstance(y, (Action, ActionGroup))
                 else:
@@ -908,7 +908,7 @@ class ViewSpec(object):
         # Initialize other specification parameters
         if __debug__:
             for x in actions:
-                if isinstance(x, (types.TupleType, types.ListType)):
+                if isinstance(x, (tuple, list)):
                     for y in x:
                         assert isinstance(y, (Action, ActionGroup))
                 else:
@@ -943,10 +943,10 @@ class ViewSpec(object):
         assert on_line_commit is None or callable(on_line_commit)
         assert redirect is None or callable(redirect)
         assert focus_field is None or callable(focus_field) or \
-               isinstance(focus_field, types.StringTypes)
+               isinstance(focus_field, (str, unicode))
         assert isinstance(row_style, FieldStyle) or callable(row_style)
-        assert description is None or isinstance(description, types.StringTypes)
-        assert help is None or isinstance(help, types.StringTypes)
+        assert description is None or isinstance(description, (str, unicode))
+        assert help is None or isinstance(help, (str, unicode))
         self._title = title
         self._singular = singular
         self._columns = columns
@@ -1004,7 +1004,7 @@ class ViewSpec(object):
                     actions.append(x)
                 elif isinstance(x, ActionGroup):
                     actions.extend(linearize(x.actions()))
-                elif isinstance(x, (types.TupleType, types.ListType)):
+                elif isinstance(x, (tuple, list)):
                     actions.extend(linearize(x))
                 else:
                     raise ProgramError("Invalid action specification: %s" % x)
@@ -1137,15 +1137,15 @@ class BindingSpec(object):
             ve vertikálním vedle sebe.
 
         """
-        assert isinstance(title, types.StringTypes)
-        assert isinstance(binding_column, types.StringTypes)
-        assert description is None or isinstance(description, types.StringTypes)
+        assert isinstance(title, (str, unicode))
+        assert isinstance(binding_column, (str, unicode))
+        assert description is None or isinstance(description, (str, unicode))
         assert side_binding_column is None or \
-               isinstance(side_binding_column, types.StringTypes)
-        assert isinstance(hide_binding_column, types.BooleanType)
+               isinstance(side_binding_column, (str, unicode))
+        assert isinstance(hide_binding_column, bool)
         assert append_condition is None or callable(append_condition)
         assert orientation in public_attributes(Orientation)
-        assert isinstance(sash_ratio, types.FloatType) and 0 < sash_ratio < 1
+        assert isinstance(sash_ratio, float) and 0 < sash_ratio < 1
         self._title = title
         self._binding_column = binding_column
         if side_binding_column is None:
@@ -1319,8 +1319,8 @@ class CbComputer(Computer):
             výslednou hodnotu dopoèítávací funkce.
         
         """
-        assert isinstance(field, types.StringType)
-        assert column is None or isinstance(column, types.StringType)
+        assert isinstance(field, str)
+        assert column is None or isinstance(column, str)
         self._field = field
         self._column = column
         self._default = default
@@ -1401,8 +1401,8 @@ class CodebookSpec(object):
         assert display is None or isinstance(display, str) \
                or callable(display) or isinstance(display, tuple) \
                and callable(display[0]) and isinstance(display[1], str)
-        assert display_size is None or isinstance(display_size, types.IntType)
-        assert begin_search is None or isinstance(begin_search,types.StringType)
+        assert display_size is None or isinstance(display_size, int)
+        assert begin_search is None or isinstance(begin_search,str)
         self._columns = columns
         self._sorting = sorting
         self._display = display
@@ -1461,7 +1461,8 @@ class Link(object):
 
     """
     
-    def __init__(self, name, column, type=FormType.BROWSE, label=None):
+    def __init__(self, name, column, type=FormType.BROWSE, label=None,
+                 enabled=True):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1480,15 +1481,23 @@ class Link(object):
             odkazy.  Pokud je titulek uveden, bude v u¾ivatelském rozhraní
             odkaz uveden samostatnì pøed v¹emi automaticky generovanými odkazy.
             
+          enabled -- funkce, vracející pravdu, pokud má být odkaz aktivní a
+            nepravdu v opaèném pøípadì.  Funkci je pøedán jeden argument --
+            instance `PresentedRow' aktuálního øádku.  Namísto funkce mù¾e být
+            pøedána té¾ pøímo boolean hodnota, která dostupnost akce urèuje
+            staticky.
+            
         """
-        assert isinstance(name, types.StringType)
-        assert isinstance(column, types.StringType)
+        assert isinstance(name, str)
+        assert isinstance(column, str)
         assert type in public_attributes(FormType)
-        assert label is None or isinstance(label, types.StringTypes)
+        assert label is None or isinstance(label, (str, unicode))
+        assert callable(enabled) or isinstance(enabled, bool)
         self._name = name
         self._column = column
         self._type = type
         self._label = label
+        self._enabled = enabled
                 
     def name(self):
         """Vra» název specifikace odkazovaného náhledu."""
@@ -1506,6 +1515,10 @@ class Link(object):
         """Vra» typ formuláøe, který má být otevøen."""
         return self._label
 
+    def enabled(self):
+        """Vra» funkci k zji¹tìní dostupnosti akce, nebo pøímo bool hodnotu."""
+        return self._enabled
+        
     
 class FieldSpec(object):
     """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
@@ -2123,9 +2136,9 @@ class DataSpec(_DataFactoryWithOrigin):
           data_class_ -- tøída datového objektu, odvozená od `Data'.
 
         """
-        assert isinstance(table, types.StringType)
-        assert isinstance(columns, (types.ListType, types.TupleType))
-        assert isinstance(key, types.StringType)
+        assert isinstance(table, str)
+        assert isinstance(columns, (list, tuple))
+        assert isinstance(key, str)
         assert isinstance(access_rights, pytis.data.AccessRights) \
                or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
@@ -2187,11 +2200,11 @@ class Column(object):
             argumentem 'type', pokud je to mo¾né.
 
         """
-        assert isinstance(id, types.StringType), \
+        assert isinstance(id, str), \
                "Invalid value for argument 'id': %s" % id
-        assert isinstance(column, types.StringType) or column is None, \
+        assert isinstance(column, str) or column is None, \
                "Invalid value for argument 'column': %s" % column
-        assert isinstance(enumerator, types.StringType) or enumerator is None, \
+        assert isinstance(enumerator, str) or enumerator is None, \
                "Invalid value for argument 'enumerator': %s" % enumerator
         assert isinstance(type, pytis.data.Type) or type is None, \
                "Invalid value for argument 'type': %s" % type
