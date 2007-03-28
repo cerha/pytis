@@ -67,7 +67,7 @@ Command(Application, 'CLEAR_RECENT_FORMS',
 Command(Application, 'HANDLED_ACTION',
         "Proveï u¾ivatelem definovanou akci.") # arg. 'handler', 'enabled'
 Command(Application, 'NOTHING',
-        "Fale¹ný pøíkaz, který nic nedìlá.")
+        "Fale¹ný pøíkaz, který nic nedìlá.") # arg. 'enabled'
 Command(Form, 'LEAVE_FORM',
         "Uzavøení formuláøe")
 Command(Form, 'HELP',

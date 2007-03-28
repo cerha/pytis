@@ -750,7 +750,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_exit(self):
         self._frame.Close()
         
-    def _cmd_nothing(self):
+    def _can_nothing(self, enabled=True):
+        return enabled
+    
+    def _cmd_nothing(self, enabled=True):
         pass
         
     # Veøejné metody
