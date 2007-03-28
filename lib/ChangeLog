@@ -1,3 +1,14 @@
+2007-03-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py: Handle the argument `enabled' of `Link'
+	specification.
+
+	* pytis/presentation/spec.py: New argument `enabled' for `Link'
+	specification.
+
+	* pytis/form/application.py: New argument `enabled' for command
+	`Application.COMMAND_NOTHING'.
+
 2007-03-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/types_.py (RegexString): New class.

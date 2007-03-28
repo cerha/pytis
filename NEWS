@@ -4,6 +4,16 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-03-28 Tomas Cerha  <cerha@brailcom.org>
+
+	Nový argument `enabled' ve specifikaci `Link' umo¾òuje ovlivnit
+	dostupnost odkazu.  je mo¾né pøedat statickou boolean hodnotu,
+	nebo funkci jednoho argumentu - instance `PresentedRow'.
+
+	V CVS pytis-help byla aktualizována nápovìda k filtraci.
+	Doporuèuji pøegenerovat nápovìdu a pøípadnì dát vìdìt u¾ivatelùm,
+	¾e nápovìda k novým filtraèním mo¾nostem je k dispozici.
+
 2007-03-07  Milan Zamazal  <pdm@brailcom.org>
 
 	Zru¹eno pou¾ívání oids.  V databázích schématech ji¾ není nutno
