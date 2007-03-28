@@ -1,3 +1,7 @@
+2007-03-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* icons/link.png (Module): Fixed background transparency.
+
 2007-03-28  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlFunction._format_returns): Oprava

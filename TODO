@@ -60,8 +60,6 @@ NOVÉ VLASTNOSTI:
 
  * Práva view na jednotlivé sloupce.
 
- * Argument 'enabled' pro odkazy.
-
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
    Práce s výbìrem je nyní problematická, proto¾e výbìr je pou¾íván také k
