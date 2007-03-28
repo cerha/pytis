@@ -1,3 +1,8 @@
+2007-03-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlFunction._format_returns): Oprava
+	zapomenutého returns.
+
 2007-03-27  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (ArgumentType): Nová tøída.
