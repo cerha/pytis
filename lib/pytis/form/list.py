@@ -2069,7 +2069,7 @@ class BrowseForm(ListForm):
                 continue
             title, f, link = item
             if row[f.id()].value() is not None:
-                type, name = link.type(), link.name()
+                type, name, enabled = link.type(), link.name(), link.enabled()
                 pair = {link.column(): row[f.id()]}
                 if type == FormType.INSERT:
                     cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
@@ -2090,6 +2090,10 @@ class BrowseForm(ListForm):
                     hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
                           % (row.format(f.id()), f.column_label())
                     icon = 'link'
+                if callable(enabled):
+                    enabled = enabled(row)
+                if not enabled:
+                    cmd = Application.COMMAND_NOTHING(enabled=False)
                 items.append(MItem(title, command=cmd, help=hlp, icon=icon))
         return items
                            
