@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-03-29 Tomas Cerha  <cerha@brailcom.org>
+
+	V pytis-extensions pøibyl nový argument `groups' pro funkci
+	`run_procedure_mitem'.  Pomocí nìj lze jednodu¹e omezit pøístup k
+	proceduøe 
+
 2007-03-28 Tomas Cerha  <cerha@brailcom.org>
 
 	Nový argument `enabled' ve specifikaci `Link' umo¾òuje ovlivnit
