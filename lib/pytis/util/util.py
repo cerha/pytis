@@ -1073,8 +1073,8 @@ def with_lock(lock, function):
 
     """
     if __debug__:
-        from log import log, DEBUG
-        log(DEBUG, 'Acquiring lock:', lock)
+        import log
+        log.log(log.DEBUG, 'Acquiring lock:', lock)
         _with_lock_lock.acquire()
         try:
             thread_id = thread.get_ident()
@@ -1091,12 +1091,12 @@ def with_lock(lock, function):
     lock.acquire()
     try:
         if __debug__:
-            log(DEBUG, 'Lock acquired:', lock)
+            log.log(log.DEBUG, 'Lock acquired:', lock)
         return function()
     finally:
         lock.release()
         if __debug__:
-            log(DEBUG, 'Lock released:', lock)
+            log.log(log.DEBUG, 'Lock released:', lock)
             _with_lock_lock.acquire()
             try:
                 _active_locks[thread_id].remove(lock)
