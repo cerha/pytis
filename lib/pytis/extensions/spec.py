@@ -78,11 +78,21 @@ def new_record_mitem(title, name, hotkey=None):
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
                             help=help)
 
-def run_procedure_mitem(title, name, proc_name, hotkey=None, **kwargs):
+def run_procedure_mitem(title, name, proc_name, hotkey=None,
+                        groups=None, enabled=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
+    if groups is not None:
+        assert isinstance(groups, (tuple, list))
+        assert enabled is None or callable(enabled)
+        enabled_ = enabled
+        def enabled(**kwargs_):
+            if not is_in_groups(groups):
+                return False
+            if enabled_ is not None:
+                return enabled_(**kwargs_)
     return pytis.form.MItem(title, command=cmd, hotkey=hotkey,
                             args=dict(spec_name=name, proc_name=proc_name,
-                                      **kwargs),
+                                      enabled=enabled, **kwargs),
                             help='Spustit proceduru "%s"' % title)
 
 nr = new_record_mitem
