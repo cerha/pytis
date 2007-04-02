@@ -1,7 +1,8 @@
 2007-04-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added hack to support localization of
-	validation message arguments.
+	validation message arguments.  Display the asterisk for not-null
+	fields by the label, not by the field.
 
 2007-03-28  Tomas Cerha  <cerha@brailcom.org>
 
