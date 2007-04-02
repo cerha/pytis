@@ -67,6 +67,15 @@ pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
 pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(minsize)s exceeded")
 pd.Image._VM_FORMAT_MSG = _("Unsupported format %(format)s; valid formats: %(formats)s")
 
+class Type(pd.Type):
+    def _validation_error(self, id, **kwargs):
+        message = self._validation_messages[id]
+        if kwargs:
+            message = _(message, **kwargs)
+        return pd.ValidationError(message)
+    # Needed to postpone variable interpolation to the translation time.
+    pd.Type._validation_error = _validation_error
+
 
 class Form(lcg.Content):
 
