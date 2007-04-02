@@ -1,3 +1,8 @@
+2007-04-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added hack to support localization of
+	validation message arguments.
+
 2007-03-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py: Handle the argument `enabled' of `Link'
