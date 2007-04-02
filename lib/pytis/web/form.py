@@ -190,17 +190,17 @@ class LayoutForm(Form):
         if not self._row.editable(f.id()):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
-        label = g.label(f.label(), attr['id']) + ":"
         if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
                (self._row.new() or not isinstance(type, (pytis.data.Password,
                                                          pytis.data.Binary))):
-            sign = '&nbsp;'+ g.sup("*", cls="not-null")
+            sign = g.sup("*", cls="not-null")
         else:
             sign = ''
-        field = ctrl(**attr) + sign
+        label = g.label(f.label(), attr['id']) + sign + ":"
+        field = ctrl(**attr)
         if isinstance(type, pytis.data.Password):
             attr['id'] = attr['id'] + '-verify-pasword'
-            field += g.br() + ctrl(**attr) + sign
+            field += g.br() + ctrl(**attr)
         help = f.descr() and g.div(f.descr(), cls="help") or ''
         return (label, field, help)
 
