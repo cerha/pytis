@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-17 13:40+0100\n"
-"PO-Revision-Date: 2007-03-17 13:43+0100\n"
+"POT-Creation-Date: 2007-04-03 08:25+0200\n"
+"PO-Revision-Date: 2007-04-03 08:26+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -89,30 +89,34 @@ msgstr "Minimální rozmìr %(minsize)s pixelù nedodr¾en"
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
-#: ../lib/pytis/web/form.py:241
+#: ../lib/pytis/web/form.py:250
 msgid "image"
 msgstr "obrázek"
 
-#: ../lib/pytis/web/form.py:241
+#: ../lib/pytis/web/form.py:250
 msgid "file"
 msgstr "soubor"
 
-#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:330
+#: ../lib/pytis/web/form.py:265 ../lib/pytis/web/form.py:342
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/form.py:256 ../lib/pytis/web/form.py:330
+#: ../lib/pytis/web/form.py:265 ../lib/pytis/web/form.py:342
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/form.py:315 ../lib/pytis/web/dialog.py:50
+#: ../lib/pytis/web/form.py:324 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:315
+#: ../lib/pytis/web/form.py:324
 msgid "Reset"
 msgstr "Vrátit pùvodní hodnoty"
 
-#: ../lib/pytis/web/form.py:358
+#: ../lib/pytis/web/form.py:326
+msgid "Fields marked by an asterisk are mandatory."
+msgstr "Políèka oznaèená hvìzdièkou jsou povinná."
+
+#: ../lib/pytis/web/form.py:370
 msgid "No records."
 msgstr "®ádné záznamy."
