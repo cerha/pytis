@@ -90,6 +90,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None,
                 return False
             if enabled_ is not None:
                 return enabled_(**kwargs_)
+            return True
     return pytis.form.MItem(title, command=cmd, hotkey=hotkey,
                             args=dict(spec_name=name, proc_name=proc_name,
                                       enabled=enabled, **kwargs),
