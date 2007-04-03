@@ -335,13 +335,15 @@ class BrowseForm(Form):
         self._rows = rows
         self._columns = [view.field(id) for id in view.columns()]
 
-    def _export_cell(self, exporter, row, col):
+    def _export_value(self, exporter, row, col):
         g = exporter.generator()
         type = col.type(self._data)
         if isinstance(type, pytis.data.Boolean):
             value = row[col.id()].value() and _("Yes") or _("No")
         elif isinstance(type, pytis.data.Binary):
             value = "--"
+        elif type.enumerator():
+            value = self._row.display(col.id())
         else:
             value = row[col.id()].export()
             if not isinstance(value, lcg.Localizable):
@@ -349,14 +351,14 @@ class BrowseForm(Form):
         uri = self._uri(row, col.id())
         if uri:
             value = g.link(value, uri)
-        #cb = col.codebook(self._row.data())
-        #if cb:
-        #    value += " (%s)" % cb
-        return concat('<td>', value, '</td>')
+        return value
+            
+    def _export_cell(self, exporter, row, col):
+        return 
         
     def _export_row(self, exporter, row):
-        cells = concat([self._export_cell(exporter, row, c)
-                        for c in self._columns])
+        cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
+                 for c in self._columns]
         return concat('<tr>', cells, '</tr>')
         
     def _wrap_exported_rows(self, exporter, rows):
