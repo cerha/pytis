@@ -2,6 +2,8 @@
 
 	* pytis/web/form.py (EditForm): Announce the meaning of the
 	asterisk sign.
+	(BrowseForm._export_cell): Transformed into `_export_value'.  Use
+	`display' for codebook fields.
 
 2007-04-02  Tomas Cerha  <cerha@brailcom.org>
 
