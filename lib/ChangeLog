@@ -1,3 +1,8 @@
+2007-04-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (EditForm): Announce the meaning of the
+	asterisk sign.
+
 2007-04-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added hack to support localization of
