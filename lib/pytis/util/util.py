@@ -1073,8 +1073,8 @@ def with_lock(lock, function):
 
     """
     if __debug__:
-        import log
-        log.log(log.DEBUG, 'Acquiring lock:', lock)
+        import pytis.util
+        pytis.util.log(pytis.util.DEBUG, 'Acquiring lock:', lock)
         _with_lock_lock.acquire()
         try:
             thread_id = thread.get_ident()
@@ -1091,12 +1091,12 @@ def with_lock(lock, function):
     lock.acquire()
     try:
         if __debug__:
-            log.log(log.DEBUG, 'Lock acquired:', lock)
+            pytis.util.log(pytis.util.DEBUG, 'Lock acquired:', lock)
         return function()
     finally:
         lock.release()
         if __debug__:
-            log.log(log.DEBUG, 'Lock released:', lock)
+            pytis.util.log(pytis.util.DEBUG, 'Lock released:', lock)
             _with_lock_lock.acquire()
             try:
                 _active_locks[thread_id].remove(lock)
@@ -1197,10 +1197,11 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
                                        {'close': close, '_catch': True})
     try:
         try:
-            import log
-            DEBUG = log.DEBUG
-            log = log.log
-            if __debug__: log(DEBUG, 'Kopíruji stream:', (input, output))
+            import pytis.util
+            DEBUG = pytis.util.DEBUG
+            log = pytis.util.log
+            if __debug__:
+                log(DEBUG, 'Kopíruji stream:', (input, output))
             while True:
                 data = input.read(4096)
                 if not data:
@@ -1211,7 +1212,8 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
                 except AttributeError:
                     pass
                 output.write(data)
-            if __debug__: log(DEBUG, 'Stream zkopírován:', (input, output))
+            if __debug__:
+                log(DEBUG, 'Stream zkopírován:', (input, output))
         except:
             if not _catch:
                 raise
