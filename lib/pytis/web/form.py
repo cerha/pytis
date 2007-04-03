@@ -322,7 +322,10 @@ class EditForm(LayoutForm):
             hidden += [('action', self._action)]
         result = [g.hidden(k, v) for k, v in hidden] + \
                  [g.submit(_("Submit")), g.reset(_("Reset"))]
-        return g.fieldset(result, cls="submit")
+        return g.fieldset(result, cls="submit") + \
+               g.div("*) " + _("Fields marked by an asterisk are mandatory."),
+                     cls='help')
+    
         
 class BrowseForm(Form):
 
