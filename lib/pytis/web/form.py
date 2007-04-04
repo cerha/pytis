@@ -329,11 +329,11 @@ class EditForm(LayoutForm):
         
 class BrowseForm(Form):
 
-    def __init__(self, data, view, resolver, rows, **kwargs):
+    def __init__(self, data, view, resolver, rows, columns=None, **kwargs):
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         assert isinstance(rows, (list, tuple)), rows
         self._rows = rows
-        self._columns = [view.field(id) for id in view.columns()]
+        self._columns = [view.field(id) for id in columns or view.columns()]
 
     def _export_value(self, exporter, row, col):
         g = exporter.generator()
