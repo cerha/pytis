@@ -102,6 +102,8 @@ def bf(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey)
 def df(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
+def sf(title, name, hotkey=None, **kwargs):
+    return run_form_mitem(title, name, pytis.form.ShowForm, hotkey, **kwargs)
 def ddf(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
 def ef(title, name, hotkey=None, **kwargs):
