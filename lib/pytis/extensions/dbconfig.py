@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ pythonového kódu ve specifikacích aplikace.
 
 from pytis.extensions import *
 
-import pytis.data
+import thread, pytis.data
 
 import config
 
@@ -50,6 +50,7 @@ class DBConfig(object):
     implementaci reflektovány.
 
     """
+    _data_object_cache = {}
 
     def __init__(self, name, callback=None):
         """Inicializuj instanci.
@@ -63,30 +64,30 @@ class DBConfig(object):
             (aktualizovaná) instance 'DBConfig'.
 
         """
-        global data_object_cache
         try:
-            cache = data_object_cache
-        except NameError:
-            cache = data_object_cache = {}
-        try:
-            data = cache[name]
+            data = DBConfig._data_object_cache[name]
         except KeyError:
             data = data_object(name)
             if data is not None:
-                cache[name] = data
+                DBConfig._data_object_cache[name] = data
         self._data = data
-        self._data.select()
-        self._row = self._data.fetchone()
-        self._key = [self._row[c.id()] for c in self._data.key()]
-        self._data.close()
+        self._lock = thread.allocate_lock()
+        def lfunction():
+            data.select()
+            self._row = data.fetchone()
+            data.close()
+        with_lock(self._lock, lfunction)
+        self._key = [self._row[c.id()] for c in data.key()]
         if callback:
             self._callback = callback
             self._data.add_callback_on_change(self._on_change)
 
     def _on_change(self):
-        self._data.select()
-        self._row = self._data.fetchone()
-        self._data.close()
+        def lfunction():
+            self._data.select()
+            self._row = self._data.fetchone()
+            self._data.close()
+        with_lock(self._lock, lfunction)
         self._callback(self)
 
     def value(self, key):
