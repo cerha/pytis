@@ -1,23 +1,7 @@
-2007-04-03  Tomas Cerha  <cerha@brailcom.org>
+2007-04-06  Tomas Cerha  <cerha@brailcom.org>
 
-	* lib/pytis/extensions/spec.py (run_procedure_mitem.enabled):
-	Fixed.
-
-2007-03-29  Tomas Cerha  <cerha@brailcom.org>
-
-	* lib/pytis/extensions/spec.py (run_procedure_mitem): New argument
-	`groups'.
-
-2007-03-21  Pavel Hanak  <hanak@asellus.cz>
-
-	* lib/pytis/extensions/misc.py
-	(SimpleEmail): Moved to 'email_.py'.
-
-	* lib/pytis/extensions/email_.py: New file.
-
-2007-03-07  Pavel Hanak  <hanak@asellus.cz>
-
-	* lib/pytis/extensions/misc.py (SimpleEmail): Nová tøída.
+	* lib/pytis/extensions/dbconfig.py (DBConfig): Perform operations
+ída.
 
 	* lib/pytis/extensions/dbutils.py: Zohlednìní
 	argumentu transactions z nového datového rozhraní.
