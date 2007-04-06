@@ -1,3 +1,7 @@
+2007-04-06  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/spec.py (sf): Pro spu¹tìní ShowForm z menu.
+
 2007-04-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/dbconfig.py (DBConfig): Perform operations
