@@ -717,26 +717,37 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         #return 'coalesce(%s%s, %s%s)' % (value, cast, default, cast)
         return '%s%s' % (value, cast)
 
+    def _pdbb_split_table_name(self, table):
+        items = table.split('.')
+        if len(items) < 2:
+            items.insert(0, 'public')
+        return items
+        
     def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
+        schema, table_name = self._pdbb_split_table_name(table)
         d = self._pg_query(
             ("select pg_type.typname, pg_attribute.atttypmod, "
              "pg_attribute.attnotnull "
-             "from pg_class, pg_attribute, pg_type "
+             "from pg_class, pg_attribute, pg_type, pg_namespace "
              "where pg_class.oid = pg_attribute.attrelid and "
+             "pg_class.relnamespace = pg_namespace.oid and "
+             "pg_namespace.nspname = '%s' and "
              "pg_class.relname = '%s' and "
              "pg_attribute.attname = '%s' and "
              "pg_attribute.atttypid = pg_type.oid") % \
-            (table, column),
+            (schema, table_name, column),
             outside_transaction=True)
         d1 = self._pg_query(
             ("select pg_attrdef.adsrc "
-             "from pg_class, pg_attribute, pg_attrdef "
+             "from pg_class, pg_attribute, pg_attrdef, pg_namespace "
              "where pg_class.oid = pg_attrdef.adrelid and "
+             "pg_class.relnamespace = pg_namespace.oid and "
+             "pg_namespace.nspname = '%s' and "
              "pg_class.oid = pg_attribute.attrelid and "
              "pg_class.relname = '%s' and "
              "pg_attribute.attname = '%s' and "
              "pg_attribute.attnum = pg_attrdef.adnum") % \
-            (table, column),
+            (schema, table_name, column),
             outside_transaction=True)
         try:
             type_, size_string, not_null = d[0]
@@ -867,6 +878,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     for b in bindings if b.related_to()]
             relation = ' and '.join(rels)
         main_table = self._key_binding[0].table()
+        schema, main_table_name = self._pdbb_split_table_name(main_table)
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
         assert len (keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
@@ -883,8 +895,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         relation_and_condition = '(%s) and (%s)' % (relation, condition)
         def make_lock_command():
             qresult = self._pg_query(
-                "select relkind from pg_class where relname='%s'" %
-                (main_table,),
+                "select relkind from pg_class join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) where nspname='%s' and relname='%s'" %
+                (schema, main_table_name,),
                 outside_transaction=True)
             if qresult[0][0] == 'r':
                 return ''
@@ -1021,11 +1033,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'select count (%s) from %s where (%s) and (%%s)' % \
           (first_key_column, main_table, relation)
         self._pdbb_command_test_broken_update = \
-          ("select 'yes' from pg_class, pg_rewrite "+\
-           "where pg_rewrite.ev_type = 2 and "+\
-           "pg_rewrite.is_instead = 't' and "+\
-           "pg_class.oid = pg_rewrite.ev_class and "+\
-           "pg_class.relname = '%s'") % main_table
+          (("select 'yes' from pg_class, pg_namespace, pg_rewrite "
+            "where pg_rewrite.ev_type = 2 and "
+            "pg_rewrite.is_instead = 't' and "
+            "pg_class.oid = pg_rewrite.ev_class and "
+            "pg_class.relnamespace = pg_namespace.oid and "
+            "pg_namespace.nspname = '%s' and "
+            "pg_class.relname = '%s'")
+           % (schema, main_table_name,))
         self._pdbb_command_delete = \
           'delete from %s where %%s' % main_table
         self._pdbb_command_notify = \
