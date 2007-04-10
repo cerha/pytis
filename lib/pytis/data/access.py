@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Přístupová práva
+# Access rights
 # 
 # Copyright (C) 2002, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
@@ -18,16 +18,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Infrastruktura pro přístupová práva.
+"""Access rights handling.
 
-Je zde definováno vše, co je potřeba pro zajištění přístupových práv k datovým
-objektům.  Množina typů přístupových práv je definována třídou 'Permission'.
-Logika přístupových práv je implementována ve třídě 'AccessRights'.  Zajištění
-přístupu k datovým objektům řízeného přístupovými právy obstarává třída
-'RestrictedData'.
+Everything what is needed to define and handle access permissions to the data
+objects is put here.  The set of allowed access rights is defined in the
+'Permission' class.  The access rights checking mechanism is implemented in the
+class 'AcessRights'.  Access to data objects is regulated in the
+'RestrictedData' class.
 
-Pro signalizaci pokusu o neoprávněný přístup k datům se používá výhradně třída
-'DataAccessException'.
+Access rights violation is signalized exclusively using the
+'DataAccessException' class.
 
 """
 
@@ -38,58 +38,58 @@ from pytis.util import *
 
 
 class Permission:
-    """Výčtová třída konstant specifikujících povolené přístupové akce.
+    """Enumerator of permission constants.
 
-    Ne všechny zde definované konstanty mají smysl pro všechny datové objekty.
-    Například pro sloupec nemá smysl specifikovat 'DELETE' a pro uživatelský
-    příkaz je nejdůležitější 'CALL'.
+    Not all the constants here make sense for all data objects.  For instance,
+    it makes no sense to specify 'DELETE' permission for a table column, or the
+    user commands will mostly use 'CALL' permission.
 
     """
     
     VIEW = 'VIEW'
-    """Právo k prohlížení obsahu."""
+    """Right to view the contents."""
     INSERT = 'INSERT'
-    """Právo vložit nový záznam."""
+    """Right to insert new records."""
     UPDATE = 'UPDATE'
-    """Právo změnit existující data."""
+    """Right to change already existing data."""
     DELETE = 'DELETE'
-    """Právo smazat existující data."""
+    """Right to delete data."""
     CALL = 'CALL'
-    """Právo ke spuštění."""
+    """Right to execute."""
     EXPORT = 'EXPORT'
-    """Právo k exportu do CSV."""
+    """Right to make CSV export."""
     ALL = 'ALL'
-    """Všechna práva k danému objektu."""
+    """All rights to the given object."""
 
     def all_permissions(class_):
-        """Vrať tuple všech neuniverzálních konstant třídy."""
+        """Return tuple of all the non-general permissions constants."""
         return (class_.VIEW, class_.INSERT, class_.UPDATE, class_.DELETE,
                 class_.CALL, class_.EXPORT)
     all_permissions = classmethod(all_permissions)
 
 
 class AccessRights:
-    """Specifikace přístupových práv."""
+    """Access rights specification."""
     
     def __init__(self, *access_rights):
-        """Inicializuj instanci.
+        """
+        Arguments:
 
-        Argumenty:
+          access_rights -- each of the arguments is a tuple of tuples of the
+            form (COLUMNS, (GROUPS, PERMISSIONS, ...), ...), where COLUMNS is
+            a column name or a sequence of column names (as strings) or 'None',
+            GROUPS is a group name or a sequence of group names or 'None' and
+            PERMISSIONS is a sequence of 'Permission' class constants
 
-          access_rights -- každý argument má podobu tuple tuples ve tvaru
-            (COLUMNS, (GROUPS, PERMISSIONS, ...), ...), kde COLUMNS je jméno
-            sloupce nebo sekvence jmen sloupců (strings) nebo 'None', GROUPS je
-            jméno skupiny nebo sekvence jmen skupin nebo 'None'' a PERMISSIONS
-            je sekvence konstant třídy 'Permission'
+        PERMISSIONS makes corresponding actions allowed, anything what is not
+        allowed is forbidden.  When COLUMN, resp. GROUP, is 'None', it's an
+        implicit value that applies to the given column, resp. group, if no
+        more specific permission is defined for it.  Implicit permissions are
+        added to the explicit permissions given to a column, resp. group, so
+        they can be extended but not limited.
 
-        'permissions' povoluje přístup, co není dovoleno, je zakázáno.  Je-li
-        na místě COLUMNS, resp. GROUP, 'None', jedná se o implicitní hodnotu,
-        platnou pokud pro daný sloupec, resp. skupinu, není řečeno jinak.
-        Implicitní práva se sčítají s právy zadanými pro nějaký sloupec,
-        resp. skupinu, explicitně, tj. lze je rozšířit, nikoliv však omezit.
-
-        Je-li některé z COLUMNS nebo GROUP v rámci COLUMNS uvedeno vícekrát,
-        odpovídající práva se sčítají.
+        If a column or a group within a column is given multiple times, the
+        corresponding permissions are added together.
 
         """
         table = {}
@@ -120,17 +120,16 @@ class AccessRights:
         return (None in ok_groups) or some(lambda g: g in ok_groups, groups)
     
     def permitted(self, permission, groups, column=None):
-        """Vrať pravdu, právě když 'group' má přístup.
+        """Return true iff 'group' has got 'permission'.
 
-        Argumenty:
+        Arguments:
 
-          permission -- požadované přístupové právo, jedna z konstant třídy
-            'Permission' kromě 'Permission.ALL'
-          groups -- sekvence jmen skupin (strings) představující množinu
-            oprávnění; přístup je povolen, je-li povolen alespoň pro jednu
-            z těchto skupin
-          column -- jméno sloupce (string), pro který má být přístupové právo
-            testováno, nebo 'None' (pak se testují implicitní práva)
+          permission -- required permission, one of the 'Permission' class
+            constants except of 'Permission.ALL'
+          groups -- sequence of group names (as strings); permission is valid
+            if at least one of the listed groups has got the permission
+          column -- name of the column (as a string) to test the permission
+            against, or 'None' in which case implicit rights are tested
 
         """
         key = (permission, xtuple(groups), column)
@@ -142,14 +141,14 @@ class AccessRights:
         return result
 
     def permitted_groups(self, permission, column):
-        """Vrať seznam skupin, které mají dané přístupové právo.
+        """Return list of groups with 'permission' to 'column'.
+
+        Arguments:
         
-        Argumenty:
-        
-          permission -- požadované přístupové právo, jedna z konstant třídy
-            'Permission' kromě 'Permission.ALL'
-          column -- jméno sloupce (string), pro který má být přístupové právo
-            testováno, nebo 'None' (pak se testují implicitní práva)
+          permission -- asked permission, one of the 'Permission' class
+            constants except of 'Permission.ALL'
+          column -- name of the column (as a string) to test the permission
+            against, or 'None' in which case implicit rights are tested
             
         """
         permsets = self._permission_table[permission]
@@ -157,17 +156,16 @@ class AccessRights:
 
 
 class RestrictedData(Data):
-    """Datový objekt s omezeným přístupem ke svým operacím."""
+    """Data object with restricted access to its operations."""
     
     def __init__(self,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  **kwargs):
-        """Inicializuj objekt.
+        """
+        Arguments:
 
-        Argumenty:
-
-          access_rights -- instance třídy 'AccessRights' určující přístupová
-            práva k objektu
+          access_rights -- 'AccessRights' instance defining access rights to
+            the object
           
         """
         super(RestrictedData, self).__init__(access_rights=access_rights,
@@ -175,9 +173,9 @@ class RestrictedData(Data):
         self._access_rights = access_rights
 
     def access_groups(self):
-        """Vrať tuple skupin, ve kterých je uživatel přítomen.
+        """Return tuple of the user's groups.
 
-        V této třídě metoda vrací prázdné tuple.
+        In this class the method returns an empty tuple.
 
         """
         return ()
@@ -250,15 +248,14 @@ class RestrictedData(Data):
         return pytis.data.Row(filtered_items)
 
     def permitted(self, column_id, permission):
-        """Vrať pravdu, právě když má uživatel právo přístupu k danému sloupci.
+        """Return true iff the user may access the given column.
 
-        Argumenty:
+        Arguments:
 
-          column_id -- id sloupce testovaného na přístup jako string; může být
-            též 'None', v kterémžto případě je testováno globální právo
-            přístupu ke sloupcům
-          permission -- jedna z konstant třídy 'Permission' určující, které
-            přístupové právo se má testovat
+          column_id -- id (as a string) of the column checked for access; it
+            may be also 'None' meaning global column access right is checked
+          permission -- the permission to be checked, one of the 'Permission'
+            class constants
 
         """
         return self._access_rights.permitted(permission, self.access_groups(),
@@ -315,12 +312,12 @@ class RestrictedData(Data):
 
 
 class RestrictedMemData(RestrictedData, MemData):
-    """Paměťová datová třída s podporou přístupových práv.
+    """Memory data class with access rights support.
 
-    Účelem třídy není ani tak omezení přístupových práv k paměťovým datům, jako
-    spíše podpora protokolu jejich ověření, díky čemuž lze paměťový datový
-    objekt použít ve formulářích (jako tzv. virtuální formulář, který není
-    vázán na databázovou tabulku).
+    The primary purpose of this class is not limiting access rights to memory
+    data, but support of the access rights checking protocol that allows to use
+    memory data objects in forms (so called virtual forms not bound to a
+    database table).
     
     """
     def __init__(self, columns, **kwargs):
@@ -328,32 +325,34 @@ class RestrictedMemData(RestrictedData, MemData):
         
     
 class DataAccessException(Exception):
-    """Výjimka vyvolaná při porušení přístupových práv."""
+    """Exception raised on access rights violation."""
 
     def __init__(self, permission, table=None, column=None):
-        """Inicializuj výjimku.
+        """
+        Arguments:
 
-        Argumenty:
-
-          permission -- chybějící právo, jedna z konstant třídy 'Permission'
-          table -- jméno tabulek, ke které byl odepřen přístup, string nebo
+          permission -- the missing permission, one of the 'Permission' class
+            constants
+          table -- name of the table which couldn't be accessed, string or
             'None'
-          column -- jméno sloupce, ke kterému byl odepřen přístup, string nebo
+          column -- name of the column which couldn't be accessed, string or
             'None'
-        
+            
         """
         import config
-        log(EVENT, 'Pokus o neoprávněný přístup',
+        log(EVENT, 'Access violation attempt',
             (config.dbconnection.user(), permission, table, column))
-        Exception.__init__(self, _("Přístup odmítnut"),
-                           permission, table, column)
+        Exception.__init__(self, _("Access denied"), permission, table, column)
 
 
 def is_in_groups(access_groups):
-    """Vrať pravdu pokud přihlášený uživatel patří alespoň do jedné ze skupin.
+    """Return true iff the current user is a member of any of the groups.
+
+    Arguments:
     
-    'access_groups' je sekvence názvů skupin, jako řetězců, nebo None, v
-    kterémžto případě je vrácena vždy pravda.
+      'access_groups' -- sequence of group names (as strings) to test the user
+        against, or 'None'; if it is 'None' then true is returned
+        unconditionally.
     
     """
     import config
