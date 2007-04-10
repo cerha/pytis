@@ -4,7 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2007-04-06 Tomas Cerha  <cerha@brailcom.org>
+2007-04-05  Milan Zamazal  <pdm@brailcom.org>
+
+	Nová tøída DBAccessRights.
+
+007-04-06 Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions byly pøístupy k datovému objektu `DBConfig'
 	obaleny zamykáním, co¾ by mohlo pomoci eliminovat nìkteré problémy

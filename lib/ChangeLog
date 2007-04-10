@@ -1,3 +1,8 @@
+2007-04-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/access.py (DBAccessRights): New class.
+	(AccessRights.permitted_groups): Consider implicit rights.
+
 2007-04-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (BrowseForm): New constructor argument `columns'.

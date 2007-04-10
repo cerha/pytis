@@ -1833,6 +1833,61 @@ class TutorialTest(_DBBaseTest):
 tests.add(TutorialTest)
 
 
+class AccessRightsTest(_DBBaseTest):
+    def setUp(self):
+        P = pytis.data.Permission
+        for item in (('table1', 'column1', 'group1', P.VIEW,),
+                     ('table1', 'column1', 'group2', P.VIEW,),
+                     ('table1', 'column1', 'group3', P.INSERT,),
+                     ('table2', 'column1', 'group4', P.VIEW,),
+                     ('table1', 'column2', 'group3', P.VIEW,),
+                     ('table1', 'column1', 'group1', P.UPDATE,),
+                     ('table1', None, 'group3', P.UPDATE,),
+                     ('table1', 'column3', 'group2', P.INSERT,),
+                     ('table1', 'column3', None, P.INSERT,),
+                     ('table1', 'column4', 'group1', P.INSERT,),
+                     ('table1', 'column4', 'group2', P.ALL,),
+                     ):
+            args = tuple([x and ("'%s'" % (x,)) or 'NULL' for x in item])
+            self._sql_command("INSERT INTO pytis.access_rights (object, column_, group_, permission) VALUES (%s, %s, %s, %s)" % args)
+        connection_data = pytis.data.DBConnection(**_connection_data)
+        self._access_rights = pytis.data.DBAccessRights(
+            'table1', connection_data=connection_data)
+    def tearDown(self):
+        self._sql_command("DELETE FROM pytis.access_rights")
+    def test_permitted_groups(self):
+        P = pytis.data.Permission
+        a = self._access_rights
+        groups = a.permitted_groups(P.VIEW, 'column1')
+        assert groups == ('group1', 'group2',), ('Invalid groups', groups,)
+        groups = a.permitted_groups(P.INSERT, 'column2')
+        assert groups == (), ('Invalid groups', groups,)
+        groups = a.permitted_groups(P.INSERT, 'column2')
+        assert groups == (), ('Invalid groups', groups,)
+        groups = a.permitted_groups(P.UPDATE, 'column1')
+        assert groups == ('group1', 'group3',), ('Invalid groups', groups,)
+        groups = a.permitted_groups(P.UPDATE, None)
+        assert groups == ('group3',), ('Invalid groups', groups,)
+        groups = a.permitted_groups(P.INSERT, 'column4')
+        assert groups == ('group1', 'group2',), ('Invalid groups', groups,)
+    def test_permitted(self):
+        P = pytis.data.Permission
+        a = self._access_rights
+        assert a.permitted(P.INSERT, ('group1', 'group3',), column='column1'),\
+            'Invalid permission'
+        assert not a.permitted(P.INSERT, ('group1', 'group2',), column='column1'),\
+            'Invalid permission'
+        assert a.permitted(P.UPDATE, ('group3',), column='column5'),\
+            'Invalid permission'
+        assert not a.permitted(P.UPDATE, ('group1',), column='column5'),\
+            'Invalid permission'
+        assert a.permitted(P.UPDATE, ('group3',)),\
+            'Invalid permission'
+        assert not a.permitted(P.VIEW, ('group3',)),\
+            'Invalid permission'
+tests.add(AccessRightsTest)
+
+
 class ThreadTest(_DBBaseTest):
     # This is a non-regular test trying to detect bugs resulting from
     # insufficient thread safety

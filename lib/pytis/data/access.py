@@ -68,7 +68,7 @@ class Permission:
     all_permissions = classmethod(all_permissions)
 
 
-class AccessRights:
+class AccessRights(object):
     """Access rights specification."""
     
     def __init__(self, *access_rights):
@@ -92,6 +92,10 @@ class AccessRights:
         corresponding permissions are added together.
 
         """
+        self._permission_table = self._build_permission_table(access_rights)
+        self._query_cache = {}
+
+    def _build_permission_table(self, access_rights):
         table = {}
         all_permissions = Permission.all_permissions()
         for p in all_permissions:
@@ -111,16 +115,15 @@ class AccessRights:
                             table_p[c] = table_p[c] + groups
                         else:
                             table_p[c] = groups
-        self._permission_table = table
-        self._query_cache = {}
+        return table
 
     def _permitted(self, permission, groups, column):
         ok_groups = self.permitted_groups(permission, column) + \
-                    self.permitted_groups(permission, None) 
+                    self.permitted_groups(permission, None)
         return (None in ok_groups) or some(lambda g: g in ok_groups, groups)
     
     def permitted(self, permission, groups, column=None):
-        """Return true iff 'group' has got 'permission'.
+        """Return true iff any of 'groups' has got 'permission'.
 
         Arguments:
 
@@ -152,8 +155,54 @@ class AccessRights:
             
         """
         permsets = self._permission_table[permission]
-        return permsets.get(column, ())
+        groups = permsets.get(column, ())
+        for g in permsets.get(None, ()):
+            if g not in groups:
+                groups = groups + (g,)
+        return groups
 
+
+class DBAccessRights(AccessRights):
+    """Access rights retrieved from a database.
+
+
+    The access rights are read from the database only when initializing the
+    instance, they are not checked for later updates.
+
+    """
+
+    def __init__ (self, object_name, connection_data=None):
+        """
+        Arguments:
+
+          object-name -- symbolic identifier (as a string) of the access rights
+            in the database
+          connection_data -- connection parameters specification
+          
+        """
+        access_rights = self._build_access_rights(object_name, connection_data)
+        super(DBAccessRights, self).__init__(*access_rights)
+
+    def _build_access_rights(self, object_name, connection_data):
+        import pytis.data
+        import config
+        access_rights = []
+        bindings = [pytis.data.DBColumnBinding(name, 'pytis.access_rights', name)
+                    for name in 'id', 'object', 'column_', 'group_', 'permission']
+        key = bindings[0]
+        data = pytis.data.DBDataDefault(bindings, key,
+                                        connection_data=connection_data)
+        data.select(condition=EQ('object', Value(String(), object_name)))
+        while True:
+            row = data.fetchone()
+            if row is None:
+                break
+            access_rights.append((row['column_'].value(),
+                                  (row['group_'].value(),
+                                   row['permission'].value())))
+        data.close()
+        return access_rights
+    
 
 class RestrictedData(Data):
     """Data object with restricted access to its operations."""
