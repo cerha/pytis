@@ -435,6 +435,9 @@ class SFDialog(SFSDialog):
                                             "pouze na prázdnou hodnotu"))
                         else:
                             val = None
+                        if op not in (pytis.data.EQ, pytis.data.NE):
+                            quit(i, wop, _("Binární sloupec lze testovat "
+                                           "pouze na rovnost èi nerovnost"))
                     elif isinstance(col1.type(), pytis.data.Boolean):
                         kwargs = dict(extended=True)
                     value, err = col1.type().validate(val, **kwargs)
