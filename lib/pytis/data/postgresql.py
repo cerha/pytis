@@ -1069,7 +1069,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 assert isinstance(arg2, Value), ('Invalid value type', arg2)
                 assert (not isinstance(t1, Binary) or
-                        (rel == '=' and arg2.value() is None)), \
+                        (rel in ('=','!=') and arg2.value() is None)), \
                         "Binary data can only be compared with NULL values"
                 val = self._pg_value(arg2)
                 a2 = self._pdbb_coalesce(t1, val)
