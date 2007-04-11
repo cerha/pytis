@@ -1,5 +1,7 @@
 CHYBY:
 
+ * Filtr na binární hodnoty funguje s IS NULL a nefunguje s NOT NULL.
+
  * Kontrola specifikací nefunguje správnì.
  
    Pokud je v application.py takto definovám duální formuláø:
@@ -38,6 +40,16 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
+ * Filtraèní podmínka jako argument konstruktoru formuláøe.
+
+ * Podmínka pro filtraci náhledu ve specifikaci (u¾ivateli se nejeví jako filtr).
+
+ * Agregaèní li¹ta...
+
+ * Titulky dálních formuláøù
+
+ * Vazební podmínka duálního formuláøe jako funkce row (nahrazující bcol,sbcol)
+ 
  * Vyu¾ití Wikinga pro webové rozhraní k aplikacím
 
    Wiking ji¾ nyní umí pracovat s daty nad pytisovými specifikacemi.
@@ -46,19 +58,20 @@ NOVÉ VLASTNOSTI:
    bylo v praxi pou¾itelné, bude nutné zvolit zpùsob správy pøístupových práv k
    tìmto náhledùm.
 
- * Práce s Binary Large Objekty.
+ * Práva:
+
+   * omezení view na jednotlivé sloupce
+
+   * správa práv pøes databázi a formuláø, nikoli pøes specifikace
+
+   * Detailnìj¹í kontrola nad rozli¹ením práv pøi UPDATE/INSERT
+
+     Pokud není na políèko právo UPDATE, zakázat jej i pøi INSERTU, ale umo¾nit
+     nìkterá políèka explicitnì povolit (pouze pro INSERT).  Nebo také povolit
+     úplnì v¹e, nehledì na práva pro UPDATE.
 
  * Pou¾ití externího PS prohlí¾eèe.
 
- * Správa pøístupových práv pøes databázi a formuláø, nikoli pøes specifikace.
-
- * Detailnìj¹í kontrola nad rozli¹ením práv pøi UPDATE/INSERT
-
-   Pokud není na políèko právo UPDATE, zakázat jej i pøi INSERTU, ale umo¾nit
-   nìkterá políèka explicitnì povolit (pouze pro INSERT).  Nebo také povolit
-   úplnì v¹e, nehledì na práva pro UPDATE.
-
- * Práva view na jednotlivé sloupce.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
@@ -68,11 +81,6 @@ NOVÉ VLASTNOSTI:
 
  * Roz¹íøit øádek po dobu inline editace víceøádkového textu.
  
- * Automatický filter èíselníku pøi vyplnìní wildcard hodnoty.
-
-   Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
-   pøi vyvolání èíselníku.
-
  * Zarovnávání, atributy a masky vstupních políèek.
 
  * Pøepoèítání závislých políèek pøi výbìru z ListField.
@@ -85,6 +93,11 @@ NOVÉ VLASTNOSTI:
  * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
 
  * Zamezit výpoètu editovatelnosti políèek v ShowFormu - je to zbyteèné...
+
+ * Automatický filtr èíselníku pøi vyplnìní wildcard hodnoty.
+
+   Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
+   pøi vyvolání èíselníku.
 
 
 2) Specifikace
