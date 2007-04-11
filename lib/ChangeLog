@@ -1,3 +1,11 @@
+2007-04-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/search.py: Make sure the operator is either `NE' or `EQ' for
+	binary data.
+
+	* pytis/data/postgresql.py: Allow also `NE' operator for comparing
+	binary data with a NULL value.
+
 2007-04-05  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/access.py (DBAccessRights): New class.
