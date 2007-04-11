@@ -2,6 +2,11 @@ CHYBY:
 
  * Filtr na binární hodnoty funguje s IS NULL a nefunguje s NOT NULL.
 
+ * Zpráva "Vlo¾ený záznam se neobjevil v aktualním náhledu"
+
+   Tato zpráva se zobrazila po vlo¾ení do spodní èásti dualformu, kde se v¹ak
+   záznam po pøidání automaticky objevil.
+
  * Kontrola specifikací nefunguje správnì.
  
    Pokud je v application.py takto definovám duální formuláø:
