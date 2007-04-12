@@ -98,10 +98,11 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None,
 
 nr = new_record_mitem
 rp = run_procedure_mitem
-def bf(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey)
-def df(title, name, hotkey=None):
-    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey)
+def bf(title, name, hotkey=None, **kwargs):
+    return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey, **kwargs)
+def df(title, name, hotkey=None, **kwargs):
+    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey,
+                          **kwargs)
 def sf(title, name, hotkey=None, **kwargs):
     return run_form_mitem(title, name, pytis.form.ShowForm, hotkey, **kwargs)
 def ddf(title, name, hotkey=None):
