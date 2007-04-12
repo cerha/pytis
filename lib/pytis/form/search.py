@@ -338,7 +338,8 @@ class SFDialog(SFSDialog):
                 field(self._TEXT_CTRL_SIZE, value,
                       tooltip=_("Zapi¹te hodnotu podmínkového výrazu")),
                 button(_("Nasát"), lambda e: self._on_suck(i),
-                       _("Naèíst hodnotu aktivní buòky")),
+                       _("Naèíst hodnotu aktivní buòky"),
+                       enabled=self._row is not None),
                 button(_("Vymazat"), lambda e: self._on_clear(i),
                        _("Vymazat obsah podmínky")),
                 button(_("Odebrat"), lambda e: self._on_remove(i),
@@ -454,8 +455,8 @@ class SFDialog(SFSDialog):
     def _on_selection_change(self, i):
         wcol1, wop, wcol2, wval, bsuck, bclear = self._controls[i][1:7]
         enabled = wcol2.GetSelection() == 0
-        for ctrl in (wval, bsuck):
-            ctrl.Enable(enabled)
+        wval.Enable(enabled)
+        bsuck.Enable(enabled and self._row is not None)
         
     def _on_clear(self, i):
         wcol1, wop, wcol2, wval = self._controls[i][1:5]
