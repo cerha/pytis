@@ -693,7 +693,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None,
                  on_delete_record=None, on_line_commit=None, redirect=None,
                  focus_field=None, description=None, help=None,
-                 row_style=FIELD_STYLE_DEFAULT, conditions=()):
+                 row_style=FIELD_STYLE_DEFAULT, condition=None, conditions=()):
         
         """Inicializuj instanci.
 
@@ -819,31 +819,35 @@ class ViewSpec(object):
             argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
             vrací pøíslu¹ný identifikátor políèka.
             
-          description -- popis formuláøe.  Krátký text rozsahu jedné a¾ dvou
-            vìt.  Více také viz poznámka ní¾e.
+          description -- brief description of the view.  A short text (one or
+            two sentences) without formatting.  Use the 'help' argument below
+            to supply a detailed description.  But even if 'help' is present,
+            this short description should still be defined.
           
-          help -- podrobnìj¹í nápovìda formuláøe formátovaná jako strukturovaný
-            text (wiki).  Více také viz poznámka ní¾e.
+          help -- detailed description of the view as a formatted text in the
+            LCG Structured Text format.  This text is used for generating the
+            on-line help and it is also possible to supply it in a separate
+            file.  See the Help tutorial for more information.
 
-          row_style -- instance tøídy 'FieldStyle' urèující vizuální styl
-            spoleèný pro v¹echna políèka, nebo funkce jednoho argumentu
-            (instance 'PresentedRow') vracející instanci tøídy 'FieldStyle'.
+          row_style -- a 'FieldStyle' instance determining the base style for
+            all fields or a function of one argument (the 'PresentedRow'
+            instance) returning the 'FieldStyle' for one row (based on its
+            values).
 
-          conditions -- a sequence of 'Condition' instances, which may be used
-            for filtering/searching records in this view.
+          condition -- a hardcoded condition used for this view to filter its
+            records.  This condition is used permanently and the user is not
+            able to switch it off.  He even does not know that it exists.  It
+            has the same effect as implementing the condition in the underlying
+            data object.  The value is a 'pytis.data.Operator' instance.
+
+          conditions -- a sequence of named conditions ('Condition' instances),
+            which should be available to the user for filtering/searching
+            records in this view.
            
-        Pokud není argument 'layout' nebo 'columns' uveden, bude vygenerován
-        implicitní layout a seznam sloupcù, odpovídající poøadí políèek ve
-        'fields'.
+        The arguments 'layout' and 'columns' may be omitted.  Default layout
+        and column list will be generated automatically based on the order of
+        the field specifications in 'fields'.
         
-	Argument `help' nech» je vyu¾íván pro rozsáhlej¹í popis formuláøe,
-	který vy¾aduje formátování.  Jednoduchý popis v rozsahu jedné a¾ dvou
-	vìt nech» je uvádìn jako `description'.  Proto¾e se oba popisy
-	pou¾ívají v jiných situacích, není pravda, ¾e staèí uvést jeden z nich.
-	Description by mìl být uveden prakticky v¾dy.  Help slou¾í pro
-	generování nápovìdy a namísto nìho je mo¾né vytvoøit odpovídající
-	soubor ve zdrojovém adresáøi nápovìdy (viz tutoriál Help).
-
         """
         assert isinstance(title, (str, unicode))
         if singular is None:
@@ -929,6 +933,7 @@ class ViewSpec(object):
                     assert self.field(id) is not None
         assert callable(check) or isinstance(check, (list, tuple))
         check = xtuple(check)
+        assert condition is None or isinstance(condition, pytis.data.Operator)
         assert isinstance(conditions, tuple)
         if __debug__:
             for f in check:
@@ -965,6 +970,7 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
+        self._condition = condition
         self._conditions = tuple(conditions)
 
     def title(self):
@@ -1069,6 +1075,10 @@ class ViewSpec(object):
     def conditions(self):
         """Vra» tuple pøeddefinovaných filtraèních/vyhledávacích podmínek."""
         return self._conditions
+
+    def condition(self):
+        """Vra» podmínku filtrace dat."""
+        return self._condition
 
     
 class BindingSpec(object):
