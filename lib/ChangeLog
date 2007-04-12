@@ -1,3 +1,15 @@
+2007-04-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/search.py: Make the `Suck' button active only if the
+	active row exists.
+
+	* pytis/presentation/spec.py (ViewSpec): New argument `condition'
+	for specification of a `hardcoded' data filter.
+
+	* pytis/form/form.py: Allow user filter initialization through a
+	form constructor argument.  Use the underlying filtering condition
+	defined in ViewSpec.
+
 2007-04-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py: Make sure the operator is either `NE' or `EQ' for

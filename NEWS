@@ -4,6 +4,21 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-04-12 Tomas Cerha  <cerha@brailcom.org>
+
+	Nový argument konstruktoru formuláøe `filter' umo¾òuje
+	pøednastavit aktivní u¾ivatelský filter.
+
+	Nová specifikaèní volba `condition' ve `ViewSpec' umo¾òuje
+	definovat statickou filtrovací podmínku, která filtruje data v¹ech
+	formuláøù nad touto specifikací sestavených.  Tato filtrovací
+	podmínka ne pro u¾ivatele neviditelná a nelze ji tedy ani vypnout.
+	
+	* BUGFIX: Tlaèítko "Nasát" ve filtraèním dialogu je nyní aktivní
+	jen kdy¾ je odkud nasát (formuláø obsahuje aktivní øádek).
+	Pøedejde se tak tracebacku pøi pokusu o nasátí z neexistujícího
+	øádku.
+	
 2007-04-11 Tomas Cerha  <cerha@brailcom.org>
 
 	Binární hodnoty laze nyní porovnávat jak na rovnost, tak na
