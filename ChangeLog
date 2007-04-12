@@ -29,7 +29,7 @@
 	(_GsqlFunction.output): Zohledni output type.
 	(sqltype): Nov� funkce.
 
-2007-03-02  Tomáš Cerha  <cerha@brailcom.org>
+2007-03-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* Makefile: Added the `cvs-install' option.
 
