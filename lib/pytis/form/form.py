@@ -1057,16 +1057,21 @@ class LookupForm(RecordForm):
     _PERSISTENT_FORM_PARAMS = RecordForm._PERSISTENT_FORM_PARAMS + \
                               ('conditions', 'filter', 'search')
     
-    def _init_attributes(self, sorting=None, condition=None, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+    def _init_attributes(self, sorting=None, filter=None, condition=None,
+                         **kwargs):
+        """Process constructor keyword arguments and initialize the attributes.
 
-        Argumenty:
+        Arguments:
 
-          sorting -- specifikace poèáteèního tøídìní formuláøe, viz argument
-            'sort' metody 'pytis.data.Data.select()'
-          condition -- podmínka výbìru dat, viz argument 'condition' metody
-            'pytis.data.Data.select()'
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          sorting -- specification of initial sorting, same as the argument
+            'sort' of 'pytis.data.Data.select()'.
+          filter -- initial filter condition as a 'pytis.data.Operator'
+            instance.  This filter is indicated to the user and can be modified
+            as any other user-defined filter.
+          condition -- 'pytis.data.Operator' instance filtering the rows of the
+            underlying data object.  This filter is not indicated to the user
+            nor is there a chance to turn it off.
+          kwargs -- arguments passed to the parent class
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
@@ -1075,10 +1080,13 @@ class LookupForm(RecordForm):
         self._lf_initial_sorting = self._lf_sorting
         # _lf_condition reprezentuje statickou podmínku danou argumentem
         # konstruktoru, naproti tomu _lf_filter reprezentuje aktuální podmínku
-        # u¾ivatelského filtru. 
+        # u¾ivatelského filtru.
         self._lf_condition = condition
-        self._lf_filter = None
-        self._lf_last_filter = self._load_condition('filter')
+        if filter:
+            # Make sure the condition is well formed.
+            Condition("", filter)
+        self._lf_filter = filter
+        self._lf_last_filter = filter or self._load_condition('filter')
         self._lf_search_condition = self._load_condition('search')
         self._user_conditions = self._load_conditions('conditions')
         
@@ -1181,12 +1189,16 @@ class LookupForm(RecordForm):
                              if self._view.field(k.id()) is not None])
         return sorting
 
-    def _current_condition(self):
-        if self._lf_condition and self._lf_filter:
-            condition = pytis.data.AND(self._lf_condition, self._lf_filter)
+    def _current_condition(self, filter=None):
+        conditions = [c for c in (self._view.condition(), self._lf_condition,
+                                  filter or self._lf_filter)
+                      if c is not None]
+        if len(conditions) == 0:
+            return None
+        elif len(conditions) == 1:
+            return conditions[0]
         else:
-            condition = self._lf_condition or self._lf_filter
-        return condition
+            return pytis.data.AND(*conditions)
     
     def _init_select(self):
         data = self._data
@@ -1286,8 +1298,7 @@ class LookupForm(RecordForm):
         self._init_sorting()
 
     def _compute_aggregate(self, operation, column_id, condition):
-        if self._lf_condition is not None:
-            condition = pytis.data.AND(condition, self._lf_condition)
+        condition = self._current_condition(filter=condition)
         return self._data.select_aggregate((operation, column_id), condition)
 
     def _filtered_columns(self):
