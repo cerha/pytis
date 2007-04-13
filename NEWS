@@ -6,6 +6,14 @@
 
 2007-04-12 Tomas Cerha  <cerha@brailcom.org>
 
+	Implementace statického filtru urèeného specifikací byla pøesunuta
+	pøímo do datového objektu.  Tím by mìlo být zaruèeno, ¾e se
+	podmínka projeví nejen ve formuláøích, ale také v enumerátorech a
+	pøi pøímém pøístupu k datovému objektu.  Proto¾e jde o záva¾nìj¹í
+	zásah do datového rozhraní, doporuèuji v¹e øádnì otestovat.
+
+2007-04-12 Tomas Cerha  <cerha@brailcom.org>
+
 	Nový argument konstruktoru formuláøe `filter' umo¾òuje
 	pøednastavit aktivní u¾ivatelský filter.
 
@@ -21,7 +29,7 @@
 	
 2007-04-11 Tomas Cerha  <cerha@brailcom.org>
 
-	Binární hodnoty laze nyní porovnávat jak na rovnost, tak na
+	Binární hodnoty lze nyní porovnávat jak na rovnost, tak na
 	nerovnost s NULL hodnotou (døíve fungovala pouze rovnost).
 	Nesprávná volba operátoru ve filtraèním dialogu je o¹etøena
 	zobrazením zprávy namísto tracebacku.
