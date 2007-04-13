@@ -4,8 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
-2007-04-12 Tomas Cerha  <cerha@brailcom.org>
+2007-04-13 Milan Zamazal  <pdm@brailcom.org>
 
+	Datové objekty mají nyní nový argument `condition' umo¾òující
+	implicitnì filtrovat jejich obsah.
+
+2007-04-12 Tomas Cerha  <cerha@brailcom.org>
+	
 	Nový argument konstruktoru formuláøe `filter' umo¾òuje
 	pøednastavit aktivní u¾ivatelský filter.
 
@@ -30,16 +35,15 @@
 
 	Nová tøída DBAccessRights.
 
-2007-04-13 Milan Zamazal  <pdm@brailcom.org>
-
-	Datové objekty mají nyní nový argument `condition' umo¾òující
-	implicitnì filtrovat jejich obsah.
-	
 2007-04-06 Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions byly pøístupy k datovému objektu `DBConfig'
 	obaleny zamykáním, co¾ by mohlo pomoci eliminovat nìkteré problémy
 	s "not within select".
+
+2007-04-05  Milan Zamazal  <pdm@brailcom.org>
+
+	Nová tøída DBAccessRights.
 	
 2007-03-29 Tomas Cerha  <cerha@brailcom.org>
 
