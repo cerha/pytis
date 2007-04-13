@@ -43,10 +43,6 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
- * Filtraèní podmínka jako argument konstruktoru formuláøe.
-
- * Podmínka pro filtraci náhledu ve specifikaci (u¾ivateli se nejeví jako filtr).
-
  * Agregaèní li¹ta...
 
  * Titulky dálních formuláøù
