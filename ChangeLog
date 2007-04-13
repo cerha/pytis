@@ -1,3 +1,8 @@
+2007-04-13  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py: Oprava chyby pøi formátování podmínek
+	pro spojování relací.
+
 2007-04-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* translations/pytis.cs.po: Updated.

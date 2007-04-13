@@ -1040,7 +1040,7 @@ class Select(_GsqlSpec):
         return result
 
     def _format_relations(self, indent=1):
-        def format_relation(rel):
+        def format_relation(i,rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
                 sel = rel.relation.format_select(indent=indent+1)
@@ -1049,17 +1049,19 @@ class Select(_GsqlSpec):
             else:    
                 relation = rel.relation
             alias = rel.alias or ''
-            condition = rel.condition or ''
+            if i == 0:
+                condition = ''
+            else:    
+                condition = rel.condition
             return JoinType.TEMPLATES[jtype] % (relation, alias, condition)
         # První relace je FROM a podmínka nebude pou¾ita
         wherecondition = self._relations[0].condition
-        self._relations[0].condition = None
-        joins = [format_relation(r) for r in self._relations]
+        joins = [format_relation(i,r) for i,r in enumerate(self._relations)]
         result = '\n '.join(joins)
         if wherecondition:
             result = '%s\n WHERE %s' % (result, wherecondition)
         return result
-        
+
 
     def set_columns(self, relation_columns):
         self._relation_columns = relation_columns
