@@ -830,11 +830,6 @@ class MemData(Data):
         self._mem_cursor = -1
 
     def _condition2pyfunc(self, condition):
-        if self._condition is not None:
-            if condition is None:
-                condition = self._condition
-            else:
-                condition = AND(self._condition, condition)
         if condition is None:
             return lambda row: True
         op_name = condition.name()
@@ -873,6 +868,11 @@ class MemData(Data):
         ignorovány.
         
         """
+        if self._condition is not None:
+            if condition is not None:
+                condition = AND(condition, self._condition)
+            else:
+                condition = self._condition
         cond = self._condition2pyfunc(condition)
         self._mem_cursor = -1
         self._mem_select = [self._restrict_row_columns(row, columns)

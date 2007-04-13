@@ -1,3 +1,8 @@
+2007-04-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/data.py (MemData): Don't apply the initial filtering
+	condition recursively.
+
 2007-04-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/data.py: Support for initial filtering condition in
