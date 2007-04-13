@@ -1,26 +1,26 @@
 2007-04-13  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/data/data.py (MemData): Don't apply the initial filtering
-	condition recursively.
+	* pytis/presentation/spec.py (DataSpec): Marked as deprecated.  Pass the initial filtering
+	condition.
+
+	* pytis/data/data.py (MemData): Don't apply the initial filtering condition recursively.
 
 2007-04-13  Milan Zamazal  <pdm@brailcom.org>
 
-	* pytis/data/data.py: Support for initial filtering condition in
-	data objects.
+	* pytis/data/data.py: Support for initial filtering condition in data objects.
+	
 	* pytis/data/postgresql.py: See above.
 
 2007-04-13  Tomas Cerha  <cerha@brailcom.org>
 	
-	* pytis/presentation/spec.py: Remove the `condition' specification
-	from `ViewSpec' and rether pass it to the data object from `Spec'.
+	* pytis/presentation/spec.py: Remove the `condition' specification from `ViewSpec' but
+	rather pass it to the data object from `Spec'.
 
-	* pytis/form/form.py: Reverted previous implementation of the
-	static filter.
+	* pytis/form/form.py: Reverted previous implementation of the static filter.
 
 2007-04-12  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/search.py: Make the `Suck' button active only if the
-	active row exists.
+	* pytis/form/search.py: Make the `Suck' button active only if the active row exists.
 
 	* pytis/presentation/spec.py (ViewSpec): New argument `condition'
 	for specification of a `hardcoded' data filter.
@@ -1035,15 +1035,6 @@
 
 2006-12-20  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/application.py (Application._cmd_run_procedure): New
-	argument `enabled'.
+	* pytis/form/application.py (Application._cmd_run_procedure): New argument `enabled'.
 	(Application._can_run_procedure): New method.
 
-Traceback (most recent call last):
-  File "/home/cerha/bin/denik.py", line 98, in ?
-    period, n = process(projects, changelog)
-  File "/home/cerha/bin/denik.py", line 72, in process
-    for date, text in split(DAY_SPLITTER, changelog.strip(), 2):
-  File "/home/cerha/bin/denik.py", line 30, in split
-    raise Exception("Invalid syntax:", seq[0].splitlines()[0] + '...')
-Exception: ('Invalid syntax:', u'2007-02-19  Tomas Cerha  <cerha@brailcom.org>...')

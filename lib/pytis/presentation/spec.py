@@ -2095,24 +2095,22 @@ class _DataFactoryWithOrigin(pytis.data.DataFactory):
 
     
 class DataSpec(_DataFactoryWithOrigin):
-    """Tøída zjednodu¹ující tvorbu datové specifikace.
+    """Tøída zjednodu¹ující tvorbu datové specifikace (deprecated).
 
-    Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává
-    tak nìkteré nízkoúrovòové detaily pøed tvùrcem specifikace.  Oproti
-    rodièovské tøídì je podstatnì omezena obecnost, ale v typickém pøípadì
-    pou¾ití datového rozhraní v Pytis aplikaci je specifikace pøi pou¾ití této
-    tøídy nejen pøehlednìj¹í, ale také flexibilnìj¹í.
+    Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává tak nìkteré
+    nízkoúrovòové detaily pøed tvùrcem specifikace.  Oproti rodièovské tøídì je podstatnì omezena
+    obecnost, ale v typickém pøípadì pou¾ití datového rozhraní v Pytis aplikaci je specifikace pøi
+    pou¾ití této tøídy nejen pøehlednìj¹í, ale také flexibilnìj¹í.
 
     Podrobný popis rozhraní viz. konstruktor tøídy.
 
-    POZOR: Namísto této tøídy je vhodnìj¹í pou¾ívat tøídu 'Specification' ní¾e.
-    Ta zajistí sestavení datové specifikace zcela automaticky, tak¾e samostatné
-    udr¾ování datových specifikací ji¾ není potøeba.  Pokud se tøída
-    'Specification' osvìdèí, je mo¾né ¾e tato tøída bude v budouvnu zru¹ena.
+    POZOR: Tato tøída je urèena k zániku.  Namísto ní nech» je pou¾ívána tøída 'Specification'
+    ní¾e.  Ta zajistí sestavení datové specifikace zcela automaticky, tak¾e samostatné udr¾ování
+    datových specifikací ji¾ není potøeba.
 
     """
     
-    def __init__(self, table, columns, key, access_rights=None,
+    def __init__(self, table, columns, key, access_rights=None, condition=None,
                  data_class_=pytis.data.DBDataDefault,
                  oid=() # temporary backward compatibility argument, ignored
                  ):
@@ -2122,23 +2120,27 @@ class DataSpec(_DataFactoryWithOrigin):
 
           table -- název datové tabulky jako øetìzec.
           
-          columns -- sekvence specifikací sloupcù jako instancí 'Column'.
-            Jedná se v¾dy o sloupce z tabulky 'table'.
+          columns -- sekvence specifikací sloupcù jako instancí 'Column'.  Jedná se v¾dy o sloupce
+            z tabulky 'table'.
             
-          key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto
-            identifikátorem musí být pøítomný v 'columns'.
+          key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto identifikátorem musí být
+            pøítomný v 'columns'.
             
-          access_rights -- práva jako instance 'pytis.data.AccessRights' nebo
-            None, pokud mají být práva neomezená.
+          access_rights -- práva jako instance 'pytis.data.AccessRights' nebo None, pokud mají být
+            práva neomezená.
             
+          condition -- A hardcoded condition filtering data of the underlying data object.  This
+            condition is used permanently and the user is not able to switch it off or know that it
+            exists.  It has the same effect as implementing the condition in the underlying data
+            source.  The value is a 'pytis.data.Operator' instance.
+        
           data_class_ -- tøída datového objektu, odvozená od `Data'.
 
         """
         assert isinstance(table, str)
         assert isinstance(columns, (list, tuple))
         assert isinstance(key, str)
-        assert isinstance(access_rights, pytis.data.AccessRights) \
-               or access_rights is None
+        assert isinstance(access_rights, pytis.data.AccessRights) or access_rights is None
         assert find(key, columns, key=lambda c: c.id()) is not None
         if __debug__:
             for c in columns:
@@ -2155,16 +2157,12 @@ class DataSpec(_DataFactoryWithOrigin):
                     enumerator.set_origin(e)
             else:
                 enumerator = None
-            bindings.append(pytis.data.DBColumnBinding(c.id(), table,
-                                                       c.column(),
-                                                       enumerator=enumerator,
-                                                       type_=c.type(),
-                                                       **c.kwargs()))
+            bindings.append(pytis.data.DBColumnBinding(c.id(), table, c.column(), type_=c.type(),
+                                                       enumerator=enumerator, **c.kwargs()))
         key = find(key, bindings, key=lambda b: b.column())
-        super(DataSpec, self).__init__(data_class_, bindings, key,
-                                       access_rights=access_rights)
+        super(DataSpec, self).__init__(data_class_, bindings, key, access_rights=access_rights,
+                                       condition=condition)
         self._origin = None
-        
 
     
 class Column(object):
