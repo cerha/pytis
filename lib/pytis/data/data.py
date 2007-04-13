@@ -185,7 +185,7 @@ class Data(object):
     class UnsupportedOperation(Exception):
         """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
     
-    def __init__(self, columns, key, ordering=None, **kwargs):
+    def __init__(self, columns, key, ordering=None, condition=None, **kwargs):
         """Inicializuj datový zdroj.
 
         Argumenty:
@@ -202,6 +202,10 @@ class Data(object):
             který musí být typu `types_.Integer'.  Pokud je argumentem tuple,
             je poøadí udr¾ováno v¾dy pouze v rámci øádkù, které mají stejné
             hodnoty v druhém a¾ posledním z uvedených sloupcù.
+          condition -- a hardcoded condition used to filter the data of this
+            data object.  It has the same effect as implementing the condition
+            in the underlying data source.  The value is a
+            'pytis.data.Operator' instance.
           kwargs -- pøedáno pøedkovi
             
         """
@@ -219,10 +223,19 @@ class Data(object):
         self._columns = tuple(columns)
         self._key = key
         self._ordering = ordering
+        self._condition = condition
         self._change_number = pytis.util.Counter()
         self._on_change_callbacks = []
         self._select_last_row_number = None
 
+    def _full_condition(self, condition):
+        if self._condition:
+            if condition:
+                condition = AND(condition, self._condition)
+            else:
+                condition = self._condition
+        return condition
+        
     def columns(self):
         """Vra» specifikaci sloupcù zadanou v konstruktoru, jako tuple."""
         return self._columns
@@ -788,8 +801,9 @@ class MemData(Data):
             key = key[0]
         data = self._mem_data
         k = self.key()[0].id()
-        for i in range(len(data)):
-            if data[i][k] == key:
+        cond = self._condition2pyfunc(self._condition)
+        for i, row in enumerate(data):
+            if cond(row) and row[k] == key:
                 return i
         else:
             return None
@@ -866,7 +880,7 @@ class MemData(Data):
         ignorovány.
         
         """
-        cond = self._condition2pyfunc(condition)
+        cond = self._condition2pyfunc(self._full_condition(condition))
         self._mem_cursor = -1
         self._mem_select = [self._restrict_row_columns(row, columns)
                             for row in self._mem_data if cond(row)]
