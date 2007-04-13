@@ -363,7 +363,8 @@ FORM_COMMAND_MENU = ((
     ),(#---------------
     (InnerForm.COMMAND_RELOAD_FORM_STATE,
      _("Vrátit pøedchozí nastavení formuláøe"),
-     _("Zahodit u¾ivatelské nastavení formuláøe bìhem tohoto spu¹tìní")),
+     _("Zahodit zmìny nastavení formuláøe provedené bìhem tohoto spu¹tìní "
+       "aplikace")),
     (InnerForm.COMMAND_RESET_FORM_STATE,
      _("Vrátit výchozí nastavení formuláøe"),
      _("Zahodit ve¹keré u¾ivatelské nastavení formuláøe")),
