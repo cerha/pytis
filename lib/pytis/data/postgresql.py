@@ -870,14 +870,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         table_names = map(lambda b: b.table(), bindings)
         table_names = remove_duplicates(table_names)
         table_list = string.join(table_names, ', ')
-        base_cond = self._pdbb_condition2sql(self._condition).replace('%','%%')
         if len(table_names) <= 1:
-            condition = base_cond
+            relation = 'true'
         else:
             rels = ['%s=%s' % (self._pdbb_btabcol(b),
                                self._pdbb_btabcol(b.related_to()))
                     for b in bindings if b.related_to()]
-            condition = ' and '.join(rels + [base_cond])
+            relation = ' and '.join(rels)
         main_table = self._key_binding[0].table()
         schema, main_table_name = self._pdbb_split_table_name(main_table)
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
@@ -892,7 +891,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return string.join(items, ',')
         ordering = sortspec('ASC')
         rordering = sortspec('DESC')
-        key_and_condition = '(%s) and (%s)' % (key_cond, condition)
+        condition = key_cond
+        relation_and_condition = '(%s) and (%s)' % (relation, condition)
         def make_lock_command():
             qresult = self._pg_query(
                 "select relkind from pg_class join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) where nspname='%s' and relname='%s'" %
@@ -950,23 +950,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
             ('select %%(columns)s from %s where %s order by %s %%(supplement)s' %
-             (table_list, key_and_condition, ordering,)),
+             (table_list, relation_and_condition, ordering,)),
             {'columns': column_list, 'supplement': ''})
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
-          (first_key_column, table_list, condition)
+          (first_key_column, table_list, relation)
         self._pdbb_command_distinct = \
           'select distinct %%s from %s where %%s and (%s) order by %%s' % \
-          (table_list, condition)
+          (table_list, relation)
         self._pdbb_command_select = \
           self._SQLCommandTemplate(
             (('declare %s scroll cursor for select %%(columns)s from %s '+
               'where %%(condition)s and (%s) order by %%(ordering)s %s') %
-             (self._PDBB_CURSOR_NAME, table_list, condition, ordering)),
+             (self._PDBB_CURSOR_NAME, table_list, relation, ordering)),
             {'columns': column_list})
         self._pdbb_command_select_agg = \
           ('select %%s(%%s) from %s where %%s and (%s)' %
-           (table_list, condition))
+           (table_list, relation))
         self._pdbb_command_fetch_forward = \
           'fetch forward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_fetch_backward = \
@@ -979,17 +979,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s) and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (main_table, condition, ordering,)),
+             (main_table, relation, ordering,)),
             {'columns': column_list})
         self._pdbb_command_search_last = \
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s) and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (main_table, condition, rordering,)),
+             (main_table, relation, rordering,)),
             {'columns': column_list})
         self._pdbb_command_search_distance = \
           'select count(%s) from %s where (%s) and %%s' % \
-          (first_key_column, main_table, condition)
+          (first_key_column, main_table, relation)
         self._pdbb_command_insert = \
           ('insert into %s (%%s) values (%%s) returning %s' %
            (main_table, first_key_column,))
@@ -1028,10 +1028,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             update_from_clause = ''
         self._pdbb_command_update = \
           'update %s set %%s%s where (%s) and (%%s)' % \
-          (main_table, update_from_clause, condition)
+          (main_table, update_from_clause, relation)
         self._pdbb_command_broken_update_preselect = \
           'select count (%s) from %s where (%s) and (%%s)' % \
-          (first_key_column, main_table, condition)
+          (first_key_column, main_table, relation)
         self._pdbb_command_test_broken_update = \
           (("select 'yes' from pg_class, pg_namespace, pg_rewrite "
             "where pg_rewrite.ev_type = 2 and "
