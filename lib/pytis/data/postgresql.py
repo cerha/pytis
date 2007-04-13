@@ -897,6 +897,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             filter_condition = ''
         else:
             filter_condition = ' and (%s)' % (self._pdbb_condition2sql(self._condition),)
+            filter_condition = filter_condition.replace('%', '%%')
         def make_lock_command():
             qresult = self._pg_query(
                 "select relkind from pg_class join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) where nspname='%s' and relname='%s'" %
