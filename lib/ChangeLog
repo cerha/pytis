@@ -1,3 +1,18 @@
+2007-04-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py: Remove the `condition' specification
+	from `ViewSpec' and rether pass it to the data object from `Spec'.
+
+	* pytis/form/form.py: Reverted previous implementation of the
+	static filter.
+
+	* pytis/data/postgresql.py: Implemented static filtering condition
+	passed to the data object constructor.
+
+	* pytis/data/data.py: New argumnet `condition' for the base `Data'
+	class constructor to support filtering the underlying data rows.
+	This filtering implemented in the `MemData' class.
+
 2007-04-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py: Make the `Suck' button active only if the
