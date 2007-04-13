@@ -1190,9 +1190,8 @@ class LookupForm(RecordForm):
         return sorting
 
     def _current_condition(self, filter=None):
-        conditions = [c for c in (self._view.condition(), self._lf_condition,
-                                  filter or self._lf_filter)
-                      if c is not None]
+        conditions = (self._lf_condition, filter or self._lf_filter)
+        conditions = [c for c in conditions if c is not None]
         if len(conditions) == 0:
             return None
         elif len(conditions) == 1:
