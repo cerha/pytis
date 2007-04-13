@@ -893,6 +893,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         rordering = sortspec('DESC')
         condition = key_cond
         relation_and_condition = '(%s) and (%s)' % (relation, condition)
+        if self._condition is None:
+            filter_condition = ''
+        else:
+            filter_condition = ' and (%s)' % (self._pdbb_condition2sql(self._condition),)
         def make_lock_command():
             qresult = self._pg_query(
                 "select relkind from pg_class join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) where nspname='%s' and relname='%s'" %
@@ -949,24 +953,25 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
-            ('select %%(columns)s from %s where %s and %%(condition)s order by %s %%(supplement)s' %
-             (table_list, relation_and_condition, ordering,)),
+            ('select %%(columns)s from %s where %s%s order by %s %%(supplement)s' %
+             (table_list, relation_and_condition, filter_condition, ordering,)),
             {'columns': column_list, 'supplement': '', 'condition': 'true'})
         self._pdbb_command_count = \
-          'select count(%s) from %s where %%s and (%s)' % \
-          (first_key_column, table_list, relation)
+          'select count(%s) from %s where %%s and (%s)%s' % \
+          (first_key_column, table_list, relation, filter_condition,)
         self._pdbb_command_distinct = \
-          'select distinct %%s from %s where %%s and (%s) order by %%s' % \
-          (table_list, relation)
+          'select distinct %%s from %s where %%s and (%s)%s order by %%s' % \
+          (table_list, relation, filter_condition,)
         self._pdbb_command_select = \
           self._SQLCommandTemplate(
             (('declare %s scroll cursor for select %%(columns)s from %s '+
-              'where %%(condition)s and (%s) order by %%(ordering)s %s') %
-             (self._PDBB_CURSOR_NAME, table_list, relation, ordering)),
+              'where %%(condition)s and (%s)%s order by %%(ordering)s %s') %
+             (self._PDBB_CURSOR_NAME, table_list, relation, filter_condition,
+              ordering,)),
             {'columns': column_list})
         self._pdbb_command_select_agg = \
-          ('select %%s(%%s) from %s where %%s and (%s)' %
-           (table_list, relation))
+          ('select %%s(%%s) from %s where %%s and (%s)%s' %
+           (table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
           'fetch forward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_fetch_backward = \
@@ -977,19 +982,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'move backward %%d from %s' % self._PDBB_CURSOR_NAME
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
-            (('select %%(columns)s from %s where (%s) and %%(condition)s '+
+            (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (main_table, relation, ordering,)),
+             (main_table, relation, filter_condition, ordering,)),
             {'columns': column_list})
         self._pdbb_command_search_last = \
           self._SQLCommandTemplate(
-            (('select %%(columns)s from %s where (%s) and %%(condition)s '+
+            (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (main_table, relation, rordering,)),
+             (main_table, relation, filter_condition, rordering,)),
             {'columns': column_list})
         self._pdbb_command_search_distance = \
-          'select count(%s) from %s where (%s) and %%s' % \
-          (first_key_column, main_table, relation)
+          'select count(%s) from %s where (%s)%s and %%s' % \
+          (first_key_column, main_table, relation, filter_condition,)
         self._pdbb_command_insert = \
           ('insert into %s (%%s) values (%%s) returning %s' %
            (main_table, first_key_column,))
@@ -1046,14 +1051,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_notify = \
           'notify MODIF_%s' % main_table
         self._pg_notifications = map(lambda t: 'MODIF_%s' % t, table_names)
-
-    def _pdbb_full_condition2sql(self, condition):
-        if self._condition is not None:
-            if condition is None:
-                condition = self._condition
-            else:
-                condition = AND(self._condition, condition)
-        return self._pdbb_condition2sql(condition)
 
     def _pdbb_condition2sql(self, condition):
         if condition == None:
@@ -1182,11 +1179,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pg_row (self, key_value, columns, transaction=None, supplement=''):
         """Retrieve and return raw data corresponding to 'key_value'."""
-        if self._condition is None:
-            condition = 'true'
-        else:
-            condition = self._pdbb_condition2sql(self._condition)
-        args = {'key': key_value, 'supplement': supplement, 'condition': condition}
+        args = {'key': key_value, 'supplement': supplement}
         if columns:
             args['columns'] = self._pdbb_sql_column_list_from_names(columns)
         query = self._pdbb_command_row.format(args)
@@ -1290,7 +1283,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           transaction -- transaction object
           
         """
-        cond_string = self._pdbb_full_condition2sql(condition)
+        cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
         data = self._pg_query(self._pdbb_command_count % cond_string)
         args = {'condition': cond_string, 'ordering': sort_string}
@@ -1309,7 +1302,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
 
     def _pg_distinct (self, column, condition, sort, transaction=None):
-        cond_string = self._pdbb_full_condition2sql(condition)
+        cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(((column, sort),))
         if sort_string.endswith(','):
             sort_string = sort_string[:-1]
@@ -1322,7 +1315,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
     
     def _pg_select_aggregate(self, operation, condition, transaction=None):
-        cond_string = self._pdbb_full_condition2sql(condition)
+        cond_string = self._pdbb_condition2sql(condition)
         aggfun, colid = operation
         FMAPPING = {self.AGG_MIN: 'min',
                     self.AGG_MAX: 'max',
