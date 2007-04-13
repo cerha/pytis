@@ -693,7 +693,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None,
                  on_delete_record=None, on_line_commit=None, redirect=None,
                  focus_field=None, description=None, help=None,
-                 row_style=FIELD_STYLE_DEFAULT, condition=None, conditions=()):
+                 row_style=FIELD_STYLE_DEFAULT, conditions=()):
         
         """Inicializuj instanci.
 
@@ -834,12 +834,6 @@ class ViewSpec(object):
             instance) returning the 'FieldStyle' for one row (based on its
             values).
 
-          condition -- a hardcoded condition used for this view to filter its
-            records.  This condition is used permanently and the user is not
-            able to switch it off.  He even does not know that it exists.  It
-            has the same effect as implementing the condition in the underlying
-            data object.  The value is a 'pytis.data.Operator' instance.
-
           conditions -- a sequence of named conditions ('Condition' instances),
             which should be available to the user for filtering/searching
             records in this view.
@@ -933,7 +927,6 @@ class ViewSpec(object):
                     assert self.field(id) is not None
         assert callable(check) or isinstance(check, (list, tuple))
         check = xtuple(check)
-        assert condition is None or isinstance(condition, pytis.data.Operator)
         assert isinstance(conditions, tuple)
         if __debug__:
             for f in check:
@@ -970,7 +963,6 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
-        self._condition = condition
         self._conditions = tuple(conditions)
 
     def title(self):
@@ -1075,10 +1067,6 @@ class ViewSpec(object):
     def conditions(self):
         """Vra» tuple pøeddefinovaných filtraèních/vyhledávacích podmínek."""
         return self._conditions
-
-    def condition(self):
-        """Vra» podmínku filtrace dat."""
-        return self._condition
 
     
 class BindingSpec(object):
@@ -2297,6 +2285,14 @@ class Specification(object):
     access_rights = None
     """Pøístupová práva náhledu jako instance 'AccessRights'."""
 
+    condition = None
+    """A hardcoded condition filtering data of the underlying data object.
+
+    This condition is used permanently and the user is not able to switch it
+    off or know that it exists.  It has the same effect as implementing the
+    condition in the underlying data source.  The value is a
+    'pytis.data.Operator' instance."""
+    
     data_cls = pytis.data.DBDataDefault
     """Datová tøída pou¾itá pro vytvoøení datového objektu."""
 
@@ -2333,7 +2329,7 @@ class Specification(object):
     
     def __init__(self, resolver):
         self._resolver = resolver
-        for attr in ('fields', 'access_rights', 'bindings', 'cb'):
+        for attr in ('fields', 'access_rights', 'condition', 'bindings', 'cb'):
             value = getattr(self, attr)
             if callable(value):
                 setattr(self, attr, value())
@@ -2342,7 +2338,7 @@ class Specification(object):
         self._view_spec_kwargs = {'description': self.__class__.__doc__}
         for attr in dir(self):
             if not (attr.startswith('_') or attr.endswith('_spec') or \
-                    attr in ('table', 'key', 'access_rights',
+                    attr in ('table', 'key', 'access_rights', 'condition',
                              'data_cls', 'bindings', 'cb', 'prints',
                              'oid', # for backward compatibility 
                              )):
@@ -2406,7 +2402,8 @@ class Specification(object):
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
         return _DataFactoryWithOrigin(self.data_cls, *args, 
-                                      **dict(access_rights=access_rights))
+                                      **dict(access_rights=access_rights,
+                                             condition=self.condition))
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:
