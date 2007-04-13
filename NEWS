@@ -30,6 +30,11 @@
 
 	Nová tøída DBAccessRights.
 
+2007-04-13 Milan Zamazal  <pdm@brailcom.org>
+
+	Datové objekty mají nyní nový argument `condition' umo¾òující
+	implicitnì filtrovat jejich obsah.
+	
 2007-04-06 Tomas Cerha  <cerha@brailcom.org>
 
 	V pytis-extensions byly pøístupy k datovému objektu `DBConfig'

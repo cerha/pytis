@@ -798,6 +798,13 @@ class DBDataDefault(_DBTest):
              B('popis', 'xcosi', 'popis')),
             key,
             conn)
+        self._dcosi_condition = pytis.data.DBDataDefault(
+            (key,
+             B('popis', 'xcosi', 'popis')),
+            key, conn,
+            condition=pytis.data.AND(
+                pytis.data.GE('id', pytis.data.Value(pytis.data.Integer(), 3)),
+                pytis.data.LT('id', pytis.data.Value(pytis.data.Integer(), 6))))
         # bin
         key = B('id', 'bin', 'id')
         dbin = pytis.data.DBDataDefault(
@@ -1018,6 +1025,25 @@ class DBDataDefault(_DBTest):
         assert result == 2, result
         result = d.select_aggregate((d.AGG_SUM, 'castka')).value()
         assert result == 3000, result
+    def test_constructor_condition(self):
+        d = self._dcosi_condition
+        def I(i):
+            return pytis.data.Value(pytis.data.Integer(), i)
+        assert d.row(I(2)) is None, 'Excluded row found in limited data object'
+        assert d.row(I(3)) is not None, 'Row not found in limited data object'
+        def test_select(condition, n):
+            d.select(condition=condition)
+            try:
+                i = 0
+                while d.fetchone() is not None:
+                    i = i + 1
+                assert i == n, ('Invalid number of rows in a limited select',
+                                condition, n, i,)
+            finally:
+                d.close()
+        test_select(None, 2)
+        test_select(pytis.data.LT('id', I(5)), 1)
+        test_select(pytis.data.GT('id', I(6)), 0)
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)

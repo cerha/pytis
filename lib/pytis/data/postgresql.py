@@ -949,9 +949,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
-            ('select %%(columns)s from %s where %s order by %s %%(supplement)s' %
+            ('select %%(columns)s from %s where %s and %%(condition)s order by %s %%(supplement)s' %
              (table_list, relation_and_condition, ordering,)),
-            {'columns': column_list, 'supplement': ''})
+            {'columns': column_list, 'supplement': '', 'condition': 'true'})
         self._pdbb_command_count = \
           'select count(%s) from %s where %%s and (%s)' % \
           (first_key_column, table_list, relation)
@@ -1046,6 +1046,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_notify = \
           'notify MODIF_%s' % main_table
         self._pg_notifications = map(lambda t: 'MODIF_%s' % t, table_names)
+
+    def _pdbb_full_condition2sql(self, condition):
+        if self._condition is not None:
+            if condition is None:
+                condition = self._condition
+            else:
+                condition = AND(self._condition, condition)
+        return self._pdbb_condition2sql(condition)
 
     def _pdbb_condition2sql(self, condition):
         if condition == None:
@@ -1174,7 +1182,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pg_row (self, key_value, columns, transaction=None, supplement=''):
         """Retrieve and return raw data corresponding to 'key_value'."""
-        args = {'key': key_value, 'supplement': supplement}
+        if self._condition is None:
+            condition = 'true'
+        else:
+            condition = self._pdbb_condition2sql(self._condition)
+        args = {'key': key_value, 'supplement': supplement, 'condition': condition}
         if columns:
             args['columns'] = self._pdbb_sql_column_list_from_names(columns)
         query = self._pdbb_command_row.format(args)
@@ -1278,7 +1290,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           transaction -- transaction object
           
         """
-        cond_string = self._pdbb_condition2sql(condition)
+        cond_string = self._pdbb_full_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
         data = self._pg_query(self._pdbb_command_count % cond_string)
         args = {'condition': cond_string, 'ordering': sort_string}
@@ -1297,7 +1309,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
 
     def _pg_distinct (self, column, condition, sort, transaction=None):
-        cond_string = self._pdbb_condition2sql(condition)
+        cond_string = self._pdbb_full_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(((column, sort),))
         if sort_string.endswith(','):
             sort_string = sort_string[:-1]
@@ -1310,7 +1322,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
     
     def _pg_select_aggregate(self, operation, condition, transaction=None):
-        cond_string = self._pdbb_condition2sql(condition)
+        cond_string = self._pdbb_full_condition2sql(condition)
         aggfun, colid = operation
         FMAPPING = {self.AGG_MIN: 'min',
                     self.AGG_MAX: 'max',

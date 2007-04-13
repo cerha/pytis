@@ -35,6 +35,12 @@
 	* pytis/data/postgresql.py: Allow also `NE' operator for comparing
 	binary data with a NULL value.
 
+2007-04-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/data.py: Support for initial filtering condition in
+	data objects.
+	* pytis/data/postgresql.py: See above.
+
 2007-04-05  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/access.py (DBAccessRights): New class.

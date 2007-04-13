@@ -185,24 +185,24 @@ class Data(object):
     class UnsupportedOperation(Exception):
         """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
     
-    def __init__(self, columns, key, ordering=None, **kwargs):
-        """Inicializuj datový zdroj.
+    def __init__(self, columns, key, ordering=None, condition=None, **kwargs):
+        """
+        Arguments:
 
-        Argumenty:
-        
-          columns -- sekvence instancí tøídy 'ColumnSpec', tato sekvence
-            jednoznaènì urèuje sloupce tabulky vèetnì jejich poøadí, které je
-            dáno jejich poøadím v 'columns'
-          key -- klíèový sloupec nebo seznam klíèových sloupcù, jejich¾
-            hodnoty jednoznaènì identifikují øádky tabulky; v¹echny tyto
-            sloupce musí být prvky 'columns'
-          ordering -- specifikace automaticky udr¾ovaného tøídìní, id sloupce
-            nebo tuple ids sloupcù nebo 'None'.  Není-li 'None', je automaticky
-            udr¾ováno poøadí øádkù dle daného sloupce (první z uvedených ids),
-            který musí být typu `types_.Integer'.  Pokud je argumentem tuple,
-            je poøadí udr¾ováno v¾dy pouze v rámci øádkù, které mají stejné
-            hodnoty v druhém a¾ posledním z uvedených sloupcù.
-          kwargs -- pøedáno pøedkovi
+          columns -- sequence of 'ColumnSpec' instances, it uniquely identifies
+            table columns and their order (by their ordering in 'columns')
+          key -- key column or a list of key columns uniquely identifying table
+            rows; all those columns must be present in 'columns'
+          ordering -- specification of automatically retained sorting, it is a
+            column id or a tuple of column ids or 'None'.  If it is not 'None',
+            rows are automatically ordered by the given column (or the first of
+            the given columns) in 'select*' operations.  This ordering column
+            must be of type 'types_.Integer'.  If the argument is a tuple, only
+            rows with the same values in the second and following columns of
+            the tuple are mutually ordered.
+          condition -- condition limiting selection of lines in all 'select*'
+            and 'row' operations; 'Operator' instance or 'None'
+          kwargs -- given to the ancestor constructor
             
         """
         super(Data,self).__init__(columns=columns, key=key, ordering=ordering,
@@ -219,6 +219,7 @@ class Data(object):
         self._columns = tuple(columns)
         self._key = key
         self._ordering = ordering
+        self._condition = condition
         self._change_number = pytis.util.Counter()
         self._on_change_callbacks = []
         self._select_last_row_number = None
@@ -788,8 +789,9 @@ class MemData(Data):
             key = key[0]
         data = self._mem_data
         k = self.key()[0].id()
+        condition = self._condition2pyfunc(self._condition)
         for i in range(len(data)):
-            if data[i][k] == key:
+            if data[i][k] == key and condition(data[i]):
                 return i
         else:
             return None
@@ -828,6 +830,11 @@ class MemData(Data):
         self._mem_cursor = -1
 
     def _condition2pyfunc(self, condition):
+        if self._condition is not None:
+            if condition is None:
+                condition = self._condition
+            else:
+                condition = AND(self._condition, condition)
         if condition is None:
             return lambda row: True
         op_name = condition.name()
