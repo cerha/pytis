@@ -1,5 +1,7 @@
 2007-04-13  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/commands_.py: Improved command help string.
+
 	* pytis/presentation/spec.py: Remove the `condition' specification
 	from `ViewSpec' and rether pass it to the data object from `Spec'.
 
