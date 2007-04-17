@@ -1312,7 +1312,9 @@ class LookupForm(RecordForm):
             analyze(self._lf_filter)
         return columns
         
-    def _filter(self, condition):
+    def filter(self, condition):
+        """Apply given filtering condition."""
+        Condition("", condition) # Make sure the condition is well formed.
         self._lf_filter = condition
         if condition is not None:
             self._lf_last_filter = condition
@@ -1364,13 +1366,13 @@ class LookupForm(RecordForm):
                                            if not c.fixed()])
             self._save_conditions('conditions', self._user_conditions)
         if perform and condition != self._lf_filter:
-            self._filter(condition)
+            self.filter(condition)
 
     def _can_unfilter(self):
         return self._lf_filter is not None
         
     def _cmd_unfilter(self):
-        self._filter(None)
+        self.filter(None)
 
     def _cmd_filter_by_value(self, column_id, value):
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:

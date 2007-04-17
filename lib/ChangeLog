@@ -10,6 +10,8 @@
 
 	* pytis/form/application.py: Apply a filter on a form found on the window stack.
 
+	* pytis/form/form.py: Make the `_filter()' method public.
+	
 2007-04-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/postgresql.py: Escape `%' in the initial filtering condition.

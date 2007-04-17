@@ -383,9 +383,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._windows.activate(form)
                 self.restore()
 
-    def _post_init_form(self, form, select_row=None):
-        if select_row:
+    def _post_init_form(self, form, select_row=None, filter=None, **kwargs):
+        if select_row is not None:
             form.select_row(select_row)
+        if filter is not None:
+            form.filter(filter)
 
     def _config_name(self):
         # Return a name for saving/restoring the configuration.
@@ -613,7 +615,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._raise_form(form)
                 message(_('Formuláø "%s" nalezen na zásobníku oken.') % \
                         form.title())
-                self._post_init_form(form, select_row=select_row)
+                self._post_init_form(form, select_row=select_row, **kwargs)
                 return result
             if issubclass(form_class, PopupForm):
                 parent = self._modals.top() or self._frame
@@ -632,7 +634,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.push(form)
                     message('', root=True)
                     form.show()
-                    self._post_init_form(form, select_row=select_row)
+                    self._post_init_form(form, select_row=select_row, **kwargs)
                     try:
                         form_str = str(form) # Dead form doesn't speak...
                         result = form.run()
@@ -662,7 +664,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         item = (self._form_menu_item_title(form),
                                 dict(form_class=form_class, name=name))
                         self._update_recent_forms(item)
-                    self._post_init_form(form, select_row=select_row)
+                    self._post_init_form(form, select_row=select_row, **kwargs)
         except UserBreakException:
             pass
         except:
