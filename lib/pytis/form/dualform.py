@@ -161,7 +161,7 @@ class DualForm(Form, Refreshable):
 
     def title(self):
         """Vra» název formuláøe jako øetìzec."""
-        return self._view.title()
+        return self._view.title() or ' / '.join((self._main_form.title(), self._side_form.title()))
 
     def select_row(self, *args, **kwargs):
         if hasattr(self._main_form, 'select_row'):
@@ -315,24 +315,26 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         view = self._view
         self._binding_column = bcol = view.binding_column()
         self._side_binding_column = sbcol = view.side_binding_column()
-        f = SideBrowseForm(parent, self._resolver, self._side_name,
-                           sibling_name=self._main_name,
-                           sibling_row=lambda : self._selection_data,
-                           sibling_binding_column=bcol,
-                           binding_column=sbcol,
-                           hide_binding_column=view.hide_binding_column(),
-                           append_condition=view.append_condition(),
-                           guardian=self)
-        self._sbcol_type = f._data.find_column(sbcol).type()
+        condition = view.condition()
+        if bcol:
+            column_condition = lambda row: pytis.data.EQ(sbcol, row[bcol])
+            if condition is not None:
+                cond = condition
+                condition = lambda row: pytis.data.AND(column_condition(row), cond(row))
+            else:
+                condition = column_condition
+        f = SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
+                           main_form=self._main_form, selection_condition=condition,
+                           hide_columns=view.hide_binding_column() and (sbcol,) or ())
+        if sbcol:
+            self._sbcol_type = f._data.find_column(sbcol).type()
         return f
 
     def _set_side_form_callbacks(self):
         f = self._side_form
         if isinstance(self._main_form, Refreshable):
-            f.set_callback(ListForm.CALL_MODIFICATION,
-                           self._main_form.refresh)
-        f.set_callback(ListForm.CALL_USER_INTERACTION,
-                       lambda : self._select_form(self._side_form))
+            f.set_callback(ListForm.CALL_MODIFICATION, self._main_form.refresh)
+        f.set_callback(ListForm.CALL_USER_INTERACTION, lambda : self._select_form(self._side_form))
 
     def _do_selection(self, row):
         focused = wx_focused_window()
@@ -346,11 +348,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             # zná nìkdo lep¹í øe¹ení?
             return False
         try:
-            v = pytis.data.Value(self._sbcol_type,
-                                 row[self._binding_column].value())
             f = self._side_form
-            f.set_prefill({self._side_binding_column: v})
-            f.filter(data=row.row())
+            if self._binding_column:
+                v = pytis.data.Value(self._sbcol_type, row[self._binding_column].value())
+                f.set_prefill({self._side_binding_column: v})
+            f.on_selection(row)
             f.Show(True)
             # Tento _select_form zde byl neznámo proè.  Proto¾e se tak necht2n2
             # pøesune focus na horní formuláø napø. po editaci dolního
@@ -379,20 +381,18 @@ class BrowseDualForm(SideBrowseDualForm):
     """
 
     def _create_main_form(self, parent, **kwargs):
-        dualform = self
-        class _MainBrowseForm(BrowseForm):
-            def title(self):
-                title = dualform._view.title()
-                if not title:
-                    title = super_(_MainBrowseForm).title(self)
-                return title
-        return _MainBrowseForm(parent, self._resolver, self._main_name,
-                               guardian=self, **kwargs)
+        #dualform = self
+        #class _MainBrowseForm(BrowseForm):
+        #    def title(self):
+        #        title = dualform._view.title()
+        #        if not title:
+        #            title = super_(_MainBrowseForm).title(self)
+        #        return title
+        return BrowseForm(parent, self._resolver, self._main_name, guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(f.CALL_USER_INTERACTION,
-                       lambda : self._select_form(self._main_form))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(self._main_form))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
         f.set_callback(f.CALL_ACTIVATION, self._on_main_activation)
     
@@ -419,34 +419,29 @@ class ShowDualForm(SideBrowseDualForm):
             self._select_form(self._main_form, force=True)
         
     def _create_main_form(self, parent, **kwargs):
-        return BrowsableShowForm(parent, self._resolver,
-                                 self._main_name,
-                                 guardian=self, **kwargs)
+        return BrowsableShowForm(parent, self._resolver, self._main_name, guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
-        self._main_form.set_callback(BrowsableShowForm.CALL_SELECTION,
-                                     self._on_main_selection)
+        self._main_form.set_callback(BrowsableShowForm.CALL_SELECTION, self._on_main_selection)
 
 
 class BrowseShowDualForm(ImmediateSelectionDualForm):
     """Duální formuláø s øádkovým seznamem nahoøe a náhledem dole.
 
-    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a formuláøe s
-    roz¹iøujícími informacemi.  Podle specifikace vazby a dolního formuláøe
-    mù¾e jít jak o detaily k aktuálnímu záznamu, tak o souhrnné informace
-    (napø. výsledky agregací nad daty horního formuláøe atd.).
+    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a formuláøe s roz¹iøujícími
+    informacemi.  Podle specifikace vazby a dolního formuláøe mù¾e jít jak o detaily k aktuálnímu
+    záznamu, tak o souhrnné informace (napø. výsledky agregací nad daty horního formuláøe atd.).
 
     """
     DESCR = _("duální náhled")
     
     def _create_main_form(self, parent, **kwargs):
-        return BrowseForm(parent, self._resolver, self._name, guardian=self,
-                          **kwargs)
+        assert view.binding_column() is not None
+        return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(ListForm.CALL_USER_INTERACTION,
-                       lambda : self._select_form(self._main_form))
+        f.set_callback(ListForm.CALL_USER_INTERACTION, lambda : self._select_form(self._main_form))
         f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
 
     def _create_side_form(self, parent):
@@ -490,8 +485,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
         return self._SideForm(parent, self._resolver, self._name)
 
     def _set_side_form_callbacks(self):
-        self._side_form.set_callback(ShowForm.CALL_SELECTION,
-                                     self._on_side_selection)
+        self._side_form.set_callback(ShowForm.CALL_SELECTION, self._on_side_selection)
     
     def _do_selection(self, row):
         if self._side_form is not None:

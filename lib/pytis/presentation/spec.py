@@ -1089,39 +1089,38 @@ class BindingSpec(object):
 
     """
     
-    def __init__(self, title, binding_column, side_binding_column=None,
-                 hide_binding_column=True, description=None,
-                 append_condition=None, sash_ratio=0.5,
-                 orientation=Orientation.HORIZONTAL):
-        
-        """Inicializuj instanci.
+    def __init__(self, title=None, binding_column=None, side_binding_column=None,
+                 hide_binding_column=True, append_condition=None, condition=None, description=None, 
+                 sash_ratio=0.5, orientation=Orientation.HORIZONTAL):
+        """Inicialize the specification.
 
-        Argumenty:
+        Arguments:
 
-          title -- titulek daného duálního spojení formuláøù jako øetìzec.
+          title -- The title of the dual form as a string.  If omitted, the title will be
+            provided automatically as a concatenation of the titles of both involved forms. 
                         
-          binding_column -- identifikátor vazebního sloupce.  Tento sloupec
-            bude pou¾it pro filtrování vedlej¹ího formuláøe pøi pohybu po
-            záznamech v hlavním formuláøi.  Filtrovací podmínka je implicitnì
-            rovnost hodnot zvolených sloupcù hlavního a vedlej¹ího formuláøe.
-
-          side_binding_column -- identifikátor vazebního sloupce ve vedlej¹ím
-            formuláøi, pokud je jiný, ne¾ `binding_column'.  Výchozí hodnota
-            `None' znamená, ¾e název vazebního sloupce je ve vedlej¹ím
-            formuláøi stejný, jako v hlavním formuláøi.
+          binding_column -- the identifier of the binding column (string).  The binding column
+            determines filtering of the side form depending on the current main form row.  If
+            specified, side form will be filtered to contain only the rows, which have the same
+            values in the binding column as the current main form row.  Use the argument
+            'side_binding_column' if the identifier of the binding column is different in the side
+            form.  Using the binding column is optional and if omitted, the filtering depends
+            solely on the 'condition' argument.
             
-          hide_binding_column -- vazební sloupec mù¾e být (a implicitnì je)
-            ve vedlej¹ím formuláøi vypu¹tìn (jeho hodnota je pro v¹echny
-            vyfiltrované záznamy shodná -- odpovídá hodnotì z hlavního
-            formuláøe).
+          side_binding_column -- identifier of the binding column in the side form.  The default
+            value None means to use the same identifier as given by 'binding_column'.
+            
+          hide_binding_column -- the binding column is hidden by default in the side form.  Pass a
+            false value to this argument to unhide it.
+
+          condition -- a function of one argument (the PresentedRow instance) returning the current
+            side form condition (a 'pytis.data.Operator' instance) for given main form row.  If
+            used together with the binding column, the condition will be used in conjunction with
+            the binding column condition.  If 'binding_column' is None, this condition will be used
+            solely.
 
           description -- textový popis daného duálního spojení formuláøù.
             
-          append_condition -- None nebo funkce jednoho argumentu, kterým je
-            aktuální øádek hlavního formuláøe. V tomto pøípadì musí funkce
-            vrátit instanci Operator, která se pøipojí k implicitní
-            podmínce provazující vazební sloupce.
-
           sash_ratio -- pomìr rozdìlení plochy formuláøù jako desetinné èíslo v
             rozsahu od nuly do jedné.  Výchozí hodnota 0.5 znamená, ¾e
             rozdìlení bude pøesnì v polovinì a obìma formuláøùm tedy pøipadne
@@ -1135,15 +1134,20 @@ class BindingSpec(object):
             ve vertikálním vedle sebe.
 
         """
-        assert isinstance(title, (str, unicode))
-        assert isinstance(binding_column, (str, unicode))
-        assert description is None or isinstance(description, (str, unicode))
-        assert side_binding_column is None or \
-               isinstance(side_binding_column, (str, unicode))
-        assert isinstance(hide_binding_column, bool)
-        assert append_condition is None or callable(append_condition)
-        assert orientation in public_attributes(Orientation)
-        assert isinstance(sash_ratio, float) and 0 < sash_ratio < 1
+        assert title is None or isinstance(title, (str, unicode)), title
+        assert binding_column is None or isinstance(binding_column, (str, unicode)), binding_column
+        assert side_binding_column is None or isinstance(side_binding_column, (str, unicode))
+        assert isinstance(hide_binding_column, bool), hide_binding_column
+        if append_condition is not None:
+            # Backwards compatibility
+            assert condition is None, "Can't use 'append_condition' (deprecated) with 'condition'."
+            condition = append_condition
+        assert condition is None or callable(condition), condition
+        assert condition is not None or binding_column is not None, \
+               "You must specify at least one of 'condition', 'binding_column'."
+        assert description is None or isinstance(description, (str, unicode)), description
+        assert orientation in public_attributes(Orientation), orientation
+        assert isinstance(sash_ratio, float) and 0 < sash_ratio < 1, sash_ratio
         self._title = title
         self._binding_column = binding_column
         if side_binding_column is None:
@@ -1151,11 +1155,9 @@ class BindingSpec(object):
         self._side_binding_column = side_binding_column
         self._hide_binding_column = hide_binding_column
         self._description = description
-        self._append_condition = append_condition
+        self._condition = condition
         self._sash_ratio = sash_ratio
         self._orientation = orientation
-        
-
         
     def title(self):
         """Vra» titulek duálního formuláøe jako øetìzec."""
@@ -1177,9 +1179,9 @@ class BindingSpec(object):
         """Vra» pravdu, pokud má být vazební sloupec skryt ve vedlej¹ím fm."""
         return self._hide_binding_column
 
-    def append_condition(self):
+    def condition(self):
         """Vra» doplòující podmínku."""
-        return self._append_condition
+        return self._condition
     
     def sash_ratio(self):
         return self._sash_ratio

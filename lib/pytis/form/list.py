@@ -80,7 +80,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     DESCR = _("øádkový formuláø")
 
     def __init__(self, *args, **kwargs):
-        super_(ListForm).__init__(self, *args, **kwargs)
+        super(ListForm, self).__init__(*args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
         for action in self._view.actions(linear=True):
             if action.hotkey():
@@ -107,7 +107,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
-        super_(ListForm)._init_attributes(self, **kwargs)
+        super(ListForm, self)._init_attributes(**kwargs)
         assert columns is None or is_sequence(columns)
         # Inicializace atributù závislých na u¾ivatelském nastavení.
         self._init_columns(columns)
@@ -1345,7 +1345,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 return False
         elif command in EDIT_COMMANDS:
             return False
-        return super_(ListForm).can_command(self, command, **kwargs)
+        return super(ListForm, self).can_command(command, **kwargs)
     
     def _cmd_activate(self, alternate=False):
         self._run_callback(self.CALL_ACTIVATION, alternate=alternate)
@@ -1405,9 +1405,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if col is not None:
             col = self._columns[col].id()
         old_sorting = self._lf_sorting
-        sorting = super_(ListForm)._cmd_sort(self, col=col,
-                                                   direction=direction,
-                                                   primary=primary)
+        sorting = super(ListForm, self)._cmd_sort(col=col, direction=direction, primary=primary)
         if sorting is not None and sorting != old_sorting:
             # Update grouping first.
             cols = self._sorting_columns()
@@ -1782,14 +1780,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
 
     def focus(self):
-        super_(ListForm).focus(self)
+        super(ListForm, self).focus()
         self._show_position()
         self._show_data_status()
         self._update_selection_colors()
         self._grid.SetFocus()
         
     def defocus(self):
-        super_(ListForm).defocus(self)
+        super(ListForm, self).defocus()
         self._update_selection_colors()
 
 
@@ -1977,7 +1975,9 @@ class BrowseForm(ListForm):
         def link_title(type, name):
             if name.find('::') != -1:
                 name1, name2 = name.split('::')
-                title = resolver().get(name1, 'binding_spec')[name2].title()
+                title = resolver().get(name1, 'binding_spec')[name2].title() or \
+                        ' / '.join((resolver().get(name1, 'view_spec').title(),
+                                    resolver().get(name2, 'view_spec').title()))
             else:
                 title = resolver().get(name, 'view_spec').title()
             mapping = {FormType.BROWSE: _("Odskok - %s"),
@@ -2127,141 +2127,52 @@ class BrowseForm(ListForm):
         run_form(PrintForm, name, formatter=formatter)
 
 
-class FilteredBrowseForm(BrowseForm):
-    """Prohlí¾ecí formuláø s filtrovaným obsahem.
+class SideBrowseForm(BrowseForm):
+    """Form displaying records depending on other form's current row."""
 
-    Oproti obyèejnému prohlí¾ecímu formuláøi zobrazuje filtrovaný formuláø
-    pouze øádky splòující podmínku zadanou v konstruktoru, pøípadnì
-    kombinovanou se zadaným datovým klíèem.
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        super_(FilteredBrowseForm).__init__(self, *args, **kwargs)
-        self._init_filter()
-    
-    def _init_attributes(self, condition=None, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+    def _init_attributes(self, main_form, selection_condition, hide_columns=(), **kwargs):
+        """Process constructor arguments and initialize attributes.
         
-        Argumenty:
+        Arguments:
 
-          condition -- hodnotou je podmínkový výraz pro datové dotazy, tak jak
-            je definovaný v metodì 'pytis.data.Data.select()'.  Tento výraz mù¾e
-            být i funkcí jednoho argumentu vracející pøíslu¹ný podmínkový
-            výraz, pøedaným argumentem je dictionary id sloupcù (strings) a
-            jejich hodnot (instancí tøídy 'pytis.data.Value').
-
-        Má-li podmínka podobu statického operátoru, je filtrování provedeno
-        ihned a nelze je zmìnit.  Má-li naopak podmínka podobu funkce, jsou
-        zobrazena v¹echna data a¾ do prvního zavolání metody `filter()';
-        následnými voláními této funkce pak lze výbìr upravovat.
+          main_form -- the main form instance.
+          hide_columns -- a list of column names which should be hidden by default
+          selection_condition -- function of one agument (PresentedRow instance) returning a
+            filtering condition for the current main form row.
 
         """
-        super_(FilteredBrowseForm)._init_attributes(self, **kwargs)
-        assert callable(condition) or isinstance(condition, pytis.data.Operator)
-        self._condition = condition
+        assert isinstance(main_form, Form), main_form
+        assert isinstance(hide_columns, (list, tuple)), hide_columns
+        assert callable(selection_condition), selection_condition
+        self._main_form = main_form
+        self._selection_condition = selection_condition
+        self._hide_columns = hide_columns
+        kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
+        super(SideBrowseForm, self)._init_attributes(**kwargs)
 
-    def _init_filter(self):
-        self.filter()
+    def on_selection(self, row):
+        """Update current filter condition
 
-    def filter(self, data=None):
-        """Filtruj data dle podmínky z konstruktoru a 'data'.
+        Arguments:
 
-        Argumenty:
-
-          data -- 'None' nebo dictionary, jeho¾ klíèe jsou ids sloupcù
-            (strings) a hodnoty jim pøíslu¹né hodnoty (instance tøídy
-            'pytis.data.Value').  Jestli¾e je dictionary prázdné, budou
-            odfiltrovány v¹echny záznamy; jestli¾e je 'None', budou naopak
-            v¹echny záznamy zobrazeny.  Tento volitelný argument není nutno
-            v zápisu volání funkce klíèovat.
-
-        Je-li podmínka zadaná v konstruktoru statickým operátorem, metoda pouze
-        zavolá 'refresh()' na obalený list.  Je-li naopak podmínka zadaná
-        v konstruktoru funkcí, je provedeno pøefiltrování v závislosti na
-        argumentu 'data' -- je-li 'None', tak jsou zobrazena v¹echna data bez
-        omezení výbìru, jinak jsou zobrazena data dle podmínky vrácené voláním
-        podmínkové funkce.
+          row -- main form selected row as a PresentedRow instance.
 
         """
-        #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, data))
-        if data is None:
-            condition = None
-        elif data == {}:
-            condition = pytis.data.OR()
-            data = None
-        elif callable(self._condition):
-            condition = self._condition(data)
-        else:
-            condition = self._condition
-        self._lf_condition = condition
+        #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, row))
+        self._lf_condition = self._selection_condition(row)
         self._refresh(reset={'filter': None})
-
-
-class SideBrowseForm(FilteredBrowseForm):
-    """Formuláø zobrazující podmno¾nu øádkù závislých na jiném øádku dat.
-
-    Data tohoto formuláøe jsou filtrována v závislosti na aktuálním øádku v
-    jiném formuláøi.
-    
-    Filtrovací podmínka je vytváøena automaticky jako ekvivalence hodnot
-    vazebních sloupcù v hlavním a vedlej¹ím formuláøi.  Identifikátory
-    pøíslu¹ných sloupcù jsou dány argumenty `binding_column' a
-    `sibling_binding_column'.
-
-    """
-
-    def _init_attributes(self, sibling_name, sibling_row,
-                         sibling_binding_column, binding_column,
-                         hide_binding_column, append_condition=None,
-                         **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
-        
-        Argumenty:
-
-          sibling_name -- jméno specifikace hlavního formuláøe; øetìzec
-          sibling_row -- funkce bez argumentù, která vrátí aktuální datový
-            øádek hlavního formuláøe.
-          sibling_binding_column -- identifikátor vazebního sloupce v hlavním
-            formuláøi; øetìzec
-          binding_column -- identifikátor vazebního sloupce ve vedlej¹ím
-            formuláøi; øetìzec
-          hide_binding_column -- pravdivá hodnota zpùsobí, ¾e vazební sloupec
-            nebude zobrazen.
-          append_condition -- None nebo funkce jednoho argumentu, kterým je
-            aktuální øádek hlavního formuláøe. V tomto pøípadì musí funkce
-            vrátit instanci Operator, která se pøipojí k implicitní
-            podmínce provazující vazební sloupce.
-
-        """
-        column_condition = lambda row: pytis.data.EQ(binding_column,
-                                                   row[sibling_binding_column])
-        if append_condition:
-            condition = lambda row: pytis.data.AND(column_condition(row),
-                                                   append_condition(row))
-        else:
-            condition = column_condition
-        self._sibling_name = sibling_name
-        self._sibling_row = sibling_row
-        self._hide_binding_column = hide_binding_column
-        self._binding_column = binding_column
-        super_(SideBrowseForm)._init_attributes(self, condition, **kwargs)
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
-        if self._hide_binding_column:
-            return tuple([c for c in columns if c != self._binding_column])
+        if self._hide_columns:
+            return tuple([c for c in columns if c not in self._hide_columns])
         else:
             return columns
-        
-    def _init_filter(self):
-        self.filter({})
 
     def _formatter_parameters(self):
-        parameters = FilteredBrowseForm._formatter_parameters(self)
-        extra_parameters = {self._sibling_name+'/'+pytis.output.P_ROW:
-                            self._sibling_row()}
-        parameters.update(extra_parameters)
+        parameters = super(SideBrowseForm, self)._formatter_parameters()
+        parameters.update({self._main_form.name()+'/'+pytis.output.P_ROW:
+                           copy.copy(self._main_form.current_row().row())})
         return parameters
 
     def _update_selection_colors(self):
@@ -2270,4 +2181,4 @@ class SideBrowseForm(FilteredBrowseForm):
             g.ClearSelection()
         else:
             g.SelectRow(g.GetGridCursorRow())
-            super_(SideBrowseForm)._update_selection_colors(self)
+            super(SideBrowseForm, self)._update_selection_colors()
