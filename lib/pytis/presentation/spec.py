@@ -1119,19 +1119,17 @@ class BindingSpec(object):
             the binding column condition.  If 'binding_column' is None, this condition will be used
             solely.
 
-          description -- textový popis daného duálního spojení formuláøù.
+          description -- a brief description of this dual connection of the forms.
             
-          sash_ratio -- pomìr rozdìlení plochy formuláøù jako desetinné èíslo v
-            rozsahu od nuly do jedné.  Výchozí hodnota 0.5 znamená, ¾e
-            rozdìlení bude pøesnì v polovinì a obìma formuláøùm tedy pøipadne
-            stejná plocha.  Men¹i hodnota znamená men¹í horní formuláø, vìt¹í
-            naopak.  Uplatní se pouze pøi zobrazení dvou øádkových formuláøù v
-            horizontálním rozdìlení.  Pøi pøítomnosti editaèního formuláøe je
-            poloha oddìlovaèe øízena jeho ¹íøkou/vý¹kou.
+          sash_ratio -- the relative proportion of the size of the two forms.  The value is a
+            decimal number in the range from zero to one.  The default value of 0.5 denotes equal
+            space for both forms.  Lower value means less space for the main form.  The ratio only
+            has effect when displaying two table forms separated horizontally.  Layout forms are
+            sized according to their width/height.
             
-          orientation -- výchozí orientace duálního formuláøe jako konstanta
-            'Orientation'.  V horizonálním rozdìlení jsou formuláøe nad sebou,
-            ve vertikálním vedle sebe.
+          orientation -- the default orientation of the dual form separator as one of 'Orientation'
+            constants.  In horizontal orientation, the main form is above the side form, in
+            vertical it is on the left side.
 
         """
         assert title is None or isinstance(title, (str, unicode)), title

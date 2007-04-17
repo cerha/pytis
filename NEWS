@@ -4,6 +4,34 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-04-17 Tomas Cerha  <cerha@brailcom.org>
+
+	Specifikace vazby duálních formuláøù nyní nevy¾aduje
+	název (argument `title').  Pokud není název urèen, bude
+	automaticky vytvoøen spojením názvù hlavního a vedlej¹ího
+	formuláøe pomocí lomíka (Napø. "Faktury / Fakturované polo¾ky").
+
+	Argument `append_condition' ve specifikaci vazby duálních
+	formuláøù by ji¾ nemìl být pou¾íván (prozatím byl ponechán pro
+	zpìtnou kompatibilitu).  Stejného efektu lze dosáhnout pou¾itím
+	argumentu `condition' s tím rozdílem, ¾e podmínka `condition' mù¾e
+	být pou¾ita i samostatnì, bez specifikace vazebního sloupce --
+	nemusí tedy jít o dodateènou podmínku, ale jedinou podmínku
+	urèující provázání záznamù formuláøù.  Pøi pou¾ití v kombinaci s
+	vazebním sloupcem je efekt stejný, jako byl doposud s
+	`append_condition'.  Více viz dokumnetace `BindingSpec'.
+	
+	Pøi vyvolání formuláøe se zapnutým filtrem (pøi pøedání argumentu
+	`filter' metodì `run_form()') dojde k uplatnìní tohoto filtru i v
+	pøípadì, ¾e je daný formuláø nalezen na zásobníku oken.  Pokud mìl
+	v takovém pøípadì pùvodní formuláø filtr zapnutý, dojde k zahození
+	pøedchozí filtrovací podmínky.  Toto chování je v¹ak konzistentní
+	vzhledem k fungování argumentu `select_row'.
+	
+	V pytis-demo bylo pøidáno vzorové pou¾ití duálních formuláøù a byl
+	vylep¹en test dialogù.
+
+	
 2007-04-13 Milan Zamazal  <pdm@brailcom.org>
 
 	Datové objekty mají nyní nový argument `condition' umo¾òující
