@@ -45,10 +45,6 @@ NOVÉ VLASTNOSTI:
 
  * Agregaèní li¹ta...
 
- * Titulky dálních formuláøù
-
- * Vazební podmínka duálního formuláøe jako funkce row (nahrazující bcol,sbcol)
- 
  * Vyu¾ití Wikinga pro webové rozhraní k aplikacím
 
    Wiking ji¾ nyní umí pracovat s daty nad pytisovými specifikacemi.
@@ -140,13 +136,6 @@ NOVÉ VLASTNOSTI:
    
 
 INTERNÍ ZÁLE®ITOSTI:
-
- * Zamykání a závislost na OID
-
-   Momentálnì musí být v¹echny tabulky vytváøeny s OID, které je pytisem
-   vyu¾íváno k zamykání øádkù.  V Postgresu je v¹ak od verze 8.1 zamykání øádku
-   vyøe¹eno, tak¾e mù¾eme závislost na pøítomnosti OID zru¹it a vyu¾ít pøímo
-   Postgresového mechanismu zamykání.
 
  * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
 
