@@ -436,7 +436,6 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
     DESCR = _("duální náhled")
     
     def _create_main_form(self, parent, **kwargs):
-        assert view.binding_column() is not None
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
@@ -451,6 +450,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
         if self._side_form is not None:
             view = self._view
             bcol, sbcol = (view.binding_column(), view.side_binding_column())
+            assert bcol is not None
             self._side_form.select_row({sbcol: row[bcol]})
             self._side_form.Show(True)
             self._select_form(self._main_form, force=True)
