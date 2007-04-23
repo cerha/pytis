@@ -1657,6 +1657,7 @@ class DBDataOrdering(_DBTest):
         assert result['popis'].value() == 'bla bla', \
                ('Unexpected value', result['popis'].value())
         value = result['id'].value()
+        d.close()
         assert value > 3 and value < 6, ('Invalid ordering value', value)
         assert d.insert(row, before=key)[1], 'Insert failed'
         d.select()
@@ -1670,6 +1671,7 @@ class DBDataOrdering(_DBTest):
         result = d.fetchone()
         assert result['popis'].value() == 'bla bla', \
                ('Unexpected value', result['popis'].value())
+        d.close()
 tests.add(DBDataOrdering)
 
 
