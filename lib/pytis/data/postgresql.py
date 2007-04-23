@@ -973,6 +973,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              (cursor_name, table_list, relation, filter_condition,
               ordering,)),
             {'columns': column_list})
+        self._pdbb_command_close_select = 'close %s' % (cursor_name,)
         self._pdbb_command_select_agg = \
           ('select %%s(%%s) from %s where %%s and (%s)%s' %
            (table_list, relation, filter_condition,))
@@ -1786,10 +1787,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._key_binding = tuple(key)
         else:
             self._key_binding = (key,)
+        self._pg_is_in_select = False
         super(DBDataPostgreSQL, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             **kwargs)
-        self._pg_is_in_select = False
         self._pg_buffer = self._PgBuffer()
         self._pg_number_of_rows = None
         self._pg_initial_select = False
@@ -1829,10 +1830,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def _pg_commit_transaction (self):
         self._postgresql_commit_transaction()
         self._pg_deallocate_connection()
+        if self._pg_is_in_select is True:
+            self._pg_is_in_select = False
         
     def _pg_rollback_transaction (self):
         self._postgresql_rollback_transaction()
         self._pg_deallocate_connection()
+        if self._pg_is_in_select is True:
+            self._pg_is_in_select = False
 
     # Pomocné metody
 
@@ -1970,7 +1975,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             use_cache = True
         else:
             use_cache = False
-        self.close()
+        if self._pg_is_in_select: 
+            self.close()
         if transaction is None:
             self._pg_begin_transaction ()
         self._pg_is_in_select = transaction or True
@@ -2235,8 +2241,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def close(self):
         if __debug__:
             log(DEBUG, 'Explicitly closing current select')
-        if self._pg_is_in_select is True: # do nothing on user transactions
+        if self._pg_is_in_select is True: # no user transaction
             self._pg_commit_transaction()
+        elif self._pg_is_in_select: # inside user transaction
+            self._pg_query(self._pdbb_command_close_select,
+                           transaction=self._pg_is_in_select)
         self._pg_is_in_select = False
 
     def insert(self, row, after=None, before=None, transaction=None):

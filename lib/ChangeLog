@@ -1,3 +1,13 @@
+2007-04-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py (DBDataPostgreSQL.select): Call `close'
+	only if in select.
+	(DBDataPostgreSQL.close): Call CLOSE query if select is active
+	within user transaction.
+	(DBDataPostgreSQL._pg_commit_transaction)
+	(DBDataPostgreSQL._pg_rollback_transaction): Set _pg_is_in_select
+	to False.
+
 2007-04-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py: Allow binding by a sole condition (without binding columns).
