@@ -569,11 +569,10 @@ class PrintFormExternal(PrintForm, PopupForm):
         return file_name
         
     def _run_viewer(self, file_name):
+        import subprocess
         viewer = config.postscript_viewer
         try:
-            # For unknown reasons os.spawnlp ignores command arguments, so
-            # let's use os.system instead.
-            os.system('%s %s' % (config.postscript_viewer, file_name,))
+            subprocess.call((config.postscript_viewer, file_name,))
         finally:
             os.remove(file_name)
         
