@@ -951,6 +951,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     result = '%s limit 1' % (lock_query,)
                 return result
         self._pdbb_command_lock = self._SQLCommandTemplate(make_lock_command)
+        # We make unique cursors for each instance to avoid conflicts with
+        # codebooks when using cross-class transactions.
+        cursor_name = '%s_%d' % (self._PDBB_CURSOR_NAME, id(self),)
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
@@ -967,20 +970,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           self._SQLCommandTemplate(
             (('declare %s scroll cursor for select %%(columns)s from %s '+
               'where %%(condition)s and (%s)%s order by %%(ordering)s %s') %
-             (self._PDBB_CURSOR_NAME, table_list, relation, filter_condition,
+             (cursor_name, table_list, relation, filter_condition,
               ordering,)),
             {'columns': column_list})
         self._pdbb_command_select_agg = \
           ('select %%s(%%s) from %s where %%s and (%s)%s' %
            (table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
-          'fetch forward %%d from %s' % self._PDBB_CURSOR_NAME
+          'fetch forward %%d from %s' % (cursor_name,)
         self._pdbb_command_fetch_backward = \
-          'fetch backward %%d from %s' % self._PDBB_CURSOR_NAME
+          'fetch backward %%d from %s' % (cursor_name,)
         self._pdbb_command_move_forward = \
-          'move forward %%d from %s' % self._PDBB_CURSOR_NAME
+          'move forward %%d from %s' % (cursor_name,)
         self._pdbb_command_move_backward = \
-          'move backward %%d from %s' % self._PDBB_CURSOR_NAME
+          'move backward %%d from %s' % (cursor_name,)
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
