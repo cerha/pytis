@@ -579,6 +579,6 @@ class PrintFormExternal(PrintForm, PopupForm):
     def show(self):
         pass
     
-    def run(self):
+    def run(self, *args, **kwargs):
         file_name = self._run_formatter()
         thread.start_new_thread(self._run_viewer, (file_name,))
