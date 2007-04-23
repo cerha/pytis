@@ -578,6 +578,13 @@ class Configuration(object):
                  "standardního vstupu.")
         _DEFAULT = 'lpr'
 
+    class _Option_postscript_viewer(_StringOption):
+        _DESCR = _("Shell command to be used for displaying print preview PostScript files. "
+                   "It must take the name of the file to be displayed as its first argument. "
+                   "If this option value is empty, Pytis internal viewer is used.")
+        _DEFAULT = ''
+        #_DEFAULT = 'gv'
+
     class _Option_sendmail_command(_StringOption):
         _DESCR = _("Shellový pøíkaz sendmail vèetnì celé cesty.")
         _DEFAULT = '/usr/lib/sendmail'

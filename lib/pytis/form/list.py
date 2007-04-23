@@ -2124,7 +2124,7 @@ class BrowseForm(ListForm):
         print_resolver = P(self._resolver, parameters=parameters)
         resolvers = (print_resolver,)
         formatter = pytis.output.Formatter(resolvers, print_spec_path)
-        run_form(PrintForm, name, formatter=formatter)
+        run_form(print_form(), name, formatter=formatter)
 
 
 class SideBrowseForm(BrowseForm):

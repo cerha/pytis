@@ -2,7 +2,7 @@
 
 # Formuláø s tiskovým preview a tiskem
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -293,7 +293,18 @@ class PostscriptViewer(wx.ScrolledWindow):
         dc.EndDrawing()
     
 
-class PrintForm(InnerForm):
+def print_form():
+    """Return proper print preview class."""
+    if config.postscript_viewer:
+        form = PrintFormExternal
+    else:
+        form = PrintFormInternal
+    return form
+
+class PrintForm(Form):
+    """Common ancestor of both internal and external print previewers."""
+
+class PrintFormInternal(PrintForm, InnerForm):
     """Formuláø zobrazující preview tisku s mo¾ností jeho provedení."""
     DESCR = "tisková sestava"
     
@@ -528,14 +539,47 @@ class PrintForm(InnerForm):
         elif command == self.COMMAND_PREVIOUS_PAGE:
             self._on_previous_page()
         else:
-            return super_(PrintForm).on_command(self, command, **kwargs)
+            return super_(PrintFormInternal).on_command(self, command, **kwargs)
         return True
 
     def _cleanup(self):
-        super(PrintForm, self)._cleanup()
+        super(PrintFormInternal, self)._cleanup()
         self._formatter.close()
         if self._current_stream is not None:
             try:
                 self._current_stream.close()
             except IOError:
                 pass
+
+class PrintFormExternal(PrintForm, PopupForm):
+    
+    def __init__(self, parent, resolver, name, formatter, guardian=None):
+        super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
+        self._formatter = formatter
+
+    def _run_formatter(self):
+        import tempfile
+        handle, file_name = tempfile.mkstemp()
+        f = os.fdopen(handle, 'w')
+        try:
+            self._formatter.printout(f)
+        except:
+            os.remove(file_name)
+            raise
+        return file_name
+        
+    def _run_viewer(self, file_name):
+        viewer = config.postscript_viewer
+        try:
+            # For unknown reasons os.spawnlp ignores command arguments, so
+            # let's use os.system instead.
+            os.system('%s %s' % (config.postscript_viewer, file_name,))
+        finally:
+            os.remove(file_name)
+        
+    def show(self):
+        pass
+    
+    def run(self):
+        file_name = self._run_formatter()
+        thread.start_new_thread(self._run_viewer, (file_name,))

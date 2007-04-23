@@ -153,9 +153,9 @@ Command(BrowsableShowForm, 'NEXT_RECORD',
         "Pøechod na dal¹í záznam vpøed/vzad") # arg. 'back'
 Command(DualForm, 'OTHER_FORM',
         "Pøechod mezi podformuláøi duálního formuláøe")
-Command(PrintForm, 'NEXT_PAGE',
+Command(PrintFormInternal, 'NEXT_PAGE',
         "Pøechod na dal¹í stránku tiskového náhledu")
-Command(PrintForm, 'PREVIOUS_PAGE',
+Command(PrintFormInternal, 'PREVIOUS_PAGE',
         "Pøechod na pøedchozí stránku tiskového náhledu")
 Command(InputField, 'RESET',
         "Vrácení pùvodní hodnoty vstupního políèka")
@@ -257,8 +257,8 @@ DEFAULT_KEYMAP = (
     ('Next',          BrowsableShowForm.COMMAND_NEXT_RECORD),
     ('Prior',         BrowsableShowForm.COMMAND_NEXT_RECORD(back=True)),
     ('Ctrl-Tab',      DualForm.COMMAND_OTHER_FORM),
-    ('Next',          PrintForm.COMMAND_NEXT_PAGE),
-    ('Prior',         PrintForm.COMMAND_PREVIOUS_PAGE),
+    ('Next',          PrintFormInternal.COMMAND_NEXT_PAGE),
+    ('Prior',         PrintFormInternal.COMMAND_PREVIOUS_PAGE),
     ('Ctrl-Backspace',InputField.COMMAND_RESET),
     ('Alt-Down',      InputField.COMMAND_CONTEXT_MENU),
     ('Alt-Enter',     InputField.COMMAND_CONTEXT_MENU),
