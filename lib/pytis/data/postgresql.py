@@ -1814,9 +1814,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         connections = self._pg_connections()
         if __debug__:
             if len(connections) >= 3:
-                if __debug__:
-                    log(DEBUG, 'Podezøele velká hloubka spojení:',
-                        len(connections))
+                log(DEBUG, 'Podezøele velká hloubka spojení:', len(connections))
         connection = self._pg_get_connection(outside_transaction=True)
         connections.append(connection)
         
