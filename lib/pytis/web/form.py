@@ -329,33 +329,35 @@ class EditForm(LayoutForm):
         
 class BrowseForm(Form):
 
-    def __init__(self, data, view, resolver, rows, columns=None, **kwargs):
+    def __init__(self, data, view, resolver, rows, columns=None, tree_level=None, **kwargs):
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         assert isinstance(rows, (list, tuple)), rows
         self._rows = rows
+        self._tree_level = tree_level
         self._columns = [view.field(id) for id in columns or view.columns()]
 
     def _export_value(self, exporter, row, col):
         g = exporter.generator()
+        key = col.id()
         type = col.type(self._data)
         if isinstance(type, pytis.data.Boolean):
-            value = row[col.id()].value() and _("Yes") or _("No")
+            value = row[key].value() and _("Yes") or _("No")
         elif isinstance(type, pytis.data.Binary):
             value = "--"
         elif type.enumerator():
-            value = self._row.display(col.id())
+            value = self._row.display(key)
         else:
-            value = row[col.id()].export()
+            value = row[key].export()
             if not isinstance(value, lcg.Localizable):
-                value = g.escape(row.format(col.id()))
-        uri = self._uri(row, col.id())
+                value = g.escape(row.format(key))
+        uri = self._uri(row, key)
         if uri:
             value = g.link(value, uri)
+        if self._tree_level is not None and col == self._columns[0]:
+            level = row[self._tree_level].value()
+            value = level * g.span('&nbsp;&nbsp;', cls='tree-indent') + '-&nbsp;' + value
         return value
             
-    def _export_cell(self, exporter, row, col):
-        return 
-        
     def _export_row(self, exporter, row):
         cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
                  for c in self._columns]
@@ -364,7 +366,8 @@ class BrowseForm(Form):
     def _wrap_exported_rows(self, exporter, rows):
         th = [concat('<th>', c.column_label(), '</th>') for c in self._columns]
         return concat('<table border="1" class="browse-form">',
-                      concat('<tr>', th, '</tr>'), rows,
+                      concat('<thead><tr>', th, '</tr></thead>'),
+                      '<tbody>', rows, '</tbody>', 
                       '</table>\n', separator="\n")
 
     def export(self, exporter):
