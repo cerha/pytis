@@ -16,6 +16,12 @@
 	indication in `BrowseForm'.  Mark the 'THEAD' and `TBODY' sections
 	in html.
 
+2007-04-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/form/list.py (ListForm.focus): Call _update_grid.
+
+	* pytis/form/form.py (Form.save): Call `sleep' on the form data object.
+
 2007-04-23  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/postgresql.py (DBDataPostgreSQL.select): Call `close'
