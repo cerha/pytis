@@ -952,8 +952,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 return result
         self._pdbb_command_lock = self._SQLCommandTemplate(make_lock_command)
         # We make unique cursors for each instance to avoid conflicts with
-        # codebooks when using cross-class transactions.
-        cursor_name = '%s_%d' % (self._PDBB_CURSOR_NAME, id(self),)
+        # codebooks when using cross-class transactions.        
+        cursor_name = '%s_%s' % (self._PDBB_CURSOR_NAME, str(id(self)).replace('-','m'))
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(

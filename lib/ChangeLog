@@ -1,3 +1,9 @@
+2007-04-24  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands):
+	Zohledni mo¾nost výskytu záporných `id' objektù.
+
 2007-04-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/dbdata.py: Allow passing enumerator directly
