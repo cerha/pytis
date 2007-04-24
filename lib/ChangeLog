@@ -1,5 +1,11 @@
 2007-04-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/dbdata.py: Allow passing enumerator directly
+	through `DBColumnBinding'.
+
+	* pytis/presentation/spec.py: Allow passing enumerator directly
+	through `FieldSpec'.
+
 	* pytis/web/form.py: Added support for hierarchy
 	indication in `BrowseForm'.  Mark the 'THEAD' and `TBODY' sections
 	in html.
@@ -16,15 +22,17 @@
 
 2007-04-17  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/presentation/spec.py: Allow binding by a sole condition (without binding columns).
-	Don't require explicit `title' in binding specification.
+	* pytis/presentation/spec.py: Allow binding by a sole
+	condition (without binding columns).  Don't require explicit
+	`title' in binding specification.
 
 	* pytis/form/dualform.py: See above.
 
-	* pytis/form/list.py (SideBrowseForm): The interface changed significantly to ignore the
-	binding logic here.
+	* pytis/form/list.py (SideBrowseForm): The interface changed
+	significantly to ignore the binding logic here.
 
-	* pytis/form/application.py: Apply a filter on a form found on the window stack.
+	* pytis/form/application.py: Apply a filter on a form found on the
+	window stack.
 
 	* pytis/form/form.py: Make the `_filter()' method public.
 	
@@ -32,27 +40,31 @@
 
 	* pytis/data/postgresql.py: Escape `%' in the initial filtering condition.
 
-	* pytis/presentation/spec.py (DataSpec): Marked as deprecated.  Pass the initial filtering
-	condition.
+	* pytis/presentation/spec.py (DataSpec): Marked as deprecated.
+	Pass the initial filtering condition.
 
-	* pytis/data/data.py (MemData): Don't apply the initial filtering condition recursively.
+	* pytis/data/data.py (MemData): Don't apply the initial filtering
+	condition recursively.
 
 2007-04-13  Milan Zamazal  <pdm@brailcom.org>
 
-	* pytis/data/data.py: Support for initial filtering condition in data objects.
+	* pytis/data/data.py: Support for initial filtering condition in
+	data objects.
 	
 	* pytis/data/postgresql.py: See above.
 
 2007-04-13  Tomas Cerha  <cerha@brailcom.org>
 	
-	* pytis/presentation/spec.py: Remove the `condition' specification from `ViewSpec' but
-	rather pass it to the data object from `Spec'.
+	* pytis/presentation/spec.py: Remove the `condition' specification
+	from `ViewSpec' but rather pass it to the data object from `Spec'.
 
-	* pytis/form/form.py: Reverted previous implementation of the static filter.
+	* pytis/form/form.py: Reverted previous implementation of the
+	static filter.
 
 2007-04-12  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/search.py: Make the `Suck' button active only if the active row exists.
+	* pytis/form/search.py: Make the `Suck' button active only if the
+	active row exists.
 
 	* pytis/presentation/spec.py (ViewSpec): New argument `condition'
 	for specification of a `hardcoded' data filter.
@@ -63,8 +75,8 @@
 
 2007-04-11  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/search.py: Make sure the operator is either `NE' or `EQ' for
-	binary data.
+	* pytis/form/search.py: Make sure the operator is either `NE' or
+	`EQ' for binary data.
 
 	* pytis/data/postgresql.py: Allow also `NE' operator for comparing
 	binary data with a NULL value.
@@ -76,7 +88,8 @@
 
 2007-04-04  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/form.py (BrowseForm): New constructor argument `columns'.
+	* pytis/web/form.py (BrowseForm): New constructor argument
+	`columns'.
 
 2007-04-03  Tomas Cerha  <cerha@brailcom.org>
 

@@ -378,47 +378,40 @@ class DBColumnBinding(DBBinding):
         Argumenty:
         
           id -- id sloupce
-          table -- jméno databázové tabulky, do které má být tabulkový
-            sloupec napojen, jako string
-          column -- jméno sloupce databázové tabulky, na který má být
-            tabulkový sloupec napojen, jako string nebo sekvence (viz ní¾e)
-          related_to -- instance 'DBColumnBinding' specifikující, se kterým
-            sloupcem jiné databázové tabulky je tento sloupec v relaci; pokud
-            s ¾ádným, je hodnotou 'None'
-          enumerator -- 'None' nebo instance tøídy 'DataFactory' odpovídající
-            navázanému èíselníku.
-          type_ -- explicitnì specifikovaný typ sloupce jako instance tøídy
-            'Type' nebo 'None'.  Je-li 'None', bude typ sloupce urèen
-            automaticky dle informací získaných pøímo z databáze.  V opaèném
-            pøípadì bude typem hodnota tohoto argumentu, která musí odpovídat
-            typu sloupce v databázi (být jeho specializací).
-          **kwargs -- explicitnì definované klíèové argumenty typu.  Pokud jsou
-            definovány libovolné klíèové argumenty, budou tyto pøedány
-            konstruktoru implicitního datového typu.  Typ v takovém pøípadì
-            nesmí být explicitnì urèen argumentem 'type_'.
+          table -- jméno databázové tabulky, do které má být tabulkový sloupec napojen, jako string
+          column -- jméno sloupce databázové tabulky, na který má být tabulkový sloupec napojen,
+            jako string nebo sekvence (viz ní¾e)
+          related_to -- instance 'DBColumnBinding' specifikující, se kterým sloupcem jiné
+            databázové tabulky je tento sloupec v relaci; pokud s ¾ádným, je hodnotou 'None'
+          enumerator -- 'None' nebo instance tøídy 'Enumerator' slou¾ící pro validaci hodnot
+            výètového typu.  Mù¾e být také instancí 'DataFactory', pro ni¾ je potom automaticky
+            vytvoøen pøíslu¹ný `DataEnumerator'.  Jeho konstruktoru budou pøedány také pøípadné
+            argumenty 'value_column' a 'validity_column'.
+          type_ -- explicitnì specifikovaný typ sloupce jako instance tøídy 'Type' nebo 'None'.
+            Je-li 'None', bude typ sloupce urèen automaticky dle informací získaných pøímo
+            z databáze.  V opaèném pøípadì bude typem hodnota tohoto argumentu, která musí
+            odpovídat typu sloupce v databázi (být jeho specializací).
+          **kwargs -- explicitnì definované klíèové argumenty typu.  Pokud jsou definovány
+            libovolné klíèové argumenty, budou tyto pøedány konstruktoru implicitního datového
+            typu.  Typ v takovém pøípadì nesmí být explicitnì urèen argumentem 'type_'.
 
-        Napojení mù¾e být *skryté*, co¾ znamená, ¾e pøímo neodpovídá ¾ádnému
-        sloupci datové tabulky.  To se mù¾e stát napøíklad v pøípadì, ¾e
-        binding je definováno *pouze* kvùli specifikaci relace mezi tabulkami
-        (prostøednictvím argumentu 'related_to').  U skrytého napojení nezále¾í
-        na hodnotì pøíslu¹ného sloupce a tudí¾ k tìmto hodnotám ani nelze
-        pøistupovat.  Napojení je pova¾ováno za skryté, právì kdy¾ øetìzec 'id'
-        je prázdný.
+        Napojení mù¾e být *skryté*, co¾ znamená, ¾e pøímo neodpovídá ¾ádnému sloupci datové
+        tabulky.  To se mù¾e stát napøíklad v pøípadì, ¾e binding je definováno *pouze* kvùli
+        specifikaci relace mezi tabulkami (prostøednictvím argumentu 'related_to').  U skrytého
+        napojení nezále¾í na hodnotì pøíslu¹ného sloupce a tudí¾ k tìmto hodnotám ani nelze
+        pøistupovat.  Napojení je pova¾ováno za skryté, právì kdy¾ øetìzec 'id' je prázdný.
 
-        'related_to' je obecnì nesymetrická relace pøibli¾nì odpovídající
-        specifikátoru REFERENCES.
+        'related_to' je obecnì nesymetrická relace pøibli¾nì odpovídající specifikátoru REFERENCES.
 
-        Pokud argument 'enumerator' není 'None', bude pro datový typ sloupce
-        automaticky vytvoøen enumerátor typu 'DataEnumerator', jeho¾
-        konstruktoru budou pøedány také pøípadné argumenty 'value_column' a
-        'validity_column'.
-          
         """
         DBBinding.__init__(self, id)
         assert isinstance(table, str), table
         assert isinstance(column, str), column
-        assert isinstance(enumerator, DataFactory) or enumerator is None, \
-               enumerator
+        if isinstance(enumerator, Enumerator):
+            kwargs['enumerator'] = enumerator
+            enumerator = None
+        else:
+            assert isinstance(enumerator, DataFactory) or enumerator is None, enumerator
         assert isinstance(type_, Type) or type_ is None, type_
         assert kwargs == {} or type_ is None, (type_, kwargs)
         self._table = table

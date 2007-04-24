@@ -1810,7 +1810,7 @@ class FieldSpec(object):
                 assert isinstance(lnk, Link)
             for arg in kwargs.keys():
                 assert arg in ('not_null', 'value_column', 'validity_column',
-                               'validity_condition', 'constraints',
+                               'validity_condition', 'constraints', 'enumerator',
                                'validation_messages', 'precision', 'maxlen',
                                'format', 'mindate', 'maxdate'), \
                     "Invalid FieldSpec argument for field '%s': %r" % (id,arg)
@@ -2356,8 +2356,11 @@ class Specification(object):
             B = pytis.data.DBColumnBinding
             table = self.table or \
                     camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(),
-                          enumerator=e(f.codebook()), **f.type_kwargs())
+            def type_kwargs(f):
+                enumerator = e(f.codebook())
+                kwargs = f.type_kwargs()
+                return enumerator and dict(enumerator=enumerator, **kwargs) or kwargs
+            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **type_kwargs(f))
                         for f in self.fields if not f.virtual()]
             if self.key:
                 bdict = dict([(b.column(), b) for b in bindings])
