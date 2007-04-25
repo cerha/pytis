@@ -333,7 +333,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def save(self):
         self._saved_state = map(lambda id: (id, get_status(id)),
                                 self._STATUS_FIELDS)
-        self._data.sleep()
+        if self._data is not None:
+            self._data.sleep()
 
     def restore(self):
         for id, message in self._saved_state:
