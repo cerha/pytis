@@ -2245,6 +2245,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_query(self._pdbb_command_close_select,
                            transaction=self._pg_is_in_select)
         self._pg_is_in_select = False
+        # Flush cached data
+        self._pg_buffer.reset()
 
     def insert(self, row, after=None, before=None, transaction=None):
         assert after is None or before is None, \
