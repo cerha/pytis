@@ -235,6 +235,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         state, keys = self._form_state, self._PERSISTENT_FORM_PARAMS
         return dict([(k, state[k]) for k in keys if state.has_key(k)])
 
+    def _release_data(self):
+        if self._data is not None:
+            self._data.sleep()
+
     # Zpracování pøíkazù
    
     def _can_reload_form_state(self):
@@ -333,8 +337,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def save(self):
         self._saved_state = map(lambda id: (id, get_status(id)),
                                 self._STATUS_FIELDS)
-        if self._data is not None:
-            self._data.sleep()
+        self._release_data()
 
     def restore(self):
         for id, message in self._saved_state:

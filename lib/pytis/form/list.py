@@ -1306,7 +1306,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if e:
                 e.close()
         self._editors = []
-
+        
+    def _release_data(self):
+        if not self._table.editing():
+            super(ListForm, self)._release_data()
         
     def _cleanup(self):
         super(ListForm, self)._cleanup()
@@ -1780,7 +1783,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
 
     def focus(self):
-        self._update_grid(data_init=True)
+        if not self.is_edited():
+            self._update_grid(data_init=True)
         super(ListForm, self).focus()
         self._show_position()
         self._show_data_status()
