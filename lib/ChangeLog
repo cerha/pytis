@@ -4,6 +4,11 @@
 
 2007-04-26  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/form/dualform.py (DualForm.save, DualForm.restore): New
+	methods.
+
+2007-04-26  Milan Zamazal  <pdm@brailcom.org>
+	
 	* pytis/data/data.py: `transaction' argument added to many
 	methods.
 

@@ -194,6 +194,14 @@ class DualForm(Form, Refreshable):
         self._splitter.Show(False)
         self._splitter.Enable(False)
 
+    def save(self):
+        self._main_form.save()
+        self._side_form.save()
+
+    def restore(self):        
+        self._main_form.restore()
+        self._side_form.restore()
+
     def _exit_check(self):
         return self._main_form._exit_check() and self._side_form._exit_check()
             
