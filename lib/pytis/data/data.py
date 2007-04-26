@@ -1256,7 +1256,7 @@ class Row:
           
         """
         if __debug__:
-            assert is_sequence(data), ("Agument must be a sequence", data)
+            assert is_sequence(data), ("Argument must be a sequence", data)
             for item in data:
                 assert is_sequence(item) and len(item) == 2, \
                        ('Column definition must be (ID, VALUE) pair', item)

@@ -1,3 +1,7 @@
+2007-04-26  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/data.py (Row.__init__): Oprava pøeklepu.
+
 2007-04-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/list.py: Release data only if not edited.
