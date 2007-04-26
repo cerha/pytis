@@ -244,7 +244,7 @@ class Data(object):
         """Vra» hodnoty klíèe z 'row' jako tuple instancí 'Value'."""
         return row.columns([c.id() for c in self.key()])
         
-    def row(self, key, columns=None):
+    def row(self, key, columns=None, transaction=None):
         """Return row instance 'Row' identified by 'key'.
 
         If there is no such row, return 'None'.
@@ -257,6 +257,8 @@ class Data(object):
           columns -- sequence of names of the columns to retrieve; if not
             given, all columns are retrieved; if given, all key columns must be
             included
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Length of 'key' must correspond to the number of key columns.
 
@@ -265,7 +267,8 @@ class Data(object):
         """
         return None
     
-    def select(self, condition=None, reuse=False, sort=(), columns=None):
+    def select(self, condition=None, reuse=False, sort=(), columns=None,
+               transaction=None):
         """Inicializuj nata¾ení v¹ech sloupcù z datového zdroje.
 
         Metoda sama nemusí je¹tì je¹tì ¾ádná data natahovat, pouze tento pøenos
@@ -290,6 +293,8 @@ class Data(object):
             hodnota je 'ASCENDENT'
           columns -- sequence of IDs of columns to select; if not given, all
             columns are selected
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
           
         Je-li 'condition' rùzné od 'None', specifikuje podmínku pro výbìr
         øádkù.  Podtøídy nejsou povinny podmínky implementovat (mohou je
@@ -333,7 +338,7 @@ class Data(object):
             result.append(function(row))
         return result
 
-    def select_aggregate(self, operation, condition=None):
+    def select_aggregate(self, operation, condition=None, transaction=None):
         """Vra» výslednou hodnotu agregaèní funkce.
 
         Metoda je provádí select, jeho¾ hodnotou je výsledek agregaèní funkce
@@ -348,6 +353,8 @@ class Data(object):
             z 'AGG_*' konstant tøídy a COLUMN je id sloupce, nad kterým má být
             operace provedena.
           condition -- shodné se stejnojmenným argumentem metody 'select()'
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Vrací: Instanci 'Value' odpovídající po¾adované agregaèní funkci.
 
@@ -362,7 +369,7 @@ class Data(object):
         """
         raise self.UnsupportedOperation()
         
-    def fetchone(self, direction=FORWARD):
+    def fetchone(self, direction=FORWARD, transaction=None):
         """Vra» dal¹í øádek dat.
 
         Opakovaným voláním této metody je mo¾no získat v¹echny øádky tabulky.
@@ -372,6 +379,8 @@ class Data(object):
 
           direction -- jedna z konstant 'FORWARD' a 'BACKWARD', urèuje, zda
             má být vrácen pøedchozí nebo následující øádek
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Ne v¹echny podtøídy jsou povinny implementovat vrácení pøedchozího
         øádku (tj. situaci, kdy 'direction==BACKWARD').  Pokud je
@@ -454,7 +463,7 @@ class Data(object):
         while self.fetchone(BACKWARD) != None:
             pass
 
-    def search(self, condition, direction=FORWARD):
+    def search(self, condition, direction=FORWARD, transaction=None):
         """Vyhledej nejbli¾¹í výskyt øádku splòujícího 'condition'.
 
         Argumenty:
@@ -463,6 +472,8 @@ class Data(object):
             instance tøídy 'Operator'
           direction -- smìr vyhledávání, jedna z konstant 'FORWARD' a
             'BACKWARD'
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Vrací: Vzdálenost hledaného øádku od aktuálního øádku v poètu øádkù
         jako kladný integer.  Pokud øádek nebyl nalezen, je vrácena 0.
@@ -513,7 +524,7 @@ class Data(object):
         """
         self._select_last_row_number = None
     
-    def insert(self, row, after=None, before=None):
+    def insert(self, row, after=None, before=None, transaction=None):
         """Vlo¾ 'row' do tabulky.
 
         Argumenty:
@@ -521,6 +532,8 @@ class Data(object):
           row -- instance tøídy 'Row'
           after -- 'None' nebo klíè øádku, za který má být nový øádek vlo¾en
           before -- 'None' nebo klíè øádku, pøed který má být nový øádek vlo¾en
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Argumenty 'after' a 'before' mají smysl pouze tehdy, pokud byl
         v konstruktoru specifikován argument 'ordering'.  Nesmí být
@@ -558,7 +571,7 @@ class Data(object):
         """
         return None, False
 
-    def update(self, key, row):
+    def update(self, key, row, transaction=None):
         """Nahraï øádek identifikovaný klíèem 'key' øádkem 'row'.
 
         Argumenty:
@@ -566,6 +579,8 @@ class Data(object):
           key -- instance nebo seznam instancí tøídy 'types._Value', musí
             odpovídat v¹em sloupcùm klíèe tabulky
           row -- instance tøídy 'Row'
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         'row' nemusí obsahovat hodnoty pro v¹echny sloupce tabulky a mù¾e
         obsahovat i dal¹í sloupce, které tabulka neobsahuje.  Zále¾í na
@@ -600,7 +615,7 @@ class Data(object):
         """
         return None, False
 
-    def update_many(self, condition, row):
+    def update_many(self, condition, row, transaction=None):
         """Nahraï øádky identifikované 'condition' daty 'row'.
 
         Argumenty:
@@ -609,6 +624,8 @@ class Data(object):
             odpovídat v¹em sloupcùm klíèe tabulky; urèuje øádek, který má být
             smazán
           row -- instance tøídy 'Row'
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         'row' nemusí obsahovat hodnoty pro v¹echny sloupce tabulky a mù¾e
         obsahovat i dal¹í sloupce, které tabulka neobsahuje.  Zále¾í na
@@ -635,7 +652,7 @@ class Data(object):
         """
         return 0
     
-    def delete(self, key):
+    def delete(self, key, transaction=None):
         """Sma¾ øádek identifikovaný 'key'.
 
         Argumenty:
@@ -643,6 +660,8 @@ class Data(object):
           key -- instance nebo seznam instancí tøídy 'types._Value', musí
             odpovídat v¹em sloupcùm klíèe tabulky; urèuje øádek, který má být
             smazán
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Pokud je øádek smazán, vra» 1.
         Pokud takový øádek nelze smazat (vèetnì situace, kdy neexistuje),
@@ -653,13 +672,15 @@ class Data(object):
         """
         return 0
 
-    def delete_many(self, condition):
+    def delete_many(self, condition, transaction=None):
         """Sma¾ øádky identifikované 'condition'.
         
         Argumenty:
         
           condition -- podmínka odpovídající øádkùm, které mají být
             smazány; instance tøídy 'Operator'
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
 
         Vrací: Poèet smazaných øádkù.
 
