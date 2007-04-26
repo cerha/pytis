@@ -2,11 +2,16 @@
 
 	* pytis/data/data.py (Row.__init__): Oprava pøeklepu.
 
+2007-04-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py (DBDataPostgreSQL): Automatically
+	restore previously closed select.
+
 2007-04-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/list.py: Release data only if not edited.
 
-2007-04-25  Milan Zamazal  <pdm@zamazal.org>
+2007-04-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/postgresql.py (DBDataPostgreSQL.close): Reset buffer.
 

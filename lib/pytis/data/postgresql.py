@@ -1934,6 +1934,16 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_new_connection(self._pg_connection_data(), self)
         return maker
 
+    def _pg_restore_select(self):
+        row_number = self._pg_last_select_row_number
+        if row_number is None:
+            return False
+        self.select(condition=self._pg_last_select_condition,
+                    sort=self._pg_last_select_sorting,
+                    transaction=self._pg_last_select_transaction)
+        self.skip(row_number)
+        return True
+
     # Veøejné metody a jimi pøímo volané abstraktní metody
 
     def row(self, key, columns=None, transaction=None):
@@ -1982,6 +1992,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_select_sorting = sort
         self._pg_last_select_transaction = transaction
         self._pg_last_fetch_row = None
+        self._pg_last_select_row_number = None
         self._pg_changed = False
         if columns:
             self._pg_make_row_template_limited = \
@@ -2076,19 +2087,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert direction in(FORWARD, BACKWARD), \
                ('Invalid direction', direction)
         if not self._pg_is_in_select:
-            # Pokusy o rekonstrukci fetche nevedou k nièemu dobrému.  Pùvodnì
-            # tu bylo provedení nového selectu a hledání pùvodního øádku
-            # v nìm.  Pomineme-li mo¾né sémantické problémy této operace,
-            # nepomù¾e nám toto ani výkonnostnì, proto¾e musíme prohledat celá
-            # data a¾ po ký¾ené místo -- to u¾ je ov¹em mù¾eme rovnou znovu
-            # naèíst.
-            #
-            # Lep¹í je pou¾ívat explicitní nový select s argumentem `reuse'
-            # v kombinaci s metodou `skip'.  Pøi "pokraèování" selectu nám více
-            # ne¾ o ten samý øádek jde spí¹e o tu samou pozici v datech, co¾
-            # tento postup podporuje.  Pøi vhodném mechanismu bufferování
-            # odpadnou i nejzáva¾nìj¹í výkonnostní problémy.
-            raise ProgramError('Not within select')
+            if not self._pg_restore_select():
+                raise ProgramError('Not within select')
         # Tady zaèíná opravdové vyta¾ení aktuálních dat
         buffer = self._pg_buffer
         row = buffer.fetch(direction, self._pdbb_select_rows)
@@ -2196,7 +2196,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def rewind(self):
         if not self._pg_is_in_select:
-            raise ProgramError('Not within select')
+            if not self._pg_restore_select():
+                raise ProgramError('Not within select')                
         __, pos = self._pg_buffer.current()
         if pos >= 0:
             self.skip(pos+1, BACKWARD)
@@ -2212,7 +2213,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert direction in (FORWARD, BACKWARD), \
                ('Invalid direction', direction)
         if not self._pg_is_in_select:
-            raise ProgramError('Not within select')
+            if not self._pg_restore_select():
+                raise ProgramError('Not within select')
         row, pos = self._pg_buffer.current()
         if not row and pos >= 0 and pos < self._pg_number_of_rows:
             self.skip(1, BACKWARD)
@@ -2239,6 +2241,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def close(self):
         if __debug__:
             log(DEBUG, 'Explicitly closing current select')
+        if self._pg_is_in_select:
+            _, self._pg_last_select_row_number = self._pg_buffer.current()
         if self._pg_is_in_select is True: # no user transaction
             self._pg_commit_transaction()
         elif self._pg_is_in_select: # inside user transaction
