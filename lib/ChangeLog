@@ -4,6 +4,10 @@
 
 2007-04-26  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/form/list.py (ListForm.focus): Grid restoration removed.
+	
+2007-04-26  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/postgresql.py (DBDataPostgreSQL): Automatically
 	restore previously closed select.
 

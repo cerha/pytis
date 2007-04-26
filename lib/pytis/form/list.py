@@ -1783,8 +1783,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             return False
 
     def focus(self):
-        if not self.is_edited():
-            self._update_grid(data_init=True)
         super(ListForm, self).focus()
         self._show_position()
         self._show_data_status()
