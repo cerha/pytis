@@ -66,7 +66,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return current_form(inner=False)
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
-    def __init__(self, parent, resolver, name, guardian=None, **kwargs):
+    def __init__(self, parent, resolver, name, guardian=None, transaction=None,
+                 **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -79,6 +80,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             pou¾it 'parent'.  Tento parametr je vyu¾íván napøíklad pøi zasílání
             klávesových událostí \"nahoru\".  Typicky je to formuláø, který
             tuto instanci vytváøí.
+          transaction -- transaction to use when manipulating data
           kwargs -- viz ní¾e.
 
         Resolver je pou¾it k získání datové a prezentaèní specifikace a
@@ -132,7 +134,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
         self._init_attributes(**kwargs)
         self._result = None
-        self._transaction = None
+        self._init_transaction = self._transaction = transaction
         start_time = time.time()
         self._create_form()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
@@ -492,23 +494,17 @@ class PopupForm:
         # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
         return self._popup_frame_.Close(force=force)
         
-    def run(self, lock_key=None, transaction=None):
+    def run(self, lock_key=None):
         """Show the form as a modal dialog.
 
         Arguments:
 
           lock_key -- lock the row with the given key
-          transaction -- transaction to use when manipulating data
 
         """
         if (lock_key is not None and
             not isinstance(self._data, pytis.data.DBDataDefault)):
             lock_key = None
-        if transaction is not None:
-            self._transaction = transaction
-        elif lock_key is not None:
-            self._transaction = \
-                pytis.data.DBTransactionDefault(config.dbconnection)
         try:
             if lock_key is not None:
                 if not self._lock_record(lock_key):
@@ -519,11 +515,13 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if transaction is None and lock_key is not None:
+            if self._init_transaction is None:
                 try:
                     self._transaction.commit()
                 except:
                     pass
+            else:    
+                self._init_transaction = None
             self._transaction = None
         result = self._result
         self._close(force=True)
@@ -656,7 +654,7 @@ class RecordForm(InnerForm):
             data = self._data
             data.rewind()
             data.skip(row_number)
-            return data.fetchone()
+            return data.fetchone(transaction=self._transaction)
         success, row = db_operation(get_it)
         if not success or not row:
             return None
@@ -681,16 +679,17 @@ class RecordForm(InnerForm):
         assert len(cols) == len(values)
         condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
         data = self._data
-        def find_row(condition):
-            n = data.select(condition, columns=self._select_columns())
-            return data.fetchone()
+        def find_row(condition):            
+            n = data.select(condition, columns=self._select_columns(),
+                            transaction=self._transaction)
+            return data.fetchone(transaction=self._transaction)
         success, result = db_operation((find_row, (condition,)))
         return result
 
     def _find_row_by_key(self, key):
         cols = self._select_columns()
         def dbop():
-            return self._data.row(key, columns=cols)
+            return self._data.row(key, columns=cols, transaction=self._transaction)
         success, row = db_operation(dbop)
         if success and row:
             return row
@@ -708,7 +707,7 @@ class RecordForm(InnerForm):
         data = self._data
         data.rewind()
         def dbop():
-            return data.search(condition)
+            return data.search(condition, transaction=self._transaction)
         success, result = db_operation(dbop)
         if not success:
             return None
@@ -738,10 +737,7 @@ class RecordForm(InnerForm):
 
     def _lock_record(self, key):
         def dbop():
-            if self._transaction:
-                return self._data.lock_row(key, transaction=self._transaction)
-            else:
-                return self._data.lock_row(key)                
+            return self._data.lock_row(key, transaction=self._transaction)
         success, locked = db_operation(dbop)
         if success and locked != None:
             log(EVENT, 'Record is locked')
@@ -855,11 +851,7 @@ class RecordForm(InnerForm):
             if condition is None:
                 return False
             assert isinstance(condition, pytis.data.Operator)
-            if transaction:
-                op = lambda : self._data.delete_many(condition,
-                                                     transaction=transaction)
-            else:
-                op = lambda : self._data.delete_many(condition)
+            op = lambda : self._data.delete_many(condition, transaction=transaction)
             log(EVENT, 'Mazání záznamu:', condition)
         else:
             msg = _("Opravdu chcete záznam zcela vymazat?")        
@@ -867,10 +859,7 @@ class RecordForm(InnerForm):
                 log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
                 return False
             key = self._current_key()
-            if transaction:
-                op = lambda : self._data.delete(key, transaction=transaction)
-            else:
-                op = lambda : self._data.delete(key)                
+            op = lambda : self._data.delete(key, transaction=transaction)
             log(EVENT, 'Mazání záznamu:', key)
         success, result = db_operation(op)
         if success:
@@ -938,7 +927,7 @@ class RecordForm(InnerForm):
                     return False
                 row_data = []
                 for id, type, val in zip(columns, types, values):
-                    value, error = type.validate(val)
+                    value, error = type.validate(val, transaction=self._transaction)
                     if error:
                         msg = _("Chyba dat na øádku %d:\n"
                                 "Nevalidní hodnota sloupce '%s': %s") % \
@@ -1001,6 +990,7 @@ class RecordForm(InnerForm):
     def set_row(self, row):
         """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
         self._row = row
+        self._row.set_transaction(self._transaction)
         self._run_callback(self.CALL_SELECTION, row)
         
     def current_row(self):
@@ -1209,7 +1199,8 @@ class LookupForm(RecordForm):
         op = lambda : data.select(condition=self._current_condition(),
                                   columns=self._select_columns(),
                                   sort=self._data_sorting(),
-                                  reuse=False)
+                                  reuse=False,
+                                  transaction=self._transaction)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
@@ -1244,7 +1235,7 @@ class LookupForm(RecordForm):
                 report_failure=True):
         self._search_adjust_data_position(row_number)
         data = self._data
-        skip = data.search(condition, direction=direction)
+        skip = data.search(condition, direction=direction, transaction=self._transaction)
         if skip == 0:
             log(EVENT, 'Záznam nenalezen')
             if report_failure:
@@ -1262,7 +1253,7 @@ class LookupForm(RecordForm):
     def _search_skip(self, skip, direction):
         data = self._data
         data.skip(skip-1, direction=direction)
-        row = data.fetchone(direction=direction)
+        row = data.fetchone(direction=direction, transaction=self._transaction)
         self._select_row(row)
 
     def _cmd_jump(self):
@@ -1303,7 +1294,8 @@ class LookupForm(RecordForm):
 
     def _compute_aggregate(self, operation, column_id, condition):
         condition = self._current_condition(filter=condition)
-        return self._data.select_aggregate((operation, column_id), condition)
+        return self._data.select_aggregate((operation, column_id), condition,
+                                           transaction=self._transaction)
 
     def _filtered_columns(self):
         columns = []
@@ -1772,18 +1764,11 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         transaction = self._transaction
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Vlo¾ení øádku')
-            if transaction:
-                op = lambda : self._data.insert(rdata,
-                                                transaction=transaction)
-            else:
-                op = lambda : self._data.insert(rdata)
+            op = lambda : self._data.insert(rdata, transaction=transaction)
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            if transaction:
-                op = lambda : self._data.update(self._current_key(), rdata,
-                                                transaction=transaction)
-            else:
-                op = lambda : self._data.update(self._current_key(), rdata)
+            op = lambda : self._data.update(self._current_key(), rdata,
+                                            transaction=transaction)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
@@ -1833,6 +1818,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
         super_(EditForm).set_row(self, row)
         for f in self._fields:
+            f.set_presented_row(row)
             v = row[f.id()]
             f.init(v.export())
             if isinstance(f, CodebookField):
@@ -1921,6 +1907,8 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
+        if self._transaction is None:
+             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)            
         size = copy.copy(self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
         self.SetSize(size)
@@ -2070,12 +2058,12 @@ class PopupEditForm(PopupForm, EditForm):
             return False
         return super(PopupEditForm, self).can_command(command, **kwargs)
         
-    def run(self, transaction=None):
+    def run(self):
         if self._mode == self.MODE_EDIT:
             key = self._current_key()
         else:
             key = None
-        return PopupForm.run(self, lock_key=key, transaction=transaction)
+        return PopupForm.run(self, lock_key=key)
 
     def set_status(self, field, message):
         if self._status_fields.has_key(field):

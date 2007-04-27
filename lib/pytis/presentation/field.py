@@ -136,6 +136,7 @@ class PresentedRow(object):
         self._editability_change_callback = editability_change_callback
         self._new = new
         self._cache = {}
+        self._transaction = None
         self._resolver = resolver or pytis.util.resolver()
         self._columns = columns = dict([(f.id(), self._Column(f, data))
                                         for f in self._fieldspec])
@@ -551,7 +552,7 @@ class PresentedRow(object):
             if value is None:
                 return ''
             try:
-                v = enum.get(value, col)
+                v = enum.get(value, col, transaction=self.get_transaction())
             except pytis.data.DataAccessException:
                 return ''
             if not v:
@@ -617,6 +618,13 @@ class PresentedRow(object):
             display = lambda v: pytis.data.Value(column.type, v).export()
         return [(v, display(v)) for v in column.type.enumerator().values()]
 
+    def set_transaction(self, transaction):
+        """Nastav transakci pro pøedávání operacím datového objektu."""
+        self._transaction = transaction
 
+    def get_transaction(self):
+        """Vra» transakci pro pøedání operacím datového objektu."""
+        return self._transaction
+    
 
     

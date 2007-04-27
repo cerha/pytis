@@ -154,7 +154,6 @@ class Button(object):
           
           handler -- funkce jednoho argumentu, kterým je instance
             'PresentedRow' obsahující aktuální hodnoty políèek formuláøe.  Tato
-            funkce je vyvolána pøi stisku tlaèítka.
             
           width -- ¹íøka (poèet znakù).  Implicitnì je ¹íøka nastavena
             automaticky podle ¹íøky nápisu ('label'), ale pokud je tento
@@ -1325,13 +1324,14 @@ class CbComputer(Computer):
         super(CbComputer, self).__init__(self._compute, depends=(field,))
         
     def _compute(self, row):
+        transaction = row.get_transaction()
         cbvalue = row[self._field]
         if cbvalue.value() is not None:
             e = cbvalue.type().enumerator()
             assert e is not None, \
                    "CbComputer refers to '%s', which has no enumerator." \
                    % self._field
-            value = e.get(cbvalue.value(), self._column)
+            value = e.get(cbvalue.value(), self._column, transaction=transaction)
             if value:
                 return value.value()
         return self._default

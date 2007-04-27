@@ -2437,7 +2437,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Locking
 
-    def lock_row(self, key, transaction):
+    def lock_row(self, key, transaction=None):
         """Lock row with the given key.
 
         Arguments:

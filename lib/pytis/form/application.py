@@ -594,7 +594,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
 
-    def _cmd_run_form(self, form_class, name, select_row=None, **kwargs):
+    def _cmd_run_form(self, form_class, name, select_row=None,
+                      transaction=None, **kwargs):
         # Dokumentace viz funkce run_form().
         result = None
         try:
@@ -624,6 +625,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 assert self._modals.empty()
                 kwargs['guardian'] = self
                 parent = self._frame
+            kwargs['transaction'] = transaction
             args = (parent, resolver(), name)
             form = catch('form-init-error', form_class, *args, **kwargs)
             if form is None:
@@ -679,7 +681,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return True
     
     def _cmd_new_record(self, name, prefill=None, inserted_data=None,
-                        block_on_new_record=False):
+                        block_on_new_record=False, transaction=None):
         # Dokumentace viz funkce new_record().
         view = resolver().get(name, 'view_spec')
         on_new_record = view.on_new_record()
@@ -690,7 +692,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 top.refresh()
         else:
             result = run_form(PopupEditForm, name, mode=EditForm.MODE_INSERT,
-                              prefill=prefill, inserted_data=inserted_data)
+                              prefill=prefill, inserted_data=inserted_data,
+                              transaction=transaction)
         return result
 
     def _can_run_procedure(self, spec_name, proc_name, args=(),
@@ -986,7 +989,7 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
                                                     args=args, **kwargs)
 
 def new_record(name, prefill=None, inserted_data=None,
-               block_on_new_record=False):
+               block_on_new_record=False, transaction=None):
     """Spus» interaktivní akci pøidání nového záznamu.
         
     Argumenty:
@@ -1002,6 +1005,9 @@ def new_record(name, prefill=None, inserted_data=None,
       block_on_new_record -- Pokud je True, nebude provedena procedura
         on_new_record; v podstatì umo¾òuje zavolání new_record v rámci
         procedury on_new_record.
+
+      transaction -- transakce, která má být pou¾ita pro operace nad datovým
+        objektem formuláøe.
             
     """
     return Application.COMMAND_NEW_RECORD.invoke(**locals())

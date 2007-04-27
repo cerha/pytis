@@ -153,7 +153,8 @@ class ListTable(wx.grid.PyGridTableBase):
         
     def __init__(self, frame, data, fields, columns, row_count,
                  sorting=(), grouping=(), inserted_row_number=None,
-                 inserted_row=None, prefill=None, row_style=None):
+                 inserted_row=None, prefill=None, row_style=None,
+                 transaction=None):
         assert isinstance(grouping, types.TupleType)
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
@@ -165,6 +166,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._prefill = prefill
         self._current_row = None
         self._row_style = row_style
+        self._transaction = transaction
         # Zpracuj sloupce
         self._update_columns(columns)
         # Vytvoø cache
@@ -238,7 +240,7 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _retrieve_row(self, row):
         def fetch(row, direction=pytis.data.FORWARD):
-            result = self._data.fetchone(direction=direction)
+            result = self._data.fetchone(direction=direction, transaction=self._transaction)
             assert result, ('Missing row', row)
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
@@ -816,9 +818,9 @@ class IncrementalSearch:
         elif key == 'Backspace':
             self._back()
         elif key == 'Ctrl-s':
-            self._search(direction=pytis.data.FORWARD)
+            self._search(direction=pytis.data.FORWARD, transaction=self._transaction)
         elif key == 'Ctrl-r':
-            self._search(direction=pytis.data.BACKWARD)
+            self._search(direction=pytis.data.BACKWARD, transaction=self._transaction)
         elif key == 'Ctrl-g' or key == 'Escape':
             self._exit(True)
         else:

@@ -179,6 +179,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         assert isinstance(spec, FieldSpec)
         CallbackHandler.__init__(self)
         self._parent = parent
+        self._presented_row = None
         self._type = spec.type(data)
         self._spec = spec
         self._data = data
@@ -408,7 +409,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """Vra» nadpis políèka jako 'wx.StaticText'."""
         return self._label
 
-    def validate(self, quiet=False, interactive=True, **kwargs):
+    def set_presented_row(self, row):
+        """Ulo¾ odpovídající instanci PresentedRow."""
+        self._presented_row = row
+        
+    def validate(self, quiet=False, interactive=True, transaction=None,
+                 **kwargs):
         """Zvaliduj hodnotu políèka a vra» instanci 'Value' a popis chyby.
 
         Argumenty:
@@ -427,7 +433,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         zadanou v políèku.
 
         """
-        value, error = self._type.validate(self.get_value(), **kwargs)
+        if self._presented_row:
+            transaction = self._presented_row.get_transaction()
+        else:
+            transaction = None
+        value, error = self._type.validate(self.get_value(),
+                                           transaction=transaction, **kwargs)
         if error and not quiet:
             if interactive:
                 msg = _('Chyba validace políèka!\n\n%s: %s') % \
@@ -1093,11 +1104,13 @@ class GenericCodebookField(InputField):
     
     def _run_codebook_form(self, begin_search=None):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
+        transaction = self._presented_row.get_transaction()
         enumerator = self._type.enumerator()
         result = run_form(CodebookForm, self._codebook_name,
                           begin_search=begin_search,
                           select_row=self._select_row_arg(),
-                          condition=enumerator.validity_condition())
+                          condition=enumerator.validity_condition(),
+                          transaction=transaction)
         if result: # may be None or False!
             self.set_value(result.format(enumerator.value_column()))
         self.set_focus()

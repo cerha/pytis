@@ -191,7 +191,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
           _grid.ListTable(self._parent, self._data, self._fields,
                           self._columns, row_count, sorting=self._lf_sorting,
                           grouping=self._grouping, prefill=self._prefill,
-                          row_style=self._view.row_style())
+                          row_style=self._view.row_style(),
+                          transaction=self._transaction)
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
         g.SetColLabelSize(dlg2px(g, 0, 12).GetHeight())
@@ -549,9 +550,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                   dict(transaction=self._transaction))
         # Provedení operace
         success, result = db_operation(op)
-        if self._transaction is not None:
+        if self._init_transaction is None and self._transaction is not None:
             self._transaction.commit()
-            self._transaction = None
+        self._transaction = self._init_transaction
         if success and result[1]:
             table.edit_row(None)
             message('Øádek ulo¾en do databáze', ACTION)
@@ -579,8 +580,8 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _on_line_rollback(self, soft=False):
         log(EVENT, 'Zru¹ení editace øádku')
         if self._transaction is not None:
-            self._transaction.rollback()
-            self._transaction = None
+            self._transaction.cut('inline')
+            self._transaction = self._init_transaction
         editing = self._table.editing()
         if not editing:
             return False
@@ -1119,7 +1120,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         data = self._data
         data.rewind()
         def dbop():
-            return data.search(condition)
+            return data.search(condition, transaction=self._transaction)
         success, result = db_operation(dbop)
         if not success:
             row = -1
@@ -1552,10 +1553,13 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             log(EVENT, 'Pokus o editaci needitovatelné tabulky')
             return False
         table = self._table
-        self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+        if self._transaction is None:
+            self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+        self._transaction.set_point('inline')
         if not table.editing():
             if not self._lock_record(self._current_key()):
-                self._transaction.rollback()
+                self._transaction.cut('inline')
+                self._transaction = self._init_transaction
                 return False
             table.edit_row(self._current_cell()[0])
             self._update_selection_colors()

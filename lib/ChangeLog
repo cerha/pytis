@@ -1,6 +1,32 @@
+2007-04-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/presentation/spec.py (CbComputer._compute): Added support
+	for user transactions.
+
+	* pytis/presentation/field.py (PresentedRow.set_transaction): New
+	method.  
+	(PresentedRow.get_transaction): New method.
+
+	* pytis/form/list.py: 'Transactions' support reworked.
+
+	* pytis/form/inputfield.py: Save PresentedRow in the instance.
+	Validate with given transaction.
+
+	* pytis/form/form.py: 'Transactions' support reworked.
+	Save transaction into PresentedRow. Save PresentedRow
+	into each InputField.
+
+	* pytis/form/application.py (new_record, _cmd_run_form):
+	Take into account 'transaction' argument.
+
+	* pytis/form/_grid.py: Take into account 'transaction' argument.
+
+	* pytis/data/types_.py: Added support for transaction in
+	validating with	DataEnumerator.
+
 2007-04-26  Pavel Hanak  <hanak@asellus.cz>
 
-	* pytis/data/data.py (Row.__init__): Oprava pøeklepu.
+	* pytis/data/data.py (Row.__init__): Typping error corrected.
 
 2007-04-26  Milan Zamazal  <pdm@brailcom.org>
 

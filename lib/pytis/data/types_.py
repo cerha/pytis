@@ -264,7 +264,7 @@ class Type(object):
         except KeyError:
             raise AttributeError(name)
 
-    def validate(self, object, strict=True, **kwargs):
+    def validate(self, object, strict=True, transaction=None, **kwargs):
         """Validate the 'object' and return a 'Value' instance and an error.
 
         Arguments:
@@ -274,6 +274,7 @@ class Type(object):
             constraints are checked and the method does its best to convert
             anything reasonable to a value.  It may be useful when the
             reason is not validation, but the conversion.
+          transaction -- transakce pro operace nad datovými objekty   
           kwargs -- type specific keyword arguments
 
         Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
@@ -309,14 +310,14 @@ class Type(object):
         # pøidat dal¹í metodu nebo argument.  Nyní je to èásteènì øe¹eno
         # argumentem 'strict'.
         try:
-            key = (object, strict, tuple(kwargs.items()))
+            key = (object, strict, transaction, tuple(kwargs.items()))
             result = self._validation_cache[key], None
         except ValidationError, e:
             result = None, e
         return result
 
     def _validating_provider(self, key):
-        object, strict, kwargs = key[0], key[1], dict(key[2])
+        object, strict, transaction, kwargs = key[0], key[1], key[2], dict(key[3])
         special = rassoc(object, self._SPECIAL_VALUES)
         if special:
             value = Value(self, special[0])
@@ -327,7 +328,7 @@ class Type(object):
             if error:
                 raise error
         if strict:
-            self._check_constraints(value.value())
+            self._check_constraints(value.value(), transaction=transaction)
         return value
     
     def _validate(self, object, **kwargs):
@@ -358,14 +359,19 @@ class Type(object):
             message %= kwargs
         return ValidationError(message)
         
-    def _check_constraints(self, value):
+    def _check_constraints(self, value, transaction=None, **kwargs):
         if value is None:
             if self._not_null:
                 raise self._validation_error(self.VM_NULL_VALUE)
             else:
                 return True
-        if self._enumerator is not None and not self._enumerator.check(value):
-            raise self._validation_error(self.VM_INVALID_VALUE)
+        if self._enumerator is not None:
+            if isinstance(self._enumerator, DataEnumerator):
+                if not self._enumerator.check(value, transaction):
+                    raise self._validation_error(self.VM_INVALID_VALUE)
+            else:
+                if not self._enumerator.check(value):
+                    raise self._validation_error(self.VM_INVALID_VALUE)                    
         for c in self._constraints:
             cresult = c(value)
             if cresult is not None:
@@ -484,8 +490,8 @@ class Limited(Type):
     def _format_maxlen(self):
         return str(self._maxlen)
 
-    def _check_constraints(self, value):
-        super(Limited, self)._check_constraints(value)
+    def _check_constraints(self, value, transaction=None):
+        super(Limited, self)._check_constraints(value, transaction=transaction)
         self._check_maxlen(value)
 
     def _check_maxlen(self, value):
@@ -1322,8 +1328,8 @@ class Image(Binary, Big):
         """Return the tuple of allowed input formats or None."""
         return self._formats
     
-    def _check_constraints(self, value):
-        super(Image, self)._check_constraints(value)
+    def _check_constraints(self, value, transaction=None):
+        super(Image, self)._check_constraints(value, transaction=transaction)
         if value is not None:
             image = value.image()
             for min,max,size in zip(self._minsize, self._maxsize, image.size):
@@ -1531,18 +1537,18 @@ class DataEnumerator(MutableEnumerator):
             assert isinstance(c.type(), Boolean), \
                    ('Invalid validity column type', c)
 
-    def _retrieve(self, value):
+    def _retrieve(self, value, transaction=None):
         data = self._data
         v = Value(self._value_column_type, value)
         condition = EQ(self._value_column, v)
         validity_condition = self.validity_condition()
         if validity_condition is not None:
             condition = AND(condition, validity_condition)
-        count = data.select(condition)
+        count = data.select(condition, transaction=transaction)
         if count > 1:
             raise ProgramError('Insufficient runtime filter for DataEnumerator',
                                str(condition))
-        row = data.fetchone()
+        row = data.fetchone(transaction=transaction)
         data.close()
         return row
 
@@ -1556,8 +1562,8 @@ class DataEnumerator(MutableEnumerator):
 
     # Enumerator interface
     
-    def check(self, value):
-        row = self._retrieve(value)
+    def check(self, value, transaction=None):
+        row = self._retrieve(value, transaction)
         if row is None:
             result = False
         else:
@@ -1580,7 +1586,7 @@ class DataEnumerator(MutableEnumerator):
         """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""
         return self._value_column
     
-    def get(self, value, column=None):
+    def get(self, value, column=None, transaction=None):
         """Získej z dat hodnotu daného sloupce z øádku odpovídajícího 'value'.
 
         Argumenty:
@@ -1590,11 +1596,13 @@ class DataEnumerator(MutableEnumerator):
              øádek.
            column -- identifikátor sloupce datového objektu, jeho¾ hodnota má
              být vrácena.
+           transaction -- transakce, pod ní¾ se mají provádìt operace nad
+             datovým objektem.             
 
         Vrací instanci 'Value', nebo None, pokud daný øádek nebyl nalezen.
 
         """
-        row = self._retrieve(value)
+        row = self._retrieve(value, transaction=transaction)
         if row is None:
             result = None
         else:
