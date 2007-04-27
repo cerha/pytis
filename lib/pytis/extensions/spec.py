@@ -133,7 +133,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
                                                 **kwargs)
    
 
-def cb2colvalue(value, column=None):
+def cb2colvalue(value, column=None, transaction=None):
     """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
     
     Argumenty:
@@ -142,6 +142,7 @@ def cb2colvalue(value, column=None):
         'pytis.data.DataEnumerator'.
       column -- název jiného sloupce èíselníku; øetìzec.  Viz
         'pytis.data.DataEnumerator.get()'
+      transaction -- 
 
     Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
     stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
@@ -156,7 +157,8 @@ def cb2colvalue(value, column=None):
     if column is None:
         return value
     else:
-        v = value.type().enumerator().get(value.value(), column=column)
+        v = value.type().enumerator().get(value.value(), column=column,
+                                          transaction=transaction)
         if v is None:
             return pytis.data.Value(value.type(), None)
         else:

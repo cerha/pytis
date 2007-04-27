@@ -231,27 +231,27 @@ def constraints_email_many(emails):
 
 # Nìkteré èasto pou¾ívané konfiguraèní parametry.
 
-def session_date(*args):
+def session_date(transaction=None):
     """Vra» vnitøní hodnotu nastaveného pracovního datumu."""
     return session_date_value().value()
 
-def session_date_value():
+def session_date_value(transaction=None):
     """Vra» nastavené pracovní datum pøihlá¹eného u¾ivatele."""
     return cfg_param('datum', 'Nastaveni.BvUsersCfg')
 
-def start_date(*args):
+def start_date(transaction=None):
     """Vra» vnitøní hodnotu nastaveného 'datumu od'."""
     return start_date_value().value()
 
-def start_date_value():
+def start_date_value(transaction=None):
     """Vra» nastavené 'datum od' pøihlá¹eného u¾ivatele."""
     return cfg_param('datum_od', 'Nastaveni.BvUsersCfg')
 
-def end_date(*args):
+def end_date(transaction=None):
     """Vra» vnitøní hodnotu nastaveného 'datumu do'."""
     return end_date_value().value()
 
-def end_date_value():
+def end_date_value(transaction=None):
     """Vra» nastavené 'datum do' pøihlá¹eného u¾ivatele."""
     return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
 

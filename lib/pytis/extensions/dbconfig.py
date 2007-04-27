@@ -52,7 +52,7 @@ class DBConfig(object):
     """
     _data_object_cache = {}
 
-    def __init__(self, name, callback=None):
+    def __init__(self, name, callback=None, transaction=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -64,17 +64,19 @@ class DBConfig(object):
             (aktualizovaná) instance 'DBConfig'.
 
         """
+        key = (name, transaction)
         try:
-            data = DBConfig._data_object_cache[name]
+            data = DBConfig._data_object_cache[key]
         except KeyError:
             data = data_object(name)
             if data is not None:
-                DBConfig._data_object_cache[name] = data
+                DBConfig._data_object_cache[key] = data
         self._data = data
+        self._transaction = transaction
         self._lock = thread.allocate_lock()
         def lfunction():
-            data.select()
-            self._row = data.fetchone()
+            data.select(transaction=transaction)
+            self._row = data.fetchone(transaction=transaction)
             data.close()
         with_lock(self._lock, lfunction)
         self._key = [self._row[c.id()] for c in data.key()]
@@ -84,8 +86,8 @@ class DBConfig(object):
 
     def _on_change(self):
         def lfunction():
-            self._data.select()
-            self._row = self._data.fetchone()
+            self._data.select(transaction=self._transaction)
+            self._row = self._data.fetchone(transaction=self._transaction)
             self._data.close()
         with_lock(self._lock, lfunction)
         self._callback(self)
@@ -102,7 +104,7 @@ class DBConfig(object):
         """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
         type = self._row[key].type()
         self._row[key] = pytis.data.Value(type, value)
-        self._data.update(self._key, self._row)
+        self._data.update(self._key, self._row, transaction=self._transaction)
 
     def has_key(self, key):
         return self._row.has_key(key)
@@ -114,7 +116,7 @@ class DBConfig(object):
         return tuple([(key, self[key]) for key in self._row.keys()])
 
 
-def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None):
+def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, transaction=None):
     """Vrací instanci Value pro konfiguraèní parametr.
 
     Argumenty:
@@ -124,14 +126,15 @@ def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None):
       cfgspec -- volitelný název specifikace s vazbou na konfiguraèní tabulku.
       value_column -- pokud je po¾adavaný sloupec Codebook, umo¾òuje získat
         hodnotu u¾ivatelského sloupce.
+      transaction -- transakce pro datové operace  
 
     """
-    dbconfig = DBConfig(cfgspec)
+    dbconfig = DBConfig(cfgspec, transaction=transaction)
     if not dbconfig.has_key(column):
         return pytis.data.Value(None, None)
     value = dbconfig.value(column)
     if value.type().enumerator():
-        return cb2colvalue(value, column=value_column)
+        return cb2colvalue(value, column=value_column, transaction=transaction)
     else:
         assert value_column is None, "Column '%s' has no enumerator!" % column
         return value

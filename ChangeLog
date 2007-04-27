@@ -1,3 +1,11 @@
+2007-04-27  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/spec.py: Take into account transactions.
+
+	* lib/pytis/extensions/misc.py: Take into account transactions.
+
+	* lib/pytis/extensions/dbconfig.py: Take into account transactions.
+
 2007-04-06  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (sf): Pro spu¹tìní ShowForm z menu.
