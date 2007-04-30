@@ -882,11 +882,12 @@ class MemData(Data):
             else:
                 raise ProgramError("Operator not supported:", op_name)
 
-    def select(self, condition=None, reuse=False, sort=None, columns=None):
+    def select(self, condition=None, reuse=False, sort=None, columns=None,
+               transaction=None):
         """Inicializace vytahování záznamù.
 
-        Bli¾¹í popis viz nadtøída.  Argumenty 'condition' a 'sort' jsou
-        ignorovány.
+        Bli¾¹í popis viz nadtøída.  Argumenty 'condition', 'sort' a
+        'transaction' jsou ignorovány.
         
         """
         if self._condition is not None:
@@ -903,7 +904,7 @@ class MemData(Data):
     def close(self):
         self._mem_select = []
         
-    def fetchone(self, direction=FORWARD):
+    def fetchone(self, direction=FORWARD, transaction=None):
         cursor = self._mem_cursor
         data = self._mem_select
         if direction == FORWARD:
@@ -928,13 +929,15 @@ class MemData(Data):
     def last_row_number(self):
         return self._mem_cursor
 
-    def insert(self, row):
+    def insert(self, row, transaction=None):
         """Vlo¾ 'row' do tabulky.
 
         Pro bli¾¹í popis viz nadtøída.
 
         'row' je vlo¾en na konec tabulky.  Chybìjící sloupce jsou nastaveny na
         'None'.
+
+        Argument 'transaction' je ignorován.
         
         """
         assert isinstance(row, Row)
@@ -944,7 +947,7 @@ class MemData(Data):
         self._mem_data.append(new_row)
         return new_row, True
 
-    def update(self, key, row):
+    def update(self, key, row, transaction=None):
         """Updatuj 'row' v tabulce.
 
         Pro bli¾¹í popis viz nadtøída.
@@ -952,6 +955,8 @@ class MemData(Data):
         'row' je v tabulce vlo¾en na místo øádku identifikovaného 'key''.
         Chybìjící sloupce jsou nastaveny na 'None'.
         
+        Argument 'transaction' je ignorován.
+
         """
         index = self._mem_find_index(key)
         if index == None:
@@ -962,7 +967,10 @@ class MemData(Data):
         self._mem_data[index] = new_row
         return new_row, True
         
-    def delete(self, key):
+    def delete(self, key, transaction=None):
+        """
+        Argument 'transaction' is ignored.
+        """
         index = self._mem_find_index(key)
         if index == None:
             return 0
