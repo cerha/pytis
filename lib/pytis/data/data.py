@@ -182,6 +182,8 @@ class Data(object):
     AGG_AVG = 'AGG_AVG'
     """Konstanta získání prùmìrné hodnoty polo¾ek pro metodu 'select()'."""
 
+    _CACHEABLE = True
+    
     class UnsupportedOperation(Exception):
         """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
     
@@ -738,6 +740,15 @@ class Data(object):
         for c in self._on_change_callbacks:
             c()
 
+    @classmethod
+    def cacheable(class_):
+        """Return whether it is possible to cache instances of this class.
+
+        This information is intended to be used in the 'DataFactory' class.
+
+        """
+        return class_._CACHEABLE
+
 
 class Counter(object):
     """Abstrakce pøístupu ke generátoru tickets.
@@ -789,6 +800,9 @@ class MemData(Data):
     Modifikaèní metody nevolají ¾ádné callbacky.
     
     """
+
+    _CACHEABLE = False
+
     def __init__(self, columns, data=(), **kwargs):
         """Inicializuj datový zdroj dle specifikace 'columns'.
 
@@ -976,7 +990,6 @@ class MemData(Data):
             return 0
         del self._mem_data[index]
         return 1
-
 
 
 ### Pomocné funkce
@@ -1242,6 +1255,9 @@ class ColumnSpec:
                 return compare_objects(self.type(), other.type())
         else:
             return compare_objects(self, other)
+
+    def __hash__(self):
+        return hash(self._id)
 
     def id(self):
         """Vra» string identifikující sloupec zadaný v konstruktoru."""
@@ -1517,7 +1533,7 @@ class DataFactory(object):
         self._args = args
         self._kwargs = kwargs
         self._kwargs_hashable = kwargs.items()
-        if DataFactory._data_object_cache is None:
+        if DataFactory._data_object_cache is None and class_.cacheable():
             DataFactory._data_object_cache = \
               LimitedCache(DataFactory._get_data_object)        
 
@@ -1542,20 +1558,22 @@ class DataFactory(object):
         """
         _kwargs = copy.copy(self._kwargs)
         _kwargs.update(kwargs)
-        # TODO: Cachovaní datových objektù zatím nemù¾eme pou¾ít,
-        #       proto¾e nará¾íme na problém udr¾ovaných konexí
-        # key = (self._class_, self._args, tuple(_kwargs.items()))
-        # data_object = DataFactory._data_object_cache[key]
-        # return copy.copy(data_object)
-        return apply(self._class_, self._args, _kwargs)
-
+        cache = DataFactory._data_object_cache
+        if cache is None:
+            result = apply(self._class_, self._args, _kwargs)
+        else:
+            key = (self._class_, self._args, tuple(_kwargs.items()),)
+            data_object = cache[key]
+            result = copy.copy(data_object)
+        return result
+    
     def __str__(self):
         return '<DataFactory: class=%s, args=%s, kwargs=%s>' % \
                (self._class_, deepstr(self._args), self._kwargs)
 
     def _get_data_object(key):
-        c, a, k = key
-        return apply(c, a, dict(k))
+        class_, args, kwargs = key
+        return class_(*args, **dict(kwargs))
     _get_data_object = staticmethod(_get_data_object)
 
     def access_rights(self):

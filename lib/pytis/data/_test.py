@@ -1704,13 +1704,15 @@ class DBDataNotification(DBDataDefault):
         assert d.change_number() == 1
     def test_side_notification(self):
         d = self.dstat
-        assert d.change_number() == 0
+        cnumber_1 = d.change_number()
+        cnumber_2 = self.data.change_number()
+        assert cnumber_1 >= 0
         d.insert(pytis.data.Row(
             (('stat', d.columns()[0].type().validate('at')[0]),
              ('nazev', d.columns()[1].type().validate('Austria')[0]))))
         self._ddn_check_result()
-        assert d.change_number() == 1
-        assert self.data.change_number() == 1
+        assert d.change_number() == cnumber_1 + 1
+        assert self.data.change_number() == cnumber_2 + 1
 tests.add(DBDataNotification)
 
 

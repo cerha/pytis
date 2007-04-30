@@ -1,3 +1,12 @@
+2007-04-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/_test.py (DBDataNotification.test_side_notification):
+	Don't require change counters to be initially 0.
+
+	* pytis/data/data.py (Data.cacheable, MemData.cacheable): New
+	methods.
+	(DataFactory.create): Get the data object from cache if possible.
+
 2007-04-27  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/presentation/spec.py (CbComputer._compute): Added support
