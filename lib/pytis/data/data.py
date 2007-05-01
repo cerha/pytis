@@ -1530,12 +1530,16 @@ class DataFactory(object):
         """
         assert issubclass(class_, Data)
         self._class_ = class_
-        self._args = args
+        def adjust(arg):
+            if type(arg) == types.ListType:
+                arg = tuple(arg)
+            return arg
+        self._args = tuple([adjust(a) for a in args])
         self._kwargs = kwargs
         self._kwargs_hashable = kwargs.items()
         if DataFactory._data_object_cache is None and class_.cacheable():
             DataFactory._data_object_cache = \
-              LimitedCache(DataFactory._get_data_object)        
+              LimitedCache(DataFactory._get_data_object)
 
     def class_(self):
         """Vra» tøídu datového objektu."""
@@ -1559,12 +1563,19 @@ class DataFactory(object):
         _kwargs = copy.copy(self._kwargs)
         _kwargs.update(kwargs)
         cache = DataFactory._data_object_cache
-        if cache is None:
-            result = apply(self._class_, self._args, _kwargs)
-        else:
+        cacheable = cache is not None
+        if cacheable:
             key = (self._class_, self._args, tuple(_kwargs.items()),)
+            try:
+                {key: True}
+            except TypeError:
+                cacheable = False
+                log(EVENT, "Non-cacheable data object cache key: %s" % (key,))
+        if cacheable:
             data_object = cache[key]
             result = copy.copy(data_object)
+        else:
+            result = apply(self._class_, self._args, _kwargs)
         return result
     
     def __str__(self):
