@@ -1,3 +1,13 @@
+2007-05-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands.make_lock_command):
+	Lock only the given row of the view.  If single row of a view
+	can't be locked, don't lock at all.
+	
+	* pytis/data/_test.py (DBDataNotification.test_side_notification):
+	See above.
+
 2007-04-30  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/_test.py (DBDataNotification.test_side_notification):

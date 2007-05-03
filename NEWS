@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-04-13 Milan Zamazal  <pdm@brailcom.org>
+
+	* BUGFIX: U view zamykej jen jednotlivé øádky.  Není-li to mo¾né,
+	nezamykej view vùbec.
+	
 2007-04-17 Tomas Cerha  <cerha@brailcom.org>
 
 	Specifikace vazby duálních formuláøù nyní nevy¾aduje

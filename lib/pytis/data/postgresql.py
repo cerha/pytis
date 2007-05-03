@@ -942,10 +942,33 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     except DBUserException:
                         return False
                 lock_tables = [c for c in lock_candidates if check_candidate(c)]
+                def find_real_key():
+                    keyname = first_key_column.split('.')[-1]
+                    for colspec in ev_action[0]['targetList']:
+                        if colspec['resname'] == keyname:
+                            break
+                    else:
+                        return None
+                    table = colspec['resorigtbl']
+                    column = colspec['resorigcol']
+                    qresult = self._pg_query(("select relname, attname from pg_class join pg_attribute on (attrelid=pg_class.oid) "+
+                                              "where pg_class.oid=%s and pg_attribute.attnum=%s")
+                                             % (table, column,),
+                                             outside_transaction=True)
+                    if qresult:
+                        relname, attname = qresult[0]
+                        if relname not in lock_tables:
+                            return None
+                    return relname, attname
                 if lock_tables:
+                    real_key = find_real_key()
+                else:
+                    real_key = None
+                if real_key:
+                    key_table_name, key_column_name = real_key
                     lock_tables_string = string.join(lock_tables, ', ')
-                    result = ("%s for update of %s nowait limit 1" %
-                              (lock_query, lock_tables_string,))
+                    result = ("%s where %s.%s=%%(key)s for update of %s nowait limit 1" %
+                              (lock_query, key_table_name, key_column_name, lock_tables_string,))
                 else:
                     log(EVENT, "Unlockable view, won't be locked:", main_table)
                     result = '%s limit 1' % (lock_query,)
@@ -2455,7 +2478,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         log(EVENT, 'Locking row:', str (key))
         self._pg_query('savepoint _lock', transaction=transaction)
         try:
-            command = self._pdbb_command_lock.format({})
+            command = self._pdbb_command_lock.format({'key': self._pg_value(key)})
             if command:         # special locking command necessary
                 result = self._pg_query(command, transaction=transaction)
             else:

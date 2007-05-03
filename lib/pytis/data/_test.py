@@ -1246,6 +1246,8 @@ class DBDataDefault(_DBTest):
         v.select()
         row = v.fetchone()
         key = row[0]
+        row3 = v.fetchone()
+        key3 = row3[0]
         v.close()
         v2 = self.rudeview
         v2.select()
@@ -1261,6 +1263,8 @@ class DBDataDefault(_DBTest):
             assert result is None, 'lock failed'
             result = v.lock_row(key, transaction=transaction_2)
             assert type(result) == type(''), 'locked record locked'
+            result = v.lock_row(key3, transaction=transaction_2)
+            assert result is None, 'additional row locking failed'
             result = v2.lock_row(key2, transaction=transaction)
             assert result is None, 'lock failed'
             result = v2.lock_row(key2, transaction=transaction_2)
