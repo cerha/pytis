@@ -967,8 +967,24 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 if real_key:
                     key_table_name, key_column_name = real_key
                     lock_tables_string = string.join(lock_tables, ', ')
-                    result = ("%s where %s.%s=%%(key)s for update of %s nowait limit 1" %
-                              (lock_query, key_table_name, key_column_name, lock_tables_string,))
+                    limit_clause = '(%s.%s=%%(key)s)' % (key_table_name, key_column_name,)
+                    # Stupid and incorrect, but how to make it better?
+                    match = re.findall(' where ', lock_query, re.I)
+                    if match:
+                        beg, end = match.span()
+                        n = 0
+                        for char in lock_query[end:]:
+                            if char == '(':
+                                n = n - 1
+                            elif char == ')':
+                                n = n + 1
+                        if n > 0:
+                            match = None
+                    if match:
+                        lock_query = lock_query[:beg] + ' where ' + limit_clause + ' and ' + lock_query[end:]
+                    else:
+                        lock_query = lock_query + ' where ' + limit_clause
+                    result = ("%s for update of %s nowait" % (lock_query, lock_tables_string,))
                 else:
                     log(EVENT, "Unlockable view, won't be locked:", main_table)
                     result = '%s limit 1' % (lock_query,)
