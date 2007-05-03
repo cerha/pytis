@@ -969,7 +969,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     lock_tables_string = string.join(lock_tables, ', ')
                     limit_clause = '(%s.%s=%%(key)s)' % (key_table_name, key_column_name,)
                     # Stupid and incorrect, but how to make it better?
-                    match = re.findall(' where ', lock_query, re.I)
+                    matches = [m for m in re.finditer(' where ', lock_query, re.I)]
+                    if matches:
+                        match = matches[-1]
                     if match:
                         beg, end = match.span()
                         n = 0
