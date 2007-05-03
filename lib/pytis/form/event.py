@@ -2,7 +2,7 @@
 
 # Zpracování událostí
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,9 @@ def top_level_exception():
     if issubclass(einfo[0], SystemExit):
         sys.exit()
     tbstring = format_traceback()
-    log(OPERATIONAL, 'Odchycena výjimka na nejvy¹¹í úrovni', tbstring)
+    import cgitb
+    tbstring = cgitb.text(einfo)
+    log(OPERATIONAL, 'Top-level exception caught', tbstring)
     text = run_dialog(BugReport, einfo)
     if text is None:
         sys.exit()

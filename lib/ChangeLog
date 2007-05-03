@@ -1,5 +1,10 @@
 2007-05-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/form/event.py (top_level_exception): Print detailed
+	traceback to log.
+
+2007-05-03  Milan Zamazal  <pdm@brailcom.org>
+	
 	* pytis/data/postgresql.py
 	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands.make_lock_command):
 	Lock only the given row of the view.  If single row of a view
