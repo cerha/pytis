@@ -1863,6 +1863,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_return_connection(self._pg_connections().pop())
 
     def _pg_begin_transaction (self):
+        if self._pg_is_in_select:
+            self.close()
         self._pg_allocate_connection()
         self._postgresql_begin_transaction()
         

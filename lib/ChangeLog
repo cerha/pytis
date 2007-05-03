@@ -1,5 +1,10 @@
 2007-05-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/postgresql.py
+	(DBDataPostgreSQL._pg_begin_transaction): If in select, close it first.
+	
+2007-05-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/form/event.py (top_level_exception): Print detailed
 	traceback to log.
 
