@@ -1,3 +1,8 @@
+2007-05-09  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/dbutils.py (dbupdate_many):
+	Opraveno zpracování argumentu `transaction'.
+
 2007-04-27  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/spec.py: Take into account transactions.

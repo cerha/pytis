@@ -150,7 +150,7 @@ def dbupdate_many(spec, condition=None, update_row=None,
         errmsg = "Nebyl pøedán øádek pro update_many."
         raise ProgramError(errmsg)
     data = data_object(spec)
-    return data.update_many(condition, update_row) 
+    return data.update_many(condition, update_row, transaction=transaction) 
 
 
 def dbfunction(name, *args, **kwargs):
