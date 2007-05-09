@@ -1217,13 +1217,14 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         self._run_codebook_form(begin_search=begin_search)
 
     def _on_codebook_insert(self, event):
+        transaction = self._presented_row.get_transaction()
         value_column = self._type.enumerator().value_column()
         if not self._is_valid() and self.is_modified():
             prefill = {value_column: self.get_value()}
         else:
             prefill = {}
         spec = self.spec().codebook_insert_spec() or self._codebook_name
-        result = new_record(spec, prefill=prefill)
+        result = new_record(spec, prefill=prefill, transaction=transaction)
         if result and result.has_key(value_column):
             self.set_value(result[value_column].export())
         return True

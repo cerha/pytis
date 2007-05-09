@@ -515,7 +515,7 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if self._init_transaction is None:
+            if self._init_transaction is None and self._result:
                 try:
                     self._transaction.commit()
                 except:
@@ -1907,8 +1907,6 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
-        if self._transaction is None:
-             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)            
         size = copy.copy(self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
         self.SetSize(size)
@@ -2012,6 +2010,9 @@ class PopupEditForm(PopupForm, EditForm):
         if result:
             message(_("Záznam ulo¾en"))
             refresh()
+            if self._init_transaction is None and self._transaction is not None:
+                self._transaction.commit()
+                self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
             self._init_inserted_row()
 
     def _on_skip_button(self, event):
@@ -2071,7 +2072,12 @@ class PopupEditForm(PopupForm, EditForm):
             return True
         else:
             return False
-       
+
+    def set_row(self, row):        
+        if self._transaction is None:
+             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection) 
+        super(PopupEditForm, self).set_row(row)
+        
 
 class ShowForm(EditForm):
     """Formuláø pro zobrazení náhledu.
