@@ -142,7 +142,7 @@ def cb2colvalue(value, column=None, transaction=None):
         'pytis.data.DataEnumerator'.
       column -- název jiného sloupce èíselníku; øetìzec.  Viz
         'pytis.data.DataEnumerator.get()'
-      transaction -- 
+      transaction -- transakce pro pøedání datovým operacím.
 
     Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
     stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
@@ -165,7 +165,7 @@ def cb2colvalue(value, column=None, transaction=None):
             return v
 
         
-def cb2strvalue(value, column=None):
+def cb2strvalue(value, column=None, transaction=None):
     """Pøeveï instanci 'Value' typu 'Codebook' na 'Value' typu 'String'.
 
     Argumenty:
@@ -173,14 +173,15 @@ def cb2strvalue(value, column=None):
       value -- Instance `pytis.data.Value' typu `pytis.data.Codebook'.
       column -- název jiného sloupce èíselníku; øetìzec.  Viz
         `Codebook.data_value()'.
-
+      transaction -- transakce pro pøedání datovým operacím.
+      
     """
     assert isinstance(value, pytis.data.Value)
     assert value.type().enumerator() is not None
     if column is None:
         v = value.value()
     else:
-        col_value = cb2colvalue(value, column=column)
+        col_value = cb2colvalue(value, column=column, transaction=transaction)
         if col_value:
             v = col_value.value()
         else:
@@ -189,7 +190,7 @@ def cb2strvalue(value, column=None):
 
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),
-           columns=None, select_row=0, multirow=False):
+           columns=None, select_row=0, multirow=False, transaction=None):
     """Vyvolá èíselník urèený specifikací.
 
     Argumenty:
@@ -203,6 +204,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
         ve specifikaci.
       select_row -- øádek, na který se má nastavit kurzor.
       multirow -- umo¾ní výbìr více øádkù.
+      transaction -- transakce pro pøedání CodebookFormu.
     
     Vrací None (pokud není vybrán ¾ádný øádek) nebo vybraný øádek nebo
     tuple vybraných øádkù (pokud je argument multirow nastaven).
@@ -215,7 +217,8 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
     return pytis.form.run_form(class_, spec, columns=columns,
                                begin_search=begin_search,
                                condition=condition,
-                               select_row=select_row)
+                               select_row=select_row,
+                               transaction=transaction)
 
 
 def help_window(inputfile=None, format=TextFormat.PLAIN):
