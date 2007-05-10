@@ -1,5 +1,8 @@
 2007-05-10  Pavel Hanak  <hanak@asellus.cz>
-	
+
+	* pytis/form/configui.py (_ConfigData): All data methods take also
+	the argument `transaction'.
+
 	* pytis/form/inputfield.py (CodebookField._on_codebook_insert):
 	Use transaction for codebook form.
 

@@ -107,11 +107,12 @@ class _ConfigData(pytis.data.RestrictedData):
         super(_ConfigData, self).__init__(columns=columns, key=columns[0])
         self._giveone = False
 
-    def select(self, condition=None, columns=None, sort=None, reuse=False):
+    def select(self, condition=None, columns=None, sort=None, reuse=False,
+               transaction=None):
         self._giveone = True
         return 1
 
-    def fetchone(self, direction=pytis.data.FORWARD):
+    def fetchone(self, direction=pytis.data.FORWARD, transaction=None):
         if direction != pytis.data.FORWARD or not self._giveone:
             return None
         self._giveone = False
@@ -119,7 +120,7 @@ class _ConfigData(pytis.data.RestrictedData):
                     for o in [c.id() for c in self.columns()]]
         return pytis.data.Row(row_data)
 
-    def update(self, key, row):
+    def update(self, key, row, transaction=None):
         options = [c.id() for c in self.columns()]
         for option in options:
             setattr(config, option, row[option].value())
