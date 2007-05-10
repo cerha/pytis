@@ -1,5 +1,5 @@
 2007-05-10  Pavel Hanak  <hanak@asellus.cz>
-
+	
 	* pytis/form/inputfield.py (CodebookField._on_codebook_insert):
 	Use transaction for codebook form.
 
@@ -8,6 +8,11 @@
 	(__init__): Initialization of transaction moved to `set_row'.
 	(PopupEditForm.set_row): New method.
 	(PopupEditForm._on_next_button): Reinitialize transaction if needed.
+
+2007-05-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/form/dialog.py (db_operation): Return values in proper
+	order on failure.
 
 2007-05-03  Milan Zamazal  <pdm@brailcom.org>
 

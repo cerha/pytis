@@ -1326,7 +1326,7 @@ def db_operation(operation, quiet=False):
     RESULT specifikována).
 
     """
-    FAILURE = None, False
+    FAILURE = False, None
     while True:
         try:
             if type(operation) == type(()):
