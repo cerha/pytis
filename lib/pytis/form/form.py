@@ -1764,15 +1764,26 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         transaction = self._transaction
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Vlo¾ení øádku')
-            op = lambda : self._data.insert(rdata, transaction=transaction)
+            def op():
+                return self._data.insert(rdata, transaction=transaction)
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
-            op = lambda : self._data.update(self._current_key(), rdata,
-                                            transaction=transaction)
+            def op():
+                return self._data.update(self._current_key(), rdata,
+                                         transaction=transaction)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
-        success, result = db_operation(op)
+        def set_point_op():
+            transaction.set_point('commitform')
+        def cut_op():
+            transaction.cut('commitform')
+        if transaction is not None:
+            success, result = db_operation(set_point_op)
+        else:
+            success = True
+        if success:
+            success, result = db_operation(op)
         if success and result[1]:
             new_row = result[0]
             original_row = copy.copy(self._row)
@@ -1798,7 +1809,14 @@ class EditForm(LookupForm, TitledForm, Refreshable):
                 self.close()
             return True
         else:
-            msg = _("Ulo¾ení záznamu se nezdaøilo")
+            if transaction is not None:
+                success, __ = db_operation(cut_op)
+            else:
+                success = True
+            if success:
+                msg = _("Ulo¾ení záznamu se nezdaøilo")
+            else:
+                msg = _("Transakce pøeru¹ena, nelze pokraèovat")
             if type(result) == type(()) and \
                isinstance(result[0], (str, unicode)):
                 msg = "%s\n\n%s" % (result[0], msg)
