@@ -1,5 +1,8 @@
 2007-05-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py: Dialog creation process modified to allow a
+	resizable traceback in bug report dialog.
+
 	* pytis/form/form.py: Create the PresentedRow instance directly in
 	the constructor.  Don't handle synchronization of input fields and
 	the row.

@@ -77,6 +77,7 @@ class GenericDialog(Dialog):
     """    
     _COMMIT_BUTTON = None
     _HELP_TOPIC = 'dialog'
+    _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
     
     def __init__(self, parent, title, buttons, default=None, report=None,
                  report_format=TextFormat.PLAIN):
@@ -97,7 +98,7 @@ class GenericDialog(Dialog):
             'InfoWindow'.
           report_format -- konstanta tøídy 'TextFormat' urèující jak má být
             nakládáno se vstupním textem argumentu 'report'.  V pøípadì, ¾e
-            není ¾ádný report specifikován, je tento argument itrelevantní.
+            není ¾ádný report specifikován, je tento argument irelevantní.
             
         """
         assert is_sequence(buttons)
@@ -124,30 +125,26 @@ class GenericDialog(Dialog):
         mìlo staèit pøedefinovat metodu '_create_content()'.
 
         """
-        style = (wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX |
-                 wx.SYSTEM_MENU)
+        style = self._STYLE
         if self._report is not None:
             style |= wx.RESIZE_BORDER
-        self._dialog = dialog = wx.Dialog(self._parent, title=self._title,
-                                          style=style)
+        self._dialog = dialog = wx.Dialog(self._parent, title=self._title, style=style)
         self._create_dialog_elements(dialog)
         self._handle_keys(dialog)
-        
 
     def _create_dialog_elements(self, dialog):
         """Vlo¾ do dialogu jeho vnitøní prvky.
         
         Pomocí sizerù je do dialogu vlo¾en hlavní obsah (výsledek metody
-        '_create_content()') a tlaèítka (výsledek metody
-        '_create_buttons()').
+        '_create_content()') a tlaèítka (výsledek metody '_create_buttons()').
 
         Tuto metodu by nemìlo být tøeba pøedefinovávat. Ve vìt¹inì pøípadù by
         mìlo staèit pøedefinovat metodu '_create_content()' a/nebo
         '_create_buttons()'.
 
         """
-        # vytvoø obsah (vnitøek) dialogu
-        content = xtuple(self._create_content())
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self._create_content(sizer)
         # vytvoø tlaèítka a poskládej je vedle sebe
         button_sizer = wx.BoxSizer()
         for b in self._create_buttons():
@@ -156,13 +153,10 @@ class GenericDialog(Dialog):
             wx_callback(wx.EVT_BUTTON, dialog, b.GetId(), self._on_button)
             self._handle_keys(b)
         # poskládej obsah a tlaèítka do top-level sizeru (nad sebe)
-        sizer = wx.BoxSizer(wx.VERTICAL)
         if self._report is not None:
             report = wx_text_view(dialog, self._report,
                                   format=self._report_format)
             sizer.Add(report, 1, wx.EXPAND)
-        for part in content:
-            sizer.Add(part, 0, wx.ALL|wx.CENTER, 5)
         sizer.Add(button_sizer, 0, wx.CENTER)
         wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
         # dokonèi ...
@@ -171,7 +165,7 @@ class GenericDialog(Dialog):
         dialog.SetSizer(sizer)
         sizer.Fit(dialog)
 
-    def _create_content(self):
+    def _create_content(self, sizer):
         """Abstraktní metoda - nutno pøedefinovat v odvozených tøídách.
 
         Vrací: Libovolný wx objekt, který má být vlo¾en do tìla dialogu.
@@ -368,16 +362,17 @@ class Message(GenericDialog):
             self._message = None
         self._icon = icon
 
-    def _create_content(self):
+    def _create_content(self, sizer):
         """Vytvoø obsah - to co bude vyplòovat plochu okna nad tlaèítky."""
-        sizer = wx.BoxSizer()
-        if self._icon is not None:
-            icon = self._create_icon(self._icon)
-            if icon is not None:
-                sizer.Add(icon, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)
-        t = wx.StaticText(self._dialog, -1, self._message)
-        sizer.Add(t, 1, wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 12)
-        return sizer
+        message = wx.StaticText(self._dialog, -1, self._message)
+        icon = self._icon and self._create_icon(self._icon)
+        if icon is not None:
+            content = wx.BoxSizer()
+            content.Add(icon, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)
+            content.Add(message, 1, wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 12)
+        else:
+            content = message
+        sizer.Add(content, 0, wx.ALL|wx.CENTER, 5)
 
     
 class Warning(Message):
@@ -547,11 +542,9 @@ class InputDialog(Message):
         self._mask = ''
         self._autoformat = None
 
-    def _create_content(self):
-        sizer = wx.BoxSizer()
-        if self._prompt:
-            prompt = wx.StaticText(self._dialog, -1, self._prompt)
-            sizer.Add(prompt, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+    def _create_content(self, sizer):
+        if self._message is not None:
+            Message._create_content(self, sizer)
         style = self._passwd and wx.TE_PASSWORD or 0
         if self._input_width is None:
             width = wx.DefaultSize.width
@@ -566,15 +559,17 @@ class InputDialog(Message):
         if self._value is not None:
             control.SetValue(self._value)
         self._control = control
-        wx_callback(wx.EVT_KILL_FOCUS, self._control,
-                    self._on_kill_control_focus)        
-        sizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+        wx_callback(wx.EVT_KILL_FOCUS, self._control, self._on_kill_control_focus)
         self._handle_keys(control)
-        if self._message is not None:
-            result = Message._create_content(self), sizer
+        if self._prompt:
+            prompt = wx.StaticText(self._dialog, -1, self._prompt)
+            content = wx.BoxSizer()
+            content.Add(prompt, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+            content.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
         else:
-            result = sizer
-        return result
+            content = control
+        sizer.Add(content, 0, wx.ALL|wx.CENTER, 5)
+        
 
     def _on_kill_control_focus(self, e):
         if not self._control.IsValid(self._control.GetValue()):
@@ -629,7 +624,9 @@ class Login(InputDialog):
         self._passwd_prompt = passwd_prompt
         self._value = login
         
-    def _create_content(self):
+    def _create_content(self, sizer):
+        if self._message is not None:
+            Message._create_content(self, sizer)
         grid = wx.FlexGridSizer(2, 2, 2, 5)
         login_label  = wx.StaticText(self._dialog, -1, self._login_prompt)
         passwd_label = wx.StaticText(self._dialog, -1, self._passwd_prompt)
@@ -644,10 +641,7 @@ class Login(InputDialog):
         self._handle_keys(self._login, self._passwd)
         if self._value != '':
             self._want_focus = self._passwd
-        if self._message is not None:
-            return (Message._create_content(self), grid)
-        else:
-            return grid
+        sizer.Add(grid, 0, wx.ALL|wx.CENTER, 5)
 
     def _customize_result(self, result):
         if self._button_label(result) == Message.BUTTON_OK:
@@ -718,11 +712,9 @@ class InputNumeric(InputDialog):
         self._thousands_sep = locale.localeconv()['thousands_sep']
         self._limited = not (self._min_value is None and self._max_value is None)
 
-    def _create_content(self):
-        sizer = wx.BoxSizer()
-        if self._prompt:
-            prompt = wx.StaticText(self._dialog, -1, self._prompt)
-            sizer.Add(prompt, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)           
+    def _create_content(self, sizer):
+        if self._message is not None:
+            Message._create_content(self, sizer)
         control = masked.NumCtrl(self._dialog, -1, 0,
                                  allowNegative=self._allow_negative,
                                  allowNone=self._allow_empty,
@@ -745,13 +737,15 @@ class InputNumeric(InputDialog):
         self._control = control
         wx_callback(wx.EVT_KILL_FOCUS, self._control,
                     self._on_kill_control_focus)        
-        sizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
-        self._handle_keys(control)
-        if self._message is not None:
-            result = Message._create_content(self), sizer
+        if self._prompt:
+            prompt = wx.StaticText(self._dialog, -1, self._prompt)
+            content = wx.BoxSizer()
+            content.Add(prompt,  1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)           
+            content.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
         else:
-            result = sizer
-        return result
+            content = control
+        self._handle_keys(control)
+        sizer.Add(content, 0, wx.ALL|wx.CENTER, 5)
         
     def _on_kill_control_focus(self, e):
         if not self._control.IsInBounds(self._control.GetValue()):
@@ -814,19 +808,19 @@ class RunFormDialog(InputDialog):
         }
 
 
-    def _create_content(self):
-        base_content = InputDialog._create_content(self)
-        sizer = wx.BoxSizer()
+    def _create_content(self, sizer):
+        super(RunFormDialog, self)._create_content(sizer)
         label = wx.StaticText(self._dialog, -1, _("Tøída formuláøe:"))
-        sizer.Add(label, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
-        ch = [self._BROWSE_FORM, self._EDIT_FORM, self._BROWSE_DUAL_FORM,
-              self._CODEBOOK_FORM]
-        control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=ch)
+        choices = [self._BROWSE_FORM, self._EDIT_FORM, self._BROWSE_DUAL_FORM,
+                   self._CODEBOOK_FORM]
+        control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=choices)
         control.SetSelection(0)
-        self._form_class_choice = control
-        sizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
         self._handle_keys(control)
-        return (base_content, sizer)
+        self._form_class_choice = control
+        vsizer = wx.BoxSizer()
+        vsizer.Add(label, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+        vsizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+        sizer.Add(vsizer, 0, wx.ALL|wx.CENTER, 5)
 
     def _customize_result(self, result):
         if self._button_label(result) == Message.BUTTON_OK:
@@ -1038,7 +1032,7 @@ class Calendar(GenericDialog):
             assert type(date) == type(DT.DateTimeFrom('2001-01-01'))
             self._date = date
         
-    def _create_content(self):
+    def _create_content(self, sizer):
         cal = calendar.CalendarCtrl(self._dialog, -1, style=self._style)
         if wx.MAJOR_VERSION == 2 and wx.MINOR_VERSION < 6:
             size = cal.GetSize()
@@ -1051,7 +1045,7 @@ class Calendar(GenericDialog):
         cal.SetDate(wx_date)
         self._cal = cal
         self._want_focus = cal
-        return cal
+        sizer.Add(cal, 0, wx.ALL|wx.CENTER, 5)
 
     def _can_commit(self, widget):
         return super(Calendar, self)._can_commit(widget) or widget == self._cal
@@ -1126,6 +1120,7 @@ class BugReport(GenericDialog):
     _REPORT_LABEL = _("Poslat oznámení o chybì")
     _EXIT_LABEL = _("Ukonèit aplikaci")
     _COMMIT_BUTTON = _EXIT_LABEL
+    _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
     def __init__(self, parent, einfo):
         """Inicializuj instanci.
@@ -1144,49 +1139,45 @@ class BugReport(GenericDialog):
                                    default=self._IGNORE_LABEL)
         self._einfo = einfo
 
-    def _create_content(self):
-        self._sizer = sizer = wx.BoxSizer(wx.VERTICAL)
-        label = wx.StaticText(self._dialog, -1, _("Nevy¹lo to"))
-        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD,
-                         encoding=wx.FONTENCODING_DEFAULT)
+    def _create_content(self, sizer):
+        dialog = self._dialog
+        label = wx.StaticText(dialog, -1, _("Nevy¹lo to"))
+        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, encoding=wx.FONTENCODING_DEFAULT)
         label.SetFont(font)
         icon = self._create_icon(Message.ICON_ERROR)
         if icon is not None:
-            s2 = wx.BoxSizer(wx.HORIZONTAL)
-            s2.Add(label, 1, wx.ALL|wx.EXPAND|wx.CENTER, 10)
-            s2.Add(icon, 0, wx.BOTTOM, 5)
-            sizer.Add(s2, 0, wx.EXPAND|wx.ALL)
-        else:
-            sizer.Add(label, 0, wx.ALL, 5)
+            vsizer = wx.BoxSizer(wx.HORIZONTAL)
+            vsizer.Add(label, 1, wx.ALIGN_CENTER_VERTICAL)
+            vsizer.Add(icon, 0, wx.ALL, 5)
+            label = vsizer
         # store the traceback text    
         import config
         if 0:
             # Fancy HTML traceback
             import cgitb
             from wx import html
-            display = html.HtmlWindow(self._dialog, -1)
+            traceback = html.HtmlWindow(dialog, -1)
             text = "<html>"+cgitb.html(self._einfo)+"</html>"
             step = 3000
             pointer = 0
             while (pointer < len(text)):
-                display.AppendToPage(text[pointer:min(pointer+step,len(text))])
+                traceback.AppendToPage(text[pointer:min(pointer+step,len(text))])
                 pointer += step
-                display.SetSize(char2px(display, 140, 35))
-            #display.SetFonts('Arial', 'Fixed', sizes=(6,7,8,9,10,11,12))
+                traceback.SetSize(char2px(traceback, 140, 35))
+            #traceback.SetFonts('Arial', 'Fixed', sizes=(6,7,8,9,10,11,12))
         else:
             style = wx.TE_MULTILINE|wx.TE_DONTWRAP #|wx.TE_READONLY
-            display = wx.TextCtrl(self._dialog, -1, style=style,
-                                  size=wx.Size(600, 400))
+            traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 400))
+            font = wx.Font(traceback.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
+            traceback.SetFont(font)
             for line in exception_info(self._einfo).splitlines():
                 # Pøíli¹ "dlouhý" text se nemusí povést do políèka vlo¾it...
-                display.AppendText(line+'\n')
-            font = wx.Font(display.GetFont().GetPointSize(),
-                           wx.MODERN, wx.NORMAL, wx.NORMAL)
-            display.SetFont(font)
-        sizer.Add(display, 0, wx.EXPAND|wx.CENTER)
-        self._display = display
-        self._want_focus = display
-        return sizer
+                traceback.AppendText(line+'\n')
+        self._traceback = traceback
+        self._want_focus = traceback
+        sizer.Add(label, 0, wx.EXPAND|wx.ALL|wx.CENTER, 5)
+        sizer.Add(traceback, 1, wx.EXPAND|wx.ALL, 5)
+
 
     def _customize_result(self, result):
         label = self._button_label(result)
@@ -1195,8 +1186,8 @@ class BugReport(GenericDialog):
         elif label == self._IGNORE_LABEL:
             result = ''
         elif label == self._REPORT_LABEL:
-            if isinstance(self._display, wx.TextCtrl):
-                result = self._display.GetValue()
+            if isinstance(self._traceback, wx.TextCtrl):
+                result = self._traceback.GetValue()
             else:
                 result = exception_info(self._einfo)
         else:
