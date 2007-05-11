@@ -119,18 +119,6 @@ class PresentedRow_(unittest.TestCase):
                                  ('c', 2),
                                  ('sum', 88),
                                  ('inc', 89)))
-    def test_callback(self):
-        changed = []
-        def cb(id):
-            changed.append(id)
-        row = PresentedRow(self._fields, self._data, None, new=True,
-                           prefill={'b': 3}, change_callback=cb)
-        self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
-        assert 'd' in changed and 'sum' in changed and 'inc' in changed
-        del changed[0:len(changed)]
-        row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
-        self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
-        assert 'd' in changed and 'sum' in changed and 'inc' in changed
     def test_editable(self):
         row = PresentedRow(self._fields, self._data, None,
                            prefill={'b': 2, 'c': 1})
@@ -138,24 +126,49 @@ class PresentedRow_(unittest.TestCase):
         assert not row.editable('d')
         row['b'] = pytis.data.Value(pytis.data.Integer(), 5)
         assert row.editable('d')
+    def test_callback(self):
+        row = PresentedRow(self._fields, self._data, None, new=True, prefill={'b': 3})
+        changed = []
+        def callback(id):
+            def cb():
+                x = row[id].value()
+                changed.append(id)
+            return cb
+        for id in ('a', 'b', 'c', 'd', 'sum', 'inc'):
+            row.register_callback(row.CALL_CHANGE, id, callback(id))
+        #self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
+        #assert 'd' in changed and 'sum' in changed and 'inc' in changed, changed
+        #del changed[0:len(changed)]
+        row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
+        #self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
+        assert 'd' in changed and 'sum' in changed and 'inc' in changed, changed
+        del changed[0:len(changed)]
+        data_row = pytis.data.Row((
+            ('a', pytis.data.Value(pytis.data.Integer(), 'xx')),
+            ('b', pytis.data.Value(pytis.data.Integer(), 10)),
+            ('c', pytis.data.Value(pytis.data.Integer(), 20)),
+            ('d', pytis.data.Value(pytis.data.Integer(), 30))))
+        row.set_row(data_row)
+        assert 'a' in changed and 'b' in changed and 'c' in changed and 'd' in changed \
+               and 'sum' in changed and 'inc' in changed, changed
+        
     def test_editability_callbacks(self):
-        enabled = ['--'] # we need a mutable object...
-        def editability_change(id, editable):
-            enabled[0] = editable and 'yes' or 'no'
-        row = PresentedRow(self._fields, self._data, None,
-                           prefill={'a': 6},
-                           editability_change_callback=editability_change)
-        assert enabled[0] == 'no', enabled[0]
+        enabled = [None] # we need a mutable object...
+        row = PresentedRow(self._fields, self._data, None, prefill={'a': 6})
+        def callback():
+            enabled[0] = row.editable('d')
+        row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
+        assert enabled[0] is None, enabled[0]
         row['a'] = pytis.data.Value(pytis.data.Integer(), 8)
-        assert enabled[0] == 'no', enabled[0]
+        assert enabled[0] is None, enabled[0]
         row['c'] = pytis.data.Value(pytis.data.Integer(), 3)
-        assert enabled[0] == 'no'
+        assert enabled[0] is False
         row['b'] = pytis.data.Value(pytis.data.Integer(), 2)
-        assert enabled[0] == 'no'
+        assert enabled[0] is False
         row['b'] = pytis.data.Value(pytis.data.Integer(), 3)
-        assert enabled[0] == 'yes'
+        assert enabled[0] is True
         row['c'] = pytis.data.Value(pytis.data.Integer(), 2)
-        assert enabled[0] == 'no'
+        assert enabled[0] is False
     def test_has_key(self):
         row = PresentedRow(self._fields, self._data, None)
         assert row.has_key('a')

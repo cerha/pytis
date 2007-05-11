@@ -768,14 +768,11 @@ class CallbackHandler:
             její dokumentace.
             
         """
-        assert kind[:5] == 'CALL_' and hasattr(self, kind), \
-               ('Invalid callback kind', kind)
-        assert function is None or callable(function), \
-               ('Callback function not callable', function)
-        if __debug__:
-            log(DEBUG, 'Nastaven callback øádkového seznamu:', (kind, function))
+        assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
+        assert function is None or callable(function), ('Invalid callback function', function)
         self._callbacks[kind] = function
-
+        if __debug__:
+            log(DEBUG, 'Callback registered:', (kind, function))
 
     def get_callback(self, kind):
         if self._callbacks.has_key(kind):
@@ -803,8 +800,9 @@ class CallbackHandler:
         except KeyError:
             return False
         if callback:
-            if __debug__: log(DEBUG, 'Bude volán callback:', (kind, callback))
-            apply(callback, args, kwargs)
+            if __debug__:
+                log(DEBUG, 'Invoking callback:', (kind, callback))
+            callback(*args, **kwargs)
             return True
             
 

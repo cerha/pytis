@@ -49,7 +49,7 @@ import config
 ### Formuláøe
 
 
-class ListForm(LookupForm, TitledForm, Refreshable):
+class ListForm(RecordForm, TitledForm, Refreshable):
     """Spoleèná nadtøída pro formuláøe se seznamovým zobrazením.
 
     Tyto formuláøe zobrazují seznam øádkù, rozdìlených do nìkolika sloupcù,
@@ -126,8 +126,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         self._mouse_dragged = False
         self._check_default_columns = not columns
         # Parametry zobrazení.
-        self._initial_position = self._position = 0
-
+        self._initial_position = self._position = self._get_row_number(self._row.row()) or 0
 
     def _default_columns(self):
         return self._view.columns()
@@ -222,13 +221,6 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
         if __debug__: log(DEBUG, 'Nový grid vytvoøen')
 
-    def _on_editor_shown(self, event):
-        if self._table.editing():
-            event.Skip()
-        else:
-            event.Veto()
-            self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
-    
     def _update_grid(self, data_init=False, inserted_row_number=None,
                      inserted_row=None, delete_column=None, insert_column=None,
                      inserted_column_index=None, init_columns=False):
@@ -327,13 +319,14 @@ class ListForm(LookupForm, TitledForm, Refreshable):
             if c.editable() in (Editable.ALWAYS, Editable.ONCE) \
                    or isinstance(c.editable(), Computer):
                 self.editable = True
-                e = _grid.InputFieldCellEditor(self._parent, self._table, self,
-                                               c, self._data, registration)
-                # TODO:
-                #e.set_callback(InputField.CALL_FIELD_CHANGE,
-                #               ...)
-                self._editors.append(e)
-                attr.SetEditor(e)
+                editing = self._table.editing()
+                if editing:
+                    the_row = editing.the_row
+                    e = _grid.InputFieldCellEditor(self._parent, the_row, c.id(), self,
+                                                   self._table, registration)
+                    self._editors.append(e)
+                    #self._grid.SetCellEditor(row, col, e)
+                    attr.SetEditor(e)
             else:
                 attr.SetReadOnly()
             self._grid.SetColAttr(i, attr)
@@ -463,16 +456,27 @@ class ListForm(LookupForm, TitledForm, Refreshable):
 
     def _edit_cell(self):
         """Spus» editor aktuálního políèka."""
+        # TODO: Cell editors must be recreated for the current edited row.  Reinitializing columns
+        # solves that, but some more gentle solution would be desirable...
+        self._init_col_attr()
         row, col = self._current_cell()
         table = self._table
         cid = self._columns[col].id()
-        if not table.row(table.editing().row).editable(cid):
+        the_row = table.editing().the_row
+        if not the_row.editable(cid):
             message(_("Políèko je needitovatelné"), kind=ACTION, beep_=True)
             return False
-        self._grid.EnableCellEditControl()       
+        self._grid.EnableCellEditControl()
         log(EVENT, 'Spu¹tìn editor políèka:', (row, cid))
         return True
-    
+
+    def _on_editor_shown(self, event):
+        if self._table.editing():
+            event.Skip()
+        else:
+            event.Veto()
+            self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
+            
     def _finish_editing(self, question=None, row=None):
         # Vrací pravdu, právì kdy¾ nejsou akce blokovány editací øádku.
         table = self._table
@@ -539,10 +543,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 before = table.row(row+1).row().columns(kc)
             else:
                 after = before = None
-            op = (self._data.insert,
+            op = (self._data.insert, 
                   (rdata,),
-                  dict(after=after, before=before,
-                       transaction=self._transaction))
+                  dict(after=after, before=before, transaction=self._transaction))
         else:
             key = editing.orig_content.row().columns(kc)
             op = (self._data.update,
@@ -550,9 +553,9 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                   dict(transaction=self._transaction))
         # Provedení operace
         success, result = db_operation(op)
-        if self._init_transaction is None and self._transaction is not None:
+        if self._governing_transaction is None and self._transaction is not None:
             self._transaction.commit()
-        self._transaction = self._init_transaction
+        self._transaction = self._governing_transaction
         if success and result[1]:
             table.edit_row(None)
             message('Øádek ulo¾en do databáze', ACTION)
@@ -581,7 +584,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         log(EVENT, 'Zru¹ení editace øádku')
         if self._transaction is not None:
             self._transaction.cut('inline')
-            self._transaction = self._init_transaction
+            self._transaction = self._governing_transaction
         editing = self._table.editing()
         if not editing:
             return False
@@ -1102,44 +1105,11 @@ class ListForm(LookupForm, TitledForm, Refreshable):
                 self._on_line_rollback()
         return True
 
-    def _find_row_by_number(self, row_number):
-        # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
-        # Krom toho je toto rychlej¹í...
-        if row_number < self._table.GetNumberRows():
-            return self._table.row(row_number).row()
-        else:
-            return None
-
-    def _find_row_by_values(self, cols, values):
-        # Nutno pøedefinovat, proto¾e metoda rodiè. tøídy nám rozhodí kurzor.
-        cols = xtuple(cols)
-        values = xtuple(values)
-        assert len(cols) == len(values)
-        cond = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
-        condition = pytis.data.AND(cond, self._current_condition())
-        data = self._data
-        data.rewind()
-        def dbop():
-            return data.search(condition, transaction=self._transaction)
-        success, result = db_operation(dbop)
-        if not success:
-            row = -1
-        elif result == 0:
-            row = -1
-        else:
-            row = result - 1
-        prow = self._table.row(row)
-        if prow:
-            return prow.row()
-        else:
-            return None
-        
     def select_row(self, position, quiet=False):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
-        if isinstance(position, types.IntType) \
-               and position < self._table.GetNumberRows():
+        if isinstance(position, int) and position < self._table.GetNumberRows():
             # Pro èíslo voláme rovnou _select_cell a nezdr¾ujeme se pøevodem na
             # row a zpìt, který probíhá v rodièovské metodì...
             self._select_cell(row=position)
@@ -1559,7 +1529,7 @@ class ListForm(LookupForm, TitledForm, Refreshable):
         if not table.editing():
             if not self._lock_record(self._current_key()):
                 self._transaction.cut('inline')
-                self._transaction = self._init_transaction
+                self._transaction = self._governing_transaction
                 return False
             table.edit_row(self._current_cell()[0])
             self._update_selection_colors()
@@ -1745,9 +1715,10 @@ class ListForm(LookupForm, TitledForm, Refreshable):
     def _cmd_cell_rollback(self):
         log(EVENT, 'Opu¹tìní políèka gridu beze zmìny hodnoty')
         self._current_editor.Reset()
+        row, col = self._current_cell()
         self._grid.DisableCellEditControl()
         self._current_editor = None
-
+                
     # Veøejné metody
         
     def is_edited(self):

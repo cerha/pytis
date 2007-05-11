@@ -1324,14 +1324,13 @@ class CbComputer(Computer):
         super(CbComputer, self).__init__(self._compute, depends=(field,))
         
     def _compute(self, row):
-        transaction = row.get_transaction()
         cbvalue = row[self._field]
         if cbvalue.value() is not None:
             e = cbvalue.type().enumerator()
             assert e is not None, \
                    "CbComputer refers to '%s', which has no enumerator." \
                    % self._field
-            value = e.get(cbvalue.value(), self._column, transaction=transaction)
+            value = e.get(cbvalue.value(), self._column, transaction=row.transaction())
             if value:
                 return value.value()
         return self._default

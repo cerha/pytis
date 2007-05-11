@@ -42,6 +42,15 @@ class PresentedRow(object):
     dat pøesahující jejich zformátování do stringu.
 
     """
+
+    CALL_CHANGE = 'CALL_CHANGE'
+    """Callback called on indirect field change (when the field value changes due to its computer
+    dependency on another field)."""
+            
+    CALL_EDITABILITY_CHANGE = 'CALL_EDITABILITY_CHANGE'
+    """Callback called on field editability change (when the field editability changes due to its
+    editability dependency on another field)."""
+    
     class _Column:
         def __init__(self, f, data):
             self.id = f.id()
@@ -54,17 +63,17 @@ class PresentedRow(object):
             self.codebook = f.codebook(data)
             self.codebook_runtime_filter = f.codebook_runtime_filter()
             
-    def __init__(self, fieldspec, data, row, prefill=None, singleline=False,
-                 change_callback=None, editability_change_callback=None,
-                 new=False, resolver=None):
+    def __init__(self, fieldspec, data, row, prefill=None, singleline=False, new=False,
+                 resolver=None, transaction=None):
         """Inicializuj prezentaci øádku.
         
         Argumenty:
 
-          fieldspec -- sekvence specifikací políèek, instancí tøídy
-            'FieldSpec'
+          fieldspec -- sekvence specifikací políèek, instancí tøídy 'FieldSpec'
             
           data -- odpovídající datový objekt, instance tøídy 'pytis.data.Data'
+          
+          transaction -- current transaction to use for data operations.
           
           row -- data øádku, viz ní¾e
           
@@ -79,18 +88,6 @@ class PresentedRow(object):
           singleline -- právì kdy¾ je pravdivé, stringové hodnoty v¹ech políèek
             budou zformátovány jako jednoøádkové
             
-          change_callback -- funkce jednoho argumentu (id políèka) volaná pøi
-            nepøímé zmìnì políèka (tj. pøi pøepoèítávání hodnot), která
-            oznamuje \"neèekané\" zmìny políèek v prezentovaném row; je-li
-            'None', není ¾ádná taková funkce volána
-            
-          editability_change_callback -- funkce dvou argumentù (id políèka,
-            pøíznak editovatelnosti) volaná pøi nepøímé zmìnì editovatelnosti
-            políèka.  Voláním této funkce øádek oznamuje, ¾e v dùsledku zmìny v
-            jiných políèkách se dané políèko stalo editovatelným (druhý
-            argument je pravdivý), èi naopak (druhý argument je nepravdivý);
-            je-li 'None', není zmìna editovatelnosti oznamována.
-            
           new -- flag urèující, zda se jedná o novì vytváøený záznam (nikoliv
             editaci záznamu ji¾ existujícího)
             
@@ -101,30 +98,22 @@ class PresentedRow(object):
             webového serveru je tøeba pracovat s více resolvery souèasnì a ty
             je potom nutné pøedávat jako argument.
 
-        Prezentaèní podoba je vytvoøena z dat specifikovaných argumentem 'row',
-        který mù¾e mít nìkterou z následujících hodnot:
+        Initial field values are determined depending on the argument 'row', which can have one of
+        the following values:
 
-          None -- bude vytvoøen zbrusu nový øádek odpovídající 'fieldspec'
-          instance 'PresentedRow' -- bude vytvoøena kopie zadaného øádku, oba
-            musí mít shodnou specifikaci políèek
-          instance 'pytis.data.Row' -- bude vytvoøena prezentace z daného
-            datového øádku
+          None -- default values will be generated according to field specifications.
+          'PresentedRow' instance -- field values are taken from this instance.
+          'pytis.data.Row' instance -- field values are taken from this data row.
 
-        Ve v¹ech pøípadech je rozhodující podoba 'row' v okam¾iku volání tohoto
-        konstruktoru, pozdìj¹í pøípadné destruktivní zmìny 'row' nemají na novì
-        vytvoøenou instanci tøídy 'PresentedRow' vliv.
+        In any case only the state of the 'row' in the time of this constructor call matters.  Any
+        later changes to it have no effect on the newly created instance.
 
         """
-        assert is_sequence(fieldspec)
-        # TODO: pytis.remote vy¾aduje inicializaci Pyro, co¾ není v¾dy to pravé
-        # oøechové.  `data' by stejnì mìlo být jednotného typu, je tøeba to
-        # nìjak promyslet.
-        #assert isinstance(data, pytis.data.Data) or \
-        #       isinstance(data, pytis.remote.RemoteData)
+        assert isinstance(fieldspec, (tuple, list))
+        # TODO: pytis.remote vy¾aduje inicializaci Pyro, co¾ není v¾dy to pravé oøechové.  `data'
+        # by stejnì mìlo být jednotného typu, je tøeba to nìjak promyslet.
+        #assert isinstance(data, pytis.data.Data) or isinstance(data, pytis.remote.RemoteData)
         assert row is None or isinstance(row, (PresentedRow, pytis.data.Row))
-        assert change_callback is None or callable(change_callback)
-        assert editability_change_callback is None or \
-               callable(editability_change_callback)
         assert prefill is None or isinstance(prefill, dict)
         assert isinstance(singleline, bool)
         assert isinstance(new, bool)
@@ -132,11 +121,10 @@ class PresentedRow(object):
         self._fieldspec = fieldspec
         self._data = data
         self._singleline = singleline
-        self._change_callback = change_callback
-        self._editability_change_callback = editability_change_callback
+        self._callbacks = {}
         self._new = new
         self._cache = {}
-        self._transaction = None
+        self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
         self._columns = columns = dict([(f.id(), self._Column(f, data))
                                         for f in self._fieldspec])
@@ -278,8 +266,7 @@ class PresentedRow(object):
                     self._row[key] = value
                 else:
                     self._virtual[key] = value
-                if self._change_callback is not None:
-                    self._change_callback(key)
+                self._run_callback(self.CALL_CHANGE, key)
         return value
 
     def __setitem__(self, key, value):
@@ -306,6 +293,23 @@ class PresentedRow(object):
         else:
             return super(PresentedRow, self).__str__()
 
+    def _run_callback(self, kind, key=None):
+        try:
+            callbacks = self._callbacks[kind]
+        except KeyError:
+            pass
+        else:
+            if key is None:
+                for callback in callbacks.values():
+                    callback()
+            else:
+                try:
+                    callback = callbacks[key]
+                except KeyError:
+                    pass
+                else:
+                    callback()
+            
     def _mark_dependent_dirty(self, key):
         # Rekurzivnì oznaè závislá políèka.
         # Vra» pravdu, pokud k oznaèení nìjakých políèek do¹lo.
@@ -318,24 +322,26 @@ class PresentedRow(object):
             return False
     
     def _resolve_dependencies(self, key=None):
-        # Recompute dependencies for all fields when key is None or recompute
-        # just fields depending on a given field (after its change).
-        # TODO: Musí se to dìlat v¾dy?  Napø. i pøi set_row z BrowseFormu?
+        # Recompute dependencies for all fields when the key is None or recompute
+        # just fields depending on given field (after its change).
         if key is None:
-            invoke_callbacks = False
+            dirty = False
         else:
-            invoke_callbacks = self._mark_dependent_dirty(key)
+            dirty = self._mark_dependent_dirty(key)
+        # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._notify_runtime_filter_change(key)
         self._recompute_editability(key)
-        if invoke_callbacks and self._change_callback is not None:
-            # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
-            # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
-            # pøepoèítána a callback byl zavolán bìhem pøepoèítávání
-            # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a
-            # musíme tedy jejich callback zavolat teï.
-            dirty = [k for k in self._dirty.keys() if self._dirty[k]]
-            for k in dirty:
-                self._change_callback(k)
+        if self._callbacks:
+            self._run_callback(self.CALL_CHANGE, key)
+            if dirty:
+                # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
+                # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
+                # pøepoèítána a callback byl zavolán bìhem pøepoèítávání
+                # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a
+                # musíme tedy jejich callback zavolat teï.
+                dirty = [k for k in self._dirty.keys() if self._dirty[k]]
+                for k in dirty:
+                    self._run_callback(self.CALL_CHANGE, k)
     
     def _recompute_editability(self, key=None):
         if key is None:
@@ -344,12 +350,12 @@ class PresentedRow(object):
             keys = self._editability_dependent[key]
         else:
             return
-        if self._editability_change_callback:
+        if self._callbacks:
             for k in keys:
                 old = self._editable[k]
                 new = self._compute_editability(k)
                 if old != new:
-                    self._editability_change_callback(k, new)
+                    self._run_callback(self.CALL_EDITABILITY_CHANGE, k)
         else:
             for k in keys:
                 self._editability_dirty[k] = True
@@ -411,15 +417,22 @@ class PresentedRow(object):
         """Vra» odpovídající datový objekt øádku."""
         return self._data
 
+    def transaction(self):
+        """Return the current transaction for data operations."""
+        return self._transaction
+
+    def set_transaction(self, transaction):
+        """Set the current transaction for data operations."""
+        self._transaction = transaction
+    
     def format(self, key, **kwargs):
-        """Vra» stringovou hodnotu políèka 'key'.
+        """Return the string representation of the field value.
 
-        Argumenty:
+        Arguments:
 
-          'key' -- id políèka (øetìzec) identifikující existující políèko,
-            jinak je chování metody nedefinováno.
-          'kwargs' -- klíèové argumenty které budou pou¾ity pøi volání metody
-            'export()' pro získání øetìzcové reprezentace hodnoty.
+          'key' -- field identifier (string).
+          'kwargs' -- keyword arguments passed to the 'export()' method of the field's
+            'Value' instance.
         
         """
         try:
@@ -469,7 +482,7 @@ class PresentedRow(object):
         return self._columns.keys()
         
     def original_row(self, empty_as_none=False):
-        """Vra» øádek obsahující pùvodní hodnoty øádku pøed pøípadnými zmìnami.
+        """Vra» *datový* øádek obsahující pùvodní hodnoty pøed pøípadnými zmìnami.
 
         Vrácená hodnota je instance 'pytis.data.Row', ne nutnì toto¾ná (ve
         smyslu 'id()') s øádkem zadaným v konstruktoru.
@@ -524,6 +537,17 @@ class PresentedRow(object):
             return editable == Editable.ALWAYS or \
                    (editable == Editable.ONCE and self._new)
 
+    def register_callback(self, kind, key, function):
+        assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
+        assert function is None or callable(function), ('Invalid callback function', function)
+        try:
+            callbacks = self._callbacks[kind]
+        except KeyError:
+            callbacks = self._callbacks[kind] = {}
+        if callbacks.has_key(key):
+            raise ProgramError("Callback already registered:", kind, key, callbacks[key])
+        callbacks[key] = function
+
     # Nakonec to není nikde potøeba, ale kdyby, staèí odkomentovat a dopsat
     # test...
     #def permitted(self, key, permission):
@@ -544,15 +568,12 @@ class PresentedRow(object):
     #    else:
     #        return None
 
-
-        
-    
     def _display_func(self, column):
         def getval(enum, value, col, func=None):
             if value is None:
                 return ''
             try:
-                v = enum.get(value, col, transaction=self.get_transaction())
+                v = enum.get(value, col, transaction=self._transaction)
             except pytis.data.DataAccessException:
                 return ''
             if not v:
@@ -618,13 +639,5 @@ class PresentedRow(object):
             display = lambda v: pytis.data.Value(column.type, v).export()
         return [(v, display(v)) for v in column.type.enumerator().values()]
 
-    def set_transaction(self, transaction):
-        """Nastav transakci pro pøedávání operacím datového objektu."""
-        self._transaction = transaction
-
-    def get_transaction(self):
-        """Vra» transakci pro pøedání operacím datového objektu."""
-        return self._transaction
-    
 
     

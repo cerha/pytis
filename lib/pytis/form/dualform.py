@@ -267,8 +267,8 @@ class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
     
     def __init__(self, *args, **kwargs):
-        super_(ImmediateSelectionDualForm).__init__(self, *args, **kwargs)
         self._selection_data = None
+        super_(ImmediateSelectionDualForm).__init__(self, *args, **kwargs)
 
     def _on_main_selection(self, row):
         r = row.row()

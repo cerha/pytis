@@ -1,3 +1,32 @@
+2007-05-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py: Create the PresentedRow instance directly in
+	the constructor.  Don't handle synchronization of input fields and
+	the row.
+
+	* pytis/form/inputfield.py: Connect directly to the edited
+	`PresentedRow' instance.
+
+	* pytis/form/list.py: Recreate cell editors before each cell
+	editation.
+
+	* pytis/form/_grid.py: Use the new `InputField' interface.
+
+	* pytis/form/application.py: Treat `select_row' as other
+	constructor arguments.
+
+	* pytis/presentation/spec.py: Respect the changed 'PresentedRow'
+	interface.
+
+	* pytis/presentation/field.py: Allow per-field callback
+	registration.
+
+	* pytis/presentation/_test.py: Test callbacks.
+
+	* pytis/form/screen.py: Minor changes.
+
+	* pytis/form/dualform.py: Minor change.
+
 2007-05-10  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/data.py (DataFactory.create): Don't use data object

@@ -181,12 +181,13 @@ class ListTable(wx.grid.PyGridTableBase):
         if inserted_row_number is None:
             self._edited_row = None
         else:
-            self._edited_row = self._EditedRow(inserted_row_number,
-                                               inserted_row, fields, data,
-                                               new=True, prefill=prefill)
-        self._presented_row = PresentedRow(fields, data, None, singleline=True,
-                                           prefill=prefill)
+            self._edited_row = self._init_edited_row(inserted_row_number, inserted_row)
+        self._presented_row = PresentedRow(fields, data, None, singleline=True, prefill=prefill)
 
+    def _init_edited_row(self, row, data_row, new=False):
+        return self._EditedRow(row, data_row, self._fields, self._data, new=new,
+                               prefill=self._prefill)
+        
     # Pomocné metody
 
     def _wx_type(self, t):
@@ -360,12 +361,8 @@ class ListTable(wx.grid.PyGridTableBase):
         if inserted_row_number is None:
             self._edited_row = None
         else:
-            self._edited_row = self._EditedRow(inserted_row_number,
-                                               inserted_row, self._fields,
-                                               self._data,
-                                               new=True, prefill=prefill)
-        self._presented_row = PresentedRow(self._fields, self._data,
-                                           None, singleline=True,
+            self._edited_row = self._init_edited_row(inserted_row_number, inserted_row, new=True)
+        self._presented_row = PresentedRow(self._fields, self._data, None, singleline=True,
                                            prefill=prefill)
         
     def close(self):
@@ -463,12 +460,8 @@ class ListTable(wx.grid.PyGridTableBase):
         if row is None:
             self._edited_row = None
         else:
-            assert row >= 0 and row < self._row_count, \
-                   ('Invalid row number', row)
-            data_row = self._get_row(row)
-            self._edited_row = \
-                  self._EditedRow(row, data_row, self._fields, self._data,
-                                  prefill=self._prefill)
+            assert row >= 0 and row < self._row_count, ('Invalid row number', row)
+            self._edited_row = self._init_edited_row(row, self._get_row(row))
 
     def editing(self):
         """Vra» informaci o editovaném øádku nebo 'None'.
@@ -698,25 +691,21 @@ class TableRowIterator(object):
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
 
-    def __init__(self, parent, table, guardian, field_spec, data,
-                 registration):
+    def __init__(self, parent, row, id, guardian, table, registration):
         wx.grid.PyGridCellEditor.__init__(self)
         self._parent = parent
-        self._table = table
+        self._row = row
+        self._id = id
         self._guardian = guardian
-        self._field_spec = field_spec
-        self._data = data
+        self._table = table
         self._registration = registration
         self._field = None
-        self._callbacks = []
 
     # Povinné metody
 
     def Create(self, parent, id, evt_handler):
-        self._field = InputField.create(parent, self._field_spec, self._data,
+        self._field = InputField.create(parent, self._row, self._id,
                                         guardian=self._guardian, inline=True)
-        for type,function in self._callbacks:
-            self._field.set_callback(type, function)
         control = self._field.widget()
         self.SetControl(control)
         return control
@@ -724,8 +713,6 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
     def BeginEdit(self, row, col, grid):
         self._registration(self)
         field = self._field
-        value = self._table.GetValue(row, col, inputfield=field)
-        field.init(value)
         invalid_string = self._table.get_invalid_string(row, col)
         if invalid_string is not None:
             field.set_value(invalid_string)
@@ -749,7 +736,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
             return True
         else:
             self._table.set_invalid_string(row, col, None)
-            self._table.SetValue(row, col, value)
+            self._row[self._id] = value
             return True
 
     def Reset(self):
@@ -769,12 +756,6 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         if __debug__: log(DEBUG, 'Neuvìøitelné -- voláno IsAcceptedKey')
         return False
     
-    def set_callback(self, type, function):
-        if self._field is not None:
-            self._field.set_callback(type, function)
-        else:
-            self._callbacks.append((type, function))
-
     def close(self):
         """Proveï ukonèovací akce.
 
