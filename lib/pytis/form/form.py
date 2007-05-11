@@ -66,7 +66,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return current_form(inner=False)
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
-    def __init__(self, parent, resolver, name, guardian=None, transaction=None,
+    def __init__(self, parent, resolver, name, guardian=None, spec_args=None, transaction=None,
                  **kwargs):
         """Inicializuj instanci.
 
@@ -120,11 +120,13 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._resolver = resolver
         self._name = name
         self._guardian = guardian or parent
+        self._governing_transaction = transaction
+        self._transaction = transaction or self._default_transaction()
         Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         start_time = time.time()
-        spec_args = kwargs.get('spec_args', {})
+        spec_args = spec_args or {}
         try:
             self._view = self._create_view_spec(**spec_args)
             self._data = self._create_data_object(**spec_args)
@@ -134,26 +136,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
         self._init_attributes(**kwargs)
         self._result = None
-        self._init_transaction = self._transaction = transaction
         start_time = time.time()
         self._create_form()
         log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
 
-    def _init_attributes(self, spec_args={}):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
-        
-        Argumenty:
-        
-          kwargs -- klíèové argumenty konstruktoru (viz dokumentace metody
-            '__init__()').
+    def _init_attributes(self):
+        """Process constructor keyword arguments and initialize the attributes.
 
-        
-        Tato metoda je volána po základní inicializaci instance (pøedev¹ím
-        naètení specifikace a inicializaci datového objektu.  Metody
-        vytváøející konkrétní prvky u¾ivatelského rozhraní formuláøe (napøíklad
-        '_create_form()'), jsou v¹ak volány a¾ poté.  Zde by mìly být pøedev¹ím
-        zpracovány v¹echny klíèové argumenty konstruktoru (viz dokumentace
-        metody '__init__()' a inicializovány atributy instance.
+        This method is called in the initial phase of form construction before any UI widget
+        creation but after the initialization of specifications and the data object.  The derived
+        classes should primarily process all their specific constructor arguments and initialize
+        the attributes of the instance.  See also the constructor documentation for more details.
 
         """
         key = self._form_state_key()
@@ -194,6 +187,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self.SetSizer(sizer)
         sizer.Fit(self) # Set the size of window `self' to size of the sizer.
 
+    def _default_transaction(self):
+        return None
+        
     def _create_form_parts(self, sizer):
         pass
 
@@ -515,13 +511,13 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if self._init_transaction is None and self._result:
+            if self._governing_transaction is None and self._result:
                 try:
                     self._transaction.commit()
                 except:
                     pass
             else:    
-                self._init_transaction = None
+                self._governing_transaction = None
             self._transaction = None
         result = self._result
         self._close(force=True)
@@ -605,441 +601,7 @@ class TitledForm:
         return panel
 
 
-class RecordForm(InnerForm):
-    """Formuláø schopný nìjakým zpùsobem zobrazit aktuální záznam."""
-
-    CALL_SELECTION = 'CALL_SELECTION'
-    """Konstanta callbacku výbìru (zmìny aktuálního) záznamu.
-
-    Argumentem callbackové funkce je novì vybraný záznam jako instance
-    'PresentedRow'.
-    
-    """
-
-    def _init_attributes(self, prefill=None, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
-
-        Argumenty:
-
-          prefill -- slovník hodnot, které mají být pøedvyplnìny pøi
-            inicializaci formuláøe.  Mohou být pøadány jak instance
-            'pytis.data.Value', tak pøímo vnitøní hodnoty, pokud odpovídají
-            datovému typu pøíslu¹ného sloupce.
-            
-          kwargs -- argumenty pøedané pøedkovi
-
-        """
-        super_(RecordForm)._init_attributes(self, **kwargs)
-        assert prefill is None or is_dictionary(prefill)
-        self._prefill = prefill
-        self._row = None
-
-    def _on_field_change(self, field_id, value=None):
-        # Signalizace zmìny hodnoty políèka z _row
-        pass
-
-    def _on_editability_change(self, field_id, editable):
-        # Callback zmìny editovatelnosti políèka
-        pass
-
-    def _signal_update(self):
-        pass
-
-    def _select_columns(self):
-        return None
-
-    def _find_row_by_number(self, row_number):
-        # row_number zaèíná od 0
-        def get_it():
-            data = self._data
-            data.rewind()
-            data.skip(row_number)
-            return data.fetchone(transaction=self._transaction)
-        success, row = db_operation(get_it)
-        if not success or not row:
-            return None
-        else:
-            return row
-    
-    def _find_row_by_values(self, cols, values):
-        """Vra» datový øádek odpovídající daným hodnotám.
-
-        Arguemnty:
-
-          cols -- sekvence názvù sloupcù, které mají být prohledávány.
-          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
-            poøadí odpovídajícím 'cols'.
-
-        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
-        pøedány i pøímo, bez obalení do sekvenèního typu.
-
-        """
-        cols = xtuple(cols)
-        values = xtuple(values)
-        assert len(cols) == len(values)
-        condition = apply(pytis.data.AND, map(pytis.data.EQ, cols, values))
-        data = self._data
-        def find_row(condition):            
-            n = data.select(condition, columns=self._select_columns(),
-                            transaction=self._transaction)
-            return data.fetchone(transaction=self._transaction)
-        success, result = db_operation((find_row, (condition,)))
-        return result
-
-    def _find_row_by_key(self, key):
-        cols = self._select_columns()
-        def dbop():
-            return self._data.row(key, columns=cols, transaction=self._transaction)
-        success, row = db_operation(dbop)
-        if success and row:
-            return row
-        else:
-            return None
-    
-    def _get_row_number(self, row):
-        """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'.
-
-        Pokud odpovídaící øádek není nalezen, vra» None.
-
-        """
-        eqs = [pytis.data.EQ(c.id(), row[c.id()]) for c in self._data.key()]
-        condition = pytis.data.AND(*eqs)
-        data = self._data
-        data.rewind()
-        def dbop():
-            return data.search(condition, transaction=self._transaction)
-        success, result = db_operation(dbop)
-        if not success:
-            return None
-        elif result == 0:
-            return None
-        else:
-            return result - 1
-        
-    def _select_row(self, row, quiet=False):
-        # Naplò formuláø daty z daného *datového* øádku
-        raise ProgrammError("This method must be overridden.")
-
-    def _current_key(self):        
-        the_row = self.current_row()
-        if the_row is not None:
-            data_row = the_row.original_row(empty_as_none=True)
-            if data_row is None:
-                data_row = the_row.row()
-            return data_row.columns([c.id() for c in self._data.key()])
-        return None
-    
-    def _current_column_id(self):
-        return None
-    
-    def _new_form_kwargs(self):
-        return {}
-
-    def _lock_record(self, key):
-        def dbop():
-            return self._data.lock_row(key, transaction=self._transaction)
-        success, locked = db_operation(dbop)
-        if success and locked != None:
-            log(EVENT, 'Record is locked')
-            run_dialog(Message, _("Záznam je zamèen"))
-            return False
-        else:
-            return True
-
-    def _check_record(self, row):
-        # Proveï kontrolu integrity dané instance PresentedRow.
-        for check in self._view.check():
-            result = check(row)
-            if result is not None:
-                if is_sequence(result):
-                    failed_id, msg = result
-                    message(msg)
-                else:
-                    failed_id = result
-                    # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø
-                    # 'check()'.  Pokud ale ¾ádná zpráva nebyla nastavena,
-                    # u¾ivatel netu¹í...
-                    #message(_("Kontrola integrity selhala!"))
-                log(EVENT, 'Kontrola integrity selhala:', failed_id)
-                return failed_id
-        return None
-
-    def _record_data(self, row):
-        rdata = [(f.id(), row[f.id()]) for f in row.fields()
-                 if self._data.find_column(f.id()) is not None]
-        return pytis.data.Row(rdata)
-
-    def _row_copy_prefill(self, the_row):
-        # Create a copy of the row, but exclude key columns and computed
-        # columns which depend on key columns.
-        if the_row:
-            keys = [c.id() for c in the_row.data().key()]
-            prefill = {}
-            for cid in the_row.keys():
-                fspec = self._view.field(cid)
-                if cid in keys or fspec.nocopy():
-                    continue
-                computer = fspec.computer()
-                if computer:
-                    skip = False
-                    for dep in computer.depends():
-                        if dep in keys:
-                            skip = True
-                            break
-                    if skip:
-                        continue
-                prefill[cid] = the_row[cid]
-        else:
-            prefill = {}
-        return prefill
-
-    # Zpracování pøíkazù.
-    
-    def _on_new_record(self, copy=False):
-        if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
-            return False
-        import copy as copy_
-        prefill = self._prefill and copy_.copy(self._prefill) or {}
-        if copy:
-            prefill.update(self._row_copy_prefill(self.current_row()))
-        result = new_record(self._name, prefill=prefill)
-        if result:
-            if not self.select_row(result.row(), quiet=True):
-                msg = _("Vlo¾ený záznam se neobjevil v aktuálním náhledu.")
-                run_dialog(Warning, msg)
-    
-    def _can_edit_record(self):
-        return self._current_key() is not None \
-               and self.check_permission(pytis.data.Permission.UPDATE)
-
-    def _on_edit_record(self):
-        if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
-            return
-        row = self.current_row()
-        on_edit_record = self._view.on_edit_record()
-        if on_edit_record is not None:
-            on_edit_record(row=row)
-            # TODO: _signal_update vyvolá refresh.  To je tu jen pro pøípad, ¾e
-            # byla u¾ivatelská procedura o¹etøena jinak ne¾ vyvoláním
-            # formuláøe.  Proto¾e to samo u¾ je hack, tak a» si radìji také
-            # tvùrce provádí refresh sám, proto¾e tady je volán ve v¹ech
-            # ostatních pøípadech zbyteènì a zdr¾uje.
-            self._signal_update()
-        else:
-            name = self._name
-            redirect = self._view.redirect()
-            if redirect is not None:
-                redirected_name = redirect(row)
-                if redirected_name is not None:
-                    assert isinstance(redirected_name, str)
-                    name = redirected_name
-            kwargs = self._new_form_kwargs()
-            key = self._current_key()
-            run_form(PopupEditForm, name, select_row=key, **kwargs)
-
-    def _can_delete_record(self):
-        return self.check_permission(pytis.data.Permission.DELETE)
-
-    def _on_delete_record(self):
-        if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
-            return False
-        # O¹etøení u¾ivatelské funkce pro mazání
-        on_delete_record = self._view.on_delete_record()
-        transaction = self._transaction
-        if on_delete_record is not None:
-            condition = on_delete_record(row=self.current_row())
-            if condition is None:
-                return False
-            assert isinstance(condition, pytis.data.Operator)
-            op = lambda : self._data.delete_many(condition, transaction=transaction)
-            log(EVENT, 'Mazání záznamu:', condition)
-        else:
-            msg = _("Opravdu chcete záznam zcela vymazat?")        
-            if not run_dialog(Question, msg):
-                log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
-                return False
-            key = self._current_key()
-            op = lambda : self._data.delete(key, transaction=transaction)
-            log(EVENT, 'Mazání záznamu:', key)
-        success, result = db_operation(op)
-        if success:
-            self._signal_update()
-            log(ACTION, 'Záznam smazán.')
-            return True
-        else:
-            return False
-
-    def _on_import_interactive(self):
-        if not self._data.permitted(None, pytis.data.Permission.INSERT):
-            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
-            message(msg, beep_=True)
-            return False
-        msg = _("Nejprve vyberte soubor obsahující importovaná data. "
-                "Poté budete moci zkontrolovat a potvrdit ka¾dý záznam.\n\n"
-                "*Formát vstupního souboru:*\n\n"
-                "Ka¾dý øádek obsahuje seznam hodnot oddìlených zvoleným "
-                "znakem, nebo skupinou znakù (vyplòte ní¾e). "
-                "Tabelátor zapi¹te jako ='\\t'=.\n\n"
-                "První øádek obsahuje identifikátory sloupcù a urèuje tedy "
-                "význam a poøadí hodnot v následujících (datových) øádcích.\n\n"
-                "Identifikátory jednotlivých sloupcù jsou následující:\n\n" + \
-                "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
-                           [self._view.field(id)
-                            for id in self._view.layout().order()]]))
-        separator = run_dialog(InputDialog, 
-                               title=_("Hromadné vkládání dat"),
-                               report=msg, report_format=TextFormat.WIKI,
-                               prompt="Oddìlovaè", value='|')
-        if not separator:
-            if separator is not None:
-                message(_("Nebyl zadán oddìlovaè."), beep_=True)
-            return False
-        separator = separator.replace('\\t', '\t')
-        while 1:
-            filename = run_dialog(FileDialog)
-            if filename is None:
-                message(_("Nebyl zadán soubor. Proces ukonèen."), beep_=True)
-                return False
-            try:
-                fh = open(filename)
-            except IOError, e:
-                msg = _("Nepodaøilo se otevøít soubor '%s': %s")
-                run_dialog(Error, msg % (filename, str(e)))
-                continue
-            break
-        try:
-            columns = [str(id.strip()) for id in fh.readline().split(separator)]
-            fields = [self._view.field(id) for id in columns]
-            if None in fields:
-                msg = _("Chybný identifikátor sloupce: %s")
-                run_dialog(Error, msg % columns[fields.index(None)])
-                return False
-            types = [f.type(self._data) for f in fields]
-            line_number = 1
-            data = []
-            for line in fh:
-                line_number += 1
-                values = line.rstrip('\r\n').split(separator)
-                if len(values) != len(columns):
-                    msg = _("Chyba dat na øádku %d:\n"
-                            "Poèet hodnot neodpovídá poètu sloupcù.")
-                    run_dialog(Error, msg % line_number)
-                    return False
-                row_data = []
-                for id, type, val in zip(columns, types, values):
-                    value, error = type.validate(val, transaction=self._transaction)
-                    if error:
-                        msg = _("Chyba dat na øádku %d:\n"
-                                "Nevalidní hodnota sloupce '%s': %s") % \
-                                (line_number, id, error.message())
-                        run_dialog(Error, msg)
-                        return False
-                    row_data.append((id, value))
-                data.append(pytis.data.Row(row_data))
-        finally:
-            fh.close()
-        new_record(self._name, prefill=self._prefill, inserted_data=data)
-            
-    # Veøejné metody
-    
-    def select_row(self, position, quiet=False):
-        """Vyber øádek dle 'position'.
-
-        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
-        
-          None -- nebude vybrán ¾ádný øádek.
-          Nezáporný integer -- bude vybrán øádek pøíslu¹ného poøadí, pøièem¾
-            øádky jsou èíslovány od 0.
-          Datový klíè -- bude vybrán øádek s tímto klíèem, kterým je instance
-            tøídy 'pytis.data.Value' nebo jejich tuple.
-          Slovník hodnot -- bude vybrán první nalezený øádek obsahující
-            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
-            klíèi slovníku.
-          Instance tøídy 'pytis.data.Row' -- bude pøeveden na datový klíè a
-            zobrazen odpovídající øádek.  Instance musí být kompatibilní
-            s datovým objektem formuláøe.
-        
-        Pokud takový záznam neexistuje, zobraz chybový dialog.  Argumentem
-        'quiet' lze zobrazení chybového dialogu potlaèit.  Tím lze nenalezení
-        øádku ti¹e ignorovat, nebo o¹etøit vlastním zpùsobem na základì
-        návratové hodnoty.
-
-        Výbìrem je my¹lena akce relevantní pro daný typ formuláøe (odvozené
-        tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
-        náhledovém formuláøi apod.
-
-        Vrací: Pravdu, pokud byl záznam úspì¹nì nalezen a vybrán, nepravdu v
-        opaèném pøípadì.
-        
-        """
-        if position is None or isinstance(position, pytis.data.Row):
-            row = position
-        elif isinstance(position, int):
-            row = self._find_row_by_number(position)
-        elif isinstance(position, (tuple, pytis.data.Value)):
-            row = self._find_row_by_key(xtuple(position))
-        elif isinstance(position, dict):
-            row = self._find_row_by_values(position.keys(), position.values())
-        else:            
-            raise ProgramError("Invalid 'position':", position)
-        if not quiet and position is not None and row is None:
-            run_dialog(Warning, _("Záznam nenalezen"))
-            return False
-        return self._select_row(row, quiet=quiet)
-
-    def set_row(self, row):
-        """Nastav aktuální záznam formuláøe daty z instance 'PresentedRow'."""
-        self._row = row
-        self._row.set_transaction(self._transaction)
-        self._run_callback(self.CALL_SELECTION, row)
-        
-    def current_row(self):
-        """Vra» instanci PresentedRow právì aktivního øádku.
-
-        Není-li vybrán ¾ádný øádek, vra» 'None'.
-
-        """
-        return self._row
-
-    def current_key(self):
-        """Vra» klíè aktuálnì vybraného øádku.
-
-        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None', pokud
-        není vybrán ¾ádný øádek.
-
-        """
-        return self._current_key()
-
-    def prefill(self):
-        """Vra» data pro pøedvyplnìní nového záznamu."""
-        return self._prefill
-    
-    def set_prefill(self, data):
-        """Nastav data pro pøedvyplnìní nového záznamu.
-
-        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
-        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
-        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
-        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
-
-        """
-        self._prefill = data
-
-    def on_command(self, command, **kwargs):
-        if command == RecordForm.COMMAND_DELETE_RECORD:
-            self._on_delete_record(**kwargs)
-        elif command == RecordForm.COMMAND_NEW_RECORD:
-            self._on_new_record(**kwargs)
-        elif command == RecordForm.COMMAND_IMPORT_INTERACTIVE:
-            self._on_import_interactive()
-        elif command == RecordForm.COMMAND_EDIT_RECORD:
-            self._on_edit_record(**kwargs)
-        else:
-            return super(RecordForm, self).on_command(command, **kwargs)
-        return True
-
-        
-class LookupForm(RecordForm):
+class LookupForm(InnerForm):
     """Formuláø s vyhledáváním a tøídìním."""
     
     SORTING_NONE = 'SORTING_NONE'
@@ -1049,11 +611,10 @@ class LookupForm(RecordForm):
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
-    _PERSISTENT_FORM_PARAMS = RecordForm._PERSISTENT_FORM_PARAMS + \
+    _PERSISTENT_FORM_PARAMS = InnerForm._PERSISTENT_FORM_PARAMS + \
                               ('conditions', 'filter', 'search')
     
-    def _init_attributes(self, sorting=None, filter=None, condition=None,
-                         **kwargs):
+    def _init_attributes(self, sorting=None, filter=None, condition=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
@@ -1084,6 +645,7 @@ class LookupForm(RecordForm):
         self._lf_last_filter = filter or self._load_condition('filter')
         self._lf_search_condition = self._load_condition('search')
         self._user_conditions = self._load_conditions('conditions')
+        self._init_select()
         
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
@@ -1193,7 +755,7 @@ class LookupForm(RecordForm):
             return conditions[0]
         else:
             return pytis.data.AND(*conditions)
-    
+
     def _init_select(self):
         data = self._data
         op = lambda : data.select(condition=self._current_condition(),
@@ -1472,12 +1034,442 @@ class LookupForm(RecordForm):
 
         """
         return self._current_condition()
+
+    
+class RecordForm(LookupForm):
+    """Formuláø schopný nìjakým zpùsobem zobrazit aktuální záznam."""
+
+    CALL_SELECTION = 'CALL_SELECTION'
+    """Konstanta callbacku výbìru (zmìny aktuálního) záznamu.
+
+    Argumentem callbackové funkce je novì vybraný záznam jako instance
+    'PresentedRow'.
+    
+    """
+
+    def _init_attributes(self, prefill=None, select_row=None, _new=False, **kwargs):
+        """Process constructor keyword arguments and initialize the attributes.
+
+        Arguments:
+
+          prefill -- a dictionary of values used to prefill the current form row.  The meaning is
+            the same as for the same 'PresentedRow' constructor argument.
+
+          select_row -- The initially selected row -- the value is the same as the argument of the
+            'select_row()' method.
+
+          kwargs -- arguments passed to the parent class
+
+        """
+        super_(RecordForm)._init_attributes(self, **kwargs)
+        assert prefill is None or isinstance(prefill, dict)
+        self._prefill = prefill
+        self._row = PresentedRow(self._view.fields(), self._data, self._data_row(select_row),
+                                 prefill=prefill, new=_new, transaction=self._transaction)
+        
+    def _signal_update(self):
+        pass
+
+    def _select_columns(self):
+        return None
+
+    def _find_row_by_number(self, row_number):
+        # row_number starts with 0
+        data = self._data
+        def dbop():
+            data.rewind()
+            data.skip(row_number)
+            return data.fetchone(transaction=self._transaction)
+        success, row = db_operation(dbop)
+        self._init_select()
+        if not success or not row:
+            return None
+        else:
+            return row
+    
+    def _find_row_by_values(self, cols, values):
+        """Vra» datový øádek odpovídající daným hodnotám.
+
+        Arguemnty:
+
+          cols -- sekvence názvù sloupcù, které mají být prohledávány.
+          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
+            poøadí odpovídajícím 'cols'.
+
+        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou být hodnoty
+        pøedány i pøímo, bez obalení do sekvenèního typu.
+
+        """
+        cols = xtuple(cols)
+        values = xtuple(values)
+        assert len(cols) == len(values)
+        cond = pytis.data.AND(*[pytis.data.EQ(c,v) for c,v in zip(cols, values)])
+        condition = pytis.data.AND(cond, self._current_condition())
+        data = self._data
+        def dbop(condition):            
+            data.rewind()
+            n = data.select(condition, columns=self._select_columns(),
+                            transaction=self._transaction)
+            return data.fetchone(transaction=self._transaction)
+        success, row = db_operation((dbop, (condition,)))
+        self._init_select()
+        return row
+        
+    def _find_row_by_key(self, key):
+        cols = self._select_columns()
+        def dbop():
+            return self._data.row(key, columns=cols, transaction=self._transaction)
+        success, row = db_operation(dbop)
+        if success and row:
+            return row
+        else:
+            return None
+    
+    def _get_row_number(self, row):
+        """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'.
+
+        Pokud odpovídaící øádek není nalezen, vra» None.
+
+        """
+        data = self._data
+        key = data.key()[0].id()
+        def dbop():
+            data.rewind()
+            return data.search(pytis.data.EQ(key, row[key]), transaction=self._transaction)
+        success, result = db_operation(dbop)
+        if not success or result == 0:
+            return None
+        else:
+            return result - 1
+
+    def _data_row(self, position):
+        # Return the *data* row instance corresponding to given 'select_row()' argument.
+        if position is None or isinstance(position, pytis.data.Row):
+            row = position
+        elif isinstance(position, int):
+            row = self._find_row_by_number(position)
+        elif isinstance(position, (tuple, pytis.data.Value)):
+            row = self._find_row_by_key(xtuple(position))
+        elif isinstance(position, dict):
+            row = self._find_row_by_values(position.keys(), position.values())
+        else:            
+            raise ProgramError("Invalid 'position':", position)
+        return row
+
+    def _select_row(self, row, quiet=False):
+        # Set the form data according to given *data* row.
+        self._row.set_row(row)
+        self._run_callback(self.CALL_SELECTION, self._row)
+        return True
+
+    def _current_key(self):        
+        the_row = self.current_row()
+        if the_row is not None:
+            data_row = the_row.original_row(empty_as_none=True)
+            if data_row is None:
+                data_row = the_row.row()
+            return data_row.columns([c.id() for c in self._data.key()])
+        return None
+    
+    def _current_column_id(self):
+        return None
+    
+    def _new_form_kwargs(self):
+        return {}
+
+    def _lock_record(self, key):
+        def dbop():
+            return self._data.lock_row(key, transaction=self._transaction)
+        success, locked = db_operation(dbop)
+        if success and locked != None:
+            log(EVENT, 'Record is locked')
+            run_dialog(Message, _("Záznam je zamèen"))
+            return False
+        else:
+            return True
+
+    def _check_record(self, row):
+        # Proveï kontrolu integrity dané instance PresentedRow.
+        for check in self._view.check():
+            result = check(row)
+            if result is not None:
+                if is_sequence(result):
+                    failed_id, msg = result
+                    message(msg)
+                else:
+                    failed_id = result
+                    # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø
+                    # 'check()'.  Pokud ale ¾ádná zpráva nebyla nastavena,
+                    # u¾ivatel netu¹í...
+                    #message(_("Kontrola integrity selhala!"))
+                log(EVENT, 'Kontrola integrity selhala:', failed_id)
+                return failed_id
+        return None
+
+    def _record_data(self, row):
+        rdata = [(f.id(), row[f.id()]) for f in row.fields()
+                 if self._data.find_column(f.id()) is not None]
+        return pytis.data.Row(rdata)
+
+    def _row_copy_prefill(self, the_row):
+        # Create a copy of the row, but exclude key columns and computed
+        # columns which depend on key columns.
+        if the_row:
+            keys = [c.id() for c in the_row.data().key()]
+            prefill = {}
+            for cid in the_row.keys():
+                fspec = self._view.field(cid)
+                if cid in keys or fspec.nocopy():
+                    continue
+                computer = fspec.computer()
+                if computer:
+                    skip = False
+                    for dep in computer.depends():
+                        if dep in keys:
+                            skip = True
+                            break
+                    if skip:
+                        continue
+                prefill[cid] = the_row[cid]
+        else:
+            prefill = {}
+        return prefill
+
+    # Zpracování pøíkazù.
+    
+    def _on_new_record(self, copy=False):
+        if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
+            return False
+        import copy as copy_
+        prefill = self._prefill and copy_.copy(self._prefill) or {}
+        if copy:
+            prefill.update(self._row_copy_prefill(self.current_row()))
+        result = new_record(self._name, prefill=prefill)
+        if result:
+            if not self.select_row(result.row(), quiet=True):
+                msg = _("Vlo¾ený záznam se neobjevil v aktuálním náhledu.")
+                run_dialog(Warning, msg)
+    
+    def _can_edit_record(self):
+        return self._current_key() is not None \
+               and self.check_permission(pytis.data.Permission.UPDATE)
+
+    def _on_edit_record(self):
+        if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
+            return
+        row = self.current_row()
+        on_edit_record = self._view.on_edit_record()
+        if on_edit_record is not None:
+            on_edit_record(row=row)
+            # TODO: _signal_update vyvolá refresh.  To je tu jen pro pøípad, ¾e
+            # byla u¾ivatelská procedura o¹etøena jinak ne¾ vyvoláním
+            # formuláøe.  Proto¾e to samo u¾ je hack, tak a» si radìji také
+            # tvùrce provádí refresh sám, proto¾e tady je volán ve v¹ech
+            # ostatních pøípadech zbyteènì a zdr¾uje.
+            self._signal_update()
+        else:
+            name = self._name
+            redirect = self._view.redirect()
+            if redirect is not None:
+                redirected_name = redirect(row)
+                if redirected_name is not None:
+                    assert isinstance(redirected_name, str)
+                    name = redirected_name
+            kwargs = self._new_form_kwargs()
+            key = self._current_key()
+            run_form(PopupEditForm, name, select_row=key, **kwargs)
+
+    def _can_delete_record(self):
+        return self.check_permission(pytis.data.Permission.DELETE)
+
+    def _on_delete_record(self):
+        if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
+            return False
+        # O¹etøení u¾ivatelské funkce pro mazání
+        on_delete_record = self._view.on_delete_record()
+        if on_delete_record is not None:
+            condition = on_delete_record(row=self.current_row())
+            if condition is None:
+                return False
+            assert isinstance(condition, pytis.data.Operator)
+            op = lambda : self._data.delete_many(condition, transaction=self._transaction)
+            log(EVENT, 'Mazání záznamu:', condition)
+        else:
+            msg = _("Opravdu chcete záznam zcela vymazat?")        
+            if not run_dialog(Question, msg):
+                log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
+                return False
+            key = self._current_key()
+            op = lambda : self._data.delete(key, transaction=self._transaction)
+            log(EVENT, 'Mazání záznamu:', key)
+        success, result = db_operation(op)
+        if success:
+            self._signal_update()
+            log(ACTION, 'Záznam smazán.')
+            return True
+        else:
+            return False
+
+    def _on_import_interactive(self):
+        if not self._data.permitted(None, pytis.data.Permission.INSERT):
+            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
+            message(msg, beep_=True)
+            return False
+        msg = _("Nejprve vyberte soubor obsahující importovaná data. "
+                "Poté budete moci zkontrolovat a potvrdit ka¾dý záznam.\n\n"
+                "*Formát vstupního souboru:*\n\n"
+                "Ka¾dý øádek obsahuje seznam hodnot oddìlených zvoleným "
+                "znakem, nebo skupinou znakù (vyplòte ní¾e). "
+                "Tabelátor zapi¹te jako ='\\t'=.\n\n"
+                "První øádek obsahuje identifikátory sloupcù a urèuje tedy "
+                "význam a poøadí hodnot v následujících (datových) øádcích.\n\n"
+                "Identifikátory jednotlivých sloupcù jsou následující:\n\n" + \
+                "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
+                           [self._view.field(id)
+                            for id in self._view.layout().order()]]))
+        separator = run_dialog(InputDialog, 
+                               title=_("Hromadné vkládání dat"),
+                               report=msg, report_format=TextFormat.WIKI,
+                               prompt="Oddìlovaè", value='|')
+        if not separator:
+            if separator is not None:
+                message(_("Nebyl zadán oddìlovaè."), beep_=True)
+            return False
+        separator = separator.replace('\\t', '\t')
+        while 1:
+            filename = run_dialog(FileDialog)
+            if filename is None:
+                message(_("Nebyl zadán soubor. Proces ukonèen."), beep_=True)
+                return False
+            try:
+                fh = open(filename)
+            except IOError, e:
+                msg = _("Nepodaøilo se otevøít soubor '%s': %s")
+                run_dialog(Error, msg % (filename, str(e)))
+                continue
+            break
+        try:
+            columns = [str(id.strip()) for id in fh.readline().split(separator)]
+            fields = [self._view.field(id) for id in columns]
+            if None in fields:
+                msg = _("Chybný identifikátor sloupce: %s")
+                run_dialog(Error, msg % columns[fields.index(None)])
+                return False
+            types = [f.type(self._data) for f in fields]
+            line_number = 1
+            data = []
+            for line in fh:
+                line_number += 1
+                values = line.rstrip('\r\n').split(separator)
+                if len(values) != len(columns):
+                    msg = _("Chyba dat na øádku %d:\n"
+                            "Poèet hodnot neodpovídá poètu sloupcù.")
+                    run_dialog(Error, msg % line_number)
+                    return False
+                row_data = []
+                for id, type, val in zip(columns, types, values):
+                    value, error = type.validate(val, transaction=self._transaction)
+                    if error:
+                        msg = _("Chyba dat na øádku %d:\n"
+                                "Nevalidní hodnota sloupce '%s': %s") % \
+                                (line_number, id, error.message())
+                        run_dialog(Error, msg)
+                        return False
+                    row_data.append((id, value))
+                data.append(pytis.data.Row(row_data))
+        finally:
+            fh.close()
+        new_record(self._name, prefill=self._prefill, inserted_data=data)
+            
+    # Veøejné metody
+    
+    def select_row(self, position, quiet=False):
+        """Vyber øádek dle 'position'.
+
+        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
+        
+          None -- nebude vybrán ¾ádný øádek.
+          Nezáporný integer -- bude vybrán øádek pøíslu¹ného poøadí, pøièem¾
+            øádky jsou èíslovány od 0.
+          Datový klíè -- bude vybrán øádek s tímto klíèem, kterým je instance
+            tøídy 'pytis.data.Value' nebo jejich tuple.
+          Slovník hodnot -- bude vybrán první nalezený øádek obsahující
+            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèených
+            klíèi slovníku.
+          Instance tøídy 'pytis.data.Row' -- bude pøeveden na datový klíè a
+            zobrazen odpovídající øádek.  Instance musí být kompatibilní
+            s datovým objektem formuláøe.
+        
+        Pokud takový záznam neexistuje, zobraz chybový dialog.  Argumentem
+        'quiet' lze zobrazení chybového dialogu potlaèit.  Tím lze nenalezení
+        øádku ti¹e ignorovat, nebo o¹etøit vlastním zpùsobem na základì
+        návratové hodnoty.
+
+        Výbìrem je my¹lena akce relevantní pro daný typ formuláøe (odvozené
+        tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
+        náhledovém formuláøi apod.
+
+        Vrací: Pravdu, pokud byl záznam úspì¹nì nalezen a vybrán, nepravdu v
+        opaèném pøípadì.
+        
+        """
+        row = self._data_row(position)
+        if not quiet and position is not None and row is None:
+            run_dialog(Warning, _("Záznam nenalezen"))
+            return False
+        return self._select_row(row, quiet=quiet)
+
+    def current_row(self):
+        """Vra» instanci PresentedRow právì aktivního øádku.
+
+        Není-li vybrán ¾ádný øádek, vra» 'None'.
+
+        """
+        return self._row
+
+    def current_key(self):
+        """Vra» klíè aktuálnì vybraného øádku.
+
+        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None', pokud
+        není vybrán ¾ádný øádek.
+
+        """
+        return self._current_key()
+
+    def prefill(self):
+        """Vra» data pro pøedvyplnìní nového záznamu."""
+        return self._prefill
+    
+    def set_prefill(self, data):
+        """Nastav data pro pøedvyplnìní nového záznamu.
+
+        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
+        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
+        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
+        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
+
+        """
+        self._prefill = data
+
+    def on_command(self, command, **kwargs):
+        if command == RecordForm.COMMAND_DELETE_RECORD:
+            self._on_delete_record(**kwargs)
+        elif command == RecordForm.COMMAND_NEW_RECORD:
+            self._on_new_record(**kwargs)
+        elif command == RecordForm.COMMAND_IMPORT_INTERACTIVE:
+            self._on_import_interactive()
+        elif command == RecordForm.COMMAND_EDIT_RECORD:
+            self._on_edit_record(**kwargs)
+        else:
+            return super(RecordForm, self).on_command(command, **kwargs)
+        return True
+
     
 
 ### Editaèní formuláø
 
 
-class EditForm(LookupForm, TitledForm, Refreshable):
+class EditForm(RecordForm, TitledForm, Refreshable):
     """Formuláø pro editaci v¹ech vlastností jednoho záznamu.
 
     Formuláø je vytvoøen poskládáním jednotlivých vstupních políèek daných
@@ -1503,48 +1495,33 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         super(EditForm, self).__init__(*args, **kwargs)
         # Remember the original size.
         self._size = self.GetSizer().GetMinSize() + wx.Size(2, 2)
-        for f in self._fields:
-            if self._mode == self.MODE_VIEW:
-                f.disable(change_appearance=False)
-            else:
-                f.enable()
-        if self._mode == self.MODE_INSERT:
-            # Inicializuji prázdný záznam.
-            self._init_inserted_row()
         if isinstance(self._parent, wx.Dialog):
             wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
             self._set_focus_field()
-            
 
     def _init_attributes(self, mode=MODE_EDIT, focus_field=None, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+        """Process constructor keyword arguments and initialize the attributes.
 
-        Argumenty:
+        Arguments:
 
-          mode -- jedna z 'MODE_*' konstant tøídy.  Urèuje, zda formuláø slou¾í
-            k prohlí¾ení, editaci èi vytváøení záznamù.
-
-          focus_field -- id políèka, které má být vybráno jako aktivní pro
-            u¾ivatelský vstup, pøípadnì funkce jednoho argumentu, kterým je
-            aktuální PresentedRow, která vrací id políèka pro u¾ivatelský
-            vstup.
-
+          mode -- one of the 'MODE_*' constants.  Determines whether the form is primarily for
+            viewing, editation or creation of records.
+          focus_field -- identifier of the field which should be activated for user input on form
+            startup.  If None, the first field is the default.  It is also possible to pass a
+            function of one argument -- the PresentedRow instance representing the current record.
+            This function must return a field identifier or None.
+          kwargs -- arguments passed to the parent class
           
-          kwargs -- argumenty pøedané konstruktoru pøedka.
-
         """
-        super_(EditForm)._init_attributes(self, **kwargs)
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
-        #assert focus_field in [f.id() for f in self._view.fields()]
+        new = mode == self.MODE_INSERT
+        super_(EditForm)._init_attributes(self, _new=new, **kwargs)
         self._mode = mode
         self._focus_field = focus_field or self._view.focus_field()
         # Other attributes
         self._fields = []
 
-    def _init_inserted_row(self):
-        self._select_row(None)
-        
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políèek."""
         if self._focus_field:
@@ -1555,7 +1532,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             if find(focused, self._fields, key=lambda f: f.id()):                
                 f = self._field(focused)
         else:
-            f = find(True, self._fields, key=lambda f: f.enabled())
+            f = find(True, self._fields, key=lambda f: f.is_enabled())
             if f is None:
                 f = self._fields[0]
         f.set_focus()
@@ -1568,25 +1545,10 @@ class EditForm(LookupForm, TitledForm, Refreshable):
     def _create_form_controls(self):
         # Create the actual form controls according to the layout.
         panel = wx.ScrolledWindow(self, style=wx.TAB_TRAVERSAL)
-        if self._mode == self.MODE_INSERT:
-            permission = pytis.data.Permission.INSERT
-        elif self._mode == self.MODE_EDIT:
-            permission = pytis.data.Permission.UPDATE
-        else:
-            permission = pytis.data.Permission.VIEW
-        data_columns = [c.id() for c in self._data.columns()]
-        for id in self._view.layout().order():
-            spec = self._view.field(id)
-            if spec.width() != 0:
-                if id in data_columns:
-                    denied = not self._data.permitted(id, permission)
-                else:
-                    denied = False
-                f = InputField.create(panel, spec, self._data, guardian=self,
-                                      denied=denied)
-                f.set_callback(InputField.CALL_FIELD_CHANGE,
-                               self._on_field_edit)
-                self._fields.append(f)
+        self._fields = [InputField.create(panel, self._row, id, guardian=self,
+                                          readonly=self._mode == self.MODE_VIEW)
+                        for id in self._view.layout().order()
+                        if self._view.field(id).width() != 0]
         # Now create the layout groups.
         group = self._create_group(panel, self._view.layout().group())
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1615,7 +1577,6 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             def _handler(event):
                 handler(self._row)
                 busy_cursor(False)
-                self.set_row(self._row)
             return _handler
         wx_callback(wx.EVT_BUTTON, self, b.GetId(),
                     create_handler(item.handler()))
@@ -1673,7 +1634,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             if isinstance(item, GroupSpec):
                 x = self._create_group(parent, item)
             elif isinstance(item, InputField):
-                if  item.spec().compact():
+                if item.spec().compact():
                     # This is a compact field (not a part of the pack).
                     x = wx.BoxSizer(wx.VERTICAL)
                     x.Add(item.label(), 0, wx.ALIGN_LEFT)
@@ -1759,9 +1720,9 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         if failed_id:
             self._field(failed_id).set_focus()
             return False
+        transaction = self._transaction
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row)
-        transaction = self._transaction
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Vlo¾ení øádku')
             def op():
@@ -1769,8 +1730,7 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Update øádku')
             def op():
-                return self._data.update(self._current_key(), rdata,
-                                         transaction=transaction)
+                return self._data.update(self._current_key(), rdata, transaction=transaction)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
@@ -1789,7 +1749,6 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             original_row = copy.copy(self._row)
             if new_row is not None:
                 self._row.set_row(new_row, reset=True)
-                self.set_row(self._row)
             else:
                 # TODO: Lze provést nìco chytøej¹ího?
                 pass
@@ -1798,9 +1757,6 @@ class EditForm(LookupForm, TitledForm, Refreshable):
                 log(ACTION, 'Záznam vlo¾en')
             else:
                 log(ACTION, 'Záznam updatován')
-            for field in self._fields:
-                # Políèka se tímto trikem budou tváøit jako nezmnìnìná.
-                field.init(field.get_value())
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row, original_row)
@@ -1823,30 +1779,6 @@ class EditForm(LookupForm, TitledForm, Refreshable):
             run_dialog(Error, msg)
             return False
 
-    def _select_row(self, row, quiet=False):
-        prow = PresentedRow(self._view.fields(), self._data, row,
-                            prefill=self._prefill,
-                            new=self._mode == self.MODE_INSERT,
-                            change_callback=self._on_field_change,
-                        editability_change_callback=self._on_editability_change)
-        self.set_row(prow)
-        return True
-
-    def set_row(self, row):
-        """Naplò formuláø daty z daného øádku (instance 'PresentedRow')."""
-        super_(EditForm).set_row(self, row)
-        for f in self._fields:
-            f.set_presented_row(row)
-            v = row[f.id()]
-            f.init(v.export())
-            if isinstance(f, CodebookField):
-                f.set_display(row.display(f.id()))
-            if self._mode != self.MODE_VIEW:
-                if row.editable(f.id()):
-                    f.enable()
-                else:
-                    f.disable()
-        
     def title(self):
         """Vra» název formuláøe jako øetìzec."""        
         return self._view.layout().caption()
@@ -1866,31 +1798,6 @@ class EditForm(LookupForm, TitledForm, Refreshable):
         field = find(True, self._fields, key=lambda f: f.is_modified())
         return field is not None
 
-    def _on_field_edit(self, field):
-        # Signalizace zmìny políèka z InputField
-        if self._row is not None:
-            value, error = field.validate(quiet=True)
-            if value:
-                self._row[field.id()] = value
-            if isinstance(field, CodebookField):
-                display = value and self._row.display(field.id()) or ''
-                field.set_display(display)
-
-    def _on_field_change(self, id):
-        # Signalizace zmìny políèka z PresentedRow
-        field = find(id, self._fields, key=lambda f: f.id())
-        if field is not None and self._row is not None:
-            value = self._row.format(id)
-            if field.initialized() and field.get_value() != value:
-                field.set_value(value)
-            
-    def _on_editability_change(self, id, editable):
-        if id in self._view.layout().order():
-            if editable:
-                self._field(id).enable()
-            else:                
-                self._field(id).disable()
-                
     def _exit_check(self):
         if self.changed():
             q = _("Data byla zmìnìna a nebyla ulo¾ena!") + "\n" + \
@@ -1925,6 +1832,8 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
+        if self._mode == self.MODE_INSERT:
+            self._load_next_row()
         size = copy.copy(self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
         self.SetSize(size)
@@ -1933,6 +1842,9 @@ class PopupEditForm(PopupForm, EditForm):
             p = p.GetParent()
         parent.SetTitle('%s: %s' % (p.GetTitle(), self.title()))
 
+    def _default_transaction(self):
+        return pytis.data.DBTransactionDefault(config.dbconnection)
+        
     def _init_attributes(self, inserted_data=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
@@ -1995,18 +1907,22 @@ class PopupEditForm(PopupForm, EditForm):
         sizer.Add(panel, expansion, wx.EXPAND)
         return field
 
-    def _init_inserted_row(self):
-        super(PopupEditForm, self)._init_inserted_row()
+    def _load_next_row(self):
         data = self._inserted_data
         if data is not None:
             i = self._inserted_data_pointer
+            self._select_row(None)
             if i < len(data):
+                if self._governing_transaction is None and self._transaction is not None:
+                    # TODO: Commit the transaction in _commit_form()?
+                    self._transaction.commit()
+                    self._transaction = self._default_transaction()
                 self.set_status('progress', "%d/%d" % (i+1, len(data)))
                 self._inserted_data_pointer += 1
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
                 ok_button.Enable(i == len(data)-1)
                 for id, value in data[i].items():
-                    self._field(id).set_value(value.export())
+                    self._row[id] = value
             else:
                 self.set_status('progress', '')
                 run_dialog(Message, _("V¹echny záznamy byly zpracovány."))
@@ -2028,15 +1944,12 @@ class PopupEditForm(PopupForm, EditForm):
         if result:
             message(_("Záznam ulo¾en"))
             refresh()
-            if self._init_transaction is None and self._transaction is not None:
-                self._transaction.commit()
-                self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
-            self._init_inserted_row()
+            self._load_next_row()
 
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
         message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
-        self._init_inserted_row()
+        self._load_next_row()
     
     def _buttons(self):
         buttons = ({'id': wx.ID_OK,
@@ -2121,10 +2034,6 @@ class BrowsableShowForm(ShowForm):
     jeden záznam zobrazený v Layoutu editaèního formuláøe.
     
     """
-        
-    def __init__(self, *args, **kwargs):
-        super_(BrowsableShowForm).__init__(self, *args, **kwargs)
-        self._init_select()
         
     def _cmd_next_record(self, back=False):
         current_row = self.current_row()
