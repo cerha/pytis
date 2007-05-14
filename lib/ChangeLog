@@ -1,3 +1,8 @@
+2007-05-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py (IncrementalSearch._on_key_down): Don't pass
+	the transaction to `self._search()', it is neither defined nor necessary.
+
 2007-05-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dialog.py: Dialog creation process modified to allow a

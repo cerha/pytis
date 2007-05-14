@@ -778,12 +778,12 @@ class IncrementalSearch:
         self._widget = w = wx.TextCtrl(listform.GetParent(), -1,
                                        name=self.TEXT_CONTROL_NAME)
         wx_callback(wx.EVT_KILL_FOCUS, w, self._on_kill_focus)
-        w.SetFocus()
         wx_callback(wx.EVT_KEY_DOWN, w, self._on_key_down)
         wx_callback(wx.EVT_TEXT, w, w.GetId(), self._on_text)
         cb = self._listform.get_callback(ListForm.CALL_SELECTION)
         self._selection_callback = cb
         self._listform.set_callback(ListForm.CALL_SELECTION, None)
+        w.SetFocus()
             
     def run(self, prefill=None):
         self._widget.Show(True)
@@ -799,9 +799,9 @@ class IncrementalSearch:
         elif key == 'Backspace':
             self._back()
         elif key == 'Ctrl-s':
-            self._search(direction=pytis.data.FORWARD, transaction=self._transaction)
+            self._search(direction=pytis.data.FORWARD)
         elif key == 'Ctrl-r':
-            self._search(direction=pytis.data.BACKWARD, transaction=self._transaction)
+            self._search(direction=pytis.data.BACKWARD)
         elif key == 'Ctrl-g' or key == 'Escape':
             self._exit(True)
         else:
@@ -814,8 +814,7 @@ class IncrementalSearch:
 
     def _on_kill_focus(self, event):
         if self._listform:
-            self._listform.set_callback(ListForm.CALL_SELECTION,
-                                        self._selection_callback)
+            self._listform.set_callback(ListForm.CALL_SELECTION, self._selection_callback)
         if not self._exiting:
             self._exit(True)
             
@@ -831,11 +830,11 @@ class IncrementalSearch:
         # pøed opu¹tìním inkrementálního vyhledávání
         # (napø. kliknutím my¹i u codebooku s vyhledáváním)
         if self._listform:
-            self._listform.focus()
+            form = self._listform
+            form.focus()
             if not rollback:
-                l = self._listform
-                the_row = l._table.row(l._table.current_row())
-                l._run_callback(l.CALL_SELECTION, the_row)
+                the_row = form._table.row(form._table.current_row())
+                form._run_callback(form.CALL_SELECTION, the_row)
 
     def _back(self):
         if self._rows:
@@ -857,14 +856,14 @@ class IncrementalSearch:
         else:
             self._last_direction = direction
         text = self._widget.GetValue()
-        l = self._listform
-        row, col = l._current_cell()
+        form = self._listform
+        row, col = form._current_cell()
         if newtext:
             oldtext = text[:-1]
         else:
             oldtext = text
         self._rows.append((row, oldtext))
-        colid = l._columns[col].id()
+        colid = form._columns[col].id()
         stext = text + '*'
         if self._full:
             stext = '*' + stext
@@ -874,12 +873,11 @@ class IncrementalSearch:
             if direction == pytis.data.FORWARD:
                 start_row = max(row-1, 0)
             else:
-                start_row = min(row+1, l._table.GetNumberRows())
+                start_row = min(row+1, form._table.GetNumberRows())
         else:
             start_row = row
         # TODO: Pøedhledání v aktuál~~ním selectu
-        found = l._search(condition, direction, row_number=start_row,
-                          report_failure=False)
+        found = form._search(condition, direction, row_number=start_row, report_failure=False)
         if found is None:
             message(_("Dal¹í záznam nenalezen"), beep_=True)
         else:
@@ -887,7 +885,7 @@ class IncrementalSearch:
                 new_row = start_row + found
             else:    
                 new_row = start_row - found
-            l._select_cell(row=new_row)
+            form._select_cell(row=new_row)
 
     def _set_row(self, row):
         current = self._listform._table.current_row()

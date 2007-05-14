@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+	
+2007-05-14 Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Odstranìno nechtìné pøedávání transakce pøi volání
+	search v inkrementálním vyhledávání.
+	
 2007-04-13 Milan Zamazal  <pdm@brailcom.org>
 
 	* BUGFIX: U view zamykej jen jednotlivé øádky.  Není-li to mo¾né,
