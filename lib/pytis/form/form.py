@@ -511,9 +511,12 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if self._governing_transaction is None and self._result:
+            if self._governing_transaction is None:
                 try:
-                    self._transaction.commit()
+                    if self._result:
+                        self._transaction.commit()
+                    else:
+                        self._transaction.rollback()
                 except:
                     pass
             else:    

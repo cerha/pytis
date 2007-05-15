@@ -583,7 +583,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _on_line_rollback(self, soft=False):
         log(EVENT, 'Zru¹ení editace øádku')
         if self._transaction is not None:
-            self._transaction.cut('inline')
+            if self._governing_transaction is None:
+                self._transaction.rollback()
+            else:
+                self._transaction.cut('inline')
             self._transaction = self._governing_transaction
         editing = self._table.editing()
         if not editing:

@@ -5,7 +5,12 @@
 ; uvozen "* BUGFIX:"
 
 	
-2007-05-14 Tomas Cerha  <cerha@brailcom.org>
+2007-05-15 Milan Zamazal  <pdm@brailcom.org>
+
+	* BUGFIX: Pøi rollbacku editace ve formuláøích proveï rollback
+	odpovídající transakce.
+
+007-05-14 Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Odstranìno nechtìné pøedávání transakce pøi volání
 	search v inkrementálním vyhledávání.
