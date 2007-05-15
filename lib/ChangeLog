@@ -1,3 +1,8 @@
+2007-05-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/output.py (PrintFormInternal.__init__): Take other key arguments.
+	(PrintFormExternal.__init__): Take other key arguments.
+
 2007-05-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_grid.py (IncrementalSearch._on_key_down): Don't pass

@@ -309,7 +309,7 @@ class PrintFormInternal(PrintForm, InnerForm):
     DESCR = "tisková sestava"
     
     def __init__(self, parent, resolver, name, formatter,
-                 guardian=None):
+                 guardian=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -553,7 +553,7 @@ class PrintFormInternal(PrintForm, InnerForm):
 
 class PrintFormExternal(PrintForm, PopupForm):
     
-    def __init__(self, parent, resolver, name, formatter, guardian=None):
+    def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
