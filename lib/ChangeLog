@@ -1,5 +1,7 @@
 2007-05-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py: Updated (fixed) for the new dialog creation strategy.
+
 	* pytis/form/inputfield.py (ImageField._disable): Stupid bug fixed.
 
 2007-05-15  Pavel Hanak  <hanak@asellus.cz>

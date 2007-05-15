@@ -119,17 +119,15 @@ class SFSDialog(GenericDialog):
             t.Enable(enabled)
         return t
 
-    def _create_content(self):
+    def _create_content(self, sizer):
         self._controls = []
         self._create_controls()
-        sizer = wx.BoxSizer(wx.VERTICAL)
         for ctrls in self._controls:
             row = wx.BoxSizer()
             for x in ctrls:
                 if x:
                     row.Add(x)
-            sizer.Add(row, 0, wx.ALIGN_RIGHT)
-        return (sizer,)
+            sizer.Add(row, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
 
     def _create_controls(self):
         pass
@@ -187,10 +185,11 @@ class SortingDialog(SFSDialog):
                        label=lambda d: self._LABELS[d],
                        tooltip=_("Zvolte smìr øazení"))))
 
-    def _create_content(self):
+    def _create_content(self, sizer):
+        super(SortingDialog, self)._create_content(sizer)
         button = self._create_button(_("Pøidat"), self._on_add,
                                      _("Pøidat sloupec sekundárního øazení"))
-        return super(SortingDialog, self)._create_content() + (button,)
+        sizer.Add(button, 0, wx.ALL|wx.CENTER, 5)
 
     def _customize_result(self, button_wid):
         label = self._button_label(button_wid)
@@ -359,7 +358,8 @@ class SFDialog(SFSDialog):
         if wval.IsEnabled():
             self._want_focus = wval
 
-    def _create_content(self):
+    def _create_content(self, sizer):
+        super(SFDialog, self)._create_content(sizer)
         choice, button = self._create_choice, self._create_button
         buttons = [
             button(_("Pøidat AND"), lambda e: self._on_add(),
@@ -393,7 +393,7 @@ class SFDialog(SFSDialog):
             bsizer.Add(b, 0, wx.RIGHT, 10)
         for x in self._saved_condition_controls:
             bsizer.Add(x)
-        return super(SFDialog, self)._create_content() + (bsizer,)
+        sizer.Add(bsizer, 0, wx.ALL|wx.CENTER, 5)
 
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
@@ -662,7 +662,8 @@ class FilterDialog(SFDialog):
         self._perform = False
         super(FilterDialog, self).__init__(parent, columns, row, **kwargs)
 
-    def _create_content(self):
+    def _create_content(self, sizer):
+        super(FilterDialog, self)._create_content(sizer)
         choice, field, button = self._create_choice, \
                                 self._create_text_ctrl, self._create_button
         self._agg_controls = (
@@ -675,10 +676,11 @@ class FilterDialog(SFDialog):
             button(_("Zjistit"), self._on_compute_aggregate,
                    tooltip=_("Zobraz výsledek zvolené agrekaèní funkce")))
         box = wx.StaticBox(self._dialog, -1, _("Agregaèní funkce:"))
-        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
-        for w in self._agg_controls:
-            sizer.Add(w)
-        return super_(FilterDialog)._create_content(self) + (sizer,)
+        boxsizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        for ctrl in self._agg_controls:
+            boxsizer.Add(ctrl)
+        sizer.Add(boxsizer, 0, wx.ALL|wx.CENTER, 5)
+
 
     def _on_compute_aggregate(self, event):
         try:
