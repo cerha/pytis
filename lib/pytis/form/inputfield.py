@@ -1487,7 +1487,7 @@ class ImageField(FileField):
                          callback=lambda e: self._on_button())
 
     def _disable(self):
-        super(ImageField, self)._disable(self)
+        super(ImageField, self)._disable()
         self._ctrl.Enable(True)
         
     def _button_size(self):
