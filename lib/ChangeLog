@@ -11,6 +11,12 @@
 	* pytis/form/form.py (PopupForm.run): If there is no result,
 	rollback governing transaction.
 
+2007-05-11  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands.make_lock_command):
+	Correct forgotten `else'.
+	
 2007-05-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dialog.py: Dialog creation process modified to allow a

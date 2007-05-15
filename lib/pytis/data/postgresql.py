@@ -353,7 +353,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         return self._pg_connections_
     
     def _pg_get_connection(self, outside_transaction=False):
-        connections = self._pg_connections()
+        connections = self._pg_connections()        
         if outside_transaction or not connections:
             pool = self._pg_connection_pool()
             return pool.get(self._pg_connection_data())
@@ -408,7 +408,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             finally:
                 # Vra» DB spojení zpìt
                 if connection and transaction is None and outside_transaction:
-                    self._pg_return_connection(connection)
+                    self._pg_return_connection(connection)                  
             if backup and self._pdbb_logging_command:
                 assert not outside_transaction, \
                     ('Backed up SQL command outside transaction', query)
@@ -972,6 +972,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     matches = [m for m in re.finditer(' where ', lock_query, re.I)]
                     if matches:
                         match = matches[-1]
+                    else:
+                        match = None 
                     if match:
                         beg, end = match.span()
                         n = 0
