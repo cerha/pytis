@@ -51,6 +51,7 @@ class DBConfig(object):
 
     """
     _data_object_cache = {}
+    _data_object_lock = thread.allocate_lock()
 
     def __init__(self, name, callback=None, transaction=None):
         """Inicializuj instanci.
@@ -73,12 +74,11 @@ class DBConfig(object):
                 DBConfig._data_object_cache[key] = data
         self._data = data
         self._transaction = transaction
-        self._lock = thread.allocate_lock()
         def lfunction():
             data.select(transaction=transaction)
             self._row = data.fetchone(transaction=transaction)
             data.close()
-        with_lock(self._lock, lfunction)
+        with_lock(self._data_object_lock, lfunction)
         self._key = [self._row[c.id()] for c in data.key()]
         if callback:
             self._callback = callback
@@ -89,7 +89,7 @@ class DBConfig(object):
             self._data.select(transaction=self._transaction)
             self._row = self._data.fetchone(transaction=self._transaction)
             self._data.close()
-        with_lock(self._lock, lfunction)
+        with_lock(self._data_object_lock, lfunction)
         self._callback(self)
 
     def value(self, key):

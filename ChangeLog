@@ -1,3 +1,8 @@
+2007-05-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/extensions/dbconfig.py (DBConfig): Make the data
+	access lock a class attribute instead of an instance attribute.
+
 2007-05-10  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (cb2strvalue):
