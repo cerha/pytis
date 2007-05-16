@@ -1,3 +1,8 @@
+2007-05-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py: Fixed a problem with transactions and
+	multiple uses of PopupEdit.
+
 2007-05-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py: Updated (fixed) for the new dialog creation strategy.

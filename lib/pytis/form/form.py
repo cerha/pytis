@@ -498,8 +498,7 @@ class PopupForm:
           lock_key -- lock the row with the given key
 
         """
-        if (lock_key is not None and
-            not isinstance(self._data, pytis.data.DBDataDefault)):
+        if lock_key is not None and not isinstance(self._data, pytis.data.DBDataDefault):
             lock_key = None
         try:
             if lock_key is not None:
@@ -511,16 +510,11 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if self._governing_transaction is None:
-                try:
-                    if self._result:
-                        self._transaction.commit()
-                    else:
-                        self._transaction.rollback()
-                except:
-                    pass
-            else:    
-                self._governing_transaction = None
+            if self._governing_transaction is None and self._result is None:
+                def rollback():
+                    self._transaction.rollback()
+                db_operation(rollback)
+            self._governing_transaction = None
             self._transaction = None
         result = self._result
         self._close(force=True)
@@ -796,8 +790,7 @@ class LookupForm(InnerForm):
     def _lf_sfs_columns(self):
         return sfs_columns(self._view.fields(), self._data)
 
-    def _search(self, condition, direction, row_number=None,
-                report_failure=True):
+    def _search(self, condition, direction, row_number=None, report_failure=True):
         self._search_adjust_data_position(row_number)
         data = self._data
         skip = data.search(condition, direction=direction, transaction=self._transaction)
@@ -1757,12 +1750,16 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 pass
             self._signal_update()
             if self._mode == self.MODE_INSERT:
-                log(ACTION, 'Záznam vlo¾en')
+                log(ACTION, 'Record inserted')
             else:
-                log(ACTION, 'Záznam updatován')
+                log(ACTION, 'Record updated')
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row, original_row)
+            if self._governing_transaction is None and self._transaction is not None:
+                def commit():
+                    self._transaction.commit()
+                db_operation(commit)
             if close:    
                 self._result = self._row
                 self.close()
@@ -1795,7 +1792,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         
         """
         return self._size
-    
+
     def changed(self):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
         field = find(True, self._fields, key=lambda f: f.is_modified())
@@ -1911,15 +1908,15 @@ class PopupEditForm(PopupForm, EditForm):
         return field
 
     def _load_next_row(self):
+        if self._governing_transaction is None and self._transaction is not None:
+            self._transaction = self._default_transaction()
+            self._row.set_transaction(self._transaction)
+        self._row.set_row(None)
         data = self._inserted_data
         if data is not None:
             i = self._inserted_data_pointer
             self._select_row(None)
             if i < len(data):
-                if self._governing_transaction is None and self._transaction is not None:
-                    # TODO: Commit the transaction in _commit_form()?
-                    self._transaction.commit()
-                    self._transaction = self._default_transaction()
                 self.set_status('progress', "%d/%d" % (i+1, len(data)))
                 self._inserted_data_pointer += 1
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
@@ -1930,6 +1927,7 @@ class PopupEditForm(PopupForm, EditForm):
                 self.set_status('progress', '')
                 run_dialog(Message, _("V¹echny záznamy byly zpracovány."))
                 self._inserted_data = None
+        self._set_focus_field()
 
     def _exit_check(self):
         i = self._inserted_data_pointer
