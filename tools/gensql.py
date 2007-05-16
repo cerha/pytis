@@ -1093,7 +1093,7 @@ class Select(_GsqlSpec):
             for r in self._relations:
                 vcolumns = r.select.set_columns(self._relation_columns)
                 self._columns.append(vcolumns)
-        else:    
+        else:
             for r in self._relations:
                 rel_alias = r.alias
                 column_aliases = r.column_aliases
@@ -1105,12 +1105,12 @@ class Select(_GsqlSpec):
                         continue
                     columnlist = self._relation_columns[r.relation]
                 make_columns(columnlist, column_aliases, rel_alias)            
-        for c in self._include_columns:
-            if c.alias not in aliases:
-                aliases.append(c.alias)
-                vcolumns.append(c)
-            else:
-                raise ProgramError('Duplicate column name', c.alias, aliases)
+            for c in self._include_columns:
+                if c.alias not in aliases:
+                    aliases.append(c.alias)
+                    vcolumns.append(c)
+                else:
+                    raise ProgramError('Duplicate column name', c.alias, aliases)
             self._columns = vcolumns
         return self._columns
 
