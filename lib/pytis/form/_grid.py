@@ -66,8 +66,7 @@ class ListTable(wx.grid.PyGridTableBase):
             self.the_row = the_row
             
     class _EditedRow(_CurrentRow):
-        def __init__(self, row, the_row, fieldspec, data, new=False,
-                     prefill=None):
+        def __init__(self, row, the_row, fieldspec, data, new=False, prefill=None):
             if __debug__ and config.server:
                 import pytis.remote
             # TODO: Proè tu není pytis.data, i kdy¾ je nahoøe import pytis.data?
@@ -84,8 +83,6 @@ class ListTable(wx.grid.PyGridTableBase):
                                  prefill=prefill, singleline=True, new=new)
             ListTable._CurrentRow.__init__(self, row, p_row)
             self.orig_row = copy.copy(the_row)
-            self.invalid_col = None # èíslo sloupce
-            self.invalid_string = None
         def update(self, colid, value):
             self.the_row[colid] = value
             
@@ -97,13 +94,10 @@ class ListTable(wx.grid.PyGridTableBase):
             self.style = style
 
     class EditInfo:
-        def __init__(self, row, the_row, new, changed, valid, orig_content):
+        def __init__(self, row, the_row, orig_row):
             self.row = row
             self.the_row = the_row
-            self.new = new
-            self.changed = changed
-            self.valid = valid
-            self.orig_content = orig_content
+            self.orig_row = orig_row
 
     class _DisplayCache:
         def __init__(self, size=1000):
@@ -477,15 +471,11 @@ class ListTable(wx.grid.PyGridTableBase):
         edited = self._edited_row
         if edited:
             the_row = edited.the_row
-            row = edited.row
-            new = the_row.new()
-            if new:
-                the_orig = None
+            if the_row.new():
+                orig_row = None
             else:
-                the_orig = edited.orig_row
-            valid = (edited.invalid_col == None)
-            changed = the_row.changed()
-            return self.EditInfo(row, the_row, new, changed, valid, the_orig)
+                orig_row = edited.orig_row
+            return self.EditInfo(edited.row, the_row, orig_row)
         else:
             return None
 
@@ -528,46 +518,6 @@ class ListTable(wx.grid.PyGridTableBase):
         """
         current = self._current_row
         return current and current.row
-
-    def set_invalid_string(self, row, col, string):
-        """Zapamatuj si nevalidní hodnotu buòky.
-        
-        Tato metoda by mìla být volána, pokud byla u¾ivatelem vlo¾ena
-        nevalidní hodnota.  Nastavení metodou 'SetValue()' pøijímá
-        instanci 'pytis.data.Value', a tudí¾ pouze validní hodnoty.  Takto
-        dáváme gridové tabulce mo¾nost dozvìdìt se o nevalidním vstupu a
-        patøiènì na nìj reagovat.
-
-        Po úspì¹né validaci musí být zapamatovaný øetìzec vymazán voláním
-        této metody s argumentem 'string' rovným 'None'.
-        
-        Souèasná implementace se omezuje na mo¾nost nastavení nevalidní
-        hodnoty pouze pro jeden sloupec právì editovaného øádku.
-        
-        """
-        edited = self._edited_row
-        if edited and edited.row == row:
-            if string is None:
-                edited.invalid_col = None
-                edited.invalid_string = None
-            else:
-                edited.invalid_col = col
-                edited.invalid_string = string
-                
-    def get_invalid_string(self, row, col):
-        """Vra» nevalidní hodnotu buòky zadanou u¾ivatelem jako øetìzec.
-        
-        Pokud nebyla do dané buòky vlo¾ena nevalidní hodnota, vra» 'None'.
-        
-        Platí zde omezení popsané v 'set_invalid_string()'.
-        
-        """
-        edited = self._edited_row
-        if edited and edited.row == row and edited.invalid_col == col:
-            return edited.invalid_string
-        return None
-
-            
         
     # Povinné gridové metody
     
@@ -691,13 +641,12 @@ class TableRowIterator(object):
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
 
-    def __init__(self, parent, row, id, guardian, table, registration):
+    def __init__(self, parent, row, id, guardian, registration):
         wx.grid.PyGridCellEditor.__init__(self)
         self._parent = parent
         self._row = row
         self._id = id
         self._guardian = guardian
-        self._table = table
         self._registration = registration
         self._field = None
 
@@ -713,9 +662,6 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
     def BeginEdit(self, row, col, grid):
         self._registration(self)
         field = self._field
-        invalid_string = self._table.get_invalid_string(row, col)
-        if invalid_string is not None:
-            field.set_value(invalid_string)
         field.widget().Enable(True)
         field.set_focus()
         try:
@@ -725,19 +671,10 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         
     def EndEdit(self, row, col, grid):
         field = self._field
+        field.validate(interactive=False)
         field.widget().Enable(False)
         self._parent.SetFocus()
-        if not field.is_modified():
-            self._table.set_invalid_string(row, col, None)
-            return False
-        value, error = field.validate(interactive=False)
-        if error:
-            self._table.set_invalid_string(row, col, field.get_value())
-            return True
-        else:
-            self._table.set_invalid_string(row, col, None)
-            self._row[self._id] = value
-            return True
+        return True
 
     def Reset(self):
         self._field.reset()

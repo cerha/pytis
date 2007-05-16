@@ -124,10 +124,10 @@ class PresentedRow(object):
         self._callbacks = {}
         self._new = new
         self._cache = {}
+        self._invalid = {}
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
-        self._columns = columns = dict([(f.id(), self._Column(f, data))
-                                        for f in self._fieldspec])
+        self._columns = columns = dict([(f.id(), self._Column(f, data)) for f in self._fieldspec])
         self._init_dependencies()
         if prefill:
             def value(v):
@@ -145,6 +145,8 @@ class PresentedRow(object):
     def _set_row(self, row, reset=True, prefill=None):
         self._row = self._init_row(row, prefill=prefill)
         if reset:
+            # Make sure all values are computed properly.
+            [self[k] for k in self._dirty.keys() if self._row.has_key(k)]
             self._original_row = copy.copy(self._row)
             self._original_row_empty = row is None
         self._resolve_dependencies()
@@ -200,6 +202,7 @@ class PresentedRow(object):
                 
     def _init_row(self, row, prefill=None):
         self._cache = {}
+        row_ = row
         if row is None:
             row_data = [(c.id(), self._default(c.id(), prefill=prefill))
                         for c in self._data.columns()]
@@ -213,19 +216,16 @@ class PresentedRow(object):
                 raise Exception('Invalid argument row:', row)
             if prefill:
                 row.update(prefill)
-            for key in self._dirty.keys():
-                self._dirty[key] = not row.has_key(key)
+        for key in self._dirty.keys():
+            # Prefill and default take precedence before the computer
+            self._dirty[key] = not (row_ is not None and row_.has_key(key) or \
+                                    prefill is not None and prefill.has_key(key) or \
+                                    self._new and self._columns[key].default is not None)
         return row
 
     def _default(self, key, prefill=None):
         if prefill and prefill.has_key(key):
             value = prefill[key]
-            if self._dirty.has_key(key):
-                # Prefill má pøednost pøed computerem, proto¾e nìkdy
-                # chceme v procedurách mít mo¾nost ve formuláøi za
-                # nìjakých okolností pøednastavit jinou hodnotu, ne¾
-                # jaká by byla computerem normálnì vypoètena.
-                self._dirty[key] = False
         elif self._columns.has_key(key):
             col = self._columns[key]
             default = col.default
@@ -233,8 +233,6 @@ class PresentedRow(object):
                 if callable(default):
                     default = default()
                 value = pytis.data.Value(col.type, default)
-                if self._dirty.has_key(key):
-                    self._dirty[key] = False
             else:
                 value = col.type.default_value()
         else:
@@ -288,7 +286,7 @@ class PresentedRow(object):
         if hasattr(self, '_row'):
             items = []
             for spec in self._fieldspec:
-                items.append(spec.id() + '=' + str(self[spec.id()]))
+                items.append(spec.id() + '=' + str(self[spec.id()].value()))
             return '<PresentedRow: %s>' % string.join(items, ', ')
         else:
             return super(PresentedRow, self).__str__()
@@ -339,7 +337,7 @@ class PresentedRow(object):
                 # pøepoèítána a callback byl zavolán bìhem pøepoèítávání
                 # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a
                 # musíme tedy jejich callback zavolat teï.
-                dirty = [k for k in self._dirty.keys() if self._dirty[k]]
+                dirty = [k for k,v in self._dirty.items() if v]
                 for k in dirty:
                     self._run_callback(self.CALL_CHANGE, k)
     
@@ -474,13 +472,17 @@ class PresentedRow(object):
         return self._fieldspec
         
     def has_key(self, key):
-        """Vra» pravdu, pokud je políèko daného klíèe v øádku obsa¾eno."""
+        """Return true if a field of given key is contained within the row."""
         return self._columns.has_key(key)
         
     def keys(self):
         """Vra» seznam identifikátorù v¹ech políèek obsa¾ených v tomto øádku."""
         return self._columns.keys()
         
+    def new(self):
+        """Return true if the row represents a new (inserted) record."""
+        return self._new
+    
     def original_row(self, empty_as_none=False):
         """Vra» *datový* øádek obsahující pùvodní hodnoty pøed pøípadnými zmìnami.
 
@@ -498,29 +500,27 @@ class PresentedRow(object):
             return self._original_row
 
     def changed(self):
-        """Vra» pravdu, právì kdy¾ byl øádek zmìnìn.
+        """Return true if the data row has been changed.
 
-        Øádek se pova¾uje za zmìnìný, není-li shodný s øádkem vytvoøeným z dat
-        zadaných v konstruktoru, ve smyslu operátoru `='.
+        The row is considered changed if the underlying data row is not equal to the original row
+        passed to (or created in) the constructor in the sense of the `=' operator.  Changes in the
+        virtual fields (not present in the underlying data row) are ignored.
 
         """
-        return self._row != self._original_row
+        return self._row != self._original_row or self._invalid
 
     def field_changed(self, key):
-        """Vra» pravdu, právì kdy¾ bylo políèko dané 'key' zmìnìno.
+        """Return true if the field 'key' was changed compared to its original value.
 
-        Pozor: Pro plnì virtuální políèka vrací v¾dy nepravdu!  Ani pro
-        nevirtuální dopoèítávaná políèka není pravdivist výsledku zaruèena,
-        nebo» k výpoètu skuteèné hodnoty nemuselo nikdy dojít.
+        Warning: False is always returned for fully virtual fields (with no underlying data
+        column).  For all computed fields the result may not be accurate because the recomputation
+        may not have happened yet.  
 
         """
-        return self._row.has_key(key) and \
-               self._row[key] != self._original_row[key]
+        return not self._row.has_key(key) or \
+               self._row[key] != self._original_row[key] or \
+               self._invalid.has_key(key)
 
-    def new(self):
-        """Vra» pravdu, právì kdy¾ se jedná o nový záznam."""
-        return self._new
-    
     def editable(self, key):
         """Vra» pravdu, právì kdy¾ je políèko dané 'key' editovatelné.
 
@@ -534,9 +534,47 @@ class PresentedRow(object):
                 return self._editable[key]
         else:
             editable = self._columns[key].editable
-            return editable == Editable.ALWAYS or \
-                   (editable == Editable.ONCE and self._new)
+            return editable == Editable.ALWAYS or editable == Editable.ONCE and self._new
+        
+    def validate(self, key, string):
+        """Validate user input and propagate the value to the row if the string is valid.
 
+        Arguments:
+
+          key -- identifier of the validated field
+          string -- string value representing user input
+
+        If the string is not valid, it is saved (can be retrieved later by the 'invalid_string()'
+        method) and this state is also reflected by the 'changed()' and 'field_changed()' methods.
+        This state is updated after each validation attempt.
+        
+        Returns: 'ValidationError' instance if an error occurs or None if the string is valid.
+        
+        """
+        column = self._columns[key]
+        value, error = column.type.validate(string, transaction=self._transaction)
+        if not error:
+            if self._invalid.has_key(key):
+                del self._invalid[key]
+            if string != self.format(key):
+                self[key] = value
+        else:
+            # TODO: perform non-strict validation?
+            if string != self.format(key):
+                self._invalid[key] = string
+            elif self._invalid.has_key(key):
+                del self._invalid[key]
+        return error
+
+    def invalid_string(self, key):
+        """Return the last invalid user input string.
+
+        Returns a string passed to the last call to 'validate()' if this last input string was
+        invalid.  None is returned if the last validation was successful.
+        
+        """
+        return self._invalid.get(key)
+    
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
         assert function is None or callable(function), ('Invalid callback function', function)

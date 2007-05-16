@@ -1528,7 +1528,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if find(focused, self._fields, key=lambda f: f.id()):                
                 f = self._field(focused)
         else:
-            f = find(True, self._fields, key=lambda f: f.is_enabled())
+            f = find(True, self._fields, key=lambda f: f.enabled())
             if f is None:
                 f = self._fields[0]
         f.set_focus()
@@ -1696,25 +1696,21 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _refresh(self, when=None):
         self.Refresh()
 
-    def _validate_fields(self):
-        # Postupná validace v¹ech políèek.
+    def _commit_form(self, close=True):
+        # Re-validate all fields.
         for f in self._fields:
-            if self._mode == self.MODE_INSERT or f.is_modified():
-                value, error = f.validate()
-                if error:
-                    log(EVENT, 'Validace selhala:', f.id())
+            if self._mode == self.MODE_INSERT or self._row.field_changed(f.id()):
+                if not f.validate():
                     f.set_focus()
                     return False
-        return True
-            
-    def _commit_form(self, close=True):
-        # Validace v¹ech políèek.
-        if not self._validate_fields():
-            return False
         # Ovìøení integrity záznamu (funkce check).
         failed_id = self._check_record(self._row)
         if failed_id:
-            self._field(failed_id).set_focus()
+            f = self._field(failed_id)
+            if f:
+                f.set_focus()
+            else:
+                log(OPERATIONAL, "Unknown field returned by check():", failed_id)
             return False
         transaction = self._transaction
         # Vytvoøení datového øádku.
@@ -1795,8 +1791,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def changed(self):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
-        field = find(True, self._fields, key=lambda f: f.is_modified())
-        return field is not None
+        return self._row.changed()
 
     def _exit_check(self):
         if self.changed():
@@ -1832,7 +1827,7 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
-        if self._mode == self.MODE_INSERT:
+        if self._inserted_data is not None:
             self._load_next_row()
         size = copy.copy(self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
@@ -1908,11 +1903,12 @@ class PopupEditForm(PopupForm, EditForm):
         return field
 
     def _load_next_row(self):
-        if self._governing_transaction is None and self._transaction is not None:
-            self._transaction = self._default_transaction()
-            self._row.set_transaction(self._transaction)
-        self._row.set_row(None)
         data = self._inserted_data
+        if data is None or self._inserted_data_pointer > 0:
+            if self._governing_transaction is None and self._transaction is not None:
+                self._transaction = self._default_transaction()
+                self._row.set_transaction(self._transaction)
+            self._row.set_row(None, reset=True)
         if data is not None:
             i = self._inserted_data_pointer
             self._select_row(None)

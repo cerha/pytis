@@ -321,9 +321,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self.editable = True
                 editing = self._table.editing()
                 if editing:
-                    the_row = editing.the_row
-                    e = _grid.InputFieldCellEditor(self._parent, the_row, c.id(), self,
-                                                   self._table, registration)
+                    e = _grid.InputFieldCellEditor(self._parent, editing.the_row, c.id(),
+                                                   self, registration)
                     self._editors.append(e)
                     #self._grid.SetCellEditor(row, col, e)
                     attr.SetEditor(e)
@@ -485,7 +484,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return True
         if editing.row == row:
             return True
-        if not editing.changed:
+        if not editing.the_row.changed():
             if __debug__: log(DEBUG, 'Odchod z needitovaného øádku povolen')
             self._on_line_rollback()
             finish = True 
@@ -494,9 +493,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if question == None:
                 question = _("Zru¹it zmìny záznamu?")
             buttons = bcancel, bsave, bcontinue = \
-                      _("Zru¹it"), _("Ulo¾it"), _("Pokraèovat v editaci")
-            result = run_dialog(MultiQuestion, question, buttons=buttons,
-                                default=bsave)
+                      _("Zru¹it zmìny"), _("Ulo¾it"), _("Pokraèovat v editaci")
+            result = run_dialog(MultiQuestion, question, buttons=buttons, default=bsave)
             finish = (result != bcontinue)
             if result == bcancel:
                 log(EVENT, 'Odchod u¾ivatelem povolen')
@@ -534,7 +532,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Urèení operace a klíèe
         rdata = self._record_data(the_row)
         kc = [c.id() for c in self._data.key()]
-        if editing.new:
+        if editing.the_row.new():
             if row > 0:
                 after = table.row(row-1).row().columns(kc)
                 before = None
@@ -547,7 +545,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                   (rdata,),
                   dict(after=after, before=before, transaction=self._transaction))
         else:
-            key = editing.orig_content.row().columns(kc)
+            key = editing.orig_row.row().columns(kc)
             op = (self._data.update,
                   (key, rdata,),
                   dict(transaction=self._transaction))
@@ -567,7 +565,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self.focus()
         elif success:
             log(EVENT, 'Zamítnuto pro chybu klíèe')
-            if editing.new:
+            if editing.the_row.new():
                 msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
                         "sousedního øádku")
             else:
@@ -591,10 +589,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         editing = self._table.editing()
         if not editing:
             return False
-        if soft and editing.changed:
+        if soft and editing.the_row.changed():
             return True
         row = editing.row
-        if editing.new:
+        if editing.the_row.new():
             self._update_grid()
         else:
             self._table.edit_row(None)
@@ -1036,7 +1034,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _is_changed(self):
         editing = self._table.editing()
-        return editing and editing.changed
+        return editing and editing.the_row.changed()
 
     def _dualform(self):
         # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
@@ -1099,7 +1097,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         editing = self._table.editing()
         if editing:
             log(EVENT, 'Pokus o odchod z øádkového formuláøe bìhem editace')
-            if editing.changed and  \
+            if editing.the_row.changed() and  \
                    run_dialog(Question, _("Ulo¾it zeditovaný øádek?"), True):
                 log(EVENT, 'Vy¾ádáno ulo¾ení')
                 self._on_line_commit()
@@ -1694,22 +1692,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_cell_commit(self):
         row, col = self._current_cell()
-        log(EVENT, 'Odeslání obsahu políèka gridu', (row, col))
+        id = self._columns[col].id()
+        log(EVENT, 'Cell commit in inline editation:', id)
         self._grid.DisableCellEditControl()
         editing = self._table.editing()
         if not editing:
             return
-        if editing.valid:
+        the_row = editing.the_row
+        if the_row.invalid_string(id) is None:
             if not self._find_next_editable_cell():
-                if editing.new:
+                if the_row.new():
                     q = _("Ulo¾it øádek?")
                     if run_dialog(Question, q, True):
                         return self._on_line_commit()
                     else:
-                        log(EVENT, 'Záporná odpovìï na dotaz o ulo¾ení øádku')
+                        log(EVENT, "Line commit refused by the user.")
                 self._grid.SetGridCursor(row, 0)
-        if not editing.valid or editing.new:
-            log(EVENT, 'Návrat do editace políèka')
+        if the_row.invalid_string(id) is not None or the_row.new():
+            log(EVENT, "Returning to in-line editation.")
             self._edit_cell()
         
     def _can_cell_rollback(self):

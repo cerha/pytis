@@ -31,21 +31,23 @@ tests = pytis.util.test.TestSuite()
 class PresentedRow_(unittest.TestCase):
     def setUp(self):
         key = pytis.data.ColumnSpec('a', pytis.data.Integer())
-        columns = (
+        self._columns = (
             key,
             pytis.data.ColumnSpec('b', pytis.data.Integer()),
             pytis.data.ColumnSpec('c', pytis.data.Integer()),
             pytis.data.ColumnSpec('d', pytis.data.Integer()))
-        self._data = pytis.data.Data(columns, key)
+        self._data = pytis.data.Data(self._columns, key)
         def twice(row):
-            return row['c'].value() * 2
+            c = row['c'].value()
+            return c is not None and c * 2 or None
         def sum(row):
             b, c = (row['b'].value(), row['c'].value())
             if b is None or c is None:
                 return None
             return b + c
         def inc(row):
-            return row['sum'].value() + 1
+            sum = row['sum'].value()
+            return sum is not None and sum + 1 or None
         def gt5(row, key):
             return row['sum'].value() > 5
         self._fields = (FieldSpec('a'),
@@ -64,6 +66,12 @@ class PresentedRow_(unittest.TestCase):
     def _check_values(self, row, pairs):
         for k, v in pairs:
             assert row[k].value() == v, (k, v, row[k].value())
+    def _value(self, key, value):
+        col = find(key, self._columns, key=lambda c: c.id())
+        return pytis.data.Value(col.type(), value)
+    def _data_row(self, **values):
+        return pytis.data.Row([(c.id(), pytis.data.Value(c.type(), values.get(c.id())))
+                               for c in self._columns])
     def test_init(self):
         row = PresentedRow(self._fields, self._data, None, new=True)
         self._check_values(row, (('a', None),
@@ -71,22 +79,22 @@ class PresentedRow_(unittest.TestCase):
                                  ('c', 5),
                                  ('d', 10),
                                  ('e', 88)))
-        data_row = pytis.data.Row((
-            ('a', pytis.data.Value(pytis.data.Integer(), 'xx')),
-            ('b', pytis.data.Value(pytis.data.Integer(), 100)),
-            ('c', pytis.data.Value(pytis.data.Integer(), 77)),
-            ('d', pytis.data.Value(pytis.data.Integer(), 18))))
-        row = PresentedRow(self._fields, self._data, data_row)
+        row = PresentedRow(self._fields, self._data, self._data_row(a='xx', b=100, c=77, d=18))
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
                                  ('c', 77),
                                  ('d', 18)))
-        row['c'] = pytis.data.Value(pytis.data.Integer(), 88)
-        #row2 = PresentedRow(self._fields, self._data, row)
+        row['c'] = self._value('c', 88)
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
                                  ('c', 88),
                                  ('d', 176)))
+        row = PresentedRow(self._fields, self._data, None)
+        self._check_values(row, (('a', None),
+                                 ('b', None),
+                                 ('c', None),
+                                 ('d', None),
+                                 ('sum', None)))
         # TODO: dodìlat
     def test_prefill(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
@@ -110,7 +118,7 @@ class PresentedRow_(unittest.TestCase):
         assert row['sum'].value() == 8
         assert row.get('sum', lazy=True).value() == 8
         self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
-        row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
+        row['c'] = self._value('c', 100)
         self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
     def test_prefill_computer(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
@@ -119,12 +127,49 @@ class PresentedRow_(unittest.TestCase):
                                  ('c', 2),
                                  ('sum', 88),
                                  ('inc', 89)))
+    def test_validation(self):
+        row = PresentedRow(self._fields, self._data, None)
+        assert row.validate('a', '2') is None
+        assert row.validate('b', '2.3') is not None
+        assert row.validate('c', '8') is None
+        assert row.validate('d', '12') is None
+        self._check_values(row, (('a', 2),
+                                 ('b', None),
+                                 ('c', 8),
+                                 ('d', 12),
+                                 ('sum', None)))
+        assert row.invalid_string('a') is None
+        assert row.invalid_string('b') == '2.3'
+        assert row.validate('b', '12') is None
+        self._check_values(row, (('b', 12),
+                                 ('c', 8),
+                                 ('sum', 20)))
+        assert row.invalid_string('b') is None
+    def test_set_row(self):
+        row = PresentedRow(self._fields, self._data, None, new=True)
+        self._check_values(row, (('a', None),
+                                 ('b', None),
+                                 ('c', 5),
+                                 ('sum', None),
+                                 ('inc', None)))
+        row.set_row(self._data_row(b=10, c=20))
+        self._check_values(row, (('a', None),
+                                 ('b', 10),
+                                 ('c', 20),
+                                 ('sum', 30),
+                                 ('inc', 31)))
+        row.set_row(None)
+        self._check_values(row, (('a', None),
+                                 ('b', None),
+                                 ('c', 5),
+                                 ('sum', None),
+                                 ('inc', None)))
     def test_editable(self):
         row = PresentedRow(self._fields, self._data, None,
                            prefill={'b': 2, 'c': 1})
         assert row.editable('a')
         assert not row.editable('d')
-        row['b'] = pytis.data.Value(pytis.data.Integer(), 5)
+        row['b'] = self._value('b', 5)
         assert row.editable('d')
     def test_callback(self):
         row = PresentedRow(self._fields, self._data, None, new=True, prefill={'b': 3})
@@ -139,16 +184,11 @@ class PresentedRow_(unittest.TestCase):
         #self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
         #assert 'd' in changed and 'sum' in changed and 'inc' in changed, changed
         #del changed[0:len(changed)]
-        row['c'] = pytis.data.Value(pytis.data.Integer(), 100)
+        row['c'] = self._value('c', 100)
         #self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
         assert 'd' in changed and 'sum' in changed and 'inc' in changed, changed
         del changed[0:len(changed)]
-        data_row = pytis.data.Row((
-            ('a', pytis.data.Value(pytis.data.Integer(), 'xx')),
-            ('b', pytis.data.Value(pytis.data.Integer(), 10)),
-            ('c', pytis.data.Value(pytis.data.Integer(), 20)),
-            ('d', pytis.data.Value(pytis.data.Integer(), 30))))
-        row.set_row(data_row)
+        row.set_row(self._data_row(a='xx', b=10, c=20, d=30))
         assert 'a' in changed and 'b' in changed and 'c' in changed and 'd' in changed \
                and 'sum' in changed and 'inc' in changed, changed
         
@@ -159,15 +199,15 @@ class PresentedRow_(unittest.TestCase):
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
         assert enabled[0] is None, enabled[0]
-        row['a'] = pytis.data.Value(pytis.data.Integer(), 8)
+        row['a'] = self._value('a', 8)
         assert enabled[0] is None, enabled[0]
-        row['c'] = pytis.data.Value(pytis.data.Integer(), 3)
+        row['c'] = self._value('c', 3)
         assert enabled[0] is False
-        row['b'] = pytis.data.Value(pytis.data.Integer(), 2)
+        row['b'] = self._value('b', 2)
         assert enabled[0] is False
-        row['b'] = pytis.data.Value(pytis.data.Integer(), 3)
+        row['b'] = self._value('b', 3)
         assert enabled[0] is True
-        row['c'] = pytis.data.Value(pytis.data.Integer(), 2)
+        row['c'] = self._value('c', 2)
         assert enabled[0] is False
     def test_has_key(self):
         row = PresentedRow(self._fields, self._data, None)
@@ -177,15 +217,14 @@ class PresentedRow_(unittest.TestCase):
     def test_changed(self):
         row = PresentedRow(self._fields, self._data, None)
         assert not row.changed()
-        row['b'] = pytis.data.Value(pytis.data.Integer(), 333)
+        row['b'] = self._value('b', 333)
         assert row.changed()
     def test_field_changed(self):
-        row = PresentedRow(self._fields, self._data, None,
-                           prefill={'b': 3, 'c': 8})
+        row = PresentedRow(self._fields, self._data, None, prefill={'b': 3, 'c': 8})
         assert not row.field_changed('a')
         assert not row.field_changed('b')
         assert not row.field_changed('c')
-        row['b'] = pytis.data.Value(pytis.data.Integer(), 333)
+        row['b'] = self._value('b', 333)
         assert not row.field_changed('a')
         assert row.field_changed('b')
         assert not row.field_changed('c')
@@ -198,8 +237,7 @@ class PresentedRow_(unittest.TestCase):
         V = pytis.data.Value
         rows = [pytis.data.Row((('x', V(S(), x)), ('y', V(S(), y))))
                 for x,y in (('1','FIRST'), ('2','SECOND'), ('3','THIRD'))]
-        edata = pytis.data.DataFactory(pytis.data.MemData,
-                                       (C('x', S()), C('y', S())), data=rows)
+        edata = pytis.data.DataFactory(pytis.data.MemData, (C('x', S()), C('y', S())), data=rows)
         enum = pytis.data.DataEnumerator(edata)
         key = C('a', pytis.data.Integer())
         columns = (key,

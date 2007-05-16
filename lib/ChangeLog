@@ -1,7 +1,23 @@
 2007-05-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py: Compute dirty values when saving
+	the original row.  Added support for validation and keeping track
+	invalid user input values.
+
+	* pytis/presentation/_test.py: New tests.
+
+	* pytis/form/_grid.py: Don't duplicate things now implemented in
+	PresentedRow.
+
+	* pytis/form/list.py: Updated for the changed cell editor and
+	`EditedRow' interface.
+
+	* pytis/form/inputfield.py: Major cleanup, improvements and a few
+	bugfixes.
+
 	* pytis/form/form.py: Fixed a problem with transactions and
-	multiple uses of PopupEdit.
+	multiple uses of PopupEdit.  Updated for the changed interface of
+	input fields.  Inserted row initialization fixed.
 
 2007-05-15  Tomas Cerha  <cerha@brailcom.org>
 

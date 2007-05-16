@@ -74,6 +74,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
+    _DEFAULT_BACKGROUND_COLOR = None
 
     CALL_FIELD_CHANGE = 'CALL_FIELD_CHANGE'
     """Callback volaný pøi ka¾dé zmìnì hodnoty. Argumentem je instance políèka.
@@ -142,9 +143,39 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         else:
             field = TextField
         return field(parent, row, id, inline=inline, **kwargs)
-
     create = classmethod(create)
 
+    def _defocus(cls, field):
+        if cls._focused_field is field:
+            cls._last_focused_field = cls._focused_field
+            cls._focused_field = None
+    _defocus = classmethod(_defocus)
+
+    def _focus(cls, field):
+        #import weakref
+        current = cls.focused()
+        cls._focused_field = field #weakref.ref(field)
+        if current is not None:
+            cls._last_focused_field = current
+    _focus   = classmethod(_focus)
+    
+    def _last_focused(cls):
+        field = cls._last_focused_field
+        cls._last_focused_field = None
+        if field is not None and field._alive():
+            return field
+        return None
+    _last_focused = classmethod(_last_focused)
+
+    def focused(cls):
+        field = cls._focused_field
+        if field is not None and field._alive():
+            return field
+        return None
+    focused = classmethod(focused)
+
+    # Instance methods
+    
     def __init__(self, parent, row, id, inline=False, guardian=None, readonly=False):
         """Initialize the input field according to its specification.
         
@@ -197,7 +228,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._enabled = not denied and not readonly and row.editable(id)
         self._callback_registered = False
         self._unregistered_widgets = {}
-        self._is_changed = False
+        self._changed = False
+        self._valid = False
         self._init_attributes()
         self._ctrl = ctrl = self._create_ctrl()
         if inline:
@@ -218,9 +250,13 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if not inline:
             row.register_callback(row.CALL_CHANGE, id, self._change_callback)
             row.register_callback(row.CALL_EDITABILITY_CHANGE, id, self._editability_change_callback)
+        value = self._row.invalid_string(id)
+        if value is None:
+            value = row.format(id)
         #self._disable_event_handlers()
-        self.set_value(row.format(id))
+        self._set_value(value)
         self._on_change()
+        self._call_on_idle = self._update_background_color
         #self._enable_event_handlers()
         
     def _init_attributes(self):
@@ -256,33 +292,28 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # sophisticated classes may add additional buttons etc.
         return self._ctrl
 
+    def _get_value(self):
+        # Return the external (string) representation of the current field value from the field UI
+        # control.  This value must be validatable by the field data type.
+        raise ProgramError("This method must be overriden!")
+
+    def _set_value(self, value):
+        # Set the field control according to given external (string) value.
+        raise ProgramError("This method must be overriden!")
+    
+    # Other private methods.
+
     def _menu(self):
         # Return a tuple of popup menu items ('MItem' instances).
         return ((InputField.COMMAND_RESET,
                  _("Vrátit pùvodní hodnotu"),
                  _("Vrátit ve¹keré provedené zmìny.")),)
 
-    def guardian(self):
-        return self._guardian
-
-    # Zpracování pøíkazù
-    
-    def _can_reset(self):
-        return self.is_modified() and self.is_enabled()
-
-    def _cmd_reset(self):
-        self.reset()
-
-    def _cmd_context_menu(self):
-        self._on_context_menu()
-
-    # Ostatní neveøejné metody.
-
     def _mitem(self, command, title=None, help=None):
         if command is None:
             return MSeparator()
         else:
-            if isinstance(command, types.TupleType):
+            if isinstance(command, tuple):
                 command, kwargs = command
             else:
                 kwargs = {}
@@ -305,11 +336,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         #event.Skip()
 
     def _on_idle(self, event):
-        if self._is_changed:
-            self._is_changed = False
-            value = self._value()
-            if value and value != self._row[self.id()]:
-                self._row[self.id()] = value
+        if self._changed:
+            self._changed = False
+            valid = self._row.validate(self.id(), self._get_value()) is None
+            if valid != self._valid:
+                self._valid = valid
+                self._on_validity_change()
             self._on_change_hook()
         if self._want_focus and not self._has_focus():
             self._set_focus()
@@ -320,21 +352,28 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return True
 
     def _on_change_hook(self):
-        """O¹etøi zmìny textu políèka.
+        """Handle field value changes.
         
-        Pøedefinováním této metody lze provádìt libovolné doplòující akce
-        pøi ka¾dé zmìnì textu políèka.
+        Overriding this method allows any additional actions after each change of the field value.
         
         """
         pass
+        
+    def _on_validity_change(self):
+        """Handle field validity changes.
+        
+        Overriding this method allows any additional actions after field validity changes, such as
+        highlighting this state in the UI.
+        
+        """
+        self._update_background_color()
         
     def _on_set_focus(self, event):
         self._want_focus = False
         last = InputField._last_focused()
         # TODO: Zkusit to pøes `wx.Window.SetFocusFromKbd()'
-        if last is not None and last is not self and last.is_enabled() and last.is_modified():
-            value, error = last.validate(interactive=False)
-            if error:
+        if last is not None and last is not self and last.enabled() and last._modified():
+            if not last.validate(interactive=False):
                 last.set_focus()
                 return True
         InputField._focus(self)
@@ -369,8 +408,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _change_callback(self):
         # Field value change signalization from PresentedRow.
         value = self._row.format(self.id())
-        if self.get_value() != value:
-            self.set_value(value)
+        if self._get_value() != value:
+            self._set_value(value)
 
     def _editability_change_callback(self):
         # Field editability change signalization from PresentedRow.
@@ -388,82 +427,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # Called on user interaction (editation, selection).  The actual processing of the change
         # is postponed to the idle thread to avoid user interface hangs on time-consuming
         # operations (such as complicated field recomputations).
-        self._is_changed = True
+        self._changed = True
         if event:
             event.Skip()
-
-    def _px_size(self, width, height):
-        return dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
-    
-    def _has_focus(self):
-        """Vra» pravdu právì kdy¾ je políèko zaostøeno pro u¾iv. vstup."""
-        return InputField.focused() is self
-
-    def width(self):
-        """Vra» ¹íøku políèka danou specifikací; poèet znakù."""
-        return self.spec().width(self._DEFAULT_WIDTH)
-
-    def height(self):
-        """Vra» vý¹ku políèka danou specifikací; poèet znakù."""
-        return self.spec().height(self._DEFAULT_HEIGHT)
-
-    def id(self):
-        """Vra» identifikátor políèka (string)."""
-        return self._id
-
-    def spec(self):
-        """Vra» prezentaèní specifikaci políèka jako 'FieldSpec'."""
-        return self._spec
-
-    def type(self):
-        """Vra» datový typ políèka jako instanci 'pytis.data.Type'."""
-        return self._type
-
-    def widget(self):
-        """Vra» ovládací prvek jako instanci 'wx.Window'."""
-        return self._widget
-
-    def label(self):
-        """Vra» nadpis políèka jako 'wx.StaticText'."""
-        return self._label
-
-    def validate(self, quiet=False, interactive=True, **kwargs):
-        """Zvaliduj hodnotu políèka a vra» instanci 'Value' a popis chyby.
-
-        Argumenty:
-        
-          quiet -- v pøípadì pravdivé hodnoty je výsledek validace metodou
-            pouze vrácen a chyba není nijak ohla¹ována.  V opaèném pøípadì je
-            chyba ohlá¹ena zpùsobem, který závísí na argumentu `interactive'.
-          interactive -- pokud je pravdivý, dojde k ohlá¹ení chyby vyskoèiv¹ím
-            dialogem s popisem chyby.  V opaèném pøípadì je pouze zobrazena
-            zpráva ve stavové øádce.
-          **kwargs -- klíèové argumenty, které mají být pøedány metodì
-            'pytis.data.Type.validate()'.
-
-        Vrací: Tuple (value, error), tak, jak ho vrátí
-        'pytis.data.Type.validate()' pøíslu¹ného datového typu pro hodnotu
-        zadanou v políèku.
-
-        """
-        value, error = self._type.validate(self.get_value(), transaction=self._row.transaction(),
-                                           **kwargs)
-        if error and not quiet:
-            if interactive:
-                msg = _('Chyba validace políèka!\n\n%s: %s') % \
-                      (self.spec().label(), error.message())
-                run_dialog(Error, msg, title=_("Chyba validace"))
-            else:
-                message(error.message(), beep_=True)
-        return value, error
-
-    def _value(self, **kwargs):
-        value, error = self.validate(quiet=True, **kwargs)
-        return value
-    
-    def _is_valid(self, **kwargs):
-        value, error = self.validate(quiet=True, **kwargs)
-        return error is None
 
     def _enable(self):
         self._ctrl.Enable(True)
@@ -478,71 +444,118 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             # effectively.
             pass
 
-    def _set_disabled_color(self):
+    def _update_background_color(self):
         if self._readonly:
             return
         elif self._denied:
             color = config.field_denied_color
+        elif not self._enabled:
+            color = config.field_disabled_color
+        elif not self._valid:
+            color = '#ffffc0' # config.field_invalid_color
         else:
-            color = config.field_disabled_color 
+            color = self._DEFAULT_BACKGROUND_COLOR
         self._ctrl.SetOwnBackgroundColour(color)
         self._ctrl.Refresh()
-            
-    def set_focus(self):
-        """Uèiò toto políèko aktivním pro vstup z klávesnice."""
-        self._want_focus = True
 
+    def _modified(self):
+        # Returns always false for virtual fields
+        return self._row.field_changed(self.id())
+
+    def _px_size(self, width, height):
+        return dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
+    
     def _set_focus(self):
         self._ctrl.SetFocus()
 
-    def get_value(self):
-        """Vra» hodnotu políèka jako string.
-        
-        Tuto metodu je tøeba pøedefinovat v odvozené tøídì.
-        
-        """
-        raise ProgramError("This method must be overriden!")
+    def _has_focus(self):
+        """Return true if the field currently has keyboard focus."""
+        return InputField.focused() is self
 
-    def set_value(self, value):
-        """Nastav hodnotu políèka na 'value'.
-
-        Argumenty:
-
-          value -- hodnota políèka, string (pokud datový typ políèka nevy¾aduje
-            jinak)
-
-        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
-        v opaèném pøípadì.
-
-        Pokud je hodnota None, nebude provedeno nic, pouze vráceno False.
-
-        Odvozené tøídy nech» tuto metodu nepøedefinovávájí, nech» pøedefinují
-        metodu '_set_value()'.
-
-        """
-        # TODO: Is this really what we want?  Why do we ignore None values?
-        # This requires a workaround in FileField, where None is a correct
-        # value.
-        if value is not None:
-            return self._set_value(value)
-        else:
+    def _alive(self):
+        try:
+            self._ctrl.GetId()
+            return True
+        except wx.PyDeadObjectError:
             return False
 
-    def _set_value(self, value):
-        raise ProgramError("This method must be overriden!")
+    # Command processing
+    
+    def _can_reset(self):
+        return self._modified() and self._enabled
 
-    def is_modified(self):
-        """Vra» pravdu, právì pokud byla hodnota políèka zmìnìna u¾ivatelem.
+    def _cmd_reset(self):
+        self.reset()
 
-        Políèko je nastaveno do poèáteèního stavu po ka¾dém volání metody
-        'init()'. Metoda vrátí pravdu právì kdy¾ je souèasná hodnota políèka
-        rozdílná od hodnoty v poèáteèním stavu.
+    def _cmd_context_menu(self):
+        self._on_context_menu()
+
+    # Public methods
         
-        """
-        # Returns always false for virtual fields
-        return self._row.field_changed(self.id()) or self.get_value() != self._row.format(self.id())
+    def width(self):
+        """Return field width in characters."""
+        return self.spec().width(self._DEFAULT_WIDTH)
 
-    def is_enabled(self):
+    def height(self):
+        """Return field height in characters."""
+        return self.spec().height(self._DEFAULT_HEIGHT)
+
+    def id(self):
+        """Return the field identifier as a string."""
+        return self._id
+
+    def guardian(self):
+        return self._guardian
+
+    def spec(self):
+        """Return field specification as a 'FieldSpec' instance."""
+        return self._spec
+
+    def type(self):
+        """Return the data type as a 'pytis.data.Type' instance."""
+        return self._type
+
+    def widget(self):
+        """Return the complete widget as a 'wx.Window' instance."""
+        return self._widget
+
+    def label(self):
+        """Return the field label as a 'wx.StaticText' instance."""
+        return self._label
+
+    def validate(self, interactive=True):
+        """Invoke field validation and propagate current user input to the underlying PresentedRow.
+
+        Arguments:
+        
+          interactive -- controls how the validation error is announced if the current field value
+            is not valid.  If true, the error is announced by a popup dialog.  If false the error
+            message will appear in the status line.
+
+        The side effect of calling this method is propagation of the current user input to the
+        underlying PresentedRow instance.  If the value is valid, it will be stored in the row.  If
+        not, the row will recognize its state as changed but invalid.
+
+        Returns: True if the field value is valid and False otherwise.
+
+        """
+        error = self._row.validate(self.id(), self._get_value())
+        if error:
+            if interactive:
+                log(EVENT, 'Invalid field:', self.id())
+                run_dialog(Error, title=_("Chyba validace"),
+                           message=_('Chyba validace políèka!\n\n%s: %s') % \
+                           (self.spec().label(), error.message()))
+            else:
+                message(error.message(), beep_=True)
+        return error is None
+
+    def set_focus(self, reset=False):
+        """Make the field active for user input."""
+        InputField._last_focused() # Focus set programatically - forget the last focused field.
+        self._want_focus = True
+
+    def enabled(self):
         """Return true if the field is editable by the user.
 
         The field may be disabled for several reasons:
@@ -555,54 +568,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._enabled
     
     def reset(self):
-        """Nastav hodnotu políèka na pùvodní hodnotu.
-
-        Pùvodní hodnotou je my¹lena hodnota po posledním volání metody
-        'init()'. Pokud motoda 'init()' nebyla doposud volána, je chování
-        metody nespecifikováno.
-        
-        """
+        """Reset the field to its original value."""
         self._set_value(self._row.original_row()[self.id()].export())
 
-    def _alive(self):
-        try:
-            self._ctrl.GetId()
-            return True
-        except wx.PyDeadObjectError:
-            return False   
-        
-    # Class methods
-
-    def _defocus(cls, field):
-        if cls._focused_field is field:
-            cls._last_focused_field = cls._focused_field
-            cls._focused_field = None
-
-    def _focus(cls, field):
-        #import weakref
-        current = cls.focused()
-        cls._focused_field = field #weakref.ref(field)
-        if current is not None:
-            cls._last_focused_field = current
-    
-    def _last_focused(cls):
-        field = cls._last_focused_field
-        cls._last_focused_field = None
-        if field is not None and field._alive():
-            return field
-        return None
-
-    def focused(cls):
-        field = cls._focused_field
-        if field is not None and field._alive():
-            return field
-        return None
-         
-    _focus   = classmethod(_focus)
-    _defocus = classmethod(_defocus)
-    _last_focused = classmethod(_last_focused)
-    focused = classmethod(focused)
-    
         
 class Unlabeled:
     """Mix-in tøída pro políèka .
@@ -661,9 +629,9 @@ class TextField(InputField):
     def _on_change(self, event=None):
         post_process = self._post_process_func()
         if post_process:
-            val = post_process(self.get_value())
-            if val != self.get_value():
-                self._set_value(val)
+            value = post_process(self._get_value())
+            if value != self._get_value():
+                self._set_value(value)
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):
@@ -716,26 +684,28 @@ class TextField(InputField):
         assert filter_spec in mapping.keys()
         return lambda char, list=mapping[filter_spec]: char in list
 
-    def get_value(self):
+    def _get_value(self):
         return self._ctrl.GetValue()
 
     def _enable(self):
         control = self._ctrl
         control.SetEditable(True)
-        control.SetOwnBackgroundColour(None)
         control.SetValidator(_TextValidator(control, filter=self._filter()))
+        self._update_background_color()
 
     def _disable(self):
         self._ctrl.SetEditable(False)
         self._ctrl.SetValidator(wx.DefaultValidator)
-        # Pokud to udìlám pøímo, u nìkterých políèek se zmìna neprojeví!
-        self._call_on_idle = self._set_disabled_color
+        # The change won't take effect for certain fields if we do it directly!
+        self._call_on_idle = self._update_background_color
 
     def _set_value(self, value):
-        assert isinstance(value, types.StringTypes), \
-               ('String or Unicode expected', value)
+        assert isinstance(value, (str, unicode)), value
         self._ctrl.SetValue(value)
-        return True
+        print "===", self._id, value
+        if self.id() == 'note' and value == '':
+            #xxx()
+            print stack_info()
 
     def _menu(self):
         return super(TextField, self)._menu() + \
@@ -774,7 +744,7 @@ class TextField(InputField):
         self._ctrl.Paste()
         
     def _can_select_all(self):
-        return bool(self.get_value())
+        return bool(self._ctrl.GetValue())
 
     def _cmd_select_all(self):
         self._ctrl.SetSelection(-1, -1)
@@ -793,7 +763,7 @@ class NumericField(TextField):
 
 
 class CheckBoxField(Unlabeled, InputField):
-    """Vstupní pole pro typ Boolean realizované pomocí 'wx.CheckBox'."""
+    """Boolean control implemented using 'wx.CheckBox'."""
 
     def _create_ctrl(self):
         """Vra» instanci 'wx.CheckBox'."""
@@ -805,95 +775,64 @@ class CheckBoxField(Unlabeled, InputField):
         wx_callback(wx.EVT_CHECKBOX, control, control.GetId(), self._on_change)
         return control
                     
-    def get_value(self):
-        """Vra» hodnotu políèka jako string.
-
-        Je vrácen string 'T', je-li políèko zatr¾eno, string 'F' jinak.
-
-        """
+    def _get_value(self):
         return self._ctrl.GetValue() and 'T' or 'F'
 
     def _set_value(self, value):
-        """Nastav hodnotu políèka na 'value'.
-
-        Argumenty:
-
-            value -- hodnota políèka, string 'T' (pravda) nebo 'F' (nepravda)
-              nebo prázdný øetìzec (nepravda)
-
-        Vrací: Pravdu, jestli¾e hodnota byla úspì¹nì nastavena, nepravdu
-        v opaèném pøípadì.
-
-        """
-        assert value in ('T','F',''), ('Invalid argument', value)
+        assert value in ('T','F'), ('Invalid value', value)
         wxvalue = value == 'T' and True or False
         self._ctrl.SetValue(wxvalue)
-        # _on_change musíme volat ruènì, proto¾e SetValue() nevyvolá událost.
-        self._on_change()
-        return True
+        self._on_change() # call manually, since SetValue() doesn't emit an event.
 
 
 class EnumerationField(InputField):
-    """Abstrakce vstupního pole pro výètový typ.
+    """Common base class for fields with fixed enumerations.
     
-    Tento typ vstupního pole je reprezentován pomocí výbìru z pevnì dané
-    mno¾iny hodnot.  Mno¾inu hodnot urèuje enumerátor datového typu (viz metoda
-    'pytis.data.FixedEnumerator.values()').
+    All the derived input fields are represented with a control which contains some sort of fixed
+    enumeration of values, such as combo boxes, radio buttons etc.
 
-    Tato tøída není urèena k pøímému pou¾ití. Je to rodièivská tøída pro
-    vstupní pole nad výètovým typem dat.
-    
     """
     def _choices(self):
         return [x[1] for x in self._row.enumerate(self.id())]
 
-    def get_value(self):
+    def _get_value(self):
         i = self._ctrl.GetSelection()
         value = self._type.enumerator().values()[i]
         return self._type.export(value)
 
     def _set_value(self, value):
-        assert isinstance(value, types.StringTypes), ('Invalid value', value)
-        t = self._type
-        values = [t.export(v) for v in t.enumerator().values()]
+        assert isinstance(value, (str, unicode)), value
+        values = [self._type.export(v) for v in self._type.enumerator().values()]
         try:
-            i = values.index(value)
+            selection = values.index(value)
         except ValueError:
-            i = wx.NOT_FOUND
-        result = self._ctrl.SetSelection(i)
-        # _on_change must be called here, because SetSelection() doesn't emit an event.
-        self._on_change()
-        return result
+            selection = wx.NOT_FOUND
+        self._ctrl.SetSelection(selection)
+        self._on_change() # call manually, since SetSelection() doesn't emit an event.
 
 
 class ChoiceField(EnumerationField):
-    """Vstupní pole pro výètový typ reprezentované pomocí 'wx.Choice'."""
+    """Field with a fixed enumeration represented by 'wx.Choice'."""
 
     def _create_ctrl(self):
-        """Vra» instanci 'wx.Choice' podle specifikace."""
         control = wx.Choice(self._parent, choices=self._choices())
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
 
     
 class RadioBoxField(Unlabeled, EnumerationField):
-    """Vstupní pole pro výètový typ reprezentované pomocí 'wx.RadioBox'.
+    """Field with a fixed enumeration represented by 'wx.RadioBox'.
 
-    Interpretace specifikace:
+    Field specification interpretation details:
 
-      orientation -- tento specifikaèní atribut udává hlavní orientaci skládání
-        jednotlivých prvkù. Hodnotou je konstanta 'spec.Orientation'.
-      width -- v pøípadì horizontální orientace udává maximální poèet sloupcù
-        prvkù vedle sebe.
-      height -- v pøípadì vertikální orientace udává maximální poèet øad
-        prvkù nad sebou.
+      orientation -- the individual radio buttons will be aligned horizontaly or vertically.
+      width -- max number of columns (if the orientation is horizontal)
+      height -- max number of rows (if the orientation is vertical)
 
     """
-
     _DEFAULT_WIDTH = 1
 
     def _create_ctrl(self):
-        """Vra» instanci 'wx.RadioBox' podle specifikace."""
         if self._spec.orientation() == Orientation.VERTICAL:
             style = wx.RA_SPECIFY_COLS
             dimension = self.width()
@@ -911,10 +850,9 @@ class RadioBoxField(Unlabeled, EnumerationField):
 
 
 class ListBoxField(EnumerationField):
-    """Vstupní pole pro výètový typ reprezentované pomocí 'wx.ListBox'."""
+    """Field with a fixed enumeration represented by 'wx.ListBox'."""
 
     def _create_ctrl(self):
-        """Vra» instanci 'wx.ListBox' podle specifikace."""
         control = wx.ListBox(self._parent, choices=self._choices(),
                              style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
@@ -922,17 +860,15 @@ class ListBoxField(EnumerationField):
     
 
 class Invocable(object, CommandHandler):
-    """Mix-in tøída pro políèka s mo¾ností vyvolání výbìru.
+    """Mix-in class for fields capable to invoke a selection.
 
-    Abstraktní tøída pro políèka, která umo¾òují vyvolat pro výbìr hodnoty
-    nìjakou akci (vìt¹inou v podobì modálního popup okna).
+    The selection can be an enumeration (such as codebook selection) or just a dialog with some
+    specific representation of the selected value (such as color selection or date selection).  The
+    selection dialog is usually modal.
 
-    Vstupní políèko (vytvoøené metodou '_create_widget()' základní tøídy) bude
-    doplnìno o tlaèítko pro vyvolání výbìru.
-
-    Výbìr lze vyvolat také klávesou pøíkazu
-    'Invocable.COMMAND_INVOKE_SELECTION'.
-
+    The input control will be accompanied with an invocation button and will also handle the
+    INVOKE_SELECTION command.
+    
     """
     _INVOKE_TITLE = _("Vybrat hodnotu")
     _INVOKE_HELP = None
@@ -943,11 +879,6 @@ class Invocable(object, CommandHandler):
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def _create_widget(self):
-        """Zavolej '_create_widget()' odvozené tøídy a pøidej tlaèítko.
-
-        Více informací viz. dokumentace tøídy 'Invocable'.
-        
-        """
         widget = super(Invocable, self)._create_widget()
         button = self._create_button('...', icon=self._INVOKE_ICON)
         button.SetToolTipString(self._INVOKE_TITLE)
@@ -990,7 +921,7 @@ class Invocable(object, CommandHandler):
         self._on_invoke_selection(**kwargs)
         
     def _can_invoke_selection(self, **kwargs):
-        return self.is_enabled()
+        return self.enabled()
 
     
 class DateField(Invocable, TextField):
@@ -1007,14 +938,13 @@ class DateField(Invocable, TextField):
     _INVOKE_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
     
     def _on_invoke_selection(self, alternate=False):
-        value = self._value()
-        if value is not None:
-            d = value.value()
+        if self._valid:
+            d = self._row[self._id].value()
         else:
             d = None
         date = run_dialog(Calendar, d)
         if date != None:
-            self.set_value(self._type.export(date))
+            self._set_value(self._type.export(date))
 
 
 class ColorSelectionField(Invocable, TextField):
@@ -1025,9 +955,9 @@ class ColorSelectionField(Invocable, TextField):
     _INVOKE_HELP = _("Zobrazit dialog pro výbìr barev.")
     
     def _on_invoke_selection(self, alternate=False):
-        color = run_dialog(ColorSelector, self.get_value())
+        color = run_dialog(ColorSelector, self._get_value())
         if color != None:
-            self.set_value(color)
+            self._set_value(color)
 
     def _create_button(self, label, **kwargs):
         size = self._button_size()
@@ -1055,8 +985,8 @@ class GenericCodebookField(InputField):
 
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' arguemnt."""
-        value = self._value()
-        if value and value.value():
+        value = self._row[self.id()]
+        if self._valid and value.value():
             return {self._type.enumerator().value_column(): value}
         else:
             return None
@@ -1068,7 +998,7 @@ class GenericCodebookField(InputField):
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
                           condition=enumerator.validity_condition())
         if result: # may be None or False!
-            self.set_value(result.format(enumerator.value_column()))
+            self._set_value(result.format(enumerator.value_column()))
         self.set_focus()
 
     def _on_enumerator_change(self):
@@ -1162,14 +1092,15 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _on_change_hook(self):
         super(CodebookField, self)._on_change_hook()
         if self._display:
-            display = self._value() and self._row.display(self.id()) or ''
+            display = self._valid and self._row.display(self.id()) or ''
             self._display.SetValue(display)
         
     def _on_invoke_selection(self, alternate=False):
         value_column = self._type.enumerator().value_column()
-        if not self._is_valid() and self.get_value() and self.is_modified() \
+        value = self._get_value()
+        if not self._valid and value and self._modified() \
                and isinstance(self.type(), pytis.data.String):
-            begin_search = (value_column, self.get_value())
+            begin_search = (value_column, value)
         elif alternate:
             begin_search = value_column
         else:
@@ -1178,14 +1109,14 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _on_codebook_insert(self, event):
         value_column = self._type.enumerator().value_column()
-        if not self._is_valid() and self.is_modified():
-            prefill = {value_column: self.get_value()}
+        if not self._valid and self._modified():
+            prefill = {value_column: self._get_value()}
         else:
             prefill = {}
         spec = self.spec().codebook_insert_spec() or self._cb_name
         result = new_record(spec, prefill=prefill, transaction=self._row.transaction())
         if result and result.has_key(value_column):
-            self.set_value(result[value_column].export())
+            self._set_value(result[value_column].export())
         return True
     
     
@@ -1198,6 +1129,7 @@ class ListField(GenericCodebookField):
     """
     _DEFAULT_WIDTH = 30
     _DEFAULT_HEIGHT = 6
+    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
     def _create_ctrl(self):
         # Naètu specifikace.
@@ -1240,7 +1172,6 @@ class ListField(GenericCodebookField):
         i = event.GetIndex()
         if self._enabled and i != self._selected_item:
             self._set_selection(i)
-            self._on_change()
             
     def _on_enumerator_change(self):
         # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
@@ -1257,7 +1188,7 @@ class ListField(GenericCodebookField):
     #    return super(ListField, self)._on_kill_focus(event)
         
     def _load_list_data(self):
-        current = self.get_value()
+        current = self._get_value()
         list = self._list
         enumerator = self.type().enumerator()
         list.DeleteAllItems()
@@ -1275,8 +1206,8 @@ class ListField(GenericCodebookField):
         self._data_dirty = False
 
     def _disable(self):
-        self._set_disabled_color()
-        
+        self._update_background_color()
+    
     def _set_selection(self, i):
         list = self._list
         if self._selected_item is not None:
@@ -1292,7 +1223,7 @@ class ListField(GenericCodebookField):
             list.SetItemBackgroundColour(i, bgcolor)
             list.SetItemState(i, wx.LIST_STATE_FOCUSED, wx.LIST_STATE_FOCUSED)
             list.EnsureVisible(i)
-        
+        self._on_change()
 
     def _set_value(self, value):
         if self._data_dirty:
@@ -1311,13 +1242,12 @@ class ListField(GenericCodebookField):
             self._set_selection(None)
             return True
         
-    def get_value(self):
-        """Vra» aktuální vnitøní hodnotu políèka."""
+    def _get_value(self):
         i = self._selected_item
         if i is not None:
             return self._list_data[i].export()
         else:
-            return None
+            return ''
 
     def _menu(self):
         return ((self.COMMAND_SELECT,
@@ -1340,26 +1270,23 @@ class ListField(GenericCodebookField):
                  _("Otevøít náhled èíselníku v øádkovém formuláøi.")),
                 )
 
-    # Zpracování pøíkazù
+    # Command handling
     
-    def on_command(self, command, **kwargs):
-        if command == self.COMMAND_SELECT:
-            i = self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
-            self._set_selection(i)
-        elif command == self.COMMAND_SHOW_SELECTED:
-            self._set_selection(self._selected_item)
-        elif command == self.COMMAND_INVOKE_EDIT_FORM:
-            run_form(PopupEditForm, self._cb_name,
-                     select_row=self._select_row_arg())
-        else:            
-            return super(ListField, self).on_command(command, **kwargs)
-        return True
-
     def _can_select(self):
-        return self.is_enabled()
+        return self.enabled()
     
+    def _cmd_select(self):
+        i = self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
+        self._set_selection(i)
+        
+    def _cmd_show_selected(self):
+        self._set_selection(self._selected_item)
+
     def _can_invoke_edit_form(self, **kwargs):
         return self._selected_item is not None
+
+    def _cmd_invoke_edit_form(self):
+        run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg())
 
 
 class FileField(Invocable, InputField):
@@ -1386,13 +1313,9 @@ class FileField(Invocable, InputField):
         x = self._px_size(1, 1)[1]
         return (x+5, x+2)
     
-    def get_value(self):
+    def _get_value(self):
         return self._buffer and self._buffer.buffer()
 
-    def set_value(self, value):
-        # This is a workargound. None values are ignored in the parent method!
-        return self._set_value(value)
-        
     def _set_value(self, value):
         assert value is None or isinstance(value, buffer)
         self._buffer = value and self._type.Buffer(value) or None
@@ -1473,7 +1396,7 @@ class FileField(Invocable, InputField):
         return self._enabled and self._buffer is not None
         
     def _cmd_clear(self):
-        self.set_value(None)
+        self._set_value(None)
 
 
 class ImageField(FileField):
