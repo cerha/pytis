@@ -458,7 +458,7 @@ class PresentedRow(object):
         
     def keys(self):
         """Vra» seznam identifikátorù v¹ech políèek obsa¾enıch v tomto øádku."""
-        return tuple([c.id for c in self._columns])
+        return [c.id for c in self._columns]
         
     def new(self):
         """Return true if the row represents a new (inserted) record."""
