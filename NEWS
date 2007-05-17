@@ -15,6 +15,13 @@
 	Pøi pou¾ití duálního názvu specifikace v `--startup-forms' je
 	automaticky vytvoøen duální formuláø.
 
+	Vnitøní datový øádek `PresentedRow' je v¾dy sestaven podle v¹ech
+	sloupcù definovaných v konstruktoru, èím¾ je zamezeno pou¾ití
+	pochybného datového øádku pøedaného z vnìj¹ku.
+
+	* BUGFIX: Pøi inicializaci PresentedRow byla v tabulkových
+	náhledech eliminována nadbyteèná volání computerù.
+	
 	* BUGFIX: Display èíselníku je nyní správnì aktualizován i v
 	duálním náhledu.
 	
