@@ -129,7 +129,8 @@ class PresentedRow(object):
         self._invalid = {}
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
-        self._columns = columns = dict([(f.id(), self._Column(f, data)) for f in fields])
+        self._columns = columns = tuple([self._Column(f, data) for f in fields])
+        self._coldict = dict([(c.id, c) for c in columns])
         self._init_dependencies()
         if prefill:
             def value(v):
@@ -137,10 +138,10 @@ class PresentedRow(object):
                     return v.value()
                 else:
                     return v
-            prefill = dict([(k, pytis.data.Value(columns[k].type, value(v)))
+            prefill = dict([(k, pytis.data.Value(self._coldict[k].type, value(v)))
                             for k, v in prefill.items()])
-        self._virtual = dict([(key, self._default(key, prefill=prefill))
-                              for key, c in columns.items() if c.virtual])
+        self._virtual = dict([(c.id, self._default(c.id, prefill=prefill))
+                              for c in columns if c.virtual])
         self._set_row(row, reset=True, prefill=prefill)
 
     def _set_row(self, row, reset=False, prefill=None):
@@ -159,7 +160,7 @@ class PresentedRow(object):
         all = []
         for key in depends:
             all.append(key)
-            computer = self._columns[key].computer
+            computer = self._coldict[key].computer
             if computer:
                 all.extend(self._all_deps(computer.depends()))
         return all
@@ -178,7 +179,8 @@ class PresentedRow(object):
         self._dirty = {}
         self._editability_dirty = {}
         self._editable = {}
-        for key, c in self._columns.items():
+        for c in self._columns:
+            key = c.id
             if c.computer is not None:
                 self._dirty[key] = True
                 for dep in c.computer.depends():
@@ -213,19 +215,19 @@ class PresentedRow(object):
                 return prefill[key]
             else:
                 return row[key]
-        row_data = [(key, value(key)) for key, c in self._columns.items() if not c.virtual]
+        row_data = [(c.id, value(c.id)) for c in self._columns if not c.virtual]
         for key in self._dirty.keys():
             # Prefill and default take precedence before the computer
             self._dirty[key] = not (row is not None and row.has_key(key) or \
                                     prefill is not None and prefill.has_key(key) or \
-                                    self._new and self._columns[key].default is not None)
+                                    self._new and self._coldict[key].default is not None)
         return pytis.data.Row(row_data)
 
     def _default(self, key, prefill=None):
         if prefill and prefill.has_key(key):
             value = prefill[key]
-        elif self._columns.has_key(key):
-            col = self._columns[key]
+        elif self._coldict.has_key(key):
+            col = self._coldict[key]
             default = col.default
             if self._new and default is not None:
                 if callable(default):
@@ -249,7 +251,7 @@ class PresentedRow(object):
         else:
             value = self._virtual[key]
         if not lazy and self._dirty.has_key(key) and self._dirty[key]:
-            column = self._columns[key]
+            column = self._coldict[key]
             # Reset the dirty flag before calling the computer to allow the computer to retrieve
             # the original value without recursion.
             self._dirty[key] = False
@@ -266,7 +268,7 @@ class PresentedRow(object):
 
     def __setitem__(self, key, value):
         assert isinstance(value, pytis.data.Value)
-        column = self._columns[key]
+        column = self._coldict[key]
         assert value.type() == column.type, \
                "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
         if self._row.has_key(key):
@@ -283,7 +285,7 @@ class PresentedRow(object):
                 
     def __str__(self):
         if hasattr(self, '_row'):
-            items = [key + '=' + str(self[key].value()) for key in self._columns.keys()]
+            items = [c.id + '=' + str(self[c.id].value()) for c in self._columns]
             return '<PresentedRow: %s>' % string.join(items, ', ')
         else:
             return super(PresentedRow, self).__str__()
@@ -353,18 +355,16 @@ class PresentedRow(object):
 
     def _compute_editability(self, key):
         # Vypoèti editovatelnost políèka a vra» výsledek (jako boolean).
-        func = self._columns[key].editable.function()
+        func = self._coldict[key].editable.function()
         self._editable[key] = result = func(self, key)
         self._editability_dirty[key] = False
         return result
     
     def _notify_runtime_filter_change(self, key=None):
         if key is None:
-            columns = [c for c in self._columns.values()
-                       if c.codebook_runtime_filter is not None]
+            columns = [c for c in self._columns if c.codebook_runtime_filter is not None]
         elif self._codebook_runtime_filter_dependent.has_key(key):
-            columns = [self._columns[k]
-                       for k in self._codebook_runtime_filter_dependent[key]]
+            columns = [self._coldict[k] for k in self._codebook_runtime_filter_dependent[key]]
         else:
             return
         for c in columns:
@@ -388,8 +388,8 @@ class PresentedRow(object):
 
     def row(self):
         """Return the current *data* row as a 'pytis.data.Row' instance."""
-        row_data = [(key, pytis.data.Value(c.data_column.type(), self[key].value()))
-                    for key, c in self._columns.items() if not c.virtual]
+        row_data = [(c.id, pytis.data.Value(c.data_column.type(), self[c.id].value()))
+                    for c in self._columns if not c.virtual]
         return pytis.data.Row(row_data)
 
     def data(self):
@@ -426,7 +426,7 @@ class PresentedRow(object):
             svalue = ''
         else:
             svalue = value.export(**kwargs)
-        column = self._columns[key]
+        column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
             svalue = string.join(svalue.splitlines(), column.line_separator)
         self._cache[key] = svalue
@@ -454,11 +454,11 @@ class PresentedRow(object):
         
     def has_key(self, key):
         """Return true if a field of given key is contained within the row."""
-        return self._columns.has_key(key)
+        return self._coldict.has_key(key)
         
     def keys(self):
         """Vra» seznam identifikátorù v¹ech políèek obsa¾ených v tomto øádku."""
-        return self._columns.keys()
+        return tuple([c.id for c in self._columns])
         
     def new(self):
         """Return true if the row represents a new (inserted) record."""
@@ -514,7 +514,7 @@ class PresentedRow(object):
             else:
                 return self._editable[key]
         else:
-            editable = self._columns[key].editable
+            editable = self._coldict[key].editable
             return editable == Editable.ALWAYS or editable == Editable.ONCE and self._new
         
     def validate(self, key, string, **kwargs):
@@ -532,7 +532,7 @@ class PresentedRow(object):
         Returns: 'ValidationError' instance if an error occurs or None if the string is valid.
         
         """
-        column = self._columns[key]
+        column = self._coldict[key]
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error:
             if self._invalid.has_key(key):
@@ -629,12 +629,12 @@ class PresentedRow(object):
         øetìzec.
         
         """
-        column = self._columns[key]
+        column = self._coldict[key]
         display = self._display_func(column)
         if not display:
             computer = column.computer
             if computer and isinstance(computer, CbComputer):
-                column = self._columns[computer.field()]
+                column = self._coldict[computer.field()]
                 display = self._display_func(column)
         if display:
             return display(self[column.id].value())
@@ -652,7 +652,7 @@ class PresentedRow(object):
         za chybu.
        
         """
-        column = self._columns[key]
+        column = self._coldict[key]
         display = self._display_func(column)
         if display is None:
             display = lambda v: pytis.data.Value(column.type, v).export()
