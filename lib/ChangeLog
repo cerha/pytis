@@ -15,8 +15,9 @@
 	singleline argument for the created `PresentedRow' instance.
 
 	* pytis/form/list.py: Use the new command handling mechanism.
-	Pass the create the PresentedRow instance as singleline and pass
-	it to `ListTable'.
+	Create the PresentedRow instance as singleline and pass it to
+	`ListTable'.  Avoid unwanted computer invocations on PresentedRow
+	initialization.
 
 	* pytis/form/application.py: Detect dual forms in startup_forms
 	automatically.

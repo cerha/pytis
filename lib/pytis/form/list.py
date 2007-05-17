@@ -93,7 +93,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=self._position)
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
 
-    def _init_attributes(self, columns=None, grouping=None, **kwargs):
+    def _init_attributes(self, columns=None, grouping=None, select_row=0, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
 
         Argumenty:
@@ -107,7 +107,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
-        super(ListForm, self)._init_attributes(_singleline=True, **kwargs)
+        # The trick with select_row=0 results in a data row passed to the PresentedRow constructor
+        # and thus avoids unwanted computer invocations on row initialization.
+        super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
         assert columns is None or is_sequence(columns)
         # Inicializace atributù závislých na u¾ivatelském nastavení.
         self._init_columns(columns)
