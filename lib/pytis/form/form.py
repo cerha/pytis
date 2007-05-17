@@ -2007,8 +2007,8 @@ class ShowForm(EditForm):
 
     DESCR = _("náhledový formuláø")
 
-    def _init_attributes(self, mode=EditForm.MODE_VIEW, **kwargs):
-        super_(ShowForm)._init_attributes(self, mode=mode, **kwargs)
+    def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0,**kwargs):
+        super_(ShowForm)._init_attributes(self, mode=mode, select_row=select_row, **kwargs)
         
     def changed(self):
         # Since the row is not reset when the current record changes, it would report a change...
@@ -2024,7 +2024,7 @@ class BrowsableShowForm(ShowForm):
     jeden záznam zobrazený v Layoutu editaèního formuláøe.
     
     """
-        
+
     def _cmd_next_record(self, back=False):
         current_row = self.current_row()
         if current_row:

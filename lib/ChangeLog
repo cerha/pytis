@@ -13,6 +13,7 @@
 	* pytis/form/form.py: Use the new command handling mechanism.
 	Always report the ShowForm unchanged.  Allow overriding the
 	singleline argument for the created `PresentedRow' instance.
+	(ShowFoem): Avoid unwanted computer invocations on initialization.
 
 	* pytis/form/list.py: Use the new command handling mechanism.
 	Create the PresentedRow instance as singleline and pass it to
