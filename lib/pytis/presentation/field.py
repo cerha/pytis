@@ -62,14 +62,16 @@ class PresentedRow(object):
             self.display = f.display()
             self.codebook = f.codebook(data)
             self.codebook_runtime_filter = f.codebook_runtime_filter()
+            self.data_column = data.find_column(f.id())
+            self.virtual = self.data_column is None
             
-    def __init__(self, fieldspec, data, row, prefill=None, singleline=False, new=False,
+    def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
         """Inicializuj prezentaci øádku.
         
         Argumenty:
 
-          fieldspec -- sekvence specifikací políèek, instancí tøídy 'FieldSpec'
+          fields -- sekvence specifikací políèek, instancí tøídy 'FieldSpec'
             
           data -- odpovídající datový objekt, instance tøídy 'pytis.data.Data'
           
@@ -109,7 +111,7 @@ class PresentedRow(object):
         later changes to it have no effect on the newly created instance.
 
         """
-        assert isinstance(fieldspec, (tuple, list))
+        assert isinstance(fields, (tuple, list))
         # TODO: pytis.remote vy¾aduje inicializaci Pyro, co¾ není v¾dy to pravé oøechové.  `data'
         # by stejnì mìlo být jednotného typu, je tøeba to nìjak promyslet.
         #assert isinstance(data, pytis.data.Data) or isinstance(data, pytis.remote.RemoteData)
@@ -118,7 +120,7 @@ class PresentedRow(object):
         assert isinstance(singleline, bool)
         assert isinstance(new, bool)
         assert resolver is None or isinstance(resolver, Resolver)
-        self._fieldspec = fieldspec
+        self._fields = fields
         self._data = data
         self._singleline = singleline
         self._callbacks = {}
@@ -127,7 +129,7 @@ class PresentedRow(object):
         self._invalid = {}
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
-        self._columns = columns = dict([(f.id(), self._Column(f, data)) for f in self._fieldspec])
+        self._columns = columns = dict([(f.id(), self._Column(f, data)) for f in fields])
         self._init_dependencies()
         if prefill:
             def value(v):
@@ -137,20 +139,19 @@ class PresentedRow(object):
                     return v
             prefill = dict([(k, pytis.data.Value(columns[k].type, value(v)))
                             for k, v in prefill.items()])
-        self._virtual = dict([(k, self._default(k, prefill=prefill))
-                              for k in columns.keys()
-                              if data.find_column(k) is None])
-        self._set_row(row, prefill=prefill)
+        self._virtual = dict([(key, self._default(k, prefill=prefill))
+                              for key, c in columns.items() if c.virtual])
+        self._set_row(row, reset=True, prefill=prefill)
 
-    def _set_row(self, row, reset=True, prefill=None):
+    def _set_row(self, row, reset=False, prefill=None):
         self._row = self._init_row(row, prefill=prefill)
         if reset:
             self._original_row_empty = row is None
-            # We need to compute all dirty fields in the saved original row, but since the
-            # computers may use the original row as well, we must create one before running them.
-            self._original_row = copy.copy(self._row)
-            [self[k] for k in self._dirty.keys() if self._row.has_key(k)]
-            self._original_row = copy.copy(self._row)
+            if not hasattr(self, '_original_row'):
+                # Calling row() may invoke dirty column computations.  The computers may use the
+                # original row as well, so we must create one before.
+                self._original_row = copy.copy(self._row)
+            self._original_row = self.row()
         self._resolve_dependencies()
         self._run_callback(self.CALL_CHANGE, None)
 
@@ -205,26 +206,20 @@ class PresentedRow(object):
                 
     def _init_row(self, row, prefill=None):
         self._cache = {}
-        row_ = row
-        if row is None:
-            row_data = [(c.id(), self._default(c.id(), prefill=prefill))
-                        for c in self._data.columns()]
-            row = pytis.data.Row(row_data)
-        else:
-            if isinstance(row, pytis.data.Row):
-                row = copy.copy(row)
-            elif isinstance(row, PresentedRow):
-                row = copy.copy(row._row)
+        def value(key):
+            if row is None or not row.has_key(key):
+                return self._default(key, prefill=prefill)
+            elif prefill and prefill.has_key(key):
+                return prefill[key]
             else:
-                raise Exception('Invalid argument row:', row)
-            if prefill:
-                row.update(prefill)
+                return row[key]
+        row_data = [(key, value(key)) for key, c in self._columns.items() if not c.virtual]
         for key in self._dirty.keys():
             # Prefill and default take precedence before the computer
-            self._dirty[key] = not (row_ is not None and row_.has_key(key) or \
+            self._dirty[key] = not (row is not None and row.has_key(key) or \
                                     prefill is not None and prefill.has_key(key) or \
                                     self._new and self._columns[key].default is not None)
-        return row
+        return pytis.data.Row(row_data)
 
     def _default(self, key, prefill=None):
         if prefill and prefill.has_key(key):
@@ -288,9 +283,7 @@ class PresentedRow(object):
                 
     def __str__(self):
         if hasattr(self, '_row'):
-            items = []
-            for spec in self._fieldspec:
-                items.append(spec.id() + '=' + str(self[spec.id()].value()))
+            items = [key + '=' + str(self[key].value()) for key in self._columns.keys()]
             return '<PresentedRow: %s>' % string.join(items, ', ')
         else:
             return super(PresentedRow, self).__str__()
@@ -394,21 +387,9 @@ class PresentedRow(object):
             return default
 
     def row(self):
-        """Vra» aktuální datový øádek, jako instanci 'pytis.data.Row'.
-
-        Typy sloupcù takto vráceného øádku jsou shodné s typy z datového
-        objektu, pro sloupce v datovém objektu pøítomné.
-
-        """
-        data = self._data
-        row_data = []
-        for key, value in self._row.items():
-            c = data.find_column(key)
-            if c is not None:
-                if self._dirty.has_key(key) and self._dirty[key]:
-                    value = self[key]
-                value = pytis.data.Value(c.type(), value.value())
-            row_data.append((key, value))
+        """Return the current *data* row as a 'pytis.data.Row' instance."""
+        row_data = [(key, pytis.data.Value(c.data_column.type(), self[key].value()))
+                    for key, c in self._columns.items() if not c.virtual]
         return pytis.data.Row(row_data)
 
     def data(self):
@@ -469,7 +450,7 @@ class PresentedRow(object):
 
     def fields(self):
         """Vra» seznam v¹ech políèek."""
-        return self._fieldspec
+        return self._fields
         
     def has_key(self, key):
         """Return true if a field of given key is contained within the row."""

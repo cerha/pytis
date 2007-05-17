@@ -22,7 +22,11 @@
 	automatically.
 
 	* pytis/presentation/field.py: Save the original_row before
-	executing the initial computers.  Allow passing validation arguments.
+	executing the initial computers.  Allow passing validation
+	arguments.  Always recreate the stored data row to make sure it
+	has all the needed columns.  Minor improvements.
+
+	
 
 	* pytis/presentation/_test.py: Test it.
 
