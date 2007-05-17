@@ -1233,7 +1233,7 @@ class RecordForm(LookupForm):
 
     # Zpracování pøíkazù.
     
-    def _on_new_record(self, copy=False):
+    def _cmd_new_record(self, copy=False):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
         import copy as copy_
@@ -1250,7 +1250,7 @@ class RecordForm(LookupForm):
         return self._current_key() is not None \
                and self.check_permission(pytis.data.Permission.UPDATE)
 
-    def _on_edit_record(self):
+    def _cmd_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
             return
         row = self.current_row()
@@ -1278,7 +1278,8 @@ class RecordForm(LookupForm):
     def _can_delete_record(self):
         return self.check_permission(pytis.data.Permission.DELETE)
 
-    def _on_delete_record(self):
+    def _cmd_delete_record(self):
+        # The return value is used in derived classes!
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
             return False
         # O¹etøení u¾ivatelské funkce pro mazání
@@ -1306,7 +1307,7 @@ class RecordForm(LookupForm):
         else:
             return False
 
-    def _on_import_interactive(self):
+    def _cmd_import_interactive(self):
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
             msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
             message(msg, beep_=True)
@@ -1446,20 +1447,6 @@ class RecordForm(LookupForm):
 
         """
         self._prefill = data
-
-    def on_command(self, command, **kwargs):
-        if command == RecordForm.COMMAND_DELETE_RECORD:
-            self._on_delete_record(**kwargs)
-        elif command == RecordForm.COMMAND_NEW_RECORD:
-            self._on_new_record(**kwargs)
-        elif command == RecordForm.COMMAND_IMPORT_INTERACTIVE:
-            self._on_import_interactive()
-        elif command == RecordForm.COMMAND_EDIT_RECORD:
-            self._on_edit_record(**kwargs)
-        else:
-            return super(RecordForm, self).on_command(command, **kwargs)
-        return True
-
     
 
 ### Editaèní formuláø

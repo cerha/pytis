@@ -1072,12 +1072,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return None
     
-    def _on_delete_record(self):
+    def _cmd_delete_record(self):
         if not self.editable:
             message('Needitovatelná tabulka!', beep_=True)
-            return False
+            return
         def blocked_code():
-            deleted = super(ListForm, self)._on_delete_record()
+            deleted = super(ListForm, self)._cmd_delete_record()
             self._table.edit_row(None)
             return deleted
         if block_refresh(blocked_code):
