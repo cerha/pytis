@@ -139,7 +139,7 @@ class PresentedRow(object):
                     return v
             prefill = dict([(k, pytis.data.Value(columns[k].type, value(v)))
                             for k, v in prefill.items()])
-        self._virtual = dict([(key, self._default(k, prefill=prefill))
+        self._virtual = dict([(key, self._default(key, prefill=prefill))
                               for key, c in columns.items() if c.virtual])
         self._set_row(row, reset=True, prefill=prefill)
 
