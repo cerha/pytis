@@ -536,7 +536,7 @@ class PresentedRow(object):
             editable = self._columns[key].editable
             return editable == Editable.ALWAYS or editable == Editable.ONCE and self._new
         
-    def validate(self, key, string):
+    def validate(self, key, string, **kwargs):
         """Validate user input and propagate the value to the row if the string is valid.
 
         Arguments:
@@ -552,7 +552,7 @@ class PresentedRow(object):
         
         """
         column = self._columns[key]
-        value, error = column.type.validate(string, transaction=self._transaction)
+        value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error:
             if self._invalid.has_key(key):
                 del self._invalid[key]

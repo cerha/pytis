@@ -1174,7 +1174,7 @@ class Binary(Limited):
             self._buffer = data
             
                 
-        def load(self, path):
+        def load(self, path, filename=None):
             """Try to load the buffer from a file replacing the current data.
 
             Arguemnts:
@@ -1195,6 +1195,9 @@ class Binary(Limited):
                 self._load(f)
             finally:
                 f.close()
+            if filename is not None:
+                assert isinstance(filename, (str, unicode))
+                self._filename = filename
             
                 
     def __init__(self, enumerator=None, **kwargs):

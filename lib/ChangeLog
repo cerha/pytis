@@ -1,7 +1,11 @@
 2007-05-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py (Binary.Buffer.load): Allow passing the
+	original filename.
+
 	* pytis/form/inputfield.py: Removed forgotten print.  Call
-	_on_change also for text fields manually.
+	_on_change also for text fields manually.  Pass the original
+	filename of file data.
 
 	* pytis/form/form.py: Use the new command handling mechanism.
 	Always report the ShowForm unchanged.
@@ -11,7 +15,7 @@
 	* pytis/form/application.py: Detect dual forms in startup_forms automatically.
 
 	* pytis/presentation/field.py: Save the original_row before
-	executing the initial computers.
+	executing the initial computers.  Allow passing validation arguments.
 
 	* pytis/presentation/_test.py: Test it.
 

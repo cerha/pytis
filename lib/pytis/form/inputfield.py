@@ -332,10 +332,13 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         menu.Destroy()
         #event.Skip()
 
+    def _validate(self):
+        return self._row.validate(self.id(), self._get_value())
+        
     def _on_idle(self, event):
         if self._changed:
             self._changed = False
-            valid = self._row.validate(self.id(), self._get_value()) is None
+            valid = self._validate() is None
             if valid != self._valid:
                 self._valid = valid
                 self._on_validity_change()
@@ -536,7 +539,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         Returns: True if the field value is valid and False otherwise.
 
         """
-        error = self._row.validate(self.id(), self._get_value())
+        error = self._validate()
         if error:
             if interactive:
                 log(EVENT, 'Invalid field:', self.id())
@@ -1307,6 +1310,10 @@ class FileField(Invocable, InputField):
         x = self._px_size(1, 1)[1]
         return (x+5, x+2)
     
+    def _validate(self):
+        filename = self._buffer and self._buffer.filename()
+        return self._row.validate(self.id(), self._get_value(), filename=filename)
+        
     def _get_value(self):
         return self._buffer and self._buffer.buffer()
 
@@ -1315,7 +1322,6 @@ class FileField(Invocable, InputField):
         self._buffer = value and self._type.Buffer(value) or None
         self._on_set_value()
         self._on_change()
-        return True
 
     def _on_set_value(self):
         if self._buffer is None:
@@ -1353,12 +1359,13 @@ class FileField(Invocable, InputField):
                             defaultDir=dir)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
+            filename = os.path.split(path)[1]
             FileField._last_load_dir = os.path.dirname(path)
             try:
                 if self._buffer:
-                    self._buffer.load(path)
+                    self._buffer.load(path, filename=filename)
                 else:
-                    self._buffer = self._type.Buffer(path)
+                    self._buffer = self._type.Buffer(path, filename=filename)
             except pytis.data.ValidationError, e:
                 message(e.message(), beep_=True)
             except IOError, e:
@@ -1369,7 +1376,7 @@ class FileField(Invocable, InputField):
                 message(_("Soubor naèten."))
         
     def _can_save(self):
-        return self._buffer is not None 
+        return self._buffer is not None
         
     def _cmd_save(self):
         msg = _("Ulo¾it hodnotu políèka '%s'") % self.spec().label()
@@ -1397,6 +1404,7 @@ class ImageField(FileField):
     """Input field for bitmap images showing a thumbnail within the control."""
 
     _DEFAULT_WIDTH = _DEFAULT_HEIGHT = 80
+    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
     def _create_ctrl(self):
         return wx_button(self._parent, bitmap=self._bitmap(),
