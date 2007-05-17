@@ -1,5 +1,19 @@
 CHYBY:
 
+ * Pøeskakování aktivního øádku.
+
+   Pokud se snazime provest nejakou operaci ... (pridat jednani, doplnit trvalou sluzbu ke
+   smlouve,...) tak po dokonceni operace at uz ulozenim nebo prerusenim NEKDY preskoci kurzor v
+   horni casti dualformu na jinou spolecnost/smlouvu ... coz je teda mimoradne neprijemne, protoze
+   uzivatel si mysli, ze se stale diva na puvodni spolecnost. Snazil jsem se najit v tom system,
+   ale nevidim ho. Ma podle me vliv, jestli se k te spolecnosti, kterou chci menit dostavam pres
+   Ctrl+F3 nebo nikoliv. Zkusim-li se dostat v nahledu Spolecnosti+Smlouvy na Selvagginu pres
+   Ctrl+F3 ... napisu "Sek" potvrdim entrem misto doskoku a dojedu si kurzorem na Selvagginu (+3
+   radky) a pak zkusim pridat Selvaggine trvalou sluzbu najem ... resp. hned svoji operaci zrusim,
+   tak po zruseni skoncim zpravidla o 3 radky pod Selvagginou.
+
+ * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
+
  * Zpráva "Vlo¾ený záznam se neobjevil v aktualním náhledu"
 
    Tato zpráva se zobrazila po vlo¾ení do spodní èásti dualformu, kde se v¹ak
@@ -73,7 +87,6 @@ NOVÉ VLASTNOSTI:
 
  * Pou¾ití externího PS prohlí¾eèe.
 
-
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
 
    Práce s výbìrem je nyní problematická, proto¾e výbìr je pou¾íván také k
@@ -143,6 +156,12 @@ NOVÉ VLASTNOSTI:
 
 INTERNÍ ZÁLE®ITOSTI:
 
+ * Neprovádìt reinicializaci v¹ech sloupcù pøi vstupu do inline editace buòky.
+
+   Je tøeba aby editory v¾dy byly vytvoøeny pro aktuální editovaný øádek.  Provádìt kvùli tomu
+   reinicializaci v¹ech sloupcù je zbyteèné, ale prozatím to tak alespoò funguje.  Do budoucna by
+   bylo vhodné editory inicializovat pøi vstupu do inline editace a po jejím ukonèení je zru¹it.
+
  * Nepou¾ívat mx.DateTime, ale Pythonový modul datetime.
 
  * Mezivrstva pro práci s aktuálním selectem, kurzory apod.
@@ -162,22 +181,7 @@ INTERNÍ ZÁLE®ITOSTI:
    Je tøeba myslet také na obnovení stavu pøi pøepínání formuláøù
    (`Form.restore()').
 
- * Instance Value na rozhraní InputField.
 
-   InputField.get_value(), InputField.set_value() nech» pracují s instancemi
-   Value, ne se stringy.  Také by bylo vhodné, kdyby políèko mìlo pøístup pøímo
-   k PresentedRow.
-   
- * Vyjasnìní práce s arguemntem prefill.
-
-   Argument prefill je nyní pou¾íván k nìkolika pomìrnì rozlièným úèelùm
-   (napø. pøednastavení hodnoty vazebního sloupce, pøedvyplnìní dat
-   kopírovaného øádku, apod.).  Bylo by vhodné se zamyslet nad tím, zda
-   jednotlivé zpùsoby pou¾ití vzájemnì nekolidují.  Problém by mohl být zejména
-   v tom, ¾e prefill není pou¾it jen k pøednastavení výchozích hodnot nového
-   øádku, ale je formuláøem také zapamatován a pøedáván dále.
-  
-   
 ÈI©TÌNÍ:
 
  * Odstraní argumentu `key' funkcí `on_new_record()'.
@@ -194,12 +198,6 @@ INTERNÍ ZÁLE®ITOSTI:
    nìjak rozli¹it -- buïto pomocí návratové hodnoty funkce enabled, nebo je¹tì
    dal¹í funkcí pro zji¹tìní pøístupových práv.
    
- * Zpracování pøíkazù.
-
-   Vyvolání handleru z on_command je nyní mo¾né nahradit metodu `_cmd_*', kde *
-   je název pøíkazu.  To u¾ skoro v¹ude je, ale na nìkolika místech je¹tì
-   `on_command' zbylo...
-
  * Validace hodnot konfiguraèních voleb.
 
    Pro ka¾dou konfiguraèní volbu je nyní znám její datový typ, tak¾e by nebyl

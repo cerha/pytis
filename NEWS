@@ -4,16 +4,51 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-05-16 Tomas Cerha  <cerha@brailcom.org>
+
+	Bylo významnì proèi¹tìno rozhraní vstupních políèek a
+	aktualizována dokumentace.  Nìkteré vlastnosti implementované
+	jednak v gridu a jednak v samotných vstupních políèkách byly
+	pøesunuty do PresentedRow.
+
+	Díky zmìnám ve vstupních políèkách se naskytla mo¾nost snadné
+	implementace jedné zajímavé u¾ivatelské vlastnosti.  V prùbìhu
+	editace políèka (a» u¾ inline, nebo ve formuláøi) je automaticky
+	zobrazen stav validace hodnoty.  Nevalidní hodnota je nyní
+	detekována ¾lutým podbarvením pozadí políèka.
+	
+	* BUGFIX: PresentedRow nyní dopoèítá správnì i hodnoty v¹ech dirty
+	políèek pøi ukládání pùvodního øádku, co¾ je dùle¾ité zejména pro
+	správné urèení zda byl øádek zmìnìn.
+	
+	* BUGFIX: Pøepracován zpùsob práce s transakcemi v PopupEditForm
+	zejména kvùlu vícenásobnému vkládání záznamù.
 	
 2007-05-15 Milan Zamazal  <pdm@brailcom.org>
 
 	* BUGFIX: Pøi rollbacku editace ve formuláøích proveï rollback
 	odpovídající transakce.
 
+2007-05-15 Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Opravena chyba pøi zneaktivnìní vstupního políèka pro
+	výbìr obrázku.
+	
+	* BUGFIX: Opraveno sestavování sort/search/filter dialogù.
+	
 007-05-14 Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Odstranìno nechtìné pøedávání transakce pøi volání
 	search v inkrementálním vyhledávání.
+	
+007-05-11 Tomas Cerha  <cerha@brailcom.org>
+
+	Provedeny zásadní zmìny umo¾òující vytvoøení instance PresentedRow
+	pøímo v konstruktoru formuláøe a její pøedávání vstupním políèkùm.
+	Ka¾dý formuláø by mìl po celou dobu svého ¾ivota pracovat s jednou
+	instancí PresentedRow.
+
+	BugReport dialog lze nyní roztahovat na libovolnou velikost.
 	
 2007-04-13 Milan Zamazal  <pdm@brailcom.org>
 
