@@ -234,7 +234,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         self.run_dialog(Error, msg +' '+ cls_name)
                         continue
                 else:
-                    form_cls = BrowseForm
+                    form_cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
                 run_form(form_cls, name.strip())
         conn = config.dbconnection
         if conn:

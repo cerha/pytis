@@ -1,5 +1,7 @@
 2007-05-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Detect dual forms in startup_forms automatically.
+
 	* pytis/presentation/field.py: Save the original_row before
 	executing the initial computers.
 
