@@ -107,7 +107,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
-        super(ListForm, self)._init_attributes(**kwargs)
+        super(ListForm, self)._init_attributes(_singleline=True, **kwargs)
         assert columns is None or is_sequence(columns)
         # Inicializace atributù závislých na u¾ivatelském nastavení.
         self._init_columns(columns)
@@ -187,11 +187,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Inicializuj datový select
         row_count = self._init_select()
         self._table = table = \
-          _grid.ListTable(self._parent, self._data, self._fields,
-                          self._columns, row_count, sorting=self._lf_sorting,
-                          grouping=self._grouping, prefill=self._prefill,
-                          row_style=self._view.row_style(),
-                          transaction=self._transaction)
+          _grid.ListTable(self._parent, self._row, self._columns, row_count,
+                          sorting=self._lf_sorting, grouping=self._grouping, prefill=self._prefill,
+                          row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
         g.SetColLabelSize(dlg2px(g, 0, 12).GetHeight())

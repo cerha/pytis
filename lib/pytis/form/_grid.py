@@ -145,22 +145,20 @@ class ListTable(wx.grid.PyGridTableBase):
                     
     _TYPE_MAPPING = None
         
-    def __init__(self, frame, data, fields, columns, row_count,
-                 sorting=(), grouping=(), inserted_row_number=None,
-                 inserted_row=None, prefill=None, row_style=None,
-                 transaction=None):
+    def __init__(self, frame, presented_row, columns, row_count, sorting=(), grouping=(),
+                 inserted_row_number=None, inserted_row=None, prefill=None, row_style=None):
         assert isinstance(grouping, types.TupleType)
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
-        self._data = data
-        self._fields = fields
+        self._presented_row = presented_row
+        self._data = presented_row.data()
+        self._fields = presented_row.fields()
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
         self._prefill = prefill
         self._current_row = None
         self._row_style = row_style
-        self._transaction = transaction
         # Zpracuj sloupce
         self._update_columns(columns)
         # Vytvoø cache
@@ -176,7 +174,6 @@ class ListTable(wx.grid.PyGridTableBase):
             self._edited_row = None
         else:
             self._edited_row = self._init_edited_row(inserted_row_number, inserted_row)
-        self._presented_row = PresentedRow(fields, data, None, singleline=True, prefill=prefill)
 
     def _init_edited_row(self, row, data_row, new=False):
         return self._EditedRow(row, data_row, self._fields, self._data, new=new,
@@ -235,7 +232,8 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _retrieve_row(self, row):
         def fetch(row, direction=pytis.data.FORWARD):
-            result = self._data.fetchone(direction=direction, transaction=self._transaction)
+            result = self._data.fetchone(direction=direction,
+                                         transaction=self._presented_row.transaction())
             assert result, ('Missing row', row)
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
@@ -356,8 +354,6 @@ class ListTable(wx.grid.PyGridTableBase):
             self._edited_row = None
         else:
             self._edited_row = self._init_edited_row(inserted_row_number, inserted_row, new=True)
-        self._presented_row = PresentedRow(self._fields, self._data, None, singleline=True,
-                                           prefill=prefill)
         
     def close(self):
         # Tato metoda je nutná kvùli jistému podivnému chování wxWindows,

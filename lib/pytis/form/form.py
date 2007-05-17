@@ -1043,7 +1043,8 @@ class RecordForm(LookupForm):
     
     """
 
-    def _init_attributes(self, prefill=None, select_row=None, _new=False, **kwargs):
+    def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
+                         **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
@@ -1061,7 +1062,8 @@ class RecordForm(LookupForm):
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
         self._row = PresentedRow(self._view.fields(), self._data, self._data_row(select_row),
-                                 prefill=prefill, new=_new, transaction=self._transaction)
+                                 prefill=prefill, new=_new, singleline=_singleline,
+                                 transaction=self._transaction)
         
     def _signal_update(self):
         pass

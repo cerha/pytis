@@ -1,18 +1,25 @@
 2007-05-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/_grid.py: Don't create just another `PresentedRow'
+	instance for the ListTable but share the form's instance.
+
 	* pytis/data/types_.py (Binary.Buffer.load): Allow passing the
 	original filename.
 
 	* pytis/form/inputfield.py: Removed forgotten print.  Call
-	_on_change also for text fields manually.  Pass the original
+	`_on_change' also for text fields manually.  Pass the original
 	filename of file data.
 
 	* pytis/form/form.py: Use the new command handling mechanism.
-	Always report the ShowForm unchanged.
+	Always report the ShowForm unchanged.  Allow overriding the
+	singleline argument for the created `PresentedRow' instance.
 
 	* pytis/form/list.py: Use the new command handling mechanism.
+	Pass the create the PresentedRow instance as singleline and pass
+	it to `ListTable'.
 
-	* pytis/form/application.py: Detect dual forms in startup_forms automatically.
+	* pytis/form/application.py: Detect dual forms in startup_forms
+	automatically.
 
 	* pytis/presentation/field.py: Save the original_row before
 	executing the initial computers.  Allow passing validation arguments.

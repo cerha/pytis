@@ -4,6 +4,25 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-05-17 Tomas Cerha  <cerha@brailcom.org>
+
+	Byl redukován poèet vytváøených instancí `PresentedRow' díky
+	sdílení øádku mezi `ListForm' a `ListTable'.
+
+	Souborová vstupní políèka nyní vytváøenému bufferu pøedávájí název
+	pùvodního souboru.
+
+	Pøi pou¾ití duálního názvu specifikace v `--startup-forms' je
+	automaticky vytvoøen duální formuláø.
+
+	* BUGFIX: Display èíselníku je nyní správnì aktualizován i v
+	duálním náhledu.
+	
+	* BUGFIX: Showform pøi opu¹tìní nehlásí zmìnìná data.
+	
+	* BUGFIX: Byl o¹etøen mo¾ný pøístup k `original_row()' pøi
+	poèáteèním výpoètu computerù.
+	
 2007-05-16 Tomas Cerha  <cerha@brailcom.org>
 
 	Bylo významnì proèi¹tìno rozhraní vstupních políèek a
