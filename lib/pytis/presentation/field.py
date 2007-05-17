@@ -152,6 +152,7 @@ class PresentedRow(object):
             [self[k] for k in self._dirty.keys() if self._row.has_key(k)]
             self._original_row = copy.copy(self._row)
         self._resolve_dependencies()
+        self._run_callback(self.CALL_CHANGE, None)
 
     def _all_deps(self, depends):
         all = []
@@ -254,9 +255,8 @@ class PresentedRow(object):
             value = self._virtual[key]
         if not lazy and self._dirty.has_key(key) and self._dirty[key]:
             column = self._columns[key]
-            # Nastavením dirty na False u¾ zde zamezíme rekurzi v pøípadì, ¾e
-            # se kód computeru ptá na vlastní hodnotu a umo¾níme mu tak zjistit
-            # pùvodní hodnotu (pøed pøepoèítáním).
+            # Reset the dirty flag before calling the computer to allow the computer to retrieve
+            # the original value without recursion.
             self._dirty[key] = False
             func = column.computer.function()
             new_value = pytis.data.Value(column.type, func(self))
@@ -273,16 +273,18 @@ class PresentedRow(object):
         assert isinstance(value, pytis.data.Value)
         column = self._columns[key]
         assert value.type() == column.type, \
-               "Invalid type for '%s': %s (expected %s)" % \
-               (key, value.type(), column.type)
-        self._cache = {}
-        if self._row.has_key(key) and self._row[key] != value:
-            self._row[key] = value
-        elif self._virtual.has_key(key) and self._virtual[key] != value:
-            self._virtual[key] = value
+               "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
+        if self._row.has_key(key):
+            row = self._row
+        elif self._virtual.has_key(key):
+            row = self._virtual
         else:
             return
-        self._resolve_dependencies(key)
+        if row[key] != value:
+            row[key] = value
+            self._cache = {}
+            self._resolve_dependencies(key)
+            self._run_callback(self.CALL_CHANGE, key)
                 
     def __str__(self):
         if hasattr(self, '_row'):
@@ -324,24 +326,20 @@ class PresentedRow(object):
     def _resolve_dependencies(self, key=None):
         # Recompute dependencies for all fields when the key is None or recompute
         # just fields depending on given field (after its change).
-        if key is None:
-            dirty = False
-        else:
-            dirty = self._mark_dependent_dirty(key)
+        if key is not None:
+            marked = self._mark_dependent_dirty(key)
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._notify_runtime_filter_change(key)
         self._recompute_editability(key)
         if self._callbacks:
-            self._run_callback(self.CALL_CHANGE, key)
-            if dirty:
-                # Zavolej 'chage_callback' pro v¹echna zbylá "dirty" políèka.
-                # Políèka, která byla oznaèena jako "dirty" ji¾ buïto byla
-                # pøepoèítána a callback byl zavolán bìhem pøepoèítávání
-                # editovatelnosti a runtime codebookù, nebo zùstala "dirty" a
-                # musíme tedy jejich callback zavolat teï.
-                dirty = [k for k,v in self._dirty.items() if v]
-                for k in dirty:
-                    self._run_callback(self.CALL_CHANGE, k)
+            if key is not None and marked:
+                # Call 'chage_callback' for all remaining dirty fields.  Some fields may already
+                # have been recomputed during the editability and runtime filter recomputations.
+                # The callbacks for those fields have already been generated, but here we neen to
+                # handle the rest.
+                for key, dirty in self._dirty.items():
+                    if dirty:
+                        self._run_callback(self.CALL_CHANGE, key)
     
     def _recompute_editability(self, key=None):
         if key is None:
