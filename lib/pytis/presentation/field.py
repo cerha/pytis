@@ -145,10 +145,12 @@ class PresentedRow(object):
     def _set_row(self, row, reset=True, prefill=None):
         self._row = self._init_row(row, prefill=prefill)
         if reset:
-            # Make sure all values are computed properly.
+            self._original_row_empty = row is None
+            # We need to compute all dirty fields in the saved original row, but since the
+            # computers may use the original row as well, we must create one before running them.
+            self._original_row = copy.copy(self._row)
             [self[k] for k in self._dirty.keys() if self._row.has_key(k)]
             self._original_row = copy.copy(self._row)
-            self._original_row_empty = row is None
         self._resolve_dependencies()
 
     def _all_deps(self, depends):

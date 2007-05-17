@@ -1,3 +1,10 @@
+2007-05-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py: Save the original_row before
+	executing the initial computers.
+
+	* pytis/presentation/_test.py: Test it.
+
 2007-05-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py: Compute dirty values when saving

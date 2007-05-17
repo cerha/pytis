@@ -38,6 +38,8 @@ class PresentedRow_(unittest.TestCase):
             pytis.data.ColumnSpec('d', pytis.data.Integer()))
         self._data = pytis.data.Data(self._columns, key)
         def twice(row):
+            # Just try if it is possible to access the original row.
+            row.original_row()['c'].value()
             c = row['c'].value()
             return c is not None and c * 2 or None
         def sum(row):
