@@ -253,11 +253,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         value = self._row.invalid_string(id)
         if value is None:
             value = row.format(id)
-        #self._disable_event_handlers()
         self._set_value(value)
-        self._on_change()
         self._call_on_idle = self._update_background_color
-        #self._enable_event_handlers()
         
     def _init_attributes(self):
         pass
@@ -702,10 +699,7 @@ class TextField(InputField):
     def _set_value(self, value):
         assert isinstance(value, (str, unicode)), value
         self._ctrl.SetValue(value)
-        print "===", self._id, value
-        if self.id() == 'note' and value == '':
-            #xxx()
-            print stack_info()
+        self._on_change() # call manually, since SetValue() doesn't emit an event.
 
     def _menu(self):
         return super(TextField, self)._menu() + \

@@ -1,5 +1,8 @@
 2007-05-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py: Removed forgotten print.  Call
+	_on_change also for text fields manually.
+
 	* pytis/form/form.py: Use the new command handling mechanism.
 	Always report the ShowForm unchanged.
 
