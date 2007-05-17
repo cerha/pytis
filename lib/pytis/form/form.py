@@ -2008,7 +2008,11 @@ class ShowForm(EditForm):
     def _init_attributes(self, mode=EditForm.MODE_VIEW, **kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, **kwargs)
         
+    def changed(self):
+        # Since the row is not reset when the current record changes, it would report a change...
+        return False
 
+        
 class BrowsableShowForm(ShowForm):
     """Listovací formuláø pro zobrazení náhledu.
 
