@@ -1,3 +1,9 @@
+2007-05-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands.make_lock_command.find_real_key):
+	Return None if the information can't be retrieved.
+
 2007-05-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py: Use the config option for invalid

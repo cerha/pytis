@@ -959,6 +959,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         relname, attname = qresult[0]
                         if relname not in lock_tables:
                             return None
+                    else:
+                        return None
                     return relname, attname
                 if lock_tables:
                     real_key = find_real_key()
