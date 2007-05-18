@@ -116,6 +116,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         být dodr¾ováno i v odvozených tøídách.
         
         """
+        start_time = time.time()
         self._parent = parent
         self._resolver = resolver
         self._name = name
@@ -125,7 +126,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
-        start_time = time.time()
         spec_args = spec_args or {}
         try:
             self._view = self._create_view_spec(**spec_args)
@@ -133,12 +133,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         except ResolverError:
             log(OPERATIONAL, 'Chyba z resolveru', format_traceback())
             throw('form-init-error')
-        log(EVENT, 'Specifikace naèteny za %.3fs' % (time.time() - start_time)) 
         self._init_attributes(**kwargs)
         self._result = None
         start_time = time.time()
         self._create_form()
-        log(EVENT, 'Formuláø sestaven za %.3fs' % (time.time() - start_time))
+        log(EVENT, 'Form created in %.3fs:' % (time.time() - start_time), self)
 
     def _init_attributes(self):
         """Process constructor keyword arguments and initialize the attributes.
@@ -156,7 +155,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._initial_form_state = copy.copy(self._form_state)
 
     def _create_view_spec(self, **kwargs):
+        t = time.time()
         spec = self._resolver.get(self._name, 'view_spec', **kwargs)
+        log(EVENT, 'Specification read in %.3fs:' % (time.time() - t), spec)
         assert isinstance(spec, ViewSpec)
         return spec        
 
@@ -174,10 +175,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             kwargs = dict(dbconnection_spec=config.dbconnection)
         else:
             kwargs = {}
+        t = time.time()
         op = lambda : data_spec.create(**kwargs)
         success, data_object = db_operation(op)
         if not success:
             throw('form-init-error')
+        log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
         return data_object
 
     def _create_form(self):
