@@ -131,6 +131,12 @@ class PresentedRow(object):
         self._resolver = resolver or pytis.util.resolver()
         self._columns = columns = tuple([self._Column(f, data) for f in fields])
         self._coldict = dict([(c.id, c) for c in columns])
+        key = data.key()[0].id()
+        if not self._coldict.has_key(key):
+            # TODO: This is a temporary hack for old applications which have data columns not
+            # present in field specifications.  This should not be supported in future and should
+            # be removed.
+            self._columns += (self._Column(FieldSpec(key), data),)
         self._init_dependencies()
         if prefill:
             def value(v):
