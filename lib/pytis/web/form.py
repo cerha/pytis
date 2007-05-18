@@ -395,12 +395,9 @@ class CheckRowsForm(BrowseForm):
 
         Arguments:
 
-          check_columns -- a sequence of pairs (ID, LABEL) determining the appended checkbox
-            columns.  The ID determines the checkbox name prefix.  LABEL determines the column
-            label.  The full name of each checkbox is a concatenation of the prefix (ID), the
-            underscore character and the exported value of the row key.  Thus for example if the
-            prefix is 'xx' and row keys are numbers, the checkbox names will be 'xx_1', 'xx_2',
-            'xx_3', etc.
+          check_columns -- a sequence of pairs (NAME, LABEL) determining the appended checkbox
+            columns.  The NAME determines the checkbox name prefix.  LABEL determines the column
+            label.  The checkbox value is automatically determined by the row key value.
 
         """
         super(CheckRowsForm, self).__init__(data, view, resolver, rows, **kwargs)
@@ -410,14 +407,14 @@ class CheckRowsForm(BrowseForm):
     def _export_headings(self, exporter):
         headings = super(CheckRowsForm, self)._export_headings(exporter)
         return headings + concat([concat('<th>', label, '</th>')
-                                  for id, label in self._check_columns])
+                                  for name, label in self._check_columns])
     
     def _export_row(self, exporter, row):
         cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
                  for c in self._columns]
         g = exporter.generator()
         key = self._data.key()[0].id()
-        checkbox_cells = [concat('<td>', g.checkbox(name=id+'_'+row.format(key)), '</td>')
-                          for id, label in self._check_columns]
+        checkbox_cells = [concat('<td>', g.checkbox(name=name, value=row.format(key)), '</td>')
+                          for name, label in self._check_columns]
         cells.append(concat(checkbox_cells))
         return concat('<tr>', cells, '</tr>')
