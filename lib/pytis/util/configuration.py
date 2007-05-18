@@ -738,11 +738,15 @@ class Configuration(object):
     class _Option_field_disabled_color(_ColorOption):
         _DESCR = _("Barva pozadí needitovatelného vstupního políèka.")
         _DEFAULT = '#d8d8d8'
-
+        
     class _Option_field_denied_color(_ColorOption):
         _DESCR = _("Pozadí políèka needitovatelného kvùli pøístupovým právùm.")
         _DEFAULT = '#e0e4f0'
 
+    class _Option_field_invalid_color(_ColorOption):
+        _DESCR = _("Barva pozadí vstupního políèka pokud aktuální hodnota není validní.")
+        _DEFAULT = '#ffffc0'
+        
     class _Option_filter_color(_ColorOption):
         _DESCR = _("Barva záhlaví tabulky pøi zapnutém filtrování.")
         _DEFAULT = '#82c882'

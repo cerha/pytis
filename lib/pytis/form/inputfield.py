@@ -452,7 +452,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif not self._enabled:
             color = config.field_disabled_color
         elif not self._valid:
-            color = '#ffffc0' # config.field_invalid_color
+            color = config.field_invalid_color
         else:
             color = self._DEFAULT_BACKGROUND_COLOR
         self._ctrl.SetOwnBackgroundColour(color)

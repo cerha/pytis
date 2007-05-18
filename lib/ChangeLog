@@ -1,5 +1,10 @@
 2007-05-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py: Use the config option for invalid
+	field color.
+
+	* pytis/util/configuration.py: New option `field_invalid_color'.
+
 	* pytis/presentation/field.py: Don't invoke callbacks when the
 	value is changed through validation.
 
@@ -7,7 +12,8 @@
 
 	* pytis/form/list.py: Fixed unwanted list position changes.
 
-	* pytis/form/configui.py: Grouping improved.
+	* pytis/form/configui.py: Grouping improved.  Added controls for
+	field colors.
 
 2007-05-17  Tomas Cerha  <cerha@brailcom.org>
 
