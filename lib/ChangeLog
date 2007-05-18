@@ -6,13 +6,16 @@
 
 2007-05-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py (CheckRowsForm): New class.
+
 	* pytis/form/inputfield.py: Use the config option for invalid
 	field color.
 
 	* pytis/util/configuration.py: New option `field_invalid_color'.
 
 	* pytis/presentation/field.py: Don't invoke callbacks when the
-	value is changed through validation.
+	value is changed through validation.  Add a key column if it
+	is not present in field specifications.
 
 	* pytis/form/form.py: Form creation logging improved.
 
