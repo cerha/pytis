@@ -33,11 +33,11 @@ from pytis.form import *
 _LAYOUT = (
     ('ui', LayoutSpec(_("Nastavení u¾ivatelského rozhraní"), VGroup(
     LVGroup(_("Barvy"),
-            HGroup(LHGroup(_("Aktivní øádek"),
+            HGroup(LVGroup(_("Aktivní øádek"),
                            'row_focus_fg_color','row_focus_bg_color'),
-                   LHGroup(_("Neaktivní øádek"),
+                   LVGroup(_("Neaktivní øádek"),
                            'row_nofocus_fg_color', 'row_nofocus_bg_color'),
-                   LHGroup(_("Editovaný øádek"),
+                   LVGroup(_("Editovaný øádek"),
                            'row_edit_fg_color','row_edit_bg_color'),
                    ),
             'cell_highlight_color',
