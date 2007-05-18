@@ -90,7 +90,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Závìreèné akce
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
-        self._select_cell(row=self._position)
+        self._select_cell(row=self._get_row_number(self._row.row()))
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
 
     def _init_attributes(self, columns=None, grouping=None, select_row=0, **kwargs):
@@ -127,8 +127,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._column_move_target = None
         self._mouse_dragged = False
         self._check_default_columns = not columns
-        # Parametry zobrazení.
-        self._initial_position = self._position = self._get_row_number(self._row.row()) or 0
 
     def _default_columns(self):
         return self._view.columns()
@@ -294,11 +292,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # shown or hidden properly, until a size event is received by the
             # grid.  Thus we generate one artificially...
             g.SetSize(g.GetSize())
-        # Tento _select_cell() zde nemù¾e být, proto¾e vyvolá ukonèení editace
-        # pøi vkládání øádku.  Pokud to je nìkdy potøeba, bude nutné volat
-        # _select_cell() zvlá¹» po _update_grid().  Zatím to ale spí¹ vypadá,
-        # ¾e je to tady zbyteènì (kostlivec).  TC 2005-12-28
-        #self._select_cell(row=self._position)
 
     def _init_col_attr(self):
         # (Re)inicializuj atributy sloupcù gridu.
@@ -383,6 +376,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g = self._grid
         return g.GetGridCursorRow(), g.GetGridCursorCol()
 
+    def _current_key(self):        
+        the_row = self.current_row()
+        if the_row is None:
+            return None
+        else:
+            return the_row.row().columns([c.id() for c in self._data.key()])
+    
     def current_row(self):
         row = self._current_cell()[0]
         if row < 0 or row >= self._grid.GetNumberRows():
@@ -411,7 +411,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if self._in_select_cell:
             return True
         self._in_select_cell = True
-        if __debug__: log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
+        if __debug__:
+            log(DEBUG, 'Pøechod na buòku gridu:', (row, col))
         try:
             g = self._grid
             current_row = g.GetGridCursorRow()
@@ -434,12 +435,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         g.MakeCellVisible(row, col)
                         self._selection_candidate = (row, col)
                         if invoke_callback:
-                            # Nevoláme callback ihned, staèí a¾ po
-                            # zastavení scrolování...
+                            # Delay callback invocation after the end of scrolling.
                             self._selection_callback_candidate = row
                             delay = self._SELECTION_CALLBACK_DELAY
                             self._selection_callback_tick = delay
-                    self._position = row
                     # TODO: tady to zpùsobuje ¹patné zobrazování pozice v
                     #       dualform. Nahrazeno voláním _show_position v
                     #       _post_selection_hook.
@@ -448,7 +447,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
-            if __debug__: log(DEBUG, 'Výbìr buòky proveden:', (row, col))
+            if __debug__:
+                log(DEBUG, 'Výbìr buòky proveden:', (row, col))
             return True
         finally:
             self._in_select_cell = False
@@ -1130,7 +1130,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=row_number)
         return True
 
-    def _refresh(self, reset=None, when=None):
+    def _refresh(self, when=None, reset=None):
         """Aktualizuj data seznamu z datového zdroje.
 
         Pøekresli celý seznam v okam¾iku daném argumentem 'when' se zachováním
@@ -1138,27 +1138,22 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
         Argumenty:
 
-          reset -- urèuje, které parametry zobrazení mají být zachovány a které
-            zmìnìny.  Hodnotou je buï 'None', nebo dictionary.  Je-li hodnotou
-            'None', zùstane zachována filtrovací podmínka, tøídìní i vybraný
-            øádek (vzhledem k jeho obsahu, ne poøadí), je-li to mo¾né.  Je-li
-            hodnotou prázdné dictionary, jsou naopak v¹echny tyto parametry
-            resetovány na své poèáteèní hodnoty.  Jinak jsou resetovány právì
-            ty parametry, pro nì¾ v dictionary existuje klíè (jeden z øetìzcù
-            'sorting', 'filter' a 'position'), a to na hodnotou z dictionary
-            pro daný klíè.
-
           when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
             jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
             'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
 
+          reset -- urèuje, které parametry zobrazení mají být zachovány a které zmìnìny.  Hodnotou
+            je buï 'None', nebo dictionary.  Je-li hodnotou 'None', zùstane zachována filtrovací
+            podmínka i tøídìní.  Je-li hodnotou prázdné dictionary, jsou naopak oba tyto parametry
+            resetovány na své poèáteèní hodnoty.  Jinak jsou resetovány právì ty parametry, pro nì¾
+            v dictionary existuje klíè (jeden z øetìzcù 'sorting', 'filter'), a to na hodnotou
+            z dictionary pro daný klíè.
+
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
         """
-        assert when in (None,           # to je pouze interní hodnota
-                        self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT,
-                        self.DOIT_IFNEEDED), \
-                        ("Invalid argument 'when'", when)
+        assert when in (None, # internal ONLY!
+                        self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT, self.DOIT_IFNEEDED), when
         assert reset is None or type(reset) == type({}), reset
         if when is None:
             if reset is None:
@@ -1169,14 +1164,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             reset = {}
         elif reset == {}:
             reset = {'sorting': self._lf_initial_sorting,
-                     'filter': None,
-                     'position': self._initial_position}
+                     'filter': None}
         # Jdeme na to
-        if __debug__: log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
+        if __debug__:
+            log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
         if when is self.DOIT_IFNEEDED:
             if self._reshuffle_request == self._last_reshuffle_request or \
                    self._reshuffle_request > time.time():
-                if __debug__: log(DEBUG, 'Refresh není tøeba provádìt nyní')
                 return False
         if when is self.DOIT_IMMEDIATELY:
             QUESTION = _("Zru¹it zmìny záznamu a aktualizovat seznam?")
@@ -1184,7 +1178,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             delay = (self._table.editing() is not None) # nechceme dr¾et info
         if delay:
-            if __debug__: log(DEBUG, 'Refresh odlo¾en do ukonèení editace')
+            if __debug__:
+                log(DEBUG, 'Refresh odlo¾en do ukonèení editace')
             return False
         # Refresh nyní bude skuteènì proveden
         for k, v in reset.items():
@@ -1192,8 +1187,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._lf_filter = v
             elif k == 'sorting':
                 self._lf_sorting = v
-            elif k == 'position':
-                self._position = v
             else:
                 raise ProgramError('Invalid refresh parameter', k)
         key = self._current_key()
