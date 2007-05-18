@@ -1,16 +1,9 @@
 CHYBY:
 
- * Pøeskakování aktivního øádku.
+ * Pøi sestavování datového objektu nìkdy dojde k zatuhnutí celé aplikace.
 
-   Pokud se snazime provest nejakou operaci ... (pridat jednani, doplnit trvalou sluzbu ke
-   smlouve,...) tak po dokonceni operace at uz ulozenim nebo prerusenim NEKDY preskoci kurzor v
-   horni casti dualformu na jinou spolecnost/smlouvu ... coz je teda mimoradne neprijemne, protoze
-   uzivatel si mysli, ze se stale diva na puvodni spolecnost. Snazil jsem se najit v tom system,
-   ale nevidim ho. Ma podle me vliv, jestli se k te spolecnosti, kterou chci menit dostavam pres
-   Ctrl+F3 nebo nikoliv. Zkusim-li se dostat v nahledu Spolecnosti+Smlouvy na Selvagginu pres
-   Ctrl+F3 ... napisu "Sek" potvrdim entrem misto doskoku a dojedu si kurzorem na Selvagginu (+3
-   radky) a pak zkusim pridat Selvaggine trvalou sluzbu najem ... resp. hned svoji operaci zrusim,
-   tak po zruseni skoncim zpravidla o 3 radky pod Selvagginou.
+   Napø. v ISASu se tak stává cca pøi ka¾dém pátém spu¹tìní...  Po zabití a novém spu¹tìní v¹e
+   funguje normálnì.
 
  * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
 

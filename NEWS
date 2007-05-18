@@ -4,6 +4,15 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-05-18 Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Pøi refreshi øádkového formuláøe je nyní korektnì urèen
+	aktuální øádek.  Mìl by tím zmizet dlouho hledaný Couperfield...
+	
+	* BUGFIX: Bylo zamezeno pøepisování hodnoty políèka v prùbìhu
+	editace, které zpùsobovalo pøeskakování hodnoty a kurzoru bìhem
+	editace napø. u èíselných a datumových políèek.
+
 2007-05-17 Tomas Cerha  <cerha@brailcom.org>
 
 	Byl redukován poèet vytváøených instancí `PresentedRow' díky
