@@ -2051,7 +2051,8 @@ class BrowsableShowForm(ShowForm):
         current_row = self.current_row()
         total = self._lf_select_count
         if current_row and total:
-            position = "%d/%d" % (self._get_row_number(current_row) + 1, total)
+            n = self._get_row_number(current_row)
+            position = "%d/%d" % (n is not None and n+1 or 0, total)
             set_status('list-position', position)
         return result
                      
