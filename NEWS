@@ -6,6 +6,9 @@
 
 2007-05-18 Tomas Cerha  <cerha@brailcom.org>
 
+	Do konfiguraèního formuláøe bylo pøidáno nastavení barev vstupních
+	políèek (neaktivní/zakázané/nevalidní).
+	
 	* BUGFIX: Pøi refreshi øádkového formuláøe je nyní korektnì urèen
 	aktuální øádek.  Mìl by tím zmizet dlouho hledanı Couperfield...
 	
