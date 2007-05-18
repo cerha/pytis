@@ -362,11 +362,14 @@ class BrowseForm(Form):
         cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
                  for c in self._columns]
         return concat('<tr>', cells, '</tr>')
-        
+
+    def _export_headings(self, exporter):
+        return concat([concat('<th>', c.column_label(), '</th>') for c in self._columns])
+    
     def _wrap_exported_rows(self, exporter, rows):
         th = [concat('<th>', c.column_label(), '</th>') for c in self._columns]
         return concat('<table border="1" class="browse-form">',
-                      concat('<thead><tr>', th, '</tr></thead>'),
+                      concat('<thead><tr>', self._export_headings(exporter), '</tr></thead>'),
                       '<tbody>', rows, '</tbody>', 
                       '</table>\n', separator="\n")
 
@@ -381,3 +384,40 @@ class BrowseForm(Form):
         return self._wrap_exported_rows(exporter, rows)
         
 
+class CheckRowsForm(BrowseForm):
+    """Web form with configurable checkboxes for each row.
+
+    The table will be automatically extended with one or more columns of checkboxes.
+    
+    """
+    def __init__(self, data, view, resolver, rows, check_columns=(), **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+
+          check_columns -- a sequence of pairs (ID, LABEL) determining the appended checkbox
+            columns.  The ID determines the checkbox name prefix.  LABEL determines the column
+            label.  The full name of each checkbox is a concatenation of the prefix (ID), the
+            underscore character and the exported value of the row key.  Thus for example if the
+            prefix is 'xx' and row keys are numbers, the checkbox names will be 'xx_1', 'xx_2',
+            'xx_3', etc.
+
+        """
+        super(CheckRowsForm, self).__init__(data, view, resolver, rows, **kwargs)
+        assert isinstance(check_columns, (list, tuple)), rows
+        self._check_columns = check_columns
+
+    def _export_headings(self, exporter):
+        headings = super(CheckRowsForm, self)._export_headings(exporter)
+        return headings + concat([concat('<th>', label, '</th>')
+                                  for id, label in self._check_columns])
+    
+    def _export_row(self, exporter, row):
+        cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
+                 for c in self._columns]
+        g = exporter.generator()
+        key = self._data.key()[0].id()
+        checkbox_cells = [concat('<td>', g.checkbox(name=id+'_'+row.format(key)), '</td>')
+                          for id, label in self._check_columns]
+        cells.append(concat(checkbox_cells))
+        return concat('<tr>', cells, '</tr>')
