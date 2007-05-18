@@ -1,3 +1,14 @@
+2007-05-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py: Don't invoke callbacks when the
+	value is changed through validation.
+
+	* pytis/form/form.py: Form creation logging improved.
+
+	* pytis/form/list.py: Fixed unwanted list position changes.
+
+	* pytis/form/configui.py: Grouping improved.
+
 2007-05-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/_grid.py: Don't create just another `PresentedRow'

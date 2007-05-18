@@ -263,10 +263,11 @@ class PresentedRow(object):
                     self._row[key] = value
                 else:
                     self._virtual[key] = value
+                # TODO: This invokes the callback again when called within a callback handler.
                 self._run_callback(self.CALL_CHANGE, key)
         return value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value, run_callback=True):
         assert isinstance(value, pytis.data.Value)
         column = self._coldict[key]
         assert value.type() == column.type, \
@@ -277,11 +278,12 @@ class PresentedRow(object):
             row = self._virtual
         else:
             return
-        if row[key] != value:
+        if row[key].value() != value.value():
             row[key] = value
             self._cache = {}
             self._resolve_dependencies(key)
-            self._run_callback(self.CALL_CHANGE, key)
+            if run_callback:
+                self._run_callback(self.CALL_CHANGE, key)
                 
     def __str__(self):
         if hasattr(self, '_row'):
@@ -538,7 +540,7 @@ class PresentedRow(object):
             if self._invalid.has_key(key):
                 del self._invalid[key]
             if string != self.format(key):
-                self[key] = value
+                self.__setitem__(key, value, run_callback=False)
         else:
             # TODO: perform non-strict validation?
             if string != self.format(key):
