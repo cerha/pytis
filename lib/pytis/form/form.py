@@ -1709,11 +1709,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row)
         if self._mode == self.MODE_INSERT:
-            log(ACTION, 'Vlo¾ení øádku')
+            log(ACTION, 'Inserting record...')
             def op():
                 return self._data.insert(rdata, transaction=transaction)
         elif self._mode == self.MODE_EDIT:
-            log(ACTION, 'Update øádku')
+            log(ACTION, 'Updating record...')
             def op():
                 return self._data.update(self._current_key(), rdata, transaction=transaction)
         else:
@@ -1732,11 +1732,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if success and result[1]:
             new_row = result[0]
             original_row = copy.copy(self._row)
-            if new_row is not None:
-                self._row.set_row(new_row, reset=True)
-            else:
-                # TODO: Lze provést nìco chytøej¹ího?
-                pass
+            if new_row is None:
+                new_row = self._row.row()
+            self._row.set_row(new_row, reset=True)
             self._signal_update()
             if self._mode == self.MODE_INSERT:
                 log(ACTION, 'Record inserted')
