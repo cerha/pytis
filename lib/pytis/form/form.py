@@ -513,7 +513,8 @@ class PopupForm:
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if self._governing_transaction is None and self._result is None:
+            if self._governing_transaction is None and self._transaction is not None \
+                   and self._result is None:
                 def rollback():
                     self._transaction.rollback()
                 db_operation(rollback)
