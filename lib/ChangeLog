@@ -1,5 +1,11 @@
 2007-05-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py: Don't invoke computers on
+	initialization, when the passed 'row' is None and 'new' is False.
+	Reinitialize also virtual columns on each `set_row' call.
+
+	* pytis/presentation/_test.py: Updated.
+
 	* pytis/form/form.py (PopupForm.run): Rollback only if transaction
 	is defined.
 

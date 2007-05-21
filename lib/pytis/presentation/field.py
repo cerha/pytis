@@ -146,12 +146,40 @@ class PresentedRow(object):
                     return v
             prefill = dict([(k, pytis.data.Value(self._coldict[k].type, value(v)))
                             for k, v in prefill.items()])
-        self._virtual = dict([(c.id, self._default(c.id, prefill=prefill))
-                              for c in columns if c.virtual])
         self._set_row(row, reset=True, prefill=prefill)
 
     def _set_row(self, row, reset=False, prefill=None):
-        self._row = self._init_row(row, prefill=prefill)
+        self._cache = {}
+        def genval(key):
+            if row is None or not row.has_key(key):
+                if prefill and prefill.has_key(key):
+                    value = prefill[key]
+                elif self._coldict.has_key(key):
+                    col = self._coldict[key]
+                    default = col.default
+                    if self._new and default is not None:
+                        if callable(default):
+                            default = default()
+                        value = pytis.data.Value(col.type, default)
+                    else:
+                        value = col.type.default_value()
+                else:
+                    value = self._data.find_column(key).type().default_value()
+            elif prefill and prefill.has_key(key):
+                value = prefill[key]
+            else:
+                value = row[key]
+            return value
+        row_data = [(c.id, genval(c.id)) for c in self._columns if not c.virtual]
+        virtual = [(c.id, genval(c.id)) for c in self._columns if c.virtual]
+        for key in self._dirty.keys():
+            # Prefill and default take precedence over the computer
+            self._dirty[key] = not (not self._new and row is None or \
+                                    row is not None and row.has_key(key) or \
+                                    prefill is not None and prefill.has_key(key) or \
+                                    self._new and self._coldict[key].default is not None)
+        self._row = pytis.data.Row(row_data)
+        self._virtual = dict(virtual)
         if reset:
             self._original_row_empty = row is None
             if not hasattr(self, '_original_row'):
@@ -211,39 +239,6 @@ class PresentedRow(object):
                 provider = c.codebook_runtime_filter.function()
                 e = c.type.enumerator()
                 e.set_runtime_filter_provider(provider, (self,))
-                
-    def _init_row(self, row, prefill=None):
-        self._cache = {}
-        def value(key):
-            if row is None or not row.has_key(key):
-                return self._default(key, prefill=prefill)
-            elif prefill and prefill.has_key(key):
-                return prefill[key]
-            else:
-                return row[key]
-        row_data = [(c.id, value(c.id)) for c in self._columns if not c.virtual]
-        for key in self._dirty.keys():
-            # Prefill and default take precedence before the computer
-            self._dirty[key] = not (row is not None and row.has_key(key) or \
-                                    prefill is not None and prefill.has_key(key) or \
-                                    self._new and self._coldict[key].default is not None)
-        return pytis.data.Row(row_data)
-
-    def _default(self, key, prefill=None):
-        if prefill and prefill.has_key(key):
-            value = prefill[key]
-        elif self._coldict.has_key(key):
-            col = self._coldict[key]
-            default = col.default
-            if self._new and default is not None:
-                if callable(default):
-                    default = default()
-                value = pytis.data.Value(col.type, default)
-            else:
-                value = col.type.default_value()
-        else:
-            value = self._data.find_column(key).type().default_value()
-        return value
 
     def __getitem__(self, key, lazy=False):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.

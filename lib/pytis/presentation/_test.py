@@ -45,7 +45,7 @@ class PresentedRow_(unittest.TestCase):
         def sum(row):
             b, c = (row['b'].value(), row['c'].value())
             if b is None or c is None:
-                return None
+                return 0
             return b + c
         def inc(row):
             sum = row['sum'].value()
@@ -80,23 +80,35 @@ class PresentedRow_(unittest.TestCase):
                                  ('b', None),
                                  ('c', 5),
                                  ('d', 10),
-                                 ('e', 88)))
-        row = PresentedRow(self._fields, self._data, self._data_row(a='xx', b=100, c=77, d=18))
-        self._check_values(row, (('a', 'xx'),
-                                 ('b', 100),
-                                 ('c', 77),
-                                 ('d', 18)))
-        row['c'] = self._value('c', 88)
-        self._check_values(row, (('a', 'xx'),
-                                 ('b', 100),
-                                 ('c', 88),
-                                 ('d', 176)))
-        row = PresentedRow(self._fields, self._data, None)
+                                 ('e', 88),
+                                 ('sum', 0)))
+        row = PresentedRow(self._fields, self._data, None, new=False)
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', None),
                                  ('d', None),
                                  ('sum', None)))
+        data_row = self._data_row(a='xx', b=100, c=77, d=18)
+        row = PresentedRow(self._fields, self._data, data_row, new=True)
+        self._check_values(row, (('a', 'xx'),
+                                 ('b', 100),
+                                 ('c', 77),
+                                 ('d', 18),
+                                 ('e', 88),
+                                 ('sum', 177)))
+        row = PresentedRow(self._fields, self._data, data_row, new=False)
+        self._check_values(row, (('a', 'xx'),
+                                 ('b', 100),
+                                 ('c', 77),
+                                 ('d', 18),
+                                 ('e', None),
+                                 ('sum', 177)))
+        row['c'] = self._value('c', 88)
+        self._check_values(row, (('a', 'xx'),
+                                 ('b', 100),
+                                 ('c', 88),
+                                 ('d', 176),
+                                 ('sum', 188)))
         # TODO: dodìlat
     def test_prefill(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
@@ -139,7 +151,7 @@ class PresentedRow_(unittest.TestCase):
                                  ('b', None),
                                  ('c', 8),
                                  ('d', 12),
-                                 ('sum', None)))
+                                 ('sum', 0)))
         assert row.invalid_string('a') is None
         assert row.invalid_string('b') == '2.3'
         assert row.validate('b', '12') is None
@@ -152,6 +164,24 @@ class PresentedRow_(unittest.TestCase):
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', 5),
+                                 ('sum', 0),
+                                 ('inc', 1)))
+        row.set_row(self._data_row(b=10, c=20))
+        self._check_values(row, (('a', None),
+                                 ('b', 10),
+                                 ('c', 20),
+                                 ('sum', 30),
+                                 ('inc', 31)))
+        row.set_row(None)
+        self._check_values(row, (('a', None),
+                                 ('b', None),
+                                 ('c', 5),
+                                 ('sum', 0),
+                                 ('inc', 1)))
+        row = PresentedRow(self._fields, self._data, None, new=False)
+        self._check_values(row, (('a', None),
+                                 ('b', None),
+                                 ('c', None),
                                  ('sum', None),
                                  ('inc', None)))
         row.set_row(self._data_row(b=10, c=20))
@@ -163,9 +193,11 @@ class PresentedRow_(unittest.TestCase):
         row.set_row(None)
         self._check_values(row, (('a', None),
                                  ('b', None),
-                                 ('c', 5),
+                                 ('c', None),
                                  ('sum', None),
                                  ('inc', None)))
+
+        
     def test_editable(self):
         row = PresentedRow(self._fields, self._data, None,
                            prefill={'b': 2, 'c': 1})
