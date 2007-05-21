@@ -1,5 +1,9 @@
 2007-05-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py: Removed outdated comment.
+
+	* pytis/form/dualform.py: Cosmetic improvement.
+
 	* pytis/presentation/field.py: Don't invoke computers on
 	initialization, when the passed 'row' is None and 'new' is False.
 	Reinitialize also virtual columns on each `set_row' call.
@@ -8,6 +12,8 @@
 
 	* pytis/form/form.py (PopupForm.run): Rollback only if transaction
 	is defined.
+	(EditForm._commit_form): Reset the row even if the data insert
+	operation desn't return the inserted row.
 
 2007-05-18  Milan Zamazal  <pdm@brailcom.org>
 

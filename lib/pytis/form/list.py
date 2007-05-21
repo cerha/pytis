@@ -107,8 +107,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
-        # The trick with select_row=0 results in a data row passed to the PresentedRow constructor
-        # and thus avoids unwanted computer invocations on row initialization.
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
         assert columns is None or is_sequence(columns)
         # Inicializace atributù závislých na u¾ivatelském nastavení.
