@@ -112,8 +112,7 @@ class DualForm(Form, Refreshable):
         wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter,
                     splitter.GetId(), self._on_sash_changed)
         # Vytvoø formuláøe
-        main_form_kwargs = self._unprocessed_kwargs
-        self._main_form = self._create_main_form(splitter, **main_form_kwargs)
+        self._main_form = self._create_main_form(splitter, **self._unprocessed_kwargs)
         self._side_form = self._create_side_form(splitter)
         if self._orientation == Orientation.HORIZONTAL:
             splitter.SplitHorizontally(self._main_form, self._side_form)
