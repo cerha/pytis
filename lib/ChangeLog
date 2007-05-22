@@ -1,3 +1,10 @@
+2007-05-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (_SubmittableForm): New class.
+	(EditForm, CheckRowsForm): Derive from it.
+	(CheckRowsForm): Consider all checkable columns to be Boolean
+	columns present in the row.
+
 2007-05-22  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/web/form.py (CheckRowsForm.__init__): New arguments and

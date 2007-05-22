@@ -113,6 +113,28 @@ class Form(lcg.Content):
         return valid
 
 
+class _SubmittableForm(object):
+    """Mix-in class for forms with submit buttons."""
+    
+    def __init__(self, handler='#', action=None, hidden=(), **kwargs):
+        super(_SubmittableForm, self).__init__(**kwargs)
+        assert isinstance(handler, str), handler
+        assert action is None or isinstance(action, str), action
+        assert isinstance(hidden, (tuple, list)), hidden
+        self._handler = handler
+        self._action = action
+        self._hidden = list(hidden)
+        
+    def _export_buttons(self, exporter):
+        g = exporter.generator()
+        hidden = self._hidden
+        if self._action:
+            hidden += [('action', self._action)]
+        result = [g.hidden(k, v) for k, v in hidden] + \
+                 [g.submit(_("Submit")), g.reset(_("Reset"))]
+        return g.fieldset(result, cls="submit")
+    
+
 class LayoutForm(Form):
 
     def __init__(self, *args, **kwargs):
@@ -154,7 +176,7 @@ class LayoutForm(Form):
     def _export_field(self, exporter, f):
         g = exporter.generator()
         value = self._row[f.id()]
-        type = f.type(self._data)
+        type = value.type()
         attr = {'name': f.id(),
                 'id': "f%x-%s" % (positive_id(self), f.id())}
         if isinstance(type, pytis.data.Boolean):
@@ -276,19 +298,17 @@ class ShowForm(LayoutForm):
         return (g.label(f.label(), f.id()) + ":", value, None)
 
     
-class EditForm(LayoutForm):
+class EditForm(LayoutForm, _SubmittableForm):
     
-    def __init__(self, data, view, resolver, row, handler='#', action=None,
-                 errors=(), hidden=(), **kwargs):
+    def __init__(self, data, view, resolver, row, errors=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
-        assert isinstance(handler, str), handler
-        assert action is None or isinstance(action, str), action
+        self._hidden += [(k, v) for k, v in self._prefill.items()
+                         if view.field(k) and not k in view.layout().order() and k!= key]
+        #key = self._data.key()[0].id()
+        #if not self._row.new():
+        #    self._hidden += [(key,  self._row.format(key))]
         assert isinstance(errors, (tuple, list, str, unicode)), errors
-        assert isinstance(hidden, (tuple, list)), hidden
-        self._handler = handler
-        self._action = action
         self._errors = errors
-        self._hidden = list(hidden)
 
     def export(self, exporter):
         g = exporter.generator()
@@ -311,20 +331,8 @@ class EditForm(LayoutForm):
                       
     def _export_buttons(self, exporter):
         g = exporter.generator()
-        key = self._data.key()[0].id()
-        order = self._view.layout().order()
-        hidden = self._hidden
-        hidden += [(k, v) for k, v in self._prefill.items()
-                   if self._view.field(k) and not k in order and k!= key]
-        #if not self._row.new():
-        #    hidden += [(key,  self._row.format(key))]
-        if self._action:
-            hidden += [('action', self._action)]
-        result = [g.hidden(k, v) for k, v in hidden] + \
-                 [g.submit(_("Submit")), g.reset(_("Reset"))]
-        return g.fieldset(result, cls="submit") + \
-               g.div("*) " + _("Fields marked by an asterisk are mandatory."),
-                     cls='help')
+        note = g.div("*) " + _("Fields marked by an asterisk are mandatory."), cls='help')
+        return super(EditForm, self)._export_buttons(exporter) + note
     
         
 class BrowseForm(Form):
@@ -384,59 +392,51 @@ class BrowseForm(Form):
         return self._wrap_exported_rows(exporter, rows)
         
 
-class CheckRowsForm(BrowseForm):
-    """Web form with configurable checkboxes for each row.
+class CheckRowsForm(BrowseForm, _SubmittableForm):
+    """Web form with checkable boolean columns in each row.
 
-    The table will be automatically extended with one or more columns of checkboxes.
+    The form is rendered as an ordinary table, but boolean columns (all or only the selected) are
+    represented by a checkbox in each row and the form has submit controls.  Thus the user can
+    modify the values in all rows and submit the changes in one step.
+
+    *Processing the submitted form:*
+
+    Each checkbox column is represented by one query parameter.  Its name is the column identifier
+    and the values are the key column values of all checked rows.
     
     """
-    def __init__(self, data, view, resolver, rows, check_columns=(),
-                 handler='#', action=None, **kwargs):
+    def __init__(self, data, view, resolver, rows, check_columns=(), **kwargs):
         """Initialize the instance.
 
         Arguments:
 
-          check_columns -- a sequence of pairs (NAME, LABEL) determining the appended checkbox
-            columns.  The NAME determines the checkbox name prefix.  LABEL determines the column
-            label.  The checkbox value is automatically determined by the row key value.
+          check_columns -- a sequence of column identifiers for which the checkboxes will be
+            created.  If the argument is omitted, checkboxes will automatically appear for all
+            boolean columns.
+
+          See the parent classes for definition of the remaining arguments.
 
         """
         super(CheckRowsForm, self).__init__(data, view, resolver, rows, **kwargs)
-        assert isinstance(check_columns, (list, tuple)), rows
+        assert isinstance(check_columns, (list, tuple)), check_columns
+        if __debug__:
+            for cid in check_columns:
+                assert row.has_key(cid), cid
+                assert isinstance(self._row[cid].type(), pd.Boolean), cid
         self._check_columns = check_columns
-        self._handler = handler
-        self._action = action
 
-    def _export_headings(self, exporter):
-        headings = super(CheckRowsForm, self)._export_headings(exporter)
-        return headings + concat([concat('<th>', label, '</th>')
-                                  for name, label in self._check_columns])
-    
-    def _export_row(self, exporter, row):
-        cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
-                 for c in self._columns]
-        g = exporter.generator()
-        key = self._data.key()[0].id()
-        checkbox_cells = [concat('<td>',
-                                 g.checkbox(name=name, value=row.format(key),
-                                            checked=row[name].value()),
-                                 '</td>')
-                          for name, label in self._check_columns]
-        cells.append(concat(checkbox_cells))
-        return concat('<tr>', cells, '</tr>')
-
-    def _export_buttons(self, exporter):
-        g = exporter.generator()
-        hidden = []
-        if self._action:
-            hidden += [('action', self._action)]
-        result = ([g.hidden(k, v) for k, v in hidden] +
-                  [g.submit(_("Submit")), g.reset(_("Reset"))])
-        return result
+    def _export_value(self, exporter, row, col):
+        cid = col.id()
+        if cid in self._check_columns or \
+               not self._check_columns and isinstance(self._row[cid].type(), pd.Boolean):
+            key = self._data.key()[0].id()
+            return exporter.generator().checkbox(name=cid, value=self._row.format(key),
+                                                 checked=self._row[cid].value()),
+        else:
+            return super(CheckRowsForm, self)._export_value(exporter, row, col)
 
     def export(self, exporter):
-        buttons = self._export_buttons(exporter)
-        table = super(CheckRowsForm, self).export(exporter)
-        content = table + '<br>\n' + concat(buttons)
         g = exporter.generator()
+        content = (super(CheckRowsForm, self).export(exporter),
+                   self._export_buttons(exporter))
         return g.form(content, action=self._handler, method='POST') + "\n"
