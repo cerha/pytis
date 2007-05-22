@@ -1,3 +1,8 @@
+2007-05-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/web/form.py (CheckRowsForm.__init__): Invalid variable
+	reference fixed.
+
 2007-05-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (_SubmittableForm): New class.

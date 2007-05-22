@@ -421,7 +421,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
             for cid in check_columns:
-                assert row.has_key(cid), cid
+                assert self._row.has_key(cid), cid
                 assert isinstance(self._row[cid].type(), pd.Boolean), cid
         self._check_columns = check_columns
 
