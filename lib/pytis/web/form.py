@@ -390,7 +390,8 @@ class CheckRowsForm(BrowseForm):
     The table will be automatically extended with one or more columns of checkboxes.
     
     """
-    def __init__(self, data, view, resolver, rows, check_columns=(), **kwargs):
+    def __init__(self, data, view, resolver, rows, check_columns=(),
+                 handler='#', action=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -403,6 +404,8 @@ class CheckRowsForm(BrowseForm):
         super(CheckRowsForm, self).__init__(data, view, resolver, rows, **kwargs)
         assert isinstance(check_columns, (list, tuple)), rows
         self._check_columns = check_columns
+        self._handler = handler
+        self._action = action
 
     def _export_headings(self, exporter):
         headings = super(CheckRowsForm, self)._export_headings(exporter)
@@ -414,7 +417,26 @@ class CheckRowsForm(BrowseForm):
                  for c in self._columns]
         g = exporter.generator()
         key = self._data.key()[0].id()
-        checkbox_cells = [concat('<td>', g.checkbox(name=name, value=row.format(key)), '</td>')
+        checkbox_cells = [concat('<td>',
+                                 g.checkbox(name=name, value=row.format(key),
+                                            checked=row[name].value()),
+                                 '</td>')
                           for name, label in self._check_columns]
         cells.append(concat(checkbox_cells))
         return concat('<tr>', cells, '</tr>')
+
+    def _export_buttons(self, exporter):
+        g = exporter.generator()
+        hidden = []
+        if self._action:
+            hidden += [('action', self._action)]
+        result = ([g.hidden(k, v) for k, v in hidden] +
+                  [g.submit(_("Submit")), g.reset(_("Reset"))])
+        return result
+
+    def export(self, exporter):
+        buttons = self._export_buttons(exporter)
+        table = super(CheckRowsForm, self).export(exporter)
+        content = table + '<br>\n' + concat(buttons)
+        g = exporter.generator()
+        return g.form(content, action=self._handler, method='POST') + "\n"

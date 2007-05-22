@@ -1,3 +1,12 @@
+2007-05-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/web/form.py (CheckRowsForm.__init__): New arguments and
+	attributes `handler' and `action'.
+	(CheckRowsForm._export_row): Make checkboxes checked according to
+	the corresponding values.
+	(CheckRowsForm._export_buttons, CheckRowsForm.export): New
+	methods.
+
 2007-05-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py: Removed outdated comment.
