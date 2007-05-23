@@ -1,3 +1,8 @@
+2007-05-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py (DBDataPostgreSQL.last_row_number):
+	Restore stopped select if necessary.
+
 2007-05-22  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/web/form.py (CheckRowsForm.__init__): Invalid variable

@@ -2220,6 +2220,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
     
     def last_row_number(self):
+        if not self._pg_is_in_select:
+            if not self._pg_restore_select():
+                raise ProgramError('Not within select')
         return self._pg_buffer.current()[1]
 
     def last_select_condition(self):
