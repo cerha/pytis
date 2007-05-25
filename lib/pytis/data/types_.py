@@ -171,6 +171,8 @@ class Type(object):
         assert validation_messages is None or \
                isinstance(validation_messages, types.DictType) 
         self._not_null = not_null
+        if enumerator is not None:
+            enumerator.make_me_safe()
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
         vm = [(getattr(self, attr), getattr(self, '_'+attr+'_MSG'))
@@ -1374,6 +1376,8 @@ class Enumerator(object):
     instances used in types.
     
     """
+    _UNSAFE_METHODS = ()
+    
     def check(self, value):
         """Vra» pravdu, pokud 'value' je prvkem mno¾iny enumerátoru.
 
@@ -1388,7 +1392,18 @@ class Enumerator(object):
     def values(self):
         """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu."""
         raise ProgramError('Not implemented', 'Enumerator.values()')
+    
+    def make_me_safe(self):
+        """Remove unsafe methods from the instance.
 
+        This method is used in 'Type' instance to protect them from
+        misbehavior.
+
+        """
+        for name in self._UNSAFE_METHODS:
+            def forbidden_method(self, *args, **kwargs):
+                raise Exception ("Forbidden method called", name)
+            self.name = forbidden_method
 
 class FixedEnumerator(Enumerator):
     """Enumerátor pracující s fixní mno¾inou hodnot."""
@@ -1470,6 +1485,8 @@ class DataEnumerator(MutableEnumerator):
     zvolit libovolný jiný sloupec.
 
     """
+    _UNSAFE_METHODS = (MutableEnumerator._UNSAFE_METHODS +
+                       ('iter', 'set_runtime_filter_provider',))
         
     def __init__(self, data_factory, data_factory_kwargs={}, value_column=None,
                  validity_column=None, validity_condition=None):
