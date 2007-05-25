@@ -1187,13 +1187,16 @@ class ListField(GenericCodebookField):
     def _load_list_data(self):
         current = self._get_value()
         list = self._list
-        enumerator = self.type().enumerator()
         list.DeleteAllItems()
         self._list_data = []
         select_item = None
-        for i, row in enumerate(enumerator.iter()):
+        enumerator = self.type().enumerator()
+        value_column = enumerator.value_column()
+        rows = enumerator.rows()
+        for i in range(rows):
+            row = rows[i]
             list.InsertStringItem(i, "")
-            v = row[enumerator.value_column()]
+            v = row[value_column]
             self._list_data.append(v)
             if v.export() == current:
                 select_item = i

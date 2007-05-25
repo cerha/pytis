@@ -1650,6 +1650,12 @@ class DataEnumerator(MutableEnumerator):
             result = row[column]
         return result
 
+    def rows(self):
+        """Return sequence of rows of the underlying data object."""
+        def lfunction():
+            return self._data.select_map(identity, condition=self.validity_condition())
+        return with_lock(self._data_lock, lfunction)
+
     def type(self, column):
         """Vra» datový typ daného sloupce v datovém objektu enumerátoru."""
         return self._data.find_column(column).type()
