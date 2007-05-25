@@ -1,5 +1,8 @@
 2007-05-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (Specification): Don't support
+	multicolumn keys.  Allow `key' to be a string.
+
 	* pytis/form/inputfield.py (ListField._load_list_data): Invalid
 	`range()' usage fixed.
 

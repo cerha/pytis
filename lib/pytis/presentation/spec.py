@@ -2362,8 +2362,12 @@ class Specification(object):
             bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **type_kwargs(f))
                         for f in self.fields if not f.virtual()]
             if self.key:
-                bdict = dict([(b.column(), b) for b in bindings])
-                key = [bdict[k] for k in self.key]
+                keyid = self.key
+                if isinstance(keyid, (list, tuple)):
+                    assert len(keyid) == 1, ("Multicolumn keys no longer supported:", keyid)
+                    keyid = keyid[0]
+                key = find(keyid, bindings, key=lambda b: b.id())
+                assert key is not None, ("Invalid key column:", keyid)
             else:
                 key = bindings[0]
             args = (bindings, key,)
