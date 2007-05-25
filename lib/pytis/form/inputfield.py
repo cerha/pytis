@@ -1192,9 +1192,7 @@ class ListField(GenericCodebookField):
         select_item = None
         enumerator = self.type().enumerator()
         value_column = enumerator.value_column()
-        rows = enumerator.rows()
-        for i in range(rows):
-            row = rows[i]
+        for i, row in enumerate(enumerator.rows()):
             list.InsertStringItem(i, "")
             v = row[value_column]
             self._list_data.append(v)

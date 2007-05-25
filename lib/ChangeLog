@@ -1,3 +1,8 @@
+2007-05-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (ListField._load_list_data): Invalid
+	`range()' usage fixed.
+
 2007-05-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/inputfield.py (ListField._load_list_data): Use safe
