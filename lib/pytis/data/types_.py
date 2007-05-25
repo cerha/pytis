@@ -40,6 +40,7 @@ instancemi samostatné tøídy 'Value'.
 import math
 import re
 from cStringIO import StringIO
+import thread
 
 from mx import DateTime as DT
 
@@ -1366,6 +1367,11 @@ class Enumerator(object):
     Tato tøída pouze definuje povinné rozhraní enumerátorù.  Kromì zde
     definovaných povinných metod mohou konkrétní tøídy enumerátorù nabízet
     je¹tì dal¹í slu¾by.
+
+    Generally, enumerators must be thread-safe as their can be used in shared
+    'Type' instances.  If some of the enumerator methods is not thread-safe, it
+    must be clearly marked as such and it may not be used with enumerator
+    instances used in types.
     
     """
     def check(self, value):
@@ -1418,7 +1424,20 @@ class MutableEnumerator(Enumerator):
     def __init__(self):
         self._hooks = []
         self._running_hooks = False
-    
+        self._data_lock = thread.allocate_lock()
+        self._hook_lock = thread.allocate_lock()
+
+    def _do_update(self, force):
+        if self._running_hooks:
+            return True
+        self._running_hooks = True
+        try:
+            for hook in self._hooks:
+                hook()
+        finally:
+            self._running_hooks = False
+        return True
+        
     def _update(self, force=False):
         """Aktualizuj data enumerátoru.
 
@@ -1433,17 +1452,14 @@ class MutableEnumerator(Enumerator):
         Vrací: Pravdu, právì kdy¾ byl update skuteènì proveden.
 
         """
-        if self._running_hooks:
-            return True
-        self._running_hooks = True
-        try:
-            for hook in self._hooks: hook()
-        finally:
-            self._running_hooks = False
-        return True
+        def lfunction():
+            return self._do_update(force)
+        return with_lock(self._data_lock, lfunction)
 
     def add_hook_on_update(self, hook):
-        self._hooks.append(hook)
+        def lfunction():
+            self._hooks.append(hook)
+        with_lock(self._hook_lock, lfunction)
         
 
 class DataEnumerator(MutableEnumerator):
@@ -1547,18 +1563,20 @@ class DataEnumerator(MutableEnumerator):
         validity_condition = self.validity_condition()
         if validity_condition is not None:
             condition = AND(condition, validity_condition)
-        count = data.select(condition, transaction=transaction)
-        if count > 1:
-            raise ProgramError('Insufficient runtime filter for DataEnumerator',
-                               str(condition))
-        row = data.fetchone(transaction=transaction)
-        data.close()
-        return row
+        def lfunction():
+            count = data.select(condition, transaction=transaction)
+            if count > 1:
+                raise ProgramError('Insufficient runtime filter for DataEnumerator',
+                                   str(condition))
+            row = data.fetchone(transaction=transaction)
+            data.close()
+            return row
+        return with_lock(self._data_lock, lfunction)
 
-    def _update(self, force=False):
+    def _do_update(self, force=False):
         if force or self._data_changed:
             self._data_changed = False
-            result = super(DataEnumerator, self)._update(force=force)
+            result = super(DataEnumerator, self)._do_update(force=force)
         else:
             result = False
         return result
@@ -1574,11 +1592,12 @@ class DataEnumerator(MutableEnumerator):
         return result
 
     def values(self):
-        result = self._data.select_map(lambda r: r[self._value_column].value(),
-                                       condition=self.validity_condition())
+        def lfunction():
+            return self._data.select_map(lambda r: r[self._value_column].value(),
+                                         condition=self.validity_condition())
+        result = with_lock(self._data_lock, lfunction)
         return tuple(result)
-        
-
+    
     # Extended interface.
 
     def data_factory(self):
@@ -1619,7 +1638,11 @@ class DataEnumerator(MutableEnumerator):
         return self._data.find_column(column).type()
 
     def iter(self):
-        """Vra» iterátor, iterující pøes v¹echny datové øádky."""
+        """Return an iterator iterating over all the data rows.
+
+        Warning: This method is not thread safe!
+
+        """
         # TODO: Asi by bylo èist¹í pøedefinovat metodu values a tu potom
         # pou¾ívat v kombinaci s metodou get.  Aby se ov¹em v get neprovádìl
         # zbyteènì nový select, bylo by nutné si nìjak internì pamatovat
@@ -1651,6 +1674,9 @@ class DataEnumerator(MutableEnumerator):
         následných operacích s enumerátorem bude podmínka automaticky
         pøepoèítána a mno¾ina platných hodnot enumerátoru bude aktualizována.
 
+        Warning: This method modifies enumerator's behavior and so it may not
+        be used in enumerator instances contained in 'Type' instances.
+
         """
         assert callable(provider) or provider is None
         self._runtime_filter_provider = provider
@@ -1668,7 +1694,6 @@ class DataEnumerator(MutableEnumerator):
         self._runtime_filter_dirty = True
         self._update(force=True)
         
-    
     def validity_condition(self):
         """Vra» podmínku urèující platné øádky enumerátoru.
         
