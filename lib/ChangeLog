@@ -1,5 +1,10 @@
 2007-05-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py: Pass `prefill' on next row initialization.
+
+	* pytis/presentation/field.py: Allow passing `prefill' also to the
+	`set_row' method.
+
 	* pytis/presentation/spec.py (Specification): Don't support
 	multicolumn keys.  Allow `key' to be a string.
 

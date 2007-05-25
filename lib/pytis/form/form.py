@@ -1899,7 +1899,7 @@ class PopupEditForm(PopupForm, EditForm):
             if self._governing_transaction is None and self._transaction is not None:
                 self._transaction = self._default_transaction()
                 self._row.set_transaction(self._transaction)
-            self._row.set_row(None, reset=True)
+            self._row.set_row(None, reset=True, prefill=self._prefill)
         if data is not None:
             i = self._inserted_data_pointer
             self._select_row(None)

@@ -138,6 +138,9 @@ class PresentedRow(object):
             # be removed.
             self._columns += (self._Column(FieldSpec(key), data),)
         self._init_dependencies()
+        self._set_row(row, reset=True, prefill=prefill)
+
+    def _set_row(self, row, reset=False, prefill=None):
         if prefill:
             def value(v):
                 if isinstance(v, pytis.data.Value):
@@ -146,9 +149,6 @@ class PresentedRow(object):
                     return v
             prefill = dict([(k, pytis.data.Value(self._coldict[k].type, value(v)))
                             for k, v in prefill.items()])
-        self._set_row(row, reset=True, prefill=prefill)
-
-    def _set_row(self, row, reset=False, prefill=None):
         self._cache = {}
         def genval(key):
             if row is None or not row.has_key(key):
@@ -435,21 +435,21 @@ class PresentedRow(object):
         self._cache[key] = svalue
         return svalue
 
-    def set_row(self, row, reset=False):
-        """Nastav aktuální data na 'row'.
+    def set_row(self, row, reset=False, prefill=None):
+        """Set the current row data according to 'row'.
 
-        'row' má stejný význam jako stejnojmenný argument metody '__init__()'.
+        Arguments:
+           row -- has the same meaning as the constructor argument of the same name.
+           reset -- a boolean flag indicating, that the new row data will now be considered as
+             original.  This influences the behavior of the methods 'changed()' and
+             'original_row()'.
+           prefill -- has the same meaning as the constructor argument of the same name.
 
-        Pravdivá hodnota argumentu 'reset' zpùsobí to, ¾e tato nová hodnota
-        øádku bude nadále pova¾ována za pùvodní, co¾ má vliv na funkci metod
-        'changed()' a 'original_row()'.
-
-        Tuto metodu je vhodné vyu¾ívat pro koncepci aktuálního øádku v tabulce
-        s nemìnnými sloupci a datovým objektem.  U¹etøí se tak chroustání
-        specifikací uvnitø této tøídy.
+        This method is meant to support the concept of current row in a form with fixed
+        fields/columns and data object.  It saves the specification processing in the constructor.
         
         """
-        self._set_row(row, reset=reset)
+        self._set_row(row, reset=reset, prefill=prefill)
 
     def fields(self):
         """Vra» seznam v¹ech políèek."""
