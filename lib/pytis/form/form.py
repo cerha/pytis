@@ -1253,8 +1253,7 @@ class RecordForm(LookupForm):
                 run_dialog(Warning, msg)
     
     def _can_edit_record(self):
-        return self._current_key() is not None \
-               and self.check_permission(pytis.data.Permission.UPDATE)
+        return self._current_key() is not None
 
     def _cmd_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
@@ -1282,7 +1281,7 @@ class RecordForm(LookupForm):
             run_form(PopupEditForm, name, select_row=key, **kwargs)
 
     def _can_delete_record(self):
-        return self.check_permission(pytis.data.Permission.DELETE)
+        return self._current_key() is not None
 
     def _cmd_delete_record(self):
         # The return value is used in derived classes!

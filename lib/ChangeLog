@@ -2,8 +2,10 @@
 
 	* pytis/form/application.py: 
 
-	* pytis/form/form.py (PopupEditForm): Added support for disabling
-	the "Next" button.
+	* pytis/form/form.py: Don't make the commands for update/delete
+	unavailable according to permissions.  Instead refuse to perform
+	them when invoked.
+	(PopupEditForm): Added support for disabling the "Next" button.
 
 	* pytis/form/list.py: Separate explicit links in row context menu.
 
