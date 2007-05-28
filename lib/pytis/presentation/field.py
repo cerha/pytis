@@ -294,21 +294,14 @@ class PresentedRow(object):
             return super(PresentedRow, self).__str__()
 
     def _run_callback(self, kind, key=None):
-        try:
-            callbacks = self._callbacks[kind]
-        except KeyError:
-            pass
+        callbacks = self._callbacks.get(kind, {})
+        if key is None:
+            for callback in callbacks.values():
+                callback()
         else:
-            if key is None:
-                for callback in callbacks.values():
-                    callback()
-            else:
-                try:
-                    callback = callbacks[key]
-                except KeyError:
-                    pass
-                else:
-                    callback()
+            callback = callbacks.get(key)
+            if callback:
+                callback()
             
     def _mark_dependent_dirty(self, key):
         # Rekurzivnì oznaè závislá políèka.

@@ -23,6 +23,11 @@
 	* pytis/form/inputfield.py (ListField._load_list_data): Invalid
 	`range()' usage fixed.
 
+2007-05-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow._run_callback):
+	Deuglified.
+
 2007-05-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/inputfield.py (ListField._load_list_data): Use safe
