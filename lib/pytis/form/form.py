@@ -1501,7 +1501,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             function of one argument -- the PresentedRow instance representing the current record.
             This function must return a field identifier or None.
           kwargs -- arguments passed to the parent class
-          
+         
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
         new = mode == self.MODE_INSERT
@@ -1831,25 +1831,29 @@ class PopupEditForm(PopupForm, EditForm):
     def _default_transaction(self):
         return pytis.data.DBTransactionDefault(config.dbconnection)
         
-    def _init_attributes(self, inserted_data=None, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+    def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):
+        """Process constructor keyword arguments and initialize the attributes.
 
-        Argumenty:
+        Arguments:
 
-          inserted_data -- umo¾òuje pøedat libovolnou sekvenci datových øádkù
-            (instancí pytis.data.Row).  Formuláø je potom postupnì
-            pøedvyplòován tìmito øádky a tlaèítkem ``Dal¹í'' je ka¾dý záznam
-            ulo¾en a formuláø naplnìn dal¹ím øádkem.  Takto je mo¾né jednodu¹e
-            vyu¾ít formuláø k hromadnému vkládání øádkù naètených z libovolného
-            zdroje.
+          inserted_data -- allows to pass a sequence of 'pytis.data.Row' instances to be inserted.
+            The form is then gradually prefilled by values of these rows and the user can
+            individually accept or skip each row.
 
-          kwargs -- argumenty pøedané konstruktoru pøedka.
+          multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
+            This option is only relevant in insert mode.  False value will disable this feature and
+            the `Next' button will not be present on the form.
+
+          kwargs -- arguments passed to the parent class
             
         """
         EditForm._init_attributes(self, **kwargs)
-        assert inserted_data is None or self._mode == self.MODE_INSERT
+        assert inserted_data is None or self._mode == self.MODE_INSERT, (inserted_data, self._mode)
+        assert isinstance(multi_insert, bool), multi_insert
+        assert multi_insert or inserted_data is None, (multi_insert, inserted_data)
         self._inserted_data = inserted_data
         self._inserted_data_pointer = 0
+        self._multi_insert = multi_insert
 
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.
@@ -1947,7 +1951,7 @@ class PopupEditForm(PopupForm, EditForm):
                    {'id': wx.ID_CANCEL,
                     'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
                     'handler': lambda e: self.close()})
-        if self._mode == self.MODE_INSERT:
+        if self._mode == self.MODE_INSERT and self._multi_insert:
             buttons += ({'id': wx.ID_FORWARD,
                          'label': _("Dal¹í"),
                          'toottip': _("Ulo¾it záznam a reinicializovat formuláø"
