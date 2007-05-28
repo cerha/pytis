@@ -1573,18 +1573,20 @@ class DataEnumerator(MutableEnumerator):
             assert isinstance(c.type(), Boolean), \
                    ('Invalid validity column type', c)
 
-    def _retrieve(self, value, transaction=None):
+    def _retrieve(self, value, transaction=None, condition=None):
         data = self._data
         v = Value(self._value_column_type, value)
-        condition = EQ(self._value_column, v)
+        the_condition = EQ(self._value_column, v)
+        if condition is not None:
+            the_condition = AND(the_condition, condition)
         validity_condition = self.validity_condition()
         if validity_condition is not None:
-            condition = AND(condition, validity_condition)
+            condition = AND(the_condition, validity_condition)
         def lfunction():
-            count = data.select(condition, transaction=transaction)
+            count = data.select(the_condition, transaction=transaction)
             if count > 1:
                 raise ProgramError('Insufficient runtime filter for DataEnumerator',
-                                   str(condition))
+                                   str(the_condition))
             row = data.fetchone(transaction=transaction)
             data.close()
             return row
@@ -1600,18 +1602,23 @@ class DataEnumerator(MutableEnumerator):
 
     # Enumerator interface
     
-    def check(self, value, transaction=None):
-        row = self._retrieve(value, transaction)
+    def check(self, value, transaction=None, condition=None):
+        row = self._retrieve(value, transaction, condition)
         if row is None:
             result = False
         else:
             result = True
         return result
 
-    def values(self):
+    def values(self, condition=None):
+        the_condition = self.validity_condition()
+        if the_condition is None:
+            the_condition = condition
+        elif condition is not None:
+            the_condition = AND(the_condition, condition)
         def lfunction():
             return self._data.select_map(lambda r: r[self._value_column].value(),
-                                         condition=self.validity_condition())
+                                         condition=the_condition)
         result = with_lock(self._data_lock, lfunction)
         return tuple(result)
     
@@ -1625,23 +1632,24 @@ class DataEnumerator(MutableEnumerator):
         """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""
         return self._value_column
     
-    def get(self, value, column=None, transaction=None):
+    def get(self, value, column=None, transaction=None, condition=None):
         """Získej z dat hodnotu daného sloupce z øádku odpovídajícího 'value'.
 
         Argumenty:
         
            value -- vnitøní (Pythonová) hodnota sloupce 'value_column' z
              datového objektu.  Podle této hodnoty bude vyhledán pøíslu¹ný
-             øádek.
+             øádek
            column -- identifikátor sloupce datového objektu, jeho¾ hodnota má
-             být vrácena.
+             být vrácena
            transaction -- transakce, pod ní¾ se mají provádìt operace nad
-             datovým objektem.             
+             datovým objektem
+           condition -- additional filtering condition
 
         Vrací instanci 'Value', nebo None, pokud daný øádek nebyl nalezen.
 
         """
-        row = self._retrieve(value, transaction=transaction)
+        row = self._retrieve(value, transaction=transaction, condition=condition)
         if row is None:
             result = None
         else:
@@ -1650,10 +1658,22 @@ class DataEnumerator(MutableEnumerator):
             result = row[column]
         return result
 
-    def rows(self):
-        """Return sequence of rows of the underlying data object."""
+    def rows(self, condition=None):
+        """Return sequence of rows of the underlying data object.
+
+        Arguments:
+
+          condition -- additional filtering condition to the one returned by
+            'validity_condition'
+
+        """
+        the_condition = self.validity_condition()
+        if the_condition is None:
+            the_condition = condition
+        elif condition is not None:
+            the_condition = AND(the_condition, condition)
         def lfunction():
-            return self._data.select_map(identity, condition=self.validity_condition())
+            return self._data.select_map(identity, condition=the_condition)
         return with_lock(self._data_lock, lfunction)
 
     def type(self, column):

@@ -25,6 +25,20 @@
 
 2007-05-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/form/inputfield.py
+	(GenericCodebookField._init_attributes): Don't manipulate with
+	enumerators, create and register row change callback instead.
+	(ListField._load_list_data): Honor value condition.
+
+	* pytis/presentation/field.py (PresentedRow): Handle filter
+	changes in a similar way as computers.
+	(PresentedRow._notify_runtime_filter_change): Removed.
+
+	* pytis/data/types_.py: Provide method arguments instead of
+ 	instance modification in DataEnumerator.
+
+2007-05-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/presentation/field.py (PresentedRow._run_callback):
 	Deuglified.
 

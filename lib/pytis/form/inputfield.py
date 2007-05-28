@@ -977,8 +977,22 @@ class GenericCodebookField(InputField):
             cb_spec = CodebookSpec()
         self._cb_name = cb_name
         self._cb_spec = cb_spec
-        self._type.enumerator().add_hook_on_update(self._on_enumerator_change)
         super(GenericCodebookField, self)._init_attributes()
+        runtime_filter_provider = self._spec.codebook_runtime_filter
+        def no_value_condition():
+            return None
+        if runtime_filter_provider is None:
+            value_condition = no_value_condition
+        else:
+            filter_function_retriever = runtime_filter_provider()
+            if filter_function_retriever is None:
+                value_condition = no_value_condition
+            else:
+                filter_function = filter_function_retriever.function()
+                def value_condition():
+                    return filter_function(self._row)
+        self._value_condition = value_condition
+        self._row.register_callback('CALL_CHANGE', self._id, self._on_enumerator_change)
 
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' arguemnt."""
@@ -1192,7 +1206,8 @@ class ListField(GenericCodebookField):
         select_item = None
         enumerator = self.type().enumerator()
         value_column = enumerator.value_column()
-        for i, row in enumerate(enumerator.rows()):
+        rows = enumerator.rows(condition=self._value_condition())
+        for i in range(len (rows)):
             list.InsertStringItem(i, "")
             v = row[value_column]
             self._list_data.append(v)

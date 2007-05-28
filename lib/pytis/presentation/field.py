@@ -204,7 +204,6 @@ class PresentedRow(object):
         # nìm závisí (obrácené mapování ne¾ ve specifikacích).
         self._dependent = {}
         self._editability_dependent = {}
-        self._codebook_runtime_filter_dependent = {}
         # Pro v¹echna poèítaná políèka si pamatuji, zda potøebují pøepoèítat,
         # èi nikoliv (po pøepoèítání je políèko èisté, po zmìnì políèka na
         # kterém závisí jiná políèka, nastavím závislým políèkùm pøíznak
@@ -232,13 +231,10 @@ class PresentedRow(object):
                         self._editability_dependent[dep] = [key]
             if c.codebook_runtime_filter is not None:
                 for dep in self._all_deps(c.codebook_runtime_filter.depends()):
-                    if self._codebook_runtime_filter_dependent.has_key(dep):
-                        self._codebook_runtime_filter_dependent[dep].append(key)
+                    if self._dependent.has_key(dep):
+                        self._dependent[dep].append(key)
                     else:
-                        self._codebook_runtime_filter_dependent[dep] = [key]
-                provider = c.codebook_runtime_filter.function()
-                e = c.type.enumerator()
-                e.set_runtime_filter_provider(provider, (self,))
+                        self._dependent[dep] = [key]
 
     def __getitem__(self, key, lazy=False):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
@@ -256,14 +252,21 @@ class PresentedRow(object):
             # Reset the dirty flag before calling the computer to allow the computer to retrieve
             # the original value without recursion.
             self._dirty[key] = False
-            func = column.computer.function()
-            new_value = pytis.data.Value(column.type, func(self))
-            if new_value.value() != value.value():
-                value = new_value
-                if self._row.has_key(key):
-                    self._row[key] = value
+            if column.codebook_runtime_filter:
+                run_callback = True
+            else:
+                func = column.computer.function()
+                new_value = pytis.data.Value(column.type, func(self))
+                if new_value.value() != value.value():
+                    value = new_value
+                    if self._row.has_key(key):
+                        self._row[key] = value
+                    else:
+                        self._virtual[key] = value
+                    run_callback = True
                 else:
-                    self._virtual[key] = value
+                    run_callback = False
+            if run_callback:
                 # TODO: This invokes the callback again when called within a callback handler.
                 self._run_callback(self.CALL_CHANGE, key)
         return value
@@ -296,12 +299,13 @@ class PresentedRow(object):
     def _run_callback(self, kind, key=None):
         callbacks = self._callbacks.get(kind, {})
         if key is None:
-            for callback in callbacks.values():
-                callback()
+            for callback_list in callbacks.values():
+                for c in callback_list:
+                    c()
         else:
-            callback = callbacks.get(key)
-            if callback:
-                callback()
+            callback_list = callbacks.get(key, ())
+            for c in callback_list:
+                c()
             
     def _mark_dependent_dirty(self, key):
         # Rekurzivnì oznaè závislá políèka.
@@ -320,7 +324,6 @@ class PresentedRow(object):
         if key is not None:
             marked = self._mark_dependent_dirty(key)
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
-        self._notify_runtime_filter_change(key)
         self._recompute_editability(key)
         if self._callbacks:
             if key is not None and marked:
@@ -355,16 +358,6 @@ class PresentedRow(object):
         self._editable[key] = result = func(self, key)
         self._editability_dirty[key] = False
         return result
-    
-    def _notify_runtime_filter_change(self, key=None):
-        if key is None:
-            columns = [c for c in self._columns if c.codebook_runtime_filter is not None]
-        elif self._codebook_runtime_filter_dependent.has_key(key):
-            columns = [self._coldict[k] for k in self._codebook_runtime_filter_dependent[key]]
-        else:
-            return
-        for c in columns:
-            c.type.enumerator().notify_runtime_filter_change()
 
     def get(self, key, default=None, lazy=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
@@ -560,8 +553,9 @@ class PresentedRow(object):
         except KeyError:
             callbacks = self._callbacks[kind] = {}
         if callbacks.has_key(key):
-            raise ProgramError("Callback already registered:", kind, key, callbacks[key])
-        callbacks[key] = function
+            callbacks[key].append(function)
+        else:
+            callbacks[key] = [function]
 
     # Nakonec to není nikde potøeba, ale kdyby, staèí odkomentovat a dopsat
     # test...
@@ -653,6 +647,4 @@ class PresentedRow(object):
         if display is None:
             display = lambda v: pytis.data.Value(column.type, v).export()
         return [(v, display(v)) for v in column.type.enumerator().values()]
-
-
     
