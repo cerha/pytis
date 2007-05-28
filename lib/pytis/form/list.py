@@ -1944,7 +1944,7 @@ class BrowseForm(ListForm):
             menu += (MSeparator(),) + tuple(actions)
         self._context_menu_static_part = menu
         # The dynamic part of the menu is created based on the links.
-        def link_title(type, name):
+        def link_title(name, type=FormType.BROWSE):
             if name.find('::') != -1:
                 name1, name2 = name.split('::')
                 title = resolver().get(name1, 'binding_spec')[name2].title() or \
@@ -1957,42 +1957,28 @@ class BrowseForm(ListForm):
                        FormType.VIEW:   _("Náhled %s"),
                        FormType.INSERT: _("Nový záznam pro %s")}
             return mapping[type] % title
+        # Create links lists as accepted by _link_mitems()
+        self._explicit_links = []
+        for  f in self._fields:
+            self._explicit_links.extend([(link.label() or link_title(link.name(), link.type()),
+                                          [(f, link)]) for link in f.links()])
         # Create automatic links for codebook fields.
+        self._automatic_links = []
         links = [(f, Link(cb, col))  for f, cb, col in
                  remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
-                                    [(f, f.codebook(self._data),
-                                      f.type(self._data).enumerator())
+                                    [(f, f.codebook(self._data), f.type(self._data).enumerator())
                                      for f in self._fields] if e and cb])]
-        # Add explicit links from FieldSpec.
-        for  f in self._fields:
-            links.extend([(f, link) for link in f.links()])
-        # Now we group all links by the target spec name.
         linkdict = {}
-        self._links = []
+        # Group automatic links by target spec name.
         for f, link in links:
-            if link.label():
-                self._links.append((link.label(), f, link))
-                continue
-            key = (link.type(), link.name(),)
             try:
-                a = linkdict[key]
+                a = linkdict[link.name()]
             except KeyError:
-                a = linkdict[key] = []
-            item = (f,link)
-            if item not in a:
-                a.append(item)
-        # Create the links list as accepted by _link_mitems()
+                a = linkdict[link.name()] = []
+            a.append((f, link))
         linklist = linkdict.items()
         linklist.sort()
-        for key, items in linklist:
-            title = link_title(*key)
-            if len(items) == 1:
-                f, link = items[0]
-                item = (title, f, link)
-            else:
-                item = (title, [(_("Pøes hodnotu sloupce '%s'") % f.label(),
-                                 f, link) for f, link in items])
-            self._links.append(item)
+        self._automatic_links = [(link_title(name), items) for name, items in linklist]
         
     def _formatter_parameters(self):
         name = self._name
@@ -2026,56 +2012,55 @@ class BrowseForm(ListForm):
                 raise ProgramError("Invalid action specification: %s" % x)
         return items
 
-    def _link_mitems(self, row, spec):
-        items = []
-        for item in spec:
-            if len(item) == 2:
-                title, links = item
-                subitems = self._link_mitems(row, links)
-                if len(subitems) == 1:
-                    i = subitems[0]
-                    items.append(MItem(title, command=i.command(), icon='link',
-                                       args=i.args(), help=i.help()))
-                elif subitems:
-                    items.append(Menu(title, subitems))
-                continue
-            title, f, link = item
-            if row[f.id()].value() is not None:
-                type, name, enabled = link.type(), link.name(), link.enabled()
-                pair = {link.column(): row[f.id()]}
-                if type == FormType.INSERT:
-                    cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
-                    hlp = _("Vlo¾it záznam pro hodnotu '%s' sloupce '%s'.") \
-                          % (row.format(f.id()), f.column_label())
-                    icon = 'link-new-record'
+    def _link_mitems(self, row, linkspec):
+        def mitem(title, f, link, row):
+            type, name, enabled = link.type(), link.name(), link.enabled()
+            pair = {link.column(): row[f.id()]}
+            if type == FormType.INSERT:
+                cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
+                hlp = _("Vlo¾it záznam pro hodnotu '%s' sloupce '%s'.") \
+                      % (row.format(f.id()), f.column_label())
+                icon = 'link-new-record'
+            else:
+                if name.find('::') != -1:
+                    assert type == FormType.BROWSE
+                    cls = BrowseDualForm
                 else:
-                    if name.find('::') != -1:
-                        assert type == FormType.BROWSE
-                        cls = BrowseDualForm
-                    else:
-                        mapping = {FormType.BROWSE: BrowseForm,
-                                   FormType.EDIT:   PopupEditForm,
-                                   FormType.VIEW:   ShowForm}
-                        cls = mapping[type]
-                    cmd = Application.COMMAND_RUN_FORM(name=name,form_class=cls,
-                                                       select_row=pair)
-                    hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
-                          % (row.format(f.id()), f.column_label())
-                    icon = 'link'
-                if callable(enabled):
-                    enabled = enabled(row)
-                if not enabled:
-                    cmd = Application.COMMAND_NOTHING(enabled=False)
-                items.append(MItem(title, command=cmd, help=hlp, icon=icon))
+                    mapping = {FormType.BROWSE: BrowseForm,
+                               FormType.EDIT:   PopupEditForm,
+                               FormType.VIEW:   ShowForm}
+                    cls = mapping[type]
+                cmd = Application.COMMAND_RUN_FORM(name=name,form_class=cls,
+                                                   select_row=pair)
+                hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
+                      % (row.format(f.id()), f.column_label())
+                icon = 'link'
+            if callable(enabled):
+                enabled = enabled(row)
+            if not enabled:
+                cmd = Application.COMMAND_NOTHING(enabled=False)
+            return MItem(title, command=cmd, help=hlp, icon=icon)
+        items = []
+        for title, links in linkspec:
+            links = [(f, link) for f, link in links if row[f.id()].value() is not None]
+            if len(links) == 1:
+                f, link = links[0]
+                items.append(mitem(title, f, link, row))
+            elif len(links) != 0:
+                subitems = [mitem(_("Pøes hodnotu sloupce '%s'") % f.label(), f, link, row)
+                            for f, link in links]
+                items.append(Menu(title, subitems))
         return items
                            
         
     def _context_menu(self):
         menu = self._context_menu_static_part
-        links = list(self._links)
-        if links:
+        if self._explicit_links:
             menu += (MSeparator(),) + \
-                    tuple(self._link_mitems(self.current_row(), links))
+                    tuple(self._link_mitems(self.current_row(), self._explicit_links))
+        if self._automatic_links:
+            menu += (MSeparator(),) + \
+                    tuple(self._link_mitems(self.current_row(), self._automatic_links))
         return menu
 
     def _cmd_print(self, print_spec_path=None):

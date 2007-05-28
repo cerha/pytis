@@ -1,3 +1,7 @@
+2007-05-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py: Separate explicit links in row context menu.
+
 2007-05-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py: Pass `prefill' on next row initialization.
