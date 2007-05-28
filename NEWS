@@ -4,6 +4,21 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-05-28 Tomas Cerha  <cerha@brailcom.org>
+
+	Byl upraven zpùsob øazení polo¾ek v menu odskokù.
+
+	Argumentem 'multi_insert' nastaveným na False lze pøi volání
+	`new_record' zakázat zobrazení tlaèítka "Dal¹í" ve vkládacím
+	formuláøi.
+
+	Pøíkazy pro editaci a mazání øádku jsou nyní aktivní i pokud
+	u¾ivatel nemá práva pro jejich provedení.  Díky tomu lze v pøípadì
+	vyvolání pøíkazu ohlásit, ¾e pøíkaz nelze provést.  Na druhou
+	stranu ale nebudou v menu pøíslu¹né pøíkazy
+	neaktivní (za¹edivìlé).  Aby ¹lo obojí, bylo by potøeba je¹tì
+	trochu pøepracovat zpracování pøíkazù - je to u¾ dlouho v TODO...
+	
 2007-05-25 Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: Pøi re-inicializaci formuláøe pro opakované vkládání
