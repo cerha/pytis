@@ -673,7 +673,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
     
-    def _cmd_new_record(self, name, prefill=None, inserted_data=None,
+    def _cmd_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
                         block_on_new_record=False, transaction=None):
         # Dokumentace viz funkce new_record().
         view = resolver().get(name, 'view_spec')
@@ -686,7 +686,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             result = run_form(PopupEditForm, name, mode=EditForm.MODE_INSERT,
                               prefill=prefill, inserted_data=inserted_data,
-                              transaction=transaction)
+                              multi_insert=multi_insert, transaction=transaction)
         return result
 
     def _can_run_procedure(self, spec_name, proc_name, args=(),
@@ -981,26 +981,30 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
                                                     proc_name=proc_name,
                                                     args=args, **kwargs)
 
-def new_record(name, prefill=None, inserted_data=None,
+def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
                block_on_new_record=False, transaction=None):
-    """Spus» interaktivní akci pøidání nového záznamu.
+    """Start an interactive form for new record insertion.
         
-    Argumenty:
+    Arguments:
         
-      name -- jméno specifikace pro resolver.
+      name -- specification name for resolver.
       
-      prefill -- slovník øetìzcových (u¾ivatelských) hodnot, které mají být
-        pøedvyplnìny pøi inicializaci formuláøe.
+      prefill -- A dictionary of values to be prefilled in the form.  Keys are field identifiers
+        and values are either 'pytis.data.Value' instances or the corresponding Python internal
+        values directly.
             
-      inserted_data -- sekvence datových øádkù (instancí pytis.data.Row),
-        kterými má být vstupní formuláø postupnì plnìn.
-            
-      block_on_new_record -- Pokud je True, nebude provedena procedura
-        on_new_record; v podstatì umo¾òuje zavolání new_record v rámci
-        procedury on_new_record.
+      inserted_data -- allows to pass a sequence of 'pytis.data.Row' instances to be inserted.  The
+        form is then gradually prefilled by values of these rows and the user can individually
+        accept or skip each row.
 
-      transaction -- transakce, která má být pou¾ita pro operace nad datovým
-        objektem formuláøe.
+      multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
+        False value will disable this feature and the `Next' button will not be present on the
+        form.
+            
+      block_on_new_record -- If true, the 'on_new_record' procedure will be blocked.  This makes it
+        possible to call 'new_record' from within the 'on_new_record' procedure without recursion..
+
+      transaction -- transaction for data operations.
             
     """
     return Application.COMMAND_NEW_RECORD.invoke(**locals())

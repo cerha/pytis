@@ -1,5 +1,10 @@
 2007-05-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: 
+
+	* pytis/form/form.py (PopupEditForm): Added support for disabling
+	the "Next" button.
+
 	* pytis/form/list.py: Separate explicit links in row context menu.
 
 2007-05-25  Tomas Cerha  <cerha@brailcom.org>
