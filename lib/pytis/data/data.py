@@ -136,6 +136,11 @@ class Operator:
         else:
             return compare_objects(self, other)
 
+    def __hash__(self):
+        return (hash(self.__class__.__name__) +
+                hash(self._args) +
+                hash(tuple(self._kwargs.items())))
+
 
 class Data(object):
     """Základní abstrakce pøístupu k tabulkovým datùm.

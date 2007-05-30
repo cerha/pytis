@@ -219,6 +219,9 @@ class Type(object):
             #result = compare_objects(self, other)
         return result
 
+    def __hash__(self):
+        return hash(self.__class__.__name__)
+
     def __getstate__(self):
         assert self._id is not None, ('Improper type instance', self)
         return self._id
@@ -1850,6 +1853,9 @@ class _Value(object):
                 return cmp(self.value(), other.value())
         else:
             return compare_objects(self, other)
+
+    def __hash__(self):
+        return hash(self._type) + hash(self._value)
 
     def type(self):
         """Vra» typ hodnoty jako instanci tøídy 'Type' zadanou v '__init__()'.
