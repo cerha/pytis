@@ -270,7 +270,7 @@ class Type(object):
         except KeyError:
             raise AttributeError(name)
 
-    def validate(self, object, strict=True, transaction=None, **kwargs):
+    def validate(self, object, strict=True, transaction=None, condition=None, **kwargs):
         """Validate the 'object' and return a 'Value' instance and an error.
 
         Arguments:
@@ -280,7 +280,8 @@ class Type(object):
             constraints are checked and the method does its best to convert
             anything reasonable to a value.  It may be useful when the
             reason is not validation, but the conversion.
-          transaction -- transakce pro operace nad datovými objekty   
+          transaction -- transaction for data operations.
+          condition -- runtime filter condition for enumerator validation.
           kwargs -- type specific keyword arguments
 
         Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
@@ -316,25 +317,25 @@ class Type(object):
         # pøidat dal¹í metodu nebo argument.  Nyní je to èásteènì øe¹eno
         # argumentem 'strict'.
         try:
-            key = (object, strict, transaction, tuple(kwargs.items()))
+            key = (object, strict, transaction, condition, tuple(kwargs.items()))
             result = self._validation_cache[key], None
         except ValidationError, e:
             result = None, e
         return result
 
     def _validating_provider(self, key):
-        object, strict, transaction, kwargs = key[0], key[1], key[2], dict(key[3])
+        object, strict, transaction, condition, kwargs_items = key
         special = rassoc(object, self._SPECIAL_VALUES)
         if special:
             value = Value(self, special[0])
         elif object is None:
             value = Value(self, None)
         else:
-            value, error = apply(self._validate, (object,), kwargs)
+            value, error = self._validate(object, **dict(kwargs_items))
             if error:
                 raise error
         if strict:
-            self._check_constraints(value.value(), transaction=transaction)
+            self._check_constraints(value.value(), transaction=transaction, condition=condition)
         return value
     
     def _validate(self, object, **kwargs):
@@ -365,7 +366,7 @@ class Type(object):
             message %= kwargs
         return ValidationError(message)
         
-    def _check_constraints(self, value, transaction=None, **kwargs):
+    def _check_constraints(self, value, transaction=None, condition=None, **kwargs):
         if value is None:
             if self._not_null:
                 raise self._validation_error(self.VM_NULL_VALUE)
@@ -373,7 +374,7 @@ class Type(object):
                 return True
         if self._enumerator is not None:
             if isinstance(self._enumerator, DataEnumerator):
-                if not self._enumerator.check(value, transaction):
+                if not self._enumerator.check(value, transaction, condition=condition):
                     raise self._validation_error(self.VM_INVALID_VALUE)
             else:
                 if not self._enumerator.check(value):
@@ -496,8 +497,8 @@ class Limited(Type):
     def _format_maxlen(self):
         return str(self._maxlen)
 
-    def _check_constraints(self, value, transaction=None):
-        super(Limited, self)._check_constraints(value, transaction=transaction)
+    def _check_constraints(self, value, **kwargs):
+        super(Limited, self)._check_constraints(value, **kwargs)
         self._check_maxlen(value)
 
     def _check_maxlen(self, value):
@@ -1337,8 +1338,8 @@ class Image(Binary, Big):
         """Return the tuple of allowed input formats or None."""
         return self._formats
     
-    def _check_constraints(self, value, transaction=None):
-        super(Image, self)._check_constraints(value, transaction=transaction)
+    def _check_constraints(self, value, **kwargs):
+        super(Image, self)._check_constraints(value, **kwargs)
         if value is not None:
             image = value.image()
             for min,max,size in zip(self._minsize, self._maxsize, image.size):
