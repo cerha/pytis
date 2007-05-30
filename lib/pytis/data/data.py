@@ -137,8 +137,8 @@ class Operator:
             return compare_objects(self, other)
 
     def __hash__(self):
-        return (hash(self.__class__.__name__) +
-                hash(self._args) +
+        return (hash(self._name) ^
+                hash(self._args) ^
                 hash(tuple(self._kwargs.items())))
 
 

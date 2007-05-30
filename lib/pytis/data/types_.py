@@ -1855,7 +1855,7 @@ class _Value(object):
             return compare_objects(self, other)
 
     def __hash__(self):
-        return hash(self._type) + hash(self._value)
+        return hash(self._type) ^ hash(self._value)
 
     def type(self):
         """Vra» typ hodnoty jako instanci tøídy 'Type' zadanou v '__init__()'.

@@ -1,3 +1,9 @@
+2007-05-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/data.py: Use XOR for hash composition to Aviod int exceeding.
+
+	* pytis/data/types_.py: Use XOR for hash composition to Aviod int exceeding.
+
 2007-05-30  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/types_.py: Make some classes hashable.
