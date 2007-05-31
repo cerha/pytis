@@ -360,6 +360,9 @@ FORM_COMMAND_MENU = ((
     (ListForm.COMMAND_EXPORT_CSV,
      _("Export do textového souboru"),
      _("Exportovat data do textového souboru ve formátu CSV.")),
+    (RecordForm.COMMAND_IMPORT_INTERACTIVE,
+     _("Import z textového souboru"),
+     _("Importovat data z textového souboru ve formátu CSV.")),
     ),(#---------------
     (InnerForm.COMMAND_RELOAD_FORM_STATE,
      _("Vrátit pøedchozí nastavení formuláøe"),
@@ -394,6 +397,7 @@ COMMAND_ICONS = (
     (ListForm.COMMAND_AUTOFILTER,               'autofilter'),
     (ListForm.COMMAND_INCREMENTAL_SEARCH,       'search-incremental'),
     (ListForm.COMMAND_EXPORT_CSV,               'export'),
+    (ListForm.COMMAND_IMPORT_INTERACTIVE,       'import'),
     (ListForm.COMMAND_INSERT_LINE(before=True,
                                   copy=True),   'insert-line-before-copy'),
     (ListForm.COMMAND_INSERT_LINE(before=True), 'insert-line-before'),
