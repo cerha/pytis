@@ -1,3 +1,9 @@
+2007-05-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* icons/export.png: Improved.
+
+	* icons/import.png: New icon.
+
 2007-05-16  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (Select.set_columns): Oprava odsazení.
