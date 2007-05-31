@@ -1352,12 +1352,11 @@ class RecordForm(LookupForm):
             break
         try:
             columns = [str(id.strip()) for id in fh.readline().split(separator)]
-            fields = [self._view.field(id) for id in columns]
-            if None in fields:
-                msg = _("Chybný identifikátor sloupce: %s")
-                run_dialog(Error, msg % columns[fields.index(None)])
-                return False
-            types = [f.type(self._data) for f in fields]
+            for id in columns:
+                if not self._row.has_key(id):
+                    run_dialog(Error, _("Neznámý sloupec: %s") % id)
+                    return False
+            types = [self._row[id].type() for id in columns]
             line_number = 1
             data = []
             for line in fh:
@@ -1371,10 +1370,10 @@ class RecordForm(LookupForm):
                 row_data = []
                 for id, type, val in zip(columns, types, values):
                     value, error = type.validate(val, transaction=self._transaction)
+                    assert value.type() == type, (value.type(), type)
                     if error:
-                        msg = _("Chyba dat na øádku %d:\n"
-                                "Nevalidní hodnota sloupce '%s': %s") % \
-                                (line_number, id, error.message())
+                        msg = _("Chyba dat na øádku %d, sloupec '%s':\n%s") % \
+                              (line_number, id, error.message())
                         run_dialog(Error, msg)
                         return False
                     row_data.append((id, value))
@@ -1912,7 +1911,7 @@ class PopupEditForm(PopupForm, EditForm):
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
                 ok_button.Enable(i == len(data)-1)
                 for id, value in data[i].items():
-                    self._row[id] = value
+                    self._row[id] = pytis.data.Value(self._row[id].type(), value.value())
             else:
                 self.set_status('progress', '')
                 run_dialog(Message, _("V¹echny záznamy byly zpracovány."))

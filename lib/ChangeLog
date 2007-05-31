@@ -1,5 +1,7 @@
 2007-05-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py: CSV import fixed.
+
 	* pytis/presentation/field.py: Codebook runtime filter handling reimplemented.
 
 	* pytis/form/inputfield.py: Likewise.
