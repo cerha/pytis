@@ -1,3 +1,9 @@
+2007-05-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py: Codebook runtime filter handling reimplemented.
+
+	* pytis/form/inputfield.py: Likewise.
+
 2007-05-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/data.py: Use XOR for hash composition to Aviod int exceeding.

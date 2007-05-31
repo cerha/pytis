@@ -18,10 +18,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Prezentace dat v políèkách.
+"""Row data presentation layer.
 
-_Políèkem_ se zde rozumí abstraktní element u¾ivatelského rozhraní pøijímající
-textová data, nikoliv konkrétní forma zobrazení dat.
+A _field_ in this context refers to an abstract element of the user intercace, not its concrete
+representation.
 
 """
 
@@ -34,22 +34,31 @@ from pytis.util import *
 
 
 class PresentedRow(object):
-    """Øádek prezentovaných dat.
+    """A record of presented data.
 
-    Tøída je mezièlánkem mezi datovým øádkem a jeho finální prezentací.  Na
-    rozdíl od datového øádku obsahuje v¹echna políèka dané specifikacemi
-    políèek 'FieldSpec'.  Na druhou stranu ale ji¾ neøe¹í konkrétní prezentaci
-    dat pøesahující jejich zformátování do stringu.
+    The class is an intermediate layer between a data row and its final presentation.  As oposed to
+    the data row, it contains all fields present in field specifications (including virtual
+    fields).  On the other hand, it doesn't solve a concrete presentation beyond string formatting.
 
     """
 
     CALL_CHANGE = 'CALL_CHANGE'
-    """Callback called on indirect field change (when the field value changes due to its computer
-    dependency on another field)."""
+    """Callback called on indirect field change.
+
+    Invoked when the field value changes due to its computer dependency on other field(s)."""
             
     CALL_EDITABILITY_CHANGE = 'CALL_EDITABILITY_CHANGE'
-    """Callback called on field editability change (when the field editability changes due to its
-    editability dependency on another field)."""
+    """Callback called on field editability change.
+
+    Invoked when the field editability changes due to its dependency on another field's
+    value(s)."""
+    
+    CALL_ENUMERATION_CHANGE = 'CALL_ENUMERATION_CHANGE'
+
+    """Callback called on field enumeration change.
+
+    Invoked when the enumaration filter changes due to its dependency on another field's value(s).
+    The enumaration is the list of valid field values provided by data type enumarator."""
     
     class _Column:
         def __init__(self, f, data):
@@ -67,38 +76,25 @@ class PresentedRow(object):
             
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
-        """Inicializuj prezentaci øádku.
+        """Inicialize the instance.
         
-        Argumenty:
+        Arguments:
 
-          fields -- sekvence specifikací políèek, instancí tøídy 'FieldSpec'
-            
-          data -- odpovídající datový objekt, instance tøídy 'pytis.data.Data'
-          
-          transaction -- current transaction to use for data operations.
-          
-          row -- data øádku, viz ní¾e
-          
-          prefill -- slovník hodnot pro inicializaci øádku namísto výchozích
-            hodnot.  Slovník je klíèovaný pøes textový identifikátor sloupce.
-            Hodnotami jsou instance tøídy Value, nebo pøímo vnitøní hodnoty.
-            Takto pøedvyplnìné hodnoty mají pøednost nejen pøed výchozími
-            hodnotami urèenými specifikací 'default' pøíslu¹ného políèka, ale
-            také pøed hodnotami dopoètenými pomocí jeho dopoèítávací funkce
-            ('computer').
-            
-          singleline -- právì kdy¾ je pravdivé, stringové hodnoty v¹ech políèek
-            budou zformátovány jako jednoøádkové
-            
-          new -- flag urèující, zda se jedná o novì vytváøený záznam (nikoliv
-            editaci záznamu ji¾ existujícího)
-            
-          resolver -- instance 'Resolver', která má být pou¾ívána k naèítání
-            specifikací.  Pokud není urèen, je pou¾it globální resolver získaný
-            pomocí funkce 'pytis.util.resolver()'.  Globální resolver je
-            pou¾itelný v samostatnì bì¾ící aplikaci, ale napø. v prostøedí
-            webového serveru je tøeba pracovat s více resolvery souèasnì a ty
-            je potom nutné pøedávat jako argument.
+          fields -- a sequence of field specifications as 'FieldSpec' instances.
+          data -- the underlying data object as a 'pytis.data.Data' instance.
+          transaction -- current transaction for data operations.
+          row -- initial row data (see below).
+          prefill -- a dictionary of values for row initialization.  The dictionary is keyed by
+            field identifiers and the values can be either 'pytis.data.Value' instances or the
+            corresponding Python internal values (matching the field type).  These values take
+            precedence before default values, the values contained within the passed 'row' as well
+            as the computed values (the computers for prefilled values are not invoked.
+          singleline -- a boolean flag indicating, that the exported values of all fields will be
+            formatted to single line (influences the 'format()' method behavior).
+          new -- boolean flag determining, whether the row represents a new record for insertion or
+            an existing row for select or update.
+          resolver -- a 'Resolver' instance for specification retrieval.  If not used, the global
+            resolver returned by 'pytis.util.resolver()' will be used.
 
         Initial field values are determined depending on the argument 'row', which can have one of
         the following values:
@@ -204,6 +200,7 @@ class PresentedRow(object):
         # nìm závisí (obrácené mapování ne¾ ve specifikacích).
         self._dependent = {}
         self._editability_dependent = {}
+        self._runtime_filter_dependent = {}
         # Pro v¹echna poèítaná políèka si pamatuji, zda potøebují pøepoèítat,
         # èi nikoliv (po pøepoèítání je políèko èisté, po zmìnì políèka na
         # kterém závisí jiná políèka, nastavím závislým políèkùm pøíznak
@@ -212,6 +209,8 @@ class PresentedRow(object):
         self._dirty = {}
         self._editability_dirty = {}
         self._editable = {}
+        self._runtime_filter_dirty = {}
+        self._runtime_filter = {}
         for c in self._columns:
             key = c.id
             if c.computer is not None:
@@ -230,11 +229,13 @@ class PresentedRow(object):
                     else:
                         self._editability_dependent[dep] = [key]
             if c.codebook_runtime_filter is not None:
+                self._runtime_filter[key] = None
+                self._runtime_filter_dirty[key] = True
                 for dep in self._all_deps(c.codebook_runtime_filter.depends()):
-                    if self._dependent.has_key(dep):
-                        self._dependent[dep].append(key)
+                    if self._runtime_filter_dependent.has_key(dep):
+                        self._runtime_filter_dependent[dep].append(key)
                     else:
-                        self._dependent[dep] = [key]
+                        self._runtime_filter_dependent[dep] = [key]
 
     def __getitem__(self, key, lazy=False):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
@@ -252,21 +253,14 @@ class PresentedRow(object):
             # Reset the dirty flag before calling the computer to allow the computer to retrieve
             # the original value without recursion.
             self._dirty[key] = False
-            if column.codebook_runtime_filter:
-                run_callback = True
-            else:
-                func = column.computer.function()
-                new_value = pytis.data.Value(column.type, func(self))
-                if new_value.value() != value.value():
-                    value = new_value
-                    if self._row.has_key(key):
-                        self._row[key] = value
-                    else:
-                        self._virtual[key] = value
-                    run_callback = True
+            func = column.computer.function()
+            new_value = pytis.data.Value(column.type, func(self))
+            if new_value.value() != value.value():
+                value = new_value
+                if self._row.has_key(key):
+                    self._row[key] = value
                 else:
-                    run_callback = False
-            if run_callback:
+                    self._virtual[key] = value
                 # TODO: This invokes the callback again when called within a callback handler.
                 self._run_callback(self.CALL_CHANGE, key)
         return value
@@ -299,13 +293,12 @@ class PresentedRow(object):
     def _run_callback(self, kind, key=None):
         callbacks = self._callbacks.get(kind, {})
         if key is None:
-            for callback_list in callbacks.values():
-                for c in callback_list:
-                    c()
+            for callback in callbacks.values():
+                callback()
         else:
-            callback_list = callbacks.get(key, ())
-            for c in callback_list:
-                c()
+            callback = callbacks.get(key)
+            if callback:
+                callback()
             
     def _mark_dependent_dirty(self, key):
         # Rekurzivnì oznaè závislá políèka.
@@ -325,6 +318,7 @@ class PresentedRow(object):
             marked = self._mark_dependent_dirty(key)
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._recompute_editability(key)
+        self._notify_runtime_filter_change(key)
         if self._callbacks:
             if key is not None and marked:
                 # Call 'chage_callback' for all remaining dirty fields.  Some fields may already
@@ -358,6 +352,15 @@ class PresentedRow(object):
         self._editable[key] = result = func(self, key)
         self._editability_dirty[key] = False
         return result
+    
+    def _notify_runtime_filter_change(self, key=None):
+        if key is None:
+            keys = self._runtime_filter_dirty.keys()
+        else:
+            keys = self._runtime_filter_dependent.get(key, ())
+        for k in keys:
+            self._runtime_filter_dirty[k] = True
+            self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
 
     def get(self, key, default=None, lazy=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
@@ -522,6 +525,8 @@ class PresentedRow(object):
         
         """
         column = self._coldict[key]
+        if column.codebook_runtime_filter is not None:
+            kwargs = dict(kwargs, condition=self.runtime_filter(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error:
             if self._invalid.has_key(key):
@@ -553,9 +558,8 @@ class PresentedRow(object):
         except KeyError:
             callbacks = self._callbacks[kind] = {}
         if callbacks.has_key(key):
-            callbacks[key].append(function)
-        else:
-            callbacks[key] = [function]
+            raise ProgramError("Callback already registered:", kind, key, callbacks[key])
+        callbacks[key] = function
 
     # Nakonec to není nikde potøeba, ale kdyby, staèí odkomentovat a dopsat
     # test...
@@ -582,7 +586,8 @@ class PresentedRow(object):
             if value is None:
                 return ''
             try:
-                v = enum.get(value, col, transaction=self._transaction)
+                v = enum.get(value, col, condition=self.runtime_filter(col),
+                             transaction=self._transaction)
             except pytis.data.DataAccessException:
                 return ''
             if not v:
@@ -645,6 +650,26 @@ class PresentedRow(object):
         column = self._coldict[key]
         display = self._display_func(column)
         if display is None:
-            display = lambda v: pytis.data.Value(column.type, v).export()
-        return [(v, display(v)) for v in column.type.enumerator().values()]
-    
+            display = lambda v: column.type.export(v)
+        values = column.type.enumerator().values(condition=self.runtime_filter(column))
+        return [(v, display(v)) for v in values]
+
+    def runtime_filter(self, key):
+        """Return the current run-time filter condition for an enumerator of field KEY.
+
+        Returns a 'pytis.data.Operator' instance when a filter is active or None if the field has
+        no enumerator or if the enumerator is not filtered.
+
+        """
+        try:
+            dirty = self._runtime_filter_dirty[key]
+        except KeyError:
+            return None
+        if dirty:
+            column = self._coldict[key]
+            function = column.codebook_runtime_filter.function()
+            self._runtime_filter_dirty[key] = False
+            condition = self._runtime_filter[key] = function(self)
+        else:
+            condition = self._runtime_filter[key]
+        return condition

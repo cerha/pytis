@@ -228,7 +228,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._enabled = not denied and not readonly and row.editable(id)
         self._callback_registered = False
         self._unregistered_widgets = {}
-        self._changed = False
+        self._needs_validation = False
         self._valid = False
         self._init_attributes()
         self._ctrl = ctrl = self._create_ctrl()
@@ -336,8 +336,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._row.validate(self.id(), self._get_value())
         
     def _on_idle(self, event):
-        if self._changed:
-            self._changed = False
+        if self._needs_validation:
+            self._needs_validation = False
             valid = self._validate() is None
             if valid != self._valid:
                 self._valid = valid
@@ -424,10 +424,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                 self._register_skip_navigation_callback()
 
     def _on_change(self, event=None):
-        # Called on user interaction (editation, selection).  The actual processing of the change
+        # Called on user interaction (editation, selection).  The actual processing of the event
         # is postponed to the idle thread to avoid user interface hangs on time-consuming
         # operations (such as complicated field recomputations).
-        self._changed = True
+        self._needs_validation = True
         if event:
             event.Skip()
 
@@ -978,22 +978,24 @@ class GenericCodebookField(InputField):
         self._cb_name = cb_name
         self._cb_spec = cb_spec
         super(GenericCodebookField, self)._init_attributes()
-        runtime_filter_provider = self._spec.codebook_runtime_filter
-        def no_value_condition():
-            return None
-        if runtime_filter_provider is None:
-            value_condition = no_value_condition
-        else:
-            filter_function_retriever = runtime_filter_provider()
-            if filter_function_retriever is None:
-                value_condition = no_value_condition
-            else:
-                filter_function = filter_function_retriever.function()
-                def value_condition():
-                    return filter_function(self._row)
-        self._value_condition = value_condition
-        self._row.register_callback('CALL_CHANGE', self._id, self._on_enumerator_change)
+        self._enumeration_changed = False
+        self._row.register_callback(self._row.CALL_ENUMERATION_CHANGE, self._id,
+                                    self._on_enumeration_change)
+        
+    def _on_enumeration_change(self):
+        # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
+        self._needs_validation = True
+        self._enumeration_changed = True
 
+    def _on_idle(self, event):
+        if self._enumeration_changed:
+            self._reload_enumeration()
+            self._enumeration_changed = False
+        return super(GenericCodebookField, self)._on_idle(event)
+
+    def _reload_enumeration(self):
+        pass
+        
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' arguemnt."""
         value = self._row[self.id()]
@@ -1007,13 +1009,10 @@ class GenericCodebookField(InputField):
         enumerator = self._type.enumerator()
         result = run_form(CodebookForm, self._cb_name, begin_search=begin_search,
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
-                          condition=enumerator.validity_condition())
+                          condition=self._row.runtime_filter(self.id()))
         if result: # may be None or False!
             self._set_value(result.format(enumerator.value_column()))
         self.set_focus()
-
-    def _on_enumerator_change(self):
-        pass
 
     def _cmd_invoke_codebook_form(self):
         self._run_codebook_form()
@@ -1130,7 +1129,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             self._set_value(result[value_column].export())
         return True
     
-    
+
 class ListField(GenericCodebookField):
     """Èíselníkové políèko zobrazující data èíselníku jako souèást formuláøe.
 
@@ -1167,12 +1166,12 @@ class ListField(GenericCodebookField):
         self._DEFAULT_WIDTH = total_width + 3
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
         self._list =  list
-        self._data_dirty = True
         wxid = list.GetId()
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, wxid, self._on_select)
         wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, wxid, self._on_activation)
         wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
         self._selected_item = None
+        self._reload_enumeration()
         return list
 
     def _on_select(self, event):
@@ -1184,21 +1183,12 @@ class ListField(GenericCodebookField):
         if self._enabled and i != self._selected_item:
             self._set_selection(i)
             
-    def _on_enumerator_change(self):
-        # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
-        self._data_dirty = True
-
-    def _on_idle(self, event):
-        if self._data_dirty:
-            self._load_list_data()
-        return super(ListField, self)._on_idle(event)
-
     #def _on_kill_focus(self, event):
     #    if self._selected_item is not None:
     #        self._list.EnsureVisible(self._selected_item)
     #    return super(ListField, self)._on_kill_focus(event)
         
-    def _load_list_data(self):
+    def _reload_enumeration(self):
         current = self._get_value()
         list = self._list
         list.DeleteAllItems()
@@ -1206,8 +1196,8 @@ class ListField(GenericCodebookField):
         select_item = None
         enumerator = self.type().enumerator()
         value_column = enumerator.value_column()
-        rows = enumerator.rows(condition=self._value_condition())
-        for i in range(len (rows)):
+        rows = enumerator.rows(condition=self._row.runtime_filter(self._id))
+        for i, row in enumerate(rows):
             list.InsertStringItem(i, "")
             v = row[value_column]
             self._list_data.append(v)
@@ -1216,7 +1206,6 @@ class ListField(GenericCodebookField):
             for j, id in enumerate(self._columns):
                 list.SetStringItem(i, j, row[id].export().replace("\n", ";"))
         self._set_selection(select_item)
-        self._data_dirty = False
 
     def _disable(self):
         self._update_background_color()
@@ -1239,8 +1228,6 @@ class ListField(GenericCodebookField):
         self._on_change()
 
     def _set_value(self, value):
-        if self._data_dirty:
-            self._load_list_data()
         if value:
             for i, v in enumerate(self._list_data):
                 if v.export() == value:
