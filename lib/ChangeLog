@@ -1,5 +1,8 @@
 2007-05-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py: Removed all garbage related to the old
+	runtime filter implementation.
+
 	* pytis/form/commands_.py: CSV import added to the commands menu.
 
 	* pytis/form/form.py: CSV import fixed.

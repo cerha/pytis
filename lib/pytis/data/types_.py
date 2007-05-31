@@ -171,8 +171,6 @@ class Type(object):
         assert validation_messages is None or \
                isinstance(validation_messages, types.DictType) 
         self._not_null = not_null
-        if enumerator is not None:
-            enumerator.make_me_safe()
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
         vm = [(getattr(self, attr), getattr(self, '_'+attr+'_MSG'))
@@ -183,12 +181,13 @@ class Type(object):
         self._fetched = True
         # Cachujeme na úrovni instancí, proto¾e ty jsou stejnì sdílené, viz
         # `__new__'.
-        self._validation_cache = cache = \
-            LimitedCache(self._validating_provider,
-                         limit=self._VALIDATION_CACHE_LIMIT)
-        if isinstance(enumerator, MutableEnumerator):
+        self._validation_cache = LimitedCache(self._validating_provider,
+                                              limit=self._VALIDATION_CACHE_LIMIT)
+        if isinstance(enumerator, DataEnumerator):
             # TODO: Jak se to bude chovat po smrti instance typu?
-            enumerator.add_hook_on_update(lambda : cache.reset())
+            def callback():
+                self._validation_cache.reset()
+            enumerator.add_callback_on_change(callback)
 
     def type_table(class_):
         """Vra» tabulku typù jako instanci '_TypeTable'.
@@ -710,7 +709,6 @@ class Password(String):
         if string != verify:
             return None, self._validation_error(self.VM_PASSWORD_VERIFY)
         return super(Password, self)._validate(string, **kwargs)
-
 
 
 class RegexString(String):
@@ -1380,8 +1378,6 @@ class Enumerator(object):
     instances used in types.
     
     """
-    _UNSAFE_METHODS = ()
-    
     def check(self, value):
         """Vra» pravdu, pokud 'value' je prvkem mno¾iny enumerátoru.
 
@@ -1410,15 +1406,15 @@ class Enumerator(object):
             self.name = forbidden_method
 
 class FixedEnumerator(Enumerator):
-    """Enumerátor pracující s fixní mno¾inou hodnot."""
+    """Enumerator with a fixed enumeration."""
     
     def __init__(self, enumeration):
-        """Inicializuj instanci.
+        """Initialize the instance.
         
-        Argumenty:
+        Arguments:
         
-          enumeration -- sekvence hodnot kompatibilních s vnitøními
-            (Pythonovými) hodnotami typu, pro který má být enumerátor pou¾it.
+          enumeration -- a sequence of values compatible with internal (Python) values of the type,
+            for which the enumerator is used.
           
         """
         super(FixedEnumerator, self).__init__()
@@ -1434,89 +1430,36 @@ class FixedEnumerator(Enumerator):
         return self._enumeration
         
         
-class MutableEnumerator(Enumerator):
-    """Abstraktní tøída, kterou povinnì dìdí v¹echny mutable enumerátory.
+class DataEnumerator(Enumerator):
+    """Enumerator retrieving the enumeration values from a data object.
 
-    Mutable enumerátor takový, jeho¾ mno¾ina hodnot se mù¾e v èase mìnit.
-
-    """
-    def __init__(self):
-        self._hooks = []
-        self._running_hooks = False
-        self._data_lock = thread.allocate_lock()
-        self._hook_lock = thread.allocate_lock()
-
-    def _do_update(self, force):
-        if self._running_hooks:
-            return True
-        self._running_hooks = True
-        try:
-            for hook in self._hooks:
-                hook()
-        finally:
-            self._running_hooks = False
-        return True
-        
-    def _update(self, force=False):
-        """Aktualizuj data enumerátoru.
-
-        Bezprostøednì po zavolání této metody by mìl enumerátor pracovat
-        s aktuálními daty.
-
-        Argumenty:
-
-          force -- právì kdy¾ je pravda, je update vynucený, jinak mù¾e a
-            nemusí být proveden, vìt¹inou v závislosti na nároènosti operace
-
-        Vrací: Pravdu, právì kdy¾ byl update skuteènì proveden.
-
-        """
-        def lfunction():
-            return self._do_update(force)
-        return with_lock(self._data_lock, lfunction)
-
-    def add_hook_on_update(self, hook):
-        def lfunction():
-            self._hooks.append(hook)
-        with_lock(self._hook_lock, lfunction)
-        
-
-class DataEnumerator(MutableEnumerator):
-    """Enumerátor získávající své hodnoty z datového objektu.
-
-    Hodnoty výètu jsou pythonové hodnoty urèitého sloupce datového objektu.
-    Typicky je to klíèový sloupec ale pomocí argumentù konstruktoru je mo¾no
-    zvolit libovolný jiný sloupec.
+    The enumerator uses one column of the data object to get the set of enumeration values.  This
+    is typically the key column (by default), but it is possible to choose any other column by
+    passing proper constructor arguments.
 
     """
-    _UNSAFE_METHODS = (MutableEnumerator._UNSAFE_METHODS +
-                       ('iter', 'set_runtime_filter_provider',))
-        
     def __init__(self, data_factory, data_factory_kwargs={}, value_column=None,
                  validity_column=None, validity_condition=None):
-        """Inicializuj instanci.
+        """Initialize the instance.
         
-        Argumenty:
+        Arguments:
         
-          data_factory -- instance tøídy 'DataFactory' slou¾ící k vytvoøení
-            datového objektu pou¾itého k získání výètových hodnot.
-            
-          data_factory_kwargs -- dictionary klíèovaných argumentù pro metodu
-            'DataFactory.create()'.
-            
-          value_column -- id sloupce datového objektu poskytujícího hodnoty
-            enumerátoru.  Je-li None, bude pou¾it klíèový sloupec.
+          data_factory -- a 'DataFactory' instance for data object creation.
+          data_factory_kwargs -- a dictionary of keyword arguments for the 'DataFactory.create()'
+            method.
+          value_column -- identifier of the column which provides the enumeration values.  If
+            None, the key column is used.
 
-          validity_column -- id sloupce, urèujícího platnost øádkù datového
-            zdroje.  Pokud je urèen (není None), budou za hodnoty výètu
-            pova¾ovány pouze ty øádky, v nich¾ daný sloupec nabývá pravdivé
-            hodnoty (musí jít o Boolean sloupec).  Není mo¾no pou¾ít v
-            kombinaci s validity_condition.
-          
-          validity_condition -- podmínka urèující platnost øádkù datového
-            zdroje.  Pokud je urèena, budou za hodnoty výètu pova¾ovány pouze
-            ty øádky, v nich¾ je podmínka pravdivá.  Jde o obecnìj¹í variantu
-            validity_column a nelze pou¾ít v kombinaci s tímto argumentem.
+          validity_column -- identifier of the column which determines valid rows (or None).  If
+            defined, only rows with a true value in this column will be used for the enumeration
+            (it must be a boolean column).  It is not possible to combine this argument with the
+            'validity_condition' argument below.
+
+          validity_condition -- a condition determining validity of data rows as a
+            'pytis.data.Operator' instance (or None).  Only rows complying to this condition will
+            be used for the enumeration.  This is a more general option than the 'validity_column'
+            argument above.  It is not possible to combine these two arguments, but it is always
+            possible to implement 'validity_column' within 'validity_condition'.
             
         """
         super(DataEnumerator, self).__init__()
@@ -1535,16 +1478,12 @@ class DataEnumerator(MutableEnumerator):
         if type(data_factory_kwargs) == type(()):
             data_factory_kwargs = dict(data_factory_kwargs)
         self._data_factory_kwargs = data_factory_kwargs
+        self._data_lock = thread.allocate_lock()
         self._value_column_ = value_column
         self._validity_column = validity_column
         if validity_column is not None:
             validity_condition = EQ(validity_column, Value(Boolean(), True))
         self._validity_condition = validity_condition
-        # Initialize the runtime filter.
-        self._runtime_filter = None
-        self._runtime_filter_dirty = True
-        self._runtime_filter_provider = None
-        self._runtime_filter_args = None
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -1555,38 +1494,36 @@ class DataEnumerator(MutableEnumerator):
         
     def _complete(self):
         # Dokonèi instanci vytvoøením datového objektu.
-        kwargs = self._data_factory_kwargs
-        self._data = data = self._data_factory.create(**kwargs)
-        self._data_changed = False
-        def on_data_change():
-            self._data_changed = True
-        self._data.add_callback_on_change(on_data_change)
+        self._data = data = self._data_factory.create(**self._data_factory_kwargs)
         if self._value_column_ is None:
-            key = data.key()
-            assert len(key) == 1, \
-                   "Only single-column key is supported by DataEnumerator."
-            self._value_column = key[0].id()
+            self._value_column = data.key()[0].id()
         else:
             self._value_column = self._value_column_
         c = data.find_column(self._value_column)
         assert c, ('Non-existent value column', self._value_column)
         self._value_column_type = c.type()
-        if self._validity_column is not None:
-            c = data.find_column(self._validity_column)
-            assert c, ('Non-existent validity column', self._validity_column)
-            assert isinstance(c.type(), Boolean), \
-                   ('Invalid validity column type', c)
+        if __debug__:
+            if self._validity_column is not None:
+                c = data.find_column(self._validity_column)
+                assert c, ('Non-existent validity column', self._validity_column)
+                assert isinstance(c.type(), Boolean), ('Invalid validity column type', c)
+
+    def _condition(self, condition=None):
+        if self._validity_condition is not None:
+            if condition is not None:
+                return AND(condition, self._validity_condition)
+            else:
+                return self._validity_condition
+        else:
+            return condition
 
     def _retrieve(self, value, transaction=None, condition=None):
-        data = self._data
-        v = Value(self._value_column_type, value)
-        the_condition = EQ(self._value_column, v)
-        if condition is not None:
-            the_condition = AND(the_condition, condition)
-        validity_condition = self.validity_condition()
+        the_condition = EQ(self._value_column, Value(self._value_column_type, value))
+        validity_condition = self._condition(condition=condition)
         if validity_condition is not None:
-            condition = AND(the_condition, validity_condition)
+            the_condition = AND(the_condition, validity_condition)
         def lfunction():
+            data = self._data
             count = data.select(the_condition, transaction=transaction)
             if count > 1:
                 raise ProgramError('Insufficient runtime filter for DataEnumerator',
@@ -1595,14 +1532,6 @@ class DataEnumerator(MutableEnumerator):
             data.close()
             return row
         return with_lock(self._data_lock, lfunction)
-
-    def _do_update(self, force=False):
-        if force or self._data_changed:
-            self._data_changed = False
-            result = super(DataEnumerator, self)._do_update(force=force)
-        else:
-            result = False
-        return result
 
     # Enumerator interface
     
@@ -1615,11 +1544,7 @@ class DataEnumerator(MutableEnumerator):
         return result
 
     def values(self, condition=None):
-        the_condition = self.validity_condition()
-        if the_condition is None:
-            the_condition = condition
-        elif condition is not None:
-            the_condition = AND(the_condition, condition)
+        the_condition = self._condition(condition=condition)
         def lfunction():
             return self._data.select_map(lambda r: r[self._value_column].value(),
                                          condition=the_condition)
@@ -1628,8 +1553,11 @@ class DataEnumerator(MutableEnumerator):
     
     # Extended interface.
 
+    def add_callback_on_change(self, callback):
+        self._data.add_callback_on_change(callback)
+        
     def data_factory(self):
-        """Vra» specifikaci datového jako instanci 'pytis.data.DataFactory'."""
+        """Vra» specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""
         return self._data_factory
     
     def value_column(self):
@@ -1667,15 +1595,11 @@ class DataEnumerator(MutableEnumerator):
 
         Arguments:
 
-          condition -- additional filtering condition to the one returned by
-            'validity_condition'
+          condition -- additional filtering condition to the 'validity_condition' passed to the
+            constructor.
 
         """
-        the_condition = self.validity_condition()
-        if the_condition is None:
-            the_condition = condition
-        elif condition is not None:
-            the_condition = AND(the_condition, condition)
+        the_condition = self._condition(condition=condition)
         def lfunction():
             return self._data.select_map(identity, condition=the_condition)
         return with_lock(self._data_lock, lfunction)
@@ -1683,91 +1607,7 @@ class DataEnumerator(MutableEnumerator):
     def type(self, column):
         """Vra» datový typ daného sloupce v datovém objektu enumerátoru."""
         return self._data.find_column(column).type()
-
-    def iter(self):
-        """Return an iterator iterating over all the data rows.
-
-        Warning: This method is not thread safe!
-
-        """
-        # TODO: Asi by bylo èist¹í pøedefinovat metodu values a tu potom
-        # pou¾ívat v kombinaci s metodou get.  Aby se ov¹em v get neprovádìl
-        # zbyteènì nový select, bylo by nutné si nìjak internì pamatovat
-        # poslední øádek a v metodì get jej potom rovnou pou¾ít, pokud je to
-        # øádek po¾adované hodnoty.
-        self._data.select(self.validity_condition())
-        def fetchone():
-            row = self._data.fetchone()
-            if row is None:
-                self._data.close()
-            return row
-        return iter(fetchone, None)
-
-    # Run-time filter interface.
-
-    def set_runtime_filter_provider(self, provider, args):
-        """Nastav poskytovatele run-time podmínky filtrující øádky enumerátoru.
-
-        Argumenty:
-        
-          provider -- None, nebo funkce, která vrací instanci tøídy 'Operator'.
-            Tato funkce bude volána v¾dy, kdy¾ je tøeba zjistit dodateènou
-            filtrovací podmínku.
-          args -- seznam argumentù (tuple), které mají být pøedány této funkci.
-
-        Run-time podmínka umo¾òuje mìnit mno¾inu platných øádkù enumerátoru za
-        bìhu.  Po externí zmìnì podmínky je tøeba toto oznámit voláním
-        'notify_runtime_filter_change()'.  Tím je zaji¹tìno, ¾e pøi v¹ech
-        následných operacích s enumerátorem bude podmínka automaticky
-        pøepoèítána a mno¾ina platných hodnot enumerátoru bude aktualizována.
-
-        Warning: This method modifies enumerator's behavior and so it may not
-        be used in enumerator instances contained in 'Type' instances.
-
-        """
-        assert callable(provider) or provider is None
-        self._runtime_filter_provider = provider
-        self._runtime_filter_args = args
-
-    def notify_runtime_filter_change(self):
-        """Ohlas zmìnu run-time filtrovací podmínky.
-
-        Tato metoda by mìla být volána v¾dy, kdy¾ dojde k externí zmìnì
-        run-time filtrovací podmínky.  Enumerátor se tak dozví, ¾e si má v
-        pøípadì potøeby zjistit novou hodnotu podmínky (viz metoda
-        'set_runtime_filter_provider()').
-        
-        """
-        self._runtime_filter_dirty = True
-        self._update(force=True)
-        
-    def validity_condition(self):
-        """Vra» podmínku urèující platné øádky enumerátoru.
-        
-        Podmínka zahrnuje jak statické omezení øádkù enumerátoru, tak aktuální
-        hodnotu run-time podmínky
-
-        Vrací: Instanci tøídy 'pytis.data.Operator'.
-
-        """
-        f = self._runtime_filter_provider
-        if f is not None:
-            if self._runtime_filter_dirty:
-                self._runtime_filter = flt = apply(f, self._runtime_filter_args)
-                assert isinstance(flt, Operator) or flt is None
-                self._runtime_filter_dirty = False
-                self._update(force=True)
-            condition = self._runtime_filter
-        else:
-            condition = None
-        if self._validity_condition:
-            if condition:
-                return AND(condition, self._validity_condition)
-            else:
-                return self._validity_condition
-        else:
-            return condition
-
+    
 
 class ValidationError(Exception):
     """Popis chyby pøi neúspìchu validace v 'Type.validate'.
