@@ -37,6 +37,7 @@ Tento modul je výjimeèný ve dvou smìrech:
 """
 
 import cgitb
+import codecs
 import copy
 import gc
 import inspect
@@ -130,6 +131,15 @@ class Counter:
         self._value = 0
 
 
+_emergency_encoder = codecs.getencoder('iso-8859-2')
+def safe_encoding_write(stream, string):
+    try:
+        stream.write(string)
+    except UnicodeEncodeError:
+        string, __ = _emergency_encoder(string, 'replace')
+        stream.write(string)
+
+
 class Pipe:
     """Jednoduchá roura umo¾òující zápis a ètení stringových dat.
 
@@ -200,7 +210,7 @@ class Pipe:
                 buffer[-1] = buffer[-1] + string_
             self._free_empty_lock()
             for s in self._cc:
-                s.write(string_)
+                safe_encoding_write(s, string_)
         with_lock(self._buffer_lock, lfunction)
 
     def read(self, size=-1):
@@ -1211,7 +1221,7 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
                         return
                 except AttributeError:
                     pass
-                output.write(data)
+                safe_encoding_write(output, data)
             if __debug__:
                 log(DEBUG, 'Stream zkopírován:', (input, output))
         except:
