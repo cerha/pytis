@@ -333,13 +333,19 @@ class Popen:
             finally:
                 os._exit(1)
         if r_to_child is not None:
-            os.close(r_to_child)
+            try:
+                os.close(r_to_child)
+            except OSError:
+                pass
         if w_to_child is None:
             self._to_child = None
         else:
             self._to_child = os.fdopen(w_to_child, 'w')
         if w_from_child is not None and isinstance(w_from_child, int):
-            os.close(w_from_child)
+            try:
+                os.close(w_from_child)
+            except OSError:
+                pass
         if r_from_child is None:
             self._from_child = None
         else:
