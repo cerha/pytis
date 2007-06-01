@@ -1090,7 +1090,6 @@ def with_lock(lock, function):
     """
     if __debug__:
         import pytis.util
-        pytis.util.log(pytis.util.DEBUG, 'Acquiring lock:', lock)
         _with_lock_lock.acquire()
         try:
             thread_id = thread.get_ident()
@@ -1106,13 +1105,10 @@ def with_lock(lock, function):
             _with_lock_lock.release()
     lock.acquire()
     try:
-        if __debug__:
-            pytis.util.log(pytis.util.DEBUG, 'Lock acquired:', lock)
         return function()
     finally:
         lock.release()
         if __debug__:
-            pytis.util.log(pytis.util.DEBUG, 'Lock released:', lock)
             _with_lock_lock.acquire()
             try:
                 _active_locks[thread_id].remove(lock)
