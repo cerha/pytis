@@ -6,8 +6,16 @@
 
 2007-06-04 Tomas Cerha  <cerha@brailcom.org>
 
+	V pytis-demo byl implementován nový formuláø pro ovìøení
+	funkènosti rùzných typù výètových políèek a také políèek
+	vyu¾ívajících FixedEnumeration.  Pøíklady jsou také øádnì
+	zdokumentovány.
+	
 	* BUGFIX: Opravena chyba v pøedávání runtime filtru pøi pou¾ití
 	`FixedEnumerator'.
+	
+	* BUGFIX: ListBoxField nyní respektuje specifikaci `height' a
+	uèiní nastavenou hodnotu viditelnou, pokud je zobrazen scrollbar.
 	
 2007-05-31 Tomas Cerha  <cerha@brailcom.org>
 
