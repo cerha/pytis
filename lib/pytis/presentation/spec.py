@@ -1188,28 +1188,31 @@ class BindingSpec(object):
 
 
 class Editable(object):
-    """Výètová tøída definující konstanty urèující editovatelnost políèka."""
+    """Definition of available constants for field editability specification."""
     ALWAYS = 'ALWAYS'
-    """Políèko je editovatelné v¾dy."""
+    """The field is always editable."""
     ONCE = 'ONCE'
-    """Políèko je editovatelné pouze jednou, pøi vytváøení nového záznamu."""
+    """The field is only editable when a new record is being created."""
     NEVER = 'NEVER'
-    """Políèko není editovatelné nikdy."""
+    """The field is never ediatble."""
 
     
 class SelectionType(object):
-    """Výètová tøída definující konstanty zpùsobu výbìru z mno¾iny hodnot."""
+    """Definition of available selection types for enumeration fields."""
     CHOICE = 'CHOICE'
-    """Výbìr z menu.  Viditelná je jen právì vybraná hodnota."""
-    RADIO_BOX = 'RADIO_BOX'
-    """Pro ka¾dou hodnotu je zobrazeno za¹krtávací políèko."""
+    """Pull-down menu selection."""
+    RADIO = 'RADIO'
+    """Radio box with a radio button for each selection value."""
     LIST_BOX = 'LIST_BOX'
-    """Viditelná je vybraná hodnota a \"nìkolik\" kolem."""
+    """Scrollable list selection."""
     CODEBOOK = 'CODEBOOK'
-    """Je mo¾ný pøímý zápis hodnoty nebo vyvolání èíselníkového formuláøe."""
+    """Hand-editable code entry field with a Codebook form invocation button."""
     LIST = 'LIST'
-    """Vícesloupcové/víceøádkové výbìrové políèko pro èíselníky."""
-
+    """Scrollable list with all codebook columns."""
+    # Backwards compatibility options
+    RADIO_BOX = RADIO
+    """Depricated."""
+    
    
 class PostProcess(object):
     "Výètová tøída definující konstanty pro zpùsob zpracování u¾iv. vstupu."

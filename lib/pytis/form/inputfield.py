@@ -125,7 +125,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                     SelectionType.LIST:      ListField,
                     SelectionType.CHOICE:    ChoiceField,
                     SelectionType.LIST_BOX:  ListBoxField,
-                    SelectionType.RADIO_BOX: RadioBoxField,
+                    SelectionType.RADIO: RadioBoxField,
                     }
                 field = mapping[selection_type]
         elif isinstance(type, pytis.data.Image):
@@ -848,13 +848,20 @@ class RadioBoxField(Unlabeled, EnumerationField):
 
 class ListBoxField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.ListBox'."""
-
+    _DEFAULT_HEIGHT = None
+    
     def _create_ctrl(self):
         control = wx.ListBox(self._parent, choices=self._choices(),
                              style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
+        if self.height() is not None:
+            height = char2px(control, 1, float(10)/7).height * self.height()
+            control.SetMinSize((control.GetSize().width, height))
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
         return control
     
+    def _set_value(self, value):
+        super(ListBoxField, self)._set_value(value)
+        self._ctrl.SetFirstItem(self._ctrl.GetSelection())
 
 class Invocable(object, CommandHandler):
     """Mix-in class for fields capable to invoke a selection.

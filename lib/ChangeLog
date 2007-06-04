@@ -1,5 +1,12 @@
 2007-06-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (SelectionType.RADIO_BOX): Renamed to
+	`RADIO'.
+
+	* pytis/form/inputfield.py: Use new `SelectionType' constants.
+	(ListBoxField): Respect `height' specification.  Make the selected
+	value visible.
+
 	* pytis/web/form.py: Minor optimization.  Fixed `EditForm'
 	constructor bug.
 
