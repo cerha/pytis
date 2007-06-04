@@ -186,13 +186,13 @@ class PresentedRow(object):
         self._resolve_dependencies()
         self._run_callback(self.CALL_CHANGE, None)
 
-    def _all_deps(self, depends):
+    def _all_deps(self, computer):
         all = []
-        for key in depends:
+        for key in computer.depends():
             all.append(key)
             computer = self._coldict[key].computer
             if computer:
-                all.extend(self._all_deps(computer.depends()))
+                all.extend(self._all_deps(computer))
         return all
         
     def _init_dependencies(self):
@@ -215,7 +215,7 @@ class PresentedRow(object):
             key = c.id
             if c.computer is not None:
                 self._dirty[key] = True
-                for dep in c.computer.depends():
+                for dep in self._all_deps(c.computer):
                     if self._dependent.has_key(dep):
                         self._dependent[dep].append(key)
                     else:
@@ -223,7 +223,7 @@ class PresentedRow(object):
             if isinstance(c.editable, Computer):
                 self._editable[key] = True
                 self._editability_dirty[key] = True
-                for dep in self._all_deps(c.editable.depends()):
+                for dep in self._all_deps(c.editable):
                     if self._editability_dependent.has_key(dep):
                         self._editability_dependent[dep].append(key)
                     else:
@@ -231,7 +231,7 @@ class PresentedRow(object):
             if c.codebook_runtime_filter is not None:
                 self._runtime_filter[key] = None
                 self._runtime_filter_dirty[key] = True
-                for dep in self._all_deps(c.codebook_runtime_filter.depends()):
+                for dep in self._all_deps(c.codebook_runtime_filter):
                     if self._runtime_filter_dependent.has_key(dep):
                         self._runtime_filter_dependent[dep].append(key)
                     else:
@@ -300,34 +300,23 @@ class PresentedRow(object):
             if callback:
                 callback()
             
-    def _mark_dependent_dirty(self, key):
-        # Rekurzivnì oznaè závislá políèka.
-        # Vra» pravdu, pokud k oznaèení nìjakých políèek do¹lo.
-        if self._dependent.has_key(key):
-            for k in self._dependent[key]:
-                self._dirty[k] = True
-                self._mark_dependent_dirty(k)
-            return True
-        else:
-            return False
-    
     def _resolve_dependencies(self, key=None):
         # Recompute dependencies for all fields when the key is None or recompute
         # just fields depending on given field (after its change).
-        if key is not None:
-            marked = self._mark_dependent_dirty(key)
+        if key is not None and self._dependent.has_key(key):
+            for k in self._dependent[key]:
+                self._dirty[k] = True
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._recompute_editability(key)
         self._notify_runtime_filter_change(key)
-        if self._callbacks:
-            if key is not None and marked:
-                # Call 'chage_callback' for all remaining dirty fields.  Some fields may already
-                # have been recomputed during the editability and runtime filter recomputations.
-                # The callbacks for those fields have already been generated, but here we neen to
-                # handle the rest.
-                for key, dirty in self._dirty.items():
-                    if dirty:
-                        self._run_callback(self.CALL_CHANGE, key)
+        if self._callbacks and key is not None and self._dependent.has_key(key):
+            # Call 'chage_callback' for all remaining dirty fields.  Some fields may already have
+            # been recomputed during the editability and runtime filter recomputations.  The
+            # callbacks for those fields have already been generated, but here we neen to handle
+            # the rest.
+            for key, dirty in self._dirty.items():
+                if dirty:
+                    self._run_callback(self.CALL_CHANGE, key)
     
     def _recompute_editability(self, key=None):
         if key is None:
@@ -651,8 +640,12 @@ class PresentedRow(object):
         display = self._display_func(column)
         if display is None:
             display = lambda v: column.type.export(v)
-        values = column.type.enumerator().values(condition=self.runtime_filter(column))
-        return [(v, display(v)) for v in values]
+        enumerator = column.type.enumerator()
+        if isinstance(enumerator, pytis.data.DataEnumerator):
+            kwargs = dict(condition=self.runtime_filter(column))
+        else:
+            kwargs = {}
+        return [(v, display(v)) for v in enumerator.values(**kwargs)]
 
     def runtime_filter(self, key):
         """Return the current run-time filter condition for an enumerator of field KEY.
