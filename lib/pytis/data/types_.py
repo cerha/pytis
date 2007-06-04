@@ -1129,6 +1129,12 @@ class Binary(Limited):
             if not isinstance(data, buffer):
                 raise ValidationError(_("Not a buffer object: %r") % data)
             
+        def _load(self, f):
+            # Load and validate data from a file-like object.
+            data = buffer(f.read())
+            self._validate(data)
+            self._buffer = data
+                
         def buffer(self):
             """Return the binary data as a Python buffer instance."""
             return self._buffer
@@ -1171,13 +1177,6 @@ class Binary(Limited):
                 f.write(self._buffer)
             finally:
                 f.close()
-                
-        def _load(self, f):
-            # Load and validate data from a file-like object.
-            data = buffer(f.read())
-            self._validate(data)
-            self._buffer = data
-            
                 
         def load(self, path, filename=None):
             """Try to load the buffer from a file replacing the current data.
@@ -1393,17 +1392,6 @@ class Enumerator(object):
         """Vra» sekvenci v¹ech správných u¾ivatelských hodnot typu."""
         raise ProgramError('Not implemented', 'Enumerator.values()')
     
-    def make_me_safe(self):
-        """Remove unsafe methods from the instance.
-
-        This method is used in 'Type' instance to protect them from
-        misbehavior.
-
-        """
-        for name in self._UNSAFE_METHODS:
-            def forbidden_method(self, *args, **kwargs):
-                raise Exception ("Forbidden method called", name)
-            self.name = forbidden_method
 
 class FixedEnumerator(Enumerator):
     """Enumerator with a fixed enumeration."""
