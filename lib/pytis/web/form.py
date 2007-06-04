@@ -187,10 +187,10 @@ class LayoutForm(Form):
             ctrl = g.upload
         elif type.enumerator():
             ctrl = g.select
+            enum = self._row.enumerate(f.id())
             attr['options'] = [("&nbsp;", "")] + \
-                              [(uv, str(v)) for v, uv
-                               in self._row.enumerate(f.id())]
-            if value.value() in type.enumerator().values():
+                              [(display, str(val)) for val, display in enum]
+            if value.value() in [val for val, display in enum]:
                 attr['selected'] = str(value.value())
         else:
             if f.height() > 1:
@@ -302,9 +302,9 @@ class EditForm(LayoutForm, _SubmittableForm):
     
     def __init__(self, data, view, resolver, row, errors=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
+        key = self._data.key()[0].id()
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in view.layout().order() and k!= key]
-        #key = self._data.key()[0].id()
         #if not self._row.new():
         #    self._hidden += [(key,  self._row.format(key))]
         assert isinstance(errors, (tuple, list, str, unicode)), errors
