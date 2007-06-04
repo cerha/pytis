@@ -1025,6 +1025,20 @@ class DBDataDefault(_DBTest):
         assert result == 2, result
         result = d.select_aggregate((d.AGG_SUM, 'castka')).value()
         assert result == 3000, result
+    def test_select_and_aggregate(self):
+        d = self.data
+        select_result, aggregate_result = d.select_and_aggregate(d.AGG_SUM)
+        assert select_result == 2, select_result
+        assert aggregate_result[0].value() == 5, aggregate_result[0].value()
+        assert aggregate_result[1].value() == None, aggregate_result[1].value()
+        assert aggregate_result[2].value() == 3000, aggregate_result[2].value()
+        assert aggregate_result[3].value() == None, aggregate_result[3].value()
+        value = pytis.data.Value(pytis.data.Float(), 2000)
+        select_result, aggregate_result = \
+            d.select_and_aggregate(d.AGG_MAX, columns=('castka',),
+                                   condition=pytis.data.GE('castka', value))
+        assert select_result == 1, select_result
+        assert aggregate_result[0].value() == 2000
     def test_constructor_condition(self):
         d = self._dcosi_condition
         def I(i):

@@ -375,6 +375,40 @@ class Data(object):
 
         """
         raise self.UnsupportedOperation()
+    
+    def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
+                             columns=None, transaction=None):
+        """Combination of 'select' and 'select_aggregate' methods.
+
+        The method returns a pair (SELECT_RESULT, AGGREGATE_RESULT) where:
+
+        - SELECT_RESULT is a result of `select' call with the same arguments
+          (except for 'operation').
+
+        - AGGREGATE_RESULT is a 'Row' instance containing the same columns as
+          the corresponding select.  Row values in place of number columns are
+          results of the aggregate function defined by the 'operation' argument
+          that must be one of the 'AGG_*' class constants.  Other row values
+          are undefined.
+
+        If 'select_aggregate' is unsupported in the given class then
+        'select_and_aggregate' is unsupported as well.
+        
+        """
+        if columns is None:
+            columns = [c.id() for c in self.columns()]
+        select_result = self.select(condition=condition, reuse=reuse,
+                                    sort=sort, columns=columns, transaction=transaction)
+        def aggregate_value(cid):
+            if isinstance(self.find_column(cid).type(), Number):
+                number = self.select_aggregate((operation, cid,), condition=condition,
+                                               transaction=transaction)
+                result = (cid, number,)
+            else:
+                result = (cid, Value(Type(), None),)
+            return result
+        aggregates = [aggregate_value(cid) for cid in columns]
+        return select_result, Row(aggregates)
         
     def fetchone(self, direction=FORWARD, transaction=None):
         """Vra» dal¹í øádek dat.
