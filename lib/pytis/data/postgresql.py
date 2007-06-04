@@ -1367,6 +1367,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pg_select_aggregate(self, operation, condition, transaction=None):
         cond_string = self._pdbb_condition2sql(condition)
         aggfun, colid = operation
+        colname = self._pdbb_btabcol(self._db_column_binding(colid))
         FMAPPING = {self.AGG_MIN: 'min',
                     self.AGG_MAX: 'max',
                     self.AGG_COUNT: 'count',
@@ -1378,7 +1379,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Invalid aggregate function identifier',
                                operation)
         return self._pg_query(self._pdbb_command_select_agg %
-                              (function, colid, cond_string),
+                              (function, colname, cond_string),
                               transaction=transaction)
     
     def _pg_fetchmany (self, count, direction, transaction=None):
