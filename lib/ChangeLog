@@ -1,5 +1,12 @@
 2007-06-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py: Minor optimization.  Fixed `EditForm'
+	constructor bug.
+
+	* pytis/presentation/field.py: Pass the runtime filter condition
+	only to `DataEnumerator' methods.  Pre-compute recursive computer
+	dependencies in the constructor.
+
 	* pytis/data/types_.py: Removed forgotten unused method `make_me_safe()'.
 
 2007-06-04  Milan Zamazal  <pdm@brailcom.org>

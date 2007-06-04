@@ -4,6 +4,27 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-04 Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Opravena chyba v pøedávání runtime filtru pøi pou¾ití
+	`FixedEnumerator'.
+	
+2007-05-31 Tomas Cerha  <cerha@brailcom.org>
+
+	Reimplementován zpùsob práce s runtime filtry v PresentedRow a ve
+	vstupních políèkách.  Ve finále kromì zmìny v rozhraní
+	enumerátorù (nutné kvùli cachování datových objektù) do¹lo i ke
+	zlep¹ení chování èíselníkových políèek.  Pøi zmìnì filtru nyní
+	automaticky dochází k nové validaci políèka.  Tím se nyní okam¾itì
+	projeví pokud døíve platná hodnota po pøefiltrování èíselníku ji¾
+	platná není, nebo naopak.
+
+	Pøíkaz pro import dat z textového souboru byl pøidán do menu
+	pøíkazù.
+
+	* BUGFIX: Opraven problém s pøedáváním datových typù pøi importu
+	dat z textového souboru.
+
 2007-05-28 Tomas Cerha  <cerha@brailcom.org>
 
 	Byl upraven zpùsob øazení polo¾ek v menu odskokù.
