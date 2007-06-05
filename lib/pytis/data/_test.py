@@ -1039,6 +1039,9 @@ class DBDataDefault(_DBTest):
                                    condition=pytis.data.GE('castka', value))
         assert select_result == 1, select_result
         assert aggregate_result[0].value() == 2000
+        select_result, aggregate_result = d.select_and_aggregate(d.AGG_COUNT)
+        assert select_result == 2, select_result
+        assert aggregate_result[0].value() == 2, aggregate_result[0].value()
     def test_constructor_condition(self):
         d = self._dcosi_condition
         def I(i):

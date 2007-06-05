@@ -386,10 +386,10 @@ class Data(object):
           (except for 'operation').
 
         - AGGREGATE_RESULT is a 'Row' instance containing the same columns as
-          the corresponding select.  Row values in place of number columns are
-          results of the aggregate function defined by the 'operation' argument
-          that must be one of the 'AGG_*' class constants.  Other row values
-          are undefined.
+          the corresponding select.  Row values of columns with the type
+          corresponding to the type of the 'operation' are results of the
+          aggregate function defined by the 'operation' argument that must be
+          one of the 'AGG_*' class constants.  Other row values are 'None'.
 
         If 'select_aggregate' is unsupported in the given class then
         'select_and_aggregate' is unsupported as well.
@@ -400,7 +400,8 @@ class Data(object):
         select_result = self.select(condition=condition, reuse=reuse,
                                     sort=sort, columns=columns, transaction=transaction)
         def aggregate_value(cid):
-            if isinstance(self.find_column(cid).type(), Number):
+            if (operation == self.AGG_COUNT or
+                isinstance(self.find_column(cid).type(), Number)):
                 number = self.select_aggregate((operation, cid,), condition=condition,
                                                transaction=transaction)
                 result = (cid, number,)

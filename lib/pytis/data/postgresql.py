@@ -1020,7 +1020,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             {'columns': column_list})
         self._pdbb_command_close_select = 'close %s' % (cursor_name,)
         self._pdbb_command_select_agg = \
-          ('select %%s(%%s) from %s where %%s and (%s)%s' %
+          ('select %%s from %s where %%s and (%s)%s' %
            (table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
           'fetch forward %%d from %s' % (cursor_name,)
@@ -1363,23 +1363,64 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
                   for r in data]
         return result
-    
-    def _pg_select_aggregate(self, operation, condition, transaction=None):
+        
+    def _pg_select_aggregate(self, operation, colids, condition, transaction=None):
+        if __debug__:
+            if operation != self.AGG_COUNT:
+                for cid in colids:
+                    t = self.find_column(cid).type()
+                    assert isinstance(t, Number)
+        close_select = False
+        if not self._pg_is_in_select:
+            self.select(condition=condition, transaction=transaction)
+            close_select = True
+        try:
+            data = self._pg_select_aggregate_1(operation, colids, condition,
+                                               transaction=transaction)
+        except:
+            cls, e, tb = sys.exc_info()
+            try:
+                if transaction is None:
+                    self._pg_rollback_transaction()
+            except:
+                pass
+            self._pg_is_in_select = False
+            raise cls, e, tb
+        if close_select:
+            self.close()
+        I = Integer()
+        F = Float()
+        def make_value(i):
+            cid = colids[i]
+            if operation == self.AGG_COUNT:
+                t = I
+            elif operation == self.AGG_AVG:
+                t = F
+            else:
+                t = self.find_column(cid).type()
+            value, error = t.validate(data[0][i])
+            assert error is None, error
+            return value
+        result = [make_value(i) for i in range(len(colids))]
+        return result
+
+    def _pg_select_aggregate_1(self, operation, colids, condition, transaction=None):
         cond_string = self._pdbb_condition2sql(condition)
-        aggfun, colid = operation
-        colname = self._pdbb_btabcol(self._db_column_binding(colid))
+        colnames = [self._pdbb_btabcol(self._db_column_binding(cid)) for cid in colids]
         FMAPPING = {self.AGG_MIN: 'min',
                     self.AGG_MAX: 'max',
                     self.AGG_COUNT: 'count',
                     self.AGG_SUM: 'sum',
                     self.AGG_AVG: 'avg',}
         try:
-            function = FMAPPING[aggfun]
+            function = FMAPPING[operation]
         except KeyError:
             raise ProgramError('Invalid aggregate function identifier',
                                operation)
+        function_list = ['%s (%s)' % (function, cname,) for cname in colnames]
+        function_string = string.join(function_list, ', ')
         return self._pg_query(self._pdbb_command_select_agg %
-                              (function, colname, cond_string),
+                              (function_string, cond_string),
                               transaction=transaction)
     
     def _pg_fetchmany (self, count, direction, transaction=None):
@@ -2070,38 +2111,33 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return number_of_rows
 
     def select_aggregate(self, operation, condition=None, transaction=None):
-        opid = operation[0]
-        t = self.find_column(operation[1]).type()
-        if opid == self.AGG_COUNT:
-            t = Integer()
-        elif opid == self.AGG_AVG:
-            if not isinstance(t, Number):
-                return None
-            t = Float()
+        return self._pg_select_aggregate(operation[0], (operation[1],),
+                                         condition=condition, transaction=transaction)[0]
+    
+    def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
+                             columns=None, transaction=None):
+        if columns is None:
+            columns = [c.id() for c in self.columns()]
+        select_result = self.select(condition=condition, reuse=reuse,
+                                    sort=sort, columns=columns, transaction=transaction)
+        if operation == self.AGG_COUNT:
+            number_columns = columns
         else:
-            if not isinstance(t, Number):
-                return None
-        close_select = False
-        if not self._pg_is_in_select:
-            self.select(condition=condition, transaction=transaction)
-            close_select = True
-        try:
-            data = self._pg_select_aggregate(operation, condition,
-                                             transaction=transaction)
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                if transaction is None:
-                    self._pg_rollback_transaction()
-            except:
-                pass
-            self._pg_is_in_select = False
-            raise cls, e, tb
-        if close_select:
-            self.close()
-        result, error = t.validate(data[0][0])
-        assert error is None, error
-        return result
+            number_columns = [cid for cid in columns
+                              if isinstance(self.find_column(cid).type(), Number)]
+        aggregate_results = self._pg_select_aggregate(operation, number_columns,
+                                                      condition=condition, transaction=transaction)
+        def aggregate_value(cid):
+            if number_columns and cid == number_columns[0]:
+                del number_columns[0]
+                number = aggregate_results[0]
+                del aggregate_results[0]
+                result = (cid, number,)
+            else:
+                result = (cid, Value(Type(), None),)
+            return result
+        aggregates = [aggregate_value(cid) for cid in columns]
+        return select_result, Row(aggregates)
         
     def distinct(self, column, condition=None, sort=ASCENDENT,
                  transaction=None):
