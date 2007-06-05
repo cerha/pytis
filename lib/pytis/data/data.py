@@ -1611,11 +1611,7 @@ class DataFactory(object):
             except TypeError:
                 cacheable = False
                 log(EVENT, "Non-cacheable data object cache key: %s" % (key,))
-        # TODO: We have still non-identified problems with enumerators
-        #       when using cache for data objects. So, for the moment, we
-        #       switch the cache off.
-        # if cacheable:
-        if False: 
+        if cacheable:
             data_object = cache[key]
             result = copy.copy(data_object)
         else:
