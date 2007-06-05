@@ -384,7 +384,7 @@ class Type(object):
                 raise ValidationError(cresult)
 
     def not_null(self):
-        """Vra» pravdu, pokud hodnoty tohoto typu smí být prázdné."""
+        """Return true iff values of this type may not be empty."""
         return self._not_null
 
     def enumerator(self):
