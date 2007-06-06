@@ -1614,6 +1614,12 @@ class DataFactory(object):
         if cacheable:
             data_object = cache[key]
             result = copy.copy(data_object)
+            ftype = type(identity)
+            for attr in result.__dict__.keys():
+                try:
+                    result.__dict__[attr] = copy.copy(result.__dict__[attr])
+                except:
+                    pass
         else:
             result = apply(self._class_, self._args, _kwargs)
         return result

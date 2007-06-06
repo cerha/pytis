@@ -6,6 +6,9 @@
 
 2007-06-06  Milan Zamazal  <pdm@brailcom.org>
 
+	* BUGFIX: Opraveno (ne)kopírování datových objektù vytahovaných
+	z cache.
+	
 	* BUGFIX: Odstranìna kolize názvù SQL selections pøi cachování
 	datových instancí.
 	
