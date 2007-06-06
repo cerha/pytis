@@ -1738,8 +1738,8 @@ class DBDataNotification(DBDataDefault):
             (('stat', d.columns()[0].type().validate('at')[0]),
              ('nazev', d.columns()[1].type().validate('Austria')[0]))))
         self._ddn_check_result()
-        assert d.change_number() == cnumber_1 + 1
-        assert self.data.change_number() == cnumber_2 + 1
+        assert d.change_number() == cnumber_1 + 1, (cnumber_1, d.change_number(),)
+        assert self.data.change_number() == cnumber_2 + 1, (cnumber_2, self.data.change_number(),)
 tests.add(DBDataNotification)
 
 

@@ -5,6 +5,11 @@
 
 2007-06-06  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/_test.py (DBDataNotification.test_side_notification):
+	Report expected and actual change numbers.
+
+2007-06-06  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/data.py (DataFactory.create): Copy instance
 	attributes, not only instance itself.
 
