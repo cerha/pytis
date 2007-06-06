@@ -665,6 +665,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     """
     _PDBB_CURSOR_NAME = 'selection'
 
+    _pdbb_selection_counter = Counter()
+    _pdbb_selection_counter_lock = thread.allocate_lock()
+
     class _SQLCommandTemplate(object):
         def __init__(self, template, arguments={}):
             self._template = template
@@ -677,6 +680,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if callable(self._template):
                 self._template = self._template()
             return self._template % args
+
+    @classmethod
+    def _pdbb_next_selection_number(class_):
+        def lfunction():
+            return class_._pdbb_selection_counter.next()
+        return with_lock(class_._pdbb_selection_counter_lock, lfunction)
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
         super(PostgreSQLStandardBindingHandler, self).__init__(
@@ -1005,9 +1014,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     result = '%s limit 1' % (lock_query,)
                 return result
         self._pdbb_command_lock = self._SQLCommandTemplate(make_lock_command)
-        # We make unique cursors for each instance to avoid conflicts with
-        # codebooks when using cross-class transactions.        
-        cursor_name = '%s_%s' % (self._PDBB_CURSOR_NAME, str(id(self)).replace('-','m'))
+        # We make all cursors names unique to avoid conflicts with codebooks
+        # when using cross-class transactions and additionally to avoid
+        # conflicts when using data instance cache.
+        cursor_name = '%s_%%(selection)s' % (self._PDBB_CURSOR_NAME,)
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
@@ -1027,18 +1037,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              (cursor_name, table_list, relation, filter_condition,
               ordering,)),
             {'columns': column_list})
-        self._pdbb_command_close_select = 'close %s' % (cursor_name,)
+        self._pdbb_command_close_select = \
+            self._SQLCommandTemplate('close %s' % (cursor_name,))
         self._pdbb_command_select_agg = \
           ('select %%s from %s where %%s and (%s)%s' %
            (table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
-          'fetch forward %%d from %s' % (cursor_name,)
+          self._SQLCommandTemplate('fetch forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_fetch_backward = \
-          'fetch backward %%d from %s' % (cursor_name,)
+          self._SQLCommandTemplate('fetch backward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_move_forward = \
-          'move forward %%d from %s' % (cursor_name,)
+          self._SQLCommandTemplate('move forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_move_backward = \
-          'move backward %%d from %s' % (cursor_name,)
+          self._SQLCommandTemplate('move backward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
@@ -1351,6 +1362,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pdbb_sql_column_list_from_names(columns)
         else:
             self._pdbb_select_column_list = None
+        args['selection'] = self._pdbb_selection_number = \
+            self._pdbb_next_selection_number()
         query = self._pdbb_command_select.format(args)
         self._pg_query(query, transaction=transaction)
         try:
@@ -1434,10 +1447,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     
     def _pg_fetchmany (self, count, direction, transaction=None):
         """Vra» 'count' øádkù selectu jako raw data."""
+        args = {'number': count, 'selection': self._pdbb_selection_number}
         if direction == FORWARD:
-            query = self._pdbb_command_fetch_forward % count
+            query = self._pdbb_command_fetch_forward.format(args)
         elif direction == BACKWARD:
-            query = self._pdbb_command_fetch_backward % count
+            query = self._pdbb_command_fetch_backward.format(args)
         else:
             raise ProgramError('Invalid direction', direction)
         return self._pg_query(query, transaction=transaction)
@@ -1445,12 +1459,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pg_skip(self, count, direction, exact_count=False, transaction=None):
         """Pøeskoè 'count' øádkù v 'direction' a vra» jejich poèet nebo 'None'.
         """
+        args = {'number': count, 'selection': self._pdbb_selection_number}
         if direction == FORWARD:
-            self._pg_query((self._pdbb_command_move_forward % (count,)),
+            self._pg_query(self._pdbb_command_move_forward.format(args),
                            transaction=transaction)
         elif direction == BACKWARD:
-            answer = self._pg_query((self._pdbb_command_move_backward %
-                                     (count,)),
+            answer = self._pg_query(self._pdbb_command_move_backward.format(args),
                                     transaction=transaction)
             answer_count = answer[0][0]
             if exact_count and answer_count != count:
@@ -2342,8 +2356,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select is True: # no user transaction
             self._pg_commit_transaction()
         elif self._pg_is_in_select: # inside user transaction
-            self._pg_query(self._pdbb_command_close_select,
-                           transaction=self._pg_is_in_select)
+            query = self._pdbb_command_close_select.format(
+                {'selection': self._pdbb_selection_number})
+            self._pg_query(query, transaction=self._pg_is_in_select)
         self._pg_is_in_select = False
         # Flush cached data
         self._pg_buffer.reset()

@@ -5,6 +5,11 @@
 
 2007-06-06  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/postgresql.py: Make selection identifiers unique even
+	when data instances are copied from cache.
+
+2007-06-06  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/types_.py: Support for `unique' type property.
 	
 	* pytis/data/postgresql.py: See above.
