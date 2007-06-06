@@ -3,6 +3,14 @@
 	* pytis/data/data.py (DataFactory.create): Pou¾ívej cachování
 	datových objektù.
 
+2007-06-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/types_.py: Support for `unique' type property.
+	
+	* pytis/data/postgresql.py: See above.
+
+	* pytis/data/_test.py: See above.
+
 2007-06-05  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/data.py (Data.select_and_aggregate): Aggregate

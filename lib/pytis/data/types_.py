@@ -134,7 +134,7 @@ class Type(object):
     make = classmethod(make)
 
     def __init__(self, not_null=False, enumerator=None, constraints=(),
-                 validation_messages=None):
+                 validation_messages=None, unique=False):
         """Inicializuj instanci.
 
         Argumenty:
@@ -162,15 +162,19 @@ class Type(object):
             daný identifikátor definovány, mají pøednost pøed implicitními
             hlá¹kami definovanými typem.
 
+          unique -- flag saying the value must be unique within its column in a
+            table
 
         """
         super(Type, self).__init__()
         assert isinstance(not_null, types.BooleanType)
+        assert isinstance(unique, types.BooleanType)
         assert enumerator is None or isinstance(enumerator, Enumerator)
         assert isinstance(constraints, (types.ListType, types.TupleType))
         assert validation_messages is None or \
                isinstance(validation_messages, types.DictType) 
         self._not_null = not_null
+        self._unique = unique
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
         vm = [(getattr(self, attr), getattr(self, '_'+attr+'_MSG'))
@@ -206,9 +210,10 @@ class Type(object):
             result = compare_objects(self, other)
         elif self._id == other._id:
             result = 0
-        elif self._constraints == other._constraints \
-                 and self._not_null == other._not_null \
-                 and cmp(self._enumerator, other._enumerator) == 0:
+        elif (self._constraints == other._constraints and
+              self._not_null == other._not_null and
+              self._unique == other.unique and
+              cmp(self._enumerator, other._enumerator) == 0):
             result = 0
         else:
             result = -1
@@ -386,6 +391,10 @@ class Type(object):
     def not_null(self):
         """Return true iff values of this type may not be empty."""
         return self._not_null
+
+    def unique(self):
+        """Return true iff values of this type must be unique in a table."""
+        return not not self._unique
 
     def enumerator(self):
         """Vra» enumerátor svázaný s tímto typem."""

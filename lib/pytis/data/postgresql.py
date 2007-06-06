@@ -749,6 +749,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "pg_attribute.attnum = pg_attrdef.adnum") % \
             (schema, table_name, column),
             outside_transaction=True)
+        d2 = self._pg_query(
+            ("select conkey "
+             "from pg_constraint, pg_namespace, pg_class, pg_attribute "
+             "where conrelid = pg_class.oid and attrelid = pg_class.oid and relnamespace = pg_namespace.oid and attnum = any (conkey) and "
+             "nspname = '%s' and relname = '%s' and attname = '%s' and (contype = 'p' or contype = 'u')") %
+            (schema, table_name, column,))
         try:
             type_, size_string, not_null = d[0]
         except:
@@ -758,12 +764,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             default = d1[0][0]
         except:
             default = ''
+        unique = not not d2
         serial = (default[:len('nextval')] == 'nextval')
         return self._pdbb_get_type(type_, size_string, not_null, serial,
-                                   ctype=ctype, type_kwargs=type_kwargs)
+                                   ctype=ctype, unique=unique, type_kwargs=type_kwargs)
     
     def _pdbb_get_type(self, type_, size_string, not_null, serial,
-                       ctype=None, type_kwargs=None):
+                       ctype=None, unique=False, type_kwargs=None):
         # Zde lze doplnit dal¹í pou¾ívané standardní typy z PostgreSQL
         TYPE_MAPPING = {'bool': Boolean,
                         'bpchar': String,
@@ -796,6 +803,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_kwargs = {}
             if not_null in (1, 'T') and not type_kwargs.has_key('not_null'):
                 type_kwargs['not_null'] = True
+            if not type_kwargs.has_key('unique') and type_class_ != Boolean:
+                type_kwargs['unique'] = unique
             if type_class_ == String:
                 if type_ != 'text':
                     try:

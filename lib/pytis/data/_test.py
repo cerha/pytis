@@ -875,6 +875,12 @@ class DBDataDefault(_DBTest):
         for i, j in ((0, 2,), (1, 3,)):
             assert result[i] != self.ROW1[j],\
                 ('invalid response', i, result[i], self.ROW1[j])
+    def test_unique(self):
+        assert self.dstat.find_column('stat').type().unique()
+        assert self.dstat.find_column('nazev').type().unique()
+        assert self.dosnova.find_column('id').type().unique()
+        for colname in 'popis', 'druh', 'stat',:
+            assert not self.dosnova.find_column(colname).type().unique(), colname
     def test_select_fetch(self):
         self.data.select()
         for r in (self.ROW1, self.ROW2):
