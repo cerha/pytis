@@ -575,7 +575,7 @@ class PresentedRow(object):
             if value is None:
                 return ''
             try:
-                v = enum.get(value, col, condition=self.runtime_filter(col),
+                v = enum.get(value, col, condition=self.runtime_filter(column.id),
                              transaction=self._transaction)
             except pytis.data.DataAccessException:
                 return ''

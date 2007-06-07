@@ -1,3 +1,8 @@
+2007-06-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow._display_func.getval):
+	Use the right column for runtime filter condition.
+
 2007-06-06  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/data.py (DataFactory.create): Pou¾ívej cachování
