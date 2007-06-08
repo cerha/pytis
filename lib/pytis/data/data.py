@@ -192,7 +192,8 @@ class Data(object):
     class UnsupportedOperation(Exception):
         """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
     
-    def __init__(self, columns, key, ordering=None, condition=None, **kwargs):
+    def __init__(self, columns, key, ordering=None, condition=None,
+                 full_init=True, **kwargs):
         """
         Arguments:
 
@@ -209,6 +210,7 @@ class Data(object):
             the tuple are mutually ordered.
           condition -- condition limiting selection of lines in all 'select*'
             and 'row' operations; 'Operator' instance or 'None'
+          full_init -- iff true, call the 'after_init' method in the constructor
           kwargs -- given to the ancestor constructor
             
         """
@@ -230,7 +232,18 @@ class Data(object):
         self._change_number = pytis.util.Counter()
         self._on_change_callbacks = []
         self._select_last_row_number = None
+        if full_init:
+            self.after_init()
 
+    def after_init(self):
+        """Method called after all initializations.
+
+        The purpose of this method is to allow instance completion after it is
+        copied from its template in the data object cache.
+
+        """
+        pass
+        
     def columns(self):
         """Vra» specifikaci sloupcù zadanou v konstruktoru, jako tuple."""
         return self._columns
@@ -1620,8 +1633,9 @@ class DataFactory(object):
                     result.__dict__[attr] = copy.copy(result.__dict__[attr])
                 except:
                     pass
+            result.after_init()
         else:
-            result = apply(self._class_, self._args, _kwargs)
+            result = self._class_(*self._args, **_kwargs)
         return result
     
     def __str__(self):
@@ -1630,7 +1644,9 @@ class DataFactory(object):
 
     def _get_data_object(key):
         class_, args, kwargs = key
-        return class_(*args, **dict(kwargs))
+        kwargs = dict(kwargs)
+        kwargs['full_init'] = False
+        return class_(*args, **kwargs)
     _get_data_object = staticmethod(_get_data_object)
 
     def access_rights(self):

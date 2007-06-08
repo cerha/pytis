@@ -596,12 +596,15 @@ class PostgreSQLNotifier(PostgreSQLConnector):
           kwargs -- k pøedání pøedkovi
         
         """
+        self._pg_notifications = []
         super(PostgreSQLNotifier, self).__init__(connection_data=connection_data,
                                                  **kwargs)
         self._pg_changed = False
-        # Pozor, notifikace smí být registrovány a¾ nakonec po provedení v¹ech
-        # inicializací!  Pozor na potomky!
-        self._pg_notifications = []
+
+    def after_init(self):
+        super(PostgreSQLNotifier, self).after_init()
+        # Attention, notifications may be registered only after or other
+        # initializations are performed.  Be careful about class successors!
         import config
         if config.dblisten:
             self._pg_add_notifications()
