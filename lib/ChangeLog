@@ -10,6 +10,12 @@
 
 2007-06-11  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/dbapi.py
+	(_DBAPIAccessor._postgresql_rollback_transaction): Reset client
+	encoding.
+
+2007-06-11  Milan Zamazal  <pdm@brailcom.org>
+	
 	* config/config.py: db_encoding configuration option removed.
 
 	* pytis/data/postgresql.py: See above.

@@ -148,6 +148,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_rollback_transaction(self):
         connection = self._pg_get_connection().connection()
         connection.rollback()
+        # For unknown reasons, connection client encoding gets reset after
+        # rollback
+        cursor = connection.cursor()
+        cursor.execute('set client_encoding to "utf-8"')
 
     
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
