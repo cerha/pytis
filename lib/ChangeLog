@@ -10,6 +10,16 @@
 
 2007-06-11  Milan Zamazal  <pdm@brailcom.org>
 
+	* config/config.py: db_encoding configuration option removed.
+
+	* pytis/data/postgresql.py: See above.
+
+	* pytis/util/configuration.py: See above.
+
+	* pytis/form/list.py: See above.
+
+2007-06-11  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/form/list.py (ListForm._cmd_delete_record): Select proper
 	row after deleting the record.
 

@@ -4,6 +4,10 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* Zru¹ena konfiguraèní volba db_encoding.
+	
 2007-06-07 Tomas Cerha  <cerha@brailcom.org>
 	
 	* BUGFIX: Opravena chyba v získání runtime filtru pøi výpoètu

@@ -1553,7 +1553,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return            
         export_dir = config.export_directory
         export_encoding = config.export_encoding
-        db_encoding = config.db_encoding
+        db_encoding = 'utf-8'
         try:
             u"test".encode(export_encoding)
         except:
@@ -1561,13 +1561,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = msg + _("Export se provede bez pøekódování.")
             export_encoding = None
             run_dialog(Error, msg)
-        try:
-            u"test".encode(db_encoding)
-        except:
-            msg = _("Kódování %s není podporováno.\n" % db_encoding)
-            msg = msg + _("Export se neprovede.")
-            run_dialog(Error, msg)
-            return
         filename = pytis.form.run_dialog(pytis.form.FileDialog,
                                        title="Zadat exportní soubor",
                                        dir=export_dir, file='export.txt',

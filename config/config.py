@@ -91,10 +91,6 @@
 # velmi výraznì zpomaluje bìh aplikace.
 #profile = False
 
-# Interní kódování databáze Hodnota musí být jedním z podporovaných kódování v
-# Pythonu.
-#db_encoding = 'utf-8'
-
 # Adresáø obsahující definièní soubory. Adresáø mù¾e být zadán absolutnì
 # i relativnì vzhledem k aktuálnímu adresáøi.
 #def_dir = './defs'

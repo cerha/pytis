@@ -251,11 +251,16 @@ class PostgreSQLAccessor(object):
         with_lock(self._pg_query_lock, lfunction)
 
     def _postgresql_initialize_coding(self, connection):
-        encoding = self._pg_encoding
-        query = 'set client_encoding to "%s"' % (encoding,)
+        query = ['set client_encoding to "utf-8"']
         def lfunction():
-            self._postgresql_query(connection, query, False)
+            return self._postgresql_query(connection, query[0], False)
         with_lock(self._pg_query_lock, lfunction)
+        query[0] = ("select pg_encoding_to_char(encoding) "
+                    "from pg_database where datname = current_database()")
+        result = with_lock(self._pg_query_lock, lfunction)
+        coding = result[0].result().fetchone()[0]
+        if coding != 'UTF8':
+            self._pg_encoding = coding
         
     def _postgresql_query(self, connection, query, restartable, query_args=()):
         """Perform SQL 'query' and return the result.
@@ -321,8 +326,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
         """
         import config
-        # Kódování
-        self._pg_encoding = config.db_encoding
+        self._pg_encoding = None
         # Logování
         if config.dblogtable:
             self._pdbb_logging_command = \
@@ -389,8 +393,13 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         caught the corresponding 'DBException' must be raised.
         
         """
+        if self._pg_encoding:
+            try:
+                query.encode(self._pg_encoding)
+            except UnicodeEncodeError:
+                raise DBUserException(_("Data obsahují znaky, které nelze reprezentovat v kódování databáze"))
         if type(query) is pytypes.UnicodeType:
-            query = query.encode(self._pg_encoding)
+            query = query.encode('utf-8')
         assert transaction is None or not outside_transaction, \
             'Connection given to a query to be performed outside transaction'
         if transaction is None:
@@ -1987,7 +1996,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if dbvalue is None:
                     v = None
                 else:
-                    v = unicode(dbvalue, self._pg_encoding)  #TODO: patøí jinam
+                    v = unicode(dbvalue, 'utf-8')  #TODO: patøí jinam
                 value = Value(type_, v)
             elif typid == 2:            # time
                 value, err = type_.validate(dbvalue, strict=False,

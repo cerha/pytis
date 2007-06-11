@@ -641,11 +641,6 @@ class Configuration(object):
         _DOC = _("Hodnota musí být jedním z podporovaných kódování v Pythonu.")
         _DEFAULT = 'iso8859-2'
 
-    class _Option_db_encoding(_StringOption):
-        _DESCR = _("Interní kódování databáze")
-        _DOC = _("Hodnota musí být jedním z podporovaných kódování v Pythonu.")
-        _DEFAULT = 'utf-8'
-
     class _Option_cache_size(_NumericOption):
         _DESCR = _("Velikost cache pro øádky datového objektu.")
         _DOC = _("Velikost je celé èíslo, které udává poèet øádkù cache.")
