@@ -8,6 +8,11 @@
 	* pytis/data/data.py (DataFactory.create): Pou¾ívej cachování
 	datových objektù.
 
+2007-06-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/form/list.py (ListForm._cmd_delete_record): Select proper
+	row after deleting the record.
+
 2007-06-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/postgresql.py (PostgreSQLNotifier.after_init): New

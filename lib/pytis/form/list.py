@@ -1082,7 +1082,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             r = self._current_cell()[0]
             n = self._table.GetNumberRows()
             if r < n - 1:
-                self._select_cell(row=r+1)
+                self._select_cell(row=r)
             elif r > 0:
                 self._select_cell(row=r-1)
             # Udìláme radìji refresh celé aplikace, proto¾e jinak se
