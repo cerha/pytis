@@ -39,7 +39,8 @@ from postgresql import *
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 
-    def _postgresql_open_connection(self, connection_data):
+    @classmethod
+    def _postgresql_open_connection(class_, connection_data):
         # Prepare connection data
         kwargs = {}
         for option, accessor in (('user', DBConnection.user),
@@ -62,9 +63,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
             raise DBException(_("Can't connect to database"), e)
-        return self._postgresql_Connection(connection, connection_data)
-    
-    def _postgresql_close_connection(self, connection):
+        return class_._postgresql_Connection(connection, connection_data)
+
+    @classmethod
+    def _postgresql_close_connection(class_, connection):
         connection.connection().close()
     
     def _postgresql_query(self, connection, query, outside_transaction, query_args=()):

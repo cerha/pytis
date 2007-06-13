@@ -204,8 +204,9 @@ class PostgreSQLAccessor(object):
         connection = self._postgresql_open_connection(connection_data)
         self._postgresql_initialize_connection(connection)
         return connection
-        
-    def _postgresql_open_connection(self, connection_data):
+
+    @classmethod
+    def _postgresql_open_connection(class_, connection_data):
         """Vytvoø a vra» nové spojení do databáze.
 
         Návratovou hodnotou je instance '_postgresql_Connection'.
@@ -220,7 +221,8 @@ class PostgreSQLAccessor(object):
         """
         raise ProgramError(_("Volána neimplementovaná metoda"))
 
-    def _postgresql_close_connection(self, connection):
+    @classmethod
+    def _postgresql_close_connection(class_, connection):
         """Uzavøi spojení do databáze.
 
         Argumenty:
@@ -316,6 +318,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
     SQL pøíkazù.
 
     """
+
+    _pg_connection_pool_ = None
     
     def __init__(self, connection_data, **kwargs):
         """
@@ -333,10 +337,14 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 "insert into %s (command) values ('%%s')" % config.dblogtable
         else:
             self._pdbb_logging_command = None
-        # Správa spojení
-        PostgreSQLConnector._pg_connection_pool_ = \
-            DBConnectionPool(self._postgresql_new_connection,
-                             self._postgresql_close_connection)
+        # Connection management
+        # Connection pool open/close methods are class specific.  This doesn't
+        # hurt now as we use only one database access class.  But it's not very
+        # elegant anyway.
+        if PostgreSQLConnector._pg_connection_pool_ is None:
+            PostgreSQLConnector._pg_connection_pool_ = \
+                DBConnectionPool(self._postgresql_new_connection,
+                                 self._postgresql_close_connection)
         if isinstance(connection_data, DBConnection):
             def _lambda(connection_data=connection_data):
                 return connection_data

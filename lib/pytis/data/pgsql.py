@@ -28,8 +28,9 @@ from postgresql import *
 
 
 class _PgsqlAccessor(PostgreSQLAccessor):
-    
-    def _postgresql_open_connection(self, connection_data):
+
+    @classmethod
+    def _postgresql_open_connection(class_, connection_data):
         # Sestav connection string
         connection_string = ''
         for option, accessor in (('user', DBConnection.user),
@@ -52,9 +53,10 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
             raise DBException(_("Nelze se pøipojit k databázi"), e)
-        return self._postgresql_Connection(connection, connection_data)
-    
-    def _postgresql_close_connection(self, connection):
+        return class_._postgresql_Connection(connection, connection_data)
+
+    @classmethod
+    def _postgresql_close_connection(class_, connection):
         connection.connection().finish()
     
     def _postgresql_query(self, connection, query, restartable, query_args=None):

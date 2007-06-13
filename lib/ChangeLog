@@ -10,6 +10,18 @@
 
 2007-06-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/postgresql.py (PostgreSQLConnector.__init__): Don't
+	replace connection pool if it has already been created.
+	(PostgreSQLAccessor._postgresql_open_connection)
+	(PostgreSQLAccessor._postgresql_close_connection): Make them
+	classmethods.
+
+	* pytis/data/pgsql.py: See above.
+
+	* pytis/data/dbapi.py: See above.
+
+2007-06-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/postgresql.py
 	(PostgreSQLStandardBindingHandler._pdbb_get_table_type): Ask for
 	column uniqueness outside transaction.
