@@ -344,7 +344,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         if PostgreSQLConnector._pg_connection_pool_ is None:
             PostgreSQLConnector._pg_connection_pool_ = \
                 DBConnectionPool(self._postgresql_new_connection,
-                                 self._postgresql_close_connection)
+                                 self._postgresql_close_connection)            
         if isinstance(connection_data, DBConnection):
             def _lambda(connection_data=connection_data):
                 return connection_data
@@ -460,15 +460,15 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         PostgreSQLUserGroups._access_groups[key] = self
 
     def _pgg_connection_key(self, connection_data):
-        return connection_data.user(), connection_data.password()
-        
-    def _pgg_retrieve_access_groups(self, data):
+        return connection_data.user(), connection_data.password()     
+
+    def _pgg_retrieve_access_groups(self):
         if __debug__:
             log(DEBUG, "Retrieving list of user groups")
-        user = data._pg_connection_data().user()
+        user = self._pg_connection_data().user()
         if not user:
             return []
-        d = data._pg_query("select distinct pg_roles2.rolname from "+
+        d = self._pg_query("select distinct pg_roles2.rolname from "+
                            "pg_auth_members, pg_roles as pg_roles1, "+
                            "pg_roles as pg_roles2 where "+
                            "pg_auth_members.member = pg_roles1.oid and "+
@@ -497,9 +497,9 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         connection_data = self._pg_connection_data()
         key = self._pgg_connection_key(connection_data)
         groups = PostgreSQLUserGroups._access_groups.get(key)
-        if isinstance(groups, PostgreSQLConnector):
+        if groups is None:
             groups = PostgreSQLUserGroups._access_groups[key] = \
-                self._pgg_retrieve_access_groups(groups)
+                self._pgg_retrieve_access_groups()
         return groups
 
     # TODO: Temporary compatibility hack:

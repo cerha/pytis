@@ -1,12 +1,9 @@
-2007-06-07  Tomas Cerha  <cerha@brailcom.org>
+2007-06-13  Pavel Hanak  <hanak@alfik.akont.xx>
 
-	* pytis/presentation/field.py (PresentedRow._display_func.getval):
-	Use the right column for runtime filter condition.
-
-2007-06-06  Pavel Hanak  <hanak@asellus.cz>
-
-	* pytis/data/data.py (DataFactory.create): Pou¾ívej cachování
-	datových objektù.
+	* pytis/data/postgresql.py 
+	(PostgreSQLUserGroups._pgg_retrieve_access_groups):
+	Don't use the argument `data'.
+	(PostgreSQLUserGroups.access_groups): See above.
 
 2007-06-13  Milan Zamazal  <pdm@brailcom.org>
 
@@ -55,6 +52,16 @@
 	* pytis/data/data.py (Data.after_init): New method.
 	(DataFactory): Use it.
 
+2007-06-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow._display_func.getval):
+	Use the right column for runtime filter condition.
+
+2007-06-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/data.py (DataFactory.create): Pou¾ívej cachování
+	datových objektù.
+	
 2007-06-06  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/_test.py (DBDataNotification.test_side_notification):
