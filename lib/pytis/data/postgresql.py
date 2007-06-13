@@ -775,7 +775,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "from pg_constraint, pg_namespace, pg_class, pg_attribute "
              "where conrelid = pg_class.oid and attrelid = pg_class.oid and relnamespace = pg_namespace.oid and attnum = any (conkey) and "
              "nspname = '%s' and relname = '%s' and attname = '%s' and (contype = 'p' or contype = 'u')") %
-            (schema, table_name, column,))
+            (schema, table_name, column,),
+            outside_transaction=True)
         try:
             type_, size_string, not_null = d[0]
         except:
