@@ -4,6 +4,22 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-14 Tomas Cerha  <cerha@brailcom.org>
+
+	Kód pro generování nápovìdy v pytis.extensions byl zjednodu¹en a
+	upraven pro nejnovìj¹í verzi LCG.  K jeho provozu je tedy tøeba
+	LCG aktualizovat z CVS.  Zároveò je tato novìj¹í verze vy¾adována
+	i pøi formátování textù dialogù a informaèních oken, tak¾e bude
+	tøeba po aktualizaci pytisu na strojích, kde pytis bì¾í,
+	aktualizovat také LCG.
+
+	Pøi generování nápovìdy k aplikacím je nyní vypisován seznam
+	nepou¾itých souborù s popisy.  To se hodí zejména pøi pøepisech
+	defsù na Specification, kdy dochází ke zmìnì jejich názvù a tím
+	pádem je tøeba pøejmenovat také pøíslu¹né soubory nápovìdy.  Pøi
+	spu¹tìní generování jsou tak nyní nesprávnì pojmenované soubory
+	odhaleny.  V mojí verzi isasu jich napøíklad bylo 157.	
+	
 2007-06-11  Milan Zamazal  <pdm@brailcom.org>
 
 	* Zru¹ena konfiguraèní volba db_encoding.

@@ -1,5 +1,7 @@
 2007-06-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (wx_text_view): Updated for the latest LCG version.
+
 	* pytis/presentation/spec.py (Specification._create_view_spec):
 	Default title setting fixed.
 
