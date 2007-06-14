@@ -16,16 +16,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Tøídy a funkce pou¾ívané pøi generování nápovìdy k Pytis aplikaci.
+"""Classes used for generating help for Pytis applications.
 
-K vytváøení nápovìdy je vyu¾íváno LCG.  Ní¾e definované tøídy automaticky
-vytváøejí strukturu LCG dokumentù odpovídající specifikaci aktuální aplikace.
-Pøed pou¾itím je tøeba inicializovat konfiguraci Pytisu.
+Help generation is implemented using the LCG Python librarry.  The classes defined below
+automatically create the hierarchy of documents according to the application specification.
 
-Tøídy 'MenuIndex' a 'DescrIndex', mohou být pou¾ity v rámci nápovìdy aplikace
-formou Pythonových zdrojových souborù, které LCG automaticky detekuje a vyu¾ije
-k dynamickému vytvoøení vìtve v hierarchii dokumentù.  Více viz dokumentace
-LCG.
+The classes 'MenuReader' and 'DescrReader', can be used within the help source files.  If they
+define the class named 'Reader', this class is automatically used by LCG to build the document
+hierarchy subtree.  The 'MenuReader' defines
+
+So the typical usage is to include the following line in the python source file:
+
+from pytis.extensions.help import MenuReader as Reader
+
+See the LCG documentation for more information.
 
 """ 
 
@@ -35,12 +39,6 @@ global _used_defs, _menu_items
 _used_defs = []
 _menu_items = {}
         
-def _fieldset(pairs, title=None):
-    """Vra» instanci 'lcg.FieldSet' sestavenou ze seznamu dvojic øetìzcù."""
-    fields = [lcg.Field(lcg.TextContent(l),
-                        isinstance(v, lcg.Content) and v or \
-                        lcg.WikiText(v)) for l,v in pairs]
-    return lcg.FieldSet(fields, title=title)
 
 def _refered_names(view):
     names = [f.codebook() for f in view.fields() if f.codebook()]
@@ -50,32 +48,28 @@ def _refered_names(view):
     
 
 
-class ItemNode(lcg.ContentNode):
-    """Stránka s popisem koncové polo¾ky menu."""
+class _MenuItemReader(lcg.Reader):
+    """Generate an LCG document from a Pytis menu item."""
     
-    def __init__(self, parent, id, item, **kwargs):
+    def __init__(self, id, item, **kwargs):
         self._name = id
         self._item = item
-        super(ItemNode, self).__init__(parent, id, title=self._item.title(),
-                                       content=self._create_content(),
-                                       **kwargs)
+        super(_MenuItemReader, self).__init__(id, title=item.title(), **kwargs)
 
-    def _menu_node_path(self):
-        path = self._node_path()
-        menu = pytis.util.find('menu', self._node_path(), lambda n: n.id())
-        i = list(path).index(menu)
-        return path[i+1:]
+    def _menu_path(self):
+        if self._parent is None or self._parent.id() == 'menu':
+            return (self,)
+        else:
+            return self._parent._menu_path() + (self,)
+
+    def item(self):
+        return self._item
     
     def menu_path(self):
-        path = []
-        for n in self._menu_node_path():
-            if path:
-                path.append(lcg.TextContent(" -> "))
-            path.append(lcg.Link(n))
-        return lcg.Container(path)
+        return lcg.WikiText(' -> '.join(['[%s]' % r.id() for r in self._menu_path()]))
         
     def menu_path_title(self):
-        return ' -> '.join([n.title() for n in self._menu_node_path()])
+        return ' -> '.join([r.item().title() for r in self._menu_path()])
 
     def _create_content(self):
         command, args = (self._item.command(), self._item.args())
@@ -121,52 +115,50 @@ class ItemNode(lcg.ContentNode):
         else:
             a = ', '.join(['%s=%r' % x for x in args.items()])
             info.append(("Argumenty pøíkazu", a or _("®ádné")))
-        return _fieldset(info)
+        return lcg.fieldset(info, formatted=True)
 
 
-class MenuNode(ItemNode):
-    """Stránka s popisem polo¾ky menu, která obsahuje podmenu.
-
-    Polo¾ka obsahující podmenu sama o sobì nevyvolává ¾ádný pøíkaz, tak¾e
-    stránka obsahuje pouze seznam odkazù na jednotlivé polo¾ky podmenu.
-    
-    """
+class _MenuReader(_MenuItemReader):
+    """Generate an LCG document from a submenu within a menu hierarchy."""
     def _create_content(self):
         return lcg.NodeIndex(depth=99)
 
     def _create_children(self):
-        cls = lambda i: isinstance(i, pytis.form.MItem) \
-              and ItemNode or MenuNode
-        return [cls(item)(self, '%s-%d' % (self._id, n+1), item)
-                for n, item in enumerate(self._item.items())
-                if isinstance(item, (pytis.form.MItem, pytis.form.Menu))]
+        children = []
+        for n, item in enumerate(self._item.items()):
+            if isinstance(item, (pytis.form.MItem, pytis.form.Menu)):
+                if isinstance(item, pytis.form.MItem):
+                    cls = _MenuItemReader
+                else:
+                    cls = _MenuReader
+                id = '%s-%d' % (self._id, n+1)
+                children.append(cls(id, item, parent=self))
+        return children
     
         
-class MenuIndex(MenuNode):
-    """Koøenová stránka hierarchie menu aplikace.
+class MenuReader(_MenuReader):
+    """Root generator of Pytis application menu descriptions.
 
-    Tato stránka nápovìdy vytvoøí hierarchii stránek popisujících jednotlivé
-    polo¾ky menu aktuální aplikace.
+    This reader reads the main menu of the current pytis application and generates LCG document
+    hierarchy corresponding to this menu.
 
     """
-    def __init__(self, parent, id, *args, **kwargs):
+    def __init__(self, id, *args, **kwargs):
         pytis.util.set_resolver(pytis.util.FileResolver('../defs'))
         if '..' not in sys.path:
             sys.path.append('..')
-        if kwargs.has_key('input_encoding'):
-            del kwargs['input_encoding']
         menu = pytis.util.resolver().get('application', 'menu')
         item = pytis.form.Menu(_("Pøehled menu"), menu)
-        super(MenuIndex, self).__init__(parent, id, item, *args, **kwargs)
+        super(MenuReader, self).__init__(id, item, *args, **kwargs)
 
     
 ################################################################################
 
         
-class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
-    """Stránka s popisem náhledu."""
+class _DescrReader(lcg.StructuredTextReader):
+    """Generates a description of a one view within a pytis application."""
 
-    def __init__(self, parent, id, subdir=None, input_encoding=None, **kwargs):
+    def __init__(self, id, **kwargs):
         self._read_spec(pytis.util.resolver(), id)
         global _menu_items
         if _menu_items.has_key(id):
@@ -174,18 +166,13 @@ class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
             descr = ", ".join(items)
         else:
             descr = None
-        lcg.FileNodeMixin._init(self, parent, subdir=subdir,
-                                input_encoding=input_encoding)
         self._name = id
-        super_ = super(DescrNode, self).__init__
-        super_(parent, id, title=self._title(), descr=descr,
-               content=self._create_content(), **kwargs)
+        super(_DescrReader, self).__init__(id, title=self._title(), descr=descr, **kwargs)
 
     def _read_spec(self, resolver, name):
         self._view_spec = resolver.get(name, 'view_spec')
         self._data_spec = resolver.get(name, 'data_spec')
 
-    
     def _title(self):
         return self._view_spec.title()
     
@@ -195,7 +182,7 @@ class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
         if _menu_items.has_key(self._name):
             links = [i.menu_path() for i in _menu_items[self._name]]
             if len(links) > 1:
-                menu_items = lcg.ItemizedList(links)
+                menu_items = lcg.ul(links)
             else:
                 menu_items = links[0]
         else:
@@ -203,56 +190,53 @@ class DescrNode(lcg.ContentNode, lcg.FileNodeMixin):
         return ((_("Název specifikace"), self._name),
                 (_("Menu"), menu_items))
         
-    def _create_content(self):
-        content = [lcg.Section("Základní informace",
-                               _fieldset(self._info()))]
-        if os.path.exists(self._input_file(self._name, ext='txt')):
-            descr = self.parse_wiki_file(self._name, ext='txt')
-        else:
-            # The file does not exist.  Let's read the specification.
-            text = lcg.WikiText(self._default_description_text())
-            descr = lcg.Paragraph(text)
-        content.append(lcg.Section("Popis", descr))
-        return content
-            
     def _default_description_text(self):
         return self._view_spec.help() or self._view_spec.description() or \
                _("Popis není k dispozici.")
+    
+    def _create_content(self):
+        content = [lcg.Section("Základní informace",
+                               lcg.fieldset(self._info(), formatted=True))]
+        if os.path.exists(self._input_file(self._name, lang=self._language, ext='txt')):
+            text = self._read_file(self._name, lang=self._language, ext='txt')
+            descr = self._parse_source_text(text)
+        else:
+            # The file does not exist.  Let's read the specification.
+            descr = lcg.p(self._default_description_text(), formatted=True)
+        content.append(lcg.Section("Popis", descr))
+        return content
+            
 
 
-class SingleDescrNode(DescrNode):
+class _SingleDescrReader(_DescrReader):
 
     def _create_content(self):
-        content = super(SingleDescrNode, self)._create_content()
+        content = super(_SingleDescrReader, self)._create_content()
         view = self._view_spec
-        actions = [lcg.Definition(lcg.TextContent(a.title()),
-                                  lcg.WikiText(a.descr() or ''))
-                   for a in view.actions(linear=True)]
-        fields = [(f.label(), f.descr() or "")
-                  for f in [view.field(cid) for cid in view.layout().order()]]
+        actions = [(a.title(), a.descr() or '') for a in view.actions(linear=True)]
+        fields = [(f.label(), f.descr() or "")  for f in
+                  [view.field(cid) for cid in view.layout().order()]]
         links = [lcg.WikiText("[%s]" % name) for name in _refered_names(view)]
         for (title, items, f) in (
-            ("Akce kontextového menu", actions, lcg.DefinitionList),
-            ("Políèka formuláøe",      fields,  _fieldset),
-            ("Související náhledy",    links,   lcg.ItemizedList)):
-            c = items and f(items) or lcg.TextContent("®ádné")
+            ("Akce kontextového menu", actions, lcg.dl),
+            ("Políèka formuláøe",      fields,  lcg.fieldset),
+            ("Související náhledy",    links,   lcg.ul)):
+            c = items and f(items, formatted=True) or lcg.TextContent("®ádné")
             content.append(lcg.Section(title, c))
         if not self._data_spec.access_rights():
             return content
         rights = self._data_spec.access_rights()
-        perms = [(perm, ', '.join([str(g) for g in
-                                   rights.permitted_groups(perm, None)]))
+        perms = [(perm, ', '.join([str(g) for g in rights.permitted_groups(perm, None)]))
                  for perm in (pytis.data.Permission.VIEW,
                               pytis.data.Permission.INSERT,
                               pytis.data.Permission.UPDATE,
                               pytis.data.Permission.DELETE,
                               pytis.data.Permission.EXPORT)]
-        content.append(lcg.Section("Pøístupová práva", _fieldset(perms)))
+        content.append(lcg.Section("Pøístupová práva", lcg.fieldset(perms, formatted=True)))
         return content
     
 
-class DualDescrNode(DescrNode):
-    """Stránka s popisem duálního náhledu."""
+class _DualDescrReader(_DescrReader):
 
     def _read_spec(self, resolver, name):
         main, side = name.split('::')
@@ -261,11 +245,12 @@ class DualDescrNode(DescrNode):
         self._binding = resolver.get(main, 'binding_spec')[side]
 
     def _title(self):
-        return self._binding.title()
+        return self._binding.title() or \
+               ' / '.join((self._main_spec.title(), self._side_spec.title()))
 
     def _info(self):
         main, side = self._name.split('::')
-        return super(DualDescrNode, self)._info() + \
+        return super(_DualDescrReader, self)._info() + \
                ((_("Horní formuláø"), "[%s]" % main),
                 (_("Dolní formuláø"), "[%s]" % side))
     
@@ -284,29 +269,43 @@ class DualDescrNode(DescrNode):
         return text
     
 
-class DescrIndex(lcg.ContentNode, lcg.FileNodeMixin):
-    """Koøenová stránka popisu pou¾itých náhledù aplikace.
+class DescrReader(lcg.FileReader):
+    """Root generator of Pytis view descriptions.
 
-    Tato stránka nápovìdy vytvoøí jednotlivé podøízené stránky s popisem v¹ech
-    pou¾itých náhledù aktuální aplikace.  Seznam pou¾itých náhledù je vytváøen
-    pøi konstrukci nápovìdy hierarchie menu (tøída 'MenuIndex').  Vytvoøení
-    nápovìdy k menu je¹tì pøed vytváøením této stránky je tedy nezbytnou
-    podmínkou funkènosti této tøídy.
+    This reader generates LCG documents with descriptions of all views used within the current
+    Pytis application.  The list of used views is generated dynamically according to the
+    application main menu.  The menu definitions are analyzed by the 'MenuReader' class defined
+    above and it is necessary to include the menu reader within the document structure prior to
+    including this class.
 
     """
+    def __init__(self, id, **kwargs):
+        super(DescrReader, self).__init__(id, title="Nápovìda k jednotlivým náhledùm", **kwargs)
 
-    def __init__(self, parent, id, subdir=None, input_encoding=None, **kwargs):
-        lcg.FileNodeMixin._init(self, parent, subdir=subdir,
-                                input_encoding=input_encoding)
-        super_ = super(DescrIndex, self).__init__
-        super_(parent, id, title="Nápovìda k jednotlivým náhledùm",
-               content=lcg.NodeIndex(depth=1), **kwargs)
+    def _create_content(self):
+        return lcg.NodeIndex(depth=1)
 
     def _create_children(self):
-        #_split_menu_descriptions(self._read_file('descr'), 'src/descr')
         global _used_defs
         _used_defs.sort()
-        cls = lambda name: name.find('::') != -1 \
-              and DualDescrNode or SingleDescrNode
-        return [cls(name)(self, name, subdir='descr') for name in _used_defs]
+        children = []
+        dir = os.path.join(self.dir(), self._id)
+        for name in _used_defs:
+            if name.find('::') != -1:
+                cls = _DualDescrReader
+            else:
+                cls = _SingleDescrReader
+            children.append(cls(name, parent=self, dir=dir, encoding=self.encoding()))
+        import glob
+        stray = [file for file in glob.glob(os.path.join(dir, '*.txt'))
+                 if os.path.split(file)[1][:-4] not in _used_defs]
+        if stray:
+            lcg.log("Unused description files:")
+            for file in stray:
+                lcg.log("   "+file)
+        return children
 
+# Backwards compatibility aliases.
+MenuIndex = MenuReader
+DescrIndex = DescrReader
+    

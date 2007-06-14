@@ -1,3 +1,12 @@
+2007-06-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py: Updated for newer LCG version.
+	Print the list of stray description files.
+
+2007-04-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (bf, df): Pass all kwargs.
+
 2007-05-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/extensions/dbconfig.py (DBConfig): Make the data
@@ -23,12 +32,12 @@
 
 2007-04-06  Petr Malivanek  <malivanek@asellus.cz>
 
-	* lib/pytis/extensions/spec.py (sf): Pro spu¹tìní ShowForm z menu.
+	* lib/pytis/extensions/spec.py (sf): New function.
 
 2007-04-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/dbconfig.py (DBConfig): Perform selects
-	with locking. 
+	with locking.
 
 2007-04-03  Tomas Cerha  <cerha@brailcom.org>
 
