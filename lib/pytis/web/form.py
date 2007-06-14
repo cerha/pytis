@@ -280,7 +280,7 @@ class ShowForm(LayoutForm):
                 if uri:
                     value = g.link(label, uri) + size
                 else:
-                    value = label
+                    value = label + size
             else:
                 value = ""
         elif isinstance(type, pytis.data.Boolean):
