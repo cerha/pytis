@@ -1,3 +1,8 @@
+2007-06-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Specification._create_view_spec):
+	Default title setting fixed.
+
 2007-06-13  Pavel Hanak  <hanak@alfik.akont.xx>
 
 	* pytis/data/postgresql.py 

@@ -2356,8 +2356,7 @@ class Specification(object):
             return name and self._resolver.get(name, 'data_spec')
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
-            table = self.table or \
-                    camel_case_to_lower(self.__class__.__name__, '_')
+            table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
             def type_kwargs(f):
                 enumerator = e(f.codebook())
                 kwargs = f.type_kwargs()
@@ -2414,7 +2413,7 @@ class Specification(object):
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:
-            title = ' '.join(split_camel_case(self.__name__))
+            title = ' '.join(split_camel_case(self.__class__.__name__))
         return ViewSpec(title, **kwargs)
 
     def view_spec(self):
