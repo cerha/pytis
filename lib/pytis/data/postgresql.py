@@ -449,6 +449,12 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     """Tøída pro zji¹»ování skupin u¾ivatele."""
     
     _access_groups = {}
+    _access_groups_data_objects = {}
+
+    def __init__ (self, *args, **kwargs):
+        super(PostgreSQLUserGroups, self).__init__(*args, **kwargs)
+        key = self._pgg_connection_key(self._pg_connection_data())
+        PostgreSQLUserGroups._access_groups_data_objects[key] = self
 
     def _postgresql_initialize_connection(self, connection):
         superclass = super(PostgreSQLUserGroups, self)
@@ -457,7 +463,11 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
 
     def _pgg_update_user_groups(self, connection):
         key = self._pgg_connection_key(connection.connection_data())
-        PostgreSQLUserGroups._access_groups[key] = self
+        try:
+            del PostgreSQLUserGroups._access_groups[key]
+        except KeyError:
+            pass
+        self._access_groups_data_objects[key] = self
 
     def _pgg_connection_key(self, connection_data):
         return connection_data.user(), connection_data.password()
@@ -496,10 +506,11 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         """
         connection_data = self._pg_connection_data()
         key = self._pgg_connection_key(connection_data)
-        groups = PostgreSQLUserGroups._access_groups.get(key)
-        if isinstance(groups, PostgreSQLConnector):
+        groups = PostgreSQLUserGroups._access_groups.get(key, UNDEFINED)
+        if groups is UNDEFINED:
+            data = self._access_groups_data_objects[key]
             groups = PostgreSQLUserGroups._access_groups[key] = \
-                self._pgg_retrieve_access_groups(groups)
+                self._pgg_retrieve_access_groups(data)
         return groups
 
     # TODO: Temporary compatibility hack:

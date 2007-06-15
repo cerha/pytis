@@ -1,3 +1,8 @@
+2007-06-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/postgresql.py (PostgreSQLUserGroups): Deuglified and
+	fixed.
+
 2007-06-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py: Perform UNIQUE constraint
