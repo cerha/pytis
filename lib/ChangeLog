@@ -1,5 +1,7 @@
 2007-06-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Make use of `PopupInsertForm'.
+
 	* pytis/form/_grid.py: Don't share the form's data object with
 	`PresentedRow' instances.
 

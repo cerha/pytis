@@ -684,8 +684,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if isinstance(top, Refreshable):
                 top.refresh()
         else:
-            result = run_form(PopupEditForm, name, mode=EditForm.MODE_INSERT,
-                              prefill=prefill, inserted_data=inserted_data,
+            result = run_form(PopupInsertForm, name, prefill=prefill, inserted_data=inserted_data,
                               multi_insert=multi_insert, transaction=transaction)
         return result
 
