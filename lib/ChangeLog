@@ -1,5 +1,8 @@
 2007-06-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py: Perform UNIQUE constraint
+	validation.
+
 	* pytis/form/application.py: Make use of `PopupInsertForm'.
 
 	* pytis/form/_grid.py: Don't share the form's data object with
@@ -22,7 +25,8 @@
 	(Module): 
 
 	* pytis/presentation/spec.py: Use the specification class
-	docstring for the default `help', not for `description'.
+	docstring for the default `help', not for `description'.  Use
+	`connection_data' instead of `dbconnection_spec'.
 
 2007-06-14  Tomas Cerha  <cerha@brailcom.org>
 

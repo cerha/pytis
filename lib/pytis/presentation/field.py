@@ -517,18 +517,28 @@ class PresentedRow(object):
         if column.codebook_runtime_filter is not None:
             kwargs = dict(kwargs, condition=self.runtime_filter(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
+        if not error and column.type.unique() and not column.virtual and \
+               (self._new or value != self._original_row[key]):
+            count = self._data.select(condition=pytis.data.EQ(column.id, value),
+                                      transaction=self._transaction)
+            self._data.close()
+            if count != 0:
+                error = pytis.data.ValidationError(_("Taková hodnota ji¾ existuje."))
+        result = error
+        if error:
+            value, error = column.type.validate(string, transaction=self._transaction,
+                                                strict=False, **kwargs)
         if not error:
             if self._invalid.has_key(key):
                 del self._invalid[key]
             if string != self.format(key):
                 self.__setitem__(key, value, run_callback=False)
         else:
-            # TODO: perform non-strict validation?
             if string != self.format(key):
                 self._invalid[key] = string
             elif self._invalid.has_key(key):
                 del self._invalid[key]
-        return error
+        return result
 
     def invalid_string(self, key):
         """Return the last invalid user input string.
