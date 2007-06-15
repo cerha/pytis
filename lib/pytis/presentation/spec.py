@@ -2256,7 +2256,7 @@ class Specification(object):
     jejich význam je zdokumentován v rámci jejich dokumentaèních øetìzcù.
     V¹echny ostatní veøejné atributy, které odvozená tøída definuje budou
     pøedány jako stejnojmenné argumenty konstruktoru 'ViewSpec'.  Výchozí
-    hodnotou argumentu 'description' pro 'ViewSpec' je dokumentaèní øetìzec
+    hodnotou argumentu 'help' pro 'ViewSpec' je dokumentaèní øetìzec
     specifikaèní tøídy.
 
     """
@@ -2335,7 +2335,7 @@ class Specification(object):
                 setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
         assert isinstance(self.fields, (list, tuple))
-        self._view_spec_kwargs = {'description': self.__class__.__doc__}
+        self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
             if not (attr.startswith('_') or attr.endswith('_spec') or \
                     attr in ('table', 'key', 'access_rights', 'condition',
@@ -2350,6 +2350,12 @@ class Specification(object):
                 continue
             if callable(value):
                 self._view_spec_kwargs[arg] = value()
+        #if self.__class__.__doc__:
+            #parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
+            #if not self._view_spec_kwargs.has_key('description'):
+            #    self._view_spec_kwargs['description'] = parts[0]
+            #if not self._view_spec_kwargs.has_key('help') and len(parts) > 1:
+            #    self._view_spec_kwargs['help'] = parts[1]
 
     def _create_data_spec(self):
         def e(name):

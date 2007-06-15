@@ -551,8 +551,8 @@ class TitledForm:
 
     def _on_show_description(self, event):
         title = _("Popis náhledu %s") % self._view.title()
-        text = "= "+self._view.title()+" =\n\n" + self._view.description()
-        return InfoWindow(title, text=text, format=TextFormat.WIKI)
+        text = "= "+ self._view.title() +" =\n\n" + (self._view.help() or self._view.description())
+        InfoWindow(title, text=text, format=TextFormat.WIKI)
 
     def _print_menu(self):
         # Vra» seznam polo¾ek tiskového menu.
@@ -574,11 +574,12 @@ class TitledForm:
     def _on_menu_button(self, event, items):
         popup_menu(event.GetEventObject(), items, self._get_keymap())
 
-    def _create_title_bar(self, description=None):
+    def _create_title_bar(self):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel)
         print_menu = self._print_menu()
+        description = self._view.help() or self._view.description()
         buttons = (
             wx_button(panel, icon='filter', label=_("Filtr"),
                       tooltip=_("Zobrazit menu filtrace"), noborder=True,

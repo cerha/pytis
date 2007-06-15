@@ -162,8 +162,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     def _create_form_parts(self, sizer):
         if self.title() is not None:
-            description = self._view.description()
-            self._title_bar = self._create_title_bar(description=description)
+            self._title_bar = self._create_title_bar()
             sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         else:
             self._title_bar = None

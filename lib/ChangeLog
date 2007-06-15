@@ -1,3 +1,15 @@
+2007-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._create_form_parts): Don't pass
+	`description' to `_create_title_bar()'.
+
+	* pytis/form/form.py (TitledForm._on_show_description): Show the
+	help text instead of description if it is available.
+	(TitledForm._create_title_bar): Argument 'description' removed.
+
+	* pytis/presentation/spec.py: Use the specification class
+	docstring for the default `help', not for `description'.
+
 2007-06-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (wx_text_view): Updated for the latest LCG version.
