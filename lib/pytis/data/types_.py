@@ -389,15 +389,15 @@ class Type(object):
                 raise ValidationError(cresult)
 
     def not_null(self):
-        """Return true iff values of this type may not be empty."""
+        """Return true if values of this type may not be empty."""
         return self._not_null
 
     def unique(self):
-        """Return true iff values of this type must be unique in a table."""
+        """Return true if values of this type must be unique in a table."""
         return not not self._unique
 
     def enumerator(self):
-        """Vra» enumerátor svázaný s tímto typem."""
+        """Return the 'Enumerator' instance bound to this type or None."""
         return self._enumerator
             
     def export(self, value, *args, **kwargs):
