@@ -118,6 +118,9 @@ class AccessRights(object):
         return table
 
     def _permitted(self, permission, groups, column):
+        if groups is None:
+            # If user groups can't be retrieved, allow it
+            return True
         ok_groups = self.permitted_groups(permission, column) + \
                     self.permitted_groups(permission, None)
         return (None in ok_groups) or some(lambda g: g in ok_groups, groups)

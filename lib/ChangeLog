@@ -1,5 +1,10 @@
 2007-06-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/access.py (AccessRights._permitted): Don't crash when
+	user groups couldn't be retrieved, allow the action instead.
+
+2007-06-15  Milan Zamazal  <pdm@brailcom.org>
+	
 	* pytis/data/postgresql.py (PostgreSQLUserGroups): Deuglified and
 	fixed.
 
