@@ -1481,6 +1481,7 @@ class DataEnumerator(Enumerator):
         if validity_column is not None:
             validity_condition = EQ(validity_column, Value(Boolean(), True))
         self._validity_condition = validity_condition
+        self._change_callbacks = []
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -1499,6 +1500,9 @@ class DataEnumerator(Enumerator):
         c = data.find_column(self._value_column)
         assert c, ('Non-existent value column', self._value_column)
         self._value_column_type = c.type()
+        for callback in self._change_callbacks:
+            self._data.add_callback_on_change(callback)
+        self._change_callbacks = []
         if __debug__:
             if self._validity_column is not None:
                 c = data.find_column(self._validity_column)
@@ -1551,7 +1555,11 @@ class DataEnumerator(Enumerator):
     # Extended interface.
 
     def add_callback_on_change(self, callback):
-        self._data.add_callback_on_change(callback)
+        # We don't want this co cause data object creation.  See also __getattr__().
+        if self.__dict__.has_key('_data'):
+            self._data.add_callback_on_change(callback)
+        else:
+            self._change_callbacks.append(callback)
         
     def data_factory(self):
         """Vra» specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""

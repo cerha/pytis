@@ -21,6 +21,9 @@
 	pøidány také v¹echny duální náhledy, ve kterých se daný náhled
 	vyskytuje.
 
+	* BUGFIX: Opraveno nechtìné vytváøení datových objektù pøi
+	inicializaci datového typu s enumerátorem.
+
 2007-06-14 Tomas Cerha  <cerha@brailcom.org>
 
 	Kód pro generování nápovìdy v pytis.extensions byl zjednodu¹en a

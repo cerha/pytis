@@ -1,5 +1,8 @@
 2007-06-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py: Fixed unwanted enumerator data object
+	creation on data type construction.
+
 	* pytis/form/list.py (ListForm._create_form_parts): Don't pass
 	`description' to `_create_title_bar()'.
 
