@@ -21,6 +21,18 @@
 	pøidány také v¹echny duální náhledy, ve kterých se daný náhled
 	vyskytuje.
 
+	PresentedRow nyní pøi validaci zohledòuje také nastavení UNIQUE
+	datového typu.
+
+	V souvislosti s validací UNIQUE je nyní do vytváøených instancí
+	PresentedRow pøedávána v¾dy nová instance datového objektu, tak¾e
+	tento objekt ji¾ není pøímo sdílen mezi formuláøem a øádkem.  To
+	by mìlo datový objekt formuláøe ochránit i pøed ne¾ádoucí
+	manipulací z computerù a procedur, které s ním mohou pracovat.
+
+	Nová tøída `PopupInsertForm' umo¾òuje jednodu¹¹í zpùsob otevøení
+	formuláøe ve vkládacím re¾imu. 
+
 	* BUGFIX: Opraveno nechtìné vytváøení datových objektù pøi
 	inicializaci datového typu s enumerátorem.
 
