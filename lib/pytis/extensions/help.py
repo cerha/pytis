@@ -35,18 +35,33 @@ See the LCG documentation for more information.
 
 import sys, os, lcg, pytis.form, pytis.util
 
-global _used_defs, _menu_items
+global _used_defs, _menu_items, _refered_defs
 _used_defs = []
 _menu_items = {}
+_refered_defs = {}
         
-
-def _refered_names(view):
-    names = [f.codebook() for f in view.fields() if f.codebook()]
-    for  f in view.fields():
-        names.extend([link.name() for link in f.links()])
-    return tuple(pytis.util.remove_duplicates(names))
+def _refered_names(name):
+    global _refered_defs
+    try:
+        names = _refered_defs[name]
+    except KeyError:
+        spec = pytis.util.resolver().get(name, 'view_spec')
+        names = [f.codebook() for f in spec.fields() if f.codebook()]
+        for f in spec.fields():
+            names.extend([link.name() for link in f.links()])
+        names = _refered_defs[name] = tuple(pytis.util.remove_duplicates(names))
+    return names
     
-
+def _related_names(name):
+    # Return related names and also all dual forms using given name
+    global _refered_defs
+    names = list(_refered_names(name))
+    if name.find('::') == -1:
+        global _used_defs
+        for n in _used_defs:
+            if n.startswith(name+'::') or n.endswith('::'+name):
+                names.append(n)
+    return names
 
 class _MenuItemReader(lcg.Reader):
     """Generate an LCG document from a Pytis menu item."""
@@ -94,15 +109,12 @@ class _MenuItemReader(lcg.Reader):
             info.append(("Typ formuláøe",
                          '%s (%s)' % (form.DESCR.capitalize(), form.__name__)))
             if not issubclass(form, pytis.form.ConfigForm):
-                def get(name, spec='view_spec'):
-                    return pytis.util.resolver().get(name, spec)
                 if issubclass(form, pytis.form.DualForm) and \
                        not issubclass(form, pytis.form.DescriptiveDualForm):
                     main, side = name.split('::')
-                    names = (name, main, side) + \
-                          _refered_names(get(main)) + _refered_names(get(side))
+                    names = (name, main, side) + _refered_names(main) + _refered_names(side)
                 else:
-                    names = (name,) + _refered_names(get(name))
+                    names = (name,) + _refered_names(name)
                 global _used_defs, _menu_items
                 for n in names:
                     if n not in _used_defs:
@@ -191,9 +203,12 @@ class _DescrReader(lcg.StructuredTextReader):
                 (_("Menu"), menu_items))
         
     def _default_description_text(self):
-        return self._view_spec.help() or self._view_spec.description() or \
-               _("Popis není k dispozici.")
-    
+        help = self._view_spec.help()
+        if help:
+            return lcg.SectionContainer(lcg.Parser().parse(help))
+        else:
+            return lcg.p(_("Popis není k dispozici."))
+
     def _create_content(self):
         content = [lcg.Section("Základní informace",
                                lcg.fieldset(self._info(), formatted=True))]
@@ -216,11 +231,11 @@ class _SingleDescrReader(_DescrReader):
         actions = [(a.title(), a.descr() or '') for a in view.actions(linear=True)]
         fields = [(f.label(), f.descr() or "")  for f in
                   [view.field(cid) for cid in view.layout().order()]]
-        links = [lcg.WikiText("[%s]" % name) for name in _refered_names(view)]
+        related = [lcg.WikiText("[%s]" % name) for name in _related_names(self._name)]
         for (title, items, f) in (
             ("Akce kontextového menu", actions, lcg.dl),
-            ("Políèka formuláøe",      fields,  lcg.fieldset),
-            ("Související náhledy",    links,   lcg.ul)):
+            ("Políèka formuláøe",      fields,  lcg.dl),
+            ("Související náhledy",    related, lcg.ul)):
             c = items and f(items, formatted=True) or lcg.TextContent("®ádné")
             content.append(lcg.Section(title, c))
         if not self._data_spec.access_rights():
@@ -242,6 +257,8 @@ class _DualDescrReader(_DescrReader):
         main, side = name.split('::')
         self._main_spec = resolver.get(main, 'view_spec')
         self._side_spec = resolver.get(side, 'view_spec')
+        self._main_data_spec = resolver.get(main, 'data_spec')
+        self._side_data_spec = resolver.get(side, 'data_spec')
         self._binding = resolver.get(main, 'binding_spec')[side]
 
     def _title(self):
@@ -254,19 +271,30 @@ class _DualDescrReader(_DescrReader):
                ((_("Horní formuláø"), "[%s]" % main),
                 (_("Dolní formuláø"), "[%s]" % side))
     
+    def _create_content(self):
+        content = super(_DualDescrReader, self)._create_content()
+        main_rights = self._main_data_spec.access_rights()
+        side_rights = self._side_data_spec.access_rights()
+        main_groups = main_rights.permitted_groups(pytis.data.Permission.VIEW, None)
+        groups = [str(g) for g in side_rights.permitted_groups(pytis.data.Permission.VIEW, None)
+                  if g in main_groups]
+        content.append(lcg.Section("Pøístupová práva", lcg.p(', '.join(groups or '-'))))
+        return content
+        
     def _default_description_text(self):
         def clabel(cid, view):
             c = view.field(cid)
             return c and c.column_label() or cid
         b = self._binding
-        text = _("Hlavním formuláøem tohoto duálního formuláøe je '%s'.  "
-                 "V dolní èásti ze zobrazují související záznamy formuláøe "
-                 "'%s'.  Oba formuláøe jsou propojeny pøes shodu hodnot "
-                 "sloupeèkù '%s' = '%s'.") % \
-                 (self._main_spec.title(), self._side_spec.title(),
-                  clabel(b.binding_column(), self._main_spec),
-                  clabel(b.side_binding_column(), self._side_spec))
-        return text
+        text = b.description()
+        if text is None:
+            main, side = self._name.split('::')
+            text = _("Hlavním formuláøem tohoto duálního formuláøe je [%s].  V dolní èásti "
+                     "se zobrazují související záznamy formuláøe [%s].  Oba formuláøe jsou "
+                     "propojeny pøes shodu hodnot sloupeèkù '%s' = '%s'.") % \
+                     (main, side, clabel(b.binding_column(), self._main_spec),
+                      clabel(b.side_binding_column(), self._side_spec))
+        return lcg.p(text, formatted=True)
     
 
 class DescrReader(lcg.FileReader):

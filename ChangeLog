@@ -1,3 +1,8 @@
+2007-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py: Generate also access groups for
+	dual views and related dual views for each single view.
+
 2007-06-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py: Updated for newer LCG version.
