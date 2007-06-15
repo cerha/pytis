@@ -4,6 +4,23 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	Dokumentaèní øetìzec specifikaèní tøídy nyní neslou¾í jako výchozí
+	hodnota atributu `description', ale atributu `help'.  Díky tomu je
+	brána jako strukturovaný text a pøi zobrazení je korektnì
+	zformátována.  Pokud je `help' definován, má nyní pøednost pøed
+	`description' pøi zobrazení `rychlé' nápovìdy (tlaèítko s
+	bublinou).
+	
+	Pøi generování nápovìdy duálního náhledu je nyní zobrazen také
+	seznam oprávnìných skupin jako prùnik skupin s právem VIEW pro
+	horní a dolní náhled.
+	
+	Dále jsou v nápovìdì nyní do seznamu "Souvisejících náhledù"
+	pøidány také v¹echny duální náhledy, ve kterých se daný náhled
+	vyskytuje.
+
 2007-06-14 Tomas Cerha  <cerha@brailcom.org>
 
 	Kód pro generování nápovìdy v pytis.extensions byl zjednodu¹en a
