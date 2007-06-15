@@ -66,23 +66,13 @@ class ListTable(wx.grid.PyGridTableBase):
             self.the_row = the_row
             
     class _EditedRow(_CurrentRow):
-        def __init__(self, row, the_row, fieldspec, data, new=False, prefill=None):
-            if __debug__ and config.server:
-                import pytis.remote
-            # TODO: Proè tu není pytis.data, i kdy¾ je nahoøe import pytis.data?
-            # Tak to importneme tady...
-            import pytis.data    
+        def __init__(self, row, data_row, fieldspec, data, new=False, prefill=None):
             assert type(row) == type(0)
-            assert the_row is None or \
-                   isinstance(the_row, pytis.data.Row) or \
-                   isinstance(the_row, PresentedRow)
-            assert is_sequence(fieldspec)
-            assert isinstance(data, pytis.data.Data) or \
-                   isinstance (data, pytis.remote.RemoteData)
-            p_row = PresentedRow(fieldspec, data, the_row,
+            assert data_row is None or isinstance(data_row, pytis.data.Row)
+            p_row = PresentedRow(fieldspec, data, data_row,
                                  prefill=prefill, singleline=True, new=new)
             ListTable._CurrentRow.__init__(self, row, p_row)
-            self.orig_row = copy.copy(the_row)
+            self.orig_row = copy.copy(data_row)
         def update(self, colid, value):
             self.the_row[colid] = value
             
@@ -145,14 +135,16 @@ class ListTable(wx.grid.PyGridTableBase):
                     
     _TYPE_MAPPING = None
         
-    def __init__(self, frame, presented_row, columns, row_count, sorting=(), grouping=(),
-                 inserted_row_number=None, inserted_row=None, prefill=None, row_style=None):
+    def __init__(self, frame, data, create_data_object, presented_row, columns, row_count,
+                 sorting=(), grouping=(), inserted_row_number=None, inserted_row_prefill=None,
+                 prefill=None, row_style=None):
         assert isinstance(grouping, types.TupleType)
+        assert callable(create_data_object)
         wx.grid.PyGridTableBase.__init__(self)
         self._frame = frame
+        self._data = data
+        self._create_data_object = create_data_object
         self._presented_row = presented_row
-        self._data = presented_row.data()
-        self._fields = presented_row.fields()
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
@@ -173,11 +165,13 @@ class ListTable(wx.grid.PyGridTableBase):
         if inserted_row_number is None:
             self._edited_row = None
         else:
-            self._edited_row = self._init_edited_row(inserted_row_number, inserted_row)
+            self._edited_row = self._init_edited_row(inserted_row_number, prefill=inserted_row_prefill)
 
-    def _init_edited_row(self, row, data_row, new=False):
-        return self._EditedRow(row, data_row, self._fields, self._data, new=new,
-                               prefill=self._prefill)
+    def _init_edited_row(self, row_number, data_row=None, prefill=None, new=False):
+        if prefill is None:
+            prefill = self._prefill
+        return self._EditedRow(row_number, data_row, self._presented_row.fields(),
+                               self._create_data_object(), new=new, prefill=prefill)
         
     # Pomocné metody
 
@@ -203,18 +197,14 @@ class ListTable(wx.grid.PyGridTableBase):
         Form.COMMAND_LEAVE_FORM.invoke()
 
     def _get_row(self, row, autoadjust=False):
-        """Vra» øádek èíslo 'row' z databáze jako instanci 'pytis.data.Row'.
+        """Return the row number 'row' from the database as a 'PresentedRow' instance.
         
-        Argumenty:
+        Arguments:
         
-        row -- poøadové èíslo øádku *v databázovém selectu*, poèínaje 0
-        autoadjust -- právì kdy¾ je pravdivé, je 'row' sní¾eno
-          o jednièku, nachází-li se za editovaným *novým* øádkem, a pokud
-          je shodno s èíslem editovaného øádku (a» u¾ nového èi pouze
-          modifikovaného), je vrácen editovaný øádek
-
-        Pozor: Pokud je po¾adovaný øádek právì editovaným øádkem, je vrácen
-        jako instance 'PresentedRow'.
+        row -- row number within the *database select*, starting from 0
+        autoadjust -- when true, 'row' is decreased by one if it is located behind an edited *new*
+          row.  Also when the 'row', equals to the number of the currently edited row (whether new
+          or existing), this edited row is returned.
 
         """
         edited = self._edited_row
@@ -336,8 +326,8 @@ class ListTable(wx.grid.PyGridTableBase):
         d = wx.NamedColor(config.grouping_background_downgrade)
         return (255-d.Red(), 255-d.Green(), 255-d.Blue())
     
-    def update(self, columns, row_count, sorting, grouping,
-               inserted_row_number, inserted_row, prefill):
+    def update(self, columns, row_count, sorting, grouping, inserted_row_number,
+               inserted_row_prefill, prefill):
         assert isinstance(grouping, types.TupleType)
         self._update_columns(columns)
         self._row_count = row_count
@@ -353,7 +343,7 @@ class ListTable(wx.grid.PyGridTableBase):
         if inserted_row_number is None:
             self._edited_row = None
         else:
-            self._edited_row = self._init_edited_row(inserted_row_number, inserted_row, new=True)
+            self._edited_row = self._init_edited_row(inserted_row_number, prefill=inserted_row_prefill, new=True)
         
     def close(self):
         # Tato metoda je nutná kvùli jistému podivnému chování wxWindows,
@@ -364,6 +354,7 @@ class ListTable(wx.grid.PyGridTableBase):
         # nedochází pøi uzavøení formuláøe k likvidaci nìjakých blí¾e
         # neurèených dat, patrnì i z této tabulky, tak radìji významná
         # data instance ma¾eme ruènì...
+        self._create_data_object = None
         self._frame = None
         self._fields = None
         self._columns = None
@@ -426,12 +417,7 @@ class ListTable(wx.grid.PyGridTableBase):
         """
         if row < 0 or row >= self.GetNumberRows():
             return None
-        r = self._get_row(row, autoadjust=True)
-        if isinstance(r, PresentedRow):
-            return r
-        else:
-            self._presented_row.set_row(r)
-            return self._presented_row
+        return self._get_row(row, autoadjust=True)
 
     def edit_row(self, row):
         """Zahaj editaci øádku èíslo 'row'.
@@ -451,7 +437,7 @@ class ListTable(wx.grid.PyGridTableBase):
             self._edited_row = None
         else:
             assert row >= 0 and row < self._row_count, ('Invalid row number', row)
-            self._edited_row = self._init_edited_row(row, self._get_row(row))
+            self._edited_row = self._init_edited_row(row, data_row=self._get_row(row).row())
 
     def editing(self):
         """Vra» informaci o editovaném øádku nebo 'None'.

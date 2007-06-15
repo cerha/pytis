@@ -184,8 +184,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Inicializuj datový select
         row_count = self._init_select()
         self._table = table = \
-          _grid.ListTable(self._parent, self._row, self._columns, row_count,
-                          sorting=self._lf_sorting, grouping=self._grouping, prefill=self._prefill,
+          _grid.ListTable(self._parent, self._data, self._create_data_object, self._row,
+                          self._columns, row_count, sorting=self._lf_sorting,
+                          grouping=self._grouping, prefill=self._prefill,
                           row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
@@ -216,9 +217,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
         if __debug__: log(DEBUG, 'Nový grid vytvoøen')
 
-    def _update_grid(self, data_init=False, inserted_row_number=None,
-                     inserted_row=None, delete_column=None, insert_column=None,
-                     inserted_column_index=None, init_columns=False):
+    def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row_prefill=None,
+                     delete_column=None, insert_column=None, inserted_column_index=None,
+                     init_columns=False):
         g = self._grid
         t = self._table
         def notify(id, *args):
@@ -264,11 +265,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             row_count = row_count + 1
         old_row_count = self._table.GetNumberRows()
         new_row_count = row_count
-        t.update(columns=self._columns,
-                 row_count=row_count, sorting=self._lf_sorting,
-                 grouping=self._grouping,
-                 inserted_row_number=inserted_row_number,
-                 inserted_row=inserted_row, prefill=self._prefill)
+        t.update(columns=self._columns, row_count=row_count, sorting=self._lf_sorting,
+                 grouping=self._grouping, inserted_row_number=inserted_row_number,
+                 inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
         ndiff = new_row_count - old_row_count
         if new_row_count < old_row_count:
             if new_row_count == 0:
@@ -542,7 +541,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                   (rdata,),
                   dict(after=after, before=before, transaction=self._transaction))
         else:
-            key = editing.orig_row.row().columns(kc)
+            key = editing.orig_row.columns(kc)
             op = (self._data.update,
                   (key, rdata,),
                   dict(transaction=self._transaction))
@@ -1633,17 +1632,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         oldg = self._grid
         oldempty = (oldg.GetNumberRows() == 0)
         if not copy or oldempty:
-            inserted_row = None
+            inserted_row_prefill = None
         else:
-            the_row = table.row(row)
-            inserted_row = PresentedRow(the_row.fields(), the_row.data(), None,
-                                        prefill=self._row_copy_prefill(the_row),
-                                        new=True)
+            inserted_row_prefill = self._row_copy_prefill(table.row(row))
         if not before and not oldempty:
             row = row + 1
         if row == -1:
             row = 0
-        self._update_grid(inserted_row_number=row, inserted_row=inserted_row)
+        self._update_grid(inserted_row_number=row, inserted_row_prefill=inserted_row_prefill)
         self._select_cell(row=row, col=0, invoke_callback=False)
         if not self._is_editable_cell(row, 0) \
                and not self._find_next_editable_cell():

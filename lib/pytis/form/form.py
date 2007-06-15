@@ -66,8 +66,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return current_form(inner=False)
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
-    def __init__(self, parent, resolver, name, guardian=None, spec_args=None, transaction=None,
-                 **kwargs):
+    def __init__(self, parent, resolver, name, guardian=None, transaction=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -126,10 +125,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
-        spec_args = spec_args or {}
         try:
-            self._view = self._create_view_spec(**spec_args)
-            self._data = self._create_data_object(**spec_args)
+            self._view = self._create_view_spec()
+            self._data = self._create_data_object()
         except ResolverError:
             log(OPERATIONAL, 'Chyba z resolveru', format_traceback())
             throw('form-init-error')
@@ -154,29 +152,28 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._form_state = config.form_state[key] = {}
         self._initial_form_state = copy.copy(self._form_state)
 
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         t = time.time()
-        spec = self._resolver.get(self._name, 'view_spec', **kwargs)
+        spec = self._resolver.get(self._name, 'view_spec')
         log(EVENT, 'Specification read in %.3fs:' % (time.time() - t), spec)
         assert isinstance(spec, ViewSpec)
         return spec        
 
-    def _create_data_object(self, **kwargs):
-        name = self._name
-        data_spec = self._resolver.get(name, 'data_spec', **kwargs)
+    def _create_data_object(self):
+        factory = self._resolver.get(self._name, 'data_spec')
         import config
         if __debug__ and config.server:
             import pytis.remote
         else:    
             import pytis.data    
-        assert isinstance(data_spec, pytis.data.DataFactory) or \
-               isinstance(data_spec, pytis.remote.RemoteDataFactory)
-        if issubclass(data_spec.class_(), pytis.data.DBData):
-            kwargs = dict(dbconnection_spec=config.dbconnection)
+        assert isinstance(factory, pytis.data.DataFactory) or \
+               isinstance(factory, pytis.remote.RemoteDataFactory)
+        if issubclass(factory.class_(), pytis.data.DBData):
+            kwargs = dict(connection_data=config.dbconnection)
         else:
             kwargs = {}
         t = time.time()
-        op = lambda : data_spec.create(**kwargs)
+        op = lambda : factory.create(**kwargs)
         success, data_object = db_operation(op)
         if not success:
             throw('form-init-error')
@@ -217,8 +214,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             assert cls is tuple
             for item in param:
                 if not isinstance(item, item_cls):
-                    log(OPERATIONAL, "Invalid saved form attribute value:",
-                        name)
+                    log(OPERATIONAL, "Invalid saved form attribute value:", name)
                     return default
         return param
 
@@ -1066,9 +1062,9 @@ class RecordForm(LookupForm):
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
-        self._row = PresentedRow(self._view.fields(), self._data, self._data_row(select_row),
-                                 prefill=prefill, new=_new, singleline=_singleline,
-                                 transaction=self._transaction)
+        self._row = PresentedRow(self._view.fields(), self._create_data_object(),
+                                 self._data_row(select_row), prefill=prefill, new=_new,
+                                 singleline=_singleline, transaction=self._transaction)
         
     def _signal_update(self):
         pass
@@ -2001,6 +1997,14 @@ class PopupEditForm(PopupForm, EditForm):
         super(PopupEditForm, self).set_row(row)
         
 
+class PopupInsertForm(PopupEditForm):
+    
+    DESCR = _("vkládací formuláø")
+    
+    def _init_attributes(self, **kwargs):
+        super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
+        
+        
 class ShowForm(EditForm):
     """Formuláø pro zobrazení náhledu.
 
