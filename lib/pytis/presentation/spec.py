@@ -2393,7 +2393,7 @@ class Specification(object):
                            ("Nelze urèit zároveò typ a jeho argumenty.",
                             f.id(), kwargs, enum)
                     if enum:
-                        df_kwargs = {'dbconnection_spec': config.dbconnection}
+                        df_kwargs = {'connection_data': config.dbconnection}
                         e_kwargs = {'data_factory_kwargs': df_kwargs}
                         for a in ('value_column', 'validity_column',
                                   'validity_condition'):
