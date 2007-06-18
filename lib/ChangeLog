@@ -1,5 +1,8 @@
 2007-06-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/event.py: Include the error message in bug report
+	subjects.
+
 	* pytis/form/list.py: Don't recreate cell editors during editation.
 
 	* pytis/form/_grid.py: Deregister the cell editor.

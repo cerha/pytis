@@ -79,10 +79,10 @@ def top_level_exception():
     if text is None:
         sys.exit()
     elif text:
-        to = config.bug_report_address
+        #to = config.bug_report_address
+        to = 'cerha@brailcom.org'
         if not to:
-            run_dialog(Message, _("Není známa cílová adresa. "
-                                  "Je nutno nastavit konfiguraèní volbu "
+            run_dialog(Message, _("Není známa cílová adresa. Je nutno nastavit konfiguraèní volbu "
                                   "`bug_report_address'."))
         else:
             import commands
@@ -93,10 +93,8 @@ def top_level_exception():
             else:    
                 address = '%s@%s' % (username, domain)
             while True:
-                address = run_dialog(InputDialog,
-                                     prompt=_("Va¹e e-mailová adresa: "),
-                                     value = address,
-                                     input_width=30)
+                address = run_dialog(InputDialog, prompt=_("Va¹e e-mailová adresa: "),
+                                     value=address, input_width=30)
                 if not address or address.strip() == '':
                     continue
                 else:
@@ -107,7 +105,8 @@ def top_level_exception():
                     s.write('From: %s\n' % address)
                     s.write('To: %s\n' % to)
                     s.write('Bcc: %s\n' % address)
-                    s.write('Subject: %s\n' % config.bug_report_subject)
+                    s.write('Subject: %s: %s: %s\n' % (config.bug_report_subject,
+                                                       str(einfo[0]), str(einfo[1])))
                     s.write('\n')
                     s.write(text)
                     s.close()
