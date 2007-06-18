@@ -450,10 +450,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._in_select_cell = False
 
     def _edit_cell(self):
-        """Spus» editor aktuálního políèka."""
+        # Activate the editor of the current field.
         # TODO: Cell editors must be recreated for the current edited row.  Reinitializing columns
         # solves that, but some more gentle solution would be desirable...
-        self._init_col_attr()
+        if self._current_editor is None:
+            self._init_col_attr()
         row, col = self._current_cell()
         table = self._table
         cid = self._columns[col].id()
@@ -1650,7 +1651,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(EVENT, 'Øádek vlo¾en')
         return True
 
-
     def _can_line_commit(self):
         return self._is_changed()
 
@@ -1695,7 +1695,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return self._grid.IsCellEditControlEnabled()
 
     def _cmd_cell_rollback(self):
-        log(EVENT, 'Opu¹tìní políèka gridu beze zmìny hodnoty')
+        log(EVENT, 'Cell rollback in inline editation.')
         self._current_editor.Reset()
         row, col = self._current_cell()
         self._grid.DisableCellEditControl()

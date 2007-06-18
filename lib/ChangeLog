@@ -1,3 +1,9 @@
+2007-06-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py: Don't recreate cell editors during editation.
+
+	* pytis/form/_grid.py: Deregister the cell editor.
+
 2007-06-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/access.py (AccessRights._permitted): Don't crash when

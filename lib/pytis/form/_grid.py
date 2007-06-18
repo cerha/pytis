@@ -656,6 +656,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         field.validate(interactive=False)
         field.widget().Enable(False)
         self._parent.SetFocus()
+        self._registration(None)
         return True
 
     def Reset(self):

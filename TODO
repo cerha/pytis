@@ -66,8 +66,12 @@ NOVÉ VLASTNOSTI:
    bylo v praxi pou¾itelné, bude nutné zvolit zpùsob správy pøístupových práv k
    tìmto náhledùm.
 
+ * Bublinová nápovìda pøi najetí my¹í na sloupec browseformu.
+
  * Práva:
 
+   * Rozli¹it polo¾ky menu nedostupné kvùli pøístuponým právùm.
+ 
    * omezení view na jednotlivé sloupce
 
    * správa práv pøes databázi a formuláø, nikoli pøes specifikace
