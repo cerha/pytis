@@ -4,6 +4,15 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-18  Tomas Cerha  <cerha@brailcom.org>
+
+	V e-mailových zprávách bug reportù je nyní chybová hlá¹ka obsa¾ena
+	pøímo v pøedmìtu zprávy.  Mìlo by to pøispìt k snadnìj¹ímu
+	dohledávání a seskupování zpráv.
+
+	* BUGFIX: Zredukován výskyt situací, pøi kterých dojde v inline
+	editaci k pádu aplikace.
+	
 2007-06-15  Tomas Cerha  <cerha@brailcom.org>
 
 	Dokumentaèní øetìzec specifikaèní tøídy nyní neslou¾í jako výchozí
