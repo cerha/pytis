@@ -1,3 +1,18 @@
+2007-06-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/data.py: Cosmetic change.
+
+	* pytis/presentation/field.py (PresentedRow.cb_value): New method.
+
+	* pytis/form/event.py (top_level_exception): Improved bug
+	information in message subject.
+
+	* pytis/presentation/spec.py (CbComputer._compute): Pass the
+	current runtime filter condition.
+
+	* pytis/form/configui.py (_ConfigData.__init__): Pass keyword
+	arguments to parent method.
+
 2007-06-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/event.py: Include the error message in bug report

@@ -192,8 +192,7 @@ class Data(object):
     class UnsupportedOperation(Exception):
         """Signalizuje, ¾e byla ¾ádána nepodporovaná operace."""
     
-    def __init__(self, columns, key, ordering=None, condition=None,
-                 full_init=True, **kwargs):
+    def __init__(self, columns, key, ordering=None, condition=None, full_init=True, **kwargs):
         """
         Arguments:
 
