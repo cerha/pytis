@@ -1333,7 +1333,8 @@ class CbComputer(Computer):
             assert e is not None, \
                    "CbComputer refers to '%s', which has no enumerator." \
                    % self._field
-            value = e.get(cbvalue.value(), self._column, transaction=row.transaction())
+            value = e.get(cbvalue.value(), self._column, transaction=row.transaction(),
+                          condition=row.runtime_filter(self._field))
             if value:
                 return value.value()
         return self._default
