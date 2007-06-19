@@ -79,8 +79,7 @@ def top_level_exception():
     if text is None:
         sys.exit()
     elif text:
-        #to = config.bug_report_address
-        to = 'cerha@brailcom.org'
+        to = config.bug_report_address
         if not to:
             run_dialog(Message, _("Není známa cílová adresa. Je nutno nastavit konfiguraèní volbu "
                                   "`bug_report_address'."))
