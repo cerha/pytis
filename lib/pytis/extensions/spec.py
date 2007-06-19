@@ -114,6 +114,20 @@ def ef(title, name, hotkey=None, **kwargs):
 
 # Dal¹í funkce pro zjednodu¹ení èasto pou¾ívaných konstrukcí
 
+def get_value(value, default=None):
+    """Return the Python value of given 'pytis.data.Value' instance.
+
+    Accepts a 'pytis.data.Value' instance or None.  If the 'value' is None, the 'default' value
+    will be returned without complaining.  If the 'value' is a 'pytis.data.Value' instance, its
+    internal (Python) value will be returned.
+    
+    """
+    if value is None:
+        return default
+    else:
+        return value.value()
+    
+
 def rp_handler(spec_name, proc_name, *args, **kwargs):
     """Vra» handler u¾ivatelské akce, který spustí proceduru s danými argumenty.
 
@@ -131,7 +145,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     return lambda row: pytis.form.run_procedure(spec_name, proc_name,
                                                 *[row[key] for key in args],
                                                 **kwargs)
-   
+
 
 def cb2colvalue(value, column=None, transaction=None):
     """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
@@ -163,30 +177,6 @@ def cb2colvalue(value, column=None, transaction=None):
             return pytis.data.Value(value.type(), None)
         else:
             return v
-
-        
-def cb2strvalue(value, column=None, transaction=None):
-    """Pøeveï instanci 'Value' typu 'Codebook' na 'Value' typu 'String'.
-
-    Argumenty:
-
-      value -- Instance `pytis.data.Value' typu `pytis.data.Codebook'.
-      column -- název jiného sloupce èíselníku; øetìzec.  Viz
-        `Codebook.data_value()'.
-      transaction -- transakce pro pøedání datovým operacím.
-      
-    """
-    assert isinstance(value, pytis.data.Value)
-    assert value.type().enumerator() is not None
-    if column is None:
-        v = value.value()
-    else:
-        col_value = cb2colvalue(value, column=column, transaction=transaction)
-        if col_value:
-            v = col_value.value()
-        else:
-            v = None
-    return pytis.data.Value(pytis.data.String(), v)
 
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),
