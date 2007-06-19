@@ -1,5 +1,13 @@
 2007-06-19  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py: Remember the top level sizer as an
+	attribute.
+
+	* pytis/form/list.py: Minor cleanup.
+
+	* pytis/form/_grid.py (ListTable.__init__): Omit the
+	`inserted_row_number' and `inserted_row_prefill' arguments.
+
 	* pytis/data/data.py: Cosmetic change.
 
 	* pytis/presentation/field.py (PresentedRow.cb_value): New method.

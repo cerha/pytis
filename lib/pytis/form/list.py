@@ -160,16 +160,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return [c.id() for c in self._data.columns() 
                 if not isinstance(c.type(), pytis.data.Big)]
     
-    def _create_form_parts(self, sizer):
-        if self.title() is not None:
-            self._title_bar = self._create_title_bar()
-            sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
-        else:
-            self._title_bar = None
-        self._create_grid()
-        self._update_colors()
-        sizer.Add(self._grid, 1, wx.EXPAND|wx.FIXED_MINSIZE)
-
     def _column_width(self, column):
         try:
             return self._column_widths[column.id()]
@@ -177,12 +167,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
+    def _create_form_parts(self, sizer):
+        if self.title() is not None:
+            self._title_bar = self._create_title_bar()
+        else:
+            self._title_bar = None
+        sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
+        sizer.Add(self._create_grid(), 1, wx.EXPAND|wx.FIXED_MINSIZE)
+
     def _create_grid(self):
-        if __debug__: log(DEBUG, 'Vytváøení nového gridu')
-        # Vytvoø grid a tabulku
-        self._grid = g = wx.grid.Grid(self, wx.NewId())
-        # Inicializuj datový select
+        # Create the grid and table.  Initialize the data select.
         row_count = self._init_select()
+        self._grid = g = wx.grid.Grid(self)
         self._table = table = \
           _grid.ListTable(self._parent, self._data, self._create_data_object, self._row,
                           self._columns, row_count, sorting=self._lf_sorting,
@@ -202,6 +198,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         labels = g.GetGridColLabelWindow()
         self._editors = []
         self._init_col_attr()
+        self._update_colors()
         # Event handlery
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL,   g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
@@ -215,8 +212,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_RIGHT_DOWN, labels, self._on_label_right_down)
         wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
-        if __debug__: log(DEBUG, 'Nový grid vytvoøen')
-
+        return g
+        
+#     def _on_hide_search_panel(self, event):
+#         panel = self._search_panel
+#         sizer = self._top_level_sizer
+#         self._search_panel = None
+#         panel.Enable(False)
+#         sizer.Detach(panel)
+#         panel.Destroy()
+#         sizer.Layout()
+        
     def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row_prefill=None,
                      delete_column=None, insert_column=None, inserted_column_index=None,
                      init_columns=False):
@@ -282,12 +288,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Závìreèné úpravy
         self._update_colors()
         self._resize_columns()
-        if new_row_count != old_row_count or new_columns != old_columns \
-               or init_columns:
-            # This is a workaround of a wxWidgets bug.  The scrollbars are not
-            # shown or hidden properly, until a size event is received by the
-            # grid.  Thus we generate one artificially...
-            g.SetSize(g.GetSize())
+        if new_row_count != old_row_count or new_columns != old_columns or init_columns:
+            # Force scrollbar update by generating a size event.
+            #g.SetSize(g.GetSize())
+            g.FitInside()
 
     def _init_col_attr(self):
         # (Re)inicializuj atributy sloupcù gridu.
@@ -899,7 +903,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _on_label_drag_size(self, event):
         self._remember_column_size(event.GetRowOrCol())
-        self._grid.SetSize(self._grid.GetSize())
+        self._grid.FitInside()
         # Mohli bychom roz¹íøit poslední sloupec, ale jak ho potom zase zú¾it?
         #if config.stretch_tables:
         #    g = self._grid
@@ -1036,8 +1040,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _dualform(self):
         # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
         top = top_window()
-        if isinstance(top, DualForm) and \
-               self in (top.active_form(), top.inactive_form()):
+        if isinstance(top, DualForm) and self in (top.active_form(), top.inactive_form()):
             return top
         else:
             return None

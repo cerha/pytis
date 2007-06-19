@@ -136,8 +136,7 @@ class ListTable(wx.grid.PyGridTableBase):
     _TYPE_MAPPING = None
         
     def __init__(self, frame, data, create_data_object, presented_row, columns, row_count,
-                 sorting=(), grouping=(), inserted_row_number=None, inserted_row_prefill=None,
-                 prefill=None, row_style=None):
+                 sorting=(), grouping=(), prefill=None, row_style=None):
         assert isinstance(grouping, types.TupleType)
         assert callable(create_data_object)
         wx.grid.PyGridTableBase.__init__(self)
@@ -162,10 +161,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._grouping_background_downgrade = self._group_bg_downgrade()
         # Nastav øádek
         self.rewind()
-        if inserted_row_number is None:
-            self._edited_row = None
-        else:
-            self._edited_row = self._init_edited_row(inserted_row_number, prefill=inserted_row_prefill)
+        self._edited_row = None
 
     def _init_edited_row(self, row_number, data_row=None, prefill=None, new=False):
         if prefill is None:
