@@ -98,14 +98,18 @@ def top_level_exception():
                     continue
                 else:
                     break
+            tb = einfo[2]
+            while tb.tb_next is not None:
+                tb = tb.tb_next
+            filename = os.path.split(tb.tb_frame.f_code.co_filename)[-1]
+            buginfo = "%s at %s line %d" % (einfo[0].__name__, filename, tb.tb_lineno)
             if address is not None:
                 try:
                     s = os.popen('%s %s' % (config.sendmail_command, to), 'w')
                     s.write('From: %s\n' % address)
                     s.write('To: %s\n' % to)
                     s.write('Bcc: %s\n' % address)
-                    s.write('Subject: %s: %s: %s\n' % (config.bug_report_subject,
-                                                       str(einfo[0]), str(einfo[1])))
+                    s.write('Subject: %s: %s\n' % (config.bug_report_subject, buginfo))
                     s.write('\n')
                     s.write(text)
                     s.close()
