@@ -109,8 +109,8 @@ def configurable_options():
 class _ConfigData(pytis.data.RestrictedData):
     """Fale¹ná datová tøída."""
     
-    def __init__(self, columns):
-        super(_ConfigData, self).__init__(columns=columns, key=columns[0])
+    def __init__(self, columns, **kwargs):
+        super(_ConfigData, self).__init__(columns=columns, key=columns[0], **kwargs)
         self._giveone = False
 
     def select(self, condition=None, columns=None, sort=None, reuse=False,
