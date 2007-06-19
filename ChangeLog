@@ -1,3 +1,8 @@
+2007-06-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (cb2strvalue): Method removed.
+	(get_value): New method.
+
 2007-06-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py: Generate also access groups for
