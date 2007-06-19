@@ -367,6 +367,26 @@ class PresentedRow(object):
         except KeyError:
             return default
 
+    def cb_value(self, key, column):
+        """Return the value of another column in the data object of given field's enumerator.
+
+        Arguments:
+
+          key -- field identifier (string).  This field must have an enumerator of type
+            'DataEnumerator'.
+          column -- identifier of another column in the enumerator's data object.
+
+        This method is in fact just a convenience wrapper for 'pytis.data.DataEnumerator.get()'.
+
+        Returns a 'pytis.data.Value' instance or None when the enumerator doesn't contain the
+        current value of the field 'key' (the field value is not valid).
+            
+        """
+        value = self[key]
+        c = self.runtime_filter(key)
+        e = value.type().enumerator()
+        return e.get(value.value(), column=column, transaction=self._transaction, condition=c)
+        
     def row(self):
         """Return the current *data* row as a 'pytis.data.Row' instance."""
         row_data = [(c.id, pytis.data.Value(c.data_column.type(), self[c.id].value()))
@@ -374,7 +394,7 @@ class PresentedRow(object):
         return pytis.data.Row(row_data)
 
     def data(self):
-        """Vra» odpovídající datový objekt øádku."""
+        """Return the data object associated with the row."""
         return self._data
 
     def transaction(self):
@@ -390,8 +410,8 @@ class PresentedRow(object):
 
         Arguments:
 
-          'key' -- field identifier (string).
-          'kwargs' -- keyword arguments passed to the 'export()' method of the field's
+          key -- field identifier (string).
+          kwargs -- keyword arguments passed to the 'export()' method of the field's
             'Value' instance.
         
         """
