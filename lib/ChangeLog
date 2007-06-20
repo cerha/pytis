@@ -1,8 +1,15 @@
 2007-06-20  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/list.py: Aggregation result display in table implemented.
+	* pytis/form/screen.py: Don't use menu icons for 'CheckItem'.
 
-	* pytis/form/commands_.py: New command ListForm.TOGGLE_AGGREGATION
+	* pytis/form/form.py: Added aggregation toolbar button.
+
+	* pytis/form/list.py: Aggregation result display in table
+	implemented.
+
+	* pytis/form/commands_.py: New commands
+	ListForm.TOGGLE_AGGREGATION, ListForm.AGGREGATE and
+	ListForm.UNAGGREGATE.  Defined their icons.
 
 2007-06-19  Tomas Cerha  <cerha@brailcom.org>
 
