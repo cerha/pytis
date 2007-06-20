@@ -142,14 +142,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _compute_aggregate(self, key):
         cid, operation = key
-        condition = self._current_condition()
         c = self._data.find_column(cid)
         if c is not None and isinstance(c.type(), pytis.data.Number):
-            value = self._data.select_aggregate((operation, cid), condition=condition,
+            result = self._data.select_aggregate((operation, cid),
+                                                condition=self._current_condition(),
                                                 transaction=self._transaction)
+            #result = pytis.data.Value(self._row[cid].type(), value.value())
         else:
-            value = None
-        return value
+            result = None
+        return result
         
     def _init_columns(self, columns=None):
         if not columns:
@@ -803,12 +804,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  ]
 
     def _aggregation_menu(self):
-        return [CheckItem(label, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
+        return [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
                           state=lambda op=op: op in self._aggregations)
                 for op, title, icon, label in self._AGGREGATIONS] + \
                 [MSeparator(),
-                 MItem(self._aggregations and _("Zru¹it v¹e") or _("Zobrazit v¹e"),
-                       command=ListForm.COMMAND_TOGGLE_AGGREGATION()),]
+                 MItem(_("Zobrazit v¹e"), command=ListForm.COMMAND_AGGREGATE),
+                 MItem(_("Skrýt v¹e"), command=ListForm.COMMAND_UNAGGREGATE)]
     
     def _column_context_menu(self, col):
         M = Menu
@@ -839,9 +840,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  ________,
                  I(_("Autofiltr"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
                  I(_("Zru¹ filtr"), command=LookupForm.COMMAND_UNFILTER),
-                 ________,
-                 M(_("Agregaèní funkce"),
-                   self._aggregation_menu()),
                  ________,
                  I(_("Skrýt tento sloupec"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=None)),
@@ -975,8 +973,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         #t = self._table
         dc = wx.PaintDC(g.GetGridColLabelWindow())
         dc.SetTextForeground(wx.BLACK)
+        #dc.SetFont(g.GetFont())
         x = - self._scroll_x_offset()
         row_height = self._row_height
+        total_width = dc.GetSize().GetWidth()
         total_height = g.GetColLabelSize()
         label_height = self._label_height
         filtered_columns = self._filtered_columns()
@@ -991,10 +991,23 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
             # Draw the rectangle around.
             dc.DrawRectangle(x-d, y, width+d, label_height)
+            # Indicate when the column is being moved (before we clip the active refion).
+            move_target = self._column_move_target
+            if self._column_to_move is not None and move_target is not None:
+                if col == move_target:
+                    ax = x - d + (col == 0 and 5 or 0)
+                elif col == move_target-1 and col == len(self._columns)-1:
+                    ax = x + width - 5
+                else:
+                    ax = None
+                if ax is not None:
+                    dc.SetBrush(wx.Brush('GREEN', wx.SOLID))
+                    dc.DrawPolygon(arrow(ax, label_height-2))
+            dc.SetClippingRegion(x, 0, total_width-x, total_height)
             # Draw the label itself.
             label = c.column_label()
             while dc.GetTextExtent(label)[0] > width and len(label):
-                label = label[:-1] # Don't allow the label to extend the width.
+                label = label[:-1] # Shrink the label to fit the column width.
             dc.DrawLabel(label, (x, y, width, label_height), wx.ALIGN_CENTER)
             # Draw the sorting sign.
             pos = self._sorting_position(id)
@@ -1010,18 +1023,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for i in range(pos):
                     dc.DrawLine(left, top+2*i, left+9, top+2*i)
                 dc.DrawPolygon(triangle(left, top+pos*2, reversed=r))
-            # Indicate when the column is being moved.
-            move_target = self._column_move_target
-            if self._column_to_move is not None and move_target is not None:
-                if col == move_target:
-                    ax = x - d + (col == 0 and 5 or 0)
-                elif col == move_target-1 and col == len(self._columns)-1:
-                    ax = x + width - 5
-                else:
-                    ax = None
-                if ax is not None:
-                    dc.SetBrush(wx.Brush('GREEN', wx.SOLID))
-                    dc.DrawPolygon(arrow(ax, label_height-2))
             # Draw the filter sign.
             if id in filtered_columns:
                 dc.SetBrush(wx.Brush('GOLD', wx.SOLID))
@@ -1029,16 +1030,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Draw the aggregation results.
             y += label_height
             if self._aggregations:
-                for op, title, icon, label in self._AGGREGATIONS:
+                for op, title, icon_id, label in self._AGGREGATIONS:
                     if op in self._aggregations:
-                        dc.SetBrush(wx.Brush('WHITE', wx.SOLID))
+                        dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
                         dc.DrawRectangle(x-d, y-1, width+d, row_height+1)
                         value = self._aggregation_results[(id, op)]
                         if value is not None:
-                            #while dc.GetTextExtent(label)[0] > width and len(label):
-                            #    label = label[:-1] # Don't allow the label to extend the width.
-                            dc.DrawLabel(label+' '+value.export(), (x-d, y-1, width+d, row_height),
-                                         alignment=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+                            icon = get_icon(icon_id)
+                            rect = (x-d, y-1, width+d, row_height)
+                            align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
+                            if icon:
+                                dc.DrawImageLabel(' '+ value.export(), icon, rect, align)
+                            else:
+                                dc.DrawLabel(label +' '+ value.export(), rect, align)
                         y += row_height
                 dc.DrawLine(x-d, y, x+width, y)
             x += width
@@ -1437,17 +1441,38 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
-    def _cmd_toggle_aggregation(self, operation=None):
-        if operation is None:
-            if self._aggregations:
-                self._aggregations = []
-            else:
-                self._aggregations = [op for op, title, icon, label in self._AGGREGATIONS]
+    def _cmd_toggle_aggregation(self, operation):
+        if operation in self._aggregations:
+            command = self.COMMAND_UNAGGREGATE
         else:
-            if operation in self._aggregations:
-                self._aggregations.remove(operation)
-            else:
-                self._aggregations.append(operation)
+            command = self.COMMAND_AGGREGATE
+        command.invoke(operation=operation)
+
+    def _can_aggregate(self, operation=None):
+        if operation is None:
+            return len(self._aggregations) != len(self._AGGREGATIONS)
+        else:
+            return operation not in self._aggregations
+        
+    def _cmd_aggregate(self, operation=None):
+        if operation is None:
+            self._aggregations = [op for op, title, icon, label in self._AGGREGATIONS]
+        else:
+            self._aggregations.append(operation)
+        self._update_label_height()
+        self.refresh()
+            
+    def _can_unaggregate(self, operation=None):
+        if operation is None:
+            return bool(self._aggregations)
+        else:
+            return operation in self._aggregations
+    
+    def _cmd_unaggregate(self, operation=None):
+        if operation is None:
+            self._aggregations = []
+        else:
+            self._aggregations.remove(operation)
         self._update_label_height()
         self.refresh()
         
