@@ -4,6 +4,34 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-20  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla implementována podpora zobrazování výsledkù agregaèních
+	funkcí pøímo v gridu.  Proto¾e ve¹keré pokusy o zobrazení výsledkù
+	na spodním okraji gridu ztrozkotaly, jsou výsledky zobrazovány dle
+	nápadu pana Hanáka jako souèást záhlaví.  Pøíslu¹né ovládací prvku
+	naleznete v kontextovém menu záhlaví sloupcù.  Pøipomínky vítány.
+	Plánuji je¹tì dodìlat ukládání stavu pøi uzavøení formuláøe.
+
+2007-06-19  Tomas Cerha  <cerha@brailcom.org>
+
+	Nová metoda `PresentedRow.cb_value()' umo¾òuje korektní získání
+	èíselníkové hodnoty a nahrazuje funkci `cb2colvalue()' z
+	pytis-extensions, která nefunguje s novou implementací runtime
+	filteru v enumerátorech.  Ve v¹ech projektech je tøeba funkci
+	`cb2colvalue()' nahradit touto novou metodou.  Oproti
+	`cb2colvalue()' v¹ak tato metoda nemusí vracet v¾dy instanci
+	`Value' -- mù¾e to být None, kdy¾ èíselníková hodnota není
+	validní.  K zjednodu¹ení práce s výsledkem je mo¾né pou¾ít novou
+	funkci `get_value()' z pytis-extensions.
+	
+	Pøedmìt zasílaných bug reportù byl vylep¹en tak, aby obsahoval
+	pouze jednoznaènou identifikaci typu a místa vzniku výjimky.  Tím
+	by mìlo lépe zafungovat seskupování souvisejících zpráv.
+
+	* BUGFIX: Metoda pro výpoèet 'CbComputer' nyní zohledòuje také
+	runtime filter.
+
 2007-06-18  Tomas Cerha  <cerha@brailcom.org>
 
 	V e-mailových zprávách bug reportù je nyní chybová hlá¹ka obsa¾ena

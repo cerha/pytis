@@ -1,3 +1,9 @@
+2007-06-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py: Aggregation result display in table implemented.
+
+	* pytis/form/commands_.py: New command ListForm.TOGGLE_AGGREGATION
+
 2007-06-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py: Remember the top level sizer as an

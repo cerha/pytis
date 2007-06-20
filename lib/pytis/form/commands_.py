@@ -118,6 +118,8 @@ Command(ListForm, 'FILTER_BY_CELL',
         "Vyfiltrování formuláøe podle hodnoty aktuální buòky")
 Command(ListForm, 'AUTOFILTER',
         "Zobrazení menu autofilteru") # arg 'col' a 'position'
+Command(ListForm, 'TOGGLE_AGGREGATION',
+        "Pøidání agregaèní funkce") # arg 'operation'
 Command(ListForm, 'EXPORT_CSV',
         "Export øádkového formuláøe do csv souboru")
 Command(ListForm, 'LINE_COMMIT',

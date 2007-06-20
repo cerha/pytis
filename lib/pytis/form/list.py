@@ -77,6 +77,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
+    _AGGREGATIONS = ((pytis.data.Data.AGG_SUM, _("Souèet"), 'agg-sum', _('Souèet:')),
+                     (pytis.data.Data.AGG_AVG, _("Prùmìr"), 'agg-avg', _('Prùmìr:')),
+                     (pytis.data.Data.AGG_MIN, _("Minimum"), 'agg-min', _('Min:')),
+                     (pytis.data.Data.AGG_MAX, _("Maximum"), 'agg-max', _('Max:')))
+    
     DESCR = _("øádkový formuláø")
 
     def __init__(self, *args, **kwargs):
@@ -107,6 +112,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
+        self._aggregations = []
+        self._aggregation_results = SimpleCache(self._compute_aggregate)
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
         assert columns is None or is_sequence(columns)
         # Inicializace atributù závislých na u¾ivatelském nastavení.
@@ -129,6 +136,21 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _default_columns(self):
         return self._view.columns()
 
+    def _init_select(self):
+        self._aggregation_results.reset()
+        return super(ListForm, self)._init_select()
+
+    def _compute_aggregate(self, key):
+        cid, operation = key
+        condition = self._current_condition()
+        c = self._data.find_column(cid)
+        if c is not None and isinstance(c.type(), pytis.data.Number):
+            value = self._data.select_aggregate((operation, cid), condition=condition,
+                                                transaction=self._transaction)
+        else:
+            value = None
+        return value
+        
     def _init_columns(self, columns=None):
         if not columns:
             default = self._default_columns()
@@ -167,6 +189,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
+    def _update_label_height(self):
+        height = self._label_height
+        if self._aggregations:
+            height += 1 + len(self._aggregations) * self._row_height
+        self._grid.SetColLabelSize(height)
+
+
     def _create_form_parts(self, sizer):
         if self.title() is not None:
             self._title_bar = self._create_title_bar()
@@ -177,29 +206,30 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
-        row_count = self._init_select()
         self._grid = g = wx.grid.Grid(self)
         self._table = table = \
           _grid.ListTable(self._parent, self._data, self._create_data_object, self._row,
-                          self._columns, row_count, sorting=self._lf_sorting,
+                          self._columns, self._lf_select_count, sorting=self._lf_sorting,
                           grouping=self._grouping, prefill=self._prefill,
                           row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
-        g.SetColLabelSize(dlg2px(g, 0, 12).GetHeight())
-        g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
+        #g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
         g.SetMargins(0,0)
         g.DisableDragGridSize()
         g.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
-        labelfont = g.GetLabelFont()
-        labelfont.SetWeight(wx.NORMAL)
-        g.SetLabelFont(labelfont)
-        g.SetDefaultRowSize(dlg2px(g, 0, 10).GetHeight())
-        labels = g.GetGridColLabelWindow()
+        #labelfont = g.GetLabelFont()
+        #labelfont.SetWeight(wx.NORMAL)
+        #g.SetLabelFont(labelfont)
+        self._row_height = row_height = dlg2px(g, 0, 10).GetHeight()
+        self._label_height = label_height = dlg2px(g, 0, 12).GetHeight()
         self._editors = []
         self._init_col_attr()
         self._update_colors()
+        self._update_label_height()
+        g.SetDefaultRowSize(row_height)
         # Event handlery
+        labels = g.GetGridColLabelWindow()
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL,   g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
@@ -764,14 +794,21 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             columns = [self._view.field(cid) for cid in select_columns]
         return [CheckItem(c.column_label(),
-                          command=ListForm.COMMAND_TOGGLE_COLUMN,
-                          args=dict(column_id=c.id(), col=col),
+                          command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=col),
                           state=lambda c=c: c in self._columns)
                 for c in columns if c and not c.disable_column()] + \
                 [MSeparator(),
                  MItem(_("Vrátit výchozí nastavení formuláøe"),
                        command=InnerForm.COMMAND_RESET_FORM_STATE),
                  ]
+
+    def _aggregation_menu(self):
+        return [CheckItem(label, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
+                          state=lambda op=op: op in self._aggregations)
+                for op, title, icon, label in self._AGGREGATIONS] + \
+                [MSeparator(),
+                 MItem(self._aggregations and _("Zru¹it v¹e") or _("Zobrazit v¹e"),
+                       command=ListForm.COMMAND_TOGGLE_AGGREGATION()),]
     
     def _column_context_menu(self, col):
         M = Menu
@@ -782,58 +819,55 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         c = self._columns[col]
         items = (M(_("Primární øazení"),
                    (I(_("Øadit vzestupnì"),
-                      command=LookupForm.COMMAND_SORT,
-                      args=dict(direction=ASC, col=col, primary=True)),
+                      command=LookupForm.COMMAND_SORT(direction=ASC, col=col, primary=True)),
                     I(_("Øadit sestupnì"),
-                      command=LookupForm.COMMAND_SORT,
-                      args=dict(direction=DESC, col=col, primary=True)),)),
+                      command=LookupForm.COMMAND_SORT(direction=DESC, col=col, primary=True)),)),
                  M(_("Dodateèné øazení"),
                    (I(_("Øadit vzestupnì"),
-                      command=LookupForm.COMMAND_SORT,
-                      args=dict(direction=ASC, col=col)),
+                      command=LookupForm.COMMAND_SORT(direction=ASC, col=col)),
                     I(_("Øadit sestupnì"),
-                      command=LookupForm.COMMAND_SORT,
-                      args=dict(direction=DESC, col=col)),)),
-                 ________,
+                      command=LookupForm.COMMAND_SORT(direction=DESC, col=col)),)),
                  I(_("Neøadit podle tohoto sloupce"),
-                   command=LookupForm.COMMAND_SORT,
-                   args=dict(direction=LookupForm.SORTING_NONE, col=col)),
+                   command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
                  I(_("Zru¹it øazení úplnì"),
-                   command=LookupForm.COMMAND_SORT,
-                   args=dict(direction=LookupForm.SORTING_NONE)),
+                   command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
                  ________,
                  I(_("Seskupovat a¾ po tento sloupec"),
-                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                   args=dict(col=col)),
+                   command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
                  I(_("Zru¹it vizuální seskupování"),
-                   command=ListForm.COMMAND_SET_GROUPING_COLUMN,
-                   args=dict(col=None)),
+                   command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
                  ________,
-                 I(_("Autofiltr"), command=ListForm.COMMAND_AUTOFILTER,
-                   args=dict(col=col)),
+                 I(_("Autofiltr"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
                  I(_("Zru¹ filtr"), command=LookupForm.COMMAND_UNFILTER),
                  ________,
+                 M(_("Agregaèní funkce"),
+                   self._aggregation_menu()),
+                 ________,
                  I(_("Skrýt tento sloupec"),
-                   command=ListForm.COMMAND_TOGGLE_COLUMN,
-                   args=dict(column_id=c.id(), col=None)),
+                   command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=None)),
                  M(_("Zobrazené sloupce"),
-                   self._displayed_columns_menu(col=col))
+                   self._displayed_columns_menu(col=col)),
                  )
         return items
     
     def _on_label_right_down(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
-        col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
-        # Menu musíme zkonstruovat a¾ zde, proto¾e je pro ka¾dý sloupec jiné.
-        if col == -1:
-            menu = self._displayed_columns_menu(len(self._columns))
+        if event.GetY() > self._label_height:
+            menu = self._aggregation_menu()
         else:
-            menu = self._column_context_menu(col)
+            col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
+            # Menu musíme zkonstruovat a¾ zde, proto¾e je pro ka¾dý sloupec jiné.
+            if col == -1:
+                menu = self._displayed_columns_menu(len(self._columns))
+            else:
+                menu = self._column_context_menu(col)
         self._popup_menu(menu)
         event.Skip()
 
     def _on_label_left_down(self, event):
         g = self._grid
+        if event.GetY() > self._label_height:
+            return
         x = event.GetX() + self._scroll_x_offset()
         col = g.XToCol(x)
         if col != -1:
@@ -842,7 +876,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if x > x1+2 and x < x2-2:
                 self._column_to_move = col
         self._mouse_dragged = False
-        # We don't call event.Skip() since we want to suppress default bahavior
+        # We don't call event.Skip() since we want to suppress the default bahavior
         # (eg. range selection when Shift is down).
         
     def _on_label_left_up(self, event):
@@ -940,26 +974,28 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g = self._grid
         #t = self._table
         dc = wx.PaintDC(g.GetGridColLabelWindow())
+        dc.SetTextForeground(wx.BLACK)
         x = - self._scroll_x_offset()
-        y = 0
-        height = g.GetColLabelSize()
+        row_height = self._row_height
+        total_height = g.GetColLabelSize()
+        label_height = self._label_height
         filtered_columns = self._filtered_columns()
         for col, c in enumerate(self._columns):
+            y = 0
             id = c.id()
             width = g.GetColSize(col)
             if col == 0:
                 d = 0
             else:
                 d = 1
-            dc.SetBrush(wx.Brush("GRAY", wx.TRANSPARENT))
-            dc.SetTextForeground(wx.BLACK)
+            dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
             # Draw the rectangle around.
-            dc.DrawRectangle(x-d, y, width+d, height)
+            dc.DrawRectangle(x-d, y, width+d, label_height)
             # Draw the label itself.
             label = c.column_label()
             while dc.GetTextExtent(label)[0] > width and len(label):
                 label = label[:-1] # Don't allow the label to extend the width.
-            dc.DrawLabel(label, (x,y,width,height), wx.ALIGN_CENTER|wx.CENTER)
+            dc.DrawLabel(label, (x, y, width, label_height), wx.ALIGN_CENTER)
             # Draw the sorting sign.
             pos = self._sorting_position(id)
             if pos is not None:
@@ -984,13 +1020,29 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     ax = None
                 if ax is not None:
-                    dc.SetBrush(wx.Brush("GREEN", wx.SOLID))
-                    dc.DrawPolygon(arrow(ax, height-2))
+                    dc.SetBrush(wx.Brush('GREEN', wx.SOLID))
+                    dc.DrawPolygon(arrow(ax, label_height-2))
             # Draw the filter sign.
             if id in filtered_columns:
                 dc.SetBrush(wx.Brush('GOLD', wx.SOLID))
                 dc.DrawPolygon(funnel(x+2, y+3))
+            # Draw the aggregation results.
+            y += label_height
+            if self._aggregations:
+                for op, title, icon, label in self._AGGREGATIONS:
+                    if op in self._aggregations:
+                        dc.SetBrush(wx.Brush('WHITE', wx.SOLID))
+                        dc.DrawRectangle(x-d, y-1, width+d, row_height+1)
+                        value = self._aggregation_results[(id, op)]
+                        if value is not None:
+                            #while dc.GetTextExtent(label)[0] > width and len(label):
+                            #    label = label[:-1] # Don't allow the label to extend the width.
+                            dc.DrawLabel(label+' '+value.export(), (x-d, y-1, width+d, row_height),
+                                         alignment=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+                        y += row_height
+                dc.DrawLine(x-d, y, x+width, y)
             x += width
+                
 
     def _on_form_state_change(self):
         super(ListForm, self)._on_form_state_change()
@@ -1072,25 +1124,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return None
     
-    def _cmd_delete_record(self):
-        if not self.editable:
-            message('Needitovatelná tabulka!', beep_=True)
-            return
-        def blocked_code():
-            deleted = super(ListForm, self)._cmd_delete_record()
-            self._table.edit_row(None)
-            return deleted
-        if block_refresh(blocked_code):
-            r = self._current_cell()[0]
-            n = self._table.GetNumberRows()
-            if r < n - 1:
-                self._select_cell(row=r)
-            elif r > 0:
-                self._select_cell(row=r-1)
-            # Udìláme radìji refresh celé aplikace, proto¾e jinak se
-            # nerefreshne horní formuláø po vymazání záznamu ze sideformu.
-            refresh()
-            
     def _exit_check(self):
         # Opu¹tìní formuláøe je umo¾nìno v¾dy, ale pøed opu¹tìním bìhem editace
         # je nutné provést dodateèné akce.
@@ -1315,6 +1348,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return False
         return super(ListForm, self).can_command(command, **kwargs)
     
+    def _cmd_delete_record(self):
+        if not self.editable:
+            message('Needitovatelná tabulka!', beep_=True)
+            return
+        def blocked_code():
+            deleted = super(ListForm, self)._cmd_delete_record()
+            self._table.edit_row(None)
+            return deleted
+        if block_refresh(blocked_code):
+            r = self._current_cell()[0]
+            n = self._table.GetNumberRows()
+            if r < n - 1:
+                self._select_cell(row=r)
+            elif r > 0:
+                self._select_cell(row=r-1)
+            # Udìláme radìji refresh celé aplikace, proto¾e jinak se
+            # nerefreshne horní formuláø po vymazání záznamu ze sideformu.
+            refresh()
+            
     def _cmd_activate(self, alternate=False):
         self._run_callback(self.CALL_ACTIVATION, alternate=alternate)
             
@@ -1385,6 +1437,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           when=self.DOIT_IMMEDIATELY)
         return sorting
 
+    def _cmd_toggle_aggregation(self, operation=None):
+        if operation is None:
+            if self._aggregations:
+                self._aggregations = []
+            else:
+                self._aggregations = [op for op, title, icon, label in self._AGGREGATIONS]
+        else:
+            if operation in self._aggregations:
+                self._aggregations.remove(operation)
+            else:
+                self._aggregations.append(operation)
+        self._update_label_height()
+        self.refresh()
+        
     def _cmd_filter_by_cell(self):
         row, col = self._current_cell()
         id = self._columns[col].id()
