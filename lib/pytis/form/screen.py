@@ -1032,17 +1032,20 @@ class MItem(_TitledMenuObject):
     def _on_ui_event(self, event):
         event.Enable(self._command.enabled(**self._args))
         
+    def _create_icon(self, item):
+        icon = get_icon(self._icon or command_icon(self._command, self._args))
+        if icon:
+            item.SetBitmap(icon)
+        
     def create(self, parent, parent_menu):
         item = wx.MenuItem(parent_menu, -1, self._title, self._help or "",
                            kind=self._WX_KIND)
         wx_callback(wx.EVT_MENU, parent, item.GetId(),
                     lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
-        icon = get_icon(self._icon or command_icon(self._command, self._args))
-        if icon:
-            item.SetBitmap(icon)
+        self._create_icon(item)
         return item
-        
+
     def command(self):
         """Vra» command zadaný v konstruktoru."""
         return self._command
@@ -1083,13 +1086,16 @@ class CheckItem(MItem):
         self._state = state
         super(CheckItem, self).__init__(title, command, **kwargs)
 
-    def state(self):
-        return self._state()
+    def _create_icon(self, item):
+        pass
         
     def _on_ui_event(self, event):
         event.Check(self.state())
         super(CheckItem, self)._on_ui_event(event)
 
+    def state(self):
+        return self._state()
+        
         
 class RadioItem(CheckItem):
     """Polo¾ka menu tvoøící pøepínatelnou skupinu."""
