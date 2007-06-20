@@ -1479,7 +1479,7 @@ class DataEnumerator(Enumerator):
         self._value_column_ = value_column
         self._validity_column = validity_column
         if validity_column is not None:
-            validity_condition = EQ(validity_column, Value(Boolean(), True))
+            validity_condition = EQ(validity_column, Value(Boolean(), True))            
         self._validity_condition = validity_condition
         self._change_callbacks = []
 
@@ -1568,6 +1568,10 @@ class DataEnumerator(Enumerator):
     def value_column(self):
         """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""
         return self._value_column
+
+    def validity_condition(self):
+        """Return static condition determining validity of data rows."""
+        return self._validity_condition
     
     def get(self, value, column=None, transaction=None, condition=None):
         """Získej z dat hodnotu daného sloupce z øádku odpovídajícího 'value'.

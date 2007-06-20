@@ -1,3 +1,10 @@
+2007-06-20  Pavel Hanak  <hanak@alfik.akont.xx>
+
+	* pytis/form/inputfield.py (GenericCodebookField._run_codebook_form): 
+	By invoking CodebookForm take into account `validity_condition'.
+	
+	* pytis/data/types_.py (DataEnumerator.validity_condition): See above.
+
 2007-06-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py: Don't use menu icons for 'CheckItem'.

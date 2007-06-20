@@ -1014,9 +1014,15 @@ class GenericCodebookField(InputField):
     def _run_codebook_form(self, begin_search=None):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
         enumerator = self._type.enumerator()
+        validity_condition = enumerator.validity_condition()
+        runtime_filter_condition = self._row.runtime_filter(self.id())
+        if validity_condition and runtime_filter_condition:
+            condition = pytis.data.AND(validity_condition, runtime_filter_condition)
+        else:    
+            condition = validity_condition or runtime_filter_condition            
         result = run_form(CodebookForm, self._cb_name, begin_search=begin_search,
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
-                          condition=self._row.runtime_filter(self.id()))
+                          condition=condition)
         if result: # may be None or False!
             self._set_value(result.format(enumerator.value_column()))
         self.set_focus()
