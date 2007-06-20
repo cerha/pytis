@@ -1,3 +1,8 @@
+2007-06-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/extensions/dbutils.py: Use function to retrieve
+	config.dbconnection instead of using config.dbconnection directly.
+
 2007-06-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (cb2strvalue): Method removed.

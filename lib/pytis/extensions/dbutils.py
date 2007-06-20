@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,9 @@ def data_object(spec):
     """
     if isinstance(spec, types.StringTypes):
         spec = pytis.util.resolver().get(spec, 'data_spec')
-    op = lambda: spec.create(dbconnection_spec=config.dbconnection)
+    def conn_spec():
+        return config.dbconnection
+    op = lambda: spec.create(dbconnection_spec=conn_spec)
     success, data = pytis.form.db_operation(op)
     #if not success:
     #    errmsg = "Nepodařilo se vytvořit datový objekt pro %s!" % (spec)
@@ -183,7 +185,9 @@ def dbfunction(name, *args, **kwargs):
             value = v.value()
             if value is None or value == '':
                 return None
-    op = lambda: pytis.data.DBFunctionDefault(name, config.dbconnection)
+    def conn_spec():
+        return config.dbconnection
+    op = lambda: pytis.data.DBFunctionDefault(name, conn_spec)
     success, function = pytis.form.db_operation(op)
     op = lambda: function.call(pytis.data.Row(args),
                                transaction=transaction)[0][0]
@@ -198,7 +202,9 @@ def nextval(seq):
     specifikace 'default' ve fieldspec.
     
     """
-    counter = pytis.data.DBCounterDefault(seq, config.dbconnection)
+    def conn_spec():
+        return config.dbconnection
+    counter = pytis.data.DBCounterDefault(seq, conn_spec)
     return lambda: counter.next()
 
 
@@ -211,7 +217,9 @@ def enum(name):
     
     """
     data_spec = pytis.util.resolver().get(name, 'data_spec')
-    kwargs = dict(dbconnection_spec=config.dbconnection)
+    def conn_spec():
+        return config.dbconnection
+    kwargs = dict(dbconnection_spec=conn_spec)
     return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
 
 
@@ -220,8 +228,9 @@ def is_in_groups(groups):
     if isinstance(groups, types.StringType):
         groups = xtuple(groups)
     from sets import Set
-    conn = config.dbconnection
-    dbgroups=pytis.data.PostgreSQLUserGroups.class_access_groups(conn)
+    def conn_spec():
+        return config.dbconnection
+    dbgroups = pytis.data.default_access_groups(conn_spec)
     if Set(groups) & Set(dbgroups) == Set([]):
         return False
     else:
