@@ -566,6 +566,9 @@ class TitledForm:
 
     def _filter_menu(self):
         return None
+
+    def _aggregation_menu(self):
+        return None
     
     def _on_menu_button(self, event, items):
         popup_menu(event.GetEventObject(), items, self._get_keymap())
@@ -579,9 +582,12 @@ class TitledForm:
         buttons = (
             wx_button(panel, icon='filter', label=_("Filtr"),
                       tooltip=_("Zobrazit menu filtrace"), noborder=True,
-                      callback=lambda e:
-                            self._on_menu_button(e, self._filter_menu()),
+                      callback=lambda e: self._on_menu_button(e, self._filter_menu()),
                       enabled=self._filter_menu() is not None),
+            wx_button(panel, icon='aggregate', label=_("f(x)"),
+                      tooltip=_("Zobrazit menu agregaèních funkcí"), noborder=True,
+                      callback=lambda e: self._on_menu_button(e, self._aggregation_menu()),
+                      enabled=self._aggregation_menu() is not None),
             wx_button(panel, icon=wx.ART_PRINT, noborder=True,
                       tooltip=_("Zobrazit tiskové menu"),
                       callback=lambda e: self._on_menu_button(e, print_menu)),
@@ -755,12 +761,13 @@ class LookupForm(InnerForm):
             return pytis.data.AND(*conditions)
 
     def _init_select(self):
-        data = self._data
-        op = lambda : data.select(condition=self._current_condition(),
-                                  columns=self._select_columns(),
-                                  sort=self._data_sorting(),
-                                  reuse=False,
-                                  transaction=self._transaction)
+        def op():
+            return self._data.select(condition=self._current_condition(),
+                                     columns=self._select_columns(),
+                                     sort=self._data_sorting(),
+                                     reuse=False,
+                                     transaction=self._transaction)
+
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
