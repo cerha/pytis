@@ -1,3 +1,7 @@
+2007-06-21  Pavel Hanak  <hanak@alfik.akont.xx>
+
+	* lib/pytis/extensions/spec.py (format_value): New function.
+
 2007-06-20  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/extensions/dbutils.py: Use function to retrieve

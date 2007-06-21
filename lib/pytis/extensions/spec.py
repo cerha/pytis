@@ -127,6 +127,18 @@ def get_value(value, default=None):
     else:
         return value.value()
     
+def format_value(value, default=None):
+    """Return the formatted (string) value of given 'pytis.data.Value' instance.
+
+    Accepts a 'pytis.data.Value' instance or None.  If the 'value' is None, the 'default' value
+    will be returned without complaining.  If the 'value' is a 'pytis.data.Value' instance, its
+    formatted (string) value will be returned.
+    
+    """
+    if value is None:
+        return default
+    else:
+        return value.export()
 
 def rp_handler(spec_name, proc_name, *args, **kwargs):
     """Vra» handler u¾ivatelské akce, který spustí proceduru s danými argumenty.
