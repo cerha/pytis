@@ -1,3 +1,15 @@
+2007-06-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* icons/agg-avg.png: New file.
+
+	* icons/agg-max.png: New file.
+
+	* icons/agg-min.png: New file.
+
+	* icons/agg-sum.png: New file.
+
+	* icons/aggregate.png: New file.
+
 2007-05-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* icons/export.png: Improved.
