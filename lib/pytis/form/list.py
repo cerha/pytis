@@ -190,15 +190,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
-    def _update_label_sizes(self):
+    def _update_label_height(self):
         height = self._label_height
         if self._aggregations:
             height += 1 + len(self._aggregations) * self._row_height
-            row_label_width = self._ROW_LABEL_WIDTH
-        else:
-            row_label_width = 0
         g = self._grid
-        g.SetRowLabelSize(row_label_width)
         g.SetColLabelSize(height)
         g.FitInside()
 
@@ -235,7 +231,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._editors = []
         self._init_col_attr()
         self._update_colors()
-        self._update_label_sizes()
+        self._update_label_height()
         g.SetDefaultRowSize(row_height)
         # Event handlery
         labels = g.GetGridColLabelWindow()
@@ -801,14 +797,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             columns = self._fields
         else:
             columns = [self._view.field(cid) for cid in select_columns]
-        return [CheckItem(c.column_label(),
+        return [CheckItem(_("Záhlaví øádkù"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
+                          state=lambda : self._grid.GetRowLabelSize() != 0)] + \
+               [CheckItem(c.column_label(),
                           command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=col),
                           state=lambda c=c: c in self._columns)
                 for c in columns if c and not c.disable_column()] + \
-                [MSeparator(),
-                 MItem(_("Vrátit výchozí nastavení formuláøe"),
-                       command=InnerForm.COMMAND_RESET_FORM_STATE),
-                 ]
+               [MSeparator(),
+                MItem(_("Vrátit výchozí nastavení formuláøe"),
+                      command=InnerForm.COMMAND_RESET_FORM_STATE),
+                ]
 
     def _aggregation_menu(self):
         return [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
@@ -1059,8 +1057,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 
     def _on_corner_paint(self, event):
         if self._aggregations:
-            g = self._grid
-            dc = wx.PaintDC(g.GetGridCornerLabelWindow())
+            dc = wx.PaintDC(self._grid.GetGridCornerLabelWindow())
             dc.SetTextForeground(wx.BLACK)
             dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
             width = dc.GetSize().GetWidth()
@@ -1070,12 +1067,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if op in self._aggregations:
                     rect = (1, y-1, width, row_height+1)
                     dc.DrawRectangle(*rect)
-                    icon = get_icon(icon_id)
-                    align = wx.ALIGN_CENTER
-                    if icon:
-                        dc.DrawImageLabel(' '+ title, icon, rect, align)
-                    else:
-                        dc.DrawLabel(title, rect, align)
+                    dc.DrawLabel(title, rect, wx.ALIGN_CENTER)
                     y += row_height
             dc.DrawLine(0, y, width, y)
 
@@ -1455,7 +1447,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.SetRowLabelSize(widht)
         g.FitInside()
         self.refresh()
-        
 
     def _cmd_resize_column(self, diff=5):
         # diff can be positive or negative integer in pixels.
@@ -1513,7 +1504,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregations = [op for op, title, icon, label in self._AGGREGATIONS]
         else:
             self._aggregations.append(operation)
-        self._update_label_sizes()
+        self._update_label_height()
         self.refresh()
             
     def _can_unaggregate(self, operation=None):
@@ -1527,7 +1518,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregations = []
         else:
             self._aggregations.remove(operation)
-        self._update_label_sizes()
+        self._update_label_height()
         self.refresh()
         
     def _cmd_filter_by_cell(self):
