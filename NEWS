@@ -4,6 +4,23 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-22  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla pøidána podpora pro zobrazení-skrytí záhlaví øádkù.  Pøi
+	zapnutí agregaèních funkcí se záhlaví øádkù zobrazí automaticky a
+	ukazuje popisky k jednotlivým agregaèním øádkùm.  Pro øádky
+	tabulky jsou zobrazována jejich èísla.  Zobrazené záhlaví øádkù
+	lze skrýt pomocí pravého tlaèítka my¹i.  Pøíkaz pro zobazení
+	nezávisle na agregaèní li¹tì existuje, ale je potøeba jej
+	zviditelnit pro u¾ivatele - pøidat do menu a/nebo pøiøadit
+	klávesovou zkratku.
+
+2007-06-21  Tomas Cerha  <cerha@brailcom.org>
+
+	Do CVS byly pøidány ikony agregaèních funkcí.  Ty se nyní
+	automaticky zobrazují u výsledkù agregaèních funkcí v agregaèní
+	li¹tì.
+
 2007-06-20  Tomas Cerha  <cerha@brailcom.org>
 
 	Byla implementována podpora zobrazování výsledkù agregaèních

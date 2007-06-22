@@ -146,6 +146,8 @@ Command(ListForm, 'MOVE_COLUMN',
         "Pøesunutí sloupce doprava/doleva") # arg. 'diff' +/- o kolik sloupcù
 Command(ListForm, 'TOGGLE_COLUMN',
         "Skrytí/zobrazení sloupce")
+Command(ListForm, 'TOGGLE_ROW_LABELS',
+        "Skrytí/zobrazení sloupce záhlaví øádkù")
 Command(ListForm, 'CONTEXT_ACTION',
         "Vyvolání akce nad aktuálním øádkem formuláøe")
         # Povinný argument 'action' je instancí specifikacní tøídy 'Action'.

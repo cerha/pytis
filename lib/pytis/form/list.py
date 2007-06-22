@@ -73,7 +73,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     _REFRESH_PERIOD = 60 # sekund
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
-    _TITLE_FOREGROUND_COLOR = WxColor(210, 210, 210)
+    _ROW_LABEL_WIDTH = 85
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
@@ -190,11 +190,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
-    def _update_label_height(self):
+    def _update_label_sizes(self):
         height = self._label_height
         if self._aggregations:
             height += 1 + len(self._aggregations) * self._row_height
-        self._grid.SetColLabelSize(height)
+            row_label_width = self._ROW_LABEL_WIDTH
+        else:
+            row_label_width = 0
+        g = self._grid
+        g.SetRowLabelSize(row_label_width)
+        g.SetColLabelSize(height)
+        g.FitInside()
 
 
     def _create_form_parts(self, sizer):
@@ -218,7 +224,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         #g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
         g.SetMargins(0,0)
         g.DisableDragGridSize()
+        g.DisableDragRowSize()
         g.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
+        g.SetLabelBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
         #labelfont = g.GetLabelFont()
         #labelfont.SetWeight(wx.NORMAL)
         #g.SetLabelFont(labelfont)
@@ -227,10 +235,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._editors = []
         self._init_col_attr()
         self._update_colors()
-        self._update_label_height()
+        self._update_label_sizes()
         g.SetDefaultRowSize(row_height)
         # Event handlery
         labels = g.GetGridColLabelWindow()
+        corner = g.GetGridCornerLabelWindow()
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL,   g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
@@ -243,6 +252,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_RIGHT_DOWN, labels, self._on_label_right_down)
         wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
+        wx_callback(wx.EVT_RIGHT_DOWN, corner, self._on_corner_right_down)
+        wx_callback(wx.EVT_PAINT,      corner, self._on_corner_paint)
         return g
         
 #     def _on_hide_search_panel(self, event):
@@ -354,11 +365,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 attr.SetReadOnly()
             self._grid.SetColAttr(i, attr)
         
-    def _update_label_colors(self):
-        color = self._lf_filter is not None and config.filter_color or \
-                self._TITLE_FOREGROUND_COLOR
-        self._grid.SetLabelBackgroundColour(color)
-
     def _context_menu(self):
         """Vra» specifikaci \"kontextového\" popup menu vybrané buòky seznamu.
 
@@ -988,7 +994,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 d = 0
             else:
                 d = 1
-            dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
+            if self._lf_filter is not None and config.filter_color:
+                dc.SetBrush(wx.Brush(config.filter_color, wx.SOLID))
+            else:
+                dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
             # Draw the rectangle around.
             dc.DrawRectangle(x-d, y, width+d, label_height)
             # Indicate when the column is being moved (before we clip the active refion).
@@ -1032,12 +1041,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if self._aggregations:
                 for op, title, icon_id, label in self._AGGREGATIONS:
                     if op in self._aggregations:
+                        rect = (x-d, y-1, width+d, row_height+1)
                         dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
-                        dc.DrawRectangle(x-d, y-1, width+d, row_height+1)
+                        dc.DrawRectangle(*rect)
                         value = self._aggregation_results[(id, op)]
                         if value is not None:
                             icon = get_icon(icon_id)
-                            rect = (x-d, y-1, width+d, row_height)
                             align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
                             if icon:
                                 dc.DrawImageLabel(' '+ value.export(), icon, rect, align)
@@ -1047,6 +1056,36 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 dc.DrawLine(x-d, y, x+width, y)
             x += width
                 
+    def _on_corner_paint(self, event):
+        if self._aggregations:
+            g = self._grid
+            dc = wx.PaintDC(g.GetGridCornerLabelWindow())
+            dc.SetTextForeground(wx.BLACK)
+            dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
+            width = dc.GetSize().GetWidth()
+            row_height = self._row_height
+            y = self._label_height
+            for op, title, icon_id, label in self._AGGREGATIONS:
+                if op in self._aggregations:
+                    rect = (1, y-1, width, row_height+1)
+                    dc.DrawRectangle(*rect)
+                    icon = get_icon(icon_id)
+                    align = wx.ALIGN_CENTER
+                    if icon:
+                        dc.DrawImageLabel(' '+ title, icon, rect, align)
+                    else:
+                        dc.DrawLabel(title, rect, align)
+                    y += row_height
+            dc.DrawLine(0, y, width, y)
+
+    def _on_corner_right_down(self, event):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        if event.GetY() > self._label_height:
+            menu = self._aggregation_menu()
+        else:
+            menu = (MItem(_("Skrýt záhlaví øádkù"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS),)
+        self._popup_menu(menu)
+        event.Skip()
 
     def _on_form_state_change(self):
         super(ListForm, self)._on_form_state_change()
@@ -1246,14 +1285,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _update_colors(self):
         self._update_selection_colors()
-        self._update_label_colors()
         if config.cell_highlight_color is not None:
             self._grid.SetCellHighlightColour(config.cell_highlight_color)
         if config.grid_line_color is not None:
             self._grid.SetGridLineColour(config.grid_line_color)
 
     def _total_width(self):
-        total = 0
+        total = self._grid.GetRowLabelSize()
         for c in self._columns:
             total += self._column_width(c)
         return total
@@ -1281,10 +1319,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) - 1
         total_width = self._total_width()
         if width > total_width > 0:
-            coef = float(width) / total_width
+            coef = float(width) / (total_width - g.GetRowLabelSize())
         else:
             coef = 1
-        total = 0
+        total = g.GetRowLabelSize()
         last = None
         # Pøenastav ¹íøky sloupcù
         for i, c in enumerate(self._columns):
@@ -1403,6 +1441,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._update_grid(insert_column=self._view.field(column_id),
                               inserted_column_index=col)
 
+    def _cmd_toggle_row_labels(self):
+        g = self._grid
+        if g.GetRowLabelSize() == 0:
+            widht = self._ROW_LABEL_WIDTH
+        else:
+            widht = 0
+        g.SetRowLabelSize(widht)
+        g.FitInside()
+        self.refresh()
+        
+
     def _cmd_resize_column(self, diff=5):
         # diff can be positive or negative integer in pixels.
         g = self._grid
@@ -1459,7 +1508,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregations = [op for op, title, icon, label in self._AGGREGATIONS]
         else:
             self._aggregations.append(operation)
-        self._update_label_height()
+        self._update_label_sizes()
         self.refresh()
             
     def _can_unaggregate(self, operation=None):
@@ -1473,7 +1522,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregations = []
         else:
             self._aggregations.remove(operation)
-        self._update_label_height()
+        self._update_label_sizes()
         self.refresh()
         
     def _cmd_filter_by_cell(self):
