@@ -223,9 +223,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.DisableDragRowSize()
         g.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
         g.SetLabelBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
-        #labelfont = g.GetLabelFont()
-        #labelfont.SetWeight(wx.NORMAL)
-        #g.SetLabelFont(labelfont)
+        g.SetLabelFont(g.GetFont()) # Use standard font instead of bold.
         self._row_height = row_height = dlg2px(g, 0, 10).GetHeight()
         self._label_height = label_height = dlg2px(g, 0, 12).GetHeight()
         self._editors = []
