@@ -1,5 +1,8 @@
 2007-06-22  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (CheckBoxField._set_value): Accept also
+	null values (as an empty string).
+
 	* pytis/form/list.py: Added support for showing/hiding row
 	labels and aggregation labels within them.
 

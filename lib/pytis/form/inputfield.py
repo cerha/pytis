@@ -776,7 +776,7 @@ class CheckBoxField(Unlabeled, InputField):
         return self._ctrl.GetValue() and 'T' or 'F'
 
     def _set_value(self, value):
-        assert value in ('T','F'), ('Invalid value', value)
+        assert value in ('T','F',''), ('Invalid value', value)
         wxvalue = value == 'T' and True or False
         self._ctrl.SetValue(wxvalue)
         self._on_change() # call manually, since SetValue() doesn't emit an event.
