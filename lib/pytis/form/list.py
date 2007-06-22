@@ -252,6 +252,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_RIGHT_DOWN, labels, self._on_label_right_down)
         wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
         wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
+        wx_callback(wx.EVT_LEFT_DOWN,  corner, self._on_corner_left_down)
         wx_callback(wx.EVT_RIGHT_DOWN, corner, self._on_corner_right_down)
         wx_callback(wx.EVT_PAINT,      corner, self._on_corner_paint)
         return g
@@ -1077,6 +1078,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         dc.DrawLabel(title, rect, align)
                     y += row_height
             dc.DrawLine(0, y, width, y)
+
+    def _on_corner_left_down(self, event):
+        # Suppress the default behavior - selection of all grid cells.
+        pass
 
     def _on_corner_right_down(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
