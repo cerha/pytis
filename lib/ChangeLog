@@ -1,5 +1,7 @@
 2007-06-22  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Window commands moved to the menu of windows.
+
 	* pytis/form/inputfield.py (CheckBoxField._set_value): Accept also
 	null values (as an empty string).
 

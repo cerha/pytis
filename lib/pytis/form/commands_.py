@@ -298,19 +298,6 @@ if __debug__:
 
 
 FORM_COMMAND_MENU = ((
-    (Application.COMMAND_RAISE_PREV_FORM,
-     _("Pøedchozí okno"),
-     _("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
-    (Application.COMMAND_RAISE_NEXT_FORM,
-     _("Následující okno"),
-     _("Pøepnout na následující okno v poøadí seznamu oken.")),
-    (Application.COMMAND_RAISE_RECENT_FORM,
-     _("Poslednì aktivní okno"),
-     _("Umo¾òuje cyklicky pøepínat mezi dvìma poslednì aktivními okny.")),
-    (Form.COMMAND_LEAVE_FORM,
-     _("Uzavøít aktuální okno"),
-     _("Uzavøít okno aktuálního formuláøe.")),
-    ),(#---------------
     (LookupForm.COMMAND_JUMP,
      _("Skok na záznam"),
      _("Skok na záznam podle èísla øádku.")),

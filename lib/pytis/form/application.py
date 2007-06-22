@@ -188,7 +188,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
         config.application_state['recent_forms'] = self._recent_forms
         # Initialize the menubar.
         menus = list(self._spec('menu', ()))
-        menus.append(Menu(self._WINDOW_MENU_TITLE, ()))
+        menus.append(Menu(self._WINDOW_MENU_TITLE, (
+            MItem(_("Pøedchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
+                  help=_("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
+            MItem(_("Následující okno"), command=Application.COMMAND_RAISE_NEXT_FORM,
+                  help=_("Pøepnout na následující okno v poøadí seznamu oken.")),
+            MItem(_("Poslednì aktivní okno"), command=Application.COMMAND_RAISE_RECENT_FORM,
+                  help=_("Umo¾òuje cyklicky pøepínat mezi dvìma poslednì aktivními okny.")),
+            MItem(_("Uzavøít aktuální okno"), command=Form.COMMAND_LEAVE_FORM,
+                  help=_("Uzavøít okno aktuálního formuláøe.")),
+            MSeparator(),
+            )))
         self._create_command_menu(menus)
         self._create_help_menu(menus)
         self._menubar = mb = MenuBar(self._frame, menus, self.keymap)
@@ -331,7 +341,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                              args={'form': form})
         menu = self._window_menu
         if menu is not None:
-            for item in menu.GetMenuItems():
+            for item in menu.GetMenuItems()[5:]:
                 menu.Remove(item.GetId())
                 item.Destroy()
             for i, form in enumerate(self._windows.items()):
