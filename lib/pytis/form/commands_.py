@@ -259,6 +259,7 @@ DEFAULT_KEYMAP = (
     ('Shift-Left',    ListForm.COMMAND_MOVE_COLUMN(diff=-1)),
     ('Alt-Down',      ListForm.COMMAND_CONTEXT_MENU),
     ('Alt-Enter',     ListForm.COMMAND_CONTEXT_MENU),
+    ('F11',           ListForm.COMMAND_TOGGLE_ROW_LABELS),
     ('Ctrl-Enter',    EditForm.COMMAND_COMMIT_RECORD),
     ('Tab',           EditForm.COMMAND_NAVIGATE),
     ('Shift-Tab',     EditForm.COMMAND_NAVIGATE(back=True)),
