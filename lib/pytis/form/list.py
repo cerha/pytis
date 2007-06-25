@@ -211,9 +211,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Create the grid and table.  Initialize the data select.
         self._grid = g = wx.grid.Grid(self)
         self._table = table = \
-          _grid.ListTable(self._parent, self._data, self._create_data_object, self._row,
-                          self._columns, self._lf_select_count, sorting=self._lf_sorting,
-                          grouping=self._grouping, prefill=self._prefill,
+          _grid.ListTable(self, self._data, self._row, self._columns, self._lf_select_count,
+                          sorting=self._lf_sorting, grouping=self._grouping, prefill=self._prefill,
                           row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)

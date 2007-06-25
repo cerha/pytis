@@ -66,12 +66,9 @@ class ListTable(wx.grid.PyGridTableBase):
             self.the_row = the_row
             
     class _EditedRow(_CurrentRow):
-        def __init__(self, row, data_row, fieldspec, data, new=False, prefill=None):
-            assert type(row) == type(0)
+        def __init__(self, row, data_row, record):
             assert data_row is None or isinstance(data_row, pytis.data.Row)
-            p_row = PresentedRow(fieldspec, data, data_row,
-                                 prefill=prefill, singleline=True, new=new)
-            ListTable._CurrentRow.__init__(self, row, p_row)
+            ListTable._CurrentRow.__init__(self, row, record)
             self.orig_row = copy.copy(data_row)
         def update(self, colid, value):
             self.the_row[colid] = value
@@ -135,14 +132,13 @@ class ListTable(wx.grid.PyGridTableBase):
                     
     _TYPE_MAPPING = None
         
-    def __init__(self, frame, data, create_data_object, presented_row, columns, row_count,
+    def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
+        assert isinstance(form, Form)
         assert isinstance(grouping, types.TupleType)
-        assert callable(create_data_object)
         wx.grid.PyGridTableBase.__init__(self)
-        self._frame = frame
+        self._form = form
         self._data = data
-        self._create_data_object = create_data_object
         self._presented_row = presented_row
         self._row_count = row_count
         self._sorting = sorting
@@ -164,10 +160,11 @@ class ListTable(wx.grid.PyGridTableBase):
         self._edited_row = None
 
     def _init_edited_row(self, row_number, data_row=None, prefill=None, new=False):
+        assert data_row is None or isinstance(data_row, pytis.data.Row)
         if prefill is None:
             prefill = self._prefill
-        return self._EditedRow(row_number, data_row, self._presented_row.fields(),
-                               self._create_data_object(), new=new, prefill=prefill)
+        record = self._form.record(data_row, new=new, singleline=True, prefill=prefill)
+        return self._EditedRow(row_number, data_row, record)
         
     # Pomocné metody
 
@@ -311,7 +308,7 @@ class ListTable(wx.grid.PyGridTableBase):
         try:
             font = self._font_cache[font_key]
         except KeyError:
-            size = self._frame.GetFont().GetPointSize()
+            size = self._form.GetFont().GetPointSize()
             font = self._font_cache[font_key] = \
                    font = wx.Font(size, wx.DEFAULT, slant, weight)
         return (color2wx(style.foreground()), color2wx(style.background()),font)
@@ -350,8 +347,7 @@ class ListTable(wx.grid.PyGridTableBase):
         # nedochází pøi uzavøení formuláøe k likvidaci nìjakých blí¾e
         # neurèených dat, patrnì i z této tabulky, tak radìji významná
         # data instance ma¾eme ruènì...
-        self._create_data_object = None
-        self._frame = None
+        self._form = None
         self._fields = None
         self._columns = None
         self._cache = None

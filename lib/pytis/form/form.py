@@ -332,8 +332,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return False
 
     def save(self):
-        self._saved_state = map(lambda id: (id, get_status(id)),
-                                self._STATUS_FIELDS)
+        self._saved_state = map(lambda id: (id, get_status(id)), self._STATUS_FIELDS)
         self._release_data()
 
     def restore(self):
@@ -765,9 +764,7 @@ class LookupForm(InnerForm):
             return self._data.select(condition=self._current_condition(),
                                      columns=self._select_columns(),
                                      sort=self._data_sorting(),
-                                     reuse=False,
-                                     transaction=self._transaction)
-
+                                     transaction=self._transaction, reuse=False)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
@@ -1047,10 +1044,21 @@ class RecordForm(LookupForm):
     """Konstanta callbacku výbìru (zmìny aktuálního) záznamu.
 
     Argumentem callbackové funkce je novì vybraný záznam jako instance
-    'PresentedRow'.
+    'RecordForm.Record'.
     
     """
+    class Record(PresentedRow):
+        # Experimental PresentedRow extension aware of its parent form.  This might allow
+        # application specific procedures more reliable access to the current form, from whic the
+        # row comes.
+        def __init__(self, form, *args, **kwargs):
+            self._form = form
+            super(RecordForm.Record, self).__init__(*args, **kwargs)
 
+        def form(self):
+            return self._form
+    
+    
     def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
                          **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -1069,10 +1077,9 @@ class RecordForm(LookupForm):
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
-        self._row = PresentedRow(self._view.fields(), self._create_data_object(),
-                                 self._data_row(select_row), prefill=prefill, new=_new,
-                                 singleline=_singleline, transaction=self._transaction)
-        
+        self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new,
+                                singleline=_singleline)
+
     def _signal_update(self):
         pass
 
@@ -1387,6 +1394,12 @@ class RecordForm(LookupForm):
         new_record(self._name, prefill=self._prefill, inserted_data=data)
             
     # Veøejné metody
+
+    def record(self, row, **kwargs):
+        """Create a new `RecordForm.Record' instance bound to this form."""
+        fields = self._view.fields()
+        data = self._create_data_object()
+        return self.Record(self, fields, data, row, transaction=self._transaction, **kwargs)
     
     def select_row(self, position, quiet=False):
         """Vyber øádek dle 'position'.

@@ -1,10 +1,18 @@
 2007-06-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (RecordForm.Record): New `PresentedRow'
+	subclass aware of its form.
+
+	* pytis/form/_grid.py: Use `Form.record()' to create new
+	`PresentedRow' instances.
+
+	* pytis/form/list.py (ListForm): Duplicated method name fixed.
+
 	* pytis/presentation/spec.py (Specification): Allow `sorting' to
 	be also defined by a method.
 
 	* pytis/form/application.py: Use `ExitDialog' on exit and save the
-	forms for next startup.
+	forms for next startup.  Use saved forms together with `congig.startup_forms'.
 
 	* pytis/form/dialog.py (ExitDialog): New dialog with a choice of
 	forms to open at next application startup.
