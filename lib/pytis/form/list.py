@@ -113,7 +113,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
         """
         self._aggregations = []
-        self._aggregation_results = SimpleCache(self._compute_aggregate)
+        self._aggregation_results = SimpleCache(self._get_aggregation_result)
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
         assert columns is None or is_sequence(columns)
         # Inicializace atributù závislých na u¾ivatelském nastavení.
@@ -140,7 +140,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._aggregation_results.reset()
         return super(ListForm, self)._init_select()
 
-    def _compute_aggregate(self, key):
+    def _get_aggregation_result(self, key):
         cid, operation = key
         c = self._data.find_column(cid)
         if c is not None and isinstance(c.type(), pytis.data.Number):
