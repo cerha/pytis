@@ -2283,8 +2283,15 @@ class Specification(object):
 
     """
 
+    fields = ()
+    """Specification of all fields as a sequence of 'FieldSpec' instances.
+    
+    May be also defined as a method of the same name."""
+    
     access_rights = None
-    """Pøístupová práva náhledu jako instance 'AccessRights'."""
+    """Access rights for the view as an 'AccessRights' instance.
+
+    May be also defined as a method of the same name."""
 
     condition = None
     """A hardcoded condition filtering data of the underlying data object.
@@ -2297,36 +2304,27 @@ class Specification(object):
     data_cls = pytis.data.DBDataDefault
     """Datová tøída pou¾itá pro vytvoøení datového objektu."""
 
-    fields = ()
-    """Specifikace políèek jako sekvence instancí 'FieldSpec'.
-    
-    Pokud nejde o sekvenci, ale o metodu, je tato metoda v okam¾ik sestavování
-    specifikace zavolána a sekvence políøèek je oèekávána jako její návratová
-    hodnota.
-    
-    """
-    
     bindings = {}
-    """Specifikace vazeb pro pou¾ití v duálních formuláøích.
+    """Specification of bindings for use in dual forms.
     
-    Slovník, kde klíèem je název specifikace vedlej¹ího formuláøe a hodnotou je
-    instance 'BindingSpec' urèující jak se tento náhled vá¾e s danám vedlej¹ím
-    náhledem.
+    A dictionary, where the key is the name of the side form specification and the value is a
+    'BindingSpec' instance which determines how the current view interconnects with given side form
+    in a dual form.
     
-    """
+    May be also defined as a method of the same name."""
     
     cb = CodebookSpec()
-    """Specifikace vlastností náhledu pøi jeho pou¾ití jako èíselkíku.
+    """'CodebookSpec' instance defining properties of the view when used as a codebook.
+
+    May be also defined as a method of the same name."""
     
-    Instance CodebookSpec.
-    """
+    sorting = None
+    """Default sorting specification.
+    
+    May be also defined as a method of the same name."""
     
     prints = None
-    """Specifikace tiskových náhledù.
-    
-    Sekvence dvojic (titulek, název tiskové specifikace).
-    
-    """
+    """A sequence of print specifications as pairs (TITLE, NAME)."""
     
     def __init__(self, resolver):
         self._resolver = resolver
