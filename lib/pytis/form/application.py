@@ -224,13 +224,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if self._windows.empty():
             self._panel.SetFocus()
         # Open the startup forms.
+        startup_forms = []
         if config.startup_forms:
-            startup_forms = []
             for name in config.startup_forms.split(','):
-                separator_position = name.find('/')
-                if separator_position != -1:
-                    name = name[separator_position+1:]
-                    cls_name = name[:separator_position].strip()
+                if name.find('/') != -1:
+                    cls_name, name = name.split('/')
                     try:
                         cls = getattr(pytis.form, cls_name)
                         if not issubclass(cls, Form):
@@ -242,17 +240,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
                 startup_forms.append((cls, name.strip()))
-        else:
-            startup_forms = []
-            for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
-                if self._is_valid_spec(args['name']) and issubclass(cls, Form):
-                    startup_forms.append((cls, name))
-                else:
-                    log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
-            startup_forms.reverse()
+        for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
+            if self._is_valid_spec(args['name']) and issubclass(cls, Form):
+                if (cls, name) not in startup_forms:
+                    startup_forms.insert(0, (cls, name))
+            else:
+                log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
         for cls, name in startup_forms:
             run_form(cls, name)
-                
         conn = config.dbconnection
         if conn:
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
