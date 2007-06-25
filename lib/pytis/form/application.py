@@ -230,7 +230,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if name.find('/') != -1:
                     cls_name, name = name.split('/')
                     try:
-                        cls = getattr(pytis.form, cls_name)
+                        cls = getattr(pytis.form, cls_name.strip())
                         if not issubclass(cls, Form):
                             raise AttributeError
                     except AttributeError:
@@ -672,7 +672,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             args = (parent, resolver(), name)
             form = catch('form-init-error', form_class, *args, **kwargs)
             if form is None:
-                self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit"))
+                self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit: %s") % name)
             else:
                 if isinstance(form, PopupForm):
                     log(EVENT, "Zobrazuji modální formuláø:", form)
@@ -901,7 +901,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 return top
         else:
             return None
-        
         
     def set_status(self, id, message, timeout=None, root=False, log_=True):
         """Nastav v poli stavové øádky daného 'id' zprávu 'message'.
