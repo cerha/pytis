@@ -509,14 +509,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.top())
                 return False
             if not self._windows.empty():
-                exit, forms = self.run_dialog(ExitDialog, self._windows.items())
+                exit, forms = self.run_dialog(ExitDialog, [f for f in self._windows.items()
+                                                           if not isinstance(f, PrintForm)])
                 if not exit:
                     return False
-                if forms is None:
-                    self._unset_state_param(self._STATE_STARTUP_FORMS)
-                else:
-                    startup_forms = [(f.__class__, f.name()) for f in forms]
-                    self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
+                if forms is not None:
+                    if forms:
+                        startup_forms = [(f.__class__, f.name()) for f in forms]
+                        self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
+                    else:
+                        self._unset_state_param(self._STATE_STARTUP_FORMS)
         except Exception, e:
             safelog(str(e))
         try:
