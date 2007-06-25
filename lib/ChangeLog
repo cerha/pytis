@@ -1,3 +1,11 @@
+2007-06-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py: Use `ExitDialog' on exit and save the
+	forms for next startup.
+
+	* pytis/form/dialog.py (ExitDialog): New dialog with a choice of
+	forms to open at next application startup.
+
 2007-06-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py: Window commands moved to the menu of windows.

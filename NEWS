@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-25  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøi ukonèení aplikace je u¾ivateli umo¾nìno vybrat které z
+	otevøených formuláøù mají být otevøeny pøi pøí¹tím startu.
+	
 2007-06-22  Tomas Cerha  <cerha@brailcom.org>
 
 	Byla pøidána podpora pro zobrazení-skrytí záhlaví øádkù.  Pøi

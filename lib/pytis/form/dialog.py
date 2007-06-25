@@ -34,7 +34,8 @@ import pytis.data
 from pytis.form import *
 import config
 from wx import calendar
-from wx.lib import masked     
+from wx.lib import masked
+import wx.lib.mixins.listctrl
 
 class Dialog(KeyHandler, CommandHandler, object):
     """Abstraktní tøída, která je základem v¹ech dialogù.
@@ -329,6 +330,8 @@ class Message(GenericDialog):
     "Ikona pro chybové zprávy."
     ICON_TIP = wx.ART_TIP
     "Ikona pro tipy, rady apod."
+    ICON_QUIT = wx.ART_QUIT
+    "Ikona opu¹tìní aplikace."
 
     BUTTON_OK = _('Ok')
     "Nápis pro potvrzovací tlaèítko." 
@@ -339,7 +342,7 @@ class Message(GenericDialog):
     BUTTON_NO = _('Ne')
     "Nápis pro tlaèítko nesouhlasu." 
     
-    _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP)
+    _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
     
     def __init__(self, parent, message, icon=ICON_INFO, title=_('Zpráva'),
                  buttons=(BUTTON_OK,), default=_(BUTTON_OK), report=None,
@@ -1197,7 +1200,63 @@ class BugReport(GenericDialog):
     def _cmd_close_dialog(self):
         self._end_modal(self._button_id(self._IGNORE_LABEL))
 
+
+class ExitDialog(Question):
+    """Application exit question with a choice of forms to save for next startup.
+
+    The dialog lets the user check the forms which should be opened automatically on next startup.
+    The only constructor argument is the sequence of currently opened forms.
+
+    The result returned by the `run()' method is a pair (EXIT, FORMS).  EXIT is True if the user
+    really wants to quit the application or False otherwise.  FORMS is a tuple of those forms from
+    the sequence passed to the constructor, which should be opened automatically on next
+    application startup.  FORMS is None if the user doesn't want to set the startup forms (so the
+    prevoius saved state should be used).
+
+    """
+    _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
+    
+    class _FormListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
+        def __init__(self, parent):
+            wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
+            wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
+
+    def __init__(self, parent, forms):
+        question = _("Aplikace obsahuje otevøené formuláøe\n" + \
+                     "Opravdu chcete ukonèit aplikaci?")
+        super(ExitDialog, self).__init__(parent, question, title=_("Ukonèit aplikaci"),
+                                         default=True, icon=self.ICON_QUIT)
+        self._forms = forms
+
+    def _create_content(self, sizer):
+        super(ExitDialog, self)._create_content(sizer)
+        label = _("Zapamatovat oznaèené formuláøe pro pøí¹tí spu¹tìní")
+        self._checkbox = checkbox = wx.CheckBox(self._dialog, -1, label)
+        checkbox.SetValue(True)
+        self._list = list = self._FormListCtrl(self._dialog)
+        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, list.GetId(),
+                    lambda e: list.ToggleItem(e.m_itemIndex))
+        list.InsertColumn(0, _("Název"))
+        list.InsertColumn(1, _("Typ"))
+        for i, form in enumerate(self._forms):
+            list.InsertStringItem(i, "")
+            list.SetStringItem(i, 0, form.title())
+            list.SetStringItem(i, 1, form.descr())
+            list.CheckItem(i)
+        list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        sizer.Add(list, 1, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(checkbox, 0, wx.ALL|wx.ALIGN_LEFT, 5)
         
+    def _customize_result(self, result):
+        exit = super(ExitDialog, self)._customize_result(result)
+        if self._checkbox.IsChecked():
+            forms = [form for i, form in enumerate(self._forms) if self._list.IsChecked(i)]
+        else:
+            forms = None
+        return (exit, forms)
+
+    
 class FileDialog(Dialog):
     """Dialog pro výbìr souboru.
 

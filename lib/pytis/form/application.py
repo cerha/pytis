@@ -107,6 +107,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _WINDOW_MENU_TITLE = _("Okn&a")
     _RECENT_FORMS_MENU_TITLE = _("Poslednì otevøené formuláøe")
 
+    _STATE_RECENT_FORMS = 'recent_forms'
+    _STATE_STARTUP_FORMS = 'startup_forms'
+
     def _get_command_handler_instance(cls):
         global _application
         return _application
@@ -170,22 +173,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 setattr(config, option, value)
         log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
         # Init the recent forms list.
-        recent_forms = config.application_state.get('recent_forms')
-        if not isinstance(recent_forms, types.ListType):
-            recent_forms = []
+        recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
         for title, args in recent_forms:
-            try:
-                assert issubclass(args['form_class'], Form), \
-                       'Not a valid form class: %s' % args['form_class']
-                # This is a simple way to test whether the specification
-                # still exists.
-                has_access(args['name'])
-            except Exception, e:
-                log(OPERATIONAL, "Ignoring recent form:", (args, e))
+            if not self._is_valid_spec(args['name']) or not issubclass(args['form_class'], Form):
+                log(OPERATIONAL, "Ignoring recent form:", args)
                 continue
             self._recent_forms.append((title, args))
-        config.application_state['recent_forms'] = self._recent_forms
+        self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
         # Initialize the menubar.
         menus = list(self._spec('menu', ()))
         menus.append(Menu(self._WINDOW_MENU_TITLE, (
@@ -230,22 +225,34 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._panel.SetFocus()
         # Open the startup forms.
         if config.startup_forms:
+            startup_forms = []
             for name in config.startup_forms.split(','):
                 separator_position = name.find('/')
                 if separator_position != -1:
-                    cls_name = name[:separator_position].strip()
                     name = name[separator_position+1:]
+                    cls_name = name[:separator_position].strip()
                     try:
-                        form_cls = getattr(pytis.form, cls_name)
-                        if not issubclass(form_cls, Form):
+                        cls = getattr(pytis.form, cls_name)
+                        if not issubclass(cls, Form):
                             raise AttributeError
                     except AttributeError:
-                        msg = _("Neplatná formuláøová tøída v 'startup_forms':")
-                        self.run_dialog(Error, msg +' '+ cls_name)
+                        self.run_dialog(Error, _("Neplatná formuláøová tøída v 'startup_forms':") +
+                                        ' '+ cls_name)
                         continue
                 else:
-                    form_cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
-                run_form(form_cls, name.strip())
+                    cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
+                startup_forms.append((cls, name.strip()))
+        else:
+            startup_forms = []
+            for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
+                if self._is_valid_spec(args['name']) and issubclass(cls, Form):
+                    startup_forms.append((cls, name))
+                else:
+                    log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
+            startup_forms.reverse()
+        for cls, name in startup_forms:
+            run_form(cls, name)
+                
         conn = config.dbconnection
         if conn:
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
@@ -266,6 +273,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(OPERATIONAL, str(e))
             result = default
         return result
+
+    def _is_valid_spec(self, name):
+        # This is a simple way to test whether the specification still exists.
+        try:
+            has_access(name)
+        except:
+            return False
+        else:
+            return True
 
     def _find_help_files(self):
         if not os.path.exists(config.help_dir):
@@ -380,7 +396,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                            command=Application.COMMAND_CLEAR_RECENT_FORMS))
         return items
         
-        
     def _raise_form(self, form):
         if form is not None:
             if form not in self._frame.GetChildren():
@@ -407,6 +422,28 @@ class Application(wx.App, KeyHandler, CommandHandler):
         name = config.application_name.lower()
         return str(re.sub("[^a-zA-Z0-9-]", safe_char, unicode(name)))
 
+    def _get_state_param(self, name, default=None, cls=None, item_cls=None):
+        try:
+            param = config.application_state[name]
+        except KeyError:
+            return default
+        if cls is not None and not isinstance(param, cls):
+            log(OPERATIONAL, "Invalid saved application attribute value:", name)
+            return default
+        if item_cls is not None:
+            for item in param:
+                if not isinstance(item, item_cls):
+                    log(OPERATIONAL, "Invalid saved application attribute value:", name)
+                    return default
+        return param
+
+    def _set_state_param(self, name, value):
+        config.application_state[name] = value
+        
+    def _unset_state_param(self, name):
+        if config.application_state.has_key(name):
+            del config.application_state[name]
+            
     def _stored_options(self, wxconfig):
         options = []
         cont, key, index = wxconfig.GetFirstEntry()
@@ -472,10 +509,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.top())
                 return False
             if not self._windows.empty():
-                q = _("Aplikace obsahuje otevøené formuláøe\n" + \
-                      "Opravdu chcete ukonèit aplikaci?")
-                if not self.run_dialog(Question, q):
+                exit, forms = self.run_dialog(ExitDialog, self._windows.items())
+                if not exit:
                     return False
+                if forms is None:
+                    self._unset_state_param(self._STATE_STARTUP_FORMS)
+                else:
+                    startup_forms = [(f.__class__, f.name()) for f in forms]
+                    self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
         except Exception, e:
             safelog(str(e))
         try:
