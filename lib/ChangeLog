@@ -1,5 +1,8 @@
 2007-06-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (Specification): Allow `sorting' to
+	be also defined by a method.
+
 	* pytis/form/application.py: Use `ExitDialog' on exit and save the
 	forms for next startup.
 

@@ -2330,7 +2330,7 @@ class Specification(object):
     
     def __init__(self, resolver):
         self._resolver = resolver
-        for attr in ('fields', 'access_rights', 'condition', 'bindings', 'cb'):
+        for attr in ('fields', 'access_rights', 'condition', 'bindings', 'cb', 'sorting'):
             value = getattr(self, attr)
             if callable(value):
                 setattr(self, attr, value())
