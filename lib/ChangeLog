@@ -1,3 +1,8 @@
+2007-06-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (InputField._on_idle): Exit if the
+	field control is not shown.
+
 2007-06-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (RecordForm.Record): New `PresentedRow'

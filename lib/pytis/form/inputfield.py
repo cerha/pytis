@@ -336,6 +336,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._row.validate(self.id(), self._get_value())
         
     def _on_idle(self, event):
+        if not self._ctrl.IsShown():
+            log(OPERATIONAL, "Field not shown:", self.id())
+            return
         if self._needs_validation:
             self._needs_validation = False
             valid = self._validate() is None
