@@ -1,3 +1,7 @@
+2007-06-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py: Close popup form before commiting its transaction.
+
 2007-06-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField._on_idle): Exit if the

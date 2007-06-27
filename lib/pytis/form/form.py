@@ -1758,13 +1758,13 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row, original_row)
+            if close:
+                self._result = self._row
+                self.close()
             if self._governing_transaction is None and self._transaction is not None:
                 def commit():
                     self._transaction.commit()
                 db_operation(commit)
-            if close:    
-                self._result = self._row
-                self.close()
             return True
         else:
             if transaction is not None:
