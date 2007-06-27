@@ -33,21 +33,11 @@ def get_menu_defs():
             result = found                
         return result
     resolver = pytis.util.resolver()
-    specs = []
-    items = flatten_menus(pytis.util.resolver().get('application', 'menu'), [])
-    for item in items:
-        if not isinstance(item, pytis.form.MItem) \
-               or item.command() != pytis.form.Application.COMMAND_RUN_FORM \
-               or issubclass(item.args()['form_class'], pytis.form.ConfigForm):
-            continue
-        args = item.args()
-        name = args['name']
-        if issubclass(args['form_class'], pytis.form.DualForm) \
-               and not issubclass(args['form_class'],
-                                  pytis.form.DescriptiveDualForm):
-            specs.extend(name.split('::'))
-        else:
-            specs.append(name)
+    specs = [item.args()['name']
+             for item in flatten_menus(resolver.get('application', 'menu'), [])
+             if (isinstance(item, pytis.form.MItem) \
+                 and item.command() == pytis.form.Application.COMMAND_RUN_FORM \
+                 and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
     specs = remove_duplicates(specs)
     # Zjistíme i varianty podle konstanty VARIANTS
     variants = []
@@ -130,9 +120,7 @@ def check_form():
         #    obsah += "Nejsou definovány"
         # Default select
         _get_default_select(spec)
-        pytis.form.run_dialog(pytis.form.Message,
-                              "DEFS: %s" % spec,
-                              report=obsah)
+        pytis.form.run_dialog(pytis.form.Message, "DEFS: %s" % spec, report=obsah)
         
 cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                   dict(handler=check_form))
@@ -141,59 +129,65 @@ cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
 def check_menus_defs():
     """Zkontroluje v¹echny specifikace uvedené v menu aplikace."""
     resolver = pytis.util.resolver()
+    dbconn = config.dbconnection
+    specnames = get_menu_defs()
+    width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
     errors = []
-    dbconn = dbconnection_spec=config.dbconnection
-    def check_spec(update, seznam):
-        total = len(seznam)
+    def check_specs(update, specnames):
+        def check_bindings(main, side):
+            try:
+                bindings = resolver.get(main, 'binding_spec')
+            except ResolverError, e:
+                return str(e)
+            try:
+                bspec = bindings[side]
+            except KeyError:
+                return "Binding item for %s not found." % side
+            return None
+        def check_spec(name):
+            try:
+                data_spec = resolver.get(name, 'data_spec')
+            except ResolverError, e:
+                return str(e)
+            try:
+                op = lambda: data_spec.create(dbconnection_spec=dbconn)
+                success, data = pytis.form.db_operation(op)
+                if not success:
+                    return "Nepodaøilo se vytvoøit datový objekt."
+                data.select()
+                row = data.fetchone()
+                if row:
+                    view_spec = resolver.get(name, 'view_spec')
+                    fields = view_spec.fields()
+                    prow = PresentedRow(fields, data, row)
+            except Exception, e:
+                return str(e)
+            return None
+        total = len(specnames)
         last_error = ''
         step = 1 # aktualizujeme jen po ka¾dých 'step' procentech...
-        for n, s in enumerate(seznam):
+        for n, name in enumerate(specnames):
             newmsg = "\n".join(("Kontroluji datové specifikace...",
-                                "Specifikace: " + s,
+                                "Specifikace: " + name,
                                 "Poslední chyba v: " + last_error))
             status = int(float(n)/total*100/step)
             if not update(status*step, newmsg=newmsg):
                 break
-            try:
-                data_spec = resolver.get(s, 'data_spec')
-                try:
-                    op = lambda: data_spec.create(dbconnection_spec=dbconn)
-                    success, data = pytis.form.db_operation(op)
-                    if not success:
-                        err = "Specifikace %s: Nepodaøilo se vytvoøit datový objekt." % (s)
-                        errors.append(err)
-                        last_error = "%s\n(Nepodaøilo se vytvoøit datový objekt)" % s
-                        continue
-                    data.select()
-                    row = data.fetchone()
-                    if row:
-                        try:
-                            view_spec = resolver.get(s, 'view_spec')
-                            fields = view_spec.fields()
-                            prow = PresentedRow(fields, data, row)
-                        except Exception, e:
-                            err = """Specifikace %s: %s""" % (s, str(e))
-                            errors.append(err)
-                            last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
-                except Exception, e:
-                    err = """Specifikace %s: %s""" % (s, str(e))
-                    errors.append(err)
-                    last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
-            except ResolverError, e:
-                err = """Specifikace %s: %s""" % (s, str(e))
-                errors.append(err)                
-                last_error = "%s\n%s...)" % (s, str(e)[:sirka-4])
-    seznam = get_menu_defs()
-    sirka = max([len(s) for s in seznam]) + len('Poslední chyba v: ') + 6
-    msg = 'Kontroluji datové specifikace...'.ljust(sirka) + '\n\n\n\n'
-    pytis.form.run_dialog(pytis.form.ProgressDialog, check_spec,
-                          args=(seznam,),
-                          message=msg, elapsed_time=True, can_abort=True)
+            if name.find('::') != -1:
+                main, side = name.split('::')
+                results = (check_bindings(main, side), check_spec(main), check_spec(side))
+            else:
+                results = (check_spec(name),)
+            for error in results:
+                if error is not None:
+                    errors.append("Specifikace %s: %s" % (name, error))
+                    last_error = "%s\n%s...)" % (name, error[:width-4])
+    pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
+                          message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
+                          elapsed_time=True, can_abort=True)
     if errors:
-        obsah = "\n".join(errors)
-        pytis.form.run_dialog(pytis.form.Message,
-                              "Chyby ve specifikacích",
-                              report=obsah)
+        pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikacích",
+                              report="\n".join(errors))
 
 cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                         dict(handler=check_menus_defs))
@@ -201,24 +195,27 @@ cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
 def cache_spec(*args, **kwargs):
     resolver = pytis.util.resolver()
     def do(update, specs):
+        def cache(name):
+            for spec in ('data_spec', 'view_spec',
+                         'cb_spec', 'proc_spec', 'binding_spec'):
+                try:
+                    resolver.get(name, spec)
+                except ResolverError:
+                    pass
+            
         total = len(specs)        
         last_status = 0
         step = 5 # aktualizujeme jen po ka¾dých 'step' procentech...
-        for n, file in enumerate(specs):
+        for n, name in enumerate(specs):
             status = int(float(n)/total*100/step)
             if status != last_status:
                 last_status = status 
                 if not update(status*step):
                     break
-            for spec in ('data_spec', 'view_spec',
-                         'cb_spec', 'proc_spec', 'binding_spec'):
-                try:
-                    resolver.get(file, spec)
-                except ResolverError:
-                    pass
+            for x in name.split('::'):
+                cache(x)
     msg = '\n'.join(('Naèítám specifikace (pøeru¹te pomocí Esc).', '',
                      'Naèítání je mo¾no trvale vypnout pomocí dialogu',
                      '"Nastavení u¾ivatelského rozhraní"'))
-    pytis.form.run_dialog(pytis.form.ProgressDialog, do,
-                          args=(get_menu_defs(),), message=msg,
-                          elapsed_time=True, can_abort=True)
+    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(get_menu_defs(),),
+                          message=msg, elapsed_time=True, can_abort=True)
