@@ -16,6 +16,11 @@
 
 2007-06-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/postgresql.py (PostgreSQLConnector._pg_query): Raise
+	DBUserException when trying to use closed transaction.
+
+2007-06-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/data/postgresql.py (DBPostgreSQLTransaction.open): New
 	method.
 

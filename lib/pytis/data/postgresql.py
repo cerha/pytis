@@ -412,6 +412,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             'Connection given to a query to be performed outside transaction'
         if transaction is None:
             connection = self._pg_get_connection(outside_transaction)
+        elif not transaction.open():
+            raise DBUserException("Can't use closed transaction")
         else:
             connection = transaction._trans_connection()
         # Proveï dotaz
