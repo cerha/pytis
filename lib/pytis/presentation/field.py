@@ -604,6 +604,8 @@ class PresentedRow(object):
         def getval(enum, value, col, func=None):
             if value is None:
                 return ''
+            if not self._transaction.open():
+                return ''
             try:
                 v = enum.get(value, col, condition=self.runtime_filter(column.id),
                              transaction=self._transaction)
@@ -635,12 +637,13 @@ class PresentedRow(object):
             return lambda v: getval(enum, v, display)
 
     def display(self, key):
-        """Vra» hodnotu displeje èíselníku daného políèka.
+        """Return enumerator `display' value for given field as a string.
 
-        Pokud dané políèko není èíselníkem, nebo tento èíselník nemá urèen
-        displej, nebo aktuální hodnota políèka není v èíselníku nalezena, nebo
-        k nejsou dostateèná práva k jejímu naètení, bude vrácen prázdný
-        øetìzec.
+        If the field has no enumerator or no display was specified, an empty string is returned.
+
+        Empty string is also returned if current field value doesn't belong to the enumeration (is
+        invalid) or if it is not possible to retrieve the displayed value (isufficient access
+        rights, current transaction aborted etc.)
         
         """
         column = self._coldict[key]
