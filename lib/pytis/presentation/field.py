@@ -604,7 +604,7 @@ class PresentedRow(object):
         def getval(enum, value, col, func=None):
             if value is None:
                 return ''
-            if not self._transaction.open():
+            if self._transaction and not self._transaction.open():
                 return ''
             try:
                 v = enum.get(value, col, condition=self.runtime_filter(column.id),
