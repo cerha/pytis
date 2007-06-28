@@ -1,5 +1,10 @@
 2007-06-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py (ExitDialog): Allow setting the checkbox
+	initial state.
+
+	* pytis/form/application.py: Remember the state of exit dialog checkbox.
+
 	* pytis/data/postgresql.py
 	(PostgreSQLStandardBindingHandler._pdbb_get_table_type): Added a
 	quick hack to ignore multicolumn unique constraints.

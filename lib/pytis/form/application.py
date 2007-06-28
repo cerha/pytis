@@ -109,6 +109,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'startup_forms'
+    _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
 
     def _get_command_handler_instance(cls):
         global _application
@@ -504,10 +505,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.top())
                 return False
             if not self._windows.empty():
-                exit, forms = self.run_dialog(ExitDialog, [f for f in self._windows.items()
-                                                           if not isinstance(f, PrintForm)])
+                save = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
+                forms = [f for f in self._windows.items() if not isinstance(f, PrintForm)]
+                exit, forms = self.run_dialog(ExitDialog, forms, save=save)
                 if not exit:
                     return False
+                self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, forms is not None)
                 if forms is not None:
                     if forms:
                         startup_forms = [(f.__class__, f.name()) for f in forms]

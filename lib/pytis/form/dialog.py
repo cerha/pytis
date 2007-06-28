@@ -1221,18 +1221,21 @@ class ExitDialog(Question):
             wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
             wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
 
-    def __init__(self, parent, forms):
+    def __init__(self, parent, forms, save=True):
         question = _("Aplikace obsahuje otevøené formuláøe\n" + \
                      "Opravdu chcete ukonèit aplikaci?")
         super(ExitDialog, self).__init__(parent, question, title=_("Ukonèit aplikaci"),
                                          default=True, icon=self.ICON_QUIT)
+        assert isinstance(forms, (list, tuple))
+        assert isinstance(save, bool)
         self._forms = forms
+        self._save = save
 
     def _create_content(self, sizer):
         super(ExitDialog, self)._create_content(sizer)
         label = _("Zapamatovat oznaèené formuláøe pro pøí¹tí spu¹tìní")
         self._checkbox = checkbox = wx.CheckBox(self._dialog, -1, label)
-        checkbox.SetValue(True)
+        checkbox.SetValue(self._save)
         self._list = list = self._FormListCtrl(self._dialog)
         wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, list.GetId(),
                     lambda e: list.ToggleItem(e.m_itemIndex))
