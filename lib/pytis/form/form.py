@@ -58,6 +58,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         specifikací, relativní k adresáøi s definièními soubory, bez pøípony
 
     """
+
+    CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
+    """Konstanta callbacku interakce u¾ivatele."""
+
+
     _STATUS_FIELDS = ()
     _PERSISTENT_FORM_PARAMS = ()
     DESCR = None
@@ -558,9 +563,8 @@ class TitledForm:
             print_spec = None
         if not print_spec:
             print_spec = ((_("Výchozí"), os.path.join('output', name)),)
-        return [MItem(title, command=InnerForm.COMMAND_PRINT,
-                      args=dict(print_spec_path=path,
-                                _command_handler=self))
+        return [MItem(title,
+                      command=InnerForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
 
     def _filter_menu(self):
@@ -570,6 +574,7 @@ class TitledForm:
         return None
     
     def _on_menu_button(self, event, items):
+        self._run_callback(self.CALL_USER_INTERACTION)
         popup_menu(event.GetEventObject(), items, self._get_keymap())
 
     def _create_title_bar(self):
@@ -892,18 +897,14 @@ class LookupForm(InnerForm):
 
     def _filter_menu(self):
         # Vra» seznam polo¾ek filtraèního menu.
-        items = [MItem(_("Otevøít filtraèní formuláø"),
-                       command=self.COMMAND_FILTER),
-                 MItem(_("Zru¹it filtr"),
-                       command=self.COMMAND_UNFILTER),
-                 MItem(_("Poslední aplikovaný filtr"),
-                       command=self.COMMAND_FILTER(last=True))]
+        items = [MItem(_("Otevøít filtraèní formuláø"), command=self.COMMAND_FILTER),
+                 MItem(_("Zru¹it filtr"),               command=self.COMMAND_UNFILTER),
+                 MItem(_("Poslední aplikovaný filtr"),  command=self.COMMAND_FILTER(last=True))]
         conditions = self._filter_conditions()[1:]
         for i, c in enumerate(conditions):
             if i==0 or i > 0 and  c.fixed() != conditions[i-1].fixed():
                 items.append(MSeparator())
-            items.append(MItem(c.name(), command=self.COMMAND_FILTER,
-                               args=dict(condition=c.condition()),
+            items.append(MItem(c.name(), command=self.COMMAND_FILTER(condition=c.condition()),
                                icon='filter'))
         return items
 

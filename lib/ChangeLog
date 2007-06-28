@@ -1,5 +1,13 @@
 2007-06-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py: Define the callback `CALL_USER_INTERACTION'
+	in the base class.  Call it on popup menu display.
+
+	* pytis/form/list.py: Callback `CALL_USER_INTERACTION' moved to
+	the parent class.
+
+	* pytis/form/inputfield.py (InputField._on_idle): Previous hack removed.
+
 	* pytis/form/dialog.py (ExitDialog): Allow setting the checkbox
 	initial state.
 

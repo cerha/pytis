@@ -68,8 +68,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     """Konstanta callbacku aktivace øádku."""
     CALL_MODIFICATION = 'CALL_MODIFICATION'
     """Konstanta callbacku modifikace øádku."""
-    CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
-    """Konstanta callbacku interakce u¾ivatele."""
 
     _REFRESH_PERIOD = 60 # sekund
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
@@ -811,7 +809,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for op, title, icon, label in self._AGGREGATIONS] + \
                 [MSeparator(),
                  MItem(_("Zobrazit v¹e"), command=ListForm.COMMAND_AGGREGATE),
-                 MItem(_("Skrýt v¹e"), command=ListForm.COMMAND_UNAGGREGATE)]
+                 MItem(_("Skrýt v¹e"),    command=ListForm.COMMAND_UNAGGREGATE)]
     
     def _column_context_menu(self, col):
         M = Menu
