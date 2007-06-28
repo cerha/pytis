@@ -1,5 +1,11 @@
 2007-06-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py: Turn on aggregation functions defined in
+	specification.
+
+	* pytis/presentation/spec.py: Added support for turning on
+	aggregation functions in specification.
+
 	* pytis/presentation/field.py: Handle closed transactions in
 	codebook display computation.
 

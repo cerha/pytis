@@ -692,7 +692,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None,
                  on_delete_record=None, on_line_commit=None, redirect=None,
                  focus_field=None, description=None, help=None,
-                 row_style=FIELD_STYLE_DEFAULT, conditions=()):
+                 row_style=FIELD_STYLE_DEFAULT, conditions=(), aggregations=()):
         
         """Inicializuj instanci.
 
@@ -836,7 +836,11 @@ class ViewSpec(object):
           conditions -- a sequence of named conditions ('Condition' instances),
             which should be available to the user for filtering/searching
             records in this view.
-           
+
+          aggregations -- a sequence aggregation functions which should be
+            turned on automatically for this view (in forms which support that).
+            The items are 'AGG_*' constants of 'pytis.data.Data'.
+            
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
         the field specifications in 'fields'.
@@ -926,13 +930,19 @@ class ViewSpec(object):
                     assert self.field(id) is not None
         assert callable(check) or isinstance(check, (list, tuple))
         check = xtuple(check)
-        assert isinstance(conditions, tuple)
+        assert isinstance(conditions, (tuple, list))
         if __debug__:
             for f in check:
                 assert callable(f)
             for c in conditions:
                 assert isinstance(c, Condition)
                 assert c.fixed()
+        assert isinstance(aggregations, (tuple, list))
+        if __debug__:
+            for agg in aggregations:
+                assert agg in [getattr(pytis.data.Data, attr)
+                               for attr in public_attributes(pytis.data.Data)
+                               if attr.startswith('AGG_')]
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -963,6 +973,7 @@ class ViewSpec(object):
         self._help = help
         self._row_style = row_style
         self._conditions = tuple(conditions)
+        self._aggregations = tuple(aggregations)
 
     def title(self):
         """Vra» název náhledu jako øetìzec."""
@@ -1064,8 +1075,12 @@ class ViewSpec(object):
         return self._row_style
 
     def conditions(self):
-        """Vra» tuple pøeddefinovaných filtraèních/vyhledávacích podmínek."""
+        """Return predefined filtering/serach conditions as a tuple of 'Condition' instances."""
         return self._conditions
+
+    def aggregations(self):
+        """Return default aggregation functions as a tuple."""
+        return self._aggregations
 
     
 class BindingSpec(object):

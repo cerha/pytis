@@ -110,7 +110,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
           kwargs -- argumenty pøedané konstruktoru pøedka.
 
         """
-        self._aggregations = []
+        self._aggregations = list(self._view.aggregations())
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
         assert columns is None or is_sequence(columns)
