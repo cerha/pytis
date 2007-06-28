@@ -2744,6 +2744,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             **kwargs)
         self._trans_notifications = []
         self._pg_begin_transaction()
+        self._open = True
         
     def _db_bindings_to_column_spec(self, __bindings):
         return (), ()
@@ -2760,12 +2761,14 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     def commit(self):
         """Commit the transaction."""
         self._pg_commit_transaction()
+        self._open = False
         for dbdata in self._trans_notifications:
             dbdata._pg_send_notifications()
 
     def rollback(self):
         """Rollback the transaction."""
         self._pg_rollback_transaction()
+        self._open = False
 
     def set_point(self, point):
         """Set transaction point for possible future partial rollback.
@@ -2791,3 +2794,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         assert re.match('^[a-z]+$', point)
         self._pg_query('rollback to %s' % (point,), transaction=self)
         self._pg_query('release %s' % (point,), transaction=self)
+
+    def open(self):
+        """Return true iff the transaction is open and hasn't been closed yet."""
+        return self._open
