@@ -807,10 +807,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
                           state=lambda op=op: op in self._aggregations)
                 for op, title, icon, label in self._AGGREGATIONS] + \
-                [MSeparator(),
-                 MItem(_("Zobrazit v¹e"), command=ListForm.COMMAND_AGGREGATE),
-                 MItem(_("Skrýt v¹e"),    command=ListForm.COMMAND_UNAGGREGATE)]
-    
+               [MSeparator(),
+                MItem(_("Zobrazit v¹e"), command=ListForm.COMMAND_AGGREGATE),
+                MItem(_("Skrýt v¹e"),    command=ListForm.COMMAND_UNAGGREGATE)]
+        
     def _column_context_menu(self, col):
         M = Menu
         I = MItem
@@ -852,6 +852,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._run_callback(self.CALL_USER_INTERACTION)
         if event.GetY() > self._label_height:
             menu = self._aggregation_menu()
+            col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
+            if col != -1:
+                cid = self._columns[col].id()
+                i = (event.GetY() - self._label_height) / self._row_height
+                operation = [op for op,x,x,x in self._AGGREGATIONS if op in self._aggregations][i]
+                cmd = self.COMMAND_COPY_AGGREGATION_RESULT(cid=cid, operation=operation)
+                menu[0:0] = (MItem(_("Zkopírovat výsledek"), command=cmd), MSeparator())
         else:
             col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
             # Menu musíme zkonstruovat a¾ zde, proto¾e je pro ka¾dý sloupec jiné.
@@ -1630,15 +1637,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_copy_cell(self):
         row, col = self._current_cell()
         cid = self._columns[col].id()
-        clptext = self._table.row(row).format(cid)
-        # set_clipboard_text(clptext)
-        # TODO: wxClipboard nefunguje, jak má, tak to vyøe¹íme
-        #       hackem, kdy vyu¾ijeme toho, ¾e wxTextCtrl.Copy()
-        #       dìlá to, co má.
-        tc = wx.TextCtrl(self, -1, clptext)
-        tc.SetSelection(0,len(clptext))
-        tc.Copy()
-        tc.Destroy()
+        copy_to_clipboard(self._table.row(row).format(cid))
+
+    def _cmd_copy_aggregation_result(self, operation, cid):
+        copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
+        
+    def _can_copy_aggregation_result(self, operation, cid):
+        return self._aggregation_results[(cid, operation)] is not None
 
     def _can_edit(self):
         return self._current_key() is not None

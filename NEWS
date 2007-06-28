@@ -4,6 +4,41 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-28  Tomas Cerha  <cerha@brailcom.org>
+
+	Agregaèní funkce lze pro vybrané náhledy zapnout ve specifikaci
+	pomocí nové specifikaèní volby `aggregations'.  Viz dokumentace
+	`ViewSpec'.
+	
+	Výsledky agregaèních funkcí lze nyní snadno zkopírovat pomocí
+	kontextového menu.
+	
+	Stav checkboxu pøi dotazu na ulo¾ení formuláøù pøi opu¹tìní
+	aplikace je nyní zapamatován.
+
+	* BUGFIX: Pøíkazy vyvolané z popup menu tlaèítek v toolbaru jsou
+	nyní správnì zpracovány i v duálních formuláøích.  Projevovalo se
+	napø. tak, ¾e agregaèní funkce nebo filtrace vyvolaná pro sideform
+	se ve skuteènosti zapnula v mainformu, proto¾e ten byl v tu chvíli
+	aktivní.
+
+	* BUGFIX: Omezení UNIQUE, které je v databázi definováno nad více
+	sloupci je nyní ignorováno.  Jeho nesprávným uplatnìním tak
+	vznikaly situace, ¾e data, která byla v poøádku, ne¹la vlo¾it,
+	proto¾e kontrola unikátnosti je provádìna pouze nad jedním
+	sloupcem.
+
+	* BUGFIX: Pøi výpoètu hodnoty displeje èíselníku je nejprve ovìøen
+	stav transakce.  Tím by se mìlo zamezit chybì zobrazené po
+	úspì¹ném odeslání editaèního formuláøe.
+	
+2007-06-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: Popup formuláø je nyní uzavírán je¹tì døíve, ne¾ je
+	proveden commit transakce.  Pokud toti¾ zùstal zobrazen, mohlo
+	zpracování idle událostí ve formuláøi spustit dotazy nad datovými
+	selecty, jejich¾ tansakce ji¾ byla uzavøena.
+	
 2007-06-25  Tomas Cerha  <cerha@brailcom.org>
 
 	Pøi ukonèení aplikace je u¾ivateli umo¾nìno vybrat které z

@@ -14,7 +14,7 @@ CHYBY:
 
  * Kontrola specifikací nefunguje správnì.
  
-   Pokud je v application.py takto definovám duální formuláø:
+   Pokud je v application.py takto definován duální formuláø:
    Uzivatel.TUzivatel::Pocitac.TPocitac. Pak pokud vyma¾u v Uzivatel.TUzivatel
    v bindings spojení tìchto formuláøù a v application.py ponechám tuto
    definici, tak kontrola specifikací si toho nevsimne. Samozrejmne pri

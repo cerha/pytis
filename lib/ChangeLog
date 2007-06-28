@@ -1,7 +1,12 @@
 2007-06-28  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/commands_.py: New command `ListForm.COMMAND_COPY_AGGREGATION_RESULT'.
+
+	* pytis/form/screen.py: Clipboard copying fixed.
+
 	* pytis/form/list.py: Turn on aggregation functions defined in
-	specification.
+	specification.  Handle aggregation result copying and add the
+	command to the context menu.  
 
 	* pytis/presentation/spec.py: Added support for turning on
 	aggregation functions in specification.

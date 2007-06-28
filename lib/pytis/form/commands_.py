@@ -124,6 +124,8 @@ Command(ListForm, 'AGGREGATE',
         "Pøidání agregaèní funkce") # arg 'operation'
 Command(ListForm, 'UNAGGREGATE',
         "Odebrání agregaèní funkce") # arg 'operation'
+Command(ListForm, 'COPY_AGGREGATION_RESULT',
+        "Zkopírování výsledku agreganí funkce do schránky") # arg 'operation', 'cid'
 Command(ListForm, 'EXPORT_CSV',
         "Export øádkového formuláøe do csv souboru")
 Command(ListForm, 'LINE_COMMIT',
@@ -405,6 +407,7 @@ COMMAND_ICONS = (
     (ListForm.COMMAND_TOGGLE_COLUMN(col=None),             'hide-column'),
     (ListForm.COMMAND_AGGREGATE,                           'aggregate'),
     (ListForm.COMMAND_UNAGGREGATE,                         'unaggregate'),
+    (ListForm.COMMAND_COPY_AGGREGATION_RESULT,             wx.ART_COPY),
     (RecordForm.COMMAND_EDIT_RECORD,                       'edit-record'),
     (RecordForm.COMMAND_NEW_RECORD(copy=True),             'new-record-copy'),
     (RecordForm.COMMAND_NEW_RECORD,                        'new-record'),

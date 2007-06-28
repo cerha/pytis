@@ -111,16 +111,16 @@ def modal(window):
     return window and \
            (isinstance(window, Dialog) or isinstance(window, PopupForm))
 
-def set_clipboard_text(text):
-    assert is_anystring(text)
+def copy_to_clipboard(text):
+    """Copy the text into system clipboard."""
+    assert isinstance(text, (str, unicode))
     clipboard = wx.TheClipboard
     if clipboard.Open():
-        clipboard.UsePrimarySelection(True)
-        clipboard.SetData(wx.PyTextDataObject(text));
+        #clipboard.UsePrimarySelection(True)
+        clipboard.SetData(wx.TextDataObject(text))
+        clipboard.Flush()
         clipboard.Close()
-    #import stdwin
-    #stdwin.setcutbuffer(0, text)
-
+        
 def color_dictionary():
     from wx.lib import colourdb
     colourdb.updateColourDB()
