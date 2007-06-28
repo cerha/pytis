@@ -1,3 +1,9 @@
+2007-06-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_get_table_type): Added a
+	quick hack to ignore multicolumn unique constraints.
+
 2007-06-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py: Close popup form before commiting its transaction.

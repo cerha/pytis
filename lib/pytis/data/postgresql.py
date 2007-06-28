@@ -800,12 +800,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             type_, size_string, not_null = d[0]
         except:
             raise pytis.data.DBException(_("Není mo¾no zjistit typ sloupce"), None,
-                              table, column, d)
+                                         table, column, d)
         try:
             default = d1[0][0]
         except:
             default = ''
-        unique = not not d2
+        try:
+            # TODO: This is a quick hack to ignore multicolumn unique constraints. (TC)
+            unique = (not not d2) and d2[0][0].find(',') == -1
+        except:
+            unique = False
         serial = (default[:len('nextval')] == 'nextval')
         return self._pdbb_get_type(type_, size_string, not_null, serial,
                                    ctype=ctype, unique=unique, type_kwargs=type_kwargs)
