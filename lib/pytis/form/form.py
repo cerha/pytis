@@ -1040,7 +1040,7 @@ class LookupForm(InnerForm):
 
         The instance will have the data select initialized with the current filter condition and
         all its attributes, such as sorting etc.  This is often practical within application
-        defined procedures, which retrieve this data object through the `Form.Record.data()'
+        defined procedures, which retrieve this data object through the 'RecordForm.Record.data()'
         method.
 
         """
@@ -1082,7 +1082,7 @@ class RecordForm(LookupForm):
         def data(self):
             # Return a new instance rather than giving the internally used data object.
             # Moreover this instance will have the select initialized in LookupForm.
-            data = self._form.data()
+            return self._form.data()
     
     def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
                          **kwargs):
