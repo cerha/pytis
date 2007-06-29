@@ -1637,10 +1637,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_copy_cell(self):
         row, col = self._current_cell()
         cid = self._columns[col].id()
-        copy_to_clipboard(self._table.row(row).format(cid))
+        self._copy_to_clipboard(self._table.row(row).format(cid))
 
+    def _copy_to_clipboard(self, text):
+        # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
+        # Thus the terrible hack below...
+        #copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
+        ctrl = wx.TextCtrl(self, -1, text)
+        ctrl.SetSelection(0, len(text))
+        ctrl.Copy()
+        ctrl.Destroy()
+    
     def _cmd_copy_aggregation_result(self, operation, cid):
-        copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
+        self._copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
         
     def _can_copy_aggregation_result(self, operation, cid):
         return self._aggregation_results[(cid, operation)] is not None
