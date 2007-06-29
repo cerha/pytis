@@ -179,6 +179,7 @@ class PresentedRow(object):
                                     self._new and self._coldict[key].default is not None)
         self._row = pytis.data.Row(row_data)
         self._virtual = dict(virtual)
+        self._invalid = {}
         if reset:
             self._original_row_empty = row is None
             if not hasattr(self, '_original_row'):
@@ -275,10 +276,10 @@ class PresentedRow(object):
                "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
         if self._row.has_key(key):
             row = self._row
-        elif self._virtual.has_key(key):
-            row = self._virtual
         else:
-            return
+            row = self._virtual
+        if self._invalid.has_key(key):
+            del self._invalid[key]
         if row[key].value() != value.value():
             row[key] = value
             self._cache = {}
@@ -453,7 +454,7 @@ class PresentedRow(object):
         self._set_row(row, reset=reset, prefill=prefill)
 
     def fields(self):
-        """Vra» seznam v¹ech políèek."""
+        """Return the list of all field specifications as 'FieldSpec' instances."""
         return self._fields
         
     def has_key(self, key):
@@ -461,7 +462,7 @@ class PresentedRow(object):
         return self._coldict.has_key(key)
         
     def keys(self):
-        """Vra» seznam identifikátorù v¹ech políèek obsa¾ených v tomto øádku."""
+        """Return the list of identifiers of all fields contained within the row."""
         return [c.id for c in self._columns]
         
     def key(self):
@@ -473,14 +474,13 @@ class PresentedRow(object):
         return self._new
     
     def original_row(self, empty_as_none=False):
-        """Vra» *datový* øádek obsahující pùvodní hodnoty pøed pøípadnými zmìnami.
+        """Return a *data* row containing the values before any changes.
 
-        Vrácená hodnota je instance 'pytis.data.Row', ne nutnì toto¾ná (ve
-        smyslu 'id()') s øádkem zadaným v konstruktoru.
+        The returned row is a 'pytis.data.Row' instance, not necasarilly identical with the row
+        passed to the constructor.
 
-        Pùvodními hodnotami jsou my¹leny hodnoty øádku pøedaného konstruktoru,
-        nebo poslednímu volání metody 'set_row()', s pravdivým argumentem
-        'reset'.
+        The original values are values after row initialization or after the last call to
+        'set_row()' with 'reset' se to true.
         
         """
         if empty_as_none and self._original_row_empty:
@@ -489,25 +489,28 @@ class PresentedRow(object):
             return self._original_row
 
     def changed(self):
-        """Return true if the data row has been changed.
+        """Return true if the *data* row has been changed.
 
         The row is considered changed if the underlying data row is not equal to the original row
         passed to (or created in) the constructor in the sense of the `=' operator.  Changes in the
         virtual fields (not present in the underlying data row) are ignored.
 
         """
-        return self._row != self._original_row or self._invalid
+        for key in self._row.keys():
+            if self.field_changed(key):
+                return True
+        return False
 
     def field_changed(self, key):
-        """Return true if the field 'key' was changed compared to its original value.
+        """Return true if given field was changed compared to its original value.
 
-        Warning: False is always returned for fully virtual fields (with no underlying data
-        column).  For all computed fields the result may not be accurate because the recomputation
-        may not have happened yet.  
+        Warning: True is always returned for virtual fields (with no underlying data column).  For
+        all computed fields the result may not be accurate because the recomputation may not have
+        happened yet.
 
         """
         return not self._row.has_key(key) or \
-               self._row[key] != self._original_row[key] or \
+               self._row[key].value() != self._original_row[key].value() or \
                self._invalid.has_key(key)
 
     def editable(self, key):
