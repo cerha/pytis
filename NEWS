@@ -4,6 +4,33 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-06-29  Tomas Cerha  <cerha@brailcom.org>
+
+	Pokud u¾ivatel pøi opu¹tìní aplikace nezvolí "Zapamatovat oznaèené
+	formuláøe pro pøí¹tí spu¹tìní", døíve zapamatované formuláøe jsou
+	zahozeny a pøí¹tì se tedy aplikace otevøe prázdná.
+	
+	Knihovny byly proèi¹tìny tak, aby nikde nebyla vyu¾ívána metoda
+	`data()' instance `PresentedRow'.  Ta nech» je nyní výhradnì
+	urèena k pou¾ití v u¾ivatelských procedurách.  Pøi volání metody
+	je nyní *v¾dy* vytvoøena nová instance datového objektu, tak¾e
+	práce s ním v rámci procedury je nyní bezpeèná a neovlivòuje stav
+	datového objektu formuláøe ani øádku.
+
+	* BUGFIX: V datovém objektu pøedávaném u¾ivatelským procedurám je
+	nyní v¾dy inicializován datový select se shodnými parametry, jaké
+	má aktuální select formuláøe.  Tím by mìly opìt zaèít fungovat
+	nìkteré procedury, které s tím poèítaly.
+	
+	* BUGFIX: Pøi validaci vstupních políèek je nejprve ovìøen stav
+	transakce.
+	
+	* BUGFIX: Pøi kontrolách zmìny políèek metodami
+	`PresentedRow.field_changed()' a `PresentedRow.changed()' jsou
+	nyní brány v potaz pouze zmìny vlastních hodnot políèek, nikoliv
+	jejich datových typù.  Tím by mìly být eliminovány nìkteré
+	"záhadné" chyby.
+
 2007-06-28  Tomas Cerha  <cerha@brailcom.org>
 
 	Agregaèní funkce lze pro vybrané náhledy zapnout ve specifikaci
