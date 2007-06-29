@@ -344,6 +344,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         for id, message in self._saved_state:
             set_status(id, message, log_=False)
 
+    def data(self):
+        """Return a new instance of the data object used by the form."""
+        return self._create_data_object()
+        
     def _cleanup(self):
         super(Form, self)._cleanup()
         for id in self._STATUS_FIELDS:
@@ -764,12 +768,15 @@ class LookupForm(InnerForm):
         else:
             return pytis.data.AND(*conditions)
 
+    def _init_data_select(self, data):
+        return data.select(condition=self._current_condition(),
+                           columns=self._select_columns(),
+                           sort=self._data_sorting(),
+                           transaction=self._transaction, reuse=False)
+    
     def _init_select(self):
         def op():
-            return self._data.select(condition=self._current_condition(),
-                                     columns=self._select_columns(),
-                                     sort=self._data_sorting(),
-                                     transaction=self._transaction, reuse=False)
+            return self._init_data_select(self._data)
         success, self._lf_select_count = db_operation(op)
         if not success:
             log(EVENT, 'Selhání databázové operace')
@@ -1028,6 +1035,19 @@ class LookupForm(InnerForm):
         
     # Veøejné metody
 
+    def data(self):
+        """Return a new instance of the data object used by the form.
+
+        The instance will have the data select initialized with the current filter condition and
+        all its attributes, such as sorting etc.  This is often practical within application
+        defined procedures, which retrieve this data object through the `Form.Record.data()'
+        method.
+
+        """
+        data = super(LookupForm, self).data()
+        self._init_data_select(data)
+        return data
+            
     def condition(self):
         """Vra» specifikaci aktuální podmínky výbìru dat.
 
@@ -1050,7 +1070,7 @@ class RecordForm(LookupForm):
     """
     class Record(PresentedRow):
         # Experimental PresentedRow extension aware of its parent form.  This might allow
-        # application specific procedures more reliable access to the current form, from whic the
+        # application specific procedures more reliable access to the current form, from which the
         # row comes.
         def __init__(self, form, *args, **kwargs):
             self._form = form
@@ -1058,7 +1078,11 @@ class RecordForm(LookupForm):
 
         def form(self):
             return self._form
-    
+
+        def data(self):
+            # Return a new instance rather than giving the internally used data object.
+            # Moreover this instance will have the select initialized in LookupForm.
+            data = self._form.data()
     
     def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
                          **kwargs):
