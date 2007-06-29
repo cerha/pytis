@@ -1,10 +1,16 @@
 2007-06-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Reset startup forms if the user
+	doesn't save the current state.
+
 	* pytis/presentation/field.py (PresentedRow.permitted)
 	(PresentedRow.codebook, PresentedRow.key): New methods.
 	(PresentedRow._set_row): Always use `FieldSpec' data type.
+	(PresentedRow): Don't care about field types within the `changed()'
+	and `field_changed()' methods.
 
 	* pytis/form/inputfield.py: Avoid using `PresentedRow.data()' method.
+	Don't validate when the transaction is already closed. 
 
 	* pytis/form/dualform.py: Avoid using `PresentedRow.data()' method.
 

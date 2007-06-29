@@ -511,12 +511,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if not exit:
                     return False
                 self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, forms is not None)
-                if forms is not None:
-                    if forms:
-                        startup_forms = [(f.__class__, f.name()) for f in forms]
-                        self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
-                    else:
-                        self._unset_state_param(self._STATE_STARTUP_FORMS)
+                if forms:
+                    startup_forms = [(f.__class__, f.name()) for f in forms]
+                    self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
+                else:
+                    self._unset_state_param(self._STATE_STARTUP_FORMS)
         except Exception, e:
             safelog(str(e))
         try:
