@@ -1623,7 +1623,9 @@ class DataFactory(object):
             except TypeError:
                 cacheable = False
                 log(EVENT, "Non-cacheable data object cache key: %s" % (key,))
-        if cacheable:
+        # TODO: Stále je¹tì máme problém, nyní u validity_condition
+        # if cacheable:      
+        if False: 
             data_object = cache[key]
             result = copy.copy(data_object)
             ftype = type(identity)
