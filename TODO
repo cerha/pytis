@@ -12,14 +12,6 @@ CHYBY:
    Tato zpráva se zobrazila po vlo¾ení do spodní èásti dualformu, kde se v¹ak
    záznam po pøidání automaticky objevil.
 
- * Kontrola specifikací nefunguje správnì.
- 
-   Pokud je v application.py takto definován duální formuláø:
-   Uzivatel.TUzivatel::Pocitac.TPocitac. Pak pokud vyma¾u v Uzivatel.TUzivatel
-   v bindings spojení tìchto formuláøù a v application.py ponechám tuto
-   definici, tak kontrola specifikací si toho nevsimne. Samozrejmne pri
-   explicitnim vyvolani dualniho formulare to vyhodi chybu.
-
  * Kombinace default, computer a prefill
 
    Pøi pou¾ití prefillu pøi zobrazení formuláøe pro nový záznam by mìl mít computer pøednost pøed
