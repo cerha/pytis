@@ -105,7 +105,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         spec = find(id, row.fields(), key=lambda f: f.id())
         type = row[id].type()
         if type.enumerator() is not None:
-            codebook = spec.codebook(row.data())
+            codebook = row.codebook(id)
             selection_type = spec.selection_type()
             if isinstance(type, pytis.data.Boolean) and selection_type is None:
                 field = CheckBoxField
@@ -204,26 +204,20 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         assert isinstance(guardian, KeyHandler)
         assert isinstance(inline, bool)
         CallbackHandler.__init__(self)
-        data = row.data()
-        if data.find_column(id) is not None:
-            if row.new():
-                permission = pytis.data.Permission.INSERT
-            else:
-                permission = pytis.data.Permission.UPDATE
-            denied = not data.permitted(id, permission)
-        else:
-            denied = False
         spec = find(id, row.fields(), key=lambda f: f.id())
-        self._row = row
         self._parent = parent
+        self._row = row
         self._type = row[id].type()
-        self._type = spec.type(data)
         self._spec = spec
         self._guardian = guardian
         self._id = id = spec.id()
         self._inline = inline
         self._want_focus = False
-        self._denied = denied
+        if row.new():
+            permission = pytis.data.Permission.INSERT
+        else:
+            permission = pytis.data.Permission.UPDATE
+        self._denied = denied = not row.permitted(id, permission)
         self._readonly = readonly
         self._enabled = not denied and not readonly and row.editable(id)
         self._callback_registered = False
@@ -976,7 +970,7 @@ class GenericCodebookField(InputField):
     """Spoleèná nadtøída èíselníkových políèek."""
 
     def _init_attributes(self):
-        cb_name = self._spec.codebook(self._row.data())
+        cb_name = self._row.codebook(self._id)
         assert cb_name is not None
         try:
             cb_spec = resolver().get(cb_name, 'cb_spec')

@@ -1074,6 +1074,7 @@ class RecordForm(LookupForm):
         # row comes.
         def __init__(self, form, *args, **kwargs):
             self._form = form
+            self._shared_data_object = None
             super(RecordForm.Record, self).__init__(*args, **kwargs)
 
         def form(self):
@@ -1082,7 +1083,9 @@ class RecordForm(LookupForm):
         def data(self):
             # Return a new instance rather than giving the internally used data object.
             # Moreover this instance will have the select initialized in LookupForm.
-            return self._form.data()
+            if self._shared_data_object is None:
+                self._shared_data_object = self._form.data()
+            return self._shared_data_object
     
     def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
                          **kwargs):
@@ -1248,12 +1251,12 @@ class RecordForm(LookupForm):
         rdata = [(f.id(), row[f.id()]) for f in row.fields()
                  if self._data.find_column(f.id()) is not None]
         return pytis.data.Row(rdata)
-
+    
     def _row_copy_prefill(self, the_row):
         # Create a copy of the row, but exclude key columns and computed
         # columns which depend on key columns.
         if the_row:
-            keys = [c.id() for c in the_row.data().key()]
+            keys = [c.id() for c in self._data.key()]
             prefill = {}
             for cid in the_row.keys():
                 fspec = self._view.field(cid)

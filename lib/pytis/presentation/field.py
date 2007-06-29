@@ -461,6 +461,10 @@ class PresentedRow(object):
         """Vra» seznam identifikátorù v¹ech políèek obsa¾enıch v tomto øádku."""
         return [c.id for c in self._columns]
         
+    def key(self):
+        """Return the data key for this row as a tuple of key column 'Value' instances."""
+        return tuple([self[c.id()] for c in self._data.key()])
+        
     def new(self):
         """Return true if the row represents a new (inserted) record."""
         return self._new
@@ -580,25 +584,22 @@ class PresentedRow(object):
             raise ProgramError("Callback already registered:", kind, key, callbacks[key])
         callbacks[key] = function
 
-    # Nakonec to není nikde potøeba, ale kdyby, staèí odkomentovat a dopsat
-    # test...
-    #def permitted(self, key, permission):
-    #    """Vra» pravdu, právì kdy¾ má u¾ivatel právo pøístupu k danému políèku.
-    #
-    #    Argumenty:
-    #    
-    #      'key' -- stejnì jako v metodì '__getitem__'.
-    #      'permission' -- jedna z konstant tøídy 'pytis.data.Permission'
-    #        urèující, které pøístupové právo se má testovat.
-    #
-    #    Pokud dané políèko není souèástí datového øádku (jde o virtuální
-    #    políèko), vrací v¾dy None.
-    #        
-    #    """
-    #    if self._row.has_key(key):
-    #        return self._data.permitted(key, permission)
-    #    else:
-    #        return None
+    def permitted(self, key, permission):
+        """Return true if the user has permissons for given field.
+        
+        Arguments:
+        
+          key -- field identifier (string).
+          permisson -- one of 'pytis.data.Permission' constants determinint the perission to be
+            checked.
+          
+        True is always returned for virtual fields.
+
+        """
+        if self._coldict[key].virtual:
+            return True
+        else:
+            return self._data.permitted(id, permission)
 
     def _display_func(self, column):
         def getval(enum, value, col, func=None):
@@ -636,6 +637,10 @@ class PresentedRow(object):
         else:
             return lambda v: getval(enum, v, display)
 
+    def codebook(self, key):
+        """Return the name of given field's codebook specification for resolver."""
+        return self._coldict[key].codebook
+        
     def display(self, key):
         """Return enumerator `display' value for given field as a string.
 

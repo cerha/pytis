@@ -1,3 +1,15 @@
+2007-06-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow.permitted)
+	(PresentedRow.codebook, PresentedRow.key): New methods.
+
+	* pytis/form/inputfield.py: Avoid using `PresentedRow.data()' method.
+
+	* pytis/form/dualform.py: Avoid using `PresentedRow.data()' method.
+
+	* pytis/form/form.py: Added a hack to pass an independent, but
+	initialized data object to application defined procedures.
+
 2007-06-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py: New command `ListForm.COMMAND_COPY_AGGREGATION_RESULT'.
