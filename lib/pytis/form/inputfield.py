@@ -331,12 +331,15 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         
     def _on_idle(self, event):
         if self._needs_validation:
-            self._needs_validation = False
-            valid = self._validate() is None
-            if valid != self._valid:
-                self._valid = valid
-                self._on_validity_change()
-            self._on_change_hook()
+            transaction = self._row.transaction()
+            # Don't validate when the transaction is already closed.
+            if transaction is None or transaction.open():
+                self._needs_validation = False
+                valid = self._validate() is None
+                if valid != self._valid:
+                    self._valid = valid
+                    self._on_validity_change()
+                self._on_change_hook()
         if self._want_focus and not self._has_focus():
             self._set_focus()
         if hasattr(self, '_call_on_idle') and self._call_on_idle is not None:
