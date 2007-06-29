@@ -164,7 +164,10 @@ class PresentedRow(object):
             elif prefill and prefill.has_key(key):
                 value = prefill[key]
             else:
-                value = row[key]
+                if self._coldict.has_key(key):
+                    value = pytis.data.Value(self._coldict[key].type, row[key].value())
+                else:
+                    value = row[key]
             return value
         row_data = [(c.id, genval(c.id)) for c in self._columns if not c.virtual]
         virtual = [(c.id, genval(c.id)) for c in self._columns if c.virtual]

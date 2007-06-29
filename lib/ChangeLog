@@ -2,6 +2,7 @@
 
 	* pytis/presentation/field.py (PresentedRow.permitted)
 	(PresentedRow.codebook, PresentedRow.key): New methods.
+	(PresentedRow._set_row): Always use `FieldSpec' data type.
 
 	* pytis/form/inputfield.py: Avoid using `PresentedRow.data()' method.
 
