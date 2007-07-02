@@ -605,7 +605,7 @@ class PresentedRow(object):
         if self._coldict[key].virtual:
             return True
         else:
-            return self._data.permitted(id, permission)
+            return self._data.permitted(key, permission)
 
     def _display_func(self, column):
         def getval(enum, value, col, func=None):
