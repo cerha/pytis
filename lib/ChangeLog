@@ -1,3 +1,8 @@
+2007-07-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm): Show field descriptions as column
+	label tooltips.
+
 2007-06-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py: Reset startup forms if the user
