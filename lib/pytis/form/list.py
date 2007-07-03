@@ -235,17 +235,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
-        wx_callback(wx.EVT_MOUSEWHEEL, g,      self._on_wheel)
-        wx_callback(wx.EVT_IDLE,       g,      self._on_idle)
-        wx_callback(wx.EVT_KEY_DOWN,   g,      self.on_key_down)
-        wx_callback(wx.EVT_LEFT_DOWN,  labels, self._on_label_left_down)
-        wx_callback(wx.EVT_LEFT_UP,    labels, self._on_label_left_up)
-        wx_callback(wx.EVT_RIGHT_DOWN, labels, self._on_label_right_down)
-        wx_callback(wx.EVT_MOTION,     labels, self._on_label_mouse_move)
-        wx_callback(wx.EVT_PAINT,      labels, self._on_label_paint)
-        wx_callback(wx.EVT_LEFT_DOWN,  corner, self._on_corner_left_down)
-        wx_callback(wx.EVT_RIGHT_DOWN, corner, self._on_corner_right_down)
-        wx_callback(wx.EVT_PAINT,      corner, self._on_corner_paint)
+        wx_callback(wx.EVT_MOUSEWHEEL,   g,      self._on_wheel)
+        wx_callback(wx.EVT_IDLE,         g,      self._on_idle)
+        wx_callback(wx.EVT_KEY_DOWN,     g,      self.on_key_down)
+        wx_callback(wx.EVT_LEFT_DOWN,    labels, self._on_label_left_down)
+        wx_callback(wx.EVT_LEFT_UP,      labels, self._on_label_left_up)
+        wx_callback(wx.EVT_RIGHT_DOWN,   labels, self._on_label_right_down)
+        wx_callback(wx.EVT_MOTION,       labels, self._on_label_mouse_move)
+        wx_callback(wx.EVT_ENTER_WINDOW, labels, self._on_label_mouse_enter)
+        wx_callback(wx.EVT_PAINT,        labels, self._on_label_paint)
+        wx_callback(wx.EVT_LEFT_DOWN,    corner, self._on_corner_left_down)
+        wx_callback(wx.EVT_RIGHT_DOWN,   corner, self._on_corner_right_down)
+        wx_callback(wx.EVT_PAINT,        corner, self._on_corner_paint)
         return g
         
 #     def _on_hide_search_panel(self, event):
@@ -847,25 +848,29 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                    self._displayed_columns_menu(col=col)),
                  )
         return items
+
+    def _aggregation_info_by_position(self, y):
+        if y > self._label_height:
+            i = min(len(self._aggregations) - 1, (y - self._label_height) / self._row_height)
+            return [x for x in self._AGGREGATIONS if x[0] in self._aggregations][i]
+        else:
+            return None
     
     def _on_label_right_down(self, event):
+        # The menu must be constructed here since it depends on the mouse event position.
         self._run_callback(self.CALL_USER_INTERACTION)
-        if event.GetY() > self._label_height:
+        col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
+        aggregation = self._aggregation_info_by_position(event.GetY())
+        if aggregation is not None:
             menu = self._aggregation_menu()
-            col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
             if col != -1:
-                cid = self._columns[col].id()
-                i = (event.GetY() - self._label_height) / self._row_height
-                operation = [op for op,x,x,x in self._AGGREGATIONS if op in self._aggregations][i]
-                cmd = self.COMMAND_COPY_AGGREGATION_RESULT(cid=cid, operation=operation)
+                cmd = self.COMMAND_COPY_AGGREGATION_RESULT(cid=self._columns[col].id(),
+                                                           operation=aggregation[0])
                 menu[0:0] = (MItem(_("Zkopírovat výsledek"), command=cmd), MSeparator())
+        elif col == -1:
+            menu = self._displayed_columns_menu(len(self._columns))
         else:
-            col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
-            # Menu musíme zkonstruovat a¾ zde, proto¾e je pro ka¾dý sloupec jiné.
-            if col == -1:
-                menu = self._displayed_columns_menu(len(self._columns))
-            else:
-                menu = self._column_context_menu(col)
+            menu = self._column_context_menu(col)
         self._popup_menu(menu)
         event.Skip()
 
@@ -934,11 +939,31 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 pos += width
             return g.GetNumberCols()
         if self._column_to_move is not None:
-            x = event.GetX() + self._scroll_x_offset()
-            self._column_move_target = nearest_column(x)
+            self._column_move_target = nearest_column(event.GetX() + self._scroll_x_offset())
             event.GetEventObject().Refresh()
+        else:
+            self._update_label_tooltips(event)
         self._mouse_dragged = True
         event.Skip()
+
+    def _on_label_mouse_enter(self, event):
+        self._update_label_tooltips(event)
+        event.Skip()
+        
+    def _update_label_tooltips(self, event):
+        col = self._grid.XToCol(event.GetX() + self._scroll_x_offset())
+        if col != -1:
+            column = self._columns[col]
+            aggregation = self._aggregation_info_by_position(event.GetY())
+            if aggregation is not None:
+                descr = _("Výsledek funkce %(aggregation)s pro sloupec %(column)s") % \
+                        dict(aggregation=aggregation[1], column=column.label())
+            else:
+                descr = column.descr() or column.label()
+        else:
+            descr = None
+        # Disabling the tooltip doesn't do what we need, so we just set an ampty string...
+        event.GetEventObject().SetToolTipString(descr or '')
 
     def _on_label_drag_size(self, event):
         self._remember_column_size(event.GetRowOrCol())
