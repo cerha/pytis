@@ -851,7 +851,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _aggregation_info_by_position(self, y):
         if y > self._label_height:
-            i = min(len(self._aggregations) - 1, (y - self._label_height) / self._row_height)
+            i = max(0, min(len(self._aggregations) - 1,
+                           (y - self._label_height) / self._row_height))
             return [x for x in self._AGGREGATIONS if x[0] in self._aggregations][i]
         else:
             return None
