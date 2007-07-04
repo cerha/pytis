@@ -1,7 +1,7 @@
 2007-07-04  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/list.py (ListForm._aggregation_info_by_position):
-	Avoid `IndexError'.
+	* pytis/form/application.py (Application.OnInit): Catch startup
+	form invocation errors.
 
 2007-07-03  Tomas Cerha  <cerha@brailcom.org>
 

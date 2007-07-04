@@ -248,7 +248,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
         for cls, name in startup_forms:
-            run_form(cls, name)
+            try:
+                run_form(cls, name)
+            except Exception, e:
+                log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
         conn = config.dbconnection
         if conn:
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
