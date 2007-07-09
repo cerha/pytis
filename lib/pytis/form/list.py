@@ -964,7 +964,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             descr = None
         # Disabling the tooltip doesn't do what we need, so we just set an ampty string...
-        event.GetEventObject().SetToolTipString(descr or '')
+        w = event.GetEventObject()
+        tip = w.GetToolTip()
+        if not tip or tip and tip.GetTip() != descr:
+            w.SetToolTipString(descr or '')
 
     def _on_label_drag_size(self, event):
         self._remember_column_size(event.GetRowOrCol())

@@ -1,3 +1,8 @@
+2007-07-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._update_label_tooltips): Change the
+	tooltip only when necessary.
+
 2007-07-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.OnInit): Catch startup
