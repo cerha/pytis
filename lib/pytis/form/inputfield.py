@@ -236,7 +236,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
         wx_callback(wx.EVT_SET_FOCUS,  ctrl, self._on_set_focus)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        if self._spec.descr() is not None and config.show_tooltips:
+        if self._spec.descr() is not None:
             ctrl.SetToolTipString(self._spec.descr())
         if not self._enabled:
             self._disable()

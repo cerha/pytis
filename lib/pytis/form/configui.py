@@ -130,6 +130,7 @@ class _ConfigData(pytis.data.RestrictedData):
         options = [c.id() for c in self.columns()]
         for option in options:
             setattr(config, option, row[option].value())
+        wx.ToolTip('').Enable(config.show_tooltips)
         return row, True
         
         

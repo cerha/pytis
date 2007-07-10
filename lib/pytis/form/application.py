@@ -131,6 +131,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # proto¾e na frame se nedá navìsit EVT_KEY_DOWN.
         self._panel = wx.Panel(self._frame, -1)
         KeyHandler.__init__(self, self._panel)
+        wx.ToolTip('').Enable(config.show_tooltips)
         self._logo = None
         logo_file = config.logo
         if logo_file is not None:

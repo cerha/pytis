@@ -98,7 +98,7 @@ class SFSDialog(GenericDialog):
         ch = wx.Choice(self._dialog, -1, choices=[label(x) for x in choices])
         ch.SetSelection(0)
         ch.SetMinSize((ch.GetSize().width, self._FIELD_HEIGHT))
-        if tooltip is not None and config.show_tooltips:
+        if tooltip is not None:
             ch.SetToolTipString(unicode(tooltip))
         if selected:
             ch.SetSelection(list(choices).index(selected))
@@ -113,7 +113,7 @@ class SFSDialog(GenericDialog):
         t.SetMinSize((dlg2px(t, 4*size), self._FIELD_HEIGHT))
         if value is not None:
             t.SetValue(value)
-        if tooltip is not None and config.show_tooltips:
+        if tooltip is not None:
             t.SetToolTipString(unicode(tooltip))
         if enabled is not None:
             t.Enable(enabled)

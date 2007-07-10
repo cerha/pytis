@@ -960,14 +960,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 descr = _("Výsledek funkce %(aggregation)s pro sloupec %(column)s") % \
                         dict(aggregation=aggregation[1], column=column.label())
             else:
-                descr = column.descr() or column.label()
+                descr = column.descr() or column.label() or ''
         else:
-            descr = None
-        # Disabling the tooltip doesn't do what we need, so we just set an ampty string...
-        w = event.GetEventObject()
-        tip = w.GetToolTip()
-        if not tip or tip and tip.GetTip() != descr:
-            w.SetToolTipString(descr or '')
+            descr = ''
+        window = event.GetEventObject()
+        tip = window.GetToolTip()
+        # Setting to None doesn't remove the tooltip, so we at least set the tooltip to an ampty
+        # string.
+        if tip is None:
+            tip = wx.ToolTip(descr)
+            window.SetToolTip(tip)
+        elif tip.GetTip() != descr:
+            tip.SetTip(descr)
 
     def _on_label_drag_size(self, event):
         self._remember_column_size(event.GetRowOrCol())

@@ -1475,7 +1475,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
         button = wx.BitmapButton(parent, -1, bitmap, size=size, style=style)
     else:
         button = wx.Button(parent, -1, label=label, size=size, style=style)
-    if tooltip and config.show_tooltips:
+    if tooltip:
         button.SetToolTipString(tooltip)
     if callback:
         wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
