@@ -9,6 +9,11 @@
 
 	Pokud je pøi startu aplikace spou¹tìno nìkolik formuláøù, je
 	postup zobrazován pomocí progress dialogu.
+
+	Povolení/zakázání tooltipù se nyní provádí globálnì a je
+	aktualizováno pøi zmìnách v dialogu nastavení u¾ivatelského
+	rozhraní.  Díky tomu by mìly v¹echny tooltipy toto nastavení
+	opravdu respektovat.
 	
 	* BUGFIX: Inicializace nové transakce po commitu formuláøe je nyní
 	provádìna tak, aby správnì fungoval také formuláø nastavení
