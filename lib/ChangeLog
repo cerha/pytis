@@ -1,5 +1,20 @@
 2007-07-10  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py (SFSDialog._create_choice)
+	(SFSDialog._create_text_ctrl): Rely on global tooltip settings.
+
+	* pytis/form/screen.py (wx_button): Rely on global tooltip
+	settings.
+
+	* pytis/form/inputfield.py (InputField.__init__): Rely on global
+	tooltip settings.
+
+	* pytis/form/configui.py (Module, _ConfigData.update):
+	Enable/disable tooltips globally.
+
+	* pytis/form/list.py (ListForm._update_label_tooltips): Minor
+	improvement.
+	
 	* pytis/form/form.py (EditForm._commit_form): Create a new
 	transaction here and not in `_load_next_row()'.
 	(PopupEditForm._on_skip_button): Handle correctly the end of

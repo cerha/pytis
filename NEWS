@@ -4,6 +4,21 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2007-07-10  Tomas Cerha  <cerha@brailcom.org>
+
+	Pokud je pøi startu aplikace spou¹tìno nìkolik formuláøù, je
+	postup zobrazován pomocí progress dialogu.
+	
+	* BUGFIX: Inicializace nové transakce po commitu formuláøe je nyní
+	provádìna tak, aby správnì fungoval také formuláø nastavení
+	u¾ivatelského rozhraní.
+	
+2007-07-09  Tomas Cerha  <cerha@brailcom.org>
+
+	Nastavování tooltipù pro záhlaví sloupcù bylo vylep¹eno tak, aby
+	nezpùsobovalo problémy s pøekreslováním.
+	
 2007-06-29  Tomas Cerha  <cerha@brailcom.org>
 
 	Pokud u¾ivatel pøi opu¹tìní aplikace nezvolí "Zapamatovat oznaèené
