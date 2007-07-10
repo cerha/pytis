@@ -242,16 +242,26 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
                 startup_forms.append((cls, name.strip()))
         for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
-            if self._is_valid_spec(args['name']) and issubclass(cls, Form):
+            if self._is_valid_spec(name) and issubclass(cls, Form):
                 if (cls, name) not in startup_forms:
                     startup_forms.insert(0, (cls, name))
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
-        for cls, name in startup_forms:
-            try:
-                run_form(cls, name)
-            except Exception, e:
-                log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
+        def run_startup_forms(update, startup_forms):
+            i, total = 0, len(startup_forms)
+            msg = _("Otevírám formuláø: %s (%d/%d)")
+            for cls, name in startup_forms:
+                update(int(float(i)/total*100), newmsg=msg % (name, i+1, total))
+                try:
+                    run_form(cls, name)
+                except Exception, e:
+                    log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
+                i += 1
+        if len(startup_forms) > 1:
+            run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
+                       message=_("Otevírám formuláø")+' '*40) #, can_abort=True)
+        else:
+            run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         conn = config.dbconnection
         if conn:
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
@@ -671,7 +681,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 parent = self._modals.top() or self._frame
                 kwargs['guardian'] = self._modals.top() or self
             else:
-                assert self._modals.empty()
+                #assert self._modals.empty()
                 kwargs['guardian'] = self
                 parent = self._frame
             args = (parent, resolver(), name)

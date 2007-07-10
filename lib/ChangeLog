@@ -1,3 +1,13 @@
+2007-07-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (EditForm._commit_form): Create a new
+	transaction here and not in `_load_next_row()'.
+	(PopupEditForm._on_skip_button): Handle correctly the end of
+	inserted data.
+
+	* pytis/form/application.py: Show a progress dialog when launching
+	multiple startup forms.
+	
 2007-07-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (ListForm._update_label_tooltips): Change the
