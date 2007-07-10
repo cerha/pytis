@@ -260,6 +260,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 i += 1
         if len(startup_forms) > 1:
             run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
+                       title=_("Automatické otevøení ulo¾ených formuláøù"),
                        message=_("Otevírám formuláø")+' '*40) #, can_abort=True)
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
