@@ -1790,6 +1790,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 def commit():
                     self._transaction.commit()
                 db_operation(commit)
+                if not close:
+                    self._transaction = self._default_transaction()
+                    self._row.set_transaction(self._transaction)
             return True
         else:
             if transaction is not None:
@@ -1940,9 +1943,6 @@ class PopupEditForm(PopupForm, EditForm):
     def _load_next_row(self):
         data = self._inserted_data
         if data is None or self._inserted_data_pointer > 0:
-            if self._governing_transaction is None and self._transaction is not None:
-                self._transaction = self._default_transaction()
-                self._row.set_transaction(self._transaction)
             self._row.set_row(None, reset=True, prefill=self._prefill)
         if data is not None:
             i = self._inserted_data_pointer
@@ -1980,8 +1980,11 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
-        message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
-        self._load_next_row()
+        if self._inserted_data is None:
+            message(_("Není dal¹í záznam"), beep_=True)
+        else:
+            message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
+            self._load_next_row()
     
     def _buttons(self):
         buttons = ({'id': wx.ID_OK,
