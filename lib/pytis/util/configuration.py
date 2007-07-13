@@ -105,8 +105,8 @@ class Configuration(object):
         pøedávat libovolný Pythonový objekt.
 
         Namísto pøímého nastavování této konstanty je doporuèováno pou¾ít
-        pøeddefinovaných tøíd '_StringOption', '_NumericOption' nebo
-        '_BooleanOption' (viz ní¾e).
+        pøeddefinovaných tøíd 'StringOption', 'NumericOption' nebo
+        'BooleanOption' (viz ní¾e).
 
         """
 
@@ -263,10 +263,12 @@ class Configuration(object):
 
 
             """
+
             if self._DEFAULT_STRING is not None:
                 return self._DEFAULT_STRING
             else:
-                return `self.default()`
+                import pprint
+                return pprint.PrettyPrinter().pformat(self.default())
 
         def type(self):
             return self._TYPE
@@ -298,42 +300,42 @@ class Configuration(object):
                 result += "\n" + self._DOC
             return result
 
-    class _StringOption(Option):
+    class StringOption(Option):
         """Tøída pro volby øetìzcového typu."""
         _TYPE = pytis.data.String()        
 
-    class _BooleanOption(Option):
+    class BooleanOption(Option):
         """Tøída pro volby typu boolean."""
         _TYPE = pytis.data.Boolean()        
 
-    class _ColorOption(Option):
+    class ColorOption(Option):
         """Tøída pro volby typu barva."""
         _TYPE = pytis.data.Color()
         _DOC = "Barva je reprezentována øetìzcem '#RRGGBB'."
 
-    class _NumericOption(Option):
+    class NumericOption(Option):
         """Tøída pro volby celoèíselného typu."""
         _TYPE = pytis.data.Integer()        
 
-    class _FileOption(_StringOption):
+    class FileOption(StringOption):
         def _compute_init_value(self, *args, **kwargs):
-            value = super(Configuration._FileOption, self).\
+            value = super(Configuration.FileOption, self).\
                     _compute_init_value(*args, **kwargs)
             if not os.path.isabs(value):
                 value = os.path.join(os.getcwd(), value)
             return value
 
-    class _HiddenOption(Option):
+    class HiddenOption(Option):
         """Mix-in tøída pro skryté volby."""
         _VISIBLE = False
         
-    class _CommandlineOption(Option):
+    class CommandlineOption(Option):
         """Mix-in tøída pro volby pøíkazové øádky."""
         _CMDLINE = True
         
     # Volba pro konfiguraci samu
 
-    class _Option_config_file(_StringOption, _HiddenOption):
+    class _Option_config_file(StringOption, HiddenOption):
         _DESCR = _("Umístìní konfiguraèního souboru.")
         _LONG_OPTION = 'config='
         _ENVIRONMENT = ('PYTISCONFIG',)
@@ -346,7 +348,7 @@ class Configuration(object):
                 result = None
             return result
 
-    class _Option_user_config_file(_StringOption, _HiddenOption):
+    class _Option_user_config_file(StringOption, HiddenOption):
         _DESCR = _("Umístìní doplòujícího konfiguraèního souboru u¾ivatele.")
         _DOC = _("Tento soubor, pokud, existuje, je naèítán navíc ke "
                  "standardní konfiguraci a v nìm definované volby mají vy¹¹í "
@@ -363,18 +365,18 @@ class Configuration(object):
         
     # Volby u¾iteèné hlavnì pro ladìní
 
-    class _Option_help(_BooleanOption, _CommandlineOption, _HiddenOption):
+    class _Option_help(BooleanOption, CommandlineOption, HiddenOption):
         _DESCR = _("Volba odpovídající --help na pøíkazové øádce.")
         _DEFAULT = False
         
-    class _Option_debug(_BooleanOption, _CommandlineOption):
+    class _Option_debug(BooleanOption, CommandlineOption):
         _DESCR = _("Pøíznak ladícího re¾imu.")
         _DOC = _("Je-li zapnut, aplikace mù¾e bì¾et s více kontrolami "
                  "a vypisovat spoustu informací, obvykle v¹ak za cenu svého "
                  "výrazného zpomalení.")
         _DEFAULT = False
         
-    class _Option_debug_on_error(_BooleanOption, _CommandlineOption):
+    class _Option_debug_on_error(BooleanOption, CommandlineOption):
         _DESCR = _("Pøíznak vyvolání debuggeru pøi chybì.")
         _DOC = _("Dojde-li k odchycení neoèekávané výjimky a tato volba je "
                  "zapnuta, je vyvolán interaktivní debugger.  Je-li zapnuta "
@@ -384,48 +386,48 @@ class Configuration(object):
         def default(self):
             return self._configuration.debug
 
-    class _Option_debug_memory(_BooleanOption, _CommandlineOption):
+    class _Option_debug_memory(BooleanOption, CommandlineOption):
         _DESCR = _("Pøíznak výpisu ladících informací o pamìti.")
         _DOC = _("Je-li zapnuta, aplikace vypisuje informativní hlá¹ky "
                  "garbage collectoru a jiné údaje o pamìti.")
         _DEFAULT = False
 
-    class _Option_bug_report_address(_StringOption):
+    class _Option_bug_report_address(StringOption):
         _DESCR = _("E-mailová adresa, na kterou mají být posílána oznámení "
                    "o chybì.")
         _DEFAULT = ''
 
-    class _Option_bug_report_subject(_StringOption):
+    class _Option_bug_report_subject(StringOption):
         _DESCR = _("Subject mailu oznámení o chybì aplikace.")
         _DEFAULT = 'Bug report: Unexpected exception'
 
-    class _Option_profile(_BooleanOption, _CommandlineOption):
+    class _Option_profile(BooleanOption, CommandlineOption):
         _DESCR = _("Pøíznak profilování.")
         _DOC = _("Je-li zapnut, aplikace se spustí v profilovacím re¾imu "
                  "a ukládá informace o trvání jednotlivých volání do souboru. "
                  "Zapnutí této volby velmi výraznì zpomaluje bìh aplikace.")
         _DEFAULT = False
         
-    class _Option_test_run_interactive(_BooleanOption, _HiddenOption):
+    class _Option_test_run_interactive(BooleanOption, HiddenOption):
         _DESCR = _("Pøíznak urèující, zda mají být spou¹tìny i interaktivní "
                    "testy.")
         _DOC = _("Týká se pouze regresivního testování.")
 
-    class _Option_custom_debug(_HiddenOption):
+    class _Option_custom_debug(HiddenOption):
         _DESCR = _("Zvlá¹tní ladící funkce, napojená na pøíkaz "
                    "'COMMAND_CUSTOM_DEBUG'.")
         _DEFAULT = (lambda: None)
 
     # Cesty a adresáøe
 
-    class _Option_def_dir(_FileOption, _CommandlineOption):
+    class _Option_def_dir(FileOption, CommandlineOption):
         _DESCR = _("Adresáø obsahující definièní soubory.")
         _DOC = _("Adresáø mù¾e být zadán absolutnì i relativnì vzhledem "
                  "k aktuálnímu adresáøi.")
         _DEFAULT = './defs'
         _ENVIRONMENT = ('PYTISDEFDIR',)
 
-    class _Option_help_dir(_FileOption, _CommandlineOption):
+    class _Option_help_dir(FileOption, CommandlineOption):
         _DESCR = _("Adresáø obsahující soubory s nápovìdou.")
         _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
                  "adresáøi.")
@@ -434,17 +436,17 @@ class Configuration(object):
 
     # TODO: Doèasnì vráceno, dokud ve v¹ech projektech nepøejdeme na nový
     # systém nápovìdy.
-    class _Option_doc_dir(_FileOption, _CommandlineOption):
+    class _Option_doc_dir(FileOption, CommandlineOption):
         _DESCR = _("Adresáø obsahující dokumentaci.")
         _DEFAULT = './docs'
 
-    class _Option_icon_dir(_FileOption):
+    class _Option_icon_dir(FileOption):
         _DESCR = _("Adresáø s obrázkovými soubory.")
         _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
                  "adresáøi.")
         _DEFAULT = './icons'
 
-    class _Option_tmp_dir(_StringOption):
+    class _Option_tmp_dir(StringOption):
         _DESCR = _("Adresáø pro doèasné pomocné soubory.")
         _DEFAULT_STRING = "'/tmp'"
         def default(self):
@@ -460,13 +462,13 @@ class Configuration(object):
                 result = '.'
             return result
 
-    class _Option_logo(_FileOption, _CommandlineOption):
+    class _Option_logo(FileOption, CommandlineOption):
         _DESCR = _("Cesta k souboru s logem.")
         _DOC = _("Mù¾e být zadán absolutnì i relativnì vzhledem k aktuálnímu "
                  "adresáøi.")
         _DEFAULT = './icons/logo.bmp'
 
-    class _Option_server(_StringOption, _CommandlineOption):
+    class _Option_server(StringOption, CommandlineOption):
         _DESCR = _("Jméno stroje (øetìzec), na kterém bì¾í Pyro server.")
         _DOC = _("Mù¾e být té¾ 'None', pak se klient nepøipojuje na server "
                  "a pou¾ívá lokální konfiguraci.")
@@ -474,30 +476,30 @@ class Configuration(object):
 
     # Databáze
     
-    class _Option_dbuser(_StringOption, _CommandlineOption):
+    class _Option_dbuser(StringOption, CommandlineOption):
         _DESCR = _("U¾ivatelské jméno (login) pro databázové spojení.")
         _DEFAULT_STRING = 'getpass.getuser()'
         def default(self):
             import getpass
             return getpass.getuser()
 
-    class _Option_dbpass(_StringOption):
+    class _Option_dbpass(StringOption):
         _DESCR = _("Heslo pro pøihlá¹ení k databázi.")
         _DEFAULT = None
         
-    class _Option_dbname(_StringOption):
+    class _Option_dbname(StringOption):
         _DESCR = _("Jméno aplikaèní databáze.")
         _DEFAULT = 'pytis'
 
-    class _Option_dbhost(_StringOption, _CommandlineOption):
+    class _Option_dbhost(StringOption, CommandlineOption):
         _DESCR = _("Jméno databázového serveru.")
         _DEFAULT = 'localhost'
     
-    class _Option_dbport(_NumericOption, _CommandlineOption):
+    class _Option_dbport(NumericOption, CommandlineOption):
         _DESCR = _("Port databázového serveru.")
         _DEFAULT = None
     
-    class _Option_dbconnection(_HiddenOption):
+    class _Option_dbconnection(HiddenOption):
         _DESCR = _("Instance specifikace spojení do databáze "
                    "('pytis.data.DBConnection').")
         _DOC = _("Implicitnì se vytváøí z vý¹e uvedených databázových voleb.")
@@ -507,11 +509,11 @@ class Configuration(object):
                                            database=c.dbname, host=c.dbhost,
                                            port=c.dbport)
 
-    class _Option_dblogtable(_StringOption):
+    class _Option_dblogtable(StringOption):
         _DESCR = _("Jméno tabulky, do které mají být logovány DML SQL pøíkazy.")
         _DEFAULT = ''
 
-    class _Option_dblisten(_BooleanOption):
+    class _Option_dblisten(BooleanOption):
         _DESCR = _("Flag urèující, zda má být spou¹tìn dohlí¾eè zmìn dat.")
         _DEFAULT = True
 
@@ -543,7 +545,7 @@ class Configuration(object):
                 import log
                 return [log.DEBUG]
 
-    class _Option_log_one_line_preferred(_BooleanOption):
+    class _Option_log_one_line_preferred(BooleanOption):
         _DESCR = _("Urèuje, zda je preferováno struèné nebo jednotné "
                    "formátování.")
         _DOC = _("Je-li tato volba nastavena na pravdu, jsou krátká data "
@@ -551,7 +553,7 @@ class Configuration(object):
                  "ihned za hlá¹ku místo vypsání na samostatný øádek.")
         _DEFAULT = True
 
-    class _Option_log_module_filter(_StringOption):
+    class _Option_log_module_filter(StringOption):
         _DESCR = _("Prefix jména modulu, jeho¾ debugovací hlá¹ky jsou "
                    "propu¹tìny.")
         _DOC = _("Debugovací logovací hlá¹ky modulù s jiným prefixem jsou "
@@ -572,24 +574,24 @@ class Configuration(object):
             
     # Externí programy
 
-    class _Option_printing_command(_StringOption):
+    class _Option_printing_command(StringOption):
         _DESCR = _("Shellový pøíkaz pro provedení tisku, vèetnì argumentù.")
         _DOC = _("Pøíkaz musí být schopen pøevzít tisková data ze "
                  "standardního vstupu.")
         _DEFAULT = 'lpr'
 
-    class _Option_postscript_viewer(_StringOption):
+    class _Option_postscript_viewer(StringOption):
         _DESCR = _("Shell command to be used for displaying print preview PostScript files. "
                    "It must take the name of the file to be displayed as its first argument. "
                    "If this option value is empty, Pytis internal viewer is used.")
         _DEFAULT = ''
         #_DEFAULT = 'gv'
 
-    class _Option_sendmail_command(_StringOption):
+    class _Option_sendmail_command(StringOption):
         _DESCR = _("Shellový pøíkaz sendmail vèetnì celé cesty.")
         _DEFAULT = '/usr/lib/sendmail'
         
-    class _Option_image_viewer(_StringOption):
+    class _Option_image_viewer(StringOption):
         _DESCR = _("Shellový pøíkaz pro spu¹tìní prohlí¾eèe obrázkù.  Pokud "
                    "pøíkaz obsahuje øetìzec %f, bude tento nahrazen názvem "
                    "otevíraného souboru, jinak je soubor pøipojen na konec "
@@ -598,7 +600,7 @@ class Configuration(object):
         
     # Ostatní konfiguraèní volby
 
-    class _Option_application_name(_StringOption):
+    class _Option_application_name(StringOption):
         _DESCR = _("Jméno aplikace.")
         _DOC = _("Jméno mù¾e být libovolné, pou¾ívá se napø. jako titulek "
                  "okna nebo pøi logování.  Od nìho je také odvozeno jméno "
@@ -606,122 +608,122 @@ class Configuration(object):
                  "konfiguraci (po vypu¹tìní speciálních znakù a diakritiky)")
         _DEFAULT = 'Pytis'
 
-    class _Option_date_time_format(_StringOption):
+    class _Option_date_time_format(StringOption):
         _DESCR = _("Formát spoleènì uvedeného data a èasu.")
         _DOC = _("Øetìzec ve tvaru vy¾adovaném parametrem `format' "
                  "konstruktoru tøídy 'pytis.data.DateTime'.")
         _DEFAULT = pytis.data.DateTime.DEFAULT_FORMAT
 
-    class _Option_date_format(_StringOption):
+    class _Option_date_format(StringOption):
         _DESCR = _("Formát data.")
         _DOC = _("Øetìzec ve tvaru vy¾adovaném parametrem `format' "
                  "konstruktoru tøídy 'pytis.data.Date'.")
         _DEFAULT = pytis.data.Date.DEFAULT_FORMAT
 
-    class _Option_time_format(_StringOption):
+    class _Option_time_format(StringOption):
         _DESCR = _("Formát èasu.")
         _DOC = _("Øetìzec ve tvaru vy¾adovaném parametrem `format' "
                  "konstruktoru tøídy 'pytis.data.Time'.")
         _DEFAULT = pytis.data.Time.DEFAULT_FORMAT
 
-    class _Option_lc_numeric(_StringOption):
+    class _Option_lc_numeric(StringOption):
         _DESCR = _("Numeric locale.")
         _DOC = _("Hodnota musí být string reprezentující locale pro "
                  "formátování èíselných polo¾ek.")
         _DEFAULT = 'C'
 
-    class _Option_export_directory(_StringOption):
+    class _Option_export_directory(StringOption):
         _DESCR = _("Adresáø pro export do CSV souborù.")
         _DOC = _("Hodnota udává cestu k adresáøi, kde se budou ukládat textové "
                  "CSV soubory.")
         _DEFAULT = '/tmp'
 
-    class _Option_export_encoding(_StringOption):
+    class _Option_export_encoding(StringOption):
         _DESCR = _("Kódování exportovaných dat.")
         _DOC = _("Hodnota musí být jedním z podporovaných kódování v Pythonu.")
         _DEFAULT = 'iso8859-2'
 
-    class _Option_cache_size(_NumericOption):
+    class _Option_cache_size(NumericOption):
         _DESCR = _("Velikost cache pro øádky datového objektu.")
         _DOC = _("Velikost je celé èíslo, které udává poèet øádkù cache.")
         _DEFAULT = 20000
 
-    class _Option_initial_fetch_size(_NumericOption):
+    class _Option_initial_fetch_size(NumericOption):
         _DESCR = _("Poèet øádkù, které se pøednaètou do cache pøi prvním "
                    "selectu z datového objektu.")
         _DEFAULT = 100
 
-    class _Option_fetch_size(_NumericOption):
+    class _Option_fetch_size(NumericOption):
         _DESCR = _("Poèet øádkù, které se pøinaèítají do cache pøi dal¹ích "
                    "selectech z datového objektu.")
         _DEFAULT = 100
 
     # Volby pøizpùsobení u¾ivatelského rozhraní
         
-    class _Option_show_tooltips(_BooleanOption):
+    class _Option_show_tooltips(BooleanOption):
         _DESCR = _("Pøíznak zobrazování bublinové nápovìdy.")
         _DEFAULT = True
         
-    class _Option_stretch_tables(_BooleanOption):
+    class _Option_stretch_tables(BooleanOption):
         _DESCR = _("Roztahovat sloupce tabulek, aby vyu¾ily celou ¹íøku okna.")
         _DEFAULT = True
         
-    class _Option_show_splash(_BooleanOption):
+    class _Option_show_splash(BooleanOption):
         _DESCR = _("Pøíznak zobrazování úvodního uvítacího dialogu.")
         _DEFAULT = True
         
-    class _Option_cache_spec_onstart(_BooleanOption):
+    class _Option_cache_spec_onstart(BooleanOption):
         _DESCR = _("Pøíznak cachování specifikací pøi startu aplikace.")
         _DEFAULT = True
 
-    class _Option_startup_forms(_StringOption, _CommandlineOption):
+    class _Option_startup_forms(StringOption, CommandlineOption):
         _DESCR = _("Seznam formuláøù, které mají být otevøeny po spu¹tìní "
                    "aplikace.")
         _DEFAULT = None
 
-    class _Option_form_state(_HiddenOption):
+    class _Option_form_state(HiddenOption):
         _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu formuláøù.")
         _DEFAULT = {}
 
-    class _Option_application_state(_HiddenOption):
+    class _Option_application_state(HiddenOption):
         _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu aplikace.")
         _DEFAULT = {}
 
-    class _Option_row_focus_fg_color(_ColorOption):
+    class _Option_row_focus_fg_color(ColorOption):
         _DESCR = _("Barva textu aktivního øádku tabulkového formuláøe.")
         _DEFAULT = '#ffffff'
         
-    class _Option_row_focus_bg_color(_ColorOption):
+    class _Option_row_focus_bg_color(ColorOption):
         _DESCR = _("Barva pozadí aktivního øádku tabulkového formuláøe.")
         _DOC   = _("Pokud barva není nastavena, bude pou¾ita systémová barva "
                    "zvýraznìní.  Barva je reprezentována øetìzcem '#RRGGBB'.")
         _DEFAULT = None
         
-    class _Option_row_nofocus_fg_color(_ColorOption):
+    class _Option_row_nofocus_fg_color(ColorOption):
         _DESCR = _("Barva textu neaktivního øádku tabulkového formuláøe.")
         _DEFAULT = '#000000'
         
-    class _Option_row_nofocus_bg_color(_ColorOption):
+    class _Option_row_nofocus_bg_color(ColorOption):
         _DESCR = _("Barva pozadí neaktivního øádku tabulkového formuláøe.")
         _DEFAULT = '#b6b6b6'
         
-    class _Option_row_edit_fg_color(_ColorOption):
+    class _Option_row_edit_fg_color(ColorOption):
         _DESCR = _("Barva textu editovaného øádku tabulkového formuláøe.")
         _DEFAULT = '#ffffff'
 
-    class _Option_row_edit_bg_color(_ColorOption):
+    class _Option_row_edit_bg_color(ColorOption):
         _DESCR = _("Barva pozadí editovaného øádku.")
         _DEFAULT = '#c80000'
 
-    class _Option_cell_highlight_color(_ColorOption):
+    class _Option_cell_highlight_color(ColorOption):
         _DESCR = _("Barva zvýraznìní aktivní buòky tabulkového formuláøe.")
         _DEFAULT = '#ffa000'
 
-    class _Option_grid_line_color(_ColorOption):
+    class _Option_grid_line_color(ColorOption):
         _DESCR = _("Barva møí¾ky tabulkového formuláøe.")
         _DEFAULT = '#6482be'
 
-    class _Option_grouping_background_downgrade(_ColorOption):
+    class _Option_grouping_background_downgrade(ColorOption):
         _DESCR = _("Ztmavení barvy skupiny pøi seskupování øádkù.")
         _DOC = _("Proto¾e barva pozadí øádkù není v¾dy bílá, je tato hodnota "
                  "chápána jako relativní.  O kolik je zvolená barva tmav¹í "
@@ -730,19 +732,19 @@ class Configuration(object):
                  "øetìzcem '#RRGGBB'.")
         _DEFAULT = '#eceef0'
 
-    class _Option_field_disabled_color(_ColorOption):
+    class _Option_field_disabled_color(ColorOption):
         _DESCR = _("Barva pozadí needitovatelného vstupního políèka.")
         _DEFAULT = '#d8d8d8'
         
-    class _Option_field_denied_color(_ColorOption):
+    class _Option_field_denied_color(ColorOption):
         _DESCR = _("Pozadí políèka needitovatelného kvùli pøístupovým právùm.")
         _DEFAULT = '#e0e4f0'
 
-    class _Option_field_invalid_color(_ColorOption):
+    class _Option_field_invalid_color(ColorOption):
         _DESCR = _("Barva pozadí vstupního políèka pokud aktuální hodnota není validní.")
         _DEFAULT = '#ffffc0'
         
-    class _Option_filter_color(_ColorOption):
+    class _Option_filter_color(ColorOption):
         _DESCR = _("Barva záhlaví tabulky pøi zapnutém filtrování.")
         _DEFAULT = '#82c882'
 
@@ -912,11 +914,15 @@ class Configuration(object):
         """
         #stream.write('# -*- coding: iso-8859-2 -*-\n\n')
         from textwrap import wrap
+        import pprint
+        pp = pprint.PrettyPrinter()
         for name, option in self._options.items():
             if option.visible():
                 for line in wrap(option.description(full=True), 77):
                     stream.write('# %s\n' % string.strip(line))
-                stream.write('#%s = %s\n\n' % (name, option.default_string()))
+                value = option.default_string()
+                indent = ' ' * (len(name) + 3)
+                stream.write('#%s = %s\n\n' % (name, value.replace("\n", "\n#"+indent)))
 
     def options(self):
         """Vra» seznam názvù v¹ech konfiguraèních voleb jako tuple øetìzcù.""" 
