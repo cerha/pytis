@@ -1,3 +1,8 @@
+2007-07-30  Pavel Hanak  <hanak@alfik.akont.xx>
+
+	* tools/gensql.py (Select._format_relations.format_relation):
+	O¹etøen stav, kdy není uvedena podmínka pro relaci.
+
 2007-06-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* icons/agg-avg.png: New file.

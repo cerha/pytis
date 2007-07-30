@@ -1049,7 +1049,7 @@ class Select(_GsqlSpec):
             else:    
                 relation = rel.relation
             alias = rel.alias or ''
-            if i == 0:
+            if i == 0 or rel.condition is None:
                 condition = ''
             else:    
                 condition = rel.condition
