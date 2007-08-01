@@ -1,3 +1,8 @@
+2007-08-01  Pavel Hanak  <hanak@alfik.akont.xx>
+
+	* pytis/form/output.py (PrintFormExternal._run_viewer):
+	Transform params from config option into list of arguments.
+
 2007-07-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py: `Option' subclasses made public.

@@ -571,8 +571,9 @@ class PrintFormExternal(PrintForm, PopupForm):
     def _run_viewer(self, file_name):
         import subprocess
         viewer = config.postscript_viewer
+        call_args = viewer.split()
         try:
-            subprocess.call((config.postscript_viewer, file_name,))
+            subprocess.call(call_args + [file_name])
         finally:
             os.remove(file_name)
         
