@@ -1232,7 +1232,7 @@ class _GsqlViewNG(Select):
         self._delete_order = delete_order
         self._columns = []
 
-    def _format_rule(self, kind):
+    def _format_rule(self, kind, table_keys):
         def relations(list_order):
             if list_order is None:
                 rels = self._relations
@@ -1244,6 +1244,17 @@ class _GsqlViewNG(Select):
                        not isinstance(rel.relation, SelectRelation):
                         rels.append(rel)
             return rels
+        def get_key_column(relation):
+            key = relation.key_column
+            if not key:
+                try:
+                    key = table_keys[relation.relation]
+                except:
+                    pass
+            if isinstance(key, (tuple,list)):
+                return key[0]
+            else:
+                return key
         def get_default_body(kind):
             columns = self._columns
             body = []
@@ -1277,9 +1288,6 @@ class _GsqlViewNG(Select):
                 for r in relations(self._update_order):
                     if isinstance(r.relation, Select):
                         continue
-                    if not r.key_column:
-                        raise ProgramError("Update rule: no key column "
-                                           "specified", r.relation)
                     table_alias = r.alias or r.relation
                     column_names = []
                     values = []                
@@ -1297,8 +1305,12 @@ class _GsqlViewNG(Select):
                     settings = ',\n      '.join(['%s = %s' % (c, v)
                                                  for c, v in zip(column_names,
                                                                  values)])
-                    condition = '%s = old.%s' % (r.key_column, r.key_column)
                     if len(column_names) > 0:
+                        key_column = get_key_column(r)
+                        if not key_column:
+                            raise ProgramError("Update rule: no key column "
+                                           "specified", r.relation)
+                        condition = '%s = old.%s' % (key_column, key_column)                        
                         body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
                                     (r.relation, settings, condition))
                 action = self._update
@@ -1308,11 +1320,11 @@ class _GsqlViewNG(Select):
                 for r in relations(self._delete_order):
                     if isinstance(r.relation, Select):
                         continue
-                    if not r.key_column:
+                    key_column = get_key_column(r)
+                    if not key_column:
                         raise ProgramError("Delete rule: no key column "
                                            "specified", r.relation)
-                        continue
-                    condition = '%s = old.%s' % (r.key_column, r.key_column)
+                    condition = '%s = old.%s' % (key_column, key_column)
                     body.append('DELETE FROM %s \n    WHERE %s' % (r.relation,
                                                                    condition))
                 action = self._delete
@@ -1355,12 +1367,12 @@ class _GsqlViewNG(Select):
                (self._name, suffix, command, self._name, body)
 
         
-    def output(self):
+    def output(self, table_keys):
         select = self.format_select()
         result = 'CREATE OR REPLACE VIEW %s AS\n%s;\n\n' % \
                  (self._name, select)        
         for kind in (self._INSERT, self._UPDATE, self._DELETE):
-            result = result + self._format_rule(kind)
+            result = result + self._format_rule(kind, table_keys)
         if self._doc is not None:
             doc = "COMMENT ON VIEW %s IS '%s';\n" % \
                   (self._name, _gsql_escape(self._doc))
@@ -1369,6 +1381,12 @@ class _GsqlViewNG(Select):
         for g in self._grant:
             result = result + self._grant_command(g)
         return result
+
+    def outputall(self, table_keys):
+        return self.output(table_keys)
+    
+    def reoutput(self, table_keys):
+        return self.output(table_keys)
 
 ViewNG = _GsqlViewNG    
 
@@ -2188,7 +2206,7 @@ class _GsqlDefs(UserDict.UserDict):
 
     def gensql(self):
         def process(o):
-            if isinstance(self[o], _GsqlView):
+            if isinstance(self[o], (_GsqlView, _GsqlViewNG)):
                 sys.stdout.write(self[o].output(self._table_keys))
             else:
                 sys.stdout.write(self[o].output())
@@ -2197,7 +2215,7 @@ class _GsqlDefs(UserDict.UserDict):
 
     def gensqlall(self):
         def process(o):
-            if isinstance(self[o], _GsqlView):
+            if isinstance(self[o], (_GsqlView, _GsqlViewNG)):
                 sys.stdout.write(self[o].outputall(self._table_keys))
             else:
                 sys.stdout.write(self[o].outputall())
@@ -2206,7 +2224,7 @@ class _GsqlDefs(UserDict.UserDict):
 
     def regensql(self):
         def process(o):
-            if isinstance(self[o], _GsqlView):
+            if isinstance(self[o], (_GsqlView, _GsqlViewNG)):
                 sys.stdout.write(self[o].reoutput(self._table_keys))
             else:
                 sys.stdout.write(self[o].reoutput())
