@@ -581,5 +581,7 @@ class PrintFormExternal(PrintForm, PopupForm):
         pass
     
     def run(self, *args, **kwargs):
+        self._run_formatter()
+        # Run it once again to make correct total page count in the document
         file_name = self._run_formatter()
         thread.start_new_thread(self._run_viewer, (file_name,))

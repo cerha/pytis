@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-08-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* BUGFIX: Dokument se pøi spou¹tìní externího prohlí¾eèe formátuje
+	dvouprùchodovì, co¾ by mìlo zajistit korektní hodnotu celkového
+	poètu stran.
 
 2007-07-10  Tomas Cerha  <cerha@brailcom.org>
 
