@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-03 08:25+0200\n"
+"POT-Creation-Date: 2007-04-03 12:24+0200\n"
 "PO-Revision-Date: 2007-04-03 08:26+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
@@ -117,6 +117,6 @@ msgstr "Vrátit pùvodní hodnoty"
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políèka oznaèená hvìzdièkou jsou povinná."
 
-#: ../lib/pytis/web/form.py:370
+#: ../lib/pytis/web/form.py:372
 msgid "No records."
 msgstr "®ádné záznamy."

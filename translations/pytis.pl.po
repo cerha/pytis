@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-14 07:36+0100\n"
+"POT-Creation-Date: 2007-04-03 12:24+0200\n"
 "PO-Revision-Date: 2006-11-06 13:45+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -15,13 +15,18 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:53
+#: ../lib/pytis/web/form.py:52
 msgid "Empty value"
 msgstr "Pusta warto¶æ"
 
-#: ../lib/pytis/web/form.py:54
+#: ../lib/pytis/web/form.py:53
 msgid "Invalid value"
 msgstr "Niepoprawna warto¶æ"
+
+#: ../lib/pytis/web/form.py:54
+#, fuzzy, python-format
+msgid "Maximal length %(maxlen)d exceeded"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
 
 #: ../lib/pytis/web/form.py:55
 msgid "Not an integer"
@@ -37,45 +42,84 @@ msgid "String exceeds max length %(maxlen)d"
 msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
 
 #: ../lib/pytis/web/form.py:58
-msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
+msgid "Enter the password twice to eliminate typos"
+msgstr ""
 
 #: ../lib/pytis/web/form.py:59
+msgid "Passwords don't match"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:60
 msgid "Invalid format"
 msgstr "Niew³a¶ciwy format"
 
-#: ../lib/pytis/web/form.py:60
+#: ../lib/pytis/web/form.py:61
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
+
+#: ../lib/pytis/web/form.py:62
 msgid "Invalid date or time format"
 msgstr "Niew³a¶ciwy format daty lub czasu"
 
-#: ../lib/pytis/web/form.py:61
+#: ../lib/pytis/web/form.py:63
 msgid "Invalid date or time"
 msgstr "Niew³a¶ciwy format daty lub czasu"
 
-#: ../lib/pytis/web/form.py:62
+#: ../lib/pytis/web/form.py:64
 msgid "Date outside the allowed range"
 msgstr "Data poza dopuszczalnym obrêbem"
 
-#: ../lib/pytis/web/form.py:254 ../lib/pytis/web/form.py:319
+#: ../lib/pytis/web/form.py:65
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:66
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:67
+#, fuzzy, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+
+#: ../lib/pytis/web/form.py:68
+#, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:250
+msgid "image"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:250
+msgid "file"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:265 ../lib/pytis/web/form.py:342
 msgid "Yes"
 msgstr "Tak"
 
-#: ../lib/pytis/web/form.py:254 ../lib/pytis/web/form.py:319
+#: ../lib/pytis/web/form.py:265 ../lib/pytis/web/form.py:342
 msgid "No"
 msgstr "Nie"
 
-#: ../lib/pytis/web/form.py:262
-msgid "reduced"
-msgstr "zredukowany"
-
-#: ../lib/pytis/web/form.py:303 ../lib/pytis/web/dialog.py:52
+#: ../lib/pytis/web/form.py:324 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Wy¶lij"
 
-#: ../lib/pytis/web/form.py:304
+#: ../lib/pytis/web/form.py:324
 msgid "Reset"
 msgstr "Od¶wie¿"
 
-#: ../lib/pytis/web/form.py:348
+#: ../lib/pytis/web/form.py:326
+msgid "Fields marked by an asterisk are mandatory."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:372
 msgid "No records."
 msgstr "Nie ma wpisu."
+
+#~ msgid "reduced"
+#~ msgstr "zredukowany"
