@@ -285,20 +285,18 @@ class Configuration(object):
             """
             return self._VISIBLE
 
-        def description(self, full=False):
-            """Vra» popis volby 'name' jako øetìzec.
+        def description(self):
+            """Vra» struèný jednoøádkový popis volby 'name' jako øetìzec."""
+            return self._DESCR
         
-            Pokud je argument `full' pravdivý vrácen popis vèetnì pøípadné
-            podrobnìj¹i dokumentace.  Øetìzec tak mù¾e být víceøádkový a délka
-            jednoho øádku mù¾e pøesahovat 80 znakù.
+        def documentation(self):
+            """Vra» podrobný popis volby 'name' jako øetìzec nebo None.
+        
+            Øetìzec tak mù¾e být víceøádkový a délka jednoho øádku mù¾e pøesahovat 80 znakù.  Pokud
+            podrobný popis není definován, mù¾e vrátit té¾ None.
             
-            Pokud je `full' nepravda, vrací pouze struèný jednoøádkový popis.
-
             """
-            result = self._DESCR
-            if self._DOC:
-                result += "\n" + self._DOC
-            return result
+            return self._DOC
 
     class StringOption(Option):
         """Tøída pro volby øetìzcového typu."""
@@ -918,8 +916,11 @@ class Configuration(object):
         pp = pprint.PrettyPrinter()
         for name, option in self._options.items():
             if option.visible():
-                for line in wrap(option.description(full=True), 77):
-                    stream.write('# %s\n' % string.strip(line))
+                stream.write('# %s\n' % option.description())
+                doc = option.documentation()
+                if doc:
+                    for line in wrap(doc, 77):
+                        stream.write('# %s\n' % string.strip(line))
                 value = option.default_string()
                 indent = ' ' * (len(name) + 3)
                 stream.write('#%s = %s\n\n' % (name, value.replace("\n", "\n#"+indent)))
@@ -928,13 +929,13 @@ class Configuration(object):
         """Vra» seznam názvù v¹ech konfiguraèních voleb jako tuple øetìzcù.""" 
         return self._options.keys()
 
-    def description(self, name, full=False):
-        """Vra» popis volby 'name' jako øetìzec.
-
-        Argument `full' viz 'Configuration.Option.description()'.
-
-        """
-        return self._options[name].description(full=full)
+    def description(self, name):
+        """Vra» struèný jednoøádkový popis volby 'name' jako øetìzec."""
+        return self._options[name].description()
+    
+    def documentation(self, name):
+        """Vra» podrobnou dokumentaci volby 'name' jako øetìzec nebo None."""
+        return self._options[name].documentation()
     
     def type(self, name):
         """Vra» datový typ volby 'name' jako instanci 'pytis.data.Type'.""" 

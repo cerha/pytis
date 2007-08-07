@@ -158,8 +158,13 @@ class ConfigForm(PopupEditForm):
         return dict(_LAYOUT)[self._name]
 
     def _create_view_spec(self, **kwargs):
-        fields = [FieldSpec(option, _LABELS.get(option, option),
-                            descr=config.description(option, full=True))
+        def descr(option):
+            descr = config.description(option)
+            doc = config.documentation(option)
+            if doc:
+                descr += "\n" + doc
+            return descr
+        fields = [FieldSpec(option, _LABELS.get(option, option), descr=descr(option))
                   for option in self._layout().order()]
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
                         fields, layout=self._layout())

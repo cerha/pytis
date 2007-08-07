@@ -1,3 +1,13 @@
+2007-08-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/configuration.py: Allow separate access to each
+	option's description and documentation strings.
+	
+	* pytis/form/configui.py: Respect the above change.
+
+	* pytis/web/form.py: Display a color sample for 'Color' fields.
+
+
 2007-08-04  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/form/output.py (PrintFormExternal.run): Run the formatter
