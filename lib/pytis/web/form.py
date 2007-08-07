@@ -285,6 +285,10 @@ class ShowForm(LayoutForm):
                 value = ""
         elif isinstance(type, pytis.data.Boolean):
             value = self._row[f.id()].value() and _("Yes") or _("No")
+        elif isinstance(type, pytis.data.Color):
+            color = self._row[f.id()].export()
+            value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
+                    g.span('&nbsp;', cls="color-display", style="background-color: %s;" % color)
         elif type.enumerator():
             value = self._row.display(f.id())
         else:
