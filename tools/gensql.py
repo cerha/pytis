@@ -1252,9 +1252,9 @@ class _GsqlViewNG(Select):
                 except:
                     pass
             if isinstance(key, (tuple,list)):
-                return key[0]
+                return _gsql_column_table_column(key[0])[1]
             else:
-                return key
+                return _gsql_column_table_column(key)[1]
         def get_default_body(kind):
             columns = self._columns
             body = []

@@ -1,3 +1,8 @@
+2007-08-09  Pavel Hanak  <hanak@alfik.akont.xx>
+
+	* tools/gensql.py (_GsqlViewNG._format_rule.get_key_column):
+	Corrected problem by getting `key column'.
+
 2007-08-02  Pavel Hanak  <hanak@alfik.akont.xx>
 
 	* tools/gensql.py: Added automated recognition of keys for
