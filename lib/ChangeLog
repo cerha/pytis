@@ -1,3 +1,18 @@
+2007-08-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py: Respect the changes in 'Configuration'
+	class interface.
+
+	* pytis/form/configui.py: Respect the changes in 'Configuration'
+	class interface.
+
+	* pytis/util/configuration.py: Respect the order of configuration
+	option definitions.  Allow direct access to option instances.
+	(description, documentation, type, changed): Methods removed.
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): Added `unique'
+	to the list of allowed data type kwargs.
+
 2007-08-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py: Allow separate access to each

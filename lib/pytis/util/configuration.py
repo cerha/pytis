@@ -37,11 +37,20 @@ import copy
 from pytis.util import *
 import pytis.data
 
+
+class _OrderedDefinitionClass(type):
+    """A metaclass allowing us to find out the order of class definitions."""
+    _class_counter = 0
+    def __init__(cls, name, bases, dict):
+        cls._class_definition_order = _OrderedDefinitionClass._class_counter
+        _OrderedDefinitionClass._class_counter += 1
+
+
 class Configuration(object):
-    """Definice konfigurace a její konkrétní parametry."""
+    """Definition of configuration and its particular options."""
 
     class Option(object):
-        """Specifikace konfiguraèní volby (promìnné).
+        """Specification of a configuration option (variable).
 
         Definicí potomka této tøídy se jménem zaèínajícím prefixem '_Option_'
         jako vnitøní tøídy tøídy 'Configuration' je automaticky definována nová
@@ -63,7 +72,8 @@ class Configuration(object):
         pøíkazové øádky pøiøazena do 'sys.argv'.
 
         """
-
+        __metaclass__ = _OrderedDefinitionClass
+        
         _DESCR = None
         """Struèný (jednoøádkový) popis volby."""
         
@@ -109,7 +119,7 @@ class Configuration(object):
         'BooleanOption' (viz ní¾e).
 
         """
-
+        
         def __init__(self, configuration):
             """Inicializuj instanci volby.
 
@@ -195,6 +205,13 @@ class Configuration(object):
             self._value = value
 
         def changed(self):
+            """Vra» pravdu, pokud hodnota volby byla zmìnìna aplikací.
+
+            Za zmìnu je pova¾ováno jakékoliv nastavení volby na jinou hodnotu, ne¾
+            jakou daná volba nabyla bìhem inicializace (tj. pøi naèítání voleb
+            pøíkazové øádky a konfiguraèního souboru).
+            
+            """ 
             return self._value != self._initial_value
 
         def long_option(self):
@@ -841,11 +858,10 @@ class Configuration(object):
         return filetime
 
     def __getattr__(self, name):
-        """Vra» konfiguraèní volbu 'name'.
+        """Return the current value of configuration option 'name'.
 
-        'name' musí být string odpovídající jménu existující konfiguraèní
-        volby.  Pokud taková konfiguraèní volba neexistuje, vyvolej výjimku
-        'AttributeError'.
+        'name' must be a string name of an existing configuration option.  'AttributeError' is
+        raised if no such option exists.
 
         """
         if __debug__ and self._config_file and \
@@ -868,10 +884,10 @@ class Configuration(object):
             raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        """Nastav atribut nebo konfiguraèní volbu 'name' na 'value'.
+        """Set the value of configuration option 'name'.
 
-        Pokud takový atribut ani konfiguraèní volba neexistuje, vyvolej výjimku
-        'AttributeError'.
+        'name' must be a string name of an existing configuration option.  'AttributeError' is
+        raised if no such option exists.
         
         """
         if self.__dict__['_options'].has_key(name):
@@ -905,16 +921,16 @@ class Configuration(object):
                     opt.set_value(dict[o])
 
     def dump_config_template(self, stream):
-        """Zapi¹ vzorový konfiguraèní soubor do 'stream'.
+        """Write configuration file template to 'stream'.
 
-        'stream' musí být otevøený stream s mo¾ností zápisu.
+        'stream' must be a stream opened for writing.
 
         """
         #stream.write('# -*- coding: iso-8859-2 -*-\n\n')
         from textwrap import wrap
         import pprint
         pp = pprint.PrettyPrinter()
-        for name, option in self._options.items():
+        for option in self.options(sorted=True):
             if option.visible():
                 stream.write('# %s\n' % option.description())
                 doc = option.documentation()
@@ -922,31 +938,30 @@ class Configuration(object):
                     for line in wrap(doc, 77):
                         stream.write('# %s\n' % string.strip(line))
                 value = option.default_string()
-                indent = ' ' * (len(name) + 3)
-                stream.write('#%s = %s\n\n' % (name, value.replace("\n", "\n#"+indent)))
+                indent = ' ' * (len(option.name()) + 3)
+                stream.write('#%s = %s\n\n' % (option.name(), value.replace("\n", "\n#"+indent)))
 
-    def options(self):
-        """Vra» seznam názvù v¹ech konfiguraèních voleb jako tuple øetìzcù.""" 
-        return self._options.keys()
+    def options(self, sort=False):
+        """Return a tuple of all configuration options as 'Configuration.Option' instances.
 
-    def description(self, name):
-        """Vra» struèný jednoøádkový popis volby 'name' jako øetìzec."""
-        return self._options[name].description()
-    
-    def documentation(self, name):
-        """Vra» podrobnou dokumentaci volby 'name' jako øetìzec nebo None."""
-        return self._options[name].documentation()
-    
-    def type(self, name):
-        """Vra» datový typ volby 'name' jako instanci 'pytis.data.Type'.""" 
-        return self._options[name].type()
+        If 'sort' is true, the options will be returned in the order of their definition.
 
-    def changed(self, name):
-        """Vra» pravdu, pokud hodnota volby 'name' byla zmìnìna aplikací.
+        """
+        options = self._options.values()
+        if sort:
+            def _cmp(o1, o2):
+                return cmp(o1._class_definition_order, o2._class_definition_order)
+            options.sort(_cmp)
+        return tuple(options)
 
-        Za zmìnu je pova¾ováno jakékoliv nastavení volby na jinou hodnotu, ne¾
-        jakou daná volba nabyla bìhem inicializace (tj. pøi naèítání voleb
-        pøíkazové øádky a konfiguraèního souboru).
-        
-        """ 
-        return self._options[name].changed()
+    def option(self, name):
+        """Return the 'Configuration.Option' instance for the option of given 'name'.
+
+        'name' must be a string name of an existing configuration option.  'AttributeError' is
+        raised if no such option exists.
+
+        """
+        try:
+            return self._options[name]
+        except KeyError:
+            raise AttributeError(name)

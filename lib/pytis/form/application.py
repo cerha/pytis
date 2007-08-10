@@ -472,7 +472,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                    (pytis.data.Boolean, wxconfig.ReadBool))
         items = []
         for option in self._stored_options(wxconfig):
-            t = config.type(option)
+            t = config.option(option).type()
             for type, read in mapping:
                 if isinstance(t, type):
                     value = read(option)
@@ -491,7 +491,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                    (pytis.data.Integer, wxconfig.WriteInt),
                    (pytis.data.Boolean, wxconfig.WriteBool))
         for option, value in items:
-            t = config.type(option)
+            t = config.option(option).type()
             if option in to_delete:
                 to_delete.remove(option)
             for type, write in mapping:
@@ -547,7 +547,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             items = tuple([(o, getattr(config, o))
                            for o in configurable_options() + \
                            ('application_state', 'form_state') 
-                           if config.changed(o)])
+                           if config.option(o).changed()])
             write_config = self._spec('write_config', self._write_config)
             write_config(items)
             log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))

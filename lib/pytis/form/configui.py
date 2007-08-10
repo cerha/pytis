@@ -122,7 +122,7 @@ class _ConfigData(pytis.data.RestrictedData):
         if direction != pytis.data.FORWARD or not self._giveone:
             return None
         self._giveone = False
-        row_data = [(o, pytis.data.Value(config.type(o), getattr(config, o)))
+        row_data = [(o, pytis.data.Value(config.option(o).type(), getattr(config, o)))
                     for o in [c.id() for c in self.columns()]]
         return pytis.data.Row(row_data)
 
@@ -158,9 +158,10 @@ class ConfigForm(PopupEditForm):
         return dict(_LAYOUT)[self._name]
 
     def _create_view_spec(self, **kwargs):
-        def descr(option):
-            descr = config.description(option)
-            doc = config.documentation(option)
+        def descr(name):
+            option = config.option(name)
+            descr = option.description()
+            doc = option.documentation()
             if doc:
                 descr += "\n" + doc
             return descr
@@ -170,7 +171,7 @@ class ConfigForm(PopupEditForm):
                         fields, layout=self._layout())
 
     def _create_data_object(self, **kwargs):
-        columns = [pytis.data.ColumnSpec(option, config.type(option))
+        columns = [pytis.data.ColumnSpec(option, config.option(option).type())
                    for option in self._layout().order()]
         return pytis.data.DataFactory(_ConfigData, columns).create()
     
