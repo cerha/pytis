@@ -691,11 +691,17 @@ class FilterDialog(SFDialog):
             wcol, wop, wresult, wbutton = self._agg_controls
             op = self._AGG_OPERATORS[wop.GetSelection()]
             col = self._columns[wcol.GetSelection()]
-            result = self._compute_aggregate(op, col.id(), condition)
-            if result is not None:
-                v = result.export()
-            else:
+            if op != pytis.data.Data.AGG_COUNT and not isinstance(col.type(), pytis.data.Number):
+                # TODO: We should also support Date and maybe other types, but first it must be
+                # implemented in the data interface.
+                run_dialog(Error, _("Tato operaca není pro daný typ sloupce podporována."))
                 v = ''
+            else:
+                result = self._compute_aggregate(op, col.id(), condition)
+                if result is not None:
+                    v = result.export()
+                else:
+                    v = ''
             wresult.SetValue(v)
 
     def _on_button(self, event):

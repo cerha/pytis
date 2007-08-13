@@ -1,3 +1,8 @@
+2007-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/search.py: Don't allow aggregation functions on
+	non-numeric data types.
+
 2007-08-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py: Respect the changes in 'Configuration'
