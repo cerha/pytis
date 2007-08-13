@@ -4,6 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* BUGFIX: O¹etøeno vyvolání agregaèní funkce nad neèíselným
+	sloupeèkem ve filtrovacím dialogu.  Teoreticky by mohlo jít
+	povolit také napø. sloupce typu datum, ale momentálnì pro to chybí
+	podpora v datovém rozhraní.
+	
 2007-08-04  Milan Zamazal  <pdm@brailcom.org>
 
 	* BUGFIX: Dokument se pøi spou¹tìní externího prohlí¾eèe formátuje
