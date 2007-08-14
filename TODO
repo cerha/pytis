@@ -48,6 +48,15 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
+ * Pokud je default hodnota políèka typu CHOICE None, pøidat do výbìru None polo¾ku
+
+ * Ve specifikaci unique datového typu pøedávat datový objekt
+
+   To by jednak umo¾nilo provádìt validaci unique pøímo jako souèást validace datového typu (nyní
+   to musí být øe¹eno a¾ na úrovni PresentedRow) a jednak by bylo mo¾né provádìt validaci oproti
+   jinému datovému objektu, ne¾ do kterého vkládáme - ten toti¾ ji¾ mù¾e být vyfiltrovaný, tak¾e
+   unikátnost nelze spolehlivì ovìøit.
+
  * Práva:
 
    * Rozli¹it polo¾ky menu nedostupné kvùli pøístuponým právùm.
