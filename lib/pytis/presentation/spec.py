@@ -1827,10 +1827,9 @@ class FieldSpec(object):
             for lnk in links:
                 assert isinstance(lnk, Link)
             for arg in kwargs.keys():
-                assert arg in ('not_null', 'value_column', 'validity_column',
-                               'validity_condition', 'constraints', 'enumerator',
-                               'validation_messages', 'precision', 'maxlen',
-                               'format', 'mindate', 'maxdate', 'unique'), \
+                assert arg in ('not_null', 'value_column', 'validity_column', 'validity_condition',
+                               'constraints', 'enumerator', 'validation_messages', 'precision',
+                               'minlen', 'maxlen', 'format', 'mindate', 'maxdate', 'unique'), \
                     "Invalid FieldSpec argument for field '%s': %r" % (id,arg)
         self._label = label
         self._descr = descr

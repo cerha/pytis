@@ -465,15 +465,17 @@ class Large(Big):
 class Limited(Type):
     """Mixin class for types with possibly limited maximal lenght.
 
-    Maximal length of a value of this type can be limited by passing the
-    `maxled' constructor argument.
+    Minimal and maximal length of a value of this type can be limited by passing the
+    `minlen' and `maxlen' constructor arguments.
     
     """
 
+    VM_MINLEN = 'VM_MINLEN'
+    _VM_MINLEN_MSG = _("Nedodr¾ena minimální délka %(minlen)s")
     VM_MAXLEN = 'VM_MAXLEN'
     _VM_MAXLEN_MSG = _("Pøekroèena maximální délka %(maxlen)s")
 
-    def __init__(self, maxlen=None, **kwargs):
+    def __init__(self, minlen=None, maxlen=None, **kwargs):
         """Initialize the instance.
         
         Arguments:
@@ -484,6 +486,7 @@ class Limited(Type):
         Other arguments are passed to the parent constructor.
 
         """
+        self._minlen = minlen
         self._maxlen = maxlen
         super(Limited, self).__init__(**kwargs)
 
@@ -492,7 +495,17 @@ class Limited(Type):
         result = super(Limited, self).__cmp__(other)
         if not result:
             result = cmp(self.maxlen(), other.maxlen())
+        if not result:
+            result = cmp(self.minlen(), other.minlen())
         return result
+
+    def minlen(self):
+        """Return the minimal lenght of the value as an integer or 'None'.
+
+        'None' denotes unlimited minimal lenght.
+        
+        """
+        return self._minlen
 
     def maxlen(self):
         """Return the maximal lenght of the value as an integer or 'None'.
@@ -502,18 +515,21 @@ class Limited(Type):
         """
         return self._maxlen
 
-    def _format_maxlen(self):
-        return str(self._maxlen)
+    def _format_length(self, length):
+        return str(length)
 
     def _check_constraints(self, value, **kwargs):
         super(Limited, self)._check_constraints(value, **kwargs)
         self._check_maxlen(value)
 
     def _check_maxlen(self, value):
-        if value is not None and self._maxlen is not None \
-               and len(value) > self._maxlen:
-            raise self._validation_error(self.VM_MAXLEN,
-                                         maxlen=self._format_maxlen())
+        if value is not None:
+            if self._minlen is not None and len(value) < self._minlen:
+                raise self._validation_error(self.VM_MINLEN,
+                                             minlen=self._format_length(self._minlen))
+            if self._maxlen is not None and len(value) > self._maxlen:
+                raise self._validation_error(self.VM_MAXLEN,
+                                             maxlen=self._format_length(self._maxlen))
 
     
 class Integer(Number):
@@ -701,25 +717,65 @@ class String(Limited):
 class Password(String):
     """String specialization for password fields.
 
-    The user interface should handle password input differently from ordinary
-    string input.  The typed characters should not be visible and it should be
-    required to type the password twice to change it.  Thus the validation
-    method requires the 'verify' argument to supply the second value.
+    The user interface should handle password input differently from ordinary string input.  The
+    typed characters should not be visible and it should be required to type the password twice to
+    change it.  Thus the validation method has the 'verify' argument to supply the second value.
+    This argument should always be used when checking user input.  If the argument is omitted or
+    None, the validation will be limited to just converting the string representaion to 'Value'
+    instance.
 
     """
     VM_PASSWORD = 'VM_PASSWORD'
     _VM_PASSWORD_MSG = _("Zadejte heslo dvakrát pro vylouèení pøeklepù")
     VM_PASSWORD_VERIFY = 'VM_PASSWORD_VERIFY'
     _VM_PASSWORD_VERIFY_MSG = _("Kontrolní zadání hesla neodpovídá")
+    VM_INVALID_MD5 = 'VM_INVALID_MD5'
+    _VM_INVALID_MD5_MSG = _("Invalid MD5 hash")
     
+    def __init__(self, md5=False, **kwargs):
+        """Initialize the instance.
+        
+        Arguments:
+        
+          md5 -- boolean flag indicating, that the password is stored as a hexadeximal md5 hash.
+            This will lead to automatic conversion of user input to its md5 hash, so the original
+            password is no more visible anywhere after successful validation.  The conversion is
+            only done when the 'verify' argument is passed to the 'validate()' method.  When
+            'verify' is not used, the input string is not considered to be user input, but an
+            already hashed value (eg. read from data source).
+             
+        Other arguments are passed to the parent constructor.
+
+        """
+        super(Password, self).__init__(**kwargs)
+        assert isinstance(md5, bool)
+        self._md5 = md5
+        
     def _validate(self, string, verify=None, **kwargs):
-        if verify is None:
-            return None, self._validation_error(self.VM_PASSWORD)
-        if string != verify:
-            return None, self._validation_error(self.VM_PASSWORD_VERIFY)
+        if verify is not None:
+            if not verify:
+                return None, self._validation_error(self.VM_PASSWORD)
+            if string != verify:
+                return None, self._validation_error(self.VM_PASSWORD_VERIFY)
         return super(Password, self)._validate(string, **kwargs)
 
+    def validate(self, object, verify=None, **kwargs):
+        if self._md5 and verify is None:
+            # Strict checking applies to the original value.  Here we are validating the md5 sum,
+            # so strict checking is forced to False.
+            kwargs['strict'] = False
+        value, error = super(Password, self).validate(object, verify=verify, **kwargs)
+        if self._md5 and value and value.value() is not None:
+            string = str(value.value())
+            if verify is not None:
+                # User input was valid, so let's turn it into its md5 hash.
+                import md5
+                value = Value(value.type(), md5.new(string).hexdigest())
+            elif len(string) != 32 or not string.isalnum():
+                return None, self._validation_error(self.VM_INVALID_MD5)
+        return value, error
 
+    
 class RegexString(String):
 
     VM_FORMAT = 'VM_FORMAT'
@@ -731,6 +787,7 @@ class RegexString(String):
         self._regex = re.compile(regex or self._REGEX)
     
     def _validate(self, string, *args, **kwargs):
+        # TODO: Shall we rather do the regexp check in _check_constraints?
         value, error = super(RegexString, self)._validate(string, *args,
                                                           **kwargs)
         if error is None and self._regex.match(string) is None:
@@ -794,6 +851,17 @@ class Macaddr(String):
         return Value(self, unicode(value)), None
 
     
+class TreeOrder(String):
+    """Numeric value denoting the level of the item within the tree structure.
+
+    The type itself does not implement any specific features.  It has strictly specificational
+    meaning.  If such a column is detected within a list, the user interface may try to render the
+    tree structure of the items according to the tree level value.
+    
+    """
+    pass
+
+
 class DateTime(Type):
     """Èasový okam¾ik reprezentovaný instancí tøídy 'DateTime.DateTime'.
 
@@ -1225,8 +1293,8 @@ class Binary(Limited):
     def _export(self, value):
         return value and value.buffer()
 
-    def _format_maxlen(self):
-        return format_byte_size(self._maxlen)
+    def _format_length(self, length):
+        return format_byte_size(length)
         
     
 class Image(Binary, Big):

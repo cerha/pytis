@@ -1,3 +1,16 @@
+2007-08-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec): Pass the 'minlen'
+	argument to data type.
+
+	* pytis/form/inputfield.py (PasswordField): New class.
+
+	* pytis/data/_test.py: New tests for type 'Password' and 'minlen'.
+
+	* pytis/data/types_.py (Limited): Added support for 'minlen' limit.
+	(Password): Added support for md5 passwords.
+	(TreeOrder): New type.
+
 2007-08-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py: Don't allow aggregation functions on

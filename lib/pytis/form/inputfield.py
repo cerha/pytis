@@ -136,6 +136,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = DateField
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
+        elif isinstance(type, pytis.data.Password):
+            field = PasswordField
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
@@ -336,6 +338,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             if transaction is None or transaction.open():
                 self._needs_validation = False
                 valid = self._validate() is None
+                print "---", self.id(), valid, self._valid
                 if valid != self._valid:
                     self._valid = valid
                     self._on_validity_change()
@@ -452,6 +455,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             color = config.field_invalid_color
         else:
             color = self._DEFAULT_BACKGROUND_COLOR
+        self._set_background_color(color)
+
+    def _set_background_color(self, color):
         self._ctrl.SetOwnBackgroundColour(color)
         self._ctrl.Refresh()
 
@@ -593,14 +599,11 @@ class TextField(InputField):
                   range(ord('A'),ord('Z')+1))
 
     def _create_ctrl(self):
-        style = wx.TE_PROCESS_ENTER
-        if self.height() > 1:
-            style |= wx.TE_MULTILINE
         if not self._inline:
             size = self._px_size(self.width(), self.height())
         else:
             size = None
-        control = wx.TextCtrl(self._parent, -1, '', style=style, size=size)
+        control = wx.TextCtrl(self._parent, -1, '', style=self._ctrl_style(), size=size)
         wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None:
@@ -613,6 +616,12 @@ class TextField(InputField):
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
         return control
 
+    def _ctrl_style(self):
+        style = wx.TE_PROCESS_ENTER
+        if self.height() > 1:
+            style |= wx.TE_MULTILINE
+        return style
+    
     def _maxlen(self):
         """Vra» maximální délku zadaného textu."""
         return None
@@ -684,6 +693,11 @@ class TextField(InputField):
     def _get_value(self):
         return self._ctrl.GetValue()
 
+    def _set_value(self, value):
+        assert isinstance(value, (str, unicode)), value
+        self._ctrl.SetValue(value)
+        self._on_change() # call manually, since SetValue() doesn't emit an event.
+
     def _enable(self):
         control = self._ctrl
         control.SetEditable(True)
@@ -695,11 +709,6 @@ class TextField(InputField):
         self._ctrl.SetValidator(wx.DefaultValidator)
         # The change won't take effect for certain fields if we do it directly!
         self._call_on_idle = self._update_background_color
-
-    def _set_value(self, value):
-        assert isinstance(value, (str, unicode)), value
-        self._ctrl.SetValue(value)
-        self._on_change() # call manually, since SetValue() doesn't emit an event.
 
     def _menu(self):
         return super(TextField, self)._menu() + \
@@ -749,6 +758,41 @@ class StringField(TextField):
 
     def _maxlen(self):
         return self._type.maxlen()
+
+class PasswordField(StringField):
+    #TODO: There should be two controls to verify the password is the same in both.
+    
+    def _ctrl_style(self):
+        return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
+
+    def _create_widget(self):
+        self._ctrl2 = self._create_ctrl()
+        sizer = wx.BoxSizer()
+        sizer.Add(self._ctrl,  0, wx.FIXED_MINSIZE)
+        sizer.Add(self._ctrl2, 0, wx.FIXED_MINSIZE)
+        return sizer
+    
+    def _set_value(self, value):
+        self._needs_validation = True
+
+    def _enable(self):
+        super(PasswordField, self)._enable()
+        self._ctrl2.SetEditable(True)
+
+    def _disable(self):
+        super(PasswordField, self)._disable()
+        self._ctrl2.SetEditable(False)
+        
+    def _set_background_color(self, color):
+        super(PasswordField, self)._set_background_color(color)
+        self._ctrl2.SetOwnBackgroundColour(color)
+        self._ctrl2.Refresh()
+
+    def _validate(self):
+        value = self._get_value()
+        if not value and not self._row.new():
+            return None
+        return self._row.validate(self.id(), value, verify=self._ctrl2.GetValue())
 
     
 class NumericField(TextField):

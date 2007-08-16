@@ -171,11 +171,15 @@ tests.add(Float)
 class String(_TypeCheck):
     _test_instance = pytis.data.String()
     def test_validation_limited(self):
+        MINLEN = 3
         MAXLEN = 5
-        t = pytis.data.String(maxlen=MAXLEN)
+        t = pytis.data.String(minlen=MINLEN, maxlen=MAXLEN)
         v, _ = self._test_validity(t, 'abcde', 'abcde')
+        assert v.type().minlen() == MINLEN, 'wrong minlen value'
         assert v.type().maxlen() == MAXLEN, 'wrong maxlen value'
+        self._test_validity(t, 'ab', None)
         self._test_validity(t, 'abcdef', None)
+        self._test_validity(t, 'abcd', 'abcd')
     def test_validation_unlimited(self):
         v = self._test_null_validation()
         assert v.type().maxlen() == None, 'wrong maxlen value'
@@ -191,6 +195,39 @@ class String(_TypeCheck):
         assert t != pytis.data.String(maxlen=MAXLEN+1), \
                'invalid comparison'
 tests.add(String)
+
+class Password(_TypeCheck):
+    _test_instance = pytis.data.Password(minlen=4)
+    def test_validation(self):
+        self._test_validity(None, 'abcdef', 'abcdef')
+        self._test_validity(None, 'abcdef', 'abcdef', kwargs={'verify': 'abcdef'})
+        self._test_validity(None, 'abcdef', None, kwargs={'verify': ''})
+        self._test_validity(None, 'abcdef', None, kwargs={'verify': 'abcef'})
+        self._test_validity(None, 'abc', None)
+        v, e = self._test_validity(None, '', None, check_value=False)
+        assert v and v.value() is None, v
+        v, e = self._test_validity(None, '', None, check_value=False, kwargs={'verify': ''})
+        assert v and v.value() is None, v
+        t2 = pytis.data.Password(not_null=True)
+        self._test_validity(t2, '', None)
+        self._test_validity(t2, None, None)
+        self._test_validity(t2, 'x', 'x')
+        self._test_validity(t2, '', None, kwargs={'verify': ''})
+        t3 = pytis.data.Password(md5=True, minlen=4)
+        import md5
+        hash = md5.new('abcdef').hexdigest()
+        self._test_validity(t3, hash, hash)
+        self._test_validity(t3, 'xxx', None)
+        self._test_validity(t3, hash, None, kwargs={'verify': ''})
+        self._test_validity(t3, 'abc', None, kwargs={'verify': 'abc'})
+        self._test_validity(t3, 'abcdef', hash, kwargs={'verify': 'abcdef'}, check_export=False)
+        t4 = pytis.data.Password(md5=True, minlen=4, not_null=True)
+        self._test_validity(t2, '', None)
+        self._test_validity(t2, None, None)
+        self._test_validity(t2, '', None, kwargs={'verify': ''})
+        self._test_validity(t2, 'x', 'x', kwargs={'verify': 'x'})
+        
+tests.add(Password)
 
 class Color(_TypeCheck):
     _test_instance = pytis.data.Color()

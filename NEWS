@@ -4,6 +4,22 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+
+2007-08-16  Tomas Cerha  <cerha@brailcom.org>
+
+	Bylo implementováno nové vstupní políèko pro zadání hesla s
+	kontrolou pøeklepù.
+
+	Datový typ 'Password' nyní umo¾òuje nastavit pøíznak md5, který
+	zajistí, ¾e heslo zadané ve formuláøi je automaticky pøevedeno na
+	pøíslu¹nou MD5 sumu, tak¾e pùvodní heslo se ji¾ nikde v aplikaci
+	nevyskytuje.
+
+	Nový argument øetìzcových datových typù 'minlen' umo¾òuje ve
+	specifikaci urèit minimální povolenou délku øe»ezce, která je
+	potom vy¾adována pøi validaci, podobnì jako stávající 'maxlen'.
+	Vhodné napø. pro hesla...
+	
 2007-08-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: O¹etøeno vyvolání agregaèní funkce nad neèíselným
