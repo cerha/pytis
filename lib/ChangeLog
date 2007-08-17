@@ -1,5 +1,8 @@
 2007-08-17  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py: Display a fake value in password
+	fields if the password was defined.
+
 	* pytis/web/form.py: Major refactoring.  Added support for
 	browsing long lists and sorting.
 

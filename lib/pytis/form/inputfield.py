@@ -759,7 +759,7 @@ class StringField(TextField):
         return self._type.maxlen()
 
 class PasswordField(StringField):
-    #TODO: There should be two controls to verify the password is the same in both.
+    _ORIGINAL_VALUE = u'\u2024'*8
     
     def _ctrl_style(self):
         return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
@@ -772,7 +772,10 @@ class PasswordField(StringField):
         return sizer
     
     def _set_value(self, value):
-        self._needs_validation = True
+        if value:
+            value = self._ORIGINAL_VALUE
+        super(PasswordField, self)._set_value(value)
+        self._ctrl2.SetValue(value)
 
     def _enable(self):
         super(PasswordField, self)._enable()
@@ -789,7 +792,7 @@ class PasswordField(StringField):
 
     def _validate(self):
         value = self._get_value()
-        if not value and not self._row.new():
+        if value == self._ORIGINAL_VALUE and not self._row.new():
             return None
         return self._row.validate(self.id(), value, verify=self._ctrl2.GetValue())
 
