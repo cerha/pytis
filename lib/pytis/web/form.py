@@ -18,24 +18,21 @@
 
 """Web forms.
 
-This module provides an implementations of Pytis forms, which can be used for
-web interfaces to Pytis informations systems.  Ideally, we should be able to
-generate web forms from the same specification.  Since some aspects of the
-specifications are bound to a GUI environment (such as callback functions,
-which run dialogs and forms directly), not all features are currently
-available.  However the core functionality is implemented and data can be
-viewed and manipulated (inserted, edited) using web forms.
+This module provides an implementations of Pytis forms, which can be used for web interfaces to
+Pytis informations systems.  Ideally, we should be able to generate web forms from the same
+specification.  Since some aspects of the specifications are bound to a GUI environment (such as
+callback functions, which run dialogs and forms directly), not all features are currently
+available.  However the core functionality is implemented and data can be viewed and manipulated
+(inserted, edited) using web forms.
 
-There is currently no support for running the actual web application.  Only
-form classes are available and it's up to the user to manipulate them.  One
-example of such an application is the Wiking Content Management System
-(http://www.freebsoft.org/wiking).
+Pytis currently does not include support running the actual web application which would make use of
+these forms.  Such an application framework which makes use of pytis web forms, is implemented
+separately.  See the Wiking project at http://www.freebsoft.org/wiking for more information.
 
-All the content generation is done using the LCG framework.  See
-http://www.freebsoft.org/lcg.
+All the content generation is done using the LCG framework.  See http://www.freebsoft.org/lcg.
 
-The classes defined below are currently just prototypes, so they are not
-documented yet and the API may change drastically!
+The classes defined below are currently just prototypes, so they are not documented yet and the API
+may change drastically!
 
 """
 
@@ -51,10 +48,12 @@ _ = lcg.TranslatableTextFactory('pytis')
 pd = pytis.data
 pd.Type._VM_NULL_VALUE_MSG = _("Empty value")
 pd.Type._VM_INVALID_VALUE_MSG = _("Invalid value")
-pd.Limited._VM_MAXLEN_MSG = _("Maximal length %(maxlen)d exceeded")
+pd.Limited._VM_MINLEN_MSG = _("Minimal length %(minlen)s not satisfied")
+pd.Limited._VM_MAXLEN_MSG = _("Maximal length %(maxlen)s exceeded")
 pd.Integer._VM_NONINTEGER_MSG = _("Not an integer")
 pd.Float._VM_INVALID_NUMBER_MSG = _("Invalid number")
-pd.String._VM_MAXLEN_MSG = _("String exceeds max length %(maxlen)d")
+pd.String._VM_MINLEN_MSG = _("Minimal length %(minlen)s not satisfied")
+pd.String._VM_MAXLEN_MSG = _("String exceeds max length %(maxlen)s")
 pd.Password._VM_PASSWORD_MSG = _("Enter the password twice to eliminate typos")
 pd.Password._VM_PASSWORD_VERIFY_MSG = _("Passwords don't match")
 pd.RegexString._VM_FORMAT_MSG = _("Invalid format")
@@ -62,6 +61,7 @@ pd.Color._VM_FORMAT_MSG = _("Invalid color format ('#RGB' or '#RRGGBB')")
 pd.DateTime._VM_DT_FORMAT_MSG = _("Invalid date or time format")
 pd.DateTime._VM_DT_VALUE_MSG = _("Invalid date or time")
 pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
+pd.Binary._VM_MINLEN_MSG = _("Minimal size %(minlen)s not satisfied")
 pd.Binary._VM_MAXLEN_MSG = _("Maximal size %(maxlen)s exceeded")
 pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
 pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(minsize)s exceeded")
@@ -73,25 +73,33 @@ class Type(pd.Type):
         if kwargs:
             message = _(message, **kwargs)
         return pd.ValidationError(message)
-    # Needed to postpone variable interpolation to the translation time.
+    # Needed to postpone variable interpolation to translation time.
     pd.Type._validation_error = _validation_error
 
 
 class Form(lcg.Content):
-
-    def __init__(self, data, view, resolver, row=None, prefill=None,
-                 new=False, link_provider=None, **kwargs):
+    _HTTP_METHOD = 'POST'
+    _CSS_CLS = None
+    
+    def __init__(self, data, view, resolver, row=None, prefill=None, new=False, link_provider=None,
+                 handler='#', hidden=(), name=None, **kwargs):
         super(Form, self).__init__(**kwargs)
         assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
         assert isinstance(resolver, pytis.util.Resolver), resolver
         assert row is None or isinstance(row, pytis.data.Row), row
+        assert isinstance(handler, str), handler
+        assert isinstance(hidden, (tuple, list)), hidden
         self._data = data
         self._view = view
         self._prefill = prefill or {}
         self._link_provider = link_provider
         self._row = PresentedRow(view.fields(), data, row, resolver=resolver,
                                  prefill=self._valid_prefill(), new=new)
+        self._handler = handler
+        self._hidden = list(hidden)
+        self._name = name
+        self._enctype = None
 
     def _uri(self, row, cid):
         if self._link_provider:
@@ -107,40 +115,55 @@ class Form(lcg.Content):
             if self._prefill.has_key(id):
                 f = self._view.field(id)
                 type = f.type(self._data)
-                value, error = type.validate(self._prefill[id], strict=False)
-                if not error:
-                    valid[id] = value
+                if not isinstance(type, pytis.data.Password):
+                    value, error = type.validate(self._prefill[id], strict=False)
+                    if not error:
+                        valid[id] = value
         return valid
 
+    def _export_body(self, exporter):
+        pass
+    
+    def _export_controls(self, exporter):
+        pass
+    
+    def _export_submit(self, exporter):
+        pass
+    
+    def _export_footer(self, exporter):
+        pass
+    
+    def export(self, exporter):
+        g = exporter.generator()
+        content = [self._export_body(exporter)] + \
+                  [wrap(part, cls=name) for wrap, part, name in
+                   ((g.fieldset, self._export_controls(exporter), 'controls'),
+                    (g.fieldset, self._export_submit(exporter),   'submit'),
+                    (g.div,      self._export_footer(exporter),   'footer')) if part]
+        cls = self._CSS_CLS + (self._name and ' ' + camel_case_to_lower(self._name, '-') or '')
+        return g.form(content, action=self._handler, method=self._HTTP_METHOD, cls=cls,
+                      enctype=self._enctype)
+    
 
-class _SubmittableForm(object):
+class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
     
-    def __init__(self, handler='#', action=None, hidden=(), **kwargs):
-        super(_SubmittableForm, self).__init__(**kwargs)
-        assert isinstance(handler, str), handler
-        assert action is None or isinstance(action, str), action
-        assert isinstance(hidden, (tuple, list)), hidden
-        self._handler = handler
-        self._action = action
-        self._hidden = list(hidden)
-        
-    def _export_buttons(self, exporter):
+    def _export_submit(self, exporter):
         g = exporter.generator()
-        hidden = self._hidden
-        if self._action:
-            hidden += [('action', self._action)]
-        result = [g.hidden(k, v) for k, v in hidden] + \
-                 [g.submit(_("Submit")), g.reset(_("Reset"))]
-        return g.fieldset(result, cls="submit")
+        return [g.hidden(k, v) for k, v in self._hidden] + \
+               [g.hidden('form-name', self._name),
+                g.submit(_("Submit")), g.reset(_("Reset"))]
     
-
+    
 class LayoutForm(Form):
 
     def __init__(self, *args, **kwargs):
         self._allow_table_layout = kwargs.pop('allow_table_layout', True)
         super(LayoutForm, self).__init__(*args, **kwargs)
     
+    def _export_body(self, exporter):
+        return self._export_group(exporter, self._view.layout().group())
+
     def _export_group(self, exporter, group):
         g = exporter.generator()
         result = []
@@ -165,9 +188,7 @@ class LayoutForm(Form):
         if fields:
             result.append(self._export_fields(g, fields))
         if wrap or group.label():
-            result = exporter.generator().fieldset(result,
-                                                   legend=group.label(),
-                                                   cls='body')
+            result = exporter.generator().fieldset(result, legend=group.label(), cls='body')
         else:
             result = concat(result, separator="\n")
         #if group.orientation() == Orientation.VERTICAL:
@@ -252,11 +273,8 @@ class LayoutForm(Form):
 
 class ShowForm(LayoutForm):
     _MAXLEN = 100
+    _CSS_CLS = 'show-form'
     
-    def export(self, exporter):
-        group = self._export_group(exporter, self._view.layout().group())
-        return exporter.generator().form(group, cls="show-form") + "\n"
-
     def _export_field(self, exporter, f):
         g = exporter.generator()
         type = self._row[f.id()].type()
@@ -303,6 +321,7 @@ class ShowForm(LayoutForm):
 
     
 class EditForm(LayoutForm, _SubmittableForm):
+    _CSS_CLS = 'edit-form'
     
     def __init__(self, data, view, resolver, row, errors=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
@@ -313,8 +332,11 @@ class EditForm(LayoutForm, _SubmittableForm):
         #    self._hidden += [(key,  self._row.format(key))]
         assert isinstance(errors, (tuple, list, str, unicode)), errors
         self._errors = errors
-
-    def export(self, exporter):
+        binary = [id for id in self._view.layout().order()
+                  if isinstance(self._row[id].type(), pytis.data.Binary)]
+        self._enctype = (binary and 'multipart/form-data' or None)
+        
+    def _export_body(self, exporter):
         g = exporter.generator()
         if isinstance(self._errors, (str, unicode)):
             errors = g.p(self._errors)
@@ -325,28 +347,99 @@ class EditForm(LayoutForm, _SubmittableForm):
                       for id, msg in self._errors]
         if errors:
             errors = g.div(errors, cls='errors')
-        group = self._export_group(exporter, self._view.layout().group())
-        content = concat(errors, group, self._export_buttons(exporter))
-        binary = [id for id in self._view.layout().order()
-                  if isinstance(self._row[id].type(), pytis.data.Binary)]
-        return g.form(content, action=self._handler, method='POST',
-                      enctype=(binary and 'multipart/form-data' or None),
-                      cls="edit-form") + "\n"
+        return concat(errors, super(EditForm, self)._export_body(exporter))
                       
-    def _export_buttons(self, exporter):
+    def _export_footer(self, exporter):
         g = exporter.generator()
-        note = g.div("*) " + _("Fields marked by an asterisk are mandatory."), cls='help')
-        return super(EditForm, self)._export_buttons(exporter) + note
+        return g.span("*", cls="not-null") +") "+ _("Fields marked by an asterisk are mandatory.")
     
         
 class BrowseForm(Form):
+    _CSS_CLS = 'browse-form'
+    _HTTP_METHOD = 'GET'
+    _LIMITS = (25, 50, 100, 200, 500)
+    _DEFAULT_LIMIT = 50
+    _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
+                           (pytis.data.DESCENDANT, 'desc'),
+                           (None, 'none'))
 
-    def __init__(self, data, view, resolver, rows, columns=None, tree_level=None, **kwargs):
+    @classmethod
+    def form_args(cls, params):
+        """Convert form state parameters from the request to form constructor arguments.
+
+        All arguments not related to form state are ignored.  A dictionary of decoded query
+        arguments is expected.  Keys are argument names (strings) and values are string or unicode
+        representations of the corresponding values.
+
+        Returns a dictionary of valid constructor keyword arguments related to form state.
+
+        """
+        limit, offset = [params.has_key(arg) and params[arg].isdigit() and int(params[arg]) or None
+                         for arg in ('limit', 'offset')]
+        if limit not in cls._LIMITS:
+            limit = None
+        if limit is None:
+            offset = 0
+        else:
+            if offset is None:
+                offset = 0
+            if params.has_key('next'):
+                offset += limit
+            if params.has_key('prev') and offset >= limit:
+                offset -= limit
+        sorting = None
+        if params.has_key('sort') and params.has_key('dir'):
+            cid = str(params['sort'])
+            trans = dict([(name, dir) for dir, name in cls._SORTING_DIRECTIONS])
+            dir = trans.get(params['dir'])
+            if dir:
+                sorting = ((cid, dir),)
+        return dict(limit=limit, offset=offset, sorting=sorting)
+    
+    def __init__(self, data, view, resolver, columns=None, condition=None, sorting=None,
+                 limit=None, offset=0, **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+
+          columns -- sequence of column identifiers to be displayed or None for the default columns
+            defined by specification
+            
+          condition -- current condition for filtering the records as 'pytis.data.Operator'
+            instance or None.
+            
+          sorting -- form sorting specification in the format recognized by the 'sort' argument of
+            'pytis.data.Data.select()'.
+          
+          limit -- maximal number of rows per page.  If the current condition produces more rows,
+            the listing will be split into pages and the form will include controls for navigation
+            between these pages.  None value
+          
+          offset -- determines the page within paged listing.  The number indicates the offset of
+            the record within all the records of the current select.  The page, which contains this
+            record will be displayed if possible.  If not (the listing is shorter than given
+            number), the nearest page is displayed.
+           
+        See the parent classes for definition of the remaining arguments.
+
+        """
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
-        assert isinstance(rows, (list, tuple)), rows
-        self._rows = rows
-        self._tree_level = tree_level
         self._columns = [view.field(id) for id in columns or view.columns()]
+        self._condition = condition
+        if sorting is None:
+            sorting = self._view.sorting()
+        if sorting is None:
+            key = self._data.key()[0].id()
+            sorting = ((key, pytis.data.ASCENDENT),)
+        self._sorting = sorting
+        if limit is None:
+            limit = self._DEFAULT_LIMIT
+        self._limit = limit
+        self._offset = offset
+        if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
+            self._tree_order_column = sorting[0][0]
+        else:
+            self._tree_order_column = None
 
     def _export_value(self, exporter, row, col):
         g = exporter.generator()
@@ -365,35 +458,110 @@ class BrowseForm(Form):
         uri = self._uri(row, key)
         if uri:
             value = g.link(value, uri)
-        if self._tree_level is not None and col == self._columns[0]:
-            level = row[self._tree_level].value()
-            value = level * g.span('&nbsp;&nbsp;', cls='tree-indent') + '-&nbsp;' + value
+        if self._tree_order_column and col == self._columns[0]:
+            level = len(row[self._tree_order_column].value().split('.')) - 2
+            if level > 0:
+                indent = level * g.span(2*'&nbsp;', cls='tree-indent')
+                value = indent + '&#8227;&nbsp;'+ value
         return value
             
-    def _export_row(self, exporter, row):
-        cells = [concat('<td>', self._export_value(exporter, row, c), '</td>')
+    def _export_row(self, exporter, row, n):
+        cells = [concat('<td%s>' %
+                        (isinstance(row[c.id()].type(), pd.Number) and ' align="right"' or ''),
+                        self._export_value(exporter, row, c),
+                        '</td>')
                  for c in self._columns]
-        return concat('<tr>', cells, '</tr>')
+        return concat('<tr class="%s">' % (n % 2 and 'even' or 'odd'), cells, '</tr>')
 
     def _export_headings(self, exporter):
-        return concat([concat('<th>', c.column_label(), '</th>') for c in self._columns])
+        g = exporter.generator()
+        current_sorting_column, current_dir = self._sorting[0]
+        directions = [dir for dir, name in self._SORTING_DIRECTIONS]
+        def label(col):
+            result = col.column_label()
+            if not col.virtual():
+                cid = col.id()
+                if cid == current_sorting_column:
+                    dir = current_dir
+                else:
+                    dir = None
+                new_dir = directions[(directions.index(dir)+1) % len(directions)]
+                arg = dict(self._SORTING_DIRECTIONS)[new_dir]
+                result = g.link(result, '%s?form-name=%s;sort=%s;dir=%s' %
+                                (self._handler, self._name, cid, arg))
+                if dir:
+                    sign = dir == pytis.data.ASCENDENT and u'\u25be' or u'\u25b4'
+                    result += ' '+ g.span(sign, cls='sorting-sign')
+            return result
+        return concat([concat('<th>', label(c), '</th>') for c in self._columns])
     
-    def _wrap_exported_rows(self, exporter, rows):
-        th = [concat('<th>', c.column_label(), '</th>') for c in self._columns]
-        return concat('<table border="1" class="browse-form">',
+    def _wrap_exported_rows(self, exporter, rows, summary):
+        n = len(self._columns)
+        return concat('<table border="1">',
                       concat('<thead><tr>', self._export_headings(exporter), '</tr></thead>'),
+                      concat('<tfoot><tr><td colspan="%d">' % n, summary, '</td></tr></tfoot>'),
                       '<tbody>', rows, '</tbody>', 
                       '</table>\n', separator="\n")
 
-    def export(self, exporter):
-        if not self._rows:
-            return exporter.generator().strong(_("No records."))
-        rows = []
+    def _export_body(self, exporter):
+        data = self._data
         row = self._row
-        for r in self._rows:
+        limit = self._limit
+        exported_rows = []
+        self._count = count = data.select(condition=self._condition, sort=self._sorting)
+        if limit is not None:
+            page = int(max(0, min(self._offset, count)) / limit)
+            offset = page*limit
+        else:
+            page = 0
+            offset = 0
+        self._page = page
+        n = 0
+        data.skip(offset)
+        while True:
+            r = data.fetchone()
+            if r is None:
+                break
             row.set_row(r)
-            rows.append(self._export_row(exporter, row))
-        return self._wrap_exported_rows(exporter, rows)
+            exported_rows.append(self._export_row(exporter, row, n))
+            n += 1 
+            if limit is not None and n >= limit:
+                break
+        data.close()
+        g = exporter.generator()
+        if n == 0:
+            return g.strong(_("No records."))
+        else:
+            if limit is None or count < self._LIMITS[0]:
+                summary = _("Total records:") +' '+ g.strong(str(count))
+            else:
+                summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
+                            first=g.strong(str(offset+1)),
+                            last=g.strong(str(offset+n)),
+                            total=g.strong(str(count)))
+            return self._wrap_exported_rows(exporter, exported_rows, summary)
+
+    def _export_controls(self, exporter):
+        limit, page, count = self._limit, self._page, self._count
+        if limit is None or count < self._LIMITS[0]:
+            return None
+        g = exporter.generator()
+        offset_id = '%x-offset' % positive_id(self)
+        limit_id = '%x-limit' % positive_id(self)
+        return (g.label(_("Page:"), offset_id),
+                g.select(name='offset', id=offset_id, selected=page*limit, 
+                         options=[(str(i+1), i*limit) for i in range(count/limit+1)],
+                         onchange='this.form.submit(); return true'),
+                '/',
+                g.strong(str(count/limit+1)),
+                g.submit(_("Previous"), name='prev', cls='prev', disabled=(page == 0)),
+                g.submit(_("Next"),  name='next', cls='next', disabled=(page+1)*limit >= count),
+                g.span((g.label(_("Records per page:"), limit_id)+' ',
+                        g.select(name='limit', id=limit_id,
+                                 options=[(str(i), i) for i in self._LIMITS], selected=limit,
+                                 onchange='this.form.submit(); return true')),
+                       cls='limit'),
+                g.submit(_("Go"), cls='hidden'))
         
 
 class CheckRowsForm(BrowseForm, _SubmittableForm):
@@ -409,7 +577,8 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     and the values are the key column values of all checked rows.
     
     """
-    def __init__(self, data, view, resolver, rows, check_columns=(), **kwargs):
+    _DEFAULT_LIMIT = None
+    def __init__(self, data, view, resolver, check_columns=(), **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -421,7 +590,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(CheckRowsForm, self).__init__(data, view, resolver, rows, **kwargs)
+        super(CheckRowsForm, self).__init__(data, view, resolver, **kwargs)
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
             for cid in check_columns:
@@ -439,8 +608,4 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
         else:
             return super(CheckRowsForm, self)._export_value(exporter, row, col)
 
-    def export(self, exporter):
-        g = exporter.generator()
-        content = (super(CheckRowsForm, self).export(exporter),
-                   self._export_buttons(exporter))
-        return g.form(content, action=self._handler, method='POST') + "\n"
+    
