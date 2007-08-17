@@ -5,6 +5,17 @@
 ; uvozen "* BUGFIX:"
 
 
+2007-08-17  Tomas Cerha  <cerha@brailcom.org>
+
+	Webové formuláøe nyní podporují dìlení dlouhých výpisù do stránek
+	a tøídìní záznamù.
+
+	Vstupní políèko pro zadání hesla nyní pøi editaci stávajícího
+	záznamu zobrazuje "fale¹né" heslo.  Heslo je zobrazeno ve formì
+	puntíkù, tak¾e na obsahu nezále¾í, jde jen o to, aby u¾ivatel
+	nemìl pocit, ¾e heslo není vyplnìno.  Políèko je nyní prázdné
+	pouze pokud heslo skuteènì nebylo vyplnìno.
+	
 2007-08-16  Tomas Cerha  <cerha@brailcom.org>
 
 	Bylo implementováno nové vstupní políèko pro zadání hesla s
