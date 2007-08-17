@@ -338,7 +338,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             if transaction is None or transaction.open():
                 self._needs_validation = False
                 valid = self._validate() is None
-                print "---", self.id(), valid, self._valid
                 if valid != self._valid:
                     self._valid = valid
                     self._on_validity_change()
