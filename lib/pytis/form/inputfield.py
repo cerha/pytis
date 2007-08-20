@@ -832,12 +832,17 @@ class EnumerationField(InputField):
     enumeration of values, such as combo boxes, radio buttons etc.
 
     """
+    _INVALID_SELECTION = wx.NOT_FOUND
+    
     def _choices(self):
         return [x[1] for x in self._row.enumerate(self.id())]
 
     def _get_value(self):
         i = self._ctrl.GetSelection()
-        value = self._type.enumerator().values()[i]
+        if i == wx.NOT_FOUND:
+            value = None
+        else:
+            value = self._type.enumerator().values()[i]
         return self._type.export(value)
 
     def _set_value(self, value):
@@ -846,20 +851,21 @@ class EnumerationField(InputField):
         try:
             selection = values.index(value)
         except ValueError:
-            selection = wx.NOT_FOUND
+            selection = self._INVALID_SELECTION
         self._ctrl.SetSelection(selection)
         self._on_change() # call manually, since SetSelection() doesn't emit an event.
 
 
 class ChoiceField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.Choice'."""
-
+    _INVALID_SELECTION = 0
+    
     def _create_ctrl(self):
         control = wx.Choice(self._parent, choices=self._choices())
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
-
     
+
 class RadioBoxField(Unlabeled, EnumerationField):
     """Field with a fixed enumeration represented by 'wx.RadioBox'.
 
