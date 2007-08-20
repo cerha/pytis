@@ -2718,6 +2718,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         data = self._pg_query(self._pdbb_function_call % arguments,
                               transaction=transaction,
                               outside_transaction=outside_transaction,
+                              backup=True
                               )
         result = self._pg_make_row_from_raw_data(data)
         log(EVENT, ('Výsledek volání funkce `%s\':' % self._name), result)
