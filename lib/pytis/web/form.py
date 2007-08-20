@@ -82,7 +82,7 @@ class Form(lcg.Content):
     _CSS_CLS = None
     
     def __init__(self, data, view, resolver, row=None, prefill=None, new=False, link_provider=None,
-                 handler='#', hidden=(), name=None, **kwargs):
+                 handler='#', hidden=(), submit=None, name=None, **kwargs):
         super(Form, self).__init__(**kwargs)
         assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
@@ -98,6 +98,7 @@ class Form(lcg.Content):
                                  prefill=self._valid_prefill(), new=new)
         self._handler = handler
         self._hidden = list(hidden)
+        self._submit = submit or ((_("Submit"), None),)
         self._name = name
         self._enctype = None
 
@@ -151,8 +152,9 @@ class _SubmittableForm(Form):
     def _export_submit(self, exporter):
         g = exporter.generator()
         return [g.hidden(k, v) for k, v in self._hidden] + \
-               [g.hidden('form-name', self._name),
-                g.submit(_("Submit")), g.reset(_("Reset"))]
+               [g.hidden('form-name', self._name)] + \
+               [g.submit(label, name=name) for label, name in self._submit] + \
+               [g.reset(_("Reset"))]
     
     
 class LayoutForm(Form):
