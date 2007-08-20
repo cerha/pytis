@@ -1550,56 +1550,44 @@ class FieldSpec(object):
     dokumentaci tøíd 'EditForm', 'ListForm', 'InputField' apod.
 
     """
-    def __init__(self, id, label='', column_label=None, descr=None,
-                 virtual=False, dbcolumn=None, type=None, type_=None,
-                 width=None, column_width=None, disable_column=False,
-                 fixed=False, height=None, editable=None, compact=False,
-                 nocopy=False, default=None, computer=None, line_separator=';',
-                 codebook=None, display=None, display_size=None,
-                 allow_codebook_insert=False, codebook_insert_spec=None,
-                 codebook_runtime_filter=None, selection_type=None,
-                 orientation=Orientation.VERTICAL, post_process=None,
-                 filter=None, filter_list=None, style=None, link=(),
-                 thumbnail=None, **kwargs):
-        """Inicializace a doplnìní výchozích hodnot atributù.
 
-        Argumenty:
+    def __init__(self, id=None, label='', column_label=None, inherit=None, **kwargs):
+        """Initialize field specification.
 
-          id -- textový identifikátor pole; neprázdný øetìzec.  Pod tímto
-            identifikátorem je potom pole pøístupné ve v¹ech operacích.
+        Arguments:
+
+          id -- field identifier as a string.  This identifier is used to refer to the field within
+            all pytis operations.  The identifier is also used as the name of the related column in
+            the underlying data object by default, but this may be overriden by the 'dbcolumn'
+            argument.
           
-          label -- text nápisu u vstupního pole jako øetìzec.  Smí být uvádìn
-            té¾ jako pozièní argument.  Poøadí je zaruèeno.
+          label -- user visible field label as a plain or unicode string.  This argument (unlike
+            the remaining arguments) may also be passed as positional.
+
+          inherit -- may be used to iherit from other field specification.  If a 'FieldSpec'
+            instance is passed in this argument, all constructor arguments not overriden in the
+            current constructor call will be inheritred from that instance.
           
-          column_label -- nadpis sloupce, je-li políèko ve sloupci, jako
-            string.  Je-li 'None', je pou¾ita hodnota 'label'.
+          column_label -- optional field label in the column view.  The column label is the same as
+            'label' by default, but may be overriden by passing a plain or unicode string value.
             
-          descr -- podrobnìj¹í popis v rozsahu cca jedné vìty vhodný napøíklad
-            pro zobrazení bublinové nápovìdy.
+          descr -- brief field description in the extent of approx. one sentence, suitable for
+            example for tooltip text.
 
-          virtual -- boolovský pøíznak.  Pokud je pravdivý, jde o virtuální
-            políèko bez vazby na datový objekt.  Hodnota virtuálního políèka je
-            nejèastìji vypoètena pomocí computeru (viz specifikaèní parametr
-            'computer'.  Vzhledem k tomu, ¾e datový typ virtuálního políèka
-            nelze urèit automaticky (z datového objektu), je výchozí typ
-            stanoven napevno na 'pytis.data.String()'.  Pokud to nevyhovuje, je
-            tøeba typ urèit explicitnì (viz specifikaèní parametr 'type').
+          virtual -- boolean flag indicating that the field is not bound to the underlying data
+            object.  The value of a virtual field will most often be computed on the fly by a
+            'Computer'.  See the argument 'computer' for more information.  Since the data type of
+            a virtual field can not be obtained form the data object, the hardcoded default type of
+            virtual fields is 'pytis.data.String'.  Use the 'type' argument to override it.
 
-          dbcolumn -- název pøíslu¹ného databázového sloupce.  Pokud není
-            urèen, je název databázového sloupce shodný s identifikátorem
-            políèka.  Toho je také doporuèováno vyu¾ívat pokud není nìjaký
-            záva¾ný dùvod, aby byl název sloupce jiný, ne¾ identifikáor
-            políèka.
-          
-          type -- explicitní urèení typu hodnoty, se kterou pracuje toto
-            políèko; instance 'pytis.data.Type'.  Výchozí datový typ je urèen
-            podle odpovídajícího sloupeèku datového objektu.  Pokud je v¹ak
-            políèko virtuální (viz ní¾e), je nutné typ urèit explicitnì (s
-            výjimkou virtuálních políèek pou¾ívajících 'CbComputer').  Typ
-            mù¾eme také explicitnì pøedefinovat, pokud chceme pro prezentaci
-            hodnot pou¾ít jiný typ, ne¾ výchozí typ datového rozhraní (ten v¹ak
-            *musí* být kompatibilní s typem datového rozhraní).  Viz také
-            metoda 'type()'.
+          dbcolumn -- name of the related column in the underlying data object.  The name is the
+            same as the field identifier by default.  It is not recommended to use different column
+            name than the field identifier unless there is a serious reason for it.
+
+          type -- explicit data type as a 'pytis.data.Type' instance.  The data type is normally
+            determined from the underlying data object, but you may need to define the type
+            explicitly to improve field presentation or pass additional validation constraints.
+            Given type, however, must be compatible with the type used by the data object.
             
           width -- ¹íøka pole ve znacích; kladné celé èíslo, nebo 0,
             v kterém¾to pøípadì je pole skryté.  Je-li 'None', bude pou¾ita
@@ -1778,6 +1766,26 @@ class FieldSpec(object):
         pomocí specifikátoru 'editable'.
 
         """
+        for key, value in (('id', id), ('label', label) ,('column_label', column_label)):
+            if value is not None:
+                kwargs[key] = value
+        self._kwargs = kwargs
+        if inherit:
+            assert isinstance(inherit, FieldSpec), inherit
+            kwargs = dict(inherit._kwargs, **kwargs)
+        self._init(**kwargs)
+                 
+    def _init(self, id, label='', column_label=None, descr=None,
+              virtual=False, dbcolumn=None, type=None, type_=None,
+              width=None, column_width=None, disable_column=False,
+              fixed=False, height=None, editable=None, compact=False,
+              nocopy=False, default=None, computer=None, line_separator=';',
+              codebook=None, display=None, display_size=None,
+              allow_codebook_insert=False, codebook_insert_spec=None,
+              codebook_runtime_filter=None, selection_type=None,
+              orientation=Orientation.VERTICAL, post_process=None,
+              filter=None, filter_list=None, style=None, link=(),
+              thumbnail=None, **kwargs):
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
         self._id = id

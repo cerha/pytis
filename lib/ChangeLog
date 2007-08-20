@@ -1,3 +1,14 @@
+2007-08-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec.__init__): New argument
+	'inherit' to allow inheritance.
+
+	* pytis/util/configuration.py
+	(Configuration.dump_config_template): Wrong argument name fixed.
+
+	* pytis/form/inputfield.py: Handle invalid default values of
+	enumeration fields.
+
 2007-08-20  Pavel Hanak  <hanak@alfik.akont.xx>
 
 	* pytis/data/postgresql.py (DBPostgreSQLFunction.call): Restore

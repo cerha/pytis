@@ -7,6 +7,23 @@
 
 2007-08-20  Tomas Cerha  <cerha@brailcom.org>
 
+	Nový argument 'inherit' konstruktoru 'FieldSpec' umo¾òuje pøedat
+	jinou instanci 'FieldSpec', ze které budou zdìdìny v¹echny
+	argumenty konstruktoru, které nejsou pøedefinovány v daném
+	volání.  Základní pou¾ití napø:
+
+     	  f1 = Field('pole1', _("Název"), maxlen=4)
+    	  f2 = Field(inherit=f1, maxlen=8)
+
+	O nìco praktiètìj¹í pøíklad:
+
+	  def fields(self):
+	      inherited = dict([(f.id(), f) for f in super(..., self).fields()])
+	      return [
+	          Field(inherit=inherited['pole1'], maxlen=8),
+	          Field('pole2', _("Nové políèko"))] +
+	          [inherited[id] for id in ('xx', 'yy', ...)]
+
 	Vstupní políèka typu CHOICE a RADIO se nyní chovají lépe, pokud
 	výchozí hodnota není ve výbìru.  Hodnota políèka pøi odeslání
 	formuláøe nyní v¾dy odpovídá zobrazené hodnotì políèka, tøeba¾e

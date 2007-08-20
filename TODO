@@ -1,10 +1,5 @@
 CHYBY:
 
- * Pøi sestavování datového objektu nìkdy dojde k zatuhnutí celé aplikace.
-
-   Napø. v ISASu se tak stává cca pøi ka¾dém pátém spu¹tìní...  Po zabití a novém spu¹tìní v¹e
-   funguje normálnì.
-
  * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
 
  * Zpráva "Vlo¾ený záznam se neobjevil v aktualním náhledu"
