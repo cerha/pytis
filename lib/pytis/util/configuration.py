@@ -930,7 +930,7 @@ class Configuration(object):
         from textwrap import wrap
         import pprint
         pp = pprint.PrettyPrinter()
-        for option in self.options(sorted=True):
+        for option in self.options(sort=True):
             if option.visible():
                 stream.write('# %s\n' % option.description())
                 doc = option.documentation()
