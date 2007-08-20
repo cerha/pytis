@@ -1,5 +1,8 @@
 2007-08-20  Pavel Hanak  <hanak@alfik.akont.xx>
 
+	* pytis/data/postgresql.py (DBPostgreSQLFunction.call): Restore
+	previous behavior (do not backup function calls).
+
 	* pytis/data/postgresql.py (DBPostgreSQLFunction.call): Do backup
 	also for function calls.
 
