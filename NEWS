@@ -5,6 +5,14 @@
 ; uvozen "* BUGFIX:"
 
 
+2007-08-20  Tomas Cerha  <cerha@brailcom.org>
+
+	Vstupní políèka typu CHOICE a RADIO se nyní chovají lépe, pokud
+	výchozí hodnota není ve výbìru.  Hodnota políèka pøi odeslání
+	formuláøe nyní v¾dy odpovídá zobrazené hodnotì políèka, tøeba¾e
+	výchozí hodnota byla jiná.  Pøednost tedy má to, co vidí u¾ivatel, ne
+	to, co si myslí aplikace...
+	
 2007-08-17  Tomas Cerha  <cerha@brailcom.org>
 
 	Webové formuláøe nyní podporují dìlení dlouhých výpisù do stránek
