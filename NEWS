@@ -4,7 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-08-21  Tomas Cerha  <cerha@brailcom.org>
 
+	Nová tøída `Fields' v `pytis.extensions' omo¾òuje dále zjednodu¹it
+	psaní odvozených specifikací políèek.  Více viz docstring tøídy.
+	
 2007-08-20  Tomas Cerha  <cerha@brailcom.org>
 
 	Nový argument 'inherit' konstruktoru 'FieldSpec' umo¾òuje pøedat
