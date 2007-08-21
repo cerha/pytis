@@ -461,10 +461,12 @@ class BrowseForm(Form):
         if uri:
             value = g.link(value, uri)
         if self._tree_order_column and col == self._columns[0]:
-            level = len(row[self._tree_order_column].value().split('.')) - 2
-            if level > 0:
-                indent = level * g.span(2*'&nbsp;', cls='tree-indent')
-                value = indent + '&bull;&nbsp;'+ value # &#8227 does not work in MSIE
+            order = row[self._tree_order_column].value()
+            if order is not None:
+                level = len(order.split('.')) - 2
+                if level > 0:
+                    indent = level * g.span(2*'&nbsp;', cls='tree-indent')
+                    value = indent + '&bull;&nbsp;'+ value # &#8227 does not work in MSIE
         return value
             
     def _export_row(self, exporter, row, n):
