@@ -1,3 +1,8 @@
+2007-08-21  Pavel Hanak  <hanak@alfik.akont.xx>
+
+	* pytis/form/form.py (EditForm._commit_form): Set correct
+	transaction for result row.
+
 2007-08-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Use safer unicode characters to avoid

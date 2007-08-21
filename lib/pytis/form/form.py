@@ -1790,10 +1790,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 def commit():
                     self._transaction.commit()
                 db_operation(commit)
-                if not close:
-                    self._transaction = self._default_transaction()
-                else:
+                if close:
                     self._transaction = None
+                else:
+                    self._transaction = self._default_transaction()
                 self._row.set_transaction(self._transaction)
             return True
         else:
