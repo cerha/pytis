@@ -1,3 +1,7 @@
+2007-08-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (Fields): New class.
+
 2007-06-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/defs.py: Added support for checking dual
