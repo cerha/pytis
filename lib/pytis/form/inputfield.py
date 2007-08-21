@@ -792,7 +792,7 @@ class PasswordField(StringField):
 
     def _validate(self):
         value = self._get_value()
-        if value == self._ORIGINAL_VALUE and not self._row.new():
+        if value == self._ORIGINAL_VALUE:
             return None
         return self._row.validate(self.id(), value, verify=self._ctrl2.GetValue())
 
