@@ -1769,10 +1769,10 @@ class FieldSpec(object):
         for key, value in (('id', id), ('label', label) ,('column_label', column_label)):
             if value is not None:
                 kwargs[key] = value
-        self._kwargs = kwargs
         if inherit:
             assert isinstance(inherit, FieldSpec), inherit
             kwargs = dict(inherit._kwargs, **kwargs)
+        self._kwargs = kwargs
         self._init(**kwargs)
                  
     def _init(self, id, label=None, column_label=None, descr=None,
