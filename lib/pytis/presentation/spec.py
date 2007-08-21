@@ -498,7 +498,7 @@ class GroupSpec(object):
 
         """
         assert is_sequence(items)
-        assert label is None or is_anystring(label)
+        assert label is None or isinstance(label, (str, unicode))
         assert type(gap) == type(0)
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
@@ -507,7 +507,7 @@ class GroupSpec(object):
             # není tøeba kontrolovat rekurzivnì, proto¾e kontrola probìhne pro
             # ka¾dou instanci na její úrovni...
             assert isinstance(item, GroupSpec) or isinstance(item, Button) \
-                   or is_anystring(item), (item, label)
+                   or isinstance(item, (str, unicode)), (item, label)
         self._items = items
         self._label = label
         self._orientation = orientation
@@ -626,7 +626,7 @@ class LayoutSpec(object):
         podléhá jazykové konverzi.
 
         """
-        assert caption is None or is_anystring(caption)
+        assert caption is None or isinstance(caption, (str, unicode))
         assert isinstance(group, GroupSpec)
         assert order is None or is_sequence(order)
         self._caption = caption
@@ -1551,7 +1551,7 @@ class FieldSpec(object):
 
     """
 
-    def __init__(self, id=None, label='', column_label=None, inherit=None, **kwargs):
+    def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
         """Initialize field specification.
 
         Arguments:
@@ -1775,7 +1775,7 @@ class FieldSpec(object):
             kwargs = dict(inherit._kwargs, **kwargs)
         self._init(**kwargs)
                  
-    def _init(self, id, label='', column_label=None, descr=None,
+    def _init(self, id, label=None, column_label=None, descr=None,
               virtual=False, dbcolumn=None, type=None, type_=None,
               width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, compact=False,
@@ -1793,8 +1793,8 @@ class FieldSpec(object):
         if type_ is not None:
             assert type is None
             type = type_
-        assert label is None or is_anystring(label)
-        assert descr is None or is_anystring(descr)
+        assert label is None or isinstance(label, (str, unicode))
+        assert descr is None or isinstance(descr, (str, unicode))
         assert type is None or isinstance(type, pytis.data.Type)
         assert isinstance(virtual, bool)
         assert isinstance(disable_column, bool)
@@ -1839,13 +1839,17 @@ class FieldSpec(object):
                                'constraints', 'enumerator', 'validation_messages', 'precision',
                                'minlen', 'maxlen', 'format', 'mindate', 'maxdate', 'unique'), \
                     "Invalid FieldSpec argument for field '%s': %r" % (id,arg)
+        if label is None:
+            label = id
         self._label = label
+        if column_label is None:
+            column_label = label
+        self._column_label = column_label
         self._descr = descr
         self._width = width
         if column_width is None and width != 0:
             column_width = width
         self._column_width = column_width
-        self._column_label = column_label
         if virtual and type is None:
             type = pytis.data.String()
         self._virtual = virtual
@@ -1922,16 +1926,8 @@ class FieldSpec(object):
         return self._label
 
     def column_label(self):
-        """Vra» textový popisek pro nadpis sloupce v tabulkovém zobrazení.
-
-        Pokud nebyl nadpis sloupce (`column_width') v konstruktoru
-        specifikován, bude vrácen popisek políèka (metoda `label()').
-            
-        """
-        if self._column_label is None:
-            return self.label()
-        else:
-            return self._column_label
+        """Vra» textový popisek pro nadpis sloupce v tabulkovém zobrazení."""
+        return self._column_label
 
     def descr(self):
         """Vra» podrobnìj¹í popis (nápovìdu) tohoto pole jako string."""
