@@ -1,3 +1,8 @@
+2007-08-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Use safer unicode characters to avoid
+	problems in MSIE.
+
 2007-08-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (FieldSpec.__init__): New argument

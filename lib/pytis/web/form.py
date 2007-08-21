@@ -464,7 +464,7 @@ class BrowseForm(Form):
             level = len(row[self._tree_order_column].value().split('.')) - 2
             if level > 0:
                 indent = level * g.span(2*'&nbsp;', cls='tree-indent')
-                value = indent + '&#8227;&nbsp;'+ value
+                value = indent + '&bull;&nbsp;'+ value # &#8227 does not work in MSIE
         return value
             
     def _export_row(self, exporter, row, n):
@@ -492,7 +492,8 @@ class BrowseForm(Form):
                 result = g.link(result, '%s?form-name=%s;sort=%s;dir=%s' %
                                 (self._handler, self._name, cid, arg))
                 if dir:
-                    sign = dir == pytis.data.ASCENDENT and u'\u25be' or u'\u25b4'
+                    # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
+                    sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
         return concat([concat('<th>', label(c), '</th>') for c in self._columns])
