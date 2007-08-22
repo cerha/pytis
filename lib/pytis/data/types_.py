@@ -1266,8 +1266,7 @@ class Binary(Limited):
 
             Raises 'ValidationError' if the data format is invalid.
 
-            The original buffer contents remains unchanged in case of any
-            error.
+            The original buffer contents remains unchanged in case of any error.
             
             """
             self._path = path
@@ -1282,8 +1281,7 @@ class Binary(Limited):
             
                 
     def __init__(self, enumerator=None, **kwargs):
-        assert enumerator is None, ("Enumerators may not be used "+
-                                    "in binary data types")
+        assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self).__init__(**kwargs)
         
     def _validate(self, object, filename=None, type=None, **kwargs):
