@@ -43,6 +43,8 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
+ * Omezit max. ¹íøku okna èíselníku
+
  * Pokud je default hodnota políèka typu CHOICE None, pøidat do výbìru None polo¾ku
 
  * Ve specifikaci unique datového typu pøedávat datový objekt

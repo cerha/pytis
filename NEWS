@@ -8,6 +8,9 @@
 
 	Nová tøída `Fields' v `pytis.extensions' omo¾òuje dále zjednodu¹it
 	psaní odvozených specifikací políèek.  Více viz docstring tøídy.
+
+	* BUGFIX: Dìdiènost políèek nyní funguje i víceúrovòovì - je mo¾nì
+	dìdit s ji¾ zdìdìného políèka.
 	
 2007-08-20  Tomas Cerha  <cerha@brailcom.org>
 
