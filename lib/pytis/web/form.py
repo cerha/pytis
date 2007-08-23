@@ -360,7 +360,7 @@ class EditForm(LayoutForm, _SubmittableForm):
 class BrowseForm(Form):
     _CSS_CLS = 'browse-form'
     _HTTP_METHOD = 'GET'
-    _LIMITS = (10, 50, 100, 200, 500)
+    _LIMITS = (25, 50, 100, 200, 500)
     _DEFAULT_LIMIT = 50
     _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
                            (pytis.data.DESCENDANT, 'desc'),
@@ -557,10 +557,9 @@ class BrowseForm(Form):
         limit_id = '%x-limit' % positive_id(self)
         result = (g.label(_("Page:"), offset_id),
                   g.select(name='offset', id=offset_id, selected=page*limit, 
-                           options=[(str(i+1), i*limit) for i in range(count/limit+1)],
-                           onchange='this.form.submit(); return true'),
-                  '/',
-                  g.strong(str(count/limit+1)),
+                           options=[(str(i+1), i*limit) for i in range(count/min(limit, count))],
+                           onchange='this.form.submit(); return true'), '/',
+                  g.strong(str(count/min(limit, count))),
                   g.submit(_("Previous"), name='prev', cls='prev', title=_("Go to previous page"),
                            disabled=(page == 0)),
                   g.submit(_("Next"),  name='next', cls='next', title=_("Go to next page"),
@@ -568,8 +567,7 @@ class BrowseForm(Form):
                   g.span((g.label(_("Records per page:"), limit_id)+' ',
                           g.select(name='limit', id=limit_id,
                                    options=[(str(i), i) for i in self._LIMITS], selected=limit,
-                                   onchange='this.form.submit(); return true')),
-                         cls='limit'))
+                                   onchange='this.form.submit(); return true')), cls='limit'))
         if len(self._sorting) == 1:
             cid, dir = self._sorting[0]
             result += (g.hidden('sort', cid),
