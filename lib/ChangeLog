@@ -1,3 +1,12 @@
+2007-08-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/__init__.py: Import `request'.
+
+	* pytis/web/form.py: Make use of the Request API.  Keep current
+	sorting and limit on movement.
+
+	* pytis/web/request.py: New file.
+
 2007-08-21  Pavel Hanak  <hanak@alfik.akont.xx>
 
 	* pytis/form/form.py (EditForm._commit_form): Set correct
@@ -1945,4 +1954,3 @@
 
 	* pytis/form/application.py (Application._cmd_run_procedure): New argument `enabled'.
 	(Application._can_run_procedure): New method.
-

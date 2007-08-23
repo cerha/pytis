@@ -153,8 +153,9 @@ class _SubmittableForm(Form):
         g = exporter.generator()
         return [g.hidden(k, v) for k, v in self._hidden] + \
                [g.hidden('form-name', self._name)] + \
-               [g.submit(label, name=name) for label, name in self._submit] + \
-               [g.reset(_("Reset"))]
+               [g.submit(label, name=name, title=_("Submit the form"))
+                for label, name in self._submit] + \
+               [g.reset(_("Reset", title=_("Undo all changes")))]
     
     
 class LayoutForm(Form):
@@ -359,24 +360,23 @@ class EditForm(LayoutForm, _SubmittableForm):
 class BrowseForm(Form):
     _CSS_CLS = 'browse-form'
     _HTTP_METHOD = 'GET'
-    _LIMITS = (25, 50, 100, 200, 500)
+    _LIMITS = (10, 50, 100, 200, 500)
     _DEFAULT_LIMIT = 50
     _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
                            (pytis.data.DESCENDANT, 'desc'),
                            (None, 'none'))
 
     @classmethod
-    def form_args(cls, params):
-        """Convert form state parameters from the request to form constructor arguments.
+    def form_args(cls, req):
+        """Convert request form state parameters to form constructor arguments.
 
-        All arguments not related to form state are ignored.  A dictionary of decoded query
-        arguments is expected.  Keys are argument names (strings) and values are string or unicode
-        representations of the corresponding values.
+        The 'req' argument is an instance of a class implementing the 'Request' API.  All request
+        parameters not related to form state are ignored.
 
         Returns a dictionary of valid constructor keyword arguments related to form state.
 
         """
-        limit, offset = [params.has_key(arg) and params[arg].isdigit() and int(params[arg]) or None
+        limit, offset = [req.param(arg, '').isdigit() and int(req.param(arg)) or None
                          for arg in ('limit', 'offset')]
         if limit not in cls._LIMITS:
             limit = None
@@ -385,15 +385,15 @@ class BrowseForm(Form):
         else:
             if offset is None:
                 offset = 0
-            if params.has_key('next'):
+            if req.has_param('next'):
                 offset += limit
-            if params.has_key('prev') and offset >= limit:
+            if req.has_param('prev') and offset >= limit:
                 offset -= limit
         sorting = None
-        if params.has_key('sort') and params.has_key('dir'):
-            cid = str(params['sort'])
+        if req.has_param('sort') and req.has_param('dir'):
+            cid = str(req.param('sort'))
             trans = dict([(name, dir) for dir, name in cls._SORTING_DIRECTIONS])
-            dir = trans.get(params['dir'])
+            dir = trans.get(req.param('dir'))
             if dir:
                 sorting = ((cid, dir),)
         return dict(limit=limit, offset=offset, sorting=sorting)
@@ -491,8 +491,10 @@ class BrowseForm(Form):
                     dir = None
                 new_dir = directions[(directions.index(dir)+1) % len(directions)]
                 arg = dict(self._SORTING_DIRECTIONS)[new_dir]
-                result = g.link(result, '%s?form-name=%s;sort=%s;dir=%s' %
-                                (self._handler, self._name, cid, arg))
+                uri = '%s?form-name=%s;sort=%s;dir=%s' % (self._handler, self._name, cid, arg)
+                if self._limit is not None:
+                    uri += ';limit=%s' % self._limit
+                result = g.link(result, uri)
                 if dir:
                     # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
@@ -553,20 +555,26 @@ class BrowseForm(Form):
         g = exporter.generator()
         offset_id = '%x-offset' % positive_id(self)
         limit_id = '%x-limit' % positive_id(self)
-        return (g.label(_("Page:"), offset_id),
-                g.select(name='offset', id=offset_id, selected=page*limit, 
-                         options=[(str(i+1), i*limit) for i in range(count/limit+1)],
-                         onchange='this.form.submit(); return true'),
-                '/',
-                g.strong(str(count/limit+1)),
-                g.submit(_("Previous"), name='prev', cls='prev', disabled=(page == 0)),
-                g.submit(_("Next"),  name='next', cls='next', disabled=(page+1)*limit >= count),
-                g.span((g.label(_("Records per page:"), limit_id)+' ',
-                        g.select(name='limit', id=limit_id,
-                                 options=[(str(i), i) for i in self._LIMITS], selected=limit,
-                                 onchange='this.form.submit(); return true')),
-                       cls='limit'),
-                g.submit(_("Go"), cls='hidden'))
+        result = (g.label(_("Page:"), offset_id),
+                  g.select(name='offset', id=offset_id, selected=page*limit, 
+                           options=[(str(i+1), i*limit) for i in range(count/limit+1)],
+                           onchange='this.form.submit(); return true'),
+                  '/',
+                  g.strong(str(count/limit+1)),
+                  g.submit(_("Previous"), name='prev', cls='prev', title=_("Go to previous page"),
+                           disabled=(page == 0)),
+                  g.submit(_("Next"),  name='next', cls='next', title=_("Go to next page"),
+                           disabled=(page+1)*limit >= count),
+                  g.span((g.label(_("Records per page:"), limit_id)+' ',
+                          g.select(name='limit', id=limit_id,
+                                   options=[(str(i), i) for i in self._LIMITS], selected=limit,
+                                   onchange='this.form.submit(); return true')),
+                         cls='limit'))
+        if len(self._sorting) == 1:
+            cid, dir = self._sorting[0]
+            result += (g.hidden('sort', cid),
+                       g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir]))
+        return result + (g.submit(_("Go"), cls='hidden'),)
         
 
 class CheckRowsForm(BrowseForm, _SubmittableForm):
