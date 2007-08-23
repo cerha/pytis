@@ -21,7 +21,7 @@ cvs-install: compile translations $(SHARE)/pytis
 cvs-update: do-cvs-update compile translations
 
 do-cvs-update:
-	cvs update
+	cvs update -dP
 
 $(SHARE)/pytis:
 	mkdir $(SHARE)/pytis

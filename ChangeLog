@@ -1,3 +1,7 @@
+2007-08-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* Makefile: Pass -dP to cvs update.
+
 2007-08-09  Pavel Hanak  <hanak@alfik.akont.xx>
 
 	* tools/gensql.py (_GsqlViewNG._format_rule.get_key_column):
