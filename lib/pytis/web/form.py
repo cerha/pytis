@@ -360,46 +360,12 @@ class EditForm(LayoutForm, _SubmittableForm):
 class BrowseForm(Form):
     _CSS_CLS = 'browse-form'
     _HTTP_METHOD = 'GET'
-    _LIMITS = (25, 50, 100, 200, 500)
-    _DEFAULT_LIMIT = 50
     _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
                            (pytis.data.DESCENDANT, 'desc'),
                            (None, 'none'))
 
-    @classmethod
-    def form_args(cls, req):
-        """Convert request form state parameters to form constructor arguments.
-
-        The 'req' argument is an instance of a class implementing the 'Request' API.  All request
-        parameters not related to form state are ignored.
-
-        Returns a dictionary of valid constructor keyword arguments related to form state.
-
-        """
-        limit, offset = [req.param(arg, '').isdigit() and int(req.param(arg)) or None
-                         for arg in ('limit', 'offset')]
-        if limit not in cls._LIMITS:
-            limit = None
-        if limit is None:
-            offset = 0
-        else:
-            if offset is None:
-                offset = 0
-            if req.has_param('next'):
-                offset += limit
-            if req.has_param('prev') and offset >= limit:
-                offset -= limit
-        sorting = None
-        if req.has_param('sort') and req.has_param('dir'):
-            cid = str(req.param('sort'))
-            trans = dict([(name, dir) for dir, name in cls._SORTING_DIRECTIONS])
-            dir = trans.get(req.param('dir'))
-            if dir:
-                sorting = ((cid, dir),)
-        return dict(limit=limit, offset=offset, sorting=sorting)
-    
     def __init__(self, data, view, resolver, columns=None, condition=None, sorting=None,
-                 limit=None, offset=0, **kwargs):
+                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, req=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -415,29 +381,64 @@ class BrowseForm(Form):
           
           limit -- maximal number of rows per page.  If the current condition produces more rows,
             the listing will be split into pages and the form will include controls for navigation
-            between these pages.  None value
-          
+            between these pages.  None value results in an unlimited list -- all records will be
+            printed on just one page and paging controls will be disabled.  The request argument
+            'limit' overrides this value if 'req' is passed and the value is one of the valid
+            'limits' (see below).
+
+          limits -- a sequence of available 'limit' values.  These values are used to create the
+            limit selection control and also determine valid values of the 'limit' request
+            parameter.
+            
           offset -- determines the page within paged listing.  The number indicates the offset of
             the record within all the records of the current select.  The page, which contains this
             record will be displayed if possible.  If not (the listing is shorter than given
-            number), the nearest page is displayed.
-           
+            number), the nearest page is displayed.  The request argument 'offset' overrides this
+            value if 'req' is passed.  Also request arguments 'next' and 'prev' modify this value.
+
+          req -- instance of a class implementing the 'Request' API.  The form state (sorting,
+            paging atc) will be set up according to the reqest parameters, if the request includes
+            them (form controls were used to submit the form).
+
+            
         See the parent classes for definition of the remaining arguments.
 
         """
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         self._columns = [view.field(id) for id in columns or view.columns()]
         self._condition = condition
+        if req is not None and req.params.get('form-name') != self._name:
+            req = None
+        # Determine the current sorting
+        if req is not None and req.has_param('sort') and req.has_param('dir'):
+            cid = str(req.param('sort'))
+            dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(req.param('dir'))
+            if self._data.find_column(cid) and dir:
+                sorting = ((cid, dir),)
         if sorting is None:
             sorting = self._view.sorting()
         if sorting is None:
             key = self._data.key()[0].id()
             sorting = ((key, pytis.data.ASCENDENT),)
         self._sorting = sorting
-        if limit is None:
-            limit = self._DEFAULT_LIMIT
+        # Determine the limit and offset
+        self._limits = limits
+        if req is not None and req.param('limit', '').isdigit():
+            requested_limit = int(req.param('limit'))
+            if requested_limit in limits:
+                limit = requested_limit
         self._limit = limit
+        if limit is None:
+            offset = 0
+        elif req is not None:
+            if req.param('offset', '').isdigit():
+                offset = int(req.param('offset'))
+            if req.has_param('next'):
+                offset += limit
+            if req.has_param('prev') and offset >= limit:
+                offset -= limit
         self._offset = offset
+        # Determine whether tree emulation should be used
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
         else:
@@ -491,10 +492,8 @@ class BrowseForm(Form):
                     dir = None
                 new_dir = directions[(directions.index(dir)+1) % len(directions)]
                 arg = dict(self._SORTING_DIRECTIONS)[new_dir]
-                uri = '%s?form-name=%s;sort=%s;dir=%s' % (self._handler, self._name, cid, arg)
-                if self._limit is not None:
-                    uri += ';limit=%s' % self._limit
-                result = g.link(result, uri)
+                result = g.link(result, g.uri(self._handler, ('form-name', self._name), sort=cid,
+                                              dir=arg, limit=self._limit, xxx=None))
                 if dir:
                     # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
@@ -539,7 +538,7 @@ class BrowseForm(Form):
         if n == 0:
             return g.strong(_("No records."))
         else:
-            if limit is None or count < self._LIMITS[0]:
+            if limit is None or count < self._limits[0]:
                 summary = _("Total records:") +' '+ g.strong(str(count))
             else:
                 summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
@@ -550,7 +549,7 @@ class BrowseForm(Form):
 
     def _export_controls(self, exporter):
         limit, page, count = self._limit, self._page, self._count
-        if limit is None or count < self._LIMITS[0]:
+        if limit is None or count < self._limits[0]:
             return None
         g = exporter.generator()
         offset_id = '%x-offset' % positive_id(self)
@@ -566,8 +565,10 @@ class BrowseForm(Form):
                            disabled=(page+1)*limit >= count),
                   g.span((g.label(_("Records per page:"), limit_id)+' ',
                           g.select(name='limit', id=limit_id,
-                                   options=[(str(i), i) for i in self._LIMITS], selected=limit,
+                                   options=[(str(i), i) for i in self._limits], selected=limit,
                                    onchange='this.form.submit(); return true')), cls='limit'))
+        if self._name is not None:
+            result += (g.hidden('form-name', self._name),)
         if len(self._sorting) == 1:
             cid, dir = self._sorting[0]
             result += (g.hidden('sort', cid),
@@ -588,8 +589,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     and the values are the key column values of all checked rows.
     
     """
-    _DEFAULT_LIMIT = None
-    def __init__(self, data, view, resolver, check_columns=(), **kwargs):
+    def __init__(self, data, view, resolver, check_columns=(), limits=(), limit=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -601,7 +601,8 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(CheckRowsForm, self).__init__(data, view, resolver, **kwargs)
+        super(CheckRowsForm, self).__init__(data, view, resolver, limits=limits, limit=limit,
+                                            **kwargs)
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
             for cid in check_columns:
