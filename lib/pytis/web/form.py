@@ -365,7 +365,8 @@ class BrowseForm(Form):
                            (None, 'none'))
 
     def __init__(self, data, view, resolver, columns=None, condition=None, sorting=None,
-                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, req=None, **kwargs):
+                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, req=None,
+                 **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -396,23 +397,41 @@ class BrowseForm(Form):
             number), the nearest page is displayed.  The request argument 'offset' overrides this
             value if 'req' is passed.  Also request arguments 'next' and 'prev' modify this value.
 
-          req -- instance of a class implementing the 'Request' API.  The form state (sorting,
-            paging atc) will be set up according to the reqest parameters, if the request includes
-            them (form controls were used to submit the form).
+          search -- search condition as a 'pytis.data.Operator' instance or None.  If used, the
+            offset will be set automatically to ensure, that the first record matching the search
+            condition will be displayed on the current page.  The request parameter 'search' can be
+            also used to generate a search condition (and overrides this argument).  In this case
+            only searching by the value of the key column is supported (it is not possible to pass
+            a generic condition within the request).  If no matching record is found, the offset is
+            controlled by the offset argument.  Searching is ignored when the current limit is
+            greater than the total number of records.
 
-            
+          req -- instance of a class implementing the 'Request' API.  The form state (sorting,
+            paging etc) will be set up according to the reqest parameters, if the request includes
+            them (form controls were used to submit the form).  The constructor argument 'name'
+            (defined in parent class) may be used to distinguish between multiple forms on one
+            page.  If this parameter was passed, it is sent as the request argument 'form-name'.
+            Thus if this argument doesn't match the form name, the request arguments are ignored.
+
         See the parent classes for definition of the remaining arguments.
 
         """
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         self._columns = [view.field(id) for id in columns or view.columns()]
         self._condition = condition
-        if req is not None and req.params.get('form-name') != self._name:
-            req = None
+        if req is not None:
+            # Ignore particular request params if they don't belong to the current form
+            valid_params = ('search',)
+            if req.param('form-name') == self._name:
+                valid_params += ('sort', 'dir', 'limit', 'offset', 'next', 'prev')
+            params = dict([(param, req.param(param))
+                           for param in valid_params if req.has_param(param)])
+        else:
+            params = {}
         # Determine the current sorting
-        if req is not None and req.has_param('sort') and req.has_param('dir'):
-            cid = str(req.param('sort'))
-            dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(req.param('dir'))
+        if params.has_key('sort') and params.has_key('dir'):
+            cid = str(params['sort'])
+            dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(params['dir'])
             if self._data.find_column(cid) and dir:
                 sorting = ((cid, dir),)
         if sorting is None:
@@ -421,23 +440,38 @@ class BrowseForm(Form):
             key = self._data.key()[0].id()
             sorting = ((key, pytis.data.ASCENDENT),)
         self._sorting = sorting
-        # Determine the limit and offset
+        # Determine the limit of records per page
         self._limits = limits
-        if req is not None and req.param('limit', '').isdigit():
-            requested_limit = int(req.param('limit'))
-            if requested_limit in limits:
-                limit = requested_limit
+        if req is not None:
+            requested_limit = params.get('limit')
+            if requested_limit and requested_limit.isdigit():
+                req.set_cookie('pytis-form-limit', requested_limit)
+            else:
+                requested_limit = req.cookie('pytis-form-limit')
+            if requested_limit and requested_limit.isdigit():
+                requested_limit = int(requested_limit)
+                if requested_limit in limits:
+                    limit = requested_limit
         self._limit = limit
+        # Determine the current offset
         if limit is None:
             offset = 0
         elif req is not None:
-            if req.param('offset', '').isdigit():
-                offset = int(req.param('offset'))
-            if req.has_param('next'):
-                offset += limit
-            if req.has_param('prev') and offset >= limit:
-                offset -= limit
+            if params.has_key('search'):
+                key = self._data.key()[0].id()
+                type = self._data.find_column(key).type()
+                value, error = type.validate(params['search'])
+                if not error:
+                    search = pytis.data.EQ(key, value)
+            else:
+                if params.get('offset', '').isdigit():
+                    offset = int(params['offset'])
+                if params.has_key('next'):
+                    offset += limit
+                if params.has_key('prev') and offset >= limit:
+                    offset -= limit
         self._offset = offset
+        self._search = search
         # Determine whether tree emulation should be used
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
@@ -515,6 +549,10 @@ class BrowseForm(Form):
         limit = self._limit
         exported_rows = []
         self._count = count = data.select(condition=self._condition, sort=self._sorting)
+        if self._search:
+            dist = data.search(self._search)
+            if dist:
+                self._offset = dist - 1
         if limit is not None:
             page = int(max(0, min(self._offset, count)) / limit)
             offset = page*limit
