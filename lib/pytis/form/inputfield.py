@@ -765,36 +765,49 @@ class PasswordField(StringField):
         return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
 
     def _create_widget(self):
-        self._ctrl2 = self._create_ctrl()
-        sizer = wx.BoxSizer()
-        sizer.Add(self._ctrl,  0, wx.FIXED_MINSIZE)
-        sizer.Add(self._ctrl2, 0, wx.FIXED_MINSIZE)
-        return sizer
+        result = super(PasswordField, self)._create_widget()
+        if self._type.verify():
+            self._ctrl2 = self._create_ctrl()
+            sizer = wx.BoxSizer()
+            sizer.Add(result,  0, wx.FIXED_MINSIZE)
+            sizer.Add(self._ctrl2, 0, wx.FIXED_MINSIZE)
+            result = sizer
+        else:
+            self._ctrl2 = None
+        return result
     
     def _set_value(self, value):
         if value:
             value = self._ORIGINAL_VALUE
         super(PasswordField, self)._set_value(value)
-        self._ctrl2.SetValue(value)
+        if self._ctrl2:
+            self._ctrl2.SetValue(value)
 
     def _enable(self):
         super(PasswordField, self)._enable()
-        self._ctrl2.SetEditable(True)
+        if self._ctrl2:
+            self._ctrl2.SetEditable(True)
 
     def _disable(self):
         super(PasswordField, self)._disable()
-        self._ctrl2.SetEditable(False)
+        if self._ctrl2:
+            self._ctrl2.SetEditable(False)
         
     def _set_background_color(self, color):
         super(PasswordField, self)._set_background_color(color)
-        self._ctrl2.SetOwnBackgroundColour(color)
-        self._ctrl2.Refresh()
+        if self._ctrl2:
+            self._ctrl2.SetOwnBackgroundColour(color)
+            self._ctrl2.Refresh()
 
     def _validate(self):
         value = self._get_value()
         if value == self._ORIGINAL_VALUE:
             return None
-        return self._row.validate(self.id(), value, verify=self._ctrl2.GetValue())
+        if self._ctrl2:
+            verify = self._ctrl2.GetValue()
+        else:
+            verify = value
+        return self._row.validate(self.id(), value, verify=verify)
 
     
 class NumericField(TextField):

@@ -715,14 +715,23 @@ class String(Limited):
 
     
 class Password(String):
-    """String specialization for password fields.
+    """Specialized string type for password fields.
 
-    The user interface should handle password input differently from ordinary string input.  The
-    typed characters should not be visible and it should be required to type the password twice to
-    change it.  Thus the validation method has the 'verify' argument to supply the second value.
-    This argument should always be used when checking user input.  If the argument is omitted or
-    None, the validation will be limited to just converting the string representaion to 'Value'
-    instance.
+    The user interface should handle password input differently from ordinary string input.
+
+    1. The typed characters should never be visible on the screen.
+
+    2. Also, if the constructor argument 'verify' is true (it is by default), the user should be
+       required to type the new value twice to prevent typos (since there is no visual feedback).
+       The user interface is responsible for creating two fields if the method 'verify()' returns
+       true.  The value of the second field is passed as the 'verify' argument to the 'validate()'
+       method.
+
+    The validation argument 'verify' should be always passed when validating user input.  It may be
+    omitted if validation is used just to convert an already validated string value (e.g. read from
+    database) to a 'Value' instance.  When user input is validated, but the type doesn't require
+    verification (the user enters the password just once), it is thus necessary to pass the same
+    value twice (as the validated value and as the 'verify' argument).
 
     """
     VM_PASSWORD = 'VM_PASSWORD'
@@ -732,7 +741,7 @@ class Password(String):
     VM_INVALID_MD5 = 'VM_INVALID_MD5'
     _VM_INVALID_MD5_MSG = _("Invalid MD5 hash")
     
-    def __init__(self, md5=False, **kwargs):
+    def __init__(self, md5=False, verify=True, **kwargs):
         """Initialize the instance.
         
         Arguments:
@@ -743,13 +752,23 @@ class Password(String):
             only done when the 'verify' argument is passed to the 'validate()' method.  When
             'verify' is not used, the input string is not considered to be user input, but an
             already hashed value (eg. read from data source).
+
+          verify -- boolean flag indicating, that user input should be verified by the user
+            interface by presenting two controls for entering the password.  Both inputs must match
+            to pass validation.
              
         Other arguments are passed to the parent constructor.
 
         """
         super(Password, self).__init__(**kwargs)
         assert isinstance(md5, bool)
+        assert isinstance(verify, bool)
         self._md5 = md5
+        self._verify = verify
+
+    def verify(self):
+        """Return true if verification of user input is required."""
+        return self._verify
         
     def _validate(self, string, verify=None, **kwargs):
         if verify is not None:

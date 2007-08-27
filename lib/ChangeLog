@@ -1,9 +1,10 @@
-2007-08-23  Tomas Cerha  <cerha@brailcom.org>
+2007-08-27  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/__init__.py: Import `request'.
+	* pytis/form/inputfield.py: Respect password type without verification.
 
-	* pytis/web/form.py: Make use of the Request API.  Keep current
-	sorting and limit on movement.
+	* pytis/web/form.py: Respect password type without verification.
+
+	* pytis/data/types_.py (Password): Make password verification optional.
 
 	* pytis/web/request.py: New file.
 

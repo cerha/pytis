@@ -244,7 +244,7 @@ class LayoutForm(Form):
             sign = ''
         label = g.label(f.label(), attr['id']) + sign + ":"
         field = ctrl(**attr)
-        if isinstance(type, pytis.data.Password):
+        if isinstance(type, pytis.data.Password) and type.verify():
             attr['id'] = attr['id'] + '-verify-pasword'
             field += g.br() + ctrl(**attr)
         help = f.descr() and g.div(f.descr(), cls="help") or ''
