@@ -219,6 +219,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
     return pytis.form.run_form(class_, spec, columns=columns,
                                begin_search=begin_search,
                                condition=condition,
+                               sorting=sort,
                                select_row=select_row,
                                transaction=transaction)
 
