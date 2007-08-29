@@ -1,3 +1,7 @@
+2007-08-29  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/spec.py (run_cb): Pøedávej parametr sort.
+
 2007-08-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (Fields): New class.
