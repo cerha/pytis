@@ -163,7 +163,45 @@ class MenuReader(_MenuReader):
         item = pytis.form.Menu(_("Pøehled menu"), menu)
         super(MenuReader, self).__init__(id, item, *args, **kwargs)
 
-    
+
+class MenuOverviewReader(MenuReader):
+    """Generate menu overview as one document with sections and subsections for menu hierarchy."""
+
+    def _create_section(self, item):
+        if isinstance(item, pytis.form.Menu):
+            content = [self._create_section(subitem) for subitem in item.items()
+                       if not isinstance(subitem, pytis.form.MSeparator)]
+        else:
+            command, args = (item.command(), item.args())
+            # pytis.form.Application.COMMAND_NEW_RECORD
+            if command == pytis.form.Application.COMMAND_RUN_FORM \
+                   and not issubclass(args['form_class'],
+                                      (pytis.form.ConfigForm, pytis.form.DualForm)):
+                name = args['name']
+                spec = pytis.util.resolver().get(name, 'view_spec')
+                help_src = spec.help()
+                if help_src:
+                    help = lcg.SectionContainer(lcg.Parser().parse(help_src))
+                else:
+                    help = lcg.p(_("Popis není k dispozici."))
+                content = lcg.coerce((lcg.ul((name,), formatted=True), lcg.p(help)))
+
+                actions = [(a.title(), a.descr() or '') for a in spec.actions(linear=True)]
+                if actions:
+                    content = lcg.coerce((content, "*Akce kontextového menu:*", lcg.dl(actions)),
+                                         formatted=True)
+            else:
+                content = lcg.p("Není obyèejný náhled.")
+        return lcg.Section(item.title(), content)
+                
+    def _create_content(self):
+        sections = [self._create_section(menu) for menu in self._item.items()]
+        return lcg.SectionContainer([lcg.TableOfContents(title="Obsah", depth=99)] + sections)
+
+    def _create_children(self):
+        return []
+
+        
 ################################################################################
 
         
