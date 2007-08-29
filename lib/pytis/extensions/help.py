@@ -175,18 +175,22 @@ class MenuOverviewReader(MenuReader):
             command, args = (item.command(), item.args())
             # pytis.form.Application.COMMAND_NEW_RECORD
             if command == pytis.form.Application.COMMAND_RUN_FORM \
-                   and not issubclass(args['form_class'],
-                                      (pytis.form.ConfigForm, pytis.form.DualForm)):
+                   and not issubclass(args['form_class'], pytis.form.ConfigForm):
                 name = args['name']
-                spec = pytis.util.resolver().get(name, 'view_spec')
-                help_src = spec.help()
+                if name.find('::') != -1:
+                    main, side = name.split('::')
+                    binding = pytis.util.resolver().get(main, 'binding_spec')[side]
+                    help_src = binding.description()
+                    actions = []
+                else:
+                    spec = pytis.util.resolver().get(name, 'view_spec')
+                    help_src = spec.help()
+                    actions = [(a.title(), a.descr() or '') for a in spec.actions(linear=True)]
                 if help_src:
                     help = lcg.SectionContainer(lcg.Parser().parse(help_src))
                 else:
                     help = lcg.p(_("Popis není k dispozici."))
                 content = lcg.coerce((lcg.ul((name,), formatted=True), lcg.p(help)))
-
-                actions = [(a.title(), a.descr() or '') for a in spec.actions(linear=True)]
                 if actions:
                     content = lcg.coerce((content, "*Akce kontextového menu:*", lcg.dl(actions)),
                                          formatted=True)
