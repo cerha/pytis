@@ -1,3 +1,7 @@
+2007-08-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (LookupForm.sorting): New method.
+
 2007-08-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py: Respect password type without verification.

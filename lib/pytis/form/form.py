@@ -1057,6 +1057,10 @@ class LookupForm(InnerForm):
         """
         return self._current_condition()
 
+    def sorting(self):
+        """Return the current sorting specification."""
+        return self._lf_sorting
+    
     
 class RecordForm(LookupForm):
     """Formuláø schopný nìjakým zpùsobem zobrazit aktuální záznam."""
