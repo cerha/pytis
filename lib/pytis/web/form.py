@@ -590,13 +590,15 @@ class BrowseForm(Form):
         if limit is None or count < self._limits[0]:
             return None
         g = exporter.generator()
+        pages, modulo = divmod(count, min(limit, count))
+        pages += modulo and 1 or 0
         offset_id = '%x-offset' % positive_id(self)
         limit_id = '%x-limit' % positive_id(self)
         result = (g.label(_("Page:"), offset_id),
                   g.select(name='offset', id=offset_id, selected=page*limit, 
-                           options=[(str(i+1), i*limit) for i in range(count/min(limit, count))],
+                           options=[(str(i+1), i*limit) for i in range(pages)],
                            onchange='this.form.submit(); return true'), '/',
-                  g.strong(str(count/min(limit, count))),
+                  g.strong(str(pages)),
                   g.submit(_("Previous"), name='prev', cls='prev', title=_("Go to previous page"),
                            disabled=(page == 0)),
                   g.submit(_("Next"),  name='next', cls='next', title=_("Go to next page"),
