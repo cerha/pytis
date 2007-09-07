@@ -1,3 +1,7 @@
+2007-09-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Table export optimized.
+
 2007-09-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (BrowseForm._export_controls): Page count
