@@ -1,6 +1,7 @@
 2007-09-07  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/form.py: Table export optimized.
+	* pytis/web/form.py: Table export optimized.  Fixed codebook
+	display in tables.  Show paging controls on both sides of a table.
 
 2007-09-04  Tomas Cerha  <cerha@brailcom.org>
 
