@@ -420,7 +420,7 @@ class BrowseForm(Form):
         self._columns = [view.field(id) for id in columns or view.columns()]
         self._condition = condition
         if req is not None:
-            # Ignore particular request params if they don't belong to the current form
+            # Ignore particular request params if they don't belong to the current form.
             valid_params = ('search',)
             if req.param('form-name') == self._name:
                 valid_params += ('sort', 'dir', 'limit', 'offset', 'next', 'prev')
@@ -428,7 +428,7 @@ class BrowseForm(Form):
                            for param in valid_params if req.has_param(param)])
         else:
             params = {}
-        # Determine the current sorting
+        # Determine the current sorting.
         if params.has_key('sort') and params.has_key('dir'):
             cid = str(params['sort'])
             dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(params['dir'])
@@ -440,7 +440,7 @@ class BrowseForm(Form):
             key = self._data.key()[0].id()
             sorting = ((key, pytis.data.ASCENDENT),)
         self._sorting = sorting
-        # Determine the limit of records per page
+        # Determine the limit of records per page.
         self._limits = limits
         if req is not None:
             requested_limit = params.get('limit')
@@ -453,7 +453,7 @@ class BrowseForm(Form):
                 if requested_limit in limits:
                     limit = requested_limit
         self._limit = limit
-        # Determine the current offset
+        # Determine the current offset.
         if limit is None:
             offset = 0
         elif req is not None:
@@ -472,44 +472,61 @@ class BrowseForm(Form):
                     offset -= limit
         self._offset = offset
         self._search = search
-        # Determine whether tree emulation should be used
+        # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
         else:
             self._tree_order_column = None
+        # Initialize formatters by column type to avoid repetitive type checking for each row.
+        self._formaters = [(col.id(),
+                            self._formatter(self._row[col.id()].type()),
+                            isinstance(self._row[col.id()].type(), pd.Number))
+                           for col in self._columns]
 
-    def _export_value(self, exporter, row, col):
-        g = exporter.generator()
-        key = col.id()
-        type = col.type(self._data)
+    def _boolean_formatter(self, row, cid):
+        return row[cid].value() and _("Yes") or _("No")
+    
+    def _binary_formatter(self, row, cid):
+        return "--"
+    
+    def _codebook_formatter(self, row, cid):
+        return row.display(cid)
+    
+    def _generic_formatter(self, row, cid):
+        return row[cid].export()
+        
+    def _formatter(self, type):
         if isinstance(type, pytis.data.Boolean):
-            value = row[key].value() and _("Yes") or _("No")
+            formatter = self._boolean_formatter
         elif isinstance(type, pytis.data.Binary):
-            value = "--"
+            formatter = self._binary_formatter
         elif type.enumerator():
-            value = self._row.display(key)
+            formatter = self._codebook_formatter
         else:
-            value = row[key].export()
-            if not isinstance(value, lcg.Localizable):
-                value = g.escape(row.format(key))
-        uri = self._uri(row, key)
+            formatter = self._generic_formatter
+        return formatter
+
+    def _export_cell(self, exporter, generator, row, cid, value):
+        if not isinstance(value, lcg.Localizable):
+            value = generator.escape(row.format(cid))
+        uri = self._uri(row, cid)
         if uri:
-            value = g.link(value, uri)
-        if self._tree_order_column and col == self._columns[0]:
+            value = generator.link(value, uri)
+        if self._tree_order_column and cid == self._columns[0].id():
             order = row[self._tree_order_column].value()
             if order is not None:
                 level = len(order.split('.')) - 2
                 if level > 0:
-                    indent = level * g.span(2*'&nbsp;', cls='tree-indent')
+                    indent = level * generator.span(2*'&nbsp;', cls='tree-indent')
                     value = indent + '&bull;&nbsp;'+ value # &#8227 does not work in MSIE
         return value
             
     def _export_row(self, exporter, row, n):
-        cells = [concat('<td%s>' %
-                        (isinstance(row[c.id()].type(), pd.Number) and ' align="right"' or ''),
-                        self._export_value(exporter, row, c),
+        g = exporter.generator()
+        cells = [concat('<td%s>' % (is_number and ' align="right"' or ''),
+                        self._export_cell(exporter, g, row, cid, formatter(row, cid)),
                         '</td>')
-                 for c in self._columns]
+                 for cid, formatter, is_number in self._formaters]
         return concat('<tr class="%s">' % (n % 2 and 'even' or 'odd'), cells, '</tr>')
 
     def _export_headings(self, exporter):
@@ -629,7 +646,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     and the values are the key column values of all checked rows.
     
     """
-    def __init__(self, data, view, resolver, check_columns=(), limits=(), limit=None, **kwargs):
+    def __init__(self, data, view, resolver, check_columns=None, limits=(), limit=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -648,16 +665,17 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
             for cid in check_columns:
                 assert self._row.has_key(cid), cid
                 assert isinstance(self._row[cid].type(), pd.Boolean), cid
+        if check_columns is None:
+            check_columns = tuple([col.id() for col in self._columns
+                                   if isinstance(self._row[col.id()].type(), pd.Boolean)])
         self._check_columns = check_columns
 
-    def _export_value(self, exporter, row, col):
-        cid = col.id()
-        if cid in self._check_columns or \
-               not self._check_columns and isinstance(self._row[cid].type(), pd.Boolean):
+    def _export_cell(self, exporter, generator, row, cid, value):
+        if cid in self._check_columns:
             key = self._data.key()[0].id()
-            return exporter.generator().checkbox(name=cid, value=self._row.format(key),
-                                                 checked=self._row[cid].value()),
+            return generator.checkbox(name=cid, value=row.format(key),
+                                                 checked=row[cid].value()),
         else:
-            return super(CheckRowsForm, self)._export_value(exporter, row, col)
+            return super(CheckRowsForm, self)._export_cell(exporter, row, cid, value)
 
     
