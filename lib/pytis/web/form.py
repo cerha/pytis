@@ -125,9 +125,6 @@ class Form(lcg.Content):
     def _export_body(self, exporter):
         pass
     
-    def _export_controls(self, exporter):
-        pass
-    
     def _export_submit(self, exporter):
         pass
     
@@ -138,10 +135,11 @@ class Form(lcg.Content):
         g = exporter.generator()
         content = [self._export_body(exporter)] + \
                   [wrap(part, cls=name) for wrap, part, name in
-                   ((g.fieldset, self._export_controls(exporter), 'controls'),
-                    (g.fieldset, self._export_submit(exporter),   'submit'),
-                    (g.div,      self._export_footer(exporter),   'footer')) if part]
-        cls = self._CSS_CLS + (self._name and ' ' + camel_case_to_lower(self._name, '-') or '')
+                   ((g.div, self._export_submit(exporter),   'submit'),
+                    (g.div, self._export_footer(exporter),   'footer')) if part]
+        cls = 'pytis-form ' + self._CSS_CLS
+        if self._name:
+            cls += ' ' + camel_case_to_lower(self._name, '-')
         return g.form(content, action=self._handler, method=self._HTTP_METHOD, cls=cls,
                       enctype=self._enctype)
     
@@ -191,7 +189,7 @@ class LayoutForm(Form):
         if fields:
             result.append(self._export_fields(g, fields))
         if wrap or group.label():
-            result = exporter.generator().fieldset(result, legend=group.label(), cls='body')
+            result = exporter.generator().fieldset(group.label(), result, cls='group')
         else:
             result = concat(result, separator="\n")
         #if group.orientation() == Orientation.VERTICAL:
@@ -419,18 +417,25 @@ class BrowseForm(Form):
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
         self._columns = [view.field(id) for id in columns or view.columns()]
         self._condition = condition
+        params = {}
         if req is not None:
             # Ignore particular request params if they don't belong to the current form.
-            valid_params = ('search',)
+            valid_params = (('search', str),)
             if req.param('form-name') == self._name:
-                valid_params += ('sort', 'dir', 'limit', 'offset', 'next', 'prev')
-            params = dict([(param, req.param(param))
-                           for param in valid_params if req.has_param(param)])
-        else:
-            params = {}
+                valid_params += (('sort', str), ('dir', str), ('limit', int), ('offset', int),
+                                 ('next', bool), ('prev', bool))
+            for param, func in valid_params:
+                if req.has_param(param):
+                    value = req.param(param)
+                    try:
+                        value = func(value)
+                    except:
+                        pass
+                    else:
+                        params[param] = value
         # Determine the current sorting.
         if params.has_key('sort') and params.has_key('dir'):
-            cid = str(params['sort'])
+            cid = params['sort']
             dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(params['dir'])
             if self._data.find_column(cid) and dir:
                 sorting = ((cid, dir),)
@@ -443,15 +448,15 @@ class BrowseForm(Form):
         # Determine the limit of records per page.
         self._limits = limits
         if req is not None:
-            requested_limit = params.get('limit')
-            if requested_limit and requested_limit.isdigit():
-                req.set_cookie('pytis-form-limit', requested_limit)
+            limit_ = params.get('limit')
+            if limit_ is None:
+                cookie = req.cookie('pytis-form-limit')
+                if cookie and isinstance(cookie, (str, unicode)) and cookie.isdigit():
+                    limit_ = int(cookie)
             else:
-                requested_limit = req.cookie('pytis-form-limit')
-            if requested_limit and requested_limit.isdigit():
-                requested_limit = int(requested_limit)
-                if requested_limit in limits:
-                    limit = requested_limit
+                req.set_cookie('pytis-form-limit', limit_)
+            if limit_ in limits:
+                limit = limit_
         self._limit = limit
         # Determine the current offset.
         if limit is None:
@@ -464,8 +469,8 @@ class BrowseForm(Form):
                 if not error:
                     search = pytis.data.EQ(key, value)
             else:
-                if params.get('offset', '').isdigit():
-                    offset = int(params['offset'])
+                if params.has_key('offset'):
+                    offset = params['offset']
                 if params.has_key('next'):
                     offset += limit
                 if params.has_key('prev') and offset >= limit:
@@ -483,17 +488,20 @@ class BrowseForm(Form):
                             isinstance(self._row[col.id()].type(), pd.Number))
                            for col in self._columns]
 
-    def _boolean_formatter(self, row, cid):
+    def _boolean_formatter(self, generator, row, cid):
         return row[cid].value() and _("Yes") or _("No")
     
-    def _binary_formatter(self, row, cid):
+    def _binary_formatter(self, generator, row, cid):
         return "--"
     
-    def _codebook_formatter(self, row, cid):
+    def _codebook_formatter(self, generator, row, cid):
         return row.display(cid)
     
-    def _generic_formatter(self, row, cid):
-        return row[cid].export()
+    def _generic_formatter(self, generator, row, cid):
+        value = row[cid].export() 
+        if not isinstance(value, lcg.Localizable):
+            value = generator.escape(row.format(cid))
+        return value
         
     def _formatter(self, type):
         if isinstance(type, pytis.data.Boolean):
@@ -507,8 +515,6 @@ class BrowseForm(Form):
         return formatter
 
     def _export_cell(self, exporter, generator, row, cid, value):
-        if not isinstance(value, lcg.Localizable):
-            value = generator.escape(row.format(cid))
         uri = self._uri(row, cid)
         if uri:
             value = generator.link(value, uri)
@@ -524,7 +530,7 @@ class BrowseForm(Form):
     def _export_row(self, exporter, row, n):
         g = exporter.generator()
         cells = [concat('<td%s>' % (is_number and ' align="right"' or ''),
-                        self._export_cell(exporter, g, row, cid, formatter(row, cid)),
+                        self._export_cell(exporter, g, row, cid, formatter(g, row, cid)),
                         '</td>')
                  for cid, formatter, is_number in self._formaters]
         return concat('<tr class="%s">' % (n % 2 and 'even' or 'odd'), cells, '</tr>')
@@ -601,20 +607,20 @@ class BrowseForm(Form):
                             last=g.strong(str(offset+n)),
                             total=g.strong(str(count)))
             return self._wrap_exported_rows(exporter, exported_rows, summary)
+                   
 
-    def _export_controls(self, exporter):
+    def _export_controls(self, exporter, second=False):
         limit, page, count = self._limit, self._page, self._count
-        if limit is None or count < self._limits[0]:
-            return None
         g = exporter.generator()
         pages, modulo = divmod(count, min(limit, count))
         pages += modulo and 1 or 0
-        offset_id = '%x-offset' % positive_id(self)
-        limit_id = '%x-limit' % positive_id(self)
+        id = (second and '0' or '1') + '%x' % positive_id(self)
+        offset_id = 'offset-' + id
+        limit_id = 'limit-' + id 
         result = (g.label(_("Page:"), offset_id),
                   g.select(name='offset', id=offset_id, selected=page*limit, 
                            options=[(str(i+1), i*limit) for i in range(pages)],
-                           onchange='this.form.submit(); return true'), '/',
+                           onchange='this.form.submit(); return true') + ' /',
                   g.strong(str(pages)),
                   g.submit(_("Previous"), name='prev', cls='prev', title=_("Go to previous page"),
                            disabled=(page == 0)),
@@ -623,16 +629,25 @@ class BrowseForm(Form):
                   g.span((g.label(_("Records per page:"), limit_id)+' ',
                           g.select(name='limit', id=limit_id,
                                    options=[(str(i), i) for i in self._limits], selected=limit,
-                                   onchange='this.form.submit(); return true')), cls='limit'))
+                                   onchange='this.form.submit(); return true')), cls='limit'),
+                  g.submit(_("Go"), cls='hidden'))
         if self._name is not None:
             result += (g.hidden('form-name', self._name),)
         if len(self._sorting) == 1:
             cid, dir = self._sorting[0]
             result += (g.hidden('sort', cid),
                        g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir]))
-        return result + (g.submit(_("Go"), cls='hidden'),)
-        
+        return g.form(result, action=self._handler, method='GET', cls=self._CSS_CLS+'-controls')
 
+    def export(self, exporter):
+        result = super(BrowseForm, self).export(exporter)
+        if self._limit is not None and self._count > self._limits[0]:
+            result = concat(self._export_controls(exporter),
+                            result,
+                            self._export_controls(exporter, second=True), separator="\n")
+        return result
+
+    
 class CheckRowsForm(BrowseForm, _SubmittableForm):
     """Web form with checkable boolean columns in each row.
 
