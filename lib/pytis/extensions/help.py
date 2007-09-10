@@ -173,8 +173,8 @@ class MenuOverviewReader(MenuReader):
                        if not isinstance(subitem, pytis.form.MSeparator)]
         else:
             command, args = (item.command(), item.args())
-            # pytis.form.Application.COMMAND_NEW_RECORD
-            if command == pytis.form.Application.COMMAND_RUN_FORM \
+            if command == pytis.form.Application.COMMAND_NEW_RECORD or \
+                   command == pytis.form.Application.COMMAND_RUN_FORM \
                    and not issubclass(args['form_class'], pytis.form.ConfigForm):
                 name = args['name']
                 resolver = pytis.util.resolver()
@@ -191,7 +191,10 @@ class MenuOverviewReader(MenuReader):
                     spec = resolver.get(name, 'view_spec')
                     help_src = spec.help()
                     title = spec.title()
-                    actions = [(a.title(), a.descr() or '') for a in spec.actions(linear=True)]
+                    if command == pytis.form.Application.COMMAND_RUN_FORM:
+                        actions = [(a.title(), a.descr() or '') for a in spec.actions(linear=True)]
+                    else:
+                        actions = []
                 if help_src:
                     help = lcg.SectionContainer(lcg.Parser().parse(help_src))
                 else:
