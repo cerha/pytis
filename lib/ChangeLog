@@ -1,3 +1,7 @@
+2007-09-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added support for custom list layout.
+
 2007-09-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Table export optimized.  Fixed codebook

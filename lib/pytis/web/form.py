@@ -77,6 +77,37 @@ class Type(pd.Type):
     pd.Type._validation_error = _validation_error
 
 
+class ListLayout(object):
+    """Specification of list layout for web presentation.
+
+    This layout defines an alternative presentation of lists of records.  The records are not
+    presented as a table, but as sections, where each record has its own heading, meta information
+    and text (description, annotation, message...).
+    
+    """
+    def __init__(self, title, meta=(), content=None, anchor=None, labeled_fields=()):
+        self._title = title
+        self._meta = meta
+        self._content = content
+        self._anchor = anchor
+        self._labeled_fields = labeled_fields
+        
+    def title(self):
+        return self._title
+    
+    def meta(self):
+        return self._meta
+    
+    def content(self):
+        return self._content
+
+    def anchor(self):
+        return self._anchor
+    
+    def labeled_fields(self):
+        return self._labeled_fields
+
+
 class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
@@ -318,7 +349,7 @@ class ShowForm(LayoutForm):
                 #end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
                 #value = concat(value[:(end != -1 and end or self._MAXLEN)],
                 #               ' ... (', _("reduced"), ')')
-        return (g.label(f.label(), f.id()) + ":", value, None)
+        return (g.label(f.label(), None) + ":", value, None)
 
     
 class EditForm(LayoutForm, _SubmittableForm):
@@ -353,8 +384,8 @@ class EditForm(LayoutForm, _SubmittableForm):
     def _export_footer(self, exporter):
         g = exporter.generator()
         return g.span("*", cls="not-null") +") "+ _("Fields marked by an asterisk are mandatory.")
+
     
-        
 class BrowseForm(Form):
     _CSS_CLS = 'browse-form'
     _HTTP_METHOD = 'GET'
@@ -483,7 +514,7 @@ class BrowseForm(Form):
         else:
             self._tree_order_column = None
         # Initialize formatters by column type to avoid repetitive type checking for each row.
-        self._formaters = [(col.id(),
+        self._formaters = [(col,
                             self._formatter(self._row[col.id()].type()),
                             isinstance(self._row[col.id()].type(), pd.Number))
                            for col in self._columns]
@@ -514,11 +545,11 @@ class BrowseForm(Form):
             formatter = self._generic_formatter
         return formatter
 
-    def _export_cell(self, exporter, generator, row, cid, value):
-        uri = self._uri(row, cid)
+    def _export_cell(self, exporter, generator, row, col, value):
+        uri = self._uri(row, col.id())
         if uri:
             value = generator.link(value, uri)
-        if self._tree_order_column and cid == self._columns[0].id():
+        if self._tree_order_column and col == self._columns[0]:
             order = row[self._tree_order_column].value()
             if order is not None:
                 level = len(order.split('.')) - 2
@@ -530,9 +561,9 @@ class BrowseForm(Form):
     def _export_row(self, exporter, row, n):
         g = exporter.generator()
         cells = [concat('<td%s>' % (is_number and ' align="right"' or ''),
-                        self._export_cell(exporter, g, row, cid, formatter(g, row, cid)),
+                        self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
                         '</td>')
-                 for cid, formatter, is_number in self._formaters]
+                 for col, formatter, is_number in self._formaters]
         return concat('<tr class="%s">' % (n % 2 and 'even' or 'odd'), cells, '</tr>')
 
     def _export_headings(self, exporter):
@@ -647,6 +678,47 @@ class BrowseForm(Form):
                             self._export_controls(exporter, second=True), separator="\n")
         return result
 
+class ListView(BrowseForm):
+    
+    def __init__(self, data, view, resolver, layout=None, **kwargs):
+        if layout is not None:
+            kwargs['columns'] = layout.meta()
+        super(ListView, self).__init__(data, view, resolver, **kwargs)
+        self._layout = layout
+        if layout is None:
+            super_ = super(ListView, self)
+            self._export_row = super_._export_row
+            self._wrap_exported_rows = super_._wrap_exported_rows
+        else:
+            self._meta = [(col, formatter, col.id() in layout.labeled_fields())
+                          for col, formatter, is_number in self._formaters]
+        
+    def _export_row(self, exporter, row, n):
+        layout = self._layout
+        g = exporter.generator()
+        parser = lcg.Parser()
+        title = self._row[layout.title()].export()
+        if layout.anchor():
+            name = layout.anchor() % row[self._data.key()[0].id()].export()
+            title = g.link(title, None, name=name)
+        parts = [g.h(title, level=3)]
+        meta = [g.span(labeled and g.span(col.label(), cls='label')+": " or '' + \
+                       self._export_cell(exporter, g, row, col, formatter(g, row, col.id())), cls=col.id())
+                for col, formatter, labeled in self._meta]
+        if meta:
+            parts.append(g.div(concat(meta, separator=', '), cls='meta'))
+        if layout.content():
+            text = self._row[layout.content()].export()
+            content = lcg.Container(parser.parse(text))
+            content.set_parent(self.parent())
+            parts.append(g.div(content.export(exporter), cls='content'))
+        return g.div(parts, cls='list-item ' + (n % 2 and 'even' or 'odd'))
+
+    def _wrap_exported_rows(self, exporter, rows, summary):
+        g = exporter.generator()
+        return g.div(rows, cls="body") +"\n"+ g.div(summary, cls="summary")
+    
+
     
 class CheckRowsForm(BrowseForm, _SubmittableForm):
     """Web form with checkable boolean columns in each row.
@@ -685,12 +757,12 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
                                    if isinstance(self._row[col.id()].type(), pd.Boolean)])
         self._check_columns = check_columns
 
-    def _export_cell(self, exporter, generator, row, cid, value):
+    def _export_cell(self, exporter, generator, row, col, value):
+        cid = col.id()
         if cid in self._check_columns:
             key = self._data.key()[0].id()
-            return generator.checkbox(name=cid, value=row.format(key),
-                                                 checked=row[cid].value()),
+            return generator.checkbox(name=cid, value=row.format(key), checked=row[cid].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(exporter, row, cid, value)
+            return super(CheckRowsForm, self)._export_cell(exporter, generator, row, col, value)
 
     
