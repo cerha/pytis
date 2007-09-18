@@ -220,7 +220,8 @@ class LayoutForm(Form):
         if fields:
             result.append(self._export_fields(g, fields))
         if wrap or group.label():
-            result = exporter.generator().fieldset(group.label(), result, cls='group')
+            result = exporter.generator().fieldset(group.label() and group.label()+':',
+                                                   result, cls='group')
         else:
             result = concat(result, separator="\n")
         #if group.orientation() == Orientation.VERTICAL:
@@ -555,7 +556,8 @@ class BrowseForm(Form):
                 level = len(order.split('.')) - 2
                 if level > 0:
                     indent = level * generator.span(2*'&nbsp;', cls='tree-indent')
-                    value = indent + '&bull;&nbsp;'+ value # &#8227 does not work in MSIE
+                    value = indent + '&bull;&nbsp;'+ generator.span(value, cls='tree-node')
+                    # &#8227 does not work in MSIE
         return value
             
     def _export_row(self, exporter, row, n):
@@ -647,21 +649,27 @@ class BrowseForm(Form):
         pages += modulo and 1 or 0
         id = (second and '0' or '1') + '%x' % positive_id(self)
         offset_id = 'offset-' + id
-        limit_id = 'limit-' + id 
-        result = (g.label(_("Page:"), offset_id),
-                  g.select(name='offset', id=offset_id, selected=page*limit, 
-                           options=[(str(i+1), i*limit) for i in range(pages)],
-                           onchange='this.form.submit(); return true') + ' /',
-                  g.strong(str(pages)),
-                  g.submit(_("Previous"), name='prev', cls='prev', title=_("Go to previous page"),
-                           disabled=(page == 0)),
-                  g.submit(_("Next"),  name='next', cls='next', title=_("Go to next page"),
-                           disabled=(page+1)*limit >= count),
-                  g.span((g.label(_("Records per page:"), limit_id)+' ',
-                          g.select(name='limit', id=limit_id,
-                                   options=[(str(i), i) for i in self._limits], selected=limit,
-                                   onchange='this.form.submit(); return true')), cls='limit'),
-                  g.submit(_("Go"), cls='hidden'))
+        limit_id = 'limit-' + id
+        result = ()
+        if pages > 1:
+            result += (g.span((g.label(_("Page")+': ', offset_id),
+                               g.select(name='offset', id=offset_id, selected=page*limit,
+                                        title=(_("Page")+' '+_("(Use ALT+arrow down to select)")),
+                                        options=[(str(i+1), i*limit) for i in range(pages)],
+                                        onchange='this.form.submit(); return true') + ' / ',
+                               g.strong(str(pages))), cls="offset"),
+                       g.span((g.submit(_("Previous"), name='prev', cls='prev',
+                                        title=_("Go to previous page"), disabled=(page == 0)),
+                               g.submit(_("Next"),  name='next', cls='next',
+                                        title=_("Go to next page"),
+                                        disabled=(page+1)*limit >= count)), cls="buttons"))
+        result += (g.span((g.label(_("Records per page")+':', limit_id)+' ',
+                           g.select(name='limit', id=limit_id,
+                                    title=(_("Records per page")+' '+
+                                           _("(Use ALT+arrow down to select)")),
+                                    options=[(str(i), i) for i in self._limits], selected=limit,
+                                    onchange='this.form.submit(); return true')), cls='limit'),
+                   g.noscript(g.submit(_("Go"))))
         if self._name is not None:
             result += (g.hidden('form-name', self._name),)
         if len(self._sorting) == 1:
