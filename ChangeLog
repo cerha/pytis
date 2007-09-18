@@ -1,3 +1,7 @@
+2007-09-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (Fields): Class moved to `pytis'.
+
 2007-09-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py: Generate descriptions also for
