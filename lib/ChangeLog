@@ -1,3 +1,15 @@
+2007-09-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Fields): New class.
+
+	* pytis/web/form.py (BrowseForm): Only include page controls if
+	there is more than one page.
+
+2007-09-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Fields): New class supporting field
+	inheritance.
+
 2007-09-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added support for custom list layout.

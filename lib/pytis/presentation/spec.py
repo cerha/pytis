@@ -2079,6 +2079,55 @@ class FieldSpec(object):
         return self._type_kwargs
 
 
+class Fields(object):
+    """Field specification container for convenient field specification inheritance.
+
+    Example usage:
+
+      def fields():
+          inherited = Fields(super(SpecName, self).fields())
+          overriden = (
+              Field(inherit=inherited['field3'], editable=NEVER, default='09'),
+              Field(inherit=inherited['field5'], editable=NEVER),
+              Field(inherit=inherited['field6'], maxlen=8))
+          return inherited.fields(override=overriden, exclude=('field8', 'field9'))
+
+    """
+
+    def __init__(self, fields):
+        """Initialize the instance.
+
+        The argument is a sequence of field specifications as 'FieldSpec' instances.
+        
+        """
+        self._fields = tuple(fields)
+        self._dict = dict([(f.id(), f) for f in fields])
+
+    def __getitem__(self, key):
+        return self._dict[key]
+    
+    def __len__(self, key):
+        return len(self._fields)
+
+    def keys(self):
+        return self._dict.keys()
+
+    def fields(self, override=(), exclude=()):
+        """Return the list of fields in their original order with given fields excluded/overriden.
+
+        Arguments:
+
+          override -- sequence of 'FieldSpec' instances that should replace the items of the same
+            id within the original list.
+
+          exclude -- sequence of field identifiers to be excluded from the resulting list.
+
+        """
+        #exclude = [isinstance(x, FieldSpec) and x.id() or x for x in exclude]
+        override = dict([(f.id(), f) for f in override])
+        return [override.get(f.id(), f) for f in self._fields if f.id() not in exclude]
+    
+
 class _DataFactoryWithOrigin(pytis.data.DataFactory):
     """Factory na tvorbu datových objektù dle zadané specifikace.
     
