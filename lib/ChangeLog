@@ -1,3 +1,7 @@
+2007-09-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py: Prevent segfault on boolean cell doubleclick.
+
 2007-09-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (Fields): New class.

@@ -130,6 +130,20 @@ class ListTable(wx.grid.PyGridTableBase):
                 cache[row-new_start] = the_row
                 self._cache = cache
                     
+    class CustomBoolRenderer(wx.grid.PyGridCellRenderer):
+        def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+            # TODO: respect selection background for selected cells
+            dc.SetBackgroundMode(wx.SOLID)
+            dc.SetBrush(wx.Brush(attr.GetBackgroundColour(), wx.SOLID))
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
+            value = grid.GetCellValue(row, col)
+            if value == 'T':
+                dc.SetBackgroundMode(wx.TRANSPARENT)
+                dc.SetFont(attr.GetFont())
+                dc.SetTextForeground(attr.GetTextColour())
+                dc.DrawText('x', rect.x+2, rect.y)
+
     _TYPE_MAPPING = None
         
     def __init__(self, form, data, presented_row, columns, row_count,
@@ -173,8 +187,7 @@ class ListTable(wx.grid.PyGridTableBase):
             # Musíme inicializovat a¾ zde kvùli neXovému serveru.
             # Nepou¾íváme mapování pro Float, proto¾e to by nám zru¹ilo
             # na¹e formátování èísel.
-            self.__class__._TYPE_MAPPING = \
-                    {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
+            self.__class__._TYPE_MAPPING = {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
         return self._TYPE_MAPPING.get(t.__class__, wx.grid.GRID_VALUE_STRING)
 
     def _update_columns(self, columns):
@@ -518,9 +531,8 @@ class ListTable(wx.grid.PyGridTableBase):
         else:
             value = self._cached_value(row, col_id)
         # Vytáhni hodnotu sloupce
-        if not inputfield and \
-               self._columns[col].wxtype == wx.grid.GRID_VALUE_BOOL and \
-               value == 'F':
+        if not inputfield \
+               and self._columns[col].wxtype == wx.grid.GRID_VALUE_BOOL and value == 'F':
             # V této podobì gridu je 0 pova¾ována za pravdu.
             # Mo¾ná to souvisí s C++ pøijímajícím zde pouze strings.
             value = ''
@@ -529,8 +541,7 @@ class ListTable(wx.grid.PyGridTableBase):
     def SetValue(self, row, col, value):
         # Tato metoda neodpovídá specifikaci gridu, ale to nevadí, proto¾e
         # políèka editujeme výhradnì pøes na¹e editory.
-        assert isinstance(value, pytis.data.Value), \
-               ('Value not a value', value)
+        assert isinstance(value, pytis.data.Value), ('Value not a value', value)
         edited = self._edited_row
         if edited == None:
             # K této situaci dochází, kdy¾ se kliknutím my¹i opou¹tí
@@ -551,10 +562,12 @@ class ListTable(wx.grid.PyGridTableBase):
     # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
-        if col >= self.GetNumberCols():
-            return wx.grid.GRID_VALUE_STRING
-        else:
-            return self._columns[col].wxtype
+        # wx.grid.GRID_VALUE_BOOL causes segfault on doubleclicking a column, so we rather blaim 
+        # the grid that everyting is a string and use a custom renderer for boolean columns...
+        #if col < self.GetNumberCols():
+        #    return self._columns[col].wxtype
+        #else:
+        return wx.grid.GRID_VALUE_STRING
     
     def GetAttr(self, row, col, kind):
         if row >= self.GetNumberRows() or col >= self.GetNumberCols(): # mù¾e se stát...
@@ -584,9 +597,12 @@ class ListTable(wx.grid.PyGridTableBase):
                 attr.SetTextColour(fg)
                 attr.SetBackgroundColour(bg)
                 attr.SetFont(font)
+                if column.wxtype == wx.grid.GRID_VALUE_BOOL:
+                    attr.SetRenderer(wx.grid.GridCellBoolRenderer())
+                    #attr.SetRenderer(self.CustomBoolRenderer())
                 return attr
         return None
-        
+
 
 class TableRowIterator(object):
     """Vytvoøí iterátor nad tabulkou, který postupnì vrací urèené øádky.
