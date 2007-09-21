@@ -361,8 +361,8 @@ class EditForm(LayoutForm, _SubmittableForm):
         key = self._data.key()[0].id()
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in view.layout().order() and k!= key]
-        #if not self._row.new():
-        #    self._hidden += [(key,  self._row.format(key))]
+        if not self._row.new() and key not in view.layout().order() + [k for k,v in self._hidden]:
+            self._hidden += [(key,  self._row[key].export())]
         assert isinstance(errors, (tuple, list, str, unicode)), errors
         self._errors = errors
         binary = [id for id in self._view.layout().order()
