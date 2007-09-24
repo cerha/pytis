@@ -833,18 +833,15 @@ class Configuration(object):
             filetime = os.stat(filename)[stat.ST_MTIME]
         except:
             if force:
-                raise Exception(_("Konfiguraèní soubor je nepøístupný"),
-                                filename)
+                raise Exception(_("Unable to stat configuration file"), filename)
             else:
                 return 2**30
         try:
             f = open(filename)
         except:
-            raise Exception(_("Nebylo lze otevøít konfiguraèní soubor"),
-                            filename)
+            raise Exception(_("Unable to open configuration file"), filename)
         try:
-            confmodule = imp.load_module('_config', f, filename,
-                                         ('.py','r',imp.PY_SOURCE))
+            confmodule = imp.load_module('_config', f, filename, ('.py', 'r', imp.PY_SOURCE))
         finally:
             f.close()
         options = self._options
