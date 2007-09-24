@@ -14,9 +14,18 @@ uninstall:
 	rm -rf $(SHARE)/pytis
 	rm -rf $(LIB)/pytis
 
-cvs-install: compile translations $(SHARE)/pytis
-	ln -s $(CURDIR)/lib/pytis $(LIB)/pytis
-	ln -s $(CURDIR)/translations $(SHARE)/pytis
+cvs-install: compile translations link-lib link-share
+
+link-lib:
+	@if [ -d $(LIB)/pytis ]; then echo "$(LIB)/pytis already exists!"; \
+	else echo "Linking Pytis libraries to $(LIB)/pytis"; \
+	ln -s $(CURDIR)/lib/pytis $(LIB)/pytis; fi
+
+link-share: link-share-translations
+
+link-share-%: $(SHARE)/pytis
+	@if [ -d $(SHARE)/pytis/$* ]; then echo "$(SHARE)/pytis/$* already exists!"; \
+	else echo "Linking $* to $(SHARE)/pytis"; ln -s $(CURDIR)/$* $(SHARE)/pytis; fi
 
 cvs-update: do-cvs-update compile translations
 
@@ -27,7 +36,8 @@ $(SHARE)/pytis:
 	mkdir $(SHARE)/pytis
 
 compile:
-	python -c "import compileall; compileall.compile_dir('lib')"
+	@echo "Compiling Python libraries from source..."
+	@python -c "import compileall; compileall.compile_dir('lib')" >/dev/null
 
 tags:
 	./tools/make-tags.sh

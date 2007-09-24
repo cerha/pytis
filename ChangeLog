@@ -1,3 +1,7 @@
+2007-09-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* Makefile: Allow repeated cvs-install.
+
 2007-08-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* Makefile: Pass -dP to cvs update.
