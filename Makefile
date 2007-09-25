@@ -1,25 +1,33 @@
-LIB = /usr/local/lib/python2.4/site-packages
+# Edit the paths below to suit your needs.
+LIB = /usr/local/lib/python%d.%d/site-packages
 SHARE = /usr/local/share
+
+lib := $(shell python -c 'import sys; print "$(LIB)".find("%d") != -1 and \
+	                 "$(LIB)" % sys.version_info[:2] or "$(LIB)"')
 
 .PHONY: translations
 
 translations:
 	make -C translations
 
-install: $(SHARE)/pytis
+install: check-lib $(SHARE)/pytis
 	cp -ruv translations $(SHARE)/pytis
-	cp -ruv lib/pytis $(LIB)
+	cp -ruv lib/pytis $(lib)
 
 uninstall:
 	rm -rf $(SHARE)/pytis
-	rm -rf $(LIB)/pytis
+	rm -rf $(lib)/pytis
 
-cvs-install: compile translations link-lib link-share
+cvs-install: check-lib compile translations link-lib link-share
+
+check-lib:
+	@echo -e "import sys\nif '$(lib)' not in sys.path: sys.exit(1)" \
+	| python || echo 'WARNING: $(lib) not in Python path!'
 
 link-lib:
-	@if [ -d $(LIB)/pytis ]; then echo "$(LIB)/pytis already exists!"; \
-	else echo "Linking Pytis libraries to $(LIB)/pytis"; \
-	ln -s $(CURDIR)/lib/pytis $(LIB)/pytis; fi
+	@if [ -d $(lib)/pytis ]; then echo "$(lib)/pytis already exists!"; \
+	else echo "Linking Pytis libraries to $(lib)/pytis"; \
+	ln -s $(CURDIR)/lib/pytis $(lib)/pytis; fi
 
 link-share: link-share-translations
 
