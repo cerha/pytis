@@ -1364,85 +1364,89 @@ class CbComputer(Computer):
     
     
 class CodebookSpec(object):
-    """Specifikace vlastností náhledu pro jeho pou¾ití jako èíselníku.
+    """Specification of codebook properties of given view.
 
-    Nepovinná specifikaèní funkce 'cb_spec' mù¾e pomocí instance této tøídy
-    upøesnit vlastnosti daného náhledu pro jeho pou¾ití v kontextu èíselníku.
+    The specification of any view may define the properties of the view, when used as a codebook
+    (see the 'codebook' argument of 'FieldSpec' for more information about codebooks).
 
+    'CodebookSpec' may be defined as the 'cb' attribute of a 'Specification'.
+    
     """
-    def __init__(self, columns=None, sorting=None, display=None,
+    def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
                  display_size=20, begin_search=None):
-        
-        """Inicializace a doplnìní výchozích hodnot atributù.
+        """Initialize the instance.
 
-        Argumenty:
+        Arguments:
         
-          columns -- sekvence identifikátorù sloupcù, které mají být zobrazeny
-            v èíselníkovém formuláøi (tøída 'CodebookForm').  Pokud je 'None',
-            bude èíselník zobrazovat v¹echny sloupce ze specifikace dané
-            tabulky.
-            
-          sorting -- sekvence identifikátorù sloupcù, podle kterých mají být
-            záznamy èíselníkového formuláøe setøídìny.  Pokud je 'None',
-            bude pou¾ito tøídìní z ViewSpec.
-            
-          display -- pokud není 'None', urèuje zpùsob zístání u¾ivatelské
-            hodnoty èíselníku (více o jejím vyu¾ití viz ní¾e).  Hodnotou mù¾e
-            být buïto identifikátor sloupeèku v datovém objektu enumerátoru
-            (bude zobrazena hodnota tohoto sloupeèku), nebo funkce jednoho
-            argumentu (vnitøní Pythonová hodnota enumerátoru), která vrací
-            u¾ivatelskou hodnotu (øetìzec).  Mù¾e být pødána také dvojice
-            (funkce, identifikátor sloupeèku).  V tom pøípadì bude argumentem
-            funkce hodnota daného sloupce, namísto sloupce vnitøní hodnoty.
+          display -- defines the method of retrieving the user visible value of the codebook item
+            (see below for more information about user visible values).  None (the default value)
+            means to use the codebook code as the user visible value (no conversion).  A string
+            value refers to a column in the *data* object of the codebook.  The user visible value
+            is retrieved from given column.  You may also pass a function (callable object).  The
+            user visible value is then computed by invoking the function, passing it the code
+            (internal Python value of the codebook field) as an argument.  The returned value must
+            be a string.  Finally, you may pass a pair (function, column).  This will lead in
+            calling the function, passing it the value of given column as the argument.
 
-          display_size -- ¹íøka políèka displeje ve znacích.  Lze také
-            pøedefinovat stejnojmeným argumentem 'FieldSpec' pro konkrétní
-            èíselníkové políèko.
+          prefer_display -- If true, the user interface will show the display value instead of the
+            codebook internal value wherever possible.  For example the browse from will show the
+            display value instead of the code (the display is normally only shown in the status
+            line or tooltip).  See below for more details
+
+          display_size -- width of the codebook display field in characters.  It is possible to
+            override this value by the argument of the same name within the field specification
+            (for particular field).
           
-          begin_search -- None nebo identifikátor sloupce, nad ním¾ se má
-            spustit automatické inkrementální vyhledávání.
+          begin_search -- None or an identifier of a column, where incremental search whould be
+            automatically started when a codebook form is invoked (GUI only).
 
-        U¾ivatelská hodnota èíselníku je vyu¾ívána v nìkolika situacích.  U
-        bì¾ného èíselníkového plíèka typu `SelectionType.CODEBOOK' je pro její
-        zobrazení vytvoøen displej.  U ostatních èíselníkových políèek
-        (napø. CHOICE, RADIO apod.)  jsou u¾ivatelské hodnoty zobrazeny pøímo
-        ve výbìru.  U¾ivatel v tomto pøípadì vnitøní hodnotu vùbec nevidí, ta
-        je pou¾ívána pouze internì.  Dal¹ím pou¾itím u¾ivatelské hodnoty je
-        zobrazení související èíselníkové hodnoty ve stavové øádce gridu (pøi
-        aktivaci buòky její¾ hodnota pochází z èíselníku).
-                    
+        The user visible value of the codebook is used in several situations.  The codebook field
+        ('SelectionType.CODEBOOK') will show it in a display next to the form control for entering
+        the codebook value.  Other fields (such as 'CHOICE' or 'RADIO') will directly shoe the user
+        value (id 'display' was defined) and the internal value is not visible.  Another usage is
+        in browse forms (tables), where the value of the display is shown in the application status
+        line (GUI) or in a tooltip (web).  If 'prefer_display' is true, however, the display value
+        will be used in browse forms directly.
+
+        Arguments 'columns' and 'sorting' are deprecated.  Use a derived specification if you need
+        to modify the parameters of the underlying view.
+
         """
         assert columns is None or is_sequence(columns)
         assert sorting is None or is_sequence(sorting)
         assert display is None or isinstance(display, str) \
                or callable(display) or isinstance(display, tuple) \
                and callable(display[0]) and isinstance(display[1], str)
+        assert isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
-        assert begin_search is None or isinstance(begin_search,str)
+        assert begin_search is None or isinstance(begin_search, str)
         self._columns = columns
         self._sorting = sorting
         self._display = display
+        self._prefer_display = prefer_display
         self._display_size = display_size
         self._begin_search = begin_search
 
     def columns(self):
-        """Vra» seznam id sloupcù, zobrazených ve výbìrovém formuláøi."""
         return self._columns
         
     def sorting(self):
-        """Vra» seznam id sloupcù, podle kterých má být èíselník setøídìn."""
         return self._sorting
         
     def display(self):
-        """Vra» id sloupce zobrazovaného v displeji."""
+        """Return the 'display' specification as passed to the constructor."""
         return self._display
+    
+    def prefer_display(self):
+        """Return true if the display should be prefered over the internal codebook value."""
+        return self._prefer_display
         
     def display_size(self):
-        """Vra» velikost displeje (poèet znakù)."""
+        """Return the display size in characters."""
         return self._display_size
         
     def begin_search(self):
-        """Vra» identifikátor sloupce pro inkrementální vyhledávání."""
+        """Return the identifier of the column where incremental search should be started."""
         return self._begin_search
 
 
@@ -1589,24 +1593,22 @@ class FieldSpec(object):
             explicitly to improve field presentation or pass additional validation constraints.
             Given type, however, must be compatible with the type used by the data object.
             
-          width -- ¹íøka pole ve znacích; kladné celé èíslo, nebo 0,
-            v kterém¾to pøípadì je pole skryté.  Je-li 'None', bude pou¾ita
-            implicitní ¹íøka.  U nìkterých typù vstupních políèek mù¾e mít
-            speciální význam (viz jejich dokumentace).
+          width -- field width in characters (integer).  Default width is determined automatically
+            if not specified here.  Certain types of input fields may interpret the value
+            differently (eg. as a number of columns) when number of characters doesn't make sense.
             
-          height -- vý¹ka pole ve znacích, kladné reálné èíslo.  U nìkterých
-            typù vstupních políèek mù¾e mít speciální význam (viz jejich
-            dokumentace).
+          height -- field height in characters (integer).  Certain types of input fields may
+            interpret the value differently (eg. as a number of rows) when number of characters
+            doesn't make sense.
           
-          column_width -- ¹íøka sloupce v tabulce ve znacích, kladné celé
-            èíslo.  Je-li 'None', je pou¾ita hodnota 'width'.
+          column_width -- table column width in characters (integer).  If not defined, defaults to
+            'width'.
 
-          disable_column -- Pokud je udána pravdivá hodnota, políèko nebude mo¾né
-            zobrazit jako sloupec -- tj. nebude se vyskytovat ve výbìru
-            sloupcù, které je mo¾no zobrazit.  Pokus o umístìní takového
-            políèka do výchozích sloupcù (argument 'columns' ve 'ViewSpec')
-            bude pova¾ován za chybu a ohlá¹en.
-            
+          disable_column -- If true, it will not be possible to display the field as a table
+            column.  The field will not appear in the selection of columns to display and presence
+            of such field in default columns ('ViewSpec' argument 'columns') will be announced as
+            an error.
+
           fixed -- pokud bude pøadána pravdivá hodnota, nebude ¹íøka sloupce
             automaticky pøepoèítávána pøi zmìnì velikosti tabulkového
             formuláøe.  Implicitnì jsou sloupce automaticky
@@ -1655,16 +1657,17 @@ class FieldSpec(object):
             není tato informace aplikaci dostupná.  Potom je nutné název
             èíselníku urèit zde.
             
-          display -- umo¾òuje definovat vlastní hodnotu displeje pro konkrétní
-            pou¾ití èíselníku.  Pokud je None, bude pou¾ita hodnota z 'cb_spec'
-            ve specifikaci èíselníku (co¾ by mìlo být také upøednostòováno).
-            Pokud je pou¾ito, je význam stejný jako u stejnojmenného argumentu
-            `CodebookSpec'.  Relevantní jen pro políèka výètových typù (datový
-            typ má definován enumerátor).
+          display -- overrides this option for particular field.  If not defined, the value
+            defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
+            information.  Only relevant if the option 'codebook' (above) was deifned.
 
-          display_size -- velikost displeje èíselníku ve znacích.  Relevantní
-            jen pro èíselníková políèka.  Pokud je None, bude pou¾ita hodnota z
-            'cb_spec' ve specifikaci èíselníku.
+          prefer_display -- overrides this option for particular field.  If not defined, the value
+            defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
+            information.
+
+          display_size -- overrides this option for particular field.  If not defined, the value
+            defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
+            information.
 
           allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
             pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
@@ -1775,16 +1778,13 @@ class FieldSpec(object):
         self._kwargs = kwargs
         self._init(**kwargs)
                  
-    def _init(self, id, label=None, column_label=None, descr=None,
-              virtual=False, dbcolumn=None, type=None, type_=None,
-              width=None, column_width=None, disable_column=False,
-              fixed=False, height=None, editable=None, compact=False,
-              nocopy=False, default=None, computer=None, line_separator=';',
-              codebook=None, display=None, display_size=None,
-              allow_codebook_insert=False, codebook_insert_spec=None,
-              codebook_runtime_filter=None, selection_type=None,
-              orientation=Orientation.VERTICAL, post_process=None,
-              filter=None, filter_list=None, style=None, link=(),
+    def _init(self, id, label=None, column_label=None, descr=None, virtual=False, dbcolumn=None,
+              type=None, type_=None, width=None, column_width=None, disable_column=False,
+              fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
+              computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
+              display_size=None, allow_codebook_insert=False, codebook_insert_spec=None,
+              codebook_runtime_filter=None, selection_type=None, orientation=Orientation.VERTICAL,
+              post_process=None, filter=None, filter_list=None, style=None, link=(),
               thumbnail=None, **kwargs):
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
@@ -1807,6 +1807,7 @@ class FieldSpec(object):
                or callable(display) or isinstance(display, tuple) \
                and len(display) == 2 and callable(display[0]) \
                and isinstance(display[1], str)
+        assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert isinstance(allow_codebook_insert, bool)
         assert codebook_insert_spec is None \
@@ -1865,6 +1866,7 @@ class FieldSpec(object):
         self._line_separator = line_separator
         self._codebook = codebook
         self._display = display
+        self._prefer_display = prefer_display
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
@@ -2022,13 +2024,17 @@ class FieldSpec(object):
                 return enumerator.data_factory().origin() or self._codebook
         return self._codebook
 
-    def display_size(self):
-        """Vra» velikost displeje èíselníku (poèet znakù)."""
-        return self._display_size
-
     def display(self):
-        """Vra» hodnotu `display' zadanou v konstruktoru."""
+        """Return specification parameter `display' passed to the constructor."""
         return self._display
+
+    def prefer_display(self):
+        """Return specification parameter `prefer_display' passed to the constructor."""
+        return self._prefer_display
+
+    def display_size(self):
+        """Return specification parameter `display_size' passed to the constructor."""
+        return self._display_size
 
     def allow_codebook_insert(self):
         """Vra» pravdu, má-li být  zobrazeno tlaèítko pøidání do èíselníku."""

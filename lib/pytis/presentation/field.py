@@ -69,6 +69,7 @@ class PresentedRow(object):
             self.default = f.default()
             self.editable = f.editable()
             self.display = f.display()
+            self.prefer_display = f.prefer_display()
             self.codebook = f.codebook(data)
             self.codebook_runtime_filter = f.codebook_runtime_filter()
             self.data_column = data.find_column(f.id())
@@ -127,6 +128,7 @@ class PresentedRow(object):
         self._resolver = resolver or pytis.util.resolver()
         self._columns = columns = tuple([self._Column(f, data) for f in fields])
         self._coldict = dict([(c.id, c) for c in columns])
+        self._cb_spec_cache = {}
         key = data.key()[0].id()
         if not self._coldict.has_key(key):
             # TODO: This is a temporary hack for old applications which have data columns not
@@ -607,6 +609,21 @@ class PresentedRow(object):
         else:
             return self._data.permitted(key, permission)
 
+    def _cb_spec(self, column):
+        try:
+            cb_spec = self._cb_spec_cache[column.id]
+        except KeyError:
+            codebook = column.codebook
+            if codebook:
+                try:
+                    cb_spec = self._resolver.get(codebook, 'cb_spec')
+                except ResolverError, e:
+                    cb_spec = CodebookSpec()
+            else:
+                cb_spec = CodebookSpec()
+            self._cb_spec_cache[column.id] = cb_spec
+        return cb_spec
+        
     def _display_func(self, column):
         def getval(enum, value, col, func=None):
             if value is None:
@@ -624,14 +641,7 @@ class PresentedRow(object):
                 return f(v.value())
             else:
                 return v.export()
-        display = column.display
-        if not display and column.codebook:
-            try:
-                cb_spec = self._resolver.get(column.codebook, 'cb_spec')
-            except ResolverError, e:
-                pass
-            else:
-                display = cb_spec.display()
+        display = column.display or self._cb_spec(column).display()
         if not display:
             return None
         elif callable(display):
@@ -646,6 +656,13 @@ class PresentedRow(object):
     def codebook(self, key):
         """Return the name of given field's codebook specification for resolver."""
         return self._coldict[key].codebook
+
+    def prefer_display(self, key):
+        column = self._coldict[key]
+        if column.prefer_display is not None:
+            return column.prefer_display
+        else:
+            return self._cb_spec(column).prefer_display()
         
     def display(self, key):
         """Return enumerator `display' value for given field as a string.

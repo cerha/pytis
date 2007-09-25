@@ -341,7 +341,11 @@ class ShowForm(LayoutForm):
             value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
                     g.span('&nbsp;', cls="color-display", style="background-color: %s;" % color)
         elif type.enumerator():
-            value = self._row.display(f.id())
+            display = self._row.display(f.id())
+            if self._row.prefer_display(f.id()):
+                value = display
+            else:
+                value = g.abbr(self._row[f.id()].export(), title=display)
         else:
             value = self._row[f.id()].export()
             if len(value) > self._MAXLEN:
@@ -527,7 +531,10 @@ class BrowseForm(Form):
         return "--"
     
     def _codebook_formatter(self, generator, row, cid):
-        return row.display(cid)
+        if row.prefer_display(cid):
+            return row.display(cid)
+        else:
+            return generator.abbr(row.format(cid), title=row.display(cid))
     
     def _generic_formatter(self, generator, row, cid):
         value = row[cid].export() 

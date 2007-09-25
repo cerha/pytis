@@ -1,3 +1,14 @@
+2007-09-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (ShowForm, BrowseForm): Use the display value
+	only if `prefer_display' was set to true.
+
+	* pytis/presentation/spec.py (CodebookSpec.prefer_display)
+	(FieldSpec.prefer_display): New methods and constructor arguments
+	of the same name.
+
+	* pytis/presentation/field.py (PresentedRow.prefer_display): New method.
+
 2007-09-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (EditForm): Include key value in a hidden field.
