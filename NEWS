@@ -4,6 +4,23 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-09-25  Tomas Cerha  <cerha@brailcom.org>
+
+	Nový specifikaèní argument 'prefer_display' umo¾òuje urèit, ¾e
+	hodnota displeje má být upøednostnìna pøed vnitøní hodnotou
+	èíselníku (kódem).  Argument lze nastavit jak v `CodebookSpec',
+	tak ve `FieldSpec' (hodnota z FieldSpec pøebíjí hodnotu z
+	CodebookSpec, podobnì jako u samotného `display' a
+	`display_size').  Zatím je tento argument respektován jen ve
+	webových formuláøích typu BrowseForm a ShowForm.  Pokud je
+	pravdivý, bude v tabulce i v show-formu u èíselníkových políèek
+	zobrazena pøímo hodnota displeje (tak¾e vnitøní kód èíselníku
+	u¾ivatel nikde neuvidí).  Výchozí chování je zobrazit kód a
+	hodnotu displeje jako tooltip (podobnì jako zobrazení displeje ve
+	stavové øádce v GUI formuláøích).  V GUI formuláøích je tento
+	parametr zatím ignorován, ale kdyby se podpora dodìlala, mohl by
+	myslím ve vìt¹inì pøípadù nahradit sloupeèky s `CbComputer'...
+	
 2007-09-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* BUGFIX: O¹etøena chyba wx zp;sobující pád aplikace pøi dvojím
