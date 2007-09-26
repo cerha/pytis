@@ -38,7 +38,7 @@ link-share-%: $(SHARE)/pytis
 cvs-update: do-cvs-update compile translations
 
 do-cvs-update:
-	cvs update -dP
+	cvs update -dPC
 
 $(SHARE)/pytis:
 	mkdir $(SHARE)/pytis

@@ -1,7 +1,8 @@
 2007-09-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* Makefile: Check python path before installation.
-
+	(cvs-update): Overwrite locally modified files.
+	
 2007-09-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* Makefile: Allow repeated cvs-install.
