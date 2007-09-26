@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-08-16 23:49+0200\n"
-"PO-Revision-Date: 2007-08-16 23:50+0200\n"
+"POT-Creation-Date: 2007-09-24 20:00+0200\n"
+"PO-Revision-Date: 2007-09-26 11:36+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 
 #: ../lib/pytis/web/form.py:49
 msgid "Empty value"
-msgstr "Prázdná hodnota."
+msgstr "Prázdná hodnota"
 
 #: ../lib/pytis/web/form.py:50
 msgid "Invalid value"
@@ -99,63 +99,83 @@ msgstr "Minimální rozmìr %(minsize)s pixelù nedodr¾en"
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
-#: ../lib/pytis/web/form.py:155 ../lib/pytis/web/dialog.py:50
+#: ../lib/pytis/web/form.py:132 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:155
+#: ../lib/pytis/web/form.py:185
+msgid "Submit the form"
+msgstr "Odeslat formuláø"
+
+#: ../lib/pytis/web/form.py:187
+msgid "Undo all changes"
+msgstr "Zru¹it v¹echny provedené zmìny"
+
+#: ../lib/pytis/web/form.py:187
 msgid "Reset"
 msgstr "Vrátit pùvodní hodnoty"
 
-#: ../lib/pytis/web/form.py:290
+#: ../lib/pytis/web/form.py:323
 msgid "image"
 msgstr "obrázek"
 
-#: ../lib/pytis/web/form.py:290
+#: ../lib/pytis/web/form.py:323
 msgid "file"
 msgstr "soubor"
 
-#: ../lib/pytis/web/form.py:305 ../lib/pytis/web/form.py:439
+#: ../lib/pytis/web/form.py:338 ../lib/pytis/web/form.py:524
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/form.py:305 ../lib/pytis/web/form.py:439
+#: ../lib/pytis/web/form.py:338 ../lib/pytis/web/form.py:524
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/form.py:354
+#: ../lib/pytis/web/form.py:387
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políèka oznaèená hvìzdièkou jsou povinná."
 
-#: ../lib/pytis/web/form.py:519
+#: ../lib/pytis/web/form.py:633
 msgid "No records."
 msgstr "®ádné záznamy."
 
-#: ../lib/pytis/web/form.py:522
+#: ../lib/pytis/web/form.py:636
 msgid "Total records:"
 msgstr "Poèet záznamù celkem:"
 
-#: ../lib/pytis/web/form.py:524
+#: ../lib/pytis/web/form.py:638
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 
-#: ../lib/pytis/web/form.py:537
-msgid "Page:"
-msgstr "Strana:"
+#: ../lib/pytis/web/form.py:655 ../lib/pytis/web/form.py:657
+msgid "Page"
+msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:543
+#: ../lib/pytis/web/form.py:657 ../lib/pytis/web/form.py:669
+msgid "(Use ALT+arrow down to select)"
+msgstr "(pou¾ijte ALT+¹ipka dolù pro výbìr)"
+
+#: ../lib/pytis/web/form.py:661
 msgid "Previous"
 msgstr "pøedchozí"
 
-#: ../lib/pytis/web/form.py:544
+#: ../lib/pytis/web/form.py:662
+msgid "Go to previous page"
+msgstr "Pøejít na pøedchozí stránku výpisu"
+
+#: ../lib/pytis/web/form.py:663
 msgid "Next"
 msgstr "dal¹í"
 
-#: ../lib/pytis/web/form.py:545
-msgid "Records per page:"
-msgstr "Poèet záznamù na stránku:"
+#: ../lib/pytis/web/form.py:664
+msgid "Go to next page"
+msgstr "Pøejít na následující stránku výpisu"
 
-#: ../lib/pytis/web/form.py:550
+#: ../lib/pytis/web/form.py:666 ../lib/pytis/web/form.py:668
+msgid "Records per page"
+msgstr "Poèet záznamù na stránku"
+
+#: ../lib/pytis/web/form.py:672
 msgid "Go"
 msgstr "Jdi"

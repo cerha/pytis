@@ -1,189 +1,180 @@
-# Pytis translations
-# Copyright (C) 2006, 2007 Brailcom, o.p.s.
-# This file is distributed under the same license as the Pytis package.
-# Pawe³ Loba <ploba@rogers.com>, 2006
+# Pytis translations.
+# Copyright (C) 2007 Brailcom, o.p.s.
+# This file is distributed under the same license as the Wiking package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.1\n"
+"Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-24 20:00+0200\n"
 "PO-Revision-Date: 2007-09-26 11:38+0200\n"
-"Last-Translator: Pawel Loba <ploba@rogers.com>\n"
-"Language-Team: Polish <wiking@lists.freebsoft.org>\n"
+"Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
+"Language-Team: German <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../lib/pytis/web/form.py:49
 msgid "Empty value"
-msgstr "Pusta warto¶æ"
+msgstr "Prázdná hodnota"
 
 #: ../lib/pytis/web/form.py:50
 msgid "Invalid value"
-msgstr "Niepoprawna warto¶æ"
+msgstr "Neplatná hodnota"
 
 #: ../lib/pytis/web/form.py:51 ../lib/pytis/web/form.py:55
-#, fuzzy, python-format
+#, python-format
 msgid "Minimal length %(minlen)s not satisfied"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "Nedodr¾ena minimální délka %(minlen)s"
 
 #: ../lib/pytis/web/form.py:52
-#, fuzzy, python-format
+#, python-format
 msgid "Maximal length %(maxlen)s exceeded"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "Øetìzec pøesahuje maximální délku %(maxlen)s"
 
 #: ../lib/pytis/web/form.py:53
 msgid "Not an integer"
-msgstr "To nie jest liczba ca³kowita"
+msgstr "Není to celé èíslo"
 
 #: ../lib/pytis/web/form.py:54
 msgid "Invalid number"
-msgstr "Niepoprawny numer"
+msgstr "Není to povolené èíslo"
 
 #: ../lib/pytis/web/form.py:56
-#, fuzzy, python-format
+#, python-format
 msgid "String exceeds max length %(maxlen)s"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "Øetìzec pøesahuje maximální délku %(maxlen)s"
 
 #: ../lib/pytis/web/form.py:57
 msgid "Enter the password twice to eliminate typos"
-msgstr ""
+msgstr "Zadejte heslo dvakrát pro eliminování pøeklepù"
 
 #: ../lib/pytis/web/form.py:58
 msgid "Passwords don't match"
-msgstr ""
+msgstr "Kontrolní zadání hesla neodpovídá"
 
 #: ../lib/pytis/web/form.py:59
 msgid "Invalid format"
-msgstr "Niew³a¶ciwy format"
+msgstr "Neplatný formát"
 
 #: ../lib/pytis/web/form.py:60
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
+msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
 
 #: ../lib/pytis/web/form.py:61
 msgid "Invalid date or time format"
-msgstr "Niew³a¶ciwy format daty lub czasu"
+msgstr "Chybný formát data nebo èasu"
 
 #: ../lib/pytis/web/form.py:62
 msgid "Invalid date or time"
-msgstr "Niew³a¶ciwy format daty lub czasu"
+msgstr "Chybné datum nebo èas"
 
 #: ../lib/pytis/web/form.py:63
 msgid "Date outside the allowed range"
-msgstr "Data poza dopuszczalnym obrêbem"
+msgstr "Datum mimo povolený rozsah"
 
 #: ../lib/pytis/web/form.py:64
-#, fuzzy, python-format
+#, python-format
 msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "Nedodr¾ena minimální velikost %(minlen)s"
 
 #: ../lib/pytis/web/form.py:65
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
-msgstr ""
+msgstr "Maximální velikost %(maxlen)s pøekroèena"
 
 #: ../lib/pytis/web/form.py:66
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
-msgstr ""
+msgstr "Maximální rozmìr %(maxsize)s pixelù pøekroèen"
 
 #: ../lib/pytis/web/form.py:67
-#, fuzzy, python-format
+#, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "Minimální rozmìr %(minsize)s pixelù nedodr¾en"
 
 #: ../lib/pytis/web/form.py:68
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-msgstr ""
+msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
 #: ../lib/pytis/web/form.py:132 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
-msgstr "Wy¶lij"
+msgstr "Odeslat"
 
 #: ../lib/pytis/web/form.py:185
 msgid "Submit the form"
-msgstr ""
+msgstr "Odeslat formuláø"
 
 #: ../lib/pytis/web/form.py:187
 msgid "Undo all changes"
-msgstr ""
+msgstr "Zru¹it v¹echny provedené zmìny"
 
 #: ../lib/pytis/web/form.py:187
 msgid "Reset"
-msgstr "Od¶wie¿"
+msgstr "Vrátit pùvodní hodnoty"
 
 #: ../lib/pytis/web/form.py:323
 msgid "image"
-msgstr ""
+msgstr "obrázek"
 
 #: ../lib/pytis/web/form.py:323
 msgid "file"
-msgstr ""
+msgstr "soubor"
 
 #: ../lib/pytis/web/form.py:338 ../lib/pytis/web/form.py:524
 msgid "Yes"
-msgstr "Tak"
+msgstr "Ano"
 
 #: ../lib/pytis/web/form.py:338 ../lib/pytis/web/form.py:524
 msgid "No"
-msgstr "Nie"
+msgstr "Ne"
 
 #: ../lib/pytis/web/form.py:387
 msgid "Fields marked by an asterisk are mandatory."
-msgstr ""
+msgstr "Políèka oznaèená hvìzdièkou jsou povinná."
 
 #: ../lib/pytis/web/form.py:633
 msgid "No records."
-msgstr "Nie ma wpisu."
+msgstr "®ádné záznamy."
 
 #: ../lib/pytis/web/form.py:636
-#, fuzzy
 msgid "Total records:"
-msgstr "Nie ma wpisu."
+msgstr "Poèet záznamù celkem:"
 
 #: ../lib/pytis/web/form.py:638
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr ""
+msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 
 #: ../lib/pytis/web/form.py:655 ../lib/pytis/web/form.py:657
 msgid "Page"
-msgstr ""
+msgstr "Strana"
 
 #: ../lib/pytis/web/form.py:657 ../lib/pytis/web/form.py:669
 msgid "(Use ALT+arrow down to select)"
-msgstr ""
+msgstr "(pou¾ijte ALT+¹ipka dolù pro výbìr)"
 
 #: ../lib/pytis/web/form.py:661
 msgid "Previous"
-msgstr ""
+msgstr "pøedchozí"
 
 #: ../lib/pytis/web/form.py:662
 msgid "Go to previous page"
-msgstr ""
+msgstr "Pøejít na pøedchozí stránku výpisu"
 
 #: ../lib/pytis/web/form.py:663
 msgid "Next"
-msgstr ""
+msgstr "dal¹í"
 
 #: ../lib/pytis/web/form.py:664
 msgid "Go to next page"
-msgstr ""
+msgstr "Pøejít na následující stránku výpisu"
 
 #: ../lib/pytis/web/form.py:666 ../lib/pytis/web/form.py:668
 msgid "Records per page"
-msgstr ""
+msgstr "Poèet záznamù na stránku"
 
 #: ../lib/pytis/web/form.py:672
 msgid "Go"
-msgstr ""
-
-#, fuzzy
-#~ msgid "String exceeds max length %(minlen)s"
-#~ msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
-
-#~ msgid "reduced"
-#~ msgstr "zredukowany"
+msgstr "Jdi"
