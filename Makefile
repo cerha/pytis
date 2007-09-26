@@ -38,6 +38,9 @@ link-share-%: $(SHARE)/pytis
 cvs-update: do-cvs-update compile translations
 
 do-cvs-update:
+	@echo "All local modifications will be lost and owerwritten with clean repository copies!"
+	@echo -n "Press Enter to continue or Ctrl-C to abort: "
+	@read || exit 1
 	cvs update -dPC
 
 $(SHARE)/pytis:
