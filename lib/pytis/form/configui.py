@@ -57,28 +57,29 @@ _LAYOUT = (
                           VGroup('export_directory','export_encoding')),
      ))
 
-_LABELS = {'row_focus_fg_color':    _("Text"),
-           'row_focus_bg_color':    _("Pozadí"),
-           'row_nofocus_fg_color':  _("Text"),
-           'row_nofocus_bg_color':  _("Pozadí"),
-           'row_edit_fg_color':     _("Text"),
-           'row_edit_bg_color':     _("Pozadí"),
-           'cell_highlight_color':  _("Zvýraznìní aktivní buòky"),
-           'grid_line_color':       _("Møí¾ka tabulky"),
-           'grouping_background_downgrade': _("Ztmavení øádkù pøi seskupování"),
-           'field_disabled_color':  _("Neaktivní vstupní políèko"),
-           'field_denied_color':    _("Zakázané vstupní políèko"),
-           'field_invalid_color':   _("Nevalidní vstupní políèko"),
-           'show_splash':           _("Zobrazovat úvodní dialog"),
-           'show_tooltips':         _("Zobrazovat bublinovou nápovìdu"),
-           'stretch_tables':        _("Rozpínat tabulky na ¹íøku okna"),
-           'cache_spec_onstart':    _("Naèítat specifikace pøi startu"),
-           'export_directory':      _("Výchozí adresáø"),
-           'export_encoding':       _("Kódování exportovaných dat"),
+_LABELS = {
+    'row_focus_fg_color':    _("Text"),
+    'row_focus_bg_color':    _("Pozadí"),
+    'row_nofocus_fg_color':  _("Text"),
+    'row_nofocus_bg_color':  _("Pozadí"),
+    'row_edit_fg_color':     _("Text"),
+    'row_edit_bg_color':     _("Pozadí"),
+    'cell_highlight_color':  _("Zvýraznìní aktivní buòky"),
+    'grid_line_color':       _("Møí¾ka tabulky"),
+    'grouping_background_downgrade': _("Ztmavení øádkù pøi seskupování"),
+    'field_disabled_color':  _("Neaktivní vstupní políèko"),
+    'field_denied_color':    _("Zakázané vstupní políèko"),
+    'field_invalid_color':   _("Nevalidní vstupní políèko"),
+    'show_splash':           _("Zobrazovat úvodní dialog"),
+    'show_tooltips':         _("Zobrazovat bublinovou nápovìdu"),
+    'stretch_tables':        _("Rozpínat tabulky na ¹íøku okna"),
+    'cache_spec_onstart':    _("Naèítat specifikace pøi startu"),
+    'export_directory':      _("Výchozí adresáø"),
+    'export_encoding':       _("Kódování exportovaných dat"),
 }
 
 _FIELDSPEC_KWARGS = {
-           'export_directory':      dict(width=45),
+    'export_directory': dict(width=45),
 }
 
 def config_menu_items(hotkeys={}):
@@ -169,7 +170,7 @@ class ConfigForm(PopupEditForm):
             if doc:
                 descr += "\n" + doc
             return descr
-        fields = [FieldSpec(option, _LABELS.get(option, option), descr=descr(option)
+        fields = [FieldSpec(option, _LABELS.get(option, option), descr=descr(option),
                             **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
