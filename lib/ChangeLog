@@ -1,3 +1,8 @@
+2007-09-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/configui.py: Extend field width for
+	`export_directory' option.
+
 2007-09-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (ShowForm, BrowseForm): Use the display value
