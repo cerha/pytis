@@ -77,6 +77,11 @@ class Type(pd.Type):
     pd.Type._validation_error = _validation_error
 
 
+class UriType(object):
+    LINK = 'LINK'
+    IMAGE = 'IMAGE'
+
+    
 class ListLayout(object):
     """Specification of list layout for web presentation.
 
@@ -111,9 +116,47 @@ class ListLayout(object):
 class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
-    
-    def __init__(self, data, view, resolver, row=None, prefill=None, new=False, link_provider=None,
-                 handler='#', hidden=(), submit=None, name=None, **kwargs):
+    def __init__(self, data, view, resolver, row=None, prefill=None, new=False, handler='#',
+                 hidden=(), submit=None, name=None, uri_provider=None, **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+
+          data -- data object as a 'pytis.data.Data' instance
+          
+          view -- presentation specification as a 'pytis.presentation.ViewSpec' instance
+          
+          resolver -- pytis name resolver as a pytis.util.Resolver' instance
+          
+          row -- current row as a 'pytis.data.Row' instance or None
+          
+          prefill -- current records prefill as a dictionary or None.  Same as the
+            'pytis.presentation.PresentedRow' constructor argument of the same name.
+          
+          new -- flag indicating, that the current record is a new (inserted) one.  Same as the
+            'pytis.presentation.PresentedRow' constructor argument of the same name.
+
+          uri_provider -- callable object (function) returning URIs for form fields.  This makes
+            Pytis web forms independent on the application's URI scheme.  The function must accept
+            one positional argument (the 'pytis.presentation.PresentedRow' instance) and two
+            keyword arguments.  The first of them -- 'cid' -- may also be used as positional and
+            denotes the identifier of the field, for which the URI is requested.  It may be None
+            when requesting URI for the whole record.  The later argument 'type' will always be one
+            of 'UriType' constants.  It is used for distinction of the purpose, for which the uri
+            us used (eg. for a link or an image src).
+          
+          handler -- form handler URI as a string.  This URI is used in the form's 'action'
+            attribute.
+          
+          hidden -- hardcoded hidden form fields as a sequence of pairs (name, value).
+
+          submit -- custom submit buttons as a sequence of (label, name) pairs.  The default submit
+            buttons are ((_('Submit'), None),)
+            
+          name -- form name as a string or None.  This name will be sent as a hidden field and used
+            to distinguish which request parameters belong to which form.
+
+        """
         super(Form, self).__init__(**kwargs)
         assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
@@ -122,9 +165,10 @@ class Form(lcg.Content):
         assert isinstance(handler, str), handler
         assert isinstance(hidden, (tuple, list)), hidden
         self._data = data
+        self._key = data.key()[0].id()
         self._view = view
         self._prefill = prefill or {}
-        self._link_provider = link_provider
+        self._uri_provider = uri_provider
         self._row = PresentedRow(view.fields(), data, row, resolver=resolver,
                                  prefill=self._valid_prefill(), new=new)
         self._handler = handler
@@ -133,9 +177,9 @@ class Form(lcg.Content):
         self._name = name
         self._enctype = None
 
-    def _uri(self, row, cid):
-        if self._link_provider:
-            return self._link_provider(row, cid)
+    def _uri(self, row, cid=None, **kwargs):
+        if self._uri_provider:
+            return self._uri_provider(row, cid=cid, **kwargs)
         else:
             return None
         
@@ -310,50 +354,52 @@ class ShowForm(LayoutForm):
     
     def _export_field(self, exporter, f):
         g = exporter.generator()
-        type = self._row[f.id()].type()
+        row = self._row
+        type = row[f.id()].type()
+        size = None
         if isinstance(type, pytis.data.Password):
             return None
         elif isinstance(type, pytis.data.Binary):
-            buf = self._row[f.id()].value()
+            buf = row[f.id()].value()
             if buf:
-                size = ' (%s)' % format_byte_size(len(buf))
-                uri = self._uri(self._row, f.id())
-
-                label = buf.filename() or isinstance(type, pd.Image) \
-                        and _("image") or _("file")
-                if isinstance(type, pd.Image) and f.thumbnail():
-                    src = self._uri(self._row, f.thumbnail())
-                    if src:
-                        label = g.img(src, alt=label+size)
-                        size = ''
-                        if uri == src:
-                            uri = None
-                if uri:
-                    value = g.link(label, uri) + size
-                else:
-                    value = label + size
+                value = buf.filename() or isinstance(type, pd.Image) and _("image") or _("file")
+                size = len(buf)
             else:
                 value = ""
         elif isinstance(type, pytis.data.Boolean):
-            value = self._row[f.id()].value() and _("Yes") or _("No")
+            value = row[f.id()].value() and _("Yes") or _("No")
         elif isinstance(type, pytis.data.Color):
-            color = self._row[f.id()].export()
+            color = row[f.id()].export()
             value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
                     g.span('&nbsp;', cls="color-display", style="background-color: %s;" % color)
         elif type.enumerator():
-            display = self._row.display(f.id())
-            if self._row.prefer_display(f.id()):
+            display = row.display(f.id())
+            if row.prefer_display(f.id()):
                 value = display
             else:
-                value = g.abbr(self._row[f.id()].export(), title=display)
+                value = g.abbr(row[f.id()].export(), title=display)
         else:
-            value = self._row[f.id()].export()
-            if len(value) > self._MAXLEN:
+            value = row[f.id()].export()
+            if value and f.filename():
+                value = row[f.filename()].export()
+                size = len(value)
+            elif len(value) > self._MAXLEN:
                 value = g.textarea(f.id(), value=value, readonly=True,
-                                       rows=min(f.height(), 5), cols=80)
+                                   rows=min(f.height(), 5), cols=80)
                 #end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
                 #value = concat(value[:(end != -1 and end or self._MAXLEN)],
                 #               ' ... (', _("reduced"), ')')
+        src = self._uri(row, f.id(), type=UriType.IMAGE)
+        if src:
+            if size is not None:
+                value += ' (%s)' % format_byte_size(size)
+                size = None
+            value = g.img(src, alt=value)
+        uri = self._uri(row, f.id())
+        if uri:
+            value = g.link(value, uri)
+        if size is not None:
+            value += ' (%s)' % format_byte_size(size)
         return (g.label(f.label(), None) + ":", value, None)
 
     
@@ -362,7 +408,7 @@ class EditForm(LayoutForm, _SubmittableForm):
     
     def __init__(self, data, view, resolver, row, errors=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
-        key = self._data.key()[0].id()
+        key = self._key
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in view.layout().order() and k!= key]
         if not self._row.new() and key not in view.layout().order() + [k for k,v in self._hidden]:
@@ -478,8 +524,7 @@ class BrowseForm(Form):
         if sorting is None:
             sorting = self._view.sorting()
         if sorting is None:
-            key = self._data.key()[0].id()
-            sorting = ((key, pytis.data.ASCENDENT),)
+            sorting = ((self._key, pytis.data.ASCENDENT),)
         self._sorting = sorting
         # Determine the limit of records per page.
         self._limits = limits
@@ -499,11 +544,10 @@ class BrowseForm(Form):
             offset = 0
         elif req is not None:
             if params.has_key('search'):
-                key = self._data.key()[0].id()
-                type = self._data.find_column(key).type()
+                type = self._data.find_column(self._key).type()
                 value, error = type.validate(params['search'])
                 if not error:
-                    search = pytis.data.EQ(key, value)
+                    search = pytis.data.EQ(self._key, value)
             else:
                 if params.has_key('offset'):
                     offset = params['offset']
@@ -554,10 +598,13 @@ class BrowseForm(Form):
         return formatter
 
     def _export_cell(self, exporter, generator, row, col, value):
-        uri = self._uri(row, col.id())
+        if col is self._columns[0] and self._layout is None:
+            uri = self._uri(row)
+        else:
+            uri = self._uri(row, col.id())
         if uri:
             value = generator.link(value, uri)
-        if self._tree_order_column and col == self._columns[0]:
+        if col is self._columns[0] and self._layout is None and self._tree_order_column:
             order = row[self._tree_order_column].value()
             if order is not None:
                 level = len(order.split('.')) - 2
@@ -714,7 +761,7 @@ class ListView(BrowseForm):
         parser = lcg.Parser()
         title = self._row[layout.title()].export()
         if layout.anchor():
-            name = layout.anchor() % row[self._data.key()[0].id()].export()
+            name = layout.anchor() % row[self._key].export()
             title = g.link(title, None, name=name)
         parts = [g.h(title, level=3)]
         meta = [g.span(labeled and g.span(col.label(), cls='label')+": " or '' + \
@@ -775,8 +822,8 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     def _export_cell(self, exporter, generator, row, col, value):
         cid = col.id()
         if cid in self._check_columns:
-            key = self._data.key()[0].id()
-            return generator.checkbox(name=cid, value=row.format(key), checked=row[cid].value())
+            value = row.format(self._key)
+            return generator.checkbox(name=cid, value=value, checked=row[cid].value())
         else:
             return super(CheckRowsForm, self)._export_cell(exporter, generator, row, col, value)
 

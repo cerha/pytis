@@ -1727,9 +1727,11 @@ class FieldSpec(object):
             umo¾òující odskok do odkazovaného náhledu s vyhledáním záznamu
             odpovídajícího aktuální hodnotì políèka.
 
-          thumbnail -- identifikátor políèka poskytujícího zmen¹ený náhled
-            tohoto políèka.  Relevantní jen pro políèka typu
-            'pytis.data.Image'.
+          filename -- identifier of the field, which provides the filename for downloading/saving
+            the value of this field into a file.  If not None, the user interface should offer
+            downloading/saving the content of the field into a file.  This may be relevant for
+            binary fields, as well as for ordinary string data.
+            
 
         V¹echny dal¹í argumenty, které budou konstruktoru pøedány jsou
         pova¾ovány za argumenty konstruktoru datového typu.  Pøedání argumentù
@@ -1785,7 +1787,7 @@ class FieldSpec(object):
               display_size=None, allow_codebook_insert=False, codebook_insert_spec=None,
               codebook_runtime_filter=None, selection_type=None, orientation=Orientation.VERTICAL,
               post_process=None, filter=None, filter_list=None, style=None, link=(),
-              thumbnail=None, **kwargs):
+              filename=None, **kwargs):
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
         self._id = id
@@ -1830,7 +1832,7 @@ class FieldSpec(object):
                or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
-        assert thumbnail is None or isinstance(thumbnail, str)
+        assert filename is None or isinstance(filename, str)
         links = xtuple(link)
         if __debug__:
             for lnk in links:
@@ -1878,7 +1880,7 @@ class FieldSpec(object):
         self._filter_list = filter_list
         self._style = style
         self._links = links
-        self._thumbnail = thumbnail
+        self._filename = filename
         self._type_kwargs = kwargs
         
     def __str__(self):
@@ -2077,9 +2079,9 @@ class FieldSpec(object):
         """Vra» specifikaci odkazu zadanou v konstruktoru."""
         return self._links
 
-    def thumbnail(self):
-        """Vra» identifikátor políèka obsahujícího zmen¹eninu obrázku."""
-        return self._thumbnail
+    def filename(self):
+        """Return the identifier of the field providing download/save filename."""
+        return self._filename
 
     def type_kwargs(self):
         return self._type_kwargs
