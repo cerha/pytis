@@ -4,6 +4,13 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-10-01  Tomas Cerha  <cerha@brailcom.org>
+
+	Do kontextového menu øádku byla pøidána polo¾ka "Kopírovat záznam".
+	
+	* BUGFIX: Formuláø konfigurace u¾ivatelského rozhraní se ji¾ neptá
+	na ulo¾ení zmìn, kdy¾ k ¾ádným zmìnám nedo¹lo.
+
 2007-09-25  Tomas Cerha  <cerha@brailcom.org>
 
 	Nový specifikaèní argument 'prefer_display' umo¾òuje urèit, ¾e
@@ -23,7 +30,7 @@
 	
 2007-09-19  Tomas Cerha  <cerha@brailcom.org>
 
-	* BUGFIX: O¹etøena chyba wx zp;sobující pád aplikace pøi dvojím
+	* BUGFIX: O¹etøena chyba wx zpùsobující pád aplikace pøi dvojím
 	kliknutí na boolean políèko v gridu.
 	
 2007-08-21  Tomas Cerha  <cerha@brailcom.org>

@@ -1,5 +1,12 @@
 2007-10-01  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (BrowseForm): Added row context menu item for
+	`BrowseForm.COMMAND_NEW_RECORD(copy=True)'.
+
+	* pytis/form/configui.py (ConfigForm.__init__): Pass
+	`select_row=0' to parent constructor.  Don't call
+	`self._select_row()' and `self._init_select()'.
+
 	* pytis/web/form.py: Distinguish image and link URI provider. 
 
 	* pytis/presentation/spec.py (FieldSpec): The constructor argument

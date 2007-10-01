@@ -135,7 +135,7 @@ class _ConfigData(pytis.data.RestrictedData):
         options = [c.id() for c in self.columns()]
         for option in options:
             setattr(config, option, row[option].value())
-        wx.ToolTip('').Enable(config.show_tooltips)
+        wx.ToolTip.Enable(config.show_tooltips)
         return row, True
         
         
@@ -154,10 +154,7 @@ class ConfigForm(PopupEditForm):
     DESCR = _("konfiguraèní formuláø")
     
     def __init__(self, *args, **kwargs):
-        kwargs['mode'] = self.MODE_EDIT
-        super(ConfigForm, self).__init__(*args, **kwargs)
-        self._init_select()
-        self.select_row(0)
+        super(ConfigForm, self).__init__(*args, **dict(kwargs, mode=self.MODE_EDIT, select_row=0))
         
     def _layout(self):
         return dict(_LAYOUT)[self._name]
