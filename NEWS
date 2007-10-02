@@ -4,6 +4,18 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-10-02  Tomas Cerha  <cerha@brailcom.org>
+	
+	* BUGFIX: Logování by nyní mìlo správnì respektovat volbu
+	`log_class_filter'.
+
+	* BUGFIX: O¹etøena ztráta focusu po editaci vedlej¹ího formuláøe,
+	která se projevovala u duálních náhledù, kde zmìna v dolním
+	formuláøi vyvolá zmìnu v datech aktuálního øádku hlavního
+	formuláøe.  Pro o¹etøení tohoto problému bylo nutné zmìnit metodu
+	porovnání dat výbìru a nedá se vylouèit, ¾e to bude mít neèekaný
+	vliv na chování duálních formuláøù...
+	
 2007-10-01  Tomas Cerha  <cerha@brailcom.org>
 
 	Do kontextového menu øádku byla pøidána polo¾ka "Kopírovat záznam".

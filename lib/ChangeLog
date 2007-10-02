@@ -1,5 +1,11 @@
 2007-10-02  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py: All `super_()' calls converted to use
+	`super()'.
+	(PostponedSelectionDualForm._on_main_selection): Compare just key
+	values, not whole data rows.  This should prevent unwanted
+	reselections on side form editation, which changes main form data.
+
 	* pytis/util/log.py (Logger._is_accepted): Class filtering fixed.
 
 	* pytis/form/list.py: Minor docstring improvement. 

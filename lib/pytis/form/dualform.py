@@ -75,7 +75,7 @@ class DualForm(Form, Refreshable):
         duálního formuláøe.
         
         """
-        super_(DualForm).__init__(self, *args, **kwargs)
+        super(DualForm, self).__init__(*args, **kwargs)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
 
@@ -86,7 +86,7 @@ class DualForm(Form, Refreshable):
         formuláøe.
         
         """
-        super_(DualForm)._init_attributes(self)
+        super(DualForm, self)._init_attributes()
         self._unprocessed_kwargs = kwargs
         self._active_form = None
         self._orientation = self._initial_orientation()
@@ -266,15 +266,15 @@ class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
     
     def __init__(self, *args, **kwargs):
-        self._selection_data = None
-        super_(ImmediateSelectionDualForm).__init__(self, *args, **kwargs)
+        self._selected_row_key = None
+        super(ImmediateSelectionDualForm, self).__init__(*args, **kwargs)
 
     def _on_main_selection(self, row):
-        r = row.row()
-        if r != self._selection_data:
+        key = row and row[row.data().key()[0].id()]
+        if key.value() != self._selected_row_key.value():
             self._side_form.Show(False)
             if self._do_selection(row):
-                self._selection_data = r
+                self._selected_row_key = key
 
     def _do_selection(self, row):
         return True
@@ -286,7 +286,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
     _SELECTION_TICK = 2
 
     def __init__(self, *args, **kwargs):
-        super_(PostponedSelectionDualForm).__init__(self, *args, **kwargs)
+        super(PostponedSelectionDualForm, self).__init__(*args, **kwargs)
         self._selection_candidate = None
         wx_callback(wx.EVT_IDLE, self, self._on_idle)        
 
@@ -301,15 +301,21 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
             row = self._selection_candidate
             self._selection_candidate = None
             if self._do_selection(row):
-                self._selection_data = row.row()
+                self._selected_row_key = row[row.data().key()[0].id()]
             else:
                 self._selection_candidate = row
                 microsleep(100)
                 event.RequestMore()
                 
     def _on_main_selection(self, row):
-        if row is not None and row.row() != self._selection_data \
-               or row is None and self._selection_data is not None:
+        cur = self._selected_row_key
+        # We compare just keys here to prevent unwanted reselections after side form editation
+        # which changes main form data (the 'row' is the same row as the currently selected one,
+        # but has different data).  The previous implementation compared whole data rows, so this
+        # change may introduce some other side effects...
+        if row is not None and \
+               (cur is None or row[row.data().key()[0].id()].value() != cur.value()) \
+               or row is None and cur is not None:
             self._side_form.Show(False)
             self._selection_candidate = copy.copy(row)
             self._selection_tick = self._SELECTION_TICK
@@ -361,13 +367,6 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
                 f.set_prefill({self._side_binding_column: v})
             f.on_selection(row)
             f.Show(True)
-            # Tento _select_form zde byl neznámo proè.  Proto¾e se tak necht2n2
-            # pøesune focus na horní formuláø napø. po editaci dolního
-            # formuláøe, bylo nutné øádek zakomentovat.  Pokud to mìlo nìjaký
-            # význam, bude tøeba najít jiné øe¹ení, respektující oba problémy.
-            # Pokud se po nìjakou dobu na ¾ádný problém nepøijde, je mo¾né to
-            # smazat vèetnì tohoto komentáøe...  TC, 22.8.2005
-            #self._select_form(self._main_form, force=True)
         finally:
             if focused:
                 focused.SetFocus()
@@ -393,7 +392,7 @@ class BrowseDualForm(SideBrowseDualForm):
         #    def title(self):
         #        title = dualform._view.title()
         #        if not title:
-        #            title = super_(_MainBrowseForm).title(self)
+        #            title = super(_MainBrowseForm, self).title()
         #        return title
         return BrowseForm(parent, self._resolver, self._main_name, guardian=self, **kwargs)
 
@@ -416,7 +415,7 @@ class ShowDualForm(SideBrowseDualForm):
 
     """
     def __init__(self, *args, **kwargs):
-        super_(ShowDualForm).__init__(self, *args, **kwargs)
+        super(ShowDualForm, self).__init__(*args, **kwargs)
         self._initialization_done = False
 
     def _on_idle(self, event):
@@ -480,7 +479,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
     def _init_attributes(self, orientation=Orientation.HORIZONTAL, **kwargs):
         self._in_mainform_selection = False
         self._orientation = orientation
-        super_(DescriptiveDualForm)._init_attributes(self, **kwargs)
+        super(DescriptiveDualForm, self)._init_attributes(**kwargs)
         
     def _initial_orientation(self):
         return self._orientation
