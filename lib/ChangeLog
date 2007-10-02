@@ -1,3 +1,9 @@
+2007-10-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/log.py (Logger._is_accepted): Class filtering fixed.
+
+	* pytis/form/list.py: Minor docstring improvement. 
+
 2007-10-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (BrowseForm): Added row context menu item for

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -144,10 +144,11 @@ class Logger(object):
         if kind in config.log_exclude:
             return False
         if kind == DEBUG:
-            if not starts_with(self._module, self._module_filter) or \
-               (self._class_filter and self._class_ and \
-                not some(lambda c, self=self: issubclass(self._class_, c),
-                         self._class_filter)):
+            if self._module_filter and not starts_with(self._module, self._module_filter):
+                return False
+            if self._class_filter \
+                   and (self._class_ is None \
+                        or not some(lambda c: issubclass(self._class_, c), self._class_filter)):
                 return False
         return True
 
