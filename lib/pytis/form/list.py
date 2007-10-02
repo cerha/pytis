@@ -2280,7 +2280,7 @@ class SideBrowseForm(BrowseForm):
         super(SideBrowseForm, self)._init_attributes(**kwargs)
 
     def on_selection(self, row):
-        """Update current filter condition
+        """Update current filter condition after main form selection.
 
         Arguments:
 
