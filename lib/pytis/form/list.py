@@ -130,6 +130,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._column_move_target = None
         self._mouse_dragged = False
         self._check_default_columns = not columns
+        self._search_panel = None
 
     def _default_columns(self):
         return self._view.columns()
@@ -248,15 +249,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_RIGHT_DOWN,   corner, self._on_corner_right_down)
         wx_callback(wx.EVT_PAINT,        corner, self._on_corner_paint)
         return g
-        
-#     def _on_hide_search_panel(self, event):
-#         panel = self._search_panel
-#         sizer = self._top_level_sizer
-#         self._search_panel = None
-#         panel.Enable(False)
-#         sizer.Detach(panel)
-#         panel.Destroy()
-#         sizer.Layout()
         
     def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row_prefill=None,
                      delete_column=None, insert_column=None, inserted_column_index=None,
@@ -398,7 +390,118 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 return label
         return sfs_columns(shown + hidden, self._data, labelfunc=labelfunc)
-    
+
+    def _create_search_panel(self, full=False, prefill=None):
+        HEIGHT = 27
+        self._search_panel = panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
+        self._incremental_search_last_direction = pytis.data.FORWARD
+        self._incremental_search_results = []
+        keys_next = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True))
+        keys_prev = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True, back=True))
+        columns = [c for c in self._columns if isinstance(c.type(self._data), pytis.data.String)]
+        self._search_panel_controls = controls = (
+            wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
+                      tooltip=_("Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
+                                "vyhledávání je mo¾né pouze nad sloupci s øetìzcovými hodnotami)."),
+                      label=lambda c: c.label(), height=HEIGHT),
+            wx_text_ctrl(panel, value=prefill, tooltip=_("Zadejte hledaný text."),
+                         on_text=lambda e: self._incremental_search(newtext=True),
+                         on_key_down=self._on_incremental_search_key_down, height=HEIGHT),
+            wx_button(panel, _("Previous"), icon=wx.ART_GO_BACK, height=HEIGHT,
+                      tooltip=_("Najít pøedchozí") +(keys_prev and ' (%s)' % keys_prev[0] or ''),
+                      callback=lambda e: self.COMMAND_SEARCH.invoke(next=True, back=True)),
+            wx_button(panel, _("Next"), icon=wx.ART_GO_FORWARD, height=HEIGHT,
+                      tooltip=_("Najít následující") +(keys_next and ' (%s)' % keys_next[0] or ''), 
+                      callback=lambda e: self.COMMAND_SEARCH.invoke(next=True)),
+            wx_checkbox(panel, label=_("hledat i uvnitø øetìzce"),
+                        tooltip=_("Za¹krtnìnte, pokud chcete vyhledávat kdekoliv uvnitø øetìzcù. "
+                                  "Jinak bude vyhledáváno pouze od poèátku øetìzce."),
+                        checked=full),
+            wx_checkbox(panel, label=_("rozli¹ovat velikost písmen"),
+                        tooltip=_("Za¹krtnìnte, pokud chcete aby vyhledávání respektovalo malá a "
+                                  "velká písmena."),
+                        checked=False),
+            wx_button(panel, _("Close"), tooltip=_("Close search panel"), icon=wx.ART_CROSS_MARK,
+                      callback=lambda e: self._exit_incremental_search(), noborder=True),
+            )
+        sizer = wx.BoxSizer()
+        for i, ctrl in enumerate(controls[:-1]):
+            sizer.Add(ctrl, 0, wx.LEFT, i>=4 and 10 or 0)
+        sizer.Add((0, 0), 1)
+        sizer.Add(controls[-1])
+        panel.SetSizer(sizer)
+        panel.SetAutoLayout(True)
+        controls[1].SetFocus()
+        self._top_level_sizer.Add(panel, 0, wx.EXPAND)
+        self._top_level_sizer.Layout()
+        return panel
+
+    def _on_incremental_search_key_down(self, event):
+        code = event.GetKeyCode()
+        if code in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            self._exit_incremental_search()
+        elif code == wx.WXK_BACK:
+            row, text = self._incremental_search_results.pop()
+            self.select_row(row)
+            event.Skip()
+        elif code == wx.WXK_ESCAPE or code == ord('G') and event.ControlDown():
+            self._exit_incremental_search(rollback=True)
+        else:
+            event.Skip()
+
+    def _incremental_search(self, direction=None, newtext=False):
+        if direction is None:
+            direction = self._incremental_search_last_direction
+        else:
+            self._incremental_search_last_direction = direction
+        choice, ctrl, b1, b2, full, case, b3 = self._search_panel_controls
+        text = ctrl.GetValue()
+        if newtext:
+            oldtext = text[:-1]
+        else:
+            oldtext = text
+        row = self._current_cell()[0]
+        self._incremental_search_results.append((row, oldtext))
+        column = choice.GetClientData(choice.GetSelection())
+        stext = text + '*'
+        if full.IsChecked():
+            stext = '*' + stext
+        wmvalue = pytis.data.WMValue(pytis.data.String(), stext)
+        condition = pytis.data.WM(column.id(), wmvalue, ignore_case=not case.IsChecked())
+        if newtext:
+            if direction == pytis.data.FORWARD:
+                start_row = max(row-1, 0)
+            else:
+                start_row = min(row+1, self._table.GetNumberRows())
+        else:
+            start_row = row
+        # TODO: Pøedhledání v aktuál~~ním selectu
+        found = self._search(condition, direction, row_number=start_row, report_failure=False)
+        if found is None:
+            message(_("Dal¹í záznam nenalezen"), beep_=True)
+        else:
+            if direction == pytis.data.FORWARD:
+                new_row = start_row + found
+            else:    
+                new_row = start_row - found
+            self._select_cell(row=new_row)
+
+    def _exit_incremental_search(self, rollback=False):
+        panel = self._search_panel
+        self._search_panel = None
+        self._search_panel_controls = None
+        if rollback and self._incremental_search_results:
+            self.select_row(self._incremental_search_results[0][0])
+        sizer = self._top_level_sizer
+        panel.Enable(False)
+        sizer.Detach(panel)
+        panel.Destroy()
+        sizer.Layout()
+        self._grid.SetFocus()
+        if not rollback:
+            the_row = self._table.row(self._table.current_row())
+            self._run_callback(self.CALL_SELECTION, the_row)
+        
     # Pomocné metody
 
     def _current_cell(self):
@@ -1665,8 +1768,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             message(_("V tomto sloupci nelze vyhledávat inkrementálnì"),
                     beep_=True)
             return
-        search_field = _grid.IncrementalSearch(self, full)
-        search_field.run(prefill=prefill)
+        if self._search_panel is None:
+            self._create_search_panel(full=full, prefill=prefill)
+        else:
+            self._search_panel_controls[1].SetFocus()
+        #self._selection_callback = self.get_callback(self.CALL_SELECTION)
+        #self.set_callback(self.CALL_SELECTION, None)
+        
+    def _cmd_search(self, next=False, back=False):
+        if next and self._search_panel is not None:
+            self._incremental_search(direction=back and pytis.data.BACKWARD or pytis.data.FORWARD)
+        else:
+            return super(ListForm, self)._cmd_search(next=next, back=back)
 
     def _cmd_copy_cell(self):
         row, col = self._current_cell()

@@ -93,31 +93,12 @@ class SFSDialog(GenericDialog):
         return wx_button(self._dialog, label=label, callback=callback,
                          tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
         
-    def _create_choice(self, choices, tooltip=None, label=identity,
-                       selected=None, on_change=None):
-        ch = wx.Choice(self._dialog, -1, choices=[label(x) for x in choices])
-        ch.SetSelection(0)
-        ch.SetMinSize((ch.GetSize().width, self._FIELD_HEIGHT))
-        if tooltip is not None:
-            ch.SetToolTipString(unicode(tooltip))
-        if selected:
-            ch.SetSelection(list(choices).index(selected))
-        if on_change:
-            wx_callback(wx.EVT_CHOICE, ch, ch.GetId(), on_change)
-        return ch
+    def _create_choice(self, choices, tooltip=None, **kwargs):
+        return wx_choice(self._dialog, choices, height=self._FIELD_HEIGHT, **kwargs)
 
-    def _create_text_ctrl(self, size, value=None, tooltip=None,
-                          readonly=False, enabled=None):
-        style = readonly and wx.TE_READONLY or 0
-        t = wx.TextCtrl(self._dialog, -1, style=style)
-        t.SetMinSize((dlg2px(t, 4*size), self._FIELD_HEIGHT))
-        if value is not None:
-            t.SetValue(value)
-        if tooltip is not None:
-            t.SetToolTipString(unicode(tooltip))
-        if enabled is not None:
-            t.Enable(enabled)
-        return t
+    def _create_text_ctrl(self, length, value=None, **kwargs):
+        return wx_text_ctrl(self._dialog, value=value, length=length, height=self._FIELD_HEIGHT,
+                            **kwargs)
 
     def _create_content(self, sizer):
         self._controls = []

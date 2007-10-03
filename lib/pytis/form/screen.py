@@ -35,10 +35,10 @@ import wx
 import pytis.presentation
 
 _WX_COLORS = {}
-_WX_COLORS_DATABASE = {}
+_WX_COLOR_DATABASE = {}
 
 def init_colors():
-    global _WX_COLORS, _WX_COLORS_DATABASE
+    global _WX_COLORS, _WX_COLOR_DATABASE
     _WX_COLORS = {
         pytis.presentation.Color.WHITE:  WxColor(255, 255, 255),
         pytis.presentation.Color.BLACK:  WxColor(0, 0, 0),
@@ -61,9 +61,13 @@ def init_colors():
         pytis.presentation.Color.LIGHTYELLOW:    WxColor(255, 255, 224),
         pytis.presentation.Color.PEACHPUFF2:     WxColor(238, 203, 173),
         pytis.presentation.Color.SLATEGRAY2:     WxColor(185, 211, 238),
-        pytis.presentation.Color.LIGHTSALMON:    WxColor(255, 160, 122)
-                  }
-    _WX_COLORS_DATABASE = color_dictionary()
+        pytis.presentation.Color.LIGHTSALMON:    WxColor(255, 160, 122),
+        }
+    from wx.lib import colourdb
+    colourdb.updateColourDB()
+    for name in colourdb.getColourList():
+        wxcolour = wx.TheColourDatabase.FindColour(name)
+        _WX_COLOR_DATABASE[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
     
 ### Pomocné funkce
 
@@ -121,16 +125,6 @@ def copy_to_clipboard(text):
         clipboard.Flush()
         clipboard.Close()
         
-def color_dictionary():
-    from wx.lib import colourdb
-    colourdb.updateColourDB()
-    clrdict = {}
-    for clrname in colourdb.getColourList():
-        wxcolour = wx.TheColourDatabase.FindColour(clrname)
-        clrdict[clrname] = WxColor(wxcolour.Red(),
-                                   wxcolour.Green(),
-                                   wxcolour.Blue())
-    return clrdict    
     
 
 
@@ -428,7 +422,7 @@ def color2wx(color):
         (instance wxTheColourDatabase)
 
     """
-    return _WX_COLORS.get(color, None) or _WX_COLORS_DATABASE.get(color, None)
+    return _WX_COLORS.get(color, None) or _WX_COLOR_DATABASE.get(color, None)
 
 ### Univerzální handlery
 
@@ -1437,29 +1431,26 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
         return None
 
 def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False, 
-              callback=None, enabled=True, tooltip=None,
-              size=None, height=None):
+              callback=None, enabled=True, tooltip=None, size=None, height=None):
     """Create and setup a button.
 
-    This is just a convenience helper to allow button creation and setup in one
-    step.
+    This is just a convenience helper to allow button creation and setup in one step.
 
     Arguments:
     
       parent -- wx parent window
-      label -- button label.  This label will only be used when no bitmap is
-        given and when the icon is not found (or not specified).
-      icon -- button icon identifier as used with 'get_icon'.  It the icon is
-        found, the label is ignored.
-      bitmap -- button bitmap.  This overrided both label and icon.
-      size -- button size in pixels as a two-tuple (width, height).
-      noborder -- If true, the button will not have the visible border.
-      callback -- If specified, the given function will be associated with
-        button press event.  The function will be called with `wx.Event'
-        instance as first argument.
-      enabled -- if false, the button will be disabled.  
-      tooltip -- tooltip string.
-      height -- height in pixels, overrides the height given by size.
+      label -- button label; this label will only be used when no bitmap is given and when the
+        icon is not found (or not specified)
+      icon -- button icon identifier as used with 'get_icon'; if the icon is found, the label is
+        ignored
+      bitmap -- button bitmap; overrides both label and icon
+      size -- button size in pixels as a two-tuple (width, height)
+      noborder -- if true, the button will not have the visible border
+      callback -- if specified, the given function will be associated with button press event.  The
+        function will be called with `wx.Event' instance as first argument
+      enabled -- if false, the button will be disabled
+      tooltip -- tooltip string
+      height -- height in pixels, overrides the height given by size
 
     Returns a 'wx.Button' or 'wx.BitmapButton' instance.
       
@@ -1485,11 +1476,82 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
         button.Enable(False)
     return button
 
+def wx_choice(parent, choices, label=None, selected=None, tooltip=None, on_change=None,
+              height=None, enabled=True):
+    """Create and setup a choice control.
+
+    This is just a convenience helper to allow choice creation and setup in one step.
+
+    Arguments:
     
+      parent -- wx parent window
+      choices -- a sequence of available choices;  the items may be directly strings or you can
+        pass arbitrary objects together with the 'label' function ('selected' still refers to these
+        objects).
+      label -- label function; if defined, the label for each choice will be generated by calling
+        this function with the choice as argument;
+      selected -- the initially selected item; one of the 'choices' items
+      tooltip -- tooltip string
+      on_change -- if specified, the given function will be associated with the change event.  The
+        function will be called with `wx.Event' instance as first argument
+      height -- height in pixels, overrides the height given by size
+      enabled -- if false, the control will be disabled
+
+    Returns a 'wx.Choice' instance.
+    
+    """
+    if label is None:
+        label = identity
+    ch = wx.Choice(parent, -1, choices=[label(x) for x in choices])
+    if label is not None:
+        for i, item in enumerate(choices):
+            ch.SetClientData(i, item)
+    ch.SetSelection(0)
+    if selected:
+        ch.SetSelection(list(choices).index(selected))
+    if tooltip is not None:
+        ch.SetToolTipString(unicode(tooltip))
+    if on_change:
+        wx_callback(wx.EVT_CHOICE, ch, ch.GetId(), on_change)
+    if height:
+        ch.SetMinSize((ch.GetSize().width, height))
+    if not enabled:
+        ch.Enable(False)
+    return ch
+
+def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=None, 
+                 length=None, width=None, height=None, readonly=False, enabled=True):
+    ctrl = wx.TextCtrl(parent, -1, style=(readonly and wx.TE_READONLY or 0))
+    if on_key_down:
+        wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
+    if on_text:
+        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
+    if length or width or height:
+        if length:
+            assert width is None
+            width = dlg2px(ctrl, 4*length)
+        elif not width:
+            width = ctrl.GetSize().width
+        ctrl.SetMinSize((width, height or ctrl.GetSize().height))
+    if value is not None:
+        ctrl.SetValue(value)
+    if tooltip is not None:
+        ctrl.SetToolTipString(unicode(tooltip))
+    if enabled is not None:
+        ctrl.Enable(enabled)
+    return ctrl
+
+def wx_checkbox(parent, label=None, tooltip=None, checked=False):
+    checkbox = wx.CheckBox(parent, -1, label=label)
+    if tooltip is not None:
+        checkbox.SetToolTipString(unicode(tooltip))
+    checkbox.SetValue(checked)
+    return checkbox
+
+
 def wx_focused_window():
     """Vra» aktuálnì zaostøené wx okno, jako instanci 'wx.Window'."""
     return wx.Window_FindFocus()
-
 
 def wx_text_view(parent, content, format=TextFormat.PLAIN):
     import wx

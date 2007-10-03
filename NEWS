@@ -5,6 +5,13 @@
 ; uvozen "* BUGFIX:"
 
 2007-10-02  Tomas Cerha  <cerha@brailcom.org>
+
+	Vylep¹eno u¾ivatelské rozhraní inkrementálního vyhledávání.
+	Vstupní políèko je nyní zobrazeno v samostatném panelu spoleènì s
+	dal¹ími u¾iteènými ovládacími prvky.  Tento panel mù¾e ve
+	formuláøi zùstat i kdy¾ se s ním nepracuje, díky èemu¾ odpadly
+	rùzné hacky s o¹etøením ztráty focusu vyhledávacího políèka, které
+	u¾ èasto ani nefungovaly...
 	
 	* BUGFIX: Vylep¹ena vèerej¹í oprava ztráty focusu, tentokráte bez
 	vedlej¹ích efektù.

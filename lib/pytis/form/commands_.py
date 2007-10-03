@@ -315,9 +315,6 @@ FORM_COMMAND_MENU = ((
     (ListForm.COMMAND_INCREMENTAL_SEARCH,
      _("Inkrementální hledání"),
      _("Postupnì vyhledávat záznam podle hodnoty políèka.")),
-    (ListForm.COMMAND_INCREMENTAL_SEARCH(full=True),
-     _("Inkrementální hledání podøetìzce"),
-     _("Postupnì vyhledávat záznam podle èásti hodnoty políèka.")),
     ),(#---------------
     (LookupForm.COMMAND_SORT,
      _("Øazení"),
