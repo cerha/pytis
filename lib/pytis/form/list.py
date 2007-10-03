@@ -2260,28 +2260,35 @@ class BrowseForm(ListForm):
 class SideBrowseForm(BrowseForm):
     """Form displaying records depending on other form's current row."""
 
-    def _init_attributes(self, main_form, selection_condition, hide_columns=(), **kwargs):
+    def _init_attributes(self, main_form, binding, **kwargs):
         """Process constructor arguments and initialize attributes.
         
         Arguments:
 
           main_form -- the main form instance.
-          hide_columns -- a list of column names which should be hidden by default
-          selection_condition -- function of one agument (PresentedRow instance) returning a
-            filtering condition for the current main form row.
+          binding -- dual form binding specification as a 'BindingSpec' instance
 
         """
         assert isinstance(main_form, Form), main_form
-        assert isinstance(hide_columns, (list, tuple)), hide_columns
-        assert callable(selection_condition), selection_condition
+        assert isinstance(binding, BindingSpec), main_form
+        bcol, sbcol = binding.binding_column(), binding.side_binding_column()
+        condition = binding.condition()
+        if bcol:
+            column_condition = lambda row: pytis.data.EQ(sbcol, row[bcol])
+            if condition is not None:
+                cond = condition
+                condition = lambda row: pytis.data.AND(column_condition(row), cond(row))
+            else:
+                condition = column_condition
+            self._sbcol_type = self._data.find_column(sbcol).type()
         self._main_form = main_form
-        self._selection_condition = selection_condition
-        self._hide_columns = hide_columns
+        self._binding = binding
+        self._selection_condition = condition
         kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
         super(SideBrowseForm, self)._init_attributes(**kwargs)
 
     def on_selection(self, row):
-        """Update current filter condition after main form selection.
+        """Update form after main form selection.
 
         Arguments:
 
@@ -2289,13 +2296,18 @@ class SideBrowseForm(BrowseForm):
 
         """
         #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, row))
+        bcol = self._binding.binding_column()
+        if bcol:
+            sbcol = self._binding.side_binding_column()
+            self._prefill = {sbcol: pytis.data.Value(self._sbcol_type, row[bcol].value())}
         self._lf_condition = self._selection_condition(row)
         self._refresh(reset={'filter': None})
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
-        if self._hide_columns:
-            return tuple([c for c in columns if c not in self._hide_columns])
+        if self._binding.hide_binding_column():
+            sbcol = self._binding.side_binding_column()
+            return tuple([c for c in columns if c != sbcol])
         else:
             return columns
 

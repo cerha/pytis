@@ -319,23 +319,8 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
     """Duální formuláø s vedlej¹ím formuláøem 'SideBrowseForm'."""
         
     def _create_side_form(self, parent):
-        view = self._view
-        self._binding_column = bcol = view.binding_column()
-        self._side_binding_column = sbcol = view.side_binding_column()
-        condition = view.condition()
-        if bcol:
-            column_condition = lambda row: pytis.data.EQ(sbcol, row[bcol])
-            if condition is not None:
-                cond = condition
-                condition = lambda row: pytis.data.AND(column_condition(row), cond(row))
-            else:
-                condition = column_condition
-        f = SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
-                           main_form=self._main_form, selection_condition=condition,
-                           hide_columns=view.hide_binding_column() and (sbcol,) or ())
-        if sbcol:
-            self._sbcol_type = f._data.find_column(sbcol).type()
-        return f
+        return SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
+                              main_form=self._main_form, binding=self._view)
 
     def _set_side_form_callbacks(self):
         f = self._side_form
@@ -344,6 +329,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         f.set_callback(ListForm.CALL_USER_INTERACTION, lambda : self._select_form(self._side_form))
 
     def _do_selection(self, row):
+        form = self._side_form
         focused = wx_focused_window()
         import _grid
         if isinstance(focused, wx.TextCtrl) and \
@@ -355,12 +341,8 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             # zná nìkdo lep¹í øe¹ení?
             return False
         try:
-            f = self._side_form
-            if self._binding_column:
-                v = pytis.data.Value(self._sbcol_type, row[self._binding_column].value())
-                f.set_prefill({self._side_binding_column: v})
-            f.on_selection(row)
-            f.Show(True)
+            form.on_selection(row)
+            form.Show(True)
         finally:
             if focused:
                 focused.SetFocus()

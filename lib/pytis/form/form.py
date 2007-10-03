@@ -1487,17 +1487,6 @@ class RecordForm(LookupForm):
         """Vra» data pro pøedvyplnìní nového záznamu."""
         return self._prefill
     
-    def set_prefill(self, data):
-        """Nastav data pro pøedvyplnìní nového záznamu.
-
-        List si mù¾e zapamatovat hodnoty, které mají být automaticky pou¾ity
-        pro pøedvyplnìní nového záznamu pøi operacích vlo¾ení øádku nad tímto
-        listem.  Pro argument 'data' zde platí stejné podmínky, jako pro
-        argument 'prefill' konstruktoru tøídy 'PresentedRow'.
-
-        """
-        self._prefill = data
-    
 
 ### Editaèní formuláø
 
