@@ -1302,7 +1302,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         self._update_grid(data_init=True)
         if key is not None:
-            self.select_row(key, quiet=True)
+            if self._current_key() != key:
+                self.select_row(key, quiet=True)
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
             # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
             if self._current_key() != key:

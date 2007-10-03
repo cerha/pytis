@@ -266,15 +266,15 @@ class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
     
     def __init__(self, *args, **kwargs):
-        self._selected_row_key = None
+        self._selection_data = None
         super(ImmediateSelectionDualForm, self).__init__(*args, **kwargs)
 
     def _on_main_selection(self, row):
-        key = row and row[row.data().key()[0].id()]
-        if key.value() != self._selected_row_key.value():
+        r = row.row()
+        if r != self._selection_data:
             self._side_form.Show(False)
             if self._do_selection(row):
-                self._selected_row_key = key
+                self._selection_data = r
 
     def _do_selection(self, row):
         return True
@@ -301,21 +301,15 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
             row = self._selection_candidate
             self._selection_candidate = None
             if self._do_selection(row):
-                self._selected_row_key = row[row.data().key()[0].id()]
+                self._selection_data = row.row()
             else:
                 self._selection_candidate = row
                 microsleep(100)
                 event.RequestMore()
                 
     def _on_main_selection(self, row):
-        cur = self._selected_row_key
-        # We compare just keys here to prevent unwanted reselections after side form editation
-        # which changes main form data (the 'row' is the same row as the currently selected one,
-        # but has different data).  The previous implementation compared whole data rows, so this
-        # change may introduce some other side effects...
-        if row is not None and \
-               (cur is None or row[row.data().key()[0].id()].value() != cur.value()) \
-               or row is None and cur is not None:
+        r = row and row.row()
+        if r != self._selection_data:
             self._side_form.Show(False)
             self._selection_candidate = copy.copy(row)
             self._selection_tick = self._SELECTION_TICK

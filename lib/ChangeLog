@@ -1,3 +1,11 @@
+2007-10-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._refresh): Only reselect row if
+	current key does not match.
+
+	* pytis/form/dualform.py (Module): Reverted yestarday's change in
+	selection comparison.
+
 2007-10-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py: All `super_()' calls converted to use
