@@ -331,15 +331,6 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
     def _do_selection(self, row):
         form = self._side_form
         focused = wx_focused_window()
-        import _grid
-        if isinstance(focused, wx.TextCtrl) and \
-               focused.GetName() == _grid.IncrementalSearch.TEXT_CONTROL_NAME:
-            # O¹etøovat to speciálním zpùsobem musíme proto, ¾e je tøeba
-            # za v¹ech okolností zabránit odskoèení z widgetu inkrementálního
-            # vyhledávání.  Ten zpùsob je trochu hloupý, proto¾e vedlej¹í
-            # formuláø se nezobrazí, dokud není aplikace opìt zaostøena, ale
-            # zná nìkdo lep¹í øe¹ení?
-            return False
         try:
             form.on_selection(row)
             form.Show(True)
