@@ -21,9 +21,10 @@
 	argument and make use of it where possible.
 	(ListForm): New implementation of incremental search.
 
-	* pytis/form/dualform.py (Module): Reverted yestarday's change in
-	selection comparison.
+	* pytis/form/dualform.py: Reverted yestarday's change in selection
+	comparison.
 	(SideBrowseDualForm): Leave all binding logic to `SideBrowseForm'.
+	(SideBrowseDualForm._do_selection): Removed incremental search hack.
 
 2007-10-02  Tomas Cerha  <cerha@brailcom.org>
 
