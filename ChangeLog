@@ -1,3 +1,7 @@
+2007-10-04  Pavel Hanak  <hanak@asellus.cz>
+
+	* db/db_pytis_config.py: DB objects for saved user configuration.
+
 2007-09-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (Fields): Class moved to `pytis'.
