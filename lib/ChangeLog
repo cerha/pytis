@@ -1,3 +1,8 @@
+2007-10-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (ListForm._create_search_panel): Handle
+	prefill correctly.
+
 2007-10-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/search.py (SFSDialog._create_choice): Use `wx_choice()'.
