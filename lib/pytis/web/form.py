@@ -356,14 +356,14 @@ class ShowForm(LayoutForm):
         g = exporter.generator()
         row = self._row
         type = row[f.id()].type()
-        size = None
+        info = None
         if isinstance(type, pytis.data.Password):
             return None
         elif isinstance(type, pytis.data.Binary):
             buf = row[f.id()].value()
             if buf:
                 value = buf.filename() or isinstance(type, pd.Image) and _("image") or _("file")
-                size = len(buf)
+                info = format_byte_size(len(buf))
             else:
                 value = ""
         elif isinstance(type, pytis.data.Boolean):
@@ -373,16 +373,18 @@ class ShowForm(LayoutForm):
             value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
                     g.span('&nbsp;', cls="color-display", style="background-color: %s;" % color)
         elif type.enumerator():
+            value = row[f.id()].export()
             display = row.display(f.id())
-            if row.prefer_display(f.id()):
-                value = display
-            else:
-                value = g.abbr(row[f.id()].export(), title=display)
+            if display:
+                if row.prefer_display(f.id()):
+                    value = display
+                else:
+                    info = display #g.abbr(value, title=display)
         else:
             value = row[f.id()].export()
             if value and f.filename():
                 value = row[f.filename()].export()
-                size = len(value)
+                info = format_byte_size(len(value))
             elif len(value) > self._MAXLEN:
                 value = g.textarea(f.id(), value=value, readonly=True,
                                    rows=min(f.height(), 5), cols=80)
@@ -391,15 +393,15 @@ class ShowForm(LayoutForm):
                 #               ' ... (', _("reduced"), ')')
         src = self._uri(row, f.id(), type=UriType.IMAGE)
         if src:
-            if size is not None:
-                value += ' (%s)' % format_byte_size(size)
-                size = None
+            if info is not None:
+                value += ' ('+ info +')'
+                info = None
             value = g.img(src, alt=value)
         uri = self._uri(row, f.id())
         if uri:
             value = g.link(value, uri)
-        if size is not None:
-            value += ' (%s)' % format_byte_size(size)
+        if info is not None:
+            value += ' ('+ info +')'
         return (g.label(f.label(), None) + ":", value, None)
 
     
@@ -575,10 +577,14 @@ class BrowseForm(Form):
         return "--"
     
     def _codebook_formatter(self, generator, row, cid):
-        if row.prefer_display(cid):
-            return row.display(cid)
-        else:
-            return generator.abbr(row.format(cid), title=row.display(cid))
+        value = row[cid].export()
+        display = row.display(cid)
+        if display:
+            if row.prefer_display(cid):
+                value = display
+            else:
+                value = generator.abbr(value, title=display)
+        return value
     
     def _generic_formatter(self, generator, row, cid):
         value = row[cid].export() 

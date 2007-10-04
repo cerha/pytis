@@ -1,5 +1,7 @@
 2007-10-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py: Improved `display' presentation.
+
 	* pytis/form/list.py (ListForm._create_search_panel): Handle
 	prefill correctly.
 
