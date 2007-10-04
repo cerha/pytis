@@ -396,15 +396,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._search_panel = panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
         self._incremental_search_last_direction = pytis.data.FORWARD
         self._incremental_search_results = []
-        keys_next = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True))
-        keys_prev = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True, back=True))
+        if self.keymap:
+            keys_next = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True))
+            keys_prev = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True, back=True))
+        else:
+            keys_next = keys_prev = ()
         columns = [c for c in self._columns if isinstance(c.type(self._data), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
                       tooltip=_("Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
                                 "vyhledávání je mo¾né pouze nad sloupci s øetìzcovými hodnotami)."),
                       label=lambda c: c.label(), height=HEIGHT),
-            wx_text_ctrl(panel, value=prefill, tooltip=_("Zadejte hledaný text."),
+            wx_text_ctrl(panel, tooltip=_("Zadejte hledaný text."),
                          on_text=lambda e: self._incremental_search(newtext=True),
                          on_key_down=self._on_incremental_search_key_down, height=HEIGHT),
             wx_button(panel, _("Previous"), icon=wx.ART_GO_BACK, height=HEIGHT,
@@ -431,10 +434,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         sizer.Add(controls[-1])
         panel.SetSizer(sizer)
         panel.SetAutoLayout(True)
-        controls[1].SetFocus()
         self._top_level_sizer.Add(panel, 0, wx.EXPAND)
         self._top_level_sizer.Layout()
-        return panel
+        if prefill:
+            controls[1].SetValue(prefill)
+        else:
+            controls[1].SetFocus()
 
     def _on_incremental_search_key_down(self, event):
         code = event.GetKeyCode()
