@@ -329,11 +329,11 @@ class LayoutForm(Form):
             if help is not None:
                 ctrl += help
             if field.compact():
-                td = '<td colspan="2">'+ label + g.br() +"\n"+ ctrl +'</td>'
+                td = g.td(label + g.br() +"\n"+ ctrl, colspan=2)
             else:
-                td = '<td valign="top" align="right" class="label">'+ label + \
-                     '</td><td width="100%" class="ctrl" >'+ ctrl +'</td>'
-            return '<tr>'+ td +'</tr>'
+                td = g.td(label, valign='top', align='right', cls='label') + \
+                     g.td(ctrl, width='100%', cls='ctrl')
+            return g.tr(td)
         else:
             rows = (concat(label, g.br()), concat(ctrl, g.br()))
             if help:
@@ -619,15 +619,36 @@ class BrowseForm(Form):
                     value = indent + '&bull;&nbsp;'+ generator.span(value, cls='tree-node')
                     # &#8227 does not work in MSIE
         return value
-            
+
+    def _style(self, style, row):
+        def color(self, color):
+            if type(color) is tuple:
+                return '#%02x%02x%02x' % color
+            else:
+                return color
+        if callable(style):
+            style = style(row)
+        if style is None:
+            return None
+        styles = (
+            (style.foreground, 'color',            color),
+            (style.background, 'background-color', color),
+            (style.slanted,    'font-style',       lambda x: x and 'italic' or 'normal'),
+            (style.bold,       'font-weight',      lambda x: x and 'bold' or 'normal'),
+            (style.overstrike, 'text-decoration',  lambda x: x and 'line-through' or 'none'),
+            (style.underline,  'text-decoration',  lambda x: x and 'underline' or 'none'),
+            )
+        return '; '.join([name +': '+ f(attr()) for attr, name, f in styles if attr() is not None])
+    
     def _export_row(self, exporter, row, n):
         g = exporter.generator()
-        cells = [concat('<td%s>' % (is_number and ' align="right"' or ''),
-                        self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
-                        '</td>')
+        cells = [g.td(self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
+                      align=(is_number and "right" or None),
+                      style=self._style(col.style(), row))
                  for col, formatter, is_number in self._formaters]
-        return concat('<tr class="%s">' % (n % 2 and 'even' or 'odd'), cells, '</tr>')
-
+        return g.tr(cells, style=self._style(self._view.row_style(), row),
+                    cls=(n % 2 and 'even' or 'odd'))
+    
     def _export_headings(self, exporter):
         g = exporter.generator()
         current_sorting_column, current_dir = self._sorting[0]
@@ -649,7 +670,7 @@ class BrowseForm(Form):
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
-        return concat([concat('<th>', label(c), '</th>') for c in self._columns])
+        return concat([g.th(label(c)) for c in self._columns])
     
     def _wrap_exported_rows(self, exporter, rows, summary):
         n = len(self._columns)
@@ -746,6 +767,7 @@ class BrowseForm(Form):
                             self._export_controls(exporter, second=True), separator="\n")
         return result
 
+
 class ListView(BrowseForm):
     
     def __init__(self, data, view, resolver, layout=None, **kwargs):
@@ -785,7 +807,6 @@ class ListView(BrowseForm):
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
         return g.div(rows, cls="body") +"\n"+ g.div(summary, cls="summary")
-    
 
     
 class CheckRowsForm(BrowseForm, _SubmittableForm):

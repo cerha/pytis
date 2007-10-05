@@ -145,6 +145,8 @@ class ListTable(wx.grid.PyGridTableBase):
                 dc.DrawText('x', rect.x+2, rect.y)
 
     _TYPE_MAPPING = None
+    _DEFAULT_FOREGROUND_COLOR = pytis.presentation.Color.BLACK
+    _DEFAULT_BACKGROUND_COLOR = pytis.presentation.Color.WHITE
         
     def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
@@ -168,7 +170,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._font_cache = {}
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        self._grouping_background_downgrade = self._group_bg_downgrade()
+        self._init_group_bg_downgrade()
         # Nastav øádek
         self.rewind()
         self._edited_row = None
@@ -309,28 +311,34 @@ class ListTable(wx.grid.PyGridTableBase):
                 return False
         
     def _make_attr(self, style):
-        if style.slanted():
-            slant = wx.ITALIC
-        else:
-            slant = wx.NORMAL
-        if style.bold():
-            weight = wx.BOLD
-        else:
-            weight = wx.NORMAL
-        font_key = (slant, weight)
+        flags = wx.FONTFLAG_DEFAULT
+        fg, bg = (self._DEFAULT_FOREGROUND_COLOR, self._DEFAULT_BACKGROUND_COLOR)
+        if style:
+            if style.slanted():
+                flags |= wx.FONTFLAG_ITALIC
+            if style.bold():
+                flags |= wx.FONTFLAG_BOLD
+            if style.overstrike():
+                flags |= wx.FONTFLAG_STRIKETHROUGH
+            if style.underline():
+                flags |= wx.FONTFLAG_UNDERLINED
+            if style.foreground():
+                fg = style.foreground()
+            if style.background():
+                bg = style.background()
+        flags |= wx.FONTFLAG_STRIKETHROUGH
         try:
-            font = self._font_cache[font_key]
+            font = self._font_cache[flags]
         except KeyError:
             size = self._form.GetFont().GetPointSize()
-            font = self._font_cache[font_key] = \
-                   font = wx.Font(size, wx.DEFAULT, slant, weight)
-        return (color2wx(style.foreground()), color2wx(style.background()),font)
+            font = self._font_cache[flags] = font = wx.FFont(size, wx.DEFAULT, flags)
+        return (color2wx(fg), color2wx(bg), font)
 
     # Na¹e veøejné metody
 
-    def _group_bg_downgrade(self):
-        d = wx.NamedColor(config.grouping_background_downgrade)
-        return (255-d.Red(), 255-d.Green(), 255-d.Blue())
+    def _init_group_bg_downgrade(self):
+        c = wx.NamedColor(config.grouping_background_downgrade)
+        self._group_bg_downgrade = (255-c.Red(), 255-c.Green(), 255-c.Blue())
     
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row_prefill, prefill):
@@ -343,7 +351,7 @@ class ListTable(wx.grid.PyGridTableBase):
         # Sma¾ cache
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        self._grouping_background_downgrade = self._group_bg_downgrade()
+        self._init_group_bg_downgrade()
         # Nastav øádek
         self.rewind()
         if inserted_row_number is None:
@@ -372,7 +380,8 @@ class ListTable(wx.grid.PyGridTableBase):
         self._presented_row = None
         self._current_row = None
         self._row_style = None
-        self._grouping_background_downgrade = None
+        self._group_bg_downgrade = None
+        self._group_bg_color = None
 
     def _cached_value(self, row, col_id, style=False):
         # Return the cached value for given row and column id.
@@ -573,23 +582,21 @@ class ListTable(wx.grid.PyGridTableBase):
         if row >= self.GetNumberRows() or col >= self.GetNumberCols(): # mù¾e se stát...
             return None
         column = self._columns[col]
+        row_style = self._row_style
+        if callable(row_style):
+            row_style = self._cached_value(row, None, style=True)
         style = column.style
-        if style is None:
-            style = self._row_style
-            style_column = None
-        else:
-            style_column = column.id
         if callable(style):
-            style = self._cached_value(row, style_column, style=True)
+            style = self._cached_value(row, column.id, style=True)
+        if row_style:
+            style += row_style
         try:
             fg, bg, font = self._attr_cache[style]
         except KeyError:
             fg, bg, font = self._attr_cache[style] = self._make_attr(style)
         if self._group(row):
-            rgb = [max(0, x - y)
-                   for x, y in zip((bg.Red(), bg.Green(), bg.Blue()),
-                                   self._grouping_background_downgrade)]
-            bg = wx.Colour(*rgb)
+            rgb = (bg.Red(), bg.Green(), bg.Blue())
+            bg = wx.Colour(*[max(0, x - y) for x, y in zip(rgb, self._group_bg_downgrade)])
         provider = self.GetAttrProvider()
         if provider:
             attr = provider.GetAttr(row, col, kind)

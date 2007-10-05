@@ -40,6 +40,7 @@ class TextFormat(object):
     HTML = 'HTML'
     WIKI = 'WIKI'
 
+
 class BorderStyle(object):
     """Výètová tøída definující konstanty pro styl orámování."""
     ALL    = 'ALL'
@@ -55,50 +56,69 @@ class BorderStyle(object):
 
     
 class Color(object):
-    """Na GUI toolkitu nezávislé konstanty pro nìkteré barvy."""
-    WHITE = 'WHITE'
-    BLACK = 'BLACK'
-    RED = 'RED'
-    RED20 = 'RED20'
-    GREEN = 'GREEN'
-    BLUE = 'BLUE'
-    YELLOW = 'YELLOW'
-    GRAY   = 'GRAY'
-    GRAY10 = 'GRAY10'
-    GRAY20 = 'GRAY20'
-    GRAY30 = 'GRAY30'
-    GRAY40 = 'GRAY40'
-    GRAY50 = 'GRAY50'
-    GRAY60 = 'GRAY60'
-    GRAY70 = 'GRAY70'
-    GRAY80 = 'GRAY80'
-    GRAY90 = 'GRAY90'
-    BLANCHETALMOND = 'BLANCHETALMOND'
-    LIGHTYELLOW = 'LIGHTYELLOW'
-    PEACHPUFF2 = 'PEACHPUFF2'
-    SLATEGRAY2 = 'SLATEGRAY2'
-    LIGHTSALMON = 'LIGHTSALMON'
+    """Independent definition of generic named colors to be used within 'Style' specifications."""
+    WHITE  = (255, 255, 255)
+    BLACK  = (  0,   0,   0)
+    RED    = (255,   0,   0)
+    RED20  = (255, 200, 200)
+    GREEN  = (  0, 255,   0)
+    BLUE   = (  0,   0, 255)
+    YELLOW = (255, 255, 160)
+    GRAY   = ( 50,  50,  50)
+    GRAY90 = ( 25,  25,  25)
+    GRAY80 = ( 50,  50,  50)
+    GRAY70 = ( 75,  75,  75)
+    GRAY60 = (100, 100, 100)
+    GRAY50 = (125, 125, 125)
+    GRAY40 = (150, 150, 150)
+    GRAY30 = (175, 175, 175)
+    GRAY20 = (200, 200, 200)
+    GRAY10 = (225, 225, 225)
+    BLANCHETALMOND = (255, 235, 205)
+    LIGHTYELLOW    = (255, 255, 224)
+    PEACHPUFF2     = (238, 203, 173)
+    SLATEGRAY2     = (185, 211, 238)
+    LIGHTSALMON    = (255, 160, 122)
 
     
-class FieldStyle(object):
-    """Specifikaèní tøída definující podobu vnitøku políèka s hodnotou."""
+class Style(object):
+    """Text style specification.
 
-    def __init__(self, foreground=Color.BLACK, background=Color.WHITE,
-                 bold=False, slanted=False):
-        """Inicializuj instanci.
+    Style instance is returned by the 'style' attribute of 'FieldSpec' or 'row_style' attribute of
+    'ViewSpec'.  Both specifiers may be functions and compute the style based on the values of the
+    current row.  They may also return None to indicate the default style.  Field style has a
+    higher precedence, so all properties not defined by field style default to those defined by row
+    style and if they are not defined by row style, global defaults are used.
 
-        Argumenty:
+    """
+    _COLOR_RE = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
-          foreground -- barva textu políèka, jedna z konstant tøídy 'Color'
-          background -- barva pozadí políèka, jedna z konstant tøídy 'Color'
-          bold -- pøíznak urèující, zda má být text políèka tuèný
-          slanted -- pøíznak urèující, zda má být text políèka sklonìný
+    def __init__(self, foreground=None, background=None, bold=None, slanted=None,
+                 overstrike=None, underline=None):
+        """Initialize the instance.
+
+        Arguments:
+
+          foreground -- background color as one of 'Color' constants, a tuple of three integers
+            (RGB), or a hexadecimal string representation (such as '#ff0000')
+          background -- background color in the same format as the foreground color
+          bold -- flag indicating bold text
+          slanted -- flag indicating slanted (italics) text 
+          overstrike -- flag indicating that the text should be stroked through
+          underline -- flag indicating that the text should be underlined
           
         """
+        def is_color(color):
+            return type(color) == tuple and len(color) == 3 or \
+                   type(color) == str and self._COLOR_RE.match(color)
+        assert foreground is None or is_color(foreground), foreground
+        assert background is None or is_color(background), background
         self._foreground = foreground
         self._background = background
         self._bold = bold
         self._slanted = slanted
+        self._overstrike = overstrike
+        self._underline = underline
 
     def foreground(self):
         """Vra» barvu textu zadanou v konstruktoru."""
@@ -116,6 +136,43 @@ class FieldStyle(object):
         """Vra» pravdu, právì kdy¾ má být text tuèný."""
         return self._slanted
 
+    def overstrike(self):
+        """Vra» pravdu, právì kdy¾ má být text pøe¹krtnutý."""
+        return self._overstrike
+    
+    def underline(self):
+        """Vra» pravdu, právì kdy¾ má být text podtr¾ený."""
+        return self._underline
+
+    def __str__(self):
+        items = [k[1:]+'='+repr(v) for k,v in self.__dict__.items()
+                 if k.startswith('_') and v is not None]
+        return "<%s %s>" % (self.__class__.__name__, ', '.join(items))
+
+    def __radd__(self, other):
+        if other is None:
+            return self
+        else:
+            return other + self
+        
+    def __add__(self, other):
+        def coalesce(x, y):
+            if x is not None:
+                return x
+            return y
+        if other is None:
+            return self
+        else:
+            return Style(foreground=coalesce(self._foreground, other._foreground),
+                         background=coalesce(self._background, other._background),
+                         bold=coalesce(self._bold, other._bold),
+                         slanted=coalesce(self._slanted, other._slanted),
+                         overstrike=coalesce(self._overstrike, other._overstrike),
+                         underline=coalesce(self._underline, other._underline))
+        
+
+# Backwards compatibility alias.
+FieldStyle = Style
 
 FIELD_STYLE_DEFAULT = FieldStyle()
 FIELD_STYLE_EMPHASIS = FieldStyle(bold=True)

@@ -1,3 +1,18 @@
+2007-10-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Apply row and field styles.
+
+	* pytis/presentation/spec.py (Color): Define color values directly
+	in constants.
+	(FieldStyle): Renamed to `Style'.  Default color values changed to
+	`None'.  New properties `overstrike' and `underline.
+
+	* pytis/form/screen.py: Expect color values in `Color' constants
+	and allow also color hex-string specifications.
+
+	* pytis/form/_grid.py: Implemented style inheritance and new style
+	specifiers.
+
 2007-10-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Improved `display' presentation.

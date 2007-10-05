@@ -35,39 +35,18 @@ import wx
 import pytis.presentation
 
 _WX_COLORS = {}
-_WX_COLOR_DATABASE = {}
+_WX_COLOR_DB = {}
 
 def init_colors():
-    global _WX_COLORS, _WX_COLOR_DATABASE
-    _WX_COLORS = {
-        pytis.presentation.Color.WHITE:  WxColor(255, 255, 255),
-        pytis.presentation.Color.BLACK:  WxColor(0, 0, 0),
-        pytis.presentation.Color.RED:    WxColor(255, 0, 0),
-        pytis.presentation.Color.RED20:  WxColor(255, 200, 200),
-        pytis.presentation.Color.GREEN:  WxColor(0, 255, 0),
-        pytis.presentation.Color.BLUE:   WxColor(0, 0, 255),
-        pytis.presentation.Color.YELLOW: WxColor(255, 255, 160),
-        pytis.presentation.Color.GRAY:   WxColor(50, 50, 50),
-        pytis.presentation.Color.GRAY90: WxColor(25, 25, 25),
-        pytis.presentation.Color.GRAY80: WxColor(50, 50, 50),
-        pytis.presentation.Color.GRAY70: WxColor(75, 75, 75),
-        pytis.presentation.Color.GRAY60: WxColor(100, 100, 100),
-        pytis.presentation.Color.GRAY50: WxColor(125, 125, 125),
-        pytis.presentation.Color.GRAY40: WxColor(150, 150, 150),
-        pytis.presentation.Color.GRAY30: WxColor(175, 175, 175),
-        pytis.presentation.Color.GRAY20: WxColor(200, 200, 200),
-        pytis.presentation.Color.GRAY10: WxColor(225, 225, 225),
-        pytis.presentation.Color.BLANCHETALMOND: WxColor(255, 235, 205),
-        pytis.presentation.Color.LIGHTYELLOW:    WxColor(255, 255, 224),
-        pytis.presentation.Color.PEACHPUFF2:     WxColor(238, 203, 173),
-        pytis.presentation.Color.SLATEGRAY2:     WxColor(185, 211, 238),
-        pytis.presentation.Color.LIGHTSALMON:    WxColor(255, 160, 122),
-        }
+    global _WX_COLORS, _WX_COLOR_DB
+    from pytis.presentation import Color
+    colors = [getattr(Color, name) for name in public_attributes(Color)]
+    _WX_COLORS = dict([(c, WxColor(*c)) for c in colors])
     from wx.lib import colourdb
     colourdb.updateColourDB()
     for name in colourdb.getColourList():
         wxcolour = wx.TheColourDatabase.FindColour(name)
-        _WX_COLOR_DATABASE[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
+        _WX_COLOR_DB[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
     
 ### Pomocné funkce
 
@@ -422,7 +401,7 @@ def color2wx(color):
         (instance wxTheColourDatabase)
 
     """
-    return _WX_COLORS.get(color, None) or _WX_COLOR_DATABASE.get(color, None)
+    return _WX_COLORS.get(color, None) or _WX_COLOR_DB.get(color, None) or wx.NamedColor(color)
 
 ### Univerzální handlery
 
