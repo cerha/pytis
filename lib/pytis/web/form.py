@@ -621,11 +621,11 @@ class BrowseForm(Form):
         return value
 
     def _style(self, style, row):
-        def color(self, color):
-            if type(color) is tuple:
-                return '#%02x%02x%02x' % color
+        def color(c):
+            if type(c) is tuple:
+                return '#%02x%02x%02x' % c
             else:
-                return color
+                return c
         if callable(style):
             style = style(row)
         if style is None:
