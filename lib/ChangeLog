@@ -1,17 +1,27 @@
 2007-10-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow._compute_editability):
+	Pass just one argument to the `editable' function.
+
+	* pytis/presentation/_test.py: Define editable function with just
+	one argument.
+
 	* pytis/web/form.py: Apply row and field styles.
 
 	* pytis/presentation/spec.py (Color): Define color values directly
 	in constants.
 	(FieldStyle): Renamed to `Style'.  Default color values changed to
 	`None'.  New properties `overstrike' and `underline.
+	(FieldSpec): Allow `style' and `editable' functions to take just
+	one argument -- the PresentedRow instance.
 
 	* pytis/form/screen.py: Expect color values in `Color' constants
 	and allow also color hex-string specifications.
 
 	* pytis/form/_grid.py: Implemented style inheritance and new style
 	specifiers.
+	(ListTable._cached_value): Pass just one argument to the `style'
+	function.
 
 2007-10-04  Tomas Cerha  <cerha@brailcom.org>
 

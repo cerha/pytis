@@ -50,7 +50,7 @@ class PresentedRow_(unittest.TestCase):
         def inc(row):
             sum = row['sum'].value()
             return sum is not None and sum + 1 or None
-        def gt5(row, key):
+        def gt5(row):
             return row['sum'].value() > 5
         self._fields = (FieldSpec('a'),
                         FieldSpec('b'),

@@ -402,7 +402,7 @@ class ListTable(wx.grid.PyGridTableBase):
                 cid = c.id
                 s = c.style
                 if callable(s):
-                    style_dict[cid] = s(cid, the_row)
+                    style_dict[cid] = s(the_row)
                 value_dict[cid] = the_row.format(cid)
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:

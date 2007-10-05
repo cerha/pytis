@@ -1666,21 +1666,18 @@ class FieldSpec(object):
             of such field in default columns ('ViewSpec' argument 'columns') will be announced as
             an error.
 
-          fixed -- pokud bude pøadána pravdivá hodnota, nebude ¹íøka sloupce
-            automaticky pøepoèítávána pøi zmìnì velikosti tabulkového
-            formuláøe.  Implicitnì jsou sloupce automaticky
-            roztahovány/zu¾ovány tak, aby byla rovnomìrnì vyu¾ita plocha
-            formuláøe.  Hodnota 'width/column_width' tak slou¾í pouze jako
-            výchozí hodnota.  Pro 'fixed' sloupce v¹ak bude v¾dy dodr¾ována.
+          fixed -- passing True value will disable automatic scaling of column width when the table
+            size is changed.  The default behavaior is to accommodate column widths to new form
+            size, so that the available space is used evenly between all columns.  Fixed columns,
+            however will be left out during these recomputations and will keep their prevoius
+            widths.
             
-          editable -- instance Computer nebo jedna z konstant tøídy 'Editable',
-            urèující za jakých okolností je políèko editovatelné.  Je-li 'None',
-            bude pou¾ita implicitní hodnota, kterou je obvykle
-            'Editable.ALWAYS', ale pro nìkteré kombinace ostatních parametrù
-            (napø. 'computer') mù¾e být implicitní hodnota jiná.
-            Pokud je editable instancí tøídy `Computer', budou jeho funkci
-            pøedány dva argumenty: instance PresentedRow a identifikátor
-            políèka.
+          editable -- one of 'Editable' constants or a 'Computer' instance.  The constants
+            determine field editability statically, the computer may be used to compute editability
+            dynamically (current row will be passed to the computer function as a 'PresentedRow'
+            instance).  The default value is 'Editable.ALWAYS', but certain combinations of other
+            specification parameters may lead to another default value (for example if 'computer'
+            is used, the field is not editable by default).
             
           compact -- pravdivá hodnota znamená, ¾e bude textový popisek políèka
             v editaèním formuláøi pøimknut k hornímu okraji vstupního prvku
@@ -1885,8 +1882,7 @@ class FieldSpec(object):
         if editable is None:
             if width == 0 or computer: editable = Editable.NEVER
             else: editable = Editable.ALWAYS
-        assert editable in public_attributes(Editable) \
-               or isinstance(editable, Computer)
+        assert editable in public_attributes(Editable) or isinstance(editable, Computer)
         assert style is None or isinstance(style, FieldStyle) \
                or callable(style), ('Invalid field style', id, style)
         assert filename is None or isinstance(filename, str)
@@ -1921,6 +1917,13 @@ class FieldSpec(object):
         self._default = default
         self._computer = computer
         self._height = height
+        if isinstance(editable, Computer):
+            func = editable.function()
+            import inspect
+            argspec = inspect.getargspec(func)
+            if len(argspec[0]) == 2:
+                # For backwards compatibility
+                editable = Computer(lambda r: func(r, id), depends=editable.depends())
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
@@ -1935,6 +1938,13 @@ class FieldSpec(object):
         self._post_process = post_process
         self._filter = filter
         self._filter_list = filter_list
+        if callable(style):
+            func = style
+            import inspect
+            argspec = inspect.getargspec(func)
+            if len(argspec[0]) == 2:
+                # For backwards compatibility
+                style = lambda r: func(id, r)
         self._style = style
         self._links = links
         self._filename = filename
