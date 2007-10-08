@@ -1920,8 +1920,8 @@ class FieldSpec(object):
         if isinstance(editable, Computer):
             func = editable.function()
             import inspect
-            argspec = inspect.getargspec(func)
-            if len(argspec[0]) == 2:
+            args, __, __, __ = inspect.getargspec(func)
+            if len(args) == 2 and args[0] != 'self' or len(args) == 3 and args[0] == 'self':
                 # For backwards compatibility
                 editable = Computer(lambda r: func(r, id), depends=editable.depends())
         self._editable = editable
@@ -1941,8 +1941,8 @@ class FieldSpec(object):
         if callable(style):
             func = style
             import inspect
-            argspec = inspect.getargspec(func)
-            if len(argspec[0]) == 2:
+            args, __, __, __ = inspect.getargspec(func)
+            if len(args) == 2 and args[0] != 'self' or len(args) == 3 and args[0] == 'self':
                 # For backwards compatibility
                 style = lambda r: func(id, r)
         self._style = style
