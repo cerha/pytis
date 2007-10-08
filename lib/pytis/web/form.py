@@ -366,8 +366,6 @@ class ShowForm(LayoutForm):
                 info = format_byte_size(len(buf))
             else:
                 value = ""
-        elif isinstance(type, pytis.data.Boolean):
-            value = row[f.id()].value() and _("Yes") or _("No")
         elif isinstance(type, pytis.data.Color):
             color = row[f.id()].export()
             value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
@@ -375,7 +373,9 @@ class ShowForm(LayoutForm):
         elif type.enumerator():
             value = row[f.id()].export()
             display = row.display(f.id())
-            if display:
+            if isinstance(type, pytis.data.Boolean):
+                value = display or value and _("Yes") or _("No")
+            elif display:
                 if row.prefer_display(f.id()):
                     value = display
                 else:
@@ -571,7 +571,7 @@ class BrowseForm(Form):
                            for col in self._columns]
 
     def _boolean_formatter(self, generator, row, cid):
-        return row[cid].value() and _("Yes") or _("No")
+        return row.display(cid) or row[cid].value() and _("Yes") or _("No")
     
     def _binary_formatter(self, generator, row, cid):
         return "--"
