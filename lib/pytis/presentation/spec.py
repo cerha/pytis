@@ -108,11 +108,6 @@ class Style(object):
           underline -- flag indicating that the text should be underlined
           
         """
-        def is_color(color):
-            return type(color) == tuple and len(color) == 3 or \
-                   type(color) == str and self._COLOR_RE.match(color)
-        assert foreground is None or is_color(foreground), foreground
-        assert background is None or is_color(background), background
         self._foreground = foreground
         self._background = background
         self._bold = bold
