@@ -446,8 +446,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if code in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             self._exit_incremental_search()
         elif code == wx.WXK_BACK:
-            row, text = self._incremental_search_results.pop()
-            self.select_row(row)
+            if self._incremental_search_results:
+                row, text = self._incremental_search_results.pop()
+                self.select_row(row)
             event.Skip()
         elif code == wx.WXK_ESCAPE or code == ord('G') and event.ControlDown():
             self._exit_incremental_search(rollback=True)
