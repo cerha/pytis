@@ -732,13 +732,14 @@ class TextField(InputField):
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
         completer = self._spec.completer()
-        if completer and not isinstance(completer, pytis.data.Enumerator):
-            if isinstance(completer, (list, tuple)):
-                completer = pytis.data.FixedEnumerator(completer)
-            else:
-                data_spec = resolver().get(completer, 'data_spec')
-                completer = pytis.data.DataEnumerator(data_spec)
-        elif not completer and self._type.enumerator():
+        if completer:
+            if not isinstance(completer, pytis.data.Enumerator):
+                if isinstance(completer, (list, tuple)):
+                    completer = pytis.data.FixedEnumerator(completer)
+                else:
+                    data_spec = resolver().get(completer, 'data_spec')
+                    completer = pytis.data.DataEnumerator(data_spec)
+        elif self._type.enumerator() and isinstance(self._type, pytis.data.String):
             completer = self._type.enumerator()
         self._completer = completer
         if completer:
