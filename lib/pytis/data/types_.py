@@ -1629,13 +1629,23 @@ class DataEnumerator(Enumerator):
             result = True
         return result
 
-    def values(self, condition=None):
+    def values(self, condition=None, transaction=None, max=None):
         the_condition = self._condition(condition=condition)
         def lfunction():
-            return self._data.select_map(lambda r: r[self._value_column].value(),
-                                         condition=the_condition)
+            result = []
+            count = self._data.select(condition=the_condition, transaction=transaction)
+            if count > max:
+                self._data.close()
+                return None
+            while True:
+                row = self._data.fetchone()
+                if row is None:
+                    self._data.close()
+                    break
+                result.append(row[self._value_column].value())
+            return tuple(result)
         result = with_lock(self._data_lock, lfunction)
-        return tuple(result)
+        return result
     
     # Extended interface.
 

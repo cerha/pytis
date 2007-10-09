@@ -746,6 +746,7 @@ class TextField(InputField):
             self._completer_widget = _Completer(control)
         else:
             self._completer_widget = None
+        self._update_completions = None
         return control
 
     def on_key_down(self, event):
@@ -777,8 +778,10 @@ class TextField(InputField):
             completer = self._completer
             if isinstance(completer, pytis.data.DataEnumerator):
                 wmvalue = pytis.data.WMValue(pytis.data.String(), text+'*')
-                condition = pytis.data.WM(completer.value_column(), wmvalue)
-                choices = completer.values(condition=condition)
+                c1 = pytis.data.WM(completer.value_column(), wmvalue)
+                c2 = self._row.runtime_filter(self.id())
+                condition = c2 and pitis.data.AND(c1, c2) or c1
+                choices = completer.values(condition=condition, max=40) or ()
             else:
                 import locale
                 choices = [x for x in completer.values() if x.lower().startswith(text)]
@@ -786,7 +789,14 @@ class TextField(InputField):
             if len(choices) == 1 and choices[0].lower() == text:
                 return ()
             return choices
-            
+
+    def _on_idle(self, event):
+        text = self._update_completions
+        if text is not None:
+            self._update_completions = None
+            self._completer_widget.update(self._completions(text))
+        return super(TextField, self)._on_idle(event)
+        
     def _on_change(self, event=None):
         post_process = self._post_process_func()
         if post_process:
@@ -794,7 +804,7 @@ class TextField(InputField):
             if value != self._get_value():
                 self._set_value(value)
         if event and self._completer_widget:
-            self._completer_widget.update(self._completions(event.GetString()))
+            self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):

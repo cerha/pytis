@@ -1,5 +1,7 @@
 2007-10-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/types_.py (DataEnumerator.values): New argument `max'.
+
 	* pytis/presentation/spec.py (FieldSpec): New argument and method
 	for `completer'.
 
