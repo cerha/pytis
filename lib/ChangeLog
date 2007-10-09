@@ -1,3 +1,22 @@
+2007-10-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (FieldSpec): New argument and method
+	for `completer'.
+
+	* pytis/form/inputfield.py (_Completer): New class.
+	(TextField): Use completers for all codebook feilds, as well as
+	for fields with `completer' defined.
+
+2007-10-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Respect `display' for boolean fields.
+
+	* pytis/form/list.py (ListForm._on_incremental_search_key_down):
+	Handle empty list.
+
+	* pytis/presentation/spec.py: Backwards compatibility for
+	`editable' and `style' fixed.  Color value assertions removed.
+
 2007-10-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py (PresentedRow._compute_editability):

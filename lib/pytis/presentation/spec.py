@@ -1685,26 +1685,29 @@ class FieldSpec(object):
             zamezit také kopírování nìkterých dal¹ích hodnot.  V tom pøípadì je
             nutno pøedat pravdivou hodnotu tomuto argumentu.
             
-          default -- funkce pro výpoèet výchozí hodnoty políèka.  Mù¾e být
-            buïto pøímo hodnota kompatibilní s vnitøní hodnotou odpovídajícího
-            datového typu, nebo callable objekt (bez argumentù) tuto hodnotu
-            vracející.  Pokud je 'None' bude pou¾ita výchozí hodnota urèená
-            datovým typem.
+          default -- default value or a function for computing the default value.  The default
+            value is used when a new record is initialized.  Please note, that if computer is
+            defined, it has higher precedence than the default value.  You may pass a value
+            directly or a callable object.  The callable object will be called with no arguments
+            when the default value is needed and its returned value will be used.  In any case, the
+            default value must be compatible with the internal Python representation for the data
+            type of the field.  If not defined, the default value is determined by the data type
+            (usually None).
             
-          computer -- 'instance tøídy 'Computer', nebo None.  Specifikuje
-            dopoèítávané políèko (viz. také ní¾e).
+          computer -- a 'Computer' instance for computing the field value based on the values of
+            other fields of the same record.  See below for more details about computed fields.
             
           line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
             
-          codebook -- název specifikace èíselníku (øetìzec), nebo None.  Název
-            specifikace èíselníku je normálnì pøebírán ze specifikace
-            enumerátoru datového typu odpovídajícího sloupce v 'DataSpec'.
-            Pokud v¹ak z nìjakého dùvodu datová specifikace není definována
-            pomocí tøídy DataSpec, ale pøímo pomocí tøíd datového rozhraní,
-            není tato informace aplikaci dostupná.  Potom je nutné název
-            èíselníku urèit zde.
+          codebook -- name of the specification which acts as a codebook for this field.  If None,
+            the field may still have an 'enumerator' on tha data level, but the user interface will
+            not be able to determine which specification it is, so displaying the codebook in a
+            separate form will not be possible.  If 'codebook' is defined, the default value of
+            'selection_type' is 'SelectionType.CODEBOOK'.  Also the default 'enumerator' for the
+            field's data type will be automatically set to a 'DataEnumerator' bound to given
+            specification.
             
           display -- overrides this option for particular field.  If not defined, the value
             defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
@@ -1718,9 +1721,8 @@ class FieldSpec(object):
             defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
             information.
 
-          allow_codebook_insert -- Pravdivá hodnota povolí zobrazení tlaèítka
-            pro pøidání nové hodnoty do èíselníku.  Relevantní jen pro
-            èíselníková políèka.
+          allow_codebook_insert -- true value enables a button for codebook new record insertion.
+            This button will be displayed next to the codebook field.
             
           codebook_insert_spec -- Název specifikace, která má být pou¾ita pro
             vkládání nových záznamù (viz 'allow_codebook_insert').  Pokud je
@@ -1736,6 +1738,16 @@ class FieldSpec(object):
             'pytis.data.Operator'.  Èíselník bude po zmìnì závislých políèek
             aktualizován tak, aby obsahoval pouze øádku vyhovující dané
             podmínce.
+
+          completer -- enumerator used for automatic completion.  The available completions are
+            taken from an enumerator object.  If the field has an enumerator (defined by
+            'enumerator' or 'codebook'), it will be used for completions automatically (unless
+            autocompletion is disabled by 'CodebookSpec').  This argument, however, makes it
+            possible to specify a completer even for fields, which don't have an enumerator (the
+            validation constants imposed by enumerator are not desirable).  The value of this
+            argument may be an enumerator instance directly (e.g. 'pytis.data.FixedEnumerator') or
+            a name of the specification used to create a 'pytis.data.DataEnumerator'.  Also a
+            sequens (list or tuple) is accepted and converted to a 'FixedEnumerator' instance.
             
           selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
             tøídy 'SelectionType'.  Relevantní jen pro vstupní pole výètových
@@ -1834,9 +1846,9 @@ class FieldSpec(object):
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
               display_size=None, allow_codebook_insert=False, codebook_insert_spec=None,
-              codebook_runtime_filter=None, selection_type=None, orientation=Orientation.VERTICAL,
-              post_process=None, filter=None, filter_list=None, style=None, link=(),
-              filename=None, **kwargs):
+              codebook_runtime_filter=None, selection_type=None, completer=None,
+              orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
+              style=None, link=(), filename=None, **kwargs):
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
         self._id = id
@@ -1858,6 +1870,7 @@ class FieldSpec(object):
                or callable(display) or isinstance(display, tuple) \
                and len(display) == 2 and callable(display[0]) \
                and isinstance(display[1], str)
+        assert completer is None or isinstance(completer, (str, list,tuple, pytis.data.Enumerator))
         assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert isinstance(allow_codebook_insert, bool)
@@ -1928,8 +1941,9 @@ class FieldSpec(object):
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_runtime_filter = codebook_runtime_filter
-        self._orientation = orientation
         self._selection_type = selection_type
+        self._completer = completer
+        self._orientation = orientation
         self._post_process = post_process
         self._filter = filter
         self._filter_list = filter_list
@@ -1949,137 +1963,87 @@ class FieldSpec(object):
         return "<FieldSpec for '%s'>" % self.id()
         
     def id(self):
-        """Vra» id pole zadané v konstruktoru jako string."""
         return self._id
 
     def dbcolumn(self):
         return self._dbcolumn
     
     def type(self, data=None):
-        """Vra» datový typ ze specifikace, nebo z datového sloupce.
-
-        Pokud byl typ explicitnì urèen v konstruktoru, bude vrácen tento typ,
-        jinak bude vrácen typ urèený sloupeèkem datového objektu pøedaného jako
-        argument.
-        
-        """
+        """Return the specified data type or take it from data object if not defined explicitly."""
         type = self._type
         if data:
             column = data.find_column(self.id())
             if type is not None:
-                assert column is None or \
-                       isinstance(type, column.type().__class__)
+                assert column is None or isinstance(type, column.type().__class__)
             elif column is not None:
                 type = column.type()
             elif isinstance(self._computer, CbComputer):
                 cb_column = data.find_column(self._computer.field())
-                enumerator = cb_column.type().enumerator()
-                type = enumerator.type(self._computer.column())
-                assert type is not None, \
-                     "Invalid enumerator column '%s' in CbComputer for '%s'." \
-                     % (self._computer.column(), self.id())
-                    
+                type = cb_column.type().enumerator().type(self._computer.column())
+                assert type is not None, "Invalid enumerator column '%s' in CbComputer for '%s'." \
+                       % (self._computer.column(), self.id())
             else:
-                raise ProgramError("Data type not specified "
-                                   "for virtual column '%s'." % self.id())
+                raise ProgramError("Data type not specified for virtual column '%s'." % self.id())
         return type
 
     def virtual(self):
         return self._virtual
     
     def label(self):
-        """Vra» textový popisek tohoto pole jako string."""
         return self._label
 
     def column_label(self):
-        """Vra» textový popisek pro nadpis sloupce v tabulkovém zobrazení."""
         return self._column_label
 
     def descr(self):
-        """Vra» podrobnìj¹í popis (nápovìdu) tohoto pole jako string."""
         return self._descr
 
     def width(self, default=12):
-        """Vra» ¹íøku pole ve znacích; kladné celé èíslo.
-
-        Argumenty:
-
-          default -- hodnota, která má být doplnìna v pøípadì, ¾e ¹íøka nebyla
-            v konstruktoru specifikována; integer.
-
-        """
+        """Return the width specified in constructor or 'default' if specified width was None."""
         if self._width is None:
             return default
         else:
             return self._width
 
     def column_width(self, default=10):
-        """Vra» ¹íøku sloupce ve znacích; kladné celé èíslo.
-
-        Argumenty:
-
-          default -- hodnota, která má být doplnìna v pøípadì, ¾e v
-            konstruktoru nebyla specifikována ani ¹íøka sloupce, ani ¹íøka
-            políèka.
-
-        Pokud nebyla ¹íøka sloupce (`column_width') v konstruktoru
-        specifikována, bude vrácena obecná ¹íøka políèka (výsledek metody
-        `width()').
-            
-        """
+        """Return the specified 'column_width', 'width' or 'default' whichever is not None."""
         if self._column_width is None:
             return self.width(default)
         else:
             return self._column_width
 
     def disable_column(self):
-        """Vra» pravdu, pokud políèko není zobrazitelné jako slopec."""
         return self._disable_column
         
     def fixed(self):
-        """Vra» pravdu, pokud jde o sloupec s fixní ¹íøkou."""
         return self._fixed
         
     def height(self, default=1):
-        """Vra» vý¹ku políèka ve znacích
-
-        Argumenty:
-
-          default -- hodnota, která má být doplnìna v pøípadì, ¾e vý¹ka nebyla
-            v konstruktoru specifikována; integer.
-            
-        """
+        """Return the height specified in constructor or 'default' if specified height was None."""
         if self._height is None:
             return default
         else:
             return self._height
 
     def editable(self):
-        """Vra» jednu z konstant 'Editable' dle editovatelnosti políèka."""
         return self._editable
 
     def compact(self):
-        """Vra» pravdu, má li být popisek pøimknut k hornímu okraji políèka."""
         return self._compact
 
     def nocopy(self):
-        """Vra» pravdu, pokud má být políèko vynecháno pøi kopii záznamu."""
         return self._nocopy
 
     def default(self):
-        """Vra» výchozí hodnotu zadanou v konstruktoru."""
         return self._default
 
     def computer(self):
-        """Vra» instanci 'Computer' pro dopoèítávání hodnoty."""
         return self._computer
 
     def line_separator(self):
-        """Vra» odddìlovaè øádkù zadaný v konstruktoru."""
         return self._line_separator
     
     def codebook(self, data=None):
-        """Vra» název specifikace navázaného èíselníku."""
         if data is not None:
             enumerator = self.type(data).enumerator()
             if isinstance(enumerator, pytis.data.DataEnumerator) and \
@@ -2089,60 +2053,48 @@ class FieldSpec(object):
         return self._codebook
 
     def display(self):
-        """Return specification parameter `display' passed to the constructor."""
         return self._display
 
     def prefer_display(self):
-        """Return specification parameter `prefer_display' passed to the constructor."""
         return self._prefer_display
 
     def display_size(self):
-        """Return specification parameter `display_size' passed to the constructor."""
         return self._display_size
 
     def allow_codebook_insert(self):
-        """Vra» pravdu, má-li být  zobrazeno tlaèítko pøidání do èíselníku."""
         return self._allow_codebook_insert
     
     def codebook_insert_spec(self):
-        """Vra» název specifikace pro vkládání do èíselníku, nebo None."""
         return self._codebook_insert_spec
     
     def codebook_runtime_filter(self):
-        """Vra» specifikaci computeru run-time podmínky pro èíselník."""
         return self._codebook_runtime_filter
 
     def selection_type(self):
-        """Vra» zpùsob výbìru z mno¾iny hodnot jako konstantu 'SelectionType'.
-        """
         return self._selection_type
 
+    def completer(self):
+        return self._completer
+    
     def orientation(self):
-        """Vra» orientaci políèka jako konstantu 'Orientation'."""
         return self._orientation
 
     def post_process(self):
-        """Vra» funkci zpracovávající u¾ivatelský vstup."""
         return self._post_process
 
     def filter(self):
-        """Vra» typ filtru jako konstantu tøídy TextFilter."""
         return self._filter
 
     def filter_list(self):
-        """Vra» seznam povolených/zakázaných znakù pro filter."""
         return self._filter_list
 
     def style(self):
-        """Vra» specifikaci stylu políèka zadanou v konstruktoru."""
         return self._style
 
     def links(self):
-        """Vra» specifikaci odkazu zadanou v konstruktoru."""
         return self._links
 
     def filename(self):
-        """Return the identifier of the field providing download/save filename."""
         return self._filename
 
     def type_kwargs(self):

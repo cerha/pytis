@@ -54,7 +54,127 @@ class _TextValidator(wx.PyValidator):
             event.Skip()
             return True
 
+class _Completer(wx.PopupWindow):
+    """Autocompletion selection control."""
+    
+    def __init__(self, ctrl):
+        """Initialize the selectrol for given `wx.TextCtrl' instance."""
+        super(_Completer, self).__init__(ctrl.GetParent())
+        self._ctrl = ctrl
+        self._last_insertion_point = 0
+        style = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER| wx.SIMPLE_BORDER
+        self._list = listctrl = wx.ListCtrl(self, pos=wx.Point(0, 0), style=style)
+        self.update(ctrl.GetValue())
+        self._show(False)
+        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_close)
+        wx_callback(wx.EVT_LEFT_DOWN,  ctrl, self._on_toggle_down)
+        wx_callback(wx.EVT_LEFT_UP,    ctrl, self._on_toggle_up)
+        wx_callback(wx.EVT_LISTBOX,     listctrl, listctrl.GetId(), self._on_list_item_selected)
+        wx_callback(wx.EVT_LEFT_DOWN,   listctrl, self._on_list_click)
+        wx_callback(wx.EVT_LEFT_DCLICK, listctrl, self._on_list_dclick)
+
+    def _on_close(self, event):
+        self._show(False)
+        event.Skip()
+
+    def _on_toggle_down(self, event):
+        self._last_insertion_point = self._ctrl.GetInsertionPoint()
+        event.Skip()
+
+    def _on_toggle_up(self, event):
+        if self._ctrl.GetInsertionPoint() == self._last_insertion_point:
+            self._show(not self.IsShown())
+        event.Skip()
+
+    def _on_list_item_selected(self, event):
+        self._set_value_from_selected()
+        event.Skip()
+
+    def _on_list_click(self, event):
+        sel, flag = self._list.HitTest(event.GetPosition())
+        if sel != -1:
+            self._list.Select(sel)
+            self._set_value_from_selected()
+
+    def _on_list_dclick(self, event):
+        self._set_value_from_selected()
+
+    def _set_value_from_selected(self):
+         sel = self._list.GetFirstSelected()
+         if sel > -1:
+            text = self._list.GetItem(sel, 0).GetText()
+            self._ctrl.SetValue(text)
+            self._ctrl.SetInsertionPointEnd()
+            self._ctrl.SetSelection(-1, -1)
+            self._show(False)
+
+    def _show(self, show=True):
+        if show and self._list.GetItemCount() > 0:
+            size = self.GetSize()
+            height = self._ctrl.GetSizeTuple()[1]
+            x, y = self._ctrl.ClientToScreenXY(0, height)
+            if (y + size.GetHeight()) >= wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y):
+                y = y - height - size.GetHeight()
+            self.SetPosition(wx.Point(x, y))
+            self.Show(True)
+        else:
+            self.Show(False)
+
+    def on_key_down(self, event):
+        """Handle TextCtrl keypresses if they belong to the completer.
+
+        Returns True if the event was processed and False when it should be passed on.
         
+        """
+        listctrl = self._list
+        if listctrl.GetItemCount() == 0:
+            return False
+        code = event.GetKeyCode()
+        if code in (wx.WXK_DOWN, wx.WXK_UP):
+            sel = listctrl.GetFirstSelected()
+            if code == wx.WXK_DOWN and sel < (listctrl.GetItemCount() - 1):
+                listctrl.Select(sel+1)
+            elif code == wx.WXK_UP and sel > 0 :
+                listctrl.Select(sel-1)
+            listctrl.EnsureVisible(sel)
+            self._show()
+            return True
+        if self.IsShown():
+            if code == wx.WXK_RETURN :
+                self._set_value_from_selected()
+                return True
+            if code == wx.WXK_ESCAPE :
+                self._show(False)
+                return True
+        return False
+    
+    def update(self, completions):
+        """Update the list of available completions."""
+        listctrl = self._list
+        self._show(False)
+        if listctrl.GetColumnCount() != 0:
+            listctrl.DeleteAllColumns()
+            listctrl.DeleteAllItems()
+        listctrl.InsertColumn(0, "")
+        listctrl.SetSize(wx.Size(1000, 1000)) # Makes GetViewRect to return best fit.
+        height = None
+        for i, choice in enumerate(completions):
+            listctrl.InsertStringItem(i, "")
+            listctrl.SetStringItem(i, 0, choice)
+            if i == 10:
+                height = listctrl.GetViewRect()[3]
+            #width = max(listctrl.GetTextExtent(choice)[0] + 10, width)
+        listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        x, y, width, total_height = listctrl.GetViewRect()
+        size = wx.Size(width, height or total_height)
+        listctrl.SetSize(size)
+        self.SetClientSize(size)
+        if completions:
+            self._show(True)
+            listctrl.Select(0)
+            listctrl.EnsureVisible(0)
+
+
 class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     """Abstraktní tøída vstupního pole.
 
@@ -393,8 +513,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _register_skip_navigation_callback(self):
         control = self._ctrl
         if not self._callback_registered:
-            wx_callback(wx.EVT_NAVIGATION_KEY, control,
-                        self._skip_navigation_callback(control))
+            wx_callback(wx.EVT_NAVIGATION_KEY, control, self._skip_navigation_callback(control))
             self._callback_registered = True
         if self._unregistered_widgets.has_key(control):
             del(self._unregistered_widgets[control])
@@ -594,8 +713,7 @@ class TextField(InputField):
     DECIMAL_POINTS = ['.', ',']
     FLOAT = map(str, range(10)) + SIGNS + DECIMAL_POINTS
     ASCII   = map(chr, range(127))
-    LETTERS = map(chr, range(ord('a'),ord('z')+1) + \
-                  range(ord('A'),ord('Z')+1))
+    LETTERS = map(chr, range(ord('a'),ord('z')+1) + range(ord('A'),ord('Z')+1))
 
     def _create_ctrl(self):
         if not self._inline:
@@ -608,12 +726,31 @@ class TextField(InputField):
         if maxlen is not None:
             control.SetMaxLength(maxlen)
             wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid,
-               lambda e: message(_("Pøekroèena maximální délka."), beep_=True))
+                        lambda e: message(_("Pøekroèena maximální délka."), beep_=True))
         filter = self._filter()
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
+        completer = self._spec.completer()
+        if completer and not isinstance(completer, pytis.data.Enumerator):
+            if isinstance(completer, (list, tuple)):
+                completer = pytis.data.FixedEnumerator(completer)
+            else:
+                data_spec = resolver().get(completer, 'data_spec')
+                completer = pytis.data.DataEnumerator(data_spec)
+        elif not completer and self._type.enumerator():
+            completer = self._type.enumerator()
+        self._completer = completer
+        if completer:
+            self._completer_widget = _Completer(control)
+        else:
+            self._completer_widget = None
         return control
+
+    def on_key_down(self, event):
+        if self._completer_widget and self._completer_widget.on_key_down(event):
+            return
+        super(TextField, self).on_key_down(event)
 
     def _ctrl_style(self):
         style = wx.TE_PROCESS_ENTER
@@ -631,12 +768,32 @@ class TextField(InputField):
         else:
             event.GetEventObject().Navigate()
 
+    def _completions(self, text):
+        if not text:
+            return ()
+        else:
+            text = text.lower()
+            completer = self._completer
+            if isinstance(completer, pytis.data.DataEnumerator):
+                wmvalue = pytis.data.WMValue(pytis.data.String(), text+'*')
+                condition = pytis.data.WM(completer.value_column(), wmvalue)
+                choices = completer.values(condition=condition)
+            else:
+                import locale
+                choices = [x for x in completer.values() if x.lower().startswith(text)]
+                choices.sort(key=lambda x: locale.strxfrm(x).lower())
+            if len(choices) == 1 and choices[0].lower() == text:
+                return ()
+            return choices
+            
     def _on_change(self, event=None):
         post_process = self._post_process_func()
         if post_process:
             value = post_process(self._get_value())
             if value != self._get_value():
                 self._set_value(value)
+        if event and self._completer_widget:
+            self._completer_widget.update(self._completions(event.GetString()))
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):
@@ -1117,7 +1274,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         self._insert_button = None
         self._display = None
         super(CodebookField, self)._init_attributes()
-    
+        
     def _create_widget(self):
         """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
         widget = super(CodebookField, self)._create_widget()
@@ -1221,7 +1378,7 @@ class ListField(GenericCodebookField):
         view_spec = resolver().get(self._cb_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         # Vytvoøím vlastní seznamový widget.
-        style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_SINGLE_SEL
+        style=wx.LC_REPORT|wx.SIMPLE_BORDER|wx.LC_SINGLE_SEL
         list = wx.ListCtrl(self._parent, -1, style=style)
         # Nastavím záhlaví sloupcù.
         total_width = 0
@@ -1233,11 +1390,7 @@ class ListField(GenericCodebookField):
                 width = len(col.label())
             list.SetColumnWidth(i, dlg2px(list, 4*(width+1)))
             total_width = total_width + width
-        # TODO/wx: Nìjak spoèítat skuteènou vý¹ku záhlaví a øádku.
-        # Tohle jsou "empirické" vzorce!!!
-        header_height = char2px(list, 1, float(9)/4).GetHeight()
-        row_height = char2px(list, 1, float(10)/7).GetHeight()
-        height = header_height + row_height * self.height()
+        height = list.GetCharHeight() * (self.height()+1) # Additional row for column headings.
         self._DEFAULT_WIDTH = total_width + 3
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
         self._list =  list

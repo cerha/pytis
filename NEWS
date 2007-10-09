@@ -3,7 +3,42 @@
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
+	
+2007-10-08  Tomas Cerha  <cerha@brailcom.org>
+	
+	Bylo implementováno automatické doplòování pro textová vstupní
+	políèka.  Èíselníková políèka automaticky doplòují podle
+	èíselníku, ostatním políèkùm lze seznam hodnot urèit pomocí nového
+	specifikaèního parametru políèka `completer'.
+	
+2007-10-05  Tomas Cerha  <cerha@brailcom.org>
 
+	Byla implementována hierarchie dìdiènosti stylù.  Nejvy¹¹í
+	prioritu má styl buòky, dále styl øádku a dále výchozí styl
+	formuláøe.  Tøída `FieldStyle' byla pøejmenována na `Style', ale
+	døívìj¹í název je pro zpìtnou kompatibilitu zachován).  Výchozí
+	hodnoty v¹ech specifikaèních parametrù `Style' jsou nyní None a
+	pokud hodnota daného parametru není v konstruktoru explicitnì
+	nastavena, bude zdìdìna podle vý¹e uvedené hierarchie.  To by mìlo
+	podstatnì zjednodu¹it logiku funkcí pro výpoèet stylù.  Styl
+	jednotlivých buòek je tak automaticky skládán se stylem øádku,
+	tak¾e napø. pokud pro øádek nastavím nìjaké pozadí a pro buòku
+	chci pouze nastavit tuèný font, nemusím se ji¾ o pozadí ve stylu
+	buòky starat.
+
+	Funkce pro výpoèet stylù stejnì jako funkce pro výpoèet
+	editovatelnosti nyní v¾dy pøijímají pouze jediný argument `row',
+	stejnì jako v¹echny ostatní dopoèítávací funkce.  Není ji¾ tedy
+	tøeba hloubat nad tím, v jakém poøadí pro kterou funkci argumenty
+	mají být (poøadí bylo u tìchto dvou funkcí opaèné...).  Zpìtná
+	kompatibilita je samozøejmì dodr¾ena, ale doporuøuji ji¾ funkce se
+	dvìma argumenty nepou¾ívat.
+
+	Ve stylech lze nyní definovat barvy i pøímým zápisem RGB hodnoty
+	ve formátu '#rgb' nebo '#rrggbb'.
+
+	Styly jsou nyní implementovány i ve webových formuláøích.
+	
 2007-10-02  Tomas Cerha  <cerha@brailcom.org>
 
 	Vylep¹eno u¾ivatelské rozhraní inkrementálního vyhledávání.
