@@ -780,7 +780,7 @@ class TextField(InputField):
                 wmvalue = pytis.data.WMValue(pytis.data.String(), text+'*')
                 c1 = pytis.data.WM(completer.value_column(), wmvalue)
                 c2 = self._row.runtime_filter(self.id())
-                condition = c2 and pitis.data.AND(c1, c2) or c1
+                condition = c2 and pytis.data.AND(c1, c2) or c1
                 choices = completer.values(condition=condition, max=40) or ()
             else:
                 import locale
