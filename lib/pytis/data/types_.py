@@ -1634,7 +1634,7 @@ class DataEnumerator(Enumerator):
         def lfunction():
             result = []
             count = self._data.select(condition=the_condition, transaction=transaction)
-            if count > max:
+            if max is not None and count > max:
                 self._data.close()
                 return None
             while True:
