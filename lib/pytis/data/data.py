@@ -286,30 +286,27 @@ class Data(object):
         """
         return None
     
-    def select(self, condition=None, reuse=False, sort=(), columns=None,
-               transaction=None):
-        """Inicializuj nata¾ení v¹ech sloupcù z datového zdroje.
+    def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None):
+        """Initialize selection of records from the data source.
+        
+        The method itself does not necessarily load any data, the selection is only initialized if
+        necessary.  The actual data may be obtained by repetitive calls to 'fetchone()' after
+        calling this method.  Rows can also be skipped using the 'skip()' method.  The number of
+        corresponding rows is returned if possible, but None may be returned if this feature is not
+        implemented.
 
-        Metoda sama nemusí je¹tì je¹tì ¾ádná data natahovat, pouze tento pøenos
-        inicializuje, je-li tøeba.  Metoda vrací poèet øádkù, které budou
-        následnì k dispozici; pokud tato hodnota není známa, metoda vrátí
-        'None'.  Po zavolání této metody je mo¾no datové øádky získat
-        opakovaným voláním metody 'fetchone()'.  Pøeskakovat øádky lze metodu
-        'skip()'.
+        Repeated calls to this method may not result in the same data if the data source changes in
+        the meanwhile.
 
-        Opakované volání metody nemusí inicializovat zpøístupnìní shodných dat
-        jako v pøedchozím volání, pokud se data u datového zdroje mìní.
+        Arguments:
 
-        Argumenty:
-
-          condition -- podmínka omezující výbìr øádkù; instance tøídy
-            'Operator' nebo 'None'
-          reuse -- právì kdy¾ je pravda, instance smí pro select pou¾ít data
-            z pøedchozího dotazu, shoduje-li se jeho podmínka
-          sort -- sekvence specifikátorù tøídìní, ka¾dý specifikátor má podobu
-            ID nebo (ID, DIRECTION), kde ID je id tøídìného sloupce a DIRECTION
-            je jedna z konstant modulu 'ASCENDENT' a 'DESCENDANT', implicitní
-            hodnota je 'ASCENDENT'
+          condition -- condition limiting the set of resulting rows as an 'Operator' instance or
+            'None'
+          reuse -- boolean flag indicating, that the data of the previous select may be reused if
+            the condition matches
+          sort -- sequence of sorting specifiers.  Each specifier is a column identifier or a pair
+            (ID, DIRECTION).  DIRECTION os one of module constants 'ASCENDENT' or 'DESCENDANT'.
+            The default value is 'ASCENDENT'.
           columns -- sequence of IDs of columns to select; if not given, all
             columns are selected
           transaction -- transaction object encapsulating the database
@@ -326,8 +323,8 @@ class Data(object):
         s prioritou dle jejich poøadí.  Tøídìní je takté¾ nepovinná operace a
         podtøídy nejsou povinny je implementovat; pokud je neimplementují, musí
         to být uvedeno v jejich dokumentaci.
-
-        V této tøídì metoda v¾dy pouze vrací 0.
+        
+        The method always returns 0 in this class.
         
         """
         self._select_last_row_number = -1
@@ -948,12 +945,10 @@ class MemData(Data):
             else:
                 raise ProgramError("Operator not supported:", op_name)
 
-    def select(self, condition=None, reuse=False, sort=None, columns=None,
-               transaction=None):
+    def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None):
         """Inicializace vytahování záznamù.
 
-        Bli¾¹í popis viz nadtøída.  Argumenty 'condition', 'sort' a
-        'transaction' jsou ignorovány.
+        Bli¾¹í popis viz nadtøída.  Argumenty 'condition', 'sort' a 'transaction' jsou ignorovány.
         
         """
         if self._condition is not None:
