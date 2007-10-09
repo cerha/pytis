@@ -2122,8 +2122,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
         
-    def select(self, condition=None, sort=(), reuse=False, columns=None,
-               transaction=None):
+    def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if (reuse and not self._pg_changed and self._pg_number_of_rows and
@@ -2149,9 +2148,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_limited_make_row_template(columns)
         else:
             self._pg_make_row_template_limited = None
+        
         try:
-            number_of_rows = self._pg_select (condition, sort, columns,
-                                              transaction=transaction)            
+            number_of_rows = self._pg_select(condition, sort, columns, transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
