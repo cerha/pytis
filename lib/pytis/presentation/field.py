@@ -72,6 +72,7 @@ class PresentedRow(object):
             self.prefer_display = f.prefer_display()
             self.codebook = f.codebook(data)
             self.completer = f.completer()
+            self.enumerator_kwargs = f.enumerator_kwargs()
             self.codebook_runtime_filter = f.codebook_runtime_filter()
             self.data_column = data.find_column(f.id())
             self.virtual = self.data_column is None
@@ -636,8 +637,11 @@ class PresentedRow(object):
                     if isinstance(completer, (list, tuple)):
                         completer = pytis.data.FixedEnumerator(completer)
                     else:
+                        import config
                         data_spec = resolver().get(completer, 'data_spec')
-                        completer = pytis.data.DataEnumerator(data_spec)
+                        kwargs = dict(data_factory_kwargs={'connection_data': config.dbconnection},
+                                      **column.enumerator_kwargs)
+                        completer = pytis.data.DataEnumerator(data_spec, **kwargs)
             elif column.type.enumerator() and isinstance(column.type, pytis.data.String):
                 cb_spec = self._cb_spec(column)
                 if cb_spec and not cb_spec.enable_autocompletion():

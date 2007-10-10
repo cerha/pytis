@@ -371,9 +371,8 @@ class DBColumnBinding(DBBinding):
     sdílena.
     
     """
-    def __init__(self, id, table, column, related_to=None, enumerator=None,
-                 type_=None, **kwargs):
-        """Definuj napojení.
+    def __init__(self, id, table, column, related_to=None, type_=None, **kwargs):
+        """Define a column binding.
 
         Argumenty:
         
@@ -383,10 +382,6 @@ class DBColumnBinding(DBBinding):
             jako string nebo sekvence (viz ní¾e)
           related_to -- instance 'DBColumnBinding' specifikující, se kterým sloupcem jiné
             databázové tabulky je tento sloupec v relaci; pokud s ¾ádným, je hodnotou 'None'
-          enumerator -- 'None' nebo instance tøídy 'Enumerator' slou¾ící pro validaci hodnot
-            výètového typu.  Mù¾e být také instancí 'DataFactory', pro ni¾ je potom automaticky
-            vytvoøen pøíslu¹ný `DataEnumerator'.  Jeho konstruktoru budou pøedány také pøípadné
-            argumenty 'value_column' a 'validity_column'.
           type_ -- explicitnì specifikovaný typ sloupce jako instance tøídy 'Type' nebo 'None'.
             Je-li 'None', bude typ sloupce urèen automaticky dle informací získaných pøímo
             z databáze.  V opaèném pøípadì bude typem hodnota tohoto argumentu, která musí
@@ -407,17 +402,11 @@ class DBColumnBinding(DBBinding):
         DBBinding.__init__(self, id)
         assert isinstance(table, str), table
         assert isinstance(column, str), column
-        if isinstance(enumerator, Enumerator):
-            kwargs['enumerator'] = enumerator
-            enumerator = None
-        else:
-            assert isinstance(enumerator, DataFactory) or enumerator is None, enumerator
         assert isinstance(type_, Type) or type_ is None, type_
         assert kwargs == {} or type_ is None, (type_, kwargs)
         self._table = table
         self._column = column
         self._related_to = related_to
-        self._enumerator = enumerator
         self._type = type_
         self._kwargs = kwargs
         self._is_hidden = not id
@@ -434,10 +423,6 @@ class DBColumnBinding(DBBinding):
         """Vra» instanci DBColumnBinding napojeného sloupce nebo 'None'."""
         return self._related_to
 
-    def enumerator(self):
-        """Vra» èíselníkový datový objekt z konstruktoru nebo 'None'."""
-        return self._enumerator
-
     def type(self):
         """Vra» instanci typu sloupce z konstruktoru nebo 'None'."""
         return self._type
@@ -451,19 +436,15 @@ class DBColumnBinding(DBBinding):
         return self._is_hidden
 
     def __str__(self):
-        return ('<DBCB: table=%s, column=%s, related_to=%s, enumerator=%s, '+\
-                'type=%s, is_hidden=%s>') % \
-                (self._table, self._column, self._related_to, self._enumerator,
-                 self._type, self._is_hidden)
+        return ('<DBCB: table=%s, column=%s, related_to=%s, type=%s, is_hidden=%s>') % \
+               (self._table, self._column, self._related_to, self._type, self._is_hidden)
 
     def __cmp__(self, other):
-        return compare_attr(self, other, ('_table', '_column', '_related_to',
-                                          '_enumerator', '_type', '_is_hidden'
-                                          ))
+        return compare_attr(self, other,
+                            ('_table', '_column', '_related_to', '_type', '_is_hidden'))
     
     def __hash__(self):
-        return hash_attr(self, ('_table', '_column', '_related_to',
-                                '_enumerator', '_type', '_is_hidden'))
+        return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
 
 

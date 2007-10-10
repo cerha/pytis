@@ -882,21 +882,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            enumerator, kwargs = b.enumerator(), copy.copy(b.kwargs())
-            if enumerator:
-                df_kwargs = {'connection_data': self._pg_connection_data()}
-                e_kwargs = {'data_factory_kwargs': df_kwargs}
-                for a in ('value_column', 'validity_column',
-                          'validity_condition'):
-                    if kwargs.has_key(a):
-                        e_kwargs[a] = kwargs[a]
-                        del kwargs[a]
-                kwargs['enumerator'] = DataEnumerator(enumerator, **e_kwargs)
-                #TODO: Toto je hack kvùli zpìtné kompatibilitì...
-                if not kwargs.has_key('not_null'):
-                    kwargs['not_null'] = True
-            t = self._pdbb_get_table_type(b.table(), b.column(), b.type(),
-                                          type_kwargs=kwargs)
+            t = self._pdbb_get_table_type(b.table(), b.column(), b.type(), type_kwargs=b.kwargs())
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:

@@ -1505,6 +1505,7 @@ class CodebookSpec(object):
 
     def enable_autocompletion(self):
         return self._enable_autocompletion
+    
 
 class FormType(object):
     """Specifikace abstraktního typu formuláøe podle úèelu jeho otevøení.
@@ -1900,14 +1901,17 @@ class FieldSpec(object):
                or callable(style), ('Invalid field style', id, style)
         assert filename is None or isinstance(filename, str)
         links = xtuple(link)
+        enumerator_kwargs = {}
+        for k in ('value_column', 'validity_column', 'validity_condition'):
+            if kwargs.has_key(k):
+                enumerator_kwargs[k] = kwargs.pop(k)
         if __debug__:
             for lnk in links:
                 assert isinstance(lnk, Link)
-            for arg in kwargs.keys():
-                assert arg in ('not_null', 'value_column', 'validity_column', 'validity_condition',
-                               'constraints', 'enumerator', 'validation_messages', 'precision',
-                               'minlen', 'maxlen', 'format', 'mindate', 'maxdate', 'unique'), \
-                    "Invalid FieldSpec argument for field '%s': %r" % (id,arg)
+            for k in kwargs.keys():
+                assert k in ('not_null', 'unique', 'constraints', 'enumerator', 'minlen', 'maxlen',
+                             'precision', 'format', 'mindate', 'maxdate', 'validation_messages'), \
+                             "Invalid FieldSpec argument for field '%s': %r" % (id, k)
         if label is None:
             label = id
         self._label = label
@@ -1963,6 +1967,7 @@ class FieldSpec(object):
         self._links = links
         self._filename = filename
         self._type_kwargs = kwargs
+        self._enumerator_kwargs = enumerator_kwargs
         
     def __str__(self):
         return "<FieldSpec for '%s'>" % self.id()
@@ -2052,8 +2057,7 @@ class FieldSpec(object):
         if data is not None:
             enumerator = self.type(data).enumerator()
             if isinstance(enumerator, pytis.data.DataEnumerator) and \
-                   isinstance(enumerator.data_factory(),
-                              _DataFactoryWithOrigin):
+                   isinstance(enumerator.data_factory(), _DataFactoryWithOrigin):
                 return enumerator.data_factory().origin() or self._codebook
         return self._codebook
 
@@ -2104,6 +2108,9 @@ class FieldSpec(object):
 
     def type_kwargs(self):
         return self._type_kwargs
+
+    def enumerator_kwargs(self):
+        return self._enumerator_kwargs
 
 
 class Fields(object):
@@ -2246,7 +2253,9 @@ class DataSpec(_DataFactoryWithOrigin):
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
         bindings = []
+        B = pytis.data.DBColumnBinding
         for c in columns:
+            kwargs = c.kwargs()
             e = c.enumerator()
             if e:
                 enumerator = resolver().get(e, 'data_spec')
@@ -2254,8 +2263,15 @@ class DataSpec(_DataFactoryWithOrigin):
                     enumerator.set_origin(e)
             else:
                 enumerator = None
-            bindings.append(pytis.data.DBColumnBinding(c.id(), table, c.column(), type_=c.type(),
-                                                       enumerator=enumerator, **c.kwargs()))
+            if isinstance(enumerator, pytis.data.DataFactory):
+                ekw = dict(data_factory_kwargs={'connection_data': config.dbconnection},
+                           **c.enumerator_kwargs())
+                enumerator = pytis.data.DataEnumerator(enum, **ekw)
+            if enumerator is not None:
+                if not kwargs.has_key('not_null'):
+                    kwargs['not_null'] = True
+                kwargs = dict(kwargs, enumerator=enumerator)
+            bindings.append(B(c.id(), table, c.column(), type_=c.type(), **kwargs))
         key = find(key, bindings, key=lambda b: b.column())
         super(DataSpec, self).__init__(data_class_, bindings, key, access_rights=access_rights,
                                        condition=condition)
@@ -2313,6 +2329,10 @@ class Column(object):
         self._column = column
         self._enumerator = enumerator
         self._type = type
+        self._enumerator_kwargs = {}
+        for k in ('value_column', 'validity_column', 'validity_condition'):
+            if kwargs.has_key(k):
+                self._enumerator_kwargs[k] = kwargs.pop(k)
         self._kwargs = kwargs
     
     def id(self):
@@ -2326,6 +2346,10 @@ class Column(object):
     def enumerator(self):
         """Vra» název specifikace enumerátoru jako øetìzec nebo None."""
         return self._enumerator
+
+    def enumerator_kwargs(self):
+        """Vra» název specifikace enumerátoru jako øetìzec nebo None."""
+        return self._enumerator_kwargs
 
     def type(self):
         """Vra» datový typ sloupce jako instanci 'pytis.data.Type' nebo None."""
@@ -2451,15 +2475,28 @@ class Specification(object):
             #    self._view_spec_kwargs['help'] = parts[1]
 
     def _create_data_spec(self):
-        def e(name):
-            return name and self._resolver.get(name, 'data_spec')
+        def type_kwargs(f):
+            kwargs = copy.copy(f.type_kwargs())
+            assert f.type() is None or not kwargs, \
+                   ("Can't define type and its arguemtns at the same time.", f.id(), kwargs)
+            enumerator = kwargs.get('enumerator')
+            if enumerator is None and f.codebook():
+                enumerator = f.codebook()
+            if isinstance(enumerator, str):
+                enumerator = self._resolver.get(enumerator, 'data_spec')
+            if isinstance(enumerator, pytis.data.DataFactory):
+                ekw = dict(data_factory_kwargs={'connection_data': config.dbconnection},
+                           **f.enumerator_kwargs())
+                enumerator = pytis.data.DataEnumerator(enumerator, **ekw)
+            if enumerator is not None:
+                assert isinstance(enumerator, pytis.data.Enumerator)
+                kwargs['enumerator'] = enumerator
+                if not kwargs.has_key('not_null'):
+                    kwargs['not_null'] = True
+            return kwargs
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            def type_kwargs(f):
-                enumerator = e(f.codebook())
-                kwargs = f.type_kwargs()
-                return enumerator and dict(enumerator=enumerator, **kwargs) or kwargs
             bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **type_kwargs(f))
                         for f in self.fields if not f.virtual()]
             if self.key:
@@ -2480,35 +2517,19 @@ class Specification(object):
             for f in self.fields:
                 if not f.virtual():
                     type = f.type() or pytis.data.String()
-                    kwargs = copy.copy(f.type_kwargs())
-                    enum = e(f.codebook())
-                    assert f.type() is None or not kwargs and not enum, \
-                           ("Nelze urèit zároveò typ a jeho argumenty.",
-                            f.id(), kwargs, enum)
-                    if enum:
-                        df_kwargs = {'connection_data': config.dbconnection}
-                        e_kwargs = {'data_factory_kwargs': df_kwargs}
-                        for a in ('value_column', 'validity_column',
-                                  'validity_condition'):
-                            if kwargs.has_key(a):
-                                e_kwargs[a] = kwargs[a]
-                                del kwargs[a]
-                        enumerator = pytis.data.DataEnumerator(enum, **e_kwargs)
-                        kwargs['enumerator'] = enumerator
+                    kwargs = type_kwargs(f)
                     if kwargs:
                         type = type.__class__(**kwargs)
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
         access_rights = self.access_rights
-        assert access_rights is None or not issubclass(self.data_cls,
-                                                       pytis.data.MemData), \
+        assert access_rights is None or not issubclass(self.data_cls, pytis.data.MemData), \
                "Cannot set `access_rights' for a MemData data object."
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        return _DataFactoryWithOrigin(self.data_cls, *args, 
-                                      **dict(access_rights=access_rights,
-                                             condition=self.condition))
+        return _DataFactoryWithOrigin(self.data_cls, *args, **dict(access_rights=access_rights,
+                                                                   condition=self.condition))
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:
