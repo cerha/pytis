@@ -217,10 +217,7 @@ def enum(name):
     
     """
     data_spec = pytis.util.resolver().get(name, 'data_spec')
-    def conn_spec():
-        return config.dbconnection
-    kwargs = dict(dbconnection_spec=conn_spec)
-    return pytis.data.DataEnumerator(data_spec, data_factory_kwargs=kwargs)
+    return pytis.data.DataEnumerator(data_spec)
 
 
 # Pozor, stejná metoda metoda je definována i v pytis.data.access
