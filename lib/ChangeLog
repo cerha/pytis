@@ -1,3 +1,14 @@
+2007-10-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow.completions): New
+	method.  Respect `CodebookSpec.enable_autocompletion'.
+
+	* pytis/presentation/spec.py (FieldSpec):
+	`codebook_runtime_filter' -> `runtime_filter'.
+	(CodebookSpec): New argument and method `enable_autocompletion'.
+
+	* pytis/form/inputfield.py: Use 'PresentedRow.completions()'.
+
 2007-10-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/types_.py (DataEnumerator.values): New argument `max'.

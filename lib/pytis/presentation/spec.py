@@ -1425,7 +1425,7 @@ class CodebookSpec(object):
     
     """
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
-                 display_size=20, begin_search=None):
+                 display_size=20, enable_autocompletion=True, begin_search=None):
         """Initialize the instance.
 
         Arguments:
@@ -1472,13 +1472,15 @@ class CodebookSpec(object):
         assert isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert begin_search is None or isinstance(begin_search, str)
+        assert isinstance(enable_autocompletion, bool)
         self._columns = columns
         self._sorting = sorting
         self._display = display
         self._prefer_display = prefer_display
         self._display_size = display_size
         self._begin_search = begin_search
-
+        self._enable_autocompletion = enable_autocompletion
+        
     def columns(self):
         return self._columns
         
@@ -1501,6 +1503,8 @@ class CodebookSpec(object):
         """Return the identifier of the column where incremental search should be started."""
         return self._begin_search
 
+    def enable_autocompletion(self):
+        return self._enable_autocompletion
 
 class FormType(object):
     """Specifikace abstraktního typu formuláøe podle úèelu jeho otevøení.
@@ -1730,7 +1734,7 @@ class FieldSpec(object):
             Relevantní jen pro èíselníková políèka, kde 'allow_codebook_insert'
             je pravdivé.
             
-          codebook_runtime_filter -- dopoèítávaè run-time filtrovací podmínky
+          runtime_filter -- dopoèítávaè run-time filtrovací podmínky
             èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit mno¾inu
             hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací funkce
             dostane jako argument aktuální data formuláøe jako instanci
@@ -1846,9 +1850,9 @@ class FieldSpec(object):
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
               display_size=None, allow_codebook_insert=False, codebook_insert_spec=None,
-              codebook_runtime_filter=None, selection_type=None, completer=None,
-              orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
-              style=None, link=(), filename=None, **kwargs):
+              codebook_runtime_filter=None, runtime_filter=None, selection_type=None,
+              completer=None, orientation=Orientation.VERTICAL, post_process=None, filter=None,
+              filter_list=None, style=None, link=(), filename=None, **kwargs):
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
         self._id = id
@@ -1874,11 +1878,12 @@ class FieldSpec(object):
         assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert isinstance(allow_codebook_insert, bool)
-        assert codebook_insert_spec is None \
-               or isinstance(codebook_insert_spec, str)
+        assert codebook_insert_spec is None or isinstance(codebook_insert_spec, str)
         assert width is None or isinstance(width, int)
-        assert codebook_runtime_filter is None \
-               or isinstance(codebook_runtime_filter, Computer)
+        if codebook_runtime_filter is not None:
+            assert runtime_filter is None
+            runtime_filter = codebook_runtime_filter
+        assert runtime_filter is None or isinstance(runtime_filter, Computer)
         assert selection_type is None \
                or selection_type in public_attributes(SelectionType)
         assert orientation in public_attributes(Orientation)
@@ -1940,7 +1945,7 @@ class FieldSpec(object):
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
-        self._codebook_runtime_filter = codebook_runtime_filter
+        self._runtime_filter = runtime_filter
         self._selection_type = selection_type
         self._completer = completer
         self._orientation = orientation
@@ -2068,7 +2073,7 @@ class FieldSpec(object):
         return self._codebook_insert_spec
     
     def codebook_runtime_filter(self):
-        return self._codebook_runtime_filter
+        return self._runtime_filter
 
     def selection_type(self):
         return self._selection_type

@@ -71,6 +71,7 @@ class PresentedRow(object):
             self.display = f.display()
             self.prefer_display = f.prefer_display()
             self.codebook = f.codebook(data)
+            self.completer = f.completer()
             self.codebook_runtime_filter = f.codebook_runtime_filter()
             self.data_column = data.find_column(f.id())
             self.virtual = self.data_column is None
@@ -129,6 +130,7 @@ class PresentedRow(object):
         self._columns = columns = tuple([self._Column(f, data) for f in fields])
         self._coldict = dict([(c.id, c) for c in columns])
         self._cb_spec_cache = {}
+        self._completer_cache = {}
         key = data.key()[0].id()
         if not self._coldict.has_key(key):
             # TODO: This is a temporary hack for old applications which have data columns not
@@ -623,7 +625,28 @@ class PresentedRow(object):
                 cb_spec = CodebookSpec()
             self._cb_spec_cache[column.id] = cb_spec
         return cb_spec
-        
+
+    def _completer(self, column):
+        try:
+            completer = self._completer_cache[column.id]
+        except KeyError:
+            completer = column.completer
+            if completer:
+                if not isinstance(completer, pytis.data.Enumerator):
+                    if isinstance(completer, (list, tuple)):
+                        completer = pytis.data.FixedEnumerator(completer)
+                    else:
+                        data_spec = resolver().get(completer, 'data_spec')
+                        completer = pytis.data.DataEnumerator(data_spec)
+            elif column.type.enumerator() and isinstance(column.type, pytis.data.String):
+                cb_spec = self._cb_spec(column)
+                if cb_spec and not cb_spec.enable_autocompletion():
+                    completer = None
+                else:
+                    completer = column.type.enumerator()
+            self._completer_cache[column.id] = completer
+        return completer
+    
     def _display_func(self, column):
         def getval(enum, value, col, func=None):
             if value is None:
@@ -727,3 +750,41 @@ class PresentedRow(object):
         else:
             condition = self._runtime_filter[key]
         return condition
+
+    def completions(self, key, prefix):
+        """Return the sequence of available completions for given prefix.
+
+        Arguments:
+          key -- field identifier as a string
+          prefix -- prefix value as a (unicode) string
+
+        The returned sequence will contain all available values returned by the underlying
+        completer, which begin with given prefix.  The completer is determined either by the
+        'completer' argument in field specification or (if not defined) the enumerator of the
+        field's data type.
+
+        If the field is not associated with any completer, the method always returns None.
+        
+        """
+        column = self._coldict[key]
+        completer = self._completer(column)
+        if completer is not None:
+            if not prefix:
+                return ()
+            prefix = prefix.lower()
+            if isinstance(completer, pytis.data.DataEnumerator):
+                wmvalue = pytis.data.WMValue(pytis.data.String(), prefix+'*')
+                c1 = pytis.data.WM(completer.value_column(), wmvalue)
+                c2 = self.runtime_filter(key)
+                condition = c2 and pytis.data.AND(c1, c2) or c1
+                choices = completer.values(condition=condition, max=40) or ()
+            else:
+                import locale
+                choices = [x for x in completer.values() if x.lower().startswith(prefix)]
+                choices.sort(key=lambda x: locale.strxfrm(x).lower())
+            if len(choices) == 1 and choices[0].lower() == prefix:
+                return ()
+            return choices
+        else:
+            return None
+

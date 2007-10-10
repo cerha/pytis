@@ -731,26 +731,15 @@ class TextField(InputField):
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
-        completer = self._spec.completer()
-        if completer:
-            if not isinstance(completer, pytis.data.Enumerator):
-                if isinstance(completer, (list, tuple)):
-                    completer = pytis.data.FixedEnumerator(completer)
-                else:
-                    data_spec = resolver().get(completer, 'data_spec')
-                    completer = pytis.data.DataEnumerator(data_spec)
-        elif self._type.enumerator() and isinstance(self._type, pytis.data.String):
-            completer = self._type.enumerator()
-        self._completer = completer
-        if completer:
-            self._completer_widget = _Completer(control)
+        if self._row.completions(self.id(), '') is not None:
+            self._completer = _Completer(control)
         else:
-            self._completer_widget = None
+            self._completer = None
         self._update_completions = None
         return control
 
     def on_key_down(self, event):
-        if self._completer_widget and self._completer_widget.on_key_down(event):
+        if self._completer and self._completer.on_key_down(event):
             return
         super(TextField, self).on_key_down(event)
 
@@ -770,31 +759,11 @@ class TextField(InputField):
         else:
             event.GetEventObject().Navigate()
 
-    def _completions(self, text):
-        if not text:
-            return ()
-        else:
-            text = text.lower()
-            completer = self._completer
-            if isinstance(completer, pytis.data.DataEnumerator):
-                wmvalue = pytis.data.WMValue(pytis.data.String(), text+'*')
-                c1 = pytis.data.WM(completer.value_column(), wmvalue)
-                c2 = self._row.runtime_filter(self.id())
-                condition = c2 and pytis.data.AND(c1, c2) or c1
-                choices = completer.values(condition=condition, max=40) or ()
-            else:
-                import locale
-                choices = [x for x in completer.values() if x.lower().startswith(text)]
-                choices.sort(key=lambda x: locale.strxfrm(x).lower())
-            if len(choices) == 1 and choices[0].lower() == text:
-                return ()
-            return choices
-
     def _on_idle(self, event):
         text = self._update_completions
         if text is not None:
             self._update_completions = None
-            self._completer_widget.update(self._completions(text))
+            self._completer.update(self._row.completions(self.id(), text))
         return super(TextField, self)._on_idle(event)
         
     def _on_change(self, event=None):
@@ -803,7 +772,7 @@ class TextField(InputField):
             value = post_process(self._get_value())
             if value != self._get_value():
                 self._set_value(value)
-        if event and self._completer_widget:
+        if event and self._completer:
             self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
 
