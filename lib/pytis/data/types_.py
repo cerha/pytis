@@ -1526,8 +1526,7 @@ class DataEnumerator(Enumerator):
         Arguments:
         
           data_factory -- a 'DataFactory' instance for data object creation.
-          data_factory_kwargs -- a dictionary of keyword arguments for the 'DataFactory.create()'
-            method.
+
           value_column -- identifier of the column which provides the enumeration values.  If
             None, the key column is used.
 
@@ -1560,6 +1559,7 @@ class DataEnumerator(Enumerator):
             validity_condition = EQ(validity_column, Value(Boolean(), True))            
         self._validity_condition = validity_condition
         self._change_callbacks = []
+        self._data_factory_kwargs = None
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -1570,6 +1570,9 @@ class DataEnumerator(Enumerator):
         
     def _complete(self):
         # Finish the instance by data object creation.
+        if self._data_factory_kwargs is None:
+            import config
+            self._data_factory_kwargs = dict(connection_data=config.dbconnection)
         self._data = data = self._data_factory.create(**self._data_factory_kwargs)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()

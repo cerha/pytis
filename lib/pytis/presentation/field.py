@@ -639,9 +639,6 @@ class PresentedRow(object):
                     else:
                         spec = resolver().get(completer, 'data_spec')
                         completer = pytis.data.DataEnumerator(spec, **column.enumerator_kwargs)
-                        import config
-                        # TODO: This will not work in web environment!
-                        completer.set_data_factory_kwargs(connection_data=config.dbconnection)
             elif column.type.enumerator() and isinstance(column.type, pytis.data.String):
                 cb_spec = self._cb_spec(column)
                 if cb_spec and not cb_spec.enable_autocompletion():

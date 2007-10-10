@@ -2511,11 +2511,6 @@ class Specification(object):
                 if not f.virtual():
                     type = f.type() or pytis.data.String()
                     kwargs = type_kwargs(f)
-                    enumerator = kwargs.get('enumerator')
-                    if enumerator and isinstance(enumerator, pytis.data.DataEnumerator):
-                        # TODO: This will not work in web envirnoment!
-                        import config
-                        enumerator.set_data_factory_kwargs(connection_data=config.dbconnection)
                     if kwargs:
                         type = type.__class__(**kwargs)
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
