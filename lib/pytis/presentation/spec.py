@@ -2266,7 +2266,7 @@ class DataSpec(_DataFactoryWithOrigin):
             if isinstance(enumerator, pytis.data.DataFactory):
                 ekw = dict(data_factory_kwargs={'connection_data': config.dbconnection},
                            **c.enumerator_kwargs())
-                enumerator = pytis.data.DataEnumerator(enum, **ekw)
+                enumerator = pytis.data.DataEnumerator(enumerator, **ekw)
             if enumerator is not None:
                 if not kwargs.has_key('not_null'):
                     kwargs['not_null'] = True
