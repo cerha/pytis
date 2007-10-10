@@ -1,3 +1,8 @@
+2007-10-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/dbutils.py: Don't pass connection data to
+	`DataEnumerator' constructor.
+
 2007-10-04  Pavel Hanak  <hanak@asellus.cz>
 
 	* db/db_pytis_config.py: DB objects for saved user configuration.
