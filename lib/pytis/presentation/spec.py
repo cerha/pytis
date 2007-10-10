@@ -1713,7 +1713,7 @@ class FieldSpec(object):
             'selection_type' is 'SelectionType.CODEBOOK'.  Also the default 'enumerator' for the
             field's data type will be automatically set to a 'DataEnumerator' bound to given
             specification.
-            
+
           display -- overrides this option for particular field.  If not defined, the value
             defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
             information.  Only relevant if the option 'codebook' (above) was deifned.
@@ -1735,28 +1735,28 @@ class FieldSpec(object):
             Relevantní jen pro èíselníková políèka, kde 'allow_codebook_insert'
             je pravdivé.
             
-          runtime_filter -- dopoèítávaè run-time filtrovací podmínky
-            èíselníku; instance `Computer'.  Tím je umo¾nìno mìnit mno¾inu
-            hodnot navázaného èíselníku za bìhu.  Navázaná dopoèítávací funkce
-            dostane jako argument aktuální data formuláøe jako instanci
-            'PresentedRow' a vrací filtrovací podmínku typu
-            'pytis.data.Operator'.  Èíselník bude po zmìnì závislých políèek
-            aktualizován tak, aby obsahoval pouze øádku vyhovující dané
-            podmínce.
+          runtime_filter -- provider of enumeration runtime filter as a 'Computer' instance.  The
+            computer function receives a 'PresentedRow' instance and generates a filter condition
+            based on the current row data and returns it as a 'pytis.data.Operator' instance.  This
+            condition is the used to filter out enumerator data for codebook fields as well as
+            available completions when autocompletion is enabled.  This is mostly useful for
+            modification of available codebook values based on the current values of other fields
+            within the form.
 
           completer -- enumerator used for automatic completion.  The available completions are
             taken from an enumerator object.  If the field has an enumerator (defined by
             'enumerator' or 'codebook'), it will be used for completions automatically (unless
-            autocompletion is disabled by 'CodebookSpec').  This argument, however, makes it
-            possible to specify a completer even for fields, which don't have an enumerator (the
-            validation constants imposed by enumerator are not desirable).  The value of this
-            argument may be an enumerator instance directly (e.g. 'pytis.data.FixedEnumerator') or
-            a name of the specification used to create a 'pytis.data.DataEnumerator'.  Also a
-            sequens (list or tuple) is accepted and converted to a 'FixedEnumerator' instance.
+            autocompletion is disabled by the relevant 'CodebookSpec').  This argument, however,
+            makes it possible to specify a completer even for fields, which don't have an
+            enumerator (the validation constants imposed by enumerator are not desirable).  The
+            value of this argument may be an enumerator instance directly
+            (e.g. 'pytis.data.FixedEnumerator') or a name of the specification used to create a
+            'pytis.data.DataEnumerator'.  Also a sequens (list or tuple) is accepted and converted
+            to a 'FixedEnumerator' instance.
             
-          selection_type -- zpùsob výbìru z mno¾iny hodnot, jedna z konstant
-            tøídy 'SelectionType'.  Relevantní jen pro vstupní pole výètových
-            typù (datový typ má urèen enumerátor).
+          selection_type -- one of 'SelectionType' constants defining the type of user interface
+            element used to present the related enumeration.  Only relevant for fields with an
+            enumerator (specified either by 'codebook' or 'enumerator').
             
           orientation -- orientace políèka, jedna z konstant tøídy
             'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
@@ -2076,7 +2076,7 @@ class FieldSpec(object):
     def codebook_insert_spec(self):
         return self._codebook_insert_spec
     
-    def codebook_runtime_filter(self):
+    def runtime_filter(self):
         return self._runtime_filter
 
     def selection_type(self):
@@ -2264,9 +2264,7 @@ class DataSpec(_DataFactoryWithOrigin):
             else:
                 enumerator = None
             if isinstance(enumerator, pytis.data.DataFactory):
-                ekw = dict(data_factory_kwargs={'connection_data': config.dbconnection},
-                           **c.enumerator_kwargs())
-                enumerator = pytis.data.DataEnumerator(enumerator, **ekw)
+                enumerator = pytis.data.DataEnumerator(enumerator, **c.enumerator_kwargs())
             if enumerator is not None:
                 if not kwargs.has_key('not_null'):
                     kwargs['not_null'] = True
@@ -2485,9 +2483,7 @@ class Specification(object):
             if isinstance(enumerator, str):
                 enumerator = self._resolver.get(enumerator, 'data_spec')
             if isinstance(enumerator, pytis.data.DataFactory):
-                ekw = dict(data_factory_kwargs={'connection_data': config.dbconnection},
-                           **f.enumerator_kwargs())
-                enumerator = pytis.data.DataEnumerator(enumerator, **ekw)
+                enumerator = pytis.data.DataEnumerator(enumerator, **f.enumerator_kwargs())
             if enumerator is not None:
                 assert isinstance(enumerator, pytis.data.Enumerator)
                 kwargs['enumerator'] = enumerator
@@ -2510,14 +2506,16 @@ class Specification(object):
                 key = bindings[0]
             args = (bindings, key,)
         else:
-            # TODO: Pøevod datových typù má mnohá omezení, ale zaènìme
-            # nìèím jednodu¹¹ím a dodìlejme co bude potøeba a¾ se uká¾e,
-            # ¾e je to skuteènì potøeba...
             columns = []
             for f in self.fields:
                 if not f.virtual():
                     type = f.type() or pytis.data.String()
                     kwargs = type_kwargs(f)
+                    enumerator = kwargs.get('enumerator')
+                    if enumerator and isinstance(enumerator, pytis.data.DataEnumerator):
+                        # TODO: This will not work in web envirnoment!
+                        import config
+                        enumerator.set_data_factory_kwargs(connection_data=config.dbconnection)
                     if kwargs:
                         type = type.__class__(**kwargs)
                     columns.append(pytis.data.ColumnSpec(f.id(), type))

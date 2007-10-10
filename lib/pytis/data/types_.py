@@ -1465,10 +1465,9 @@ class Enumerator(object):
     definovaných povinných metod mohou konkrétní tøídy enumerátorù nabízet
     je¹tì dal¹í slu¾by.
 
-    Generally, enumerators must be thread-safe as their can be used in shared
-    'Type' instances.  If some of the enumerator methods is not thread-safe, it
-    must be clearly marked as such and it may not be used with enumerator
-    instances used in types.
+    Generally, enumerators must be thread-safe as thy can be used in shared 'Type' instances.  Any
+    enumerator method which is not thread-safe must be clearly marked as such and it may not be
+    used with enumerator instances used in types.
     
     """
     def check(self, value):
@@ -1520,8 +1519,8 @@ class DataEnumerator(Enumerator):
     passing proper constructor arguments.
 
     """
-    def __init__(self, data_factory, data_factory_kwargs={}, value_column=None,
-                 validity_column=None, validity_condition=None):
+    def __init__(self, data_factory, value_column=None, validity_column=None,
+                 validity_condition=None):
         """Initialize the instance.
         
         Arguments:
@@ -1546,8 +1545,6 @@ class DataEnumerator(Enumerator):
         """
         super(DataEnumerator, self).__init__()
         assert isinstance(data_factory, DataFactory), data_factory
-        assert isinstance(data_factory_kwargs,
-                          (types.DictType, types.TupleType))
         assert value_column is None or \
                isinstance(value_column, types.StringType)
         assert validity_column is None or \
@@ -1555,11 +1552,7 @@ class DataEnumerator(Enumerator):
         assert validity_condition is None or \
                isinstance(validity_condition, pytis.data.Operator) \
                and validity_column is None
-        # Store the arguments.
         self._data_factory = data_factory
-        if type(data_factory_kwargs) == type(()):
-            data_factory_kwargs = dict(data_factory_kwargs)
-        self._data_factory_kwargs = data_factory_kwargs
         self._data_lock = thread.allocate_lock()
         self._value_column_ = value_column
         self._validity_column = validity_column
@@ -1573,10 +1566,10 @@ class DataEnumerator(Enumerator):
             self._complete()
             return self.__dict__[name]
         else:
-            return super(DataEnumerator, self).__getattr__(name)
+            raise AttributeError(name)
         
     def _complete(self):
-        # Dokonèi instanci vytvoøením datového objektu.
+        # Finish the instance by data object creation.
         self._data = data = self._data_factory.create(**self._data_factory_kwargs)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()
@@ -1659,6 +1652,9 @@ class DataEnumerator(Enumerator):
     def data_factory(self):
         """Vra» specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""
         return self._data_factory
+    
+    def set_data_factory_kwargs(self, **kwargs):
+        self._data_factory_kwargs = kwargs
     
     def value_column(self):
         """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""

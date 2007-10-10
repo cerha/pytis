@@ -73,7 +73,7 @@ class PresentedRow(object):
             self.codebook = f.codebook(data)
             self.completer = f.completer()
             self.enumerator_kwargs = f.enumerator_kwargs()
-            self.codebook_runtime_filter = f.codebook_runtime_filter()
+            self.runtime_filter = f.runtime_filter()
             self.data_column = data.find_column(f.id())
             self.virtual = self.data_column is None
             
@@ -237,10 +237,10 @@ class PresentedRow(object):
                         self._editability_dependent[dep].append(key)
                     else:
                         self._editability_dependent[dep] = [key]
-            if c.codebook_runtime_filter is not None:
+            if c.runtime_filter is not None:
                 self._runtime_filter[key] = None
                 self._runtime_filter_dirty[key] = True
-                for dep in self._all_deps(c.codebook_runtime_filter):
+                for dep in self._all_deps(c.runtime_filter):
                     if self._runtime_filter_dependent.has_key(dep):
                         self._runtime_filter_dependent[dep].append(key)
                     else:
@@ -549,7 +549,7 @@ class PresentedRow(object):
         
         """
         column = self._coldict[key]
-        if column.codebook_runtime_filter is not None:
+        if column.runtime_filter is not None:
             kwargs = dict(kwargs, condition=self.runtime_filter(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error and column.type.unique() and not column.virtual and \
@@ -637,11 +637,11 @@ class PresentedRow(object):
                     if isinstance(completer, (list, tuple)):
                         completer = pytis.data.FixedEnumerator(completer)
                     else:
+                        spec = resolver().get(completer, 'data_spec')
+                        completer = pytis.data.DataEnumerator(spec, **column.enumerator_kwargs)
                         import config
-                        data_spec = resolver().get(completer, 'data_spec')
-                        kwargs = dict(data_factory_kwargs={'connection_data': config.dbconnection},
-                                      **column.enumerator_kwargs)
-                        completer = pytis.data.DataEnumerator(data_spec, **kwargs)
+                        # TODO: This will not work in web environment!
+                        completer.set_data_factory_kwargs(connection_data=config.dbconnection)
             elif column.type.enumerator() and isinstance(column.type, pytis.data.String):
                 cb_spec = self._cb_spec(column)
                 if cb_spec and not cb_spec.enable_autocompletion():
@@ -748,7 +748,7 @@ class PresentedRow(object):
             return None
         if dirty:
             column = self._coldict[key]
-            function = column.codebook_runtime_filter.function()
+            function = column.runtime_filter.function()
             self._runtime_filter_dirty[key] = False
             condition = self._runtime_filter[key] = function(self)
         else:

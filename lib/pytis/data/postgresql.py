@@ -852,6 +852,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_kwargs['not_null'] = True
             if not type_kwargs.has_key('unique') and type_class_ != Boolean:
                 type_kwargs['unique'] = unique
+            enumerator = type_kwargs.get('enumerator')
+            if enumerator and isinstance(enumerator, DataEnumerator):
+                enumerator.set_data_factory_kwargs(connection_data=self._pg_connection_data())
             if type_class_ == String:
                 if type_ != 'text':
                     try:
