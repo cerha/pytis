@@ -1935,12 +1935,12 @@ class FieldSpec(object):
         self._computer = computer
         self._height = height
         if isinstance(editable, Computer):
-            func = editable.function()
+            e_func = editable.function()
             import inspect
-            args, __, __, __ = inspect.getargspec(func)
+            args, __, __, __ = inspect.getargspec(e_func)
             if len(args) == 2 and args[0] != 'self' or len(args) == 3 and args[0] == 'self':
                 # For backwards compatibility
-                editable = Computer(lambda r: func(r, id), depends=editable.depends())
+                editable = Computer(lambda r: e_func(r, id), depends=editable.depends())
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
@@ -1957,12 +1957,12 @@ class FieldSpec(object):
         self._filter = filter
         self._filter_list = filter_list
         if callable(style):
-            func = style
+            s_func = style
             import inspect
-            args, __, __, __ = inspect.getargspec(func)
+            args, __, __, __ = inspect.getargspec(s_func)
             if len(args) == 2 and args[0] != 'self' or len(args) == 3 and args[0] == 'self':
                 # For backwards compatibility
-                style = lambda r: func(id, r)
+                style = lambda r: s_func(id, r)
         self._style = style
         self._links = links
         self._filename = filename
