@@ -155,6 +155,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
         self._help_controller = None
         self._help_files = self._find_help_files()
+        self._login_hook = self._spec('login_hook')
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
         assert is_sequence(custom_keymap), "Specifikace klávesových zkratek " +\
@@ -198,7 +199,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
             )))
         self._create_command_menu(menus)
         self._create_help_menu(menus)
-        self._menubar = mb = MenuBar(self._frame, menus, self.keymap)
+        # Determining availability of menu items may invoke database operations...
+        success, mb = db_operation(MenuBar, self._frame, menus, self.keymap)
+        if not success:
+            return False
+        self._menubar = mb
         self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         assert self._window_menu is not None
         # Try to find the recent forms menu.
@@ -987,6 +992,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
         return self._frame
 
+    def login_hook(self, success):
+        if self._login_hook:
+            self._login_hook(success)
+            if success:
+                self._login_hook = None
+
 
 # Funkce odpovídající pøíkazùm aplikace.
 
@@ -1083,6 +1094,77 @@ def help(topic=None):
 def exit():
     """Ukonèi u¾ivatelské rozhraní aplikace."""
     return Application.COMMAND_EXIT.invoke()
+
+def db_operation(operation, *args, **kwargs):
+    """Invoke database operation with handling possible exceptions.
+
+    The 'operation' is called with given arguments.  If a 'pytis.data.dbdata.DBException' exception
+    is raised during the operation, the an error dialog is displayed with exception description and
+    a question, whether the user wishes to re-invoke the operation.  The operation is repeated as
+    long as user answers the question positively.
+
+    The exceptions of type 'DBLoginException' result in displaying a login dialog and the supplied
+    username and password is set before repeating the operation.
+
+    When the operation is performed successfully (regardles whether on the first try or later), its
+    result is returned.
+
+    Arguments:
+
+      operation -- function (callable object) performing a database operation and returning its
+        result
+      args, kwargs -- arguments and keyword arguments passed to the function
+
+    Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating success (true) or
+    failure (false) and RESULT is the value returned by 'operation' (if SUCCESS is false, RESULT is
+    not defined).
+
+    """
+    FAILURE = False, None
+    while True:
+        try:
+            result = operation(*args, **kwargs)
+            _application.login_hook(success=True)
+            return True, result
+        except pytis.data.DataAccessException, e:
+            run_dialog(Error, _("Pøístup odmítnut"))
+            return FAILURE
+        except pytis.data.DBLoginException, e:
+            import config
+            if config.dbconnection.password() is not None:
+                _application.login_hook(success=False)
+            login_and_password = run_dialog(Login, _("Zadejte heslo pro pøístup do databáze"),
+                                            login=config.dbuser)
+	    if not login_and_password:
+                return FAILURE
+	    login, password = login_and_password
+            if password is None:
+                return FAILURE
+            config.dbconnection = config.dbconnection.modified(user=login, password=password)
+        except pytis.data.DBException, e:
+            log(OPERATIONAL, "Database exception in db_operation", format_traceback())
+            message = e.message()
+            if e.exception():
+                message += '\n' + str(e.exception())
+            message += '\n' + _("Zkusit znovu?")
+            if not run_dialog(Question, message, title=_("Databázová chyba"),
+                              icon=Question.ICON_ERROR):
+                return FAILURE
+
+def delete_record_question(msg=None):
+    """Zeptej se u¾ivatele, zda má být opravdu smazán záznam.
+
+    Vra» pravdu, právì kdy¾ u¾ivatel odpoví kladnì.
+    
+    """
+    log(EVENT, 'Dialog mazání øádku')
+    if msg == None:
+        msg = _("Opravdu chcete záznam zcela vymazat?")        
+    if not run_dialog(Question, msg):
+        log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto')
+        return False
+    log(EVENT, 'Mazání øádku u¾ivatelem potvrzeno')
+    return True
 
 # Funkce, které jsou obrazem veøejných metod aktuální aplikace.
 

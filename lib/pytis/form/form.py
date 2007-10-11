@@ -178,8 +178,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         else:
             kwargs = {}
         t = time.time()
-        op = lambda : factory.create(**kwargs)
-        success, data_object = db_operation(op)
+        success, data_object = db_operation(factory.create, **kwargs)
         if not success:
             throw('form-init-error')
         log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
@@ -519,9 +518,7 @@ class PopupForm:
         finally:
             if self._governing_transaction is None and self._transaction is not None \
                    and self._result is None:
-                def rollback():
-                    self._transaction.rollback()
-                db_operation(rollback)
+                db_operation(self._transaction.rollback)
             self._governing_transaction = None
             self._transaction = None
         result = self._result
@@ -775,9 +772,7 @@ class LookupForm(InnerForm):
                            transaction=self._transaction, reuse=False)
     
     def _init_select(self):
-        def op():
-            return self._init_data_select(self._data)
-        success, self._lf_select_count = db_operation(op)
+        success, self._lf_select_count = db_operation(self._init_data_select, self._data)
         if not success:
             log(EVENT, 'Selhání databázové operace')
             throw('form-init-error')
@@ -1153,15 +1148,14 @@ class RecordForm(LookupForm):
             n = data.select(condition, columns=self._select_columns(),
                             transaction=self._transaction)
             return data.fetchone(transaction=self._transaction)
-        success, row = db_operation((dbop, (condition,)))
+        success, row = db_operation(dbop, condition)
         self._init_select()
         return row
         
     def _find_row_by_key(self, key):
         cols = self._select_columns()
-        def dbop():
-            return self._data.row(key, columns=cols, transaction=self._transaction)
-        success, row = db_operation(dbop)
+        success, row = db_operation(self._data.row, key, columns=cols,
+                                    transaction=self._transaction)
         if success and row:
             return row
         else:
@@ -1220,9 +1214,7 @@ class RecordForm(LookupForm):
         return {}
 
     def _lock_record(self, key):
-        def dbop():
-            return self._data.lock_row(key, transaction=self._transaction)
-        success, locked = db_operation(dbop)
+        success, locked = db_operation(self._data.lock_row, key, transaction=self._transaction)
         if success and locked != None:
             log(EVENT, 'Record is locked')
             run_dialog(Message, _("Záznam je zamèen"))
@@ -1334,7 +1326,7 @@ class RecordForm(LookupForm):
             if condition is None:
                 return False
             assert isinstance(condition, pytis.data.Operator)
-            op = lambda : self._data.delete_many(condition, transaction=self._transaction)
+            op, arg = self._data.delete_many, condition
             log(EVENT, 'Mazání záznamu:', condition)
         else:
             msg = _("Opravdu chcete záznam zcela vymazat?")        
@@ -1342,9 +1334,9 @@ class RecordForm(LookupForm):
                 log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
                 return False
             key = self._current_key()
-            op = lambda : self._data.delete(key, transaction=self._transaction)
+            op, arg = self._data.delete, key
             log(EVENT, 'Mazání záznamu:', key)
-        success, result = db_operation(op)
+        success, result = db_operation(op, arg, transaction=self._transaction)
         if success:
             self._signal_update()
             log(ACTION, 'Záznam smazán.')
@@ -1743,25 +1735,19 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         rdata = self._record_data(self._row)
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Inserting record...')
-            def op():
-                return self._data.insert(rdata, transaction=transaction)
+            op, args = self._data.insert, (rdata,)
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Updating record...')
-            def op():
-                return self._data.update(self._current_key(), rdata, transaction=transaction)
+            op, args = self._data.update, (self._current_key(), rdata)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
-        def set_point_op():
-            transaction.set_point('commitform')
-        def cut_op():
-            transaction.cut('commitform')
         if transaction is not None:
-            success, result = db_operation(set_point_op)
+            success, result = db_operation(transaction.set_point, 'commitform')
         else:
             success = True
         if success:
-            success, result = db_operation(op)
+            success, result = db_operation(op, *args, **dict(transaction=transaction))
         if success and result[1]:
             new_row = result[0]
             original_row = copy.copy(self._row)
@@ -1780,9 +1766,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._result = self._row
                 self.close()
             if self._governing_transaction is None and self._transaction is not None:
-                def commit():
-                    self._transaction.commit()
-                db_operation(commit)
+                db_operation(self._transaction.commit)
                 if close:
                     self._transaction = None
                 else:
@@ -1791,7 +1775,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             return True
         else:
             if transaction is not None:
-                success, __ = db_operation(cut_op)
+                success, __ = db_operation(transaction.cut, 'commitform')
             else:
                 success = True
             if success:

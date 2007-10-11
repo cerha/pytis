@@ -674,16 +674,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 before = table.row(row+1).row().columns(kc)
             else:
                 after = before = None
-            op = (self._data.insert, 
-                  (rdata,),
-                  dict(after=after, before=before, transaction=self._transaction))
+            op, args, kwargs = self._data.insert, (rdata,), dict(after=after, before=before)
         else:
             key = editing.orig_row.columns(kc)
-            op = (self._data.update,
-                  (key, rdata,),
-                  dict(transaction=self._transaction))
+            op, args, kwargs = self._data.update, (key, rdata,)
         # Provedení operace
-        success, result = db_operation(op)
+        
+        success, result = db_operation(op, *args, **dict(kwargs, transaction=self._transaction))
         if self._governing_transaction is None and self._transaction is not None:
             self._transaction.commit()
         self._transaction = self._governing_transaction

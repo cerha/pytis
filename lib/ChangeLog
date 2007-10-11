@@ -1,5 +1,11 @@
 2007-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dialog.py: `db_operation' moved to `application.py'.
+
+	* pytis/form/application.py: `db_operation' moved here.
+	Implemented login hook.  Handle database exceptions during menubar
+	initialization.
+
 	* pytis/form/screen.py (wx_button): Allow passing `command'
 	instead of a `callback'.  Display command shortcut keys in
 	tooltip.  Allow fullsize buttons.
@@ -14,13 +20,14 @@
 	* pytis/form/event.py (top_level_exception): Log brief traceback
 	if cgitb fails.
 
-	* pytis/form/form.py (EditForm._cmd_commit_record): New argument `close'.
+	* pytis/form/form.py: Use simplified `db_operation' interface.
+	(EditForm._cmd_commit_record): New argument `close'.
 	(PopupEditForm._cmd_commit_record): New argument `next'.
 	(PopupEditForm._buttons): Create buttons using `wx_button'.  Use
 	commands, not callbacks.
 
-	* pytis/form/list.py (ListForm._create_search_panel): Pass command
-	to `wx_button()'.
+	* pytis/form/list.py: Use simplified `db_operation' interface.
+	(ListForm._create_search_panel): Pass command to `wx_button()'.
 
 	* pytis/presentation/spec.py (FieldSpec._init): Prevent namespace
 	problems within lambda functions.
