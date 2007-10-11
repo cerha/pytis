@@ -1413,24 +1413,28 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
               command=None, callback=None, enabled=True, tooltip=None, size=None, height=None):
     """Create and setup a button.
 
-    This is just a convenience helper to allow button creation and setup in one step.
+    This is a convenience helper to allow simple button creation and setup in one step.
 
     Arguments:
     
       parent -- wx parent window
-      label -- button label; this label will only be used when no bitmap is given and when the
-        icon is not found (or not specified)
+      label -- button label; the label is only used when no icon was specified or if the specified
+        icon was not found.  Label should be always specified when using named icons (not stock
+        icons), since it must be available in case the icon can not be found
       icon -- button icon identifier as used with 'get_icon'; if the icon is found, the label is
         ignored
       bitmap -- button bitmap; overrides both label and icon
-      size -- button size in pixels as a two-tuple (width, height)
+      id -- wx id of the button; integer; may be useful for creating ``stock buttons''
       noborder -- if true, the button will not have the visible border
+      fullsize -- the button is created with exact fit by default (smallest possible).  Pass true
+        if you want normal size buttons (irrelevant when size is defined explicitly)
       command -- pytis command to invoke when button is pressed.  If defined, 'callback' must
         be None
       callback -- if specified, the given function will be associated with button press event.  The
         function will be called with `wx.Event' instance as first argument
       enabled -- if false, the button will be disabled
       tooltip -- tooltip string
+      size -- button size in pixels as a two-tuple (width, height)
       height -- height in pixels, overrides the height given by size
 
     Returns a 'wx.Button' or 'wx.BitmapButton' instance.
