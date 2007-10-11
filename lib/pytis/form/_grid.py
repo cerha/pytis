@@ -223,7 +223,7 @@ class ListTable(wx.grid.PyGridTableBase):
             row_ = row - 1
         else:
             row_ = row
-        success, result = db_operation(lambda: self._retrieve_row(row_))
+        success, result = db_operation(self._retrieve_row, row_)
         if not success:
             self._panic()
         return result
@@ -497,13 +497,11 @@ class ListTable(wx.grid.PyGridTableBase):
             pass
         else:
             row = position
-            success, result = \
-                     db_operation(lambda : self._retrieve_row(row))
+            success, result = db_operation(self._retrieve_row, row)
             if not success:
                 self._panic()
             self._presented_row.set_row(result)
-            self._current_row = \
-                  self._CurrentRow(row, copy.copy(self._presented_row))
+            self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
 
     def current_row(self):
         """Vra» èíslo aktuálního øádku datového objektu tabulky.
