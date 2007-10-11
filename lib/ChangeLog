@@ -1,5 +1,9 @@
 2007-10-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (wx_button): Allow passing `command'
+	instead of a `callback'.  Display command shortcut keys in
+	tooltip.  Allow fullsize buttons.
+
 	* pytis/form/commands_.py (DEFAULT_KEYMAP): New shortcut
 	`Ctrl-Shift-Enter' for
 	`EditForm.COMMAND_COMMIT_RECORD(next=True)'.
