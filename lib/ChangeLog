@@ -1,3 +1,26 @@
+2007-10-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): New shortcut
+	`Ctrl-Shift-Enter' for
+	`EditForm.COMMAND_COMMIT_RECORD(next=True)'.
+
+	* pytis/form/configui.py (ConfigForm._buttons): Respect super
+	class changes.
+
+	* pytis/form/event.py (top_level_exception): Log brief traceback
+	if cgitb fails.
+
+	* pytis/form/form.py (EditForm._cmd_commit_record): New argument `close'.
+	(PopupEditForm._cmd_commit_record): New argument `next'.
+	(PopupEditForm._buttons): Create buttons using `wx_button'.  Use
+	commands, not callbacks.
+
+	* pytis/form/list.py (ListForm._create_search_panel): Pass command
+	to `wx_button()'.
+
+	* pytis/presentation/spec.py (FieldSpec._init): Prevent namespace
+	problems within lambda functions.
+
 2007-10-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/postgresql.py

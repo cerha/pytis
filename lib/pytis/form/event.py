@@ -73,7 +73,11 @@ def top_level_exception():
         sys.exit()
     tbstring = format_traceback()
     import cgitb
-    tbstring = cgitb.text(einfo)
+    try:
+        tbstring = cgitb.text(einfo)
+    except:
+        import traceback
+        tbstring = "\n".join(traceback.format_exception(*einfo))
     log(OPERATIONAL, 'Top-level exception caught', tbstring)
     text = run_dialog(BugReport, einfo)
     if text is None:

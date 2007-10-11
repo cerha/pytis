@@ -104,7 +104,9 @@ def copy_to_clipboard(text):
         clipboard.Flush()
         clipboard.Close()
         
-    
+def hotkey_string(hotkey):
+    """Return the human readable hotkey representation of Keymap.lookup_command() result."""
+    return ' '.join([k.replace(' ', _("Mezerník")) for k in hotkey])
 
 
 ### Pomocné tøídy
@@ -884,7 +886,7 @@ class Menu(_TitledMenuObject):
                     lambda event: self._on_highlight_item(menu, event))
         # At first, compute the maximal width of hotkey string in this menu.
         max_hotkey_width = 0
-        hotkey_string = {}
+        hotkey_str = {}
         for i in self._items:
             if isinstance(i, MItem):
                 hotkey, command, args = i.hotkey(), i.command(), i.args()
@@ -895,9 +897,7 @@ class Menu(_TitledMenuObject):
                 elif keymap is not None:
                     keymap.define_key(hotkey, command, args)
                 if hotkey != (None,):
-                    s = hotkey_string[i] = '    ' + \
-                        ' '.join([k.replace(' ', _("Mezerník"))
-                                  for k in hotkey]) 
+                    s = hotkey_str[i] = '    ' + hotkey_string(hotkey)
                     hotkey_width = parent.GetTextExtent(s)[0]
                     max_hotkey_width = max(hotkey_width, max_hotkey_width)
         # Now create the items and remember max. width of whole item label
@@ -915,7 +915,7 @@ class Menu(_TitledMenuObject):
                 if isinstance(i, (RadioItem, CheckItem)):
                     item.Check(i.state())
                 width = parent.GetTextExtent(i.title())[0]
-                if hotkey_string.has_key(i):
+                if hotkey_str.has_key(i):
                     hotkey_items.append((i, item, width))
                     width = width + max_hotkey_width
                 max_label_width = max(width, max_label_width)
@@ -935,7 +935,7 @@ class Menu(_TitledMenuObject):
             fill_width = max_label_width - width - max_hotkey_width
             n = round(float(fill_width) / float(space_width))
             fill = "%%%ds" % n % ''
-            item.SetText(i.title(raw=True) + fill + hotkey_string[i]) 
+            item.SetText(i.title(raw=True) + fill + hotkey_str[i]) 
         return menu
 
 
@@ -1409,8 +1409,8 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
     else:
         return None
 
-def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False, 
-              callback=None, enabled=True, tooltip=None, size=None, height=None):
+def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False, fullsize=False,
+              command=None, callback=None, enabled=True, tooltip=None, size=None, height=None):
     """Create and setup a button.
 
     This is just a convenience helper to allow button creation and setup in one step.
@@ -1425,6 +1425,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
       bitmap -- button bitmap; overrides both label and icon
       size -- button size in pixels as a two-tuple (width, height)
       noborder -- if true, the button will not have the visible border
+      command -- pytis command to invoke when button is pressed.  If defined, 'callback' must
+        be None
       callback -- if specified, the given function will be associated with button press event.  The
         function will be called with `wx.Event' instance as first argument
       enabled -- if false, the button will be disabled
@@ -1438,13 +1440,24 @@ def wx_button(parent, label=None, icon=None, bitmap=None, noborder=False,
            "Button with non-system icon must have a fallback label."
     if not bitmap and icon:
         bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
-    style = wx.BU_EXACTFIT
+    style = 0
+    if not fullsize:
+        style |= wx.BU_EXACTFIT
     if noborder:
         style |= wx.NO_BORDER
     if bitmap:
-        button = wx.BitmapButton(parent, -1, bitmap, size=size, style=style)
+        button = wx.BitmapButton(parent, id, bitmap, size=size, style=style)
     else:
-        button = wx.Button(parent, -1, label=label, size=size, style=style)
+        button = wx.Button(parent, id, label=label or '', size=size, style=style)
+    if command:
+        assert callback is None
+        command, args = command
+        callback = lambda e: command.invoke(**args)
+        if tooltip:
+            hotkey = global_keymap().lookup_command(command, args)
+            if hotkey:
+                tooltip += ' ('+ hotkey_string(hotkey) +')'
+        #enabled = command.enabled(**args)
     if tooltip:
         button.SetToolTipString(tooltip)
     if callback:

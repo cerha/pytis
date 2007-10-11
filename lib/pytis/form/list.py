@@ -396,11 +396,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._search_panel = panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
         self._incremental_search_last_direction = pytis.data.FORWARD
         self._incremental_search_results = []
-        if self.keymap:
-            keys_next = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True))
-            keys_prev = self.keymap.lookup_command(self.COMMAND_SEARCH, dict(next=True, back=True))
-        else:
-            keys_next = keys_prev = ()
         columns = [c for c in self._columns if isinstance(c.type(self._data), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
@@ -410,12 +405,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             wx_text_ctrl(panel, tooltip=_("Zadejte hledaný text."),
                          on_text=lambda e: self._incremental_search(newtext=True),
                          on_key_down=self._on_incremental_search_key_down, height=HEIGHT),
-            wx_button(panel, _("Previous"), icon=wx.ART_GO_BACK, height=HEIGHT,
-                      tooltip=_("Najít pøedchozí") +(keys_prev and ' (%s)' % keys_prev[0] or ''),
-                      callback=lambda e: self.COMMAND_SEARCH.invoke(next=True, back=True)),
-            wx_button(panel, _("Next"), icon=wx.ART_GO_FORWARD, height=HEIGHT,
-                      tooltip=_("Najít následující") +(keys_next and ' (%s)' % keys_next[0] or ''), 
-                      callback=lambda e: self.COMMAND_SEARCH.invoke(next=True)),
+            wx_button(panel, icon=wx.ART_GO_BACK, height=HEIGHT, tooltip=_("Najít pøedchozí"),
+                      command=self.COMMAND_SEARCH(next=True, back=True)),
+            wx_button(panel, icon=wx.ART_GO_FORWARD, height=HEIGHT, tooltip=_("Najít následující"),
+                      command=self.COMMAND_SEARCH(next=True)),
             wx_checkbox(panel, label=_("hledat i uvnitø øetìzce"),
                         tooltip=_("Za¹krtnìnte, pokud chcete vyhledávat kdekoliv uvnitø øetìzcù. "
                                   "Jinak bude vyhledáváno pouze od poèátku øetìzce."),
@@ -424,7 +417,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         tooltip=_("Za¹krtnìnte, pokud chcete aby vyhledávání respektovalo malá a "
                                   "velká písmena."),
                         checked=False),
-            wx_button(panel, _("Close"), tooltip=_("Close search panel"), icon=wx.ART_CROSS_MARK,
+            wx_button(panel, tooltip=_("Skrýt vyhledávací panel"), icon=wx.ART_CROSS_MARK,
                       callback=lambda e: self._exit_incremental_search(), noborder=True),
             )
         sizer = wx.BoxSizer()

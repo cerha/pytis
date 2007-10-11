@@ -1100,8 +1100,7 @@ class Invocable(object, CommandHandler):
         return (x, x)
 
     def _create_button(self, label, icon=None):
-        return wx_button(self._parent, label=label, icon=icon,
-                         size=self._button_size())
+        return wx_button(self._parent, label=label, icon=icon, size=self._button_size())
 
     def _disable(self):
         self._invocation_button.Enable(False)

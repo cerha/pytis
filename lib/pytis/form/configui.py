@@ -181,14 +181,10 @@ class ConfigForm(PopupEditForm):
     def _create_print_menu(self):
         return None
     
-    def _on_apply(self):
-        self._commit_form(close=False)
-        refresh()
-
     def _buttons(self):
-        apply = {'id': wx.ID_APPLY,
-                 'toottip': _("Uplatnit zmìny bez uzavøení formuláøe"),
-                 'handler': lambda e: self._on_apply()}
+        button = dict(id=wx.ID_APPLY,
+                      tooltip=_("Uplatnit zmìny bez uzavøení formuláøe"),
+                      command=self.COMMAND_COMMIT_RECORD(close=False))
         buttons = super(ConfigForm, self)._buttons()
-        return (buttons[0], apply) + buttons[1:]
+        return (buttons[0], button) + buttons[1:]
     

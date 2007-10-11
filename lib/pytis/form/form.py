@@ -1830,11 +1830,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 return False
         return True
 
-    def _can_commit_record(self):
+    def _can_commit_record(self, close=True):
         return self._mode != self.MODE_VIEW
     
-    def _cmd_commit_record(self):
-        return self._commit_form()
+    def _cmd_commit_record(self, close=True):
+        result = self._commit_form(close=close)
+        if result:
+            refresh()
+        return result
 
     def _cmd_navigate(self, back=False):
         if self._mode != self.MODE_VIEW:
@@ -1966,13 +1969,6 @@ class PopupEditForm(PopupForm, EditForm):
                 return False
         return super(PopupEditForm, self)._exit_check()
 
-    def _on_next_button(self, event):
-        result = self._commit_form(close=False)
-        if result:
-            message(_("Záznam ulo¾en"))
-            refresh()
-            self._load_next_row()
-
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
         if self._inserted_data is None:
@@ -1982,32 +1978,28 @@ class PopupEditForm(PopupForm, EditForm):
             self._load_next_row()
     
     def _buttons(self):
-        buttons = ({'id': wx.ID_OK,
-                    'toottip': _("Ulo¾it záznam a uzavøít formuláø"),
-                    'handler': lambda e: self._commit_form(),
-                    'default': True},
-                   {'id': wx.ID_CANCEL,
-                    'toottip': _("Uzavøít formuláø bez ulo¾ení dat"),
-                    'handler': lambda e: self.close()})
+        buttons = (dict(id=wx.ID_OK,
+                        tooltip=_("Ulo¾it záznam a uzavøít formuláø"),
+                        command=self.COMMAND_COMMIT_RECORD()),
+                   dict(id=wx.ID_CANCEL,
+                        tooltip=_("Uzavøít formuláø bez ulo¾ení dat"),
+                        command=self.COMMAND_LEAVE_FORM()))
         if self._mode == self.MODE_INSERT and self._multi_insert:
-            buttons += ({'id': wx.ID_FORWARD,
-                         'label': _("Dal¹í"),
-                         'toottip': _("Ulo¾it záznam a reinicializovat formuláø"
-                                      " pro vlo¾ení dal¹ího záznamu"),
-                         'handler': self._on_next_button},)
+            buttons += (dict(id=wx.ID_FORWARD, label=_("Dal¹í"), #icon=wx.ART_GO_FORWARD, 
+                             tooltip=_("Ulo¾it záznam a reinicializovat formuláø"
+                                       " pro vlo¾ení dal¹ího záznamu"),
+                             command=self.COMMAND_COMMIT_RECORD(next=True)),)
         if self._inserted_data is not None:
-            buttons += ({'label': _("Pøeskoèit"),
-                         'toottip': _("Pøeskoèit tento záznam bez ulo¾ení"),
-                         'handler': self._on_skip_button},)
+            buttons += (dict(label=_("Pøeskoèit"),
+                             tooltip=_("Pøeskoèit tento záznam bez ulo¾ení"),
+                             callback=self._on_skip_button),)
         return buttons
         
     def _create_buttons(self):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        for b in self._buttons():
-            button = wx.Button(self, b.get('id', -1), b.get('label', ""))
-            wx_callback(wx.EVT_BUTTON, self, button.GetId(), b['handler'])
-            button.SetToolTipString(b.get('toottip'))
-            if b.get('default'):
+        for i, kwargs in enumerate(self._buttons()):
+            button = wx_button(self, fullsize=True, **kwargs)
+            if i == 0:
                 button.SetDefault()
             sizer.Add(button, 0, wx.ALL, 20)
         return sizer
@@ -2015,6 +2007,18 @@ class PopupEditForm(PopupForm, EditForm):
     def _cleanup(self):
         super(PopupEditForm, self)._cleanup()
 
+    def _can_commit_record(self, close=True, next=False):
+        if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
+            return False
+        return super(PopupEditForm, self)._can_commit_record()
+    
+    def _cmd_commit_record(self, close=True, next=False):
+        result = super(PopupEditForm, self)._cmd_commit_record(close=close and not next)
+        if result and next:
+            message(_("Záznam ulo¾en"))
+            self._load_next_row()
+        return result
+        
     def can_command(self, command, **kwargs):
         if command.handler() in (LookupForm, RecordForm):
             return False
