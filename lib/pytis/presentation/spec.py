@@ -739,30 +739,22 @@ class ViewSpec(object):
 
     """
     
-    def __init__(self, title, fields, singular=None, layout=None, columns=None,
-                 actions=(), sorting=None, grouping=None, check=(),
-                 cleanup=None, on_new_record=None, on_edit_record=None,
-                 on_delete_record=None, on_line_commit=None, redirect=None,
-                 focus_field=None, description=None, help=None,
+    def __init__(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
+                 actions=(), sorting=None, grouping=None, check=(), cleanup=None,
+                 on_new_record=None, on_edit_record=None, on_delete_record=None,
+                 on_line_commit=None, redirect=None, focus_field=None, description=None, help=None,
                  row_style=FIELD_STYLE_DEFAULT, conditions=(), aggregations=()):
         
         """Inicializuj instanci.
 
         Argumenty:
 
-          title -- název náhledu (øetìzec).  Název je pou¾íván jako titulek
-            záhlaví seznamových formuláøù a na dal¹ích místech, kde je
-            odkazováno na náhled jako celek, tedy celou mno¾ninu záznamù, proto
-            by mìlo být pou¾ito mno¾né èíslo, napø. Faktury.
+          title -- the title of this view as a (unicode) string.  The title is used in browse form
+            headings and in other contexts, where the entity is refered as whole (all the records).
+            Thus the title should mostly be in plural (for example 'Invoices').
             
-          singular -- název náhledu jedné polo¾ky (øetìzec).  Tento název je
-            pou¾íván v¹ude tam, kde jde o jednu polo¾ku náhledu (napø záhlaví
-            editaèního fotmuláøe), proto by mìl být v jednotném èísle,
-            napø. Faktura.  Pokud je None, bude pou¾it název daná argumentem
-            'title'.
-            
-          fields -- specifikace políèek jako sekvence instancí tøídy
-            'FieldSpec'.
+          singular -- the title of a single item (one record) of the entity as a (unicode) string.
+            If None, 'title' is used in both contexts.
             
           layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
             instance tøídy 'GroupSpec'.  Je mo¾né pøedat také sekvenci
@@ -772,7 +764,9 @@ class ViewSpec(object):
             ve fields.  Pro zpìtnou kompatibilitu je mo¾né pou¾ít také
             'LayoutSpec', ale tento zpùsob definice je pova¾ován za nevhodný a
             v budoucnu nebude podporován.
-            
+
+          list_layout -- specification of list layout as a 'ListLayout' instance or None.
+          
           columns -- specifikace sloupcù tabulkového formuláøe, sekvence
             indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
             výchozí seznam sloupcù obsahovat v¹echna políèka z fields, která
@@ -870,28 +864,24 @@ class ViewSpec(object):
             argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
             vrací pøíslu¹ný identifikátor políèka.
             
-          description -- brief description of the view.  A short text (one or
-            two sentences) without formatting.  Use the 'help' argument below
-            to supply a detailed description.  But even if 'help' is present,
-            this short description should still be defined.
+          description -- brief description of the view.  A short text (one or two sentences)
+            without formatting.  Use the 'help' argument below to supply a detailed description.
+            But even if 'help' is present, this short description should still be defined.
           
-          help -- detailed description of the view as a formatted text in the
-            LCG Structured Text format.  This text is used for generating the
-            on-line help and it is also possible to supply it in a separate
-            file.  See the Help tutorial for more information.
+          help -- detailed description of the view as a formatted text in the LCG Structured Text
+            format.  This text is used for generating the on-line help and it is also possible to
+            supply it in a separate file.  See the Help tutorial for more information.
 
-          row_style -- a 'FieldStyle' instance determining the base style for
-            all fields or a function of one argument (the 'PresentedRow'
-            instance) returning the 'FieldStyle' for one row (based on its
-            values).
+          row_style -- a 'FieldStyle' instance determining the base style for all fields or a
+            function of one argument (the 'PresentedRow' instance) returning the 'FieldStyle' for
+            one row (based on its values).
 
-          conditions -- a sequence of named conditions ('Condition' instances),
-            which should be available to the user for filtering/searching
-            records in this view.
+          conditions -- a sequence of named conditions ('Condition' instances), which should be
+            available to the user for filtering/searching records in this view.
 
-          aggregations -- a sequence aggregation functions which should be
-            turned on automatically for this view (in forms which support that).
-            The items are 'AGG_*' constants of 'pytis.data.Data'.
+          aggregations -- a sequence aggregation functions which should be turned on automatically
+            for this view (in forms which support that).  The items are 'AGG_*' constants of
+            'pytis.data.Data'.
             
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
@@ -1010,6 +1000,7 @@ class ViewSpec(object):
         self._singular = singular
         self._columns = columns
         self._layout = layout
+        self._list_layout = list_layout
         self._actions = actions
         self._sorting = sorting
         self._grouping = grouping
@@ -1051,6 +1042,9 @@ class ViewSpec(object):
         """Vra» specifikaci rozvr¾ení editaèního formuláøe."""
         return self._layout
 
+    def list_layout(self):
+        return self._list_layout
+    
     def columns(self):
         """Vra» tuple identifikátorù sloupcù pro tabulkový formuláø."""
         return self._columns
@@ -1595,7 +1589,78 @@ class Link(object):
     def enabled(self):
         """Vra» funkci k zji¹tìní dostupnosti akce, nebo pøímo bool hodnotu."""
         return self._enabled
+    
+
+class ListLayout(object):
+    """Specification of list layout.
+
+    Currently only implemented in web forms.
+
+    This layout defines an alternative presentation of lists of records.  The records are not
+    presented as a table, but as sections, where each record has its own heading, meta information
+    and text (description, annotation, message...).
+    
+    """
+    def __init__(self, title, meta=(), layout=None, content=None, image=None, anchor=None,
+                 meta_labels=False):
+        """Initialize the instance.
+
+        Arguemnts:
+
+          title -- identifier of a field which will be used as a title for each item in the list (a
+            string).
+
+          meta -- a sequence of field identifiers (strings) which will be printed underneath each
+            item's title as records meta information.
+
+          layout -- GroupSpec instance describing the layout of a fields within each item's
+            section.  If used (not None), the fields will be displayed for each record in a manner
+            simillar to a show form.  Similarly as for the 'layout' argument in 'ViewSpec', it is
+            also possible to pass a sequence of fields (or 'GroupFpec' instances) which will be
+            turned into a vertical group automatically.
+
+          content -- identifier of a field which provides a textual content for this item.  The
+            text of the field value will be formatted as WIKI text.  If None, no text content will
+            be printed.
+
+          meta_labels -- boolean flag indicating, whether 'meta' fields should be labeled.  If a
+            sequence is passed, only meta fields with identifiers contained within the sequence
+            will be babeled.
+
+        """
+        if isinstance(layout, (list, tuple)):
+            layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
+        else:
+            assert layout is None or isinstance(layout, GroupSpec)
+        if isinstance(meta_labels, (bool)):
+            meta_labels = meta_labels and meta or ()
+        else:
+            assert isinstance(meta_labels, (bool, tuple, list))
+        self._title = title
+        self._meta = meta
+        self._content = content
+        self._layout = layout
+        self._anchor = anchor
+        self._meta_labels = meta_labels
         
+    def title(self):
+        return self._title
+    
+    def meta(self):
+        return self._meta
+    
+    def content(self):
+        return self._content
+
+    def layout(self):
+        return self._layout
+
+    def anchor(self):
+        return self._anchor
+    
+    def meta_labels(self):
+        return self._meta_labels
+    
     
 class FieldSpec(object):
     """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.

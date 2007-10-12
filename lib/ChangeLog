@@ -1,4 +1,18 @@
+2007-10-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Allow `ShowForm' layout within `ListView'.
+	(ListLayout): Moved to `spec.py'.
+
+	* pytis/presentation/spec.py (ViewSpec): New parameter
+	`list_layout'.
+	(ListLayout): New class.
+
+	* pytis/data/dbapi.py (DBDataDefaultClass.__init__): Respect
+	`config.dblisten'.
+
 2007-10-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/_grid.py: Use simplified `db_operation' interface.
 
 	* pytis/form/dialog.py: `db_operation' moved to `application.py'.
 
