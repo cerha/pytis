@@ -214,14 +214,16 @@ class LayoutForm(Form):
                 field = self._view.field(item)
                 if field.width() == 0:
                     continue
-                items = self._export_field(exporter, field)
-                if items:
-                    fields.append((field,) + items)
+                exported_field = self._export_field(exporter, field)
+                if exported_field:
+                    fields.append((field,) + exported_field)
                     wrap = True
         if fields:
             result.append(self._export_fields(g, fields))
-        if wrap or group.label():
-            result = g.fieldset(group.label() and group.label()+':', result, cls='group')
+        if group.label():
+            result = g.fieldset(group.label()+':', result, cls='group')
+        elif wrap:
+            result = g.div(result, cls='group')
         else:
             result = concat(result, separator="\n")
         #if group.orientation() == Orientation.VERTICAL:
@@ -286,20 +288,18 @@ class LayoutForm(Form):
             elif len(value) > self._MAXLEN:
                 value = g.textarea(f.id(), value=value, readonly=True,
                                    rows=min(f.height(), 5), cols=80)
-                #end = value.find(' ', self._MAXLEN-20, self._MAXLEN)
-                #value = concat(value[:(end != -1 and end or self._MAXLEN)],
-                #               ' ... (', _("reduced"), ')')
-        src = self._uri(row, f.id(), type=UriType.IMAGE)
-        if src:
+        if value:
+            src = self._uri(row, f.id(), type=UriType.IMAGE)
+            if src:
+                if info is not None:
+                    value += ' ('+ info +')'
+                    info = None
+                value = g.img(src, alt=value)
+            uri = self._uri(row, f.id())
+            if uri:
+                value = g.link(value, uri)
             if info is not None:
                 value += ' ('+ info +')'
-                info = None
-            value = g.img(src, alt=value)
-        uri = self._uri(row, f.id())
-        if uri:
-            value = g.link(value, uri)
-        if info is not None:
-            value += ' ('+ info +')'
         return (g.label(f.label(), None) + ":", value, None)
 
     
@@ -765,11 +765,15 @@ class ListView(BrowseForm):
             name = layout.anchor() % row[self._key].export()
             title = g.link(title, None, name=name)
         parts = [g.h(title, level=3)]
-        meta = [g.span(labeled and g.span(col.label(), cls='label')+": " or '' + \
-                       self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
-                       cls=col.id())
-                for col, formatter, labeled in self._meta]
-        if meta:
+        if layout.image():
+            img = self._export_field(exporter, self._view.field(layout.image()))[1]
+            if img:
+                parts.append(img)
+        if self._meta:
+            meta = [g.span(labeled and g.span(col.label(), cls='label')+": " or '' + \
+                           self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
+                           cls=col.id())
+                    for col, formatter, labeled in self._meta]
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
             parts.append(self._export_group(exporter, layout.layout()))

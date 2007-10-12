@@ -1623,6 +1623,9 @@ class ListLayout(object):
             text of the field value will be formatted as WIKI text.  If None, no text content will
             be printed.
 
+          image -- identifier of a field which provides an image to be displayed along with each
+            record.
+
           meta_labels -- boolean flag indicating, whether 'meta' fields should be labeled.  If a
             sequence is passed, only meta fields with identifiers contained within the sequence
             will be babeled.
@@ -1640,6 +1643,7 @@ class ListLayout(object):
         self._meta = meta
         self._content = content
         self._layout = layout
+        self._image = image
         self._anchor = anchor
         self._meta_labels = meta_labels
         
@@ -1655,6 +1659,9 @@ class ListLayout(object):
     def layout(self):
         return self._layout
 
+    def image(self):
+        return self._image
+        
     def anchor(self):
         return self._anchor
     
