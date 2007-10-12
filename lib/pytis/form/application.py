@@ -1124,14 +1124,15 @@ def db_operation(operation, *args, **kwargs):
     while True:
         try:
             result = operation(*args, **kwargs)
-            _application.login_hook(success=True)
+            if _application:
+                _application.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException, e:
             run_dialog(Error, _("Pøístup odmítnut"))
             return FAILURE
         except pytis.data.DBLoginException, e:
             import config
-            if config.dbconnection.password() is not None:
+            if config.dbconnection.password() is not None and _application:
                 _application.login_hook(success=False)
             login_and_password = run_dialog(Login, _("Zadejte heslo pro pøístup do databáze"),
                                             login=config.dbuser)

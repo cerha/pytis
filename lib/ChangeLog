@@ -1,5 +1,8 @@
 2007-10-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (db_operation): Don't call
+	`login_hook' if `_application' does not run.
+
 	* pytis/web/form.py: Allow `ShowForm' layout within `ListView'.
 	(ListLayout): Moved to `spec.py'.
 
