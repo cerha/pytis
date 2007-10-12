@@ -68,6 +68,21 @@ NOVÉ VLASTNOSTI:
      nìkterá políèka explicitnì povolit (pouze pro INSERT).  Nebo také povolit
      úplnì v¹e, nehledì na práva pro UPDATE.
 
+ * Automatické doplòování.
+
+   Widget nabídky doplnìní momentálnì nereaguje na my¹.
+
+   Pro velké èíselníky trvá select neúmìrnì dlouho kvùli "select count".  Pøitom pokud výsledek
+   selectu obsahuje více ne¾ X (napø. 50) záznamù, nemá smysl výbìr zobrazovat.  Øe¹ením by bylo
+   vyvolat select bez "select count" a provést fetch prvních maximálnì X záznamù.  Potom pokud lze
+   provést i fetch záznamu X+1, je mo¾né v¹e zahodit.  To by mìlo fungovat stejnì rychle nezávisle
+   na velikosti èíselníku.
+
+   V seznamu doplnìní by pro èíselníky s displejem bylo mo¾né zobrazovat i druhý sloupec s hodnotou
+   displeje.
+
+ * Vyu¾ití vyhledávacího panelu i pro vyhledávání s podmínkou zadanou pøes formuláø.
+
  * Pou¾ití externího PS prohlí¾eèe.
 
  * Souèasný výbìr nìkolika øádkù v øádkovém formuláøi.
@@ -90,11 +105,6 @@ NOVÉ VLASTNOSTI:
  * Zobrazení editovatelných/needitovatelných políèek v ShowFormu.
 
  * Zamezit výpoètu editovatelnosti políèek v ShowFormu - je to zbyteèné...
-
- * Automatický filtr èíselníku pøi vyplnìní wildcard hodnoty.
-
-   Pokud je vyplnìna hodnota obsahující hvìzdièku, automaticky zapnout filtr
-   pøi vyvolání èíselníku.
 
 
 2) Specifikace
