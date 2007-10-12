@@ -257,7 +257,9 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
         # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
         # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat
         # tøídy týkající se notifikací.
-        self._pg_add_notifications()
+        import config
+        if config.dblisten:
+            self._pg_add_notifications()
 
 
 ### Exportované promìnné/tøídy
