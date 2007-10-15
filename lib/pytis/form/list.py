@@ -677,7 +677,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             op, args, kwargs = self._data.insert, (rdata,), dict(after=after, before=before)
         else:
             key = editing.orig_row.columns(kc)
-            op, args, kwargs = self._data.update, (key, rdata,)
+            op, args, kwargs = self._data.update, (key, rdata,), {}
         # Provedení operace
         
         success, result = db_operation(op, *args, **dict(kwargs, transaction=self._transaction))

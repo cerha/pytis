@@ -1,3 +1,8 @@
+2007-10-15  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/list.py (ListForm._on_line_commit): Add forgotten
+	dictionary for `kwargs'.
+
 2007-10-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (db_operation): Don't call
