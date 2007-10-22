@@ -57,8 +57,7 @@ def _get_default_select(spec):
         if sorting is None:
             sorting = tuple([(k.id(), pytis.data.DESCENDANT) for k in data.key()
                              if view.field(k.id()) is not None])
-        op = lambda : data.select(sort=sorting, reuse=False)
-        success, select_count = db_operation(op)
+        success, select_count = db_operation(data.select, sort=sorting, reuse=False)
         if not success:
             log(EVENT, 'Selhání databázové operace')
             return None
@@ -150,8 +149,7 @@ def check_menus_defs():
             except ResolverError, e:
                 return str(e)
             try:
-                op = lambda: data_spec.create(dbconnection_spec=dbconn)
-                success, data = pytis.form.db_operation(op)
+                success, data = pytis.form.db_operation(data_spec.create, dbconnection_spec=dbconn)
                 if not success:
                     return "Nepodaøilo se vytvoøit datový objekt."
                 data.select()

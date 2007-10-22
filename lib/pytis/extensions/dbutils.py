@@ -33,8 +33,7 @@ def data_object(spec):
         spec = pytis.util.resolver().get(spec, 'data_spec')
     def conn_spec():
         return config.dbconnection
-    op = lambda: spec.create(dbconnection_spec=conn_spec)
-    success, data = pytis.form.db_operation(op)
+    success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
     #if not success:
     #    errmsg = "Nepodaøilo se vytvoøit datový objekt pro %s!" % (spec)
     #    raise ProgramError(errmsg)
@@ -99,8 +98,7 @@ def dbinsert(spec, row, transaction=None):
                 raise ProgramError(errmsg)
         row = pytis.data.Row(row)
     data = data_object(spec)
-    op = lambda: data.insert(row, transaction=transaction)
-    success, result = pytis.form.db_operation(op)
+    success, result = pytis.form.db_operation(data.insert, row, transaction=transaction)
     return result
 
 
@@ -122,9 +120,7 @@ def dbupdate(row, values=(), transaction=None):
         key = key[0]
     for col, val in values:
         updaterow[col] = val
-    op = lambda: data.update(row[key.id()], updaterow,
-                             transaction=transaction)
-    return pytis.form.db_operation(op)
+    return pytis.form.db_operation(data.update, row[key.id()], updaterow, transaction=transaction)
 
 # Alias
 row_update = dbupdate
@@ -187,12 +183,10 @@ def dbfunction(name, *args, **kwargs):
                 return None
     def conn_spec():
         return config.dbconnection
-    op = lambda: pytis.data.DBFunctionDefault(name, conn_spec)
-    success, function = pytis.form.db_operation(op)
-    op = lambda: function.call(pytis.data.Row(args),
-                               transaction=transaction)[0][0]
-    success, result = pytis.form.db_operation(op)
-    return result.value()
+    success, function = pytis.form.db_operation(pytis.data.DBFunctionDefault, name, conn_spec)
+    success, result   = pytis.form.db_operation(function.call, pytis.data.Row(args),
+                                                transaction=transaction)
+    return result[0][0].value()
 
 
 def nextval(seq):

@@ -166,16 +166,15 @@ def cb2colvalue(value, column=None, transaction=None):
 
       value -- Instance `Value', její¾ typ má definován enumerátor typu
         'pytis.data.DataEnumerator'.
-      column -- název jiného sloupce èíselníku; øetìzec.  Viz
-        'pytis.data.DataEnumerator.get()'
+      column -- název sloupce èíselníku poskytujícího výslednou hodnotu.
       transaction -- transakce pro pøedání datovým operacím.
 
     Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
     stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
     'None'.  Takováto hodnota nemusí být validní hodnotou typu, ale
     zjednodu¹uje se tím práce s výsledkem.  Pokud je zapotøebí korektnìj¹ího
-    chování, je doporuèeno pou¾ít pøímo metodu 'DataEnumerator.get()'
-    (napøíklad voláním 'value.type().enumerator().get(value.value(), column))'.
+    chování, je doporuèeno pou¾ít pøímo metodu 'DataEnumerator.row()'
+    (napøíklad voláním 'value.type().enumerator().row(value.value())'.
         
     """
     assert isinstance(value, pytis.data.Value)
@@ -183,12 +182,13 @@ def cb2colvalue(value, column=None, transaction=None):
     if column is None:
         return value
     else:
-        v = value.type().enumerator().get(value.value(), column=column,
-                                          transaction=transaction)
-        if v is None:
-            return pytis.data.Value(value.type(), None)
+        row = value.type().enumerator().row(value.value(), transaction=transaction)
+        if row is not None:
+            return row[column]
         else:
-            return v
+            return pytis.data.Value(value.type(), None)
+
+        
 
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),

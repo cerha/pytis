@@ -1,3 +1,14 @@
+2007-10-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (cb2colvalue): Use
+	`DataEnumerator.row()' instead of `DataEnumerator.get()'.
+
+	* lib/pytis/extensions/defs.py:  Use new `db_operation'
+	interface.
+
+	* lib/pytis/extensions/dbutils.py: Use new `db_operation'
+	interface.
+
 2007-10-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/dbutils.py: Don't pass connection data to
