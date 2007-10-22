@@ -1667,32 +1667,21 @@ class DataEnumerator(Enumerator):
         """Return static condition determining validity of data rows."""
         return self._validity_condition
     
-    def get(self, value, column=None, transaction=None, condition=None):
-        """Získej z dat hodnotu daného sloupce z øádku odpovídajícího 'value'.
-
-        Argumenty:
+    def row(self, value, transaction=None, condition=None):
+        """Return a *data* row corresponding to given codebook value.
         
-           value -- vnitøní (Pythonová) hodnota sloupce 'value_column' z
-             datového objektu.  Podle této hodnoty bude vyhledán pøíslu¹ný
-             øádek
-           column -- identifikátor sloupce datového objektu, jeho¾ hodnota má
-             být vrácena
-           transaction -- transakce, pod ní¾ se mají provádìt operace nad
-             datovým objektem
-           condition -- additional filtering condition
-
-        Vrací instanci 'Value', nebo None, pokud daný øádek nebyl nalezen.
+        Arguments:
+        
+         value -- internal (Python) value of the enumerator's 'value_column'.  The row
+           corresponding to this value will be returned.
+          transaction -- transaction for data operations.
+          condition -- runtime filter condition for enumerator validation.
+  
+        Returns a 'pytis.data.Row' instance from the underlying data object.
 
         """
-        row = self._retrieve(value, transaction=transaction, condition=condition)
-        if row is None:
-            result = None
-        else:
-            if column is None:
-                column = self._value_column
-            result = row[column]
-        return result
-
+        return self._retrieve(value, transaction=transaction, condition=condition)
+    
     def rows(self, condition=None):
         """Return sequence of rows of the underlying data object.
 

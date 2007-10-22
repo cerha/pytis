@@ -295,7 +295,7 @@ class PresentedRow(object):
     def __str__(self):
         if hasattr(self, '_row'):
             items = [c.id + '=' + str(self[c.id].value()) for c in self._columns]
-            return '<PresentedRow: %s>' % string.join(items, ', ')
+            return "<%s: %s>" % (self.__class__.__name__, string.join(items, ', '))
         else:
             return super(PresentedRow, self).__str__()
 
@@ -385,16 +385,19 @@ class PresentedRow(object):
             'DataEnumerator'.
           column -- identifier of another column in the enumerator's data object.
 
-        This method is in fact just a convenience wrapper for 'pytis.data.DataEnumerator.get()'.
+        This method is in fact just a convenience wrapper for 'pytis.data.DataEnumerator.row()'.
 
         Returns a 'pytis.data.Value' instance or None when the enumerator doesn't contain the
         current value of the field 'key' (the field value is not valid).
             
         """
         value = self[key]
-        c = self.runtime_filter(key)
-        e = value.type().enumerator()
-        return e.get(value.value(), column=column, transaction=self._transaction, condition=c)
+        row = value.type().enumerator().row(value.value(), transaction=self._transaction,
+                                            condition=self.runtime_filter(key))
+        if row is not None:
+            return row[column]
+        else:
+            return None
         
     def row(self):
         """Return the current *data* row as a 'pytis.data.Row' instance."""
@@ -637,7 +640,7 @@ class PresentedRow(object):
                     if isinstance(completer, (list, tuple)):
                         completer = pytis.data.FixedEnumerator(completer)
                     else:
-                        spec = resolver().get(completer, 'data_spec')
+                        spec = self._resolver.get(completer, 'data_spec')
                         completer = pytis.data.DataEnumerator(spec, **column.enumerator_kwargs)
             elif column.type.enumerator() and isinstance(column.type, pytis.data.String):
                 cb_spec = self._cb_spec(column)
@@ -649,33 +652,29 @@ class PresentedRow(object):
         return completer
     
     def _display_func(self, column):
-        def getval(enum, value, col, func=None):
-            if value is None:
-                return ''
-            if self._transaction and not self._transaction.open():
+        def get(enum, value, display, call=False):
+            if value is None or self._transaction and not self._transaction.open():
                 return ''
             try:
-                v = enum.get(value, col, condition=self.runtime_filter(column.id),
-                             transaction=self._transaction)
+                row = enum.row(value, condition=self.runtime_filter(column.id),
+                               transaction=self._transaction)
             except pytis.data.DataAccessException:
                 return ''
-            if not v:
+            if row is None:
                 return ''
-            elif func:
-                return f(v.value())
+            if call:
+                return display(row)
             else:
-                return v.export()
+                return row[display].export()
         display = column.display or self._cb_spec(column).display()
         if not display:
             return None
-        elif callable(display):
+        call = callable(display)
+        if call and argument_names(display) != ('row',):
             return display
-        enum = column.type.enumerator()
-        if isinstance(display, tuple):
-            f, col = display
-            return lambda v: getval(enum, v, col, f)
         else:
-            return lambda v: getval(enum, v, display)
+            enum = column.type.enumerator()
+            return lambda v: get(enum, v, display, call=call)
 
     def codebook(self, key):
         """Return the name of given field's codebook specification for resolver."""

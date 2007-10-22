@@ -901,6 +901,20 @@ def public_attributes(class_):
     _public_attributes[class_] = result
     return result
 
+def argument_names(callable):
+    """Return names of all function/method arguments as a tuple of strings.
+
+    The method argument 'self' is ignored.  The names are returned in the order in which the
+    arguments are defined, including all keyword arguments.  Only named arguments are taken into
+    account, so any `*' and `**' arguments are ignored.
+    
+    """
+    args, __, __, __ = inspect.getargspec(callable)
+    if args[0] == 'self':
+        args = args[1:]
+    return tuple(args)
+    
+
 
 def direct_public_members(obj):
     """Vra» tuple v¹ech pøímých veøejných atributù a metod tøídy objektu 'obj'.

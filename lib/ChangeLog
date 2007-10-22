@@ -1,3 +1,23 @@
+2007-10-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow.cb_value)
+	(PresentedRow._display_func): Use `DataEnumerator.row()' instead
+	of `DataEnumerator.get()'.
+	(PresentedRow._display_func): Added support for passing the whole
+	enumerator data row into the display function.
+
+	* pytis/presentation/spec.py (FieldSpec, CodebookSpec): Docstrings
+	and asserts updated for new definition of `display' function.
+	(CbComputer): Use `DataEnumerator.row()' instead of
+	`DataEnumerator.get()'.
+
+	* pytis/util/util.py (argument_names): New method.
+
+	* pytis/data/types_.py (DataEnumerator.get): Method replaced by a
+	more general method `row()'.
+
+	* pytis/web/form.py: Field export divided into several methods.
+
 2007-10-15  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/list.py (ListForm._on_line_commit): Add forgotten

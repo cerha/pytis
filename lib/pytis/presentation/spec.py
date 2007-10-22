@@ -1391,13 +1391,11 @@ class CbComputer(Computer):
         cbvalue = row[self._field]
         if cbvalue.value() is not None:
             e = cbvalue.type().enumerator()
-            assert e is not None, \
-                   "CbComputer refers to '%s', which has no enumerator." \
-                   % self._field
-            value = e.get(cbvalue.value(), self._column, transaction=row.transaction(),
-                          condition=row.runtime_filter(self._field))
-            if value:
-                return value.value()
+            assert e is not None, "CbComputer field '%s' has no enumerator." % self._field
+            row = e.row(cbvalue.value(), transaction=row.transaction(),
+                        condition=row.runtime_filter(self._field))
+            if row:
+                return row[self._column].value() or self._default
         return self._default
 
     def field(self):
@@ -1431,8 +1429,9 @@ class CodebookSpec(object):
             is retrieved from given column.  You may also pass a function (callable object).  The
             user visible value is then computed by invoking the function, passing it the code
             (internal Python value of the codebook field) as an argument.  The returned value must
-            be a string.  Finally, you may pass a pair (function, column).  This will lead in
-            calling the function, passing it the value of given column as the argument.
+            be a string.  If a function is passed and this function has just one argument named
+            'row', the function will recieve the data row of the corresponding codebook data object
+            as an argument (instead of just the internal codebook value).
 
           prefer_display -- If true, the user interface will show the display value instead of the
             codebook internal value wherever possible.  For example the browse from will show the
@@ -1460,9 +1459,7 @@ class CodebookSpec(object):
         """
         assert columns is None or is_sequence(columns)
         assert sorting is None or is_sequence(sorting)
-        assert display is None or isinstance(display, str) \
-               or callable(display) or isinstance(display, tuple) \
-               and callable(display[0]) and isinstance(display[1], str)
+        assert display is None or isinstance(display, str) or callable(display) and len(argument_names(display)) == 1
         assert isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert begin_search is None or isinstance(begin_search, str)
@@ -1943,10 +1940,7 @@ class FieldSpec(object):
         assert isinstance(nocopy, bool)
         assert computer is None or isinstance(computer, Computer)
         assert codebook is None or isinstance(codebook, str)
-        assert display is None or isinstance(display, str) \
-               or callable(display) or isinstance(display, tuple) \
-               and len(display) == 2 and callable(display[0]) \
-               and isinstance(display[1], str)
+        assert display is None or isinstance(display, str) or callable(display)
         assert completer is None or isinstance(completer, (str, list,tuple, pytis.data.Enumerator))
         assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
@@ -2008,9 +2002,7 @@ class FieldSpec(object):
         self._height = height
         if isinstance(editable, Computer):
             e_func = editable.function()
-            import inspect
-            args, __, __, __ = inspect.getargspec(e_func)
-            if len(args) == 2 and args[0] != 'self' or len(args) == 3 and args[0] == 'self':
+            if len(argument_names(e_func)) == 2:
                 # For backwards compatibility
                 editable = Computer(lambda r: e_func(r, id), depends=editable.depends())
         self._editable = editable
@@ -2030,9 +2022,7 @@ class FieldSpec(object):
         self._filter_list = filter_list
         if callable(style):
             s_func = style
-            import inspect
-            args, __, __, __ = inspect.getargspec(s_func)
-            if len(args) == 2 and args[0] != 'self' or len(args) == 3 and args[0] == 'self':
+            if len(argument_names(s_func)) == 2:
                 # For backwards compatibility
                 style = lambda r: s_func(id, r)
         self._style = style
