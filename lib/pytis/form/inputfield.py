@@ -1369,7 +1369,7 @@ class ListField(GenericCodebookField):
                 width = len(col.label())
             list.SetColumnWidth(i, dlg2px(list, 4*(width+1)))
             total_width = total_width + width
-        height = list.GetCharHeight() * (self.height()+1) # Additional row for column headings.
+        height = list.GetCharHeight() * 5/4 * (self.height()+ 1) + 10 # TODO: something better?
         self._DEFAULT_WIDTH = total_width + 3
         list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
         self._list =  list
