@@ -215,8 +215,10 @@ class LayoutForm(Form):
                 if field.width() == 0:
                     continue
                 exported_field = self._export_field(exporter, field)
-                if exported_field:
-                    fields.append((field,) + exported_field)
+                if exported_field is not None:
+                    label = self._export_field_label(exporter, field)
+                    help = self._export_field_help(exporter, field)
+                    fields.append((field, label, exported_field, help))
                     wrap = True
         if fields:
             result.append(self._export_fields(g, fields))
@@ -252,7 +254,7 @@ class LayoutForm(Form):
             rows = ["<table>"] + rows + ["</table>"]
         return concat(rows, separator="\n")
 
-    def _export_field(self, exporter, f):
+    def _export_field(self, exporter, f, cls=None):
         g = exporter.generator()
         row = self._row
         type = row[f.id()].type()
@@ -294,14 +296,19 @@ class LayoutForm(Form):
                 if info is not None:
                     value += ' ('+ info +')'
                     info = None
-                value = g.img(src, alt=value)
+                value = g.img(src, alt=value, cls=cls)
             uri = self._uri(row, f.id())
             if uri:
                 value = g.link(value, uri)
             if info is not None:
                 value += ' ('+ info +')'
-        return (g.label(f.label(), None) + ":", value, None)
+        return value
 
+    def _export_field_label(self, exporter, f):
+        return exporter.generator().label(f.label(), None) + ":"
+    
+    def _export_field_help(self, exporter, f):
+        return None
     
 class _SingleRecordForm(LayoutForm):
 
@@ -340,12 +347,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                   if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
 
+    def _field_id(self, f):
+        return "f%x-%s" % (positive_id(self), f.id())
+    
     def _export_field(self, exporter, f):
         g = exporter.generator()
         value = self._row[f.id()]
         type = value.type()
         attr = {'name': f.id(),
-                'id': "f%x-%s" % (positive_id(self), f.id())}
+                'id': self._field_id(f)}
         if isinstance(type, pytis.data.Boolean):
             ctrl = g.checkbox
             attr['value'] = 'T'
@@ -379,19 +389,24 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if not self._row.editable(f.id()):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
-        if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
-               (self._row.new() or not isinstance(type, (pytis.data.Password,
-                                                         pytis.data.Binary))):
-            sign = g.sup("*", cls="not-null")
-        else:
-            sign = ''
-        label = g.label(f.label(), attr['id']) + sign + ":"
         field = ctrl(**attr)
         if isinstance(type, pytis.data.Password) and type.verify():
             attr['id'] = attr['id'] + '-verify-pasword'
             field += g.br() + ctrl(**attr)
-        help = f.descr() and g.div(f.descr(), cls="help") or ''
-        return (label, field, help)
+        return field
+
+    def _export_field_label(self, exporter, f):
+        g = exporter.generator()
+        type = self._row[f.id()].type()
+        if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
+               (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary))):
+            sign = g.sup("*", cls="not-null")
+        else:
+            sign = ''
+        return g.label(f.label(), self._field_id(f)) + sign + ":"
+        
+    def _export_field_help(self, exporter, f):
+        return f.descr() and exporter.generator().div(f.descr(), cls="help") or ''
 
     def _export_body(self, exporter):
         g = exporter.generator()
@@ -766,7 +781,8 @@ class ListView(BrowseForm):
             title = g.link(title, None, name=name)
         parts = [g.h(title, level=3)]
         if layout.image():
-            img = self._export_field(exporter, self._view.field(layout.image()))[1]
+            img = self._export_field(exporter, self._view.field(layout.image()),
+                                     cls='list-layout-image')
             if img:
                 parts.append(img)
         if self._meta:
