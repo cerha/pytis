@@ -1369,15 +1369,17 @@ class CbComputer(Computer):
 
     """
     def __init__(self, field, column, default=None):
-        """Inicializuj instanci.
+        """Inicialize the instance.
 
-        Argumenty:
+        Arguments:
         
-          field -- identifikátor políèka ve stejném náhledu, které je spojeno s
-            èíselníkem (jeho datový typ má enumerátor typu DataEnumerator).
+          field -- identifier of a field in the same specification, which provides codebook
+            values.  This field must have an enumerator of type 'DataEnumerator' (must be a
+            codebook field).
 
-          column -- sloupeèek datového objektu enumerátoru, který udává
-            výslednou hodnotu dopoèítávací funkce.
+          column -- identifier of a column within the enumerator data object.  The computer will
+            return the value of this column as its result.
+          
         
         """
         assert isinstance(field, str)
@@ -1395,7 +1397,10 @@ class CbComputer(Computer):
             row = e.row(cbvalue.value(), transaction=row.transaction(),
                         condition=row.runtime_filter(self._field))
             if row:
-                return row[self._column].value() or self._default
+                value = row[self._column].value()
+                if value is None:
+                    return self._default
+                return value
         return self._default
 
     def field(self):
