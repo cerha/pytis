@@ -154,7 +154,13 @@ def saved_config_reader(name, column):
     """
     import cPickle as pickle
     def reader():
-        value = DBConfig(name)[column]
+        try:
+            value = dbfunction('read_pytis_config')
+        except:
+            # TODO: don't use DBConfig in the future
+            #       return None if not succesful
+            log(OPERATIONAL, "Obsolete saved_config_reader. Use read_pytis_config instead.")
+            value = DBConfig(name)[column]
         try:
             return pickle.loads(str(value))
         except pickle.UnpicklingError, e:
@@ -177,7 +183,12 @@ def saved_config_writer(name, column):
     """
     import cPickle as pickle
     def writer(items):
-        DBConfig(name)[column] = pickle.dumps(items)
+        value = pytis.data.Value(pytis.data.String(), pickle.dumps(items))
+        try:
+            dbfunction('write_pytis_config', ('value', value))
+        except:    
+            log(OPERATIONAL, "Obsolete saved_config_writer. Use write_pytis_config instead.")
+            DBConfig(name)[column] = pickle.dumps(items)
     return writer
 
 
