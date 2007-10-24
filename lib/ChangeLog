@@ -1,5 +1,12 @@
 2007-10-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/__init__.py: Import `field'.  Validation message
+	localization hacks moved here.
+
+	* pytis/web/field.py: New module.
+
+	* pytis/web/form.py: Use field formatters for form field export.
+
 	* pytis/presentation/spec.py (GroupSpec.order): New method.
 	(LayoutSpec.__init__): Use it.
 
