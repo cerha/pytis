@@ -21,9 +21,24 @@ from pytis.web import *
 _ = lcg.TranslatableTextFactory('pytis')
 
 class UriType(object):
+    """URI type for 'uri_provider' 'type' argument."""
     LINK = 'LINK'
     IMAGE = 'IMAGE'
 
+class Link(object):
+    """Link representation for 'uri_provider' returned value."""
+    def __init__(self, uri, title=None, target=None):
+        self._uri = uri
+        self._title = title
+        self._target = target
+    def uri(self):
+        return self._uri
+    def title(self):
+        return self._title
+    def target(self):
+        return self._target
+
+    
     
 class _Field(object):
     """Internal form field representation (all attributes are read-only)."""
@@ -139,9 +154,13 @@ class FieldFormatter(object):
                     value += ' ('+ info +')'
                     info = None
                 value = generator.img(src, alt=value) #, cls=cls)
-            uri = self._uri_provider(row, field.id)
-            if uri:
-                value = generator.link(value, uri)
+            link = self._uri_provider(row, field.id, type=UriType.LINK)
+            if link:
+                if type(link) in (str, unicode):
+                    value = generator.link(value, link)
+                else:
+                    value = generator.link(value, link.uri(), title=link.title(),
+                                           target=link.target())
             if info is not None:
                 value += ' ('+ info +')'
         return value    
