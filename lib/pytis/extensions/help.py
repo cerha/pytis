@@ -133,7 +133,7 @@ class _MenuItemReader(lcg.Reader):
 class _MenuReader(_MenuItemReader):
     """Generate an LCG document from a submenu within a menu hierarchy."""
     def _create_content(self):
-        return lcg.NodeIndex(depth=99)
+        return lcg.NodeIndex()
 
     def _create_children(self):
         children = []
@@ -211,7 +211,7 @@ class MenuOverviewReader(MenuReader):
                 
     def _create_content(self):
         sections = [self._create_section(menu) for menu in self._item.items()]
-        return lcg.SectionContainer([lcg.TableOfContents(title="Obsah", depth=99)] + sections)
+        return lcg.SectionContainer([lcg.TableOfContents(title="Obsah")] + sections)
 
     def _create_children(self):
         return []
