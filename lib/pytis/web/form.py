@@ -36,36 +36,9 @@ may change drastically!
 
 """
 
-import pytis.data
-from pytis.presentation import *
-
-import lcg
-from lcg import concat
+from pytis.web import *
 
 _ = lcg.TranslatableTextFactory('pytis')
-
-# TODO: This hack is necessary as long as pytis default language is Czech.
-pd = pytis.data
-pd.Type._VM_NULL_VALUE_MSG = _("Empty value")
-pd.Type._VM_INVALID_VALUE_MSG = _("Invalid value")
-pd.Limited._VM_MINLEN_MSG = _("Minimal length %(minlen)s not satisfied")
-pd.Limited._VM_MAXLEN_MSG = _("Maximal length %(maxlen)s exceeded")
-pd.Integer._VM_NONINTEGER_MSG = _("Not an integer")
-pd.Float._VM_INVALID_NUMBER_MSG = _("Invalid number")
-pd.String._VM_MINLEN_MSG = _("Minimal length %(minlen)s not satisfied")
-pd.String._VM_MAXLEN_MSG = _("String exceeds max length %(maxlen)s")
-pd.Password._VM_PASSWORD_MSG = _("Enter the password twice to eliminate typos")
-pd.Password._VM_PASSWORD_VERIFY_MSG = _("Passwords don't match")
-pd.RegexString._VM_FORMAT_MSG = _("Invalid format")
-pd.Color._VM_FORMAT_MSG = _("Invalid color format ('#RGB' or '#RRGGBB')")
-pd.DateTime._VM_DT_FORMAT_MSG = _("Invalid date or time format")
-pd.DateTime._VM_DT_VALUE_MSG = _("Invalid date or time")
-pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
-pd.Binary._VM_MINLEN_MSG = _("Minimal size %(minlen)s not satisfied")
-pd.Binary._VM_MAXLEN_MSG = _("Maximal size %(maxlen)s exceeded")
-pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
-pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(minsize)s exceeded")
-pd.Image._VM_FORMAT_MSG = _("Unsupported format %(format)s; valid formats: %(formats)s")
 
 class Type(pd.Type):
     def _validation_error(self, id, **kwargs):
@@ -75,11 +48,6 @@ class Type(pd.Type):
         return pd.ValidationError(message)
     # Needed to postpone variable interpolation to translation time.
     pd.Type._validation_error = _validation_error
-
-
-class UriType(object):
-    LINK = 'LINK'
-    IMAGE = 'IMAGE'
 
 
 class Form(lcg.Content):
@@ -146,12 +114,6 @@ class Form(lcg.Content):
         self._name = name
         self._enctype = None
 
-    def _uri(self, row, cid=None, **kwargs):
-        if self._uri_provider:
-            return self._uri_provider(row, cid=cid, **kwargs)
-        else:
-            return None
-        
     def _valid_prefill(self):
         # Return a dictionary of Python values for the prefill argument.
         valid = {}
@@ -181,22 +143,40 @@ class Form(lcg.Content):
                   [wrap(part, cls=name) for wrap, part, name in
                    ((g.div, self._export_submit(exporter),   'submit'),
                     (g.div, self._export_footer(exporter),   'footer')) if part]
-
-        
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
         return g.form(content, action=self._handler, method=self._HTTP_METHOD, cls=cls,
                       enctype=self._enctype)
+
+
+class FieldForm(Form):
+    """Form with formattable fields."""
+    
+    def __init__(self, *args, **kwargs):
+        super(FieldForm, self).__init__(*args, **kwargs)
+        self._fields = [self._field(id) for id in self._used_fields()]
+        
+    def _field(self, id):
+        from field import _Field
+        return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
+        
+    def _used_fields(self):
+        # Override this method to 
+        return ()
+        
+    def _format_field(self, exporter, field):
+        return field.formatter.format(exporter.generator(), self._row, field)
     
 
-class LayoutForm(Form):
+class LayoutForm(FieldForm):
     _MAXLEN = 100
 
     def __init__(self, *args, **kwargs):
         self._allow_table_layout = kwargs.pop('allow_table_layout', True)
         super(LayoutForm, self).__init__(*args, **kwargs)
-    
+        self._field_dict = dict([(f.id, f) for f in self._fields])
+        
     def _export_group(self, exporter, group):
         g = exporter.generator()
         result = []
@@ -211,14 +191,12 @@ class LayoutForm(Form):
                 fields = []
                 result.append(self._export_group(exporter, item))
             else:
-                field = self._view.field(item)
-                if field.width() == 0:
-                    continue
-                exported_field = self._export_field(exporter, field)
-                if exported_field is not None:
+                field = self._field_dict[item]
+                ctrl = self._export_field(exporter, field)
+                if ctrl is not None:
                     label = self._export_field_label(exporter, field)
                     help = self._export_field_help(exporter, field)
-                    fields.append((field, label, exported_field, help))
+                    fields.append((field, label, ctrl, help))
                     wrap = True
         if fields:
             result.append(self._export_fields(g, fields))
@@ -235,7 +213,7 @@ class LayoutForm(Form):
         if self._allow_table_layout:
             if help is not None:
                 ctrl += help
-            if field.compact():
+            if field.spec.compact():
                 td = g.td(label + g.br() +"\n"+ ctrl, colspan=2)
             else:
                 td = g.td(label, valign='top', align='right', cls='label') + \
@@ -254,67 +232,25 @@ class LayoutForm(Form):
             rows = ["<table>"] + rows + ["</table>"]
         return concat(rows, separator="\n")
 
-    def _export_field(self, exporter, f, cls=None):
-        g = exporter.generator()
-        row = self._row
-        type = row[f.id()].type()
-        info = None
-        if isinstance(type, pytis.data.Password):
-            return None
-        elif isinstance(type, pytis.data.Binary):
-            buf = row[f.id()].value()
-            if buf:
-                value = buf.filename() or isinstance(type, pd.Image) and _("image") or _("file")
-                info = format_byte_size(len(buf))
-            else:
-                value = ""
-        elif isinstance(type, pytis.data.Color):
-            color = row[f.id()].export()
-            value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
-                    g.span('&nbsp;', cls="color-display", style="background-color: %s;" % color)
-        elif type.enumerator():
-            value = row[f.id()].export()
-            display = row.display(f.id())
-            if isinstance(type, pytis.data.Boolean):
-                value = display or value and _("Yes") or _("No")
-            elif display:
-                if row.prefer_display(f.id()):
-                    value = display
-                else:
-                    info = display #g.abbr(value, title=display)
-        else:
-            value = row[f.id()].export()
-            if value and f.filename():
-                value = row[f.filename()].export()
-                info = format_byte_size(len(value))
-            elif len(value) > self._MAXLEN:
-                value = g.textarea(f.id(), value=value, readonly=True,
-                                   rows=min(f.height(), 5), cols=80)
-        if value:
-            src = self._uri(row, f.id(), type=UriType.IMAGE)
-            if src:
-                if info is not None:
-                    value += ' ('+ info +')'
-                    info = None
-                value = g.img(src, alt=value, cls=cls)
-            uri = self._uri(row, f.id())
-            if uri:
-                value = g.link(value, uri)
-            if info is not None:
-                value += ' ('+ info +')'
-        return value
-
-    def _export_field_label(self, exporter, f):
-        return exporter.generator().label(f.label(), None) + ":"
-    
-    def _export_field_help(self, exporter, f):
+    def _export_field(self, exporter, field):
         return None
+
+    def _export_field_label(self, exporter, field):
+        return exporter.generator().label(field.label, None) + ":"
     
+    def _export_field_help(self, exporter, field):
+        return None
+
+
 class _SingleRecordForm(LayoutForm):
 
     def _export_body(self, exporter):
         return self._export_group(exporter, self._view.layout().group())
 
+    def _used_fields(self):
+        return self._view.layout().order()
+    
+    
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
     
@@ -326,10 +262,13 @@ class _SubmittableForm(Form):
                 for label, name in self._submit] + \
                [g.reset(_("Reset", title=_("Undo all changes")))]
 
-    
+
 class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
     
+    def _export_field(self, exporter, field):
+        return self._format_field(exporter, field)
+
     
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
@@ -347,15 +286,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                   if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
 
-    def _field_id(self, f):
-        return "f%x-%s" % (positive_id(self), f.id())
-    
-    def _export_field(self, exporter, f):
+    def _export_field(self, exporter, field):
         g = exporter.generator()
-        value = self._row[f.id()]
+        value = self._row[field.id]
         type = value.type()
-        attr = {'name': f.id(),
-                'id': self._field_id(f)}
+        attr = {'name': field.id,
+                'id': field.unique_id}
         if isinstance(type, pytis.data.Boolean):
             ctrl = g.checkbox
             attr['value'] = 'T'
@@ -364,49 +300,50 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             ctrl = g.upload
         elif type.enumerator():
             ctrl = g.select
-            enum = self._row.enumerate(f.id())
+            enum = self._row.enumerate(field.id)
             attr['options'] = [("&nbsp;", "")] + \
                               [(display, str(val)) for val, display in enum]
             if value.value() in [val for val, display in enum]:
                 attr['selected'] = str(value.value())
         else:
-            if f.height() > 1:
+            if field.spec.height() > 1:
                 ctrl = g.textarea
-                attr['rows'] = f.height()
-                attr['cols'] = f.width()
+                attr['rows'] = field.spec.height()
+                attr['cols'] = field.spec.width()
             else:
                 if isinstance(type, pytis.data.String):
                     maxlen = type.maxlen()
                 else:
                     maxlen = None
                 ctrl = g.field
-                attr['size'] = f.width(maxlen)
+                attr['size'] = field.spec.width(maxlen)
                 attr['maxlength'] = maxlen
             if isinstance(type, pytis.data.Password):
                 attr['password'] = True
             else:
-                attr['value'] = self._prefill.get(f.id()) or value.export()
-        if not self._row.editable(f.id()):
+                attr['value'] = self._prefill.get(field.id) or value.export()
+        if not self._row.editable(field.id):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
-        field = ctrl(**attr)
+        result = ctrl(**attr)
         if isinstance(type, pytis.data.Password) and type.verify():
             attr['id'] = attr['id'] + '-verify-pasword'
-            field += g.br() + ctrl(**attr)
-        return field
+            result += g.br() + ctrl(**attr)
+        return result
 
-    def _export_field_label(self, exporter, f):
+    def _export_field_label(self, exporter, field):
         g = exporter.generator()
-        type = self._row[f.id()].type()
+        type = field.type
         if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
                (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary))):
             sign = g.sup("*", cls="not-null")
         else:
             sign = ''
-        return g.label(f.label(), self._field_id(f)) + sign + ":"
+        return g.label(field.label, field.unique_id) + sign + ":"
         
-    def _export_field_help(self, exporter, f):
-        return f.descr() and exporter.generator().div(f.descr(), cls="help") or ''
+    def _export_field_help(self, exporter, field):
+        descr = field.spec.descr()
+        return descr and exporter.generator().div(descr, cls="help")
 
     def _export_body(self, exporter):
         g = exporter.generator()
@@ -485,8 +422,15 @@ class BrowseForm(LayoutForm):
         See the parent classes for definition of the remaining arguments.
 
         """
+        self._columns = columns or view.columns()
+        uri_provider = kwargs.pop('uri_provider')
+        if uri_provider:
+            def browse_form_uri_provider(row, cid=None, **kwargs):
+                if cid == self._columns[0]:
+                    cid = None
+                return uri_provider(row, cid, **kwargs)
+            kwargs['uri_provider'] = browse_form_uri_provider
         super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
-        self._columns = [view.field(id) for id in columns or view.columns()]
         self._condition = condition
         params = {}
         if req is not None:
@@ -551,60 +495,21 @@ class BrowseForm(LayoutForm):
             self._tree_order_column = sorting[0][0]
         else:
             self._tree_order_column = None
-        # Initialize formatters by column type to avoid repetitive type checking for each row.
-        self._formatters = self._init_formatters(self._columns)
+        self._align = dict([(f.id, 'right') for f in self._fields if isinstance(f.type, pd.Number)])
 
-    def _init_formatters(self, columns):
-        return [(col, self._formatter(self._row[col.id()].type()),
-                 isinstance(self._row[col.id()].type(), pd.Number)) for col in columns]
+    def _used_fields(self):
+        return self._columns
 
-    def _boolean_formatter(self, generator, row, cid):
-        return row.display(cid) or row[cid].value() and _("Yes") or _("No")
-    
-    def _binary_formatter(self, generator, row, cid):
-        return "--"
-    
-    def _codebook_formatter(self, generator, row, cid):
-        value = row[cid].export()
-        display = row.display(cid)
-        if display:
-            if row.prefer_display(cid):
-                value = display
-            else:
-                value = generator.abbr(value, title=display)
-        return value
-    
-    def _generic_formatter(self, generator, row, cid):
-        value = row[cid].export() 
-        if not isinstance(value, lcg.Localizable):
-            value = generator.escape(row.format(cid))
-        return value
-        
-    def _formatter(self, type):
-        if isinstance(type, pytis.data.Boolean):
-            formatter = self._boolean_formatter
-        elif isinstance(type, pytis.data.Binary):
-            formatter = self._binary_formatter
-        elif type.enumerator():
-            formatter = self._codebook_formatter
-        else:
-            formatter = self._generic_formatter
-        return formatter
-
-    def _export_cell(self, exporter, generator, row, col, value):
-        if col is self._columns[0]:
-            uri = self._uri(row)
-        else:
-            uri = self._uri(row, col.id())
-        if uri:
-            value = generator.link(value, uri)
-        if col is self._columns[0] and self._tree_order_column:
-            order = row[self._tree_order_column].value()
+    def _export_cell(self, exporter, field):
+        value = self._format_field(exporter, field)
+        if field.id == self._fields[0].id and self._tree_order_column:
+            order = self._row[self._tree_order_column].value()
             if order is not None:
                 level = len(order.split('.')) - 2
                 if level > 0:
-                    indent = level * generator.span(2*'&nbsp;', cls='tree-indent')
-                    value = indent + '&bull;&nbsp;'+ generator.span(value, cls='tree-node')
+                    g = exporter.generator()
+                    indent = level * g.span(2*'&nbsp;', cls='tree-indent')
+                    value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
                     # &#8227 does not work in MSIE
         return value
 
@@ -630,10 +535,9 @@ class BrowseForm(LayoutForm):
     
     def _export_row(self, exporter, row, n):
         g = exporter.generator()
-        cells = [g.td(self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
-                      align=(is_number and "right" or None),
-                      style=self._style(col.style(), row))
-                 for col, formatter, is_number in self._formatters]
+        cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
+                      style=self._style(field.style, row))
+                 for field in self._fields]
         return g.tr(cells, style=self._style(self._view.row_style(), row),
                     cls=(n % 2 and 'even' or 'odd'))
     
@@ -641,27 +545,26 @@ class BrowseForm(LayoutForm):
         g = exporter.generator()
         current_sorting_column, current_dir = self._sorting[0]
         directions = [dir for dir, name in self._SORTING_DIRECTIONS]
-        def label(col):
-            result = col.column_label()
-            if not col.virtual():
-                cid = col.id()
-                if cid == current_sorting_column:
+        def label(field):
+            result = field.column_label
+            if not field.virtual:
+                if field.id == current_sorting_column:
                     dir = current_dir
                 else:
                     dir = None
                 new_dir = directions[(directions.index(dir)+1) % len(directions)]
                 arg = dict(self._SORTING_DIRECTIONS)[new_dir]
-                result = g.link(result, g.uri(self._handler, ('form-name', self._name), sort=cid,
-                                              dir=arg, limit=self._limit, xxx=None))
+                result = g.link(result, g.uri(self._handler, ('form-name', self._name),
+                                              sort=field.id, dir=arg, limit=self._limit))
                 if dir:
                     # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
-        return concat([g.th(label(c)) for c in self._columns])
+        return concat([g.th(label(f)) for f in self._fields])
     
     def _wrap_exported_rows(self, exporter, rows, summary):
-        n = len(self._columns)
+        n = len(self._fields)
         return concat('<table border="1">',
                       concat('<thead><tr>', self._export_headings(exporter), '</tr></thead>'),
                       concat('<tfoot><tr><td colspan="%d">' % n, summary, '</td></tr></tfoot>'),
@@ -768,9 +671,16 @@ class ListView(BrowseForm):
             self._export_row = super_._export_row
             self._wrap_exported_rows = super_._wrap_exported_rows
         else:
-            self._meta = [(col, fmtr, col.id() in layout.meta_labels()) for col, fmtr, __ in
-                          self._init_formatters([view.field(id) for id in layout.meta()])]
+            self._meta = [(self._field(id), id in layout.meta_labels()) for id in layout.meta()]
+            self._image = layout.image() and self._field(layout.image())
             
+    def _used_fields(self):
+        layout = self._view.list_layout()
+        if layout:
+            return layout.layout() and layout.layout().order() or ()
+        else:
+            return super(ListView, self)._used_fields()
+    
     def _export_row(self, exporter, row, n):
         layout = self._layout
         g = exporter.generator()
@@ -781,15 +691,13 @@ class ListView(BrowseForm):
             title = g.link(title, None, name=name)
         parts = [g.h(title, level=3)]
         if layout.image():
-            img = self._export_field(exporter, self._view.field(layout.image()),
-                                     cls='list-layout-image')
+            img = self._export_field(exporter, self._image) #cls='list-layout-image')
             if img:
                 parts.append(img)
         if self._meta:
-            meta = [g.span(labeled and g.span(col.label(), cls='label')+": " or '' + \
-                           self._export_cell(exporter, g, row, col, formatter(g, row, col.id())),
-                           cls=col.id())
-                    for col, formatter, labeled in self._meta]
+            meta = [g.span(labeled and g.span(field.label, cls='label')+": " or '' + \
+                           self._format_field(exporter, field), cls=field.id)
+                    for field, labeled in self._meta]
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
             parts.append(self._export_group(exporter, layout.layout()))
@@ -800,6 +708,9 @@ class ListView(BrowseForm):
             parts.append(g.div(content.export(exporter), cls='content'))
         return g.div(parts, cls='list-item ' + (n % 2 and 'even' or 'odd'))
 
+    def _export_field(self, exporter, field):
+        return self._format_field(exporter, field)
+    
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
         return g.div(rows, cls="body") +"\n"+ g.div(summary, cls="summary")
@@ -836,18 +747,15 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
         if __debug__:
             for cid in check_columns:
                 assert self._row.has_key(cid), cid
-                assert isinstance(self._row[cid].type(), pd.Boolean), cid
         if check_columns is None:
-            check_columns = tuple([col.id() for col in self._columns
-                                   if isinstance(self._row[col.id()].type(), pd.Boolean)])
+            check_columns = tuple([field.id for field in self._fields
+                                   if isinstance(field.type, pd.Boolean)])
         self._check_columns = check_columns
 
-    def _export_cell(self, exporter, generator, row, col, value):
-        cid = col.id()
-        if cid in self._check_columns:
-            value = row.format(self._key)
-            return generator.checkbox(name=cid, value=value, checked=row[cid].value())
+    def _export_cell(self, exporter, field):
+        if field.id in self._check_columns:
+            return exporter.generator().checkbox(name=field.id, value=self._row.format(self._key),
+                                                 checked=self._row[field.id].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(exporter, generator, row, col, value)
+            return super(CheckRowsForm, self)._export_cell(exporter, field)
 
-    
