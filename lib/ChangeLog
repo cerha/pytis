@@ -1,3 +1,13 @@
+2007-10-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (GroupSpec.order): New method.
+	(LayoutSpec.__init__): Use it.
+
+2007-10-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (CbComputer): Fixed default value
+	substitution.
+
 2007-10-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (ListField): Improved list height

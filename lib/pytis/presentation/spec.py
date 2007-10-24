@@ -572,6 +572,16 @@ class GroupSpec(object):
         """Vra» prvky skupiny jako tuple."""
         return tuple(self._items)
 
+    def order(self):
+        """Return the identifiers of all fields in this group and all subgroups."""
+        fields = []
+        for item in self._items:
+            if isinstance(item, GroupSpec):
+                fields.extend(item.order())
+            elif not isinstance(item, Button):
+                fields.append(item)
+        return fields
+
     def label(self):
         """Vra» název skupiny."""
         return self._label
@@ -683,17 +693,8 @@ class LayoutSpec(object):
         assert order is None or is_sequence(order)
         self._caption = caption
         self._group = group
-        def find_fields(group):
-            # Extract field ids from group by recursing it.
-            fields = []
-            for item in group.items():
-                if isinstance(item, GroupSpec):
-                    fields += find_fields(item)
-                elif not isinstance(item, Button):
-                    fields.append(item)
-            return fields
         if order is None:
-            order = find_fields(group)
+            order = group.order()
         elif __debug__:
             found = find_fields(group)
             for id in order:
