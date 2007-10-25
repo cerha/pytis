@@ -218,9 +218,11 @@ class LayoutForm(FieldForm):
             if help is not None:
                 ctrl += help
             if field.spec.compact():
-                td = g.td(label + g.br() +"\n"+ ctrl, colspan=2)
+                if label:
+                    label += g.br() +"\n"
+                td = g.td(label + ctrl, colspan=2)
             else:
-                td = g.td(label, valign='top', align='right', cls='label') + \
+                td = g.td(label or '', valign='top', cls='label') + \
                      g.td(ctrl, width='100%', cls='ctrl')
             return g.tr(td)
         else:
@@ -240,7 +242,10 @@ class LayoutForm(FieldForm):
         return None
 
     def _export_field_label(self, exporter, field):
-        return exporter.generator().label(field.label, None) + ":"
+        if field.label:
+            return exporter.generator().label(field.label, None) + ":"
+        else:
+            return None
     
     def _export_field_help(self, exporter, field):
         return None
@@ -337,6 +342,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def _export_field_label(self, exporter, field):
         g = exporter.generator()
+        if not field.label:
+            return None
         type = field.type
         if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
                (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary))):

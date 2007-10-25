@@ -2,6 +2,7 @@
 
 	* pytis/web/form.py (LayoutForm._export_group): Added support for
 	horizontal groups.
+	(LayoutForm): Respect empty labels.
 
 	* pytis/presentation/spec.py (GroupSpec): Automatically convert
 	sequences to vertical groups.
