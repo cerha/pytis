@@ -138,7 +138,7 @@ class FieldFormatter(object):
             if len(lines) > 1:
                 if self._showform and field.spec.width(None) is not None:
                     value = generator.textarea(field.id, value=value, readonly=True,
-                                               rows=min(len(lines), field.spec.height()),
+                                               rows=min(len(lines), field.spec.height(), 8),
                                                cols=field.spec.width())
                 else:
                     # Insert explicit linebreaks for non-css browasers.
