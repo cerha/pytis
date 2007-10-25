@@ -200,6 +200,10 @@ class LayoutForm(FieldForm):
                     wrap = True
         if fields:
             result.append(self._export_fields(g, fields))
+        if group.orientation() == Orientation.HORIZONTAL:
+            result = [g.table(g.tr([g.td(x, valign='top') for x in result]), border=0,
+                              cellspacing=0, cellpadding=0, cls='horizontal-group')]
+            wrap = False
         if group.label():
             result = g.fieldset(group.label()+':', result, cls='group')
         elif wrap:

@@ -1,3 +1,11 @@
+2007-10-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (LayoutForm._export_group): Added support for
+	horizontal groups.
+
+	* pytis/presentation/spec.py (GroupSpec): Automatically convert
+	sequences to vertical groups.
+
 2007-10-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/__init__.py: Import `field'.  Validation message
