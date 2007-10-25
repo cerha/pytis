@@ -555,12 +555,15 @@ class GroupSpec(object):
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
-        for item in items:
-            # není tøeba kontrolovat rekurzivnì, proto¾e kontrola probìhne pro
-            # ka¾dou instanci na její úrovni...
-            assert isinstance(item, GroupSpec) or isinstance(item, Button) \
-                   or isinstance(item, (str, unicode)), (item, label)
-        self._items = items
+        for i, item in enumerate(items):
+            if isinstance(item, (tuple, list)):
+                if isinstance(items, tuple):
+                    items = list(items)
+                items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
+            else:
+                # No need for recursion, since the check is performed for each group on ite level.
+                assert isinstance(item, (GroupSpec, Button, str, unicode)), item
+        self._items = tuple(items)
         self._label = label
         self._orientation = orientation
         self._gap = gap
