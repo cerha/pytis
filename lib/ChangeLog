@@ -1,8 +1,8 @@
 2007-10-25  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/form.py (LayoutForm._export_group): Added support for
-	horizontal groups.
-	(LayoutForm): Respect empty labels.
+	* pytis/web/form.py (LayoutForm): Added support for
+	horizontal groups.  Respect empty labels.  Stretch horizontal
+	groups to page width.
 
 	* pytis/presentation/spec.py (GroupSpec): Automatically convert
 	sequences to vertical groups.

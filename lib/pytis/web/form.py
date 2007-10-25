@@ -170,6 +170,7 @@ class FieldForm(Form):
     
 
 class LayoutForm(FieldForm):
+    """Form with fields arranged according to pytis layout specification."""
     _MAXLEN = 100
 
     def __init__(self, *args, **kwargs):
@@ -201,8 +202,9 @@ class LayoutForm(FieldForm):
         if fields:
             result.append(self._export_fields(g, fields))
         if group.orientation() == Orientation.HORIZONTAL:
-            result = [g.table(g.tr([g.td(x, valign='top') for x in result]), border=0,
-                              cellspacing=0, cellpadding=0, cls='horizontal-group')]
+            result = [g.table(g.tr([g.td(x, valign='top', cls=(i != 0 and 'spaced' or None))
+                                    for i, x in enumerate(result)]),
+                              width='100%', cellspacing=0, cellpadding=0, cls='horizontal-group')]
             wrap = False
         if group.label():
             result = g.fieldset(group.label()+':', result, cls='group')
@@ -235,7 +237,7 @@ class LayoutForm(FieldForm):
         rows = [self._export_packed_field(g, field, label, ctrl, help)
                 for field, label, ctrl, help in fields]
         if self._allow_table_layout:
-            rows = ["<table>"] + rows + ["</table>"]
+            rows = g.table(rows)
         return concat(rows, separator="\n")
 
     def _export_field(self, exporter, field):
@@ -575,12 +577,10 @@ class BrowseForm(LayoutForm):
         return concat([g.th(label(f)) for f in self._fields])
     
     def _wrap_exported_rows(self, exporter, rows, summary):
-        n = len(self._fields)
-        return concat('<table border="1">',
-                      concat('<thead><tr>', self._export_headings(exporter), '</tr></thead>'),
-                      concat('<tfoot><tr><td colspan="%d">' % n, summary, '</td></tr></tfoot>'),
-                      '<tbody>', rows, '</tbody>', 
-                      '</table>\n', separator="\n")
+        g = exporter.generator()
+        return g.table((g.thead(g.tr(self._export_headings(exporter))),
+                        g.tfoot(g.tr(g.td(summary, colspan=len(self._fields)))),
+                        g.tbody(rows)), border=1)
 
     def _export_body(self, exporter):
         data = self._data
