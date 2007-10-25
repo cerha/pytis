@@ -185,8 +185,8 @@ class LayoutForm(FieldForm):
         wrap = False
         for item in group.items():
             if isinstance(item, Button):
-                continue
-            if isinstance(item, GroupSpec):
+                pass
+            elif isinstance(item, GroupSpec):
                 if fields:
                     result.append(self._export_fields(g, fields))
                 fields = []
@@ -237,7 +237,7 @@ class LayoutForm(FieldForm):
         rows = [self._export_packed_field(g, field, label, ctrl, help)
                 for field, label, ctrl, help in fields]
         if self._allow_table_layout:
-            rows = g.table(rows)
+            rows = g.table(rows, cls='packed-fields')
         return concat(rows, separator="\n")
 
     def _export_field(self, exporter, field):
