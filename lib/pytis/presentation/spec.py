@@ -852,21 +852,18 @@ class ViewSpec(object):
             `PresentedRow', lze vyvolat doplòující akce po editaci inline
             záznamu.
              
-          redirect -- pøesmìrování formuløe pro editaci jednoho záznamu.  Jedná
-            se o funkci jednoho argumentu, jím¾ je instance 'PresentedRow'
-            reprezentující øádek dat, pro který je pøesmìrování po¾adováno.
-            Vrácenou hodnotou musí být název specifikace, nad kterou bude
-            vytváøený formuláø sestaven.  Pokud funkce vrátí None, nebo není
-            ¾ádná funkce specifikována, k ¾ádnému pøesmìrování nedojde.
-            Stejného efektu by ¹lo dosáhnout také pomocí 'on_edit_record', ale
-            pou¾ití 'redirect' je v podstatì zjednodu¹ená varianta
-            'on_edit_record'.  Pokud je v¹ak 'on_edit_record' pou¾it, je
-            'redirect' ignorován!
+          redirect -- redirection for single record view/editation specified as a callable object
+            (function) of one argument - the 'PresentedRow' instance.  The function should return
+            the name of the specification to use for given record.  If the function is not defined
+            or it returns None, no redirection takes place.  Redirection may be useful when a form
+            lists records of different types (displaying only the fields which are common for all
+            the subtypes) and you want to be able to open each particular record in a form which
+            matches its subtype.  Note, that the same effect would be possible by defining the
+            'on_edit_record' function.
             
-          focus_field -- øetìzcová hodnota identifikátoru políèka urèující,
-            které políèko má po otevøení formuláøe fokus, nebo funkce jednoho
-            argumentu, kterým je PresentedRow pro otevíraný formuláø, a která
-            vrací pøíslu¹ný identifikátor políèka.
+          focus_field -- identifier of the field, which should automatically gain focus when a form
+            is open.  You may also pass a function of one argument ('PresentedRow' instance), which
+            returns the field identifier.
             
           description -- brief description of the view.  A short text (one or two sentences)
             without formatting.  Use the 'help' argument below to supply a detailed description.
