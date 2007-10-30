@@ -2,6 +2,7 @@
 
 	* lib/pytis/extensions/email_.py (SimpleEmail.send): Correct
 	arguments for `smtplib.sendmail'.	
+	(SimpleEmail.create_headers): Add `Date' header to message.
 
 2007-10-19  Pavel Hanak  <hanak@asellus.cz>
 

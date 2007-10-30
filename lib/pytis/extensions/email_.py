@@ -98,9 +98,11 @@ class SimpleEmail(object):
         from_ = get_header(self.from_)
         to = get_header(self._flatten_for_header(self.to))
         subject = get_header(self.subject)
+        date = email.Utils.formatdate()
         self.msg['From'] = from_
         self.msg['To'] = to        
         self.msg['Subject'] = subject
+        self.msg['Date'] = date
         if self.bcc:
             bcc = get_header(self._flatten_for_header(self.bcc))
             self.msg['Bcc'] = bcc                    
