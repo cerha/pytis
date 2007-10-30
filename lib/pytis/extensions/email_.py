@@ -123,7 +123,7 @@ class SimpleEmail(object):
         try:
             import smtplib
             server = smtplib.SMTP(self.smtp)
-            server.sendmail(self.to, self.from_, message)
+            server.sendmail(self.from_, self.to, message)
             success = True
         finally:    
             server.quit()
