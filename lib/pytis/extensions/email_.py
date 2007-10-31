@@ -80,6 +80,18 @@ class SimpleEmail(object):
             return ', '.join(header)
         else:
             return header
+
+    def smtp_to(self):
+        if self.bcc is None:
+            return self.to
+        else:
+            to = self.to
+            bcc = self.bcc
+            if isinstance(to, (str, unicode)):
+                to = [to]
+            if isinstance(bcc, (str, unicode)):
+                bcc = [bcc]                
+            return to + bcc
         
     def create_headers(self):
         def get_header(header):
@@ -103,9 +115,6 @@ class SimpleEmail(object):
         self.msg['To'] = to        
         self.msg['Subject'] = subject
         self.msg['Date'] = date
-        if self.bcc:
-            bcc = get_header(self._flatten_for_header(self.bcc))
-            self.msg['Bcc'] = bcc                    
 
     def create_content(self):
         self.msg.set_payload(self.content)        
@@ -122,11 +131,10 @@ class SimpleEmail(object):
         self.create_message()
         message = self.msg.as_string()
         success = False
-        server = None
         try:
             import smtplib
             server = smtplib.SMTP(self.smtp)
-            server.sendmail(self.from_, self.to, message)
+            server.sendmail(self.from_, self.smtp_to(), message)
             success = True
         finally:
             if server:

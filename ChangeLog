@@ -2,6 +2,8 @@
 
 	* lib/pytis/extensions/email_.py (SimpleEmail.send):
 	Call `server.quit' only if exists.
+	(SimpleEmail.smtp_to): New method.
+	(SimpleEmail.send): Use it.
 
 2007-10-30  Pavel Hanak  <hanak@asellus.cz>
 
