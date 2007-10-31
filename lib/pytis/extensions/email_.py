@@ -127,7 +127,8 @@ class SimpleEmail(object):
             server = smtplib.SMTP(self.smtp)
             server.sendmail(self.from_, self.to, message)
             success = True
-        finally:    
+        finally:
+            # TODO opravit chybu
             server.quit()
         return success              
 
