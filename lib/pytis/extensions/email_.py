@@ -122,14 +122,15 @@ class SimpleEmail(object):
         self.create_message()
         message = self.msg.as_string()
         success = False
+        server = None
         try:
             import smtplib
             server = smtplib.SMTP(self.smtp)
             server.sendmail(self.from_, self.to, message)
             success = True
         finally:
-            # TODO opravit chybu
-            server.quit()
+            if server:
+                server.quit()
         return success              
 
 
