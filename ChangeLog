@@ -1,5 +1,8 @@
 2007-11-01  Pavel Hanak  <hanak@asellus.cz>
 
+	* lib/pytis/extensions/dbconfig.py (saved_config_writer): Convert
+	pickled config to unicode.
+
 	* db/db_pytis_config.py (read_pytis_config, write_pytis_config):
 	Bad `where' condition corrected.
 

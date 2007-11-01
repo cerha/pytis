@@ -103,6 +103,8 @@ class DBConfig(object):
     def __setitem__(self, key, value):
         """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
         type = self._row[key].type()
+        if key == 'saved_config':
+            print "SSSSSSSSSSSSSS", self._row[key].type()
         self._row[key] = pytis.data.Value(type, value)
         self._data.update(self._key, self._row, transaction=self._transaction)
 
@@ -183,7 +185,7 @@ def saved_config_writer(name, column):
     """
     import cPickle as pickle
     def writer(items):
-        value = pytis.data.Value(pytis.data.String(), pickle.dumps(items))
+        value = pytis.data.Value(pytis.data.String(), pickle.dumps(items).decode('latin2'))
         try:
             dbfunction('write_pytis_config', ('value', value))
         except:    
