@@ -45,6 +45,12 @@ NOVÉ VLASTNOSTI:
 
  * Omezit max. ¹íøku okna èíselníku
 
+ * Umo¾nit definici `editable' i na úrovni ViewSpec
+
+   Editovatelnost záznamu je tøeba kontrolovat jak pøed editací ve formuláøi, tak pøed inline
+   editací.  V pøípadì needitovatelnosti by nìkdy bylo vhodné mít mo¾nost zobrazit zprávu proè
+   editace není pøípustná.
+
  * Pokud je default hodnota políèka typu CHOICE None, pøidat do výbìru None polo¾ku
 
  * Ve specifikaci unique datového typu pøedávat datový objekt
