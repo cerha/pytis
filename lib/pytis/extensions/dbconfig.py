@@ -156,20 +156,13 @@ def saved_config_reader(name, column):
     """
     import cPickle as pickle
     def reader():
-        try:
-            value = dbfunction('read_pytis_config')
-        except:
-            # TODO: don't use DBConfig in the future
-            #       return None if not succesful
-            log(OPERATIONAL, "Obsolete saved_config_reader. Use read_pytis_config instead.")
-            value = DBConfig(name)[column]
+        value = DBConfig(name)[column]
         try:
             return pickle.loads(str(value))
         except pickle.UnpicklingError, e:
-            log(OPERATIONAL, "Nepodaøilo se obnovit ulo¾enou konfiguraci:", e)
+            log(OPERATIONAL, "Couldn't restore saved configuration:", e)
             return ()
     return reader
-
 
 def saved_config_writer(name, column):
     """Vra» funkci pro ulo¾ení u¾ivatelské konfigurace do databáze.
@@ -185,12 +178,41 @@ def saved_config_writer(name, column):
     """
     import cPickle as pickle
     def writer(items):
+        DBConfig(name)[column] = pickle.dumps(items)
+    return writer
+
+def pytis_config_reader():
+    """Vra» funkci pro naètení ulo¾ené u¾ivatelské konfigurace z databáze.
+
+    Funkce je urèena pro pou¾ití ve specifikaèní funkci `read_config()' v
+    `application.py'.
+
+    """
+    import cPickle as pickle
+    def reader():
+        try:
+            value = dbfunction('read_pytis_config')
+            return pickle.loads(str(value))
+        except pickle.UnpicklingError, e:
+            log(OPERATIONAL, "Couldn't restore saved configuration:", e)
+            return ()
+    return reader
+
+
+def pytis_config_writer():
+    """Vra» funkci pro ulo¾ení u¾ivatelské konfigurace do databáze.
+
+    Funkce je urèena pro pou¾ití ve specifikaèní funkci `write_config()' v
+    `application.py'.
+
+    """
+    import cPickle as pickle
+    def writer(items):
         value = pytis.data.Value(pytis.data.String(), pickle.dumps(items).decode('latin2'))
         try:
             dbfunction('write_pytis_config', ('value', value))
-        except:    
-            log(OPERATIONAL, "Obsolete saved_config_writer. Use write_pytis_config instead.")
-            DBConfig(name)[column] = pickle.dumps(items)
+        except:
+            log(OPERATIONAL, "Couldn't save user configuration:", e)
     return writer
 
 
