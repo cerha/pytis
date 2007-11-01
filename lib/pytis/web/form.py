@@ -99,7 +99,7 @@ class Form(lcg.Content):
         assert isinstance(view, ViewSpec), view
         assert isinstance(resolver, pytis.util.Resolver), resolver
         assert row is None or isinstance(row, pytis.data.Row), row
-        assert isinstance(handler, str), handler
+        assert isinstance(handler, (str, unicode)), handler
         assert isinstance(hidden, (tuple, list)), hidden
         self._data = data
         self._key = data.key()[0].id()
