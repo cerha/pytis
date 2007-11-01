@@ -23,12 +23,12 @@ table('_pytis_config',
 function('read_pytis_config',
          (),
          TString,
-         body=("insert into _pytis_config select current_user, NULL::text "
+         body=("insert into _pytis_config (uzivatel, config) "
+               "select current_user, NULL::text "
                "where (select current_user) not in "
                "(select uzivatel from _pytis_config); "
                "select config from _pytis_config "
-               "where (select current_user) = "
-               "(select uzivatel from _pytis_config)"),
+               "where uzivatel = (select current_user)"),
          doc="""Funkce na zji¹»ování configu pro daného u¾ivatele""",
          depends=('_pytis_config',))
 
@@ -36,14 +36,13 @@ function('write_pytis_config',
          (TString,),
          TString,
          body=("update _pytis_config set config = $1 "
-               "where (select current_user) = "
-               "(select uzivatel from _pytis_config); "
-               "insert into _pytis_config select current_user, $1::text "
+               "where uzivatel = (select current_user);"
+               "insert into _pytis_config (uzivatel, config) "
+               "select current_user, $1::text "
                "where (select current_user) not in "
-               "(select uzivatel from _pytis_config); "
+               "(select uzivatel from _pytis_config); "               
                "select config from _pytis_config "
-               "where (select current_user) = "
-               "(select uzivatel from _pytis_config)"
+               "where uzivatel = (select current_user)"
                ),
          doc="""Funkce na zápis configu pro daného u¾ivatele.""",
          depends=('_pytis_config',))
