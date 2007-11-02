@@ -1,5 +1,24 @@
 CHYBY:
 
+ * Deadlock pøi zamykání
+
+   Mìjme tabulku T1, kde políèko p1 má "references=C1 ON UPDATE CASCADE".  Pøi otevøení editaèního
+   formuláøe nad T1 dojde k uzamèení T1.  Pokud nad tímto editaèním formuláøem otevøeme èíselník C1
+   a provedeme editaci referenèního sloupce (vìt¹inou klíèového) v záznamu referovaném z uzamèeného
+   øádku T1, dojde k dead-locku, proto¾e databáze nemù¾e provést "ON UPDATE CASCADE".
+
+   Návrh øe¹ení:
+
+   Evidovat v datovém rozhraní zamknuté sloupce tabulek odkazovaných v REFERENCES.  Pøi lock_record
+   do této evidence pøidat v¹echny sloupce v odkazovaných tabulkách, které jsou z uzamykané tabulky
+   odkazovány, pokud mají nastaveno ON UPDATE CASCADE (pøi unlock_record je opìt odebrat).
+
+   Díky tomu by bylo mo¾né pøi zápisu do datového objektu zjistit, jestli není nìkterý ze sloupcù
+   aktualizované tabulky v této evidenci a napø. vyvolat výjimku a pøedejít tím zatuhnutí.
+   
+   Dále by bylo mo¾né tuto informaci z datového objektu nìjak vytáhnout a napø. uèinit pøíslu¹né
+   políèko needitovatelné.
+
  * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
 
  * Zpráva "Vlo¾ený záznam se neobjevil v aktualním náhledu"
