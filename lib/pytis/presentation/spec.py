@@ -709,7 +709,7 @@ class LayoutSpec(object):
                        (_("Field id missing in 'order' specification:"), id)
             assert len(found) == len(order), \
                    _("Duplicate field id in 'order' spcification.")
-        self._order = order
+        self._order = tuple(order)
 
     def caption(self):
         """Vra» nadpis pro editaèní formuláø jednoho záznamu."""
