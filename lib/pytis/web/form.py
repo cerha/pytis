@@ -286,15 +286,14 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     
     def __init__(self, data, view, resolver, row, errors=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
-        key = self._key
+        key, order = self._key, view.layout().order()
         self._hidden += [(k, v) for k, v in self._prefill.items()
-                         if view.field(k) and not k in view.layout().order() and k!= key]
-        if not self._row.new() and key not in view.layout().order() + [k for k,v in self._hidden]:
+                         if view.field(k) and not k in order and k != key]
+        if not self._row.new() and key not in order + tuple([k for k,v in self._hidden]):
             self._hidden += [(key,  self._row[key].export())]
         assert isinstance(errors, (tuple, list, str, unicode)), errors
         self._errors = errors
-        binary = [id for id in self._view.layout().order()
-                  if isinstance(self._row[id].type(), pytis.data.Binary)]
+        binary = [id for id in order if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
 
     def _export_field(self, exporter, field):

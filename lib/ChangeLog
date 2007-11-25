@@ -1,5 +1,13 @@
 2007-11-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/__init__.py: Define `debug'.
+
+	* pytis/web/form.py (EditForm.__init__): Treat `layout.order()' as
+	a tuple.
+
+	* pytis/presentation/spec.py (LayoutSpec.__init__): Store the
+	`order' as a tuple.
+
 	* pytis/data/postgresql.py
 	(PostgreSQLStandardBindingHandler._pdbb_coalesce): Cast `DateTime'
 	to `timestamp', not `date'.
