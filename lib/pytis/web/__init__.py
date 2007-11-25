@@ -20,7 +20,7 @@ import pytis.data as pd
 from pytis.presentation import *
 
 import lcg
-from lcg import concat
+from lcg import concat, log as debug
 
 from request import *
 from form import *
