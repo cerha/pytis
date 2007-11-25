@@ -747,9 +747,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         elif isinstance(ctype, Time):
             default = "'00:00:01'"
             cast = '::time'
-        elif isinstance(ctype, DateTime):
+        elif isinstance(ctype, Date):
             default = "'0000-01-01'"
             cast = '::date'
+        elif isinstance(ctype, DateTime):
+            default = "'0000-01-01'"
+            cast = '::timestamp'
         elif isinstance(ctype, Boolean):
             default = "'F'"
             cast = '::bool'
