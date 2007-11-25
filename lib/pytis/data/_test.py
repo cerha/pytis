@@ -363,8 +363,8 @@ class DataEnumerator(unittest.TestCase):
         assert v == ('1', '2', '3'), v
     def test_get(self):
         e = self.cb1.enumerator()
-        b = e.get('2', 'y')
-        assert b.value() == 'b', ('Unexpected value', b)
+        r = e.row('2')
+        assert r['y'].value() == 'b', ('Unexpected value', b)
 tests.add(DataEnumerator)
         
 class FixedEnumerator(unittest.TestCase):
@@ -805,7 +805,7 @@ class DBDataDefault(_DBTest):
              B('synt', 'cosnova', 'synte'), B('anal', 'cosnova', 'anal'),
              B('popis', 'cosnova', 'popis'),
              B('druh', 'cosnova', 'druh'),
-             B('stat', 'cosnova', 'stat', enumerator=dstat_spec),
+             B('stat', 'cosnova', 'stat', enumerator=pytis.data.DataEnumerator(dstat_spec)),
              B('danit', 'cosnova', 'danit')),
             key)
         dosnova = dosnova_spec.create(connection_data=conn)
