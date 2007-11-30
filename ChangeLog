@@ -1,3 +1,7 @@
+2007-12-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py: Updated for latest LCG version.
+
 2007-11-01  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/dbconfig.py (saved_config_writer): Convert
