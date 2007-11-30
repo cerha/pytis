@@ -69,7 +69,10 @@ class _MenuItemReader(lcg.Reader):
     def __init__(self, id, item, **kwargs):
         self._name = id
         self._item = item
-        super(_MenuItemReader, self).__init__(id, title=item.title(), **kwargs)
+        super(_MenuItemReader, self).__init__(id, **kwargs)
+
+    def _title(self):
+        return self._item.title()
 
     def _menu_path(self):
         if self._parent is None or self._parent.id() == 'menu':
@@ -86,7 +89,7 @@ class _MenuItemReader(lcg.Reader):
     def menu_path_title(self):
         return ' -> '.join([r.item().title() for r in self._menu_path()])
 
-    def _create_content(self):
+    def _content(self):
         command, args = (self._item.command(), self._item.args())
         hotkey = self._item.hotkey()
         if hotkey and hotkey[0] is not None:
@@ -132,10 +135,10 @@ class _MenuItemReader(lcg.Reader):
 
 class _MenuReader(_MenuItemReader):
     """Generate an LCG document from a submenu within a menu hierarchy."""
-    def _create_content(self):
+    def _content(self):
         return lcg.NodeIndex()
 
-    def _create_children(self):
+    def _children(self):
         children = []
         for n, item in enumerate(self._item.items()):
             if isinstance(item, (pytis.form.MItem, pytis.form.Menu)):
@@ -209,11 +212,11 @@ class MenuOverviewReader(MenuReader):
                 content = lcg.p("Není obyèejný náhled.")
         return lcg.Section(item.title(), content)
                 
-    def _create_content(self):
+    def _content(self):
         sections = [self._create_section(menu) for menu in self._item.items()]
         return lcg.SectionContainer([lcg.TableOfContents(title="Obsah")] + sections)
 
-    def _create_children(self):
+    def _children(self):
         return []
 
         
@@ -221,18 +224,12 @@ class MenuOverviewReader(MenuReader):
 
         
 class _DescrReader(lcg.StructuredTextReader):
-    """Generates a description of a one view within a pytis application."""
+    """Generates a description of one view within a pytis application."""
 
     def __init__(self, id, **kwargs):
         self._read_spec(pytis.util.resolver(), id)
-        global _menu_items
-        if _menu_items.has_key(id):
-            items = [i.menu_path_title() for i in _menu_items[id]]
-            descr = ", ".join(items)
-        else:
-            descr = None
         self._name = id
-        super(_DescrReader, self).__init__(id, title=self._title(), descr=descr, **kwargs)
+        super(_DescrReader, self).__init__(id, **kwargs)
 
     def _read_spec(self, resolver, name):
         self._view_spec = resolver.get(name, 'view_spec')
@@ -240,6 +237,13 @@ class _DescrReader(lcg.StructuredTextReader):
 
     def _title(self):
         return self._view_spec.title()
+
+    def _descr(self):
+        global _menu_items
+        if _menu_items.has_key(id):
+            return ", ".join([i.menu_path_title() for i in _menu_items[id]])
+        else:
+            return None
     
     def _info(self):
         # Create a list of relevant menu items
@@ -262,11 +266,11 @@ class _DescrReader(lcg.StructuredTextReader):
         else:
             return lcg.p(_("Popis není k dispozici."))
 
-    def _create_content(self):
+    def _content(self):
         content = [lcg.Section("Základní informace",
                                lcg.fieldset(self._info(), formatted=True))]
-        if os.path.exists(self._input_file(self._name, lang=self._language, ext='txt')):
-            text = self._read_file(self._name, lang=self._language, ext='txt')
+        if os.path.exists(self._input_file(self._name, lang='cs', ext='txt')):
+            text = self._read_file(self._name, lang='cs', ext='txt')
             descr = self._parse_source_text(text)
         else:
             # The file does not exist.  Let's read the specification.
@@ -278,8 +282,8 @@ class _DescrReader(lcg.StructuredTextReader):
 
 class _SingleDescrReader(_DescrReader):
 
-    def _create_content(self):
-        content = super(_SingleDescrReader, self)._create_content()
+    def _content(self):
+        content = super(_SingleDescrReader, self)._content()
         view = self._view_spec
         actions = [(a.title(), a.descr() or '') for a in view.actions(linear=True)]
         fields = [(f.label(), f.descr() or "")  for f in
@@ -324,8 +328,8 @@ class _DualDescrReader(_DescrReader):
                ((_("Horní formuláø"), "[%s]" % main),
                 (_("Dolní formuláø"), "[%s]" % side))
     
-    def _create_content(self):
-        content = super(_DualDescrReader, self)._create_content()
+    def _content(self):
+        content = super(_DualDescrReader, self)._content()
         main_rights = self._main_data_spec.access_rights()
         side_rights = self._side_data_spec.access_rights()
         main_groups = main_rights.permitted_groups(pytis.data.Permission.VIEW, None)
@@ -360,13 +364,14 @@ class DescrReader(lcg.FileReader):
     including this class.
 
     """
-    def __init__(self, id, **kwargs):
-        super(DescrReader, self).__init__(id, title="Nápovìda k jednotlivým náhledùm", **kwargs)
 
-    def _create_content(self):
+    def _title(self):
+        return "Nápovìda k jednotlivým náhledùm"
+
+    def _content(self):
         return lcg.NodeIndex(depth=1)
 
-    def _create_children(self):
+    def _children(self):
         global _used_defs
         _used_defs.sort()
         children = []
