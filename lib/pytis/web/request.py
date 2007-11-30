@@ -32,7 +32,7 @@ class FileUpload(object):
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
         
     def filename(self):
-        """Return the original filename as a string"""
+        """Return the original filename (without path) as a unicode string."""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
         
     def type(self):

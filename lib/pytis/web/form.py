@@ -146,7 +146,7 @@ class Form(lcg.Content):
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
-        return g.form(content, action=self._handler, method=self._HTTP_METHOD, cls=cls,
+        return g.form(content, action=g.uri(self._handler), method=self._HTTP_METHOD, cls=cls,
                       enctype=self._enctype)
 
 
@@ -658,7 +658,8 @@ class BrowseForm(LayoutForm):
             cid, dir = self._sorting[0]
             result += (g.hidden('sort', cid),
                        g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir]))
-        return g.form(result, action=self._handler, method='GET', cls=self._CSS_CLS+'-controls')
+        return g.form(result, action=g.uri(self._handler), method='GET',
+                      cls=self._CSS_CLS+'-controls')
 
     def export(self, exporter):
         result = super(BrowseForm, self).export(exporter)

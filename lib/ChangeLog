@@ -1,3 +1,9 @@
+2007-11-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/request.py (FileUpload.filename): Docstring imporoved.
+
+	* pytis/web/form.py: Escape the URI passed to form action.
+
 2007-11-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/__init__.py: Define `debug'.
