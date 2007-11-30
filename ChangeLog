@@ -27,6 +27,10 @@
 	* lib/pytis/extensions/dbconfig.py (saved_config_reader.reader):
 	Use new sql function `read_pytis_config'.
 
+2007-10-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py: Updated for newer LCG interface.
+
 2007-10-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (cb2colvalue): Use
