@@ -1,5 +1,8 @@
 CHYBY:
 
+ * V duálním náhledu se ve spodní èásti nezachová filtrování (zelené záhlaví
+   zmizí), pokud v horní èásti pøejdu na jiný záznam.
+
  * Virtuální sloupeèek (tøída Field s parametrem type) vyhodí chybu, pokud na
    nìj aplikujeme funci pøes pravé tlaè. "Filtrovat podle buòky".
  
