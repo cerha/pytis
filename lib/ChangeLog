@@ -1,3 +1,8 @@
+2007-12-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/list.py (SideBrowseForm.on_selection): Don't reset
+	filtering after main form selection.
+
 2007-11-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/request.py (FileUpload.filename): Docstring imporoved.

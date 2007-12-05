@@ -3,6 +3,11 @@
 ; a opravených chyb.  Dodr¾ujte prosím formát.  Nejprve jsou nové
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
+
+2007-12-05  Tomas Cerha  <cerha@brailcom.org>
+
+	Filtraèní podmínka vedlej¹ího formuláøe je nyní zachována i po
+	výbìru jiného øádku v hlavním formuláøi.
 	
 2007-10-08  Tomas Cerha  <cerha@brailcom.org>
 	

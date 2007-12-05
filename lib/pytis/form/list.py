@@ -1359,6 +1359,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
         """
+        # TODO: 'reset' is now only used in '_cmd_sort()'.  If we can find another way to apply
+        # sorting, the argument can be removed!!!
         assert when in (None, # internal ONLY!
                         self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT, self.DOIT_IFNEEDED), when
         assert reset is None or type(reset) == type({}), reset
@@ -1617,6 +1619,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._grouping = tuple(cols[:l])
             self._set_state_param('grouping', self._grouping)
             # Make the changes visible.
+            # TODO: This is now the only use of the 'reset' argument to '_refresh()'.  Could we
+            # find another solution and remove 'reset' form '_refresh()'?
             self._refresh(reset={'sorting': sorting},
                           when=self.DOIT_IMMEDIATELY)
         return sorting
@@ -2410,7 +2414,7 @@ class SideBrowseForm(BrowseForm):
             sbcol = self._binding.side_binding_column()
             self._prefill = {sbcol: pytis.data.Value(self._sbcol_type, row[bcol].value())}
         self._lf_condition = self._selection_condition(row)
-        self._refresh(reset={'filter': None})
+        self._refresh()
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
