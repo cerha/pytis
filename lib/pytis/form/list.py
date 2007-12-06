@@ -595,6 +595,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         table = self._table
         cid = self._columns[col].id()
         the_row = table.editing().the_row
+        if self._view.on_edit_record() is not None:
+            message(_("In-line editace zakázána.  Pou¾ijte formuláø (F5)."), beep_=True)
+            return False
         if not the_row.editable(cid):
             message(_("Políèko je needitovatelné"), kind=ACTION, beep_=True)
             return False
@@ -701,11 +704,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         elif success:
             log(EVENT, 'Zamítnuto pro chybu klíèe')
             if editing.the_row.new():
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna "
-                        "sousedního øádku")
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo zmìna sousedního øádku")
             else:
-                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní "
-                        "øádek ji¾ neexistuje")
+                msg = _("Øádek s tímto klíèem ji¾ existuje nebo pùvodní øádek ji¾ neexistuje")
             run_dialog(Warning, msg)
             return False
         else:
@@ -1907,13 +1908,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         row = self._current_cell()[0]
         log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
-            message('Nemáte pøístupová práva pro vkládání záznamù do této ' + \
-                    'tabulky!', beep_=True)
+            message(_("Nemáte pøístupová práva pro vkládání záznamù do této tabulky!"), beep_=True)
             return False
         if not self.editable:
-            message('Needitovatelná tabulka!', beep_=True)
+            message(_("Needitovatelná tabulka!"), beep_=True)
             return False
-
+        if self._view.on_new_record() is not None:
+            message(_("In-line vkládání zakázáno.  Pou¾ijte formuláø (F6)."), beep_=True)
+            return False
         cols = [c.id() for c in self._columns]
         for col in self._data.columns():
             if col.type().not_null() and col.id() not in cols \
@@ -1923,9 +1925,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 # We silently presume, that when a not null column is not in
                 # fields, it probably has a default value (if not, it would be
                 # an error anyway), so we can continue.
-                msg = _('Povinný sloupec "%s" není zobrazen.\n'
-                        'Není mo¾né vkládat øádky v in-line editaci.\n'
-                        'Pøidejte sloupec nebo pou¾ijte editaèní formuláø.')
+                msg = _("Povinný sloupec '%s' není zobrazen.\n"
+                        "Není mo¾né vkládat øádky v in-line re¾imu.\n"
+                        "Pøidejte sloupec nebo vlo¾te záznam pøes formuláø (F6).")
                 label = self._view.field(col.id()).column_label()
                 run_dialog(Warning, msg % label)
                 return False
