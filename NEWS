@@ -9,6 +9,9 @@
 	Zobrazení "rychlé" nápovìdy (ikonka s otazníkem v pravém horním
 	rohu formuláøe) nyní vyu¾ívá nejnovìj¹í verzi LCG.  LCG je tøeba
 	v¹ude aktualizovat.
+
+	Specifikaèní funkce `cleanup' je nyní volána i po inline
+	editaci/vkládání.  Funkce `on_line_commit' byla zru¹ena.
 	
 	* BUGFIX: Pøíkaz "Filtrovat podle buòky" je nyní neaktivní nad
 	virtuálními sloupeèky (díky èemu¾ nedojde pøi pokusu o vyvolání
