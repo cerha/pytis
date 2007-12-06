@@ -12,6 +12,10 @@
 
 	Specifikaèní funkce `cleanup' je nyní volána i po inline
 	editaci/vkládání.  Funkce `on_line_commit' byla zru¹ena.
+
+	Inline vkládání je nyní automaticky zakázáno, pokud je definována
+	funkce `on_new_record'.  Stejnì tak inline editace je znemo¾nìna,
+	je-li definováno `on_edit_record'.
 	
 	* BUGFIX: Pøíkaz "Filtrovat podle buòky" je nyní neaktivní nad
 	virtuálními sloupeèky (díky èemu¾ nedojde pøi pokusu o vyvolání

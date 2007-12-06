@@ -6,6 +6,10 @@
 	* pytis/form/list.py (ListForm._can_filter_by_cell): New method.
 	(ListForm._on_line_commit): Call `cleanup' instead of
 	`on_line_commit'.
+	(ListForm._cmd_insert_line): Disable inline insert if
+	`on_new_record' is defined.
+	(ListForm._edit_cell): Disable inline editation if
+	`on_edit_record' is defined.
 
 	* pytis/form/screen.py (wx_text_view): Updated for recent LCG
 	version.
