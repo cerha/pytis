@@ -1,3 +1,8 @@
+2007-12-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (wx_text_view): Updated for recent LCG
+	version.
+
 2007-12-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py (SideBrowseForm.on_selection): Don't reset

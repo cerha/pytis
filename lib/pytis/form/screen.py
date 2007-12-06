@@ -1567,7 +1567,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN):
         if format == TextFormat.WIKI:
             import lcg
             n = lcg.ContentNode('', content=lcg.SectionContainer(lcg.Parser().parse(content)))
-            html = n.content().export(lcg.HtmlExporter())
+            html = n.content().export(lcg.HtmlExporter().context(n, None))
         else:
             html = content
         import wx.html
