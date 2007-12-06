@@ -1666,6 +1666,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         value = self._table.row(row)[id]
         self.COMMAND_FILTER_BY_VALUE.invoke(column_id=id, value=value)
             
+    def _can_filter_by_cell(self):
+        row, col = self._current_cell()
+        return self._data.find_column(self._columns[col].id()) is not None
+            
     def _cmd_autofilter(self, col=None, position=None):
         busy_cursor(True)
         try:

@@ -1,5 +1,7 @@
 2007-12-06  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py (ListForm._can_filter_by_cell): New method.
+
 	* pytis/form/screen.py (wx_text_view): Updated for recent LCG
 	version.
 

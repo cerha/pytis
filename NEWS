@@ -4,10 +4,20 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-12-06  Tomas Cerha  <cerha@brailcom.org>
+
+	Zobrazení "rychlé" nápovìdy (ikonka s otazníkem v pravém horním
+	rohu formuláøe) nyní vyu¾ívá nejnovìj¹í verzi LCG.  LCG je tøeba
+	v¹ude aktualizovat.
+	
+	* BUGFIX: Pøíkaz "Filtrovat podle buòky" je nyní neaktivní nad
+	virtuálními sloupeèky (díky èemu¾ nedojde pøi pokusu o vyvolání
+	filtrace k chybì).
+
 2007-12-05  Tomas Cerha  <cerha@brailcom.org>
 
-	Filtraèní podmínka vedlej¹ího formuláøe je nyní zachována i po
-	výbìru jiného øádku v hlavním formuláøi.
+	* BUGFIX: Filtraèní podmínka vedlej¹ího formuláøe je nyní
+	zachována i po výbìru jiného øádku v hlavním formuláøi.
 	
 2007-10-08  Tomas Cerha  <cerha@brailcom.org>
 	

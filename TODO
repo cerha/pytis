@@ -1,8 +1,5 @@
 CHYBY:
 
- * Virtuální sloupeèek (tøída Field s parametrem type) vyhodí chybu, pokud na
-   nìj aplikujeme funci pøes pravé tlaè. "Filtrovat podle buòky".
- 
  * Deadlock pøi zamykání
 
    Mìjme tabulku T1, kde políèko p1 má "references=C1 ON UPDATE CASCADE".  Pøi otevøení editaèního
