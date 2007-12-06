@@ -679,19 +679,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             key = editing.orig_row.columns(kc)
             op, args, kwargs = self._data.update, (key, rdata,), {}
         # Provedení operace
-        
         success, result = db_operation(op, *args, **dict(kwargs, transaction=self._transaction))
         if self._governing_transaction is None and self._transaction is not None:
             self._transaction.commit()
         self._transaction = self._governing_transaction
         if success and result[1]:
+            cleanup = self._view.cleanup()
+            if cleanup is not None:
+                original_row = copy.copy(the_row)
+                new_row = result[0]
+                if new_row is None:
+                    new_row = the_row.row()
+                the_row.set_row(new_row, reset=True)
             table.edit_row(None)
             message('Øádek ulo¾en do databáze', ACTION)
             self.refresh()
             self._run_callback(self.CALL_MODIFICATION)
-            on_line_commit = self._view.on_line_commit()
-            if on_line_commit is not None:
-                on_line_commit(the_row)
+            if cleanup is not None:
+                cleanup(the_row, original_row)
             self.focus()
         elif success:
             log(EVENT, 'Zamítnuto pro chybu klíèe')

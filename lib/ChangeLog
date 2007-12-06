@@ -1,6 +1,11 @@
 2007-12-06  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (ViewSpec): Removed option
+	`on_line_commit'.  Updated docstring for `cleanup'.
+
 	* pytis/form/list.py (ListForm._can_filter_by_cell): New method.
+	(ListForm._on_line_commit): Call `cleanup' instead of
+	`on_line_commit'.
 
 	* pytis/form/screen.py (wx_text_view): Updated for recent LCG
 	version.

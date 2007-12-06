@@ -746,7 +746,7 @@ class ViewSpec(object):
     def __init__(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
                  actions=(), sorting=None, grouping=None, check=(), cleanup=None,
                  on_new_record=None, on_edit_record=None, on_delete_record=None,
-                 on_line_commit=None, redirect=None, focus_field=None, description=None, help=None,
+                 redirect=None, focus_field=None, description=None, help=None,
                  row_style=FIELD_STYLE_DEFAULT, conditions=(), aggregations=()):
         
         """Inicializuj instanci.
@@ -815,16 +815,18 @@ class ViewSpec(object):
             Je mo¾né vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová
             zpráva, která má být zobrazena u¾ivateli.
             
-          cleanup -- funkce provádìjící závìreèné akce pøi uzavøení formuláøe.
-            Jedná se o funkci dvou argumentù.  Prvním je výsledný ulo¾ený øádek
-            odpovídající koneènému stavu databáze a druhým je pùvodní øádek z
-            formuláøe pøed ulo¾ením (na úrovni databáze mohou být nìkteré
-            hodnoty zmìnìny èi doplnìny ``default'' hodnoty apod.).  Druhý
-            øádek obsahuje hodnoty po editaci u¾ivatelem, ale pomocí jeho
-            metody `original_row' je mo¾né také získat pùvodní hodnoty pøed
-            editací.  Oba argumenty jsou instance 'PresentedRow'.  Funkce je
-            spou¹tìna v¾dy pøi pøi uzavøení editaèního formuláøe tlaèítkem
-            ``Ok'' (potvrzením) a to i v pøípadì, ¾e ¾ádná data nebyla zmìnìna.
+          cleanup -- a function for final actions after inserting/updating a record.  The function
+            must accept two arguemnts -- the first one is the row after performing the database
+            operation (insert/update) and the second is the edited/inserted row before the database
+            operation (row values may be changed by the operation -- default values may be supplied
+            and/or triggers/rules may modify the data).  Both arguments are `PresentedRow'
+            instances.  Note, that you can also access the values before any user changes throught
+            the 'original_row()' method on the second argument.  The cleanup function is run after
+            comitting the edit/insert form (using the ``Ok'' button) or after committing inline
+            editation/insert regardless whether the record has been changed or not.  Note, that
+            unlike 'check', 'cleanup' is called after the database operation, but you can still
+            abort the operation by rollback of the transaction (if the underlying database engine
+            supports it).
             
           on_new_record -- akce vlo¾ení nového záznamu.  Pokud je None, bude
             provedena výchozí akce (otevøení PopupEditForm nad danou
@@ -847,11 +849,6 @@ class ViewSpec(object):
             dal¹ím akcím, pokud vrací instancí 'pytis.data.Operator', bude
             provedeno 'pytis.data.delete_many()' s pøíslu¹nou podmínkou.
             
-          on_line_commit -- akce volaná po ulo¾ení øádku v inline editaci.
-            Pøedáním funkce jednoho argumentu, jím¾ je instance
-            `PresentedRow', lze vyvolat doplòující akce po editaci inline
-            záznamu.
-             
           redirect -- redirection for single record view/editation specified as a callable object
             (function) of one argument - the 'PresentedRow' instance.  The function should return
             the name of the specification to use for given record.  If the function is not defined
@@ -990,7 +987,6 @@ class ViewSpec(object):
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
         assert on_delete_record is None or callable(on_delete_record)
-        assert on_line_commit is None or callable(on_line_commit)
         assert redirect is None or callable(redirect)
         assert focus_field is None or callable(focus_field) or \
                isinstance(focus_field, (str, unicode))
@@ -1010,7 +1006,6 @@ class ViewSpec(object):
         self._on_new_record = on_new_record
         self._on_edit_record = on_edit_record
         self._on_delete_record = on_delete_record
-        self._on_line_commit = on_line_commit
         self._redirect = redirect
         self._focus_field = focus_field
         self._description = description
@@ -1096,10 +1091,6 @@ class ViewSpec(object):
     def on_delete_record(self):
         """Vra» funkci provádìjící mazání záznamu, nebo None."""
         return self._on_delete_record
-
-    def on_line_commit(self):
-        """Vra» funkci volanou po ulo¾ení inline øádku."""
-        return self._on_line_commit
 
     def redirect(self):
         """Vra» funkci zaji¹»ující pøesmìrování na jiný název specifikace."""
