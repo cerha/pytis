@@ -212,7 +212,6 @@ class LayoutForm(FieldForm):
             result = g.div(result, cls='group')
         else:
             result = concat(result, separator="\n")
-        #if group.orientation() == Orientation.VERTICAL:
         return result
 
     def _export_packed_field(self, g, field, label, ctrl, help):
@@ -222,10 +221,14 @@ class LayoutForm(FieldForm):
             if field.spec.compact():
                 if label:
                     label += g.br() +"\n"
-                td = g.td(label + ctrl, colspan=2)
+                td = g.td(label + ctrl, colspan=3)
             else:
-                td = g.td(label or '', valign='top', cls='label') + \
-                     g.td(ctrl, width='100%', cls='ctrl')
+                td = g.td(label or '', valign='top', cls='label')
+                if isinstance(field.type, pytis.data.Number):
+                    td += g.td(ctrl, cls='ctrl', align='right') + \
+                          g.td('', width='100%', cls='spacer')
+                else:
+                    td += g.td(ctrl, cls='ctrl', width='100%', colspan=2)
             return g.tr(td)
         else:
             rows = (concat(label, g.br()), concat(ctrl, g.br()))

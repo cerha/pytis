@@ -1,6 +1,7 @@
 2007-12-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (BrowseForm): Added support for named styles.
+	(LayoutForm): Align numeric fields in the layout.
 
 	* pytis/presentation/spec.py (Style): New constructor argument and
 	method `name'.
