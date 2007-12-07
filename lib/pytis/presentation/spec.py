@@ -94,7 +94,7 @@ class Style(object):
     _COLOR_RE = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     def __init__(self, foreground=None, background=None, bold=None, slanted=None,
-                 overstrike=None, underline=None):
+                 overstrike=None, underline=None, name=None):
         """Initialize the instance.
 
         Arguments:
@@ -106,6 +106,7 @@ class Style(object):
           slanted -- flag indicating slanted (italics) text 
           overstrike -- flag indicating that the text should be stroked through
           underline -- flag indicating that the text should be underlined
+          name -- style name (string) refering to a common style definition in a stylesheet
           
         """
         self._foreground = foreground
@@ -114,30 +115,28 @@ class Style(object):
         self._slanted = slanted
         self._overstrike = overstrike
         self._underline = underline
+        self._name = name
 
     def foreground(self):
-        """Vra» barvu textu zadanou v konstruktoru."""
         return self._foreground
 
     def background(self):
-        """Vra» barvu pozadí zadanou v konstruktoru."""
         return self._background
 
     def bold(self):
-        """Vra» pravdu, právì kdy¾ má text blikat."""
         return self._bold
 
     def slanted(self):
-        """Vra» pravdu, právì kdy¾ má být text tuèný."""
         return self._slanted
 
     def overstrike(self):
-        """Vra» pravdu, právì kdy¾ má být text pøe¹krtnutý."""
         return self._overstrike
     
     def underline(self):
-        """Vra» pravdu, právì kdy¾ má být text podtr¾ený."""
         return self._underline
+
+    def name(self):
+        return self._name
 
     def __str__(self):
         items = [k[1:]+'='+repr(v) for k,v in self.__dict__.items()
@@ -163,15 +162,8 @@ class Style(object):
                          bold=coalesce(self._bold, other._bold),
                          slanted=coalesce(self._slanted, other._slanted),
                          overstrike=coalesce(self._overstrike, other._overstrike),
-                         underline=coalesce(self._underline, other._underline))
-        
-
-# Backwards compatibility alias.
-FieldStyle = Style
-
-FIELD_STYLE_DEFAULT = FieldStyle()
-FIELD_STYLE_EMPHASIS = FieldStyle(bold=True)
-FIELD_STYLE_WARNING = FieldStyle(foreground=Color.RED)
+                         underline=coalesce(self._underline, other._underline),
+                         name=coalesce(self._name, other._name))
 
 
 class Orientation(object):
@@ -747,7 +739,7 @@ class ViewSpec(object):
                  actions=(), sorting=None, grouping=None, check=(), cleanup=None,
                  on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None,
-                 row_style=FIELD_STYLE_DEFAULT, conditions=(), aggregations=()):
+                 row_style=None, conditions=(), aggregations=()):
         
         """Inicializuj instanci.
 
@@ -870,9 +862,9 @@ class ViewSpec(object):
             format.  This text is used for generating the on-line help and it is also possible to
             supply it in a separate file.  See the Help tutorial for more information.
 
-          row_style -- a 'FieldStyle' instance determining the base style for all fields or a
-            function of one argument (the 'PresentedRow' instance) returning the 'FieldStyle' for
-            one row (based on its values).
+          row_style -- a 'Style' instance determining the base style for all fields or a function
+            of one argument (the 'PresentedRow' instance) returning the 'Style' for one row (based
+            on its values).
 
           conditions -- a sequence of named conditions ('Condition' instances), which should be
             available to the user for filtering/searching records in this view.
@@ -990,7 +982,7 @@ class ViewSpec(object):
         assert redirect is None or callable(redirect)
         assert focus_field is None or callable(focus_field) or \
                isinstance(focus_field, (str, unicode))
-        assert isinstance(row_style, FieldStyle) or callable(row_style)
+        assert row_style is None or isinstance(row_style, Style) or callable(row_style)
         assert description is None or isinstance(description, (str, unicode))
         assert help is None or isinstance(help, (str, unicode))
         self._title = title
@@ -1846,8 +1838,8 @@ class FieldSpec(object):
             Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
             'EXCLUDE_LIST'.
             
-          style -- instance tøídy 'FieldStyle' urèující vizuální styl políèka
-            nebo funkce dvou argumentù vracející instanci tøídy 'FieldStyle'.
+          style -- instance tøídy 'Style' urèující vizuální styl políèka
+            nebo funkce dvou argumentù vracející instanci tøídy 'Style'.
             Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
             a aktuální datový øádek jako instance 'PresentedRow'.  Pokud je
             None, bude pou¾it výchozí styl øádku (viz. argument 'row_style'
@@ -1960,7 +1952,7 @@ class FieldSpec(object):
             if width == 0 or computer: editable = Editable.NEVER
             else: editable = Editable.ALWAYS
         assert editable in public_attributes(Editable) or isinstance(editable, Computer)
-        assert style is None or isinstance(style, FieldStyle) \
+        assert style is None or isinstance(style, Style) \
                or callable(style), ('Invalid field style', id, style)
         assert filename is None or isinstance(filename, str)
         links = xtuple(link)
