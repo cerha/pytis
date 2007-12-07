@@ -525,7 +525,7 @@ class BrowseForm(LayoutForm):
                     # &#8227 does not work in MSIE
         return value
 
-    def _style(self, style, row):
+    def _style(self, style, row, n=None):
         def color(c):
             if type(c) is tuple:
                 return '#%02x%02x%02x' % c
@@ -533,25 +533,31 @@ class BrowseForm(LayoutForm):
                 return c
         if callable(style):
             style = style(row)
+        cls = n is not None and (n % 2 and 'even' or 'odd') or None
         if style is None:
-            return None
-        styles = (
+            return cls and dict(cls=cls) or {}
+        if style.name() is not None:
+            if cls is None:
+                cls = style.name()
+            else:
+                cls += ' ' + style.name()
+            return dict(cls=cls)
+        styles = [name +': '+ f(attr()) for attr, name, f in (
             (style.foreground, 'color',            color),
             (style.background, 'background-color', color),
             (style.slanted,    'font-style',       lambda x: x and 'italic' or 'normal'),
             (style.bold,       'font-weight',      lambda x: x and 'bold' or 'normal'),
             (style.overstrike, 'text-decoration',  lambda x: x and 'line-through' or 'none'),
             (style.underline,  'text-decoration',  lambda x: x and 'underline' or 'none'),
-            )
-        return '; '.join([name +': '+ f(attr()) for attr, name, f in styles if attr() is not None])
+            ) if attr() is not None]
+        return dict(cls=cls, style='; '.join(styles))
     
     def _export_row(self, exporter, row, n):
         g = exporter.generator()
         cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
-                      style=self._style(field.style, row))
+                      **self._style(field.style, row))
                  for field in self._fields]
-        return g.tr(cells, style=self._style(self._view.row_style(), row),
-                    cls=(n % 2 and 'even' or 'odd'))
+        return g.tr(cells, **self._style(self._view.row_style(), row, n))
     
     def _export_headings(self, exporter):
         g = exporter.generator()
