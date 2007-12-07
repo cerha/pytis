@@ -55,6 +55,13 @@ EDIT_FORM = FormType.EDIT
 INSERT_FORM = FormType.INSERT
 VIEW_FORM = FormType.VIEW
 
+FIELD_STYLE_DEFAULT = Style()
+FIELD_STYLE_EMPHASIS = Style(bold=True)
+FIELD_STYLE_WARNING = Style(foreground=Color.RED)
+
+# Backwards compatibility alias.
+FieldStyle = Style
+
 # Funkce pro zjednodu¹ení vytváøení polo¾ek menu.
 
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):

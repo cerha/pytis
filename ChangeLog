@@ -1,3 +1,9 @@
+2007-12-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (FIELD_STYLE_DEFAULT)
+	(FIELD_STYLE_EMPHASIS, FIELD_STYLE_WARNING): New constants.
+	(FieldStyle): New alias.
+
 2007-12-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py: Updated for latest LCG version.
