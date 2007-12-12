@@ -1,3 +1,8 @@
+2007-12-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added support for alternative layouts.  Don't
+	align numeric fields in `EditForm'.
+
 2007-12-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (BrowseForm): Added support for named styles.
