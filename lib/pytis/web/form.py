@@ -162,7 +162,7 @@ class FieldForm(Form):
         return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
     def _used_fields(self):
-        # Override this method to 
+        # Override this method to return a sequence of field identifiers for all used fields.
         return ()
         
     def _format_field(self, exporter, field):
@@ -172,12 +172,18 @@ class FieldForm(Form):
 class LayoutForm(FieldForm):
     """Form with fields arranged according to pytis layout specification."""
     _MAXLEN = 100
+    _ALIGN_NUMERIC_FIELDS = False
 
-    def __init__(self, *args, **kwargs):
-        self._allow_table_layout = kwargs.pop('allow_table_layout', True)
-        super(LayoutForm, self).__init__(*args, **kwargs)
+    def __init__(self, data, view, resolver, layout=None, allow_table_layout=True, **kwargs):
+        assert layout is None or isinstance(layout, GroupSpec)
+        self._layout = layout
+        super(LayoutForm, self).__init__(data, view, resolver, **kwargs)
+        self._allow_table_layout = allow_table_layout
         self._field_dict = dict([(f.id, f) for f in self._fields])
         
+    def _used_fields(self):
+        return self._layout.order()
+    
     def _export_group(self, exporter, group):
         g = exporter.generator()
         result = []
@@ -224,7 +230,7 @@ class LayoutForm(FieldForm):
                 td = g.td(label + ctrl, colspan=3)
             else:
                 td = g.td(label or '', valign='top', cls='label')
-                if isinstance(field.type, pytis.data.Number):
+                if self._ALIGN_NUMERIC_FIELDS and isinstance(field.type, pytis.data.Number):
                     td += g.td(ctrl, cls='ctrl', align='right') + \
                           g.td('', width='100%', cls='spacer')
                 else:
@@ -258,11 +264,12 @@ class LayoutForm(FieldForm):
 
 class _SingleRecordForm(LayoutForm):
 
+    def __init__(self, data, view, resolver, row, layout=None, **kwargs):
+        super(_SingleRecordForm, self).__init__(data, view, resolver, row=row,
+                                                layout=layout or view.layout().group(), **kwargs)
+        
     def _export_body(self, exporter):
-        return self._export_group(exporter, self._view.layout().group())
-
-    def _used_fields(self):
-        return self._view.layout().order()
+        return self._export_group(exporter, self._layout)
     
     
 class _SubmittableForm(Form):
@@ -279,6 +286,7 @@ class _SubmittableForm(Form):
 
 class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
+    _ALIGN_NUMERIC_FIELDS = False
     
     def _export_field(self, exporter, field):
         return self._format_field(exporter, field)
@@ -289,7 +297,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     
     def __init__(self, data, view, resolver, row, errors=(), **kwargs):
         super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
-        key, order = self._key, view.layout().order()
+        key, order = self._key, tuple(self._layout.order())
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in order and k != key]
         if not self._row.new() and key not in order + tuple([k for k,v in self._hidden]):
@@ -683,16 +691,18 @@ class ListView(BrowseForm):
     _CSS_CLS = 'list-view'
     
     def __init__(self, data, view, resolver, **kwargs):
-        super(ListView, self).__init__(data, view, resolver, **kwargs)
-        self._layout = layout = self._view.list_layout()
-        if layout is None:
+        self._list_layout = list_layout = view.list_layout()
+        layout = list_layout and list_layout.layout() or None
+        super(ListView, self).__init__(data, view, resolver, layout=layout, **kwargs)
+        if list_layout is None:
             super_ = super(ListView, self)
             self._CSS_CLS = super_._CSS_CLS
             self._export_row = super_._export_row
             self._wrap_exported_rows = super_._wrap_exported_rows
         else:
-            self._meta = [(self._field(id), id in layout.meta_labels()) for id in layout.meta()]
-            self._image = layout.image() and self._field(layout.image())
+            self._meta = [(self._field(id), id in list_layout.meta_labels())
+                          for id in list_layout.meta()]
+            self._image = list_layout.image() and self._field(list_layout.image())
             
     def _used_fields(self):
         layout = self._view.list_layout()
@@ -702,7 +712,7 @@ class ListView(BrowseForm):
             return super(ListView, self)._used_fields()
     
     def _export_row(self, exporter, row, n):
-        layout = self._layout
+        layout = self._list_layout
         g = exporter.generator()
         parser = lcg.Parser()
         title = self._row[layout.title()].export()
