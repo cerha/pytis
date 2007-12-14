@@ -1363,7 +1363,7 @@ class ListField(GenericCodebookField):
         total_width = 0
         for i, id in enumerate(columns):
             col = view_spec.field(id)
-            list.InsertColumn(i, col.label())
+            list.InsertColumn(i, col.column_label())
             width = col.column_width()
             if width < len(col.label()):
                 width = len(col.label())
