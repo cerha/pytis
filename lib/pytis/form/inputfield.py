@@ -1103,11 +1103,13 @@ class Invocable(object, CommandHandler):
         return wx_button(self._parent, label=label, icon=icon, size=self._button_size())
 
     def _disable(self):
-        self._invocation_button.Enable(False)
+        if not self._inline:
+            self._invocation_button.Enable(False)
         super(Invocable, self)._disable()
     
     def _enable(self):
-        self._invocation_button.Enable(True)
+        if not self._inline:
+            self._invocation_button.Enable(True)
         super(Invocable, self)._enable()
     
     def _menu(self):
@@ -1166,7 +1168,8 @@ class ColorSelectionField(Invocable, TextField):
         return wx.lib.colourselect.ColourSelect(self._parent, -1, size=size)
     
     def _set_value(self, value):
-        self._invocation_button.SetColour(value)
+        if not self._inline:
+            self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
 
     

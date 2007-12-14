@@ -2,6 +2,7 @@
 
 	* pytis/form/inputfield.py (ListField._create_ctrl): Use
 	`column_label()' instead of `label()'.
+	(Invocable): Inline editation bug fixed.
 
 2007-12-12  Tomas Cerha  <cerha@brailcom.org>
 
