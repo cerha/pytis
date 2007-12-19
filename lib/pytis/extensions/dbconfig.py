@@ -103,8 +103,6 @@ class DBConfig(object):
     def __setitem__(self, key, value):
         """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
         type = self._row[key].type()
-        if key == 'saved_config':
-            print "SSSSSSSSSSSSSS", self._row[key].type()
         self._row[key] = pytis.data.Value(type, value)
         self._data.update(self._key, self._row, transaction=self._transaction)
 
