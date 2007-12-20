@@ -1,3 +1,13 @@
+2007-12-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* translations/pytis.cs.po: Updated.
+
+	* translations/pytis.de.po: Updated.
+
+	* translations/pytis.pl.po: Updated.
+
+	* translations/pytis.sk.po: Updated.
+
 2007-09-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* Makefile: Check python path before installation.

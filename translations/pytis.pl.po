@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-24 20:00+0200\n"
+"POT-Creation-Date: 2007-12-20 10:17+0100\n"
 "PO-Revision-Date: 2007-09-26 11:38+0200\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -15,121 +15,21 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:49
-msgid "Empty value"
-msgstr "Pusta warto¶æ"
-
-#: ../lib/pytis/web/form.py:50
-msgid "Invalid value"
-msgstr "Niepoprawna warto¶æ"
-
-#: ../lib/pytis/web/form.py:51 ../lib/pytis/web/form.py:55
-#, fuzzy, python-format
-msgid "Minimal length %(minlen)s not satisfied"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
-
-#: ../lib/pytis/web/form.py:52
-#, fuzzy, python-format
-msgid "Maximal length %(maxlen)s exceeded"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
-
-#: ../lib/pytis/web/form.py:53
-msgid "Not an integer"
-msgstr "To nie jest liczba ca³kowita"
-
-#: ../lib/pytis/web/form.py:54
-msgid "Invalid number"
-msgstr "Niepoprawny numer"
-
-#: ../lib/pytis/web/form.py:56
-#, fuzzy, python-format
-msgid "String exceeds max length %(maxlen)s"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
-
-#: ../lib/pytis/web/form.py:57
-msgid "Enter the password twice to eliminate typos"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:58
-msgid "Passwords don't match"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:59
-msgid "Invalid format"
-msgstr "Niew³a¶ciwy format"
-
-#: ../lib/pytis/web/form.py:60
-msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
-
-#: ../lib/pytis/web/form.py:61
-msgid "Invalid date or time format"
-msgstr "Niew³a¶ciwy format daty lub czasu"
-
-#: ../lib/pytis/web/form.py:62
-msgid "Invalid date or time"
-msgstr "Niew³a¶ciwy format daty lub czasu"
-
-#: ../lib/pytis/web/form.py:63
-msgid "Date outside the allowed range"
-msgstr "Data poza dopuszczalnym obrêbem"
-
-#: ../lib/pytis/web/form.py:64
-#, fuzzy, python-format
-msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
-
-#: ../lib/pytis/web/form.py:65
-#, python-format
-msgid "Maximal size %(maxlen)s exceeded"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:66
-#, python-format
-msgid "Maximal pixel size %(maxsize)s exceeded"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:67
-#, fuzzy, python-format
-msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
-
-#: ../lib/pytis/web/form.py:68
-#, python-format
-msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:132 ../lib/pytis/web/dialog.py:50
+#: ../lib/pytis/web/form.py:114 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Wy¶lij"
 
-#: ../lib/pytis/web/form.py:185
+#: ../lib/pytis/web/form.py:283
 msgid "Submit the form"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:187
+#: ../lib/pytis/web/form.py:285
 msgid "Undo all changes"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:187
+#: ../lib/pytis/web/form.py:285
 msgid "Reset"
 msgstr "Od¶wie¿"
-
-#: ../lib/pytis/web/form.py:323
-msgid "image"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:323
-msgid "file"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:338 ../lib/pytis/web/form.py:524
-msgid "Yes"
-msgstr "Tak"
-
-#: ../lib/pytis/web/form.py:338 ../lib/pytis/web/form.py:524
-msgid "No"
-msgstr "Nie"
 
 #: ../lib/pytis/web/form.py:387
 msgid "Fields marked by an asterisk are mandatory."
@@ -179,6 +79,106 @@ msgstr ""
 
 #: ../lib/pytis/web/form.py:672
 msgid "Go"
+msgstr ""
+
+#: ../lib/pytis/web/__init__.py:39
+msgid "Empty value"
+msgstr "Pusta warto¶æ"
+
+#: ../lib/pytis/web/__init__.py:40
+msgid "Invalid value"
+msgstr "Niepoprawna warto¶æ"
+
+#: ../lib/pytis/web/__init__.py:41 ../lib/pytis/web/__init__.py:45
+#, fuzzy, python-format
+msgid "Minimal length %(minlen)s not satisfied"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+
+#: ../lib/pytis/web/__init__.py:42
+#, fuzzy, python-format
+msgid "Maximal length %(maxlen)s exceeded"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+
+#: ../lib/pytis/web/__init__.py:43
+msgid "Not an integer"
+msgstr "To nie jest liczba ca³kowita"
+
+#: ../lib/pytis/web/__init__.py:44
+msgid "Invalid number"
+msgstr "Niepoprawny numer"
+
+#: ../lib/pytis/web/__init__.py:46
+#, fuzzy, python-format
+msgid "String exceeds max length %(maxlen)s"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+
+#: ../lib/pytis/web/__init__.py:47
+msgid "Enter the password twice to eliminate typos"
+msgstr ""
+
+#: ../lib/pytis/web/__init__.py:48
+msgid "Passwords don't match"
+msgstr ""
+
+#: ../lib/pytis/web/__init__.py:49
+msgid "Invalid format"
+msgstr "Niew³a¶ciwy format"
+
+#: ../lib/pytis/web/__init__.py:50
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
+
+#: ../lib/pytis/web/__init__.py:51
+msgid "Invalid date or time format"
+msgstr "Niew³a¶ciwy format daty lub czasu"
+
+#: ../lib/pytis/web/__init__.py:52
+msgid "Invalid date or time"
+msgstr "Niew³a¶ciwy format daty lub czasu"
+
+#: ../lib/pytis/web/__init__.py:53
+msgid "Date outside the allowed range"
+msgstr "Data poza dopuszczalnym obrêbem"
+
+#: ../lib/pytis/web/__init__.py:54
+#, fuzzy, python-format
+msgid "Minimal size %(minlen)s not satisfied"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+
+#: ../lib/pytis/web/__init__.py:55
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr ""
+
+#: ../lib/pytis/web/__init__.py:56
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr ""
+
+#: ../lib/pytis/web/__init__.py:57
+#, fuzzy, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+
+#: ../lib/pytis/web/__init__.py:58
+#, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr ""
+
+#: ../lib/pytis/web/field.py:89
+msgid "Yes"
+msgstr "Tak"
+
+#: ../lib/pytis/web/field.py:89
+msgid "No"
+msgstr "Nie"
+
+#: ../lib/pytis/web/field.py:101
+msgid "image"
+msgstr ""
+
+#: ../lib/pytis/web/field.py:101
+msgid "file"
 msgstr ""
 
 #, fuzzy

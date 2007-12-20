@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-20 08:53+0100\n"
+"POT-Creation-Date: 2007-12-20 10:17+0100\n"
 "PO-Revision-Date: 2007-11-29 09:27+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -14,9 +14,70 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/dialog.py:50 ../lib/pytis/web/form.py:113
+#: ../lib/pytis/web/form.py:114 ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Senden"
+
+#: ../lib/pytis/web/form.py:283
+msgid "Submit the form"
+msgstr "Formular senden"
+
+#: ../lib/pytis/web/form.py:285
+msgid "Undo all changes"
+msgstr "Alle durchgeführten Änderungen zurücksetzen."
+
+#: ../lib/pytis/web/form.py:285
+msgid "Reset"
+msgstr "Ursprungswerte wiederherstellen"
+
+#: ../lib/pytis/web/form.py:387
+msgid "Fields marked by an asterisk are mandatory."
+msgstr "Felder mit Sternchen sind Pflichtfelder."
+
+#: ../lib/pytis/web/form.py:633
+msgid "No records."
+msgstr "Kein Eintrag"
+
+#: ../lib/pytis/web/form.py:636
+msgid "Total records:"
+msgstr "Einträge insgesamt:"
+
+#: ../lib/pytis/web/form.py:638
+#, python-format
+msgid "Displayed records %(first)s-%(last)s of total %(total)s"
+msgstr "Abgebildete Einträge %(first)s-%(last)s von insgesamt %(total)s"
+
+#: ../lib/pytis/web/form.py:655 ../lib/pytis/web/form.py:657
+msgid "Page"
+msgstr "Seite"
+
+#: ../lib/pytis/web/form.py:657 ../lib/pytis/web/form.py:669
+msgid "(Use ALT+arrow down to select)"
+msgstr "(Drücken Sie ALT+Pfeil nach unten für die Auswahl)"
+
+#: ../lib/pytis/web/form.py:661
+msgid "Previous"
+msgstr "vorherige"
+
+#: ../lib/pytis/web/form.py:662
+msgid "Go to previous page"
+msgstr "Zurück zur vorherigen Seite des Auszugs"
+
+#: ../lib/pytis/web/form.py:663
+msgid "Next"
+msgstr "weiter"
+
+#: ../lib/pytis/web/form.py:664
+msgid "Go to next page"
+msgstr "Nächsten Seite des Auszugs"
+
+#: ../lib/pytis/web/form.py:666 ../lib/pytis/web/form.py:668
+msgid "Records per page"
+msgstr "Anzahl der Einträge pro Seite"
+
+#: ../lib/pytis/web/form.py:672
+msgid "Go"
+msgstr "Start"
 
 #: ../lib/pytis/web/__init__.py:39
 msgid "Empty value"
@@ -117,64 +178,3 @@ msgstr "Bild"
 #: ../lib/pytis/web/field.py:101
 msgid "file"
 msgstr "Datei"
-
-#: ../lib/pytis/web/form.py:282
-msgid "Submit the form"
-msgstr "Formular senden"
-
-#: ../lib/pytis/web/form.py:284
-msgid "Undo all changes"
-msgstr "Alle durchgeführten Änderungen zurücksetzen."
-
-#: ../lib/pytis/web/form.py:284
-msgid "Reset"
-msgstr "Ursprungswerte wiederherstellen"
-
-#: ../lib/pytis/web/form.py:386
-msgid "Fields marked by an asterisk are mandatory."
-msgstr "Felder mit Sternchen sind Pflichtfelder."
-
-#: ../lib/pytis/web/form.py:632
-msgid "No records."
-msgstr "Kein Eintrag"
-
-#: ../lib/pytis/web/form.py:635
-msgid "Total records:"
-msgstr "Einträge insgesamt:"
-
-#: ../lib/pytis/web/form.py:637
-#, python-format
-msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr "Abgebildete Einträge %(first)s-%(last)s von insgesamt %(total)s"
-
-#: ../lib/pytis/web/form.py:654 ../lib/pytis/web/form.py:656
-msgid "Page"
-msgstr "Seite"
-
-#: ../lib/pytis/web/form.py:656 ../lib/pytis/web/form.py:668
-msgid "(Use ALT+arrow down to select)"
-msgstr "(Drücken Sie ALT+Pfeil nach unten für die Auswahl)"
-
-#: ../lib/pytis/web/form.py:660
-msgid "Previous"
-msgstr "vorherige"
-
-#: ../lib/pytis/web/form.py:661
-msgid "Go to previous page"
-msgstr "Zurück zur vorherigen Seite des Auszugs"
-
-#: ../lib/pytis/web/form.py:662
-msgid "Next"
-msgstr "weiter"
-
-#: ../lib/pytis/web/form.py:663
-msgid "Go to next page"
-msgstr "Nächsten Seite des Auszugs"
-
-#: ../lib/pytis/web/form.py:665 ../lib/pytis/web/form.py:667
-msgid "Records per page"
-msgstr "Anzahl der Einträge pro Seite"
-
-#: ../lib/pytis/web/form.py:671
-msgid "Go"
-msgstr "Start"
