@@ -7,10 +7,12 @@
 2007-12-27  Tomas Cerha  <cerha@brailcom.org>
 
 	Novı pøíkaz umo¾òuje vlo¾ení nového záznamu èíselníku pøímo z
-	kontextového menu políèka typu ListField.  Navíc Pøi editaci
-	èíselníkového záznamu je nyní respektována aktuální transakce a
-	pøi v¹ech zmìnách èíselníku je obsah políèka automaticky
-	pøenaèten.
+	kontextového menu políèka typu ListField.  Navíc je pøi v¹ech
+	zmìnách èíselníku obsah políèka automaticky pøenaèten.
+
+	* BUGFIX: Pøi editaci èíselníkového záznamu z kontextového menu
+	ListField respektována aktuální transakce a pøípadná definice
+	on_edit_record.
 	
 2007-12-06  Tomas Cerha  <cerha@brailcom.org>
 

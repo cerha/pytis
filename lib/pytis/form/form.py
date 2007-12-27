@@ -134,7 +134,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._view = self._create_view_spec()
             self._data = self._create_data_object()
         except ResolverError:
-            log(OPERATIONAL, 'Chyba z resolveru', format_traceback())
+            log(OPERATIONAL, 'Resolver error', format_traceback())
+            throw('form-init-error')
+        if not self._data:
             throw('form-init-error')
         self._init_attributes(**kwargs)
         self._result = None
@@ -165,24 +167,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return spec        
 
     def _create_data_object(self):
-        factory = self._resolver.get(self._name, 'data_spec')
-        import config
-        if __debug__ and config.server:
-            import pytis.remote
-        else:    
-            import pytis.data    
-        assert isinstance(factory, pytis.data.DataFactory) or \
-               isinstance(factory, pytis.remote.RemoteDataFactory)
-        if issubclass(factory.class_(), pytis.data.DBData):
-            kwargs = dict(connection_data=config.dbconnection)
-        else:
-            kwargs = {}
-        t = time.time()
-        success, data_object = db_operation(factory.create, **kwargs)
-        if not success:
-            throw('form-init-error')
-        log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
-        return data_object
+        return create_data_object(self._name)
 
     def _create_form(self):
         # Build the form from parts

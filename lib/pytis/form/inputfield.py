@@ -1468,11 +1468,11 @@ class ListField(GenericCodebookField):
                 (self.COMMAND_INVOKE_CODEBOOK_FORM,
                  _("Zobrazit èíselník"),
                  _("Otevøít èíselníkový formuláø.")),
-                (self.COMMAND_INVOKE_EDIT_FORM,
+                (self.COMMAND_EDIT_SELECTED,
                  _("Upravit vybraný záznam"),
                  _("Otevøít vybraný záznam v editaèním formuláøi.")),
-                (self.COMMAND_INVOKE_INSERT_FORM,
-                 _("Vlo¾it nový zýznam do èíselníku"),
+                (self.COMMAND_NEW_CODEBOOK_RECORD,
+                 _("Vlo¾it nový záznam do èíselníku"),
                  _("Otevøít formuláø pro vlo¾ení nového záznamu do navázaného èíselníku.")),
                 (Application.COMMAND_RUN_FORM(form_class=BrowseForm,
                                               name=self._cb_name,
@@ -1493,15 +1493,24 @@ class ListField(GenericCodebookField):
     def _cmd_show_selected(self):
         self._set_selection(self._selected_item)
 
-    def _can_invoke_edit_form(self, **kwargs):
+    def _can_edit_selected(self, **kwargs):
         return self._selected_item is not None
 
-    def _cmd_invoke_edit_form(self):
-        run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
-                 transaction=self._row.transaction())
+    def _cmd_edit_selected(self):
+        view = resolver().get(self._cb_name, 'view_spec')
+        on_edit_record = view.on_edit_record()
+        if on_edit_record is not None:
+            data = create_data_object(self._cb_name)
+            r = self._type.enumerator().row(self._row[self._id].value(),
+                                            transaction=self._row.transaction())
+            row = PresentedRow(view.fields(), data, r, transaction=self._row.transaction())
+            on_edit_record(row=row)
+        else:
+            run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
+                     transaction=self._row.transaction())
         self._reload_enumeration()
 
-    def _cmd_invoke_insert_form(self):
+    def _cmd_new_codebook_record(self):
         self._codebook_insert()
         self._reload_enumeration()
 

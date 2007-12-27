@@ -1,5 +1,11 @@
 2007-12-27  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application.create_data_object): New method.
+	(create_data_object): New function.
+
+	* pytis/form/form.py (Form._create_data_object): Use global
+	function `create_data_object()'.
+
 	* pytis/data/types_.py (DataEnumerator.rows): Added support for
 	transactions.
 
@@ -7,14 +13,18 @@
 	the `fetch()' calls.
 
 	* pytis/form/commands_.py: New command
-	`ListField.COMMAND_INVOKE_INSERT_FORM'.
+	`ListField.COMMAND_NEW_CODEBOOK_RECORD'.
+	(ListField.COMMAND_INVOKE_EDIT_FORM): Renamed to	
+	`ListField.COMMAND_EDIT_SELECTED'.
 
 	* pytis/form/inputfield.py (ListField._create_ctrl): Adjust column
 	widths according to column labels.
 	(ListField._reload_enumeration): Respect the current transaction.
-	(ListField._cmd_invoke_edit_form): Respect the current
-	transaction.
-	(ListField._cmd_invoke_insert_form): New command handler.
+	(ListField._cmd_invoke_edit_form): Renamed to
+	`_cmd_edit_selected'.
+	(ListField._cmd_edit_selected): Respect the current transaction.
+	Call `on_edit_record' if needed.
+	(ListField._cmd_new_codebook_record): New command handler.
 	(ListField._cmd_invoke_codebook_form): Reload enumeration after
 	the codebook form is closed.
 

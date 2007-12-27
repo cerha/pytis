@@ -992,6 +992,28 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
         return self._frame
 
+    def create_data_object(self, name):
+        factory = resolver().get(name, 'data_spec')
+        import config
+        if __debug__ and config.server:
+            import pytis.remote
+        else:    
+            import pytis.data    
+        assert isinstance(factory, pytis.data.DataFactory) or \
+               isinstance(factory, pytis.remote.RemoteDataFactory)
+        if issubclass(factory.class_(), pytis.data.DBData):
+            kwargs = dict(connection_data=config.dbconnection)
+        else:
+            kwargs = {}
+        t = time.time()
+        success, data_object = db_operation(factory.create, **kwargs)
+        if success:
+            log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
+            return data_object
+        else:
+            log(OPERATIONAL, 'Failed to create data object:', name)
+            return None
+        
     def login_hook(self, success):
         if self._login_hook:
             self._login_hook(success)
@@ -1211,6 +1233,9 @@ def recent_forms_menu():
 def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
+
+def create_data_object(name):
+    return _application.create_data_object(name)
 
 # Ostatní funkce.
 

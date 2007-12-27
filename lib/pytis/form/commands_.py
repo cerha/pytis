@@ -188,9 +188,9 @@ Command(ListField, 'SELECT',
         "Výbìr aktuálního záznamu")
 Command(ListField, 'SHOW_SELECTED',
         "Výbìr aktuálního záznamu")
-Command(ListField, 'INVOKE_EDIT_FORM',
+Command(ListField, 'EDIT_SELECTED',
         "Vyvolání editaèního formuláøe nad aktuálním záznamem.")
-Command(ListField, 'INVOKE_INSERT_FORM',
+Command(ListField, 'NEW_CODEBOOK_RECORD',
         "Vyvolání formuláøe pro vlo¾ení nového záznamu do èíselníku.")
 Command(FileField, 'LOAD',
         "Nahrání soubodu jako nové hodnoty políèka.")
