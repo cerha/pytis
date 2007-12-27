@@ -1220,7 +1220,7 @@ class GenericCodebookField(InputField):
         if validity_condition and runtime_filter_condition:
             condition = pytis.data.AND(validity_condition, runtime_filter_condition)
         else:    
-            condition = validity_condition or runtime_filter_condition            
+            condition = validity_condition or runtime_filter_condition
         result = run_form(CodebookForm, self._cb_name, begin_search=begin_search,
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
                           condition=condition)
@@ -1228,6 +1228,17 @@ class GenericCodebookField(InputField):
             self._set_value(result.format(enumerator.value_column()))
         self.set_focus()
 
+    def _codebook_insert(self):
+        value_column = self._type.enumerator().value_column()
+        if not self._valid and self._modified():
+            prefill = {value_column: self._get_value()}
+        else:
+            prefill = {}
+        spec = self.spec().codebook_insert_spec() or self._cb_name
+        result = new_record(spec, prefill=prefill, transaction=self._row.transaction())
+        if result and result.has_key(value_column):
+            self._set_value(result[value_column].export())
+        
     def _cmd_invoke_codebook_form(self):
         self._run_codebook_form()
     
@@ -1282,10 +1293,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         if spec.allow_codebook_insert():
             button = self._create_button('+', icon='new-record')
             button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
-            wx_callback(wx.EVT_BUTTON, button, button.GetId(),
-                        self._on_codebook_insert)
-            wx_callback(wx.EVT_NAVIGATION_KEY, button,
-                        self._skip_navigation_callback(button))
+            wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
+            wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
             sizer.Add(button, 0, wx.FIXED_MINSIZE)
             self._insert_button = button
         return sizer
@@ -1330,18 +1339,6 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         else:
             begin_search = self._cb_spec.begin_search()
         self._run_codebook_form(begin_search=begin_search)
-
-    def _on_codebook_insert(self, event):
-        value_column = self._type.enumerator().value_column()
-        if not self._valid and self._modified():
-            prefill = {value_column: self._get_value()}
-        else:
-            prefill = {}
-        spec = self.spec().codebook_insert_spec() or self._cb_name
-        result = new_record(spec, prefill=prefill, transaction=self._row.transaction())
-        if result and result.has_key(value_column):
-            self._set_value(result[value_column].export())
-        return True
     
 
 class ListField(GenericCodebookField):
@@ -1368,8 +1365,8 @@ class ListField(GenericCodebookField):
             col = view_spec.field(id)
             list.InsertColumn(i, col.column_label())
             width = col.column_width()
-            if width < len(col.label()):
-                width = len(col.label())
+            if width < len(col.column_label()):
+                width = len(col.column_label())
             list.SetColumnWidth(i, dlg2px(list, 4*(width+1)))
             total_width = total_width + width
         height = list.GetCharHeight() * 5/4 * (self.height()+ 1) + 10 # TODO: something better?
@@ -1406,7 +1403,8 @@ class ListField(GenericCodebookField):
         select_item = None
         enumerator = self.type().enumerator()
         value_column = enumerator.value_column()
-        rows = enumerator.rows(condition=self._row.runtime_filter(self._id))
+        rows = enumerator.rows(condition=self._row.runtime_filter(self._id),
+                               transaction=self._row.transaction())
         for i, row in enumerate(rows):
             list.InsertStringItem(i, "")
             v = row[value_column]
@@ -1469,15 +1467,18 @@ class ListField(GenericCodebookField):
                 (None,),
                 (self.COMMAND_INVOKE_CODEBOOK_FORM,
                  _("Zobrazit èíselník"),
-                 _("Otevøít odpovídající èíselníkový formuláø.")),
+                 _("Otevøít èíselníkový formuláø.")),
                 (self.COMMAND_INVOKE_EDIT_FORM,
-                 _("Editovat vybraný záznam"),
+                 _("Upravit vybraný záznam"),
                  _("Otevøít vybraný záznam v editaèním formuláøi.")),
+                (self.COMMAND_INVOKE_INSERT_FORM,
+                 _("Vlo¾it nový zýznam do èíselníku"),
+                 _("Otevøít formuláø pro vlo¾ení nového záznamu do navázaného èíselníku.")),
                 (Application.COMMAND_RUN_FORM(form_class=BrowseForm,
                                               name=self._cb_name,
                                               select_row=self._select_row_arg()),
                  _("Zobrazit celou tabulku"),
-                 _("Otevøít náhled èíselníku v øádkovém formuláøi.")),
+                 _("Otevøít náhled èíselníku v samostatném øádkovém formuláøi.")),
                 )
 
     # Command handling
@@ -1496,8 +1497,18 @@ class ListField(GenericCodebookField):
         return self._selected_item is not None
 
     def _cmd_invoke_edit_form(self):
-        run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg())
+        run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
+                 transaction=self._row.transaction())
+        self._reload_enumeration()
 
+    def _cmd_invoke_insert_form(self):
+        self._codebook_insert()
+        self._reload_enumeration()
+
+    def _cmd_invoke_codebook_form(self):
+        super(ListField, self)._cmd_invoke_codebook_form()
+        self._reload_enumeration()
+        
 
 class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""

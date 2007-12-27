@@ -330,7 +330,7 @@ class Data(object):
         self._select_last_row_number = -1
         return 0
     
-    def select_map(self, function, **kwargs):
+    def select_map(self, function, transaction=None, **kwargs):
         """Aplikuj 'function' na v¹echny øádky výbìru a vra» výsledky.
 
         Zavolej metodu 'select()' s argumenty 'kwargs' a na v¹echny vrácené
@@ -340,14 +340,16 @@ class Data(object):
 
         Argumenty:
 
-          function -- funkce jednoho argumentu, jím¾ je instance tøídy 'Row'
-          kwargs -- argumenty pøedané metodì 'select()'
+          function -- function of one argument -- the 'Row' instance
+          transaction -- transaction object encapsulating the database
+            operation environment or 'None' (meaning default environment)
+          kwargs -- remaining arguments passed to 'select()'
           
         """
         result = []
-        self.select(**kwargs)
+        self.select(transaction=transaction, **kwargs)
         while True:
-            row = self.fetchone()
+            row = self.fetchone(transaction=transaction)
             if row is None:
                 self.close()
                 break

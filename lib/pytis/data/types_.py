@@ -1682,18 +1682,18 @@ class DataEnumerator(Enumerator):
         """
         return self._retrieve(value, transaction=transaction, condition=condition)
     
-    def rows(self, condition=None):
+    def rows(self, transaction=None, condition=None):
         """Return sequence of rows of the underlying data object.
 
         Arguments:
 
-          condition -- additional filtering condition to the 'validity_condition' passed to the
-            constructor.
+          transaction -- transaction for data operations.
+          condition -- runtime filter condition as an 'Operator' instance or None.
 
         """
         the_condition = self._condition(condition=condition)
         def lfunction():
-            return self._data.select_map(identity, condition=the_condition)
+            return self._data.select_map(identity, condition=the_condition, transaction=transaction)
         return with_lock(self._data_lock, lfunction)
 
     def type(self, column):

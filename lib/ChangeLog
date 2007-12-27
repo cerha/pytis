@@ -1,3 +1,23 @@
+2007-12-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py (DataEnumerator.rows): Added support for
+	transactions.
+
+	* pytis/data/data.py (Data.select_map): Pass the transaction to
+	the `fetch()' calls.
+
+	* pytis/form/commands_.py: New command
+	`ListField.COMMAND_INVOKE_INSERT_FORM'.
+
+	* pytis/form/inputfield.py (ListField._create_ctrl): Adjust column
+	widths according to column labels.
+	(ListField._reload_enumeration): Respect the current transaction.
+	(ListField._cmd_invoke_edit_form): Respect the current
+	transaction.
+	(ListField._cmd_invoke_insert_form): New command handler.
+	(ListField._cmd_invoke_codebook_form): Reload enumeration after
+	the codebook form is closed.
+
 2007-12-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (ListField._create_ctrl): Use

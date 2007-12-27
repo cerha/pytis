@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-12-27  Tomas Cerha  <cerha@brailcom.org>
+
+	Nový pøíkaz umo¾òuje vlo¾ení nového záznamu èíselníku pøímo z
+	kontextového menu políèka typu ListField.  Navíc Pøi editaci
+	èíselníkového záznamu je nyní respektována aktuální transakce a
+	pøi v¹ech zmìnách èíselníku je obsah políèka automaticky
+	pøenaèten.
+	
 2007-12-06  Tomas Cerha  <cerha@brailcom.org>
 
 	Zobrazení "rychlé" nápovìdy (ikonka s otazníkem v pravém horním
