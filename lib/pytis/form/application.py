@@ -992,26 +992,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
         return self._frame
 
-    def create_data_object(self, name):
-        factory = resolver().get(name, 'data_spec')
-        import config
-        if __debug__ and config.server:
-            import pytis.remote
-        else:    
-            import pytis.data    
-        assert isinstance(factory, pytis.data.DataFactory) or \
-               isinstance(factory, pytis.remote.RemoteDataFactory)
-        if issubclass(factory.class_(), pytis.data.DBData):
-            kwargs = dict(connection_data=config.dbconnection)
-        else:
-            kwargs = {}
-        t = time.time()
-        success, data_object = db_operation(factory.create, **kwargs)
-        if not success:
-            raise ProgramError("Unable to create data object:", name)
-        log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
-        return data_object
-        
     def login_hook(self, success):
         if self._login_hook:
             self._login_hook(success)
@@ -1232,9 +1212,6 @@ def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
 
-def create_data_object(name):
-    return _application.create_data_object(name)
-
 # Ostatní funkce.
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
@@ -1266,9 +1243,37 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
     if _application:
         if message and message[-1] == ':':
             message = message[:-1]
-        _application.set_status('message', message, timeout=timeout,
-                                root=root)
+        _application.set_status('message', message, timeout=timeout, root=root)
 
+def create_data_object(name):
+    """Create a data object for given specification.
+
+    Arguments:
+
+      name -- specification name for resolver as a string.
+
+    Raises 'ResolverError' or 'ProgramError' if data object creation fails.
+    
+    """
+    factory = resolver().get(name, 'data_spec')
+    import config
+    if __debug__ and config.server:
+        import pytis.remote
+        assert isinstance(factory, (pytis.data.DataFactory, pytis.remote.RemoteDataFactory))
+    else:    
+        import pytis.data    
+        assert isinstance(factory, pytis.data.DataFactory)
+    if issubclass(factory.class_(), pytis.data.DBData):
+        kwargs = dict(connection_data=config.dbconnection)
+    else:
+        kwargs = {}
+    t = time.time()
+    success, data_object = db_operation(factory.create, **kwargs)
+    if not success:
+        raise ProgramError("Unable to create data object:", name)
+    log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
+    return data_object
+        
 def global_keymap():
     """Vra» klávesovou mapu aplikace jako instanci tøídy 'Keymap'."""
     try:
