@@ -1007,12 +1007,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             kwargs = {}
         t = time.time()
         success, data_object = db_operation(factory.create, **kwargs)
-        if success:
-            log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
-            return data_object
-        else:
-            log(OPERATIONAL, 'Failed to create data object:', name)
-            return None
+        if not success:
+            raise ProgramError("Unable to create data object:", name)
+        log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
+        return data_object
         
     def login_hook(self, success):
         if self._login_hook:

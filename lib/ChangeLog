@@ -1,3 +1,11 @@
+2007-12-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (Form.__init__): Handle exceptions instead of
+	testing the returned value of `create_data_object()'.
+
+	* pytis/form/application.py (Application.create_data_object):
+	Raise error if data object was not created.
+
 2007-12-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application.create_data_object): New method.

@@ -133,10 +133,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         try:
             self._view = self._create_view_spec()
             self._data = self._create_data_object()
-        except ResolverError:
-            log(OPERATIONAL, 'Resolver error', format_traceback())
-            throw('form-init-error')
-        if not self._data:
+        except (ResolverError, ProgramError):
+            log(OPERATIONAL, 'Form initialization error', format_traceback())
             throw('form-init-error')
         self._init_attributes(**kwargs)
         self._result = None
