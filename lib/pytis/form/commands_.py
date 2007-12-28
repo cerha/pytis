@@ -190,6 +190,8 @@ Command(ListField, 'SHOW_SELECTED',
         "Výbìr aktuálního záznamu")
 Command(ListField, 'EDIT_SELECTED',
         "Vyvolání editaèního formuláøe nad aktuálním záznamem.")
+Command(ListField, 'DELETE_SELECTED',
+        "Smazání aktuálního záznamu z èíselníku.")
 Command(ListField, 'NEW_CODEBOOK_RECORD',
         "Vyvolání formuláøe pro vlo¾ení nového záznamu do èíselníku.")
 Command(FileField, 'LOAD',

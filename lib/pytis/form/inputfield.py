@@ -1471,6 +1471,9 @@ class ListField(GenericCodebookField):
                 (self.COMMAND_EDIT_SELECTED,
                  _("Upravit vybraný záznam"),
                  _("Otevøít vybraný záznam v editaèním formuláøi.")),
+                (self.COMMAND_DELETE_SELECTED,
+                 _("Smazat vybraný záznam"),
+                 _("Vymazat vybraný záznam z èíselníku.")),
                 (self.COMMAND_NEW_CODEBOOK_RECORD,
                  _("Vlo¾it nový záznam do èíselníku"),
                  _("Otevøít formuláø pro vlo¾ení nového záznamu do navázaného èíselníku.")),
@@ -1481,6 +1484,13 @@ class ListField(GenericCodebookField):
                  _("Otevøít náhled èíselníku v samostatném øádkovém formuláøi.")),
                 )
 
+    def _current_row(self):
+        view = resolver().get(self._cb_name, 'view_spec')
+        data = create_data_object(self._cb_name)
+        row = self._type.enumerator().row(self._row[self._id].value(),
+                                          transaction=self._row.transaction())
+        return PresentedRow(view.fields(), data, row, transaction=self._row.transaction())
+    
     # Command handling
     
     def _can_select(self):
@@ -1500,16 +1510,40 @@ class ListField(GenericCodebookField):
         view = resolver().get(self._cb_name, 'view_spec')
         on_edit_record = view.on_edit_record()
         if on_edit_record is not None:
-            data = create_data_object(self._cb_name)
-            r = self._type.enumerator().row(self._row[self._id].value(),
-                                            transaction=self._row.transaction())
-            row = PresentedRow(view.fields(), data, r, transaction=self._row.transaction())
-            on_edit_record(row=row)
+            on_edit_record(row=self._current_row())
         else:
             run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
                      transaction=self._row.transaction())
         self._reload_enumeration()
 
+    def _can_delete_selected(self):
+        return self._selected_item is not None
+        
+    def _cmd_delete_selected(self):
+        view = resolver().get(self._cb_name, 'view_spec')
+        data = create_data_object(self._cb_name)
+        row = self._current_row()
+        on_delete_record = view.on_delete_record()
+        # TODO: This code duplicates the code in `Form._cmd_delete_record()'.
+        if on_delete_record is not None:
+            condition = on_delete_record(row)
+            if condition is None:
+                self._reload_enumeration()
+                return
+            assert isinstance(condition, pytis.data.Operator)
+            op, arg = data.delete_many, condition
+        else:
+            msg = _("Opravdu chcete polo¾ku %s zcela vymazat z èíselníku?")
+            if not run_dialog(Question, msg % self._row[self._id].export()):
+                return
+            key = row.row().columns([c.id() for c in data.key()])
+            op, arg = data.delete, key
+        log(EVENT, 'Deleting record:', arg)
+        success, result = db_operation(op, arg, transaction=self._row.transaction())
+        if success:
+            log(ACTION, 'Record deleted.')
+        self._reload_enumeration()
+        
     def _cmd_new_codebook_record(self):
         self._codebook_insert()
         self._reload_enumeration()

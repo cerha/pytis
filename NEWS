@@ -4,6 +4,14 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dı
 ; uvozen "* BUGFIX:"
 
+2007-12-28  Tomas Cerha  <cerha@brailcom.org>
+
+	Novı pøíkaz umo¾òuje mazání záznamu èíselníku pøímo z
+	kontextového menu políèka typu ListField.
+
+	* BUGFIX: Opravena drobná chyba ve vèerej¹ích úpravách, která
+	znemo¾òovala spu¹tìní duálních formuláøù.
+	
 2007-12-27  Tomas Cerha  <cerha@brailcom.org>
 
 	Novı pøíkaz umo¾òuje vlo¾ení nového záznamu èíselníku pøímo z
