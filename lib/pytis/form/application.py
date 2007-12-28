@@ -749,7 +749,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         view = resolver().get(name, 'view_spec')
         on_new_record = view.on_new_record()
         if not block_on_new_record and on_new_record is not None:
-            result = on_new_record(prefill=prefill)
+            kwargs = dict(prefill=prefill)
+            if 'transaction' in argument_names(on_new_record):
+                kwargs['transaction'] = transaction
+            result = on_new_record(**kwargs)
             top = self.current_form()
             if isinstance(top, Refreshable):
                 top.refresh()

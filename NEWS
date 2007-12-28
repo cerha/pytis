@@ -9,6 +9,11 @@
 	Nový pøíkaz umo¾òuje mazání záznamu èíselníku pøímo z
 	kontextového menu políèka typu ListField.
 
+	Pokud funkce `on_new_record()' definuje argument `transaction',
+	bude jí nyní pøedána aktuální transakce.  Tento argument by bylo vhodné
+	doplnit do v¹ech stávajících funkcí `on_new_record()' ve v¹ech
+	specifikacích.
+
 	* BUGFIX: Opravena drobná chyba ve vèerej¹ích úpravách, která
 	znemo¾òovala spu¹tìní duálních formuláøù.
 	

@@ -15,6 +15,8 @@
 	* pytis/form/application.py (Application.create_data_object):
 	Raise error if data object was not created.  Moved to a function
 	`create_data_object()'.
+	(Application._cmd_new_record): Pass the current transaction to
+	`on_new_record()'.
 
 2007-12-27  Tomas Cerha  <cerha@brailcom.org>
 
