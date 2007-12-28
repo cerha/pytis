@@ -1310,19 +1310,15 @@ class RecordForm(LookupForm):
                 return False
             assert isinstance(condition, pytis.data.Operator)
             op, arg = self._data.delete_many, condition
-            log(EVENT, 'Mazání záznamu:', condition)
         else:
-            msg = _("Opravdu chcete záznam zcela vymazat?")        
-            if not run_dialog(Question, msg):
-                log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto.')
+            if not run_dialog(Question, _("Opravdu chcete záznam zcela vymazat?")):
                 return False
-            key = self._current_key()
-            op, arg = self._data.delete, key
-            log(EVENT, 'Mazání záznamu:', key)
+            op, arg = self._data.delete, self._current_key()
+        log(EVENT, 'Deleting record:', arg)
         success, result = db_operation(op, arg, transaction=self._transaction)
         if success:
             self._signal_update()
-            log(ACTION, 'Záznam smazán.')
+            log(ACTION, 'Record deleted.')
             return True
         else:
             return False
