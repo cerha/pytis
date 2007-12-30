@@ -1,3 +1,10 @@
+2007-12-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (EditForm._create_group_panel): New method.
+	(EditForm._create_form_controls): Added support for tabs.
+
+	* pytis/presentation/spec.py (TabGroup): New class.
+
 2007-12-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (ListField._current_row): New method.

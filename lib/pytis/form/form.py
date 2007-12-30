@@ -1536,21 +1536,35 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
 
     def _create_form_controls(self):
-        # Create the actual form controls according to the layout.
-        panel = wx.ScrolledWindow(self, style=wx.TAB_TRAVERSAL)
-        self._fields = [InputField.create(panel, self._row, id, guardian=self,
-                                          readonly=self._mode == self.MODE_VIEW)
-                        for id in self._view.layout().order()
-                        if self._view.field(id).width() != 0]
+        self._fields = []
+        group = self._view.layout().group()
+        if isinstance(group, TabGroup):
+            nb = wx.Notebook(self)
+            for item in group.items():
+                if len(item.items()) == 1 and isinstance(item.items()[0], GroupSpec):
+                    group = item.items()[0]
+                else:
+                    group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
+                nb.AddPage(self._create_group_panel(nb, group), item.label())
+            return nb
+        else:
+            return self._create_group_panel(self, group)
+
+    def _create_group_panel(self, parent, group):
+        panel = wx.ScrolledWindow(parent, style=wx.TAB_TRAVERSAL)
+        # Create the form controls first, according to the order.
+        fields = [InputField.create(panel, self._row, id, guardian=self,
+                                    readonly=self._mode == self.MODE_VIEW)
+                  for id in group.order() if self._view.field(id).width() != 0]
+        self._fields.extend(fields)
         # Now create the layout groups.
-        group = self._create_group(panel, self._view.layout().group())
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(group, 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
+        sizer.Add(self._create_group(panel, group), 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
         panel.SetScrollRate(20, 20)
         panel.SetSizer(sizer)
         sizer.Fit(panel)
         return panel
-
+    
     def _field(self, id):
         f = find(id, self._fields, key=lambda f: f.id())
         assert f is not None, (_("Unknown field:"), id)
@@ -1574,7 +1588,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_BUTTON, self, b.GetId(),
                     create_handler(item.handler()))
         return b
-        
+
     def _create_group(self, parent, group):
         """Vytvoø skupinu vstupních políèek podle specifikace.
 

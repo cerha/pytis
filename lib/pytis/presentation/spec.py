@@ -537,9 +537,6 @@ class GroupSpec(object):
             mù¾e v¹ak být pouze vpravo, vlevo, nahoøe, nebo dole; Konstanta
             tøídy 'BorderStyle'.
 
-        'label' je v¾dy pova¾ován za jazykovì závislý text a tudí¾ automaticky
-        podléhá jazykové konverzi.
-
         """
         assert is_sequence(items)
         assert label is None or isinstance(label, (str, unicode))
@@ -564,7 +561,7 @@ class GroupSpec(object):
         self._border_style = border_style
 
     def items(self):
-        """Vra» prvky skupiny jako tuple."""
+        """Return the group contents as a tuple."""
         return tuple(self._items)
 
     def order(self):
@@ -602,6 +599,24 @@ class GroupSpec(object):
         return self._border_style
 
     
+class TabGroup(GroupSpec):
+    """Tabbed layout specification."""
+    
+    def __init__(self, *tabs):
+        """Initialize the instance.
+
+        Arguments:
+
+          tabs -- tab specifications as (LABEL, GROUP) pairs, where LABEL is the tab label and
+            GROUP is the tab contents as a 'GroupSpec' instance.  If GROUP is a sequence, it will
+            be automatically turned into a vertical group.
+
+        """
+        items = [GroupSpec(xtuple(group), label=label, orientation=Orientation.VERTICAL)
+                 for label, group in tabs]
+        super(TabGroup, self).__init__(items, orientation=Orientation.VERTICAL)
+        
+
 class HGroup(GroupSpec):
     """Horizontální seskupení políèek.
 
@@ -625,7 +640,7 @@ class VGroup(GroupSpec):
 
         
 class LHGroup(HGroup):
-    """Horizontální seskupení políèek s labelem a orámováním.
+    """Horizontální seskupení políèek s nadpisem a orámováním.
 
     Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
 

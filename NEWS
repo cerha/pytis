@@ -4,6 +4,18 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2007-12-30  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla pøidána základní podpora pro zálo¾ky ve formuláøích.  Pro
+	vyzkou¾ení staèí v layoutu pou¾ít novou specifikacní tøídu
+	'TabGroup'.  Pou¾ití viz její dokumentace a pøíklad ve specifikaci
+	'misc.Products' v pytis-demo.  Testoval jsem napø. i `computer' a
+	`editable' závislé na hodnotì políèka z jiné zálo¾ky a to funguje
+	bez problémù.  Je v¹ak dost mo¾né, ¾e nastanou situace, kdy
+	stávající kód nepoèítá s tím, ¾e políèko není v¾dy viditelné,
+	tak¾e doporuèuji pou¾ívat zatím jen experimentálnì a dobøe
+	testovat.
+	
 2007-12-28  Tomas Cerha  <cerha@brailcom.org>
 
 	Nový pøíkaz umo¾òuje mazání záznamu èíselníku pøímo z
