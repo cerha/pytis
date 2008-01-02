@@ -1385,7 +1385,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
-        data = self._pg_query(self._pdbb_command_count % cond_string)
+        data = self._pg_query(self._pdbb_command_count % cond_string, transaction=transaction)
         args = {'condition': cond_string, 'ordering': sort_string}
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
@@ -1627,7 +1627,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                     transaction=transaction)
         if broken:
             d = self._pg_query(self._pdbb_command_broken_update_preselect % \
-                               cond_string)
+                               cond_string, transaction=transaction)
             result = extract_result(d)
         d = self._pg_query(self._pdbb_command_update % (settings, cond_string,),
                            backup=True, query_args=query_args,

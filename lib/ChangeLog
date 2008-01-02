@@ -1,3 +1,11 @@
+2008-01-02  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pg_select): Added forgotten
+	`transaction' argument in `_pg_query'.
+	(PostgreSQLStandardBindingHandler._pg_update): Added forgotten
+	`transaction' argument in `_pg_query'.
+
 2007-12-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py (EditForm._create_group_panel): New method.
