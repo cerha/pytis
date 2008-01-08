@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1412,7 +1412,11 @@ class ListField(GenericCodebookField):
             if v.export() == current:
                 select_item = i
             for j, id in enumerate(self._columns):
-                list.SetStringItem(i, j, row[id].export().replace("\n", ";"))
+                if isinstance(row[id].type(), pytis.data.Boolean):
+                    value = row[id].value() and _("Ano") or _("Ne")
+                else:
+                    value = row[id].value().replace("\n", ";")
+                list.SetStringItem(i, j, value)
         self._set_selection(select_item)
 
     def _disable(self):
