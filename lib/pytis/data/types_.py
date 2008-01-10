@@ -884,9 +884,8 @@ class TreeOrder(String):
 class DateTime(Type):
     """Èasový okam¾ik reprezentovaný instancí tøídy 'DateTime.DateTime'.
 
-    Tøída je schopna pracovat pouze s absolutním èasovým okam¾ikem.  Èas je
-    navíc v¾dy uva¾ován v UTC, èasové zóny nejsou podporovány.  Datum je
-    podporováno pouze od roku 1000 dále.
+    Tøída je schopna pracovat pouze s absolutním èasovým okam¾ikem.  Èas je uva¾ován v UTC nebo v
+    lokálním èase podle parametru v konstruktoru, èasové zóny nejsou podporovány.  
 
     Formát data a èasu je shodný pro import a export a je dán parametrem
     'format' metody '__init__()'.
@@ -911,7 +910,7 @@ class DateTime(Type):
     if __debug__:
         _dt_type = type(DT.DateTimeFrom('2001-01-01'))
 
-    def __init__(self, format=None, mindate=None, maxdate=None, **kwargs):
+    def __init__(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -922,6 +921,7 @@ class DateTime(Type):
             'config.date_time_format'.  Tøída obsahuje pøeddefinované konstanty
             '*_FORMAT', které lze vyu¾ít jako hodnotu tohoto parametru.
           mindate. maxdate -- omezení validity èasu
+          utc -- specifies, if timestamp in database is in UTC
 
         """
         assert mindate is None or isinstance(mindate, types.StringTypes)
@@ -932,6 +932,7 @@ class DateTime(Type):
         self._format = format
         self._mindate = mindate
         self._maxdate = maxdate
+        self._utc = utc
         self._check_matcher = {}
         if mindate:
             try:
@@ -987,8 +988,10 @@ class DateTime(Type):
             if not self._check_format(format, string):
                 raise ValidationError(self.VM_DT_FORMAT)
             dt = DT.strptime(string, format)
-            if local:
+            if local and self._utc:                
                 dt = dt.gmtime()
+            elif not local and not self._utc:
+                dt = dt.localtime()
             if (self._mindate and dt < self._mindate) or \
                    (self._maxdate and dt > self._maxdate):
                 result = None, self._validation_error(self.VM_DT_AGE)
@@ -1012,9 +1015,14 @@ class DateTime(Type):
           
         """
         assert type(value) == self._dt_type, 'Value is not DateTime'
-        if local:
+        if local and self._utc:
             value = value.localtime()
+        elif not local and not self._utc:
+            value = value.gmtime()
         return value.strftime(self._format)
+
+    def is_utc(self):
+        return self._utc
 
     def now(class_, **kwargs):
         """Vra» instanci 'Value' tohoto typu odpovídající aktuálnímu okam¾iku.

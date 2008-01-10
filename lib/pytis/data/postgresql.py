@@ -2017,8 +2017,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     v = unicode(dbvalue, 'utf-8')  #TODO: patøí jinam
                 value = Value(type_, v)
             elif typid == 2:            # time
+                local = not type_.is_utc()
                 value, err = type_.validate(dbvalue, strict=False,
-                                            format=type_.SQL_FORMAT, local=False)
+                                            format=type_.SQL_FORMAT, local=local)
                 assert err is None, err
             else:
                 value, err = type_.validate(dbvalue, strict=False)
