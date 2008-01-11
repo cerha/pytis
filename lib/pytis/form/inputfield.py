@@ -1415,7 +1415,7 @@ class ListField(GenericCodebookField):
                 if isinstance(row[id].type(), pytis.data.Boolean):
                     value = row[id].value() and _("Ano") or _("Ne")
                 else:
-                    value = row[id].value().replace("\n", ";")
+                    value = row[id].export().replace("\n", ";")
                 list.SetStringItem(i, j, value)
         self._set_selection(select_item)
 
