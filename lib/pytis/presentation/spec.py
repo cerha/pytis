@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1150,7 +1150,7 @@ class BindingSpec(object):
     
     def __init__(self, title=None, binding_column=None, side_binding_column=None,
                  hide_binding_column=True, append_condition=None, condition=None, description=None, 
-                 sash_ratio=0.5, orientation=Orientation.HORIZONTAL):
+                 help=None, sash_ratio=0.5, orientation=Orientation.HORIZONTAL):
         """Inicialize the specification.
 
         Arguments:
@@ -1180,6 +1180,11 @@ class BindingSpec(object):
 
           description -- a brief description of this dual connection of the forms.
             
+          help -- detailed description of this dual connection as a formatted text in the LCG
+            Structured Text format.  This text is used for generating the on-line help and it is
+            also possible to supply it in a separate file.  See the Help tutorial for more
+            information.
+            
           sash_ratio -- the relative proportion of the size of the two forms.  The value is a
             decimal number in the range from zero to one.  The default value of 0.5 denotes equal
             space for both forms.  Lower value means less space for the main form.  The ratio only
@@ -1203,6 +1208,7 @@ class BindingSpec(object):
         assert condition is not None or binding_column is not None, \
                "You must specify at least one of 'condition', 'binding_column'."
         assert description is None or isinstance(description, (str, unicode)), description
+        assert help is None or isinstance(help, (str, unicode)), help
         assert orientation in public_attributes(Orientation), orientation
         assert isinstance(sash_ratio, float) and 0 < sash_ratio < 1, sash_ratio
         self._title = title
@@ -1212,32 +1218,30 @@ class BindingSpec(object):
         self._side_binding_column = side_binding_column
         self._hide_binding_column = hide_binding_column
         self._description = description
+        self._help = help
         self._condition = condition
         self._sash_ratio = sash_ratio
         self._orientation = orientation
         
     def title(self):
-        """Vrať titulek duálního formuláře jako řetězec."""
         return self._title
 
     def description(self):
-        """Vrať nápovědu pro formulář."""
         return self._description
     
+    def help(self):
+        return self._help
+    
     def binding_column(self):
-        """Vrať id vazebního sloupce hlavního formuláře jako řetězec."""
         return self._binding_column
 
     def side_binding_column(self):
-        """Vrať id vazebního sloupce vedlejšího formuláře jako řetězec."""
         return self._side_binding_column
 
     def hide_binding_column(self):
-        """Vrať pravdu, pokud má být vazební sloupec skryt ve vedlejším fm."""
         return self._hide_binding_column
 
     def condition(self):
-        """Vrať doplňující podmínku."""
         return self._condition
     
     def sash_ratio(self):

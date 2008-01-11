@@ -1,5 +1,7 @@
 2008-01-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (BindingSpec): New specifier `help'.
+
 	* pytis/form/inputfield.py (ListField._reload_enumeration): Fixed
 	bug in previous commit.
 

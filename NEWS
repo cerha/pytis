@@ -4,6 +4,15 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2008-01-11  Tomas Cerha  <cerha@brailcom.org>
+
+	Ve specifikaci vazby duálního formuláøe je nyní mo¾no pou¾ít také
+	specifikátor `help' a jím urèit text nápovìdy pro dané duální
+	spojení formuláøù, podobnì jako specifikátorem `help' ve
+	`ViewSpec'.  Hodnota mù¾e pou¾ívat wiki formátování a i zde platí,
+	¾e pøípadná nápovìda definovaná v samostatném souboru bude mít
+	pøednost.
+	
 2007-12-30  Tomas Cerha  <cerha@brailcom.org>
 
 	Byla pøidána základní podpora pro zálo¾ky ve formuláøích.  Pro
