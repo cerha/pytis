@@ -1,3 +1,8 @@
+2008-01-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/inputfield.py (ListField._reload_enumeration): Fixed
+	bug in previous commit.
+
 2008-01-10  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/postgresql.py (DBDataPostgreSQL._pg_make_row_from_raw_data): 
