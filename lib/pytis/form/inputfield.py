@@ -553,14 +553,11 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._ctrl.Enable(True)
 
     def _disable(self):
-        if not self._readonly and not self._denied:
-            self._ctrl.Enable(False)
-        else:
-            # Here we rely on a simple hack in InputField._on_change() which
-            # resets field value after each attempt to chnge it, so the field
-            # is in fact editable, but it is not possible to change it
-            # effectively.
-            pass
+        #if not self._readonly:
+        # There is currently no way to disable a wx control without graying it out, which we don't
+        # want in show forms, so we leave it editable relying on the fact, that there is no way to
+        # save the changed in a readonly form.  This situation is fixed for TextFields below.
+        self._ctrl.Enable(False)
 
     def _update_background_color(self):
         if self._readonly:

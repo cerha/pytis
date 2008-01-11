@@ -4,6 +4,7 @@
 
 	* pytis/form/inputfield.py (ListField._reload_enumeration): Fixed
 	bug in previous commit.
+	(InputField._disable): Gray out the field no matter what.
 
 2008-01-10  Pavel Hanak  <hanak@asellus.cz>
 
