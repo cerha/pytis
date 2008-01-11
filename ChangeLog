@@ -1,3 +1,9 @@
+2008-01-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (MenuOverviewReader._create_section)
+	(_DualDescrReader._default_description_text): Pou¾ívej
+	`BindingSpec.help()', pokud je text definován.
+
 2007-12-19  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/dbconfig.py (DBConfig.__setitem__): Smazání
