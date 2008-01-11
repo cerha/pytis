@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -188,7 +188,7 @@ class MenuOverviewReader(MenuReader):
                     if not title:
                         title = ' / '.join((resolver.get(main, 'view_spec').title(),
                                             resolver.get(side, 'view_spec').title()))
-                    help_src = binding.description()
+                    help_src = binding.help() or binding.description()
                     actions = []
                 else:
                     spec = resolver.get(name, 'view_spec')
@@ -343,15 +343,17 @@ class _DualDescrReader(_DescrReader):
             c = view.field(cid)
             return c and c.column_label() or cid
         b = self._binding
-        text = b.description()
-        if text is None:
+        help = b.help() or b.description()
+        if help:
+            return lcg.SectionContainer(lcg.Parser().parse(help))
+        else:
             main, side = self._name.split('::')
             text = _("Hlavním formulářem tohoto duálního formuláře je [%s].  V dolní části "
                      "se zobrazují související záznamy formuláře [%s].  Oba formuláře jsou "
                      "propojeny přes shodu hodnot sloupečků '%s' = '%s'.") % \
                      (main, side, clabel(b.binding_column(), self._main_spec),
                       clabel(b.side_binding_column(), self._side_spec))
-        return lcg.p(text, formatted=True)
+            return lcg.p(text, formatted=True)
     
 
 class DescrReader(lcg.FileReader):
