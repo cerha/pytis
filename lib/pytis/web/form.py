@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -725,7 +725,7 @@ class ListView(BrowseForm):
             if img:
                 parts.append(img)
         if self._meta:
-            meta = [g.span(labeled and g.span(field.label, cls='label')+": " or '' + \
+            meta = [g.span((labeled and g.span(field.label, cls='label')+": " or '') + \
                            self._format_field(exporter, field), cls=field.id)
                     for field, labeled in self._meta]
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
