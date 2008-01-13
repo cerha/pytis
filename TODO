@@ -209,6 +209,11 @@ INTERNÍ ZÁLE®ITOSTI:
    `on_new_record()' arument `key' nikdy nedostane.  V nìkterých defsech se s
    ním v¹ak stále poèítá.
 
+ * Specifikace okrajù a mezer ve formuláøích.
+
+   Argument `border_style' ne pravdìpodobnì zcela nepou¾ívaný.  `gap', `space' a `border' by bylo
+   lépe definovat pro celý layout globálnì, ne¾ zvlá¹» pro ka¾dou `GroupSpec'.
+
  * Nedostupnost pøíkazu vs. pøístupová práva.
 
    Pokud není pøíkaz dostupný z dùvodu nedostateèných pøístupových práv,
