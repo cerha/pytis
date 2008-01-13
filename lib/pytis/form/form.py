@@ -1252,6 +1252,41 @@ class RecordForm(LookupForm):
             prefill = {}
         return prefill
 
+    def _dualform(self):
+        # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
+        top = top_window()
+        if isinstance(top, DualForm) and self in (top.active_form(), top.inactive_form()):
+            return top
+        else:
+            return None
+    
+    def _context_action_args(self, action):
+        if action.context() == ActionContext.CURRENT_ROW:
+            args = (self.current_row(),)
+        elif action.context() == ActionContext.SELECTION:
+            args = (self.selected_rows(),)
+        else:
+            raise ProgramError("Invalid action context:", action.context())
+        if action.secondary_context() is not None:
+            args += (self._secondary_context(action.secondary_context()),)
+        return args
+    
+    def _secondary_context(self, context):
+        dual = self._dualform()
+        if dual:
+            if dual.active_form() is self:
+                form = dual.inactive_form()
+            else:
+                form = dual.active_form()
+            if context == ActionContext.CURRENT_ROW:
+                return form.current_row()
+            elif context == ActionContext.SELECTION:
+                return form.selected_rows()
+            else:
+                raise ProgramError("Invalid action secondary_context:", context)
+        else:
+            return None
+    
     # Zpracování pøíkazù.
     
     def _cmd_new_record(self, copy=False):
@@ -1322,6 +1357,36 @@ class RecordForm(LookupForm):
             return True
         else:
             return False
+
+    def _can_context_action(self, action):
+        if action.context() == ActionContext.SELECTION and len(self.selected_rows()) < 1:
+            return False
+        if action.secondary_context() is not None and \
+               self._secondary_context(action.secondary_context()) is None:
+            return False
+        if not pytis.data.is_in_groups(action.access_groups()):
+            return False
+        enabled = action.enabled()
+        if callable(enabled):
+            args = self._context_action_args(action)
+            kwargs = action.kwargs()
+            return enabled(*args, **kwargs)
+        else:
+            return enabled
+
+    def _cmd_context_action(self, action):
+        args = self._context_action_args(action)
+        kwargs = action.kwargs()
+        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
+        apply(action.handler(), args, kwargs)
+        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
+        # dualform.  Jinak refreshujeme jen sebe sama.
+        dual = self._dualform()
+        if dual:
+            dual.refresh()
+        else:
+            self.refresh()
+        return True
 
     def _cmd_import_interactive(self):
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
@@ -1444,6 +1509,9 @@ class RecordForm(LookupForm):
 
         """
         return self._row
+
+    def selected_rows(self):
+        return ()
 
     def current_key(self):
         """Vra» klíè aktuálnì vybraného øádku.
@@ -1570,24 +1638,24 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         assert f is not None, (_("Unknown field:"), id)
         return f
 
-    def _create_button(self, parent, item):
-        b = wx.Button(parent, -1, item.label())
-        b.Enable(item.active_in_popup_form() \
-                 or not isinstance(self, PopupForm))
-        if item.width() is not None:
-            width = dlg2px(b, 4*item.width())
-            height = b.GetSize().GetHeight()
-            b.SetMinSize((width, height))
-        if item.tooltip() is not None:
-            b.SetToolTipString(item.tooltip())
-        def create_handler(handler):
-            def _handler(event):
-                handler(self._row)
+    def _create_button(self, parent, button):
+        if button.handler():
+            def handler(row):
+                button.handler()(row)
                 busy_cursor(False)
-            return _handler
-        wx_callback(wx.EVT_BUTTON, self, b.GetId(),
-                    create_handler(item.handler()))
-        return b
+            label = button.label()
+            tooltip = button.tooltip()
+            command = Application.COMMAND_HANDLED_ACTION(handler=handler, row=self._row,
+                                                         enabled=button.enabled())
+        else:
+            action = find(button.action(), self._view.actions(linear=True), key=lambda a: a.name())
+            label = button.label() or action.title()
+            tooltip = button.tooltip() or action.descr()
+            command = self.COMMAND_CONTEXT_ACTION(action=action)
+        return wx_button(parent, label, command=command, tooltip=tooltip,
+                         width=button.width() and dlg2px(parent, 4*button.width()),
+                         enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))\
+                                 and (button.active_in_readonly_form() or not self.readonly()))
 
     def _create_group(self, parent, group):
         """Vytvoø skupinu vstupních políèek podle specifikace.
@@ -1997,7 +2065,8 @@ class PopupEditForm(PopupForm, EditForm):
         return result
         
     def can_command(self, command, **kwargs):
-        if command.handler() in (LookupForm, RecordForm):
+        if command.handler() in (LookupForm, RecordForm) \
+               and command != RecordForm.COMMAND_CONTEXT_ACTION:
             return False
         return super(PopupEditForm, self).can_command(command, **kwargs)
         

@@ -167,69 +167,92 @@ class Style(object):
 
 
 class Orientation(object):
-    """Výètová tøída definující konstanty pro smìrovou orientaci."""
+    """Definition of constants for orientation specification."""
     HORIZONTAL = 'HORIZONTAL'
-    """Horizontální orientace."""
+    """Horizontal orientation."""
     VERTICAL = 'VERTICAL'
-    """Vertikální orientace."""
+    """Vertical orientation."""
 
     
 class Button(object):
-    """Specifikace tlaèítka navázaného na proceduru pro pou¾ití ve formuláøích.
+    """Specification of a button for use within a form layout.
 
-    Takto lze do formuláøe umístit tlaèítka, jejich¾ stisk vyvolá libovolnou
-    u¾ivatelem definovanou akci.  Pøi spu¹tìní akce pøitom lze pøistupovat k
-    aktuálním hodnotám políèek formuláøe (viz konstruktor).
-
-    Tlaèítko lze umístit do LayoutSpec jako jednu z polo¾ek (v¹ude tam, kde
-    bì¾nì uvádíme id políèka pro umístìní vstupního políèka, nebo vnoøenou
-    LayoutSpec).  Pokud ve specifikaci není 'LayoutSpec' definována explicitnì,
-    nelze tlaèítko pou¾ít.
+    This allows to place buttons which can invoke an action or a user defined function within form
+    layout.  See `GroupSpec' for more information about where buttons can be used.
 
     """
     
-    def __init__(self, label, handler, width=None, tooltip=None,
-                 active_in_popup_form=True):
-        """Inicializuj specifikaèní instanci.
-
-        Argumenty:
-
-          label -- nápis tlaèítka jako string.
-          
-          handler -- funkce jednoho argumentu, kterým je instance
-            'PresentedRow' obsahující aktuální hodnoty políèek formuláøe.  Tato
-            
-          width -- ¹íøka (poèet znakù).  Implicitnì je ¹íøka nastavena
-            automaticky podle ¹íøky nápisu ('label'), ale pokud je tento
-            argument specifikován, bude ¹íøka nastavena podle dané celoèíselné
-            hodnoty.
-            
-          tooltip -- text, který se zobrazí jako bublinová nápovìda pro toto
-            tlaèítko.
-            
-          active_in_popup_form -- Pokud je zde specifikována pravdivá hodnota,
-            nebude tlaèítko aktivní v popup (modálních) formuláøích.  To je
-            urèeno zejména pro tlaèítka, která mají vyvolat otevøení nového
-            formuláøe na zásobníku oken aplikace, co¾ není právì v dobì práce s
-            modálním formuláøem mo¾né.
+    def __init__(self, label=None, handler=None, enabled=None, action=None, width=None,
+                 tooltip=None, active_in_popup_form=True, active_in_readonly_form=False):
+        """Initialize the instance.
         
+        Arguments:
+
+          label -- button label as a string.  Can be None when 'action' is specified -- in this
+            case the action title is used.
+          
+          handler -- function of one argument -- the 'PresentedRow' instance representing the
+            current state of the form.  If None, 'action' must be sepecified.
+
+          enabled -- function of one argument -- the 'PresentedRow' instance representing the
+            current state of the form -- which returns True if the button is enabled or False
+            otherwise.  This function will be called periodically on each user interface update, so
+            the result may change during form editation.  Only relevant if 'handler' is used.  For
+            'action' the button state depends on the refered action and its 'enabled' parameter.
+
+          action -- name of an 'Action' specification as a string.  This allows to handle the
+            button press by invoking one of 'actions' defined in the same 'ViewSpec' instead of
+            passing the 'handler' function directly.  If used, 'handler' must be None, if None,
+            'handler' must be specified.
+            
+          width -- button with (number of characters).  The default width is set automatically to
+            fit the label, but this argument may override this default.
+            
+          tooltip -- button's tooltip text as a string.
+            
+          active_in_popup_form -- False value deactivate the button in popup (modal) forms.  This
+            may be particularly usefull when the button opens a new form, which is impossible in
+            modal forms.
+            
+          active_in_readonly_form -- buttons are inactive in read-only forms by default, since they
+            often modify form data.  True value will activate the button in even for readonly
+            forms.  This may be particularly usefull when the button performs some action, which
+            doesnt't modify the data.
+            
         """
-        assert isinstance(label, (str, unicode))
-        assert callable(handler)
+        if action is None:
+            assert isinstance(label, (str, unicode)), label
+            assert callable(handler), handler
+            assert enabled is None or callable(enabled), enabled
+        else:
+            assert isinstance(action, str), action
+            assert label is None or isinstance(label, (str, unicode)), label
+            assert handler is None, handler
+            assert enabled is None, enabled
         assert width is None or isinstance(width, int)
-        assert tooltip is None or isinstance(tooltip, (str, unicode))
-        assert isinstance(active_in_popup_form, bool)
+        assert tooltip is None or isinstance(tooltip, (str, unicode)), tooltip
+        assert isinstance(active_in_popup_form, bool), active_in_popup_form
+        assert isinstance(active_in_readonly_form, bool), active_in_readonly_form
         self._label = label
         self._handler = handler
+        self._enabled = enabled
+        self._action = action
         self._width = width
         self._tooltip = tooltip
         self._active_in_popup_form = active_in_popup_form
+        self._active_in_readonly_form = active_in_readonly_form
         
     def label(self):
         return self._label
     
     def handler(self):
         return self._handler
+    
+    def enabled(self):
+        return self._enabled
+    
+    def action(self):
+        return self._action
     
     def width(self):
         return self._width
@@ -239,6 +262,9 @@ class Button(object):
     
     def active_in_popup_form(self):
         return self._active_in_popup_form
+
+    def active_in_readonly_form(self):
+        return self._active_in_readonly_form
 
 class ActionContext(object):
     """Výètová tøída definující konstanty pro urèení kontextu akce."""
@@ -284,9 +310,9 @@ class Action(_ActionItem):
     aktuálním øádkem tabulky apod.  Více viz argumenty konstruktoru.
     
     """
-    def __init__(self, title, handler, context=ActionContext.CURRENT_ROW,
-                 secondary_context=None, enabled=True, access_groups=None,
-                 descr=None, hotkey=None, **kwargs):
+    
+    def __init__(self, title, handler, context=ActionContext.CURRENT_ROW, secondary_context=None,
+                 name=None, enabled=True, access_groups=None, descr=None, hotkey=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -316,6 +342,9 @@ class Action(_ActionItem):
             dal¹ím kontextem se nepracuje a druhý pozièní argument se handleru
             nepøedává.
 
+          name -- action name as a string.  This name will identify the action for use with a form
+            'Button'.  May be None if the action is not refered by any button.
+
           enabled -- funkce, vracející pravdu, pokud je akce aktivní a nepravdu
             v opaèném pøípadì.  Funkci jsou pøadány stejné argumenty, jako
             handleru.  Není-li uvedeno, je akce aktivní v závislosti na
@@ -341,15 +370,13 @@ class Action(_ActionItem):
         assert context in (None,) + public_attributes(ActionContext)
         assert secondary_context in (None,) + public_attributes(ActionContext)
         assert callable(enabled) or isinstance(enabled, bool)
-        assert access_groups is None or \
-               isinstance(access_groups,
-                          (str, tuple, list))
+        assert access_groups is None or isinstance(access_groups, (str, tuple, list))
         assert descr is None or isinstance(descr, (str, unicode))
-        assert hotkey is None or isinstance(hotkey, (str,
-                                                     tuple))
+        assert hotkey is None or isinstance(hotkey, (str, tuple))
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
+        self._name = name
         self._enabled = enabled
         self._access_groups = access_groups
         self._descr = descr
@@ -358,35 +385,30 @@ class Action(_ActionItem):
         super(Action, self).__init__(title)
         
     def handler(self):
-        """Vra» obslu¾nou funkci akce."""
         return self._handler
 
     def context(self):
-        """Vra» kontext akce jako instanci 'ActionContext'."""
         return self._context
     
     def secondary_context(self):
-        """Vra» pøídavný kontext akce, pokud je definován, nebo None."""
         return self._secondary_context
 
+    def name(self):
+        return self._name
+    
     def enabled(self):
-        """Vra» funkci k zji¹tìní dostupnosti akce, nebo pøímo bool hodnotu."""
         return self._enabled
         
     def access_groups(self):
-        """Vra» seznam u¾iv. skupin které mají právo akci vyvolat.""" 
         return self._access_groups
         
     def descr(self):
-        """Vra» popis akce.""" 
         return self._descr
         
     def hotkey(self):
-        """Vra» klávesovou zkratku akce.""" 
         return self._hotkey
     
     def kwargs(self):
-        """Vra» klíèové argumenty pro handler akce."""
         return self._kwargs
     
 
@@ -510,13 +532,12 @@ class GroupSpec(object):
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
-        """Inicializuj instanci.
+        """Initialize the instance.
 
-        Argumenty:
+        Arguments:
 
-          items -- obsah této skupiny jako sekvence vnoøených skupin (instancí
-            'GroupSpec'), nebo pøímo vstupních políèek urèených svým
-            identifikátorem (øetìzec).
+          items -- contents of the group as a sequence of field identifiers (strings), button
+            specifications ('Button' instances) or nested groups ('GroupSpec' instances).
             
           orientation -- orientace skládání obsa¾ených prvkù; konstanta
             tøídy 'Orientation'.
@@ -550,7 +571,7 @@ class GroupSpec(object):
                     items = list(items)
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
-                # No need for recursion, since the check is performed for each group on ite level.
+                # No need for recursion, since the check is performed for each group on its level.
                 assert isinstance(item, (GroupSpec, Button, str, unicode)), item
         self._items = tuple(items)
         self._label = label
@@ -916,14 +937,19 @@ class ViewSpec(object):
                                 GroupSpec(layout,
                                           orientation=Orientation.VERTICAL))
         if __debug__:
-            assert isinstance(layout, LayoutSpec)
+            assert isinstance(actions, (tuple, list)), actions
+            assert isinstance(layout, LayoutSpec), layout
+            action_names = [action.name() for action in self._linearize_actions(actions)]
             def recourse_group(group):
                 for item in group.items():
                     if isinstance(item, GroupSpec):
                         recourse_group(item)
-                    elif not isinstance(item, Button):
+                    elif isinstance(item, Button):
+                        assert item.action() is None or item.action() in action_names, \
+                               "Unknown button action in layout: %s" % item.action()
+                    else:
                         assert self._field_dict.has_key(item), \
-                            _("Unknown field id in 'layout' spec.: %r") % item
+                               "Unknown field in layout: %r" % item
                         if self._field_dict[item].width() == 0:
                             log(OPERATIONAL,
                                 "Zero width field in layout:", item)
@@ -954,13 +980,6 @@ class ViewSpec(object):
                     assert not f.disable_column(), \
                            _("Disabled column in columns: %s") % c
         # Initialize other specification parameters
-        if __debug__:
-            for x in actions:
-                if isinstance(x, (tuple, list)):
-                    for y in x:
-                        assert isinstance(y, (Action, ActionGroup))
-                else:
-                    assert isinstance(x, (Action, ActionGroup))
         if sorting is not None:
             assert is_sequence(sorting)
             if __debug__:
@@ -1020,7 +1039,20 @@ class ViewSpec(object):
         self._row_style = row_style
         self._conditions = tuple(conditions)
         self._aggregations = tuple(aggregations)
-
+        
+    def _linearize_actions(self, spec):
+        actions = []
+        for x in spec:
+            if isinstance(x, Action):
+                actions.append(x)
+            elif isinstance(x, ActionGroup):
+                actions.extend(self._linearize_actions(x.actions()))
+            elif isinstance(x, (tuple, list)):
+                actions.extend(self._linearize_actions(x))
+            else:
+                raise ProgramError("Invalid action specification: %s" % x)
+        return actions
+    
     def title(self):
         """Vra» název náhledu jako øetìzec."""
         return self._title
@@ -1054,20 +1086,8 @@ class ViewSpec(object):
 
     def actions(self, linear=False):
         """Vra» specifikaci akcí."""
-        def linearize(spec):
-            actions = []
-            for x in spec:
-                if isinstance(x, Action):
-                    actions.append(x)
-                elif isinstance(x, ActionGroup):
-                    actions.extend(linearize(x.actions()))
-                elif isinstance(x, (tuple, list)):
-                    actions.extend(linearize(x))
-                else:
-                    raise ProgramError("Invalid action specification: %s" % x)
-            return actions
         if linear:
-            return linearize(self._actions)
+            return self._linearize_actions(self._actions)
         else:
             return self._actions
 

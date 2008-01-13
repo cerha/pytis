@@ -1410,7 +1410,8 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
         return None
 
 def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False, fullsize=False,
-              command=None, callback=None, enabled=True, tooltip=None, size=None, height=None):
+              command=None, callback=None, enabled=True, tooltip=None, size=None, width=None,
+              height=None):
     """Create and setup a button.
 
     This is a convenience helper to allow simple button creation and setup in one step.
@@ -1435,7 +1436,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
       enabled -- if false, the button will be disabled
       tooltip -- tooltip string
       size -- button size in pixels as a two-tuple (width, height)
-      height -- height in pixels, overrides the height given by size
+      width -- width in pixels, overrides the width given by 'size'
+      height -- height in pixels, overrides the height given by 'size'
 
     Returns a 'wx.Button' or 'wx.BitmapButton' instance.
       
@@ -1461,11 +1463,14 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
             hotkey = global_keymap().lookup_command(command, args)
             if hotkey:
                 tooltip += ' ('+ hotkey_string(hotkey) +')'
-        #enabled = command.enabled(**args)
+        wx_callback(wx.EVT_UPDATE_UI, button, button.GetId(),
+                    lambda e: e.Enable(command.enabled(**args)))
     if tooltip:
         button.SetToolTipString(tooltip)
     if callback:
         wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
+    if width:
+        button.SetMinSize((height, button.GetSize().height))
     if height:
         button.SetMinSize((button.GetSize().width, height))
     if not enabled:

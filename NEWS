@@ -4,6 +4,22 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2008-01-13  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla pøidána popora pro navázání tlaèítek na akce.  Ve specifikaci
+	akcí lze akci pøiøadit identifikátor pomocí argumentu 'name' a ve
+	specifikaci 'Button' se potom na takto definovaný identifikátor
+	lze odkázat pomocí argumentu 'action'.  Více viz dokumentace
+	'Button'.
+
+	Dále je mo¾né ve specifikaci Button pøímo urèit dostupnost
+	tlaèítka pomocí argumentu `enabled'.  Pøi pou¾ití tlaèítka
+	odkazujícího na akci, bude dostupnost automaticky urèena podle
+	dostupnosti akce (jejího argumentu `enabled').  V obou pøípadech
+	je dostupnost urèována dynamicky, tak¾e pokud v prùbìhu editace
+	formuláøe dojde ke splnìní podmínky, bude tlaèítko automaticky
+	aktivováno/deaktivováno.
+	
 2008-01-11  Tomas Cerha  <cerha@brailcom.org>
 
 	Ve specifikaci vazby duálního formuláøe je nyní mo¾no pou¾ít také

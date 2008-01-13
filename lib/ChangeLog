@@ -1,3 +1,23 @@
+2008-01-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py: `ListForm.COMMAND_CONTEXT_ACTION' ->
+	`RecordForm.COMMAND_CONTEXT_ACTION'.
+
+	* pytis/form/form.py (RecordForm): Implement
+	`COMMAND_CONTEXT_ACTION' here.
+	(EditForm._create_button): Added support for action buttons?
+
+	* pytis/form/list.py (ListForm): Support for
+	`COMMAND_CONTEXT_ACTION' moved to `RecordForm'.
+
+	* pytis/form/screen.py (wx_button): Make botton available
+	according to command availability.  New argument `width'.
+
+	* pytis/presentation/spec.py (Button): New argument `enabled'.
+	Allow references to actions.
+	(Action): New argument `name'.
+	(ViewSpec): Check actions refered by buttons.
+
 2008-01-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (BindingSpec): New specifier `help'.

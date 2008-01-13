@@ -102,6 +102,8 @@ Command(RecordForm, 'EDIT_RECORD',
         "Editace aktuálního záznamu v editaèním formuláøi")
 Command(RecordForm, 'DELETE_RECORD',
         "Vymazání editovaného záznamu z databáze")
+Command(RecordForm, 'CONTEXT_ACTION',
+        "Vyvolání akce nad aktuálním øádkem formuláøe") # mandatory arg. 'action'
 Command(ListForm, 'ACTIVATE',
         "Aktivaèní funkce pro aktuální øádek formuláøe") # arg. 'alternate'
 Command(ListForm, 'FIRST_COLUMN',
@@ -150,8 +152,6 @@ Command(ListForm, 'TOGGLE_COLUMN',
         "Skrytí/zobrazení sloupce")
 Command(ListForm, 'TOGGLE_ROW_LABELS',
         "Skrytí/zobrazení sloupce záhlaví øádkù")
-Command(ListForm, 'CONTEXT_ACTION',
-        "Vyvolání akce nad aktuálním øádkem formuláøe") # mandatory arg. 'action'
 Command(ListForm, 'CONTEXT_MENU',
         "Zobrazení kontextového menu aktivní buòky")
 Command(EditForm, 'COMMIT_RECORD',
