@@ -1,7 +1,14 @@
 2008-01-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py (wx_button): New argument `update'.  Don't
+	bind to UPDATE_UI events to temporarily solve the problem of
+	freezes.
+
+	* pytis/form/list.py: Cosmetic changes.
+
 	* pytis/form/form.py (RecordForm.readonly, EditForm.readonly): New
 	methods.
+	(EditForm._create_button): Set button UI updates explicitly.
 
 2008-01-13  Tomas Cerha  <cerha@brailcom.org>
 

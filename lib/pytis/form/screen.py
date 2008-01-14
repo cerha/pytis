@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1410,8 +1410,8 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
         return None
 
 def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False, fullsize=False,
-              command=None, callback=None, enabled=True, tooltip=None, size=None, width=None,
-              height=None):
+              command=None, callback=None, enabled=True, update=False, tooltip=None, size=None,
+              width=None, height=None):
     """Create and setup a button.
 
     This is a convenience helper to allow simple button creation and setup in one step.
@@ -1434,6 +1434,9 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
       callback -- if specified, the given function will be associated with button press event.  The
         function will be called with `wx.Event' instance as first argument
       enabled -- if false, the button will be disabled
+      update -- if true the button availability will be periodically checked and the changes will
+        be reflected by enabling/disabling the button when the 'command' becomes enabled/disabled.
+        Currently not supported if 'callback' is used instead of 'command'.
       tooltip -- tooltip string
       size -- button size in pixels as a two-tuple (width, height)
       width -- width in pixels, overrides the width given by 'size'
@@ -1457,14 +1460,18 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         button = wx.Button(parent, id, label=label or '', size=size, style=style)
     if command:
         assert callback is None
-        command, args = command
-        callback = lambda e: command.invoke(**args)
+        cmd, args = command
+        callback = lambda e: cmd.invoke(**args)
         if tooltip:
-            hotkey = global_keymap().lookup_command(command, args)
+            hotkey = global_keymap().lookup_command(cmd, args)
             if hotkey:
                 tooltip += ' ('+ hotkey_string(hotkey) +')'
-        wx_callback(wx.EVT_UPDATE_UI, button, button.GetId(),
-                    lambda e: e.Enable(command.enabled(**args)))
+        if update and False:
+            # TODO: This causes the whole application to freeze when a dialog is closed.
+            wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
+                        lambda e: e.Enable(cmd.enabled(**args)))
+        elif enabled and not cmd.enabled(**args):
+            enabled = False
     if tooltip:
         button.SetToolTipString(tooltip)
     if callback:

@@ -1654,10 +1654,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             label = button.label() or action.title()
             tooltip = button.tooltip() or action.descr()
             command = self.COMMAND_CONTEXT_ACTION(action=action)
-        return wx_button(parent, label, command=command, tooltip=tooltip,
-                         width=button.width() and dlg2px(parent, 4*button.width()),
+        return wx_button(parent, label, command=command, tooltip=tooltip, update=True,
                          enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))\
-                                 and (button.active_in_readonly_form() or not self.readonly()))
+                                 and (button.active_in_readonly_form() or not self.readonly()),
+                         width=button.width() and dlg2px(parent, 4*button.width()))
 
     def _create_group(self, parent, group):
         # Each continuous sequence of fields is first stored in an array and finally packed into a

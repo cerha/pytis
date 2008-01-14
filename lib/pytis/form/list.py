@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,8 +87,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Nastav klávesové zkratky z kontextových menu.
         for action in self._view.actions(linear=True):
             if action.hotkey():
-                self.define_key(action.hotkey(),
-                                ListForm.COMMAND_CONTEXT_ACTION, dict(action=action))
+                self.define_key(action.hotkey(), self.COMMAND_CONTEXT_ACTION, dict(action=action))
         # Závěrečné akce
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
@@ -2211,28 +2210,20 @@ class BrowseForm(ListForm):
         
     def _formatter_parameters(self):
         name = self._name
-        return {(name+'/'+pytis.output.P_CONDITION):
-                pytis.data.AND(self._current_condition()),
-                (name+'/'+pytis.output.P_SORTING):
-                self._data_sorting(),
-                (name+'/'+pytis.output.P_KEY):
-                self._current_key(),
-                (name+'/'+pytis.output.P_ROW):
-                copy.copy(self._table.row(self._current_cell()[0])),
-                (name+'/'+pytis.output.P_DATA):
-                copy.copy(self._data)
-                }
+        return {(name+'/'+pytis.output.P_CONDITION): pytis.data.AND(self._current_condition()),
+                (name+'/'+pytis.output.P_SORTING): self._data_sorting(),
+                (name+'/'+pytis.output.P_KEY): self._current_key(),
+                (name+'/'+pytis.output.P_ROW): copy.copy(self._table.row(self._current_cell()[0])),
+                (name+'/'+pytis.output.P_DATA): copy.copy(self._data)}
 
     def _action_mitems(self, spec):
         items = []
         for x in spec:
             if isinstance(x, Action):
-                cmd = ListForm.COMMAND_CONTEXT_ACTION(action=x)
-                items.append(MItem(x.title(raw=True), command=cmd,
-                                   help=x.descr()))
+                cmd = self.COMMAND_CONTEXT_ACTION(action=x)
+                items.append(MItem(x.title(raw=True), command=cmd, help=x.descr()))
             elif isinstance(x, ActionGroup):
-                items.append(Menu(x.title(raw=True),
-                                  self._action_mitems(x.actions())))
+                items.append(Menu(x.title(raw=True), self._action_mitems(x.actions())))
             elif isinstance(x, (types.TupleType, types.ListType)):
                 if items:
                     items.append(MSeparator())
