@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1287,7 +1287,7 @@ class RecordForm(LookupForm):
         else:
             return None
     
-    # Zpracování příkazů.
+    # Command handling
     
     def _cmd_new_record(self, copy=False):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
@@ -1458,7 +1458,7 @@ class RecordForm(LookupForm):
             fh.close()
         new_record(self._name, prefill=self._prefill, inserted_data=data)
             
-    # Veřejné metody
+    # Public methods
 
     def record(self, row, **kwargs):
         """Create a new `RecordForm.Record' instance bound to this form."""
@@ -1521,6 +1521,9 @@ class RecordForm(LookupForm):
 
         """
         return self._current_key()
+
+    def readonly(self):
+        return False
 
     def prefill(self):
         """Vrať data pro předvyplnění nového záznamu."""
@@ -1621,8 +1624,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _create_group_panel(self, parent, group):
         panel = wx.ScrolledWindow(parent, style=wx.TAB_TRAVERSAL)
         # Create the form controls first, according to the order.
-        fields = [InputField.create(panel, self._row, id, guardian=self,
-                                    readonly=self._mode == self.MODE_VIEW)
+        fields = [InputField.create(panel, self._row, id, guardian=self, readonly=self.readonly())
                   for id in group.order() if self._view.field(id).width() != 0]
         self._fields.extend(fields)
         # Now create the layout groups.
@@ -1658,32 +1660,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                  and (button.active_in_readonly_form() or not self.readonly()))
 
     def _create_group(self, parent, group):
-        """Vytvoř skupinu vstupních políček podle specifikace.
-
-        Argumenty:
-
-          group -- instance 'GroupSpec', která má být zpracována.
-
-        Každou posloupnost za sebou následujících políček seskupí pod sebe
-        a pro každou vnořenou skupinu políček zavolá sebe sama rekurzivně.
-        Výsledek potom poskládá do instance 'wx.BoxSizer', kterou vytvoří.
-
-        Specifikace skupiny ovlivňuje způsob seskupení:
-        horizontální/vertikální, mezery mezi políčky, skupinami
-        atd. Viz. dokuewntace třídy 'GroupSpec'
-
-        Vrací: 'wx.BoxSizer' naplněný políčky a vnořenými skupinami.
-
-        """
+        # Each continuous sequence of fields is first stored in an array and finally packed into a
+        # grid sizer by self._pack_fields() and added to this group's sizer.
         orientation = orientation2wx(group.orientation())
         if group.label() is not None:
             box = wx.StaticBox(parent, -1, group.label())
             sizer = wx.StaticBoxSizer(box, orientation)
         else:
             sizer = wx.BoxSizer(orientation)
-        # každý souvislý sled políček ukládám do pole a teprve nakonec je
-        # poskládám metodou self._pack_fields() a vložím do sizeru této
-        # skupiny
         pack = []
         space = dlg2px(parent, group.space())
         gap = dlg2px(parent, group.gap())
@@ -1733,22 +1717,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return sizer
 
     def _pack_fields(self, parent, items, space, gap):
-        """Sestav skupinu pod sebou umístěných políček/tlačítek do gridu.
-
-        Argumenty:
-
-          items -- sekvence identifikátorů políček nebo instancí Button.
-          space -- mezera mezi ovládacím prvkem a labelem políčka v dlg units;
-            integer
-          gap -- mezera mezi jednotlivými políčky v dlg units; integer
-
-        Pro každý prvek skupiny vytvoří tlačítko nebo políčko
-        'inputfield.InputField' a přidá jeho label a widget do vytvořené
-        instance 'wx.FlexGridSizer'.
-
-        Vrací: instanci 'wx.FlexGridSizer' naplněnou políčky a tlačítky.
-
-        """
+        # Pack the sequence of fields and/or buttons into a grid.
+        #  items -- sequence of field identifiers and/or Button instances.
+        #  space -- space between the control and its label in dlg units; integer
+        #  gap -- space between the fields in dlg units; integer
         grid = wx.FlexGridSizer(len(items), 2, gap, space)
         for item in items:
             if isinstance(item, Button):
@@ -1849,24 +1821,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             run_dialog(Error, msg)
             return False
 
-    def title(self):
-        """Vrať název formuláře jako řetězec."""        
-        return self._view.layout().caption()
-
-    def size(self):
-        """Vrať skutečnou velikost formuláře (bez ohledu na aktuální velikost).
-
-        Vrácená hodnota reprezentuje minimální velikost formuláře, tak aby byly
-        všechny jeho prvky viditelné.  Skutečná velikost může být menší, nebo
-        větší v závoslosti na velikost okna, ve kterém je formulář zobrazen.
-        
-        """
-        return self._size
-
-    def changed(self):
-        """Vrať pravdu, pokud byla data změněna od posledního uložení."""
-        return self._row.changed()
-
     def _exit_check(self):
         if self.changed():
             q = _("Data byla změněna a nebyla uložena!") + "\n" + \
@@ -1875,6 +1829,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 return False
         return True
 
+    # Command handling
+    
     def _can_commit_record(self, close=True):
         return self._mode != self.MODE_VIEW
     
@@ -1894,6 +1850,29 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if w:
                 flags = not back and wx.NavigationKeyEvent.IsForward or 0
                 w.Navigate(flags=flags)
+    
+    # Public methods
+
+    def title(self):
+        """Vrať název formuláře jako řetězec."""        
+        return self._view.layout().caption()
+
+    def size(self):
+        """Vrať skutečnou velikost formuláře (bez ohledu na aktuální velikost).
+
+        Vrácená hodnota reprezentuje minimální velikost formuláře, tak aby byly
+        všechny jeho prvky viditelné.  Skutečná velikost může být menší, nebo
+        větší v závoslosti na velikost okna, ve kterém je formulář zobrazen.
+        
+        """
+        return self._size
+
+    def changed(self):
+        """Vrať pravdu, pokud byla data změněna od posledního uložení."""
+        return self._row.changed()
+
+    def readonly(self):
+        return self._mode == self.MODE_VIEW
 
     
 class PopupEditForm(PopupForm, EditForm):

@@ -1,3 +1,8 @@
+2008-01-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py (RecordForm.readonly, EditForm.readonly): New
+	methods.
+
 2008-01-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py: `ListForm.COMMAND_CONTEXT_ACTION' ->
