@@ -19,6 +19,15 @@ CHYBY:
    Dále by bylo mo¾né tuto informaci z datového objektu nìjak vytáhnout a napø. uèinit pøíslu¹né
    políèko needitovatelné.
 
+ * Zamrznutí aplikace pøi pou¾ití tlaèítek s EVT_UPDATE_UI ve formuláøích.
+
+   Pokud ve funkci `wx_button()' povolím navázání `EVT_UPDATE_UI' pro aktualizaci stavu tlaèítka v
+   závislosti na dostupnosti pøíkazu, dojde pøi uzavøení jakéhokoliv dialogu nad otevøeným
+   editaèním formuláøem (ve kterém je takové tlaèítko pou¾ito) k zatuhnutí celé aplikace (Formuláø
+   pøestane reagovat, celé okno je za¹edlé).  Aby k tomu nedocházelo, je pøíslu¹ný kód nyní
+   zablokován, ale bude potøeba to nìjak doøe¹it, aby tlaèítka mohla dynamicky reagovat na zmìnu
+   dostupnosti pøíkazù...
+
  * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
 
  * Zpráva "Vlo¾ený záznam se neobjevil v aktualním náhledu"
