@@ -1,3 +1,11 @@
+2008-01-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py (wx_button): Don't disable the button when
+	the command is not enabled.
+
+	* pytis/form/form.py (EditForm._create_button): Set button
+	availability explicitly.
+
 2008-01-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/screen.py (wx_button): New argument `update'.  Don't

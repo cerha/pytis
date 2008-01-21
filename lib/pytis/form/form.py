@@ -1647,16 +1647,19 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 busy_cursor(False)
             label = button.label()
             tooltip = button.tooltip()
-            command = Application.COMMAND_HANDLED_ACTION(handler=handler, row=self._row,
+            cmd, args = Application.COMMAND_HANDLED_ACTION(handler=handler, row=self._row,
                                                          enabled=button.enabled())
         else:
             action = find(button.action(), self._view.actions(linear=True), key=lambda a: a.name())
             label = button.label() or action.title()
             tooltip = button.tooltip() or action.descr()
-            command = self.COMMAND_CONTEXT_ACTION(action=action)
-        return wx_button(parent, label, command=command, tooltip=tooltip, update=True,
+            cmd, args = self.COMMAND_CONTEXT_ACTION(action=action)
+        return wx_button(parent, label, command=(cmd, args), tooltip=tooltip, update=True,
                          enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))\
-                                 and (button.active_in_readonly_form() or not self.readonly()),
+                                 and (button.active_in_readonly_form() or not self.readonly())
+                                 # TODO: This should be removed once the problem in wx_button()
+                                 # is solved.
+                                 and cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4*button.width()))
 
     def _create_group(self, parent, group):

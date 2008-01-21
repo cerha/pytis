@@ -1466,12 +1466,14 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
             hotkey = global_keymap().lookup_command(cmd, args)
             if hotkey:
                 tooltip += ' ('+ hotkey_string(hotkey) +')'
-        if update and False:
-            # TODO: This causes the whole application to freeze when a dialog is closed.
-            wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
-                        lambda e: e.Enable(cmd.enabled(**args)))
-        elif enabled and not cmd.enabled(**args):
-            enabled = False
+        # TODO: This causes the whole application to freeze when a dialog is closed.
+        #if update:
+        #    wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
+        #                lambda e: e.Enable(cmd.enabled(**args)))
+        # TODO: This doesn't work for some commands.  For example the InsertForm commit button
+        # stays disabled when the following test is enabled
+        #elif enabled and not cmd.enabled(**args):
+        #    enabled = False
     if tooltip:
         button.SetToolTipString(tooltip)
     if callback:
