@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,8 +123,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if __debug__:
             title += ' (wxWidgets %d.%d.%d)' % \
                      (wx.MAJOR_VERSION, wx.MINOR_VERSION, wx.RELEASE_NUMBER)
-        frame = self._frame = wx.Frame(None, -1, title, 
-                                       pos=(0,0), size=(800, 600),
+        frame = self._frame = wx.Frame(None, -1, title, pos=(0,0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # Tento panel slouží pouze pro odchytávání klávesových událostí,
@@ -373,9 +372,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                              args={'form': form})
         menu = self._window_menu
         if menu is not None:
-            for item in menu.GetMenuItems()[5:]:
-                menu.Remove(item.GetId())
-                item.Destroy()
+            for i, item in enumerate(menu.GetMenuItems()):
+                if i >= 5:
+                    menu.Remove(item.GetId())
+                    item.Destroy()
             for i, form in enumerate(self._windows.items()):
                 menu.AppendItem(wmitem(i+1, form).create(self._frame, menu))
 
@@ -724,6 +724,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     message('', root=True)
+                    form.resize() # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
                     if not isinstance(form, PrintForm):

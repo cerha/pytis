@@ -1,5 +1,7 @@
 2008-01-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Fixes for wx 2.8.x.
+
 	* pytis/form/inputfield.py (InputField._set_focus): Focus the
 	current tab if the field is in a `wx.Notebook'.
 
