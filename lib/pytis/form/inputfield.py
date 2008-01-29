@@ -584,6 +584,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
     
     def _set_focus(self):
+        parent = self._ctrl.GetParent()
+        nb = parent.GetParent()
+        if isinstance(nb, wx.Notebook) and nb.GetCurrentPage() != parent:
+            for i in range(nb.GetPageCount()):
+                if nb.GetPage(i) == parent:
+                    nb.SetSelection(i)
         self._ctrl.SetFocus()
 
     def _has_focus(self):

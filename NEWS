@@ -6,7 +6,11 @@
 
 2008-01-29  Tomas Cerha  <cerha@brailcom.org>
 
-	BUGFIX: Opravena chyba v substituci hodnot dotazu v datovém
+	Nastavení focusu políèka nyní automaticky pøepne i aktuální
+	zálo¾ku.  To se hodí zejména pøi validaci a checku ve formuláøích
+	se zálo¾kami.
+
+	* BUGFIX: Opravena chyba v substituci hodnot dotazu v datovém
 	rozhraní, která znemo¾òovala pou¾ití `%' v hodnotách formuláøe,
 	je¾ obsahuje binární data.
 	

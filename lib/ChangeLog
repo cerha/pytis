@@ -1,5 +1,8 @@
 2008-01-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (InputField._set_focus): Focus the
+	current tab if the field is in a `wx.Notebook'.
+
 	* pytis/data/postgresql.py (PostgreSQLStandardBindingHandler._pg_insert)
 	(PostgreSQLStandardBindingHandler._pg_update): Escape `%' signs in
 	query values when binary values are passed as `query_args'.
