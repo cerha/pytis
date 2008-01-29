@@ -4,6 +4,12 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2008-01-29  Tomas Cerha  <cerha@brailcom.org>
+
+	BUGFIX: Opravena chyba v substituci hodnot dotazu v datovém
+	rozhraní, která znemo¾òovala pou¾ití `%' v hodnotách formuláøe,
+	je¾ obsahuje binární data.
+	
 2008-01-13  Tomas Cerha  <cerha@brailcom.org>
 
 	Byla pøidána popora pro navázání tlaèítek na akce.  Ve specifikaci

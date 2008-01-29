@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1550,12 +1550,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         cols, vals_ = self._pdbb_table_row_lists(row)
         vals = []
         query_args = []
+        escape = len([v for v in vals_ if isinstance(v, buffer)]) != 0
         for v in vals_:
             if isinstance(v, buffer):
                 vals.append('%s')
                 query_args.append(v)
             else:
+                if escape:
+                    # Quick fix by TC.  TODO: Wouldn't it be better to escape always and then
+                    # always substitute in `_DBAPIAccessor._postgresql_query.do_query()'?
+                    v = v.replace('%', '%%')
                 vals.append(v)
+                
         self._pg_query("savepoint _insert", transaction=transaction)
         try:
             key_data = self._pg_query(
@@ -1605,12 +1611,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         cols, vals = self._pdbb_table_row_lists(row)
         query_args = []
         s = []
+        escape = len([v for v in vals if isinstance(v, buffer)]) != 0
         for c, v in zip(cols, vals):
             if isinstance(v, buffer):
                 item = "%s=%%s" % c
                 query_args.append(v)
             else:
-                item = "%s=%s" % (c, v,)
+                if escape:
+                    # Quick fix by TC.  TODO: Wouldn't it be better to escape always and then
+                    # always substitute in `_DBAPIAccessor._postgresql_query.do_query()'?
+                    v = v.replace('%', '%%')
+                item = "%s=%s" % (c, v)
             s.append(item)
         settings = ','.join(s)
         cond_string = self._pdbb_condition2sql(condition)
