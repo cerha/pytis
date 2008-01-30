@@ -30,11 +30,6 @@ CHYBY:
 
  * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
 
- * Zpráva "Vlo¾ený záznam se neobjevil v aktualním náhledu"
-
-   Tato zpráva se zobrazila po vlo¾ení do spodní èásti dualformu, kde se v¹ak
-   záznam po pøidání automaticky objevil.
-
  * Kombinace default, computer a prefill
 
    Pøi pou¾ití prefillu pøi zobrazení formuláøe pro nový záznam by mìl mít computer pøednost pøed
@@ -72,6 +67,10 @@ CHYBY:
 NOVÉ VLASTNOSTI:
 
  * Omezit max. ¹íøku okna èíselníku
+
+ * Nová polo¾ka v menu sloupce: Vrátit výchozí øazení
+
+ * Umo¾nit definici hierarchie a skupin filtrù podobnì jako u actions.
 
  * Umo¾nit definici `editable' i na úrovni ViewSpec
 

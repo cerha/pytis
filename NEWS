@@ -4,6 +4,11 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2008-01-30  Tomas Cerha  <cerha@brailcom.org>
+
+	Byla pøidána podpora pro zobrazování stromové struktury v menu
+	pomocí indentace prvního sloupce.
+
 2008-01-29  Tomas Cerha  <cerha@brailcom.org>
 
 	Nastavení focusu políèka nyní automaticky pøepne i aktuální

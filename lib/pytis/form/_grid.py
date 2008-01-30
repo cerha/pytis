@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -199,6 +199,11 @@ class ListTable(wx.grid.PyGridTableBase):
                                       c.style())
                          for c in columns]
         self._column_count = len(self._columns)
+        self._tree_order_column = None
+        if self._sorting:
+            cid = self._sorting[0][0]
+            if isinstance(self._presented_row[cid].type(), pytis.data.TreeOrder):
+                self._tree_order_column = cid
         
     def _panic(self):
         if __debug__: log(DEBUG, 'Zpanikaření gridové tabulky')
@@ -343,11 +348,11 @@ class ListTable(wx.grid.PyGridTableBase):
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row_prefill, prefill):
         assert isinstance(grouping, types.TupleType)
-        self._update_columns(columns)
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
         self._prefill = prefill
+        self._update_columns(columns)
         # Smaž cache
         self._group_cache = {0: False}
         self._group_value_cache = {}
@@ -404,11 +409,19 @@ class ListTable(wx.grid.PyGridTableBase):
                 if callable(s):
                     style_dict[cid] = s(the_row)
                 value_dict[cid] = the_row.format(cid)
+            # Indent the first column if tree order is defined.
+            if self._tree_order_column is not None:
+                order = the_row[self._tree_order_column].export()
+                if order is not None:
+                    level = len(order.split('.')) - 2
+                    if level > 0:
+                        cid = self._columns[0].id
+                        value_dict[cid] = 3*level*' ' +'- '+ value_dict[cid]
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
                 if not value_dict.has_key(gcol):
                     value_dict[gcol] = the_row.format(gcol)
-            # When row_style was defined, lets compute it.
+            # If row_style is defined, lets compute it.
             if callable(self._row_style):
                 style_dict[None] = self._row_style(the_row)
             self._cache[row] = cached_things = [value_dict, style_dict]
