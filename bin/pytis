@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-import locale # kvùli o¹etøení chyby pøi importu wxWindows; viz go()
+import locale # kvùli o¹etøení chyby pøi importu wx; viz go()
 
 import gc
 import getopt
@@ -26,8 +26,9 @@ import gettext
 import imp
 import os
 import sys
-# O¹klivý hack kvùli o¹etøení defaultního kódování
-# proto¾e site.py ma¾e ze 'sys' metodu setdefaultencoding
+
+# O¹klivý hack kvùli o¹etøení výchozího kódování proto¾e site.py metodu `setdefaultencoding()' z
+# modulu `sys' vyma¾e.
 reload(sys)
 sys.setdefaultencoding('iso-8859-2')
 
