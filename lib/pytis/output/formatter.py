@@ -606,7 +606,10 @@ class LoutFormatter(Tmpdir):
                 break
         if i < flen - 1:
             formatted = formatted[:i+1] + '"' + formatted[i+1:] + '"'
-        formatted = string.join(formatted.split('\n'), '\n'+indent) + ' & '
+        # TODO: quick solution for problem with ' & ' at the end of wrapped elements
+        #       such as @B or @II
+        # formatted = string.join(formatted.split('\n'), '\n'+indent) + ' & '
+        formatted = string.join(formatted.split('\n'), '\n'+indent)
         if stream is None:
             return formatted
         else:
@@ -615,8 +618,13 @@ class LoutFormatter(Tmpdir):
     def _format_conc(self, elements, stream, indent):
         nindent = self._indent(indent)
         stream.write('\n%s{ ' % (indent))
-        for e in elements:
+        # TODO: quick solution for problem with ' & ' at the end of wrapped elements
+        #       such as @B or @II
+        # see also _format_text
+        for i, e in enumerate(elements):
             self._format(e, stream, nindent)
+            if i < len(elements) - 1:
+                stream.write(' & ')
         stream.write('} ')
 
     def _format_null(self, template, stream, indent):
@@ -1017,7 +1025,8 @@ class LoutFormatter(Tmpdir):
             try:
                 if self._formatted_document is None:
                     cc = [to_lout]
-                    if config.debug:
+                    if True:
+                    # if config.debug:
                         tmpfile = os.path.join(config.tmp_dir, 'pytis.lout')
                         try:
                             f = open(tmpfile, 'w')
