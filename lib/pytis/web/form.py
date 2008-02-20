@@ -330,7 +330,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             if field.spec.height() > 1:
                 ctrl = g.textarea
                 attr['rows'] = field.spec.height()
-                attr['cols'] = field.spec.width()
+                attr['cols'] = width = field.spec.width(None)
+                if width is None:
+                    attr['cls'] = 'fullsize'
             else:
                 if isinstance(type, pytis.data.String):
                     maxlen = type.maxlen()

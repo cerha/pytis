@@ -1,3 +1,8 @@
+2008-02-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (EditForm._export_field): Set the `fullsize'
+	style when width is None for textarea.
+
 2008-02-20  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/output/formatter.py (LoutFormatter._format_text): Try to
