@@ -47,8 +47,8 @@ class Type(pd.Type):
 class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
-    def __init__(self, view, row, handler='#', prefill=None, hidden=(), submit=None,
-                 name=None, uri_provider=None, **kwargs):
+    def __init__(self, view, row, handler='#', prefill=None, hidden=(), name=None,
+                 uri_provider=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -73,9 +73,6 @@ class Form(lcg.Content):
           
           hidden -- hardcoded hidden form fields as a sequence of pairs (name, value).
 
-          submit -- custom submit buttons as a sequence of (label, name) pairs.  The default submit
-            buttons are ((_('Submit'), None),)
-            
           name -- form name as a string or None.  This name will be sent as a hidden field and used
             to distinguish which request parameters belong to which form.
 
@@ -89,10 +86,9 @@ class Form(lcg.Content):
         self._row = row
         self._key = row.data().key()[0].id()
         self._handler = handler
-        self._prefill = prefill
+        self._prefill = prefill or {}
         self._uri_provider = uri_provider
         self._hidden = list(hidden)
-        self._submit = submit or ((_("Submit"), None),)
         self._name = name
         self._enctype = None
 
@@ -243,14 +239,36 @@ class _SingleRecordForm(LayoutForm):
     
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
+
+    def __init__(self, view, row, submit=_("Submit"), reset=_("Undo all changes"), **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+
+          submit -- custom submit buttons as a sequence of (label, name) pairs.  A single unnamed
+            button can be passed as just the label string.
+
+          reset -- reset button label as a string or None to omit the reset button.
+            
+          See the parent classes for definition of the remaining arguments.
+
+        """
+        if not isinstance(submit, (list, tuple)):
+            submit = ((submit, None),)
+        self._submit = submit or _("Submit")
+        self._reset = reset
+        super(_SubmittableForm, self).__init__(view, row, **kwargs)
+
     
     def _export_submit(self, exporter):
         g = exporter.generator()
-        return [g.hidden(k, v) for k, v in self._hidden] + \
-               [g.hidden('form-name', self._name)] + \
-               [g.submit(label, name=name, title=_("Submit the form"))
-                for label, name in self._submit] + \
-               [g.reset(_("Reset", title=_("Undo all changes")))]
+        result = [g.hidden(k, v) for k, v in self._hidden] + \
+                 [g.hidden('form-name', self._name)] + \
+                 [g.submit(label, name=name, title=_("Submit the form"))
+                  for label, name in self._submit]
+        if self._reset:
+            result.append(g.reset(_("Reset", title=self._reset)))
+        return result
 
 
 class ShowForm(_SingleRecordForm):
