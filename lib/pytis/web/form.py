@@ -18,21 +18,15 @@
 
 """Web forms.
 
-This module provides an implementations of Pytis forms, which can be used for web interfaces to
-Pytis informations systems.  Ideally, we should be able to generate web forms from the same
-specification.  Since some aspects of the specifications are bound to a GUI environment (such as
-callback functions, which run dialogs and forms directly), not all features are currently
-available.  However the core functionality is implemented and data can be viewed and manipulated
-(inserted, edited) using web forms.
+This module provides an implementations of Pytis forms which can be used for web interfaces to
+Pytis informations systems.  The intention is to be able to generate web forms from the same
+specification as GUI forms.
 
-Pytis currently does not include support running the actual web application which would make use of
-these forms.  Such an application framework which makes use of pytis web forms, is implemented
-separately.  See the Wiking project at http://www.freebsoft.org/wiking for more information.
+Pytis currently does not include support running the actual web application.  Application framework
+which makes use of pytis web forms is implemented separately.  See the Wiking project at
+http://www.freebsoft.org/wiking for more information.
 
 All the content generation is done using the LCG framework.  See http://www.freebsoft.org/lcg.
-
-The classes defined below are currently just prototypes, so they are not documented yet and the API
-may change drastically!
 
 """
 
@@ -59,9 +53,9 @@ class Form(lcg.Content):
 
         Arguments:
 
-          view -- presentation specification as a 'pytis.presentation.ViewSpec' instance
+          view -- presentation specification as a 'pytis.presentation.ViewSpec' instance.
           
-          row -- current row as a 'pytis.data.Row' instance or None
+          row -- 'pytis.presentation.PresentedRow' instance.
           
           handler -- form handler URI as a string.  This URI is used in the form's 'action'
             attribute.
@@ -748,8 +742,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(CheckRowsForm, self).__init__(view, row, limits=limits, limit=limit,
-                                            **kwargs)
+        super(CheckRowsForm, self).__init__(view, row, limits=limits, limit=limit, **kwargs)
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
             for cid in check_columns:
