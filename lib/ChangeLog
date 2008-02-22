@@ -1,3 +1,8 @@
+2008-02-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Always take a `PresentedRow' instance as a
+	constructor argument.
+
 2008-02-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (EditForm._export_field): Set the `fullsize'

@@ -53,26 +53,21 @@ class Type(pd.Type):
 class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
-    def __init__(self, data, view, resolver, row=None, prefill=None, new=False, handler='#',
-                 hidden=(), submit=None, name=None, uri_provider=None, **kwargs):
+    def __init__(self, view, row, handler='#', prefill=None, hidden=(), submit=None,
+                 name=None, uri_provider=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
 
-          data -- data object as a 'pytis.data.Data' instance
-          
           view -- presentation specification as a 'pytis.presentation.ViewSpec' instance
-          
-          resolver -- pytis name resolver as a pytis.util.Resolver' instance
           
           row -- current row as a 'pytis.data.Row' instance or None
           
-          prefill -- current records prefill as a dictionary or None.  Same as the
-            'pytis.presentation.PresentedRow' constructor argument of the same name.
+          handler -- form handler URI as a string.  This URI is used in the form's 'action'
+            attribute.
           
-          new -- flag indicating, that the current record is a new (inserted) one.  Same as the
-            'pytis.presentation.PresentedRow' constructor argument of the same name.
-
+          prefill -- form prefill data as a dictionary of string values.
+          
           uri_provider -- callable object (function) returning URIs for form fields.  This makes
             Pytis web forms independent on the application's URI scheme.  The function must accept
             one positional argument (the 'pytis.presentation.PresentedRow' instance) and two
@@ -81,9 +76,6 @@ class Form(lcg.Content):
             when requesting URI for the whole record.  The later argument 'type' will always be one
             of 'UriType' constants.  It is used for distinction of the purpose, for which the uri
             us used (eg. for a link or an image src).
-          
-          handler -- form handler URI as a string.  This URI is used in the form's 'action'
-            attribute.
           
           hidden -- hardcoded hidden form fields as a sequence of pairs (name, value).
 
@@ -95,38 +87,21 @@ class Form(lcg.Content):
 
         """
         super(Form, self).__init__(**kwargs)
-        assert isinstance(data, pytis.data.Data), data
         assert isinstance(view, ViewSpec), view
-        assert isinstance(resolver, pytis.util.Resolver), resolver
-        assert row is None or isinstance(row, pytis.data.Row), row
+        assert isinstance(row, pytis.presentation.PresentedRow), row
         assert isinstance(handler, (str, unicode)), handler
         assert isinstance(hidden, (tuple, list)), hidden
-        self._data = data
-        self._key = data.key()[0].id()
         self._view = view
-        self._prefill = prefill or {}
-        self._uri_provider = uri_provider
-        self._row = PresentedRow(view.fields(), data, row, resolver=resolver,
-                                 prefill=self._valid_prefill(), new=new)
+        self._row = row
+        self._key = row.data().key()[0].id()
         self._handler = handler
+        self._prefill = prefill
+        self._uri_provider = uri_provider
         self._hidden = list(hidden)
         self._submit = submit or ((_("Submit"), None),)
         self._name = name
         self._enctype = None
 
-    def _valid_prefill(self):
-        # Return a dictionary of Python values for the prefill argument.
-        valid = {}
-        for f in self._view.fields():
-            id = f.id()
-            if self._prefill.has_key(id):
-                f = self._view.field(id)
-                type = f.type(self._data)
-                if not isinstance(type, pytis.data.Password):
-                    value, error = type.validate(self._prefill[id], strict=False)
-                    if not error:
-                        valid[id] = value
-        return valid
 
     def _export_body(self, exporter):
         pass
@@ -174,10 +149,10 @@ class LayoutForm(FieldForm):
     _MAXLEN = 100
     _ALIGN_NUMERIC_FIELDS = False
 
-    def __init__(self, data, view, resolver, layout=None, allow_table_layout=True, **kwargs):
+    def __init__(self, view, row, layout=None, allow_table_layout=True, **kwargs):
         assert layout is None or isinstance(layout, GroupSpec)
         self._layout = layout
-        super(LayoutForm, self).__init__(data, view, resolver, **kwargs)
+        super(LayoutForm, self).__init__(view, row, **kwargs)
         self._allow_table_layout = allow_table_layout
         self._field_dict = dict([(f.id, f) for f in self._fields])
         
@@ -264,9 +239,9 @@ class LayoutForm(FieldForm):
 
 class _SingleRecordForm(LayoutForm):
 
-    def __init__(self, data, view, resolver, row, layout=None, **kwargs):
-        super(_SingleRecordForm, self).__init__(data, view, resolver, row=row,
-                                                layout=layout or view.layout().group(), **kwargs)
+    def __init__(self, view, row, layout=None, **kwargs):
+        layout = layout or view.layout().group()
+        super(_SingleRecordForm, self).__init__(view, row, layout=layout, **kwargs)
         
     def _export_body(self, exporter):
         return self._export_group(exporter, self._layout)
@@ -295,8 +270,8 @@ class ShowForm(_SingleRecordForm):
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     
-    def __init__(self, data, view, resolver, row, errors=(), **kwargs):
-        super(EditForm, self).__init__(data, view, resolver, row, **kwargs)
+    def __init__(self, view, row, errors=(), **kwargs):
+        super(EditForm, self).__init__(view, row, **kwargs)
         key, order = self._key, tuple(self._layout.order())
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in order and k != key]
@@ -395,7 +370,7 @@ class BrowseForm(LayoutForm):
                            (pytis.data.DESCENDANT, 'desc'),
                            (None, 'none'))
 
-    def __init__(self, data, view, resolver, columns=None, condition=None, sorting=None,
+    def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, req=None,
                  **kwargs):
         """Initialize the instance.
@@ -455,7 +430,7 @@ class BrowseForm(LayoutForm):
                     cid = None
                 return uri_provider(row, cid, **kwargs)
             kwargs['uri_provider'] = browse_form_uri_provider
-        super(BrowseForm, self).__init__(data, view, resolver, **kwargs)
+        super(BrowseForm, self).__init__(view, row, **kwargs)
         self._condition = condition
         params = {}
         if req is not None:
@@ -477,7 +452,7 @@ class BrowseForm(LayoutForm):
         if params.has_key('sort') and params.has_key('dir'):
             cid = params['sort']
             dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(params['dir'])
-            if self._data.find_column(cid) and dir:
+            if self._row.data().find_column(cid) and dir:
                 sorting = ((cid, dir),)
         if sorting is None:
             sorting = self._view.sorting()
@@ -502,7 +477,7 @@ class BrowseForm(LayoutForm):
             offset = 0
         elif req is not None:
             if params.has_key('search'):
-                type = self._data.find_column(self._key).type()
+                type = self._row.data().find_column(self._key).type()
                 value, error = type.validate(params['search'])
                 if not error:
                     search = pytis.data.EQ(self._key, value)
@@ -601,7 +576,7 @@ class BrowseForm(LayoutForm):
                         g.tbody(rows)), border=1)
 
     def _export_body(self, exporter):
-        data = self._data
+        data = self._row.data()
         row = self._row
         limit = self._limit
         exported_rows = []
@@ -692,10 +667,10 @@ class BrowseForm(LayoutForm):
 class ListView(BrowseForm):
     _CSS_CLS = 'list-view'
     
-    def __init__(self, data, view, resolver, **kwargs):
+    def __init__(self, view, row, **kwargs):
         self._list_layout = list_layout = view.list_layout()
         layout = list_layout and list_layout.layout() or None
-        super(ListView, self).__init__(data, view, resolver, layout=layout, **kwargs)
+        super(ListView, self).__init__(view, row, layout=layout, **kwargs)
         if list_layout is None:
             super_ = super(ListView, self)
             self._CSS_CLS = super_._CSS_CLS
@@ -761,7 +736,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     and the values are the key column values of all checked rows.
     
     """
-    def __init__(self, data, view, resolver, check_columns=None, limits=(), limit=None, **kwargs):
+    def __init__(self, view, row, check_columns=None, limits=(), limit=None, **kwargs):
         """Initialize the instance.
 
         Arguments:
@@ -773,7 +748,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(CheckRowsForm, self).__init__(data, view, resolver, limits=limits, limit=limit,
+        super(CheckRowsForm, self).__init__(view, row, limits=limits, limit=limit,
                                             **kwargs)
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
