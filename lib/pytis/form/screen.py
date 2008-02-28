@@ -1356,7 +1356,7 @@ def dlg2px(window, x, y=None):
         return pxsize
 
 def alphanumeric_index(i):
-    return i <= 10 and str(i+1) or chr(i+87)
+    return i < 9 and str(i+1) or chr(i+88)
 
 
 def orientation2wx(orientation):
