@@ -1356,7 +1356,7 @@ def dlg2px(window, x, y=None):
         return pxsize
 
 def acceskey_prefix(i):
-    pad = {'f': '  ', 'i': '  ', 'j': '  ', 'l': '  ', 'm': '', 't': '  ', 'r': '  '}
+    pad = {'f': '  ', 'i': '  ', 'j': '  ', 'l': '  ', 'm': '', 't': '  ', 'r': '  ', 'w': ''}
     if i < 26:
         index = chr(i+97)
     else:
