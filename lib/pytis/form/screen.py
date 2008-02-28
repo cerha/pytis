@@ -913,9 +913,9 @@ class Menu(_TitledMenuObject):
             else:
                 title, wx_title = item.title(), item.title(raw=True)
                 if self._allow_autoindex:
-                    n = alphanumeric_index(i)
-                    wx_title = '&'+ n +'. ' + title
-                    title = n +'. '+ title
+                    prefix = acceskey_prefix(i)
+                    wx_title = prefix + title
+                    title = prefix[1:] + title
                 i += 1
                 width = parent.GetTextExtent(title)[0] + 20
                 if isinstance(item, MItem):
@@ -1355,14 +1355,13 @@ def dlg2px(window, x, y=None):
     else:
         return pxsize
 
-def alphanumeric_index(i):
-    if i < 9:
-        index = str(i+1)
+def acceskey_prefix(i):
+    pad = {'f': '  ', 'i': '  ', 'j': '  ', 'l': '  ', 'm': '', 't': '  ', 'r': '  '}
+    if i < 24:
+        index = chr(i+97)
     else:
-        index = chr(i+88)
-        if index in ('f', 'i', 'j', 'l'):
-            index += ' '
-    return index
+        index = str(i)
+    return '&'+ index +'. '+ pad.get(index, ' ')
 
 
 def orientation2wx(orientation):
