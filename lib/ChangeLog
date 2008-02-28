@@ -1,3 +1,13 @@
+2008-02-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/screen.py: Added support for menu autoindex
+	keyboard access.
+
+	* pytis/form/commands_.py: Cosmetic changes.
+
+	* pytis/form/application.py: Added support for menu autoindex
+	keyboard access.
+
 2008-02-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Always take a `PresentedRow' instance as a

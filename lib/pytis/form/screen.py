@@ -840,13 +840,14 @@ class Menu(_TitledMenuObject):
     metody 'create()'.
 
     """ 
-    def __init__(self, title, items):
-        """Uschovej specifikaci menu.
+    def __init__(self, title, items, allow_autoindex=True):
+        """Initialize menu specification.
 
-        Argumenty:
+        Arguments:
 
-          title -- název menu, string
-          items -- polo¾ky menu, sekvence instancí tøíd 'Menu' a 'MItem';
+          title -- menu title as a string
+          items -- sequence of menu items as 'Menu', 'MItem' and 'MSeparator' instances
+          allow_autoindex -- allow automatic keyboard access index numbers on this menu 
 
         """
         assert is_sequence(items)
@@ -854,6 +855,8 @@ class Menu(_TitledMenuObject):
             for i in items:
                 assert isinstance(i, _MenuObject)
         self._items = tuple(items)
+        self._allow_autoindex = allow_autoindex
+        self._wx_menu = None
         super(Menu, self).__init__(title)
 
     def items(self):
@@ -881,7 +884,7 @@ class Menu(_TitledMenuObject):
              synchronizována s klávesovými zkratkami polo¾ek menu.
         
         """
-        menu = wx.Menu()
+        self._wx_menu = menu = wx.Menu()
         wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
                     lambda event: self._on_highlight_item(menu, event))
         # At first, compute the maximal width of hotkey string in this menu.
@@ -903,40 +906,50 @@ class Menu(_TitledMenuObject):
         # Now create the items and remember max. width of whole item label
         hotkey_items = []
         max_label_width = 0
-        for i in self._items:
-            if isinstance(i, MItem):
-                item = i.create(parent, menu)
-                menu.AppendItem(item)
-                # Toto je zde zejména kvùli nake¹ování datových specifikací
-                # pro výpoèet 'Command.enabled()' pøi startu aplikace.  Polo¾ky
-                # jsou správnì aktivovány i bez toho, ale první zobrazení menu
-                # je pomalej¹í.
-                menu.Enable(item.GetId(), i.command().enabled(**i.args()))
-                if isinstance(i, (RadioItem, CheckItem)):
-                    item.Check(i.state())
-                width = parent.GetTextExtent(i.title())[0]
-                if hotkey_str.has_key(i):
-                    hotkey_items.append((i, item, width))
-                    width = width + max_hotkey_width
-                max_label_width = max(width, max_label_width)
-            elif isinstance(i, MSeparator):
+        i = 0
+        for item in self._items:
+            if isinstance(item, MSeparator):
                 menu.AppendSeparator()
-            elif isinstance(i, Menu):
-                menu.AppendMenu(wx.NewId(), i.title(raw=True),
-                                i.create(parent, keymap))
-                width = parent.GetTextExtent(i.title())[0] + 20
-                max_label_width = max(width, max_label_width)
             else:
-                raise ProgramError('Invalid menu item type', i)
+                title, wx_title = item.title(), item.title(raw=True)
+                if self._allow_autoindex:
+                    n = alphanumeric_index(i)
+                    wx_title = '&'+ n +'. ' + title
+                    title = n +'. '+ title
+                i += 1
+                width = parent.GetTextExtent(title)[0] + 20
+                if isinstance(item, MItem):
+                    wxitem = item.create(parent, menu)
+                    wxitem.SetText(wx_title)
+                    menu.AppendItem(wxitem)
+                    # Toto je zde zejména kvùli nake¹ování datových specifikací
+                    # pro výpoèet 'Command.enabled()' pøi startu aplikace.  Polo¾ky
+                    # jsou správnì aktivovány i bez toho, ale první zobrazení menu
+                    # je pomalej¹í.
+                    menu.Enable(wxitem.GetId(), item.command().enabled(**item.args()))
+                    if isinstance(item, (RadioItem, CheckItem)):
+                        wxitem.Check(item.state())
+                    if hotkey_str.has_key(item):
+                        hotkey_items.append((item, wxitem, wx_title, width))
+                    max_label_width = max(width + max_hotkey_width, max_label_width)
+                elif isinstance(item, Menu):
+                    menu.AppendMenu(wx.NewId(), wx_title, item.create(parent, keymap))
+                    max_label_width = max(width+20, max_label_width)
+                else:
+                    raise ProgramError('Invalid menu item type', item)
         # Append hotkey description string to the item labels.
         # Fill with spaces to justify hotkeys on the right edge.
         space_width = parent.GetTextExtent(' ')[0]
-        for i, item, width in hotkey_items:
+        for i, wxitem, wx_title, width in hotkey_items:
             fill_width = max_label_width - width - max_hotkey_width
             n = round(float(fill_width) / float(space_width))
             fill = "%%%ds" % n % ''
-            item.SetText(i.title(raw=True) + fill + hotkey_str[i]) 
+            wxitem.SetText(wx_title + fill + hotkey_str[i]) 
         return menu
+
+    def wx_menu(self):
+        """Return the most recently created 'wxMenu' instance or None if create() was not called."""
+        return self._wx_menu
 
 
 class MItem(_TitledMenuObject):
@@ -1011,10 +1024,8 @@ class MItem(_TitledMenuObject):
             item.SetBitmap(icon)
         
     def create(self, parent, parent_menu):
-        item = wx.MenuItem(parent_menu, -1, self._title, self._help or "",
-                           kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, item.GetId(),
-                    lambda e: self._command.invoke(**self._args))
+        item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
+        wx_callback(wx.EVT_MENU, parent, item.GetId(), lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
         self._create_icon(item)
         return item
@@ -1110,8 +1121,7 @@ class MenuBar(wx.MenuBar):
             for m in menus:
                 self._check_duplicate_keys(m)
         for menu in menus:
-            self.Append(menu.create(self._parent, keymap),
-                        menu.title(raw=True))
+            self.Append(menu.create(self._parent, keymap), menu.title(raw=True))
         parent.SetMenuBar(self)        
         
     def _check_duplicate_keys(self, menu):
@@ -1344,7 +1354,11 @@ def dlg2px(window, x, y=None):
         return pxsize.GetWidth()
     else:
         return pxsize
-    
+
+def alphanumeric_index(i):
+    return i <= 10 and str(i+1) or chr(i+87)
+
+
 def orientation2wx(orientation):
     """Pøeveï konstantu tøídy 'Orientation' na wx reprezentaci."""
     if orientation == spec.Orientation.VERTICAL:

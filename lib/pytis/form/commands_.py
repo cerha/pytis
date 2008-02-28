@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002-2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -330,15 +330,15 @@ FORM_COMMAND_MENU = ((
      _("Zru¹ filtr"),
      _("Zru¹it filtrování záznamù.")),
     ),(#---------------
+    (RecordForm.COMMAND_EDIT_RECORD,
+     _("Upravit záznam"),
+     _("Upravit hodnoty záznamu v samostatném formuláøi.")),
     (RecordForm.COMMAND_NEW_RECORD,
      _("Nový záznam"),
      _("Vlo¾it nový záznam v samostatném formuláøi.")),
     (RecordForm.COMMAND_NEW_RECORD(copy=True),
      _("Nový záznam - kopie"),
      _("Vlo¾it nový záznam zkopírováním hodnot aktuálního záznamu.")),
-    (RecordForm.COMMAND_EDIT_RECORD,
-     _("Editovat záznam"),
-     _("Upravit hodnoty záznamu v samostatném formuláøi.")),
     (RecordForm.COMMAND_DELETE_RECORD,
      _("Smazat záznam"),
      _("Smazat aktuální záznam.")),
