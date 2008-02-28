@@ -273,7 +273,7 @@ class _SubmittableForm(Form):
 
 class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
-    _ALIGN_NUMERIC_FIELDS = False
+    _ALIGN_NUMERIC_FIELDS = True
     
     def _export_field(self, exporter, field):
         return self._format_field(exporter, field)
