@@ -105,7 +105,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _menubar_forms = {}
 
     _WINDOW_MENU_TITLE = _("Okn&a")
-    _RECENT_FORMS_MENU_TITLE = _("Poslednì otevøené formuláøe")
 
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'startup_forms'
@@ -978,9 +977,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def recent_forms_menu(self):
         """Vra» menu poslednì otevøených formuláøù jako instanci 'Menu'."""
-        self._recent_forms_menu = menu = Menu(self._RECENT_FORMS_MENU_TITLE,
-                                              self._recent_forms_menu_items(),
-                                              allow_autoindex=False)
+        menu = Menu(_("Poslednì otevøené formuláøe"),
+                    self._recent_forms_menu_items(), allow_autoindex=False)
+        self._recent_forms_menu = menu
         return menu
 
     def wx_frame(self):
@@ -1198,10 +1197,7 @@ def recent_forms_menu():
     obhospodaøovat.  Toto menu lze do hlavního menu umístit pouze jednou.
         
     """
-    if _application is not None:
-        return _application.recent_forms_menu()
-    else:
-        return Menu(Application._RECENT_FORMS_MENU_TITLE, ())
+    return _application.recent_forms_menu()
 
 def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
