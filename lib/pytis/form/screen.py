@@ -1357,10 +1357,10 @@ def dlg2px(window, x, y=None):
 
 def acceskey_prefix(i):
     pad = {'f': '  ', 'i': '  ', 'j': '  ', 'l': '  ', 'm': '', 't': '  ', 'r': '  '}
-    if i < 24:
+    if i < 26:
         index = chr(i+97)
     else:
-        index = str(i)
+        index = str(i-25)
     return '&'+ index +'. '+ pad.get(index, ' ')
 
 

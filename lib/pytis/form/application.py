@@ -351,8 +351,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _update_window_menu(self):
         def wmitem(i, form):
-            return CheckItem("&%s. %s" % (alphanumeric_index(i),
-                                          self._form_menu_item_title(form)),
+            return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
                              help=_('Vyzvednout okno formuláøe "%s" (%s/%s)') %\
                              (form.title(),form.__class__.__name__,form.name()),
                              command=Application.COMMAND_RAISE_FORM,
@@ -389,7 +388,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     menu.AppendItem(item.create(self._frame, menu))
                 
     def _recent_forms_menu_items(self):
-        items = [MItem('&'+ alphanumeric_index(i) +'. '+ title,
+        items = [MItem(acceskey_prefix(i) + title,
                        help=_('Otevøít formuláø "%s" (%s/%s)') %
                             (title, args['form_class'].__name__, args['name']),
                        command=Application.COMMAND_RUN_FORM, args=args)
