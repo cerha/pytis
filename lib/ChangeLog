@@ -1,3 +1,9 @@
+2008-03-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Textarea display improvements.
+
+	* pytis/web/field.py: Textarea display improvements.
+
 2008-02-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Hacks for fixing form display in MSIE.

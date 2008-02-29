@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -136,10 +136,11 @@ class FieldFormatter(object):
             value = generator.escape(row.format(field.id))
             lines = value.splitlines()
             if len(lines) > 1:
-                if self._showform and field.spec.width(None) is not None:
+                if self._showform and len(lines) > field.spec.height()+2:
+                    width = field.spec.width()
                     value = generator.textarea(field.id, value=value, readonly=True,
-                                               rows=min(len(lines), field.spec.height(), 8),
-                                               cols=field.spec.width())
+                                               rows=min(field.spec.height(), 8), cols=width,
+                                               cls=width >= 80 and 'fullsize' or None)
                 else:
                     # Insert explicit linebreaks for non-css browasers.
                     value = generator.span(generator.br().join(lines), cls='multiline')
