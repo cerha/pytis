@@ -1,3 +1,7 @@
+2008-02-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Minor HTML compatibility fix.
+
 2008-02-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (ShowForm): Allow numeric fields anignment.
