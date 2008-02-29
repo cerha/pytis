@@ -28,6 +28,8 @@ CHYBY:
    zablokován, ale bude potøeba to nìjak doøe¹it, aby tlaèítka mohla dynamicky reagovat na zmìnu
    dostupnosti pøíkazù...
 
+ * Pøi ukládání pojmenovaného filtru upozornit, ¾e filtr se stejným jménem u¾ existuje.
+
  * Tiskové menu je zobrazeno pro v¹echny formuláøe ale pøíkaz PRINT je o¹etøen jen pro BrowseForm.
 
  * Kombinace default, computer a prefill
