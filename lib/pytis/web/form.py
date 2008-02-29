@@ -149,7 +149,7 @@ class LayoutForm(FieldForm):
     def _used_fields(self):
         return self._layout.order()
     
-    def _export_group(self, exporter, group):
+    def _export_group(self, exporter, group, inner=False):
         g = exporter.generator()
         result = []
         fields = []
@@ -161,7 +161,7 @@ class LayoutForm(FieldForm):
                 if fields:
                     result.append(self._export_fields(g, fields))
                 fields = []
-                result.append(self._export_group(exporter, item))
+                result.append(self._export_group(exporter, item, inner=True))
             else:
                 field = self._field_dict[item]
                 ctrl = self._export_field(exporter, field)
@@ -181,6 +181,9 @@ class LayoutForm(FieldForm):
             result = g.fieldset(group.label()+':', result, cls='group')
         elif wrap:
             result = g.div(result, cls='group')
+        elif not inner:
+            # This fieldset fixes MSIE display of top-level horizontal groups...
+            result = g.fieldset(None, result, cls='outer')
         else:
             result = concat(result, separator="\n")
         return result

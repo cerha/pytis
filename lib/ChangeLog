@@ -1,6 +1,6 @@
 2008-02-29  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/form.py: Minor HTML compatibility fix.
+	* pytis/web/form.py: Hacks for fixing form display in MSIE.
 
 2008-02-28  Tomas Cerha  <cerha@brailcom.org>
 
