@@ -175,7 +175,7 @@ class LayoutForm(FieldForm):
         if group.orientation() == Orientation.HORIZONTAL:
             result = [g.table(g.tr([g.td(x, valign='top', cls=(i != 0 and 'spaced' or None))
                                     for i, x in enumerate(result)]),
-                              width='100%', cellspacing=0, cellpadding=0, cls='horizontal-group')]
+                              cellspacing=0, cellpadding=0, cls='horizontal-group')]
             wrap = False
         if group.label():
             result = g.fieldset(group.label()+':', result, cls='group')
