@@ -106,8 +106,8 @@ class Form(lcg.Content):
         g = exporter.generator()
         content = [self._export_body(exporter)] + \
                   [wrap(part, cls=name) for wrap, part, name in
-                   ((g.div, self._export_submit(exporter),   'submit'),
-                    (g.div, self._export_footer(exporter),   'footer')) if part]
+                   ((g.div, self._export_submit(exporter), 'submit'),
+                    (g.div, self._export_footer(exporter), 'footer')) if part]
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
@@ -188,13 +188,15 @@ class LayoutForm(FieldForm):
             result = concat(result, separator="\n")
         return result
 
-    def _export_packed_field(self, g, field, label, ctrl, help):
+    def _export_packed_field(self, g, field, label, ctrl, help, single=False):
         if self._allow_table_layout:
             if help is not None:
                 ctrl += help
             if field.spec.compact():
                 if label:
                     label += g.br() +"\n"
+                if single:
+                    return label + ctrl
                 td = g.td(label + ctrl, colspan=3)
             else:
                 td = g.td(label or '', valign='top', cls='label')
@@ -211,6 +213,10 @@ class LayoutForm(FieldForm):
             return g.div(rows, cls="field")
         
     def _export_fields(self, g, fields):
+        if len(fields) == 1 and fields[0][0].spec.compact():
+            # Avoid unnecessary packing of a single compact field.
+            field, label, ctrl, help = fields[0]
+            return self._export_packed_field(g, field, label, ctrl, help, single=True)
         rows = [self._export_packed_field(g, field, label, ctrl, help)
                 for field, label, ctrl, help in fields]
         if self._allow_table_layout:
@@ -249,7 +255,7 @@ class _SubmittableForm(Form):
         Arguments:
 
           submit -- custom submit buttons as a sequence of (label, name) pairs.  A single unnamed
-            button can be passed as just the label string.
+            button can be passed as just the label string.  Default is one button labeled `Submit'.
 
           reset -- reset button label as a string or None to omit the reset button.
             
@@ -257,8 +263,8 @@ class _SubmittableForm(Form):
 
         """
         if not isinstance(submit, (list, tuple)):
-            submit = ((submit, None),)
-        self._submit = submit or _("Submit")
+            submit = ((submit or _("Submit"), None),)
+        self._submit = submit
         self._reset = reset
         super(_SubmittableForm, self).__init__(view, row, **kwargs)
 

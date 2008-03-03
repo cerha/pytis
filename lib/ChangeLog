@@ -1,3 +1,10 @@
+2008-03-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (LayoutForm._export_fields): Avoid unnecessary
+	packing of a single compact field.
+	(_SubmittableForm.__init__): Supply the default submit label even
+	of None is passed to `submit'.
+
 2008-03-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Textarea display improvements.
