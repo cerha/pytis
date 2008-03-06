@@ -1788,7 +1788,7 @@ class _GsqlFunction(_GsqlSpec):
 
     _SQL_NAME = 'FUNCTION'
     
-    def __init__(self, name, arguments, output_type, body=None,
+    def __init__(self, name, arguments, output_type, body=None, security_definer=False,
                  use_functions=(), **kwargs):
         """Inicializuj instanci.
 
@@ -1810,6 +1810,7 @@ class _GsqlFunction(_GsqlSpec):
             zdrojovým kódem tvoøící tìlo funkce v jazyce plpython, nebo 'None',
             v kterém¾to pøípadì je funkce pythonová a musí být hodnotou
             argumentu 'name'
+          security_definer -- if True, add 'SECURITY DEFINER' to function definition
           kwargs -- argumenty pøedané konstruktoru pøedka
 
         """
@@ -1824,6 +1825,7 @@ class _GsqlFunction(_GsqlSpec):
         if body is None:
             body = name
         self._body = body
+        self._security_definer = security_definer
         if self._doc is None and not isinstance(body, str):
             self._doc = body.__doc__
 
@@ -1920,7 +1922,13 @@ class _GsqlFunction(_GsqlSpec):
             output_type = _gsql_format_type(self._output_type)
             returns = 'RETURNS %s' % output_type
         return returns
-        
+
+    def _format_security(self):
+        if self._security_definer:
+            return " SECURITY DEFINER"
+        else:
+            return ""
+    
     def output(self):
         # input_types = string.join(map(_gsql_format_type, self._input_types),
         #                          ',')
@@ -1929,10 +1937,9 @@ class _GsqlFunction(_GsqlSpec):
         # output_type = self._format_output_type()
         returns = self._format_returns()
         body = self._format_body(self._body)
-        # result = 'CREATE OR REPLACE FUNCTION %s (%s) RETURNS %s AS %s;\n' % \
-        #         (self._name, input_types, output_type, body)
-        result = 'CREATE OR REPLACE FUNCTION %s (%s) %s\nAS %s;\n' % \
-                 (self._name, arguments, returns, body)
+        security = self._format_security()
+        result = 'CREATE OR REPLACE FUNCTION %s (%s) %s\nAS %s%s;\n' % \
+                 (self._name, arguments, returns, body, security)
         if self._doc:
         #    doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
         #          (self._name, input_types, _gsql_escape(self._doc))

@@ -1,3 +1,7 @@
+2008-03-06  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlFunction): Added argument 'security_definer'.
+
 2007-12-20  Tomas Cerha  <cerha@brailcom.org>
 
 	* translations/pytis.cs.po: Updated.
