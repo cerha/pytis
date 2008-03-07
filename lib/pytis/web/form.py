@@ -344,6 +344,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if not self._row.editable(field.id):
             attr['disabled'] = True
             attr['name'] = None # w3m bug workaround (sends disabled fields)
+        if field.id in [id for id, msg in self._errors]:
+            attr['cls'] = (attr.has_key('cls') and attr['cls']+' ' or '') + 'invalid'
         result = ctrl(**attr)
         if isinstance(type, pytis.data.Password) and type.verify():
             attr['id'] = attr['id'] + '-verify-pasword'
@@ -371,10 +373,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if isinstance(self._errors, (str, unicode)):
             errors = g.p(self._errors)
         else:
-            errors = [g.p(self._view.field(id) and
-                          self._view.field(id).label() or id, ": ",
-                          msg) +"\n"
-                      for id, msg in self._errors]
+            errors = []
+            for id, msg in self._errors:
+                f = self._view.field(id)
+                errors.append(g.p(g.strong(f and f.label() or id) + ": " + msg))
         if errors:
             errors = g.div(errors, cls='errors')
         return concat(errors, super(EditForm, self)._export_body(exporter))

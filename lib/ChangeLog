@@ -2,6 +2,7 @@
 
 	* pytis/web/form.py (EditForm._export_field): Export enumerator
 	option values to fix support for Date/Time types in enumerations.
+	(EditForm): Validation error display improved.
 
 2008-03-03  Tomas Cerha  <cerha@brailcom.org>
 
