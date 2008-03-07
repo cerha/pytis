@@ -321,7 +321,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             attr['options'] = [("&nbsp;", "")] + \
                               [(display, type.export(val)) for val, display in enum]
             if value.value() in [val for val, display in enum]:
-                attr['selected'] = str(value.value())
+                attr['selected'] = type.export(value.value())
         else:
             if field.spec.height() > 1:
                 ctrl = g.textarea
