@@ -319,7 +319,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             ctrl = g.select
             enum = self._row.enumerate(field.id)
             attr['options'] = [("&nbsp;", "")] + \
-                              [(display, str(val)) for val, display in enum]
+                              [(display, type.export(val)) for val, display in enum]
             if value.value() in [val for val, display in enum]:
                 attr['selected'] = str(value.value())
         else:

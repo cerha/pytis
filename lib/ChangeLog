@@ -1,3 +1,8 @@
+2008-03-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (EditForm._export_field): Export enumerator
+	option values to fix support for Date/Time types in enumerations.
+
 2008-03-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (LayoutForm._export_fields): Avoid unnecessary
