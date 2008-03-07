@@ -1196,7 +1196,11 @@ def recent_forms_menu():
     obhospodaøovat.  Toto menu lze do hlavního menu umístit pouze jednou.
         
     """
-    return _application.recent_forms_menu()
+    if _application:
+        return _application.recent_forms_menu()
+    else:
+        # This may happen when generating help.
+        return ()
 
 def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""

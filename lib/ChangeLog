@@ -1,5 +1,8 @@
 2008-03-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (recent_forms_menu): Check if
+	application is not None.
+
 	* pytis/web/form.py (EditForm._export_field): Export enumerator
 	option values to fix support for Date/Time types in enumerations.
 	(EditForm): Validation error display improved.
