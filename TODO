@@ -1,5 +1,10 @@
 CHYBY:
 
+ * Chyba pøi vyvolání tisk. sestavy
+
+   Pøi vyvolání formuláøe pøes Enter nebo Space v BrowseFormu a následného vyvolání tiskové sestavy
+   vyskoèí chybové okno.
+ 
  * Deadlock pøi zamykání
 
    Mìjme tabulku T1, kde políèko p1 má "references=C1 ON UPDATE CASCADE".  Pøi otevøení editaèního
