@@ -200,7 +200,9 @@ class LayoutForm(FieldForm):
                 td = g.td(label + ctrl, colspan=3)
             else:
                 td = g.td(label or '', valign='top', cls='label')
-                if self._ALIGN_NUMERIC_FIELDS and isinstance(field.type, pytis.data.Number):
+                if self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator() \
+                       and isinstance(field.type, pytis.data.Number):
+                    # Codebook field display is not numeric even though the underlying type is...
                     td += g.td(ctrl, cls='ctrl', align='right') + \
                           g.td('', width='100%', cls='spacer')
                 else:

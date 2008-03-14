@@ -1,3 +1,8 @@
+2008-03-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (LayoutForm._export_packed_field): Avoid
+	aligning codebook fields as numeric.
+
 2008-03-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (recent_forms_menu): Check if
