@@ -538,7 +538,7 @@ class BrowseForm(LayoutForm):
                     # &#8227 does not work in MSIE
         return value
 
-    def _style(self, style, row, n=None):
+    def _style(self, style, row, n, field=None):
         def color(c):
             if type(c) is tuple:
                 return '#%02x%02x%02x' % c
@@ -546,15 +546,27 @@ class BrowseForm(LayoutForm):
                 return c
         if callable(style):
             style = style(row)
-        cls = n is not None and (n % 2 and 'even' or 'odd') or None
+        cls = []
+        if field is None: # For row style only
+            cls.append(n % 2 and 'even' or 'odd')
+            grouping = self._view.grouping()
+            if grouping:
+                values_, group = hasattr(self, '_last_group') and self._last_group or (None, True)
+                values = [row[cid].value() for cid in grouping]
+                if values != values_:
+                    group = not group
+                    self._last_group = (values, group)
+                    cls.append('group-start')
+                    if n != 0:
+                        cls.append('group-change')
+                cls.append(group and 'even-group' or 'odd-group')
+        #else:
+        #    cls.append('field-id-'+field.id)
         if style is None:
-            return cls and dict(cls=cls) or {}
-        if style.name() is not None:
-            if cls is None:
-                cls = style.name()
-            else:
-                cls += ' ' + style.name()
-            return dict(cls=cls)
+            return cls and dict(cls=' '.join(cls)) or {}
+        elif style.name() is not None:
+            cls.append(style.name())
+            return dict(cls=' '.join(cls))
         styles = [name +': '+ f(attr()) for attr, name, f in (
             (style.foreground, 'color',            color),
             (style.background, 'background-color', color),
@@ -563,12 +575,12 @@ class BrowseForm(LayoutForm):
             (style.overstrike, 'text-decoration',  lambda x: x and 'line-through' or 'none'),
             (style.underline,  'text-decoration',  lambda x: x and 'underline' or 'none'),
             ) if attr() is not None]
-        return dict(cls=cls, style='; '.join(styles))
+        return dict(cls=' '.join(cls), style='; '.join(styles))
     
     def _export_row(self, exporter, row, n):
         g = exporter.generator()
         cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
-                      **self._style(field.style, row))
+                      **self._style(field.style, row, n, field))
                  for field in self._fields]
         return g.tr(cells, **self._style(self._view.row_style(), row, n))
     

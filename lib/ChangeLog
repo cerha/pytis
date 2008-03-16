@@ -2,6 +2,7 @@
 
 	* pytis/web/form.py (ListView._wrap_exported_rows): Wrap the rows
 	into a grid if multiple columns are specified.
+	(BrowseForm._style): Grouping implemented.
 
 	* pytis/presentation/spec.py (ListLayout): New argument `columns'.
 
