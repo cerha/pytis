@@ -1627,7 +1627,7 @@ class ListLayout(object):
     
     """
     def __init__(self, title, meta=(), layout=None, content=None, image=None, anchor=None,
-                 meta_labels=False):
+                 meta_labels=False, columns=1):
         """Initialize the instance.
 
         Arguemnts:
@@ -1655,6 +1655,8 @@ class ListLayout(object):
             sequence is passed, only meta fields with identifiers contained within the sequence
             will be babeled.
 
+          columns -- number of columns; integer.
+
         """
         if isinstance(layout, (list, tuple)):
             layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
@@ -1664,6 +1666,7 @@ class ListLayout(object):
             meta_labels = meta_labels and meta or ()
         else:
             assert isinstance(meta_labels, (bool, tuple, list))
+        assert isinstance(columns, int)
         self._title = title
         self._meta = meta
         self._content = content
@@ -1671,6 +1674,7 @@ class ListLayout(object):
         self._image = image
         self._anchor = anchor
         self._meta_labels = meta_labels
+        self._columns = columns
         
     def title(self):
         return self._title
@@ -1692,6 +1696,9 @@ class ListLayout(object):
     
     def meta_labels(self):
         return self._meta_labels
+    
+    def columns(self):
+        return self._columns
     
     
 class FieldSpec(object):
