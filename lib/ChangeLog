@@ -1,3 +1,10 @@
+2008-03-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (ListView._wrap_exported_rows): Wrap the rows
+	into a grid if multiple columns are specified.
+
+	* pytis/presentation/spec.py (ListLayout): New argument `columns'.
+
 2008-03-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (LayoutForm._export_packed_field): Avoid
