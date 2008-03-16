@@ -347,7 +347,7 @@ class ListTable(wx.grid.PyGridTableBase):
     
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row_prefill, prefill):
-        assert isinstance(grouping, types.TupleType)
+        assert isinstance(grouping, tuple)
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
