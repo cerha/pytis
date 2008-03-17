@@ -550,7 +550,7 @@ class BrowseForm(LayoutForm):
         if field is None: # For row style only
             cls.append(n % 2 and 'even' or 'odd')
             grouping = self._view.grouping()
-            if grouping:
+            if grouping and self._sorting == self._view.sorting():
                 values_, group = hasattr(self, '_last_group') and self._last_group or (None, True)
                 values = [row[cid].value() for cid in grouping]
                 if values != values_:
