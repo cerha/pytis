@@ -912,7 +912,7 @@ class Menu(_TitledMenuObject):
                 menu.AppendSeparator()
             else:
                 title, wx_title = item.title(), item.title(raw=True)
-                if self._allow_autoindex:
+                if self._allow_autoindex and config.auto_menu_accel:
                     prefix = acceskey_prefix(i)
                     wx_title = prefix + title
                     title = prefix[1:] + title

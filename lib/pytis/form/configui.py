@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@ _LAYOUT = (
     LVGroup(_("Chování"),
             'stretch_tables',
             'show_tooltips',
+            'auto_menu_accel',
             'show_splash',
             'cache_spec_onstart'),
     ))),
@@ -72,6 +73,7 @@ _LABELS = {
     'field_invalid_color':   _("Nevalidní vstupní políčko"),
     'show_splash':           _("Zobrazovat úvodní dialog"),
     'show_tooltips':         _("Zobrazovat bublinovou nápovědu"),
+    'auto_menu_accel':       _("Automaticky číslovat menu akceleračními klávesami"),
     'stretch_tables':        _("Rozpínat tabulky na šířku okna"),
     'cache_spec_onstart':    _("Načítat specifikace při startu"),
     'export_directory':      _("Výchozí adresář"),

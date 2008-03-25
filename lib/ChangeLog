@@ -1,3 +1,14 @@
+2008-03-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/configui.py (_LABELS, _LAYOUT): Added
+	`config.auto_menu_accel'.
+
+	* pytis/form/screen.py (Menu.create): Respect
+	`config.auto_menu_accel'.
+
+	* pytis/util/configuration.py (_Option_auto_menu_accel): New
+	option.
+
 2008-03-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Don't apply grouping if sorting is not the

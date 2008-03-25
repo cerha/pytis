@@ -2,7 +2,7 @@
 
 # Prostøedky pro definici a zpracování konfigurace bìhu aplikace
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -676,7 +676,7 @@ class Configuration(object):
     # Volby pøizpùsobení u¾ivatelského rozhraní
         
     class _Option_show_tooltips(BooleanOption):
-        _DESCR = _("Pøíznak zobrazování bublinové nápovìdy.")
+        _DESCR = _("Zobrazovat bublinovou nápovìdu.")
         _DEFAULT = True
         
     class _Option_stretch_tables(BooleanOption):
@@ -684,8 +684,13 @@ class Configuration(object):
         _DEFAULT = True
         
     class _Option_show_splash(BooleanOption):
-        _DESCR = _("Pøíznak zobrazování úvodního uvítacího dialogu.")
+        _DESCR = _("Zobrazovat úvodní uvítací dialog.")
         _DEFAULT = True
+        
+    class _Option_auto_menu_accel(BooleanOption):
+        _DESCR = _("Automaticky doplnit polo¾ky menu prefixy akcelerátorových kláves (zmìna "
+                   "vy¾aduje restart aplikace).")
+        _DEFAULT = False
         
     class _Option_cache_spec_onstart(BooleanOption):
         _DESCR = _("Pøíznak cachování specifikací pøi startu aplikace.")
