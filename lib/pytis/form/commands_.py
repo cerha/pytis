@@ -265,6 +265,7 @@ DEFAULT_KEYMAP = (
     ('Alt-Down',         ListForm.COMMAND_CONTEXT_MENU),
     ('Alt-Enter',        ListForm.COMMAND_CONTEXT_MENU),
     ('F11',              ListForm.COMMAND_TOGGLE_ROW_LABELS),
+    ('Ctrl-=',           ListForm.COMMAND_FILTER_BY_CELL),
     ('Ctrl-Enter',       EditForm.COMMAND_COMMIT_RECORD),
     ('Ctrl-Shift-Enter', EditForm.COMMAND_COMMIT_RECORD(next=True)),
     ('Tab',              EditForm.COMMAND_NAVIGATE),

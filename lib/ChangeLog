@@ -1,3 +1,11 @@
+2008-03-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/commands_.py (DEFAULT_KEYMAP): New shortcut for
+	`ListForm.FILTER_BY_CELL'.
+
+	* pytis/data/postgresql.py: Added information to assertion
+	messages.
+
 2008-03-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/configui.py (_LABELS, _LAYOUT): Added
