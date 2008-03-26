@@ -2031,10 +2031,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 local = not type_.is_utc()
                 value, err = type_.validate(dbvalue, strict=False,
                                             format=type_.SQL_FORMAT, local=local)
-                assert err is None, err
+                assert err is None, (dbvalue, type_, err)
             else:
                 value, err = type_.validate(dbvalue, strict=False)
-                assert err is None, err
+                assert err is None, (dbvalue, type_, err)
             row_data.append((id, value))
         return Row(row_data)
 
