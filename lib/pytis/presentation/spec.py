@@ -772,10 +772,10 @@ class ViewSpec(object):
     """
     
     def __init__(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
-                 actions=(), sorting=None, grouping=None, check=(), cleanup=None,
-                 on_new_record=None, on_edit_record=None, on_delete_record=None,
-                 redirect=None, focus_field=None, description=None, help=None,
-                 row_style=None, conditions=(), aggregations=()):
+                 actions=(), sorting=None, grouping=None, group_heading=None, check=(),
+                 cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
+                 redirect=None, focus_field=None, description=None, help=None, row_style=None,
+                 conditions=(), aggregations=()):
         
         """Inicializuj instanci.
 
@@ -816,18 +816,23 @@ class ViewSpec(object):
             'ActionGroup'.  Prvky v rámci ka¾dé 'ActionGroup' lze dále
             seskupovat stejným zpùsobem.
                         
-          sorting -- výchozí seøazení tabulky.  Specifikace øazení ve formátu
-            odpovídajícím argumentu 'sort' metody 'pytis.data.select()', nebo
-            None.  Potom je výchozí seøazení tabulky podle klíèového sloupce
-            datového objektu vzestupnì.
+          sorting -- default sorting in the same format as accepted by the 'sort' argument of
+            'pytis.data.Data.select()'.  If None, the records will be sorted by the key column.
             
-          grouping -- výchozí vizuální seskupování tabulky.  Mù¾e být None,
-            idendifikátor sloupce, nebo tuple idendifikátorù.  Vizuální
-            seskupování umo¾òuje graficky odli¹it skupiny øádkù, které
-            následují bezprostøednì po sobì a pøitom mají stejnou hodnotu v¹ech
-            seskupovacích sloupcù.  To má význam pouze u sloupcù, podle kterých
-            je zároveò øazeno.
-            
+          grouping -- default visual grouping of table rows.  The value is a column identifier or a
+            sequence of column identifiers.  Grouping allows you to visually group table rows,
+            which have the same value(s) in grouping columns(s).  This usually only makes sense
+            when the table is sorted by these columns.  Grouping is typically represented by slight
+            changes in the background color.  Rows with the same values in grouping columns always
+            have the same background color.  This color changes whenever one of the values changes.
+
+          group_heading -- group heading allows additional representation of `grouping' (see
+            above).  If a column identifier is specified, the value of this column will apeear as a
+            separate table row whenever a new group starts.  Thus this only makes sense when
+            `grouping' is on.  Most often, you will want to show group headings when the grouping
+            columns are actually not shown in the table.  Group heading is currently only supported
+            by web forms.
+
           check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
             funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
             reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Namísto
@@ -989,11 +994,13 @@ class ViewSpec(object):
                                    pytis.data.DESCENDANT)
         if grouping is None:
             grouping = ()
+            assert group_heading is None
         else:
             grouping = xtuple(grouping)
+            assert group_heading is None or self.field(group_heading) is not None, group_heading
             if __debug__:
                 for id in grouping:
-                    assert self.field(id) is not None
+                    assert self.field(id) is not None, id
         assert callable(check) or isinstance(check, (list, tuple))
         check = xtuple(check)
         assert isinstance(conditions, (tuple, list))
@@ -1027,6 +1034,7 @@ class ViewSpec(object):
         self._actions = actions
         self._sorting = sorting
         self._grouping = grouping
+        self._group_heading = group_heading
         self._check = check
         self._cleanup = cleanup
         self._on_new_record = on_new_record
@@ -1098,6 +1106,10 @@ class ViewSpec(object):
     def grouping(self):
         """Vra» tuple id sloupcù výchozího vizuálního seskupování."""
         return self._grouping
+
+    def group_heading(self):
+        """Vra» id sloupce záhlaví skupiny."""
+        return self._group_heading
 
     def cleanup(self):
         """Vra» funkci provádìjící akce pøi uzavøení formuláøe."""

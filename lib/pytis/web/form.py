@@ -523,7 +523,15 @@ class BrowseForm(LayoutForm):
         self._align = dict([(f.id, 'right') for f in self._fields if isinstance(f.type, pd.Number)])
 
     def _used_fields(self):
-        return self._columns
+        used = list(self._columns)
+        if self._view.grouping():
+            for fid in self._view.grouping():
+                if fid not in used:
+                    used.append(fid)
+            heading = self._view.group_heading()
+            if heading is not None and heading not in used:
+                used.append(heading)
+        return used
 
     def _export_cell(self, exporter, field):
         value = self._format_field(exporter, field)
@@ -549,17 +557,11 @@ class BrowseForm(LayoutForm):
         cls = []
         if field is None: # For row style only
             cls.append(n % 2 and 'even' or 'odd')
-            grouping = self._view.grouping()
-            if grouping and self._sorting == self._view.sorting():
-                values_, group = hasattr(self, '_last_group') and self._last_group or (None, True)
-                values = [row[cid].value() for cid in grouping]
-                if values != values_:
-                    group = not group
-                    self._last_group = (values, group)
-                    cls.append('group-start')
-                    if n != 0:
-                        cls.append('group-change')
-                cls.append(group and 'even-group' or 'odd-group')
+            if self._group != self._last_group:
+                cls.append('group-start')
+                if n != 0:
+                    cls.append('group-change')
+            cls.append(self._group and 'even-group' or 'odd-group')
         #else:
         #    cls.append('field-id-'+field.id)
         if style is None:
@@ -583,6 +585,11 @@ class BrowseForm(LayoutForm):
                       **self._style(field.style, row, n, field))
                  for field in self._fields]
         return g.tr(cells, **self._style(self._view.row_style(), row, n))
+
+    def _export_group_heading(self, exporter, field):
+        g = exporter.generator()
+        return g.tr(g.th(self._format_field(exporter, field), colspan=len(self._fields)),
+                    cls='group-heading')
     
     def _export_headings(self, exporter):
         g = exporter.generator()
@@ -629,6 +636,16 @@ class BrowseForm(LayoutForm):
             page = 0
             offset = 0
         self._page = page
+        grouping = self._view.grouping()
+        if self._view.group_heading():
+            group_heading = self._field(self._view.group_heading())
+        else:
+            group_heading = None
+        if self._sorting != self._view.sorting():
+            grouping = None
+        self._group = True
+        self._last_group = None
+        group_values = last_group_values = None
         n = 0
         data.skip(offset)
         while True:
@@ -636,7 +653,15 @@ class BrowseForm(LayoutForm):
             if r is None:
                 break
             row.set_row(r)
+            if grouping:
+                group_values = [row[cid].value() for cid in grouping]
+                if group_values != last_group_values:
+                    self._group = not self._group
+                    last_group_values = group_values
+                    if group_heading:
+                        exported_rows.append(self._export_group_heading(exporter, group_heading))
             exported_rows.append(self._export_row(exporter, row, n))
+            self._last_group = self._group
             n += 1 
             if limit is not None and n >= limit:
                 break
@@ -754,7 +779,11 @@ class ListView(BrowseForm):
 
     def _export_field(self, exporter, field):
         return self._format_field(exporter, field)
-    
+
+    def _export_group_heading(self, exporter, field):
+        #return exporter.generator().h(self._format_field(exporter, field), 3, cls='group-heding')
+        return ''
+
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
         columns = self._list_layout.columns()
@@ -765,7 +794,7 @@ class ListView(BrowseForm):
                             for i in range(n+min(mod, 1))], border=0, cls='grid')
         return g.div(rows, cls="body") +"\n"+ g.div(summary, cls="summary")
 
-    
+
 class CheckRowsForm(BrowseForm, _SubmittableForm):
     """Web form with checkable boolean columns in each row.
 

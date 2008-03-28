@@ -1,3 +1,10 @@
+2008-03-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added support for group headings.
+
+	* pytis/presentation/spec.py (ViewSpec): New option
+	`group_heading'.
+
 2008-03-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/commands_.py (DEFAULT_KEYMAP): New shortcut for
