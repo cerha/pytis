@@ -1812,6 +1812,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             xls_possible = True
         except:
             xls_possible = False
+        wildcards = ["Soubory CSV (*.csv)", "*.csv",
+                     "Soubory TXT (*.txt)", "*.txt"
+                     ]
+        defaultexportfile = 'export.csv'
         if xls_possible:
             msg = _("Export mù¾e být proveden do XLS nebo CSV souboru.\n\n")
             msg = msg + _("Zvolte po¾adovaný formát.")
@@ -1819,11 +1823,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if fileformat and fileformat == 'XLS':                
                 wildcards = ["Soubory XLS (*.xls)", "*.xls"]
                 defaultexportfile = 'export.xls'
-            else:
-                wildcards = ["Soubory CSV (*.csv)", "*.csv",
-                             "Soubory TXT (*.txt)", "*.txt"
-                             ]
-                defaultexportfile = 'export.csv'
         export_dir = config.export_directory
         filename = pytis.form.run_dialog(pytis.form.FileDialog,
                                        title="Zadat exportní soubor",
