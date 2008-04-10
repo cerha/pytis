@@ -1021,6 +1021,9 @@ class DateTime(Type):
             value = value.gmtime()
         return value.strftime(self._format)
 
+    def format(self):
+        return self._format
+    
     def is_utc(self):
         return self._utc
 

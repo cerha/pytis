@@ -1764,29 +1764,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._on_line_rollback()
         return True
     
-    def _cmd_export_csv(self):
+    def _cmd_export_csv(self, filename, column_list):
         log(EVENT, 'Vyvolání CSV exportu')
-        data = self._data
-        # Kontrola poètu øádkù
-        number_rows = self._table.GetNumberRows()
-        if number_rows == 0:
-            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return
-        # Seznam sloupcù
-        column_list = [(c.id(), c.type(data)) for c in self._columns]
-        allowed = True
-        # Kontrola práv        
-        for cid, ctype in column_list:
-            if not data.permitted(cid, pytis.data.Permission.EXPORT):
-                allowed = False
-                break
-        if not allowed:
-            msg = _("Nemáte právo exportu k této tabulce.\n")
-            msg = msg + _("Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return            
-        export_dir = config.export_directory
         export_encoding = config.export_encoding
         db_encoding = 'utf-8'
         try:
@@ -1796,16 +1775,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = msg + _("Export se provede bez pøekódování.")
             export_encoding = None
             run_dialog(Error, msg)
-        filename = pytis.form.run_dialog(pytis.form.FileDialog,
-                                       title="Zadat exportní soubor",
-                                       dir=export_dir, file='export.txt',
-                                       mode='SAVE',
-                                       wildcards=("Soubory TXT (*.txt)",
-                                                  "*.txt",
-                                                  "Soubory CSV (*.csv)",
-                                                  "*.csv"))
-        if not filename:
-            return
         try:       
             export_file = open(filename,'w')
         except:
@@ -1813,6 +1782,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     " pro zápis!\n")
             run_dialog(Error, msg)
             return
+        number_rows = self._table.GetNumberRows()
         def _process_table(update):
             # Export labelù
             for column in self._columns:
@@ -1835,6 +1805,130 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_file.close()
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
 
+    def _cmd_export_file(self):
+        log(EVENT, 'Called export to file')
+        try:
+            import pyExcelerator as pyxls
+            xls_possible = True
+        except:
+            xls_possible = False
+        if xls_possible:
+            msg = _("Export mù¾e být proveden do XLS nebo CSV souboru.\n\n")
+            msg = msg + _("Zvolte po¾adovaný formát.")
+            fileformat = run_dialog(MultiQuestion, msg, ('CSV','XLS'), default='CSV')
+            if fileformat and fileformat == 'XLS':                
+                wildcards = ["Soubory XLS (*.xls)", "*.xls"]
+                defaultexportfile = 'export.xls'
+            else:
+                wildcards = ["Soubory CSV (*.csv)", "*.csv",
+                             "Soubory TXT (*.txt)", "*.txt"
+                             ]
+                defaultexportfile = 'export.csv'
+        export_dir = config.export_directory
+        filename = pytis.form.run_dialog(pytis.form.FileDialog,
+                                       title="Zadat exportní soubor",
+                                       dir=export_dir, file=defaultexportfile,
+                                       mode='SAVE',
+                                       wildcards=tuple(wildcards))
+        if not filename:
+            return
+        try:       
+            export_file = open(filename,'w')
+            export_file.write('')
+        except:
+            msg = _("Nepodaøilo se otevøít soubor " + filename + \
+                    " pro zápis!\n")
+            run_dialog(Error, msg)
+            return
+        export_file.close()
+        data = self._data
+        # Kontrola poètu øádkù
+        number_rows = self._table.GetNumberRows()
+        if number_rows == 0:
+            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return
+        # Seznam sloupcù
+        column_list = [(c.id(), c.type(data)) for c in self._columns]
+        allowed = True
+        # Kontrola práv        
+        for cid, ctype in column_list:
+            if not data.permitted(cid, pytis.data.Permission.EXPORT):
+                allowed = False
+                break
+        if not allowed:
+            msg = _("Nemáte právo exportu k této tabulce.\n")
+            msg = msg + _("Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return            
+        if fileformat == 'XLS':
+            self._cmd_export_xls(filename, column_list)
+        else:
+            self._cmd_export_csv(filename, column_list)            
+        return 
+        
+    def _cmd_export_xls(self, filename, column_list):
+        log(EVENT, 'Called XLS export')
+        try:
+            import pyExcelerator as pyxls
+        except:
+            msg = _("Modul pro práci s XLS soubory není nainstalován. Konèím.")
+            run_dialog(Error, msg)
+            return            
+        number_rows = self._table.GetNumberRows()
+        def _process_table(update):
+            w = pyxls.Workbook()
+            ws = w.add_sheet('Export')            
+            # Export labelù            
+            for i, column in enumerate(self._columns):
+                ws.write(0, i, unicode(column.label()))
+            default_style = pyxls.XFStyle()
+            w.add_style(default_style)
+            # Styles
+            column_styles = {}
+            for cid, ctype in column_list:
+                st = pyxls.XFStyle()
+                if isinstance(ctype, pytis.data.Float):
+                    precision = ctype.precision()
+                    if precision and precision > 0:
+                        fmt = "0." + "0" * precision
+                    else:
+                        fmt = "general"
+                    st.num_format_str = fmt
+                elif isinstance(ctype, pytis.data.Date):
+                    st.num_format_str = "D.M.YYYY"
+                elif isinstance(ctype, pytis.data.Time):
+                    st.num_format_str = "h:mm:ss"
+                elif isinstance(ctype, pytis.data.DateTime):
+                    st.num_format_str = "D.M.YYYY h:mm:ss"
+                column_styles[cid] = st
+                w.add_style(st)
+            for r in range(0,number_rows):
+                if not update(int(float(r)/number_rows*100)):
+                    break
+                for j, (cid, ctype) in enumerate(column_list):
+                    if isinstance(ctype, pytis.data.Number):
+                        s = self._table.row(r)[cid].value()
+                    elif isinstance(ctype, pytis.data.Date):
+                        s = self._table.row(r)[cid].value()
+                        if s:
+                            s = "%s.%s.%s" % (s.day, s.month, s.year)
+                    elif isinstance(ctype, pytis.data.Time):
+                        s = self._table.row(r)[cid].value()
+                        if s:
+                            s = "%s:%s:%s" % (s.hour, s.minute, int(s.second))
+                    elif isinstance(ctype, pytis.data.DateTime):
+                        s = self._table.row(r)[cid].value()
+                        if s:
+                            s = s.strftime(pytis.data.DateTime.CZECH_FORMAT)
+                    else:
+                        s = self._table.row(r)[cid].export()
+                        s = ';'.join(s.split('\n'))
+                    if s is not None:                        
+                        ws.write(r+1, j, s, column_styles[cid])
+            w.save(filename)
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
+        
     def _cmd_insert_line(self, before=False, copy=False):
         row = self._current_cell()[0]
         log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))

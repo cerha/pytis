@@ -130,6 +130,8 @@ Command(ListForm, 'COPY_AGGREGATION_RESULT',
         "Zkopírování výsledku agreganí funkce do schránky") # arg 'operation', 'cid'
 Command(ListForm, 'EXPORT_CSV',
         "Export øádkového formuláøe do csv souboru")
+Command(ListForm, 'EXPORT_FILE',
+        "Export øádkového formuláøe do souboru")
 Command(ListForm, 'LINE_COMMIT',
         "Dokonèení editace záznamu (ulo¾ení)")
 Command(ListForm, 'LINE_ROLLBACK',
@@ -246,7 +248,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-c',           ListForm.COMMAND_COPY_CELL),
     ('Home',             ListForm.COMMAND_FIRST_COLUMN),
     ('End',              ListForm.COMMAND_LAST_COLUMN),
-    ('Ctrl-e',           ListForm.COMMAND_EXPORT_CSV),
+    ('Ctrl-e',           ListForm.COMMAND_EXPORT_FILE),
     ('F2',               ListForm.COMMAND_EDIT),
     ('F9',               ListForm.COMMAND_EDIT),
     ('Ctrl-F12',         ListForm.COMMAND_LINE_ROLLBACK),
@@ -357,9 +359,9 @@ FORM_COMMAND_MENU = ((
      _("Kopírovat øádek nad"),
      _("Vlo¾it nový záznam v re¾imu inline editace jako kopii souèasného.")),
     ),(#---------------
-    (ListForm.COMMAND_EXPORT_CSV,
-     _("Export do textového souboru"),
-     _("Exportovat data do textového souboru ve formátu CSV.")),
+    (ListForm.COMMAND_EXPORT_FILE,
+     _("Export do souboru"),
+     _("Exportovat data do souboru.")),
     (RecordForm.COMMAND_IMPORT_INTERACTIVE,
      _("Import z textového souboru"),
      _("Importovat data z textového souboru ve formátu CSV.")),
@@ -400,7 +402,7 @@ COMMAND_ICONS = (
     (ListForm.COMMAND_FILTER_BY_CELL,                      'filter-by-cell'),
     (ListForm.COMMAND_AUTOFILTER,                          'autofilter'),
     (ListForm.COMMAND_INCREMENTAL_SEARCH,                  'search-incremental'),
-    (ListForm.COMMAND_EXPORT_CSV,                          'export'),
+    (ListForm.COMMAND_EXPORT_FILE,                         'export'),
     (ListForm.COMMAND_IMPORT_INTERACTIVE,                  'import'),
     (ListForm.COMMAND_INSERT_LINE(before=True, copy=True), 'insert-line-before-copy'),
     (ListForm.COMMAND_INSERT_LINE(before=True),            'insert-line-before'),

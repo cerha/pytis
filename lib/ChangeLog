@@ -1,3 +1,15 @@
+2008-04-10  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/form/list.py: Change `_cmd_export_csv' to
+	`_cmd_export_file'.
+	(ListForm._cmd_export_file): New method.
+	(ListForm._cmd_export_xls): New method.
+	
+	* pytis/form/commands_.py: New command 'EXPORT_FILE'.
+	Use command `COMMAND_EXPORT_FILE' instead of 'COMMAND_EXPORT_CSV'.
+
+	* pytis/data/types_.py (DateTime.format): New public method.
+
 2008-03-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added support for group headings.
