@@ -1906,7 +1906,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if not update(int(float(r)/number_rows*100)):
                     break
                 for j, (cid, ctype) in enumerate(column_list):
-                    if isinstance(ctype, pytis.data.Number):
+                    if isinstance(ctype, pytis.data.Float):
+                        s = self._table.row(r)[cid].export(locale_format=False)
+                    elif isinstance(ctype, pytis.data.Number):
                         s = self._table.row(r)[cid].value()
                     elif isinstance(ctype, pytis.data.Date):
                         s = self._table.row(r)[cid].value()
