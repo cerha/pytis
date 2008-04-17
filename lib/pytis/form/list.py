@@ -1812,10 +1812,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             xls_possible = True
         except:
             xls_possible = False
-        wildcards = ["Soubory CSV (*.csv)", "*.csv",
-                     "Soubory TXT (*.txt)", "*.txt"
+        wildcards = ["Soubory TXT (*.txt)", "*.txt",
+                     "Soubory CSV (*.csv)", "*.csv"
                      ]
-        defaultexportfile = 'export.csv'
+        defaultexportfile = 'export.txt'
         if xls_possible:
             msg = _("Export mù¾e být proveden do XLS nebo CSV souboru.\n\n")
             msg = msg + _("Zvolte po¾adovaný formát.")
@@ -1868,6 +1868,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cmd_export_xls(self, filename, column_list):
         log(EVENT, 'Called XLS export')
+        import datetime
         try:
             import pyExcelerator as pyxls
         except:
@@ -1913,11 +1914,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     elif isinstance(ctype, pytis.data.Date):
                         s = self._table.row(r)[cid].value()
                         if s:
-                            s = "%s.%s.%s" % (s.day, s.month, s.year)
+                            s = datetime.date(s.year, s.month, s.day)
                     elif isinstance(ctype, pytis.data.Time):
                         s = self._table.row(r)[cid].value()
                         if s:
-                            s = "%s:%s:%s" % (s.hour, s.minute, int(s.second))
+                            s = datetime.time(s.hour, s.minute, int(s.second))
                     elif isinstance(ctype, pytis.data.DateTime):
                         s = self._table.row(r)[cid].value()
                         if s:
