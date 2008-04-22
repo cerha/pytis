@@ -853,7 +853,8 @@ class Menu(_TitledMenuObject):
         assert is_sequence(items)
         if __debug__:
             for i in items:
-                assert isinstance(i, _MenuObject)
+                # Empty tuple is possible for items like 'recent_forms_menu' by generating help
+                assert isinstance(i, _MenuObject) or i == ()
         self._items = tuple(items)
         self._allow_autoindex = allow_autoindex
         self._wx_menu = None

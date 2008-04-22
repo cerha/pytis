@@ -690,7 +690,7 @@ class Configuration(object):
     class _Option_auto_menu_accel(BooleanOption):
         _DESCR = _("Automaticky doplnit polo¾ky menu prefixy akcelerátorových kláves (zmìna "
                    "vy¾aduje restart aplikace).")
-        _DEFAULT = False
+        _DEFAULT = True
         
     class _Option_cache_spec_onstart(BooleanOption):
         _DESCR = _("Pøíznak cachování specifikací pøi startu aplikace.")
