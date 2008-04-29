@@ -294,13 +294,28 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     
     def __init__(self, view, row, errors=(), **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+
+          errors -- a sequence of error messages to display within the form (results of previous
+            attempt to commit the form).  The sequence consists of pairs (ID, MESSAGE), where ID is
+            the field identifier and MESSAGE is the error message for given field.  ID can also be
+            None for messages which don't belong to any particular field and it is also legal to
+            pass field identifiers, which don't appear in the current form or even don't exist in
+            the current specification (typically for fields which only appear in the underlying
+            database objects).
+            
+          See the parent classes for definition of the remaining arguments.
+
+        """
         super(EditForm, self).__init__(view, row, **kwargs)
         key, order = self._key, tuple(self._layout.order())
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in order and k != key]
         if not self._row.new() and key not in order + tuple([k for k,v in self._hidden]):
             self._hidden += [(key,  self._row[key].export())]
-        assert isinstance(errors, (tuple, list, str, unicode)), errors
+        assert isinstance(errors, (tuple, list)), errors
         self._errors = errors
         binary = [id for id in order if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
@@ -372,13 +387,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def _export_body(self, exporter):
         g = exporter.generator()
-        if isinstance(self._errors, (str, unicode)):
-            errors = g.p(self._errors)
-        else:
-            errors = []
-            for id, msg in self._errors:
+        errors = []
+        for id, msg in self._errors:
+            if id is not None:
                 f = self._view.field(id)
-                errors.append(g.p(g.strong(f and f.label() or id) + ": " + msg))
+                msg = g.strong(f and f.label() or id) + ": " + msg
+            errors.append(g.p(msg))
         if errors:
             errors = g.div(errors, cls='errors')
         return concat(errors, super(EditForm, self)._export_body(exporter))
