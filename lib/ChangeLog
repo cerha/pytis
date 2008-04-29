@@ -1,3 +1,13 @@
+2008-04-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/dbapi.py (_DBAPIAccessor._postgresql_query): Handle
+	also `dbapi.NotSupportedError' which occures in newer dbapi versions.
+
+2008-04-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (EditForm): Always expect a sequence of FIELD,
+	MSG pairs in `errors' constructor argument.
+
 2008-04-22  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/form/screen.py (Menu.__init__): Item can be empty tuple.

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,6 +87,12 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
+            raise DBUserException(None, e, e.args, query)
+        except dbapi.NotSupportedError, e:
+            if e.args and e.args[0].find('cannot perform INSERT RETURNING') != -1:
+                # This is handled once again below since older dbapi versions report it as
+                # ProgrammingError and newer versions as NotSupportedError.
+                raise DBInsertException()
             raise DBUserException(None, e, e.args, query)
         except dbapi.ProgrammingError, e:
             if e.args:
