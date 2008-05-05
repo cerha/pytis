@@ -1,3 +1,7 @@
+2008-05-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (EditForm.__init__): Assertions added.
+
 2008-04-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/dbapi.py (_DBAPIAccessor._postgresql_query): Handle
