@@ -316,6 +316,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if not self._row.new() and key not in order + tuple([k for k,v in self._hidden]):
             self._hidden += [(key,  self._row[key].export())]
         assert isinstance(errors, (tuple, list)), errors
+        if __debug__:
+            for e in errors:
+                assert isinstance(e, tuple), ('type error', e, errors)
+                assert len(e) == 2, ('type error', e, errors)
+                assert e[0] is None or isinstance(e[0], basestring), ('type error', e[0], errors)
+                assert isinstance(e[1], basestring), ('type error', e[1], errors)
         self._errors = errors
         binary = [id for id in order if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
