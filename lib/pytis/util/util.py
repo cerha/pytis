@@ -927,10 +927,10 @@ def direct_public_members(obj):
     jejich¾ název nezaèíná podtr¾ítkem.
 
     """
-    if hasattr(obj, '__class__'):
-        cls = obj.__class__
-    else:
+    if isinstance(obj, (pytypes.ClassType, type,)):
         cls = obj
+    else:
+        cls = obj.__class__
     def public_members(cls):
         return [(name, value) for name, value in inspect.getmembers(cls)
                 if name and not name.startswith('_')]

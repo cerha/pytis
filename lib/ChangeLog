@@ -1,5 +1,13 @@
 2008-05-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/util/util.py (direct_public_members): Once again reworked.
+	The undocumented change from 2005-05-24 was probably broken and
+	makes no sense to me.  At least tests work now.  If there is still
+	anything wrong with the function, please write appropriate tests
+	and make them work.
+
+2008-05-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/util/util.py (direct_public_members): Test more correctly
 	for the presence of the __class__ attribute.
 
