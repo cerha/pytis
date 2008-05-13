@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -159,32 +159,32 @@ class XStack(unittest.TestCase):
         assert xstack.active() is a
         assert xstack.prev() is None and xstack.next() is None
         xstack.push(b)
-        assert xstack.items() == (a, b)
+        assert xstack.items() == (b, a,)
         assert xstack.active() is b
         assert xstack.prev() is a
         assert xstack.next() is a
         xstack.push(c)
-        assert xstack.items() == (a, b, c)
+        assert xstack.items() == (c, b, a,)
         assert xstack.active() is c
-        assert xstack.prev() is b
-        assert xstack.next() is a
+        assert xstack.prev() is a
+        assert xstack.next() is b
         xstack.activate(a)
         assert xstack.active() is a
-        assert xstack.prev() is c
-        assert xstack.next() is b
+        assert xstack.prev() is b
+        assert xstack.next() is c
         xstack.activate(b)
         assert xstack.active() is b
-        assert xstack.prev() is a
-        assert xstack.next() is c
+        assert xstack.prev() is c
+        assert xstack.next() is a
         xstack.remove(b)
-        assert xstack.items() == (a, c)
+        assert xstack.items() == (c, a,)
         assert xstack.active() is a
         xstack.push(d)
-        assert xstack.items() == (a, c, d)
+        assert xstack.items() == (c, d, a,)
         assert xstack.active() is d
         xstack.pop()
         xstack.pop()
-        assert xstack.active() is a
+        assert xstack.active() is c
         assert xstack.prev() is None and xstack.next() is None
 tests.add(XStack)
 

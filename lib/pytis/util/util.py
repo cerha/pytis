@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -464,9 +464,9 @@ class XStack(Stack):
     resp. zásobník nesmí obsahovat dva ekvivalentní prvky.  V
     takovém případě není chování zásobníku definováno.
 
-    Vkládání je automaticky prováděno za právě aktivní prvek, nikoliv na
-    poslední místo, jako v předkovi.
-      
+    New elements are pushed just below the currently active element on the
+    stack, not to the top of the stack as in the superclass.
+
     """
     def __init__(self):
         self._active = None
@@ -474,9 +474,9 @@ class XStack(Stack):
         super(XStack, self).__init__()
         
     def push(self, item):
-        """Přidej prvek za právě aktivní prvek.
+        """Push the element just below the currently active element.
 
-        Přidaný prvek se automaticky stává aktivním.
+        The inserted element automatically becomes active.
 
         """
         if self.empty():
@@ -499,7 +499,9 @@ class XStack(Stack):
             self.activate(self.top())
 
     def remove(self, item):
-        """Vyjmi daný prvek ze zásobníku.
+        """Remove the given 'item' from the stack.
+
+        If 'item' is currently the active element, 
 
         Pokud byl vyjmutý prvek aktivním prvkem, je aktivován následující prvek
         (pokud neexistuje, tak předcházející).
@@ -538,8 +540,7 @@ class XStack(Stack):
         if item is not None:
             if item in self._mru:
                 self._mru.remove(item)
-            self._mru.insert(0, item)
-            
+            self._mru.insert(0, item)            
         
     def active(self):
         """Vrať právě aktivní prvek"""
@@ -548,10 +549,11 @@ class XStack(Stack):
         return self._active
 
     def next(self):
-        """Vrať prvek následující za právě aktivním prvkem.
+        """Return element just below the currently active element.
 
-        Pokud je aktivní prvek jediným prvkem zásobníku, nebo je zásobník
-        prázdný, vrať None.
+        If the active element is the only element on the stack or when the
+        stack is empty, return 'None'.  Otherwise, if there is nothing below
+        the currently active element, return the top element.
 
         """
         if len(self._list) <= 1:
@@ -560,10 +562,11 @@ class XStack(Stack):
         return self._list[(i+1) % len(self._list)]
 
     def prev(self):
-        """Vrať prvek předcházející před právě aktivním prvkem.
+        """Return element just above the currently active element.
 
-        Pokud je aktivní prvek jediným prvkem zásobníku, nebo je zásobník
-        prázdný, vrať None.
+        If the active element is the only element on the stack or when the
+        stack is empty, return 'None'.  Otherwise, if there is nothing above
+        the currently active element, return the bottom element.
 
         """
         if len(self._list) <= 1:

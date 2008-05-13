@@ -1,3 +1,14 @@
+2008-05-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/util/_test.py (XStack): 
+	* pytis/util/util.py (XStack): 
+
+	XStack tests and docstrings adjusted according to actual XStack behavior
+
+	This changes semantics of the class.  But because the current XStack behavior
+	is implemented this way for about three years now, I assume the class semantics
+	is determined by its implementation.
+
 2008-05-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (EditForm.__init__): Assertions added.
