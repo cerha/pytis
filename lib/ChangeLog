@@ -1,5 +1,10 @@
 2008-05-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/util/util.py (direct_public_members): Test more correctly
+	for the presence of the __class__ attribute.
+
+2008-05-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* pytis/util/_test.py (XStack): 
 	* pytis/util/util.py (XStack): 
 

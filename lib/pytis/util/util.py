@@ -927,7 +927,7 @@ def direct_public_members(obj):
     jejich¾ název nezaèíná podtr¾ítkem.
 
     """
-    if isinstance(obj, pytypes.ClassType):
+    if hasattr(obj, '__class__'):
         cls = obj.__class__
     else:
         cls = obj
