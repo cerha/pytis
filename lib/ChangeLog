@@ -1,3 +1,8 @@
+2008-05-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/data/dbapi.py (_DBAPIAccessor._postgresql_query.do_query):
+	Locking exception detection updated for new psycopg version.
+
 2008-05-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/util/util.py (direct_public_members): Once again reworked.

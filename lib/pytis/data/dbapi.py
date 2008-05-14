@@ -104,6 +104,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.OperationalError, e:
+            if e.args and e.args[0].find('could not obtain lock') != -1:
+                raise DBLockException()
             if not outside_transaction:
                 raise DBSystemException(_("Database operational error"),
                                         e, e.args, query)
