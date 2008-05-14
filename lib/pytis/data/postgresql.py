@@ -714,6 +714,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._template = self._template()
             return self._template % args
 
+    class _TableColumnData(object):
+        def __init__(self, basic, default, unique):
+            self._basic = basic
+            self._default = default
+            self._unique = unique
+        def basic(self):
+            return self._basic
+        def default(self):
+            return self._default
+        def unique(self):
+            return self._unique
+
     @classmethod
     def _pdbb_next_selection_number(class_):
         def lfunction():
@@ -721,6 +733,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return with_lock(class_._pdbb_selection_counter_lock, lfunction)
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
+        self._pdbb_table_column_data = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_create_sql_commands()
@@ -767,52 +780,63 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if len(items) < 2:
             items.insert(0, 'public')
         return items
-        
-    def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
+    
+    def _pdbb_get_table_column_data(self, table):
         schema, table_name = self._pdbb_split_table_name(table)
         d = self._pg_query(
-            ("select pg_type.typname, pg_attribute.atttypmod, "
+            ("select pg_attribute.attname, pg_type.typname, pg_attribute.atttypmod, "
              "pg_attribute.attnotnull "
              "from pg_class, pg_attribute, pg_type, pg_namespace "
              "where pg_class.oid = pg_attribute.attrelid and "
              "pg_class.relnamespace = pg_namespace.oid and "
              "pg_namespace.nspname = '%s' and "
              "pg_class.relname = '%s' and "
-             "pg_attribute.attname = '%s' and "
              "pg_attribute.atttypid = pg_type.oid") % \
-            (schema, table_name, column),
+            (schema, table_name,),
             outside_transaction=True)
         d1 = self._pg_query(
-            ("select pg_attrdef.adsrc "
+            ("select pg_attribute.attname, pg_attrdef.adsrc "
              "from pg_class, pg_attribute, pg_attrdef, pg_namespace "
              "where pg_class.oid = pg_attrdef.adrelid and "
              "pg_class.relnamespace = pg_namespace.oid and "
              "pg_namespace.nspname = '%s' and "
              "pg_class.oid = pg_attribute.attrelid and "
              "pg_class.relname = '%s' and "
-             "pg_attribute.attname = '%s' and "
              "pg_attribute.attnum = pg_attrdef.adnum") % \
-            (schema, table_name, column),
+            (schema, table_name,),
             outside_transaction=True)
         d2 = self._pg_query(
-            ("select conkey "
+            ("select attname, conkey "
              "from pg_constraint, pg_namespace, pg_class, pg_attribute "
              "where conrelid = pg_class.oid and attrelid = pg_class.oid and relnamespace = pg_namespace.oid and attnum = any (conkey) and "
-             "nspname = '%s' and relname = '%s' and attname = '%s' and (contype = 'p' or contype = 'u')") %
-            (schema, table_name, column,),
+             "nspname = '%s' and relname = '%s' and (contype = 'p' or contype = 'u')") %
+            (schema, table_name,),
             outside_transaction=True)
+        table_data = self._TableColumnData(d, d1, d2)
+        self._pdbb_table_column_data[table] = table_data
+        return table_data
+        
+    def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
+        table_data = self._pdbb_table_column_data.get(table)
+        if table_data is None:
+            table_data = self._pdbb_get_table_column_data(table)
+        def lookup_column(data):
+            for row in data:
+                if row[0] == column:
+                    return row[1:]
         try:
-            type_, size_string, not_null = d[0]
+            type_, size_string, not_null = lookup_column(table_data.basic())
         except:
             raise pytis.data.DBException(_("Není mo¾no zjistit typ sloupce"), None,
                                          table, column, d)
         try:
-            default = d1[0][0]
+            default = lookup_column(table_data.default())[0]
         except:
             default = ''
         try:
             # TODO: This is a quick hack to ignore multicolumn unique constraints. (TC)
-            unique = (not not d2) and d2[0][0].find(',') == -1
+            row = lookup_column(table_data.unique())
+            unique = (not not row) and row[0].find(',') == -1
         except:
             unique = False
         serial = (default[:len('nextval')] == 'nextval')
