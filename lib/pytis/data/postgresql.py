@@ -701,6 +701,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     _pdbb_selection_counter = Counter()
     _pdbb_selection_counter_lock = thread.allocate_lock()
 
+    _pdbb_table_column_data = {}
+
     class _SQLCommandTemplate(object):
         def __init__(self, template, arguments={}):
             self._template = template
@@ -733,7 +735,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return with_lock(class_._pdbb_selection_counter_lock, lfunction)
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
-        self._pdbb_table_column_data = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_create_sql_commands()
@@ -813,11 +814,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             (schema, table_name,),
             outside_transaction=True)
         table_data = self._TableColumnData(d, d1, d2)
-        self._pdbb_table_column_data[table] = table_data
+        PostgreSQLStandardBindingHandler._pdbb_table_column_data[table] = table_data
         return table_data
         
     def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
-        table_data = self._pdbb_table_column_data.get(table)
+        table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table)
         if table_data is None:
             table_data = self._pdbb_get_table_column_data(table)
         def lookup_column(data):
