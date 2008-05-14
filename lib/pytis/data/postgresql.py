@@ -2319,8 +2319,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 xskip = buffer.skip(size, BACKWARD, self._pg_number_of_rows)
                 skip()
             try:
-                data_ = self._pg_fetchmany(size, FORWARD,
-                                           transaction=transaction)
+                if size != 0:
+                    data_ = self._pg_fetchmany(size, FORWARD, transaction=transaction)
+                else:
+                    # Don't run an unnecessary SQL command
+                    data_ = None
             except:
                 cls, e, tb = sys.exc_info()
                 try:
