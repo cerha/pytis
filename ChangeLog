@@ -2,6 +2,7 @@
 
 	* lib/pytis/extensions/email_.py (SimpleEmail.send): Definuj
 	promìnnou `server'.
+	(SimpleEmail): Rozli¹uj odchytávané výjimky pøi odesílání mailu.
 
 2008-01-11  Tomas Cerha  <cerha@brailcom.org>
 

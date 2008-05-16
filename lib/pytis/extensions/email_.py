@@ -40,6 +40,13 @@ class SimpleEmail(object):
     DEFAULT_CHARSET = 'iso-8859-2'
     DEFAULT_CONTENT_TYPE = 'text/html'
 
+    ERR_CONNECTION = _("Could not connect to SMTP server")
+    ERR_RECIPIENT = _("Recipient refused")
+    ERR_SENDER = _("Sender refused")
+    ERR_DISCONNECTED = _("SMTP server disconnected")
+    ERR_DATA = _("Error by sending data")
+    ERR_HELO = _("Error by sending helo")
+    
     def __init__(self, to, from_, subject, content,
                  bcc=None,  smtp='localhost'):
         """Inicializuj instanci.
@@ -65,6 +72,7 @@ class SimpleEmail(object):
         self.subject = subject
         self.content = content
         self.smtp = smtp
+        self._error_msg = None
 
     def create_message(self):
         self._create_message()
@@ -81,6 +89,12 @@ class SimpleEmail(object):
         else:
             return header
 
+    def reset_error_msg(self):
+        self._error_msg = None
+
+    def get_error_msg(self):
+        return self._error_msg
+        
     def smtp_to(self):
         if self.bcc is None:
             return self.to
@@ -128,18 +142,37 @@ class SimpleEmail(object):
         return self.msg.as_string()
 
     def send(self):
+        import smtplib
         self.create_message()
         message = self.msg.as_string()
-        success = False
-        server = None
+        success = True
+        self.reset_error_msg()
         try:
-            import smtplib
             server = smtplib.SMTP(self.smtp)
+        except SMTPConnectError:
+            self._error_msg = "%s: %s" % (self.ERR_CONNECTION, self.smtp)
+            return False
+        try:
             server.sendmail(self.from_, self.smtp_to(), message)
-            success = True
-        finally:
-            if server:
-                server.quit()
+        except SMTPRecipientsRefused:            
+            self._error_msg = "%s: %s" % (self.ERR_RECIPIENT, self.smtp_to())
+            success = False
+        except SMTPSenderRefused:
+            self._error_msg = "%s: %s" % (self.ERR_SENDER, self.from_)
+            success = False
+        except SMTPHeloError:            
+            self._error_msg = self.ERR_HELO
+            success = False
+        except SMTPDataError:
+            self._error_msg = self.ERR_DATA
+            success = False
+        except SMTPServerDisconnected:
+            self._error_msg = self.ERR_DISCONNECTED
+            success = False
+        try:
+            server.quit()
+        except:
+            pass
         return success              
 
 
