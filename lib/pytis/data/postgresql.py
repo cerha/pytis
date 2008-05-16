@@ -829,7 +829,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             type_, size_string, not_null = lookup_column(table_data.basic())
         except:
             raise pytis.data.DBException(_("Není mo¾no zjistit typ sloupce"), None,
-                                         table, column, d)
+                                         table, column)
         try:
             default = lookup_column(table_data.default())[0]
         except:
