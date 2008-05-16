@@ -131,6 +131,7 @@ class SimpleEmail(object):
         self.create_message()
         message = self.msg.as_string()
         success = False
+        server = None
         try:
             import smtplib
             server = smtplib.SMTP(self.smtp)
