@@ -149,24 +149,24 @@ class SimpleEmail(object):
         self.reset_error_msg()
         try:
             server = smtplib.SMTP(self.smtp)
-        except SMTPConnectError:
+        except smtplib.SMTPConnectError:
             self._error_msg = "%s: %s" % (self.ERR_CONNECTION, self.smtp)
             return False
         try:
             server.sendmail(self.from_, self.smtp_to(), message)
-        except SMTPRecipientsRefused:            
+        except smtplib.SMTPRecipientsRefused:            
             self._error_msg = "%s: %s" % (self.ERR_RECIPIENT, self.smtp_to())
             success = False
-        except SMTPSenderRefused:
+        except smtplib.SMTPSenderRefused:
             self._error_msg = "%s: %s" % (self.ERR_SENDER, self.from_)
             success = False
-        except SMTPHeloError:            
+        except smtplib.SMTPHeloError:            
             self._error_msg = self.ERR_HELO
             success = False
-        except SMTPDataError:
+        except smtplib.SMTPDataError:
             self._error_msg = self.ERR_DATA
             success = False
-        except SMTPServerDisconnected:
+        except smtplib.SMTPServerDisconnected:
             self._error_msg = self.ERR_DISCONNECTED
             success = False
         try:
