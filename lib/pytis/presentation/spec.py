@@ -1290,7 +1290,7 @@ class Editable(object):
     ONCE = 'ONCE'
     """The field is only editable when a new record is being created."""
     NEVER = 'NEVER'
-    """The field is never ediatble."""
+    """The field is never editable."""
 
     
 class SelectionType(object):
