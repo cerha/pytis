@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1027,6 +1027,7 @@ class DateTime(Type):
     def is_utc(self):
         return self._utc
 
+    @classmethod
     def now(class_, **kwargs):
         """Vra» instanci 'Value' tohoto typu odpovídající aktuálnímu okam¾iku.
 
@@ -1037,7 +1038,12 @@ class DateTime(Type):
         """
         type = class_(**kwargs)
         return Value(type, DT.now())
-    now = classmethod(now)
+
+    @staticmethod
+    def current_gmtime():
+        """Return current GM time suitable for use as this class value.
+        """
+        return DT.now().gmtime()
 
 
 class Date(DateTime):
