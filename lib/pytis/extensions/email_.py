@@ -149,7 +149,7 @@ class SimpleEmail(object):
         self.reset_error_msg()
         try:
             server = smtplib.SMTP(self.smtp)
-        except smtplib.SMTPConnectError:
+        except:
             self._error_msg = "%s: %s" % (self.ERR_CONNECTION, self.smtp)
             return False
         try:
