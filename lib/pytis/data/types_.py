@@ -39,6 +39,7 @@ instancemi samostatné tøídy 'Value'.
 
 import math
 import re
+import string
 from cStringIO import StringIO
 import thread
 
@@ -741,7 +742,7 @@ class Password(String):
     VM_INVALID_MD5 = 'VM_INVALID_MD5'
     _VM_INVALID_MD5_MSG = _("Invalid MD5 hash")
     
-    def __init__(self, md5=False, verify=True, **kwargs):
+    def __init__(self, md5=False, verify=True, strength=None, **kwargs):
         """Initialize the instance.
         
         Arguments:
@@ -756,6 +757,13 @@ class Password(String):
           verify -- boolean flag indicating, that user input should be verified by the user
             interface by presenting two controls for entering the password.  Both inputs must match
             to pass validation.
+
+          strength -- specification of password strength checking.  If 'None',
+            no special checks are performed.  If 'True', default checking
+            implemented in the '_check_strength' method is performed.  If
+            anything else, it must be a function of a single argument, the
+            password string, that returns either 'None' when the password is
+            strong enough or an error message if the password is weak.
              
         Other arguments are passed to the parent constructor.
 
@@ -765,10 +773,24 @@ class Password(String):
         assert isinstance(verify, bool)
         self._md5 = md5
         self._verify = verify
+        if strength is True:
+            self._strength = self._check_strength
+        else:
+            self._strength = strength
 
     def verify(self):
         """Return true if verification of user input is required."""
         return self._verify
+
+    def _check_strength(self, string_):
+        letters = non_letters = False
+        for char in string_:
+            if char in string.ascii_letters:
+                letters = True
+            else:
+                non_letters = True
+        if not letters or not non_letters:
+            return _("Please use mix of letters and non-letters in your password")
         
     def _validate(self, string, verify=None, **kwargs):
         if verify is not None:
@@ -776,6 +798,10 @@ class Password(String):
                 return None, self._validation_error(self.VM_PASSWORD)
             if string != verify:
                 return None, self._validation_error(self.VM_PASSWORD_VERIFY)
+        if self._strength is not None:
+            error = self._strength(string)
+            if error is not None:
+                raise ValidationError(error)
         return super(Password, self)._validate(string, **kwargs)
 
     def validate(self, object, verify=None, **kwargs):

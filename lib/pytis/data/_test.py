@@ -226,6 +226,20 @@ class Password(_TypeCheck):
         self._test_validity(t2, None, None)
         self._test_validity(t2, '', None, kwargs={'verify': ''})
         self._test_validity(t2, 'x', 'x', kwargs={'verify': 'x'})
+        t5 = pytis.data.Password(strength=None)
+        self._test_validity(t5, 'x', 'x')
+        t6 = pytis.data.Password(strength=True)
+        self._test_validity(t6, 'x', None)
+        self._test_validity(t6, 'abcABC', None)
+        self._test_validity(t6, '123456', None)
+        self._test_validity(t6, 'abc123', 'abc123')
+        self._test_validity(t6, 'abc abc', 'abc abc')
+        def strength(password):
+            if password and password[0] != 'X':
+                return "Not an eXtreme password!"
+        t7 = pytis.data.Password(strength=strength)
+        self._test_validity(t7, 'abc', None)
+        self._test_validity(t7, 'Xabc', 'Xabc')
         
 tests.add(Password)
 
