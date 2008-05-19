@@ -1,5 +1,10 @@
 2008-05-19  Milan Zamazal  <pdm@brailcom.org>
 
+	* pytis/data/_test.py (Password.test_validation): Fix one of the
+	older tests.
+
+2008-05-19  Milan Zamazal  <pdm@brailcom.org>
+	
 	* pytis/data/types_.py (Password): New parameter `strength'.
 
 2008-05-16  Milan Zamazal  <pdm@brailcom.org>
