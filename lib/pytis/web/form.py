@@ -470,10 +470,10 @@ class BrowseForm(LayoutForm):
         self._columns = columns or view.columns()
         uri_provider = kwargs.pop('uri_provider')
         if uri_provider:
-            def browse_form_uri_provider(row, cid=None, **kwargs):
-                if cid == self._columns[0]:
+            def browse_form_uri_provider(row, cid=None, type=UriType.LINK):
+                if cid == self._columns[0] and type==UriType.LINK:
                     cid = None
-                return uri_provider(row, cid, **kwargs)
+                return uri_provider(row, cid, type=type)
             kwargs['uri_provider'] = browse_form_uri_provider
         super(BrowseForm, self).__init__(view, row, **kwargs)
         self._condition = condition

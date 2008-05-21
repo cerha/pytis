@@ -1,3 +1,8 @@
+2008-05-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py
+	(BrowseForm.__init__.browse_form_uri_provider): Image URI handling fixed.
+
 2008-05-19  Milan Zamazal  <pdm@brailcom.org>
 
 	* pytis/data/_test.py (Password.test_validation): Fix one of the
