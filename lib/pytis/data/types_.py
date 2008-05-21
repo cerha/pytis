@@ -1715,8 +1715,8 @@ class DataEnumerator(Enumerator):
         
         Arguments:
         
-         value -- internal (Python) value of the enumerator's 'value_column'.  The row
-           corresponding to this value will be returned.
+          value -- internal (Python) value of the enumerator's 'value_column'.  The row
+            corresponding to this value is returned.
           transaction -- transaction for data operations.
           condition -- runtime filter condition for enumerator validation.
   
