@@ -1,3 +1,15 @@
+2008-05-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/util/configuration.py
+	(Configuration._Option_user_config_file.default): Don't set if the
+	file actually doesn't exist.
+	(Configuration._read_configuration): Read `user_config_file' even
+	if `config_file' is not defined.  Don't suppress errors when
+	reading `user_config_file'.
+	(Configuration.__getattr__): Check `config_file' and
+	`user_config_file' independently.
+	(Configuration.__setattr__): Allow dynamic setting of `user_config_file'.
+
 2008-05-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py

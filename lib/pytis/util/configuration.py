@@ -373,7 +373,11 @@ class Configuration(object):
             config_file = self._configuration.config_file
             if config_file:
                 dir, file = os.path.split(config_file)
-                result = os.path.join(dir, '_'+file)
+                user_config_file = os.path.join(dir, '_'+file)
+                if os.path.exists(user_config_file):
+                    result = user_config_file
+                else:
+                    result = None
             else:
                 result = None 
             return result
@@ -823,28 +827,21 @@ class Configuration(object):
 
     def _read_configuration(self):
         conffile = self._config_file
-        if conffile is None:
-            return
-        self.__dict__['_config_mtime'] = \
-          self._read_configuration_file(conffile)
+        if conffile is not None:
+            self.__dict__['_config_mtime'] = self._read_configuration_file(conffile)
         uconffile = self._user_config_file
-        if uconffile is None:
-            return
-        self.__dict__['_user_config_mtime'] = \
-          self._read_configuration_file(uconffile, force=False)
+        if uconffile is not None:
+            self.__dict__['_user_config_mtime'] = self._read_configuration_file(uconffile)
 
-    def _read_configuration_file(self, filename, force=True):
+    def _read_configuration_file(self, filename=True):
         try:
             filetime = os.stat(filename)[stat.ST_MTIME]
         except:
-            if force:
-                raise Exception(_("Unable to stat configuration file"), filename)
-            else:
-                return 2**30
+            raise Exception(_("Unable to stat configuration file:"), filename)
         try:
             f = open(filename)
         except:
-            raise Exception(_("Unable to open configuration file"), filename)
+            raise Exception(_("Unable to open configuration file:"), filename)
         try:
             confmodule = imp.load_module('_config', f, filename, ('.py', 'r', imp.PY_SOURCE))
         finally:
@@ -866,20 +863,19 @@ class Configuration(object):
         raised if no such option exists.
 
         """
-        if __debug__ and self._config_file and \
-               name not in ('config_file', 'user_config_file'):
+        if __debug__ and name not in ('config_file', 'user_config_file'):
             now = time.time()
-            if now > self._config_mtime or \
-                   self._user_config_file and now > self._user_config_mtime:
+            reread = False
+            if self._config_file and now > self._config_mtime:
                 t = os.stat(self._config_file)[stat.ST_MTIME]
-                try:
-                    ut = os.stat(self._user_config_file)[stat.ST_MTIME]
-                except:
-                    ut = 0
-                if t > self._config_mtime \
-                       or self._user_config_file \
-                       and ut > self._user_config_mtime:
-                    self._read_configuration()
+                if t > self._config_mtime:
+                    reread = True
+            if not reread and self._user_config_file and now > self._user_config_mtime:
+                ut = os.stat(self._user_config_file)[stat.ST_MTIME]
+                if ut > self._user_config_mtime:
+                    reread = True
+            if reread:
+                self._read_configuration()
         try:
             return self._options[name].value()
         except KeyError:
@@ -892,6 +888,9 @@ class Configuration(object):
         raised if no such option exists.
         
         """
+        if name == 'user_config_file':
+            self.__dict__['_user_config_file'] = value
+            self.__dict__['_user_config_mtime'] = 0
         if self.__dict__['_options'].has_key(name):
             self.__dict__['_options'][name].set_value(value)
         elif hasattr(self, name):
