@@ -1,3 +1,8 @@
+2008-05-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* pytis/presentation/field.py
+	(PresentedRow.original_presented_row): New method.
+
 2008-05-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/util/configuration.py

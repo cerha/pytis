@@ -2,7 +2,7 @@
 
 # Prezentace dat v políèkách.
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -495,6 +495,18 @@ class PresentedRow(object):
             return None
         else:
             return self._original_row
+
+    def original_presented_row(self):
+        """Return 'PresentedRow' instance containing the original row values.
+
+        The original values are values set in row initialization or after the
+        last call to 'set_row()' with 'reset' se to true.
+        
+        """
+        original_row = self.original_row()
+        original_record = copy.copy(self)
+        original_record.set_row(original_row)
+        return original_record
 
     def changed(self):
         """Return true if the *data* row has been changed.
