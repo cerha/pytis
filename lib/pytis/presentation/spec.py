@@ -1738,15 +1738,15 @@ class FieldSpec(object):
             the underlying data object by default, but this may be overriden by the 'dbcolumn'
             argument.
           
-          label -- user visible field label as a plain or unicode string.  This argument (unlike
+          label -- user visible field label as a string or unicode.  This argument (unlike
             the remaining arguments) may also be passed as positional.
 
-          inherit -- may be used to iherit from other field specification.  If a 'FieldSpec'
+          inherit -- may be used to inherit from other field specification.  If a 'FieldSpec'
             instance is passed in this argument, all constructor arguments not overriden in the
-            current constructor call will be inheritred from that instance.
+            current constructor call will be inherited from that instance.
           
           column_label -- optional field label in the column view.  The column label is the same as
-            'label' by default, but may be overriden by passing a plain or unicode string value.
+            'label' by default, but may be overriden by passing a string or unicode value.
             
           descr -- brief field description in the extent of approx. one sentence, suitable for
             example for tooltip text.
@@ -1754,7 +1754,7 @@ class FieldSpec(object):
           virtual -- boolean flag indicating that the field is not bound to the underlying data
             object.  The value of a virtual field will most often be computed on the fly by a
             'Computer'.  See the argument 'computer' for more information.  Since the data type of
-            a virtual field can not be obtained form the data object, the hardcoded default type of
+            a virtual field cannot be obtained from the data object, the hardcoded default type of
             virtual fields is 'pytis.data.String'.  Use the 'type' argument to override it.
 
           dbcolumn -- name of the related column in the underlying data object.  The name is the
@@ -1768,18 +1768,18 @@ class FieldSpec(object):
             
           width -- field width in characters (integer).  Default width is determined automatically
             if not specified here.  Certain types of input fields may interpret the value
-            differently (eg. as a number of columns) when number of characters doesn't make sense.
+            differently (e.g. as a number of columns) when number of characters doesn't make sense.
             
           height -- field height in characters (integer).  Certain types of input fields may
-            interpret the value differently (eg. as a number of rows) when number of characters
+            interpret the value differently (e.g. as a number of rows) when number of characters
             doesn't make sense.
           
           column_width -- table column width in characters (integer).  If not defined, defaults to
             'width'.
 
-          disable_column -- If true, it will not be possible to display the field as a table
-            column.  The field will not appear in the selection of columns to display and presence
-            of such field in default columns ('ViewSpec' argument 'columns') will be announced as
+          disable_column -- If true, it is not possible to display the field as a table
+            column.  The field does not appear in the selection of columns to display and presence
+            of such field in default columns ('ViewSpec' argument 'columns') is announced as
             an error.
 
           fixed -- passing True value will disable automatic scaling of column width when the table
@@ -1813,7 +1813,7 @@ class FieldSpec(object):
             when the default value is needed and its returned value will be used.  In any case, the
             default value must be compatible with the internal Python representation for the data
             type of the field.  If not defined, the default value is determined by the data type
-            (usually None).
+            (usually 'None').
             
           computer -- a 'Computer' instance for computing the field value based on the values of
             other fields of the same record.  See below for more details about computed fields.
@@ -1822,12 +1822,12 @@ class FieldSpec(object):
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
             
-          codebook -- name of the specification which acts as a codebook for this field.  If None,
-            the field may still have an 'enumerator' on tha data level, but the user interface will
-            not be able to determine which specification it is, so displaying the codebook in a
-            separate form will not be possible.  If 'codebook' is defined, the default value of
+          codebook -- name of the specification which acts as a codebook for this field.  If 'None',
+            the field may still have an 'enumerator' on tha data level, but the user interface is
+            not able to determine which specification it is, so displaying the codebook in a
+            separate form is not possible.  If 'codebook' is defined, the default value of
             'selection_type' is 'SelectionType.CODEBOOK'.  Also the default 'enumerator' for the
-            field's data type will be automatically set to a 'DataEnumerator' bound to given
+            field's data type is automatically set to a 'DataEnumerator' bound to given
             specification.
 
           display -- overrides this option for particular field.  If not defined, the value
@@ -1843,18 +1843,18 @@ class FieldSpec(object):
             information.
 
           allow_codebook_insert -- true value enables a button for codebook new record insertion.
-            This button will be displayed next to the codebook field.
+            This button is displayed next to the codebook field.
             
           codebook_insert_spec -- Název specifikace, která má být pou¾ita pro
             vkládání nových záznamù (viz 'allow_codebook_insert').  Pokud je
-            None, bude pou¾ita hodnota 'codebook', nebo její výchozí hodnota.
+            'None', bude pou¾ita hodnota 'codebook', nebo její výchozí hodnota.
             Relevantní jen pro èíselníková políèka, kde 'allow_codebook_insert'
             je pravdivé.
             
           runtime_filter -- provider of enumeration runtime filter as a 'Computer' instance.  The
             computer function receives a 'PresentedRow' instance and generates a filter condition
             based on the current row data and returns it as a 'pytis.data.Operator' instance.  This
-            condition is the used to filter out enumerator data for codebook fields as well as
+            condition is used to filter out enumerator data for codebook fields as well as
             available completions when autocompletion is enabled.  This is mostly useful for
             modification of available codebook values based on the current values of other fields
             within the form.
@@ -1900,7 +1900,7 @@ class FieldSpec(object):
             nebo funkce dvou argumentù vracející instanci tøídy 'Style'.
             Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
             a aktuální datový øádek jako instance 'PresentedRow'.  Pokud je
-            None, bude pou¾it výchozí styl øádku (viz. argument 'row_style'
+            'None', bude pou¾it výchozí styl øádku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
 
           link -- specifikace odkazu/odkazù do jiného náhledu souvisejícího s
@@ -1912,8 +1912,7 @@ class FieldSpec(object):
           filename -- identifier of the field, which provides the filename for downloading/saving
             the value of this field into a file.  If not None, the user interface should offer
             downloading/saving the content of the field into a file.  This may be relevant for
-            binary fields, as well as for ordinary string data.
-            
+            binary fields, as well as for ordinary string data.            
 
         V¹echny dal¹í argumenty, které budou konstruktoru pøedány jsou
         pova¾ovány za argumenty konstruktoru datového typu.  Pøedání argumentù
