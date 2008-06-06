@@ -49,9 +49,7 @@ class Form(lcg.Content):
     _CSS_CLS = None
     def __init__(self, view, row, handler='#', prefill=None, hidden=(), name=None,
                  uri_provider=None, **kwargs):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           view -- presentation specification as a 'pytis.presentation.ViewSpec' instance.
           
@@ -252,9 +250,7 @@ class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
 
     def __init__(self, view, row, submit=_("Submit"), reset=_("Undo all changes"), **kwargs):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           submit -- custom submit buttons as a sequence of (label, name) pairs.  A single unnamed
             button can be passed as just the label string.  Default is one button labeled `Submit'.
@@ -294,9 +290,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     
     def __init__(self, view, row, errors=(), **kwargs):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           errors -- a sequence of error messages to display within the form (results of previous
             attempt to commit the form).  The sequence consists of pairs (ID, MESSAGE), where ID is
@@ -418,9 +412,7 @@ class BrowseForm(LayoutForm):
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, req=None,
                  **kwargs):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
             defined by specification
@@ -747,6 +739,15 @@ class BrowseForm(LayoutForm):
 
 
 class ListView(BrowseForm):
+    """Listing with a customizable layout for each record.
+
+    This form behaves similarly to a regular 'BrowseForm', but the records are not represented as
+    table rows but as individual (sub)sections of a document.  Field values can be displayed within
+    each section and their layout can be customized through the 'list_view' argument within
+    specification (see 'ViewSpec').  If 'list_view' is not defined, the form will use the standard
+    table presentation like 'BrowseForm'.
+    
+    """
     _CSS_CLS = 'list-view'
     
     def __init__(self, view, row, **kwargs):
@@ -815,6 +816,41 @@ class ListView(BrowseForm):
         return g.div(rows, cls="body") +"\n"+ g.div(summary, cls="summary")
 
 
+class ItemizedView(BrowseForm):
+    """Simplified listing of records in a form of itemized list.
+
+    This form behaves similarly to a regular 'BrowseForm', but the records are presented as items
+    in an unordered bullet list rather than as table rows.
+
+    """
+    
+    _CSS_CLS = 'itemized-view'
+    
+    def __init__(self, view, row, columns=None, separator=', ', **kwargs):
+        """Arguments:
+
+          columns -- an explicit list of fields shown for each record.  Only the first column of
+            the underlying view is shown by default, but if a sequence of column identifierrs is
+            passed, multiple values will be shown (separated by the 'separator').
+          separator -- string used to separate individual values when multiple 'columns' are shown.
+
+          See the parent classes for definition of the remaining arguments.
+          
+        """
+        if not columns:
+            columns = (view.columns()[0],) # Include just the first column by default.
+        super(ItemizedView, self).__init__(view, row, columns=columns, **kwargs)
+        self._separator = separator
+        
+    def _export_row(self, exporter, row, n):
+        fields = [self._format_field(exporter, field) for field in self._fields]
+        return concat(fields, separator=self._separator)
+
+    def _wrap_exported_rows(self, exporter, rows, summary):
+        g = exporter.generator()
+        return g.list(rows)
+
+
 class CheckRowsForm(BrowseForm, _SubmittableForm):
     """Web form with checkable boolean columns in each row.
 
@@ -829,9 +865,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     
     """
     def __init__(self, view, row, check_columns=None, limits=(), limit=None, **kwargs):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           check_columns -- a sequence of column identifiers for which the checkboxes will be
             created.  If the argument is omitted, checkboxes will automatically appear for all
