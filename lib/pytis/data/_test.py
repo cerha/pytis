@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1901,12 +1901,13 @@ class TutorialTest(_DBBaseTest):
         cis_columns = (cis_key,
                        C('popis', 'cis', 'y'))
         cis_data_spec = pytis.data.DataFactory(D, cis_columns, cis_key)
+        cis_enumerator = pytis.data.DataEnumerator(cis_data_spec, value_column='popis')
         cis_data = cis_data_spec.create(connection_data=connection)
         tab_key = C('klic', 'tab', 'a')
         tab_columns = (tab_key,
                        C('popis', 'tab', 'b'),
                        C('id', 'tab', 'c',
-                         enumerator=cis_data_spec, value_column='popis'))
+                         enumerator=cis_enumerator))
         tab_data = D(tab_columns, tab_key, get_connection)
         try:
             # go
