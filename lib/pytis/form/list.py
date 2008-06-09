@@ -2413,7 +2413,7 @@ class SideBrowseForm(BrowseForm):
 
         """
         assert isinstance(main_form, Form), main_form
-        assert isinstance(binding, BindingSpec), main_form
+        assert isinstance(binding, BindingSpec), binding
         bcol, sbcol = binding.binding_column(), binding.side_binding_column()
         condition = binding.condition()
         if bcol:
