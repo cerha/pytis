@@ -629,6 +629,10 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _initial_orientation(self):
         return Orientation.HORIZONTAL
         
+    def _initial_sash_position(self, mode, size):
+        return size.height / 2 
+
+        
     def _create_main_form(self, parent, **kwargs):
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
     
