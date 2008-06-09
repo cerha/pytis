@@ -906,14 +906,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         jeho aktivní podformuláø, právì pokud je argument 'inner' pravdivý.
         
         """
-        top = self.top_window()
-        if isinstance(top, Form):
-            if inner and isinstance(top, DualForm):
-                return top.active_form()
-            else:
-                return top
-        else:
+        form = self.top_window()
+        if not isinstance(form, Form):
             return None
+        if inner:
+            while isinstance(form, (DualForm, MultiForm)):
+                form = form.active_form()
+        return form
         
     def set_status(self, id, message, timeout=None, root=False, log_=True):
         """Nastav v poli stavové øádky daného 'id' zprávu 'message'.

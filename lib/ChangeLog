@@ -1,3 +1,13 @@
+2008-06-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (current_form): Handle also multi
+	forms.
+
+	* pytis/form/dualform.py: Added experimental support for
+	multi side forms.
+
+	* pytis/presentation/spec.py (Binding): New class (experimental).
+
 2008-06-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/data/_test.py (TutorialTest.test_it): Test updated.

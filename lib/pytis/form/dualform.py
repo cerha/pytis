@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -477,3 +477,165 @@ class DescriptiveDualForm(BrowseShowDualForm):
         return self._main_form.title()
 
             
+class MultiForm(Form, Refreshable):
+    """Form container showing multiple inner forms in separate notebook tabs.
+
+    The form has no data itself -- it just acts as a proxy to the currently visible inner form.
+
+    """
+    def __init__(self, *args, **kwargs):
+        super(MultiForm, self).__init__(*args, **kwargs)
+        wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
+        wx_callback(wx.EVT_SIZE, self, self._on_size)
+
+    def _create_view_spec(self):
+        return None
+    
+    def _create_data_object(self):
+        return None
+    
+    def _create_forms(self, parent):
+        pass
+        
+    def _create_form(self):
+        self._notebook = nb = wx.Notebook(self)
+        self._forms = forms = self._create_forms(nb)
+        for form in forms:
+            nb.AddPage(form, form.title())
+        self._last_selection = None
+        wx_callback(wx.EVT_NOTEBOOK_PAGE_CHANGED, nb, nb.GetId(), self._on_page_changed)
+    
+    def _on_page_changed(self, event):
+        selected_form_index = event.GetSelection()
+        if selected_form_index != -1:
+            form = self._forms[selected_form_index]
+            row = self._last_selection
+            if row is not None:
+                form.on_selection(row)
+
+    #def _cmd_change_form(self, forward=True):
+    #    self._notebook.AdvanceSelection(forward=forward)
+
+    def _exit_check(self):
+        for form in self._forms:
+            if not form._exit_check():
+                return False
+        return True
+            
+    def _cleanup(self):
+        nb = self._notebook
+        nb.Show(False)
+        for form in self._forms:
+            form.Reparent(self)
+            nb.RemovePage(0)
+            form.close(force=True)
+        self._forms = None
+        nb.Close()
+        nb.Destroy()
+        
+    def _on_size(self, event):
+        size = event.GetSize()
+        self._notebook.SetSize(size)
+        
+    def show(self):
+        # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
+        for form in self._forms:
+            form.show()
+        self._notebook.Enable(True)
+        self._notebook.Show(True)
+
+    def hide(self):
+        for form in self._forms:
+            form.hide()
+        self._notebook.Show(False)
+        self._notebook.Enable(False)
+
+    def set_callback(self, kind, function):
+        for form in self._forms:
+            form.set_callback(kind, function)
+
+    def active_form(self):
+        """Return the currently active form of this form group."""
+        selection = self._notebook.GetSelection()
+        if selection != -1:
+            form = self._forms[selection]
+        else:
+            form = None
+        return form
+
+    def on_selection(self, row):
+        self._last_selection = row
+        active = self.active_form()
+        if active:
+            active.on_selection(row)
+
+    def save(self):
+        active = self.active_form()
+        if active:
+            active.save()
+
+    def restore(self):        
+        active = self.active_form()
+        if active:
+            active.restore()
+
+    def focus(self):
+        active = self.active_form()
+        if active:
+            active.focus()
+
+    def _refresh(self, when=None):
+        active = self.active_form()
+        if active and isinstance(active, Refreshable):
+            active.refresh()
+            
+
+class MultiSideBrowseForm(MultiForm):
+        
+    class SubForm(SideBrowseForm):
+        def _init_attributes(self, binding, **kwargs):
+            # Hack: Transform 'Binding' to 'BindingSpec'.
+            sbcol = binding.colname()
+            bcol = self._data.find_column(sbcol).type().enumerator().value_column()
+            bs = BindingSpec(binding_column=bcol, side_binding_column=sbcol,
+                             condition=binding.condition())
+            self._title = binding.title()
+            super(MultiSideBrowseForm.SubForm, self)._init_attributes(binding=bs, **kwargs)
+        def title(self):
+            return self._title
+            
+    def _init_attributes(self, main_form, **kwargs):
+        assert isinstance(main_form, Form), main_form
+        self._main_form = main_form
+        super(MultiSideBrowseForm, self)._init_attributes(**kwargs)
+        
+    def _create_forms(self, parent):
+        bindings = self._resolver.get(self._main_form.name(), 'binding_spec')
+        return [self.SubForm(parent, self._resolver, binding.name(), guardian=self,
+                             main_form=self._main_form, binding=binding)
+                for binding in bindings]
+    
+            
+class MultiBrowseDualForm(BrowseDualForm):
+    """Dual form with a 'BrowseForm' up and multiple side browse forms."""
+    DESCR = _("vícenásobný duální formulář")
+    
+    def _create_view_spec(self):
+        return None
+
+    def _create_data_object(self):
+        return None
+    
+    def _initial_orientation(self):
+        return Orientation.HORIZONTAL
+        
+    def _create_main_form(self, parent, **kwargs):
+        return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
+    
+    def _create_side_form(self, parent, **kwargs):
+        return MultiSideBrowseForm(parent, self._resolver, self._name, guardian=self,
+                                   main_form=self._main_form, **kwargs)
+
+    def title(self):
+        return self._main_form.title()
+    
