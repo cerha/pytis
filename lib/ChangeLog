@@ -1,5 +1,8 @@
 2008-06-11  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py (EditForm._export_field): Escape enumeration
+	display values.
+
 	* pytis/presentation/field.py (PresentedRow.enumerate): Sort the
 	items according to codebook's cb_spec or view_spec sorting.
 
