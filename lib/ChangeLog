@@ -1,3 +1,11 @@
+2008-06-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/field.py (PresentedRow.enumerate): Sort the
+	items according to codebook's cb_spec or view_spec sorting.
+
+	* pytis/data/types_.py (DataEnumerator.values): New argument
+	`sort'.
+
 2008-06-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (current_form): Handle also multi

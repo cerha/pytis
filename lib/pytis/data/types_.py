@@ -1668,11 +1668,11 @@ class DataEnumerator(Enumerator):
             result = True
         return result
 
-    def values(self, condition=None, transaction=None, max=None):
+    def values(self, condition=None, transaction=None, sort=(), max=None):
         the_condition = self._condition(condition=condition)
         def lfunction():
             result = []
-            count = self._data.select(condition=the_condition, transaction=transaction)
+            count = self._data.select(condition=the_condition, transaction=transaction, sort=sort)
             if max is not None and count > max:
                 self._data.close()
                 return None
