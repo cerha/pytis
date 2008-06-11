@@ -739,6 +739,13 @@ class PresentedRow(object):
         enumerator = column.type.enumerator()
         if isinstance(enumerator, pytis.data.DataEnumerator):
             kwargs = dict(condition=self.runtime_filter(column))
+            cb_spec = self._cb_spec(column)
+            if cb_spec and cb_spec.sorting() is not None:
+                kwargs['sort'] = cb_spec.sorting()
+            elif column.codebook:
+                view_spec = self._resolver.get(column.codebook, 'view_spec')
+                kwargs['sort'] = view_spec.sorting()
+            lcg.log("***", kwargs)
         else:
             kwargs = {}
         return [(v, display(v)) for v in enumerator.values(**kwargs)]
