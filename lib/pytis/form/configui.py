@@ -180,7 +180,7 @@ class ConfigForm(PopupEditForm):
                    for option in self._layout().order()]
         return pytis.data.DataFactory(_ConfigData, columns).create()
     
-    def _create_print_menu(self):
+    def _print_menu(self):
         return None
     
     def _buttons(self):

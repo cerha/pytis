@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -155,8 +155,8 @@ class Command(object):
             identifikáítor, mezi názvy pøíkazù unikátní.  Název je pou¾it pro
             vytvoøení konstanty (viz. ní¾e), tak¾e dal¹ím po¾adavkem je, aby
             ve¹kerá písmena byla velká.
-          doc -- dokumentaèní øetìzec pøíkazu.  Struèný popis, který mù¾e být
-            napø. zobrazen v u¾ivatelském rozhraní.
+          doc -- dokumentaèní øetìzec pøíkazu.  Struèný popis z pohledu vývojáøe
+            (ne pro zobrazení v u¾ivatelském rozhraní).
           log_ -- právì kdy¾ je pravdivé, je vyvolání pøíkazu logováno jako
             EVENT, jinak je logováno pouze jako DEBUG
 
@@ -250,6 +250,63 @@ class Command(object):
         
     def __str__(self):
         return '<Command: %s>' % self._id
+
+
+class UICommand(object):
+    """User interface command specification.
+
+    This class defines concrete command variants available within the user interface (as menu
+    items, toolbar buttons).  Technically, 'Command' instances can be invoked with arguments, but
+    'UICommand' instance is a definition of a command and its arguments.  Each combination of a
+    command and its arguments is accompanied by the corresponding title and description which can
+    be displayed in the user interface (as a button tooltip, menu item title, etc).
+
+    """
+    def __init__(self, cmd, title, descr, icon=None, hotkey=None):
+        """Arguments:
+
+          cmd -- The (command, args) pair as produced by calling a command instance.
+          title -- user interface title shown as menu item title, toolbar button tooltip, etc.
+          descr -- brief description (longer than title) used in status-bar help or so.
+          
+          icon, hotkey -- currently unused, but planned to replace the 'DEFAULT_KEYMAP' and
+            'COMMAND_ICONS' specifications.
+
+        """
+        command, args = cmd
+        assert isinstance(command, Command), command
+        assert isinstance(args, dict), args
+        assert isinstance(title, (str, unicode)), title
+        assert isinstance(descr, (str, unicode)), descr
+        assert icon is None or isinstance(icon, (int, str)), icon
+        assert hotkey is None or isinstance(hotkey, str), hotkey
+        self._command = command
+        self._args = args
+        self._title = title
+        self._descr = descr
+        self._icon = icon
+        self._hotkey = hotkey
+
+    def command(self):
+        return self._command
+
+    def args(self):
+        return self._args
+
+    def title(self):
+        return self._title
+
+    def descr(self):
+        return self._descr
+
+    def icon(self):
+        return self._icon
+
+    def hotkey(self):
+        return self._hotkey
+
+    def mitem(self):
+        return MItem(self._title, command=self._command, args=self._args, help=self._descr)
 
 
 _command_icons = None

@@ -355,7 +355,64 @@ class InnerForm(Form):
         return current_form()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
+    def _init_attributes(self, **kwargs):
+        super(InnerForm, self)._init_attributes(**kwargs)
+        # Filter and aggregation menus must be created dynamically, but we cen find out just once,
+        # whether the menu exists for given form.
+        self._has_filter_menu = self._aggregation_menu() is not None
+        self._has_aggregation_menu = self._aggregation_menu() is not None
+        # Print menu is static for given form instance, so we create it just once.
+        self._print_menu_ = self._print_menu()
+        
+    def _on_menu_button(self, items):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        popup_menu(wx_focused_window(), items, self._get_keymap())
 
+    def _print_menu(self):
+        # Vra» seznam polo¾ek tiskového menu.
+        name = self._name
+        try:
+            print_spec = self._resolver.get(name, 'print_spec')
+        except ResolverSpecError:
+            print_spec = None
+        if not print_spec:
+            print_spec = ((_("Výchozí"), os.path.join('output', name)),)
+        return [MItem(title,
+                      command=InnerForm.COMMAND_PRINT(print_spec_path=path))
+                for title, path in print_spec]
+
+    def _filter_menu(self):
+        return None
+
+    def _aggregation_menu(self):
+        return None
+    
+    def _cmd_describe(self):
+        title = self._view.title()
+        description = self._view.help() or self._view.description()
+        text = "= "+ title +" =\n\n" + description
+        InfoWindow(_("Popis náhledu %s") % title, text=text, format=TextFormat.WIKI)
+        
+    def _can_describe(self):
+        description = self._view.help() or self._view.description()
+        return description is not None
+        
+    def _cmd_filter_menu(self):
+        self._on_menu_button(self._filter_menu())
+
+    def _can_filter_menu(self):
+        return self._has_filter_menu
+    
+    def _cmd_aggregation_menu(self):
+        self._on_menu_button(self._aggregation_menu())
+        
+    def _can_aggregation_menu(self):
+        return self._has_aggregation_menu
+        
+    def _cmd_print_menu(self):
+        self._on_menu_button(self._print_menu_)
+
+    
 class Refreshable:
     """Tøída zaji¹»ující existenci metody 'refresh()' s daným významem.
 
@@ -516,7 +573,7 @@ class TitledForm:
     text titulku, nebo metodu '_create_title_bar()', která pøidává 3d panel.
 
     """    
-    _TITLE_BORDER_WIDTH = 3
+    _TITLE_BORDER_WIDTH = 2
     
     def _create_caption(self, parent=None, size=None):
         # Create the title text as 'wxStaticText' instance.
@@ -533,62 +590,13 @@ class TitledForm:
         caption.SetSize(wx.Size(width, height))
         return caption
 
-    def _on_show_description(self, event):
-        title = _("Popis náhledu %s") % self._view.title()
-        text = "= "+ self._view.title() +" =\n\n" + (self._view.help() or self._view.description())
-        InfoWindow(title, text=text, format=TextFormat.WIKI)
-
-    def _print_menu(self):
-        # Vra» seznam polo¾ek tiskového menu.
-        name = self._name
-        try:
-            print_spec = self._resolver.get(name, 'print_spec')
-        except ResolverSpecError:
-            print_spec = None
-        if not print_spec:
-            print_spec = ((_("Výchozí"), os.path.join('output', name)),)
-        return [MItem(title,
-                      command=InnerForm.COMMAND_PRINT(print_spec_path=path))
-                for title, path in print_spec]
-
-    def _filter_menu(self):
-        return None
-
-    def _aggregation_menu(self):
-        return None
-    
-    def _on_menu_button(self, event, items):
-        self._run_callback(self.CALL_USER_INTERACTION)
-        popup_menu(event.GetEventObject(), items, self._get_keymap())
-
     def _create_title_bar(self):
         """Vytvoø 3d panel s nadpisem formuláøe."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel)
-        print_menu = self._print_menu()
-        description = self._view.help() or self._view.description()
-        buttons = (
-            wx_button(panel, icon='filter', label=_("Filtr"),
-                      tooltip=_("Zobrazit menu filtrace"), noborder=True,
-                      callback=lambda e: self._on_menu_button(e, self._filter_menu()),
-                      enabled=self._filter_menu() is not None),
-            wx_button(panel, icon='aggregate', label=_("f(x)"),
-                      tooltip=_("Zobrazit menu agregaèních funkcí"), noborder=True,
-                      callback=lambda e: self._on_menu_button(e, self._aggregation_menu()),
-                      enabled=self._aggregation_menu() is not None),
-            wx_button(panel, icon=wx.ART_PRINT, noborder=True,
-                      tooltip=_("Zobrazit tiskové menu"),
-                      callback=lambda e: self._on_menu_button(e, print_menu)),
-            wx_button(panel, '?', icon='describe', noborder=True,
-                      tooltip=_("Zobrazit popis náhledu"),
-                      callback=self._on_show_description,
-                      enabled=description is not None))
         box = wx.BoxSizer()
         box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
-        for b in buttons:
-            box.Add(b)
         panel.SetSizer(box)
-        panel.SetAutoLayout(True)        
         box.Fit(panel)
         return panel
 

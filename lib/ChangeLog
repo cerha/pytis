@@ -1,3 +1,21 @@
+2008-06-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py: Don't create form toolbar.  Form toolbar
+	actions transformed to commands to allow their invocation from
+	application toolbar. 
+
+	* pytis/form/configui.py (ConfigForm._create_print_menu): Renamed to `_print_menu'.
+
+	* pytis/form/commands_.py: Define UI commands to be used both for
+	toolbar buttons and menu items.
+
+	* pytis/form/command.py (UICommand): New class.
+
+	* pytis/form/application.py: Create a toolbar.
+
+	* pytis/form/event.py (_is_user_event): Exclude
+	`wx.UpdateUIEvent'.
+	
 2008-06-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (EditForm._export_field): Escape enumeration

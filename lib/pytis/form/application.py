@@ -125,9 +125,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame = self._frame = wx.Frame(None, -1, title, pos=(0,0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
-        # Tento panel slou¾í pouze pro odchytávání klávesových událostí,
-        # proto¾e na frame se nedá navìsit EVT_KEY_DOWN.
-        self._panel = wx.Panel(self._frame, -1)
+        # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
+        self._panel = wx.Panel(frame, -1)
         KeyHandler.__init__(self, self._panel)
         wx.ToolTip('').Enable(config.show_tooltips)
         self._logo = None
@@ -135,8 +134,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if logo_file is not None:
             if os.access(logo_file, os.R_OK):
                 logo = wx.Image(logo_file, type=wx.BITMAP_TYPE_BMP)
-                self._logo = wx.StaticBitmap(self._frame, -1,
-                                             logo.ConvertToBitmap())
+                self._logo = wx.StaticBitmap(frame, -1, logo.ConvertToBitmap())
                 self._logo.Show(False)
             else:
                 log(OPERATIONAL, "Unable to read logo:", logo_file)
@@ -150,14 +148,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
-        self._statusbar = StatusBar(self._frame, self._spec('status_fields',()))
+        self._statusbar = StatusBar(frame, self._spec('status_fields',()))
         self._help_controller = None
         self._help_files = self._find_help_files()
         self._login_hook = self._spec('login_hook')
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
-        assert is_sequence(custom_keymap), "Specifikace klávesových zkratek " +\
-               "'keymap' musí vracet sekvenci dvojic (KEY, COMMAND)."
+        assert is_sequence(custom_keymap), "Keyboard shortcuts specification returned by " + \
+               "'keymap' must be a sequence of (KEY, COMMAND) pairs."
         for key, cmd in command.DEFAULT_KEYMAP + custom_keymap:
             if is_sequence(cmd):
                 cmd, args = cmd
@@ -199,7 +197,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._create_command_menu(menus)
         self._create_help_menu(menus)
         # Determining availability of menu items may invoke database operations...
-        success, mb = db_operation(MenuBar, self._frame, menus, self.keymap)
+        success, mb = db_operation(MenuBar, frame, menus, self.keymap)
         if not success:
             return False
         self._menubar = mb
@@ -209,9 +207,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
         default_font_encoding = self._spec('default_font_encoding')
         if default_font_encoding is not None:
             wx.Font.SetDefaultEncoding(default_font_encoding)
-        wx_callback(wx.EVT_SIZE, self._frame, self._on_frame_size)
-        self.SetTopWindow(self._frame)
-        self._frame.Show(True)
+        wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
+        self.SetTopWindow(frame)
+        frame.Show(True)
+        # Initialize the toolbar.
+        self._toolbar = toolbar = frame.CreateToolBar(wx.NO_BORDER|wx.TB_DOCKABLE)
+        for group in TOOLBAR_COMMANDS:
+            if group != TOOLBAR_COMMANDS[0]:
+                toolbar.AddSeparator()
+            for uicmd in group:
+                self._create_toolbar_button(uicmd)
+        toolbar.Realize()                
         # Run application specific initialization.
         self._spec('init')
         if self._windows.empty():
@@ -260,12 +266,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
             # databázi (není vyvolána ¾ádná databázová operace), nemusí být
             # hodnoty správnì.
-            title = self._frame.GetTitle()            
+            title = frame.GetTitle()            
             title += " %s@%s %s" % (conn.user(), conn.database(),
                                     conn.host())
             if conn.port():
                 title += ":%d" % conn.port()
-            self._frame.SetTitle(title)
+            frame.SetTitle(title)
         return True
 
     def _spec(self, name, default=None, **kwargs):
@@ -318,30 +324,36 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _create_command_menu(self, menus):
         items = []
-        for group in FORM_COMMAND_MENU:
+        for group in FORM_MENU_COMMANDS:
             if items:
                 items.append(MSeparator())
-            for cmd, title, help in group:
-                if is_sequence(cmd):
-                    cmd, args = cmd
-                else:
-                    args = {}
-                items.append(MItem(title, command=cmd, args=args, help=help))
+            for uicmd in group:
+                items.append(uicmd.mitem())
         menus.append(Menu(_("Pøíkazy"), items))
 
     def _create_help_menu(self, menus):
         if [m for m in menus if m.title() == _("Nápovìda")]:
             log(OPERATIONAL, "Menu nápovìdy nalezeno - nevytváøím vlastní.")
             return
-        items = [MItem(title, command=Application.COMMAND_HELP(topic=index))
-                 for file, index, title in self._help_files]
-        if items:
-            items.extend((MSeparator(),
-                          MItem(_("Nápovìda k aktuálnímu formuláøi"), 
-                                command=Form.COMMAND_HELP)))
-            menus.append(Menu(_("Nápovìda"), items))
-
-    # Ostatní metody
+        items = [UICommands.PYTIS_HELP.mitem()]
+        items.extend([MItem(title, command=Application.COMMAND_HELP(topic=index))
+                      for file, index, title in self._help_files if index != 'pytis'])
+        items.extend((MSeparator(),
+                      UICommands.HELP.mitem(),
+                      UICommands.DESCRIBE.mitem()))
+        menus.append(Menu(_("Nápovìda"), items))
+            
+    def _create_toolbar_button(self, uicmd):
+        id = wx.NewId()
+        cmd, args = uicmd.command(), uicmd.args()
+        icon = get_icon(command_icon(cmd, args), type=wx.ART_TOOLBAR)
+        self._toolbar.AddTool(id, icon,
+                              shortHelpString=uicmd.title(),
+                              longHelpString=uicmd.descr())
+        wx_callback(wx.EVT_TOOL, self._frame, id, lambda e: cmd.invoke(**args))
+        wx_callback(wx.EVT_UPDATE_UI, self._frame, id, lambda e: e.Enable(cmd.enabled(**args)))
+        
+# Ostatní metody
 
     def _form_menu_item_title(self, form):
         title = form.title()
@@ -584,7 +596,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._windows.remove(form)
         self._update_window_menu()
         self.restore()
-    
+
     def on_key_down(self, event, dont_skip=False):
         # Toto je záchranný odchytávaè.  Vìøte tomu nebo ne, ale pokud tady ta
         # metoda není, wxWindows se pøi více pøíle¾itostech po stisku klávesy
@@ -801,6 +813,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 controller.AddBook(filename)
         self._help_controller.Display((topic or self._help_files[0][1])+'.html')
 
+    def _can_help(self, topic=None):
+        if topic == 'pytis':
+            return 'pytis' in [index for filename, index, title in self._help_files]
+        return True
+        
     def _cmd_custom_debug(self):
         if __debug__:
             config.custom_debug()

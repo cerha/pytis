@@ -4,6 +4,15 @@
 ; vlastnosti (na ka¾dou vlastnost jeden odstavec) a potom bugfixy, ka¾dý
 ; uvozen "* BUGFIX:"
 
+2008-06-12  Tomas Cerha  <cerha@brailcom.org>
+
+	Pøidána podpora pro globální toolbar aplikace nahrazující toolbary
+	vázané na formuláøe.  O¹etøení pùvodních akcí formuláøových
+	toolbarù bylo pøevedeno na obecné pøíkazy, které lze do globálního
+	toolbaru zaøadit stejnì jako jakékoliv jiné pøíkazy.  Pøíkazy musí
+	být definovány v 'UICommands' v 'commands.py' a poté je mo¾né je
+	zaøadit to 'TOOLBAR_COMMANDS' tamté¾.
+	
 2008-03-25  Tomas Cerha  <cerha@brailcom.org>
 
 	Byla pøidána konfiguraèní volba pro povolení/zakázání
