@@ -2,7 +2,7 @@
 
 # Zpracování událostí
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -143,14 +143,12 @@ def _is_user_event(event):
     # Sem nelze pøidat jen tak jakoukoliv událost, proto¾e nìkteré u¾ivatelské
     # události nastávají vesmìs bìhem jiných u¾ivatelských událostí, a pak by
     # mohlo dojít k rùzným nepøíjemným efektùm.
-    for class_ in (wx.KeyEvent,
-                   wx.MenuEvent, wx.MouseEvent):
-        if isinstance(event, class_):            
-            return True
+    if isinstance(event, (wx.KeyEvent, wx.MenuEvent, wx.MouseEvent)):
+        return True
     # Instance wxCommandEvent pova¾ujeme za user_event, kromì událostí gridu
     # a výbìru z menu (napø. výbìr z popup menu)
     if isinstance(event, wx.CommandEvent) and \
-       not isinstance(event, wx.grid.GridEvent) and \
+       not isinstance(event, (wx.grid.GridEvent, wx.UpdateUIEvent)) and \
        event.GetEventType() != wx.wxEVT_COMMAND_MENU_SELECTED:
         return True
     else:
