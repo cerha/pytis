@@ -1,3 +1,9 @@
+2008-06-12  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_create_sql_commands):
+	Value of `pg_rewrite.ev_type' is of type `char', not `integer'. 	
+
 2008-06-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py: Don't create form toolbar.  Form toolbar

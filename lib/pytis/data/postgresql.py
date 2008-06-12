@@ -1164,7 +1164,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           (first_key_column, main_table, relation)
         self._pdbb_command_test_broken_update = \
           (("select 'yes' from pg_class, pg_namespace, pg_rewrite "
-            "where pg_rewrite.ev_type = 2 and "
+            "where pg_rewrite.ev_type = '2' and "
             "pg_rewrite.is_instead = 't' and "
             "pg_class.oid = pg_rewrite.ev_class and "
             "pg_class.relnamespace = pg_namespace.oid and "
