@@ -483,6 +483,10 @@ class UICommands(object):
         InnerForm.COMMAND_RESET_FORM_STATE(),
         _("Vrátit výchozí nastavení formuláøe"),
         _("Zahodit ve¹keré u¾ivatelské nastavení formuláøe"))
+    OTHER_FORM = UICommand(
+        DualForm.COMMAND_OTHER_FORM(),
+        _("Pøepnout aktivní formuláø duálního formuláøe"),
+        _("Pøechod mezi horním a dolním formuláøem duálního formuláøe"))
 
 
 TOOLBAR_COMMANDS = ((
@@ -499,6 +503,7 @@ TOOLBAR_COMMANDS = ((
         UICommands.FILTER_MENU,
         UICommands.AGGREGATION_MENU,
         UICommands.PRINT_MENU,
+        UICommands.OTHER_FORM,
         ),(
         UICommands.PYTIS_HELP,
         UICommands.HELP,

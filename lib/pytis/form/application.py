@@ -344,14 +344,38 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menus.append(Menu(_("Nápovìda"), items))
             
     def _create_toolbar_button(self, uicmd):
-        id = wx.NewId()
         cmd, args = uicmd.command(), uicmd.args()
-        icon = get_icon(command_icon(cmd, args), type=wx.ART_TOOLBAR)
-        self._toolbar.AddTool(id, icon,
-                              shortHelpString=uicmd.title(),
-                              longHelpString=uicmd.descr())
-        wx_callback(wx.EVT_TOOL, self._frame, id, lambda e: cmd.invoke(**args))
-        wx_callback(wx.EVT_UPDATE_UI, self._frame, id, lambda e: e.Enable(cmd.enabled(**args)))
+        if cmd == DualForm.COMMAND_OTHER_FORM:
+            # This is a total hack to allow bitmap swithing on the COMMAND_OTHER_FORM toolbar
+            # button.  SetBitmap1 doesn't seem to work on tools created using AddTool...
+            self._form_switcher_bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR),
+                                           get_icon('dual-form-active-down', type=wx.ART_TOOLBAR))
+            button = wx_button(self._toolbar, 'x', icon='dual-form-active-up', size=(30, 30),
+                          tooltip=uicmd.title(), noborder=True,
+                          callback=lambda e: cmd.invoke(**args))
+            self._last_form_switch_icon = 0
+            def update(event):
+                enabled = cmd.enabled(**args)
+                event.Enable(enabled)
+                if enabled:
+                    form = self.current_form(inner=False)
+                    i = form._active_form != form._main_form and 1 or 0
+                    if i != self._last_form_switch_icon:
+                        self._last_form_switch_icon = i
+                        button.SetBitmapLabel(self._form_switcher_bitmaps[i])
+                        self._toolbar.Realize()
+            wx_callback(wx.EVT_UPDATE_UI, self._frame, button.GetId(), update)
+            tool = self._toolbar.AddControl(button)
+            # This also doesn't seem to work...
+            self._toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr())
+        else:
+            id = wx.NewId()
+            icon = get_icon(command_icon(cmd, args), type=wx.ART_TOOLBAR)
+            self._toolbar.AddTool(id, icon,
+                                  shortHelpString=uicmd.title(),
+                                  longHelpString=uicmd.descr())
+            wx_callback(wx.EVT_TOOL, self._frame, id, lambda e: cmd.invoke(**args))
+            wx_callback(wx.EVT_UPDATE_UI, self._frame, id, lambda e: e.Enable(cmd.enabled(**args)))
         
 # Ostatní metody
 
