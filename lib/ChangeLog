@@ -1,5 +1,11 @@
 2008-06-13  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py: Disable the title bar in multi-form
+	inner forms.
+
+	* pytis/form/list.py: Allow disabling the title bar in derived
+	classes.
+
 	* pytis/form/application.py (Application._create_toolbar_button):
 	Added a hack for special handling of DualForm.COMMAND_OTHER_FORM.
 

@@ -593,6 +593,7 @@ class MultiForm(Form, Refreshable):
 class MultiSideBrowseForm(MultiForm):
         
     class SubForm(SideBrowseForm):
+        _ALLOW_TITLE_BAR = False
         def _init_attributes(self, binding, **kwargs):
             # Hack: Transform 'Binding' to 'BindingSpec'.
             sbcol = binding.colname()

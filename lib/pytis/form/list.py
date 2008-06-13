@@ -72,6 +72,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     _REFRESH_PERIOD = 60 # sekund
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
     _ROW_LABEL_WIDTH = 85
+    _ALLOW_TITLE_BAR = True
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
@@ -197,11 +198,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
 
     def _create_form_parts(self, sizer):
-        if self.title() is not None:
+        if self.title() is not None and self._ALLOW_TITLE_BAR:
             self._title_bar = self._create_title_bar()
+            sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         else:
             self._title_bar = None
-        sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(self._create_grid(), 1, wx.EXPAND|wx.FIXED_MINSIZE)
 
     def _create_grid(self):
