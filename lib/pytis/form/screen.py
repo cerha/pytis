@@ -1139,8 +1139,7 @@ class MenuBar(wx.MenuBar):
                     log(OPERATIONAL, _("Kolidující pøíkaz:"), self._keys[k])
                 else:
                     self._keys[k] = cmd
-
-
+                    
 ### Status bar
 
 
@@ -1454,7 +1453,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
       callback -- if specified, the given function will be associated with button press event.  The
         function will be called with `wx.Event' instance as first argument
       enabled -- if false, the button will be disabled
-      update -- if true the button availability will be periodically checked and the changes will
+      update -- CURRENTLY IGNORED!
+        if true the button availability will be periodically checked and the changes will
         be reflected by enabling/disabling the button when the 'command' becomes enabled/disabled.
         Currently not supported if 'callback' is used instead of 'command'.
       tooltip -- tooltip string
