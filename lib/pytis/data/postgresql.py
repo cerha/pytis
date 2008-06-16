@@ -853,6 +853,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'date': Date,
                         'time': Time,
                         'smallint': Integer,                        
+                        'bigint': Integer,
                         'int2': Integer,                        
                         'int4': Integer,
                         'int8': Integer,

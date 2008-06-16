@@ -1,3 +1,8 @@
+2008-06-16  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/data/postgresql.py
+	(PostgreSQLStandardBindingHandler._pdbb_get_type): Added 'bigint'.
+
 2008-06-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py: Disable the title bar in multi-form
