@@ -511,6 +511,7 @@ class MultiForm(Form, Refreshable):
         selected_form_index = event.GetSelection()
         if selected_form_index != -1:
             form = self._forms[selected_form_index]
+            form.focus()
             row = self._last_selection
             if row is not None:
                 form.on_selection(row)
