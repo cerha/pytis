@@ -499,6 +499,8 @@ class MultiForm(Form, Refreshable):
         
     def _create_form(self):
         self._notebook = nb = wx.Notebook(self)
+        #nb.SetPadding((0,0))
+        nb.SetTabSize((0,0))
         self._forms = forms = self._create_forms(nb)
         for form in forms:
             nb.AddPage(form, form.title())
@@ -570,13 +572,14 @@ class MultiForm(Form, Refreshable):
             active.on_selection(row)
 
     def save(self):
-        active = self.active_form()
+        self._saved_active_form = active = self.active_form()
         if active:
             active.save()
 
     def restore(self):        
-        active = self.active_form()
+        active = self._saved_active_form
         if active:
+            self._notebook.SetSelection(self._forms.index(active))
             active.restore()
 
     def focus(self):

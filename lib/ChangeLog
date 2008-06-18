@@ -6,6 +6,7 @@
 	* pytis/form/dualform.py
 	(MultiSideBrowseForm.SubForm._init_attributes): Allow Bindings
 	without a binding column just with condition.
+	(MultiForm): Save/restore the active form correctly.
 
 2008-06-16  Pavel Hanak  <hanak@asellus.cz>
 
