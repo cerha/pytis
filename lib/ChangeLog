@@ -1,3 +1,12 @@
+2008-06-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Binding): Allow Bindings
+	without a binding column just with condition.
+
+	* pytis/form/dualform.py
+	(MultiSideBrowseForm.SubForm._init_attributes): Allow Bindings
+	without a binding column just with condition.
+
 2008-06-16  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/data/postgresql.py

@@ -1283,35 +1283,41 @@ class BindingSpec(object):
         return self._orientation
 
 
-
 class Binding(object):
     """Specification of a binding to other view.
 
     Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
 
     """
-    def __init__(self, title, name, colname, condition=None):
+    def __init__(self, title, name, binding_column, condition=None):
         """Arguments:
 
           title -- title used for the list of related records
           name -- name of the related specification
-          colname -- the string identifier of the binding column in the related view.  This
-            column must have a codebook specification pointing to the view for which the binding
-            is used.  The related records will be filtered by this column automatically.
-          condition -- function of one argument returning additional condition
-            ('pytis.data.Operator' instance) to filter the list of related records.  The argument
-            will be a 'PresentedRow' instance representing the current row of the view for which
-            the binding is used.
+          binding_column -- the string identifier of the binding column in the related view.  This
+            column must have a codebook specification pointing to the main form (the view for which
+            the binding is used).  The related records will be filtered by this column
+            automatically.  The binding column represents the typical case of 1:N relation with the
+            dependent form having a foreign key (codebook) pointing to the main form.  You will
+            need to use the generic 'condition' in all other cases.  This argument may be used as
+            positional.
+          condition -- a function of one argument (the 'PresentedRow' instance) returning the
+            current binding condition (a 'pytis.data.Operator' instance) to filter the data of the
+            dependent form for given main form row.  If used together with the binding column, the
+            condition will be used in conjunction with the binding column condition.  If
+            'binding_column' is None, this condition will be used solely.
             
         """
         assert isinstance(name, (str, unicode)), name
         assert isinstance(title, (str, unicode)), title
-        assert isinstance(colname, (str, unicode)), colname
+        assert binding_column is None or isinstance(binding_column, (str, unicode)), binding_column
         assert condition is None or callable(condition), condition
+        assert condition is not None or binding_column is not None, \
+               "At least one of 'binding_column', 'condition' must be used."
         #assert form is None or issubclass(form, pytis.web.BrowseForm), form
         self._name = name
         self._title = title
-        self._colname = colname
+        self._binding_column = binding_column
         self._condition = condition
         #self._form = form
 
@@ -1321,15 +1327,12 @@ class Binding(object):
     def name(self):
         return self._name
         
-    def colname(self):
-        return self._colname
+    def binding_column(self):
+        return self._binding_column
     
     def condition(self):
         return self._condition
         
-        
-    
-
 
 class Editable(object):
     """Definition of available constants for field editability specification."""

@@ -596,8 +596,11 @@ class MultiSideBrowseForm(MultiForm):
         _ALLOW_TITLE_BAR = False
         def _init_attributes(self, binding, **kwargs):
             # Hack: Transform 'Binding' to 'BindingSpec'.
-            sbcol = binding.colname()
-            bcol = self._data.find_column(sbcol).type().enumerator().value_column()
+            sbcol = binding.binding_column()
+            if sbcol:
+                bcol = self._data.find_column(sbcol).type().enumerator().value_column()
+            else:
+                bcol = None
             bs = BindingSpec(binding_column=bcol, side_binding_column=sbcol,
                              condition=binding.condition())
             self._title = binding.title()
