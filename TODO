@@ -70,6 +70,12 @@ CHYBY:
    vyhledávání podle kódu zakázky v¹ak bylo toto chování hlá¹eno, ale po
    restartu aplikace ne¹lo zreprodukovat.
 
+ * Problém s notifikaèním threadem pøi startu aplikace
+
+   Pøi volání funkce v rámci Application.Init, která pracuje nad daty v databázi
+   (napø. insert_new_user nebo obecnì operace nad DBConfig), hlásí notification thread
+   na pozadí chybové hlá¹ení AttributeError pro atribut connection.
+
 
 NOVÉ VLASTNOSTI:
 
@@ -253,3 +259,12 @@ INTERNÍ ZÁLE®ITOSTI:
    zaruèit, ¾e akci nejsou pøedány ¾ádné argumenty.  Toho je v¹ak zatím
    vyu¾íváno jen ve webových formuláøích.  Bylo by dobré to samé
    doimplementovat i do GUI formuláøù.
+
+
+WXPYTHON-2.8:
+
+ * Chyba v zobrazení boolean hodnoty True v BrowseForm
+
+   Checkbox daného políèka s True hodnotou není zatr¾en.
+
+ 
