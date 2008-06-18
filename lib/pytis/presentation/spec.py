@@ -1289,7 +1289,7 @@ class Binding(object):
     Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
 
     """
-    def __init__(self, title, name, binding_column, condition=None):
+    def __init__(self, title, name, binding_column=None, condition=None):
         """Arguments:
 
           title -- title used for the list of related records
