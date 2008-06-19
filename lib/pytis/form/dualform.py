@@ -152,6 +152,7 @@ class DualForm(Form, Refreshable):
         return other_form
 
     def _select_form(self, form, force=False):
+        form.focus()
         if form is None or (form is self._active_form and not force):
             return
         form.focus()
@@ -326,7 +327,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         f = self._side_form
         if isinstance(self._main_form, Refreshable):
             f.set_callback(ListForm.CALL_MODIFICATION, self._main_form.refresh)
-        f.set_callback(ListForm.CALL_USER_INTERACTION, lambda : self._select_form(self._side_form))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
 
     def _do_selection(self, row):
         form = self._side_form
@@ -365,7 +366,7 @@ class BrowseDualForm(SideBrowseDualForm):
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(self._main_form))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
         f.set_callback(f.CALL_ACTIVATION, self._on_main_activation)
     
@@ -413,8 +414,8 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(ListForm.CALL_USER_INTERACTION, lambda : self._select_form(self._main_form))
-        f.set_callback(ListForm.CALL_SELECTION, self._on_main_selection)
+        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_SELECTION, self._on_main_selection)
 
     def _create_side_form(self, parent):
         return ShowForm(parent, self._resolver, self._side_name)
@@ -483,10 +484,12 @@ class MultiForm(Form, Refreshable):
     The form has no data itself -- it just acts as a proxy to the currently visible inner form.
 
     """
-    def __init__(self, *args, **kwargs):
-        super(MultiForm, self).__init__(*args, **kwargs)
-        wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
-        wx_callback(wx.EVT_SIZE, self, self._on_size)
+    def _get_command_handler_instance(cls):
+        form = current_form(inner=False)
+        if isinstance(form, DualForm):
+            form = form.active_form()
+        return form
+    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def _create_view_spec(self):
         return None
@@ -495,33 +498,61 @@ class MultiForm(Form, Refreshable):
         return None
     
     def _create_forms(self, parent):
+        # To be overridden in derived classes.
         pass
         
     def _create_form(self):
         self._notebook = nb = wx.Notebook(self)
         #nb.SetPadding((0,0))
-        nb.SetTabSize((0,0))
-        self._forms = forms = self._create_forms(nb)
-        for form in forms:
-            nb.AddPage(form, form.title())
+        self._forms = forms = []
+        for title, form in self._create_forms(nb):
+            forms.append(form)
+            if form is None:
+                form = wx.Panel(nb)
+            nb.AddPage(form, title)
+        # Select the first available form.
+        for i, form in enumerate(forms):
+            if form:
+                self._notebook.SetSelection(i)
+                break
         self._last_selection = None
-        wx_callback(wx.EVT_NOTEBOOK_PAGE_CHANGED, nb, nb.GetId(), self._on_page_changed)
-    
-    def _on_page_changed(self, event):
-        selected_form_index = event.GetSelection()
-        if selected_form_index != -1:
-            form = self._forms[selected_form_index]
-            form.focus()
-            row = self._last_selection
-            if row is not None:
-                form.on_selection(row)
+        wx_callback(wx.EVT_NOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
+        wx_callback(wx.EVT_LEFT_DOWN, nb, self._on_mouse)
+        wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_mouse)
+        wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
+        wx_callback(wx.EVT_SIZE, self, self._on_size)
+        #self.set_callback(self.CALL_USER_INTERACTION, lambda : self._select_form(self))
 
-    #def _cmd_change_form(self, forward=True):
-    #    self._notebook.AdvanceSelection(forward=forward)
+    def _on_mouse(self, event):
+        self._run_callback(self.CALL_USER_INTERACTION)
+        event.Skip()
+    
+    def _on_page_change(self, event=None):
+        if event:
+            #event.Skip()
+            selection = event.GetSelection()
+        else:
+            selection = self._notebook.GetSelection()
+        if selection != -1:
+            form = self._forms[selection]
+            if form:
+                row = self._last_selection
+                if row is not None:
+                    form.on_selection(row)
+                form.focus()
+            elif event:
+                message(_("Formuláø není dostupnı"), beep_=True)
+                event.Veto()
+                old_selection = event.GetOldSelection()
+                if old_selection != -1:
+                    form = self._forms[old_selection]
+                    if form:
+                        form.focus()
+                        form.SetFocus()
 
     def _exit_check(self):
         for form in self._forms:
-            if not form._exit_check():
+            if form and not form._exit_check():
                 return False
         return True
             
@@ -529,34 +560,56 @@ class MultiForm(Form, Refreshable):
         nb = self._notebook
         nb.Show(False)
         for form in self._forms:
-            form.Reparent(self)
-            nb.RemovePage(0)
-            form.close(force=True)
+            if form:
+                form.Reparent(self)
+                nb.RemovePage(0)
+                form.close(force=True)
+            else:
+                nb.DeletePage(0)
         self._forms = None
         nb.Close()
         nb.Destroy()
+        super(MultiForm, self)._cleanup()
         
     def _on_size(self, event):
         size = event.GetSize()
         self._notebook.SetSize(size)
+
+    def _cmd_next_form(self, back=False):
+        d = back and -1 or 1
+        i = self._notebook.GetSelection() + d
+        while i >= 0 and i < len(self._forms):
+            form = self._forms[i]
+            if form:
+                self._notebook.SetSelection(i)
+                self._on_page_change()
+                return
+            i += d
+        msg = back and _("®ádnı pøedchozí aktivní formuláø") or _("®ádnı dal¹í aktivní formuláø")
+        message(msg, beep_=True)
         
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
         for form in self._forms:
-            form.show()
+            if form:
+                form.show()
         self._notebook.Enable(True)
         self._notebook.Show(True)
 
     def hide(self):
         for form in self._forms:
-            form.hide()
+            if form:
+                form.hide()
         self._notebook.Show(False)
         self._notebook.Enable(False)
 
     def set_callback(self, kind, function):
+        if kind != ListForm.CALL_MODIFICATION:
+            super(MultiForm, self).set_callback(kind, function)
         for form in self._forms:
-            form.set_callback(kind, function)
-
+            if form:
+                form.set_callback(kind, function)
+        
     def active_form(self):
         """Return the currently active form of this form group."""
         selection = self._notebook.GetSelection()
@@ -588,6 +641,11 @@ class MultiForm(Form, Refreshable):
         if active:
             active.focus()
 
+    def defocus(self):
+        active = self.active_form()
+        if active:
+            active.defocus()
+
     def _refresh(self, when=None):
         active = self.active_form()
         if active and isinstance(active, Refreshable):
@@ -607,23 +665,25 @@ class MultiSideBrowseForm(MultiForm):
                 bcol = None
             bs = BindingSpec(binding_column=bcol, side_binding_column=sbcol,
                              condition=binding.condition())
-            self._title = binding.title()
             super(MultiSideBrowseForm.SubForm, self)._init_attributes(binding=bs, **kwargs)
-        def title(self):
-            return self._title
             
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
         self._main_form = main_form
         super(MultiSideBrowseForm, self)._init_attributes(**kwargs)
-        
+
+    def _create_subform(self, parent, binding):
+        if has_access(binding.name()):
+            return self.SubForm(parent, self._resolver, binding.name(), guardian=self,
+                                main_form=self._main_form, binding=binding)
+        else:
+            return None
+
     def _create_forms(self, parent):
-        bindings = self._resolver.get(self._main_form.name(), 'binding_spec')
-        return [self.SubForm(parent, self._resolver, binding.name(), guardian=self,
-                             main_form=self._main_form, binding=binding)
-                for binding in bindings]
+        return [(binding.title(), self._create_subform(parent, binding))
+                for binding in self._resolver.get(self._main_form.name(), 'binding_spec')]
     
-            
+
 class MultiBrowseDualForm(BrowseDualForm):
     """Dual form with a 'BrowseForm' up and multiple side browse forms."""
     DESCR = _("vícenásobnı duální formuláø")
@@ -640,14 +700,20 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _initial_sash_position(self, mode, size):
         return size.height / 2 
 
-        
     def _create_main_form(self, parent, **kwargs):
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
     
     def _create_side_form(self, parent, **kwargs):
         return MultiSideBrowseForm(parent, self._resolver, self._name, guardian=self,
                                    main_form=self._main_form, **kwargs)
-
+        
+    def _on_main_activation(self, alternate=False):
+        if alternate:
+            form, name = (DescriptiveDualForm, self._name)
+        else:
+            form, name = (ShowForm, self._name)
+        run_form(form, name, select_row=self._main_form.current_key())
+        
     def title(self):
         return self._main_form.title()
     
