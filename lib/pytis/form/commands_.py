@@ -173,6 +173,8 @@ Command(BrowsableShowForm, 'NEXT_RECORD',
         "Pøechod na dal¹í záznam vpøed/vzad (arg. 'back')") 
 Command(DualForm, 'OTHER_FORM',
         "Pøechod mezi podformuláøi duálního formuláøe")
+Command(MultiForm, 'NEXT_FORM',
+        "Advance to next/previous tab in a multi-form (arg. 'back')")
 Command(PrintFormInternal, 'NEXT_PAGE',
         "Pøechod na dal¹í stránku tiskového náhledu")
 Command(PrintFormInternal, 'PREVIOUS_PAGE',
@@ -269,8 +271,8 @@ DEFAULT_KEYMAP = (
     ('F7',               ListForm.COMMAND_INSERT_LINE(copy=True)),
     ('Ctrl-Insert',      ListForm.COMMAND_INSERT_LINE(before=True)),
     ('Ctrl-F7',          ListForm.COMMAND_INSERT_LINE(before=True, copy=True)),
-    ('Alt-Right',        ListForm.COMMAND_RESIZE_COLUMN(diff=+5)),
-    ('Alt-Left',         ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
+    ('Ctrl-Shift-Right', ListForm.COMMAND_RESIZE_COLUMN(diff=+5)),
+    ('Ctrl-Shift-Left',  ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
     ('Shift-Right',      ListForm.COMMAND_MOVE_COLUMN(diff=+1)),
     ('Shift-Left',       ListForm.COMMAND_MOVE_COLUMN(diff=-1)),
     ('Alt-Down',         ListForm.COMMAND_CONTEXT_MENU),
@@ -284,6 +286,8 @@ DEFAULT_KEYMAP = (
     ('Next',             BrowsableShowForm.COMMAND_NEXT_RECORD),
     ('Prior',            BrowsableShowForm.COMMAND_NEXT_RECORD(back=True)),
     ('Ctrl-Tab',         DualForm.COMMAND_OTHER_FORM),
+    ('Alt-Right',        MultiForm.COMMAND_NEXT_FORM),
+    ('Alt-Left',         MultiForm.COMMAND_NEXT_FORM(back=True)),
     ('Next',             PrintFormInternal.COMMAND_NEXT_PAGE),
     ('Prior',            PrintFormInternal.COMMAND_PREVIOUS_PAGE),
     ('Ctrl-Backspace',   InputField.COMMAND_RESET),
