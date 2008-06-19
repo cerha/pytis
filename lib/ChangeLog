@@ -1,3 +1,15 @@
+2008-06-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (MultiForm): Handle forms with insufficient
+	permissions.  Added support for keyboard form switching.  Handle
+	form focus correctly.  Handle activation.
+
+	* pytis/form/application.py (current_form): Test if `_application'
+	is alive.
+
+	* pytis/form/commands_.py: New command
+	`MultiForm.COMMAND_NEXT_FORM'.  Added keyboard shortcuts.
+
 2008-06-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (Binding): Allow Bindings
