@@ -1211,7 +1211,8 @@ def run_dialog(*args, **kwargs):
 
 def current_form(inner=True):
     """Vra» právì aktivní formuláø (viz 'Application.currnt_form()')."""
-    return _application.current_form(inner=inner)
+    if _application is not None:
+        return _application.current_form(inner=inner)
 
 def top_window():
     """Vra» aktivní okno aplikace (formuláø, nebo dialog)."""
