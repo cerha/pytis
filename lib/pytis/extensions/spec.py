@@ -110,6 +110,8 @@ def bf(title, name, hotkey=None, **kwargs):
 def df(title, name, hotkey=None, **kwargs):
     return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey,
                           **kwargs)
+def mf(title, name, hotkey=None, **kwargs):
+    return run_form_mitem(title, name, pytis.form.MultiBrowseDualForm, hotkey, **kwargs)
 def sf(title, name, hotkey=None, **kwargs):
     return run_form_mitem(title, name, pytis.form.ShowForm, hotkey, **kwargs)
 def ddf(title, name, hotkey=None):
