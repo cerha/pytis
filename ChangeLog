@@ -1,3 +1,7 @@
+2008-06-19  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/spec.py (mf): Nová funkce.
+
 2008-05-16  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/email_.py (SimpleEmail.send): Definuj
