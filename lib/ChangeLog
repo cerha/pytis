@@ -1,3 +1,10 @@
+2008-06-23  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (BrowseForm): Added support for "index navigation".
+
+	* pytis/data/postgresql.py (DBDataPostgreSQL.distinct): Added
+	support for selection of distinct string prefixes.
+
 2008-06-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/dualform.py (MultiForm): Handle forms with insufficient

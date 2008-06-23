@@ -1429,15 +1429,21 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_select_rows = result
         return result
 
-    def _pg_distinct (self, column, condition, sort, transaction=None):
+    def _pg_distinct (self, column, prefix, condition, sort, transaction=None):
         cond_string = self._pdbb_condition2sql(condition)
-        sort_string = self._pdbb_sort2sql(((column, sort),))
-        if sort_string.endswith(','):
-            sort_string = sort_string[:-1]
-        data = self._pg_query(self._pdbb_command_distinct % \
-                              (column, cond_string, sort_string),
-                              transaction=transaction)
-        tmpl = self._pg_create_make_row_template((self.find_column(column),))
+        colspec = self.find_column(column)
+        if prefix:
+            if isinstance(colspec.type(), String):
+                expr = 'substr(%s, 1, %d) as %s' % (column, prefix, column)
+            else:
+                raise ProgramError("Invalid column type for prefix selection")
+        else:
+            expr = column
+        dir = {ASCENDENT: 'ASC', DESCENDANT: 'DESC'}[sort]
+        sort_string = '%s %s' % (column, dir)
+        query = self._pdbb_command_distinct % (expr, cond_string, sort_string)
+        data = self._pg_query(query, transaction=transaction)
+        tmpl = self._pg_create_make_row_template((colspec,))
         result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
                   for r in data]
         return result
@@ -2229,21 +2235,22 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         aggregates = [aggregate_value(cid) for cid in columns]
         return select_result, Row(aggregates)
         
-    def distinct(self, column, condition=None, sort=ASCENDENT,
-                 transaction=None):
+    def distinct(self, column, prefix=None, condition=None, sort=ASCENDENT, transaction=None):
         """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
 
         Argumenty:
 
-          column -- identifikátor sloupce.
-          condition -- podmínkový výraz nebo 'None'.
-          sort -- jedna z konstant  'ASCENDENT', 'DESCENDANT' nebo None.
+          column -- column identifier
+          prefix -- lenght of a string prefix to work on (integer).  If not 'None', only given
+            initial substring of column's value is considered by the query.  Only applicable for
+            columns of string types.
+          condition -- conditional expression as an Operator instance or 'None'
+          sort -- one of 'ASCENDENT', 'DESCENDANT' constants or None
           transaction -- transaction object to be used when running the SQL
             commands
 
         """
-        return self._pg_distinct(column, condition, sort,
-                                 transaction=transaction)
+        return self._pg_distinct(column, prefix, condition, sort, transaction=transaction)
 
     def fetchone(self, direction=FORWARD, transaction=None):
         """Stejné jako v nadtøídì.

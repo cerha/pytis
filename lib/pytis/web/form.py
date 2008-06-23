@@ -443,12 +443,16 @@ class BrowseForm(LayoutForm):
 
           search -- search condition as a 'pytis.data.Operator' instance or None.  If used, the
             offset will be set automatically to ensure, that the first record matching the search
-            condition will be displayed on the current page.  The request parameter 'search' can be
-            also used to generate a search condition (and overrides this argument).  In this case
-            only searching by the value of the key column is supported (it is not possible to pass
-            a generic condition within the request).  If no matching record is found, the offset is
-            controlled by the offset argument.  Searching is ignored when the current limit is
-            greater than the total number of records.
+            condition will be displayed on the current page.  The request parameters 'search' or
+            'index_search' can be also used to initialize the search condition (if this constructor
+            argument is not used).  The request parameter 'search' is for searching by the value of
+            the key column.  The request parameter 'index_search' is for searching by a prefix
+            string and is always performed on the primary sorting column.  If no search condition
+            is passed (either to the constructor or through the request), the offset is controlled
+            by the 'offset' argument.
+
+            Searching is ignored when the current limit is greater than the total number of
+            records.
 
           req -- instance of a class implementing the 'Request' API.  The form state (sorting,
             paging etc) will be set up according to the reqest parameters, if the request includes
@@ -476,16 +480,16 @@ class BrowseForm(LayoutForm):
             valid_params = (('search', str),)
             if req.param('form-name') == self._name:
                 valid_params += (('sort', str), ('dir', str), ('limit', int), ('offset', int),
-                                 ('next', bool), ('prev', bool))
+                                 ('next', bool), ('prev', bool), ('index_search', None))
             for param, func in valid_params:
                 if req.has_param(param):
                     value = req.param(param)
-                    try:
-                        value = func(value)
-                    except:
-                        pass
-                    else:
-                        params[param] = value
+                    if func:
+                        try:
+                            value = func(value)
+                        except:
+                            continue
+                    params[param] = value
         # Determine the current sorting.
         if params.has_key('sort') and params.has_key('dir'):
             cid = params['sort']
@@ -513,12 +517,18 @@ class BrowseForm(LayoutForm):
         # Determine the current offset.
         if limit is None:
             offset = 0
-        elif req is not None:
+        elif req is not None and search is None:
             if params.has_key('search'):
                 type = self._row.data().find_column(self._key).type()
                 value, error = type.validate(params['search'])
                 if not error:
                     search = pytis.data.EQ(self._key, value)
+            elif params.has_key('index_search'):
+                searchcol = sorting[0][0]
+                if isinstance(self._row[searchcol].type(), pd.String):
+                    search_string = params['index_search'] + "*"
+                    search = pytis.data.WM(searchcol, pd.Value(pd.String(), search_string),
+                                           ignore_case=False)
             else:
                 if params.has_key('offset'):
                     offset = params['offset']
@@ -597,7 +607,11 @@ class BrowseForm(LayoutForm):
         cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
                       **self._style(field.style, row, n, field))
                  for field in self._fields]
-        return g.tr(cells, **self._style(self._view.row_style(), row, n))
+        if self._search and self._offset == (n + self._page * self._limit):
+            id = 'found-record'
+        else:
+            id = None
+        return g.tr(cells, id=id, **self._style(self._view.row_style(), row, n))
 
     def _export_group_heading(self, exporter, field):
         g = exporter.generator()
@@ -617,8 +631,7 @@ class BrowseForm(LayoutForm):
                     dir = None
                 new_dir = directions[(directions.index(dir)+1) % len(directions)]
                 arg = dict(self._SORTING_DIRECTIONS)[new_dir]
-                result = g.link(result, g.uri(self._handler, ('form-name', self._name),
-                                              sort=field.id, dir=arg, limit=self._limit))
+                result = g.link(result, self._link_ctrl_uri(g, sort=field.id, dir=arg))
                 if dir:
                     # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
@@ -691,7 +704,12 @@ class BrowseForm(LayoutForm):
                             last=g.strong(str(offset+n)),
                             total=g.strong(str(count)))
             return self._wrap_exported_rows(exporter, exported_rows, summary)
-                   
+
+    def _link_ctrl_uri(self, generator, sort=None, dir=None, **kwargs):
+        if sort is None:
+            sort, dir_ = self._sorting[0]
+            dir = dict(self._SORTING_DIRECTIONS)[dir_]
+        return generator.uri(self._handler, ('form-name', self._name), sort=sort, dir=dir, **kwargs)
 
     def _export_controls(self, exporter, second=False):
         limit, page, count = self._limit, self._page, self._count
@@ -702,6 +720,25 @@ class BrowseForm(LayoutForm):
         offset_id = 'offset-' + id
         limit_id = 'limit-' + id
         result = ()
+        if count > 100:
+            if not second:
+                index_search_controls = None
+                index_column = self._sorting[0][0]
+                if isinstance(self._row[index_column].type(), pd.String):
+                    data = self._row.data()
+                    values = [v.value() for v in data.distinct(index_column, prefix=1)
+                              if v.value() is not None]
+                    if len(values) > 2 and len(values) < 100:
+                        links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record')
+                                 for v in values]
+                        index_search_controls = g.div((_("Index")+': ',
+                                                       concat(links, separator='-')),
+                                                      cls='index-search-controls')
+                self._index_search_controls = index_search_controls
+            else:
+                index_search_controls = self._index_search_controls
+            if index_search_controls:
+                result += (index_search_controls,)
         if pages > 1:
             result += (g.span((g.label(_("Page")+': ', offset_id),
                                g.select(name='offset', id=offset_id, selected=page*limit,
