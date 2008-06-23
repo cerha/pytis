@@ -607,7 +607,7 @@ class BrowseForm(LayoutForm):
         cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
                       **self._style(field.style, row, n, field))
                  for field in self._fields]
-        if self._search and self._offset == (n + self._page * self._limit):
+        if self._search and self._found and self._offset == (n + self._page * self._limit):
             id = 'found-record'
         else:
             id = None
@@ -654,7 +654,10 @@ class BrowseForm(LayoutForm):
         if self._search:
             dist = data.search(self._search)
             if dist:
+                self._found = True
                 self._offset = dist - 1
+            else:
+                self._found = False
         if limit is not None:
             page = int(max(0, min(self._offset, count)) / limit)
             offset = page*limit
