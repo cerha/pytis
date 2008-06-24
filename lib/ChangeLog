@@ -1,3 +1,13 @@
+2008-06-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py: Add formely saved startup forms to
+	the list of forms within the exit dialog.
+
+	* pytis/form/dialog.py (ExitDialog): Don't work with form
+	instances, just with a generic list of items.
+
+	* pytis/form/form.py (descr): Converted to a class method.
+
 2008-06-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (BrowseForm): Added support for "index navigation".

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1202,33 +1202,39 @@ class BugReport(GenericDialog):
 
 
 class ExitDialog(Question):
-    """Application exit question with a choice of forms to save for next startup.
+    """Application exit question with a choice of items to save for next startup.
 
-    The dialog lets the user check the forms which should be opened automatically on next startup.
-    The only constructor argument is the sequence of currently opened forms.
+    The dialog lets the user to save the application state by checking the items (forms, documents)
+    which should be opened automatically on next startup.
 
-    The result returned by the `run()' method is a pair (EXIT, FORMS).  EXIT is True if the user
-    really wants to quit the application or False otherwise.  FORMS is a tuple of those forms from
-    the sequence passed to the constructor, which should be opened automatically on next
-    application startup.  FORMS is None if the user doesn't want to set the startup forms (so the
-    prevoius saved state should be used).
+    The constructor argument ITEMS can be used to pass a sequence of checkable items.  Each item is
+    a sequence.  The first value in this sequence is a boolean flag indicating the initial checkbox
+    state for this item.  The following values are textual fields describing the item.  The number
+    of textual fields is not limited, but there should be at least one and all items should have
+    the same number of fields.  These fields are presented in a table-like list.
+    
+    The result returned by the `run()' method is a pair (EXIT, ITEMS).  EXIT is True if the user
+    really wants to quit the application or False otherwise.  ITEMS is a sequence of boolean
+    values, one for each item passed to the constructor.  The value is True for items which were
+    checked and False for unchecked items.  ITEMS is None if the user doesn't want to save the
+    current state (so the prevoius saved state should be used).
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
-    class _FormListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
+    class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
         def __init__(self, parent):
             wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
             wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
 
-    def __init__(self, parent, forms, save=True):
+    def __init__(self, parent, items, save=True):
         question = _("Aplikace obsahuje otevřené formuláře\n" + \
                      "Opravdu chcete ukončit aplikaci?")
         super(ExitDialog, self).__init__(parent, question, title=_("Ukončit aplikaci"),
                                          default=True, icon=self.ICON_QUIT)
-        assert isinstance(forms, (list, tuple))
+        assert isinstance(items, (list, tuple))
         assert isinstance(save, bool)
-        self._forms = forms
+        self._items = items
         self._save = save
 
     def _create_content(self, sizer):
@@ -1236,16 +1242,16 @@ class ExitDialog(Question):
         label = _("Zapamatovat označené formuláře pro příští spuštění")
         self._checkbox = checkbox = wx.CheckBox(self._dialog, -1, label)
         checkbox.SetValue(self._save)
-        self._list = list = self._FormListCtrl(self._dialog)
+        self._list = list = self._CheckListCtrl(self._dialog)
         wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, list.GetId(),
                     lambda e: list.ToggleItem(e.m_itemIndex))
         list.InsertColumn(0, _("Název"))
         list.InsertColumn(1, _("Typ"))
-        for i, form in enumerate(self._forms):
+        for i, item in enumerate(self._items):
             list.InsertStringItem(i, "")
-            list.SetStringItem(i, 0, form.title())
-            list.SetStringItem(i, 1, form.descr())
-            list.CheckItem(i)
+            list.CheckItem(i, item[0])
+            for j in range(len(item)-1):
+                list.SetStringItem(i, j, item[j+1])
         list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         sizer.Add(list, 1, wx.EXPAND|wx.ALL, 5)
@@ -1254,10 +1260,10 @@ class ExitDialog(Question):
     def _customize_result(self, result):
         exit = super(ExitDialog, self)._customize_result(result)
         if self._checkbox.IsChecked():
-            forms = [form for i, form in enumerate(self._forms) if self._list.IsChecked(i)]
+            items = [self._list.IsChecked(i) for i, triple in enumerate(self._items)]
         else:
-            forms = None
-        return (exit, forms)
+            items = None
+        return (exit, items)
 
     
 class FileDialog(Dialog):

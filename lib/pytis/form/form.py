@@ -71,6 +71,14 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return current_form(inner=False)
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
+    def descr(cls):
+        """Vra» textový popis typu formuláøe jako øetìzec."""
+        if cls.DESCR is not None:
+            return cls.DESCR
+        else:
+            return cls.__class__.__name__
+    descr = classmethod(descr)
+        
     def __init__(self, parent, resolver, name, guardian=None, transaction=None, **kwargs):
         """Inicializuj instanci.
 
@@ -263,13 +271,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """Vra» název specifikace formuláøe."""
         return self._name
 
-    def descr(self):
-        """Vra» textový popis typu formuláøe jako øetìzec."""
-        if self.DESCR is not None:
-            return self.DESCR
-        else:
-            return self.__class__.__name__
-        
     def title(self):
         """Vra» titulek ze specifikace formuláøe jako øetìzec."""
         return self._view.title()

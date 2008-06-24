@@ -239,12 +239,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
                 startup_forms.append((cls, name.strip()))
-        for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
-            if self._is_valid_spec(name) and issubclass(cls, Form):
-                if (cls, name) not in startup_forms:
-                    startup_forms.insert(0, (cls, name))
-            else:
-                log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
+        self._saved_startup_forms = []
+        for pair in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
+            if len(pair) == 2:
+                cls, name = pair
+                if issubclass(cls, Form) and self._is_valid_spec(name):
+                    if pair not in startup_forms:
+                        startup_forms.insert(0, pair)
+                    self._saved_startup_forms.append(list(pair) + [None])
+                    continue
+            log(OPERATIONAL, "Ignoring saved startup form:", pair)
         def run_startup_forms(update, startup_forms):
             i, total = 0, len(startup_forms)
             msg = _("Otevírám formuláø: %s (%d/%d)")
@@ -254,6 +258,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     run_form(cls, name)
                 except Exception, e:
                     log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
+                else:
+                    # Assign titles to saved startup forms (we need a form instance for this).
+                    f = self._windows.active()
+                    x = find([f.__class__, f.name(), None], self._saved_startup_forms)
+                    if x:
+                        x[2] = f.title()
                 i += 1
         if len(startup_forms) > 1:
             run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
@@ -547,15 +557,20 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
                     self._modals.top())
                 return False
-            if not self._windows.empty():
+            forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
+                     if not isinstance(f, PrintForm)]
+            for cls, name, title in self._saved_startup_forms:
+                if title is not None and (cls, name) not in [x[:2] for x in forms]:
+                    forms.append((cls, name, title, False))
+            if forms:
+                items = [(checked, title, cls.descr()) for cls, name, title, checked in forms]
                 save = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
-                forms = [f for f in self._windows.items() if not isinstance(f, PrintForm)]
-                exit, forms = self.run_dialog(ExitDialog, forms, save=save)
+                exit, result = self.run_dialog(ExitDialog, items, save=save)
                 if not exit:
                     return False
-                self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, forms is not None)
-                if forms:
-                    startup_forms = [(f.__class__, f.name()) for f in forms]
+                self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, result is not None)
+                if result:
+                    startup_forms = [f[:2] for f, checked in zip(forms, result) if checked]
                     self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
                 else:
                     self._unset_state_param(self._STATE_STARTUP_FORMS)
