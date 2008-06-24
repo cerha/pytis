@@ -1,3 +1,8 @@
+2008-06-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py (_MenuItemReader._content):
+	Recognize dual specifications by name, not by form type.
+
 2008-06-19  Petr Malivanek  <malivanek@asellus.cz>
 
 	* lib/pytis/extensions/spec.py (mf): Nová funkce.

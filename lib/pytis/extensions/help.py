@@ -112,8 +112,7 @@ class _MenuItemReader(lcg.Reader):
             info.append(("Typ formuláøe",
                          '%s (%s)' % (form.DESCR.capitalize(), form.__name__)))
             if not issubclass(form, pytis.form.ConfigForm):
-                if issubclass(form, pytis.form.DualForm) and \
-                       not issubclass(form, pytis.form.DescriptiveDualForm):
+                if name.find('::') != -1:
                     main, side = name.split('::')
                     names = (name, main, side) + _refered_names(main) + _refered_names(side)
                 else:
