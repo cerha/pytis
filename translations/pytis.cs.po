@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-06-25 09:17+0200\n"
-"PO-Revision-Date: 2008-06-25 09:20+0200\n"
+"POT-Creation-Date: 2008-06-25 12:38+0200\n"
+"PO-Revision-Date: 2008-06-25 12:47+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: LANGUAGE <cs@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -49,40 +49,45 @@ msgstr "Počet záznamů celkem:"
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 
-#: ../lib/pytis/web/form.py:740
+#: ../lib/pytis/web/form.py:739
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na „%(prefix)s“:"
 
-#: ../lib/pytis/web/form.py:767 ../lib/pytis/web/form.py:769
+#: ../lib/pytis/web/form.py:743
+#, python-format
+msgid "Skip to the first record beginning with \"%s\""
+msgstr "Přejít na první záznam začínající na „%s“"
+
+#: ../lib/pytis/web/form.py:766 ../lib/pytis/web/form.py:768
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:769 ../lib/pytis/web/form.py:781
+#: ../lib/pytis/web/form.py:768 ../lib/pytis/web/form.py:780
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použijte ALT+šipka dolů pro výběr)"
 
-#: ../lib/pytis/web/form.py:773
+#: ../lib/pytis/web/form.py:772
 msgid "Previous"
 msgstr "předchozí"
 
-#: ../lib/pytis/web/form.py:774
+#: ../lib/pytis/web/form.py:773
 msgid "Go to previous page"
 msgstr "Přejít na předchozí stránku výpisu"
 
-#: ../lib/pytis/web/form.py:775
+#: ../lib/pytis/web/form.py:774
 msgid "Next"
 msgstr "další"
 
-#: ../lib/pytis/web/form.py:776
+#: ../lib/pytis/web/form.py:775
 msgid "Go to next page"
 msgstr "Přejít na následující stránku výpisu"
 
-#: ../lib/pytis/web/form.py:778 ../lib/pytis/web/form.py:780
+#: ../lib/pytis/web/form.py:777 ../lib/pytis/web/form.py:779
 msgid "Records per page"
 msgstr "Počet záznamů na stránku"
 
-#: ../lib/pytis/web/form.py:784
+#: ../lib/pytis/web/form.py:783
 msgid "Go"
 msgstr "Jdi"
 

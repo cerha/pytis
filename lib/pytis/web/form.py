@@ -739,7 +739,8 @@ class BrowseForm(LayoutForm):
                 label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
             else:
                 label = field.label + ":"
-            links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record')
+            links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record',
+                            title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
             result.append(g.div(label +' '+ concat(links, separator='-')))
         return (g.div(result, cls='index-search-controls'),)
