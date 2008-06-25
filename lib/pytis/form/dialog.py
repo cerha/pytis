@@ -789,6 +789,7 @@ class RunFormDialog(InputDialog):
     _BROWSE_FORM = "BrowseForm"
     _EDIT_FORM = "EditForm"
     _BROWSE_DUAL_FORM = "BrowseDualForm"
+    _MULTI_BROWSE_DUAL_FORM = "MultiBrowseDualForm"
     _CODEBOOK_FORM = "CodebookForm"
 
     def __init__(self, parent, title=_("Zobrazit formuláø")):
@@ -805,6 +806,7 @@ class RunFormDialog(InputDialog):
                                        icon=self.ICON_TIP)
         self._FORM_CLASS_MAPPING = {
             self._BROWSE_DUAL_FORM: pytis.form.BrowseDualForm,
+            self._MULTI_BROWSE_DUAL_FORM: pytis.form.MultiBrowseDualForm,
             self._BROWSE_FORM: BrowseForm,
             self._EDIT_FORM: PopupEditForm,
             self._CODEBOOK_FORM: CodebookForm,
@@ -815,7 +817,7 @@ class RunFormDialog(InputDialog):
         super(RunFormDialog, self)._create_content(sizer)
         label = wx.StaticText(self._dialog, -1, _("Tøída formuláøe:"))
         choices = [self._BROWSE_FORM, self._EDIT_FORM, self._BROWSE_DUAL_FORM,
-                   self._CODEBOOK_FORM]
+                   self._MULTI_BROWSE_DUAL_FORM, self._CODEBOOK_FORM]
         control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=choices)
         control.SetSelection(0)
         self._handle_keys(control)

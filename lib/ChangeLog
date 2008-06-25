@@ -4,6 +4,7 @@
 	arguments.
 
 	* pytis/form/dialog.py (ExitDialog): Further generalizations.
+	(RunFormDialog): `MultiBrowseDualForm' added.
 
 2008-06-24  Tomas Cerha  <cerha@brailcom.org>
 
