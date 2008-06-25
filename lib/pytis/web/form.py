@@ -514,6 +514,7 @@ class BrowseForm(LayoutForm):
             if limit_ in limits:
                 limit = limit_
         self._limit = limit
+        self._index_search_string = ''
         # Determine the current offset.
         if limit is None:
             offset = 0
@@ -524,11 +525,9 @@ class BrowseForm(LayoutForm):
                 if not error:
                     search = pytis.data.EQ(self._key, value)
             elif params.has_key('index_search'):
-                searchcol = sorting[0][0]
-                if isinstance(self._row[searchcol].type(), pd.String):
-                    search_string = params['index_search'] + "*"
-                    search = pytis.data.WM(searchcol, pd.Value(pd.String(), search_string),
-                                           ignore_case=False)
+                if isinstance(self._row[sorting[0][0]].type(), pd.String):
+                    self._index_search_string = search_string = params['index_search']
+                    search = self._index_search_condition(search_string)
             else:
                 if params.has_key('offset'):
                     offset = params['offset']
@@ -714,6 +713,37 @@ class BrowseForm(LayoutForm):
             dir = dict(self._SORTING_DIRECTIONS)[dir_]
         return generator.uri(self._handler, ('form-name', self._name), sort=sort, dir=dir, **kwargs)
 
+    def _index_search_condition(self, search_string):
+        value = pd.Value(pd.String(), search_string+"*")
+        return pytis.data.WM(self._sorting[0][0], value, ignore_case=False)
+    
+    def _export_index_search_controls(self, context):
+        g = context.generator()
+        field = self._field(self._sorting[0][0])
+        if not isinstance(field.type, pd.String):
+            return ()
+        result = []
+        data = self._row.data()
+        for level in range(len(self._index_search_string)+1):
+            if level:
+                search_string = self._index_search_string[:level]
+                cond = self._index_search_condition(search_string)
+            else:
+                search_string = None
+                cond = None
+            values = [v.value() for v in data.distinct(field.id, prefix=level+1, condition=cond)
+                      if v.value() is not None]
+            if len(values) < 3 or len(values) > 100:
+                break
+            if search_string:
+                label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
+            else:
+                label = field.label + ":"
+            links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record')
+                     for v in values]
+            result.append(g.div(label +' '+ concat(links, separator='-')))
+        return (g.div(result, cls='index-search-controls'),)
+
     def _export_controls(self, exporter, second=False):
         limit, page, count = self._limit, self._page, self._count
         g = exporter.generator()
@@ -725,23 +755,12 @@ class BrowseForm(LayoutForm):
         result = ()
         if count > 100:
             if not second:
-                index_search_controls = None
-                index_column = self._sorting[0][0]
-                if isinstance(self._row[index_column].type(), pd.String):
-                    data = self._row.data()
-                    values = [v.value() for v in data.distinct(index_column, prefix=1)
-                              if v.value() is not None]
-                    if len(values) > 2 and len(values) < 100:
-                        links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record')
-                                 for v in values]
-                        index_search_controls = g.div((_("Index")+': ',
-                                                       concat(links, separator='-')),
-                                                      cls='index-search-controls')
+                index_search_controls = self._export_index_search_controls(exporter)
                 self._index_search_controls = index_search_controls
             else:
                 index_search_controls = self._index_search_controls
             if index_search_controls:
-                result += (index_search_controls,)
+                result += index_search_controls
         if pages > 1:
             result += (g.span((g.label(_("Page")+': ', offset_id),
                                g.select(name='offset', id=offset_id, selected=page*limit,
