@@ -1,4 +1,14 @@
+2008-06-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py: Use new `ExitDialog' constructor
+	arguments.
+
+	* pytis/form/dialog.py (ExitDialog): Further generalizations.
+
 2008-06-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Added support for multi-level alphabetical
+	indexes.
 
 	* pytis/form/application.py: Add formely saved startup forms to
 	the list of forms within the exit dialog.

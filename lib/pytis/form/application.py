@@ -564,8 +564,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     forms.append((cls, name, title, False))
             if forms:
                 items = [(checked, title, cls.descr()) for cls, name, title, checked in forms]
-                save = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
-                exit, result = self.run_dialog(ExitDialog, items, save=save)
+                save_state = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
+                exit, result = self.run_dialog(ExitDialog, save_columns=(_("Název"), _("Typ")),
+                                               save_items=items, save_state=save_state)
                 if not exit:
                     return False
                 self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, result is not None)

@@ -1207,17 +1207,11 @@ class ExitDialog(Question):
     The dialog lets the user to save the application state by checking the items (forms, documents)
     which should be opened automatically on next startup.
 
-    The constructor argument ITEMS can be used to pass a sequence of checkable items.  Each item is
-    a sequence.  The first value in this sequence is a boolean flag indicating the initial checkbox
-    state for this item.  The following values are textual fields describing the item.  The number
-    of textual fields is not limited, but there should be at least one and all items should have
-    the same number of fields.  These fields are presented in a table-like list.
-    
     The result returned by the `run()' method is a pair (EXIT, ITEMS).  EXIT is True if the user
     really wants to quit the application or False otherwise.  ITEMS is a sequence of boolean
-    values, one for each item passed to the constructor.  The value is True for items which were
-    checked and False for unchecked items.  ITEMS is None if the user doesn't want to save the
-    current state (so the prevoius saved state should be used).
+    values, one for each item of 'save_items' passed to the constructor.  The value is True for
+    items which were checked and False for unchecked items.  ITEMS is None if the user doesn't want
+    to save the current state (so the prevoius saved state should be used).
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
@@ -1227,40 +1221,57 @@ class ExitDialog(Question):
             wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
             wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
 
-    def __init__(self, parent, items, save=True):
-        question = _("Aplikace obsahuje otevøené formuláøe\n" + \
-                     "Opravdu chcete ukonèit aplikaci?")
-        super(ExitDialog, self).__init__(parent, question, title=_("Ukonèit aplikaci"),
-                                         default=True, icon=self.ICON_QUIT)
-        assert isinstance(items, (list, tuple))
-        assert isinstance(save, bool)
-        self._items = items
-        self._save = save
+    def __init__(self, parent, title=_("Ukonèit aplikaci"),
+                 message=_("Opravdu chcete ukonèit aplikaci?"), icon=Message.ICON_QUIT,
+                 save_label=_("Zapamatovat oznaèené formuláøe pro pøí¹tí spu¹tìní"),
+                 save_state=True, save_columns=(), save_items=()):
+        """Arguments:
+
+           save_label -- save state checkbox label as a string or unicode.  This checkbox
+             indicates, whether the current application state should be saved or not.
+           save_state -- initial state of the save checkbox as a boolean value.
+           save_columns -- sequence of column labels for the list of items to save.
+           save_items -- a sequence of checkable items.  Each item is a sequence.  The first value
+             in this sequence is a boolean flag indicating the initial checkbox state for this
+             item.  The following values are textual fields describing the item.  The number of
+             textual fields must be the same as the numer of column labels passed in
+             'save_columns'.  These fields are presented in a table-like list.
+    
+        """
+        super(ExitDialog, self).__init__(parent, message, title=title, default=True, icon=icon)
+        assert isinstance(save_state, bool)
+        assert isinstance(save_columns, (list, tuple))
+        assert isinstance(save_items, (list, tuple))
+        assert isinstance(save_label, basestring)
+        self._save_state = save_state
+        self._save_label = save_label
+        self._save_columns = save_columns
+        self._save_items = save_items
 
     def _create_content(self, sizer):
         super(ExitDialog, self)._create_content(sizer)
-        label = _("Zapamatovat oznaèené formuláøe pro pøí¹tí spu¹tìní")
-        self._checkbox = checkbox = wx.CheckBox(self._dialog, -1, label)
-        checkbox.SetValue(self._save)
-        self._list = list = self._CheckListCtrl(self._dialog)
-        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, list.GetId(),
-                    lambda e: list.ToggleItem(e.m_itemIndex))
-        list.InsertColumn(0, _("Název"))
-        list.InsertColumn(1, _("Typ"))
-        for i, item in enumerate(self._items):
-            list.InsertStringItem(i, "")
-            list.CheckItem(i, item[0])
-            for j in range(len(item)-1):
-                list.SetStringItem(i, j, item[j+1])
-        list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
-        sizer.Add(list, 1, wx.EXPAND|wx.ALL, 5)
-        sizer.Add(checkbox, 0, wx.ALL|wx.ALIGN_LEFT, 5)
+        if self._save_items:
+            self._checkbox = checkbox = wx.CheckBox(self._dialog, -1, self._save_label)
+            checkbox.SetValue(self._save_state)
+            self._list = list = self._CheckListCtrl(self._dialog)
+            wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, list.GetId(),
+                        lambda e: list.ToggleItem(e.m_itemIndex))
+            for i, label in enumerate(self._save_columns):
+                list.InsertColumn(i, label)
+            for i, item in enumerate(self._save_items):
+                list.InsertStringItem(i, "")
+                list.CheckItem(i, item[0])
+                for j in range(len(item)-1):
+                    list.SetStringItem(i, j, item[j+1])
+            list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+            list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+            sizer.Add(list, 1, wx.EXPAND|wx.ALL, 5)
+            sizer.Add(checkbox, 0, wx.ALL|wx.ALIGN_LEFT, 5)
         
     def _customize_result(self, result):
         exit = super(ExitDialog, self)._customize_result(result)
-        if self._checkbox.IsChecked():
-            items = [self._list.IsChecked(i) for i, triple in enumerate(self._items)]
+        if self._save_items and self._checkbox.IsChecked():
+            items = [self._list.IsChecked(i) for i, triple in enumerate(self._save_items)]
         else:
             items = None
         return (exit, items)
