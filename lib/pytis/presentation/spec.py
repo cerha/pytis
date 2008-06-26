@@ -775,7 +775,7 @@ class ViewSpec(object):
                  actions=(), sorting=None, grouping=None, group_heading=None, check=(),
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
-                 conditions=(), aggregations=()):
+                 conditions=(), aggregations=(), bindings=()):
         
         """Inicializuj instanci.
 
@@ -913,6 +913,8 @@ class ViewSpec(object):
           aggregations -- a sequence aggregation functions which should be turned on automatically
             for this view (in forms which support that).  The items are 'AGG_*' constants of
             'pytis.data.Data'.
+
+          bindings -- a sequence of binding specifications as 'Binding' instances.
             
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
@@ -1016,6 +1018,10 @@ class ViewSpec(object):
                 assert agg in [getattr(pytis.data.Data, attr)
                                for attr in public_attributes(pytis.data.Data)
                                if attr.startswith('AGG_')]
+        assert isinstance(bindings, (tuple, list))
+        if __debug__:
+            for b in bindings:
+                assert isinstance(b, Binding)
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -1047,6 +1053,7 @@ class ViewSpec(object):
         self._row_style = row_style
         self._conditions = tuple(conditions)
         self._aggregations = tuple(aggregations)
+        self._bindings = tuple(bindings)
         
     def _linearize_actions(self, spec):
         actions = []
@@ -1158,6 +1165,10 @@ class ViewSpec(object):
     def aggregations(self):
         """Return default aggregation functions as a tuple."""
         return self._aggregations
+
+    def bindings(self):
+        """Return bindings as a tuple."""
+        return self._bindings
 
     
 class BindingSpec(object):
@@ -2617,6 +2628,12 @@ class Specification(object):
                              'oid', # for backward compatibility 
                              )):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
+        if isinstance(self.bindings, (tuple, list)):
+            # Only pass new style bindings to ViewSpec, old style bindings are accessed through the
+            # 'binding_spec' resolver function. 
+            self._view_spec_kwargs['bindings'] = self.bindings
+        else:
+            assert isinstance(self.bindings, dict):
         for arg in ('layout', 'actions', 'columns'):
             try:
                 value = self._view_spec_kwargs[arg]

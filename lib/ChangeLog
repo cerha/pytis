@@ -1,3 +1,9 @@
+2008-06-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (ViewSpec): Added support for
+	`bindings'.
+	(Specification.__init__): Pass the new style bindings to ViewSpec.
+
 2008-06-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Added support for multi-level alphabetical
