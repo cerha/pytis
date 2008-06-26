@@ -2633,7 +2633,7 @@ class Specification(object):
             # 'binding_spec' resolver function. 
             self._view_spec_kwargs['bindings'] = self.bindings
         else:
-            assert isinstance(self.bindings, dict):
+            assert isinstance(self.bindings, dict)
         for arg in ('layout', 'actions', 'columns'):
             try:
                 value = self._view_spec_kwargs[arg]
