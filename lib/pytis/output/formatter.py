@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -885,11 +885,14 @@ class LoutFormatter(Tmpdir):
                     raise ProgramError('Unknown alignment', alignment)
                 return cell_fun
             # Hlavièková buòka
-            label = cStringIO.StringIO()
-            self._format(c.label, label)
+            if c.label is not None:
+                label_stream = cStringIO.StringIO()
+                self._format(c.label, label_stream)
+                label = label_stream.getvalue()
+            else:
+                label = ''
             cell_fun = cell_function(c.label_alignment)
-            hcell = '{ %s } %s header { yes } { %s }' % \
-                    (all_width, cell_fun, label.getvalue())
+            hcell = '{ %s } %s header { yes } { %s }' % (all_width, cell_fun, label)
             hcells.append(hcell)            
             # Netabulková buòka
             cell_fun = cell_function(c.alignment)
@@ -899,19 +902,20 @@ class LoutFormatter(Tmpdir):
         s = stream
         # Hlavièka
         nindent = self._indent(indent)
-        labels = string.join(hcells, ' | ')
-        hsep_raw = template.separator_height()
-        hsep = self._unit(hsep_raw, UPoint)
-        hmargin = self._unit(template.separator_margin(), UPoint)
-        if hsep_raw:
-            labels = (('@hline placement { bottom } linewidth { %s } ' +
-                       'margin { %s } { %s }') % (hsep, hmargin, labels))
-        else:
-            labels = '%s //%s //%s' % (labels, hmargin, hmargin)
-        header = '{\n%s%s\n%s}\n%s' % (nindent, labels, nindent, indent)
-        s.write('\n%s@LLP\n%s@BeginHeaderComponent {\n%s%s}\n%s//\n' % \
-                (indent, indent, nindent, header, indent))
-        s.write(indent + header + '\n')
+        if [c for c in columns if c.label is not None]:
+            labels = string.join(hcells, ' | ')
+            hsep_raw = template.separator_height()
+            hsep = self._unit(hsep_raw, UPoint)
+            hmargin = self._unit(template.separator_margin(), UPoint)
+            if hsep_raw:
+                labels = (('@hline placement { bottom } linewidth { %s } ' +
+                           'margin { %s } { %s }') % (hsep, hmargin, labels))
+            else:
+                labels = '%s //%s //%s' % (labels, hmargin, hmargin)
+                header = '{\n%s%s\n%s}\n%s' % (nindent, labels, nindent, indent)
+                s.write('\n%s@LLP\n%s@BeginHeaderComponent {\n%s%s}\n%s//\n' % \
+                        (indent, indent, nindent, header, indent))
+                s.write(indent + header + '\n')
         # Øádky dat
         sep_raw = template.line_separator_height()
         sep = self._unit(sep_raw, UPoint)

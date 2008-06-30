@@ -1,3 +1,9 @@
+2008-06-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/output/formatter.py: Respect `None' values in
+	`Table.Column' `label' specification as described in the
+	docstring.
+
 2008-06-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py (ViewSpec): Added support for
