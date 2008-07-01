@@ -469,7 +469,9 @@ class BrowseForm(LayoutForm):
         if uri_provider:
             def browse_form_uri_provider(row, cid=None, type=UriType.LINK):
                 if cid == self._columns[0] and type==UriType.LINK:
-                    cid = None
+                    uri = uri_provider(row, None, type=type)
+                    if uri is not None:
+                        return uri
                 return uri_provider(row, cid, type=type)
             kwargs['uri_provider'] = browse_form_uri_provider
         super(BrowseForm, self).__init__(view, row, **kwargs)

@@ -1,3 +1,8 @@
+2008-07-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py (BrowseForm): Fallback to column uri for the
+	first column if the record uri is None.
+
 2008-06-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/output/formatter.py: Respect `None' values in
