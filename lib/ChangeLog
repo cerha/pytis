@@ -5,6 +5,8 @@
 	fields, always create `_Field' instances for all existing fields.
 	Added support for formatting templates in `ItemizedView' items and
 	`ListView' title.
+	(BrowseForm._export_index_search_controls): Leave spaces between
+	index links.
 
 	* pytis/presentation/spec.py (FieldSpec): Allow more convenient
 	computer specification.
