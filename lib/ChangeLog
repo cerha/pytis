@@ -1,5 +1,8 @@
 2008-07-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py (FieldSpec): Allow more convenient
+	computer specification.
+
 	* pytis/form/search.py (SFDialog._selected_condition): Don't allow
 	wildcard matching for binary types.
 
