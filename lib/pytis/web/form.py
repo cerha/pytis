@@ -118,18 +118,23 @@ class FieldForm(Form):
     
     def __init__(self, *args, **kwargs):
         super(FieldForm, self).__init__(*args, **kwargs)
-        self._fields = dict([(id, self._field(id)) for id in self._used_fields()])
+        self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
         
     def _field(self, id):
         from field import _Field
         return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
-    def _used_fields(self):
-        # Override this method to return a sequence of field identifiers for all used fields.
-        return ()
-        
     def _format_field(self, exporter, field):
         return field.formatter.format(exporter.generator(), self._row, field)
+
+    def _interpolate(self, context, template, row):
+        if callable(template):
+            template = template(row)
+        result = template.interpolate(lambda fid: self._format_field(context, self._fields[fid]))
+        # Translation is called immediately to force immediate interpolation (with the current row
+        # data).  Delayed translation (which invokes the interpolation) would use invalid row data
+        # (the 'PresentedRow' instance is reused and filled with table data row by row).
+        return context.translate(result)
     
 
 class LayoutForm(FieldForm):
@@ -143,9 +148,6 @@ class LayoutForm(FieldForm):
         super(LayoutForm, self).__init__(view, row, **kwargs)
         self._allow_table_layout = allow_table_layout
         
-    def _used_fields(self):
-        return self._layout.order()
-    
     def _export_group(self, exporter, group, inner=False):
         g = exporter.generator()
         result = []
@@ -546,17 +548,6 @@ class BrowseForm(LayoutForm):
         self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
         self._align = dict([(f.id, 'right') for f in cfields if isinstance(f.type, pd.Number)])
 
-    def _used_fields(self):
-        used = list(self._columns)
-        if self._view.grouping():
-            for fid in self._view.grouping():
-                if fid not in used:
-                    used.append(fid)
-            heading = self._view.group_heading()
-            if heading is not None and heading not in used:
-                used.append(heading)
-        return used
-
     def _export_cell(self, exporter, field):
         value = self._format_field(exporter, field)
         if field.id == self._column_fields[0].id and self._tree_order_column:
@@ -828,18 +819,14 @@ class ListView(BrowseForm):
                           for id in list_layout.meta()]
             self._image = list_layout.image() and self._field(list_layout.image())
             
-    def _used_fields(self):
-        layout = self._view.list_layout()
-        if layout:
-            return layout.layout() and layout.layout().order() or ()
-        else:
-            return super(ListView, self)._used_fields()
-    
     def _export_row(self, exporter, row, n):
         layout = self._list_layout
         g = exporter.generator()
         parser = lcg.Parser()
-        title = self._row[layout.title()].export()
+        if isinstance(layout.title(), lcg.TranslatableText):
+            title = self._interpolate(exporter, layout.title(), row)
+        else:
+            title = self._row[layout.title()].export()
         if layout.anchor():
             name = layout.anchor() % row[self._key].export()
             title = g.link(title, None, name=name)
@@ -890,13 +877,18 @@ class ItemizedView(BrowseForm):
     
     _CSS_CLS = 'itemized-view'
     
-    def __init__(self, view, row, columns=None, separator=', ', **kwargs):
+    def __init__(self, view, row, columns=None, separator=', ', template=None, **kwargs):
         """Arguments:
 
           columns -- an explicit list of fields shown for each record.  Only the first column of
             the underlying view is shown by default, but if a sequence of column identifierrs is
             passed, multiple values will be shown (separated by the 'separator').
           separator -- string used to separate individual values when multiple 'columns' are shown.
+          template -- if used, the list items will be formatted using given template string.  The
+            string must be an `lcg.TranslatableText' instance.  The final item text will be
+            produced by interpolating variables in the string by the formatted values of
+            corresponding fields.  The argument may also be a callable object (function), which
+            returns the template string when called with a `PresentedRow' instance as an argument.
 
           See the parent classes for definition of the remaining arguments.
           
@@ -905,13 +897,18 @@ class ItemizedView(BrowseForm):
             columns = (view.columns()[0],) # Include just the first column by default.
         super(ItemizedView, self).__init__(view, row, columns=columns, **kwargs)
         assert isinstance(separator, basestring)
+        assert template is None or isinstance(template, lcg.TranslatableText) or callable(template)
         self._separator = separator
-        
+        self._template = template
         
     def _export_row(self, exporter, row, n):
-        fields = [self._format_field(exporter, field)
-                  for field in self._column_fields if row[field.id].value() is not None]
-        return concat(fields, separator=self._separator)
+        template = self._template
+        if template:
+            return self._interpolate(exporter, template, row)
+        else:
+            fields = [self._format_field(exporter, field)
+                      for field in self._column_fields if row[field.id].value() is not None]
+            return concat(fields, separator=self._separator)
 
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
