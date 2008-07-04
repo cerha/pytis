@@ -1,3 +1,11 @@
+2008-07-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/search.py (SFDialog._selected_condition): Don't allow
+	wildcard matching for binary types.
+
+	* pytis/data/types_.py: Boolean validation fixed.  Wildcard
+	matching enabled only for string types.
+
 2008-07-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py (BrowseForm): Fallback to column uri for the

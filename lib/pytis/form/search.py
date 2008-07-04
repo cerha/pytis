@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -403,25 +403,21 @@ class SFDialog(SFSDialog):
                         quit(i, wcol2, _("Nesluèitelné typy %s a %s") %
                              (col1.type().__class__.__name__,
                               col2.type().__class__.__name__))
+            elif isinstance(col1.type(), pytis.data.Binary):
+                if wval.GetValue():
+                    quit(i, wval, _("Binární sloupec lze testovat pouze na prázdnou hodnotu"))
+                elif op not in (pytis.data.EQ, pytis.data.NE):
+                    quit(i, wop, _("Binární sloupec lze testovat pouze na rovnost èi nerovnost"))
+                arg2 = pytis.data.Value(col1.type(), None)
             else:
                 val = wval.GetValue()
-                if self._WM_OPERATORS.has_key(op) and \
-                       (val.find('*') >= 0 or val.find('?') >= 0):
+                if self._WM_OPERATORS.has_key(op) and (val.find('*') >= 0 or val.find('?') >= 0):
                     op = self._WM_OPERATORS[op]
                     value, err = col1.type().wm_validate(val)
                 else:
                     kwargs = dict(strict=False)
-                    if isinstance(col1.type(), pytis.data.Binary):
-                        if val:
-                            quit(i, wval, _("Binární sloupec lze testovat "
-                                            "pouze na prázdnou hodnotu"))
-                        else:
-                            val = None
-                        if op not in (pytis.data.EQ, pytis.data.NE):
-                            quit(i, wop, _("Binární sloupec lze testovat "
-                                           "pouze na rovnost èi nerovnost"))
-                    elif isinstance(col1.type(), pytis.data.Boolean):
-                        kwargs = dict(extended=True)
+                    if isinstance(col1.type(), pytis.data.Boolean):
+                        kwargs['extended'] = True
                     value, err = col1.type().validate(val, **kwargs)
                 if err:
                     quit(i, wval, err.message())
