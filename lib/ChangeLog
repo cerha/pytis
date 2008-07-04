@@ -1,5 +1,8 @@
 2008-07-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py: Don't show grouping columns when not in
+	columns.  Fix group headings in `ListView'.
+
 	* pytis/presentation/spec.py (FieldSpec): Allow more convenient
 	computer specification.
 

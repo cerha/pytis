@@ -118,7 +118,7 @@ class FieldForm(Form):
     
     def __init__(self, *args, **kwargs):
         super(FieldForm, self).__init__(*args, **kwargs)
-        self._fields = [self._field(id) for id in self._used_fields()]
+        self._fields = dict([(id, self._field(id)) for id in self._used_fields()])
         
     def _field(self, id):
         from field import _Field
@@ -142,7 +142,6 @@ class LayoutForm(FieldForm):
         self._layout = layout
         super(LayoutForm, self).__init__(view, row, **kwargs)
         self._allow_table_layout = allow_table_layout
-        self._field_dict = dict([(f.id, f) for f in self._fields])
         
     def _used_fields(self):
         return self._layout.order()
@@ -161,7 +160,7 @@ class LayoutForm(FieldForm):
                 fields = []
                 result.append(self._export_group(exporter, item, inner=True))
             else:
-                field = self._field_dict[item]
+                field = self._fields[item]
                 ctrl = self._export_field(exporter, field)
                 if ctrl is not None:
                     label = self._export_field_label(exporter, field)
@@ -544,7 +543,8 @@ class BrowseForm(LayoutForm):
             self._tree_order_column = sorting[0][0]
         else:
             self._tree_order_column = None
-        self._align = dict([(f.id, 'right') for f in self._fields if isinstance(f.type, pd.Number)])
+        self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
+        self._align = dict([(f.id, 'right') for f in cfields if isinstance(f.type, pd.Number)])
 
     def _used_fields(self):
         used = list(self._columns)
@@ -559,7 +559,7 @@ class BrowseForm(LayoutForm):
 
     def _export_cell(self, exporter, field):
         value = self._format_field(exporter, field)
-        if field.id == self._fields[0].id and self._tree_order_column:
+        if field.id == self._column_fields[0].id and self._tree_order_column:
             order = self._row[self._tree_order_column].value()
             if order is not None:
                 level = len(order.split('.')) - 2
@@ -607,7 +607,7 @@ class BrowseForm(LayoutForm):
         g = exporter.generator()
         cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
                       **self._style(field.style, row, n, field))
-                 for field in self._fields]
+                 for field in self._column_fields]
         if self._search and self._found and self._offset == (n + self._page * self._limit):
             id = 'found-record'
         else:
@@ -616,7 +616,7 @@ class BrowseForm(LayoutForm):
 
     def _export_group_heading(self, exporter, field):
         g = exporter.generator()
-        return g.tr(g.th(self._format_field(exporter, field), colspan=len(self._fields)),
+        return g.tr(g.th(self._format_field(exporter, field), colspan=len(self._column_fields)),
                     cls='group-heading')
     
     def _export_headings(self, exporter):
@@ -638,12 +638,12 @@ class BrowseForm(LayoutForm):
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
-        return concat([g.th(label(f)) for f in self._fields])
+        return concat([g.th(label(f)) for f in self._column_fields])
     
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
         return g.table((g.thead(g.tr(self._export_headings(exporter))),
-                        g.tfoot(g.tr(g.td(summary, colspan=len(self._fields)))),
+                        g.tfoot(g.tr(g.td(summary, colspan=len(self._column_fields)))),
                         g.tbody(rows)), border=1)
 
     def _export_body(self, exporter):
@@ -668,7 +668,7 @@ class BrowseForm(LayoutForm):
         self._page = page
         grouping = self._view.grouping()
         if self._view.group_heading():
-            group_heading = self._field(self._view.group_heading())
+            group_heading = self._fields[self._view.group_heading()]
         else:
             group_heading = None
         if self._sorting != self._view.sorting():
@@ -822,6 +822,7 @@ class ListView(BrowseForm):
             self._CSS_CLS = super_._CSS_CLS
             self._export_row = super_._export_row
             self._wrap_exported_rows = super_._wrap_exported_rows
+            self._export_group_heading = super_._export_group_heading
         else:
             self._meta = [(self._field(id), id in list_layout.meta_labels())
                           for id in list_layout.meta()]
@@ -903,10 +904,13 @@ class ItemizedView(BrowseForm):
         if not columns:
             columns = (view.columns()[0],) # Include just the first column by default.
         super(ItemizedView, self).__init__(view, row, columns=columns, **kwargs)
+        assert isinstance(separator, basestring)
         self._separator = separator
         
+        
     def _export_row(self, exporter, row, n):
-        fields = [self._format_field(exporter, field) for field in self._fields]
+        fields = [self._format_field(exporter, field)
+                  for field in self._column_fields if row[field.id].value() is not None]
         return concat(fields, separator=self._separator)
 
     def _wrap_exported_rows(self, exporter, rows, summary):
@@ -943,7 +947,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
             for cid in check_columns:
                 assert self._row.has_key(cid), cid
         if check_columns is None:
-            check_columns = tuple([field.id for field in self._fields
+            check_columns = tuple([field.id for field in self._column_fields
                                    if isinstance(field.type, pd.Boolean)])
         self._check_columns = check_columns
 
