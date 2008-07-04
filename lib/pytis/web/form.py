@@ -735,7 +735,7 @@ class BrowseForm(LayoutForm):
             links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record',
                             title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
-            result.append(g.div(label +' '+ concat(links, separator='-')))
+            result.append(g.div(label +' '+ concat(links, separator='&nbsp;')))
         return (g.div(result, cls='index-search-controls'),)
 
     def _export_controls(self, exporter, second=False):
