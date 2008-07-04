@@ -362,8 +362,8 @@ class Type(object):
         nepodporují, vrací dvojici (None, ERROR).
 
         """
-        assert isinstance(object, types.StringTypes)
-        return WMValue(self, object), None
+        msg = _("Hvìzdièkové výrazy nejsou podporovány pro hodnoty typu '%s'.")
+        return None, ValidationError(msg % self.__class__.__name__)
 
     def _validation_error(self, id, **kwargs):
         message = self._validation_messages[id]
@@ -713,6 +713,10 @@ class String(Limited):
         assert isinstance(value, types.StringTypes), \
                ('Value not a string', value)
         return isinstance(value, unicode) and value or unicode(value)
+
+    def wm_validate(self, object):
+        assert isinstance(object, basestring)
+        return WMValue(self, object), None
 
     
 class Password(String):
@@ -1151,6 +1155,13 @@ class Boolean(Type):
     jsou u¾ivatelskými hodnotami výètu.  Odpovídající vnitøní hodnoty jsou
     blí¾e nespecifikované pythonové objekty s pythonovu sémantikou pravdy a
     nepravdy.
+
+    Validaèní argument 'extended' umo¾òuje liberálnìj¹í kontrolu vstupu.  Je-li pravdivý, jsou
+    kromì \"oficiálních\" hodnot 'object' zvalidovány i následující stringové hodnoty:
+    
+    \'t\', \'1\' -- jako reprezentace pravdivé hodnoty
+    \'f\', \'0\' -- jako reprezentace nepravdivé hodnoty
+
     
     """
 
@@ -1161,27 +1172,20 @@ class Boolean(Type):
         super(Boolean, self).__init__(enumerator=e, not_null=not_null)
 
     def _validate(self, object, extended=False):
-        """Vra» instanci tøídy 'Value' s hodnotou definovanou pro 'object'.
-
-        Je-li argument 'extended' pravdivý, jsou kromì \"oficiálních\" hodnot
-        'object' zvalidovány i následující stringové hodnoty:
-
-          \'t\', \'1\' -- jako reprezentace pravdivé hodnoty
-          \'f\', \'0\', \'\' -- jako reprezentace nepravdivé hodnoty
-        
-        """
-        if not extended and isinstance(object, str):
-            object = string.strip(object)
+        print "->", object, extended
+        if extended:
             if object in ('t', '1'):
-                object = 'T'
-            elif object in ('', 'f', '0'):
-                object = 'F'
-        return super(Boolean, self)._validate(object)
+                return Value(self, True), None
+            elif object in ('f', '0'):
+                return Value(self, False), None
+        # Valid values are found in _SPECIAL_VALUES before _validate is called.
+        return None, ValidationError(_("Neplatná vstupní hodnota typu boolean."))
+
     
     def default_value(self):
         return Value(self, False)
 
-
+    
 class Binary(Limited):
     """Binary data.
 
