@@ -1,10 +1,14 @@
 2008-07-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Don't show grouping columns when not in
-	columns.  Fix group headings in `ListView'.
+	columns.  Fix group headings in `ListView'.  Don't care about used
+	fields, always create `_Field' instances for all existing fields.
+	Added support for formatting templates in `ItemizedView' items and
+	`ListView' title.
 
 	* pytis/presentation/spec.py (FieldSpec): Allow more convenient
 	computer specification.
+	(ListLayout): Docstring updated.
 
 	* pytis/form/search.py (SFDialog._selected_condition): Don't allow
 	wildcard matching for binary types.

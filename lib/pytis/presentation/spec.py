@@ -1707,7 +1707,9 @@ class ListLayout(object):
         Arguemnts:
 
           title -- identifier of a field which will be used as a title for each item in the list (a
-            string).
+            string).  An 'lcg.TranslatableText' instance can also be passed as an interpolation
+            template.  In this case the title will be produced by interpolation of formatted row
+            values within given string (with python string formatting syntax).
 
           meta -- a sequence of field identifiers (strings) which will be printed underneath each
             item's title as records meta information.
