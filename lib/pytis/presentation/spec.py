@@ -1020,8 +1020,12 @@ class ViewSpec(object):
                                if attr.startswith('AGG_')]
         assert isinstance(bindings, (tuple, list))
         if __debug__:
+            bids = []
             for b in bindings:
                 assert isinstance(b, Binding)
+                if b.id() is not None:
+                    assert b.id() not in bids, "Duplicate binding id: %s" % b.id()
+                    bids.append(b.id())
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -1300,37 +1304,50 @@ class Binding(object):
     Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
 
     """
-    def __init__(self, title, name, binding_column=None, condition=None):
+    def __init__(self, title, name, binding_column=None, condition=None, single=False, id=None):
         """Arguments:
 
           title -- title used for the list of related records
           name -- name of the related specification
-          binding_column -- the string identifier of the binding column in the related view.  This
-            column must have a codebook specification pointing to the main form (the view for which
-            the binding is used).  The related records will be filtered by this column
-            automatically.  The binding column represents the typical case of 1:N relation with the
-            dependent form having a foreign key (codebook) pointing to the main form.  You will
-            need to use the generic 'condition' in all other cases.  This argument may be used as
-            positional.
+          binding_column -- the string identifier of the binding column.  The meaning depends on
+            the type of the binding.  The binding can be 1:1 or 1:N and is determined by the
+            'single' argument (below).  Binding column can be combined with a 'condition' to
+            further restrict the relation or can be completely omitted and only a generic condition
+            may be used to define the relation.  In this case, however, the application has no
+            information about the type of the binding and may not be able to offer some features
+            which require this knowledge.  This argument may be used as positional.
           condition -- a function of one argument (the 'PresentedRow' instance) returning the
             current binding condition (a 'pytis.data.Operator' instance) to filter the data of the
             dependent form for given main form row.  If used together with the binding column, the
             condition will be used in conjunction with the binding column condition.  If
             'binding_column' is None, this condition will be used solely.
+          single -- boolean flag indicating whether this binding corresponds to a 1:1 relation
+            (True value) or 1:N relation (False value).  The value of this flag determines the
+            meaning of the 'binding_column' argument.  For the 1:1 relation, there is exactly one
+            record in the related view corresponding to one record of the main form.  The
+            'binding_column' in this case is the identifier of a column in main form specification
+            which must have a codebook specification pointing to the related view.  For the 1:N
+            relation the binding column must exist in the related view and must have a codebook
+            (foreign key) specification pointing to the main form (the view for which the binding
+            is used).
+          id -- unique string identifier of the binding.  This identifier may be used to
+            refer to the binding.
             
         """
-        assert isinstance(name, (str, unicode)), name
-        assert isinstance(title, (str, unicode)), title
+        assert isinstance(name, basestring), name
+        assert isinstance(title, basestring), title
         assert binding_column is None or isinstance(binding_column, (str, unicode)), binding_column
         assert condition is None or callable(condition), condition
         assert condition is not None or binding_column is not None, \
                "At least one of 'binding_column', 'condition' must be used."
-        #assert form is None or issubclass(form, pytis.web.BrowseForm), form
+        assert isinstance(single, bool), single
+        assert id is None or isinstance(id, basestring), id
         self._name = name
         self._title = title
         self._binding_column = binding_column
         self._condition = condition
-        #self._form = form
+        self._single = single
+        self._id = id
 
     def title(self):
         return self._title
@@ -1343,6 +1360,12 @@ class Binding(object):
     
     def condition(self):
         return self._condition
+        
+    def single(self):
+        return self._single
+        
+    def id(self):
+        return self._id
         
 
 class Editable(object):
@@ -2648,13 +2671,15 @@ class Specification(object):
     
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
-    
+
     def __init__(self, resolver):
         self._resolver = resolver
-        for attr in ('fields', 'access_rights', 'condition', 'bindings', 'cb', 'sorting'):
-            value = getattr(self, attr)
-            if callable(value):
-                setattr(self, attr, value())
+        for attr in ('fields', 'access_rights', 'condition', 'bindings', 'cb', 'sorting',
+                     'conditions'):
+            if hasattr(self, attr):
+                value = getattr(self, attr)
+                if callable(value):
+                    setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
         assert isinstance(self.fields, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
