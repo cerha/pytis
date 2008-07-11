@@ -680,7 +680,9 @@ class BrowseForm(LayoutForm):
                     self._group = not self._group
                     last_group_values = group_values
                     if group_heading:
-                        exported_rows.append(self._export_group_heading(exporter, group_heading))
+                        exported_heading = self._export_group_heading(exporter, group_heading)
+                        if exported_heading is not None:
+                            exported_rows.append(exported_heading)
             exported_rows.append(self._export_row(exporter, row, n))
             self._last_group = self._group
             n += 1 
@@ -854,7 +856,7 @@ class ListView(BrowseForm):
 
     def _export_group_heading(self, exporter, field):
         #return exporter.generator().h(self._format_field(exporter, field), 3, cls='group-heding')
-        return ''
+        return None
 
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
@@ -910,6 +912,10 @@ class ItemizedView(BrowseForm):
                       for field in self._column_fields if row[field.id].value() is not None]
             return concat(fields, separator=self._separator)
 
+    def _export_group_heading(self, exporter, field):
+        #TODO: Create multi-level lists.
+        return None
+    
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
         return g.list(rows)
