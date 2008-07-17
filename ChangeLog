@@ -1,3 +1,8 @@
+2008-07-17  Pavel Hanak  <hanak@asellus.cz>
+
+	* lib/pytis/extensions/defs.py (_get_default_select.init_select):
+	Correct calling of db_operation.
+
 2008-06-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py (_MenuItemReader._content):

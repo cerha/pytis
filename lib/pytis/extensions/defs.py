@@ -57,7 +57,7 @@ def _get_default_select(spec):
         if sorting is None:
             sorting = tuple([(k.id(), pytis.data.DESCENDANT) for k in data.key()
                              if view.field(k.id()) is not None])
-        success, select_count = db_operation(data.select, sort=sorting, reuse=False)
+        success, select_count = pytis.form.db_operation(data.select, sort=sorting, reuse=False)
         if not success:
             log(EVENT, 'Selhání databázové operace')
             return None
