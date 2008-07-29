@@ -1,5 +1,14 @@
 2008-07-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py (Application._cmd_new_record): Pass
+	`spec_kwargs' to `run_form()'.
+
+	* pytis/util/resolver.py (Resolver._get_spec): Pass the `kwargs'
+	to the specification class constructor rather than to the method.
+
+	* pytis/presentation/spec.py (Specification.view_spec): Pass the
+	keyword arguments to the 
+
 	* pytis/form/form.py (Form): New argument `spec_kwargs' to pass
 	specification constructor arguments.
 
