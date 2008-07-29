@@ -785,9 +785,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return True
     
     def _cmd_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
-                        block_on_new_record=False, transaction=None):
+                        block_on_new_record=False, transaction=None, spec_kwargs={}):
         # Dokumentace viz funkce new_record().
-        view = resolver().get(name, 'view_spec')
+        view = resolver().get(name, 'view_spec', **spec_kwargs)
         on_new_record = view.on_new_record()
         if not block_on_new_record and on_new_record is not None:
             kwargs = dict(prefill=prefill)
@@ -799,7 +799,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 top.refresh()
         else:
             result = run_form(PopupInsertForm, name, prefill=prefill, inserted_data=inserted_data,
-                              multi_insert=multi_insert, transaction=transaction)
+                              multi_insert=multi_insert, transaction=transaction,
+                              spec_kwargs=spec_kwargs)
         return result
 
     def _can_run_procedure(self, spec_name, proc_name, args=(),
