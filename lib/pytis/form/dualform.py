@@ -607,7 +607,7 @@ class MultiForm(Form, Refreshable):
         if kind != ListForm.CALL_MODIFICATION:
             super(MultiForm, self).set_callback(kind, function)
         for form in self._forms:
-            if form:
+            if form and hasattr(form, kind):
                 form.set_callback(kind, function)
         
     def active_form(self):
@@ -652,9 +652,9 @@ class MultiForm(Form, Refreshable):
             active.refresh()
             
 
-class MultiSideBrowseForm(MultiForm):
+class MultiSideForm(MultiForm):
         
-    class SubForm(SideBrowseForm):
+    class TabbedBrowseForm(SideBrowseForm):
         _ALLOW_TITLE_BAR = False
         def _init_attributes(self, binding, **kwargs):
             # Hack: Transform 'Binding' to 'BindingSpec'.
@@ -665,23 +665,37 @@ class MultiSideBrowseForm(MultiForm):
                 bcol = None
             bs = BindingSpec(binding_column=bcol, side_binding_column=sbcol,
                              condition=binding.condition())
-            super(MultiSideBrowseForm.SubForm, self)._init_attributes(binding=bs, **kwargs)
+            super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=bs, **kwargs)
+    class TabbedShowForm(ShowForm):
+        def _init_attributes(self, binding, main_form, **kwargs):
+            self._bcol = bcol = binding.binding_column()
+            self._sbcol = main_form.data().find_column(bcol).type().enumerator().value_column()
+            super(MultiSideForm.TabbedShowForm, self)._init_attributes(**kwargs)
+        def on_selection(self, row):
+            self.select_row({self._sbcol: row[self._bcol]})
             
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
         self._main_form = main_form
-        super(MultiSideBrowseForm, self)._init_attributes(**kwargs)
+        super(MultiSideForm, self)._init_attributes(**kwargs)
 
     def _create_subform(self, parent, binding):
-        if has_access(binding.name()):
-            return self.SubForm(parent, self._resolver, binding.name(), guardian=self,
-                                main_form=self._main_form, binding=binding)
-        else:
+        if not has_access(binding.name()):
             return None
+        kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
+        if binding.single():
+            form = self.TabbedShowForm
+        else:
+            form = self.TabbedBrowseForm
+        return form(parent, self._resolver, binding.name(), **kwargs)
 
     def _create_forms(self, parent):
         return [(binding.title(), self._create_subform(parent, binding))
-                for binding in self._resolver.get(self._main_form.name(), 'binding_spec')]
+                for binding in self._resolver.get(self._main_form.name(), 'binding_spec')
+                # TODO: Remove this condition to include inactive tabs in multi form.
+                # The wx.Notebook doesn't support inactive tabs and the workaround doesn't
+                # work correctly, so we rather exclude disabled tabs here for now.
+                if has_access(binding.name())]
     
 
 class MultiBrowseDualForm(BrowseDualForm):
@@ -704,7 +718,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
     
     def _create_side_form(self, parent, **kwargs):
-        return MultiSideBrowseForm(parent, self._resolver, self._name, guardian=self,
+        return MultiSideForm(parent, self._resolver, self._name, guardian=self,
                                    main_form=self._main_form, **kwargs)
         
     def _on_main_activation(self, alternate=False):
