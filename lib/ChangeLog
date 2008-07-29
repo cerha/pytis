@@ -1,3 +1,21 @@
+2008-07-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py: Added support for `ShowForm' in multi
+	form side forms.
+
+	* pytis/form/list.py (ListForm._cmd_export_file): Fix the case,
+	when `pyExcelerator' is not installed.
+
+2008-07-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py: Disable group headings in `ItemizedView'.
+
+2008-07-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py (Specification): Allow specification
+	of `conditions' as a method.
+	(Binding): Added support for 1:1 relations and binding identifiers.
+
 2008-07-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: Don't show grouping columns when not in
