@@ -75,8 +75,7 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
         pytis.form.DescriptiveDualForm: "duální náhledový formuláø",
         }.get(form_class, "formuláø")
     help = _('Otevøít %s "%s"') % (descr, title.replace('&', ''))
-    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
-                            help=help)
+    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def new_record_mitem(title, name, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
@@ -84,8 +83,7 @@ def new_record_mitem(title, name, hotkey=None, **kwargs):
     help = _('Otevøít vstupní formuláø "%s"') % title
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
-def run_procedure_mitem(title, name, proc_name, hotkey=None,
-                        groups=None, enabled=None, **kwargs):
+def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
     if groups is not None:
         assert isinstance(groups, (tuple, list))
