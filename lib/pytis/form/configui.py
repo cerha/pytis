@@ -173,7 +173,7 @@ class ConfigForm(PopupEditForm):
                             **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
-                        fields, layout=self._layout())
+                        fields, layout=self._layout(), **kwargs)
 
     def _create_data_object(self, **kwargs):
         columns = [pytis.data.ColumnSpec(option, config.option(option).type())

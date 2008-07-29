@@ -96,7 +96,7 @@ class DualForm(Form, Refreshable):
         #return Orientation.VERTICAL
         return self._view.orientation()
 
-    def _create_view_spec(self):
+    def _create_view_spec(self, **kwargs):
         self._main_name, self._side_name = main, side = self._name.split('::')
         return self._resolver.get(main, 'binding_spec')[side]
 
@@ -452,7 +452,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
     def _initial_orientation(self):
         return self._orientation
         
-    def _create_view_spec(self):
+    def _create_view_spec(self, **kwargs):
         return None
 
     def _create_side_form(self, parent):
@@ -491,7 +491,7 @@ class MultiForm(Form, Refreshable):
         return form
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
-    def _create_view_spec(self):
+    def _create_view_spec(self, **kwargs):
         return None
     
     def _create_data_object(self):
@@ -702,7 +702,7 @@ class MultiBrowseDualForm(BrowseDualForm):
     """Dual form with a 'BrowseForm' up and multiple side browse forms."""
     DESCR = _("vícenásobný duální formuláø")
     
-    def _create_view_spec(self):
+    def _create_view_spec(self, **kwargs):
         return None
 
     def _create_data_object(self):

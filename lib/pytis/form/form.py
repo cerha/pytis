@@ -79,7 +79,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             return cls.__class__.__name__
     descr = classmethod(descr)
         
-    def __init__(self, parent, resolver, name, guardian=None, transaction=None, **kwargs):
+    def __init__(self, parent, resolver, name, guardian=None, transaction=None,
+                 spec_kwargs={}, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -93,6 +94,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             klávesových událostí \"nahoru\".  Typicky je to formuláø, který
             tuto instanci vytváøí.
           transaction -- transaction to use when manipulating data
+          spec_kwargs -- keyword arguments passed to the view specification constructor.
           kwargs -- viz ní¾e.
 
         Resolver je pou¾it k získání datové a prezentaèní specifikace a
@@ -121,7 +123,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         zpracovávat pouze klíèové argumenty, které jsou specifické pro danou
         tøídu.  Zbylé pøedá metodì rodièovské tøídy konstrukcí **kwargs.  Takto
         by mìlo být zaruèeno, ¾e dojde postupnì ke zpracování v¹ech argumentù.
-        Pokud nìjaké zbydou, vyvolá bázová tøída výjimku 'AssertionError'.
 
         Teprve po zpravování argumentù konstruktoru a inicializaci atributù je
         vytváøen vlastní obsah formuláøe (viz. '_create_form()').  Toto by mìlo
@@ -139,7 +140,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
-            self._view = self._create_view_spec()
+            self._view = self._create_view_spec(**spec_kwargs)
             self._data = self._create_data_object()
         except (ResolverError, ProgramError):
             log(OPERATIONAL, 'Form initialization error', format_traceback())
@@ -165,9 +166,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._form_state = config.form_state[key] = {}
         self._initial_form_state = copy.copy(self._form_state)
 
-    def _create_view_spec(self):
+    def _create_view_spec(self, **kwargs):
         t = time.time()
-        spec = self._resolver.get(self._name, 'view_spec')
+        spec = self._resolver.get(self._name, 'view_spec', **kwargs)
         log(EVENT, 'Specification read in %.3fs:' % (time.time() - t), spec)
         assert isinstance(spec, ViewSpec)
         return spec        

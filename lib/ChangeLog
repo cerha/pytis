@@ -1,7 +1,17 @@
 2008-07-29  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py (Form): New argument `spec_kwargs' to pass
+	specification constructor arguments.
+
+	* pytis/form/configui.py (ConfigForm._create_view_spec): Pass
+	kwargs to the ViewSpec constructor.
+
 	* pytis/form/dualform.py: Added support for `ShowForm' in multi
 	form side forms.
+	(DualForm._create_view_spec)
+	(DescriptiveDualForm._create_view_spec)
+	(MultiForm._create_view_spec)
+	(MultiBrowseDualForm._create_view_spec): Accept	kwargs.
 
 	* pytis/form/list.py (ListForm._cmd_export_file): Fix the case,
 	when `pyExcelerator' is not installed.
