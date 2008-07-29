@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005, 2006, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -150,12 +150,12 @@ class Resolver(object):
             parts = module_name.split('.')
             module_name = os.path.join(*parts[:-1])
             class_name = parts[-1]
-            instance = self.get_instance(module_name, class_name, self)
+            instance = self.get_instance(module_name, class_name, self, **kwargs)
             try:
                 method = getattr(instance, spec_name)
             except AttributeError:
                 raise ResolverSpecError(module_name, spec_name)
-            return method(**kwargs)
+            return method()
         else:
             obj = self.get_object(module_name, spec_name)
             return obj(self, **kwargs)
