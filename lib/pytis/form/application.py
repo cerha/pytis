@@ -716,12 +716,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         key=lambda f: (f.__class__, f.name()))
             if form is not None:
                 self._raise_form(form)
-                message(_('Formuláø "%s" nalezen na zásobníku oken.') % \
-                        form.title())
+                message(_('Formuláø "%s" nalezen na zásobníku oken.') % form.title())
                 if kwargs.has_key('select_row'):
                     form.select_row(kwargs['select_row'])
                 if kwargs.has_key('filter'):
                     form.filter(kwargs['filter'])
+                if kwargs.has_key('select_side_form'):
+                    form.select_side_form(kwargs['select_side_form'])
                 return result
             if issubclass(form_class, PopupForm):
                 parent = self._modals.top() or self._frame

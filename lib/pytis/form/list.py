@@ -2404,29 +2404,28 @@ class BrowseForm(ListForm):
 class SideBrowseForm(BrowseForm):
     """Form displaying records depending on other form's current row."""
 
-    def _init_attributes(self, main_form, binding, **kwargs):
+    def _init_attributes(self, main_form, binding_column=None, side_binding_column=None,
+                         hide_binding_column=True, condition=None, **kwargs):
         """Process constructor arguments and initialize attributes.
         
         Arguments:
 
           main_form -- the main form instance.
-          binding -- dual form binding specification as a 'BindingSpec' instance
 
         """
         assert isinstance(main_form, Form), main_form
-        assert isinstance(binding, BindingSpec), binding
-        bcol, sbcol = binding.binding_column(), binding.side_binding_column()
-        condition = binding.condition()
-        if bcol:
-            column_condition = lambda row: pytis.data.EQ(sbcol, row[bcol])
+        self._binding_column = binding_column
+        self._side_binding_column = side_binding_column
+        self._hide_binding_column = hide_binding_column
+        if binding_column:
+            column_condition = lambda row: pytis.data.EQ(side_binding_column, row[binding_column])
             if condition is not None:
                 cond = condition
                 condition = lambda row: pytis.data.AND(column_condition(row), cond(row))
             else:
                 condition = column_condition
-            self._sbcol_type = self._data.find_column(sbcol).type()
+            self._side_binding_column_type = self._data.find_column(side_binding_column).type()
         self._main_form = main_form
-        self._binding = binding
         self._selection_condition = condition
         kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
         super(SideBrowseForm, self)._init_attributes(**kwargs)
@@ -2440,18 +2439,17 @@ class SideBrowseForm(BrowseForm):
 
         """
         #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, row))
-        bcol = self._binding.binding_column()
-        if bcol:
-            sbcol = self._binding.side_binding_column()
-            self._prefill = {sbcol: pytis.data.Value(self._sbcol_type, row[bcol].value())}
+        if self._binding_column:
+            value = pytis.data.Value(self._side_binding_column_type,
+                                     row[self._binding_column].value())
+            self._prefill = {self._side_binding_column: value}
         self._lf_condition = self._selection_condition(row)
         self._refresh()
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
-        if self._binding.hide_binding_column():
-            sbcol = self._binding.side_binding_column()
-            return tuple([c for c in columns if c != sbcol])
+        if self._hide_binding_column:
+            return tuple([c for c in columns if c != self._side_binding_column])
         else:
             return columns
 

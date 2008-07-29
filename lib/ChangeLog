@@ -11,10 +11,14 @@
 	(DualForm._create_view_spec)
 	(DescriptiveDualForm._create_view_spec)
 	(MultiForm._create_view_spec)
-	(MultiBrowseDualForm._create_view_spec): Accept	kwargs.
+	(MultiBrowseDualForm._create_view_spec): Accept kwargs.
+	(MultiBrowseDualForm): Added support for side form selection
+	through constructor arguments and an instance method.
 
 	* pytis/form/list.py (ListForm._cmd_export_file): Fix the case,
 	when `pyExcelerator' is not installed.
+	(SideBrowseForm._init_attributes): Accept binding parameters
+	directly, not as a BindingSpec instance.
 
 2008-07-11  Tomas Cerha  <cerha@brailcom.org>
 

@@ -321,7 +321,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         
     def _create_side_form(self, parent):
         return SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
-                              main_form=self._main_form, binding=self._view)
+                              main_form=self._main_form,
+                              binding_column=self._view.binding_column(),
+                              side_binding_column=self._view.side_binding_column(),
+                              hide_binding_column=self._view.hide_binding_column(),
+                              condition=self._view.condition())
 
     def _set_side_form_callbacks(self):
         f = self._side_form
@@ -654,23 +658,29 @@ class MultiForm(Form, Refreshable):
 
 class MultiSideForm(MultiForm):
         
-    class TabbedBrowseForm(SideBrowseForm):
+    class TabbedForm(object):
+        def _init_attributes(self, binding, **kwargs):
+            self._binding = binding
+            super(MultiSideForm.TabbedForm, self)._init_attributes(**kwargs)
+        def binding(self):
+            return self._binding
+        
+    class TabbedBrowseForm(TabbedForm, SideBrowseForm):
         _ALLOW_TITLE_BAR = False
         def _init_attributes(self, binding, **kwargs):
-            # Hack: Transform 'Binding' to 'BindingSpec'.
             sbcol = binding.binding_column()
             if sbcol:
                 bcol = self._data.find_column(sbcol).type().enumerator().value_column()
             else:
                 bcol = None
-            bs = BindingSpec(binding_column=bcol, side_binding_column=sbcol,
-                             condition=binding.condition())
-            super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=bs, **kwargs)
-    class TabbedShowForm(ShowForm):
+            kwargs = dict(kwargs, binding_column=bcol, side_binding_column=sbcol,
+                          condition=binding.condition())
+            super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
+    class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
             self._sbcol = main_form.data().find_column(bcol).type().enumerator().value_column()
-            super(MultiSideForm.TabbedShowForm, self)._init_attributes(**kwargs)
+            super(MultiSideForm.TabbedShowForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})
             
@@ -691,16 +701,35 @@ class MultiSideForm(MultiForm):
 
     def _create_forms(self, parent):
         return [(binding.title(), self._create_subform(parent, binding))
-                for binding in self._resolver.get(self._main_form.name(), 'binding_spec')
+                for binding in self._main_form.bindings()
                 # TODO: Remove this condition to include inactive tabs in multi form.
                 # The wx.Notebook doesn't support inactive tabs and the workaround doesn't
                 # work correctly, so we rather exclude disabled tabs here for now.
                 if has_access(binding.name())]
     
+    def select_side_form(self, id):
+        """Raise the side form tab corresponfing to the binding of given identifier.
+
+        The argument 'id' is a string identifier of a 'Binding' instance which must appear in the
+        main form 'bindings' specification.  If there is no binding of given id, an 'AssertError'
+        is raised.  If the corresponding form is not active (e.g. the user has no access rights for
+        the form), False is returned.  Otherwise the form is raised and 'True' is returned.
+        
+        """
+        assert id in [b.id() for b in self._main_form.bindings()]
+        for i, form in enumerate(self._forms):
+            if form and form.binding().id() == id:
+                self._notebook.SetSelection(i)
+                return True
+        return False
+    
 
 class MultiBrowseDualForm(BrowseDualForm):
-    """Dual form with a 'BrowseForm' up and multiple side browse forms."""
+    """Dual form with a 'BrowseForm' up and multiple side forms."""
     DESCR = _("vícenásobný duální formuláø")
+    class MainForm(BrowseForm):
+        def bindings(self):
+            return self._view.bindings()
     
     def _create_view_spec(self, **kwargs):
         return None
@@ -714,12 +743,23 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _initial_sash_position(self, mode, size):
         return size.height / 2 
 
-    def _create_main_form(self, parent, **kwargs):
-        return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
+    def _create_main_form(self, parent, select_side_form=None, **kwargs):
+        """Arguments:
+
+          select_side_form -- has the same effect as calling the method 'select_side_form' with
+            given argument after the form is created.
+          
+        """
+        self._select_side_form = select_side_form
+        return self.MainForm(parent, self._resolver, self._name, guardian=self, **kwargs)
     
-    def _create_side_form(self, parent, **kwargs):
-        return MultiSideForm(parent, self._resolver, self._name, guardian=self,
-                                   main_form=self._main_form, **kwargs)
+    def _create_side_form(self, parent):
+        form = MultiSideForm(parent, self._resolver, self._name, guardian=self,
+                             main_form=self._main_form)
+        if self._select_side_form:
+            form.select_side_form(self._select_side_form)
+        return form
+    
         
     def _on_main_activation(self, alternate=False):
         if alternate:
@@ -731,3 +771,5 @@ class MultiBrowseDualForm(BrowseDualForm):
     def title(self):
         return self._main_form.title()
     
+    def select_side_form(self, id):
+        self._side_form.select_side_form(id)
