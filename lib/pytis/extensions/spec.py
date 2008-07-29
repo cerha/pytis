@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,12 +78,11 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
                             help=help)
 
-def new_record_mitem(title, name, hotkey=None):
+def new_record_mitem(title, name, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
-    args = dict(name=name)
+    args = dict(kwargs, name=name)
     help = _('Otevřít vstupní formulář "%s"') % title
-    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey,
-                            help=help)
+    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None,
                         groups=None, enabled=None, **kwargs):

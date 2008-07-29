@@ -1,3 +1,8 @@
+2008-07-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/spec.py (new_record_mitem): Pass keyword
+	arguments as command args.
+
 2008-07-17  Pavel Hanak  <hanak@asellus.cz>
 
 	* lib/pytis/extensions/defs.py (_get_default_select.init_select):
