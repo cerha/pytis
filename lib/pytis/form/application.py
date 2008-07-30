@@ -1107,7 +1107,7 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
                                                     args=args, **kwargs)
 
 def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
-               block_on_new_record=False, transaction=None):
+               block_on_new_record=False, transaction=None, spec_kwargs={}):
     """Start an interactive form for new record insertion.
         
     Arguments:
@@ -1130,6 +1130,8 @@ def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
         possible to call 'new_record' from within the 'on_new_record' procedure without recursion..
 
       transaction -- transaction for data operations.
+
+      spec_kwargs -- a dictionary of keyword arguments passed to the specification.
             
     """
     return Application.COMMAND_NEW_RECORD.invoke(**locals())
