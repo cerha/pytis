@@ -1,3 +1,7 @@
+2008-07-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py (new_record): Pass also `spec_kwargs'.
+
 2008-07-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py (Application._cmd_new_record): Pass
