@@ -1,5 +1,7 @@
 2008-07-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/list.py: Added support for multiform links.
+
 	* pytis/form/application.py (new_record): Pass also `spec_kwargs'.
 
 2008-07-29  Tomas Cerha  <cerha@brailcom.org>

@@ -1654,20 +1654,20 @@ class Link(object):
 
     """
     
-    def __init__(self, name, column, type=FormType.BROWSE, label=None,
-                 enabled=True):
-        """Inicializuj instanci.
+    def __init__(self, name, column, binding=None, type=FormType.BROWSE, label=None, enabled=True):
+        """Arguments:
 
-        Argumenty:
+          name -- name of the refered specification as a string.
 
-          name -- název specifikace odkazovaného náhledu jako øetìzec.
+          column -- column identifier in the refered specification.  This column is used to locate
+            the record corresponding to the current value of the refering field.
 
-          column -- identifikátor sloupce v odkazovaném náhledu.  Slou¾í k
-            vyhledání záznamu v odkazovaném náhledu, který odpovídá aktuální
-            hodnotì odkazujícího políèka.
+          binding -- 'Binding' specification identifier (string) determining the current side view
+            shown along with the refered record.  A binding with given identifier must exist in the
+            'bindings' specification of 'name'.
 
-          type -- typ formuláøe, ve kterám bude odkazovaný náhled otevøen.
-            Jedna z konstant 'FormType'.  Výchozím typem je 'FormType.BROWSE'.
+          type -- type of the form used to display the refered view/record as one of 'FormType'
+            constants.  The default type is 'FormType.BROWSE'.
 
           label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
             pojmenován automaticky a zaøazen mezi automaticky generované
@@ -1683,11 +1683,13 @@ class Link(object):
         """
         assert isinstance(name, str)
         assert isinstance(column, str)
+        assert binding is None or isinstance(binding, str)
         assert type in public_attributes(FormType)
         assert label is None or isinstance(label, (str, unicode))
         assert callable(enabled) or isinstance(enabled, bool)
         self._name = name
         self._column = column
+        self._binding = binding
         self._type = type
         self._label = label
         self._enabled = enabled
@@ -1703,6 +1705,10 @@ class Link(object):
     def type(self):
         """Vra» konstantu typu formuláøe, který má být otevøen."""
         return self._type
+
+    def binding(self):
+        """Return the identifier of the target binding specification or None."""
+        return self._binding
 
     def label(self):
         """Vra» typ formuláøe, který má být otevøen."""

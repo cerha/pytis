@@ -2339,16 +2339,21 @@ class BrowseForm(ListForm):
                       % (row.format(f.id()), f.column_label())
                 icon = 'link-new-record'
             else:
+                kwargs = {}
                 if name.find('::') != -1:
                     assert type == FormType.BROWSE
                     cls = BrowseDualForm
+                elif link.binding():
+                    assert type == FormType.BROWSE
+                    cls = MultiBrowseDualForm
+                    kwargs['select_side_form'] = link.binding()
                 else:
                     mapping = {FormType.BROWSE: BrowseForm,
                                FormType.EDIT:   PopupEditForm,
                                FormType.VIEW:   ShowForm}
                     cls = mapping[type]
-                cmd = Application.COMMAND_RUN_FORM(name=name,form_class=cls,
-                                                   select_row=pair)
+                cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls, select_row=pair,
+                                                   **kwargs)
                 hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
                       % (row.format(f.id()), f.column_label())
                 icon = 'link'
