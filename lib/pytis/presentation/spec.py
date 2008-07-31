@@ -1663,7 +1663,8 @@ class Link(object):
             the record corresponding to the current value of the refering field.
 
           type -- type of the form used to display the refered view/record as one of 'FormType'
-            constants.  The default type is 'FormType.BROWSE'.
+            constants.  The default type is 'FormType.BROWSE'.  This argument may also be used as
+            positional.
 
           binding -- 'Binding' specification identifier (string) determining the current side view
             shown along with the refered record.  A binding with given identifier must exist in the
