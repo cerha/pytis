@@ -1,5 +1,9 @@
 2008-07-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/data/dbdata.py: Logging messages translated to English.
+
+	* pytis/data/postgresql.py: Logging messages translated to English.
+
 	* pytis/form/application.py: `select_side_form' -> `select_binding'.
 
 	* pytis/form/dualform.py: `select_side_form' -> `select_binding'.

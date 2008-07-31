@@ -1530,7 +1530,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                     transaction=transaction)
             answer_count = answer[0][0]
             if exact_count and answer_count != count:
-                log(OPERATIONAL, "Neèekaný výsledek kurzorové operace MOVE:",
+                log(OPERATIONAL, "Unexpected result of cursor operation MOVE:",
                     (answer_count, count))
         else:
             raise ProgramError('Invalid direction', direction)
@@ -2441,19 +2441,16 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_buffer.reset()
 
     def insert(self, row, after=None, before=None, transaction=None):
-        assert after is None or before is None, \
-               'Both after and before specified'
-        log(ACTION, 'Vlo¾ení øádku', (row, after, before))
+        assert after is None or before is None, 'Both after and before specified'
+        log(ACTION, 'Insert row:', (row, after, before))
         if transaction is None:
             self._pg_begin_transaction ()
         try:
             # Jestli¾e je definováno ordering, které je souèástí klíèe, bude
             # novì vlo¾ený øádek nutnì unikátní.
-            if (not self._ordering or \
-                (self._ordering[0] not in map(lambda c: c.id(), self.key()))
-                ) and \
-               self._pg_already_present(row, transaction=transaction):
-                msg = 'Øádek s tímto klíèem ji¾ existuje'
+            if (not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) \
+                   and self._pg_already_present(row, transaction=transaction):
+                msg = 'Row with this key already exists'
                 result = msg, False
                 log(ACTION, msg)
             else:
@@ -2463,13 +2460,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 elif before:
                     neighbor = before = self.row(before)
                 if positioned and (not neighbor):
-                    msg = 'Zadaný sousední øádek nenalezen'
-                    log(ACTION, msg,
-                        (after, before))
+                    msg = 'Given neighbor row not found'
+                    log(ACTION, msg, (after, before))
                     result = msg, False
                 else:
-                    r = self._pg_insert (row, after=after, before=before,
-                                         transaction=transaction)
+                    r = self._pg_insert (row, after=after, before=before, transaction=transaction)
                     result = r, True
         except:
             cls, e, tb = sys.exc_info()
@@ -2485,13 +2480,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             transaction._trans_notify(self)
         if result[1]:
-            log(ACTION, 'Øádek vlo¾en', result)
+            log(ACTION, 'Row inserted:', result)
         return result
     
     def update(self, key, row, transaction=None):
         key = xtuple(key)
-        log(ACTION, 'Update øádku:', key)
-        log(ACTION, 'Nová data', str(row))
+        log(ACTION, 'Update row:', key)
+        log(ACTION, 'New data:', str(row))
         if transaction is None:
             self._pg_begin_transaction ()
         try:
@@ -2515,7 +2510,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     new_key.append(v)
                 new_key = tuple(new_key)
                 if new_key != key and self._pg_already_present(row):
-                    msg = 'Øádek s tímto klíèem ji¾ existuje'
+                    msg = 'Row with given key already exists'
                     result = msg, False
                     log(ACTION, msg, key)
                 else:
@@ -2527,7 +2522,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         new_row = self.row(new_key, transaction=transaction)
                         result = new_row, True
             else: # not origrow
-                msg = 'Øádek s daným klíèem neexistuje'
+                msg = 'Row with given key does not exist'
                 result = msg, False
                 log(ACTION, msg, key)
         except:
@@ -2544,12 +2539,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             transaction._trans_notify(self)
         if result[1]:
-            log(ACTION, 'Øádek updatován', result)
+            log(ACTION, 'Row updated:', result)
         return result
     
     def update_many(self, condition, row, transaction=None):
-        log(ACTION, 'Update øádkù:', condition)
-        log(ACTION, 'Nová data', str(row))
+        log(ACTION, 'Update rows:', condition)
+        log(ACTION, 'New data:', str(row))
         if transaction is None:
             self._pg_begin_transaction ()
         try:
@@ -2575,11 +2570,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             transaction._trans_notify(self)
         if result:
-            log(ACTION, 'Øádky updatovány:', result)
+            log(ACTION, 'Rows updated:', result)
         return result
 
     def delete(self, key, transaction=None):
-        log(ACTION, 'Mazání øádku:', key)
+        log(ACTION, 'Delete row:', key)
         if transaction is None:
             self._pg_begin_transaction ()
         try:
@@ -2598,11 +2593,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
-        log(ACTION, 'Øádek smazán', result)
+        log(ACTION, 'Row deleted:', result)
         return result
     
     def delete_many(self, condition, transaction=None):
-        log(ACTION, 'Mazání øádkù:', condition)
+        log(ACTION, 'Delete rows:', condition)
         if transaction is None:
             self._pg_begin_transaction ()
         try:
@@ -2620,7 +2615,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
-        log(ACTION, 'Øádky smazány', result)
+        log(ACTION, 'Rows deleted:', result)
         return result
 
     # Locking
@@ -2748,7 +2743,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         self._pg_notifications = []
     
     def call(self, row, transaction=None):
-        log(EVENT, ('Volání funkce `%s\'' % self._name))
+        log(EVENT, 'Function call:', self._name)
         arguments = tuple([self._pg_value(item) for item in row])
         if transaction is None:
             outside_transaction = True
@@ -2759,7 +2754,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                               outside_transaction=outside_transaction
                               )
         result = self._pg_make_row_from_raw_data(data)
-        log(EVENT, ('Výsledek volání funkce `%s\':' % self._name), result)
+        log(EVENT, 'Function call result:', (self._name, result))
         return [result]
 
 

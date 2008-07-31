@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -479,10 +479,9 @@ class DBException(Exception):
         if message == None:
             message = _("Databázová chyba")
         super_(DBException).__init__(self, message, exception, *args)
-        log(OPERATIONAL, 'Databázová výjimka', (message,) + args)
+        log(OPERATIONAL, 'Database exception', (message,) + args)
         if exception:
-            log(OPERATIONAL, 'Obalená databázová výjimka',
-                (exception,) + exception.args)
+            log(OPERATIONAL, 'Wrapped database exception', (exception,) + exception.args)
         self._message = message
         self._exception = exception
 
