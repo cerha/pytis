@@ -2346,7 +2346,7 @@ class BrowseForm(ListForm):
                 elif link.binding():
                     assert type == FormType.BROWSE
                     cls = MultiBrowseDualForm
-                    kwargs['select_side_form'] = link.binding()
+                    kwargs['binding'] = link.binding()
                 else:
                     mapping = {FormType.BROWSE: BrowseForm,
                                FormType.EDIT:   PopupEditForm,

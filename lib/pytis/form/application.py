@@ -721,8 +721,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.select_row(kwargs['select_row'])
                 if kwargs.has_key('filter'):
                     form.filter(kwargs['filter'])
-                if kwargs.has_key('select_side_form'):
-                    form.select_side_form(kwargs['select_side_form'])
+                if kwargs.has_key('binding'):
+                    form.select_binding(kwargs['binding'])
                 return result
             if issubclass(form_class, PopupForm):
                 parent = self._modals.top() or self._frame

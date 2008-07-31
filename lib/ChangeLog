@@ -1,3 +1,11 @@
+2008-07-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py: `select_side_form' -> `select_binding'.
+
+	* pytis/form/dualform.py: `select_side_form' -> `select_binding'.
+
+	* pytis/form/list.py: `select_side_form' -> `select_binding'.
+
 2008-07-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py: Added support for multiform links.

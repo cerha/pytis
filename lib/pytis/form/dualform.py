@@ -707,7 +707,7 @@ class MultiSideForm(MultiForm):
                 # work correctly, so we rather exclude disabled tabs here for now.
                 if has_access(binding.name())]
     
-    def select_side_form(self, id):
+    def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.
 
         The argument 'id' is a string identifier of a 'Binding' instance which must appear in the
@@ -725,7 +725,14 @@ class MultiSideForm(MultiForm):
     
 
 class MultiBrowseDualForm(BrowseDualForm):
-    """Dual form with a 'BrowseForm' up and multiple side forms."""
+    """Dual form with a 'BrowseForm' up and multiple side forms.
+
+    Specific constructor arguments:
+    
+      binding -- has the same effect as calling the method 'select_binding' with
+        given argument after the form is created.
+
+    """
     DESCR = _("vícenásobný duální formuláø")
     class MainForm(BrowseForm):
         def bindings(self):
@@ -743,21 +750,15 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _initial_sash_position(self, mode, size):
         return size.height / 2 
 
-    def _create_main_form(self, parent, select_side_form=None, **kwargs):
-        """Arguments:
-
-          select_side_form -- has the same effect as calling the method 'select_side_form' with
-            given argument after the form is created.
-          
-        """
-        self._select_side_form = select_side_form
+    def _create_main_form(self, parent, binding=None, **kwargs):
+        self._selected_binding = binding
         return self.MainForm(parent, self._resolver, self._name, guardian=self, **kwargs)
     
     def _create_side_form(self, parent):
         form = MultiSideForm(parent, self._resolver, self._name, guardian=self,
                              main_form=self._main_form)
-        if self._select_side_form:
-            form.select_side_form(self._select_side_form)
+        if self._selected_binding:
+            form.select_binding(self._selected_binding)
         return form
     
         
@@ -771,5 +772,5 @@ class MultiBrowseDualForm(BrowseDualForm):
     def title(self):
         return self._main_form.title()
     
-    def select_side_form(self, id):
-        self._side_form.select_side_form(id)
+    def select_binding(self, id):
+        self._side_form.select_binding(id)
