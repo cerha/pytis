@@ -1654,7 +1654,7 @@ class Link(object):
 
     """
     
-    def __init__(self, name, column, binding=None, type=FormType.BROWSE, label=None, enabled=True):
+    def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None, enabled=True):
         """Arguments:
 
           name -- name of the refered specification as a string.
@@ -1662,12 +1662,12 @@ class Link(object):
           column -- column identifier in the refered specification.  This column is used to locate
             the record corresponding to the current value of the refering field.
 
+          type -- type of the form used to display the refered view/record as one of 'FormType'
+            constants.  The default type is 'FormType.BROWSE'.
+
           binding -- 'Binding' specification identifier (string) determining the current side view
             shown along with the refered record.  A binding with given identifier must exist in the
             'bindings' specification of 'name'.
-
-          type -- type of the form used to display the refered view/record as one of 'FormType'
-            constants.  The default type is 'FormType.BROWSE'.
 
           label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
             pojmenován automaticky a zaøazen mezi automaticky generované
