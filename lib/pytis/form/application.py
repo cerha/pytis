@@ -687,12 +687,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if isinstance(w, Refreshable):
                 w.refresh()
 
-    def _can_run_form(self, form_class, name, **kwargs):
-        if isinstance(self.current_form(), PopupForm) \
-           and not issubclass(form_class, PopupForm):
+    def _can_run_form(self, form_class, name, binding=None, **kwargs):
+        if isinstance(self.current_form(), PopupForm) and not issubclass(form_class, PopupForm):
             return False
         try:
-            return has_access(name)
+            if has_access(name):
+                if binding is not None:
+                    spec = resolver().get(name, 'view_spec')
+                    b = find(binding, spec.bindings(), key=lambda b: b.id())
+                    return has_access(b.name())
+                return True
+            else:
+                return False
         except ResolverError:
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
