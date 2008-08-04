@@ -693,9 +693,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             if has_access(name):
                 if binding is not None:
-                    print "XXXXXXXXXXXX", name
                     spec = resolver().get(name, 'view_spec')
-                    b = find(binding, spec.bindings(), key=lambda b: b.id())                    
+                    b = find(binding, spec.bindings(), key=lambda b: b.id())
+                    assert b is not None, "Unknown binding for %s: %s" % (name, binding)
                     return has_access(b.name())
                 return True
             else:

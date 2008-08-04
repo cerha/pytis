@@ -2280,6 +2280,7 @@ class BrowseForm(ListForm):
                 title = spec.title()
                 if binding is not None:
                     b = find(binding, spec.bindings(), key=lambda b: b.id())
+                    assert b is not None, "Unknown binding for %s: %s" % (name, binding)
                     title += ' / ' + resolver().get(b.name(), 'view_spec').title()
             mapping = {FormType.BROWSE: _("Odskok - %s"),
                        FormType.EDIT:   _("Editovat %s"),
