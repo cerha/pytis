@@ -2269,14 +2269,18 @@ class BrowseForm(ListForm):
             menu += (MSeparator(),) + tuple(actions)
         self._context_menu_static_part = menu
         # The dynamic part of the menu is created based on the links.
-        def link_title(name, type=FormType.BROWSE):
+        def link_title(name, type=FormType.BROWSE, binding=None):
             if name.find('::') != -1:
                 name1, name2 = name.split('::')
                 title = resolver().get(name1, 'binding_spec')[name2].title() or \
                         ' / '.join((resolver().get(name1, 'view_spec').title(),
                                     resolver().get(name2, 'view_spec').title()))
             else:
-                title = resolver().get(name, 'view_spec').title()
+                spec = resolver().get(name, 'view_spec')
+                title = spec.title()
+                if binding is not None:
+                    b = find(binding, spec.bindings(), key=lambda b: b.id())
+                    title += ' / ' + resolver().get(b.name(), 'view_spec').title()
             mapping = {FormType.BROWSE: _("Odskok - %s"),
                        FormType.EDIT:   _("Editovat %s"),
                        FormType.VIEW:   _("Náhled %s"),
@@ -2285,7 +2289,8 @@ class BrowseForm(ListForm):
         # Create links lists as accepted by _link_mitems()
         self._explicit_links = []
         for  f in self._fields:
-            self._explicit_links.extend([(link.label() or link_title(link.name(), link.type()),
+            self._explicit_links.extend([(link.label() or
+                                          link_title(link.name(), link.type(), link.binding()),
                                           [(f, link)]) for link in f.links()])
         # Create automatic links for codebook fields.
         self._automatic_links = []
