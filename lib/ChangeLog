@@ -1,5 +1,8 @@
 2008-08-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/dualform.py (MultiSideForm.select_binding): Show an
+	error message when the form is not accessible.
+
 	* pytis/form/list.py: Show sideform name in link title with
 	'binding' specification.
 

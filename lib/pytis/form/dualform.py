@@ -713,7 +713,8 @@ class MultiSideForm(MultiForm):
         The argument 'id' is a string identifier of a 'Binding' instance which must appear in the
         main form 'bindings' specification.  If there is no binding of given id, an 'AssertError'
         is raised.  If the corresponding form is not active (e.g. the user has no access rights for
-        the form), False is returned.  Otherwise the form is raised and 'True' is returned.
+        the form), False is returned and an error message is displayed.  Otherwise the form is
+        raised and 'True' is returned.
         
         """
         assert id in [b.id() for b in self._main_form.bindings()]
@@ -721,6 +722,7 @@ class MultiSideForm(MultiForm):
             if form and form.binding().id() == id:
                 self._notebook.SetSelection(i)
                 return True
+        message(_("Po¾adovaný vedlej¹í formuláø není dostupný"), beep_=True)
         return False
     
 
