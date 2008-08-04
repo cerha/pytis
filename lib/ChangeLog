@@ -1,5 +1,8 @@
 2008-08-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: Make run form commands inactive, if
+	they refer to an inaccessible binding.
+
 	* pytis/form/dualform.py (MultiSideForm.select_binding): Show an
 	error message when the form is not accessible.
 
