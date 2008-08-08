@@ -202,7 +202,7 @@ def nextval(seq):
     return lambda: counter.next()
 
 
-def enum(name):
+def enum(name, **kwargs):
     """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
 
     Takto vytvoøený enumerátor lze pou¾ít jako argument 'enumerator'
@@ -211,7 +211,7 @@ def enum(name):
     
     """
     data_spec = pytis.util.resolver().get(name, 'data_spec')
-    return pytis.data.DataEnumerator(data_spec)
+    return pytis.data.DataEnumerator(data_spec, **kwargs)
 
 
 # Pozor, stejná metoda metoda je definována i v pytis.data.access
