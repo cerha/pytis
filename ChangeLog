@@ -1,3 +1,7 @@
+2008-08-08  Petr Malivanek  <malivanek@asellus.cz>
+
+	* lib/pytis/extensions/dbutils.py (enum): Pøedávej kwargs.
+
 2008-07-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/spec.py (new_record_mitem): Pass keyword
