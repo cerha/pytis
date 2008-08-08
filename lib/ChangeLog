@@ -1,3 +1,8 @@
+2008-08-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/dualform.py (MultiBrowseDualForm.filter): Nová
+	metoda.
+
 2008-08-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/application.py: Make run form commands inactive, if

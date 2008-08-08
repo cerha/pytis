@@ -775,4 +775,8 @@ class MultiBrowseDualForm(BrowseDualForm):
         return self._main_form.title()
     
     def select_binding(self, id):
-        self._side_form.select_binding(id)
+        return self._side_form.select_binding(id)
+
+    def filter(self, condition):
+        return self._main_form.filter(condition)
+        
