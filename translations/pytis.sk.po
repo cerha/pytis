@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-20 10:17+0100\n"
+"POT-Creation-Date: 2008-08-12 11:16+0200\n"
 "PO-Revision-Date: 2007-12-20 10:17+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -14,68 +14,79 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../lib/pytis/web/form.py:114 ../lib/pytis/web/dialog.py:50
+#: ../lib/pytis/web/form.py:253 ../lib/pytis/web/form.py:265
+#: ../lib/pytis/web/dialog.py:50
 msgid "Submit"
 msgstr "Odosla»"
 
-#: ../lib/pytis/web/form.py:283
-msgid "Submit the form"
-msgstr "Odosla» formulár"
-
-#: ../lib/pytis/web/form.py:285
+#: ../lib/pytis/web/form.py:253
 msgid "Undo all changes"
 msgstr "Zru¹i» v¹etky urobené zmeny"
 
-#: ../lib/pytis/web/form.py:285
+#: ../lib/pytis/web/form.py:275
+msgid "Submit the form"
+msgstr "Odosla» formulár"
+
+#: ../lib/pytis/web/form.py:278
 msgid "Reset"
 msgstr "Vráti» pôvodné hodnoty"
 
-#: ../lib/pytis/web/form.py:387
+#: ../lib/pytis/web/form.py:404
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políèka oznaèené hviezdièkou sú povinné."
 
-#: ../lib/pytis/web/form.py:633
+#: ../lib/pytis/web/form.py:694
 msgid "No records."
 msgstr "®iadne záznamy."
 
-#: ../lib/pytis/web/form.py:636
+#: ../lib/pytis/web/form.py:697
 msgid "Total records:"
 msgstr "Poèet záznamov celkom:"
 
-#: ../lib/pytis/web/form.py:638
+#: ../lib/pytis/web/form.py:699
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
 
-#: ../lib/pytis/web/form.py:655 ../lib/pytis/web/form.py:657
+#: ../lib/pytis/web/form.py:734
+#, python-format
+msgid "%(label)s on \"%(prefix)s\":"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:738
+#, python-format
+msgid "Skip to the first record beginning with \"%s\""
+msgstr ""
+
+#: ../lib/pytis/web/form.py:761 ../lib/pytis/web/form.py:763
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:657 ../lib/pytis/web/form.py:669
+#: ../lib/pytis/web/form.py:763 ../lib/pytis/web/form.py:775
 msgid "(Use ALT+arrow down to select)"
 msgstr "(pou¾ite ALT+¹ipka dole pre výber)"
 
-#: ../lib/pytis/web/form.py:661
+#: ../lib/pytis/web/form.py:767
 msgid "Previous"
 msgstr "predchádzajúci"
 
-#: ../lib/pytis/web/form.py:662
+#: ../lib/pytis/web/form.py:768
 msgid "Go to previous page"
 msgstr "Prejs» na predchádzajúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:663
+#: ../lib/pytis/web/form.py:769
 msgid "Next"
 msgstr "ïal¹í"
 
-#: ../lib/pytis/web/form.py:664
+#: ../lib/pytis/web/form.py:770
 msgid "Go to next page"
 msgstr "Prejs» na nasledujúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:666 ../lib/pytis/web/form.py:668
+#: ../lib/pytis/web/form.py:772 ../lib/pytis/web/form.py:774
 msgid "Records per page"
 msgstr "Poèet záznamov na stránku"
 
-#: ../lib/pytis/web/form.py:672
+#: ../lib/pytis/web/form.py:778
 msgid "Go"
 msgstr "Choï"
 
