@@ -1,5 +1,5 @@
 # Pytis translations.
-# Copyright (C) 2007 Brailcom, o.p.s.
+# Copyright (C) 2007, 2008 Brailcom, o.p.s.
 # This file is distributed under the same license as the Wiking package.
 #
 msgid ""
@@ -7,56 +7,56 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-12 11:16+0200\n"
-"PO-Revision-Date: 2007-12-20 10:17+0100\n"
+"PO-Revision-Date: 2008-08-12 11:23+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../lib/pytis/web/form.py:253 ../lib/pytis/web/form.py:265
 #: ../lib/pytis/web/dialog.py:50
 msgid "Submit"
-msgstr "Odoslaª"
+msgstr "Odosla≈•"
 
 #: ../lib/pytis/web/form.py:253
 msgid "Undo all changes"
-msgstr "Zruπiª vπetky urobenÈ zmeny"
+msgstr "Zru≈°i≈• v≈°etky uroben√© zmeny"
 
 #: ../lib/pytis/web/form.py:275
 msgid "Submit the form"
-msgstr "Odoslaª formul·r"
+msgstr "Odosla≈• formul√°r"
 
 #: ../lib/pytis/web/form.py:278
 msgid "Reset"
-msgstr "Vr·tiª pÙvodnÈ hodnoty"
+msgstr "Vr√°ti≈• p√¥vodn√© hodnoty"
 
 #: ../lib/pytis/web/form.py:404
 msgid "Fields marked by an asterisk are mandatory."
-msgstr "PolÌËka oznaËenÈ hviezdiËkou s˙ povinnÈ."
+msgstr "Pol√≠ƒçka oznaƒçen√© hviezdiƒçkou s√∫ povinn√©."
 
 #: ../lib/pytis/web/form.py:694
 msgid "No records."
-msgstr "Æiadne z·znamy."
+msgstr "≈Ωiadne z√°znamy."
 
 #: ../lib/pytis/web/form.py:697
 msgid "Total records:"
-msgstr "PoËet z·znamov celkom:"
+msgstr "Poƒçet z√°znamov celkom:"
 
 #: ../lib/pytis/web/form.py:699
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr "ZobrazenÈ z·znamy %(first)s-%(last)s z celkom %(total)s"
+msgstr "Zobrazen√© z√°znamy %(first)s-%(last)s z celkom %(total)s"
 
 #: ../lib/pytis/web/form.py:734
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
-msgstr ""
+msgstr "%(label)s na \"%(prefix)s\":"
 
 #: ../lib/pytis/web/form.py:738
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
-msgstr ""
+msgstr "Preskoƒçit na prv√Ω riadok zaƒç√≠naj√∫ci na ‚Äû%s‚Äú"
 
 #: ../lib/pytis/web/form.py:761 ../lib/pytis/web/form.py:763
 msgid "Page"
@@ -64,119 +64,119 @@ msgstr "Strana"
 
 #: ../lib/pytis/web/form.py:763 ../lib/pytis/web/form.py:775
 msgid "(Use ALT+arrow down to select)"
-msgstr "(pouæite ALT+πipka dole pre v˝ber)"
+msgstr "(pou≈æite ALT+≈°ipka dole pre v√Ωber)"
 
 #: ../lib/pytis/web/form.py:767
 msgid "Previous"
-msgstr "predch·dzaj˙ci"
+msgstr "predch√°dzaj√∫ci"
 
 #: ../lib/pytis/web/form.py:768
 msgid "Go to previous page"
-msgstr "Prejsª na predch·dzaj˙cu str·nku v˝pisu"
+msgstr "Prejs≈• na predch√°dzaj√∫cu str√°nku v√Ωpisu"
 
 #: ../lib/pytis/web/form.py:769
 msgid "Next"
-msgstr "ÔalπÌ"
+msgstr "ƒèal≈°√≠"
 
 #: ../lib/pytis/web/form.py:770
 msgid "Go to next page"
-msgstr "Prejsª na nasleduj˙cu str·nku v˝pisu"
+msgstr "Prejs≈• na nasleduj√∫cu str√°nku v√Ωpisu"
 
 #: ../lib/pytis/web/form.py:772 ../lib/pytis/web/form.py:774
 msgid "Records per page"
-msgstr "PoËet z·znamov na str·nku"
+msgstr "Poƒçet z√°znamov na str√°nku"
 
 #: ../lib/pytis/web/form.py:778
 msgid "Go"
-msgstr "ChoÔ"
+msgstr "Choƒè"
 
 #: ../lib/pytis/web/__init__.py:39
 msgid "Empty value"
-msgstr "Pr·zdna hodnota"
+msgstr "Pr√°zdna hodnota"
 
 #: ../lib/pytis/web/__init__.py:40
 msgid "Invalid value"
-msgstr "Neplatn· hodnota"
+msgstr "Neplatn√° hodnota"
 
 #: ../lib/pytis/web/__init__.py:41 ../lib/pytis/web/__init__.py:45
 #, python-format
 msgid "Minimal length %(minlen)s not satisfied"
-msgstr "Nedodræan· minim·lna dÂæka %(minlen)s"
+msgstr "Nedodr≈æan√° minim√°lna dƒ∫≈æka %(minlen)s"
 
 #: ../lib/pytis/web/__init__.py:42
 #, python-format
 msgid "Maximal length %(maxlen)s exceeded"
-msgstr "Reªazec presahuje maxim·lnu dÂæku %(maxlen)s"
+msgstr "Re≈•azec presahuje maxim√°lnu dƒ∫≈æku %(maxlen)s"
 
 #: ../lib/pytis/web/__init__.py:43
 msgid "Not an integer"
-msgstr "Nie je to celÈ ËÌslo"
+msgstr "Nie je to cel√© ƒç√≠slo"
 
 #: ../lib/pytis/web/__init__.py:44
 msgid "Invalid number"
-msgstr "NiepovolenÈ ËÌslo"
+msgstr "Niepovolen√© ƒç√≠slo"
 
 #: ../lib/pytis/web/__init__.py:46
 #, python-format
 msgid "String exceeds max length %(maxlen)s"
-msgstr "Raªazec presahuje maxim·lnu dÂæku %(maxlen)s"
+msgstr "Ra≈•azec presahuje maxim√°lnu dƒ∫≈æku %(maxlen)s"
 
 #: ../lib/pytis/web/__init__.py:47
 msgid "Enter the password twice to eliminate typos"
-msgstr "Zadajte heslo dvakr·t pre eliminovanie preklepov"
+msgstr "Zadajte heslo dvakr√°t pre eliminovanie preklepov"
 
 #: ../lib/pytis/web/__init__.py:48
 msgid "Passwords don't match"
-msgstr "KontrolnÈ zadanie hesla nezodpoved·"
+msgstr "Kontroln√© zadanie hesla nezodpoved√°"
 
 #: ../lib/pytis/web/__init__.py:49
 msgid "Invalid format"
-msgstr "Neplatn˝ form·t"
+msgstr "Neplatn√Ω form√°t"
 
 #: ../lib/pytis/web/__init__.py:50
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Form·t farby nezodpoved·  ('#RGB' nebo '#RRGGBB')"
+msgstr "Form√°t farby nezodpoved√°  ('#RGB' nebo '#RRGGBB')"
 
 #: ../lib/pytis/web/__init__.py:51
 msgid "Invalid date or time format"
-msgstr "Chybn˝ form·t d·tumu alebo Ëasu"
+msgstr "Chybn√Ω form√°t d√°tumu alebo ƒçasu"
 
 #: ../lib/pytis/web/__init__.py:52
 msgid "Invalid date or time"
-msgstr "Chybn˝ d·tum alebo Ëas"
+msgstr "Chybn√Ω d√°tum alebo ƒças"
 
 #: ../lib/pytis/web/__init__.py:53
 msgid "Date outside the allowed range"
-msgstr "D·tum mimo povolen˝ rozsah"
+msgstr "D√°tum mimo povolen√Ω rozsah"
 
 #: ../lib/pytis/web/__init__.py:54
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Nedodræan· minim·lna veµkosª %(minlen)s"
+msgstr "Nedodr≈æan√° minim√°lna veƒækos≈• %(minlen)s"
 
 #: ../lib/pytis/web/__init__.py:55
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
-msgstr "Maxim·lna veµkosª %(maxlen)s prekroËen·"
+msgstr "Maxim√°lna veƒækos≈• %(maxlen)s prekroƒçen√°"
 
 #: ../lib/pytis/web/__init__.py:56
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
-msgstr "Maxim·lny rozmer %(maxsize)s pixelov prekroËen˝"
+msgstr "Maxim√°lny rozmer %(maxsize)s pixelov prekroƒçen√Ω"
 
 #: ../lib/pytis/web/__init__.py:57
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr "Minim·lny rozmer %(minsize)s pixelov nedodræan˝"
+msgstr "Minim√°lny rozmer %(minsize)s pixelov nedodr≈æan√Ω"
 
 #: ../lib/pytis/web/__init__.py:58
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-msgstr "Nepodporovan˝ form·t %(format)s; platnÈ form·ty: %(formats)s"
+msgstr "Nepodporovan√Ω form√°t %(format)s; platn√© form√°ty: %(formats)s"
 
 #: ../lib/pytis/web/field.py:89
 msgid "Yes"
-msgstr "¡no"
+msgstr "√Åno"
 
 #: ../lib/pytis/web/field.py:89
 msgid "No"
@@ -184,8 +184,8 @@ msgstr "Nie"
 
 #: ../lib/pytis/web/field.py:101
 msgid "image"
-msgstr "obr·zok"
+msgstr "obr√°zok"
 
 #: ../lib/pytis/web/field.py:101
 msgid "file"
-msgstr "s˙bor"
+msgstr "s√∫bor"

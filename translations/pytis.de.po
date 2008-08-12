@@ -1,5 +1,5 @@
 # Pytis translations.
-# Copyright (C) 2007 Brailcom, o.p.s.
+# Copyright (C) 2007, 2008 Brailcom, o.p.s.
 # This file is distributed under the same license as the Wiking package.
 #
 msgid ""
@@ -7,11 +7,11 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-12 11:16+0200\n"
-"PO-Revision-Date: 2007-11-29 09:27+0100\n"
+"PO-Revision-Date: 2008-08-12 11:45+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../lib/pytis/web/form.py:253 ../lib/pytis/web/form.py:265
@@ -21,7 +21,7 @@ msgstr "Senden"
 
 #: ../lib/pytis/web/form.py:253
 msgid "Undo all changes"
-msgstr "Alle durchgeführten Änderungen zurücksetzen."
+msgstr "Alle durchgefÃ¼hrten Ã„nderungen zurÃ¼cksetzen."
 
 #: ../lib/pytis/web/form.py:275
 msgid "Submit the form"
@@ -41,12 +41,12 @@ msgstr "Kein Eintrag"
 
 #: ../lib/pytis/web/form.py:697
 msgid "Total records:"
-msgstr "Einträge insgesamt:"
+msgstr "EintrÃ¤ge insgesamt:"
 
 #: ../lib/pytis/web/form.py:699
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr "Abgebildete Einträge %(first)s-%(last)s von insgesamt %(total)s"
+msgstr "Abgebildete EintrÃ¤ge %(first)s-%(last)s von insgesamt %(total)s"
 
 #: ../lib/pytis/web/form.py:734
 #, python-format
@@ -56,7 +56,7 @@ msgstr ""
 #: ../lib/pytis/web/form.py:738
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
-msgstr ""
+msgstr "Ãœbersetzen Sie auf die erste Zeile beginnende an \"%s\":"
 
 #: ../lib/pytis/web/form.py:761 ../lib/pytis/web/form.py:763
 msgid "Page"
@@ -64,7 +64,7 @@ msgstr "Seite"
 
 #: ../lib/pytis/web/form.py:763 ../lib/pytis/web/form.py:775
 msgid "(Use ALT+arrow down to select)"
-msgstr "(Drücken Sie ALT+Pfeil nach unten für die Auswahl)"
+msgstr "(DrÃ¼cken Sie ALT+Pfeil nach unten fÃ¼r die Auswahl)"
 
 #: ../lib/pytis/web/form.py:767
 msgid "Previous"
@@ -72,7 +72,7 @@ msgstr "vorherige"
 
 #: ../lib/pytis/web/form.py:768
 msgid "Go to previous page"
-msgstr "Zurück zur vorherigen Seite des Auszugs"
+msgstr "ZurÃ¼ck zur vorherigen Seite des Auszugs"
 
 #: ../lib/pytis/web/form.py:769
 msgid "Next"
@@ -80,11 +80,11 @@ msgstr "weiter"
 
 #: ../lib/pytis/web/form.py:770
 msgid "Go to next page"
-msgstr "Nächsten Seite des Auszugs"
+msgstr "NÃ¤chsten Seite des Auszugs"
 
 #: ../lib/pytis/web/form.py:772 ../lib/pytis/web/form.py:774
 msgid "Records per page"
-msgstr "Anzahl der Einträge pro Seite"
+msgstr "Anzahl der EintrÃ¤ge pro Seite"
 
 #: ../lib/pytis/web/form.py:778
 msgid "Go"
@@ -96,17 +96,17 @@ msgstr "Leerer Wert"
 
 #: ../lib/pytis/web/__init__.py:40
 msgid "Invalid value"
-msgstr "Ungültiger Wert"
+msgstr "UngÃ¼ltiger Wert"
 
 #: ../lib/pytis/web/__init__.py:41 ../lib/pytis/web/__init__.py:45
 #, python-format
 msgid "Minimal length %(minlen)s not satisfied"
-msgstr "Mindestlänge nicht eingehalten %(minlen)s"
+msgstr "MindestlÃ¤nge nicht eingehalten %(minlen)s"
 
 #: ../lib/pytis/web/__init__.py:42
 #, python-format
 msgid "Maximal length %(maxlen)s exceeded"
-msgstr "Die Sequenz überschreitet die max. Länge %(maxlen)s"
+msgstr "Die Sequenz Ã¼berschreitet die max. LÃ¤nge %(maxlen)s"
 
 #: ../lib/pytis/web/__init__.py:43
 msgid "Not an integer"
@@ -114,12 +114,12 @@ msgstr "Das ist keine ganze Zahl. "
 
 #: ../lib/pytis/web/__init__.py:44
 msgid "Invalid number"
-msgstr "Das ist eine ungültige Zahl."
+msgstr "Das ist eine ungÃ¼ltige Zahl."
 
 #: ../lib/pytis/web/__init__.py:46
 #, python-format
 msgid "String exceeds max length %(maxlen)s"
-msgstr "Die Sequenz überschreitet die max. Länge %(maxlen)s."
+msgstr "Die Sequenz Ã¼berschreitet die max. LÃ¤nge %(maxlen)s."
 
 #: ../lib/pytis/web/__init__.py:47
 msgid "Enter the password twice to eliminate typos"
@@ -127,19 +127,19 @@ msgstr "Geben Sie das Passwort doppelt ein, um Tippfehler zu eliminieren."
 
 #: ../lib/pytis/web/__init__.py:48
 msgid "Passwords don't match"
-msgstr "Die Kontrolleingabe des Passworts stimmt nicht überein."
+msgstr "Die Kontrolleingabe des Passworts stimmt nicht Ã¼berein."
 
 #: ../lib/pytis/web/__init__.py:49
 msgid "Invalid format"
-msgstr "Ungültiges Format"
+msgstr "UngÃ¼ltiges Format"
 
 #: ../lib/pytis/web/__init__.py:50
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Farbformat stimmt nicht überein ('#RGB' oder '#RRGGBB')"
+msgstr "Farbformat stimmt nicht Ã¼berein ('#RGB' oder '#RRGGBB')"
 
 #: ../lib/pytis/web/__init__.py:51
 msgid "Invalid date or time format"
-msgstr "Falsches Format für Datum oder Zeit "
+msgstr "Falsches Format fÃ¼r Datum oder Zeit "
 
 #: ../lib/pytis/web/__init__.py:52
 msgid "Invalid date or time"
@@ -147,32 +147,32 @@ msgstr "Falsches Datum oder Zeit "
 
 #: ../lib/pytis/web/__init__.py:53
 msgid "Date outside the allowed range"
-msgstr "Datum außerhalb des zulässigen Umfangs"
+msgstr "Datum auÃŸerhalb des zulÃ¤ssigen Umfangs"
 
 #: ../lib/pytis/web/__init__.py:54
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Mindestgröße nicht eingehalten %(minlen)s"
+msgstr "MindestgrÃ¶ÃŸe nicht eingehalten %(minlen)s"
 
 #: ../lib/pytis/web/__init__.py:55
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
-msgstr "max. Größe %(maxlen)s überschritten"
+msgstr "max. GrÃ¶ÃŸe %(maxlen)s Ã¼berschritten"
 
 #: ../lib/pytis/web/__init__.py:56
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
-msgstr "max. Größe %(maxlen)s überschritten"
+msgstr "max. GrÃ¶ÃŸe %(maxlen)s Ã¼berschritten"
 
 #: ../lib/pytis/web/__init__.py:57
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr "Max. Pixelmaß %(maxsize)s überschritten"
+msgstr "Max. PixelmaÃŸ %(maxsize)s Ã¼berschritten"
 
 #: ../lib/pytis/web/__init__.py:58
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"
+msgstr "Format entspricht nicht %(format)s; gÃ¼ltige Formate: %(formats)s"
 
 #: ../lib/pytis/web/field.py:89
 msgid "Yes"
