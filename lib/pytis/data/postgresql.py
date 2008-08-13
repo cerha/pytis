@@ -485,7 +485,8 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                            "pg_roles as pg_roles2 where "+
                            "pg_auth_members.member = pg_roles1.oid and "+
                            ("pg_roles1.rolname = '%s' and " % (user,))+
-                           "pg_roles2.oid = pg_auth_members.roleid",
+                           "(pg_roles2.oid = pg_auth_members.roleid or"+
+                           "pg_roles2.oid = pg_roles1.oid)",
                            outside_transaction=True)
         groups = [row[0] for row in d]
         if __debug__:
