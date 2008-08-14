@@ -477,16 +477,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     def _pgg_retrieve_access_groups(self, data):
         if __debug__:
             log(DEBUG, "Retrieving list of user groups")
-        user = data._pg_connection_data().user()
-        if not user:
-            return []
-        d = data._pg_query("select distinct pg_roles2.rolname from "+
-                           "pg_auth_members, pg_roles as pg_roles1, "+
-                           "pg_roles as pg_roles2 where "+
-                           "pg_auth_members.member = pg_roles1.oid and "+
-                           ("pg_roles1.rolname = '%s' and " % (user,))+
-                           "(pg_roles2.oid = pg_auth_members.roleid or"+
-                           "pg_roles2.oid = pg_roles1.oid)",
+        d = data._pg_query("select rolname from pg_roles where pg_has_role(rolname, 'member')",
                            outside_transaction=True)
         groups = [row[0] for row in d]
         if __debug__:
