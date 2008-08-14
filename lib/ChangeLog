@@ -1,3 +1,8 @@
+2008-08-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Use pg_has_role SQL function for determing user's PostgreSQL roles.
+
 2008-08-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
