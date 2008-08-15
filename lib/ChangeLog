@@ -1,3 +1,9 @@
+2008-08-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/_test.py:
+	* lib/pytis/data/postgresql.py:
+	Support for multiple (both columns and rows) return values of SQL functions.
+
 2008-08-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
