@@ -10,8 +10,7 @@
 
 2008-08-08  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/dualform.py (MultiBrowseDualForm.filter): Nová
-	metoda.
+	* pytis/form/dualform.py (MultiBrowseDualForm.filter): New method.
 
 2008-08-04  Tomas Cerha  <cerha@brailcom.org>
 
