@@ -1825,22 +1825,39 @@ class DBFunction(_DBBaseTest):
         c = self._connector
         try:
             self._sql_command("create table tab (x int)")
+            self._sql_command("create table tab1 (x int)")
+            self._sql_command("insert into tab1 values(10)")
+            self._sql_command("insert into tab1 values(20)")
+            self._sql_command("insert into tab1 values(30)")
             for q in ("foo1(int) returns int as 'select $1+1'",
                       "foo2(text,text) returns text as 'select $1 || $2'",
-                      "foo3() returns int as 'select min(x) from tab'"):
+                      "foo3() returns int as 'select min(x) from tab'",
+                      "foo4() returns tab1 as 'select * from tab1'",
+                      ("foo5(int) returns setof tab1 as 'select * from tab1 "
+                       "where x >= $1 order by x'"),
+                      "foo6(int) returns void as 'insert into tab values ($1)'",
+                      "foo7(int, out int, out int) as 'select $1, $1+2'",
+                      ):
                 self._sql_command("create function %s language sql " % q)
         except:
             self.tearDown()
             raise
     def tearDown(self):
         c = self._connector
-        try:
-            self._sql_command("drop table tab")
-        except:
-            pass
-        for q in ("foo1(int)", "foo2(text,text)", "foo3()"):
+        for q in ("foo1(int)",
+                  "foo2(text,text)",
+                  "foo3()",
+                  "foo4()",
+                  "foo5(int)",
+                  "foo6(int)",
+                  "foo7(int, out int, out int)",):
             try:
                 self._sql_command("drop function %s" % q)
+            except:
+                pass
+        for table in ('tab', 'tab1',):
+            try:
+                self._sql_command("drop table %s" % (table,))
             except:
                 pass
         _DBBaseTest.tearDown(self)
@@ -1864,6 +1881,40 @@ class DBFunction(_DBBaseTest):
         row = pytis.data.Row(())
         result = function.call(row)[0][0].value()
         assert result is None, ('Invalid result', result)
+    def test_row_result(self):
+        function = pytis.data.DBFunctionDefault('foo4', self._dconnection)
+        row = pytis.data.Row(())
+        result = function.call(row)
+        assert len(result) == 1, ('Invalid number of rows', result)
+        values = [col.value() for col in result[0]]
+        assert values == [10] or values == [20] or values == [30], \
+            ('Invalid result', values)
+    def test_setof_result(self):
+        function = pytis.data.DBFunctionDefault('foo5', self._dconnection)
+        row = pytis.data.Row((('arg1',
+                             pytis.data.Integer().validate('20')[0]),))
+        result = function.call(row)
+        assert len(result) == 2, ('Invalid number of rows', result)
+        value = result[0][0].value()
+        assert value == 20, ('Invalid result', value)
+        value = result[1][0].value()
+        assert value == 30, ('Invalid result', value)
+    def test_void(self):
+        function = pytis.data.DBFunctionDefault('foo6', self._dconnection)
+        row = pytis.data.Row((('arg1',
+                             pytis.data.Integer().validate('1000')[0]),))
+        function.call(row)
+        data = self._sql_command("select count(*) from tab where x = 1000")
+        assert data[0][0] == 1, ('Invalid data', data)
+    def test_complex_result(self):
+        C = pytis.data.ColumnSpec
+        I = pytis.data.Integer()
+        columns = [C('result1', I), C('result2', I)]
+        function = pytis.data.DBFunctionDefault('foo7', self._dconnection, result_columns=columns)
+        row = pytis.data.Row((('arg1',
+                             pytis.data.Integer().validate('10')[0]),))
+        result = [col.value() for col in function.call(row)[0]]
+        assert result == [10, 12], ('Invalid result', result)
 tests.add(DBFunction)
 
 

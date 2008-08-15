@@ -784,7 +784,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "pg_class.relnamespace = pg_namespace.oid and "
              "pg_namespace.nspname = '%s' and "
              "pg_class.relname = '%s' and "
-             "pg_attribute.atttypid = pg_type.oid") % \
+             "pg_attribute.atttypid = pg_type.oid and "
+             "pg_attribute.attnum > 0") % \
             (schema, table_name,),
             outside_transaction=True)
         d1 = self._pg_query(
@@ -795,28 +796,36 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "pg_namespace.nspname = '%s' and "
              "pg_class.oid = pg_attribute.attrelid and "
              "pg_class.relname = '%s' and "
-             "pg_attribute.attnum = pg_attrdef.adnum") % \
+             "pg_attribute.attnum = pg_attrdef.adnum and "
+             "pg_attribute.attnum > 0") % \
             (schema, table_name,),
             outside_transaction=True)
         d2 = self._pg_query(
             ("select attname, conkey "
              "from pg_constraint, pg_namespace, pg_class, pg_attribute "
              "where conrelid = pg_class.oid and attrelid = pg_class.oid and relnamespace = pg_namespace.oid and attnum = any (conkey) and "
-             "nspname = '%s' and relname = '%s' and (contype = 'p' or contype = 'u')") %
+             "nspname = '%s' and relname = '%s' and (contype = 'p' or contype = 'u') and "
+             "pg_attribute.attnum > 0") %
             (schema, table_name,),
             outside_transaction=True)
         table_data = self._TableColumnData(d, d1, d2)
         PostgreSQLStandardBindingHandler._pdbb_table_column_data[table] = table_data
         return table_data
         
-    def _pdbb_get_table_type(self, table, column, ctype, type_kwargs=None):
+    def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None):
         table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table)
         if table_data is None:
             table_data = self._pdbb_get_table_column_data(table)
         def lookup_column(data):
-            for row in data:
-                if row[0] == column:
-                    return row[1:]
+            if isinstance(column, int):
+                row = data[column]
+            else:
+                for row in data:
+                    if row[0] == column:
+                        break
+                else:
+                    return None
+            return row[1:]
         try:
             type_, size_string, not_null = lookup_column(table_data.basic())
         except:
@@ -2677,26 +2686,26 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
 
 class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                            PostgreSQLStandardBindingHandler):
-    """Implementace tøídy 'Function' pro PostgreSQL.
-
-    Podporovány jsou pouze funkce vracející jedinou hodnotu.
-
-    """
-    def __init__(self, name, connection_data, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
+    """PostgreSQL implementation of the 'Function' class."""
+    
+    def __init__(self, name, connection_data, result_columns=None, **kwargs):
+        """
+        Arguments:
 
           name -- jméno funkce jako neprázdný string
           connection_data -- instance tøídy 'DBConnection' definující
             parametry pøipojení, nebo funkce bez argumentù vracející takovou
             instanci 'DBConnection'
-          kwargs -- k pøedání pøedkùm
+          result_columns -- sequence of 'ColumnSpec' instances describing the result
+            rows; if 'None', columns and their types are determined
+            automatically but only if it is possible and supported
+          kwargs -- forwarded to successors
 
         """
         assert is_string(name)
         self._name = name
         bindings = ()
+        self._pdbb_result_columns = result_columns
         super(DBPostgreSQLFunction, self).__init__(
             bindings=bindings, key=bindings, connection_data=connection_data,
             **kwargs)
@@ -2704,9 +2713,11 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         data = self._pg_query(arg_query, outside_transaction=True)
         narg = int(data[0][0])
         arguments = string.join(('%s',)*narg, ', ')
-        self._pdbb_function_call = 'select %s(%s)' % (name, arguments)
+        self._pdbb_function_call = 'select * from %s(%s)' % (name, arguments)
         
     def _db_bindings_to_column_spec(self, __bindings):
+        if self._pdbb_result_columns is not None:
+            return self._pdbb_result_columns, ()
         type_query = ("select proretset, prorettype, proargtypes from pg_proc"+
                       " where proname = '%s'") % self._name
         self._pg_begin_transaction()
@@ -2716,17 +2727,29 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             assert len(data) == 1, ('Overloaded functions not supported',
                                     self._name)
             r_set, r_type, arg_types = data[0]
-            assert r_set == 'F', \
-                   ('Multiset functions not supported', self._name)
-            def type_instance(tnum):
-                query = ("select typname, typlen from pg_type "+
-                         "where oid = '%s'") % tnum
+            def type_instances(tnum):
+                query = ("select typname, nspname, typlen, typtype "
+                         "from pg_type join pg_namespace on typnamespace = pg_namespace.oid "
+                         "where pg_type.oid = '%s'") % (tnum,)
                 data = self._pg_query(query)
-                type_, size_string = data[0]
-                t = self._pdbb_get_type(type_, size_string, False, False)
-                return t
-            r_type_instance = type_instance(r_type)
-            columns = [ColumnSpec('', r_type_instance)]
+                type_, type_ns, size_string, t_type = data[0]
+                if t_type == 'b':
+                    instances = [self._pdbb_get_type(type_, size_string, False, False)]
+                elif t_type == 'c':
+                    table = '%s.%s' % (type_ns, type_,)
+                    table_data = self._pdbb_get_table_column_data(table)
+                    instances = [self._pdbb_get_table_type(table, i)
+                                 for i in range(len(table_data.basic()))]
+                elif type_ == 'void':
+                    instances = []
+                else:
+                    raise Exception(("Unsupported function return type, "
+                                     "use explicit column specification:"),
+                                    '%s.%s' % (type_ns, type_,))
+                return instances
+            r_type_instances = type_instances(r_type)
+            columns = [ColumnSpec('column%d' % (i+1,), r_type_instances[i])
+                       for i in range(len(r_type_instances))]
         finally:
             self._pg_commit_transaction()
         return columns, ()
@@ -2745,9 +2768,9 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                               transaction=transaction,
                               outside_transaction=outside_transaction
                               )
-        result = self._pg_make_row_from_raw_data(data)
+        result = [self._pg_make_row_from_raw_data([row]) for row in data]
         log(EVENT, 'Function call result:', (self._name, result))
-        return [result]
+        return result
 
 
 class DBPostgreSQLTransaction(DBDataPostgreSQL):
