@@ -1,3 +1,8 @@
+2008-08-28  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/presentation/field.py (PresentedRow.validate): Test unique
+	only if value is not None.
+
 2008-08-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/_test.py:
