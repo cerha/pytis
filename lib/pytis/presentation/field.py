@@ -568,7 +568,7 @@ class PresentedRow(object):
             kwargs = dict(kwargs, condition=self.runtime_filter(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error and column.type.unique() and not column.virtual and \
-               (self._new or value != self._original_row[key]):
+               (self._new or value != self._original_row[key]) and value is not None:
             count = self._data.select(condition=pytis.data.EQ(column.id, value),
                                       transaction=self._transaction)
             self._data.close()
