@@ -267,4 +267,4 @@ WXPYTHON-2.8:
 
    Checkbox daného políèka s True hodnotou není zatr¾en.
 
- 
+ * Nefunguje allow_codebook_insert=True, vyvolání pøidání záznamu do èíselníku vyvolá chybu.
