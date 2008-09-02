@@ -186,7 +186,9 @@ def dbfunction(name, *args, **kwargs):
     success, function = pytis.form.db_operation(pytis.data.DBFunctionDefault, name, conn_spec)
     success, result   = pytis.form.db_operation(function.call, pytis.data.Row(args),
                                                 transaction=transaction)
-    return result[0][0].value()
+    if len(result) == 1 and len(result[0]) == 1:
+        return result[0][0].value()
+    return result
 
 
 def nextval(seq):
