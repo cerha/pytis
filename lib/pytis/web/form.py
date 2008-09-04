@@ -371,13 +371,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             result += g.br() + ctrl(**attr)
         return result
 
+    def _has_not_null_indicator(self, field):
+        type = field.type
+        return type.not_null() and not isinstance(type, pytis.data.Boolean) and \
+               (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary)))
+    
     def _export_field_label(self, exporter, field):
         g = exporter.generator()
         if not field.label:
             return None
-        type = field.type
-        if type.not_null() and not isinstance(type, pytis.data.Boolean) and \
-               (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary))):
+        if self._has_not_null_indicator(field):
             sign = g.sup("*", cls="not-null")
         else:
             sign = ''
@@ -400,8 +403,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return concat(errors, super(EditForm, self)._export_body(exporter))
                       
     def _export_footer(self, exporter):
-        g = exporter.generator()
-        return g.span("*", cls="not-null") +") "+ _("Fields marked by an asterisk are mandatory.")
+        for f in self._fields.values():
+            if f.label and self._has_not_null_indicator(f) and f.id in self._layout.order():
+                g = exporter.generator()
+                return g.span("*", cls="not-null") +") "+\
+                       _("Fields marked by an asterisk are mandatory.")
+        return None
 
     
 class BrowseForm(LayoutForm):
