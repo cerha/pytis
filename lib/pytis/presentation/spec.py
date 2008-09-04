@@ -1471,6 +1471,45 @@ class Computer(object):
         return self._depends    
 
 
+def computer(function):
+    """Return a Computer instance for given function.
+
+    This convenience wrapper creates a Computer instance and wraps the computer function by a code,
+    that automatically converts row values into function arguments.
+
+    Any named (positional) arguments of given 'function' which follow the first argument (which is
+    the current row as usual) are used for automatic construction of the 'depends' list and the
+    function will receive the Python values of the corresponding fields in place of these arguments.
+
+    Example:
+
+        def func(row):
+             return row['aa'].value() + row['bb'].value()
+        Computer(func, depends=('aa', 'bb'))
+
+    is equivalent to:
+
+        def func(row, aa, bb):
+            return aa + bb
+        c = computer(func)
+        
+    or:
+
+        c = computer(lambda r, aa, bb: aa + bb)
+
+    The first argument (row) is always passed, but should not be used to access field values
+    (fields accessed this way would not be visible in computer's dependencis).  It may still be
+    usefull, however, to access other information needed by the computer function.
+
+    """
+    assert callable(function) and not isinstance(function, Computer)
+    columns = argument_names(function)[1:]
+    def func(row):
+        kwargs = dict([(column, row[column].value()) for column in columns])
+        return function(row, **kwargs)
+    return Computer(func, depends=columns)
+    
+
 class CbComputer(Computer):
     """Specializovaný computer, který získává hodnotu z èíselníku.
     
@@ -1950,8 +1989,7 @@ class FieldSpec(object):
             returns it as a 'pytis.data.Operator' instance.  This condition is used to filter out
             enumerator data for codebook fields as well as available completions when
             autocompletion is enabled.  This is mostly useful for modification of available
-            codebook values based on the current values of other fields within the form.  See also
-            notes about computer specifications below.
+            codebook values based on the current values of other fields within the form.
 
           completer -- enumerator used for automatic completion.  The available completions are
             taken from an enumerator object.  If the field has an enumerator (defined by
@@ -2046,29 +2084,6 @@ class FieldSpec(object):
         ('Editable.NEVER'), pokud není explicitnì nastaven jako editovatelný
         pomocí specifikátoru 'editable'.
 
-        For convenience, it is possible to pass a function (or any callable object) everywhere,
-        where a 'Computer' instance is expected (arguments 'computer', 'editable', and
-        'runtime_filter').  In this case the Computer instance will be created automatically.  The
-        passed function must define named (positional) arguments.  Names of these arguments are
-        used for construction of the 'Computer' 'depends' list and the function will receive the
-        Python values of the corresponding fields as arguments.
-
-        Example:
-
-            def func(row):
-                return row['aa'].value() + row['bb'].value()
-            computer = Computer(func, depends=('aa', 'bb'))
-
-        is equivalent to:
-
-            def func(aa, bb):
-                return aa + bb
-            computer = func
-        
-        or:
-
-            computer = lambda aa, bb: aa + bb
-
         """
         for key, value in (('id', id), ('label', label) ,('column_label', column_label)):
             if value is not None:
@@ -2087,17 +2102,6 @@ class FieldSpec(object):
               codebook_runtime_filter=None, runtime_filter=None, selection_type=None,
               completer=None, orientation=Orientation.VERTICAL, post_process=None, filter=None,
               filter_list=None, style=None, link=(), filename=None, **kwargs):
-        def make_computer(computer):
-            assert computer is None or callable(computer) or isinstance(computer, Computer), computer
-            if callable(computer) and not isinstance(computer, Computer):
-                func = computer
-                columns = argument_names(func)
-                def function(row):
-                    kwargs = dict([(column, row[column].value()) for column in columns])
-                    return func(**kwargs)
-                computer = Computer(function, depends=columns)
-            return computer
-            
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
         self._id = id
@@ -2113,6 +2117,9 @@ class FieldSpec(object):
         assert isinstance(fixed, bool)
         assert isinstance(compact, bool)
         assert isinstance(nocopy, bool)
+
+        assert computer is None or isinstance(computer, Computer), computer
+        
         assert codebook is None or isinstance(codebook, str)
         assert display is None or isinstance(display, str) or callable(display)
         assert completer is None or isinstance(completer, (str, list,tuple, pytis.data.Enumerator))
@@ -2124,6 +2131,7 @@ class FieldSpec(object):
         if codebook_runtime_filter is not None:
             assert runtime_filter is None
             runtime_filter = codebook_runtime_filter
+        assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
         assert selection_type is None \
                or selection_type in public_attributes(SelectionType)
         assert orientation in public_attributes(Orientation)
@@ -2167,7 +2175,7 @@ class FieldSpec(object):
         self._compact = compact
         self._nocopy = nocopy
         self._default = default
-        self._computer = make_computer(computer)
+        self._computer = computer
         self._height = height
         if editable is None:
             if width == 0 or computer:
@@ -2179,8 +2187,8 @@ class FieldSpec(object):
             e_func = editable.function()
             if len(argument_names(e_func)) == 2:
                 editable = Computer(lambda r: e_func(r, id), depends=editable.depends())
-        elif editable not in public_attributes(Editable):
-            editable = make_computer(editable)
+        else:
+            assert editable in public_attributes(Editable), editable
         self._editable = editable
         self._line_separator = line_separator
         self._codebook = codebook
@@ -2189,7 +2197,7 @@ class FieldSpec(object):
         self._display_size = display_size
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
-        self._runtime_filter = make_computer(runtime_filter)
+        self._runtime_filter = runtime_filter
         self._selection_type = selection_type
         self._completer = completer
         self._orientation = orientation
