@@ -91,21 +91,21 @@ class Form(lcg.Content):
         self._enctype = None
 
 
-    def _export_body(self, exporter):
+    def _export_body(self, context):
         pass
     
-    def _export_submit(self, exporter):
+    def _export_submit(self, context):
         pass
     
-    def _export_footer(self, exporter):
+    def _export_footer(self, context):
         pass
     
-    def export(self, exporter):
-        g = exporter.generator()
-        content = [self._export_body(exporter)] + \
+    def export(self, context):
+        g = context.generator()
+        content = [self._export_body(context)] + \
                   [wrap(part, cls=name) for wrap, part, name in
-                   ((g.div, self._export_submit(exporter), 'submit'),
-                    (g.div, self._export_footer(exporter), 'footer')) if part]
+                   ((g.div, self._export_submit(context), 'submit'),
+                    (g.div, self._export_footer(context), 'footer')) if part]
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
@@ -124,8 +124,8 @@ class FieldForm(Form):
         from field import _Field
         return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
-    def _format_field(self, exporter, field):
-        return field.formatter.format(exporter.generator(), self._row, field)
+    def _format_field(self, context, field):
+        return field.formatter.format(context.generator(), self._row, field)
 
     def _interpolate(self, context, template, row):
         if callable(template):
@@ -148,8 +148,8 @@ class LayoutForm(FieldForm):
         super(LayoutForm, self).__init__(view, row, **kwargs)
         self._allow_table_layout = allow_table_layout
         
-    def _export_group(self, exporter, group, inner=False):
-        g = exporter.generator()
+    def _export_group(self, context, group, inner=False):
+        g = context.generator()
         result = []
         fields = []
         wrap = False
@@ -160,13 +160,13 @@ class LayoutForm(FieldForm):
                 if fields:
                     result.append(self._export_fields(g, fields))
                 fields = []
-                result.append(self._export_group(exporter, item, inner=True))
+                result.append(self._export_group(context, item, inner=True))
             else:
                 field = self._fields[item]
-                ctrl = self._export_field(exporter, field)
+                ctrl = self._export_field(context, field)
                 if ctrl is not None:
-                    label = self._export_field_label(exporter, field)
-                    help = self._export_field_help(exporter, field)
+                    label = self._export_field_label(context, field)
+                    help = self._export_field_help(context, field)
                     fields.append((field, label, ctrl, help))
                     wrap = True
         if fields:
@@ -224,16 +224,16 @@ class LayoutForm(FieldForm):
             rows = g.table(rows, cls='packed-fields')
         return concat(rows, separator="\n")
 
-    def _export_field(self, exporter, field):
+    def _export_field(self, context, field):
         return None
 
-    def _export_field_label(self, exporter, field):
+    def _export_field_label(self, context, field):
         if field.label:
-            return exporter.generator().label(field.label, None) + ":"
+            return context.generator().label(field.label, None) + ":"
         else:
             return None
     
-    def _export_field_help(self, exporter, field):
+    def _export_field_help(self, context, field):
         return None
 
 
@@ -243,8 +243,8 @@ class _SingleRecordForm(LayoutForm):
         layout = layout or view.layout().group()
         super(_SingleRecordForm, self).__init__(view, row, layout=layout, **kwargs)
         
-    def _export_body(self, exporter):
-        return self._export_group(exporter, self._layout)
+    def _export_body(self, context):
+        return self._export_group(context, self._layout)
     
     
 class _SubmittableForm(Form):
@@ -268,8 +268,8 @@ class _SubmittableForm(Form):
         super(_SubmittableForm, self).__init__(view, row, **kwargs)
 
     
-    def _export_submit(self, exporter):
-        g = exporter.generator()
+    def _export_submit(self, context):
+        g = context.generator()
         result = [g.hidden(k, v) for k, v in self._hidden] + \
                  [g.hidden('form-name', self._name)] + \
                  [g.submit(label, name=name, title=_("Submit the form"))
@@ -283,8 +283,8 @@ class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
     _ALIGN_NUMERIC_FIELDS = True
     
-    def _export_field(self, exporter, field):
-        return self._format_field(exporter, field)
+    def _export_field(self, context, field):
+        return self._format_field(context, field)
 
     
 class EditForm(_SingleRecordForm, _SubmittableForm):
@@ -321,8 +321,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         binary = [id for id in order if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
 
-    def _export_field(self, exporter, field):
-        g = exporter.generator()
+    def _export_field(self, context, field):
+        g = context.generator()
         value = self._row[field.id]
         type = value.type()
         attr = {'name': field.id,
@@ -376,8 +376,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return type.not_null() and not isinstance(type, pytis.data.Boolean) and \
                (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary)))
     
-    def _export_field_label(self, exporter, field):
-        g = exporter.generator()
+    def _export_field_label(self, context, field):
+        g = context.generator()
         if not field.label:
             return None
         if self._has_not_null_indicator(field):
@@ -386,12 +386,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             sign = ''
         return g.label(field.label, field.unique_id) + sign + ":"
         
-    def _export_field_help(self, exporter, field):
+    def _export_field_help(self, context, field):
         descr = field.spec.descr()
-        return descr and exporter.generator().div(descr, cls="help")
+        return descr and context.generator().div(descr, cls="help")
 
-    def _export_body(self, exporter):
-        g = exporter.generator()
+    def _export_body(self, context):
+        g = context.generator()
         errors = []
         for id, msg in self._errors:
             if id is not None:
@@ -400,12 +400,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             errors.append(g.p(msg))
         if errors:
             errors = g.div(errors, cls='errors')
-        return concat(errors, super(EditForm, self)._export_body(exporter))
+        return concat(errors, super(EditForm, self)._export_body(context))
                       
-    def _export_footer(self, exporter):
+    def _export_footer(self, context):
         for f in self._fields.values():
             if f.label and self._has_not_null_indicator(f) and f.id in self._layout.order():
-                g = exporter.generator()
+                g = context.generator()
                 return g.span("*", cls="not-null") +") "+\
                        _("Fields marked by an asterisk are mandatory.")
         return None
@@ -555,14 +555,14 @@ class BrowseForm(LayoutForm):
         self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
         self._align = dict([(f.id, 'right') for f in cfields if isinstance(f.type, pd.Number)])
 
-    def _export_cell(self, exporter, field):
-        value = self._format_field(exporter, field)
+    def _export_cell(self, context, field):
+        value = self._format_field(context, field)
         if field.id == self._column_fields[0].id and self._tree_order_column:
             order = self._row[self._tree_order_column].value()
             if order is not None:
                 level = len(order.split('.')) - 2
                 if level > 0:
-                    g = exporter.generator()
+                    g = context.generator()
                     indent = level * g.span(2*'&nbsp;', cls='tree-indent')
                     value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
                     # &#8227 does not work in MSIE
@@ -601,9 +601,9 @@ class BrowseForm(LayoutForm):
             ) if attr() is not None]
         return dict(cls=' '.join(cls), style='; '.join(styles))
     
-    def _export_row(self, exporter, row, n):
-        g = exporter.generator()
-        cells = [g.td(self._export_cell(exporter, field), align=self._align.get(field.id),
+    def _export_row(self, context, row, n):
+        g = context.generator()
+        cells = [g.td(self._export_cell(context, field), align=self._align.get(field.id),
                       **self._style(field.style, row, n, field))
                  for field in self._column_fields]
         if self._search and self._found and self._offset == (n + self._page * self._limit):
@@ -612,13 +612,13 @@ class BrowseForm(LayoutForm):
             id = None
         return g.tr(cells, id=id, **self._style(self._view.row_style(), row, n))
 
-    def _export_group_heading(self, exporter, field):
-        g = exporter.generator()
-        return g.tr(g.th(self._format_field(exporter, field), colspan=len(self._column_fields)),
+    def _export_group_heading(self, context, field):
+        g = context.generator()
+        return g.tr(g.th(self._format_field(context, field), colspan=len(self._column_fields)),
                     cls='group-heading')
     
-    def _export_headings(self, exporter):
-        g = exporter.generator()
+    def _export_headings(self, context):
+        g = context.generator()
         current_sorting_column, current_dir = self._sorting[0]
         directions = [dir for dir, name in self._SORTING_DIRECTIONS]
         def label(field):
@@ -638,13 +638,13 @@ class BrowseForm(LayoutForm):
             return result
         return concat([g.th(label(f)) for f in self._column_fields])
     
-    def _wrap_exported_rows(self, exporter, rows, summary):
-        g = exporter.generator()
-        return g.table((g.thead(g.tr(self._export_headings(exporter))),
+    def _wrap_exported_rows(self, context, rows, summary):
+        g = context.generator()
+        return g.table((g.thead(g.tr(self._export_headings(context))),
                         g.tfoot(g.tr(g.td(summary, colspan=len(self._column_fields)))),
                         g.tbody(rows)), border=1)
     
-    def _export_body(self, exporter):
+    def _export_body(self, context):
         data = self._row.data()
         row = self._row
         limit = self._limit
@@ -687,16 +687,16 @@ class BrowseForm(LayoutForm):
                     self._group = not self._group
                     last_group_values = group_values
                     if group_heading:
-                        exported_heading = self._export_group_heading(exporter, group_heading)
+                        exported_heading = self._export_group_heading(context, group_heading)
                         if exported_heading is not None:
                             exported_rows.append(exported_heading)
-            exported_rows.append(self._export_row(exporter, row, n))
+            exported_rows.append(self._export_row(context, row, n))
             self._last_group = self._group
             n += 1 
             if limit is not None and n >= limit:
                 break
         data.close()
-        g = exporter.generator()
+        g = context.generator()
         if n == 0:
             return g.strong(_("No records."))
         else:
@@ -707,7 +707,7 @@ class BrowseForm(LayoutForm):
                             first=g.strong(str(offset+1)),
                             last=g.strong(str(offset+n)),
                             total=g.strong(str(count)))
-            return self._wrap_exported_rows(exporter, exported_rows, summary)
+            return self._wrap_exported_rows(context, exported_rows, summary)
 
     def _link_ctrl_uri(self, generator, sort=None, dir=None, **kwargs):
         if sort is None:
@@ -747,9 +747,9 @@ class BrowseForm(LayoutForm):
             result.append(g.div(label +' '+ concat(links, separator='&nbsp;')))
         return (g.div(result, cls='index-search-controls'),)
 
-    def _export_controls(self, exporter, second=False):
+    def _export_controls(self, context, second=False):
         limit, page, count = self._limit, self._page, self._count
-        g = exporter.generator()
+        g = context.generator()
         pages, modulo = divmod(count, min(limit, count))
         pages += modulo and 1 or 0
         id = (second and '0' or '1') + '%x' % positive_id(self)
@@ -758,7 +758,7 @@ class BrowseForm(LayoutForm):
         result = ()
         if count > 100:
             if not second:
-                index_search_controls = self._export_index_search_controls(exporter)
+                index_search_controls = self._export_index_search_controls(context)
                 self._index_search_controls = index_search_controls
             else:
                 index_search_controls = self._index_search_controls
@@ -792,12 +792,12 @@ class BrowseForm(LayoutForm):
         return g.form(result, action=g.uri(self._handler), method='GET',
                       cls=self._CSS_CLS+'-controls')
 
-    def export(self, exporter):
-        result = super(BrowseForm, self).export(exporter)
+    def export(self, context):
+        result = super(BrowseForm, self).export(context)
         if self._limit is not None and self._count > self._limits[0]:
-            result = concat(self._export_controls(exporter),
+            result = concat(self._export_controls(context),
                             result,
-                            self._export_controls(exporter, second=True), separator="\n")
+                            self._export_controls(context, second=True), separator="\n")
         return result
 
 
@@ -831,16 +831,16 @@ class ListView(BrowseForm):
             if not anchor and list_layout.allow_index():
                 self._anchor = camel_case_to_lower(self._name, '-') + '-%s'
 
-    def _export_body(self, exporter):
+    def _export_body(self, context):
         self._exported_row_index = []
-        return super(ListView, self)._export_body(exporter)
+        return super(ListView, self)._export_body(context)
         
-    def _export_row(self, exporter, row, n):
+    def _export_row(self, context, row, n):
         layout = self._list_layout
-        g = exporter.generator()
+        g = context.generator()
         parser = lcg.Parser()
         if isinstance(layout.title(), lcg.TranslatableText):
-            title = self._interpolate(exporter, layout.title(), row)
+            title = self._interpolate(context, layout.title(), row)
         else:
             title = self._row[layout.title()].export()
         anchor = self._anchor
@@ -853,32 +853,32 @@ class ListView(BrowseForm):
             self._exported_row_index.append(g.link(title, '#'+anchor))
         parts = [g.h(heading, level=3)]
         if layout.image():
-            img = self._export_field(exporter, self._image) #cls='list-layout-image')
+            img = self._export_field(context, self._image) #cls='list-layout-image')
             if img:
                 parts.append(img)
         if self._meta:
             meta = [g.span((labeled and g.span(field.label, cls='label')+": " or '') + \
-                           self._format_field(exporter, field), cls=field.id)
+                           self._format_field(context, field), cls=field.id)
                     for field, labeled in self._meta]
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
-            parts.append(self._export_group(exporter, layout.layout()))
+            parts.append(self._export_group(context, layout.layout()))
         if layout.content():
             text = self._row[layout.content()].export()
             content = lcg.Container(parser.parse(text))
             content.set_parent(self.parent())
-            parts.append(g.div(content.export(exporter), cls='content'))
+            parts.append(g.div(content.export(context), cls='content'))
         return g.div(parts, cls='list-item ' + (n % 2 and 'even' or 'odd'))
 
-    def _export_field(self, exporter, field):
-        return self._format_field(exporter, field)
+    def _export_field(self, context, field):
+        return self._format_field(context, field)
 
-    def _export_group_heading(self, exporter, field):
-        #return exporter.generator().h(self._format_field(exporter, field), 3, cls='group-heding')
+    def _export_group_heading(self, context, field):
+        #return context.generator().h(self._format_field(context, field), 3, cls='group-heding')
         return None
 
-    def _wrap_exported_rows(self, exporter, rows, summary):
-        g = exporter.generator()
+    def _wrap_exported_rows(self, context, rows, summary):
+        g = context.generator()
         result = ()
         if self._exported_row_index:
             result += (g.div(g.list(self._exported_row_index), cls="index"),)
@@ -927,21 +927,21 @@ class ItemizedView(BrowseForm):
         self._separator = separator
         self._template = template
         
-    def _export_row(self, exporter, row, n):
+    def _export_row(self, context, row, n):
         template = self._template
         if template:
-            return self._interpolate(exporter, template, row)
+            return self._interpolate(context, template, row)
         else:
-            fields = [self._format_field(exporter, field)
+            fields = [self._format_field(context, field)
                       for field in self._column_fields if row[field.id].value() is not None]
             return concat(fields, separator=self._separator)
 
-    def _export_group_heading(self, exporter, field):
+    def _export_group_heading(self, context, field):
         #TODO: Create multi-level lists.
         return None
     
-    def _wrap_exported_rows(self, exporter, rows, summary):
-        g = exporter.generator()
+    def _wrap_exported_rows(self, context, rows, summary):
+        g = context.generator()
         return g.list(rows)
 
 
@@ -978,10 +978,10 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
                                    if isinstance(field.type, pd.Boolean)])
         self._check_columns = check_columns
 
-    def _export_cell(self, exporter, field):
+    def _export_cell(self, context, field):
         if field.id in self._check_columns:
-            return exporter.generator().checkbox(name=field.id, value=self._row.format(self._key),
-                                                 checked=self._row[field.id].value())
+            return context.generator().checkbox(name=field.id, value=self._row.format(self._key),
+                                                checked=self._row[field.id].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(exporter, field)
+            return super(CheckRowsForm, self)._export_cell(context, field)
 
