@@ -1770,7 +1770,7 @@ class ListLayout(object):
     
     """
     def __init__(self, title, meta=(), layout=None, content=None, image=None, anchor=None,
-                 meta_labels=False, columns=1):
+                 meta_labels=False, columns=1, allow_index=False):
         """Initialize the instance.
 
         Arguemnts:
@@ -1802,6 +1802,10 @@ class ListLayout(object):
 
           columns -- number of columns; integer.
 
+          allow_index -- boolean flag indicating, whether an index of all displayed records should
+            be displayed at the top of the list.  Each item in this index makes it possible to jump
+            directly to the record.
+
         """
         if isinstance(layout, (list, tuple)):
             layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
@@ -1812,6 +1816,7 @@ class ListLayout(object):
         else:
             assert isinstance(meta_labels, (bool, tuple, list))
         assert isinstance(columns, int)
+        assert isinstance(allow_index, bool)
         self._title = title
         self._meta = meta
         self._content = content
@@ -1820,6 +1825,7 @@ class ListLayout(object):
         self._anchor = anchor
         self._meta_labels = meta_labels
         self._columns = columns
+        self._allow_index = allow_index
         
     def title(self):
         return self._title
@@ -1844,6 +1850,9 @@ class ListLayout(object):
     
     def columns(self):
         return self._columns
+
+    def allow_index(self):
+        return self._allow_index
     
     
 class FieldSpec(object):

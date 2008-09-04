@@ -636,7 +636,7 @@ class BrowseForm(LayoutForm):
         return g.table((g.thead(g.tr(self._export_headings(exporter))),
                         g.tfoot(g.tr(g.td(summary, colspan=len(self._column_fields)))),
                         g.tbody(rows)), border=1)
-
+    
     def _export_body(self, exporter):
         data = self._row.data()
         row = self._row
@@ -820,7 +820,14 @@ class ListView(BrowseForm):
             self._meta = [(self._field(id), id in list_layout.meta_labels())
                           for id in list_layout.meta()]
             self._image = list_layout.image() and self._field(list_layout.image())
-            
+            self._anchor = anchor = list_layout.anchor()
+            if not anchor and list_layout.allow_index():
+                self._anchor = camel_case_to_lower(self._name, '-') + '-%s'
+
+    def _export_body(self, exporter):
+        self._exported_row_index = []
+        return super(ListView, self)._export_body(exporter)
+        
     def _export_row(self, exporter, row, n):
         layout = self._list_layout
         g = exporter.generator()
@@ -829,10 +836,15 @@ class ListView(BrowseForm):
             title = self._interpolate(exporter, layout.title(), row)
         else:
             title = self._row[layout.title()].export()
-        if layout.anchor():
-            name = layout.anchor() % row[self._key].export()
-            title = g.link(title, None, name=name)
-        parts = [g.h(title, level=3)]
+        anchor = self._anchor
+        if anchor:
+            anchor = anchor % row[self._key].export()
+            heading = g.link(title, None, name=anchor)
+        else:
+            heading = title
+        if layout.allow_index():
+            self._exported_row_index.append(g.link(title, '#'+anchor))
+        parts = [g.h(heading, level=3)]
         if layout.image():
             img = self._export_field(exporter, self._image) #cls='list-layout-image')
             if img:
@@ -860,13 +872,18 @@ class ListView(BrowseForm):
 
     def _wrap_exported_rows(self, exporter, rows, summary):
         g = exporter.generator()
+        result = ()
+        if self._exported_row_index:
+            result += (g.div(g.list(self._exported_row_index), cls="index"),)
         columns = self._list_layout.columns()
         if columns > 1:
             n, mod = divmod(len(rows), columns)
             rows = g.table([g.tr([g.td(r, width="%d%%" % (100/columns), valign='top')
                                   for r in rows[i*columns:(i+1)*columns]])
                             for i in range(n+min(mod, 1))], border=0, cls='grid')
-        return g.div(rows, cls="body") +"\n"+ g.div(summary, cls="summary")
+        result += (g.div(rows, cls="body"),
+                   g.div(summary, cls="summary"))
+        return "".join(result)
 
 
 class ItemizedView(BrowseForm):

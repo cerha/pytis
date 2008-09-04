@@ -1,8 +1,18 @@
 2008-09-04  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/presentation/spec.py: Link documentation updated.
+	* pytis/presentation/spec.py: 
+	* pytis/web/form.py:
+	Added support for automatic ListView row indexes.
+
+	* pytis/util/util.py:
+	(argument_names): Handle functions with no arguments correctly.
+	
+	* pytis/presentation/spec.py:
 	Don't convert functions to Computer instances automatically, but
 	provide a conveninence wrapper function 'computer()'.
+
+	* pytis/presentation/spec.py:
+	Link documentation updated.
 
 2008-08-28  Pavel Hanak  <hanak@asellus.cz>
 
