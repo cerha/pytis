@@ -1648,9 +1648,9 @@ class FormType(object):
 
 
 class Link(object):
-    """Specifikace odkazu políèka do jiného náhledu.
+    """Specification of a link from field to a differnt view.
 
-    Pou¾ívá se jako hodnota argumentu 'link' ve 'FieldSpec'.
+    Used as a value of 'FieldSpec' constructor argument  'link'.
 
     """
     
@@ -1997,11 +1997,12 @@ class FieldSpec(object):
             'None', bude pou¾it výchozí styl øádku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
 
-          link -- specifikace odkazu/odkazù do jiného náhledu souvisejícího s
-            hodnotou políèka.  Instance 'Link' nebo jejich sekvence.  V
-            kontextovém menu øádku bude pro ka¾dý odkaz vytvoøena jedna polo¾ka
-            umo¾òující odskok do odkazovaného náhledu s vyhledáním záznamu
-            odpovídajícího aktuální hodnotì políèka.
+          link -- specification of a link, or a series of links to other forms related to the
+            current filed value.  The value is a 'Link' instance or their sequence.  The links will
+            be presented as separate menu items in the context menu of a record in the GUI.  The
+            web forms currently only support one link per field and present it as a hypertext link
+            on field's value.  The links will open the related form and locate the record
+            corresponding to the value of the refering field.
 
           filename -- identifier of the field, which provides the filename for downloading/saving
             the value of this field into a file.  If not None, the user interface should offer
