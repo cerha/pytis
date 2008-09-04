@@ -1,9 +1,12 @@
 2008-09-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py:
+	All references to `exporter' replaced by `context' (according to
+	LCG).
+	
+	* pytis/web/form.py:
 	Only export the information about the asterix sign, if the sign
 	was used in the form.
-
 
 	* pytis/presentation/spec.py: 
 	* pytis/web/form.py:
