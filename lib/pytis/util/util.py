@@ -913,11 +913,9 @@ def argument_names(callable):
     
     """
     args, __, __, __ = inspect.getargspec(callable)
-    if args[0] == 'self':
+    if args and args[0] == 'self':
         args = args[1:]
     return tuple(args)
-    
-
 
 def direct_public_members(obj):
     """Vra» tuple v¹ech pøímých veøejných atributù a metod tøídy objektu 'obj'.
