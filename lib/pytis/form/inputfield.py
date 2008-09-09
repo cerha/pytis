@@ -695,6 +695,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """Reset the field to its original value."""
         self._set_value(self._row.original_row()[self.id()].export())
 
+    def insert_text(self, text):
+        """Insert given text into the field in the current place of the cursor."""
+        self._ctrl.WriteText(text)
+        
         
 class Unlabeled:
     """Mix-in tøída pro políèka .

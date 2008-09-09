@@ -1,5 +1,7 @@
 2008-09-09  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/inputfield.py (InputField.insert_text): New method.
+
 	* pytis/form/form.py: Allow access to form fields through a public
 	method `field()'.
 
