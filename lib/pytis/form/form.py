@@ -1868,32 +1868,33 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     # Public methods
 
     def title(self):
-        """Vra» název formuláøe jako øetìzec."""        
+        """Return the form title as a string."""        
         return self._view.layout().caption()
 
     def size(self):
-        """Vra» skuteènou velikost formuláøe (bez ohledu na aktuální velikost).
+        """Return the ideal total size of the form in pixels as a tuple of two integers.
 
-        Vrácená hodnota reprezentuje minimální velikost formuláøe, tak aby byly
-        v¹echny jeho prvky viditelné.  Skuteèná velikost mù¾e být men¹í, nebo
-        vìt¹í v závoslosti na velikost okna, ve kterém je formuláø zobrazen.
+        The returned size represents the total size of the form needed to display all fields
+        without scrolling.  The current real size may be greater or smaller depending on the size
+        of the window where the form is displayed.
         
         """
         return self._size
 
     def field(self, id):
-        """Vra» instanci 'InputField' políèka s identifikátorem 'id'.
+        """Return the 'InputField' instance for the field 'id'.
 
-        Pokud políèko daného id ve formuláøi neexistuje, vyvolá výjimku 'ProgramError'.
+        Raises 'ProgramError' if the field of given id does not exist.
         
         """
         return self._field(id)
     
     def changed(self):
-        """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
+        """Return true iff the form data was changed since last saved."""
         return self._row.changed()
 
     def readonly(self):
+        """Return true iff the form is read only."""
         return self._mode == self.MODE_VIEW
 
     
