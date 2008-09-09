@@ -1,3 +1,8 @@
+2008-09-09  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py: Allow access to form fields through a public
+	method `field()'.
+
 2008-09-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py:

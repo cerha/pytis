@@ -1647,7 +1647,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     
     def _field(self, id):
         f = find(id, self._fields, key=lambda f: f.id())
-        assert f is not None, (_("Unknown field:"), id)
+        if f is None:
+            raise ProgramError("Unknown field: %s" % id)
         return f
 
     def _create_button(self, parent, button):
@@ -1880,6 +1881,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         """
         return self._size
 
+    def field(self, id):
+        """Vra» instanci 'InputField' políèka s identifikátorem 'id'.
+
+        Pokud políèko daného id ve formuláøi neexistuje, vyvolá výjimku 'ProgramError'.
+        
+        """
+        return self._field(id)
+    
     def changed(self):
         """Vra» pravdu, pokud byla data zmìnìna od posledního ulo¾ení."""
         return self._row.changed()
