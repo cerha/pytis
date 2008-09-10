@@ -890,7 +890,7 @@ class ListView(BrowseForm):
                             for i in range(n+min(mod, 1))], border=0, cls='grid')
         result += (g.div(rows, cls="body"),
                    g.div(summary, cls="summary"))
-        return "".join(result)
+        return concat(result)
 
 
 class ItemizedView(BrowseForm):
