@@ -1,3 +1,10 @@
+2008-09-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py: 
+	* pytis/web/field.py: 
+	* pytis/web/form.py: 
+	Automatically format structured text fields in web forms.
+
 2008-09-09  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/inputfield.py (InputField.insert_text): New method.

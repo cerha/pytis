@@ -899,9 +899,18 @@ class Macaddr(String):
                             for x in range(0,len(macaddr),2)] )
         return Value(self, unicode(value)), None
 
+
+class StructuredText(String):
+    """Text formatted using the LCG structored text markup.
+
+    Fields of this type may be handled specifically in the user interface.
+
+    """
+    pass
+
     
 class TreeOrder(String):
-    """Numeric value denoting the level of the item within the tree structure.
+    """Literal numeric value denoting the level of the item within the tree structure.
 
     The type itself does not implement any specific features.  It has strictly specificational
     meaning.  If such a column is detected within a list, the user interface may try to render the

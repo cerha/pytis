@@ -82,20 +82,24 @@ class FieldFormatter(object):
             self._formatter = self._codebook_formatter
         elif field.spec.filename():
             self._formatter = self._file_formatter
+        elif isinstance(type, pytis.data.StructuredText):
+            self._formatter = self._structured_text_formatter
+            self._parser = lcg.Parser()
         else:
             self._formatter = self._generic_formatter
 
-    def _boolean_formatter(self, generator, row, field):
+    def _boolean_formatter(self, context, row, field):
         value = row.display(field.id) or row[field.id].value() and _("Yes") or _("No")
         return value, None
 
-    def _color_formatter(self, generator, row, field):
+    def _color_formatter(self, context, row, field):
+        g = context.generator()
         color = row[field.id].export()
-        value = generator.span(color or '&nbsp;', cls="color-value") +' '+ \
-                generator.span('&nbsp;', cls="color-display", style="background-color: %s;" %color)
+        value = g.span(color or '&nbsp;', cls="color-value") +' '+ \
+                g.span('&nbsp;', cls="color-display", style="background-color: %s;" %color)
         return value, None
         
-    def _binary_formatter(self, generator, row, field):
+    def _binary_formatter(self, context, row, field):
         buf = row[field.id].value()
         if buf:
             value = buf.filename() or isinstance(type, pd.Image) and _("image") or _("file")
@@ -104,7 +108,7 @@ class FieldFormatter(object):
             value, info = "", None
         return value, info
     
-    def _codebook_formatter(self, generator, row, field):
+    def _codebook_formatter(self, context, row, field):
         value = row[field.id].export()
         display = row.display(field.id)
         info = None
@@ -114,54 +118,61 @@ class FieldFormatter(object):
             elif self._showform:
                 info = display
             else:
-                value = generator.abbr(value, title=display)
+                value = context.generator().abbr(value, title=display)
         return value, info
     
-    def _password_formatter(self, generator, row, field):
+    def _password_formatter(self, context, row, field):
         if self._showform:
             return None, None
         else:
-            return self._generic_formatter(generator, row)
+            return self._generic_formatter(context, row, field)
         
-    def _file_formatter(self, generator, row, field):
+    def _file_formatter(self, context, row, field):
         value, info = row[field.id].export(), None
         if value:
             value = row[field.spec.filename()].export()
             info = format_byte_size(len(value))
         return value, None
 
-    def _generic_formatter(self, generator, row, field):
+    def _structured_text_formatter(self, context, row, field):
+        value = row[field.id].export()
+        content = lcg.SectionContainer(self._parser.parse(value))
+        content.set_parent(context.node())
+        return context.generator().div(content.export(context)), None
+        
+    def _generic_formatter(self, context, row, field):
         value = row[field.id].export()
         if value and not isinstance(value, lcg.Localizable):
-            value = generator.escape(row.format(field.id))
+            g = context.generator()
+            value = g.escape(row.format(field.id))
             lines = value.splitlines()
             if len(lines) > 1:
                 if self._showform and len(lines) > field.spec.height()+2:
                     width = field.spec.width()
-                    value = generator.textarea(field.id, value=value, readonly=True,
-                                               rows=min(field.spec.height(), 8), cols=width,
-                                               cls=width >= 80 and 'fullsize' or None)
+                    value = g.textarea(field.id, value=value, readonly=True,
+                                       rows=min(field.spec.height(), 8), cols=width,
+                                       cls=width >= 80 and 'fullsize' or None)
                 else:
                     # Insert explicit linebreaks for non-css browasers.
-                    value = generator.span(generator.br().join(lines), cls='multiline')
+                    value = g.span(g.br().join(lines), cls='multiline')
         return value, None
 
-    def format(self, generator, row, field):
-        value, info = self._formatter(generator, row, field)
+    def format(self, context, row, field):
+        value, info = self._formatter(context, row, field)
         if value and self._uri_provider:
+            g = context.generator()
             src = self._uri_provider(row, field.id, type=UriType.IMAGE)
             if src:
                 if info is not None:
                     value += ' ('+ info +')'
                     info = None
-                value = generator.img(src, alt=value) #, cls=cls)
+                value = g.img(src, alt=value) #, cls=cls)
             link = self._uri_provider(row, field.id, type=UriType.LINK)
             if link:
                 if type(link) in (str, unicode):
-                    value = generator.link(value, link)
+                    value = g.link(value, link)
                 else:
-                    value = generator.link(value, link.uri(), title=link.title(),
-                                           target=link.target())
+                    value = g.link(value, link.uri(), title=link.title(), target=link.target())
             if info is not None:
                 value += ' ('+ info +')'
         return value    

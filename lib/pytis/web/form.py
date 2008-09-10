@@ -125,7 +125,7 @@ class FieldForm(Form):
         return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
     def _format_field(self, context, field):
-        return field.formatter.format(context.generator(), self._row, field)
+        return field.formatter.format(context, self._row, field)
 
     def _interpolate(self, context, template, row):
         if callable(template):
