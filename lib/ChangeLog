@@ -1,5 +1,8 @@
 2008-09-10  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py: 
+	Fixed invalid concatenation of translatable texts.
+	
 	* pytis/data/types_.py: 
 	* pytis/web/field.py: 
 	* pytis/web/form.py: 
