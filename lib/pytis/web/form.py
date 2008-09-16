@@ -271,7 +271,7 @@ class _SubmittableForm(Form):
     def _export_submit(self, context):
         g = context.generator()
         result = [g.hidden(k, v) for k, v in self._hidden] + \
-                 [g.hidden('form-name', self._name)] + \
+                 [g.hidden('form_name', self._name)] + \
                  [g.submit(label, name=name, title=_("Submit the form"))
                   for label, name in self._submit]
         if self._reset:
@@ -466,7 +466,7 @@ class BrowseForm(LayoutForm):
             paging etc) will be set up according to the reqest parameters, if the request includes
             them (form controls were used to submit the form).  The constructor argument 'name'
             (defined in parent class) may be used to distinguish between multiple forms on one
-            page.  If this parameter was passed, it is sent as the request argument 'form-name'.
+            page.  If this parameter was passed, it is sent as the request argument 'form_name'.
             Thus if this argument doesn't match the form name, the request arguments are ignored.
 
         See the parent classes for definition of the remaining arguments.
@@ -485,13 +485,12 @@ class BrowseForm(LayoutForm):
         super(BrowseForm, self).__init__(view, row, **kwargs)
         self._condition = condition
         params = {}
-        if req is not None:
-            # Ignore particular request params if they don't belong to the current form.
-            valid_params = (('search', str),)
-            if req.param('form-name') == self._name:
-                valid_params += (('sort', str), ('dir', str), ('limit', int), ('offset', int),
-                                 ('next', bool), ('prev', bool), ('index_search', None))
-            for param, func in valid_params:
+        if req is not None and req.param('form_name') == self._name:
+            # Process request params if they belong to the current form.
+            for param, func in (('sort', str), ('dir', str),
+                                ('limit', int), ('offset', int),
+                                ('next', bool), ('prev', bool),
+                                ('search', str), ('index_search', None)):
                 if req.has_param(param):
                     value = req.param(param)
                     if func:
@@ -713,7 +712,7 @@ class BrowseForm(LayoutForm):
         if sort is None:
             sort, dir_ = self._sorting[0]
             dir = dict(self._SORTING_DIRECTIONS)[dir_]
-        return generator.uri(self._handler, ('form-name', self._name), sort=sort, dir=dir, **kwargs)
+        return generator.uri(self._handler, ('form_name', self._name), sort=sort, dir=dir, **kwargs)
 
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string+"*")
@@ -784,7 +783,7 @@ class BrowseForm(LayoutForm):
                                     onchange='this.form.submit(); return true')), cls='limit'),
                    g.noscript(g.submit(_("Go"))))
         if self._name is not None:
-            result += (g.hidden('form-name', self._name),)
+            result += (g.hidden('form_name', self._name),)
         if len(self._sorting) == 1:
             cid, dir = self._sorting[0]
             result += (g.hidden('sort', cid),

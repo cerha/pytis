@@ -1,5 +1,9 @@
 2008-09-16  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py:
+	The `form-name' argument renamed to `form_name'.  Respect
+	`form_name' also for the `search' argument.
+
 	* pytis/presentation/spec.py: 
 	* pytis/form/form.py:
 	Added support for condition identifiers and default filter
