@@ -152,6 +152,11 @@ NOVÉ VLASTNOSTI:
 
  * Zamezit výpoètu editovatelnosti políèek v ShowFormu - je to zbyteèné...
 
+ * Zobrazení názvu aktivního filtru
+
+   Pokud se pøi otevøení filtraèního dialogu zjistí, ¾e podmínka aktivního filtru
+   odpovídá nìjakému pojmenovanému filtru, zobrazí se místo "Poslední aplikovaný filtr"
+   název pojmenovaného filtru.
 
 2) Specifikace
 
