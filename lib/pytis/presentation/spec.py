@@ -449,7 +449,7 @@ class ActionGroup(_ActionItem):
     
 class Condition(object):
     """Saved searching/filtering condition specification."""
-    def __init__(self, name, condition, fixed=True):
+    def __init__(self, name, condition, fixed=True, id=None):
         """Initialize condition specification.
 
         Arguments:
@@ -462,7 +462,11 @@ class Condition(object):
             logical operator.  For example instead of AND(a, b, c) use
             AND(AND(a, b), c), insteda of NOT(EQ(x, y)) use NE(x, y), etc.
           fixed -- indicates, whether the user is allowed to manipulate the
-            condition.  
+            condition.
+          id -- string identifier of the condition.  This string must be unique
+            within all conditions defined for one view.  It can be used to refer
+            to the condition (for example in the 'default_filter' 'ViewSpec'
+            argument).
 
         """
         def check(cond):
@@ -484,13 +488,14 @@ class Condition(object):
                                          pytis.data.WMValue)), \
                    ('Second operand must be column id or Value instance:',
                     str(arg2))
-        if __debug__:
-            assert isinstance(name, (str, unicode)), name
-            if condition is not None:
-                check(condition)
+            return True
+        assert isinstance(name, (str, unicode)), name
+        assert condition is None or check(condition)
+        assert id is None or isinstance(id, basestring)
         self._name = name
         self._condition = condition
         self._fixed = fixed
+        self._id = id
         
     def name(self):
         """Return the name passed to the constructor."""
@@ -504,6 +509,9 @@ class Condition(object):
         """Return True if the user is allowed to manipulate this condition."""
         return self._fixed
     
+    def id(self):
+        return self._id
+        
     
 class GroupSpec(object):
     """Definice skupiny vstupních polí editaèního formuláøe.
@@ -775,7 +783,7 @@ class ViewSpec(object):
                  actions=(), sorting=None, grouping=None, group_heading=None, check=(),
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
-                 conditions=(), aggregations=(), bindings=()):
+                 conditions=(), default_filter=None, aggregations=(), bindings=()):
         
         """Inicializuj instanci.
 
@@ -910,6 +918,10 @@ class ViewSpec(object):
           conditions -- a sequence of named conditions ('Condition' instances), which should be
             available to the user for filtering/searching records in this view.
 
+          default_filter -- a string identifier of the condition, which should be automatically
+            turned on for this view.  This must be an existing identifier of one of the named
+            conditions specified by 'conditions'.
+            
           aggregations -- a sequence aggregation functions which should be turned on automatically
             for this view (in forms which support that).  The items are 'AGG_*' constants of
             'pytis.data.Data'.
@@ -934,15 +946,12 @@ class ViewSpec(object):
         self._fields = tuple(fields)
         # Initialize the layout
         if layout is None:
-            layout = LayoutSpec(singular,
-                                GroupSpec([f.id() for f in self._fields],
-                                          orientation=Orientation.VERTICAL))
+            layout = LayoutSpec(singular, GroupSpec([f.id() for f in self._fields],
+                                                    orientation=Orientation.VERTICAL))
         elif isinstance(layout, GroupSpec):
             layout = LayoutSpec(singular, layout)
         elif isinstance(layout, (list, tuple)):
-            layout = LayoutSpec(singular,
-                                GroupSpec(layout,
-                                          orientation=Orientation.VERTICAL))
+            layout = LayoutSpec(singular, GroupSpec(layout, orientation=Orientation.VERTICAL))
         if __debug__:
             assert isinstance(actions, (tuple, list)), actions
             assert isinstance(layout, LayoutSpec), layout
@@ -1005,13 +1014,21 @@ class ViewSpec(object):
                     assert self.field(id) is not None, id
         assert callable(check) or isinstance(check, (list, tuple))
         check = xtuple(check)
-        assert isinstance(conditions, (tuple, list))
         if __debug__:
             for f in check:
                 assert callable(f)
+        assert isinstance(conditions, (tuple, list))
+        if __debug__:
+            condition_identifiers = []
             for c in conditions:
                 assert isinstance(c, Condition)
                 assert c.fixed()
+                if c.id():
+                    assert c.id() not in condition_identifiers, \
+                           "Duplicate condition id: %s" % c.id()
+                    condition_identifiers.append(c.id())
+            assert default_filter is None or default_filter in condition_identifiers, \
+                   "Default filter not found in conditions: %s" % default_filter
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1020,12 +1037,12 @@ class ViewSpec(object):
                                if attr.startswith('AGG_')]
         assert isinstance(bindings, (tuple, list))
         if __debug__:
-            bids = []
+            binding_identifiers = []
             for b in bindings:
                 assert isinstance(b, Binding)
                 if b.id() is not None:
-                    assert b.id() not in bids, "Duplicate binding id: %s" % b.id()
-                    bids.append(b.id())
+                    assert b.id() not in binding_identifiers, "Duplicate binding id: %s" % b.id()
+                    binding_identifiers.append(b.id())
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -1056,6 +1073,7 @@ class ViewSpec(object):
         self._help = help
         self._row_style = row_style
         self._conditions = tuple(conditions)
+        self._default_filter = default_filter
         self._aggregations = tuple(aggregations)
         self._bindings = tuple(bindings)
         
@@ -1165,6 +1183,10 @@ class ViewSpec(object):
     def conditions(self):
         """Return predefined filtering/serach conditions as a tuple of 'Condition' instances."""
         return self._conditions
+
+    def default_filter(self):
+        """Return the default filter identifier as a string."""
+        return self._default_filter
 
     def aggregations(self):
         """Return default aggregation functions as a tuple."""

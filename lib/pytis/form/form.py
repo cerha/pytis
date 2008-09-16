@@ -643,6 +643,12 @@ class LookupForm(InnerForm):
         if filter:
             # Make sure the condition is well formed.
             Condition("", filter)
+        elif self._view.default_filter():
+            cond = find(self._view.default_filter(), self._view.conditions(), key=lambda c: c.id())
+            if cond:
+                filter = cond.condition()
+            else:
+                raise ProgramError("Unknown default filter: %s" % self._view.default_filter())
         self._lf_filter = filter
         self._lf_last_filter = filter or self._load_condition('filter')
         self._lf_search_condition = self._load_condition('search')
