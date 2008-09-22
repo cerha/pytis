@@ -266,10 +266,14 @@ INTERNÍ ZÁLE®ITOSTI:
    doimplementovat i do GUI formuláøù.
 
 
-WXPYTHON-2.8:
+wx-2.8:
 
- * Chyba v zobrazení boolean hodnoty True v BrowseForm
+ * Chyba v zobrazení boolean hodnoty True v BrowseForm.
 
    Checkbox daného políèka s True hodnotou není zatr¾en.
 
  * Nefunguje allow_codebook_insert=True, vyvolání pøidání záznamu do èíselníku vyvolá chybu.
+
+ * Po zmìnì ve filtraèním formuláøi se "zboøí" layout celého formuláøe.
+
+ * Formuláø pøi opu¹tìní aplikace se nezobrazí celý.
