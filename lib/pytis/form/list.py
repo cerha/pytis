@@ -395,12 +395,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._search_panel = panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
         self._incremental_search_last_direction = pytis.data.FORWARD
         self._incremental_search_results = []
-        columns = [c for c in self._columns if isinstance(c.type(self._data), pytis.data.String)]
+        columns = [(c.label(), c) for c in self._columns
+                   if isinstance(c.type(self._data), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
                       tooltip=_("Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
                                 "vyhledávání je mo¾né pouze nad sloupci s øetìzcovými hodnotami)."),
-                      label=lambda c: c.label(), height=HEIGHT),
+                      height=HEIGHT),
             wx_text_ctrl(panel, tooltip=_("Zadejte hledaný text."),
                          on_text=lambda e: self._incremental_search(newtext=True),
                          on_key_down=self._on_incremental_search_key_down, height=HEIGHT),

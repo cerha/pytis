@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,7 +123,34 @@ class Operator:
         
         """
         return self._name in ('AND', 'OR', 'NOT')
+
+    def is_same(self, other):
+        """Return true if the operators 'self' and 'other' represent the same condition.
         
+        This method is ignores types of all 'Value' instances in oprator's arguments.  Operators
+        are considered same if just the values match.
+
+        Note: This method was added to allow correct comparison of saved (pickled/unpickled)
+        conditions, conditions defined in specifications and conditions defined through the
+        filter/search dialog.  It might be better to rething and maybe fix the __cmp__ method to
+        correctly recognize equalty of operator instances and remove this method in future...
+
+        """
+        if not isinstance(other, Operator):
+            return False
+        if self._name != other._name or self._kwargs != other._kwargs \
+               or len(self._args) != len(other._args):
+            return False
+        for a1, a2 in zip(self._args, other._args):
+            if isinstance(a1, (Value, WMValue)) and isinstance(a2, (Value, WMValue)):
+                if not a1.value() == a2.value():
+                    return False
+            elif isinstance(a1, Operator) and isinstance(a2, Operator) and not a1.is_same(a2):
+                return False
+            elif a1 != a2:
+                return False
+        return True
+
     def __str__(self):
         args = string.join(map(str, self.args()), ', ')
         return '%s (%s)' % (self.name(), args)

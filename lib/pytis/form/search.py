@@ -157,13 +157,10 @@ class SortingDialog(SFSDialog):
     def _create_controls(self):
         choice = self._create_choice
         for cid, dir in self._sorting or ((self._col, self._direction),):
-            # Sloupce
             self._controls.append((
-                choice(self._columns, selected=self._find_column(cid),
-                       label=lambda c: c.label(),
+                choice([(c.label(), c) for c in self._columns], selected=self._find_column(cid),
                        tooltip=_("Zvolte sloupec, podle nìj¾ chcete øadit")),
-                choice(self._DIRECTIONS, selected=dir,
-                       label=lambda d: self._LABELS[d],
+                choice([(self._LABELS[d], d) for d in self._DIRECTIONS], selected=dir,
                        tooltip=_("Zvolte smìr øazení"))))
 
     def _create_content(self, sizer):
@@ -233,8 +230,8 @@ class SFDialog(SFSDialog):
     class SFConditionError(Exception):
         pass
 
-    def __init__(self, parent, columns, row, condition=None,
-                 conditions=(), **kwargs):
+    def __init__(self, parent, columns, row, condition=None, last_condition=None, conditions=(),
+                 **kwargs):
         """Initialize the dialog.
 
         Arguments:
@@ -246,7 +243,10 @@ class SFDialog(SFSDialog):
             This condition will be preselected in the dialog.  The current
             implementation, can only display a certainly structured condition.
             It is safe to use a condition obtained from the previous dialog
-            call.
+            call or a condition from a 'Condition' instance (which checks the
+            condition validity in its constructor).
+          last_condition -- last used condition as a 'pytis.data.Operator' instance.
+
           conditions -- predefined search/filtering conditions as a sequence of
             'Condition' instances which may be loaded into a dialog.  Same
             limitations as for 'condition' apply.
@@ -256,7 +256,7 @@ class SFDialog(SFSDialog):
         assert isinstance(conditions, tuple)
         self._row = row
         self._condition = condition
-        self._conditions = list(conditions)
+        self._conditions = [Condition('', None)] + list(conditions)
         self._loaded_condition = None
         self._col2_columns = (self._NO_COLUMN,) + tuple(columns)
         super(SFDialog, self).__init__(parent, columns, **kwargs)
@@ -301,18 +301,14 @@ class SFDialog(SFSDialog):
                                     self._create_text_ctrl, self._create_button
             return (
                 log_op and \
-                choice(self._LOGICAL_OPERATORS, selected=log_op,
-                       label=lambda o: self._LABELS[o],
-                  tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
-                choice(self._columns, selected=col1,
-                       label=lambda c: c.label(),
+                choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS], selected=log_op,
+                       tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
+                choice([(c.label(), c) for c in self._columns], selected=col1,
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte sloupec tabulky")),
-                choice(self._OPERATORS, selected=operator,
-                       label=lambda o: self._LABELS[o],
+                choice([(self._LABELS[op], op) for op in self._OPERATORS], selected=operator,
                        tooltip=_("Zvolte operátor")),
-                choice(self._col2_columns, selected=col2,
-                       label=lambda c: c.label(),
+                choice([(c.label(), c) for c in self._col2_columns], selected=col2,
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte s èím má být hodnota porovnávána")),
                 field(self._TEXT_CTRL_SIZE, value,
@@ -354,19 +350,21 @@ class SFDialog(SFSDialog):
                 button(_("Ulo¾it"), lambda e: self._on_save(),
                        tooltip=_("Ulo¾it stávající výbìr jako pojmenovanou "
                                  "podmínku")))
-            self._saved_condition_controls = (
-                choice(self._conditions, label=lambda c: c.name(),
-                       selected=self._loaded_condition,
+            self._saved_condition_controls = controls = (
+                choice([(c.name(), c) for c in self._conditions],
                        on_change=lambda e: self._on_saved_selection_change(),
                        tooltip=_("Vyberte jednu z pojmenovaných podmínek.")),
                 button(_("Naèíst"), lambda e: self._on_load(),
-                       tooltip=_("Nahradit stávající výbìr zvolenou "
-                                 "podmínkou")),
+                       tooltip=_("Nahradit stávající výbìr zvolenou podmínkou")),
                 button(_("Smazat"), lambda e: self._on_remove_saved(),
                        tooltip=_("Smazat zvolenou podmínkou")),
                 button(_("Aktualizovat"), lambda e: self._on_update_saved(),
                        tooltip=_("Ulo¾it stávající výbìr pod zvoleným názvem")))
             self._on_saved_selection_change()
+            for i, c in enumerate(self._conditions[1:]):
+                if c.condition().is_same(self._condition):
+                    controls[0].SetSelection(i+1)
+                    break
         else:
             self._saved_condition_controls = ()
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -395,14 +393,11 @@ class SFDialog(SFSDialog):
             col2 = self._col2_columns[wcol2.GetSelection()]
             if col2 is not self._NO_COLUMN:
                 arg2 = col2.id()
-                for basetype in (pytis.data.String, pytis.data.Number,
-                                 pytis.data.DateTime, pytis.data.Boolean,
-                                 pytis.data.Binary):
-                    if isinstance(col1.type(), basetype) \
-                           and not isinstance(col2.type(), basetype):
+                for basetype in (pytis.data.String, pytis.data.Number, pytis.data.DateTime,
+                                 pytis.data.Boolean, pytis.data.Binary):
+                    if isinstance(col1.type(), basetype) and not isinstance(col2.type(), basetype):
                         quit(i, wcol2, _("Nesluèitelné typy %s a %s") %
-                             (col1.type().__class__.__name__,
-                              col2.type().__class__.__name__))
+                             (col1.type().__class__.__name__, col2.type().__class__.__name__))
             elif isinstance(col1.type(), pytis.data.Binary):
                 if wval.GetValue():
                     quit(i, wval, _("Binární sloupec lze testovat pouze na prázdnou hodnotu"))
@@ -491,8 +486,8 @@ class SFDialog(SFSDialog):
     def _on_saved_selection_change(self):
         sel, bload, bremove, bupdate = self._saved_condition_controls
         cond = self._conditions[sel.GetSelection()]
-        for b in (bremove, bupdate):
-            b.Enable(not cond.fixed())
+        for b in (bload, bremove, bupdate):
+            b.Enable(cond.condition() is not None and (not cond.fixed() or b == bload))
         
     def _on_load(self):
         i = self._saved_condition_controls[0].GetSelection()
@@ -503,7 +498,7 @@ class SFDialog(SFSDialog):
     def _on_remove_saved(self):
         i = self._saved_condition_controls[0].GetSelection()
         cond = self._conditions[i]
-        if cond.fixed():
+        if cond.fixed() or cond.condition() is None:
             return
         msg = _("Opravdu chcete smazat ulo¾enou podmínku '%s'?") % cond.name()
         if run_dialog(Question, msg, title=_("Mazání ulo¾ené podmínky")):
@@ -514,17 +509,16 @@ class SFDialog(SFSDialog):
     def _on_update_saved(self):
         i = self._saved_condition_controls[0].GetSelection()
         cond = self._conditions[i]
-        if cond.fixed():
+        if cond.fixed() or cond.condition() is None:
             return
         try:
             self._condition = self._selected_condition()
         except SFConditionError:
             return
-        msg = _("Opravdu pøepsat ulo¾enou podmínku\n"
-                "'%s' aktuálním výbìrem?") % cond.name()
+        msg = _("Opravdu pøepsat ulo¾enou podmínku\n'%s' aktuálním výbìrem?") % cond.name()
         if run_dialog(Question, msg, title=_("Pøepis ulo¾ené podmínky")):
             self._conditions[i] = self._loaded_condition = \
-                     Condition(cond.name(), self._condition, fixed=False)
+                                  Condition(cond.name(), self._condition, fixed=False)
             self.rebuild()
         
             
@@ -573,7 +567,7 @@ class SearchDialog(SFDialog):
         return super(SearchDialog, self)._on_button(event)
         
     def _customize_result(self, button_wid):
-        return self._direction, self._condition, self._conditions
+        return self._direction, self._condition, self._conditions[1:]
 
 
 class FilterDialog(SFDialog):
@@ -644,9 +638,9 @@ class FilterDialog(SFDialog):
         choice, field, button = self._create_choice, \
                                 self._create_text_ctrl, self._create_button
         self._agg_controls = (
-            choice(self._columns, label=lambda c: c.label(),
+            choice([(c.label(), c) for c in self._columns],
                    tooltip=_("Zvolte sloupec pro agregaci")),
-            choice(self._AGG_OPERATORS, label=lambda o: self._AGG_LABELS[o],
+            choice([(self._AGG_LABELS[op], op) for op in self._AGG_OPERATORS],
                    tooltip=_("Zvolte agregaèní funkci")),
             field(24, readonly=True,
                   tooltip=_("Zobrazení výsledku agregaèní funkce")),
@@ -695,7 +689,7 @@ class FilterDialog(SFDialog):
         return super(FilterDialog, self)._on_button(event)
         
     def _customize_result(self, button_wid):
-        return self._perform, self._condition, self._conditions
+        return self._perform, self._condition, self._conditions[1:]
 
 
 def sfs_columns(columns, data, labelfunc=FieldSpec.label):

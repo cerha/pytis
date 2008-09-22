@@ -359,9 +359,8 @@ class InnerForm(Form):
     
     def _init_attributes(self, **kwargs):
         super(InnerForm, self)._init_attributes(**kwargs)
-        # Filter and aggregation menus must be created dynamically, but we cen find out just once,
+        # The aggregation menu must be created dynamically, but we can find out just once,
         # whether the menu exists for given form.
-        self._has_filter_menu = self._aggregation_menu() is not None
         self._has_aggregation_menu = self._aggregation_menu() is not None
         # Print menu is static for given form instance, so we create it just once.
         self._print_menu_ = self._print_menu()
@@ -383,9 +382,6 @@ class InnerForm(Form):
                       command=InnerForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
 
-    def _filter_menu(self):
-        return None
-
     def _aggregation_menu(self):
         return None
     
@@ -399,12 +395,6 @@ class InnerForm(Form):
         description = self._view.help() or self._view.description()
         return description is not None
         
-    def _cmd_filter_menu(self):
-        self._on_menu_button(self._filter_menu())
-
-    def _can_filter_menu(self):
-        return self._has_filter_menu
-    
     def _cmd_aggregation_menu(self):
         self._on_menu_button(self._aggregation_menu())
         
@@ -892,22 +882,47 @@ class LookupForm(InnerForm):
         self.select_row(self._current_key())
 
     def _filter_conditions(self):
-        return (Condition(_("Poslední aplikovaný filtr"),
-                          self._lf_last_filter),
-                ) + self._view.conditions() + self._user_conditions
+        return self._view.conditions() + self._user_conditions
 
-    def _filter_menu(self):
-        # Vra» seznam polo¾ek filtraèního menu.
-        items = [MItem(_("Otevøít filtraèní formuláø"), command=self.COMMAND_FILTER),
-                 MItem(_("Zru¹it filtr"),               command=self.COMMAND_UNFILTER),
-                 MItem(_("Poslední aplikovaný filtr"),  command=self.COMMAND_FILTER(last=True))]
-        conditions = self._filter_conditions()[1:]
-        for i, c in enumerate(conditions):
-            if i==0 or i > 0 and  c.fixed() != conditions[i-1].fixed():
-                items.append(MSeparator())
-            items.append(MItem(c.name(), command=self.COMMAND_FILTER(condition=c.condition()),
-                               icon='filter'))
-        return items
+    def update_filter_menu(self, ctrl, state):
+        # Called repeatedly in update UI event loop, so must be quite efficient...
+        UNNAMED_FILTER_LABEL = _("Nepojmenovaný filtr")
+        if state:
+            last_filter, last_conditions = state
+        else:
+            last_filter, last_conditions = None, None
+        conditions = self._filter_conditions()
+        if conditions != last_conditions:
+            # Update the list of available filters.
+            ctrl.Clear()
+            ctrl.Append(_("V¹echny polo¾ky"), None)
+            if self._lf_filter is None:
+                selected = 0
+            else:
+                selected = None
+            for c in conditions:
+                ctrl.Append(c.name(), c.condition())
+                if selected is None and c.condition().is_same(self._lf_filter):
+                    selected = ctrl.GetCount() - 1
+            if selected is None:
+                ctrl.Append(UNNAMED_FILTER_LABEL, self._lf_filter)
+                selected = ctrl.GetCount() - 1
+            ctrl.SetSelection(selected)
+        elif self._lf_filter != last_filter:
+            # Update the current selection only.
+            if self._lf_filter is None:
+                ctrl.SetSelection(0)
+            else:
+                for i, c in enumerate(conditions):
+                    if c.condition().is_same(self._lf_filter):
+                        ctrl.SetSelection(i+1)
+                        break
+                else:
+                    if ctrl.GetString(ctrl.GetCount()-1) == UNNAMED_FILTER_LABEL:
+                        ctrl.Delete(ctrl.GetCount()-1)
+                    ctrl.Append(UNNAMED_FILTER_LABEL, self._lf_filter)
+                    ctrl.SetSelection(ctrl.GetCount()-1)
+        return self._lf_filter, conditions
 
     def _can_filter(self, condition=None, last=False):
         return not last or self._lf_last_filter is not None
@@ -922,10 +937,9 @@ class LookupForm(InnerForm):
                      run_dialog(FilterDialog, self._lf_sfs_columns(),
                                 self.current_row(), self._compute_aggregate,
                                 col=self._current_column_id(),
-                                condition=self._lf_filter,
+                                condition=self._lf_filter, last_condition=self._lf_last_filter,
                                 conditions=self._filter_conditions())
-            self._user_conditions = tuple([c for c in conditions
-                                           if not c.fixed()])
+            self._user_conditions = tuple([c for c in conditions if not c.fixed()])
             self._save_conditions('conditions', self._user_conditions)
         if perform and condition != self._lf_filter:
             self.filter(condition)
@@ -1671,12 +1685,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             label = button.label() or action.title()
             tooltip = button.tooltip() or action.descr()
             cmd, args = self.COMMAND_CONTEXT_ACTION(action=action)
-        return wx_button(parent, label, command=(cmd, args), tooltip=tooltip, update=True,
-                         enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))\
-                                 and (button.active_in_readonly_form() or not self.readonly())
-                                 # TODO: This should be removed once the problem in wx_button()
-                                 # is solved.
-                                 and cmd.enabled(**args),
+        return wx_button(parent, label, command=(cmd, args), tooltip=tooltip,
+                         enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))
+                                  and (button.active_in_readonly_form() or not self.readonly())
+                                  and cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4*button.width()))
 
     def _create_group(self, parent, group):

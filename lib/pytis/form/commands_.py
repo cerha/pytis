@@ -77,8 +77,6 @@ Command(InnerForm, 'DESCRIBE',
         "Show form description in a eparate window")
 Command(InnerForm, 'AGGREGATION_MENU',
         "Show aggregation menu for the current form")
-Command(InnerForm, 'FILTER_MENU',
-        "Show filtering menu for the current form")
 Command(InnerForm, 'PRINT_MENU',
         "Show print menu for the current form")
 Command(InnerForm, 'PRINT',
@@ -87,6 +85,8 @@ Command(InnerForm, 'RELOAD_FORM_STATE',
         "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty")
 Command(InnerForm, 'RESET_FORM_STATE',
         "Zahoï ulo¾ené u¾iv. nastavení formuláøe a vra» výchozí nastavení")
+Command(LookupForm, 'FILTER_MENU',
+        "Show filtering menu for the current form")
 Command(LookupForm, 'FILTER',
         "Filtrování záznamù")
 Command(LookupForm, 'UNFILTER',
@@ -332,10 +332,9 @@ COMMAND_ICONS = (
     #(Application.COMMAND_NEW_RECORD,                      'new-record'),
     #(Application.COMMAND_RUN_FORM,                        'run-form'),
     (Form.COMMAND_HELP,                                    'help-book'),
-    (Form.COMMAND_LEAVE_FORM,                              'close'),
+    (Form.COMMAND_LEAVE_FORM,                              wx.ART_CROSS_MARK), #'close'),
     (InnerForm.COMMAND_DESCRIBE,                           'describe'),
     (InnerForm.COMMAND_AGGREGATION_MENU,                   'aggregate'),
-    (InnerForm.COMMAND_FILTER_MENU,                        'filter'),
     (InnerForm.COMMAND_PRINT_MENU,                         wx.ART_PRINT),
     (InnerForm.COMMAND_PRINT,                              wx.ART_PRINT),
     (InputField.COMMAND_RESET,                             wx.ART_UNDO),
@@ -350,8 +349,8 @@ COMMAND_ICONS = (
     (ListForm.COMMAND_FILTER_BY_CELL,                      'filter-by-cell'),
     (ListForm.COMMAND_AUTOFILTER,                          'autofilter'),
     (ListForm.COMMAND_INCREMENTAL_SEARCH,                  'search-incremental'),
-    (ListForm.COMMAND_EXPORT_FILE,                         'export'),
-    (ListForm.COMMAND_IMPORT_INTERACTIVE,                  'import'),
+    (ListForm.COMMAND_EXPORT_FILE,                         wx.ART_FILE_SAVE), #'export'),
+    (ListForm.COMMAND_IMPORT_INTERACTIVE,                  wx.ART_FILE_OPEN), #'import'),
     (ListForm.COMMAND_INSERT_LINE(before=True, copy=True), 'insert-line-before-copy'),
     (ListForm.COMMAND_INSERT_LINE(before=True),            'insert-line-before'),
     (ListForm.COMMAND_INSERT_LINE(copy=True),              'insert-line-copy'),
@@ -395,10 +394,6 @@ class UICommands(object):
         InnerForm.COMMAND_DESCRIBE(),
         _("Popis aktuálního formuláøe"),
         _("Zobrazit popis aktuálního formuláøe v samostatném oknì"))
-    FILTER_MENU = UICommand(
-        InnerForm.COMMAND_FILTER_MENU(),
-        _("Zobrazit menu filtrace"),
-        _("Zobrazit menu filtrace pro aktivní formuláø"))
     AGGREGATION_MENU = UICommand(
         InnerForm.COMMAND_AGGREGATION_MENU(),
         _("Zobrazit menu agregaèních funkcí"),
@@ -431,6 +426,10 @@ class UICommands(object):
         LookupForm.COMMAND_SORT(),
         _("Øazení"),
         _("Urèit podmínky øazení záznamù."))
+    FILTER_MENU = UICommand(
+        LookupForm.COMMAND_FILTER_MENU(),
+        _("Výbìr aktivního filtru"),
+        _("Zobrazuje aktivní filtr a umo¾òuje jeho výbìr."))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
         _("Filtrování"),
@@ -491,6 +490,10 @@ class UICommands(object):
         DualForm.COMMAND_OTHER_FORM(),
         _("Pøepnout aktivní formuláø duálního formuláøe"),
         _("Pøechod mezi horním a dolním formuláøem duálního formuláøe"))
+    LEAVE_FORM = UICommand(
+        Form.COMMAND_LEAVE_FORM(),
+        _("Uzavøít formuláø"),
+        _("Uzavøít aktuální formuláø"))
 
 
 TOOLBAR_COMMANDS = ((
@@ -498,20 +501,26 @@ TOOLBAR_COMMANDS = ((
         UICommands.EDIT_RECORD,
         UICommands.DELETE_RECORD,
         ),(
+        UICommands.EXPORT_FILE,
+        UICommands.PRINT_MENU,
+        UICommands.OTHER_FORM,
+        ),(
         UICommands.INCREMENTAL_SEARCH,
         UICommands.SEARCH,
         UICommands.SEARCH_PREVIOUS,
         UICommands.SEARCH_NEXT,
         UICommands.JUMP,
         ),(
-        UICommands.FILTER_MENU,
         UICommands.AGGREGATION_MENU,
-        UICommands.PRINT_MENU,
-        UICommands.OTHER_FORM,
+        ),(
+        UICommands.FILTER,
+        UICommands.FILTER_MENU,
         ),(
         UICommands.PYTIS_HELP,
         UICommands.HELP,
         UICommands.DESCRIBE,
+        ),(
+        UICommands.LEAVE_FORM,
         ))
 
 FORM_MENU_COMMANDS = ((
@@ -540,4 +549,4 @@ FORM_MENU_COMMANDS = ((
         ),(
         UICommands.RELOAD_FORM_STATE,
         UICommands.RESET_FORM_STATE,
-        ))
+))

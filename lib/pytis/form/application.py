@@ -361,8 +361,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._form_switcher_bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR),
                                            get_icon('dual-form-active-down', type=wx.ART_TOOLBAR))
             button = wx_button(self._toolbar, 'x', icon='dual-form-active-up', size=(30, 30),
-                          tooltip=uicmd.title(), noborder=True,
-                          callback=lambda e: cmd.invoke(**args))
+                               tooltip=uicmd.title(), noborder=True,
+                               callback=lambda e: cmd.invoke(**args))
             self._last_form_switch_icon = 0
             def update(event):
                 enabled = cmd.enabled(**args)
@@ -378,12 +378,42 @@ class Application(wx.App, KeyHandler, CommandHandler):
             tool = self._toolbar.AddControl(button)
             # This also doesn't seem to work...
             self._toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr())
+        elif cmd == LookupForm.COMMAND_FILTER_MENU:
+            # Another hack to for the filter selection combo box.  The current 'Command'
+            # implementation doesn't support command control updates other than
+            # enabling/disabling.  These two examples (this and DualForm.COMMAND_OTHER_FORM above)
+            # might serve as reference for futre extension of command control updates.
+            def on_change(event):
+                ctrl = event.GetEventObject()
+                condition = ctrl.GetClientData(ctrl.GetSelection())
+                if condition:
+                    LookupForm.COMMAND_FILTER.invoke(condition=condition)
+                else:
+                    LookupForm.COMMAND_UNFILTER.invoke()
+            ctrl = wx_combo(self._toolbar, (), size=(270, 25), tooltip=uicmd.title(),
+                            on_change=on_change)
+            self._current_filter_menu_state = None
+            def update(event):
+                enabled = cmd.enabled(**args)
+                event.Enable(enabled)
+                if enabled:
+                    form = self.current_form()
+                    state = form.update_filter_menu(ctrl, self._current_filter_menu_state)
+                    self._current_filter_menu_state = state
+                elif self._windows.empty() and not ctrl.IsEmpty():
+                    self._current_filter_menu_state = None
+                    ctrl.SetSelection(wx.NOT_FOUND)
+                    ctrl.Clear()
+                    ctrl.SetValue('')
+            wx_callback(wx.EVT_UPDATE_UI, self._frame, ctrl.GetId(), update)
+            tool = self._toolbar.AddControl(ctrl)
+            self._toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
         else:
             id = wx.NewId()
             icon = get_icon(command_icon(cmd, args), type=wx.ART_TOOLBAR)
-            self._toolbar.AddTool(id, icon,
-                                  shortHelpString=uicmd.title(),
-                                  longHelpString=uicmd.descr())
+            tool = self._toolbar.AddTool(id, icon,
+                                         shortHelpString=uicmd.title(),
+                                         longHelpString=uicmd.descr())
             wx_callback(wx.EVT_TOOL, self._frame, id, lambda e: cmd.invoke(**args))
             wx_callback(wx.EVT_UPDATE_UI, self._frame, id, lambda e: e.Enable(cmd.enabled(**args)))
         

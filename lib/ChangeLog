@@ -1,3 +1,14 @@
+2008-09-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/data.py:
+	* pytis/form/application.py:
+	* pytis/form/commands_.py:
+	* pytis/form/form.py:
+	* pytis/form/list.py:
+	* pytis/form/search.py:
+	* pytis/form/screen.py:
+	Added (experimental) support for toolbar filter menu.
+
 2008-09-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py:
