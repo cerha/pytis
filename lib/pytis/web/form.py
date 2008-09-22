@@ -600,15 +600,11 @@ class BrowseForm(LayoutForm):
             ) if attr() is not None]
         return dict(cls=' '.join(cls), style='; '.join(styles))
     
-    def _export_row(self, context, row, n):
+    def _export_row(self, context, row, n, id):
         g = context.generator()
         cells = [g.td(self._export_cell(context, field), align=self._align.get(field.id),
                       **self._style(field.style, row, n, field))
                  for field in self._column_fields]
-        if self._search and self._found and self._offset == (n + self._page * self._limit):
-            id = 'found-record'
-        else:
-            id = None
         return g.tr(cells, id=id, **self._style(self._view.row_style(), row, n))
 
     def _export_group_heading(self, context, field):
@@ -649,19 +645,19 @@ class BrowseForm(LayoutForm):
         limit = self._limit
         exported_rows = []
         self._count = count = data.select(condition=self._condition, sort=self._sorting)
+        found = False
+        offset = self._offset
         if self._search:
             dist = data.search(self._search)
             if dist:
-                self._found = True
-                self._offset = dist - 1
-            else:
-                self._found = False
+                found = True
+                offset = dist - 1
         if limit is not None:
-            page = int(max(0, min(self._offset, count)) / limit)
-            offset = page*limit
+            page = int(max(0, min(offset, count)) / limit)
+            first_record_offset = page*limit
         else:
             page = 0
-            offset = 0
+            first_record_offset = 0
         self._page = page
         grouping = self._view.grouping()
         if self._view.group_heading():
@@ -674,7 +670,7 @@ class BrowseForm(LayoutForm):
         self._last_group = None
         group_values = last_group_values = None
         n = 0
-        data.skip(offset)
+        data.skip(first_record_offset)
         while True:
             r = data.fetchone()
             if r is None:
@@ -689,7 +685,11 @@ class BrowseForm(LayoutForm):
                         exported_heading = self._export_group_heading(context, group_heading)
                         if exported_heading is not None:
                             exported_rows.append(exported_heading)
-            exported_rows.append(self._export_row(context, row, n))
+            if found and offset == (n + page * limit):
+                id = 'found-record'
+            else:
+                id = None
+            exported_rows.append(self._export_row(context, row, n, id))
             self._last_group = self._group
             n += 1 
             if limit is not None and n >= limit:
@@ -703,8 +703,8 @@ class BrowseForm(LayoutForm):
                 summary = _("Total records:") +' '+ g.strong(str(count))
             else:
                 summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
-                            first=g.strong(str(offset+1)),
-                            last=g.strong(str(offset+n)),
+                            first=g.strong(str(first_record_offset+1)),
+                            last=g.strong(str(first_record_offset+n)),
                             total=g.strong(str(count)))
             return self._wrap_exported_rows(context, exported_rows, summary)
 
@@ -834,7 +834,7 @@ class ListView(BrowseForm):
         self._exported_row_index = []
         return super(ListView, self)._export_body(context)
         
-    def _export_row(self, context, row, n):
+    def _export_row(self, context, row, n, id):
         layout = self._list_layout
         g = context.generator()
         parser = lcg.Parser()
@@ -867,7 +867,7 @@ class ListView(BrowseForm):
             content = lcg.Container(parser.parse(text))
             content.set_parent(self.parent())
             parts.append(g.div(content.export(context), cls='content'))
-        return g.div(parts, cls='list-item ' + (n % 2 and 'even' or 'odd'))
+        return g.div(parts, id=id, cls='list-item ' + (n % 2 and 'even' or 'odd'))
 
     def _export_field(self, context, field):
         return self._format_field(context, field)
@@ -926,7 +926,7 @@ class ItemizedView(BrowseForm):
         self._separator = separator
         self._template = template
         
-    def _export_row(self, context, row, n):
+    def _export_row(self, context, row, n, id):
         template = self._template
         if template:
             return self._interpolate(context, template, row)
