@@ -738,7 +738,7 @@ class PresentedRow(object):
             display = lambda v: column.type.export(v)
         enumerator = column.type.enumerator()
         if isinstance(enumerator, pytis.data.DataEnumerator):
-            kwargs = dict(condition=self.runtime_filter(column))
+            kwargs = dict(condition=self.runtime_filter(key))
             sorting = None
             cb_spec = self._cb_spec(column)
             if cb_spec:

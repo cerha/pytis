@@ -1,5 +1,8 @@
 2008-09-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/field.py (PresentedRow.enumerate): Fixed
+	runtime filter invocation.
+
 	* pytis/web/form.py:
 	Added support for active filter selection.
 	Added experimental support for search string queries. 
