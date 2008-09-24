@@ -261,8 +261,18 @@ cmd_run_any_form = \
            pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
-def printdirect(resolver, spec, print_spec, row):
-    """Tiskni specifikaci pomocí pøíkazu config.printing_command."""
+def printdirect(resolver, spec, print_spec, row, **kwargs):
+    """Tiskni specifikaci pomocí pøíkazu config.printing_command.
+
+    Argumenty:
+
+      spec -- název specifikace pro PrintResolver
+      print_spec -- název tiskové specifikace pro pytis.output.Formatter
+      row -- øádek s daty pro PrintResolver
+
+      Klíèové argumenty jsou dále pøedány PrintResolver pro pou¾ití v tiskové proceduøe.
+    """
+        
     import pytis.output
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
@@ -293,6 +303,7 @@ def printdirect(resolver, spec, print_spec, row):
     P = _PrintResolver    
     parameters = {(spec+'/'+pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
+    parameters.update(kwargs)
     print_resolver = P(resolver, parameters=parameters)
     resolvers = (print_resolver,)
     formatter = pytis.output.Formatter(resolvers, spec_path)
