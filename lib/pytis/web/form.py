@@ -492,7 +492,7 @@ class BrowseForm(LayoutForm):
                                 ('limit', int), ('offset', int),
                                 ('next', bool), ('prev', bool),
                                 ('search', str), ('index_search', None),
-                                ('filter', str)):
+                                ('filter', str), ('query', str)):
                 if req.has_param(param):
                     value = req.param(param)
                     if func:
@@ -556,6 +556,15 @@ class BrowseForm(LayoutForm):
             filter = find(filter_id, self._view.conditions(), key=lambda c: c.id()) \
                      or self._NULL_FILTER
         self._filter = filter
+        # Determine the current query search condition.
+        if params.has_key('query'):
+            query = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
+                                     for f in self._fields.values()
+                                     if isinstance(f.type, pd.String)])
+                             for word in params['query'].split()])
+        else:
+            query = None
+        self._query = query
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
@@ -654,13 +663,14 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        condition = self._condition
-        if self._filter:
-            fc = self._filter.condition()
-            if condition:
-                condition = pytis.data.AND(condition, fc)
-            else:
-                condition = fc
+        conditions = [c for c in (self._condition, self._filter.condition(), self._query)
+                      if c is not None]
+        if len(conditions) == 0:
+            condition = None
+        elif len(conditions) == 1:
+            condition = conditions[0]
+        else:
+            condition = pytis.data.AND(*conditions)
         self._count = count = data.select(condition=condition, sort=self._sorting)
         found = False
         offset = self._offset

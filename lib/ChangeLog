@@ -2,6 +2,7 @@
 
 	* pytis/web/form.py:
 	Added support for active filter selection.
+	Added experimental support for search string queries. 
 
 2008-09-22  Tomas Cerha  <cerha@brailcom.org>
 
