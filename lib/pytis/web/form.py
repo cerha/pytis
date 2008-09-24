@@ -417,6 +417,7 @@ class BrowseForm(LayoutForm):
     _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
                            (pytis.data.DESCENDANT, 'desc'),
                            (None, 'none'))
+    _NULL_FILTER = pytis.presentation.Condition(_("All items"), None, id='-')
 
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, req=None,
@@ -490,7 +491,8 @@ class BrowseForm(LayoutForm):
             for param, func in (('sort', str), ('dir', str),
                                 ('limit', int), ('offset', int),
                                 ('next', bool), ('prev', bool),
-                                ('search', str), ('index_search', None)):
+                                ('search', str), ('index_search', None),
+                                ('filter', str)):
                 if req.has_param(param):
                     value = req.param(param)
                     if func:
@@ -546,6 +548,14 @@ class BrowseForm(LayoutForm):
                     offset -= limit
         self._offset = offset
         self._search = search
+        # Determine the current filter.
+        filter_id = params.get('filter', self._view.default_filter())
+        if filter_id == self._NULL_FILTER.id():
+            filter = self._NULL_FILTER
+        else:
+            filter = find(filter_id, self._view.conditions(), key=lambda c: c.id()) \
+                     or self._NULL_FILTER
+        self._filter = filter
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
@@ -644,7 +654,14 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        self._count = count = data.select(condition=self._condition, sort=self._sorting)
+        condition = self._condition
+        if self._filter:
+            fc = self._filter.condition()
+            if condition:
+                condition = pytis.data.AND(condition, fc)
+            else:
+                condition = fc
+        self._count = count = data.select(condition=condition, sort=self._sorting)
         found = False
         offset = self._offset
         if self._search:
@@ -699,7 +716,7 @@ class BrowseForm(LayoutForm):
         if n == 0:
             return g.strong(_("No records."))
         else:
-            if limit is None or count < self._limits[0]:
+            if limit is None or count <= self._limits[0]:
                 summary = _("Total records:") +' '+ g.strong(str(count))
             else:
                 summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
@@ -712,7 +729,10 @@ class BrowseForm(LayoutForm):
         if sort is None:
             sort, dir_ = self._sorting[0]
             dir = dict(self._SORTING_DIRECTIONS)[dir_]
-        return generator.uri(self._handler, ('form_name', self._name), sort=sort, dir=dir, **kwargs)
+        return generator.uri(self._handler,
+                             ('form_name', self._name),
+                             ('filter', self._filter.id()),
+                             sort=sort, dir=dir, **kwargs)
 
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string+"*")
@@ -749,55 +769,78 @@ class BrowseForm(LayoutForm):
     def _export_controls(self, context, second=False):
         limit, page, count = self._limit, self._page, self._count
         g = context.generator()
-        pages, modulo = divmod(count, min(limit, count))
-        pages += modulo and 1 or 0
         id = (second and '0' or '1') + '%x' % positive_id(self)
-        offset_id = 'offset-' + id
-        limit_id = 'limit-' + id
-        result = ()
-        if count > 100:
-            if not second:
-                index_search_controls = self._export_index_search_controls(context)
-                self._index_search_controls = index_search_controls
+        controls = ()
+        filters = [(c.name(), c.id()) for c in self._view.conditions()
+                   if c.id() is not None and c.condition() is not None]
+        if filters:
+            null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
+            if null_filter:
+                null_filter_name = null_filter.name()
             else:
-                index_search_controls = self._index_search_controls
-            if index_search_controls:
-                result += index_search_controls
-        if pages > 1:
-            result += (g.span((g.label(_("Page")+': ', offset_id),
-                               g.select(name='offset', id=offset_id, selected=page*limit,
-                                        title=(_("Page")+' '+_("(Use ALT+arrow down to select)")),
-                                        options=[(str(i+1), i*limit) for i in range(pages)],
-                                        onchange='this.form.submit(); return true') + ' / ',
-                               g.strong(str(pages))), cls="offset"),
-                       g.span((g.submit(_("Previous"), name='prev', cls='prev',
-                                        title=_("Go to previous page"), disabled=(page == 0)),
-                               g.submit(_("Next"),  name='next', cls='next',
-                                        title=_("Go to next page"),
-                                        disabled=(page+1)*limit >= count)), cls="buttons"))
-        result += (g.span((g.label(_("Records per page")+':', limit_id)+' ',
-                           g.select(name='limit', id=limit_id,
-                                    title=(_("Records per page")+' '+
-                                           _("(Use ALT+arrow down to select)")),
-                                    options=[(str(i), i) for i in self._limits], selected=limit,
-                                    onchange='this.form.submit(); return true')), cls='limit'),
-                   g.noscript(g.submit(_("Go"))))
-        if self._name is not None:
-            result += (g.hidden('form_name', self._name),)
-        if len(self._sorting) == 1:
-            cid, dir = self._sorting[0]
-            result += (g.hidden('sort', cid),
-                       g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir]))
-        return g.form(result, action=g.uri(self._handler), method='GET',
-                      cls=self._CSS_CLS+'-controls')
+                null_filter_name = self._NULL_FILTER.name()
+            filters.insert(0, (null_filter_name, self._NULL_FILTER.id()))
+            filter_id = 'filter-' + id
+            controls += (g.div((g.label(_("Filter")+': ', filter_id),
+                              g.select(name='filter', id=filter_id, selected=self._filter.id(),
+                                       title=(_("Filter")+' '+_("(Use ALT+arrow down to select)")),
+                                       onchange='this.form.submit(); return true',
+                                       options=filters),
+                              g.noscript(g.submit(_("Apply")))),
+                             cls="filter"),)
+        if limit is not None and count > self._limits[0]:
+            pages, modulo = divmod(count, min(limit, count))
+            pages += modulo and 1 or 0
+            if count > 100:
+                if not second:
+                    index_search_controls = self._export_index_search_controls(context)
+                    self._index_search_controls = index_search_controls
+                else:
+                    index_search_controls = self._index_search_controls
+                if index_search_controls:
+                    controls += index_search_controls
+            if pages > 1:
+                offset_id = 'offset-' + id
+                controls += (g.span((g.label(_("Page")+': ', offset_id),
+                                     g.select(name='offset', id=offset_id, selected=page*limit,
+                                              title=(_("Page")+' '+
+                                                     _("(Use ALT+arrow down to select)")),
+                                              onchange='this.form.submit(); return true',
+                                              options=[(str(i+1), i*limit) for i in range(pages)]),
+                                     ' / ',
+                                     g.strong(str(pages))), cls="offset"),
+                             g.span((g.submit(_("Previous"), name='prev', cls='prev',
+                                              title=_("Go to previous page"), disabled=(page == 0)),
+                                     g.submit(_("Next"),  name='next', cls='next',
+                                              title=_("Go to next page"),
+                                              disabled=(page+1)*limit >= count)), cls="buttons"))
+            limit_id = 'limit-' + id
+            controls += (g.span((g.label(_("Records per page")+':', limit_id)+' ',
+                                 g.select(name='limit', id=limit_id, selected=limit,
+                                          title=(_("Records per page")+' '+
+                                                 _("(Use ALT+arrow down to select)")),
+                                          onchange='this.form.submit(); return true',
+                                          options=[(str(i), i) for i in self._limits])),
+                                cls='limit'),
+                         g.noscript(g.submit(_("Go"))))
+        if controls:
+            if self._name is not None:
+                controls += (g.hidden('form_name', self._name),)
+            if len(self._sorting) == 1:
+                cid, dir = self._sorting[0]
+                controls += (g.hidden('sort', cid),
+                             g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir]))
+            return g.form(controls, action=g.uri(self._handler), method='GET',
+                          cls=self._CSS_CLS+'-controls')
+        else:
+            return None
 
     def export(self, context):
-        result = super(BrowseForm, self).export(context)
-        if self._limit is not None and self._count > self._limits[0]:
-            result = concat(self._export_controls(context),
-                            result,
-                            self._export_controls(context, second=True), separator="\n")
-        return result
+        form = super(BrowseForm, self).export(context)
+        content = (self._export_controls(context),
+                   form,
+                   self._export_controls(context, second=True))
+        return concat([c for c in content if c], separator="\n")
 
 
 class ListView(BrowseForm):
@@ -864,8 +907,10 @@ class ListView(BrowseForm):
             parts.append(self._export_group(context, layout.layout()))
         if layout.content():
             text = self._row[layout.content()].export()
-            content = lcg.Container(parser.parse(text))
+            content = lcg.SectionContainer(parser.parse(text), toc_depth=0)
             content.set_parent(self.parent())
+            # Hack: Add a fake container to force the heading level start at 4.
+            container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content)))
             parts.append(g.div(content.export(context), cls='content'))
         return g.div(parts, id=id, cls='list-item ' + (n % 2 and 'even' or 'odd'))
 
