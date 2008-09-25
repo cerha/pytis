@@ -1410,8 +1410,11 @@ class ListField(GenericCodebookField):
         select_item = None
         enumerator = self.type().enumerator()
         value_column = enumerator.value_column()
+        sorting = self._cb_spec.sorting()
+        if sorting is None:
+            sorting = resolver().get(self._cb_name, 'view_spec').sorting()
         rows = enumerator.rows(condition=self._row.runtime_filter(self._id),
-                               transaction=self._row.transaction())
+                               transaction=self._row.transaction(), sort=sorting or ())
         for i, row in enumerate(rows):
             list.InsertStringItem(i, "")
             v = row[value_column]

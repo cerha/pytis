@@ -1,3 +1,9 @@
+2008-09-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/data/types_.py: 
+	* pytis/form/inputfield.py: 
+	Respect codebook sorting in `ListField'.
+
 2008-09-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/field.py (PresentedRow.enumerate): Fixed
