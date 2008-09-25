@@ -1791,7 +1791,7 @@ class ListLayout(object):
     and text (description, annotation, message...).
     
     """
-    def __init__(self, title, meta=(), layout=None, content=None, image=None, anchor=None,
+    def __init__(self, title, meta=(), layout=None, content=(), image=None, anchor=None,
                  meta_labels=False, columns=1, allow_index=False):
         """Initialize the instance.
 
@@ -1803,7 +1803,8 @@ class ListLayout(object):
             values within given string (with python string formatting syntax).
 
           meta -- a sequence of field identifiers (strings) which will be printed underneath each
-            item's title as records meta information.
+            item's title as records meta information.  A single item may be passed as a string
+            directly.
 
           layout -- GroupSpec instance describing the layout of a fields within each item's
             section.  If used (not None), the fields will be displayed for each record in a manner
@@ -1811,9 +1812,9 @@ class ListLayout(object):
             also possible to pass a sequence of fields (or 'GroupFpec' instances) which will be
             turned into a vertical group automatically.
 
-          content -- identifier of a field which provides a textual content for this item.  The
-            text of the field value will be formatted as WIKI text.  If None, no text content will
-            be printed.
+          content -- a sequence of field identifiers (strings) which provide a textual content for
+            this item.  The text of the field values will be formatted as LCG structured text.
+            A single item may be passed as a string directly.
 
           image -- identifier of a field which provides an image to be displayed along with each
             record.
@@ -1833,15 +1834,15 @@ class ListLayout(object):
             layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
         else:
             assert layout is None or isinstance(layout, GroupSpec)
-        if isinstance(meta_labels, (bool)):
-            meta_labels = meta_labels and meta or ()
+        if isinstance(meta_labels, bool):
+            meta_labels = meta_labels and xtuple(meta) or ()
         else:
             assert isinstance(meta_labels, (bool, tuple, list))
         assert isinstance(columns, int)
         assert isinstance(allow_index, bool)
         self._title = title
-        self._meta = meta
-        self._content = content
+        self._meta = xtuple(meta)
+        self._content = xtuple(content)
         self._layout = layout
         self._image = image
         self._anchor = anchor

@@ -1,5 +1,10 @@
 2008-09-25  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/presentation/spec.py: 
+	* pytis/web/form.py: 
+	Allow multiple `ListLayout' `content' fields.  Add field id CSS
+	classes to all layout fields.
+
 	* pytis/data/types_.py: 
 	* pytis/form/inputfield.py: 
 	Respect codebook sorting in `ListField'.

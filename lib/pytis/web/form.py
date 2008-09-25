@@ -125,7 +125,8 @@ class FieldForm(Form):
         return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
     def _format_field(self, context, field):
-        return field.formatter.format(context, self._row, field)
+        formatted = field.formatter.format(context, self._row, field)
+        return context.generator().span(formatted, cls='field id-'+field.id)
 
     def _interpolate(self, context, template, row):
         if callable(template):
@@ -557,14 +558,15 @@ class BrowseForm(LayoutForm):
                      or self._NULL_FILTER
         self._filter = filter
         # Determine the current query search condition.
-        if params.has_key('query'):
-            query = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
-                                     for f in self._fields.values()
-                                     if isinstance(f.type, pd.String)])
-                             for word in params['query'].split()])
+        self._query = query = params.get('query')
+        if query is not None:
+            query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
+                                               for f in self._fields.values()
+                                               if isinstance(f.type, pd.String)])
+                                       for word in query.split()])
         else:
-            query = None
-        self._query = query
+            query_condition = None
+        self._query_condition = query_condition
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
@@ -603,7 +605,7 @@ class BrowseForm(LayoutForm):
                     cls.append('group-change')
             cls.append(self._group and 'even-group' or 'odd-group')
         #else:
-        #    cls.append('field-id-'+field.id)
+        #    cls.append('id-'+field.id)
         if style is None:
             return cls and dict(cls=' '.join(cls)) or {}
         elif style.name() is not None:
@@ -663,7 +665,7 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        conditions = [c for c in (self._condition, self._filter.condition(), self._query)
+        conditions = [c for c in (self._condition, self._filter.condition(), self._query_condition)
                       if c is not None]
         if len(conditions) == 0:
             condition = None
@@ -783,21 +785,23 @@ class BrowseForm(LayoutForm):
         controls = ()
         filters = [(c.name(), c.id()) for c in self._view.conditions()
                    if c.id() is not None and c.condition() is not None]
-        if filters:
-            null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
-            if null_filter:
-                null_filter_name = null_filter.name()
-            else:
-                null_filter_name = self._NULL_FILTER.name()
-            filters.insert(0, (null_filter_name, self._NULL_FILTER.id()))
-            filter_id = 'filter-' + id
-            controls += (g.div((g.label(_("Filter")+': ', filter_id),
-                              g.select(name='filter', id=filter_id, selected=self._filter.id(),
-                                       title=(_("Filter")+' '+_("(Use ALT+arrow down to select)")),
-                                       onchange='this.form.submit(); return true',
-                                       options=filters),
-                              g.noscript(g.submit(_("Apply")))),
-                             cls="filter"),)
+        if count and (not second or limit is not None and count > self._limits[0]):
+            if filters:
+                null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
+                if null_filter:
+                    null_filter_name = null_filter.name()
+                else:
+                    null_filter_name = self._NULL_FILTER.name()
+                filters.insert(0, (null_filter_name, self._NULL_FILTER.id()))
+                filter_id = 'filter-' + id
+                controls += (g.div((g.label(_("Filter")+': ', filter_id),
+                                    g.select(name='filter', id=filter_id, selected=self._filter.id(),
+                                             title=(_("Filter")+' '+
+                                                    _("(Use ALT+arrow down to select)")),
+                                             onchange='this.form.submit(); return true',
+                                             options=filters),
+                                    g.noscript(g.submit(_("Apply")))),
+                                   cls="filter"),)
         if limit is not None and count > self._limits[0]:
             pages, modulo = divmod(count, min(limit, count))
             pages += modulo and 1 or 0
@@ -909,19 +913,21 @@ class ListView(BrowseForm):
             if img:
                 parts.append(img)
         if self._meta:
-            meta = [g.span((labeled and g.span(field.label, cls='label')+": " or '') + \
-                           self._format_field(context, field), cls=field.id)
+            meta = [(labeled and
+                     g.span(field.label+":", cls='label id-'+ field.id)+" " or '') + \
+                    self._format_field(context, field)
                     for field, labeled in self._meta]
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
             parts.append(self._export_group(context, layout.layout()))
-        if layout.content():
-            text = self._row[layout.content()].export()
-            content = lcg.SectionContainer(parser.parse(text), toc_depth=0)
-            content.set_parent(self.parent())
-            # Hack: Add a fake container to force the heading level start at 4.
-            container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content)))
-            parts.append(g.div(content.export(context), cls='content'))
+        for fid in layout.content():
+            if self._row[fid].value() is not None:
+                text = self._row[fid].export()
+                content = lcg.SectionContainer(parser.parse(text), toc_depth=0)
+                content.set_parent(self.parent())
+                # Hack: Add a fake container to force the heading level start at 4.
+                container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content)))
+                parts.append(g.div(content.export(context), cls='content id-'+ fid))
         return g.div(parts, id=id, cls='list-item ' + (n % 2 and 'even' or 'odd'))
 
     def _export_field(self, context, field):
