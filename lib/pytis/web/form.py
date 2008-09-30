@@ -493,7 +493,8 @@ class BrowseForm(LayoutForm):
                                 ('limit', int), ('offset', int),
                                 ('next', bool), ('prev', bool),
                                 ('search', str), ('index_search', None),
-                                ('filter', str), ('query', str)):
+                                ('filter', str), ('query', unicode),
+                                ('show_query_field', bool)):
                 if req.has_param(param):
                     value = req.param(param)
                     if func:
@@ -549,15 +550,8 @@ class BrowseForm(LayoutForm):
                     offset -= limit
         self._offset = offset
         self._search = search
-        # Determine the current filter.
-        filter_id = params.get('filter', self._view.default_filter())
-        if filter_id == self._NULL_FILTER.id():
-            filter = self._NULL_FILTER
-        else:
-            filter = find(filter_id, self._view.conditions(), key=lambda c: c.id()) \
-                     or self._NULL_FILTER
-        self._filter = filter
         # Determine the current query search condition.
+        self._show_query_field = params.get('show_query_field')
         self._query = query = params.get('query')
         if query is not None:
             query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
@@ -567,6 +561,13 @@ class BrowseForm(LayoutForm):
         else:
             query_condition = None
         self._query_condition = query_condition
+        # Determine the current filter.
+        filter_id = params.get('filter', self._view.default_filter())
+        if filter_id == self._NULL_FILTER.id():
+            filter = None
+        else:
+            filter = find(filter_id, self._view.conditions(), key=lambda c: c.id())
+        self._filter = filter
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
             self._tree_order_column = sorting[0][0]
@@ -665,7 +666,8 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        conditions = [c for c in (self._condition, self._filter.condition(), self._query_condition)
+        conditions = [c for c in (self._condition, self._filter and self._filter.condition(),
+                                  self._query_condition)
                       if c is not None]
         if len(conditions) == 0:
             condition = None
@@ -743,7 +745,7 @@ class BrowseForm(LayoutForm):
             dir = dict(self._SORTING_DIRECTIONS)[dir_]
         return generator.uri(self._handler,
                              ('form_name', self._name),
-                             ('filter', self._filter.id()),
+                             ('filter', self._filter and self._filter.id()),
                              sort=sort, dir=dir, **kwargs)
 
     def _index_search_condition(self, search_string):
@@ -782,29 +784,64 @@ class BrowseForm(LayoutForm):
         limit, page, count = self._limit, self._page, self._count
         g = context.generator()
         id = (second and '0' or '1') + '%x' % positive_id(self)
-        controls = ()
+        content = []
         filters = [(c.name(), c.id()) for c in self._view.conditions()
                    if c.id() is not None and c.condition() is not None]
-        if count and (not second or limit is not None and count > self._limits[0]):
-            if filters:
-                null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
-                if null_filter:
-                    null_filter_name = null_filter.name()
+        show_filter = filters and (count or self._filter)
+        show_query = self._query or self._show_query_field
+
+        if (self._query or self._filter) and not second:
+            if count:
+                if self._query and self._filter:
+                    result = _.ngettext("Found %d record matching the search expression and the "
+                                        "current filter.",
+                                        "Found %d records matching the search expression and the "
+                                        "current filter.",
+                                        count)
+                elif self._query:
+                    result = _.ngettext("Found %d record matching the search expression.",
+                                        "Found %d records matching the search expression.",
+                                        count)
                 else:
-                    null_filter_name = self._NULL_FILTER.name()
-                filters.insert(0, (null_filter_name, self._NULL_FILTER.id()))
-                filter_id = 'filter-' + id
-                controls += (g.div((g.label(_("Filter")+': ', filter_id),
-                                    g.select(name='filter', id=filter_id, selected=self._filter.id(),
-                                             title=(_("Filter")+' '+
-                                                    _("(Use ALT+arrow down to select)")),
-                                             onchange='this.form.submit(); return true',
-                                             options=filters),
-                                    g.noscript(g.submit(_("Apply")))),
-                                   cls="filter"),)
+                    result = _.ngettext("Found %d record matching the current filter.",
+                                        "Found %d records matching the current filter.",
+                                        count)
+            else:
+                if self._query and self._filter:
+                    result = _("No record matching the search expression and the current filter.")
+                elif self._query:
+                    result = _("No record matching the search expression.")
+                else:
+                    result = _("No record matching the current filter.")
+            content.append(g.div(result, cls='results'))
+        if show_query and not second:
+            query_id = 'filter-' + id
+            content.append(g.div((g.label(_("Search expression") +': ', query_id),
+                                  g.field(self._query, name='query'),
+                                  g.hidden('show_query_field', '1'),
+                                  g.submit(_("Search"))),
+                                 cls='query' + (show_filter and ' with-filter' or '')))
+        if show_filter and not second:
+            null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
+            if null_filter:
+                null_filter_name = null_filter.name()
+            else:
+                null_filter_name = self._NULL_FILTER.name()
+            filters.insert(0, (null_filter_name, self._NULL_FILTER.id()))
+            filter_id = 'filter-' + id
+            content.append(g.div((g.label(_("Filter")+': ', filter_id),
+                                  g.select(name='filter', id=filter_id,
+                                           selected=self._filter and self._filter.id(),
+                                           title=(_("Filter")+' '+
+                                                  _("(Use ALT+arrow down to select)")),
+                                           onchange='this.form.submit(); return true',
+                                           options=filters),
+                                  g.noscript(g.submit(_("Apply")))),
+                                 cls="filter"))
         if limit is not None and count > self._limits[0]:
             pages, modulo = divmod(count, min(limit, count))
             pages += modulo and 1 or 0
+            controls = ()
             if count > 100:
                 if not second:
                     index_search_controls = self._export_index_search_controls(context)
@@ -815,6 +852,10 @@ class BrowseForm(LayoutForm):
                     controls += index_search_controls
             if pages > 1:
                 offset_id = 'offset-' + id
+                if not show_query:
+                    search_button = g.submit(_("Search"), name='show_query_field', cls='search')
+                else:
+                    search_button = None
                 controls += (g.span((g.label(_("Page")+': ', offset_id),
                                      g.select(name='offset', id=offset_id, selected=page*limit,
                                               title=(_("Page")+' '+
@@ -827,7 +868,9 @@ class BrowseForm(LayoutForm):
                                               title=_("Go to previous page"), disabled=(page == 0)),
                                      g.submit(_("Next"),  name='next', cls='next',
                                               title=_("Go to next page"),
-                                              disabled=(page+1)*limit >= count)), cls="buttons"))
+                                              disabled=(page+1)*limit >= count),
+                                     ) + (search_button and (search_button,) or ()),
+                                    cls="buttons"))
             limit_id = 'limit-' + id
             controls += (g.span((g.label(_("Records per page")+':', limit_id)+' ',
                                  g.select(name='limit', id=limit_id, selected=limit,
@@ -837,15 +880,17 @@ class BrowseForm(LayoutForm):
                                           options=[(str(i), i) for i in self._limits])),
                                 cls='limit'),
                          g.noscript(g.submit(_("Go"))))
-        if controls:
+            if controls:
+                content.append(g.div(controls, cls='paging-controls'))
+        if content:
             if self._name is not None:
-                controls += (g.hidden('form_name', self._name),)
+                content.append(g.hidden('form_name', self._name))
             if len(self._sorting) == 1:
                 cid, dir = self._sorting[0]
-                controls += (g.hidden('sort', cid),
-                             g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir]))
-            return g.form(controls, action=g.uri(self._handler), method='GET',
-                          cls=self._CSS_CLS+'-controls')
+                content.extend((g.hidden('sort', cid),
+                                g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir])))
+            return g.form(content, action=g.uri(self._handler), method='GET',
+                          cls='list-form-controls')
         else:
             return None
 
