@@ -103,6 +103,12 @@ class FileError(Exception):
     """
     pass
 
+
+class NotImplementedException(Exception):
+    """Exception raised on calling unimplemented methods.
+    """
+    pass
+
     
 class Counter:
     """Jednoduchý èítaè.
