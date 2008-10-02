@@ -1,5 +1,13 @@
 2008-10-02  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/_test.py:
+	* lib/pytis/data/data.py:
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/data/types_.py:
+	Database full text search support.
+
+2008-10-02  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/util/util.py:
 	Missing NotImplementedException class added.
 
