@@ -735,9 +735,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """Vra» zadaný sloupec zformátovaný pro SQL."""
         return '%s.%s' % (table_name, column_name)
 
-    def _pdbb_btabcol(self, binding):
+    def _pdbb_btabcol(self, binding, full_text_handler=None):
         """Vra» sloupec z 'binding' zformátovaný pro SQL."""
-        return self._pdbb_tabcol(binding.table(), binding.column())
+        if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
+            result = full_text_handler(binding)
+        else:
+            result = self._pdbb_tabcol(binding.table(), binding.column())
+        return result
         
     def _pdbb_coalesce(self, ctype, value):
         """Vra» string 'value' zabezpeèený pro typ sloupce 'ctype' v SQL."""
@@ -865,6 +869,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'text': String,
                         'timestamp': DateTime,
                         'timestamptz': DateTime,
+                        'tsvector': FullTextIndex,
                         'varchar': String,
                         'inet': Inet,
                         'macaddr': Macaddr,
@@ -926,13 +931,27 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Hotovo
         return columns, tuple(key)
 
-    def _pdbb_sql_column_list_from_names(self, column_names):
+    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None):
         bindings = [self._db_column_binding(name) for name in column_names]
-        return self._pdbb_sql_column_list(bindings)
+        return self._pdbb_sql_column_list(bindings, full_text_handler)
         
-    def _pdbb_sql_column_list(self, bindings):
-        column_names = [self._pdbb_btabcol(b) for b in bindings if b.id()]
+    def _pdbb_sql_column_list(self, bindings, full_text_handler=None):
+        column_names = [self._pdbb_btabcol(b, full_text_handler) for b in bindings if b.id()]
         return string.join(column_names, ', ')
+    
+    def _pdbb_full_text_handler(self, binding):
+        indexed_columns = binding.type().columns()
+        if indexed_columns:
+            indexed_columns_list = []
+            for name in indexed_columns:
+                sql_name = self._pdbb_btabcol(self._db_column_binding(name))
+                indexed_columns_list.append("coalesce(%s,'')" % (sql_name,))
+            text = string.join(indexed_columns_list, "||' * '||")
+            query_name = self._pdbb_fulltext_query_name(binding.column())
+            result = 'ts_headline(%s,%s)' % (text, query_name,)
+        else:
+            result = "''"
+        return result
         
     def _pdbb_create_sql_commands(self):
         """Vytvoø ¹ablony SQL pøíkazù pou¾ívané ve veøejných metodách."""
@@ -941,7 +960,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert isinstance(b, DBColumnBinding), \
                    ('Unsupported binding specification', b)
         # Pøiprav parametry
-        column_list = self._pdbb_sql_column_list(bindings)
+        column_list = self._pdbb_sql_column_list(bindings,
+                                                 full_text_handler=self._pdbb_full_text_handler)
         table_names = map(lambda b: b.table(), bindings)
         table_names = remove_duplicates(table_names)
         table_list = string.join(table_names, ', ')
@@ -1082,17 +1102,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              (table_list, relation_and_condition, filter_condition, ordering,)),
             {'columns': column_list, 'supplement': '', 'condition': 'true'})
         self._pdbb_command_count = \
-          'select count(%s) from %s where %%s and (%s)%s' % \
+          'select count(%s) from %s%%(fulltext_queries)s where %%(condition)s and (%s)%s' % \
           (first_key_column, table_list, relation, filter_condition,)
         self._pdbb_command_distinct = \
           'select distinct %%s from %s where %%s and (%s)%s order by %%s' % \
           (table_list, relation, filter_condition,)
         self._pdbb_command_select = \
           self._SQLCommandTemplate(
-            (('declare %s scroll cursor for select %%(columns)s from %s '+
+            (('declare %s scroll cursor for select %%(columns)s from %s%%(fulltext_queries)s '+
               'where %%(condition)s and (%s)%s order by %%(ordering)s %s') %
-             (cursor_name, table_list, relation, filter_condition,
-              ordering,)),
+             (cursor_name, table_list, relation, filter_condition, ordering,)),
             {'columns': column_list})
         self._pdbb_command_close_select = \
             self._SQLCommandTemplate('close %s' % (cursor_name,))
@@ -1266,11 +1285,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             condition = data._pdbb_condition2sql(cond)
             expression = '%s in (select %s from %s where %s)' % \
                          (col, table_col, table, condition)
+        elif op_name == 'FT':
+            assert len(op_args) == 3, ('Invalid number of arguments', op_args)
+            col, query, query_id = op_args
+            expression = '%s @@ %s' % (col, self._pdbb_fulltext_query_name(col),)
         else:
             raise ProgramError('Unknown operator', op_name)
         return '(%s)' % expression
 
     def _pdbb_sort2sql(self, sort):
+        def full_text_handler(binding):
+            column_name = self._pdbb_btabcol(binding)
+            query = self._pdbb_fulltext_query_name(binding.column())
+            result = 'ts_rank_cd(%s,%s)' % (column_name, query)
+            return result
         def item2sql(item, self=self):
             if isinstance(item, tuple):
                 id, dirspec = item
@@ -1278,11 +1306,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 id, dir = item, 'ASC'
             b = self._db_column_binding(id)
-            return '%s %s' % (self._pdbb_btabcol(b), dir)
+            return '%s %s' % (self._pdbb_btabcol(b, full_text_handler=full_text_handler), dir)
         sort_string = ','.join([item2sql(item) for item in sort])
         if sort_string:
             sort_string += ','
         return sort_string
+
+    def _pdbb_fulltext_query_name(self, column_name):
+        return '_pytis_ftq__%s' % (column_name,)
         
     # Metody související s exportovanými metodami DB operací
     
@@ -1412,11 +1443,26 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
-        data = self._pg_query(self._pdbb_command_count % cond_string, transaction=transaction)
         args = {'condition': cond_string, 'ordering': sort_string}
+        fulltext_queries = ['']
+        if condition:
+            def find_fulltext(operator):
+                if operator.name() == 'FT':
+                    index_column = operator.args()[0]
+                    query = operator.args()[1]
+                    fulltext_queries[0] += (",to_tsquery('%s') as %s" %
+                                            (query,
+                                             self._pdbb_fulltext_query_name(index_column),))
+                elif operator.logical():
+                    for a in operator.args():
+                        find_fulltext(a)
+            find_fulltext(condition)
+        args['fulltext_queries'] = fulltext_queries[0]
+        data = self._pg_query(self._pdbb_command_count % args, transaction=transaction)
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
-                self._pdbb_sql_column_list_from_names(columns)
+                self._pdbb_sql_column_list_from_names(columns,
+                                                      full_text_handler=self._pdbb_full_text_handler)
         else:
             self._pdbb_select_column_list = None
         args['selection'] = self._pdbb_selection_number = \
@@ -2184,8 +2230,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_make_row_template_limited = \
                 self._pg_limited_make_row_template(columns)
         else:
-            self._pg_make_row_template_limited = None
-        
+            self._pg_make_row_template_limited = None        
         try:
             number_of_rows = self._pg_select(condition, sort, columns, transaction=transaction)
         except:

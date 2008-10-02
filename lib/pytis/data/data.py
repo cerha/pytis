@@ -1261,6 +1261,26 @@ def IN(column_id, data, table_column_id, table_condition):
     """
     return Operator('IN', column_id, data, table_column_id, table_condition)
 
+_ft_query_id = None
+def FT(column_id, query):
+    """Full text search
+
+    Arguments:
+
+      query -- string containing the PostgreSQL full text search expression
+
+    Using this operator is limited only to search conditions and to one
+    instance of this operator per one condition.
+      
+    This is a primitive operator.
+    
+    """
+    global _ft_query_id
+    if _ft_query_id is None:
+        # This is not thread safe, but query id is not used for now anyway
+        _ft_query_id = pytis.util.Counter()
+    query_id = _ft_query_id.next()
+    return Operator('FT', column_id, query, query_id)
 
 def reversed_sorting(sorting):
     """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.

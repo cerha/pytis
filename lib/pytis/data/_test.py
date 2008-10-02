@@ -725,6 +725,11 @@ class _DBTest(_DBBaseTest):
                   "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madati int NOT NULL DEFAULT 1 REFERENCES cosnova)",
                   "create table xcosi(id int, popis varchar(12))",
                   "create table bin(id int, data bytea)",
+                  "create table fulltext(id int, text1 varchar(256), text2 text, index tsvector)",
+                  "create trigger textindexupdate before update or insert on fulltext for each row execute procedure tsvector_update_trigger(index,'pg_catalog.simple',text1,text2)",
+                  "insert into fulltext (id, text1, text2) values(1, 'Hello, world!', 'bear')",
+                  "insert into fulltext (id, text1, text2) values(2, 'The quick brown fox jumps over the lazy dog.', 'cat')",
+                  "insert into fulltext (id, text1, text2) values(3, 'GNU''s Not Unix', 'lazy fox and lazy dog')",
                   "insert into cstat values('us', 'U.S.A.')",
                   "insert into cstat values('cz', 'Czech Republic')",
                   "insert into cosnova values(1, '100', '007', 'abcd', 'X', 'us', 'FALSE')",
@@ -768,7 +773,7 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % t)
             except:
                 pass            
-        for t in ('bin', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
+        for t in ('bin', 'fulltext', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
                   'viewtest0', 'viewtest6',):
             try:
                 self._sql_command('drop table %s' % t)
@@ -863,6 +868,22 @@ class DBDataDefault(_DBTest):
              B('data', 'bin', 'data'),),
             key,
             conn)
+        # fulltext
+        key = B('id', 'fulltext', 'id')
+        fulltext = pytis.data.DBDataDefault(
+            (key,
+             B('text1', 'fulltext', 'text1'),
+             B('text2', 'fulltext', 'text2'),
+             B('index', 'fulltext', 'index'),),
+            key,
+            conn)
+        fulltext1 = pytis.data.DBDataDefault(
+            (key,
+             B('text1', 'fulltext', 'text1'),
+             B('text2', 'fulltext', 'text2'),
+             B('index', 'fulltext', 'index', type_=pytis.data.FullTextIndex(columns=('text1','text2',))),),
+            key,
+            conn)
         # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -886,6 +907,8 @@ class DBDataDefault(_DBTest):
         self.dosnova = dosnova
         self.dcosi = dcosi
         self.dbin = dbin
+        self.fulltext = fulltext
+        self.fulltext1 = fulltext1
         self.view = view
         self.view3 = view3
         self.view4 = view4
@@ -1280,6 +1303,34 @@ class DBDataDefault(_DBTest):
         assert result == str(data2.value().buffer()), \
                ('Invalid binary data', result,)
         assert self.dbin.delete(key) == 1, 'Binary deletion failed'
+    def test_full_text_select(self):
+        def check(query, result_set):
+            condition = pytis.data.FT('index', query)
+            self.fulltext.select(condition=condition, sort=('index',))
+            result_ids = []
+            while True:
+                row = self.fulltext.fetchone()
+                if row is None:
+                    break
+                result_ids.append(row[0].value())
+            self.fulltext.close()
+            assert result_set == result_ids, ('wrong full text result', result_ids,)
+        def check1(query, result_set):
+            condition = pytis.data.FT('index', query)
+            self.fulltext1.select(condition=condition, sort=('index',))
+            result_samples = []
+            while True:
+                row = self.fulltext1.fetchone()
+                if row is None:
+                    break
+                result_samples.append(row[3].value())
+            self.fulltext1.close()
+            assert result_samples == result_set, ('wrong full text sample', result_samples,)
+        check('nobody&likes&me', [])
+        check('lazy&fox', [3, 2])
+        check1('lazy&fox', ["The quick brown <b>fox</b> jumps over the <b>lazy</b> dog. * cat",
+                            "GNU's Not Unix * <b>lazy</b> <b>fox</b> and <b>lazy</b> dog"])
+        check1('world', ["Hello, <b>world</b>! * bear"])
     def test_lock(self):
         us = pytis.data.String().validate('us')[0]
         cz = pytis.data.String().validate('cz')[0]

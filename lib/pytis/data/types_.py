@@ -920,6 +920,33 @@ class TreeOrder(String):
     pass
 
 
+class FullTextIndex(String):
+    """Type representing full text index columns.
+
+    This is a special type with limited use and promiscuous values.  Values of
+    this type can't be directly read from the database and they can't be
+    inserted at all into it.  All this type is able to do is to enable access
+    to 'pytis.data.FT' operator and to enable access to full text search result
+    headlines.
+    
+    """
+    def __init__(self, columns=(), **kwargs):
+        """Arguments:
+
+          columns -- tuple of column ids (strings), these columns will be
+            included for the purpose of generating full text search headlines
+            when a column of this type is included in the full text search
+
+        """
+        assert is_sequence(columns), ("Invalid argument type", columns,)
+        super(FullTextIndex, self).__init__(**kwargs)
+        self._columns = columns
+
+    def columns(self):
+        """Return sequence of column ids given in constructor."""
+        return self._columns
+    
+
 class DateTime(Type):
     """Èasový okam¾ik reprezentovaný instancí tøídy 'DateTime.DateTime'.
 
