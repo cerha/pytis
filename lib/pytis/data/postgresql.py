@@ -540,7 +540,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             thread.start_new_thread(self._notif_listen, ())
 
         def _notif_do_registration(self, notification):
-            self._pg_query('listen %s' % notification)
+            self._pg_query('listen "%s"' % notification)
             
         def _notif_register(self, notification):
             # Zamykáme zde kvùli mo¾nosti souèasného vyvolání této metody
@@ -1176,7 +1176,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_delete = \
           'delete from %s where %%s' % main_table
         self._pdbb_command_notify = \
-          'notify MODIF_%s' % main_table
+          'notify "MODIF_%s"' % main_table
         self._pg_notifications = map(lambda t: 'MODIF_%s' % t, table_names)
 
     def _pdbb_condition2sql(self, condition):

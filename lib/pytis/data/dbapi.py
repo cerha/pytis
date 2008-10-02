@@ -193,7 +193,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 self._pgnotif_connection = connection
                 connection.connection().set_isolation_level(0)
             connection = self._pgnotif_connection
-            query = 'listen %s' % (notification,)
+            query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations            
             def lfunction():
                 return self._postgresql_query(connection, query, False)

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -161,7 +161,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                 self._pgnotif_connection = \
                     self._postgresql_new_connection(connection_data)
             connection = self._pgnotif_connection
-            query = 'listen %s' % (notification,)
+            query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations
             def lfunction():
                 self._postgresql_query(connection, query, False)
