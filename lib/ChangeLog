@@ -1,5 +1,10 @@
 2008-10-02  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/util/util.py:
+	Missing NotImplementedException class added.
+
+2008-10-02  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/dbapi.py:
 	* lib/pytis/data/pgsql.py:
 	* lib/pytis/data/postgresql.py:
