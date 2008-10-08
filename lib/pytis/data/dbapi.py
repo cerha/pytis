@@ -178,20 +178,20 @@ class DBAPITransaction(_DBAPIAccessor, DBPostgreSQLTransaction):
 
 class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
 
-    # This part is psycopg specific
-    
     class _PgNotifier(_DBAPIAccessor, PostgreSQLNotifier._PgNotifier):
 
         def __init__(self, connection_data):
             PostgreSQLNotifier._PgNotifier.__init__(self, connection_data)
             self._pgnotif_connection = None
 
-        def _notif_do_registration(self, notification):
+        def _notif_init_connection(self):
             if self._pgnotif_connection is None:
                 connection_data = self._pg_connection_data()
                 connection = self._postgresql_new_connection(connection_data)
                 self._pgnotif_connection = connection
                 connection.connection().set_isolation_level(0)
+            
+        def _notif_do_registration(self, notification):
             connection = self._pgnotif_connection
             query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations            

@@ -548,6 +548,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
             def lfunction():
+                self._notif_init_connection()
                 self._notif_do_registration(notification)
             with_lock(self._notif_connection_lock, lfunction)
             if __debug__:
@@ -557,6 +558,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             if __debug__:
                 log(DEBUG, 'Nový listener')
             error_pause = 1
+            self._notif_init_connection()
             while True:
                 if __debug__:
                     log(DEBUG, 'Napichuji se na nové spojení')

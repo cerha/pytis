@@ -155,11 +155,12 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                 connection_data=connection_data, **kwargs)
             self._pgnotif_connection = None
 
-        def _notif_do_registration(self, notification):
+        def _notif_init_connection(self):
             if self._pgnotif_connection is None:
                 connection_data = self._pg_connection_data()
-                self._pgnotif_connection = \
-                    self._postgresql_new_connection(connection_data)
+                self._pgnotif_connection = self._postgresql_new_connection(connection_data)
+            
+        def _notif_do_registration(self, notification):
             connection = self._pgnotif_connection
             query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations
