@@ -1,3 +1,7 @@
+2008-10-08  Pavel Hanak  <hanak@asellus.cz>
+
+	* tools/gensql.py (_GsqlSchema): New class.
+
 2008-08-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* translations/pytis.cs.po:

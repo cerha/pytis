@@ -552,7 +552,34 @@ class ReturnType(object):
         """
         self.name = name
         self.setof = setof
+
+class _GsqlSchema(_GsqlSpec):
+    """Specifikace SQL schématu."""
     
+    _SQL_NAME = 'SCHEMA'
+    
+    def __init__(self, name, owner=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          name -- jméno schématu, SQL string
+          owner -- volitelný øetìzec udávající vlastníka schématu.
+            Pozor, uvede-li se, pak musí být vytváøení provedeno superuserem.
+        """
+        super(_GsqlSchema, self).__init__(name, **kwargs)
+        self._name = name
+        self._owner = owner
+        
+    def output(self):
+        if self._owner is not None:
+            owner = " AUTHORIZATION %s" % self._owner
+        else:
+            owner = ''
+        result = 'CREATE SCHEMA %s%s;\n' % (self._name, owner)
+        return result
+
+        
 class _GsqlTable(_GsqlSpec):
     """Specifikace SQL tabulky."""
     
@@ -620,7 +647,6 @@ class _GsqlTable(_GsqlSpec):
         self._init_columns = [isinstance(c, str) and c
                               or self._column_column(c)
                               for c in init_columns]
-       
 
     def _full_column_name(self, column):
         if not _gsql_column_table_column(column.name)[0]:
@@ -647,14 +673,11 @@ class _GsqlTable(_GsqlSpec):
             kwargs = view.kwargs
             if not kwargs.has_key('key_columns'):
                 kwargs['key_columns'] = None
-#                key_columns = [c.name for c in self._columns
-#                               if isinstance(c, PrimaryColumn)]
             vcolumns = map(self._full_column_name, vcolumns)
             vcolumns = filter(lambda x: self._column_column(x) not in
                               view.exclude, vcolumns)
             # Remove also columns specified like table.name
             vcolumns = filter(lambda x: x.name not in view.exclude, vcolumns)
-#            args = (view.name or self, vcolumns, key_columns or [c for c in key_columns])
             args = (view.name or self, vcolumns)
             
             if not kwargs.has_key('doc'):
@@ -870,6 +893,7 @@ class _GsqlTable(_GsqlSpec):
                                 'int2': pytis.data.Integer,
                                 'int4': pytis.data.Integer,
                                 'int8': pytis.data.Integer,
+                                'bigint': pytis.data.Integer,
                                 'numeric': pytis.data.Float,
                                 'oid': pytis.data.Oid,
                                 'name': pytis.data.String,
@@ -2369,6 +2393,10 @@ def _gsql_process(class_, args, kwargs):
 def sqltype(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlType."""
     return _gsql_process(_GsqlType, args, kwargs)
+
+def schema(*args, **kwargs):
+    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlSchema."""
+    return _gsql_process(_GsqlSchema, args, kwargs)
 
 def table(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlTable."""
