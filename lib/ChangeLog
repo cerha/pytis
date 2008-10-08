@@ -1,3 +1,10 @@
+2008-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	* lib/pytis/data/pgsql.py:
+	* lib/pytis/data/postgresql.py:
+	Ensure listening db loops won't start before their connection is initialized.
+
 2008-10-08  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/output/formatter.py: Corrected indentation error.
