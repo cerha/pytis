@@ -1,3 +1,7 @@
+2008-10-08  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/output/formatter.py: Corrected indentation error.
+
 2008-10-02  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/_test.py:

@@ -912,10 +912,10 @@ class LoutFormatter(Tmpdir):
                            'margin { %s } { %s }') % (hsep, hmargin, labels))
             else:
                 labels = '%s //%s //%s' % (labels, hmargin, hmargin)
-                header = '{\n%s%s\n%s}\n%s' % (nindent, labels, nindent, indent)
-                s.write('\n%s@LLP\n%s@BeginHeaderComponent {\n%s%s}\n%s//\n' % \
+            header = '{\n%s%s\n%s}\n%s' % (nindent, labels, nindent, indent)
+            s.write('\n%s@LLP\n%s@BeginHeaderComponent {\n%s%s}\n%s//\n' % \
                         (indent, indent, nindent, header, indent))
-                s.write(indent + header + '\n')
+            s.write(indent + header + '\n')
         # Øádky dat
         sep_raw = template.line_separator_height()
         sep = self._unit(sep_raw, UPoint)
