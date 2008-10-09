@@ -81,13 +81,15 @@ class DBData(Data):
     V¹echny metody této tøídy pøístupující k datùm mohou metat 'DBException'.
     
     """
-    def __init__(self, bindings, ordering=None, **kwargs):
+    def __init__(self, bindings, ordering=None, distinct_on=(), **kwargs):
         """Inicializuj tabulku s napojením do databáze.
 
         Argumenty:
         
           bindings -- sekvence instancí tøídy 'DBBinding'
           ordering -- stejné jako v pøedkovi
+          distinct_on -- sequence of column names to add as a DISTINCT TO part
+            to SELECT commands
           kwargs -- k pøedání pøedkovi
 
         Sloupce datové tabulky se urèí automaticky na základì 'bindings'.
@@ -109,6 +111,7 @@ class DBData(Data):
         columns, key = self._db_bindings_to_column_spec(self._bindings)
         if __debug__: log(DEBUG, 'Sloupce databázové instance:', columns)
         if __debug__: log(DEBUG, 'Klíè databázové instance:', key)
+        self._distinct_on = distinct_on
         try:
             del kwargs['key']
         except:

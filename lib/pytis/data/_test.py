@@ -724,6 +724,7 @@ class _DBTest(_DBBaseTest):
                   "create table cosnova (id serial PRIMARY KEY, synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE')",
                   "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madati int NOT NULL DEFAULT 1 REFERENCES cosnova)",
                   "create table xcosi(id int, popis varchar(12))",
+                  "create table dist (x int, y int)",
                   "create table bin(id int, data bytea)",
                   "create table fulltext(id int, text1 varchar(256), text2 text, index tsvector)",
                   "create trigger textindexupdate before update or insert on fulltext for each row execute procedure tsvector_update_trigger(index,'pg_catalog.simple',text1,text2)",
@@ -743,6 +744,11 @@ class _DBTest(_DBBaseTest):
                   "insert into xcosi values(3, 'zvlastni')",
                   "insert into xcosi values(5, 'nove')",
                   "insert into xcosi values(999, NULL)",
+                  "insert into dist values (1, 1)",
+                  "insert into dist values (2, 1)",
+                  "insert into dist values (3, 2)",
+                  "insert into dist values (4, 2)",
+                  "insert into dist values (5, 3)",
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
@@ -773,7 +779,7 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % t)
             except:
                 pass            
-        for t in ('bin', 'fulltext', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
+        for t in ('bin', 'fulltext', 'dist', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
                   'viewtest0', 'viewtest6',):
             try:
                 self._sql_command('drop table %s' % t)
@@ -861,6 +867,16 @@ class DBDataDefault(_DBTest):
             condition=pytis.data.AND(
                 pytis.data.GE('id', pytis.data.Value(pytis.data.Integer(), 3)),
                 pytis.data.LT('id', pytis.data.Value(pytis.data.Integer(), 6))))
+        # dist
+        key = B('x', 'dist', 'x')
+        dist = pytis.data.DBDataDefault(
+            (key,
+             B('y', 'dist', 'y')),
+            key, conn, distinct_on=('y',))
+        dist1 = pytis.data.DBDataDefault(
+            (key,
+             B('y', 'dist', 'y')),
+            key, conn, distinct_on=('x',))
         # bin
         key = B('id', 'bin', 'id')
         dbin = pytis.data.DBDataDefault(
@@ -906,6 +922,8 @@ class DBDataDefault(_DBTest):
         self.dstat1 = dstat1
         self.dosnova = dosnova
         self.dcosi = dcosi
+        self.dist = dist
+        self.dist1 = dist1
         self.dbin = dbin
         self.fulltext = fulltext
         self.fulltext1 = fulltext1
@@ -1090,6 +1108,22 @@ class DBDataDefault(_DBTest):
                 assert synt == k1, ('bad value', synt, k1, spec)
                 assert anal == k2, ('bad value', anal, k2, spec)
             assert not d.fetchone(), 'too many lines'
+    def test_select_distinct_on(self):
+        def check(d, condition, result):
+            d.select(condition=condition)
+            try:
+                for r in result:
+                    row = d.fetchone()
+                    assert row is not None, ('missing lines', condition,)
+                    x, y = r
+                    assert x == row['x'].value() and y == row['y'].value(), \
+                        ('unexpected result', condition, (x, y,), (row['x'].value(), row['y'].value(),),)
+                assert d.fetchone() is None, ('extra row', condition,)
+            finally:
+                d.close()
+        check(self.dist, None, ((1, 1,), (3, 2,), (5, 3,),))
+        check(self.dist, pytis.data.GT('x', pytis.data.Value(pytis.data.Integer(), 3)), ((4, 2,), (5, 3,),))
+        check(self.dist1, None, ((1, 1,), (2, 1,), (3, 2,), (4, 2,), (5, 3,),))
     def test_select_aggregate(self):
         d = self.data
         result = d.select_aggregate((d.AGG_MIN, 'castka')).value()
