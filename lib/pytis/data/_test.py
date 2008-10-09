@@ -1124,6 +1124,10 @@ class DBDataDefault(_DBTest):
         check(self.dist, None, ((1, 1,), (3, 2,), (5, 3,),))
         check(self.dist, pytis.data.GT('x', pytis.data.Value(pytis.data.Integer(), 3)), ((4, 2,), (5, 3,),))
         check(self.dist1, None, ((1, 1,), (2, 1,), (3, 2,), (4, 2,), (5, 3,),))
+        self.dist.select(sort=('x',))
+        self.dist.close()
+        self.dist.select(sort=('y',))
+        self.dist.close()
     def test_select_aggregate(self):
         d = self.data
         result = d.select_aggregate((d.AGG_MIN, 'castka')).value()
