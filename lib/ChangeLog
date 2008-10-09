@@ -1,6 +1,12 @@
 2008-10-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/_test.py:
+	* lib/pytis/data/postgresql.py:
+	DISTINCT ON SQL clauses adjusted to allow arbitrary ordering.
+
+2008-10-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/_test.py:
 	* lib/pytis/data/dbdata.py:
 	* lib/pytis/data/postgresql.py:
 	Limited support for DISTINCT ON SQL clauses.
