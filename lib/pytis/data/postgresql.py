@@ -994,8 +994,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return spec
         ordering = sortspec('ASC')
         rordering = sortspec('DESC')
-        if distinct_on:
-            dist_ordering = distinct_columns_string
         condition = key_cond
         relation_and_condition = '(%s) and (%s)' % (relation, condition)
         if self._condition is None:
@@ -1127,10 +1125,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._SQLCommandTemplate(
                 (('declare %s scroll cursor for select %%(columns)s from '+
                   '(select %s * from %s%%(fulltext_queries)s '+
-                  'where %%(condition)s and (%s)%s order by %s) '+
+                  'where %%(condition)s and (%s)%s) '+
                   'as %s order by %%(ordering)s %s') %
                  (cursor_name, distinct_on, table_list, relation, filter_condition,
-                  dist_ordering, table_names[0], ordering,)),
+                  table_names[0], ordering,)),
                 {'columns': column_list})
         else:
             self._pdbb_command_select = \
