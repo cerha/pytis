@@ -1,5 +1,10 @@
 2008-10-10  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/postgresql.py:
+	Inner extra sorting in DISTINCT ON selects removed.
+
+2008-10-10  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/_test.py:
 	* lib/pytis/data/postgresql.py:
 	Typo in SELECT DISTINCT ON fixed.
