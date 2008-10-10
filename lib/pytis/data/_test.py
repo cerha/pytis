@@ -1128,6 +1128,12 @@ class DBDataDefault(_DBTest):
         self.dist.close()
         self.dist.select(sort=('y',))
         self.dist.close()
+        self.dist.select(sort=(('x', pytis.data.ASCENDENT,),))
+        try:
+            result = self.dist.search(pytis.data.GT('x', pytis.data.Value(pytis.data.Integer(), 3)))
+        finally:
+            self.dist.close()
+        assert result == 2, ('distinct on search failed', result,)
     def test_select_aggregate(self):
         d = self.data
         result = d.select_aggregate((d.AGG_MIN, 'castka')).value()

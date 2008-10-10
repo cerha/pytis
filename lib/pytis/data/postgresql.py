@@ -1166,7 +1166,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             {'columns': column_list})
         if distinct_on:
             self._pdbb_command_search_distance = \
-                'select count(*) from (select%s from %s where (%s)%s and %%s) as %s' % \
+                'select count(*) from (select%s * from %s where (%s)%s and %%s) as %s' % \
                 (distinct_on, main_table, relation, filter_condition, table_names[0])
         else:
             self._pdbb_command_search_distance = \
