@@ -1,3 +1,9 @@
+2008-10-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py:
+	Allow passing search string and filter conditions to form
+	constructor (+ minor fixes).
+
 2008-10-10  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

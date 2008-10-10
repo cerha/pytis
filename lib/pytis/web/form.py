@@ -199,14 +199,14 @@ class LayoutForm(FieldForm):
                     return label + ctrl
                 td = g.td(label + ctrl, colspan=3)
             else:
-                td = g.td(label or '', valign='top', cls='label')
+                td = g.th(label or '', valign='top', cls='label', align='right')
                 if self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator() \
                        and isinstance(field.type, pytis.data.Number):
                     # Codebook field display is not numeric even though the underlying type is...
-                    td += g.td(ctrl, cls='ctrl', align='right') + \
+                    td += g.td(ctrl, cls='ctrl', valign='top', align='right') + \
                           g.td('', width='100%', cls='spacer')
                 else:
-                    td += g.td(ctrl, cls='ctrl', width='100%', colspan=2)
+                    td += g.td(ctrl, cls='ctrl', valign='top', width='100%', colspan=2)
             return g.tr(td)
         else:
             rows = (concat(label, g.br()), concat(ctrl, g.br()))
@@ -418,15 +418,15 @@ class BrowseForm(LayoutForm):
     _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
                            (pytis.data.DESCENDANT, 'desc'),
                            (None, 'none'))
-    _NULL_FILTER = pytis.presentation.Condition(_("All items"), None, id='-')
+    _NULL_FILTER_ID = '-'
 
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
-                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, req=None,
-                 **kwargs):
+                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
+                 filter=None, req=None, **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
-            defined by specification
+            defined by specification.
             
           condition -- current condition for filtering the records as 'pytis.data.Operator'
             instance or None.
@@ -463,6 +463,17 @@ class BrowseForm(LayoutForm):
 
             Searching is ignored when the current limit is greater than the total number of
             records.
+
+          query -- query search string.  If None, the form automatically displays search controls
+            when the number of records exceeds one page.  If 'query' is passed, these embedded
+            search conrols are disabled (it is considered, that the application has it's own search
+            interface), but otherwise the form behaves as if the query was filled in its own search
+            field.  The query string is split into query words by space and the form is filtered to
+            contain only records containing all the words in any of its string columns.
+
+          filter -- filter condition as a 'pytis.data.Operator' instance.  This condition will be
+            appended to 'condition', but the difference is that 'filter' is a user defined filter
+            and is indicated in the user interface, while 'condition' is invisible to the user.
 
           req -- instance of a class implementing the 'Request' API.  The form state (sorting,
             paging etc) will be set up according to the reqest parameters, if the request includes
@@ -551,22 +562,37 @@ class BrowseForm(LayoutForm):
         self._offset = offset
         self._search = search
         # Determine the current query search condition.
-        self._show_query_field = params.get('show_query_field')
-        self._query = query = params.get('query')
         if query is not None:
+            show_query_field = False
+            allow_query_field = False
+        else:
+            query = params.get('query')
+            show_query_field = bool(query or params.get('show_query_field'))
+            allow_query_field = True
+        if query:
             query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
                                                for f in self._fields.values()
-                                               if isinstance(f.type, pd.String)])
+                                               if isinstance(f.type, pd.String) and not f.virtual])
                                        for word in query.split()])
         else:
             query_condition = None
+        self._query = query
         self._query_condition = query_condition
+        self._show_query_field = show_query_field
+        self._allow_query_field = allow_query_field
         # Determine the current filter.
         filter_id = params.get('filter', self._view.default_filter())
-        if filter_id == self._NULL_FILTER.id():
-            filter = None
-        else:
-            filter = find(filter_id, self._view.conditions(), key=lambda c: c.id())
+        if filter_id and filter_id != self._NULL_FILTER_ID:
+            condition = find(filter_id, self._view.conditions(), key=lambda c: c.id())
+            if condition:
+                c = condition.condition()
+                if filter:
+                    filter = pd.AND(filter, c)
+                else:
+                    filter = c
+            else:
+                filter_id = None
+        self._filter_id = filter_id
         self._filter = filter
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
@@ -654,6 +680,16 @@ class BrowseForm(LayoutForm):
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
         return concat([g.th(label(f)) for f in self._column_fields])
+
+    def _conditions(self, condition=None):
+        conditions = [c for c in (self._condition, self._filter, self._query_condition, condition)
+                      if c is not None]
+        if len(conditions) == 0:
+            return None
+        elif len(conditions) == 1:
+            return conditions[0]
+        else:
+            return pytis.data.AND(*conditions)
     
     def _wrap_exported_rows(self, context, rows, summary):
         g = context.generator()
@@ -666,16 +702,7 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        conditions = [c for c in (self._condition, self._filter and self._filter.condition(),
-                                  self._query_condition)
-                      if c is not None]
-        if len(conditions) == 0:
-            condition = None
-        elif len(conditions) == 1:
-            condition = conditions[0]
-        else:
-            condition = pytis.data.AND(*conditions)
-        self._count = count = data.select(condition=condition, sort=self._sorting)
+        self._count = count = data.select(condition=self._conditions(), sort=self._sorting)
         found = False
         offset = self._offset
         if self._search:
@@ -728,7 +755,11 @@ class BrowseForm(LayoutForm):
         data.close()
         g = context.generator()
         if n == 0:
-            return g.strong(_("No records."))
+            if self._query or self._filter:
+                # The message about search/filter results is already printed.
+                return '' 
+            else:
+                return g.strong(_("No records."))
         else:
             if limit is None or count <= self._limits[0]:
                 summary = _("Total records:") +' '+ g.strong(str(count))
@@ -745,7 +776,7 @@ class BrowseForm(LayoutForm):
             dir = dict(self._SORTING_DIRECTIONS)[dir_]
         return generator.uri(self._handler,
                              ('form_name', self._name),
-                             ('filter', self._filter and self._filter.id()),
+                             ('filter', self._filter_id),
                              sort=sort, dir=dir, **kwargs)
 
     def _index_search_condition(self, search_string):
@@ -762,11 +793,12 @@ class BrowseForm(LayoutForm):
         for level in range(len(self._index_search_string)+1):
             if level:
                 search_string = self._index_search_string[:level]
-                cond = self._index_search_condition(search_string)
+                condition = self._index_search_condition(search_string)
             else:
                 search_string = None
-                cond = None
-            values = [v.value() for v in data.distinct(field.id, prefix=level+1, condition=cond)
+                condition = None
+            values = [v.value() for v in data.distinct(field.id, prefix=level+1,
+                                                       condition=self._conditions(condition))
                       if v.value() is not None]
             if len(values) < 3 or len(values) > 100:
                 break
@@ -780,17 +812,16 @@ class BrowseForm(LayoutForm):
             result.append(g.div(label +' '+ concat(links, separator='&nbsp;')))
         return (g.div(result, cls='index-search-controls'),)
 
-    def _export_controls(self, context, second=False):
+    def _export_controls(self, context, bottom=False):
         limit, page, count = self._limit, self._page, self._count
         g = context.generator()
-        id = (second and '0' or '1') + '%x' % positive_id(self)
+        id = (bottom and '0' or '1') + '%x' % positive_id(self)
         content = []
         filters = [(c.name(), c.id()) for c in self._view.conditions()
                    if c.id() is not None and c.condition() is not None]
-        show_filter = filters and (count or self._filter)
-        show_query = self._query or self._show_query_field
-
-        if (self._query or self._filter) and not second:
+        show_filter = filters and (count or self._filter_id is not None)
+        show_query_field = self._show_query_field
+        if (self._query or self._filter) and not bottom:
             if count:
                 if self._query and self._filter:
                     result = _.ngettext("Found %d record matching the search expression and the "
@@ -814,24 +845,24 @@ class BrowseForm(LayoutForm):
                 else:
                     result = _("No record matching the current filter.")
             content.append(g.div(result, cls='results'))
-        if show_query and not second:
+        if show_query_field and not bottom:
             query_id = 'filter-' + id
             content.append(g.div((g.label(_("Search expression") +': ', query_id),
-                                  g.field(self._query, name='query'),
+                                  g.field(self._query, name='query', id=query_id),
                                   g.hidden('show_query_field', '1'),
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
-        if show_filter and not second:
+        if show_filter and not bottom:
             null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
             if null_filter:
                 null_filter_name = null_filter.name()
             else:
-                null_filter_name = self._NULL_FILTER.name()
-            filters.insert(0, (null_filter_name, self._NULL_FILTER.id()))
+                null_filter_name = _("All items")
+            filters.insert(0, (null_filter_name, self._NULL_FILTER_ID))
             filter_id = 'filter-' + id
             content.append(g.div((g.label(_("Filter")+': ', filter_id),
                                   g.select(name='filter', id=filter_id,
-                                           selected=self._filter and self._filter.id(),
+                                           selected=self._filter_id,
                                            title=(_("Filter")+' '+
                                                   _("(Use ALT+arrow down to select)")),
                                            onchange='this.form.submit(); return true',
@@ -843,7 +874,7 @@ class BrowseForm(LayoutForm):
             pages += modulo and 1 or 0
             controls = ()
             if count > 100:
-                if not second:
+                if not bottom:
                     index_search_controls = self._export_index_search_controls(context)
                     self._index_search_controls = index_search_controls
                 else:
@@ -852,7 +883,7 @@ class BrowseForm(LayoutForm):
                     controls += index_search_controls
             if pages > 1:
                 offset_id = 'offset-' + id
-                if not show_query:
+                if not show_query_field and self._allow_query_field:
                     search_button = g.submit(_("Search"), name='show_query_field', cls='search')
                 else:
                     search_button = None
@@ -898,7 +929,7 @@ class BrowseForm(LayoutForm):
         form = super(BrowseForm, self).export(context)
         content = (self._export_controls(context),
                    form,
-                   self._export_controls(context, second=True))
+                   self._export_controls(context, bottom=True))
         return concat([c for c in content if c], separator="\n")
 
 
