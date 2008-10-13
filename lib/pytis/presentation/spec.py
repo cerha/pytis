@@ -2668,14 +2668,11 @@ class Specification(object):
     """
 
     key = None
-    """Identifikátor klíèového sloupce jako øetìzec, nebo jejich sekvence.
-
-    Pokud má tabulka vícenásobný klíè, udáme sekvenci identifikátorù
-    pøíslu¹ných sloupcù.  Vyjmenované sloupce se musí nacházet ve specifikaci
-    'fields'.  Pokud klíè není definován, bude automaticky za klíèový pova¾ován
-    první sloupec z 'fields'.
-
-    """
+    """Data object key column identifier as a string or their sequence.
+    
+    Sequence may be used if the data object has a multicolumn key.  In any case all named columns
+    must exist in the 'fields' specification.  In 'key' is not defined, the first column form
+    'fields' is used."""
 
     fields = ()
     """Specification of all fields as a sequence of 'FieldSpec' instances.
@@ -2694,6 +2691,9 @@ class Specification(object):
     off or know that it exists.  It has the same effect as implementing the
     condition in the underlying data source.  The value is a
     'pytis.data.Operator' instance."""
+
+    distinct_on = None
+    """Sequence of column names to filter distinct rows of the underlying data object."""
     
     data_cls = pytis.data.DBDataDefault
     """Datová tøída pou¾itá pro vytvoøení datového objektu."""
@@ -2722,8 +2722,8 @@ class Specification(object):
 
     def __init__(self, resolver):
         self._resolver = resolver
-        for attr in ('fields', 'access_rights', 'condition', 'bindings', 'cb', 'sorting',
-                     'conditions'):
+        for attr in ('fields', 'access_rights', 'condition', 'distinct_on',
+                     'bindings', 'cb', 'sorting', 'conditions'):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if callable(value):
@@ -2732,11 +2732,11 @@ class Specification(object):
         assert isinstance(self.fields, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
-            if not (attr.startswith('_') or attr.endswith('_spec') or \
-                    attr in ('table', 'key', 'access_rights', 'condition',
-                             'data_cls', 'bindings', 'cb', 'prints',
-                             'oid', # for backward compatibility 
-                             )):
+            if not attr.startswith('_') and not attr.endswith('_spec') and \
+                   attr not in ('table', 'key', 'access_rights', 'condition', 'distinct_on',
+                                'data_cls', 'bindings', 'cb', 'prints',
+                                'oid', # for backward compatibility 
+                                ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         if isinstance(self.bindings, (tuple, list)):
             # Only pass new style bindings to ViewSpec, old style bindings are accessed through the
@@ -2807,8 +2807,9 @@ class Specification(object):
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        return _DataFactoryWithOrigin(self.data_cls, *args, **dict(access_rights=access_rights,
-                                                                   condition=self.condition))
+        kwargs = dict(access_rights=access_rights,
+                      condition=self.condition, distinct_on=self.distinct_on)
+        return _DataFactoryWithOrigin(self.data_cls, *args, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:

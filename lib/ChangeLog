@@ -1,3 +1,9 @@
+2008-10-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py:
+	Pass `distinct_on' from 'Specification' to data object
+	constructor.
+
 2008-10-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py:
