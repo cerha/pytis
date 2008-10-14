@@ -89,6 +89,7 @@ class FieldFormatter(object):
             self._formatter = self._generic_formatter
 
     def _boolean_formatter(self, context, row, field):
+        # Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
         value = row.display(field.id) or row[field.id].value() and _("Yes") or _("No")
         return value, None
 
@@ -102,6 +103,8 @@ class FieldFormatter(object):
     def _binary_formatter(self, context, row, field):
         buf = row[field.id].value()
         if buf:
+            # Translators: The label "image"/"file" is used in textual representation of binary
+            # data values, usually as a link to download the actual binary file.
             value = buf.filename() or isinstance(type, pd.Image) and _("image") or _("file")
             info = format_byte_size(len(buf))
         else:

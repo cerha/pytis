@@ -1,5 +1,11 @@
 2008-10-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/__init__.py: 
+	* pytis/web/dialog.py: 
+	* pytis/web/field.py: 
+	* pytis/web/form.py: 
+	Added translators comments.
+
 	* pytis/form/application.py:
 	* pytis/form/command.py:
 	* pytis/form/commands_.py:

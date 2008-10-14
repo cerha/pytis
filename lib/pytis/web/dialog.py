@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2007 Brailcom, o.p.s.
+# Copyright (C) 2007, 2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ class Dialog(lcg.Content):
         hidden = self._hidden
         if self._action:
             hidden += [('action', self._action)]
+        # Translators: Default edit form submit button label.
         content += tuple([g.hidden(k, v) for k, v in hidden]) + \
                    (g.submit(_("Submit")),)
         return g.form(content, action=self._handler, cls="dialog") + "\n"

@@ -1,5 +1,8 @@
 2008-10-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* translations/Makefile:
+	Extract also translator comments.
+
 	* translations/pytis.es.po:
 	* translations/pytis.fr.po:
 	* translations/pytis.hu.po:

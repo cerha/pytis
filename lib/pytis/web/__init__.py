@@ -36,6 +36,7 @@ _ = lcg.TranslatableTextFactory('pytis')
 
 # TODO: This hack is necessary as long as pytis default language is Czech.
 pd = pytis.data
+# Translators: All the messages below are validation errors.
 pd.Type._VM_NULL_VALUE_MSG = _("Empty value")
 pd.Type._VM_INVALID_VALUE_MSG = _("Invalid value")
 pd.Limited._VM_MINLEN_MSG = _("Minimal length %(minlen)s not satisfied")
@@ -55,4 +56,5 @@ pd.Binary._VM_MINLEN_MSG = _("Minimal size %(minlen)s not satisfied")
 pd.Binary._VM_MAXLEN_MSG = _("Maximal size %(maxlen)s exceeded")
 pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
 pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(minsize)s exceeded")
+# Translators: This is the last validation error message.
 pd.Image._VM_FORMAT_MSG = _("Unsupported format %(format)s; valid formats: %(formats)s")

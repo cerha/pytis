@@ -759,11 +759,15 @@ class BrowseForm(LayoutForm):
                 # The message about search/filter results is already printed.
                 return '' 
             else:
+                # Translators: Used in empty list forms.  "Records" refers to database records in
+                # the most generic senese possible.
                 return g.strong(_("No records."))
         else:
             if limit is None or count <= self._limits[0]:
                 summary = _("Total records:") +' '+ g.strong(str(count))
             else:
+                # Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
+                # by the numbers corresponding to the current listing range.
                 summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
                             first=g.strong(str(first_record_offset+1)),
                             last=g.strong(str(first_record_offset+n)),
@@ -803,10 +807,22 @@ class BrowseForm(LayoutForm):
             if len(values) < 3 or len(values) > 100:
                 break
             if search_string:
+                # Translators: This is a label preceding index search controls.  These controls
+                # allow the user to move in a long alphabetically sorted list by alphabetical
+                # prefix.  For example in a listing of books, one might have the following index
+                # search controls: 'Author: A, B, C, D, ...' and selecting 'A' will move us to the
+                # first author beginning with A.  At the same time the form will automatically
+                # display subordinate index search controls for all authors beginning with 'A':
+                # 'Author on "A": Ab, Ac, Ad, Af, ....'.  And this is where this label is used.
+                # '%(label)s' is replaced by the label of the controlling column. '%(prefix)s' is
+                # replaced by the selected letter or substring and 'on' has the meaning "beginning
+                # with".  Also take care to use the correct quotation marks for the target language
+                # (written as the corresponding unicode characters).
                 label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
             else:
                 label = field.label + ":"
             links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record',
+                            # Translators: Index search controls link tooltip.
                             title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
             result.append(g.div(label +' '+ concat(links, separator='&nbsp;')))
@@ -824,6 +840,10 @@ class BrowseForm(LayoutForm):
         if (self._query or self._filter) and not bottom:
             if count:
                 if self._query and self._filter:
+                    # Translators: This string (and the following two) uses plural forms.  '%d' is
+                    # replaced by the number and this number also denotes the plural form used.
+                    # Please supply translations for all plural forms relevant for the target
+                    # language.
                     result = _.ngettext("Found %d record matching the search expression and the "
                                         "current filter.",
                                         "Found %d records matching the search expression and the "
@@ -850,6 +870,7 @@ class BrowseForm(LayoutForm):
             content.append(g.div((g.label(_("Search expression") +': ', query_id),
                                   g.field(self._query, name='query', id=query_id),
                                   g.hidden('show_query_field', '1'),
+                                  # Translators: Search button label.
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
@@ -857,16 +878,25 @@ class BrowseForm(LayoutForm):
             if null_filter:
                 null_filter_name = null_filter.name()
             else:
+                # Translators: Label used in filter selection box for the option which disables
+                # filtering and thus results in all records to be displayed.
                 null_filter_name = _("All items")
             filters.insert(0, (null_filter_name, self._NULL_FILTER_ID))
             filter_id = 'filter-' + id
+            # Translators: Label of filter selection box.  Filtering limits the displayed records
+            # by certain criterias.
             content.append(g.div((g.label(_("Filter")+': ', filter_id),
                                   g.select(name='filter', id=filter_id,
                                            selected=self._filter_id,
                                            title=(_("Filter")+' '+
+                                                  # Translators: Tooltip text suggesting keyboard
+                                                  # combination to use for selection without
+                                                  # unexpected invocation of the option.
                                                   _("(Use ALT+arrow down to select)")),
                                            onchange='this.form.submit(); return true',
                                            options=filters),
+                                  # Translators: Button for manual selection invocation (when
+                                  # JavaScript is off.
                                   g.noscript(g.submit(_("Apply")))),
                                  cls="filter"))
         if limit is not None and count > self._limits[0]:
@@ -887,6 +917,8 @@ class BrowseForm(LayoutForm):
                     search_button = g.submit(_("Search"), name='show_query_field', cls='search')
                 else:
                     search_button = None
+                # Translators: Paging controls allow navigation in long lists which are split into
+                # several pages.  The user can select a specific page or browse forward/backwards.
                 controls += (g.span((g.label(_("Page")+': ', offset_id),
                                      g.select(name='offset', id=offset_id, selected=page*limit,
                                               title=(_("Page")+' '+
