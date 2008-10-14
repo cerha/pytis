@@ -1,107 +1,42 @@
 # Pytis translations
-# Copyright (C) 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2006-2008 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
-# Pawe³ Loba <ploba@rogers.com>, 2006
+# PaweÅ‚ Loba <ploba@rogers.com>, 2006
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-20 10:17+0100\n"
-"PO-Revision-Date: 2007-09-26 11:38+0200\n"
+"POT-Creation-Date: 2008-10-14 12:50+0200\n"
+"PO-Revision-Date: 2008-10-14 13:14+0200\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: ../lib/pytis/web/form.py:114 ../lib/pytis/web/dialog.py:50
-msgid "Submit"
-msgstr "Wy¶lij"
-
-#: ../lib/pytis/web/form.py:283
-msgid "Submit the form"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:285
-msgid "Undo all changes"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:285
-msgid "Reset"
-msgstr "Od¶wie¿"
-
-#: ../lib/pytis/web/form.py:387
-msgid "Fields marked by an asterisk are mandatory."
-msgstr ""
-
-#: ../lib/pytis/web/form.py:633
-msgid "No records."
-msgstr "Nie ma wpisu."
-
-#: ../lib/pytis/web/form.py:636
-#, fuzzy
-msgid "Total records:"
-msgstr "Nie ma wpisu."
-
-#: ../lib/pytis/web/form.py:638
-#, python-format
-msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:655 ../lib/pytis/web/form.py:657
-msgid "Page"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:657 ../lib/pytis/web/form.py:669
-msgid "(Use ALT+arrow down to select)"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:661
-msgid "Previous"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:662
-msgid "Go to previous page"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:663
-msgid "Next"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:664
-msgid "Go to next page"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:666 ../lib/pytis/web/form.py:668
-msgid "Records per page"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:672
-msgid "Go"
-msgstr ""
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 
 #: ../lib/pytis/web/__init__.py:39
 msgid "Empty value"
-msgstr "Pusta warto¶æ"
+msgstr "Pusta wartoÅ›Ä‡"
 
 #: ../lib/pytis/web/__init__.py:40
 msgid "Invalid value"
-msgstr "Niepoprawna warto¶æ"
+msgstr "Niepoprawna wartoÅ›Ä‡"
 
 #: ../lib/pytis/web/__init__.py:41 ../lib/pytis/web/__init__.py:45
 #, fuzzy, python-format
 msgid "Minimal length %(minlen)s not satisfied"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "CiÄ…g przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡ %(maxlen)d"
 
 #: ../lib/pytis/web/__init__.py:42
 #, fuzzy, python-format
 msgid "Maximal length %(maxlen)s exceeded"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "CiÄ…g przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡ %(maxlen)d"
 
 #: ../lib/pytis/web/__init__.py:43
 msgid "Not an integer"
-msgstr "To nie jest liczba ca³kowita"
+msgstr "To nie jest liczba caÅ‚kowita"
 
 #: ../lib/pytis/web/__init__.py:44
 msgid "Invalid number"
@@ -110,7 +45,7 @@ msgstr "Niepoprawny numer"
 #: ../lib/pytis/web/__init__.py:46
 #, fuzzy, python-format
 msgid "String exceeds max length %(maxlen)s"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "CiÄ…g przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡ %(maxlen)d"
 
 #: ../lib/pytis/web/__init__.py:47
 msgid "Enter the password twice to eliminate typos"
@@ -122,28 +57,28 @@ msgstr ""
 
 #: ../lib/pytis/web/__init__.py:49
 msgid "Invalid format"
-msgstr "Niew³a¶ciwy format"
+msgstr "NiewÅ‚aÅ›ciwy format"
 
 #: ../lib/pytis/web/__init__.py:50
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Niew³a¶ciwy format koloru ('#RGB' lub '#RRGGBB')"
+msgstr "NiewÅ‚aÅ›ciwy format koloru ('#RGB' lub '#RRGGBB')"
 
 #: ../lib/pytis/web/__init__.py:51
 msgid "Invalid date or time format"
-msgstr "Niew³a¶ciwy format daty lub czasu"
+msgstr "NiewÅ‚aÅ›ciwy format daty lub czasu"
 
 #: ../lib/pytis/web/__init__.py:52
 msgid "Invalid date or time"
-msgstr "Niew³a¶ciwy format daty lub czasu"
+msgstr "NiewÅ‚aÅ›ciwy format daty lub czasu"
 
 #: ../lib/pytis/web/__init__.py:53
 msgid "Date outside the allowed range"
-msgstr "Data poza dopuszczalnym obrêbem"
+msgstr "Data poza dopuszczalnym obrÄ™bem"
 
 #: ../lib/pytis/web/__init__.py:54
 #, fuzzy, python-format
 msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "CiÄ…g przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡ %(maxlen)d"
 
 #: ../lib/pytis/web/__init__.py:55
 #, python-format
@@ -158,32 +93,164 @@ msgstr ""
 #: ../lib/pytis/web/__init__.py:57
 #, fuzzy, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+msgstr "CiÄ…g przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡ %(maxlen)d"
 
 #: ../lib/pytis/web/__init__.py:58
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:89
+#: ../lib/pytis/web/dialog.py:50 ../lib/pytis/web/form.py:254
+#: ../lib/pytis/web/form.py:266
+msgid "Submit"
+msgstr "WyÅ›lij"
+
+#: ../lib/pytis/web/field.py:92
 msgid "Yes"
 msgstr "Tak"
 
-#: ../lib/pytis/web/field.py:89
+#: ../lib/pytis/web/field.py:92
 msgid "No"
 msgstr "Nie"
 
-#: ../lib/pytis/web/field.py:101
+#: ../lib/pytis/web/field.py:105
 msgid "image"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:101
+#: ../lib/pytis/web/field.py:105
 msgid "file"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:254
+msgid "Undo all changes"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:276
+msgid "Submit the form"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:279
+msgid "Reset"
+msgstr "OdÅ›wieÅ¼"
+
+#: ../lib/pytis/web/form.py:411
+msgid "Fields marked by an asterisk are mandatory."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:762
+msgid "No records."
+msgstr "Nie ma wpisu."
+
+#: ../lib/pytis/web/form.py:765
+#, fuzzy
+msgid "Total records:"
+msgstr "Nie ma wpisu."
+
+#: ../lib/pytis/web/form.py:767
+#, python-format
+msgid "Displayed records %(first)s-%(last)s of total %(total)s"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:806
+#, python-format
+msgid "%(label)s on \"%(prefix)s\":"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:810
+#, python-format
+msgid "Skip to the first record beginning with \"%s\""
+msgstr ""
+
+#: ../lib/pytis/web/form.py:827
+#, python-format
+msgid "Found %d record matching the search expression and the current filter."
+msgid_plural ""
+"Found %d records matching the search expression and the current filter."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/web/form.py:833
+#, python-format
+msgid "Found %d record matching the search expression."
+msgid_plural "Found %d records matching the search expression."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/web/form.py:837
+#, python-format
+msgid "Found %d record matching the current filter."
+msgid_plural "Found %d records matching the current filter."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/web/form.py:842
+msgid "No record matching the search expression and the current filter."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:844
+msgid "No record matching the search expression."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:846
+msgid "No record matching the current filter."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:850
+msgid "Search expression"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:853 ../lib/pytis/web/form.py:887
+msgid "Search"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:860
+msgid "All items"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:863 ../lib/pytis/web/form.py:866
+msgid "Filter"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:867 ../lib/pytis/web/form.py:893
+#: ../lib/pytis/web/form.py:909
+msgid "(Use ALT+arrow down to select)"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:870
+msgid "Apply"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:890 ../lib/pytis/web/form.py:892
+msgid "Page"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:898
+msgid "Previous"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:899
+msgid "Go to previous page"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:900
+msgid "Next"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:901
+msgid "Go to next page"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:906 ../lib/pytis/web/form.py:908
+msgid "Records per page"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:913
+msgid "Go"
 msgstr ""
 
 #, fuzzy
 #~ msgid "String exceeds max length %(minlen)s"
-#~ msgstr "Ci±g przekracza maksymaln± d³ugo¶æ %(maxlen)d"
+#~ msgstr "CiÄ…g przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡ %(maxlen)d"
 
 #~ msgid "reduced"
 #~ msgstr "zredukowany"

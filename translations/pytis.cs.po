@@ -1,16 +1,16 @@
-# Pytis translations.
-# Copyright (C) 2006, 2007, 2008 Brailcom, o.p.s.
-# This file is distributed under the same license as the Wiking package.
+# Pytis translations
+# Copyright (C) 2006-2008 Brailcom, o.p.s.
+# This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2006.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-30 12:12+0200\n"
+"POT-Creation-Date: 2008-10-14 12:50+0200\n"
 "PO-Revision-Date: 2008-09-30 12:14+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
-"Language-Team: LANGUAGE <cs@li.org>\n"
+"Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -137,43 +137,41 @@ msgstr "Vrátit původní hodnoty"
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označená hvězdičkou jsou povinná."
 
-#: ../lib/pytis/web/form.py:421
-msgid "All items"
-msgstr "Všechny položky"
-
-#: ../lib/pytis/web/form.py:731
+#: ../lib/pytis/web/form.py:762
 msgid "No records."
 msgstr "Žádné záznamy."
 
-#: ../lib/pytis/web/form.py:734
+#: ../lib/pytis/web/form.py:765
 msgid "Total records:"
 msgstr "Počet záznamů celkem:"
 
-#: ../lib/pytis/web/form.py:736
+#: ../lib/pytis/web/form.py:767
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 
-#: ../lib/pytis/web/form.py:774
+#: ../lib/pytis/web/form.py:806
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na „%(prefix)s“:"
 
-#: ../lib/pytis/web/form.py:778
+#: ../lib/pytis/web/form.py:810
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Přejít na první záznam začínající na „%s“"
 
-#: ../lib/pytis/web/form.py:796
+#: ../lib/pytis/web/form.py:827
 #, python-format
 msgid "Found %d record matching the search expression and the current filter."
 msgid_plural ""
 "Found %d records matching the search expression and the current filter."
 msgstr[0] "Nalezen %d záznam odpovídající hledanému výrazu a aktivnímu filtru."
-msgstr[1] "Nalezeny %d záznamy odpovídající hledanému výrazu a aktivnímu filtru."
-msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu a aktivnímu filtru."
+msgstr[1] ""
+"Nalezeny %d záznamy odpovídající hledanému výrazu a aktivnímu filtru."
+msgstr[2] ""
+"Nalezeno %d záznamů odpovídajících hledanému výrazu a aktivnímu filtru."
 
-#: ../lib/pytis/web/form.py:802
+#: ../lib/pytis/web/form.py:833
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -181,7 +179,7 @@ msgstr[0] "Nalezen %d záznam odpovídající hledanému výrazu."
 msgstr[1] "Nalezeny %d záznamy odpovídající hledanému výrazu."
 msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
-#: ../lib/pytis/web/form.py:806
+#: ../lib/pytis/web/form.py:837
 #, python-format
 msgid "Found %d record matching the current filter."
 msgid_plural "Found %d records matching the current filter."
@@ -189,63 +187,67 @@ msgstr[0] "Nalezen %d záznam odpovídající aktivnímu filtru."
 msgstr[1] "Nalezeny %d záznamy odpovídající aktivnímu filtru."
 msgstr[2] "Nalezeno %d záznamů odpovídajících aktivnímu filtru."
 
-#: ../lib/pytis/web/form.py:811
+#: ../lib/pytis/web/form.py:842
 msgid "No record matching the search expression and the current filter."
 msgstr "Žádný záznam neodpovídá hledanému výrazu a aktivnímu filtru."
 
-#: ../lib/pytis/web/form.py:813
+#: ../lib/pytis/web/form.py:844
 msgid "No record matching the search expression."
 msgstr "Žádný záznam neodpovídá hledanému výrazu."
 
-#: ../lib/pytis/web/form.py:815
+#: ../lib/pytis/web/form.py:846
 msgid "No record matching the current filter."
 msgstr "Žádný záznam neodpovídá aktivnímu filtru."
 
-#: ../lib/pytis/web/form.py:819
+#: ../lib/pytis/web/form.py:850
 msgid "Search expression"
 msgstr "Hledaný výraz"
 
-#: ../lib/pytis/web/form.py:822 ../lib/pytis/web/form.py:856
+#: ../lib/pytis/web/form.py:853 ../lib/pytis/web/form.py:887
 msgid "Search"
 msgstr "Hledat"
 
-#: ../lib/pytis/web/form.py:832 ../lib/pytis/web/form.py:835
+#: ../lib/pytis/web/form.py:860
+msgid "All items"
+msgstr "Všechny položky"
+
+#: ../lib/pytis/web/form.py:863 ../lib/pytis/web/form.py:866
 msgid "Filter"
 msgstr "Filtr"
 
-#: ../lib/pytis/web/form.py:836 ../lib/pytis/web/form.py:862
-#: ../lib/pytis/web/form.py:878
+#: ../lib/pytis/web/form.py:867 ../lib/pytis/web/form.py:893
+#: ../lib/pytis/web/form.py:909
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použijte ALT+šipka dolů pro výběr)"
 
-#: ../lib/pytis/web/form.py:839
+#: ../lib/pytis/web/form.py:870
 msgid "Apply"
 msgstr "Použij"
 
-#: ../lib/pytis/web/form.py:859 ../lib/pytis/web/form.py:861
+#: ../lib/pytis/web/form.py:890 ../lib/pytis/web/form.py:892
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:867
+#: ../lib/pytis/web/form.py:898
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/web/form.py:868
+#: ../lib/pytis/web/form.py:899
 msgid "Go to previous page"
 msgstr "Přejít na předchozí stránku výpisu"
 
-#: ../lib/pytis/web/form.py:869
+#: ../lib/pytis/web/form.py:900
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/web/form.py:870
+#: ../lib/pytis/web/form.py:901
 msgid "Go to next page"
 msgstr "Přejít na následující stránku výpisu"
 
-#: ../lib/pytis/web/form.py:875 ../lib/pytis/web/form.py:877
+#: ../lib/pytis/web/form.py:906 ../lib/pytis/web/form.py:908
 msgid "Records per page"
 msgstr "Počet záznamů na stránku"
 
-#: ../lib/pytis/web/form.py:882
+#: ../lib/pytis/web/form.py:913
 msgid "Go"
 msgstr "Jdi"

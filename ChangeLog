@@ -1,3 +1,11 @@
+2008-10-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* translations/pytis.cs.po:
+	* translations/pytis.de.po:
+	* translations/pytis.pl.po:
+	* translations/pytis.sk.po:
+	Updated meta information and encoding unified.
+
 2008-10-08  Pavel Hanak  <hanak@asellus.cz>
 
 	* tools/gensql.py (_GsqlSchema): New class.
@@ -96,7 +104,7 @@
 
 2007-03-28  Tomas Cerha  <cerha@brailcom.org>
 
-	* icons/link.png (Module): Fixed background transparency.
+	* icons/link.png: Fixed background transparency.
 
 2007-03-28  Pavel Hanak  <hanak@asellus.cz>
 
@@ -872,8 +880,8 @@
 
 2002-04-16  Tomá¹ Cerha  <cerha@brailcom.org>
 
-	* icons/logo.fig (Module): Pøidán pytel.
-	* icons/logo.bmp (Module): Pøegenerováno.
+	* icons/logo.fig: Pøidán pytel.
+	* icons/logo.bmp: Pøegenerováno.
 
 2002-04-14  Milan Zamazal  <pdm@brailcom.org>
 

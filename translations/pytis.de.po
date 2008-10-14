@@ -1,94 +1,19 @@
-# Pytis translations.
-# Copyright (C) 2007, 2008 Brailcom, o.p.s.
-# This file is distributed under the same license as the Wiking package.
+# Pytis translations
+# Copyright (C) 2007-2008 Brailcom, o.p.s.
+# This file is distributed under the same license as the Pytis package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-12 11:16+0200\n"
-"PO-Revision-Date: 2008-08-12 11:45+0200\n"
+"POT-Creation-Date: 2008-10-14 12:50+0200\n"
+"PO-Revision-Date: 2008-10-14 13:12+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: ../lib/pytis/web/form.py:253 ../lib/pytis/web/form.py:265
-#: ../lib/pytis/web/dialog.py:50
-msgid "Submit"
-msgstr "Senden"
-
-#: ../lib/pytis/web/form.py:253
-msgid "Undo all changes"
-msgstr "Alle durchgeführten Änderungen zurücksetzen."
-
-#: ../lib/pytis/web/form.py:275
-msgid "Submit the form"
-msgstr "Formular senden"
-
-#: ../lib/pytis/web/form.py:278
-msgid "Reset"
-msgstr "Ursprungswerte wiederherstellen"
-
-#: ../lib/pytis/web/form.py:404
-msgid "Fields marked by an asterisk are mandatory."
-msgstr "Felder mit Sternchen sind Pflichtfelder."
-
-#: ../lib/pytis/web/form.py:694
-msgid "No records."
-msgstr "Kein Eintrag"
-
-#: ../lib/pytis/web/form.py:697
-msgid "Total records:"
-msgstr "Einträge insgesamt:"
-
-#: ../lib/pytis/web/form.py:699
-#, python-format
-msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr "Abgebildete Einträge %(first)s-%(last)s von insgesamt %(total)s"
-
-#: ../lib/pytis/web/form.py:734
-#, python-format
-msgid "%(label)s on \"%(prefix)s\":"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:738
-#, python-format
-msgid "Skip to the first record beginning with \"%s\""
-msgstr "Übersetzen Sie auf die erste Zeile beginnende an \"%s\":"
-
-#: ../lib/pytis/web/form.py:761 ../lib/pytis/web/form.py:763
-msgid "Page"
-msgstr "Seite"
-
-#: ../lib/pytis/web/form.py:763 ../lib/pytis/web/form.py:775
-msgid "(Use ALT+arrow down to select)"
-msgstr "(Drücken Sie ALT+Pfeil nach unten für die Auswahl)"
-
-#: ../lib/pytis/web/form.py:767
-msgid "Previous"
-msgstr "vorherige"
-
-#: ../lib/pytis/web/form.py:768
-msgid "Go to previous page"
-msgstr "Zurück zur vorherigen Seite des Auszugs"
-
-#: ../lib/pytis/web/form.py:769
-msgid "Next"
-msgstr "weiter"
-
-#: ../lib/pytis/web/form.py:770
-msgid "Go to next page"
-msgstr "Nächsten Seite des Auszugs"
-
-#: ../lib/pytis/web/form.py:772 ../lib/pytis/web/form.py:774
-msgid "Records per page"
-msgstr "Anzahl der Einträge pro Seite"
-
-#: ../lib/pytis/web/form.py:778
-msgid "Go"
-msgstr "Start"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../lib/pytis/web/__init__.py:39
 msgid "Empty value"
@@ -174,18 +99,150 @@ msgstr "Max. Pixelmaß %(maxsize)s überschritten"
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"
 
-#: ../lib/pytis/web/field.py:89
+#: ../lib/pytis/web/dialog.py:50 ../lib/pytis/web/form.py:254
+#: ../lib/pytis/web/form.py:266
+msgid "Submit"
+msgstr "Senden"
+
+#: ../lib/pytis/web/field.py:92
 msgid "Yes"
 msgstr "Ja"
 
-#: ../lib/pytis/web/field.py:89
+#: ../lib/pytis/web/field.py:92
 msgid "No"
 msgstr "Nein"
 
-#: ../lib/pytis/web/field.py:101
+#: ../lib/pytis/web/field.py:105
 msgid "image"
 msgstr "Bild"
 
-#: ../lib/pytis/web/field.py:101
+#: ../lib/pytis/web/field.py:105
 msgid "file"
 msgstr "Datei"
+
+#: ../lib/pytis/web/form.py:254
+msgid "Undo all changes"
+msgstr "Alle durchgeführten Änderungen zurücksetzen."
+
+#: ../lib/pytis/web/form.py:276
+msgid "Submit the form"
+msgstr "Formular senden"
+
+#: ../lib/pytis/web/form.py:279
+msgid "Reset"
+msgstr "Ursprungswerte wiederherstellen"
+
+#: ../lib/pytis/web/form.py:411
+msgid "Fields marked by an asterisk are mandatory."
+msgstr "Felder mit Sternchen sind Pflichtfelder."
+
+#: ../lib/pytis/web/form.py:762
+msgid "No records."
+msgstr "Kein Eintrag"
+
+#: ../lib/pytis/web/form.py:765
+msgid "Total records:"
+msgstr "Einträge insgesamt:"
+
+#: ../lib/pytis/web/form.py:767
+#, python-format
+msgid "Displayed records %(first)s-%(last)s of total %(total)s"
+msgstr "Abgebildete Einträge %(first)s-%(last)s von insgesamt %(total)s"
+
+#: ../lib/pytis/web/form.py:806
+#, python-format
+msgid "%(label)s on \"%(prefix)s\":"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:810
+#, python-format
+msgid "Skip to the first record beginning with \"%s\""
+msgstr "Übersetzen Sie auf die erste Zeile beginnende an \"%s\":"
+
+#: ../lib/pytis/web/form.py:827
+#, python-format
+msgid "Found %d record matching the search expression and the current filter."
+msgid_plural ""
+"Found %d records matching the search expression and the current filter."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/web/form.py:833
+#, python-format
+msgid "Found %d record matching the search expression."
+msgid_plural "Found %d records matching the search expression."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/web/form.py:837
+#, python-format
+msgid "Found %d record matching the current filter."
+msgid_plural "Found %d records matching the current filter."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/web/form.py:842
+msgid "No record matching the search expression and the current filter."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:844
+msgid "No record matching the search expression."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:846
+msgid "No record matching the current filter."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:850
+msgid "Search expression"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:853 ../lib/pytis/web/form.py:887
+msgid "Search"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:860
+msgid "All items"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:863 ../lib/pytis/web/form.py:866
+#, fuzzy
+msgid "Filter"
+msgstr "Datei"
+
+#: ../lib/pytis/web/form.py:867 ../lib/pytis/web/form.py:893
+#: ../lib/pytis/web/form.py:909
+msgid "(Use ALT+arrow down to select)"
+msgstr "(Drücken Sie ALT+Pfeil nach unten für die Auswahl)"
+
+#: ../lib/pytis/web/form.py:870
+msgid "Apply"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:890 ../lib/pytis/web/form.py:892
+msgid "Page"
+msgstr "Seite"
+
+#: ../lib/pytis/web/form.py:898
+msgid "Previous"
+msgstr "vorherige"
+
+#: ../lib/pytis/web/form.py:899
+msgid "Go to previous page"
+msgstr "Zurück zur vorherigen Seite des Auszugs"
+
+#: ../lib/pytis/web/form.py:900
+msgid "Next"
+msgstr "weiter"
+
+#: ../lib/pytis/web/form.py:901
+msgid "Go to next page"
+msgstr "Nächsten Seite des Auszugs"
+
+#: ../lib/pytis/web/form.py:906 ../lib/pytis/web/form.py:908
+msgid "Records per page"
+msgstr "Anzahl der Einträge pro Seite"
+
+#: ../lib/pytis/web/form.py:913
+msgid "Go"
+msgstr "Start"
