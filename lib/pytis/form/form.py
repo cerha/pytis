@@ -605,6 +605,9 @@ class LookupForm(InnerForm):
 
     _PERSISTENT_FORM_PARAMS = InnerForm._PERSISTENT_FORM_PARAMS + \
                               ('conditions', 'filter', 'search')
+
+    _UNNAMED_FILTER_LABEL = _("Nepojmenovaný filtr")
+
     
     def _init_attributes(self, sorting=None, filter=None, condition=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -838,7 +841,7 @@ class LookupForm(InnerForm):
         if condition is not None and next:
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
-            direction, condition, conditions = block_refresh(lambda:
+            direction, condition = block_refresh(lambda:
                  run_dialog(SearchDialog, self._lf_sfs_columns(),
                             self.current_row(), col=self._current_column_id(),
                             condition=self._lf_search_condition))
@@ -868,61 +871,9 @@ class LookupForm(InnerForm):
             analyze(self._lf_filter)
         return columns
         
-    def filter(self, condition):
-        """Apply given filtering condition."""
-        Condition("", condition) # Make sure the condition is well formed.
-        self._lf_filter = condition
-        if condition is not None:
-            self._lf_last_filter = condition
-            self._save_condition('filter', condition)
-        self._filter_refresh()
-        
     def _filter_refresh(self):
         self._init_select()
         self.select_row(self._current_key())
-
-    def _filter_conditions(self):
-        return self._view.conditions() + self._user_conditions
-
-    def update_filter_menu(self, ctrl, state):
-        # Called repeatedly in update UI event loop, so must be quite efficient...
-        UNNAMED_FILTER_LABEL = _("Nepojmenovaný filtr")
-        if state:
-            last_filter, last_conditions = state
-        else:
-            last_filter, last_conditions = None, None
-        conditions = self._filter_conditions()
-        if conditions != last_conditions:
-            # Update the list of available filters.
-            ctrl.Clear()
-            ctrl.Append(_("V¹echny polo¾ky"), None)
-            if self._lf_filter is None:
-                selected = 0
-            else:
-                selected = None
-            for c in conditions:
-                ctrl.Append(c.name(), c.condition())
-                if selected is None and c.condition().is_same(self._lf_filter):
-                    selected = ctrl.GetCount() - 1
-            if selected is None:
-                ctrl.Append(UNNAMED_FILTER_LABEL, self._lf_filter)
-                selected = ctrl.GetCount() - 1
-            ctrl.SetSelection(selected)
-        elif self._lf_filter != last_filter:
-            # Update the current selection only.
-            if self._lf_filter is None:
-                ctrl.SetSelection(0)
-            else:
-                for i, c in enumerate(conditions):
-                    if c.condition().is_same(self._lf_filter):
-                        ctrl.SetSelection(i+1)
-                        break
-                else:
-                    if ctrl.GetString(ctrl.GetCount()-1) == UNNAMED_FILTER_LABEL:
-                        ctrl.Delete(ctrl.GetCount()-1)
-                    ctrl.Append(UNNAMED_FILTER_LABEL, self._lf_filter)
-                    ctrl.SetSelection(ctrl.GetCount()-1)
-        return self._lf_filter, conditions
 
     def _can_filter(self, condition=None, last=False):
         return not last or self._lf_last_filter is not None
@@ -933,14 +884,11 @@ class LookupForm(InnerForm):
         if condition:
             perform = True
         else:
-            perform, condition, conditions = \
+            perform, condition = \
                      run_dialog(FilterDialog, self._lf_sfs_columns(),
                                 self.current_row(), self._compute_aggregate,
                                 col=self._current_column_id(),
-                                condition=self._lf_filter, last_condition=self._lf_last_filter,
-                                conditions=self._filter_conditions())
-            self._user_conditions = tuple([c for c in conditions if not c.fixed()])
-            self._save_conditions('conditions', self._user_conditions)
+                                condition=self._lf_filter)
         if perform and condition != self._lf_filter:
             self.filter(condition)
 
@@ -957,7 +905,52 @@ class LookupForm(InnerForm):
         if self._lf_filter is not None:
             condition = pytis.data.AND(self._lf_filter, condition)
         self.COMMAND_FILTER.invoke(condition=condition)
+
+    def _can_save_filter(self, name, kbd=False):
+        if kbd:
+            # Always allow keyboard invocation (it will be rejected later with appropriate message).
+            return True
+        else:
+            # Detect command availability for the menu item.
+            names = [c.name() for c in self._view.conditions() + self._user_conditions]
+            return self._lf_filter is not None and name not in names
+    
+    def _cmd_save_filter(self, name, kbd=False):
+        if self._lf_filter is not None:
+            if name == self._UNNAMED_FILTER_LABEL or not name:
+                message(_("Nejprve upravte název, pod kterým chcete filtr ulo¾it."), beep_=True)
+                return
+            for c in self._view.conditions() + self._user_conditions:
+                if c.name() == name:
+                    message(_("Pojmenovaný filtr '%s' ji¾ existuje.") % name, beep_=True)
+                    return
+                elif c.condition().is_same(self._lf_filter):
+                    message(_("Shodný filtr ji¾ existuje pod názvem '%s'.") % c.name(), beep_=True)
+                    return
+            self._user_conditions += (Condition(name, self._lf_filter),)
+            self._save_conditions('conditions', self._user_conditions)
+            message(_("Filtr ulo¾en pod názvem '%s'.") % name)
+        self.focus()
+    
+    def _can_update_saved_filter(self, index):
+        # The whole submenu is disabled in 'filter_context_menu()' if needed.
+        return True
         
+    def _cmd_update_saved_filter(self, index):
+        conditions = list(self._user_conditions)
+        conditions[index] = Condition(conditions[index].name(), self._lf_filter)
+        self._user_conditions = tuple(conditions)
+        self._save_conditions('conditions', self._user_conditions)
+    
+    def _can_delete_saved_filter(self, index):
+        return index is not None
+
+    def _cmd_delete_saved_filter(self, index):
+        conditions = list(self._user_conditions)
+        del conditions[index]
+        self._user_conditions = tuple(conditions)
+        self._save_conditions('conditions', self._user_conditions)
+
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
 
@@ -1042,7 +1035,133 @@ class LookupForm(InnerForm):
             return True
         
     # Veøejné metody
+    
+    @classmethod
+    def add_toolbar_ctrl(cls, toolbar, uicmd):
+        cmd, kwargs = uicmd.command(), uicmd.args()
+        if cmd == LookupForm.COMMAND_FILTER_MENU:
+            # Create the filter selection combo box.  The current 'Command' implementation doesn't
+            # support command control updates other than enabling/disabling.  This example,
+            # together with the hack for DualForm.COMMAND_OTHER_FORM might serve as reference for
+            # futre generalization of command control updates.
+            def on_change(event):
+                ctrl = event.GetEventObject()
+                selection = ctrl.GetSelection()
+                condition = ctrl.GetClientData(selection)
+                if condition:
+                    LookupForm.COMMAND_FILTER.invoke(condition=condition)
+                else:
+                    LookupForm.COMMAND_UNFILTER.invoke()
+            ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(), on_change=on_change)
+            cls._last_filter_menu_state = (None, None)
+            def update(event):
+                enabled = cmd.enabled(**kwargs)
+                event.Enable(enabled)
+                if enabled:
+                    form = current_form()
+                    last_form, last_state = cls._last_filter_menu_state
+                    if form is not last_form:
+                        last_state = None
+                    state = form.update_filter_menu(ctrl, last_state)
+                    cls._last_filter_menu_state = (form, state)
+                elif top_window() is None and not ctrl.IsEmpty():
+                    cls._last_filter_menu_state = (None, None)
+                    ctrl.SetSelection(wx.NOT_FOUND)
+                    ctrl.Clear()
+                    ctrl.SetValue('')
+            #frame = toolbar.GetParent()
+            wx_callback(wx.EVT_UPDATE_UI, ctrl, ctrl.GetId(), update)
+            def on_context_menu(event):
+                form = current_form()
+                popup_menu(ctrl, form.filter_context_menu(ctrl))
+            wx_callback(wx.EVT_RIGHT_DOWN, ctrl, on_context_menu)
+            def on_enter(event):
+                LookupForm.COMMAND_SAVE_FILTER.invoke(name=ctrl.GetValue())
+            wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), on_enter)
+            tool = toolbar.AddControl(ctrl)
+            toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
+        else:
+            InnerForm.add_toolbar_ctrl(toolbar, uicmd)
+    
+    def update_filter_menu(self, ctrl, state):
+        # Update the toolbar filter selection control.
+        # Called repeatedly in update UI event loop, so must be quite efficient...
+        if state:
+            last_filter, last_conditions = state
+        else:
+            last_filter, last_conditions = None, None
+        if self._user_conditions != last_conditions:
+            # Update the list of available filters.
+            ctrl.Clear()
+            ctrl.Append(_("V¹echny polo¾ky"), None)
+            if self._lf_filter is None:
+                selected = 0
+            else:
+                selected = None
+            editable = False
+            for c in self._view.conditions() + self._user_conditions:
+                ctrl.Append(c.name(), c.condition())
+                if selected is None and c.condition().is_same(self._lf_filter):
+                    selected = ctrl.GetCount() - 1
+            if selected is None:
+                ctrl.Append(self._UNNAMED_FILTER_LABEL, self._lf_filter)
+                selected = ctrl.GetCount() - 1
+                editable = True
+            ctrl.SetEditable(editable)
+            ctrl.SetSelection(selected)
+        elif self._lf_filter != last_filter:
+            # Update the current selection only.
+            editable = False
+            if self._lf_filter is None:
+                ctrl.SetSelection(0)
+            else:
+                for i, c in enumerate(self._view.conditions() + self._user_conditions):
+                    if c.condition().is_same(self._lf_filter):
+                        ctrl.SetSelection(i+1)
+                        break
+                else:
+                    if ctrl.GetString(ctrl.GetCount()-1) == self._UNNAMED_FILTER_LABEL:
+                        ctrl.Delete(ctrl.GetCount()-1)
+                    ctrl.Append(self._UNNAMED_FILTER_LABEL, self._lf_filter)
+                    ctrl.SetSelection(ctrl.GetCount()-1)
+                    editable = True
+            ctrl.SetEditable(editable)
+        return self._lf_filter, self._user_conditions
 
+    def filter_context_menu(self, ctrl):
+        # Return the context menu for the toolbar filter selection control.
+        for i, c in enumerate(self._user_conditions):
+            if c.condition().is_same(self._lf_filter):
+                user_filter_index = i
+                break
+        else:
+            user_filter_index = None
+        return (
+            MItem(_("Ulo¾it"), self.COMMAND_SAVE_FILTER(name=ctrl.GetValue()),
+                  help=_("Ulo¾it souèasný filtr pod tímto názvem"), hotkey='Enter'),
+            (user_filter_index is None and ctrl.GetSelection() > len(self._view.conditions()) + 1)\
+            # "Save as" is only possible for "Unnamed filter".
+            # It is not possible to disable a menu, so we replace it by a fake disabled item.
+            and Menu(_("Ulo¾it jako"),
+                     [MItem(c.name(),
+                            self.COMMAND_UPDATE_SAVED_FILTER(index=i),
+                            help=_("Aktualizovat existující ulo¾ený filtr."))
+                      for i, c in enumerate(self._user_conditions)]) \
+            or MItem(_("Ulo¾it jako"), Application.COMMAND_NOTHING(enabled=False)),
+            MItem(_("Smazat vybraný filtr"), 
+                  self.COMMAND_DELETE_SAVED_FILTER(index=user_filter_index),
+                  help=_("Smazat zvolený pojmenovaný filtr")),
+            )
+
+    def filter(self, condition):
+        """Apply given filtering condition."""
+        Condition("", condition) # Make sure the condition is well formed.
+        self._lf_filter = condition
+        if condition is not None:
+            self._lf_last_filter = condition
+            self._save_condition('filter', condition)
+        self._filter_refresh()
+        
     def data(self):
         """Return a new instance of the data object used by the form.
 
@@ -1679,7 +1798,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             label = button.label()
             tooltip = button.tooltip()
             cmd, args = Application.COMMAND_HANDLED_ACTION(handler=handler, row=self._row,
-                                                         enabled=button.enabled())
+                                                           enabled=button.enabled())
         else:
             action = find(button.action(), self._view.actions(linear=True), key=lambda a: a.name())
             label = button.label() or action.title()

@@ -39,11 +39,12 @@ class CommandHandler:
 
     """
     
+    @classmethod
     def _get_command_handler_instance(cls):
         """Najdi v aplikaci aktivní prvek, který je schopen zpracovat pøíkaz."""
         raise ProgramError("This method must be overriden in a derived class.")
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
+    @classmethod
     def _command_handler(cls, command, _command_handler=None, **kwargs):
         if _command_handler is not None:
             handler = _command_handler
@@ -52,8 +53,8 @@ class CommandHandler:
         if not isinstance(handler, cls):
             handler = None
         return handler, kwargs
-    _command_handler = classmethod(_command_handler)
     
+    @classmethod
     def command_enabled(cls, command, **kwargs):
         """Vra» pravdu, pokud je daný pøíkaz aktivní (smí být vyvolán).
         
@@ -71,8 +72,8 @@ class CommandHandler:
             assert hasattr(handler,name) and getattr(handler,name) == command,\
                    "Invalid command '%s' for %s" % (name, handler)
         return handler.can_command(command, **kwargs)
-    command_enabled = classmethod(command_enabled)
 
+    @classmethod
     def invoke_command(cls, command, **kwargs):
         """Vyhledej instanci handleru pøíkazu a pøíkaz proveï.
 
@@ -90,8 +91,26 @@ class CommandHandler:
             pass
         except:
             top_level_exception()
-    invoke_command = classmethod(invoke_command)
 
+    @classmethod
+    def add_toolbar_ctrl(cls, toolbar, uicmd):
+        """Add a toolbar control for given 'uicmd' into 'toolbar'.
+
+        This method adds a default command control into the toolbar.  The default control is a
+        simple button which invokes the command on click.  Derived classes may override this method
+        to create some more sophisticated controls for their specific commands.
+
+        """
+        cmd, kwargs = uicmd.command(), uicmd.args()
+        id = wx.NewId()
+        icon = get_icon(command_icon(cmd, kwargs), type=wx.ART_TOOLBAR)
+        tool = toolbar.AddTool(id, icon,
+                               shortHelpString=uicmd.title(),
+                               longHelpString=uicmd.descr())
+        frame = toolbar.GetParent()
+        wx_callback(wx.EVT_TOOL, frame, id, lambda e: cmd.invoke(**kwargs))
+        wx_callback(wx.EVT_UPDATE_UI, frame, id, lambda e: e.Enable(cmd.enabled(**kwargs)))
+    
     def on_command(self, command, **kwargs):
         """Zpracuj pøíkaz 'command' s parametry 'kwargs'.
 
@@ -132,6 +151,9 @@ class CommandHandler:
             if not can(**kwargs):
                 return False
         return True
+
+
+
 
     
 class Command(object):
@@ -305,8 +327,10 @@ class UICommand(object):
     def hotkey(self):
         return self._hotkey
 
-    def mitem(self):
-        return MItem(self._title, command=self._command, args=self._args, help=self._descr)
+    def clone(self, **kwargs):
+        """Return the same 'UICommand' instance with command arguments overriden by 'kwargs'."""
+        return UICommand((self._command, dict(self._args, **kwargs)), self._title, self._descr,
+                         icon=self._icon, hotkey=self._hotkey)
 
 
 _command_icons = None

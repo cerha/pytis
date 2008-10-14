@@ -1050,7 +1050,7 @@ class MItem(_TitledMenuObject):
     def help(self):
         """Vra» text nápovìdy polo¾ky zadaný v konstruktoru."""
         return self._help
-
+    
 
 class CheckItem(MItem):
     """Polo¾ka menu, která mù¾e být ve stavu ON/OFF."""
@@ -1088,7 +1088,6 @@ class RadioItem(CheckItem):
     # stejnì, tak¾e to vlastnì vùbec nevadí...
     #_WX_KIND = wx.ITEM_RADIO
     pass
-
 
 
 class MenuBar(wx.MenuBar):
@@ -1389,7 +1388,23 @@ def border_style2wx(style):
 
 # Pomocné funkce
 
+def mitem(uicmd):
+    """Return a 'MItem' instance for given 'UICommand' instance."""
+    return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
+
+
 def popup_menu(parent, items, keymap=None, position=None):
+    """Pop-up a wx context menu.
+
+    Arguments:
+       parent -- wx parent window of the menu
+       items -- sequence of MItem, MSeparator or Menu instances
+       keymap -- keymap to use for determination of menu command keyboard shortcuts
+       position -- optional position of the menu as a tuple (x, y).  The menu is normally
+         positioned automatically under the pointer so position may be needed when displaying menu
+         in response to a keyboard command.
+
+    """
     menu = Menu('', items).create(parent, keymap)
     parent.PopupMenu(menu, position)
     menu.Destroy()
@@ -1428,6 +1443,12 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
     else:
         return None
 
+    
+def wx_focused_window():
+    """Vra» aktuálnì zaostøené wx okno, jako instanci 'wx.Window'."""
+    return wx.Window_FindFocus()
+
+    
 def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, height=None):
     if tooltip:
         ctrl.SetToolTipString(tooltip)
@@ -1576,7 +1597,6 @@ def wx_combo(parent, choices, **kwargs):
     return wx_choice(parent, choices, _combo=True, **kwargs)
 
 
-
 def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=None, 
                  length=None, width=None, height=None, readonly=False, enabled=True):
     ctrl = wx.TextCtrl(parent, -1, style=(readonly and wx.TE_READONLY or 0))
@@ -1592,6 +1612,7 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
 
+
 def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     checkbox = wx.CheckBox(parent, -1, label=label)
     if tooltip is not None:
@@ -1599,10 +1620,6 @@ def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     checkbox.SetValue(checked)
     return checkbox
 
-
-def wx_focused_window():
-    """Vra» aktuálnì zaostøené wx okno, jako instanci 'wx.Window'."""
-    return wx.Window_FindFocus()
 
 def wx_text_view(parent, content, format=TextFormat.PLAIN):
     import wx

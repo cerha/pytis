@@ -93,6 +93,12 @@ Command(LookupForm, 'UNFILTER',
         "Zru¹ení filtrování záznamù")
 Command(LookupForm, 'FILTER_BY_VALUE',
         "Vyfiltrování formuláøe podle dané hodnoty (arg. 'column_id', 'value')")
+Command(LookupForm, 'SAVE_FILTER',
+        "Save current condition as named user filter."),
+Command(LookupForm, 'UPDATE_SAVED_FILTER',
+        "Update en existing named filter by the current condition"),
+Command(LookupForm, 'DELETE_SAVED_FILTER',
+        "Delete the current saved filter."),
 Command(LookupForm, 'JUMP',
         "Skok na záznam")
 Command(LookupForm, 'SEARCH',
@@ -103,6 +109,7 @@ Command(LookupForm, 'FIRST_RECORD',
         "Skok na první záznam")
 Command(LookupForm, 'LAST_RECORD',
         "Skok na poslední záznam")
+
 Command(RecordForm, 'NEW_RECORD',
         "Vlo¾ení nového záznamu pomocí editaèního formuláøe")
 Command(RecordForm, 'IMPORT_INTERACTIVE',

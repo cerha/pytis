@@ -1,3 +1,16 @@
+2008-10-14  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/application.py:
+	* pytis/form/command.py:
+	* pytis/form/commands_.py:
+	* pytis/form/dualform.py:
+	* pytis/form/form.py:
+	* pytis/form/inputfield.py:
+	* pytis/form/screen.py:
+	* pytis/form/search.py:
+	Manage saved filters through filter menu toolbar control, not in
+	filter dialog.
+
 2008-10-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/presentation/spec.py:
@@ -2710,8 +2723,8 @@
 
 2007-01-26  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/screen.py (Module): Added assert to require a
-	fallback label for non-system icons.
+	* pytis/form/screen.py: Added assert to require a fallback label
+	for non-system icons.
 
 	* pytis/form/form.py (TitledForm._create_title_bar): Pass also
 	label to "Show description" button.

@@ -418,35 +418,25 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     def _menu(self):
         # Return a tuple of popup menu items ('MItem' instances).
-        return ((InputField.COMMAND_RESET,
-                 _("Vrátit pùvodní hodnotu"),
-                 _("Vrátit ve¹keré provedené zmìny.")),)
-
-    def _mitem(self, command, title=None, help=None):
-        if command is None:
-            return MSeparator()
-        else:
-            if isinstance(command, tuple):
-                command, kwargs = command
-            else:
-                kwargs = {}
-            if issubclass(command.handler(), (InputField, Invocable)):
-                kwargs['_command_handler'] = self
-            return MItem(title, command=command(**kwargs), help=help)
+        return (UICommand(InputField.COMMAND_RESET(),
+                          _("Vrátit pùvodní hodnotu"),
+                          _("Vrátit ve¹keré provedené zmìny.")),)
                         
     def _on_context_menu(self, event=None):
-        control = self._ctrl
+        def handler(uicmd):
+            if issubclass(uicmd.command().handler(), (InputField, Invocable)):
+                return self
+            else:
+                return None
+        self._set_focus()
+        menu = [uicmd and mitem(uicmd.clone(_command_handler=handler(uicmd))) or MSeparator()
+                for uicmd in self._menu()]
         if event:
             position = None
         else:
-            size = control.GetSize()
+            size = self._ctrl.GetSize()
             position = (size.x/3, size.y/2)
-        items = [self._mitem(*args) for args in self._menu()]
-        self._set_focus()
-        menu = Menu('', items).create(control, global_keymap())
-        control.PopupMenu(menu, position)
-        menu.Destroy()
-        #event.Skip()
+        popup_menu(self._ctrl, menu, position=position, keymap=global_keymap())
 
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())
@@ -855,19 +845,15 @@ class TextField(InputField):
 
     def _menu(self):
         return super(TextField, self)._menu() + \
-               ((None,),
-                (TextField.COMMAND_CUT,
-                 _("Vyjmout"),
-                 _("Vyjmout oznaèený text a ulo¾it jej do schránky.")),
-                (TextField.COMMAND_COPY,
-                 _("Kopírovat"),
-                 _("Zkopírovat oznaèený text do schránky.")),
-                (TextField.COMMAND_PASTE,
-                 _("Vlo¾it"),
-                 _("Vlo¾it text ze schránky do políèka.")),
-                (TextField.COMMAND_SELECT_ALL,
-                 _("Vybrat v¹e"),
-                 _("Oznaèit celou hodnotu.")))
+               (None,
+                UICommand(TextField.COMMAND_CUT(), _("Vyjmout"),
+                          _("Vyjmout oznaèený text a ulo¾it jej do schránky.")),
+                UICommand(TextField.COMMAND_COPY(), _("Kopírovat"),
+                          _("Zkopírovat oznaèený text do schránky.")),
+                UICommand(TextField.COMMAND_PASTE(), _("Vlo¾it"),
+                          _("Vlo¾it text ze schránky do políèka.")),
+                UICommand(TextField.COMMAND_SELECT_ALL(), _("Vybrat v¹e"),
+                          _("Oznaèit celou hodnotu.")))
 
     # Zpracování pøíkazù
     
@@ -1121,9 +1107,8 @@ class Invocable(object, CommandHandler):
     
     def _menu(self):
         return super(Invocable, self)._menu() + \
-               ((None,),
-                (self.COMMAND_INVOKE_SELECTION,
-                 self._INVOKE_TITLE, self._INVOKE_HELP))
+               (None,
+                UICommand(self.COMMAND_INVOKE_SELECTION(), self._INVOKE_TITLE, self._INVOKE_HELP))
     
     def _on_invoke_selection(self, alternate=False):
         raise ProgramError("This method must be overriden!")
@@ -1308,10 +1293,9 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _menu(self):
         return super(CodebookField, self)._menu() + \
-               ((self.COMMAND_INVOKE_SELECTION(alternate=True),
-                 _("Vyhledávat v èíselníku"),
-                 _("Zobrazit èíselník se zapnutým inkrementálním "
-                   "vyhledáváním.")),)
+               (UICommand(self.COMMAND_INVOKE_SELECTION(alternate=True),
+                          _("Vyhledávat v èíselníku"),
+                          _("Zobrazit èíselník se zapnutým inkrementálním vyhledáváním.")),)
 
     def _maxlen(self):
         try:
@@ -1472,30 +1456,24 @@ class ListField(GenericCodebookField):
             return ''
 
     def _menu(self):
-        return ((self.COMMAND_SELECT,
-                 _("Vybrat"),
-                 _("Zvolit tuto polo¾ku jako aktivní.")),
-                (self.COMMAND_SHOW_SELECTED,
-                 _("Najít vybranou polo¾ku"),
-                 _("Nalistovat v seznamu vybranou polo¾ku.")),
-                (None,),
-                (self.COMMAND_INVOKE_CODEBOOK_FORM,
-                 _("Zobrazit èíselník"),
-                 _("Otevøít èíselníkový formuláø.")),
-                (self.COMMAND_EDIT_SELECTED,
-                 _("Upravit vybraný záznam"),
-                 _("Otevøít vybraný záznam v editaèním formuláøi.")),
-                (self.COMMAND_DELETE_SELECTED,
-                 _("Smazat vybraný záznam"),
-                 _("Vymazat vybraný záznam z èíselníku.")),
-                (self.COMMAND_NEW_CODEBOOK_RECORD,
-                 _("Vlo¾it nový záznam do èíselníku"),
-                 _("Otevøít formuláø pro vlo¾ení nového záznamu do navázaného èíselníku.")),
-                (Application.COMMAND_RUN_FORM(form_class=BrowseForm,
-                                              name=self._cb_name,
-                                              select_row=self._select_row_arg()),
-                 _("Zobrazit celou tabulku"),
-                 _("Otevøít náhled èíselníku v samostatném øádkovém formuláøi.")),
+        return (UICommand(self.COMMAND_SELECT(), _("Vybrat"),
+                          _("Zvolit tuto polo¾ku jako aktivní.")),
+                UICommand(self.COMMAND_SHOW_SELECTED(), _("Najít vybranou polo¾ku"),
+                          _("Nalistovat v seznamu vybranou polo¾ku.")),
+                None,
+                UICommand(self.COMMAND_INVOKE_CODEBOOK_FORM(), _("Zobrazit èíselník"),
+                          _("Otevøít èíselníkový formuláø.")),
+                UICommand(self.COMMAND_EDIT_SELECTED(), _("Upravit vybraný záznam"),
+                          _("Otevøít vybraný záznam v editaèním formuláøi.")),
+                UICommand(self.COMMAND_DELETE_SELECTED(), _("Smazat vybraný záznam"),
+                          _("Vymazat vybraný záznam z èíselníku.")),
+                UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _("Vlo¾it nový záznam do èíselníku"),
+                          _("Otevøít formuláø pro vlo¾ení nového záznamu do èíselníku.")),
+                UICommand(Application.COMMAND_RUN_FORM(form_class=BrowseForm,
+                                                       name=self._cb_name,
+                                                       select_row=self._select_row_arg()),
+                          _("Zobrazit celou tabulku"),
+                          _("Otevøít náhled èíselníku v samostatném øádkovém formuláøi.")),
                 )
 
     def _current_row(self):
@@ -1618,16 +1596,13 @@ class FileField(Invocable, InputField):
         # We really want to use Invocable's super method, since we don't
         # want the Invocable menu items.
         return super(Invocable, self)._menu() + \
-               ((None,),
-                (FileField.COMMAND_LOAD,
-                 _("Nastavit ze souboru"),
-                 _("Nahradit hodnotu políèka daty ze souboru. ")),
-                (FileField.COMMAND_SAVE,
-                 _("Ulo¾it do souboru"),
-                 _("Ulo¾it objekt z databáze jako soubor.")),
-                (FileField.COMMAND_CLEAR,
-                 _("Vynulovat"),
-                 _("Nastavit prázdnou hodnotu.")),
+               (None,
+                UICommand(FileField.COMMAND_LOAD(), _("Nastavit ze souboru"),
+                          _("Nahradit hodnotu políèka daty ze souboru. ")),
+                UICommand(FileField.COMMAND_SAVE(), _("Ulo¾it do souboru"),
+                          _("Ulo¾it objekt z databáze jako soubor.")),
+                UICommand(FileField.COMMAND_CLEAR(), _("Vynulovat"),
+                          _("Nastavit prázdnou hodnotu.")),
                 )
 
     def _can_load(self):
