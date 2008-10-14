@@ -1,5 +1,10 @@
 2008-10-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* translations/pytis.es.po:
+	* translations/pytis.fr.po:
+	* translations/pytis.hu.po:
+	New (empty) translation files.
+
 	* translations/pytis.cs.po:
 	* translations/pytis.de.po:
 	* translations/pytis.pl.po:
