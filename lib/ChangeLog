@@ -1,3 +1,8 @@
+2008-10-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Look for FT operators only in Operator instances.
+
 2008-10-23  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/configui.py: 
