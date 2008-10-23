@@ -1484,7 +1484,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                              self._pdbb_fulltext_query_name(index_column),))
                 elif operator.logical():
                     for a in operator.args():
-                        find_fulltext(a)
+                        if isinstance(a, pytis.data.Operator):
+                            find_fulltext(a)
             find_fulltext(condition)
         args['fulltext_queries'] = fulltext_queries[0]
         data = self._pg_query(self._pdbb_command_count % args, transaction=transaction)
