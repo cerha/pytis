@@ -418,7 +418,7 @@ class Configuration(object):
 
     class _Option_bug_report_subject(StringOption):
         _DESCR = _("Subject mailu oznámení o chybì aplikace.")
-        _DEFAULT = 'Bug report: Unexpected exception'
+        _DEFAULT = 'Bug report'
 
     class _Option_profile(BooleanOption, CommandlineOption):
         _DESCR = _("Pøíznak profilování.")
@@ -607,8 +607,13 @@ class Configuration(object):
         #_DEFAULT = 'gv'
 
     class _Option_sendmail_command(StringOption):
-        _DESCR = _("Shellový pøíkaz sendmail vèetnì celé cesty.")
+        # Pou¾íváno ji¾ jen v pytis-extensions...
+        _DESCR = _("Shellový pøíkaz sendmail vèetnì celé cesty (DEPRECATED).")
         _DEFAULT = '/usr/lib/sendmail'
+        
+    class _Option_smtp_server(StringOption):
+        _DESCR = _("Jméno serveru odchozí po¹ty.")
+        _DEFAULT = 'localhost'
         
     class _Option_image_viewer(StringOption):
         _DESCR = _("Shellový pøíkaz pro spu¹tìní prohlí¾eèe obrázkù.  Pokud "

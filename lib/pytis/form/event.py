@@ -108,19 +108,33 @@ def top_level_exception():
             filename = os.path.split(tb.tb_frame.f_code.co_filename)[-1]
             buginfo = "%s at %s line %d" % (einfo[0].__name__, filename, tb.tb_lineno)
             if address is not None:
+                import email.Header, email.Message, email.Utils, smtplib
+                def header(value):
+                    if isinstance(value, (str, unicode)):
+                        try:
+                            unicode(value, 'us-ascii')
+                        except:
+                            pass
+                        else:
+                            return value
+                    return email.Header.Header(value, 'utf-8')
+                msg = email.Message.Message()
+                msg['From'] = header(address)
+                msg['To'] = header(to)
+                msg['Subject'] = header('%s: %s' % (config.bug_report_subject, buginfo))
+                msg['Date'] = email.Utils.formatdate()
+                msg.set_payload(text)
                 try:
-                    s = os.popen('%s %s' % (config.sendmail_command, to), 'w')
-                    s.write('From: %s\n' % address)
-                    s.write('To: %s\n' % to)
-                    s.write('Bcc: %s\n' % address)
-                    s.write('Subject: %s: %s\n' % (config.bug_report_subject, buginfo))
-                    s.write('\n')
-                    s.write(text)
-                    s.close()
+                    try:
+                        server = smtplib.SMTP(config.smtp_server)
+                        server.sendmail(address, to, msg.as_string())
+                    finally:
+                        try:
+                            server.quit()
+                        except:
+                            pass
                 except Exception, e:
-                    run_dialog(Message,
-                               _("Oznámení se nezdaøilo odeslat:\n")+\
-                               str(e) + deepstr(e.args))
+                    run_dialog(Error, _("Oznámení se nezdaøilo odeslat:\n") + unicode(e))
                 else:
                     run_dialog(Message, _("Oznámení o chybì odesláno"))
     if config.debug_on_error:
