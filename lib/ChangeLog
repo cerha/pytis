@@ -1,6 +1,10 @@
 2008-10-23  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/configui.py: 
 	* pytis/util/configuration.py:
+	* pytis/form/event.py:
+	Allow permanent setting of sender address in Config UI.
+
 	* pytis/form/event.py:
 	Send bug-report mail using smtplib, not direct `sendmail'
 	invocation.

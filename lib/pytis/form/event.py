@@ -88,26 +88,29 @@ def top_level_exception():
             run_dialog(Message, _("Není známa cílová adresa. Je nutno nastavit konfiguraèní volbu "
                                   "`bug_report_address'."))
         else:
-            import commands
-            status, domain = commands.getstatusoutput('hostname -f')
-            username = config.dbconnection.user()
-            if status:
-                address = username
-            else:    
-                address = '%s@%s' % (username, domain)
-            while True:
-                address = run_dialog(InputDialog, prompt=_("Va¹e e-mailová adresa: "),
-                                     value=address, input_width=30)
-                if not address or address.strip() == '':
-                    continue
-                else:
-                    break
             tb = einfo[2]
             while tb.tb_next is not None:
                 tb = tb.tb_next
             filename = os.path.split(tb.tb_frame.f_code.co_filename)[-1]
             buginfo = "%s at %s line %d" % (einfo[0].__name__, filename, tb.tb_lineno)
-            if address is not None:
+            address = config.sender_address
+            if not address:
+                import commands
+                status, domain = commands.getstatusoutput('hostname -f')
+                username = config.dbconnection.user()
+                if status:
+                    address = username
+                else:    
+                    address = '%s@%s' % (username, domain)
+                while True:
+                    address = run_dialog(InputDialog, prompt=_("Va¹e e-mailová adresa: "),
+                                         value=address, input_width=30,
+                                         message=_("Pokud svou adresu nastavíte ve formuláøi "
+                                                   "Nastavení u¾ivatelského rozhraní, nebudete "
+                                                   "ji¾ pøí¹tì dotazováni."))
+                    if address is None or address and address.strip() != '':
+                        break
+            if address:
                 import email.Header, email.Message, email.Utils, smtplib
                 def header(value):
                     if isinstance(value, (str, unicode)):

@@ -53,6 +53,8 @@ _LAYOUT = (
             'auto_menu_accel',
             'show_splash',
             'cache_spec_onstart'),
+    LVGroup(_("Ostatní"),
+            'sender_address'),
     ))),
     ('export', LayoutSpec(_("Nastavení exportu"),
                           VGroup('export_directory','export_encoding')),
@@ -76,12 +78,14 @@ _LABELS = {
     'auto_menu_accel':       _("Automaticky èíslovat menu akceleraèními klávesami"),
     'stretch_tables':        _("Rozpínat tabulky na ¹íøku okna"),
     'cache_spec_onstart':    _("Naèítat specifikace pøi startu"),
+    'sender_address':        _("E-mailová adresa"),
     'export_directory':      _("Výchozí adresáø"),
     'export_encoding':       _("Kódování exportovaných dat"),
 }
 
 _FIELDSPEC_KWARGS = {
     'export_directory': dict(width=45),
+    'sender_address': dict(width=45),
 }
 
 def config_menu_items(hotkeys={}):

@@ -682,6 +682,11 @@ class Configuration(object):
                    "selectech z datového objektu.")
         _DEFAULT = 100
 
+    class _Option_sender_address(StringOption):
+        _DESCR = _("E-mailová adresa odesílatele pou¾itá napø. jako odchozí adresa bug-reportù "
+                   " apod.")
+        _DEFAULT = None
+
     # Volby pøizpùsobení u¾ivatelského rozhraní
         
     class _Option_show_tooltips(BooleanOption):
