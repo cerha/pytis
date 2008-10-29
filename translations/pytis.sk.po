@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-14 16:50+0200\n"
+"POT-Creation-Date: 2008-10-29 15:50+0100\n"
 "PO-Revision-Date: 2008-10-14 13:14+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -142,19 +142,29 @@ msgstr "Vrátiť pôvodné hodnoty"
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označené hviezdičkou sú povinné."
 
+#. Translators: This string uses plural forms.  '%d' is replaced by the number and
+#. this number also denotes the plural form used.  Please supply translations for
+#. all plural forms relevant for the target language.
+#: ../lib/pytis/web/form.py:709
+#, python-format
+msgid "Found %d record matching the search expression."
+msgid_plural "Found %d records matching the search expression."
+msgstr[0] ""
+msgstr[1] ""
+
 #. Translators: Used in empty list forms.  "Records" refers to database records in
 #. the most generic senese possible.
-#: ../lib/pytis/web/form.py:764
+#: ../lib/pytis/web/form.py:786
 msgid "No records."
 msgstr "Žiadne záznamy."
 
-#: ../lib/pytis/web/form.py:767
+#: ../lib/pytis/web/form.py:789
 msgid "Total records:"
 msgstr "Počet záznamov celkom:"
 
 #. Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
 #. by the numbers corresponding to the current listing range.
-#: ../lib/pytis/web/form.py:771
+#: ../lib/pytis/web/form.py:793
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
@@ -170,73 +180,35 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
 #. replaced by the selected letter or substring and 'on' has the meaning "beginning
 #. with".  Also take care to use the correct quotation marks for the target language
 #. (written as the corresponding unicode characters).
-#: ../lib/pytis/web/form.py:821
+#: ../lib/pytis/web/form.py:843
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na \"%(prefix)s\":"
 
 #. Translators: Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:826
+#: ../lib/pytis/web/form.py:848
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Preskočit na prvý riadok začínajúci na „%s“"
 
-#. Translators: This string (and the following two) uses plural forms.  '%d' is
-#. replaced by the number and this number also denotes the plural form used.
-#. Please supply translations for all plural forms relevant for the target
-#. language.
-#: ../lib/pytis/web/form.py:847
-#, python-format
-msgid "Found %d record matching the search expression and the current filter."
-msgid_plural ""
-"Found %d records matching the search expression and the current filter."
-msgstr[0] ""
-msgstr[1] ""
-
-#: ../lib/pytis/web/form.py:853
-#, python-format
-msgid "Found %d record matching the search expression."
-msgid_plural "Found %d records matching the search expression."
-msgstr[0] ""
-msgstr[1] ""
-
-#: ../lib/pytis/web/form.py:857
-#, python-format
-msgid "Found %d record matching the current filter."
-msgid_plural "Found %d records matching the current filter."
-msgstr[0] ""
-msgstr[1] ""
-
-#: ../lib/pytis/web/form.py:862
-msgid "No record matching the search expression and the current filter."
-msgstr ""
-
-#: ../lib/pytis/web/form.py:864
-msgid "No record matching the search expression."
-msgstr ""
-
-#: ../lib/pytis/web/form.py:866
-msgid "No record matching the current filter."
-msgstr ""
-
-#: ../lib/pytis/web/form.py:870
+#: ../lib/pytis/web/form.py:868
 msgid "Search expression"
 msgstr ""
 
 #. Translators: Search button label.
-#: ../lib/pytis/web/form.py:874 ../lib/pytis/web/form.py:917
+#: ../lib/pytis/web/form.py:872 ../lib/pytis/web/form.py:915
 msgid "Search"
 msgstr ""
 
 #. Translators: Label used in filter selection box for the option which disables
 #. filtering and thus results in all records to be displayed.
-#: ../lib/pytis/web/form.py:883
+#: ../lib/pytis/web/form.py:881
 msgid "All items"
 msgstr ""
 
 #. Translators: Label of filter selection box.  Filtering limits the displayed records
 #. by certain criterias.
-#: ../lib/pytis/web/form.py:888 ../lib/pytis/web/form.py:891
+#: ../lib/pytis/web/form.py:886 ../lib/pytis/web/form.py:889
 #, fuzzy
 msgid "Filter"
 msgstr "súbor"
@@ -244,43 +216,43 @@ msgstr "súbor"
 #. Translators: Tooltip text suggesting keyboard
 #. combination to use for selection without
 #. unexpected invocation of the option.
-#: ../lib/pytis/web/form.py:895 ../lib/pytis/web/form.py:925
-#: ../lib/pytis/web/form.py:941
+#: ../lib/pytis/web/form.py:893 ../lib/pytis/web/form.py:923
+#: ../lib/pytis/web/form.py:939
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použite ALT+šipka dole pre výber)"
 
 #. Translators: Button for manual selection invocation (when
 #. JavaScript is off.
-#: ../lib/pytis/web/form.py:900
+#: ../lib/pytis/web/form.py:898
 msgid "Apply"
 msgstr ""
 
 #. Translators: Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse forward/backwards.
-#: ../lib/pytis/web/form.py:922 ../lib/pytis/web/form.py:924
+#: ../lib/pytis/web/form.py:920 ../lib/pytis/web/form.py:922
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:930
+#: ../lib/pytis/web/form.py:928
 msgid "Previous"
 msgstr "predchádzajúci"
 
-#: ../lib/pytis/web/form.py:931
+#: ../lib/pytis/web/form.py:929
 msgid "Go to previous page"
 msgstr "Prejsť na predchádzajúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:932
+#: ../lib/pytis/web/form.py:930
 msgid "Next"
 msgstr "ďalší"
 
-#: ../lib/pytis/web/form.py:933
+#: ../lib/pytis/web/form.py:931
 msgid "Go to next page"
 msgstr "Prejsť na nasledujúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:938 ../lib/pytis/web/form.py:940
+#: ../lib/pytis/web/form.py:936 ../lib/pytis/web/form.py:938
 msgid "Records per page"
 msgstr "Počet záznamov na stránku"
 
-#: ../lib/pytis/web/form.py:945
+#: ../lib/pytis/web/form.py:943
 msgid "Go"
 msgstr "Choď"

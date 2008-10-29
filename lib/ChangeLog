@@ -1,7 +1,12 @@
+2008-10-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py:
+	Added support for custom search result messages.
+
 2008-10-23  Pavel Hanak  <hanak@asellus.cz>
 
-	* pytis/presentation/spec.py: Allow specification
-	of `grouping' as a method.
+	* pytis/presentation/spec.py:
+	Allow specification of `grouping' as a method.
 
 2008-10-23  Milan Zamazal  <pdm@brailcom.org>
 

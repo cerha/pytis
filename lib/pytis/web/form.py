@@ -422,7 +422,7 @@ class BrowseForm(LayoutForm):
 
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
-                 filter=None, req=None, **kwargs):
+                 filter=None, message=None, req=None, **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
@@ -472,8 +472,15 @@ class BrowseForm(LayoutForm):
             contain only records containing all the words in any of its string columns.
 
           filter -- filter condition as a 'pytis.data.Operator' instance.  This condition will be
-            appended to 'condition', but the difference is that 'filter' is a user defined filter
-            and is indicated in the user interface, while 'condition' is invisible to the user.
+            appended to 'condition', but the difference is that 'condition' is invisible to the
+            user, but 'filter' may be indicated in the user interface.
+
+          message -- function returning a custom search result message.  If none, a default message
+            will be used according to current query, such as 'Found 5 records matching the search
+            expression.'.  A function of one argument (integer determining the number of records in
+            the form) may be used to return a custom message as a string (possibly LCG Translatable
+            object).  An example of a custom message might be 'Found 15 articles in category
+            Python'.
 
           req -- instance of a class implementing the 'Request' API.  The form state (sorting,
             paging etc) will be set up according to the reqest parameters, if the request includes
@@ -601,6 +608,7 @@ class BrowseForm(LayoutForm):
             self._tree_order_column = None
         self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
         self._align = dict([(f.id, 'right') for f in cfields if isinstance(f.type, pd.Number)])
+        self._custom_message = message
 
     def _export_cell(self, context, field):
         value = self._format_field(context, field)
@@ -691,6 +699,20 @@ class BrowseForm(LayoutForm):
         else:
             return pytis.data.AND(*conditions)
     
+    def _message(self, count):
+        if self._custom_message:
+            msg = self._custom_message(count)
+        elif self._query:
+            # Translators: This string uses plural forms.  '%d' is replaced by the number and
+            # this number also denotes the plural form used.  Please supply translations for
+            # all plural forms relevant for the target language.
+            msg = _.ngettext("Found %d record matching the search expression.",
+                             "Found %d records matching the search expression.",
+                             count)
+        else:
+            msg = None
+        return msg
+
     def _wrap_exported_rows(self, context, rows, summary):
         g = context.generator()
         return g.table((g.thead(g.tr(self._export_headings(context))),
@@ -755,7 +777,7 @@ class BrowseForm(LayoutForm):
         data.close()
         g = context.generator()
         if n == 0:
-            if self._query or self._filter:
+            if self._message(0):
                 # The message about search/filter results is already printed.
                 return '' 
             else:
@@ -837,34 +859,10 @@ class BrowseForm(LayoutForm):
                    if c.id() is not None and c.condition() is not None]
         show_filter = filters and (count or self._filter_id is not None)
         show_query_field = self._show_query_field
-        if (self._query or self._filter) and not bottom:
-            if count:
-                if self._query and self._filter:
-                    # Translators: This string (and the following two) uses plural forms.  '%d' is
-                    # replaced by the number and this number also denotes the plural form used.
-                    # Please supply translations for all plural forms relevant for the target
-                    # language.
-                    result = _.ngettext("Found %d record matching the search expression and the "
-                                        "current filter.",
-                                        "Found %d records matching the search expression and the "
-                                        "current filter.",
-                                        count)
-                elif self._query:
-                    result = _.ngettext("Found %d record matching the search expression.",
-                                        "Found %d records matching the search expression.",
-                                        count)
-                else:
-                    result = _.ngettext("Found %d record matching the current filter.",
-                                        "Found %d records matching the current filter.",
-                                        count)
-            else:
-                if self._query and self._filter:
-                    result = _("No record matching the search expression and the current filter.")
-                elif self._query:
-                    result = _("No record matching the search expression.")
-                else:
-                    result = _("No record matching the current filter.")
-            content.append(g.div(result, cls='results'))
+        if not bottom:
+            msg = self._message(count)
+            if msg:
+                content.append(g.div(msg, cls='results'))
         if show_query_field and not bottom:
             query_id = 'filter-' + id
             content.append(g.div((g.label(_("Search expression") +': ', query_id),
