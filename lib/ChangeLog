@@ -1,7 +1,11 @@
 2008-10-30  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/form/application.py: 
 	* pytis/form/form.py:
+	Check column existence in restored conditions using two columns as
+	operands.
+	
+	* pytis/form/form.py:
+	* pytis/form/application.py: 
 	Ask for removal of invalid saved filter.
 
 	* pytis/form/list.py:

@@ -708,8 +708,8 @@ class LookupForm(InnerForm):
                 args = col, value
             else:
                 args = packed_args
-                assert isinstance(args[0], str)
-                assert isinstance(args[1], str)
+                for col in args:
+                    assert isinstance(col, str) and self._data.find_column(col) is not None
             return op(*args, **kwargs)
         try:
             return unpack(packed)
