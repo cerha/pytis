@@ -714,8 +714,7 @@ class LookupForm(InnerForm):
         try:
             return unpack(packed)
         except Exception, e:
-            log(OPERATIONAL, "Unable to restore packed condition:",
-                (packed, str(e)))
+            log(OPERATIONAL, "Unable to restore packed condition:", (packed, str(e)))
             return None
         
     def _load_condition(self, key):
@@ -870,8 +869,16 @@ class LookupForm(InnerForm):
         if self._lf_filter is not None:
             analyze(self._lf_filter)
         return columns
-        
-    def _filter_refresh(self):
+
+    def _user_filter_index(self, condition):
+        # Return the index of given filter condition in self._user_conditions or None.
+        for i, c in enumerate(self._user_conditions):
+            if c.condition().is_same(condition):
+                return i
+        return None
+
+    def _apply_filter(self, condition):
+        self._lf_filter = condition
         self._init_select()
         self.select_row(self._current_key())
 
@@ -879,6 +886,7 @@ class LookupForm(InnerForm):
         return not last or self._lf_last_filter is not None
         
     def _cmd_filter(self, condition=None, last=False):
+        # Returns True if applied successfully, False on invalid condition, None when not applied.
         if last:
             condition = self._lf_last_filter
         if condition:
@@ -890,8 +898,8 @@ class LookupForm(InnerForm):
                                 col=self._current_column_id(),
                                 condition=self._lf_filter)
         if perform and condition != self._lf_filter:
-            self.filter(condition)
-
+            return self.filter(condition)
+    
     def _can_unfilter(self):
         return self._lf_filter is not None
         
@@ -1049,7 +1057,9 @@ class LookupForm(InnerForm):
                 selection = ctrl.GetSelection()
                 condition = ctrl.GetClientData(selection)
                 if condition:
-                    LookupForm.COMMAND_FILTER.invoke(condition=condition)
+                    if not LookupForm.COMMAND_FILTER.invoke(condition=condition):
+                        message("Neplatný filtr: %s" % ctrl.GetStringSelection(), beep_=True)
+                        cls._last_filter_menu_state = (None, None)
                 else:
                     LookupForm.COMMAND_UNFILTER.invoke()
             ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(), on_change=on_change)
@@ -1130,12 +1140,7 @@ class LookupForm(InnerForm):
 
     def filter_context_menu(self, ctrl):
         # Return the context menu for the toolbar filter selection control.
-        for i, c in enumerate(self._user_conditions):
-            if c.condition().is_same(self._lf_filter):
-                user_filter_index = i
-                break
-        else:
-            user_filter_index = None
+        user_filter_index = self._user_filter_index(self._lf_filter)
         return (
             MItem(_("Ulo¾it"), self.COMMAND_SAVE_FILTER(name=ctrl.GetValue()),
                   help=_("Ulo¾it souèasný filtr pod tímto názvem"), hotkey='Enter'),
@@ -1154,14 +1159,21 @@ class LookupForm(InnerForm):
             )
 
     def filter(self, condition):
-        """Apply given filtering condition."""
+        """Apply given filtering condition.  Return true if successfull."""
         Condition("", condition) # Make sure the condition is well formed.
-        self._lf_filter = condition
-        if condition is not None:
-            self._lf_last_filter = condition
-            self._save_condition('filter', condition)
-        self._filter_refresh()
-        
+        last_filter = self._lf_filter
+        try:
+            self._apply_filter(condition)
+        except Exception, e:
+            self._apply_filter(last_filter)
+            log(OPERATIONAL, "Unable to apply filter:", e)
+            return False
+        else:
+            if condition is not None:
+                self._lf_last_filter = condition
+                self._save_condition('filter', condition)
+            return True
+            
     def data(self):
         """Return a new instance of the data object used by the form.
 

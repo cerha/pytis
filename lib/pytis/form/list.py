@@ -263,54 +263,56 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
         g.BeginBatch()
-        if init_columns:
-            deleted = len(self._columns)
-            self._init_columns()
-            inserted = len(self._columns)
-            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
-            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
-        if delete_column is not None:
-            i = self._columns.index(delete_column)
-            del self._columns[i]
-            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, i, 1)
-        if insert_column is not None:
-            i = inserted_column_index
-            if i is None or not (0 <= i <= len(self._columns)):
-                i = len(self._columns)
-            self._columns.insert(i, insert_column)
-            notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
-        new_columns = tuple([c.id() for c in self._columns])
-        if new_columns != old_columns and not init_columns:
-            default_columns = self._default_columns()
-            if new_columns == default_columns:
-                self._unset_state_param('columns')
-                self._unset_state_param('default_columns')
+        try:
+            if init_columns:
+                deleted = len(self._columns)
+                self._init_columns()
+                inserted = len(self._columns)
+                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
+                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
+            if delete_column is not None:
+                i = self._columns.index(delete_column)
+                del self._columns[i]
+                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, i, 1)
+            if insert_column is not None:
+                i = inserted_column_index
+                if i is None or not (0 <= i <= len(self._columns)):
+                    i = len(self._columns)
+                self._columns.insert(i, insert_column)
+                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
+            new_columns = tuple([c.id() for c in self._columns])
+            if new_columns != old_columns and not init_columns:
+                default_columns = self._default_columns()
+                if new_columns == default_columns:
+                    self._unset_state_param('columns')
+                    self._unset_state_param('default_columns')
+                else:
+                    self._set_state_param('columns', new_columns)
+                    self._set_state_param('default_columns', default_columns)
+            if data_init:
+                row_count = self._init_select()
             else:
-                self._set_state_param('columns', new_columns)
-                self._set_state_param('default_columns', default_columns)
-        if data_init:
-            row_count = self._init_select()
-        else:
-            row_count = self._lf_select_count
-            self._data.rewind()
-        if inserted_row_number is not None:
-            row_count = row_count + 1
-        old_row_count = self._table.GetNumberRows()
-        new_row_count = row_count
-        t.update(columns=self._columns, row_count=row_count, sorting=self._lf_sorting,
-                 grouping=self._grouping, inserted_row_number=inserted_row_number,
-                 inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
-        ndiff = new_row_count - old_row_count
-        if new_row_count < old_row_count:
-            if new_row_count == 0:
-                current_row = 1
-            notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -ndiff)
-        elif new_row_count > old_row_count:
-            notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
-        notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
-        if new_columns != old_columns or init_columns:
-            self._init_col_attr()
-        g.EndBatch()
+                row_count = self._lf_select_count
+                self._data.rewind()
+            if inserted_row_number is not None:
+                row_count = row_count + 1
+            old_row_count = self._table.GetNumberRows()
+            new_row_count = row_count
+            t.update(columns=self._columns, row_count=row_count, sorting=self._lf_sorting,
+                     grouping=self._grouping, inserted_row_number=inserted_row_number,
+                     inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
+            ndiff = new_row_count - old_row_count
+            if new_row_count < old_row_count:
+                if new_row_count == 0:
+                    current_row = 1
+                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -ndiff)
+            elif new_row_count > old_row_count:
+                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
+            notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+            if new_columns != old_columns or init_columns:
+                self._init_col_attr()
+        finally:
+            g.EndBatch()
         # Závìreèné úpravy
         self._update_colors()
         self._resize_columns()
@@ -797,8 +799,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._table.rewind(position=new_row)
         self._select_cell(row=new_row)
 
-    def _filter_refresh(self):
-        self._refresh(when=self.DOIT_IMMEDIATELY)
+    def _apply_filter(self, condition):
+        self._refresh(when=self.DOIT_IMMEDIATELY, reset={'filter': condition})
 
     def _current_column_id(self):
         col = self._current_cell()[1]
@@ -1322,32 +1324,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
           reset -- urèuje, které parametry zobrazení mají být zachovány a které zmìnìny.  Hodnotou
             je buï 'None', nebo dictionary.  Je-li hodnotou 'None', zùstane zachována filtrovací
-            podmínka i tøídìní.  Je-li hodnotou prázdné dictionary, jsou naopak oba tyto parametry
-            resetovány na své poèáteèní hodnoty.  Jinak jsou resetovány právì ty parametry, pro nì¾
+            podmínka i tøídìní.  Jinak jsou resetovány právì ty parametry, pro nì¾
             v dictionary existuje klíè (jeden z øetìzcù 'sorting', 'filter'), a to na hodnotou
             z dictionary pro daný klíè.
 
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
         """
-        # TODO: 'reset' is now only used in '_cmd_sort()'.  If we can find another way to apply
-        # sorting, the argument can be removed!!!
         assert when in (None, # internal ONLY!
                         self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT, self.DOIT_IFNEEDED), when
-        assert reset is None or type(reset) == type({}), reset
+        assert reset is None or isinstance(reset, dict), reset
         if when is None:
             if reset is None:
                 when = self.DOIT_AFTEREDIT
             else:
                 when = self.DOIT_IMMEDIATELY
-        if reset == None:
-            reset = {}
-        elif reset == {}:
-            reset = {'sorting': self._lf_initial_sorting,
-                     'filter': None}
         # Jdeme na to
         if __debug__:
-            log(DEBUG, 'Po¾adavek na refresh:', (reset, when))
+            log(DEBUG, 'Refresh request:', (when, reset))
         if when is self.DOIT_IFNEEDED:
             if self._reshuffle_request == self._last_reshuffle_request or \
                    self._reshuffle_request > time.time():
@@ -1359,16 +1353,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             delay = (self._table.editing() is not None) # nechceme dr¾et info
         if delay:
             if __debug__:
-                log(DEBUG, 'Refresh odlo¾en do ukonèení editace')
+                log(DEBUG, 'Refresh postponed until end of editation.')
             return False
         # Refresh nyní bude skuteènì proveden
-        for k, v in reset.items():
-            if k == 'filter':
-                self._lf_filter = v
-            elif k == 'sorting':
-                self._lf_sorting = v
-            else:
-                raise ProgramError('Invalid refresh parameter', k)
+        if reset:
+            for k, v in reset.items():
+                if k == 'filter':
+                    self._lf_filter = v
+                elif k == 'sorting':
+                    self._lf_sorting = v
+                else:
+                    raise ProgramError('Invalid refresh parameter', k)
         key = self._current_key()
         row = max(0, self._current_cell()[0])
         self._last_reshuffle_request = self._reshuffle_request = time.time()
@@ -1590,10 +1585,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._grouping = tuple(cols[:l])
             self._set_state_param('grouping', self._grouping)
             # Make the changes visible.
-            # TODO: This is now the only use of the 'reset' argument to '_refresh()'.  Could we
-            # find another solution and remove 'reset' form '_refresh()'?
-            self._refresh(reset={'sorting': sorting},
-                          when=self.DOIT_IMMEDIATELY)
+            self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting})
         return sorting
 
     def _cmd_toggle_aggregation(self, operation):
