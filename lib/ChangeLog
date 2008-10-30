@@ -1,6 +1,9 @@
 2008-10-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/application.py: 
 	* pytis/form/form.py:
+	Ask for removal of invalid saved filter.
+
 	* pytis/form/list.py:
 	Recover after invalid filter application.
 

@@ -1210,7 +1210,8 @@ def current_form(inner=True):
 
 def top_window():
     """Vra» aktivní okno aplikace (formuláø, nebo dialog)."""
-    return _application.top_window()
+    if _application is not None:
+        return _application.top_window()
 
 def set_status(id, message, log_=True):
     """Nastav pole 'id' stavové øádky (viz 'Application.set_status()')."""

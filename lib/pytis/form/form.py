@@ -898,7 +898,31 @@ class LookupForm(InnerForm):
                                 col=self._current_column_id(),
                                 condition=self._lf_filter)
         if perform and condition != self._lf_filter:
-            return self.filter(condition)
+            try:
+                self.filter(condition)
+            except Exception, e:
+                self.filter(None)
+                i = self._user_filter_index(condition)
+                if i is not None:
+                    log(OPERATIONAL, "Unable to apply filter:", e)
+                    c = self._user_conditions[i]
+                    answer = run_dialog(Question, icon=Question.ICON_ERROR,
+                                        title=_("Neplatný filtr"),
+                                        message=_("U¾ivatelský filtr \"%s\" je neplatný.\n"
+                                                  "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
+                                                  "a ulo¾ený filtr ji¾ nelze pou¾ít.\n\n"
+                                                  "Pøejete si filtr smazat?") % c.name())
+                    if answer:
+                        conditions = list(self._user_conditions)
+                        del conditions[i]
+                        self._user_conditions = tuple(conditions)
+                    else:
+                        # The filter menu needs to be realoaded, since the current selection
+                        # doesn't match the current filter (invalid filter is selected, but no
+                        # filter is active).
+                        LookupForm._last_filter_menu_state = (None, None)
+                else:
+                    raise
     
     def _can_unfilter(self):
         return self._lf_filter is not None
@@ -1057,9 +1081,7 @@ class LookupForm(InnerForm):
                 selection = ctrl.GetSelection()
                 condition = ctrl.GetClientData(selection)
                 if condition:
-                    if not LookupForm.COMMAND_FILTER.invoke(condition=condition):
-                        message("Neplatný filtr: %s" % ctrl.GetStringSelection(), beep_=True)
-                        cls._last_filter_menu_state = (None, None)
+                    LookupForm.COMMAND_FILTER.invoke(condition=condition)
                 else:
                     LookupForm.COMMAND_UNFILTER.invoke()
             ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(), on_change=on_change)
@@ -1161,18 +1183,10 @@ class LookupForm(InnerForm):
     def filter(self, condition):
         """Apply given filtering condition.  Return true if successfull."""
         Condition("", condition) # Make sure the condition is well formed.
-        last_filter = self._lf_filter
-        try:
-            self._apply_filter(condition)
-        except Exception, e:
-            self._apply_filter(last_filter)
-            log(OPERATIONAL, "Unable to apply filter:", e)
-            return False
-        else:
-            if condition is not None:
-                self._lf_last_filter = condition
-                self._save_condition('filter', condition)
-            return True
+        self._apply_filter(condition)
+        if condition is not None:
+            self._lf_last_filter = condition
+            self._save_condition('filter', condition)
             
     def data(self):
         """Return a new instance of the data object used by the form.
