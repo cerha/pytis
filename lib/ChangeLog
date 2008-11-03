@@ -1,5 +1,18 @@
 2008-11-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* translations/Makefile:
+	* translations/pytis.cs.po:
+	* translations/pytis.de.po:
+	* translations/pytis.es.po:
+	* translations/pytis.fr.po:
+	* translations/pytis.hu.po:
+	* translations/pytis.pl.po:
+	* translations/pytis.sk.po:
+	Include lib/data/types_.py into translations.
+	Translate some Czech messages.
+
+2008-11-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* translations/pytis.cs.po:
 	* translations/pytis.de.po:
 	* translations/pytis.es.po:
