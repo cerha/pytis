@@ -1,3 +1,14 @@
+2008-11-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* translations/pytis.cs.po:
+	* translations/pytis.de.po:
+	* translations/pytis.es.po:
+	* translations/pytis.fr.po:
+	* translations/pytis.hu.po:
+	* translations/pytis.pl.po:
+	* translations/pytis.sk.po:
+	Translations updated.
+
 2008-10-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/form.py:
