@@ -1,5 +1,19 @@
 2008-11-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/types_.py:
+	* lib/pytis/web/__init__.py:
+	* translations/Makefile:
+	* translations/pytis.cs.po:
+	* translations/pytis.de.po:
+	* translations/pytis.es.po:
+	* translations/pytis.fr.po:
+	* translations/pytis.hu.po:
+	* translations/pytis.pl.po:
+	* translations/pytis.sk.po:
+	Fixes of the previous translation changes.
+
+2008-11-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/web/__init__.py:
 	* translations/pytis.cs.po:
 	* translations/pytis.de.po:
