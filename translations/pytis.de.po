@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 14:43+0100\n"
+"POT-Creation-Date: 2008-11-03 17:07+0100\n"
 "PO-Revision-Date: 2008-10-14 13:12+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -24,14 +24,14 @@ msgstr "Leerer Wert"
 msgid "Invalid value"
 msgstr "Ungültiger Wert"
 
-#: ../lib/pytis/web/__init__.py:42
-#, python-format
-msgid "Minimal length %(minlen)s not satisfied"
+#: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
+#, fuzzy, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr "Mindestlänge nicht eingehalten %(minlen)s"
 
 #: ../lib/pytis/web/__init__.py:43
-#, python-format
-msgid "Maximal length %(maxlen)s exceeded"
+#, fuzzy, python-format
+msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr "Die Sequenz überschreitet die max. Länge %(maxlen)s"
 
 #: ../lib/pytis/web/__init__.py:44
@@ -41,11 +41,6 @@ msgstr "Das ist keine ganze Zahl. "
 #: ../lib/pytis/web/__init__.py:45
 msgid "Invalid number"
 msgstr "Das ist eine ungültige Zahl."
-
-#: ../lib/pytis/web/__init__.py:46
-#, fuzzy, python-format
-msgid "Minimal length %(minlen)s characters not satisfied"
-msgstr "Mindestlänge nicht eingehalten %(minlen)s"
 
 #: ../lib/pytis/web/__init__.py:47
 #, fuzzy, python-format
@@ -61,47 +56,51 @@ msgid "Passwords don't match"
 msgstr "Die Kontrolleingabe des Passworts stimmt nicht überein."
 
 #: ../lib/pytis/web/__init__.py:50
+msgid "Please use mix of letters and non-letters in your password"
+msgstr ""
+
+#: ../lib/pytis/web/__init__.py:51
 msgid "Invalid format"
 msgstr "Ungültiges Format"
 
-#: ../lib/pytis/web/__init__.py:51
+#: ../lib/pytis/web/__init__.py:52
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
 msgstr "Farbformat stimmt nicht überein ('#RGB' oder '#RRGGBB')"
 
-#: ../lib/pytis/web/__init__.py:52
+#: ../lib/pytis/web/__init__.py:53
 msgid "Invalid date or time format"
 msgstr "Falsches Format für Datum oder Zeit "
 
-#: ../lib/pytis/web/__init__.py:53
+#: ../lib/pytis/web/__init__.py:54
 msgid "Invalid date or time"
 msgstr "Falsches Datum oder Zeit "
 
-#: ../lib/pytis/web/__init__.py:54
+#: ../lib/pytis/web/__init__.py:55
 msgid "Date outside the allowed range"
 msgstr "Datum außerhalb des zulässigen Umfangs"
 
-#: ../lib/pytis/web/__init__.py:55
+#: ../lib/pytis/web/__init__.py:56
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Mindestgröße nicht eingehalten %(minlen)s"
 
-#: ../lib/pytis/web/__init__.py:56
+#: ../lib/pytis/web/__init__.py:57
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "max. Größe %(maxlen)s überschritten"
 
-#: ../lib/pytis/web/__init__.py:57
+#: ../lib/pytis/web/__init__.py:58
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "max. Größe %(maxlen)s überschritten"
 
-#: ../lib/pytis/web/__init__.py:58
+#: ../lib/pytis/web/__init__.py:59
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Max. Pixelmaß %(maxsize)s überschritten"
 
 #. Translators: This is the last validation error message.
-#: ../lib/pytis/web/__init__.py:60
+#: ../lib/pytis/web/__init__.py:61
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"
@@ -262,179 +261,13 @@ msgstr "Bild"
 msgid "file"
 msgstr "Datei"
 
-#: ../lib/pytis/data/access.py:397
-msgid "Access denied"
-msgstr ""
+#~ msgid "Minimal length %(minlen)s not satisfied"
+#~ msgstr "Mindestlänge nicht eingehalten %(minlen)s"
 
-#: ../lib/pytis/data/dbdata.py:483
-msgid "Databázová chyba"
-msgstr ""
-
-#: ../lib/pytis/data/dbdata.py:539
-msgid "Chybné uživatelské jméno nebo heslo"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:115
-msgid "Prázdná hodnota"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:116
-msgid "Nesprávná hodnota"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:365
-#, python-format
-msgid "Hvězdičkové výrazy nejsou podporovány pro hodnoty typu '%s'."
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:475
-#, python-format
-msgid "Nedodržena minimální délka %(minlen)s"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:477
-#, python-format
-msgid "Překročena maximální délka %(maxlen)s"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:540
-msgid "Není to celé číslo"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:597
-msgid "Není to povolené číslo"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:697
-#, python-format
-msgid "Řetězec přesahuje maximální délku %(maxlen)s"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:743
-msgid "Zadejte heslo dvakrát pro vyloučení překlepů"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:745
-msgid "Kontrolní zadání hesla neodpovídá"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:747
 #, fuzzy
-msgid "Invalid MD5 hash"
-msgstr "Ungültiger Wert"
+#~ msgid "Invalid MD5 hash"
+#~ msgstr "Ungültiger Wert"
 
-#: ../lib/pytis/data/types_.py:797
-msgid "Please use mix of letters and non-letters in your password"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:831
-msgid "Neplatný formát."
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:850
-msgid "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:860
-msgid "Chybný formát Inet adresy."
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:861
-#, python-format
-msgid "Chybná maska Inet adresy: %(mask)s"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:862
-#, python-format
-msgid "Chybná hodnota Inet adresy %(addr)s"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:890
-msgid "Chybný formát MAC adresy."
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:963
-msgid "Chybný formát data nebo času"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:964
-msgid "Chybné datum nebo čas"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:965
-msgid "Datum mimo povolený rozsah"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:1218
-msgid "Neplatná vstupní hodnota typu boolean."
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:1248
-#, python-format
-msgid "Překročena maximální velikost %(maxlen)s"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:1309
-#, python-format
-msgid "Not a buffer object: %r"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:1422
-#, python-format
-msgid "Překročena maximální velikost %(maxsize)s pixelů"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:1424
-#, python-format
-msgid "Nedodržena minimální velikost %(minsize)s pixelů"
-msgstr ""
-
-#: ../lib/pytis/data/types_.py:1426
-#, fuzzy, python-format
-msgid "Nepovolený formát %(format)s; povoleno: %(formats)s"
-msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"
-
-#: ../lib/pytis/data/types_.py:1442
-msgid "Neplatný grafický formát"
-msgstr ""
-
-#: ../lib/pytis/data/dbapi.py:65
-msgid "Can't connect to database"
-msgstr ""
-
-#: ../lib/pytis/data/dbapi.py:110 ../lib/pytis/data/dbapi.py:117
-#: ../lib/pytis/data/pgsql.py:82 ../lib/pytis/data/pgsql.py:89
-msgid "Database operational error"
-msgstr ""
-
-#: ../lib/pytis/data/dbapi.py:122 ../lib/pytis/data/pgsql.py:94
-msgid "Database integrity violation"
-msgstr ""
-
-#: ../lib/pytis/data/pgsql.py:55
-msgid "Nelze se připojit k databázi"
-msgstr ""
-
-#: ../lib/pytis/data/pgsql.py:64
-msgid "Query arguments unsupported by "
-msgstr ""
-
-#: ../lib/pytis/data/postgresql.py:222 ../lib/pytis/data/postgresql.py:301
-msgid "Volána neimplementovaná metoda"
-msgstr ""
-
-#: ../lib/pytis/data/postgresql.py:289
-msgid "Unimplemented method"
-msgstr ""
-
-#: ../lib/pytis/data/postgresql.py:408
-msgid "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
-msgstr ""
-
-#: ../lib/pytis/data/postgresql.py:838
-msgid "Není možno zjistit typ sloupce"
-msgstr ""
-
-#: ../lib/pytis/data/postgresql.py:2758
-msgid "Chybná hodnota čítače z databáze"
-msgstr ""
+#, fuzzy
+#~ msgid "Nepovolený formát %(format)s; povoleno: %(formats)s"
+#~ msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"

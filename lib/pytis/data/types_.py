@@ -745,6 +745,8 @@ class Password(String):
     _VM_PASSWORD_VERIFY_MSG = _("Kontrolní zadání hesla neodpovídá")
     VM_INVALID_MD5 = 'VM_INVALID_MD5'
     _VM_INVALID_MD5_MSG = _("Invalid MD5 hash")
+    VM_MIX_CHARACTERS = 'VM_MIX_CHARACTERS'
+    _VM_MIX_CHARACTERS_MSG = _("Please use mix of letters and non-letters in your password")
     
     def __init__(self, md5=False, verify=True, strength=None, **kwargs):
         """Initialize the instance.
@@ -794,7 +796,7 @@ class Password(String):
             else:
                 non_letters = True
         if not letters or not non_letters:
-            return _("Please use mix of letters and non-letters in your password")
+            return self._VM_MIX_CHARACTERS_MSG
         
     def _validate(self, string, verify=None, **kwargs):
         if verify is not None:
