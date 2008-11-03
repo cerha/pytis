@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 13:47+0100\n"
-"PO-Revision-Date: 2008-11-03 14:18+0100\n"
+"POT-Creation-Date: 2008-11-03 14:43+0100\n"
+"PO-Revision-Date: 2008-11-03 14:43+0100\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
@@ -25,7 +25,7 @@ msgstr "Prázdná hodnota"
 msgid "Invalid value"
 msgstr "Neplatná hodnota"
 
-#: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
+#: ../lib/pytis/web/__init__.py:42
 #, python-format
 msgid "Minimal length %(minlen)s not satisfied"
 msgstr "Nedodržena minimální délka %(minlen)s"
@@ -43,10 +43,15 @@ msgstr "Není to celé číslo"
 msgid "Invalid number"
 msgstr "Není to povolené číslo"
 
+#: ../lib/pytis/web/__init__.py:46
+#, fuzzy, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr "Nedodržena minimální délka %(minlen)s znaků"
+
 #: ../lib/pytis/web/__init__.py:47
-#, python-format
-msgid "String exceeds max length %(maxlen)s"
-msgstr "Řetězec přesahuje maximální délku %(maxlen)s"
+#, fuzzy, python-format
+msgid "String exceeds max length %(maxlen)s characters"
+msgstr "Řetězec přesahuje maximální délku %(maxlen)s znaků"
 
 #: ../lib/pytis/web/__init__.py:48
 msgid "Enter the password twice to eliminate typos"

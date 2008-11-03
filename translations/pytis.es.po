@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 13:47+0100\n"
+"POT-Creation-Date: 2008-11-03 14:43+0100\n"
 "PO-Revision-Date: 2008-10-14 13:10+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 msgid "Invalid value"
 msgstr ""
 
-#: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
+#: ../lib/pytis/web/__init__.py:42
 #, python-format
 msgid "Minimal length %(minlen)s not satisfied"
 msgstr ""
@@ -43,9 +43,14 @@ msgstr ""
 msgid "Invalid number"
 msgstr ""
 
+#: ../lib/pytis/web/__init__.py:46
+#, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr ""
+
 #: ../lib/pytis/web/__init__.py:47
 #, python-format
-msgid "String exceeds max length %(maxlen)s"
+msgid "String exceeds max length %(maxlen)s characters"
 msgstr ""
 
 #: ../lib/pytis/web/__init__.py:48

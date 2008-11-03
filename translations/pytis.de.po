@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 13:47+0100\n"
+"POT-Creation-Date: 2008-11-03 14:43+0100\n"
 "PO-Revision-Date: 2008-10-14 13:12+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -24,7 +24,7 @@ msgstr "Leerer Wert"
 msgid "Invalid value"
 msgstr "Ungültiger Wert"
 
-#: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
+#: ../lib/pytis/web/__init__.py:42
 #, python-format
 msgid "Minimal length %(minlen)s not satisfied"
 msgstr "Mindestlänge nicht eingehalten %(minlen)s"
@@ -42,9 +42,14 @@ msgstr "Das ist keine ganze Zahl. "
 msgid "Invalid number"
 msgstr "Das ist eine ungültige Zahl."
 
+#: ../lib/pytis/web/__init__.py:46
+#, fuzzy, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr "Mindestlänge nicht eingehalten %(minlen)s"
+
 #: ../lib/pytis/web/__init__.py:47
-#, python-format
-msgid "String exceeds max length %(maxlen)s"
+#, fuzzy, python-format
+msgid "String exceeds max length %(maxlen)s characters"
 msgstr "Die Sequenz überschreitet die max. Länge %(maxlen)s."
 
 #: ../lib/pytis/web/__init__.py:48

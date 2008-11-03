@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 13:47+0100\n"
+"POT-Creation-Date: 2008-11-03 14:43+0100\n"
 "PO-Revision-Date: 2008-10-14 13:14+0200\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -26,7 +26,7 @@ msgstr "Pusta wartość"
 msgid "Invalid value"
 msgstr "Niepoprawna wartość"
 
-#: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
+#: ../lib/pytis/web/__init__.py:42
 #, fuzzy, python-format
 msgid "Minimal length %(minlen)s not satisfied"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
@@ -44,9 +44,14 @@ msgstr "To nie jest liczba całkowita"
 msgid "Invalid number"
 msgstr "Niepoprawny numer"
 
+#: ../lib/pytis/web/__init__.py:46
+#, fuzzy, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
+
 #: ../lib/pytis/web/__init__.py:47
 #, fuzzy, python-format
-msgid "String exceeds max length %(maxlen)s"
+msgid "String exceeds max length %(maxlen)s characters"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
 #: ../lib/pytis/web/__init__.py:48
