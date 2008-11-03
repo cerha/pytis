@@ -11,5 +11,5 @@ all: $(mo_files)
 $(shell ls *.po): pytis.%.po: pytis.pot
 	msgmerge -q --update $@ $< && touch $@
 
-pytis.pot: $(shell find ../lib/pytis/web -name "*.py")
+pytis.pot: $(shell find ../lib/pytis/web ../lib/pytis/data -name "*.py")
 	xgettext $^ --add-comments=Translators: --from-code=utf-8 -o $@
