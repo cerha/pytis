@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-29 15:50+0100\n"
+"POT-Creation-Date: 2008-11-03 12:26+0100\n"
 "PO-Revision-Date: 2008-10-14 13:14+0200\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -106,25 +106,6 @@ msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 #: ../lib/pytis/web/form.py:266
 msgid "Submit"
 msgstr "Odoslať"
-
-#. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
-#: ../lib/pytis/web/field.py:93
-msgid "Yes"
-msgstr "Áno"
-
-#: ../lib/pytis/web/field.py:93
-msgid "No"
-msgstr "Nie"
-
-#. Translators: The label "image"/"file" is used in textual representation of binary
-#. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:108
-msgid "image"
-msgstr "obrázok"
-
-#: ../lib/pytis/web/field.py:108
-msgid "file"
-msgstr "súbor"
 
 #: ../lib/pytis/web/form.py:254
 msgid "Undo all changes"
@@ -256,3 +237,22 @@ msgstr "Počet záznamov na stránku"
 #: ../lib/pytis/web/form.py:943
 msgid "Go"
 msgstr "Choď"
+
+#. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
+#: ../lib/pytis/web/field.py:93
+msgid "Yes"
+msgstr "Áno"
+
+#: ../lib/pytis/web/field.py:93
+msgid "No"
+msgstr "Nie"
+
+#. Translators: The label "image"/"file" is used in textual representation of binary
+#. data values, usually as a link to download the actual binary file.
+#: ../lib/pytis/web/field.py:108
+msgid "image"
+msgstr "obrázok"
+
+#: ../lib/pytis/web/field.py:108
+msgid "file"
+msgstr "súbor"

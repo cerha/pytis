@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-29 15:50+0100\n"
+"POT-Creation-Date: 2008-11-03 12:26+0100\n"
 "PO-Revision-Date: 2008-10-14 13:14+0200\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -108,25 +108,6 @@ msgstr ""
 #: ../lib/pytis/web/form.py:266
 msgid "Submit"
 msgstr "Wyślij"
-
-#. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
-#: ../lib/pytis/web/field.py:93
-msgid "Yes"
-msgstr "Tak"
-
-#: ../lib/pytis/web/field.py:93
-msgid "No"
-msgstr "Nie"
-
-#. Translators: The label "image"/"file" is used in textual representation of binary
-#. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:108
-msgid "image"
-msgstr ""
-
-#: ../lib/pytis/web/field.py:108
-msgid "file"
-msgstr ""
 
 #: ../lib/pytis/web/form.py:254
 msgid "Undo all changes"
@@ -257,6 +238,25 @@ msgstr ""
 
 #: ../lib/pytis/web/form.py:943
 msgid "Go"
+msgstr ""
+
+#. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
+#: ../lib/pytis/web/field.py:93
+msgid "Yes"
+msgstr "Tak"
+
+#: ../lib/pytis/web/field.py:93
+msgid "No"
+msgstr "Nie"
+
+#. Translators: The label "image"/"file" is used in textual representation of binary
+#. data values, usually as a link to download the actual binary file.
+#: ../lib/pytis/web/field.py:108
+msgid "image"
+msgstr ""
+
+#: ../lib/pytis/web/field.py:108
+msgid "file"
 msgstr ""
 
 #, fuzzy
