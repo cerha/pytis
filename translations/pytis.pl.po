@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 17:07+0100\n"
-"PO-Revision-Date: 2008-10-14 13:14+0200\n"
+"PO-Revision-Date: 2008-11-04 12:38+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
@@ -262,18 +262,6 @@ msgstr ""
 #: ../lib/pytis/web/field.py:108
 msgid "file"
 msgstr ""
-
-#, fuzzy
-#~ msgid "Minimal length %(minlen)s not satisfied"
-#~ msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
-
-#, fuzzy
-#~ msgid "Invalid MD5 hash"
-#~ msgstr "Niepoprawna wartość"
-
-#, fuzzy
-#~ msgid "String exceeds max length %(minlen)s"
-#~ msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
 #~ msgid "reduced"
 #~ msgstr "zredukowany"

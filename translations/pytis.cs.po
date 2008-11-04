@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 17:07+0100\n"
-"PO-Revision-Date: 2008-11-03 17:08+0100\n"
+"PO-Revision-Date: 2008-11-04 12:36+0100\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
@@ -267,14 +267,6 @@ msgstr "soubor"
 
 #~ msgid "Access denied"
 #~ msgstr "Neoprávněný přístup"
-
-#, fuzzy
-#~ msgid "Invalid MD5 hash"
-#~ msgstr "Neplatná hodnota"
-
-#, fuzzy
-#~ msgid "Nepovolený formát %(format)s; povoleno: %(formats)s"
-#~ msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
 #~ msgid "Can't connect to database"
 #~ msgstr "Nemohu se připojit do databáze"

@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 17:07+0100\n"
-"PO-Revision-Date: 2008-10-14 13:14+0200\n"
+"PO-Revision-Date: 2008-11-04 12:38+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
@@ -260,14 +260,3 @@ msgstr "obrázok"
 #: ../lib/pytis/web/field.py:108
 msgid "file"
 msgstr "súbor"
-
-#~ msgid "Minimal length %(minlen)s not satisfied"
-#~ msgstr "Nedodržaná minimálna dĺžka %(minlen)s"
-
-#, fuzzy
-#~ msgid "Invalid MD5 hash"
-#~ msgstr "Neplatná hodnota"
-
-#, fuzzy
-#~ msgid "Nepovolený formát %(format)s; povoleno: %(formats)s"
-#~ msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
