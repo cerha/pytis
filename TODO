@@ -79,6 +79,11 @@ CHYBY:
 
 NOVÉ VLASTNOSTI:
 
+ * Optické zvýraznìní políèek Editformu pøi zmìnì hodnoty tohoto políèka
+
+   V Editformu rozli¹it opticky políèka, u kterých u¾ivatel zmìnil hodnotu nebo hodnota byla
+   zmìnìna funkcionalitou (Computerem). U¾ivatel tak bude mít pøehled, která políèka zeditoval.  
+
  * Omezit max. ¹íøku okna èíselníku
 
  * Nová polo¾ka v menu sloupce: Vrátit výchozí øazení
