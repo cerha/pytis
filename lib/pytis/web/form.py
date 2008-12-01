@@ -125,8 +125,11 @@ class FieldForm(Form):
         return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
     def _format_field(self, context, field):
-        formatted = field.formatter.format(context, self._row, field)
-        return context.generator().span(formatted, cls='field id-'+field.id)
+        if isinstance(field.type, pd.StructuredText):
+            wrap = context.generator().div
+        else:
+            wrap = context.generator().span
+        return wrap(field.formatter.format(context, self._row, field), cls='field id-'+field.id)
 
     def _interpolate(self, context, template, row):
         if callable(template):
@@ -1032,7 +1035,8 @@ class ListView(BrowseForm):
                 content = lcg.SectionContainer(parser.parse(text), toc_depth=0)
                 content.set_parent(self.parent())
                 # Hack: Add a fake container to force the heading level start at 4.
-                container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content)))
+                container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content,
+                                                                             anchor=anchor)))
                 parts.append(g.div(content.export(context), cls='content id-'+ fid))
         return g.div(parts, id=id, cls='list-item ' + (n % 2 and 'even' or 'odd'))
 

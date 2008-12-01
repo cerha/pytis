@@ -1,5 +1,8 @@
 2008-12-01  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/web/form.py: 
+	Wrap formatted field content in a div, not a span.
+
 	* pytis/web/field.py:
 	Ignore the surrounding paragraph if a formatted field has just one
 	paragraph.
