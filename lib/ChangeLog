@@ -1,3 +1,9 @@
+2008-12-01  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/field.py:
+	Ignore the surrounding paragraph if a formatted field has just one
+	paragraph.
+
 2008-11-03  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/types_.py:

@@ -139,7 +139,11 @@ class FieldFormatter(object):
 
     def _structured_text_formatter(self, context, row, field):
         value = row[field.id].export()
-        content = lcg.SectionContainer(self._parser.parse(value))
+        blocks = self._parser.parse(value)
+        if len(blocks) == 1 and isinstance(blocks[0], lcg.Paragraph):
+            content = lcg.Container(blocks[0].content())
+        else:
+            content = lcg.SectionContainer(blocks)
         content.set_parent(context.node())
         return context.generator().div(content.export(context)), None
         
