@@ -72,7 +72,8 @@ class _MenuItemReader(lcg.Reader):
         super(_MenuItemReader, self).__init__(id, **kwargs)
 
     def _title(self):
-        return self._item.title()
+        # TODO: This is a workaround until the specifications use 8-bit strings.
+        return unicode(self._item.title(), 'iso-8859-2')
 
     def _menu_path(self):
         if self._parent is None or self._parent.id() == 'menu':
