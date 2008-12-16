@@ -850,7 +850,7 @@ class BrowseForm(LayoutForm):
                             # Translators: Index search controls link tooltip.
                             title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
-            result.append(g.div(label +' '+ concat(links, separator='&nbsp;')))
+            result.append(g.div(label +' '+ concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
 
     def _export_controls(self, context, bottom=False):
@@ -945,7 +945,8 @@ class BrowseForm(LayoutForm):
                                 cls='limit'),
                          g.noscript(g.submit(_("Go"))))
             if controls:
-                content.append(g.div(controls, cls='paging-controls'))
+                cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
+                content.append(g.div(controls, cls=cls))
         if content:
             if self._name is not None:
                 content.append(g.hidden('form_name', self._name))

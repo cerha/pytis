@@ -1,3 +1,8 @@
+2008-12-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py:
+	Use normal (breakable) spaces within index search controls.
+
 2008-12-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py: 
