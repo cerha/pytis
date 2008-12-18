@@ -1,3 +1,8 @@
+2008-12-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/form/form.py:
+	Disable default print menu item.
+
 2008-12-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/web/form.py:

@@ -373,13 +373,14 @@ class InnerForm(Form):
         # Vra» seznam polo¾ek tiskového menu.
         name = self._name
         try:
-            print_spec = self._resolver.get(name, 'print_spec')
+            print_spec = self._resolver.get(name, 'print_spec') or ()
         except ResolverSpecError:
-            print_spec = None
-        if not print_spec:
-            print_spec = ((_("Výchozí"), os.path.join('output', name)),)
-        return [MItem(title,
-                      command=InnerForm.COMMAND_PRINT(print_spec_path=path))
+            print_spec = ()
+        # Default print currently disabled, since on a huge table it may extensively cunsume
+        # resources and no one is using it anyway...
+        #if not print_spec:
+        #    print_spec = ((_("Výchozí"), os.path.join('output', name)),)
+        return [MItem(title, command=InnerForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
 
     def _aggregation_menu(self):
@@ -401,6 +402,9 @@ class InnerForm(Form):
     def _can_aggregation_menu(self):
         return self._has_aggregation_menu
         
+    def _can_print_menu(self):
+        return bool(self._print_menu_)
+
     def _cmd_print_menu(self):
         self._on_menu_button(self._print_menu_)
 
