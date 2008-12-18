@@ -1,60 +1,60 @@
-# Pytis translations
+# Pytis translations.
 # Copyright (C) 2008 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
-# Tomas Cerha <cerha@brailcom.org>, 2008.
+# Hynek Hanke <hanke@brailcom.org>, 2008.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 17:07+0100\n"
-"PO-Revision-Date: 2008-10-14 13:10+0200\n"
-"Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
+"POT-Creation-Date: 2008-12-18 17:11+0100\n"
+"PO-Revision-Date: 2008-12-18 17:13+0100\n"
+"Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n!=1;\n"
 
 #. Translators: All the messages below are validation errors.
 #: ../lib/pytis/web/__init__.py:40
 msgid "Empty value"
-msgstr ""
+msgstr "Valor vacío"
 
 #: ../lib/pytis/web/__init__.py:41
 msgid "Invalid value"
-msgstr ""
+msgstr "Valor no válido"
 
 #: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
-#, python-format
+#, fuzzy, python-format
 msgid "Minimal length %(minlen)s characters not satisfied"
-msgstr ""
+msgstr "La longitud mínima %(minlen)s no satisfecha"
 
 #: ../lib/pytis/web/__init__.py:43
-#, python-format
+#, fuzzy, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
-msgstr ""
+msgstr "La longitud máxima %(maxlen)s sobrepasada"
 
 #: ../lib/pytis/web/__init__.py:44
 msgid "Not an integer"
-msgstr ""
+msgstr "No es un número entero"
 
 #: ../lib/pytis/web/__init__.py:45
 msgid "Invalid number"
-msgstr ""
+msgstr "Número no válido"
 
 #: ../lib/pytis/web/__init__.py:47
-#, python-format
+#, fuzzy, python-format
 msgid "String exceeds max length %(maxlen)s characters"
-msgstr ""
+msgstr "Texto sobrepasa la longitud máxima %(maxlen)s"
 
 #: ../lib/pytis/web/__init__.py:48
 msgid "Enter the password twice to eliminate typos"
-msgstr ""
+msgstr "Pone la clave dos vecer para eliminar errores"
 
 #: ../lib/pytis/web/__init__.py:49
 msgid "Passwords don't match"
-msgstr ""
+msgstr "Las claves no son idénticas"
 
 #: ../lib/pytis/web/__init__.py:50
 msgid "Please use mix of letters and non-letters in your password"
@@ -62,76 +62,95 @@ msgstr ""
 
 #: ../lib/pytis/web/__init__.py:51
 msgid "Invalid format"
-msgstr ""
+msgstr "Formate no válido"
 
 #: ../lib/pytis/web/__init__.py:52
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr ""
+msgstr "Formate del color no válido ('#RGB' o '#RRGGBB')"
 
 #: ../lib/pytis/web/__init__.py:53
 msgid "Invalid date or time format"
-msgstr ""
+msgstr "Formate de fecha o tiempo no válido"
 
 #: ../lib/pytis/web/__init__.py:54
 msgid "Invalid date or time"
-msgstr ""
+msgstr "Fecha o tiempo no válido"
 
 #: ../lib/pytis/web/__init__.py:55
 msgid "Date outside the allowed range"
-msgstr ""
+msgstr "La fecha no está en el rango permitido"
 
 #: ../lib/pytis/web/__init__.py:56
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
-msgstr ""
+msgstr "El tamaňo mínimo %(minlen)s no satisfecho"
 
 #: ../lib/pytis/web/__init__.py:57
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
-msgstr ""
+msgstr "Tamaňo máximo %(minlen)s sobrepasato"
 
 #: ../lib/pytis/web/__init__.py:58
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
-msgstr ""
+msgstr "Tamaňo máximo del pixel %(maxsize)s sobrepasato"
 
 #: ../lib/pytis/web/__init__.py:59
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr ""
+msgstr "Tamaňo mínimo del pixel %(maxsize)s sobrepasato"
 
 #. Translators: This is the last validation error message.
 #: ../lib/pytis/web/__init__.py:61
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-msgstr ""
+msgstr "Un formate no permitido %(format)s; formates válidos: %(formats)s"
 
 #. Translators: Default edit form submit button label.
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:254
-#: ../lib/pytis/web/form.py:266
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:257
+#: ../lib/pytis/web/form.py:269
 msgid "Submit"
-msgstr ""
+msgstr "Confirma"
 
-#: ../lib/pytis/web/form.py:254
+#. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
+#: ../lib/pytis/web/field.py:93
+msgid "Yes"
+msgstr "Sí"
+
+#: ../lib/pytis/web/field.py:93
+msgid "No"
+msgstr "No"
+
+#. Translators: The label "image"/"file" is used in textual representation of binary
+#. data values, usually as a link to download the actual binary file.
+#: ../lib/pytis/web/field.py:108
+msgid "image"
+msgstr "imágen"
+
+#: ../lib/pytis/web/field.py:108
+msgid "file"
+msgstr "archivo"
+
+#: ../lib/pytis/web/form.py:257
 msgid "Undo all changes"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:276
-msgid "Submit the form"
-msgstr ""
+msgstr "Volva todas modificaciones"
 
 #: ../lib/pytis/web/form.py:279
-msgid "Reset"
-msgstr ""
+msgid "Submit the form"
+msgstr "Envia el formulario"
 
-#: ../lib/pytis/web/form.py:411
+#: ../lib/pytis/web/form.py:282
+msgid "Reset"
+msgstr "Reset"
+
+#: ../lib/pytis/web/form.py:414
 msgid "Fields marked by an asterisk are mandatory."
-msgstr ""
+msgstr "Preguntas seňaladas con il asterisko son obligatorias."
 
 #. Translators: This string uses plural forms.  '%d' is replaced by the number and
 #. this number also denotes the plural form used.  Please supply translations for
 #. all plural forms relevant for the target language.
-#: ../lib/pytis/web/form.py:709
+#: ../lib/pytis/web/form.py:712
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -140,20 +159,20 @@ msgstr[1] ""
 
 #. Translators: Used in empty list forms.  "Records" refers to database records in
 #. the most generic senese possible.
-#: ../lib/pytis/web/form.py:786
-msgid "No records."
-msgstr ""
-
 #: ../lib/pytis/web/form.py:789
+msgid "No records."
+msgstr "Ningunos registros"
+
+#: ../lib/pytis/web/form.py:792
 msgid "Total records:"
-msgstr ""
+msgstr "Registros en total:"
 
 #. Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
 #. by the numbers corresponding to the current listing range.
-#: ../lib/pytis/web/form.py:793
+#: ../lib/pytis/web/form.py:796
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr ""
+msgstr "Registros representados %(first)s-%(last)s de %(total)s en total"
 
 #. Translators: This is a label preceding index search controls.  These controls
 #. allow the user to move in a long alphabetically sorted list by alphabetical
@@ -166,97 +185,79 @@ msgstr ""
 #. replaced by the selected letter or substring and 'on' has the meaning "beginning
 #. with".  Also take care to use the correct quotation marks for the target language
 #. (written as the corresponding unicode characters).
-#: ../lib/pytis/web/form.py:843
+#: ../lib/pytis/web/form.py:846
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
-msgstr ""
+msgstr "%(label)s sobre \"%(prefix)s\":"
 
 #. Translators: Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:848
+#: ../lib/pytis/web/form.py:851
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
-msgstr ""
+msgstr "Va al primo registro que empieza con \"%s\""
 
-#: ../lib/pytis/web/form.py:868
+#: ../lib/pytis/web/form.py:871
 msgid "Search expression"
 msgstr ""
 
 #. Translators: Search button label.
-#: ../lib/pytis/web/form.py:872 ../lib/pytis/web/form.py:915
+#: ../lib/pytis/web/form.py:875 ../lib/pytis/web/form.py:918
 msgid "Search"
 msgstr ""
 
 #. Translators: Label used in filter selection box for the option which disables
 #. filtering and thus results in all records to be displayed.
-#: ../lib/pytis/web/form.py:881
+#: ../lib/pytis/web/form.py:884
 msgid "All items"
 msgstr ""
 
 #. Translators: Label of filter selection box.  Filtering limits the displayed records
 #. by certain criterias.
-#: ../lib/pytis/web/form.py:886 ../lib/pytis/web/form.py:889
+#: ../lib/pytis/web/form.py:889 ../lib/pytis/web/form.py:892
+#, fuzzy
 msgid "Filter"
-msgstr ""
+msgstr "archivo"
 
 #. Translators: Tooltip text suggesting keyboard
 #. combination to use for selection without
 #. unexpected invocation of the option.
-#: ../lib/pytis/web/form.py:893 ../lib/pytis/web/form.py:923
-#: ../lib/pytis/web/form.py:939
+#: ../lib/pytis/web/form.py:896 ../lib/pytis/web/form.py:926
+#: ../lib/pytis/web/form.py:942
 msgid "(Use ALT+arrow down to select)"
-msgstr ""
+msgstr "(Usa ALT+flecha abajo para elegir)"
 
 #. Translators: Button for manual selection invocation (when
 #. JavaScript is off.
-#: ../lib/pytis/web/form.py:898
+#: ../lib/pytis/web/form.py:901
 msgid "Apply"
 msgstr ""
 
 #. Translators: Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse forward/backwards.
-#: ../lib/pytis/web/form.py:920 ../lib/pytis/web/form.py:922
+#: ../lib/pytis/web/form.py:923 ../lib/pytis/web/form.py:925
 msgid "Page"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:928
-msgid "Previous"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:929
-msgid "Go to previous page"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:930
-msgid "Next"
-msgstr ""
+msgstr "Página"
 
 #: ../lib/pytis/web/form.py:931
+msgid "Previous"
+msgstr "Anterior"
+
+#: ../lib/pytis/web/form.py:932
+msgid "Go to previous page"
+msgstr "Va a la pagina anterior"
+
+#: ../lib/pytis/web/form.py:933
+msgid "Next"
+msgstr "Proximo"
+
+#: ../lib/pytis/web/form.py:934
 msgid "Go to next page"
-msgstr ""
+msgstr "Va a la pagina proxima"
 
-#: ../lib/pytis/web/form.py:936 ../lib/pytis/web/form.py:938
+#: ../lib/pytis/web/form.py:939 ../lib/pytis/web/form.py:941
 msgid "Records per page"
-msgstr ""
+msgstr "Registros per página"
 
-#: ../lib/pytis/web/form.py:943
+#: ../lib/pytis/web/form.py:946
 msgid "Go"
-msgstr ""
-
-#. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
-#: ../lib/pytis/web/field.py:93
-msgid "Yes"
-msgstr ""
-
-#: ../lib/pytis/web/field.py:93
-msgid "No"
-msgstr ""
-
-#. Translators: The label "image"/"file" is used in textual representation of binary
-#. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:108
-msgid "image"
-msgstr ""
-
-#: ../lib/pytis/web/field.py:108
-msgid "file"
-msgstr ""
+msgstr "Va"

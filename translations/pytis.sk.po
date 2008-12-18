@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 17:07+0100\n"
+"POT-Creation-Date: 2008-12-18 17:01+0100\n"
 "PO-Revision-Date: 2008-11-04 12:38+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -106,141 +106,10 @@ msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
 #. Translators: Default edit form submit button label.
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:254
-#: ../lib/pytis/web/form.py:266
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:257
+#: ../lib/pytis/web/form.py:269
 msgid "Submit"
 msgstr "Odoslať"
-
-#: ../lib/pytis/web/form.py:254
-msgid "Undo all changes"
-msgstr "Zrušiť všetky urobené zmeny"
-
-#: ../lib/pytis/web/form.py:276
-msgid "Submit the form"
-msgstr "Odoslať formulár"
-
-#: ../lib/pytis/web/form.py:279
-msgid "Reset"
-msgstr "Vrátiť pôvodné hodnoty"
-
-#: ../lib/pytis/web/form.py:411
-msgid "Fields marked by an asterisk are mandatory."
-msgstr "Políčka označené hviezdičkou sú povinné."
-
-#. Translators: This string uses plural forms.  '%d' is replaced by the number and
-#. this number also denotes the plural form used.  Please supply translations for
-#. all plural forms relevant for the target language.
-#: ../lib/pytis/web/form.py:709
-#, python-format
-msgid "Found %d record matching the search expression."
-msgid_plural "Found %d records matching the search expression."
-msgstr[0] ""
-msgstr[1] ""
-
-#. Translators: Used in empty list forms.  "Records" refers to database records in
-#. the most generic senese possible.
-#: ../lib/pytis/web/form.py:786
-msgid "No records."
-msgstr "Žiadne záznamy."
-
-#: ../lib/pytis/web/form.py:789
-msgid "Total records:"
-msgstr "Počet záznamov celkom:"
-
-#. Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
-#. by the numbers corresponding to the current listing range.
-#: ../lib/pytis/web/form.py:793
-#, python-format
-msgid "Displayed records %(first)s-%(last)s of total %(total)s"
-msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
-
-#. Translators: This is a label preceding index search controls.  These controls
-#. allow the user to move in a long alphabetically sorted list by alphabetical
-#. prefix.  For example in a listing of books, one might have the following index
-#. search controls: 'Author: A, B, C, D, ...' and selecting 'A' will move us to the
-#. first author beginning with A.  At the same time the form will automatically
-#. display subordinate index search controls for all authors beginning with 'A':
-#. 'Author on "A": Ab, Ac, Ad, Af, ....'.  And this is where this label is used.
-#. '%(label)s' is replaced by the label of the controlling column. '%(prefix)s' is
-#. replaced by the selected letter or substring and 'on' has the meaning "beginning
-#. with".  Also take care to use the correct quotation marks for the target language
-#. (written as the corresponding unicode characters).
-#: ../lib/pytis/web/form.py:843
-#, python-format
-msgid "%(label)s on \"%(prefix)s\":"
-msgstr "%(label)s na \"%(prefix)s\":"
-
-#. Translators: Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:848
-#, python-format
-msgid "Skip to the first record beginning with \"%s\""
-msgstr "Preskočit na prvý riadok začínajúci na „%s“"
-
-#: ../lib/pytis/web/form.py:868
-msgid "Search expression"
-msgstr ""
-
-#. Translators: Search button label.
-#: ../lib/pytis/web/form.py:872 ../lib/pytis/web/form.py:915
-msgid "Search"
-msgstr ""
-
-#. Translators: Label used in filter selection box for the option which disables
-#. filtering and thus results in all records to be displayed.
-#: ../lib/pytis/web/form.py:881
-msgid "All items"
-msgstr ""
-
-#. Translators: Label of filter selection box.  Filtering limits the displayed records
-#. by certain criterias.
-#: ../lib/pytis/web/form.py:886 ../lib/pytis/web/form.py:889
-#, fuzzy
-msgid "Filter"
-msgstr "súbor"
-
-#. Translators: Tooltip text suggesting keyboard
-#. combination to use for selection without
-#. unexpected invocation of the option.
-#: ../lib/pytis/web/form.py:893 ../lib/pytis/web/form.py:923
-#: ../lib/pytis/web/form.py:939
-msgid "(Use ALT+arrow down to select)"
-msgstr "(použite ALT+šipka dole pre výber)"
-
-#. Translators: Button for manual selection invocation (when
-#. JavaScript is off.
-#: ../lib/pytis/web/form.py:898
-msgid "Apply"
-msgstr ""
-
-#. Translators: Paging controls allow navigation in long lists which are split into
-#. several pages.  The user can select a specific page or browse forward/backwards.
-#: ../lib/pytis/web/form.py:920 ../lib/pytis/web/form.py:922
-msgid "Page"
-msgstr "Strana"
-
-#: ../lib/pytis/web/form.py:928
-msgid "Previous"
-msgstr "predchádzajúci"
-
-#: ../lib/pytis/web/form.py:929
-msgid "Go to previous page"
-msgstr "Prejsť na predchádzajúcu stránku výpisu"
-
-#: ../lib/pytis/web/form.py:930
-msgid "Next"
-msgstr "ďalší"
-
-#: ../lib/pytis/web/form.py:931
-msgid "Go to next page"
-msgstr "Prejsť na nasledujúcu stránku výpisu"
-
-#: ../lib/pytis/web/form.py:936 ../lib/pytis/web/form.py:938
-msgid "Records per page"
-msgstr "Počet záznamov na stránku"
-
-#: ../lib/pytis/web/form.py:943
-msgid "Go"
-msgstr "Choď"
 
 #. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
 #: ../lib/pytis/web/field.py:93
@@ -260,3 +129,134 @@ msgstr "obrázok"
 #: ../lib/pytis/web/field.py:108
 msgid "file"
 msgstr "súbor"
+
+#: ../lib/pytis/web/form.py:257
+msgid "Undo all changes"
+msgstr "Zrušiť všetky urobené zmeny"
+
+#: ../lib/pytis/web/form.py:279
+msgid "Submit the form"
+msgstr "Odoslať formulár"
+
+#: ../lib/pytis/web/form.py:282
+msgid "Reset"
+msgstr "Vrátiť pôvodné hodnoty"
+
+#: ../lib/pytis/web/form.py:414
+msgid "Fields marked by an asterisk are mandatory."
+msgstr "Políčka označené hviezdičkou sú povinné."
+
+#. Translators: This string uses plural forms.  '%d' is replaced by the number and
+#. this number also denotes the plural form used.  Please supply translations for
+#. all plural forms relevant for the target language.
+#: ../lib/pytis/web/form.py:712
+#, python-format
+msgid "Found %d record matching the search expression."
+msgid_plural "Found %d records matching the search expression."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Translators: Used in empty list forms.  "Records" refers to database records in
+#. the most generic senese possible.
+#: ../lib/pytis/web/form.py:789
+msgid "No records."
+msgstr "Žiadne záznamy."
+
+#: ../lib/pytis/web/form.py:792
+msgid "Total records:"
+msgstr "Počet záznamov celkom:"
+
+#. Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
+#. by the numbers corresponding to the current listing range.
+#: ../lib/pytis/web/form.py:796
+#, python-format
+msgid "Displayed records %(first)s-%(last)s of total %(total)s"
+msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
+
+#. Translators: This is a label preceding index search controls.  These controls
+#. allow the user to move in a long alphabetically sorted list by alphabetical
+#. prefix.  For example in a listing of books, one might have the following index
+#. search controls: 'Author: A, B, C, D, ...' and selecting 'A' will move us to the
+#. first author beginning with A.  At the same time the form will automatically
+#. display subordinate index search controls for all authors beginning with 'A':
+#. 'Author on "A": Ab, Ac, Ad, Af, ....'.  And this is where this label is used.
+#. '%(label)s' is replaced by the label of the controlling column. '%(prefix)s' is
+#. replaced by the selected letter or substring and 'on' has the meaning "beginning
+#. with".  Also take care to use the correct quotation marks for the target language
+#. (written as the corresponding unicode characters).
+#: ../lib/pytis/web/form.py:846
+#, python-format
+msgid "%(label)s on \"%(prefix)s\":"
+msgstr "%(label)s na \"%(prefix)s\":"
+
+#. Translators: Index search controls link tooltip.
+#: ../lib/pytis/web/form.py:851
+#, python-format
+msgid "Skip to the first record beginning with \"%s\""
+msgstr "Preskočit na prvý riadok začínajúci na „%s“"
+
+#: ../lib/pytis/web/form.py:871
+msgid "Search expression"
+msgstr ""
+
+#. Translators: Search button label.
+#: ../lib/pytis/web/form.py:875 ../lib/pytis/web/form.py:918
+msgid "Search"
+msgstr ""
+
+#. Translators: Label used in filter selection box for the option which disables
+#. filtering and thus results in all records to be displayed.
+#: ../lib/pytis/web/form.py:884
+msgid "All items"
+msgstr ""
+
+#. Translators: Label of filter selection box.  Filtering limits the displayed records
+#. by certain criterias.
+#: ../lib/pytis/web/form.py:889 ../lib/pytis/web/form.py:892
+#, fuzzy
+msgid "Filter"
+msgstr "súbor"
+
+#. Translators: Tooltip text suggesting keyboard
+#. combination to use for selection without
+#. unexpected invocation of the option.
+#: ../lib/pytis/web/form.py:896 ../lib/pytis/web/form.py:926
+#: ../lib/pytis/web/form.py:942
+msgid "(Use ALT+arrow down to select)"
+msgstr "(použite ALT+šipka dole pre výber)"
+
+#. Translators: Button for manual selection invocation (when
+#. JavaScript is off.
+#: ../lib/pytis/web/form.py:901
+msgid "Apply"
+msgstr ""
+
+#. Translators: Paging controls allow navigation in long lists which are split into
+#. several pages.  The user can select a specific page or browse forward/backwards.
+#: ../lib/pytis/web/form.py:923 ../lib/pytis/web/form.py:925
+msgid "Page"
+msgstr "Strana"
+
+#: ../lib/pytis/web/form.py:931
+msgid "Previous"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/web/form.py:932
+msgid "Go to previous page"
+msgstr "Prejsť na predchádzajúcu stránku výpisu"
+
+#: ../lib/pytis/web/form.py:933
+msgid "Next"
+msgstr "ďalší"
+
+#: ../lib/pytis/web/form.py:934
+msgid "Go to next page"
+msgstr "Prejsť na nasledujúcu stránku výpisu"
+
+#: ../lib/pytis/web/form.py:939 ../lib/pytis/web/form.py:941
+msgid "Records per page"
+msgstr "Počet záznamov na stránku"
+
+#: ../lib/pytis/web/form.py:946
+msgid "Go"
+msgstr "Choď"
