@@ -289,10 +289,13 @@ class _SingleDescrReader(_DescrReader):
         fields = [(f.label(), f.descr() or "")  for f in
                   [view.field(cid) for cid in view.layout().order()]]
         related = [lcg.WikiText("[%s]" % name) for name in _related_names(self._name)]
+        bindings = [lcg.WikiText("[%s %s]" % (b.name(), b.title()))
+                    for b in view.bindings()]
         for (title, items, f) in (
-            ("Akce kontextového menu", actions, lcg.dl),
-            ("Políèka formuláøe",      fields,  lcg.dl),
-            ("Související náhledy",    related, lcg.ul)):
+            ("Akce kontextového menu", actions,  lcg.dl),
+            ("Políèka formuláøe",      fields,   lcg.dl),
+            ("Postranní formuláøe",    bindings, lcg.ul),
+            ("Související náhledy",    related,  lcg.ul)):
             c = items and f(items, formatted=True) or lcg.TextContent("®ádné")
             content.append(lcg.Section(title, c))
         if not self._data_spec.access_rights():
@@ -368,7 +371,7 @@ class DescrReader(lcg.FileReader):
     """
 
     def _title(self):
-        return "Nápovìda k jednotlivým náhledùm"
+        return u"Nápovìda k jednotlivým náhledùm"
 
     def _content(self):
         return lcg.NodeIndex(depth=1)
