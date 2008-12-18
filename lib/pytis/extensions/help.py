@@ -119,9 +119,6 @@ class _MenuItemReader(lcg.Reader):
                 else:
                     names = (name,) + _refered_names(name)
                 global _used_defs, _menu_items
-                for n in names:
-                    if n not in _used_defs:
-                        _used_defs.append(n)
                 if _menu_items.has_key(name):
                     _menu_items[name].append(self)
                 else:
@@ -129,9 +126,15 @@ class _MenuItemReader(lcg.Reader):
                 info.append(("Náhled", "[%s] (%s)" % (name, name)))
                 if issubclass(form, pytis.form.MultiBrowseDualForm):
                     view = pytis.util.resolver().get(name, 'view_spec')
-                    bindings = ["[%s %s]" % (b.name(), b.title()) for b in view.bindings()]
+                    bindings = []
+                    for b in view.bindings():
+                        _menu_items[b.name()] = [self]
+                        bindings.append("[%s %s]" % (b.name(), b.title()))
+                        names += (b.name(),)
                     info.append(("Postranní formuláøe", ', '.join(bindings)))
-
+                for n in names:
+                    if n not in _used_defs:
+                        _used_defs.append(n)
         else:
             a = ', '.join(['%s=%r' % x for x in args.items()])
             info.append(("Argumenty pøíkazu", a or _("®ádné")))

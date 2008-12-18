@@ -1,5 +1,8 @@
 2008-12-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/help.py:
+	Ensure that help for forms used in bindings is generated.
+	
 	* lib/pytis/extensions/help.py: 
 	Convert menu item titles to unicode.  Show bindings.
 
