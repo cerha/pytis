@@ -2,7 +2,7 @@
 
 # Formátovací funkce pro datové objekty
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002-2008 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ def data_table(resolver, name, condition=None, sorting=None,
         'LongTable'
     
     """
-    assert type(name) == type('')
+    assert type(name) == type(''), name
     if condition is None:
         try:
             condition = resolver.p((name, P_CONDITION))

@@ -1,5 +1,8 @@
 2008-12-18  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/output/flibdata.py:
+	Added assertion info.
+
 	* pytis/form/form.py:
 	Disable default print menu item.
 
