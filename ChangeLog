@@ -3,6 +3,9 @@
 	* lib/pytis/extensions/help.py: 
 	Convert menu item titles to unicode.  Show bindings.
 
+	* lib/pytis/extensions/help.py: 
+	Add sideform links to multiform menu item info.
+
 2008-10-20  Pavel Hanak  <hanak@asellus.cz>
 
 	* db/db_pytis_menu.py: New database specification for menu storage.
