@@ -1997,7 +1997,7 @@ class FieldSpec(object):
 
           display -- overrides this option for particular field.  If not defined, the value
             defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
-            information.  Only relevant if the option 'codebook' (above) was deifned.
+            information.  Only relevant if the option 'codebook' (above) was defined.
 
           prefer_display -- overrides this option for particular field.  If not defined, the value
             defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
