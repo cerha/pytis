@@ -1,3 +1,8 @@
+2008-12-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/help.py:
+	Include side form descriptions in the list of bindings.
+
 2008-12-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py:

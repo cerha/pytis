@@ -294,15 +294,15 @@ class _SingleDescrReader(_DescrReader):
         content = super(_SingleDescrReader, self)._content()
         view = self._view_spec
         actions = [(a.title(), a.descr() or '') for a in view.actions(linear=True)]
-        fields = [(f.label(), f.descr() or "")  for f in
+        fields = [(f.label(), f.descr() or '')  for f in
                   [view.field(cid) for cid in view.layout().order()]]
         related = [lcg.WikiText("[%s]" % name) for name in _related_names(self._name)]
-        bindings = [lcg.WikiText("[%s %s]" % (b.name(), b.title()))
+        bindings = [(lcg.WikiText("[%s %s]" % (b.name(), b.title())), lcg.WikiText(b.descr() or ''))
                     for b in view.bindings()]
         for (title, items, f) in (
             ("Akce kontextového menu", actions,  lcg.dl),
             ("Políèka formuláøe",      fields,   lcg.dl),
-            ("Postranní formuláøe",    bindings, lcg.ul),
+            ("Postranní formuláøe",    bindings, lcg.dl),
             ("Související náhledy",    related,  lcg.ul)):
             c = items and f(items, formatted=True) or lcg.TextContent("®ádné")
             content.append(lcg.Section(title, c))
