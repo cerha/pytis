@@ -1370,8 +1370,9 @@ class Binding(object):
         self._title = title
         self._binding_column = binding_column
         self._condition = condition
-        self._single = single
         self._id = id
+        self._descr = descr
+        self._single = single
 
     def title(self):
         return self._title
@@ -1385,11 +1386,14 @@ class Binding(object):
     def condition(self):
         return self._condition
         
-    def single(self):
-        return self._single
-        
     def id(self):
         return self._id
+        
+    def descr(self):
+        return self._descr
+        
+    def single(self):
+        return self._single
         
 
 class Editable(object):
