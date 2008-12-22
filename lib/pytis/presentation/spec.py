@@ -1326,7 +1326,8 @@ class Binding(object):
     Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
 
     """
-    def __init__(self, title, name, binding_column=None, condition=None, single=False, id=None):
+    def __init__(self, title, name, binding_column=None, condition=None, id=None, descr=None,
+                 single=False):
         """Arguments:
 
           title -- title used for the list of related records
@@ -1343,6 +1344,9 @@ class Binding(object):
             dependent form for given main form row.  If used together with the binding column, the
             condition will be used in conjunction with the binding column condition.  If
             'binding_column' is None, this condition will be used solely.
+          id -- unique string identifier of the binding.  This identifier may be used to
+            refer to the binding.
+          descr -- binding description text (to be used in on-line help etc).
           single -- boolean flag indicating whether this binding corresponds to a 1:1 relation
             (True value) or 1:N relation (False value).  The value of this flag determines the
             meaning of the 'binding_column' argument.  For the 1:1 relation, there is exactly one
@@ -1352,8 +1356,6 @@ class Binding(object):
             relation the binding column must exist in the related view and must have a codebook
             (foreign key) specification pointing to the main form (the view for which the binding
             is used).
-          id -- unique string identifier of the binding.  This identifier may be used to
-            refer to the binding.
             
         """
         assert isinstance(name, basestring), name

@@ -1,3 +1,8 @@
+2008-12-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/presentation/spec.py:
+	Allow help texts in Binding specification.
+
 2008-12-19  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/presentation/spec.py:
