@@ -66,7 +66,7 @@ def data_table(resolver, name, condition=None, sorting=None,
         'LongTable'
     
     """
-    assert type(name) == type(''), name
+    assert type(name) == type(''), repr(name)
     if condition is None:
         try:
             condition = resolver.p((name, P_CONDITION))
