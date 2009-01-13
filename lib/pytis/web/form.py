@@ -666,6 +666,24 @@ class BrowseForm(LayoutForm):
                  for field in self._column_fields]
         return g.tr(cells, id=id, **self._style(self._view.row_style(), row, n))
 
+    def _export_aggregation(self, context, op):
+        def export_aggregation_value(data, op, field):
+            if not field.virtual and isinstance(field.type, pytis.data.Number):
+                return data.select_aggregate((op, field.id), condition=self._conditions()).export()
+            else:
+                return ''
+        g = context.generator()
+        data = self._row.data()
+        agg_id, label = {pytis.data.Data.AGG_SUM: ('agg-sum', _("Sum")),
+                         pytis.data.Data.AGG_AVG: ('agg-avg', _("Average")),
+                         pytis.data.Data.AGG_MIN: ('agg-min', _("Minimum")),
+                         pytis.data.Data.AGG_MAX: ('agg-max', _("Maximum"))}[op]
+        cells = [i==0 and \
+                 g.th(label+':', scope='row') or \
+                 g.td(export_aggregation_value(data, op, field), cls='id-'+field.id)
+                 for i, field in enumerate(self._column_fields)]
+        return g.tr(cells, cls='aggregation-results '+agg_id)
+    
     def _export_group_heading(self, context, field):
         g = context.generator()
         return g.tr(g.th(self._format_field(context, field), colspan=len(self._column_fields)),
@@ -718,8 +736,15 @@ class BrowseForm(LayoutForm):
 
     def _wrap_exported_rows(self, context, rows, summary):
         g = context.generator()
+        if self._page + 1 == self._pages:
+            # Display aggregations on the last page.
+            foot_rows = [self._export_aggregation(context, op)
+                         for op in self._view.aggregations()]
+        else:
+            foot_rows = []
+        foot_rows.append(g.tr(g.td(summary, colspan=len(self._column_fields))))
         return g.table((g.thead(g.tr(self._export_headings(context))),
-                        g.tfoot(g.tr(g.td(summary, colspan=len(self._column_fields)))),
+                        g.tfoot(foot_rows),
                         g.tbody(rows)), border=1)
     
     def _export_body(self, context):
@@ -742,6 +767,9 @@ class BrowseForm(LayoutForm):
             page = 0
             first_record_offset = 0
         self._page = page
+        pages, modulo = divmod(count, min(limit, count))
+        pages += modulo and 1 or 0
+        self._pages = pages
         grouping = self._view.grouping()
         if self._view.group_heading():
             group_heading = self._fields[self._view.group_heading()]
@@ -854,7 +882,7 @@ class BrowseForm(LayoutForm):
         return (g.div(result, cls='index-search-controls'),)
 
     def _export_controls(self, context, bottom=False):
-        limit, page, count = self._limit, self._page, self._count
+        limit, page, count, pages = self._limit, self._page, self._count, self._pages
         g = context.generator()
         id = (bottom and '0' or '1') + '%x' % positive_id(self)
         content = []
@@ -901,8 +929,6 @@ class BrowseForm(LayoutForm):
                                   g.noscript(g.submit(_("Apply")))),
                                  cls="filter"))
         if limit is not None and count > self._limits[0]:
-            pages, modulo = divmod(count, min(limit, count))
-            pages += modulo and 1 or 0
             controls = ()
             if count > 100:
                 if not bottom:
