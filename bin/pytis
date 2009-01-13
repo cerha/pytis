@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
+import locale # kvùli o¹etøení chyby pøi importu wx; viz go()
+
 import gc
 import getopt
 import gettext
@@ -28,6 +31,13 @@ import sys
 # modulu `sys' vyma¾e.
 reload(sys)
 sys.setdefaultencoding('iso-8859-2')
+
+if os.environ.has_key('WXVER'):
+    WXVER = os.environ["WXVER"]
+    import wxversion
+    if wxversion.checkInstalled(WXVER):
+        wxversion.select(WXVER)        
+    
 
 _EXIT_OK = 0
 _EXIT_USAGE = 1
@@ -88,31 +98,21 @@ def go():
         gc.set_debug(gc.DEBUG_COLLECTABLE | gc.DEBUG_UNCOLLECTABLE |
                      gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)
         util.log.add_hook(util.mem_info)
-    try:
-        if config.profile:
-            import profile
-            profile.run('run_application()', _PROFILE)
-            import pstats
-            stats = pstats.Stats(_PROFILE)
-            stats.sort_stats('cumulative')
-            stdout = sys.stdout
-            f = open(_PROFILE_RESULTS, 'w')
-            sys.stdout = f
-            try:
-                stats.print_stats()
-            finally:
-                sys.stdout = stdout
-        else:
-            run_application()
-    except:
-        einfo = sys.exc_info()
+    if config.profile:
+        import profile
+        profile.run('run_application()', _PROFILE)
+        import pstats
+        stats = pstats.Stats(_PROFILE)
+        stats.sort_stats('cumulative')
+        stdout = sys.stdout
+        f = open(_PROFILE_RESULTS, 'w')
+        sys.stdout = f
         try:
-            import cgitb
-            sys.stderr.write(cgitb.text(einfo))
-        except Exception, e:
-            sys.stderr.write("Unable to generate detailed traceback: "+ str(e) +"\n")
-            import traceback
-            traceback.print_exception(*einfo)
+            stats.print_stats()
+        finally:
+            sys.stdout = stdout
+    else:
+        run_application()
     if config.debug_memory:
         sys.stderr.write('Final pending data: %s\n' % gc.garbage)
 
@@ -126,9 +126,8 @@ def gg():
 
 
 def run_application():
-    gc.enable() # pro jistotu
-    import locale
-    import pytis.form # musí být a¾ za zpracováním voleb
+    gc.enable()                         # pro jistotu
+    import pytis.form                     # musí být a¾ za zpracováním voleb
     # O¹etøení chyby Pythonu zpùsobující chybné parsování reálných èísel ve
     # zdrojových textech po importu wxWindows.
     # ??? Mo¾ná je to ji¾ opraveno, zdá se, ¾e se tato chyba ji¾ neprojevuje.
