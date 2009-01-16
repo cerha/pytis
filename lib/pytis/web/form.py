@@ -767,8 +767,11 @@ class BrowseForm(LayoutForm):
             page = 0
             first_record_offset = 0
         self._page = page
-        pages, modulo = divmod(count, min(limit, count))
-        pages += modulo and 1 or 0
+        if count == 0:
+            pages = 0
+        else:
+            pages, modulo = divmod(count, min(limit, count))
+            pages += modulo and 1 or 0
         self._pages = pages
         grouping = self._view.grouping()
         if self._view.group_heading():

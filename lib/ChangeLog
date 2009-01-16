@@ -1,7 +1,13 @@
+2009-01-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* pytis/web/form.py:
+	Handle empty browse forms correctly.
+
 2009-01-13  Tomas Cerha  <cerha@brailcom.org>
 
-	* pytis/web/form.py: Added basic support for aggregation functions
-	turned on in specification.
+	* pytis/web/form.py:
+	Added basic support for aggregation functions turned on in
+	specification.
 
 2008-12-22  Tomas Cerha  <cerha@brailcom.org>
 
