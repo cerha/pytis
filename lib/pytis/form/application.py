@@ -262,9 +262,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     # Assign titles to saved startup forms (we need a form instance for this).
                     f = self._windows.active()
-                    x = find([f.__class__, f.name(), None], self._saved_startup_forms)
-                    if x:
-                        x[2] = f.title()
+                    if f:
+                        x = find([f.__class__, f.name(), None], self._saved_startup_forms)
+                        if x:
+                            x[2] = f.title()
                 i += 1
         if len(startup_forms) > 1:
             run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
