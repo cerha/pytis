@@ -1,3 +1,8 @@
+2009-01-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* Makefile:
+	New target `all'.
+
 2008-12-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* translations/pytis.cs.po: 
