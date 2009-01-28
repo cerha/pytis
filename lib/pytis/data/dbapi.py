@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                                  ('password', DBConnection.password),
                                  ('database', DBConnection.database),
                                  ('host', DBConnection.host),
-                                 ('port', DBConnection.port)):
+                                 ('port', DBConnection.port),
+                                 ('sslmode', DBConnection.sslmode),
+                                 ):
             # Note: 'port' argument is not defined in DB API.
             value = accessor(connection_data)
             if value != None:

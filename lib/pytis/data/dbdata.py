@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -255,7 +255,7 @@ class DBConnection:
 
     """
     def __init__(self, user=None, password=None, host=None, port=None,
-                 database=None):
+                 database=None, sslmode='allow'):
         """Nastav parametry připojení.
 
         Argumenty:
@@ -265,6 +265,7 @@ class DBConnection:
           host -- jméno databázového serveru jako string nebo 'None'
           port -- číslo portu na serveru jako integer nebo 'None'
           database -- jméno databáze jako string nebo 'None'
+          sslmode -- jedna z řetězcových konstant akceptovaných PostgreSQL
 
         Je-li kterýkoliv z argumentů 'None', není při připojování uvažován.
 
@@ -274,11 +275,12 @@ class DBConnection:
         self._host = host
         self._port = port
         self._database = database
+        self._sslmode = sslmode
 
     def __str__(self):
         params = ["%s='%s'" % (k,v)
                   for k,v in [(k, getattr(self, '_'+k))
-                              for k in ('user', 'host', 'port', 'database')]
+                              for k in ('user', 'host', 'port', 'database', 'sslmode',)]
                   if v is not None]
         return "<%s %s>" % (self.__class__.__name__, ", ".join(params))
 
@@ -302,6 +304,9 @@ class DBConnection:
         """Vrať jméno databáze jako string nebo 'None'."""
         return self._database
 
+    def sslmode(self):
+        return self._sslmode
+
     def __cmp__(self, other):
         """Vrať 0, právě když 'self' a 'other' definují totéž spojení.
 
@@ -310,11 +315,11 @@ class DBConnection:
 
         """
         return compare_attr(self, other, ('_user', '_password', '_host',
-                                          '_port', '_database'))
+                                          '_port', '_database', '_sslmode',))
 
     def __hash__(self):
         return hash_attr(self,
-                         ('_user', '_password', '_host', '_port', '_database'))
+                         ('_user', '_password', '_host', '_port', '_database', '_sslmode',))
 
     def modified(self, **kwargs):
         """Vrať novou instanci specifikace updatované zadanými argumenty.
