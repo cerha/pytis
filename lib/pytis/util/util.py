@@ -580,6 +580,76 @@ class XStack(Stack):
         i = self._list.index(self._active)
         return self._list[i-1]
 
+
+class Attribute(object):
+    """Definition of a 'Structure' attribute."""
+    
+    def __init__(self, name, type=object, default=None):
+        """
+        Arguments:
+
+          name -- name of the attribute, string
+          type -- Python type or a sequence of Python types of the attribute
+          default -- default value of the attribute
+
+        """
+        self._name = name
+        self._type = type
+        self._default = default
+    def name(self):
+        return self._name
+    def type(self):
+        return self._type
+    def default(self):
+        return self._default
+                 
+class Structure (object):
+    """Simple data structures.
+    
+    Attribute names of the instance are listed in the sequence '_attributes'.
+    Each element of '_attributes' is an 'Attribute' instance.
+    
+    """
+    _attributes = ()
+
+    def __init__ (self, _template=None, **kwargs):
+        self._init(kwargs, template=_template)
+
+    def _init(self, kwargs, nodefault=False, template=None):
+        for member in self._attributes:
+            name = member.name()
+            value = UNDEFINED
+            if kwargs.has_key (name):
+                value = kwargs[name]
+                assert isinstance(value, member.type()), ("Invalid attribute type", name, value, member.type())
+                if __debug__:
+                    del kwargs[name]
+            else:
+                if template is not None:
+                    assert isinstance(self, template.__class__)
+                    try:
+                        value = getattr(template, name)()
+                    except AttributeError:
+                        pass
+                if value is UNDEFINED and not nodefault:
+                    value = member.default()
+            if value is not UNDEFINED:
+                setattr (self, name, lambda value=value: value)
+        assert not kwargs, ("Extra initialization arguments", kwargs.keys())
+
+    def __str__ (self):
+        result = '<%s:' % (self.__class__.__name__,)
+        for member in self._attributes:
+            name = member.name()
+            result = result + (' %s=%s;' % (name, str_ (getattr (self, name)),))
+        result = result + '>'
+        return result
+
+    def copy(self, **kwargs):
+        result = copy.copy(self)
+        result._init(kwargs, nodefault=True)
+        return result
+
 
 ### Funkce
 
