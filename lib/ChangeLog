@@ -1,3 +1,8 @@
+2009-02-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/util/util.py:
+	New class pytis.util.Structure.
+
 2009-01-28  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/dbapi.py:
