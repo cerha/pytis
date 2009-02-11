@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -637,11 +637,14 @@ class Structure (object):
                 setattr (self, name, lambda value=value: value)
         assert not kwargs, ("Extra initialization arguments", kwargs.keys())
 
+    def _replace_value(self, name, value):
+        setattr(self, name, lambda value=value: value)
+
     def __str__ (self):
         result = '<%s:' % (self.__class__.__name__,)
         for member in self._attributes:
             name = member.name()
-            result = result + (' %s=%s;' % (name, str_ (getattr (self, name)),))
+            result = result + (' %s=%s;' % (name, str (getattr (self, name)),))
         result = result + '>'
         return result
 
