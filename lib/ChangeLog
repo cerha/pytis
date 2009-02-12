@@ -1,6 +1,11 @@
 2009-02-12  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
+	DB: Add host and port parameters to connection keys in PostgreSQLUserGroups.
+
+2009-02-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
 	DB: Add connection parameters to table data cache keys.
 
 2009-02-11  Milan Zamazal  <pdm@brailcom.org>
