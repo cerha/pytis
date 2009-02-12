@@ -1687,6 +1687,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             key_row = self._pg_make_row_from_raw_data(
                 key_data, template=(self._pg_make_row_template[0],))
             key = key_row[0]
+            self._pg_query("release _insert", transaction=transaction)
         except DBInsertException:
             self._pg_query("rollback to _insert", transaction=transaction)
             self._pg_query(
@@ -2728,6 +2729,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 result = self._pg_row(self._pg_value(key), None,
                                       transaction=transaction,
                                       supplement='for update nowait')
+            self._pg_query('release _lock', transaction=transaction)
             if not result:
                 return "No such record"
         except DBLockException:
