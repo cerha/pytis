@@ -1,6 +1,11 @@
 2009-02-12  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
+	DB: Release temporary savepoints after they are no longer needed.
+
+2009-02-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
 	DB: Add host and port parameters to connection keys in PostgreSQLUserGroups.
 
 2009-02-12  Milan Zamazal  <pdm@brailcom.org>
