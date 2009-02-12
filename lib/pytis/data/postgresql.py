@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -779,7 +779,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if len(items) < 2:
             items.insert(0, 'public')
         return items
-    
+
+    def _pdbb_unique_table_id(self, table):
+        connection_data = self._pg_connection_data()
+        return table, connection_data.host(), connection_data.port(), connection_data.database()
+
     def _pdbb_get_table_column_data(self, table):
         schema, table_name = self._pdbb_split_table_name(table)
         d = self._pg_query(
@@ -815,11 +819,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             (schema, table_name,),
             outside_transaction=True)
         table_data = self._TableColumnData(d, d1, d2)
-        PostgreSQLStandardBindingHandler._pdbb_table_column_data[table] = table_data
+        table_key = self._pdbb_unique_table_id(table)
+        PostgreSQLStandardBindingHandler._pdbb_table_column_data[table_key] = table_data
         return table_data
         
     def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None):
-        table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table)
+        table_key = self._pdbb_unique_table_id(table)
+        table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table_key)
         if table_data is None:
             table_data = self._pdbb_get_table_column_data(table)
         def lookup_column(data):
