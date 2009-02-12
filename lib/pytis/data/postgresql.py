@@ -472,7 +472,8 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         self._access_groups_data_objects[key] = self
 
     def _pgg_connection_key(self, connection_data):
-        return connection_data.user(), connection_data.password()
+        return (connection_data.user(), connection_data.password(),
+                connection_data.host(), connection_data.port(),)
         
     def _pgg_retrieve_access_groups(self, data):
         if __debug__:
