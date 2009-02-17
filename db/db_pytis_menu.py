@@ -212,9 +212,9 @@ _std_table('e_pytis_roles',
               references='c_pytis_role_purposes'),
             C('deleted', TDate),),
             """Application user roles.""",
-           init_values=(('1', "'admin_roles'", "'Administrátor rolí'", '1', 'NULL',),
-                        ('2', "'admin_menu'", "'Administrátor menu'", '1', 'NULL',),
-                        ('3', "'admin'", "'Administrátor rolí a menu'", '1', 'NULL',),
+           init_values=(('-1', "'admin_roles'", "'Administrátor rolí'", '1', 'NULL',),
+                        ('-2', "'admin_menu'", "'Administrátor menu'", '1', 'NULL',),
+                        ('-3', "'admin'", "'Administrátor rolí a menu'", '1', 'NULL',),
                         ),
            depends=('c_pytis_role_purposes',))
 
@@ -227,7 +227,7 @@ _std_table('e_pytis_role_members',
            """Mutual memberships of roles.
 Entries in this table define `member's of each `roleid'.
 """,
-           init_values=(('1', '3',),
-                        ('2', '3',),
+           init_values=(('-1', '1', '3',),
+                        ('-2', '2', '3',),
                         ),
            depends=('e_pytis_roles',))
