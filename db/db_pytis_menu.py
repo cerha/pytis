@@ -131,6 +131,7 @@ table('_deletes',
       doc="""Tabulka zaznamenávající vymazávání záznamů ve standardních
       tabulkách."""
       )
+
 def _log_update_trigger():
     def pg_escape(val):
         return val.replace("'", "''")
@@ -182,26 +183,40 @@ def _std_table(name, columns, doc, grant=db_rights, **kwargs):
                  doc=doc, upd_log_trigger='_log_update_trigger',
                  **kwargs)
 
+def _std_table_nolog(name, columns, doc, grant=db_rights, **kwargs):
+    return table(name, columns, inherits=('_changes',), grant=grant,
+                 doc=doc, **kwargs)
+
 
 ### The menu schema itself
+
+_std_table_nolog('c_pytis_role_purposes',
+                 (P('purposeid', TInteger),
+                  C('purpose', 'varchar(32)', constraints=('unique', 'not null',)),),
+                 """There are three kinds of roles:
+1. Menu and access administrator roles.  Definitions of these roles may be changed
+   only by the database administrators.
+2. Roles corresponding to system accounts (login roles).
+3. Pure application roles.
+""",
+                 init_values=(('1', "'Správcovská'",),
+                              ('2', "'Uživatelská'",),
+                              ('3', "'Aplikační'",),)
+            )
 
 _std_table('e_pytis_roles',
            (P('roleid', TSerial),
             C('name', TUser, constraints=('unique', 'not null',),),
-            C('description', 'varchar(32)'),
-            C('system', TBoolean, constraints=('not null',), default="'F'",
-              doc="Identifies roles corresponding to system accounts"),
-            C('admin', TBoolean, constraints=('not null',), default="'F'",
-              doc="Identifies roles of menu and access administrators"),
-            C('deleted', TDate)),
-            """Application user roles.
-There are three kinds of roles:
-1. Roles corresponding to system accounts (login roles).
-2. Menu and access administrator roles.  Rows of these roles may be changed
-   only by the database administrators.
-3. Pure application roles.
-"""
-            )
+            C('description', 'varchar(64)'),
+            C('purposeid', TInteger, constraints=('not null',), default="1",
+              references='c_pytis_role_purposes'),
+            C('deleted', TDate),),
+            """Application user roles.""",
+           init_values=(('1', "'admin_roles'", "'Administrátor rolí'", '1', 'NULL',),
+                        ('2', "'admin_menu'", "'Administrátor menu'", '1', 'NULL',),
+                        ('3', "'admin'", "'Administrátor rolí a menu'", '1', 'NULL',),
+                        ),
+           depends=('c_pytis_role_purposes',))
 
 _std_table('e_pytis_role_members',
            (P('id', TSerial,
@@ -212,4 +227,7 @@ _std_table('e_pytis_role_members',
            """Mutual memberships of roles.
 Entries in this table define `member's of each `roleid'.
 """,
+           init_values=(('1', '3',),
+                        ('2', '3',),
+                        ),
            depends=('e_pytis_roles',))
