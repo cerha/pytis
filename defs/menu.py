@@ -80,6 +80,12 @@ class ApplicationRoles(ApplicationRolesSpecification):
     layout = ('name', 'description', 'purposeid',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='name')
+    bindings = {'menu.ApplicationRolesMembership':
+                    pytis.presentation.BindingSpec(
+                      title=_("Role members"),
+                      condition=(lambda row: pytis.data.OR(pytis.data.EQ('roleid', row['roleid'],),
+                                                           pytis.data.EQ('member', row['roleid'],))))
+                }
     
     def on_delete_record(self, row):
         if self._row_deleteable(row):
