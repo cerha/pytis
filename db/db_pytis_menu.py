@@ -218,6 +218,18 @@ _std_table('e_pytis_roles',
                         ),
            depends=('c_pytis_role_purposes',))
 
+viewng('ev_pytis_roles',
+       (SelectRelation('e_pytis_roles', alias='t1'),
+        SelectRelation('c_pytis_role_purposes', alias='t2', exclude_columns=('purposeid',),
+                       condition='t1.purposeid = t2.purposeid', jointype=JoinType.INNER),
+        ),
+       insert_order=('e_pytis_roles',),
+       update_order=('e_pytis_roles',),
+       delete_order=('e_pytis_roles',),
+       grant=db_rights,
+       depends=('e_pytis_roles', 'c_pytis_role_purposes',)
+       )
+
 _std_table('e_pytis_role_members',
            (P('id', TSerial,
               doc="Just to make logging happy"),
