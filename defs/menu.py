@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytis.data
 import pytis.form
 import pytis.presentation
 from pytis.extensions import Field, nextval
@@ -41,9 +42,18 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm, self._my_name, select_row=row['roleid'])
 
+    def _row_deleteable(self, row):
+        if not self._row_editable(row):
+            pytis.form.run_dialog(pytis.form.Warning, "Správcovské role nelze mazat")
+            return False
+        return True
+        
     def on_delete_record(self, row):
-        pytis.form.run_dialog(pytis.form.Warning, "Role nelze mazat, nastavte datum zru¹ení")
-        return None
+        if not self._row_deleteable(row):
+            return None
+        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
+            return None
+        return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationRoles(ApplicationRolesSpecification):
     table = 'ev_pytis_roles'
@@ -70,6 +80,11 @@ class ApplicationRoles(ApplicationRolesSpecification):
     layout = ('name', 'description', 'purposeid',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='name')
+    
+    def on_delete_record(self, row):
+        if self._row_deleteable(row):
+            pytis.form.run_dialog(pytis.form.Warning, "Role nelze mazat, nastavte datum zru¹ení")
+        return None
 
 class ApplicationRolesMembership(ApplicationRolesSpecification):
     table = 'ev_pytis_role_members'
