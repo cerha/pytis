@@ -190,6 +190,8 @@ def _std_table_nolog(name, columns, doc, grant=db_rights, **kwargs):
 
 ### The menu schema itself
 
+### Roles
+
 _std_table_nolog('c_pytis_role_purposes',
                  (P('purposeid', TInteger),
                   C('purpose', 'varchar(32)', constraints=('unique', 'not null',)),),
@@ -243,3 +245,88 @@ Entries in this table define `member's of each `roleid'.
                         ('-2', '-2', '-3',),
                         ),
            depends=('e_pytis_roles',))
+
+### Menus
+
+_std_table_nolog('c_pytis_menu_actions',
+                 (P('actionid', TSerial),
+                  C('name', 'varchar(64)', constraints=('not null', 'unique',)),
+                  C('description', TString),
+                  ),
+                 """List of available (pre-defined and visible) application actions."""
+                 )
+
+_std_table('e_pytis_menu',
+           (P('menuid', TSerial),
+            C('title', 'varchar(32)', constraints=('not null',)),
+            C('parent', TInteger, references='e_pytis_menu',
+              doc="Parent menu item, NULL for top level items."),
+            C('position', TInteger,
+              doc=("Order of the item within the given submenu. "
+                   "Lower numbers put the item higher. "
+                   "No two items in the same submenu should have the same order number; "
+                   "if they do, their mutual order is undefined.")),
+            C('actionid', TInteger, references='c_pytis_menu_actions',
+              doc=("Application action assigned to the menu item."
+                   "Menu items bound to submenus should have this value NULL; "
+                   "if they do not, the assigned action is ignored.")),
+            ),
+           """Menu structure definition.""",
+           depends=('c_pytis_menu_actions',))
+         
+_std_table_nolog('c_pytis_access_rights',
+                 (P('rightid', TInteger),
+                  C('name', 'varchar(8)', constraints=('not null', 'unique',)),
+                  C('description', 'varchar(32)', constraints=('not null',)),
+                  ),
+                 """Available rights.  Not all rights make sense for all actions and menus.""",
+                 init_values=(('0', "'show'", "'Visibility of menu items.'",),
+                              ('1', "'view'", "'Viewing existent records.'",),
+                              ('2', "'insert'", "'Inserting new records.'",),
+                              ('3', "'edit'", "'Editing existent records.'",),
+                              ('4', "'delete'", "'Deleting records.'",),
+                              ('5', "'print'", "'Printing data.'",),
+                              ('6', "'export'", "'Exporting data.'",),
+                              ('7', "'run'", "'Running application procedures.'",),
+                              ))
+
+### Access rights
+
+_std_table('e_pytis_action_rights',
+           (P('id', TSerial,
+              doc="Just to make logging happy"),
+            C('actionid', TInteger, references='c_pytis_menu_actions', constraints=('not null',)),
+            C('roleid', TInteger, references='e_pytis_roles', constraints=('not null',)),
+            C('rightid', TInteger, references='c_pytis_access_rights', constraints=('not null',)),
+            ),
+           """Assignments of access rights to actions.
+Actions have access rights given here and only those access rights,
+unless overridden by menu items access rights.
+
+Action rights are supported in the application, but they are not exposed in the
+current user interface.  They are introduced to support extend rights
+assignment, e.g. in context menus etc.
+""",
+           depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
+           )
+
+_std_table('e_pytis_menu_rights',
+           (P('id', TSerial,
+              doc="Just to make logging happy"),
+            C('menuid', TInteger, references='e_pytis_menu', constraints=('not null',)),
+            C('roleid', TInteger, references='e_pytis_roles', constraints=('not null',)),
+            C('rightid', TInteger, references='c_pytis_access_rights', constraints=('not null',)),
+            C('granted', TBoolean, constraints=('not null',),
+              doc="If true the right is granted, otherwise it is denied"),
+            ),
+           """Assignments of access rights to menu items.
+These right assignments have preference over rights assigned to actions.
+If a right is assigned or denied to a terminal menu item, it takes absolute precedence.
+If a right is assigned or denied to a non-terminal menu item, it applies
+implicitly to all the items included in it.  But particular terminal or
+non-terminal menu items can override the assignment.
+Action rights take precedence over implicit rights set by non-terminal menu
+items, but have lower precedence than terminal menu items rights.
+""",
+           depends=('e_pytis_menu', 'e_pytis_roles', 'c_pytis_access_rights',)
+           )
