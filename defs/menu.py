@@ -28,11 +28,27 @@ class ApplicationRolePurposes(pytis.presentation.Specification):
         Field('purposeid', "Id"),
         Field('purpose', "Úèel"),
         )
-    cb = pytis.presentation.CodebookSpec(display='purpose', prefer_display=True)
+    cb = pytis.presentation.CodebookSpec(display='purpose')
 
-class ApplicationRoles(pytis.presentation.Specification):
+class ApplicationRolesSpecification(pytis.presentation.Specification):
+    
+    def _row_editable(self, row):
+        return row['purposeid'].value() != 1
+    
+    def on_edit_record(self, row):
+        if not self._row_editable(row):
+            pytis.form.run_dialog(pytis.form.Warning, "Správcovské role nelze editovat")
+            return None
+        return pytis.form.run_form(pytis.form.PopupEditForm, self._my_name, select_row=row['roleid'])
+
+    def on_delete_record(self, row):
+        pytis.form.run_dialog(pytis.form.Warning, "Role nelze mazat, nastavte datum zru¹ení")
+        return None
+    
+class ApplicationRoles(ApplicationRolesSpecification):
     table = 'ev_pytis_roles'
     title = "Role"
+    _my_name = 'menu.ApplicationRoles'
     fields = (
         Field('roleid', "Id", default=nextval('e_pytis_roles_roleid_seq')),
         Field('name', "Název",
@@ -53,16 +69,28 @@ class ApplicationRoles(pytis.presentation.Specification):
     columns = ('name', 'description', 'purpose', 'deleted',)
     layout = ('name', 'description', 'purposeid',)
     sorting = (('name', pytis.data.ASCENDENT,),)
+    cb = pytis.presentation.CodebookSpec(display='name')
+
+class ApplicationRolesMembership(ApplicationRolesSpecification):
+    table = 'ev_pytis_role_members'
+    title = "Èlenství v rolích"
+    _my_name = 'menu.ApplicationRolesMembership'
+    fields = (
+        Field('id', "Id", default=nextval('e_pytis_role_members_id_seq')),
+        Field('roleid', "Id obsahující role", codebook='menu.ApplicationRoles'),
+        Field('member', "Id obsa¾ené role", codebook='menu.ApplicationRoles'),
+        Field('name', "Role jako skupina",
+              fixed=True,
+              descr="Role, do ní¾ jsou zahrnuty jiné role."),
+        Field('mname', "Role jako èlen",
+              fixed=True,
+              descr="Role, která je èlenem skupinové role."),
+        Field('purposeid', "Úèel", codebook='menu.ApplicationRolePurposes'),
+        Field('mpurposeid', "Úèel", codebook='menu.ApplicationRolePurposes'),
+        )
+    columns = ('name', 'mname',)
+    layout = ('roleid', 'member',)
+    sorting = (('name', pytis.data.ASCENDENT,), ('mname', pytis.data.ASCENDENT,),)
 
     def _row_editable(self, row):
-        return row['purposeid'].value() != 1
-    
-    def on_edit_record(self, row):
-        if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, "Správcovské role nelze editovat")
-            return None
-        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.ApplicationRoles', select_row=row['roleid'])
-
-    def on_delete_record(self, row):
-        pytis.form.run_dialog(pytis.form.Warning, "Role nelze mazat, nastavte datum zru¹ení")
-        return None
+        return row['purposeid'].value() != 1 and row['mpurposeid'] != 1
