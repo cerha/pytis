@@ -66,7 +66,7 @@ class ApplicationRoles(ApplicationRolesSpecification):
         Field('description', "Popis",
               descr=_("Popis urèení role.")),
         Field('purposeid', "Kód úèelu", codebook='menu.ApplicationRolePurposes',
-              fixed=True,
+              fixed=True, selection_type=pytis.presentation.SelectionType.CHOICE,
               descr="Kód role: normální, u¾ivatelský úèet, správcovská."),              
         Field('purpose', "Úèel",
               fixed=True,
