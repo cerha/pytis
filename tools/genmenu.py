@@ -22,76 +22,104 @@ import copy
 import sys
 import types
 
+import psycopg2 as dbapi
+
 import pytis.form
 import pytis.util
 
-#actions: (actionid), name, description
-#menu: (menuid)?, title, parent, position, actionid
+class Serial(object):
+    _counter = pytis.util.Counter()
+    def __init__(self):
+        self.id = Serial._counter.next()
 
-def modulify(obj, name):
-    module = obj.__module__
-    if module[:len('pytis.')] != 'pytis.':
-        name = '%s.%s' % (obj.__module__, name,)
-    return name
+class Action(Serial):
+    def __init__(self, name, description):
+        Serial.__init__(self)
+        self.name = name
+        self.description = description
 
-def super_menu_id(menu):
+class Menu(Serial):
+    def __init__(self, name, title, parent, position, action=None):
+        Serial.__init__(self)
+        self.name = name
+        self.title = title
+        self.parent = parent
+        self.position = position
+        self.action = action
+        self.children = []
+
+def super_menu_id(menu, menu_items):
     title = menu.title()
     id_title = title.replace(' ', '-')
-    return ('menu/%s' % (id_title,))
+    base_id = 'menu/%s' % (id_title,)
+    menu_id = base_id
+    i = 1
+    while menu_items.has_key(menu_id):
+        menu_id = base_id + str(i)
+        i += 1
+    return menu_id
 
-def menu_item_id(menu):
-    args = copy.copy(menu.args())
-    command = menu.command().name()
-    appstring = 'Application.'
-    if command[:len(appstring)] == appstring:
-        command = command[len(appstring):]
-    if command == 'RUN_FORM':
-        form_class = args['form_class']; del args['form_class']
-        form_name = args['name']; del args['name']
-        extra = ''
-        if args.has_key('binding'):
-            extra = ('/binding=%s' % (args['binding'],)); del args['binding']
-        if not args:
-            class_name = modulify(form_class, form_class.__name__)
-            return ('item/form/%s/%s%s' % (class_name, form_name, extra,))
-    elif command == 'NEW_RECORD':
-        form_name = args['name']; del args['name']
-        if not args:
-            return ('item/%s/%s' % (command, form_name,))
-    elif command == 'HANDLED_ACTION':
-        handler = args['handler']; del args['handler']
-        if not args and type(handler) == types.FunctionType:
-            name = modulify(handler, handler.func_name)
-            return ('item/handle/%s' % (name,))
-    elif command == 'RUN_PROCEDURE':
-        proc_name = args['proc_name']; del args['proc_name']
-        spec_name = args['spec_name']; del args['spec_name']
-        if args.has_key('enabled'):
-            del args['enabled']
-        if not args:
-            return ('item/proc/%s/%s' % (proc_name, spec_name,))
-    if args:
-        return '??? %s %s' % (command, menu.args(),)
-    return ('item/%s' % (command,))
-
-def dump_menu(menu, indent=0):
+def process_menu(menu, parent, menu_items, actions, position=100):
     if isinstance(menu, pytis.form.Menu):
-        print '%s* %s: %s' % (' '*indent, menu.title(), super_menu_id(menu),)
-        dump_menu(menu.items(), indent=indent+2)
+        menu_id = super_menu_id(menu, menu_items)
+        menu_items[menu_id] = supmenu = Menu(name=menu_id, title=menu.title(), parent=parent, position=position)
+        parent.children.append(supmenu)
+        process_menu(menu.items(), supmenu, menu_items, actions)
     elif isinstance(menu, pytis.form.MItem):
-        print '%s- %s: %s' % (' '*indent, menu.title(), menu_item_id(menu))
+        action_id = menu.action_id()
+        if action_id is None:
+            print "Menu item without action id, add one explicitly:", menu.title()
+            return
+        action = actions.get(action_id)
+        if action is None:
+            actions[action_id] = action = Action(name=action_id, description=menu.help())
+        else:
+            if action.description is None:
+                action.description = menu.help()
+        menu_id = super_menu_id(menu, menu_items)
+        if menu_items.has_key(menu_id):
+            print "Duplicate menu id, change it:", menu.title()
+            return
+        menu_items[menu_id] = submenu = Menu(name=menu_id, title=menu.title(), parent=parent, position=position, action=action)
+        parent.children.append(submenu)        
     elif isinstance(menu, pytis.form.MSeparator):
-        print '%s----' % (' '*indent,)
+        parent.children.append(Menu(name=None, title=None, parent=parent, position=position))
     elif isinstance(menu, tuple):
         for m in menu:
-            dump_menu(m, indent=indent)        
+            process_menu(m, parent, menu_items, actions, position=position)
+            position += 10
     else:
         print 'Unknown menu: %s' % (menu,)
 
+def fill_actions(cursor, actions):
+    for action in actions.values():
+        cursor.execute("insert into c_pytis_menu_actions (actionid, name, description) values(%s, %s, %s)",
+                       (action.id, action.name, action.description,))
+
+def fill_menu_items(cursor, menu, fullposition=''):
+    fullposition += str(menu.position)
+    parent = menu.parent and menu.parent.id
+    action = menu.action and menu.action.id
+    cursor.execute("insert into e_pytis_menu(menuid, name, title, parent, position, fullposition, actionid) values(%s, %s, %s, %s, %s, %s, %s)",
+                   (menu.id, menu.name, menu.title, parent, menu.position, fullposition, action,))
+    for m in menu.children:
+        fill_menu_items(cursor, m, fullposition=fullposition)
+    
 def run(def_dir):
     resolver = pytis.util.FileResolver(def_dir)
     menu = resolver.get('application', 'menu')
-    dump_menu(menu)
+    top = Menu(name='', title="Top", parent=None, position=0, action=None)
+    menu_items = {}
+    actions = {}
+    process_menu(menu, top, menu_items, actions)
+    connection = dbapi.connect(database='pytis-demo')
+    cursor = connection.cursor()
+    cursor.execute("set client_encoding to 'latin2'") # grrr
+    cursor.execute("delete from e_pytis_menu")
+    cursor.execute("delete from c_pytis_menu_actions")
+    fill_actions(cursor, actions)
+    fill_menu_items(cursor, top)
+    connection.commit()
 
 if __name__ == '__main__':
     run(sys.argv[1])

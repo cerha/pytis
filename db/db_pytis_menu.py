@@ -267,7 +267,7 @@ viewng('ev_pytis_role_members',
 ### Menus
 
 _std_table_nolog('c_pytis_menu_actions',
-                 (P('actionid', TSerial),
+                 (P('actionid', TInteger),
                   C('name', TString, constraints=('not null', 'unique',)),
                   C('description', TString),
                   ),
@@ -275,8 +275,10 @@ _std_table_nolog('c_pytis_menu_actions',
                  )
 
 _std_table('e_pytis_menu',
-           (P('menuid', TSerial),
-            C('title', 'varchar(32)',
+           (P('menuid', TInteger),
+            C('name', TString, constraints=('unique',),
+              doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
+            C('title', 'varchar(64)',
               doc='User title of the item. If NULL then it is a separator.'),
             C('parent', TInteger, references='e_pytis_menu',
               doc="Parent menu item, NULL for top level items."),
@@ -285,6 +287,9 @@ _std_table('e_pytis_menu',
                    "Lower numbers put the item higher. "
                    "No two items in the same submenu should have the same order number; "
                    "if they do, their mutual order is undefined.")),
+            C('fullposition', TString,
+              doc=("Full position including parent items. "
+                   "Lexicographical ordering of all menu items. ")),
             C('actionid', TInteger, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
