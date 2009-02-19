@@ -79,12 +79,11 @@ class ApplicationRoles(ApplicationRolesSpecification):
     layout = ('name', 'description', 'purposeid',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='name')
-    bindings = {'menu.ApplicationRolesMembership':
-                    pytis.presentation.BindingSpec(
-                      title=_("Role members"),
-                      condition=(lambda row: pytis.data.OR(pytis.data.EQ('roleid', row['roleid'],),
-                                                           pytis.data.EQ('member', row['roleid'],))))
-                }
+    bindings = (pytis.presentation.Binding("Zahrnuté role", 'menu.ApplicationRolesMembers', id='members',
+                                           condition=(lambda row: pytis.data.OR(pytis.data.EQ('roleid', row['roleid'],),))),
+                pytis.presentation.Binding("Èlenství v rolích", 'menu.ApplicationRolesOwners', id='owners',
+                                           condition=(lambda row: pytis.data.OR(pytis.data.EQ('member', row['roleid'],)))),
+                )
     
     def on_delete_record(self, row):
         if self._row_deleteable(row):
@@ -106,6 +105,10 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
               descr="Role, která je èlenem skupinové role."),
         Field('purposeid', "Úèel", codebook='menu.ApplicationRolePurposes'),
         Field('mpurposeid', "Úèel", codebook='menu.ApplicationRolePurposes'),
+        Field('description', "Popis",
+              descr=_("Popis urèení role.")),
+        Field('mdescription', "Popis",
+              descr=_("Popis urèení role.")),
         )
     columns = ('name', 'mname',)
     layout = ('roleid', 'member',)
@@ -113,3 +116,11 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
 
     def _row_editable(self, row):
         return row['purposeid'].value() != 1 and row['mpurposeid'] != 1
+
+class ApplicationRolesOwners(ApplicationRolesMembership):
+    title = "Èlenství v rolích"
+    columns = ('name', 'description',)
+
+class ApplicationRolesMembers(ApplicationRolesMembership):
+    title = "Vlastnìné role"
+    columns = ('mname', 'mdescription',)
