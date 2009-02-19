@@ -268,7 +268,7 @@ viewng('ev_pytis_role_members',
 
 _std_table_nolog('c_pytis_menu_actions',
                  (P('actionid', TSerial),
-                  C('name', 'varchar(64)', constraints=('not null', 'unique',)),
+                  C('name', TString, constraints=('not null', 'unique',)),
                   C('description', TString),
                   ),
                  """List of available (pre-defined and visible) application actions."""
