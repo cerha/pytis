@@ -969,7 +969,7 @@ class MItem(_TitledMenuObject):
     _used_titles = {}
     
     def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None):
+                 icon=None, menu_item_id=None, action_id=None):
         """Uschovej parametry.
 
         Argumenty:
@@ -995,6 +995,19 @@ class MItem(_TitledMenuObject):
             identifikátor ikony pou¾itelný jako argument funkce 'get_icon'.
             Pokud není urèena, bude automaticky pou¾ita ikona podle typu
             pøíkazu (je-li pro pøíkaz definována).
+
+          action_id -- string uniquely identifying the action bound to the menu
+            item; if 'None' the id is generated if possible.  It is allowed for
+            different menu items to have the same actionid as long as their
+            actions are actually the same.
+
+          menu_item_id -- string uniquely identifying the menu item; if 'None'
+            it defaults to actionid.  No two menu items may have the same id.
+            The primary purpose of the menu item ids is to identify the menu
+            items in the dynamic menu stored in the database.  So when you
+            change a menu item, consider either retaining or changing its id,
+            depending on whether its customizations in the database should be
+            retained or discarded.
             
         Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
         'command' automaticky nastavena tato klávesa.
@@ -1019,11 +1032,57 @@ class MItem(_TitledMenuObject):
         self._help = help
         self._hotkey = xtuple(hotkey)
         self._icon = icon
+        if action_id is None:
+            action_id = self._make_action_id()
+        self._action_id = action_id
+        if menu_item_id is None:
+            menu_item_id = action_id
+        self._menu_item_id = menu_item_id
         super(MItem, self).__init__(title)
 
     def _on_ui_event(self, event):
         event.Enable(self._command.enabled(**self._args))
-        
+
+    def _make_action_id(self):
+        def modulify(obj, name):
+            module = obj.__module__
+            if module[:len('pytis.')] != 'pytis.':
+                name = '%s.%s' % (obj.__module__, name,)
+            return name
+        args = copy.copy(self.args())
+        command = self.command().name()
+        appstring = 'Application.'
+        if command[:len(appstring)] == appstring:
+            command = command[len(appstring):]
+        if command == 'RUN_FORM':
+            form_class = args['form_class']; del args['form_class']
+            form_name = args['name']; del args['name']
+            extra = ''
+            if args.has_key('binding'):
+                extra = ('/binding=%s' % (args['binding'],)); del args['binding']
+            if not args:
+                class_name = modulify(form_class, form_class.__name__)
+                return ('item/form/%s/%s%s' % (class_name, form_name, extra,))
+        elif command == 'NEW_RECORD':
+            form_name = args['name']; del args['name']
+            if not args:
+                return ('item/%s/%s' % (command, form_name,))
+        elif command == 'HANDLED_ACTION':
+            handler = args['handler']; del args['handler']
+            if not args and type(handler) == types.FunctionType:
+                name = modulify(handler, handler.func_name)
+                return ('item/handle/%s' % (name,))
+        elif command == 'RUN_PROCEDURE':
+            proc_name = args['proc_name']; del args['proc_name']
+            spec_name = args['spec_name']; del args['spec_name']
+            if args.has_key('enabled'):
+                del args['enabled']
+            if not args:
+                return ('item/proc/%s/%s' % (proc_name, spec_name,))
+        if args:
+            return None
+        return ('item/%s' % (command,))
+
     def _create_icon(self, item):
         icon = get_icon(self._icon or command_icon(self._command, self._args))
         if icon:
@@ -1055,6 +1114,14 @@ class MItem(_TitledMenuObject):
     def help(self):
         """Vra» text nápovìdy polo¾ky zadaný v konstruktoru."""
         return self._help
+
+    def action_id(self):
+        """Return action id string of the menu item or 'None' if it is unavailable."""
+        return self._action_id
+
+    def menu_item_id(self):
+        """Return id string of the menu item or 'None' if it is unavailable."""
+        return self._menu_item_id
     
 
 class CheckItem(MItem):
