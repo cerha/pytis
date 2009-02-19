@@ -53,7 +53,7 @@ def menu_item_id(menu):
             extra = ('/binding=%s' % (args['binding'],)); del args['binding']
         if not args:
             class_name = modulify(form_class, form_class.__name__)
-            return ('item/%s/%s/%s%s' % (command, class_name, form_name, extra,))
+            return ('item/form/%s/%s%s' % (class_name, form_name, extra,))
     elif command == 'NEW_RECORD':
         form_name = args['name']; del args['name']
         if not args:
@@ -62,7 +62,14 @@ def menu_item_id(menu):
         handler = args['handler']; del args['handler']
         if not args and type(handler) == types.FunctionType:
             name = modulify(handler, handler.func_name)
-            return ('item/%s/%s' % (command, name,))
+            return ('item/handle/%s' % (name,))
+    elif command == 'RUN_PROCEDURE':
+        proc_name = args['proc_name']; del args['proc_name']
+        spec_name = args['spec_name']; del args['spec_name']
+        if args.has_key('enabled'):
+            del args['enabled']
+        if not args:
+            return ('item/proc/%s/%s' % (proc_name, spec_name,))
     if args:
         return '??? %s %s' % (command, menu.args(),)
     return ('item/%s' % (command,))
