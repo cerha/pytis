@@ -40,7 +40,7 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, "Správcovské role nelze editovat")
             return None
-        return pytis.form.run_form(pytis.form.PopupEditForm, self._my_name, select_row=row['roleid'])
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['roleid'])
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
@@ -58,7 +58,6 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
 class ApplicationRoles(ApplicationRolesSpecification):
     table = 'ev_pytis_roles'
     title = "Role"
-    _my_name = 'menu.ApplicationRoles'
     fields = (
         Field('roleid', "Id", default=nextval('e_pytis_roles_roleid_seq')),
         Field('name', "Název",
@@ -95,7 +94,6 @@ class ApplicationRoles(ApplicationRolesSpecification):
 class ApplicationRolesMembership(ApplicationRolesSpecification):
     table = 'ev_pytis_role_members'
     title = "Èlenství v rolích"
-    _my_name = 'menu.ApplicationRolesMembership'
     fields = (
         Field('id', "Id", default=nextval('e_pytis_role_members_id_seq')),
         Field('roleid', "Id obsahující role", codebook='menu.ApplicationRoles'),
