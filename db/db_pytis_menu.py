@@ -193,7 +193,7 @@ def _std_table_nolog(name, columns, doc, grant=db_rights, **kwargs):
 ### Roles
 
 _std_table_nolog('c_pytis_role_purposes',
-                 (P('purposeid', TInteger),
+                 (P('purposeid', 'char(4)'),
                   C('purpose', 'varchar(32)', constraints=('unique', 'not null',)),),
                  """There are three kinds of roles:
 1. Menu and access administrator roles.  Definitions of these roles may be changed
@@ -201,22 +201,22 @@ _std_table_nolog('c_pytis_role_purposes',
 2. Roles corresponding to system accounts (login roles).
 3. Pure application roles.
 """,
-                 init_values=(('1', "'Správcovská'",),
-                              ('2', "'Uživatelská'",),
-                              ('3', "'Aplikační'",),)
+                 init_values=(("'admn'", "'Správcovská'",),
+                              ("'user'", "'Uživatelská'",),
+                              ("'appl'", "'Aplikační'",),)
             )
 
 _std_table('e_pytis_roles',
            (P('roleid', TSerial),
             C('name', TUser, constraints=('unique', 'not null',),),
             C('description', 'varchar(64)'),
-            C('purposeid', TInteger, constraints=('not null',), default="1",
+            C('purposeid', 'char(4)', constraints=('not null',), default="'appl'",
               references='c_pytis_role_purposes'),
             C('deleted', TDate),),
             """Application user roles.""",
-           init_values=(('-1', "'admin_roles'", "'Administrátor rolí'", '1', 'NULL',),
-                        ('-2', "'admin_menu'", "'Administrátor menu'", '1', 'NULL',),
-                        ('-3', "'admin'", "'Administrátor rolí a menu'", '1', 'NULL',),
+           init_values=(('-1', "'admin_roles'", "'Administrátor rolí'", "'admn'", 'NULL',),
+                        ('-2', "'admin_menu'", "'Administrátor menu'", "'admn'", 'NULL',),
+                        ('-3', "'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
                         ),
            depends=('c_pytis_role_purposes',))
 
@@ -276,7 +276,8 @@ _std_table_nolog('c_pytis_menu_actions',
 
 _std_table('e_pytis_menu',
            (P('menuid', TSerial),
-            C('title', 'varchar(32)', constraints=('not null',)),
+            C('title', 'varchar(32)',
+              doc='User title of the item. If NULL then it is a separator.'),
             C('parent', TInteger, references='e_pytis_menu',
               doc="Parent menu item, NULL for top level items."),
             C('position', TInteger,
@@ -293,19 +294,18 @@ _std_table('e_pytis_menu',
            depends=('c_pytis_menu_actions',))
          
 _std_table_nolog('c_pytis_access_rights',
-                 (P('rightid', TInteger),
-                  C('name', 'varchar(8)', constraints=('not null', 'unique',)),
+                 (P('rightid', 'varchar(8)'),
                   C('description', 'varchar(32)', constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
-                 init_values=(('0', "'show'", "'Visibility of menu items.'",),
-                              ('1', "'view'", "'Viewing existent records.'",),
-                              ('2', "'insert'", "'Inserting new records.'",),
-                              ('3', "'edit'", "'Editing existent records.'",),
-                              ('4', "'delete'", "'Deleting records.'",),
-                              ('5', "'print'", "'Printing data.'",),
-                              ('6', "'export'", "'Exporting data.'",),
-                              ('7', "'run'", "'Running application procedures.'",),
+                 init_values=(("'show'", "'Visibility of menu items.'",),
+                              ("'view'", "'Viewing existent records.'",),
+                              ("'insert'", "'Inserting new records.'",),
+                              ("'edit'", "'Editing existent records.'",),
+                              ("'delete'", "'Deleting records.'",),
+                              ("'print'", "'Printing data.'",),
+                              ("'export'", "'Exporting data.'",),
+                              ("'run'", "'Running application procedures.'",),
                               ))
 
 ### Access rights
@@ -315,7 +315,7 @@ _std_table('e_pytis_action_rights',
               doc="Just to make logging happy"),
             C('actionid', TInteger, references='c_pytis_menu_actions', constraints=('not null',)),
             C('roleid', TInteger, references='e_pytis_roles', constraints=('not null',)),
-            C('rightid', TInteger, references='c_pytis_access_rights', constraints=('not null',)),
+            C('rightid', 'varchar(8)', references='c_pytis_access_rights', constraints=('not null',)),
             ),
            """Assignments of access rights to actions.
 Actions have access rights given here and only those access rights,
@@ -333,7 +333,7 @@ _std_table('e_pytis_menu_rights',
               doc="Just to make logging happy"),
             C('menuid', TInteger, references='e_pytis_menu', constraints=('not null',)),
             C('roleid', TInteger, references='e_pytis_roles', constraints=('not null',)),
-            C('rightid', TInteger, references='c_pytis_access_rights', constraints=('not null',)),
+            C('rightid', 'varchar(8)', references='c_pytis_access_rights', constraints=('not null',)),
             C('granted', TBoolean, constraints=('not null',),
               doc="If true the right is granted, otherwise it is denied"),
             ),

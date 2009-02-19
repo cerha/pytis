@@ -34,7 +34,7 @@ class ApplicationRolePurposes(pytis.presentation.Specification):
 class ApplicationRolesSpecification(pytis.presentation.Specification):
     
     def _row_editable(self, row):
-        return row['purposeid'].value() != 1
+        return row['purposeid'].value() != 'admn'
     
     def on_edit_record(self, row):
         if not self._row_editable(row):
