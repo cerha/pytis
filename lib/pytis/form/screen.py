@@ -1457,8 +1457,10 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
     if not enabled:
         ctrl.Enable(False)
     if width:
-        ctrl.SetMinSize((height, ctrl.GetSize().height))
+        ctrl.SetSize((width, ctrl.GetSize().height))
+        ctrl.SetMinSize((width, ctrl.GetSize().height))
     if height:
+        ctrl.SetSize((ctrl.GetSize().width, height))
         ctrl.SetMinSize((ctrl.GetSize().width, height))
 
 

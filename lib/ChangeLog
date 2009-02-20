@@ -1,5 +1,8 @@
 2009-02-20  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/screen.py:
+	Make sure to apply the control size correctly.
+
 	* pytis/form/search.py:
 	Apply logical operator precedence at the same level.
 
