@@ -314,7 +314,7 @@ class SFDialog(SFSDialog):
                 choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
                        selected=operator,
                        tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
-                spin(level, length=2,
+                spin(level, length=4,
                      tooltip=_("Zvolte váhu logického operátoru.")),)
         def create_relational_operator(i, n, operator, col1, col2, value):
             return (
