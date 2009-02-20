@@ -158,7 +158,10 @@ class ApplicationMenu(pytis.presentation.Specification):
     layout = ('title', 'position',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
-
+    bindings = {'menu.ApplicationMenuRights':
+                    pytis.presentation.BindingSpec(title="Práva polo¾ky menu", binding_column='menuid')
+                }
+    
 class ApplicationMenus(pytis.presentation.Specification):
     # This is almost the same as ApplicationMenu.
     # But we can't inherit from it because pytis would suffer from infinite
@@ -181,3 +184,32 @@ class ApplicationMenus(pytis.presentation.Specification):
     layout = ('title', 'position',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
+
+class ApplicationRights(pytis.presentation.Specification):
+    table = 'c_pytis_access_rights'
+    title = "Seznam práv"
+    fields = (
+        Field('rightid', "Právo", fixed=True),
+        Field('description', "Popis"),
+        )
+    columns = ('rightid', 'description',)
+    layout = ('rightid', 'description',)
+    cb = pytis.presentation.CodebookSpec(display='rightid')        
+
+class ApplicationMenuRights(pytis.presentation.Specification):
+    table = 'ev_pytis_menu_rights'
+    title = "Práva"
+    fields = (
+        Field('id', "Id", default=nextval('e_pytis_menu_rights_id_seq')),
+        Field('menuid', "Id Menu", codebook='menu.ApplicationMenu'),
+        Field('title', "Polo¾ka menu"),
+        Field('roleid', "Id Role", codebook='menu.ApplicationRoles'),
+        Field('name', "Role", fixed=True),
+        Field('rightid', "Právo", codebook='menu.ApplicationRights',
+              fixed=True),
+        Field('granted', "Povoleno/zakázáno", fixed=True),
+        )
+    columns = ('title', 'name', 'rightid', 'granted',)
+    layout = ('menuid', 'roleid', 'rightid', 'granted',)
+    sorting = (('name', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
+

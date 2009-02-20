@@ -324,13 +324,15 @@ viewng('ev_pytis_menu_parents',
        depends=('ev_pytis_menu',)
        )
 
+### Access rights
+
 _std_table_nolog('c_pytis_access_rights',
                  (P('rightid', 'varchar(8)'),
                   C('description', 'varchar(32)', constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
                  init_values=(("'show'", "'Visibility of menu items.'",),
-                              ("'viiew'", "'Viewing existent records.'",),
+                              ("'view'", "'Viewing existent records.'",),
                               ("'insert'", "'Inserting new records.'",),
                               ("'edit'", "'Editing existent records.'",),
                               ("'delete'", "'Deleting records.'",),
@@ -338,8 +340,6 @@ _std_table_nolog('c_pytis_access_rights',
                               ("'export'", "'Exporting data.'",),
                               ("'run'", "'Running application procedures.'",),
                               ))
-
-### Access rights
 
 _std_table('e_pytis_action_rights',
            (P('id', TSerial,
@@ -360,8 +360,7 @@ assignment, e.g. in context menus etc.
            )
 
 _std_table('e_pytis_menu_rights',
-           (P('id', TSerial,
-              doc="Just to make logging happy"),
+           (P('id', TSerial),
             C('menuid', TInteger, references='e_pytis_menu', constraints=('not null',)),
             C('roleid', TInteger, references='e_pytis_roles', constraints=('not null',)),
             C('rightid', 'varchar(8)', references='c_pytis_access_rights', constraints=('not null',)),
@@ -379,3 +378,18 @@ items, but have lower precedence than terminal menu items rights.
 """,
            depends=('e_pytis_menu', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
+
+viewng('ev_pytis_menu_rights',
+       (SelectRelation('e_pytis_menu_rights', alias='main'),
+        SelectRelation('e_pytis_menu', alias='menu',
+                       exclude_columns=('menuid', 'name', 'parent', 'position', 'fullposition', 'indentation', 'actionid',),
+                       condition='main.menuid = menu.menuid', jointype=JoinType.INNER),
+        SelectRelation('e_pytis_roles', alias='roles', exclude_columns=('roleid', 'description', 'purposeid',),
+                       condition='main.roleid = roles.roleid', jointype=JoinType.INNER),
+        ),
+       insert_order=('e_pytis_menu_rights',),
+       update_order=('e_pytis_menu_rights',),
+       delete_order=('e_pytis_menu_rights',),
+       grant=db_rights,
+       depends=('e_pytis_menu_rights', 'e_pytis_menu', 'e_pytis_roles',)
+       )
