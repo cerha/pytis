@@ -1615,6 +1615,8 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
     if length:
         assert width is None
         width = dlg2px(ctrl, 4*length)
+        if _spin:
+            width += 20 # Add some space for spin buttons...
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
 
