@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -607,8 +607,13 @@ class LookupForm(InnerForm):
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
     """Konstanta pro argument direction příkazu 'COMMAND_SORT'."""
 
+    _USER_FILTERS_PARAM = 'conditions'
+    _FILTER_CONDITION_PARAM = 'filter'
+    _SEARCH_CONDITION_PARAM = 'search'
     _PERSISTENT_FORM_PARAMS = InnerForm._PERSISTENT_FORM_PARAMS + \
-                              ('conditions', 'filter', 'search')
+                              (_USER_FILTERS_PARAM,
+                               _FILTER_CONDITION_PARAM,
+                               _SEARCH_CONDITION_PARAM)
 
     _UNNAMED_FILTER_LABEL = _("Nepojmenovaný filtr")
 
@@ -637,19 +642,16 @@ class LookupForm(InnerForm):
         # konstruktoru, naproti tomu _lf_filter reprezentuje aktuální podmínku
         # uživatelského filtru.
         self._lf_condition = condition
-        if filter:
-            # Make sure the condition is well formed.
-            Condition("", filter)
-        elif self._view.default_filter():
-            cond = find(self._view.default_filter(), self._view.conditions(), key=lambda c: c.id())
-            if cond:
-                filter = cond.condition()
+        if filter is None and self._view.default_filter() is not None:
+            f = find(self._view.default_filter(), self._view.filters(), key=lambda f: f.id())
+            if f:
+                filter = f.condition()
             else:
                 raise ProgramError("Unknown default filter: %s" % self._view.default_filter())
         self._lf_filter = filter
-        self._lf_last_filter = filter or self._load_condition('filter')
-        self._lf_search_condition = self._load_condition('search')
-        self._user_conditions = self._load_conditions('conditions')
+        self._lf_last_filter = filter or self._load_condition(self._FILTER_CONDITION_PARAM)
+        self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
+        self._user_filters = self._load_user_filters()
         self._init_select()
         
     def _new_form_kwargs(self):
@@ -720,28 +722,26 @@ class LookupForm(InnerForm):
         except Exception, e:
             log(OPERATIONAL, "Unable to restore packed condition:", (packed, str(e)))
             return None
-        
+
+    def _save_condition(self, key, condition):
+        self._set_state_param(key, self._pack_condition(condition))
+
     def _load_condition(self, key):
         packed = self._get_state_param(key, None, tuple)
         return packed and self._unpack_condition(packed)
-    
-    def _save_condition(self, key, condition):
-        self._set_state_param(key, self._pack_condition(condition))
-        
-    def _load_conditions(self, key):
-        packed = self._get_state_param(key, None, tuple, tuple)
+
+    def _save_user_filters(self, filters):
+        packed = [(f.name(), self._pack_condition(f.condition())) for f in filters]
+        self._set_state_param(self._USER_FILTERS_PARAM, tuple(packed))
+
+    def _load_user_filters(self):
+        packed = self._get_state_param(self._USER_FILTERS_PARAM, None, tuple, tuple)
         if packed:
-            unpacked = [(n, self._unpack_condition(c)) for n,c in packed]
-            return tuple([Condition(name, cond, fixed=False)
-                          for name, cond in unpacked if cond])
+            unpacked = [(n, self._unpack_condition(c)) for n, c in packed]
+            return tuple([Filter(name, cond, fixed=False) for name, cond in unpacked if cond])
         else:
             return ()
 
-    def _save_conditions(self, key, conditions):
-        packed = [(c.name(), self._pack_condition(c.condition()))
-                  for c in conditions]
-        self._set_state_param(key, tuple(packed))
-    
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
@@ -765,7 +765,7 @@ class LookupForm(InnerForm):
                            columns=self._select_columns(),
                            sort=self._data_sorting(),
                            transaction=self._transaction, reuse=False)
-    
+
     def _init_select(self):
         success, self._lf_select_count = db_operation(self._init_data_select, self._data)
         if not success:
@@ -851,7 +851,7 @@ class LookupForm(InnerForm):
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)
-            self._save_condition('search', condition)
+            self._save_condition(self._SEARCH_CONDITION_PARAM, condition)
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
@@ -875,9 +875,9 @@ class LookupForm(InnerForm):
         return columns
 
     def _user_filter_index(self, condition):
-        # Return the index of given filter condition in self._user_conditions or None.
-        for i, c in enumerate(self._user_conditions):
-            if c.condition().is_same(condition):
+        # Return the index of given filter condition in self._user_filters or None.
+        for i, f in enumerate(self._user_filters):
+            if f.condition().is_same(condition):
                 return i
         return None
 
@@ -909,17 +909,17 @@ class LookupForm(InnerForm):
                 i = self._user_filter_index(condition)
                 if i is not None:
                     log(OPERATIONAL, "Unable to apply filter:", e)
-                    c = self._user_conditions[i]
+                    f = self._user_filters[i]
                     answer = run_dialog(Question, icon=Question.ICON_ERROR,
                                         title=_("Neplatný filtr"),
                                         message=_("Uživatelský filtr \"%s\" je neplatný.\n"
                                                   "Pravděpodobně došlo ke změně definice náhledu\n"
                                                   "a uložený filtr již nelze použít.\n\n"
-                                                  "Přejete si filtr smazat?") % c.name())
+                                                  "Přejete si filtr smazat?") % f.name())
                     if answer:
-                        conditions = list(self._user_conditions)
-                        del conditions[i]
-                        self._user_conditions = tuple(conditions)
+                        filters = list(self._user_filters)
+                        del filters[i]
+                        self._user_filters = tuple(filters)
                     else:
                         # The filter menu needs to be realoaded, since the current selection
                         # doesn't match the current filter (invalid filter is selected, but no
@@ -948,7 +948,7 @@ class LookupForm(InnerForm):
             return True
         else:
             # Detect command availability for the menu item.
-            names = [c.name() for c in self._view.conditions() + self._user_conditions]
+            names = [f.name() for f in self._view.filters() + self._user_filters]
             return self._lf_filter is not None and name not in names
     
     def _cmd_save_filter(self, name, kbd=False):
@@ -956,15 +956,15 @@ class LookupForm(InnerForm):
             if name == self._UNNAMED_FILTER_LABEL or not name:
                 message(_("Nejprve upravte název, pod kterým chcete filtr uložit."), beep_=True)
                 return
-            for c in self._view.conditions() + self._user_conditions:
-                if c.name() == name:
+            for f in self._view.filters() + self._user_filters:
+                if f.name() == name:
                     message(_("Pojmenovaný filtr '%s' již existuje.") % name, beep_=True)
                     return
-                elif c.condition().is_same(self._lf_filter):
-                    message(_("Shodný filtr již existuje pod názvem '%s'.") % c.name(), beep_=True)
+                elif f.condition().is_same(self._lf_filter):
+                    message(_("Shodný filtr již existuje pod názvem '%s'.") % f.name(), beep_=True)
                     return
-            self._user_conditions += (Condition(name, self._lf_filter),)
-            self._save_conditions('conditions', self._user_conditions)
+            self._user_filters += (Filter(name, self._lf_filter),)
+            self._save_user_filters(self._user_filters)
             message(_("Filtr uložen pod názvem '%s'.") % name)
         self.focus()
     
@@ -973,19 +973,19 @@ class LookupForm(InnerForm):
         return True
         
     def _cmd_update_saved_filter(self, index):
-        conditions = list(self._user_conditions)
-        conditions[index] = Condition(conditions[index].name(), self._lf_filter)
-        self._user_conditions = tuple(conditions)
-        self._save_conditions('conditions', self._user_conditions)
+        filters = list(self._user_filters)
+        filters[index] = Filter(filters[index].name(), self._lf_filter)
+        self._user_filters = tuple(filters)
+        self._save_user_filters(self._user_filters)
     
     def _can_delete_saved_filter(self, index):
         return index is not None
 
     def _cmd_delete_saved_filter(self, index):
-        conditions = list(self._user_conditions)
-        del conditions[index]
-        self._user_conditions = tuple(conditions)
-        self._save_conditions('conditions', self._user_conditions)
+        filters = list(self._user_filters)
+        del filters[index]
+        self._user_filters = tuple(filters)
+        self._save_user_filters(self._user_filters)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Změň třídění.
@@ -1123,10 +1123,10 @@ class LookupForm(InnerForm):
         # Update the toolbar filter selection control.
         # Called repeatedly in update UI event loop, so must be quite efficient...
         if state:
-            last_filter, last_conditions = state
+            last_filter, last_filters = state
         else:
-            last_filter, last_conditions = None, None
-        if self._user_conditions != last_conditions:
+            last_filter, last_filters = None, None
+        if self._user_filters != last_filters:
             # Update the list of available filters.
             ctrl.Clear()
             ctrl.Append(_("Všechny položky"), None)
@@ -1135,9 +1135,9 @@ class LookupForm(InnerForm):
             else:
                 selected = None
             editable = False
-            for c in self._view.conditions() + self._user_conditions:
-                ctrl.Append(c.name(), c.condition())
-                if selected is None and c.condition().is_same(self._lf_filter):
+            for f in self._view.filters() + self._user_filters:
+                ctrl.Append(f.name(), f.condition())
+                if selected is None and f.condition().is_same(self._lf_filter):
                     selected = ctrl.GetCount() - 1
             if selected is None:
                 ctrl.Append(self._UNNAMED_FILTER_LABEL, self._lf_filter)
@@ -1151,8 +1151,8 @@ class LookupForm(InnerForm):
             if self._lf_filter is None:
                 ctrl.SetSelection(0)
             else:
-                for i, c in enumerate(self._view.conditions() + self._user_conditions):
-                    if c.condition().is_same(self._lf_filter):
+                for i, f in enumerate(self._view.filters() + self._user_filters):
+                    if f.condition().is_same(self._lf_filter):
                         ctrl.SetSelection(i+1)
                         break
                 else:
@@ -1162,7 +1162,7 @@ class LookupForm(InnerForm):
                     ctrl.SetSelection(ctrl.GetCount()-1)
                     editable = True
             ctrl.SetEditable(editable)
-        return self._lf_filter, self._user_conditions
+        return self._lf_filter, self._user_filters
 
     def filter_context_menu(self, ctrl):
         # Return the context menu for the toolbar filter selection control.
@@ -1170,14 +1170,14 @@ class LookupForm(InnerForm):
         return (
             MItem(_("Uložit"), self.COMMAND_SAVE_FILTER(name=ctrl.GetValue()),
                   help=_("Uložit současný filtr pod tímto názvem"), hotkey='Enter'),
-            (user_filter_index is None and ctrl.GetSelection() > len(self._view.conditions()) + 1)\
+            (user_filter_index is None and ctrl.GetSelection() > len(self._view.filters()) + 1)\
             # "Save as" is only possible for "Unnamed filter".
             # It is not possible to disable a menu, so we replace it by a fake disabled item.
             and Menu(_("Uložit jako"),
-                     [MItem(c.name(),
+                     [MItem(f.name(),
                             self.COMMAND_UPDATE_SAVED_FILTER(index=i),
                             help=_("Aktualizovat existující uložený filtr."))
-                      for i, c in enumerate(self._user_conditions)]) \
+                      for i, f in enumerate(self._user_filters)]) \
             or MItem(_("Uložit jako"), Application.COMMAND_NOTHING(enabled=False)),
             MItem(_("Smazat vybraný filtr"), 
                   self.COMMAND_DELETE_SAVED_FILTER(index=user_filter_index),
@@ -1186,11 +1186,10 @@ class LookupForm(InnerForm):
 
     def filter(self, condition):
         """Apply given filtering condition.  Return true if successfull."""
-        Condition("", condition) # Make sure the condition is well formed.
         self._apply_filter(condition)
         if condition is not None:
             self._lf_last_filter = condition
-            self._save_condition('filter', condition)
+            self._save_condition(self._FILTER_CONDITION_PARAM, condition)
             
     def data(self):
         """Return a new instance of the data object used by the form.

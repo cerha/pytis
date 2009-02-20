@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1598,8 +1598,12 @@ def wx_combo(parent, choices, **kwargs):
 
 
 def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=None, 
-                 length=None, width=None, height=None, readonly=False, enabled=True):
-    ctrl = wx.TextCtrl(parent, -1, style=(readonly and wx.TE_READONLY or 0))
+                 length=None, width=None, height=None, readonly=False, enabled=True, _spin=False):
+    if _spin:
+        cls = wx.SpinCtrl
+    else:
+        cls = wx.TextCtrl
+    ctrl = cls(parent, -1, style=(readonly and wx.TE_READONLY or 0))
     if on_key_down:
         wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
     if on_text:
@@ -1611,6 +1615,10 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         width = dlg2px(ctrl, 4*length)
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
+
+
+def wx_spin_ctrl(parent, value=None, **kwargs):
+    return wx_text_ctrl(parent, value=value, _spin=True, **kwargs)
 
 
 def wx_checkbox(parent, label=None, tooltip=None, checked=False):

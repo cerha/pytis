@@ -447,20 +447,24 @@ class ActionGroup(_ActionItem):
         return self._actions
 
     
-class Condition(object):
-    """Saved searching/filtering condition specification."""
+class Filter(object):
+    """Predefined filtering condition specification."""
     def __init__(self, name, condition, fixed=True, id=None):
         """Initialize condition specification.
 
         Arguments:
           name -- condition name as a string
-          condition -- condition as a 'pytis.data.Operator' instance.  The
+          condition -- condition as a 'pytis.data.Operator' instance.
+
+            The
             condition must be displayable in the serach/filtering dialog, thus
             certain restrictions apply.  It is not possible to use the logical
             operator 'NOT', logical operators 'AND' and 'OR' must always have
             exactly two operands and only the first of the two may be a nested
             logical operator.  For example instead of AND(a, b, c) use
             AND(AND(a, b), c), insteda of NOT(EQ(x, y)) use NE(x, y), etc.
+
+            
           fixed -- indicates, whether the user is allowed to manipulate the
             condition.
           id -- string identifier of the condition.  This string must be unique
@@ -489,8 +493,8 @@ class Condition(object):
                    ('Second operand must be column id or Value instance:',
                     str(arg2))
             return True
-        assert isinstance(name, (str, unicode)), name
-        assert condition is None or check(condition)
+        assert isinstance(name, basestring), name
+        assert condition is None or isinstance(condition, pytis.data.Operator), condition
         assert id is None or isinstance(id, basestring)
         self._name = name
         self._condition = condition
@@ -511,7 +515,9 @@ class Condition(object):
     
     def id(self):
         return self._id
-        
+    
+# For backwards compatibility
+Condition = Filter
     
 class GroupSpec(object):
     """Definice skupiny vstupních polí editaèního formuláøe.
@@ -783,7 +789,7 @@ class ViewSpec(object):
                  actions=(), sorting=None, grouping=None, group_heading=None, check=(),
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
-                 conditions=(), default_filter=None, aggregations=(), bindings=()):
+                 filters=(), conditions=(), default_filter=None, aggregations=(), bindings=()):
         
         """Inicializuj instanci.
 
@@ -915,12 +921,12 @@ class ViewSpec(object):
             of one argument (the 'PresentedRow' instance) returning the 'Style' for one row (based
             on its values).
 
-          conditions -- a sequence of named conditions ('Condition' instances), which should be
-            available to the user for filtering/searching records in this view.
+          filters -- a sequence of predefined filtering conditions ('Filter' instances), which
+            should be available in the user interface.
 
-          default_filter -- a string identifier of the condition, which should be automatically
-            turned on for this view.  This must be an existing identifier of one of the named
-            conditions specified by 'conditions'.
+          default_filter -- a string identifier of the filtering condition, which should be
+            automatically turned on for this view.  This must be an existing identifier of one of
+            the named conditions specified by 'filters'.
             
           aggregations -- a sequence aggregation functions which should be turned on automatically
             for this view (in forms which support that).  The items are 'AGG_*' constants of
@@ -1017,18 +1023,21 @@ class ViewSpec(object):
         if __debug__:
             for f in check:
                 assert callable(f)
-        assert isinstance(conditions, (tuple, list))
+        if conditions:
+            # `conditions' are for backwards compatibility.
+            assert not filters, "Both 'filters' and 'conditions' defined."
+            filters = conditions
+        assert isinstance(filters, (tuple, list))
         if __debug__:
-            condition_identifiers = []
-            for c in conditions:
-                assert isinstance(c, Condition)
-                assert c.fixed()
-                if c.id():
-                    assert c.id() not in condition_identifiers, \
-                           "Duplicate condition id: %s" % c.id()
-                    condition_identifiers.append(c.id())
-            assert default_filter is None or default_filter in condition_identifiers, \
-                   "Default filter not found in conditions: %s" % default_filter
+            filter_identifiers = []
+            for f in filters:
+                assert isinstance(f, Filter)
+                assert f.fixed()
+                if f.id():
+                    assert f.id() not in filter_identifiers, "Duplicate filter id: %s" % f.id()
+                    filter_identifiers.append(f.id())
+            assert default_filter is None or default_filter in filter_identifiers, \
+                "Default filter not found in filters: %s" % default_filter
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1072,7 +1081,7 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
-        self._conditions = tuple(conditions)
+        self._filters = tuple(filters)
         self._default_filter = default_filter
         self._aggregations = tuple(aggregations)
         self._bindings = tuple(bindings)
@@ -1180,9 +1189,9 @@ class ViewSpec(object):
         """Vra» výchozí styl øádku, nebo funkci, která jej vypoète."""
         return self._row_style
 
-    def conditions(self):
-        """Return predefined filtering/serach conditions as a tuple of 'Condition' instances."""
-        return self._conditions
+    def filters(self):
+        """Return predefined filtering conditions as a tuple of 'Filter' instances."""
+        return self._filters
 
     def default_filter(self):
         """Return the default filter identifier as a string."""
@@ -2729,7 +2738,7 @@ class Specification(object):
     def __init__(self, resolver):
         self._resolver = resolver
         for attr in ('fields', 'access_rights', 'condition', 'distinct_on',
-                     'bindings', 'cb', 'sorting', 'conditions'):
+                     'bindings', 'cb', 'sorting', 'filters', 'conditions'):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if callable(value):

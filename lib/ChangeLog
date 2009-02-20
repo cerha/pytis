@@ -1,5 +1,13 @@
 2009-02-20  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/form.py: 
+	* pytis/form/screen.py: 
+	* pytis/form/search.py: 
+	* pytis/presentation/spec.py: 
+	* pytis/web/form.py:
+	Allow unlimited conditions in filter dialog.  Use filter/condition
+	more consistently in identifiers.
+
 	* pytis/data/data.py:
 	(Operator.is_same): Operator comparison fixed.
 

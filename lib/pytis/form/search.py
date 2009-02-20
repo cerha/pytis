@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,19 +96,24 @@ class SFSDialog(GenericDialog):
     def _create_choice(self, choices, tooltip=None, **kwargs):
         return wx_choice(self._dialog, choices, height=self._FIELD_HEIGHT, **kwargs)
 
-    def _create_text_ctrl(self, length, value=None, **kwargs):
-        return wx_text_ctrl(self._dialog, value=value, length=length, height=self._FIELD_HEIGHT,
-                            **kwargs)
+    def _create_text_ctrl(self, value, **kwargs):
+        return wx_text_ctrl(self._dialog, value, height=self._FIELD_HEIGHT, **kwargs)
+
+    def _create_spin_ctrl(self, value, **kwargs):
+        return wx_spin_ctrl(self._dialog, value, height=self._FIELD_HEIGHT, **kwargs)
 
     def _create_content(self, sizer):
         self._controls = []
         self._create_controls()
-        for ctrls in self._controls:
+        for i, ctrls in enumerate(self._controls):
             row = wx.BoxSizer()
             for x in ctrls:
                 if x:
                     row.Add(x)
-            sizer.Add(row, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
+            flags = wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT
+            if i == 0:
+                flags |= wx.TOP
+            sizer.Add(row, 0, flags, 8)
 
     def _create_controls(self):
         pass
@@ -196,20 +201,20 @@ class SFDialog(SFSDialog):
     """Spoleèný základ v¹ech vyhledávacích a filtrovacích dialogù."""
 
     _OPERATORS = (pytis.data.EQ,
+                  pytis.data.NE,
                   pytis.data.LE,
                   pytis.data.GE,
                   pytis.data.LT,
-                  pytis.data.GT,
-                  pytis.data.NE)
+                  pytis.data.GT)
     _LOGICAL_OPERATORS = (pytis.data.AND, pytis.data.OR)
     _WM_OPERATORS = {pytis.data.EQ: pytis.data.WM,
                      pytis.data.NE: pytis.data.NW}
     _LABELS = {pytis.data.EQ: '=',
+               pytis.data.NE: '=/=', #u'\u2260',
                pytis.data.LE: '=<',
                pytis.data.GE: '>=',
                pytis.data.LT: '<',
                pytis.data.GT: '>',
-               pytis.data.NE: '=/=',
                pytis.data.AND: _("AND"),
                pytis.data.OR:  _("OR")}
     # WM and EQ have the same UI ctrl, so we ignore the difference.
@@ -228,8 +233,13 @@ class SFDialog(SFSDialog):
                            '* '+_("hodnota")+' *')
     
     class SFConditionError(Exception):
-        pass
-
+        def __init__(self, i, ctrl, msg):
+            msg = _("Chyba v podmínce è. %d: %s") % (i+1, msg)
+            run_dialog(Error, msg)
+            #ctrl.SetFocus()
+            #self.focus()
+            super(SFDialog.SFConditionError, self).__init__(msg)
+            
     def __init__(self, parent, columns, row, condition=None, **kwargs):
         """Initialize the dialog.
 
@@ -238,12 +248,7 @@ class SFDialog(SFSDialog):
           parent -- wx parent of the dialog window
           columns -- a sequence of 'SFSColumn' instances
           row -- current row as a 'pytis.data.Row' instance or 'None'
-          condition -- current condition as a 'pytis.data.Operator' instance.
-            This condition will be preselected in the dialog.  The current
-            implementation, can only display a certainly structured condition.
-            It is safe to use a condition obtained from the previous dialog
-            call or a condition from a 'Condition' instance (which checks the
-            condition validity in its constructor).
+          condition -- currently displayed condition as a 'pytis.data.Operator' instance.
           kwargs -- passed to the parent class constructor
 
         """
@@ -252,48 +257,67 @@ class SFDialog(SFSDialog):
         self._col2_columns = (self._NO_COLUMN,) + tuple(columns)
         super(SFDialog, self).__init__(parent, columns, **kwargs)
 
-    def _create_controls(self):
-        # Construct the ui controls based on the current condition.
-        def decompose_condition(operator, logical_operation=None):
-            # Decompose nested conditions into a list of corresponding operator
-            # functions and their logical pairing.
-            if not isinstance(operator, pytis.data.Operator):
-                raise Exception("Invalid condition: "+ repr(operator))
-            name, args = operator.name(), operator.args()
+    def _strop(self, operator, ):
+        if operator.logical():
+            op = ' '+ operator.name() +' '
+            return '('+ op.join([self._strop(arg) for arg in operator.args()]) + ')'
+        else:
+            arg1, arg2 = operator.args()
+            if isinstance(arg2, (pytis.data.Value, pytis.data.WMValue)):
+                if isinstance(arg2.value(), unicode):
+                    # Avoid the initial u for unicode strings...
+                    arg2 = repr(arg2.value())[1:]
+                else:
+                    arg2 = repr(arg2.value())
+            op = self._LABELS[self._RELATIONAL_OPERATORS_MAP[operator.name()]]
+            return arg1 +' '+ op +' '+ arg2
+
+    def _decompose_condition(self, operator, level=1):
+        # Decompose nested conditions into a linear list of corresponding relational and logical
+        # operators in infix notation.  Hierarchy is represented by the level of logical operators.
+        if not isinstance(operator, pytis.data.Operator):
+            raise Exception("Invalid condition: "+ repr(operator))
+        name, args = operator.name(), operator.args()
+        if self._LOGICAL_OPERATORS_MAP.has_key(name):
+            op = self._LOGICAL_OPERATORS_MAP[name]
+            conds = [self._decompose_condition(arg, level=level+1) for arg in args]
+            return reduce(lambda a, b: (a + ((op, level),)) + b, conds)
+        elif self._RELATIONAL_OPERATORS_MAP.has_key(name):
             if len(args) != 2:
-                # This really applies also for logical operators!
                 raise Exception("Wrong number of arguments: "+ str(args))
             arg1, arg2 = args
-            if self._LOGICAL_OPERATORS_MAP.has_key(name):
-                op = self._LOGICAL_OPERATORS_MAP[name]
-                return decompose_condition(arg1, logical_operation) + \
-                       decompose_condition(arg2, op)
-            elif self._RELATIONAL_OPERATORS_MAP.has_key(name):
-                op = self._RELATIONAL_OPERATORS_MAP[name]
-                col1 = self._find_column(arg1)
-                if col1 is None:
-                    raise Exception("Invalid column: "+ arg1)
-                if isinstance(arg2, str):
-                    col2 = self._find_column(arg2)
-                    if col2 is None:
-                        raise Exception("Invalid column: "+ arg2)
-                    value = None
-                elif isinstance(arg2, (pytis.data.WMValue, pytis.data.Value)):
-                    col2 = None
-                    value = isinstance(arg2, pytis.data.WMValue) \
-                            and arg2.value() or arg2.export()
-                else:
-                    raise Exception("Invalid operand type: "+ repr(arg))
-                return ((logical_operation, op, col1, col2, value), )
+            op = self._RELATIONAL_OPERATORS_MAP[name]
+            col1 = self._find_column(arg1)
+            if col1 is None:
+                raise Exception("Invalid column: "+ arg1)
+            if isinstance(arg2, str):
+                col2 = self._find_column(arg2)
+                if col2 is None:
+                    raise Exception("Invalid column: "+ arg2)
+                value = None
+            elif isinstance(arg2, (pytis.data.WMValue, pytis.data.Value)):
+                col2 = None
+                value = isinstance(arg2, pytis.data.WMValue) \
+                        and arg2.value() or arg2.export()
             else:
-                raise Exception("Unsupported operator: "+ name)
-        def create_controls(i, n, log_op, operator, col1, col2, value):
-            choice, field, button = self._create_choice, \
-                                    self._create_text_ctrl, self._create_button
+                raise Exception("Invalid operand type: "+ repr(arg))
+            return (op, col1, col2, value),
+        else:
+            raise Exception("Unsupported operator: "+ name)
+
+    def _create_controls(self):
+        choice, spin, field, button = self._create_choice, self._create_spin_ctrl, \
+            self._create_text_ctrl, self._create_button
+        # Construct the ui controls based on the current condition.
+        def create_logical_operator(i, n, operator, level):
             return (
-                log_op and \
-                choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS], selected=log_op,
+                choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
+                       selected=operator,
                        tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
+                spin(level, length=2,
+                     tooltip=_("Zvolte váhu logického operátoru.")),)
+        def create_relational_operator(i, n, operator, col1, col2, value):
+            return (
                 choice([(c.label(), c) for c in self._columns], selected=col1,
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte sloupec tabulky")),
@@ -302,7 +326,7 @@ class SFDialog(SFSDialog):
                 choice([(c.label(), c) for c in self._col2_columns], selected=col2,
                        on_change=lambda e: self._on_selection_change(i),
                        tooltip=_("Zvolte s èím má být hodnota porovnávána")),
-                field(self._TEXT_CTRL_SIZE, value,
+                field(value, length=self._TEXT_CTRL_SIZE,
                       tooltip=_("Zapi¹te hodnotu podmínkového výrazu")),
                 button(_("Nasát"), lambda e: self._on_suck(i),
                        _("Naèíst hodnotu aktivní buòky"),
@@ -313,16 +337,19 @@ class SFDialog(SFSDialog):
                        _("Zru¹it tuto podmínku"), enabled=n > 1))
         c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
+        #print "===", self._strop(self._condition or empty)
         try:
-            conditions = decompose_condition(self._condition  or empty)
+            operators = self._decompose_condition(self._condition or empty)
         except Exception, e:
-            run_dialog(Warning, (_("Nepdaøilo se rozlo¾it podmínkový výraz:")+
-                                 " "+str(e)))
-            conditions = decompose_condition(empty)
-        for i, items in enumerate(conditions):
-            self._controls.append(create_controls(i, len(conditions), *items))
-            self._on_selection_change(i)
-        wval = self._controls[-1][4]
+            run_dialog(Warning, _("Nepdaøilo se rozlo¾it podmínkový výraz:") +" "+ str(e))
+            operators = self._decompose_condition(empty)
+        for i, items in enumerate(operators):
+            if len(items) == 2:
+                self._controls.append(create_logical_operator(i, len(operators), *items))
+            else:
+                self._controls.append(create_relational_operator(i, len(operators), *items))
+                self._on_selection_change(i)
+        wval = self._controls[-1][3]
         if wval.IsEnabled():
             self._want_focus = wval
 
@@ -343,18 +370,13 @@ class SFDialog(SFSDialog):
 
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
-        def quit(i, ctrl, msg):
-            msg = _("Chyba v podmínce è. %d: %s") % (i+1, msg)
-            run_dialog(Error, msg)
-            #ctrl.SetFocus()
-            #self.focus()
-            raise self.SFConditionError(msg)
-        condition = None
-        for i, controls in enumerate(self._controls):
-            if i == omit:
-                continue
-            wlop, wcol1, wop, wcol2, wval, b1, b2, b3 = controls
-            lop = wlop and self._LOGICAL_OPERATORS[wlop.GetSelection()]
+        def logical_operator(i):
+            wop, wweight = self._controls[i]
+            op = self._LOGICAL_OPERATORS[wop.GetSelection()]
+            weight = wweight.GetValue()
+            return (op, weight)
+        def relational_operator(i):
+            wcol1, wop, wcol2, wval, b1, b2, b3 = self._controls[i]
             col1 = self._columns[wcol1.GetSelection()]
             op = self._OPERATORS[wop.GetSelection()]
             col2 = self._col2_columns[wcol2.GetSelection()]
@@ -363,13 +385,16 @@ class SFDialog(SFSDialog):
                 for basetype in (pytis.data.String, pytis.data.Number, pytis.data.DateTime,
                                  pytis.data.Boolean, pytis.data.Binary):
                     if isinstance(col1.type(), basetype) and not isinstance(col2.type(), basetype):
-                        quit(i, wcol2, _("Nesluèitelné typy %s a %s") %
-                             (col1.type().__class__.__name__, col2.type().__class__.__name__))
+                        raise self.SFConditionError(i, wcol2, _("Nesluèitelné typy %s a %s") %
+                                                    (col1.type().__class__.__name__,
+                                                     col2.type().__class__.__name__))
             elif isinstance(col1.type(), pytis.data.Binary):
                 if wval.GetValue():
-                    quit(i, wval, _("Binární sloupec lze testovat pouze na prázdnou hodnotu"))
+                    raise self.SFConditionError(i, wval,
+                                     _("Binární sloupec lze testovat pouze na prázdnou hodnotu"))
                 elif op not in (pytis.data.EQ, pytis.data.NE):
-                    quit(i, wop, _("Binární sloupec lze testovat pouze na rovnost èi nerovnost"))
+                    raise self.SFConditionError(i, wop,
+                                     _("Binární sloupec lze testovat pouze na rovnost èi nerovnost"))
                 arg2 = pytis.data.Value(col1.type(), None)
             else:
                 val = wval.GetValue()
@@ -382,30 +407,75 @@ class SFDialog(SFSDialog):
                         kwargs['extended'] = True
                     value, err = col1.type().validate(val, **kwargs)
                 if err:
-                    quit(i, wval, err.message())
+                    raise self.SFConditionError(i, wval, err.message())
                 arg2 = value
-            subcondition = op(col1.id(), arg2)
-            if condition is None:
-                condition = subcondition
+            return op(col1.id(), arg2)
+        def apply_logical_operators(operators, level):
+            # Apply the logical operators at given level to its operands and return the reduced
+            # list of top-level operators.
+            result = []
+            operator = None
+            operands = []
+            for i in range(1, len(operators), 2):
+                op, weight = operators[i]
+                if weight == level:
+                    if operator == op or operator is None:
+                        if operator is None:
+                            operator = op
+                        operands.append(operators[i-1])
+                    else:
+                        result.append(operator(*operands))
+                        operator, operands = op, [operators[i-1]]
+                else:
+                    if operands:
+                        operands.append(operators[i-1])
+                        result.append(operator(*operands))
+                        operator, operands = None, []
+                    else:
+                        result.append(operators[i-1])
+                    result.append(operators[i])
+            if operators[-2][0] == operator and operators[-2][1] == level:
+                operands.append(operators[-1])
             else:
-                condition = lop(condition, subcondition)
-        return condition
+                result.append(operators[-1])
+            if operands:
+                result.append(operator(*operands))
+                operator, operands = None, []
+            return result
+        operators = []
+        weights = []
+        for i in range(len(self._controls)):
+            if omit is None or i not in (omit, omit-1):
+                if i % 2 == 1:
+                    op, weight = logical_operator(i)
+                    if weight not in weights:
+                        weights.append(weight)
+                    operators.append((op, weight))
+                else:
+                    operators.append(relational_operator(i))
+        weights.sort()
+        weights.reverse()
+        for weight in weights:
+            operators = apply_logical_operators(operators, weight)
+        assert len(operators) == 1
+        #print "***", self._strop(operators[0])
+        return operators[0]
 
     def _on_selection_change(self, i):
-        wcol1, wop, wcol2, wval, bsuck, bclear = self._controls[i][1:7]
+        wcol1, wop, wcol2, wval, bsuck, bclear, bremove = self._controls[i]
         enabled = wcol2.GetSelection() == 0
         wval.Enable(enabled)
         bsuck.Enable(enabled and self._row is not None)
-        
+
     def _on_clear(self, i):
-        wcol1, wop, wcol2, wval = self._controls[i][1:5]
+        wcol1, wop, wcol2, wval = self._controls[i][:4]
         wop.SetSelection(0)
         wcol2.SetSelection(0)
         wval.SetValue('')
         self._on_selection_change(i)
 
     def _on_suck(self, i):
-        wcol1, wop, wcol2, wval = self._controls[i][1:5]
+        wcol1, wop, wcol2, wval = self._controls[i][:4]
         col = self._columns[wcol1.GetSelection()]
         v = self._row[col.id()].export()
         if is_sequence(v):
@@ -539,14 +609,13 @@ class FilterDialog(SFDialog):
 
     def _create_content(self, sizer):
         super(FilterDialog, self)._create_content(sizer)
-        choice, field, button = self._create_choice, \
-                                self._create_text_ctrl, self._create_button
+        choice, field, button = self._create_choice, self._create_text_ctrl, self._create_button
         self._agg_controls = (
             choice([(c.label(), c) for c in self._columns],
                    tooltip=_("Zvolte sloupec pro agregaci")),
             choice([(self._AGG_LABELS[op], op) for op in self._AGG_OPERATORS],
                    tooltip=_("Zvolte agregaèní funkci")),
-            field(24, readonly=True,
+            field(None, length=24, readonly=True,
                   tooltip=_("Zobrazení výsledku agregaèní funkce")),
             button(_("Zjistit"), self._on_compute_aggregate,
                    tooltip=_("Zobraz výsledek zvolené agrekaèní funkce")))

@@ -593,7 +593,7 @@ class BrowseForm(LayoutForm):
         # Determine the current filter.
         filter_id = params.get('filter', self._view.default_filter())
         if filter_id and filter_id != self._NULL_FILTER_ID:
-            condition = find(filter_id, self._view.conditions(), key=lambda c: c.id())
+            condition = find(filter_id, self._view.filters(), key=lambda f: f.id())
             if condition:
                 c = condition.condition()
                 if filter:
@@ -889,8 +889,8 @@ class BrowseForm(LayoutForm):
         g = context.generator()
         id = (bottom and '0' or '1') + '%x' % positive_id(self)
         content = []
-        filters = [(c.name(), c.id()) for c in self._view.conditions()
-                   if c.id() is not None and c.condition() is not None]
+        filters = [(f.name(), f.id()) for f in self._view.filters()
+                   if f.id() is not None and f.condition() is not None]
         show_filter = filters and (count or self._filter_id is not None)
         show_query_field = self._show_query_field
         if not bottom:
@@ -906,7 +906,7 @@ class BrowseForm(LayoutForm):
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
-            null_filter = find(None, self._view.conditions(), key=lambda c: c.condition())
+            null_filter = find(None, self._view.filters(), key=lambda f: f.condition())
             if null_filter:
                 null_filter_name = null_filter.name()
             else:
