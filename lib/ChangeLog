@@ -1,5 +1,8 @@
 2009-02-20  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/search.py:
+	Apply logical operator precedence at the same level.
+
 	* pytis/form/__init__.py:
 	Use vwversion to select the desired wx version. 
 

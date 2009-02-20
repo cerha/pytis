@@ -341,7 +341,7 @@ class SFDialog(SFSDialog):
         try:
             operators = self._decompose_condition(self._condition or empty)
         except Exception, e:
-            run_dialog(Warning, _("Nepdaøilo se rozlo¾it podmínkový výraz:") +" "+ str(e))
+            run_dialog(Warning, _("Nepodaøilo se rozlo¾it podmínkový výraz:") +" "+ str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
             if len(items) == 2:
@@ -410,37 +410,30 @@ class SFDialog(SFSDialog):
                     raise self.SFConditionError(i, wval, err.message())
                 arg2 = value
             return op(col1.id(), arg2)
-        def apply_logical_operators(operators, level):
+        def apply_logical_operator(operator, operators, level):
             # Apply the logical operators at given level to its operands and return the reduced
             # list of top-level operators.
             result = []
-            operator = None
             operands = []
             for i in range(1, len(operators), 2):
                 op, weight = operators[i]
-                if weight == level:
-                    if operator == op or operator is None:
-                        if operator is None:
-                            operator = op
-                        operands.append(operators[i-1])
-                    else:
-                        result.append(operator(*operands))
-                        operator, operands = op, [operators[i-1]]
+                operand = operators[i-1]
+                if weight == level and op == operator:
+                    operands.append(operand)
                 else:
                     if operands:
-                        operands.append(operators[i-1])
-                        result.append(operator(*operands))
-                        operator, operands = None, []
-                    else:
-                        result.append(operators[i-1])
-                    result.append(operators[i])
-            if operators[-2][0] == operator and operators[-2][1] == level:
-                operands.append(operators[-1])
+                        operands.append(operand)
+                        operand = operator(*operands)
+                        operands = []
+                    result.extend([operand, (op, weight)])
+            op, weight = operators[-2]
+            operand = operators[-1]
+            if op == operator and weight == level:
+                operands.append(operand)
             else:
-                result.append(operators[-1])
+                result.append(operand)
             if operands:
                 result.append(operator(*operands))
-                operator, operands = None, []
             return result
         operators = []
         weights = []
@@ -456,9 +449,11 @@ class SFDialog(SFSDialog):
         weights.sort()
         weights.reverse()
         for weight in weights:
-            operators = apply_logical_operators(operators, weight)
-        assert len(operators) == 1
+            operators = apply_logical_operator(pytis.data.AND, operators, weight)
+            if len(operators) > 1:
+                operators = apply_logical_operator(pytis.data.OR, operators, weight)
         #print "***", self._strop(operators[0])
+        assert len(operators) == 1
         return operators[0]
 
     def _on_selection_change(self, i):
