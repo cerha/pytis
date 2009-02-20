@@ -1055,26 +1055,26 @@ class MItem(_TitledMenuObject):
         if command[:len(appstring)] == appstring:
             command = command[len(appstring):]
         if command == 'RUN_FORM':
-            form_class = args['form_class']; del args['form_class']
-            form_name = args['name']; del args['name']
+            form_class = args.pop('form_class', None)
+            form_name = args.pop('name', None)
             extra = ''
             if args.has_key('binding'):
                 extra = ('/binding=%s' % (args['binding'],)); del args['binding']
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
                 return ('item/form/%s/%s%s' % (class_name, form_name, extra,))
-        elif command == 'NEW_RECORD':
-            form_name = args['name']; del args['name']
-            if not args:
+        elif command == 'NEW_RECORD' and args:
+            form_name = args.pop('name', '')
+            if form_name is not None and not args:
                 return ('item/%s/%s' % (command, form_name,))
         elif command == 'HANDLED_ACTION':
-            handler = args['handler']; del args['handler']
+            handler = args.pop('handler', None)
             if not args and type(handler) == types.FunctionType:
                 name = modulify(handler, handler.func_name)
                 return ('item/handle/%s' % (name,))
         elif command == 'RUN_PROCEDURE':
-            proc_name = args['proc_name']; del args['proc_name']
-            spec_name = args['spec_name']; del args['spec_name']
+            proc_name = args.pop('proc_name')
+            spec_name = args.pop('spec_name')
             if args.has_key('enabled'):
                 del args['enabled']
             if not args:
