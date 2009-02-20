@@ -1,3 +1,9 @@
+
+2009-02-19  Tomas Cerha  <cerha@brailcom.org>
+
+	* bin/pytis:
+	Wx import moved to `pytis.form'.
+	
 2009-02-19  Tomas Cerha  <cerha@brailcom.org>
 
 	* translations/pytis.es.po:

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,27 @@ specifikace jednotlivých prvků rozhraní.
 
 from pytis.util import *
 from pytis.presentation import *
+
+if os.environ.has_key('WXVER'):
+    version = os.environ["WXVER"]
+else:
+    try:
+        import wx
+    except ImportError:
+        version = '2.8'
+    else:
+        version = None
+if version is not None:
+    import wxversion
+    try:
+        ok = wxversion.checkInstalled(version)
+    except ValueError:
+        ok = False
+    if ok:
+        wxversion.select(version)
+    else:
+        sys.stderr.write("Invalid wx version: %s\nInstalled versions are: %s\n" % \
+                         (version, ', '.join(wxversion.getInstalled())))
 
 _list = list
 

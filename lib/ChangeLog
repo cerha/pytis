@@ -1,5 +1,10 @@
 2009-02-20  Tomas Cerha  <cerha@brailcom.org>
 
+	* pytis/form/__init__.py:
+	Use vwversion to select the desired wx version. 
+
+2009-02-20  Tomas Cerha  <cerha@brailcom.org>
+
 	* pytis/form/form.py: 
 	* pytis/form/screen.py: 
 	* pytis/form/search.py: 
