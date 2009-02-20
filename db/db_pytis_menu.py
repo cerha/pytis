@@ -275,7 +275,7 @@ _std_table_nolog('c_pytis_menu_actions',
                  )
 
 _std_table('e_pytis_menu',
-           (P('menuid', TInteger),
+           (P('menuid', TSerial),
             C('name', TString, constraints=('unique',),
               doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
             C('title', 'varchar(64)',
@@ -290,6 +290,8 @@ _std_table('e_pytis_menu',
             C('fullposition', TString,
               doc=("Full position including parent items. "
                    "Lexicographical ordering of all menu items. ")),
+            C('indentation', 'varchar(8)',
+              doc="Indentation of the menu item in the menu structure"),
             C('actionid', TInteger, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
@@ -297,14 +299,38 @@ _std_table('e_pytis_menu',
             ),
            """Menu structure definition.""",
            depends=('c_pytis_menu_actions',))
-         
+
+viewng('ev_pytis_menu',
+       (SelectRelation('e_pytis_menu', alias='main'),
+        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('actionid', 'description',),
+                       column_aliases=(('name', 'action',),),
+                       condition='main.actionid = actions.actionid', jointype=JoinType.INNER),
+        ),
+       include_columns=(V(None, 'ititle', "main.indentation || ' ' || main.title"),),
+       insert_order=('e_pytis_menu',),
+       update_order=('e_pytis_menu',),
+       delete_order=('e_pytis_menu',),
+       grant=db_rights,
+       depends=('e_pytis_menu', 'c_pytis_menu_actions',)
+       )
+
+viewng('ev_pytis_menu_parents',
+       (SelectRelation('ev_pytis_menu', alias='main',
+                       condition='main.name is null and main.title is not null'),),
+       insert_order=('e_pytis_menu',),
+       update_order=('e_pytis_menu',),
+       delete_order=('e_pytis_menu',),
+       grant=db_rights,
+       depends=('ev_pytis_menu',)
+       )
+
 _std_table_nolog('c_pytis_access_rights',
                  (P('rightid', 'varchar(8)'),
                   C('description', 'varchar(32)', constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
                  init_values=(("'show'", "'Visibility of menu items.'",),
-                              ("'view'", "'Viewing existent records.'",),
+                              ("'viiew'", "'Viewing existent records.'",),
                               ("'insert'", "'Inserting new records.'",),
                               ("'edit'", "'Editing existent records.'",),
                               ("'delete'", "'Deleting records.'",),

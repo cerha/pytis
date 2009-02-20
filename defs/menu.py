@@ -20,6 +20,7 @@
 import pytis.data
 import pytis.form
 import pytis.presentation
+from pytis.presentation import Editable
 from pytis.extensions import Field, nextval
 
 class ApplicationRolePurposes(pytis.presentation.Specification):
@@ -124,3 +125,59 @@ class ApplicationRolesOwners(ApplicationRolesMembership):
 class ApplicationRolesMembers(ApplicationRolesMembership):
     title = "Vlastnìné role"
     columns = ('mname', 'mdescription',)
+
+class ApplicationActions(pytis.presentation.Specification):
+    table = 'c_pytis_menu_actions'
+    title = "U¾ivatelské akce"
+    fields = (
+        Field('actionid', "Id"),
+        Field('name', "Id", editable=Editable.NEVER),
+        Field('description', "Id"),
+        )
+    columns = ('name', 'description',)
+    layout = ('name', 'description',)
+    sorting = (('name', pytis.data.ASCENDENT,),)    
+    cb = pytis.presentation.CodebookSpec(display='name')
+        
+class ApplicationMenu(pytis.presentation.Specification):
+    table = 'ev_pytis_menu'
+    title = "Menu"
+    fields = (
+        Field('menuid', "Id", default=nextval('e_pytis_menu_menuid_seq')),
+        Field('name', "Id obsahující role"),
+        Field('title', "Titulek polo¾ky menu"),
+        Field('ititle', "Titulek polo¾ky menu"),
+        Field('parent', "Rodièovské menu", codebook='menu.ApplicationMenus'),
+        Field('position', "Pozice v menu",
+              fixed=True),
+        Field('fullposition', "Pozice v celém menu"),
+        Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
+        Field('action', "Navì¹ená akce"),
+        )
+    columns = ('ititle', 'position', 'action',)
+    layout = ('title', 'position',)
+    sorting = (('fullposition', pytis.data.ASCENDENT,),)
+    cb = pytis.presentation.CodebookSpec(display='title')
+
+class ApplicationMenus(pytis.presentation.Specification):
+    # This is almost the same as ApplicationMenu.
+    # But we can't inherit from it because pytis would suffer from infinite
+    # recursion.
+    table = 'ev_pytis_menu_parents'
+    title = "Menu"
+    fields = (
+        Field('menuid', "Id", default=nextval('e_pytis_menu_menuid_seq')),
+        Field('name', "Id obsahující role"),
+        Field('title', "Titulek polo¾ky menu"),
+        Field('ititle', "Titulek polo¾ky menu"),
+        Field('parent', "Rodièovské menu"),
+        Field('position', "Pozice v menu",
+              fixed=True),
+        Field('fullposition', "Pozice v celém menu"),
+        Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
+        Field('action', "Navì¹ená akce"),
+        )
+    columns = ('ititle', 'position', 'action',)
+    layout = ('title', 'position',)
+    sorting = (('fullposition', pytis.data.ASCENDENT,),)
+    cb = pytis.presentation.CodebookSpec(display='title')

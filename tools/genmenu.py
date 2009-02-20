@@ -96,14 +96,16 @@ def fill_actions(cursor, actions):
         cursor.execute("insert into c_pytis_menu_actions (actionid, name, description) values(%s, %s, %s)",
                        (action.id, action.name, action.description,))
 
-def fill_menu_items(cursor, menu, fullposition=''):
+def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     fullposition += str(menu.position)
-    parent = menu.parent and menu.parent.id
+    parent = menu.parent and -menu.parent.id
     action = menu.action and menu.action.id
-    cursor.execute("insert into e_pytis_menu(menuid, name, title, parent, position, fullposition, actionid) values(%s, %s, %s, %s, %s, %s, %s)",
-                   (menu.id, menu.name, menu.title, parent, menu.position, fullposition, action,))
+    cursor.execute(("insert into e_pytis_menu(menuid, name, title, parent, position, fullposition, indentation, actionid) "
+                    "values(%s, %s, %s, %s, %s, %s, %s, %s)"),
+                   (-menu.id, menu.name, menu.title, parent, menu.position, fullposition, indentation, action,))
+    next_indentation = indentation + '   '
     for m in menu.children:
-        fill_menu_items(cursor, m, fullposition=fullposition)
+        fill_menu_items(cursor, m, fullposition=fullposition, indentation=next_indentation)
     
 def run(def_dir):
     resolver = pytis.util.FileResolver(def_dir)
