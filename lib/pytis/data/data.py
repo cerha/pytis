@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -143,10 +143,11 @@ class Operator:
             return False
         for a1, a2 in zip(self._args, other._args):
             if isinstance(a1, (Value, WMValue)) and isinstance(a2, (Value, WMValue)):
-                if not a1.value() == a2.value():
+                if a1.value() != a2.value():
                     return False
-            elif isinstance(a1, Operator) and isinstance(a2, Operator) and not a1.is_same(a2):
-                return False
+            elif isinstance(a1, Operator) and isinstance(a2, Operator):
+                if not a1.is_same(a2):
+                    return False
             elif a1 != a2:
                 return False
         return True
