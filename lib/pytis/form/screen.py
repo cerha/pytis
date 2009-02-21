@@ -841,7 +841,7 @@ class Menu(_TitledMenuObject):
     metody 'create()'.
 
     """ 
-    def __init__(self, title, items, allow_autoindex=True):
+    def __init__(self, title, items, allow_autoindex=True, rights={}):
         """Initialize menu specification.
 
         Arguments:
@@ -969,7 +969,7 @@ class MItem(_TitledMenuObject):
     _used_titles = {}
     
     def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None, menu_item_id=None, action_id=None):
+                 icon=None, menu_item_id=None, action_id=None, rights={}):
         """Uschovej parametry.
 
         Argumenty:
