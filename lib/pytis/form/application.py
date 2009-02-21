@@ -30,6 +30,7 @@ import time
 import cPickle as pickle
 
 import config
+import pytis.data
 import pytis.form
 if config.server:
     try:
@@ -182,7 +183,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
         # Initialize the menubar.
         self._recent_forms_menu = None
-        menus = list(self._spec('menu', ()))
+        menus_prototype = self._spec('menu', ())
+        menus = self._build_menu(menus_prototype)
         menus.append(Menu(self._WINDOW_MENU_TITLE, (
             MItem(_("Pøedchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
                   help=_("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
@@ -354,7 +356,124 @@ class Application(wx.App, KeyHandler, CommandHandler):
                       mitem(UICommands.HELP),
                       mitem(UICommands.DESCRIBE)))
         menus.append(Menu(_("Nápovìda"), items))
-            
+
+    def _dynamic_menu_specifications(self):
+        specifications = {}
+        def add_spec(name, table, columns):
+            bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
+            factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+            specifications[name] = factory
+        add_spec('menu', 'e_pytis_menu', ('menuid', 'name', 'title', 'parent', 'fullposition', 'actionid',))
+        add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
+        add_spec('membership', 'ev_pytis_valid_role_members', ('roleid', 'member',))
+        add_spec('rights', 'e_pytis_menu_rights', ('menuid', 'roleid', 'rightid', 'granted',))
+        return specifications
+
+    def _dynamic_menu(self):
+        specifications = self._dynamic_menu_specifications()
+        connection = config.dbconnection
+        # Check for menu presence, if not available, return None
+        try:
+            menu_data = specifications['menu'].create(connection_data=connection)
+        except pytis.data.DBException:
+            return None
+        menu_rows = menu_data.select_map(identity, sort=(('fullposition', pytis.data.ASCENDENT,),))
+        if not rows:
+            return None
+        # Find my roles
+        roles_data = specifications['roles'].create(connection_data=connection)
+        roles = roles_data.select_map(identity)
+        if not roles:
+            return []
+        roleid = roles[0][0].value()
+        membership = {}
+        membership_data = specifications['membership'].create(connection_data=connection)
+        def add_membership(row):
+            role, member = [row[i].value() for i in (1, 2,)]
+            if not membership.has_key(member):
+                membership[member] = []
+            membership[member].append(role)
+        membership_data.select_map(add_membership)
+        my_roles = []
+        new_roles = [roleid]
+        while new_roles:
+            r = new_roles.pop()
+            if r in my_roles:
+                continue
+            my_roles.append(r)
+            new_roles += membership[r]
+        # Find my rights
+        I = pytis.data.Integer()
+        my_roles_values = [pytis.data.EQ('roleid', pytis.data.Value(I, r)) for r in roles]
+        condition = pytis.data.OR(*my_roles_values)
+        rights_data = specifications['rights'].create(connection_data=connection)
+        rights = {}
+        def add_right(row):
+            menuid, rightid, granted = [row[i].value() for i in (0, 2, 3,)]
+            if not rights.has_key(menuid):
+                rights[menuid] = {}
+            elif rights[menuid].has_key(rightid):
+                raise Exception("Multiple right specification")
+            rights[menuid][rightid] = granted
+        rights_data.select_map(add_right, condition=condition)
+        # Build visible menu items
+        menu_template = []
+        parents = []
+        for row in menu_rows:
+            menuid, name, title, parent, actionid = [row[i].value() for i in (0, 1, 2, 3, 4,)]
+            item_rights = rights.get(menuid, {})
+            if not parents: # the top pseudonode, should be the first one
+                if not item_rights.get('show'):
+                    # Menu not visible
+                    return None
+                parents.append((menuid, menu_template,))
+                current_template = menu_template
+            elif not name: # separator
+                pass
+            elif item_rights.get('show') == False:
+                pass
+            elif actionid: # terminal item
+                current_template.append((name, title, item_rights,))
+            else:          # non-terminal item
+                while parent != parents[-1][0]:
+                    parents.pop()
+                upper_template = parents[-1][1]
+                current_template = [(name, title, item_rights,)]
+                upper_template.append(current_template)
+                parents.append((menuid, current_template,))
+        # Done, return the menu structure
+        return menu_template
+        
+    def _build_menu(self, menu_prototype):
+        menu_template = self._dynamic_menu()
+        if not menu_template:
+            return list(menu_prototype)
+        menu_index = {}
+        def process(prototype):
+            if isinstance(prototype, Menu):
+                for item in prototype.items():
+                    process(item)
+            elif isinstance(prototype, MItem):
+                menu_index[prototype.menu_item_id()] = prototype
+        process(menu_prototype)
+        def build(template):
+            if isinstance(template, list):
+                heading = template[0]
+                items = [build(i) for i in template[1:]]
+                if heading is None:
+                    result = items
+                else:
+                    result = Menu(heading[1], items, rights=heading[2])
+            else:
+                item_id = heading[1]
+                item = menu_index[item_id]
+                result = MItem(item_id, item.command(), args=item.args(),
+                               help=item.help(), hotkey=item.hotkey(), icon=item.icon(),
+                               menu_item_id=heading[0], action_id=item.action_id(),
+                               rights=heading[2])
+            return result
+        return build(menu_template)
+
 # Ostatní metody
 
     def _form_menu_item_title(self, form):
