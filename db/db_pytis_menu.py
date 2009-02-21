@@ -220,6 +220,25 @@ _std_table('e_pytis_roles',
                         ),
            depends=('c_pytis_role_purposes',))
 
+viewng('ev_pytis_valid_roles',
+       (SelectRelation('e_pytis_roles', alias='main',
+                       condition='main.deleted is null or main.deleted > now()'),
+        ),
+       grant=db_rights,
+       depends=('e_pytis_roles',)
+       )
+
+viewng('ev_pytis_user_roles',
+       (SelectRelation('e_pytis_roles', alias='main',
+                       condition=("(main.deleted is null or main.deleted > now()) and "
+                                  "main.purposeid = 'user' and "
+                                  "pg_has_role(main.name, 'member') and "
+                                  "main.name = session_user")),
+        ),
+       grant=db_rights,
+       depends=('e_pytis_roles',)
+       )
+
 viewng('ev_pytis_roles',
        (SelectRelation('e_pytis_roles', alias='t1'),
         SelectRelation('c_pytis_role_purposes', alias='t2', exclude_columns=('purposeid',),
@@ -245,6 +264,22 @@ Entries in this table define `member's of each `roleid'.
                         ('-2', '-2', '-3',),
                         ),
            depends=('e_pytis_roles',))
+
+viewng('ev_pytis_valid_role_members',
+       (SelectRelation('e_pytis_role_members', alias='main'),
+        SelectRelation('ev_pytis_valid_roles', alias='roles1',
+                       exclude_columns=('roleid', 'name', 'description', 'purposeid', 'deleted',),
+                       condition="roles1.roleid = main.roleid", jointype=JoinType.INNER),
+        SelectRelation('ev_pytis_valid_roles', alias='roles2',
+                       exclude_columns=('roleid', 'name', 'description', 'purposeid', 'deleted',),
+                       condition="roles1.roleid = main.member", jointype=JoinType.INNER),
+        ),
+       insert_order=('e_pytis_role_members',),
+       update_order=('e_pytis_role_members',),
+       delete_order=('e_pytis_role_members',),
+       grant=db_rights,
+       depends=('e_pytis_role_members', 'ev_pytis_valid_roles',)       
+       )
 
 viewng('ev_pytis_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
