@@ -363,14 +363,19 @@ class Application(wx.App, KeyHandler, CommandHandler):
             bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             specifications[name] = factory
-        add_spec('menu', 'e_pytis_menu', ('menuid', 'name', 'title', 'parent', 'fullposition', 'actionid',))
+        add_spec('menu', 'e_pytis_menu', ('menuid', 'name', 'title', 'parent', 'actionid', 'fullposition',))
         add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
         add_spec('membership', 'ev_pytis_valid_role_members', ('roleid', 'member',))
         add_spec('rights', 'e_pytis_menu_rights', ('menuid', 'roleid', 'rightid', 'granted',))
+        add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications
 
     def _dynamic_menu(self):
         specifications = self._dynamic_menu_specifications()
+        # Initialize login and password
+        def test():
+            dummy_data = specifications['tables'].create(connection_data=config.dbconnection)
+        db_operation(test)
         connection = config.dbconnection
         # Check for menu presence, if not available, return None
         try:
@@ -378,7 +383,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except pytis.data.DBException:
             return None
         menu_rows = menu_data.select_map(identity, sort=(('fullposition', pytis.data.ASCENDENT,),))
-        if not rows:
+        if not menu_rows:
             return None
         # Find my roles
         roles_data = specifications['roles'].create(connection_data=connection)
@@ -401,10 +406,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if r in my_roles:
                 continue
             my_roles.append(r)
-            new_roles += membership[r]
+            new_roles += membership.get(r, [])
         # Find my rights
         I = pytis.data.Integer()
-        my_roles_values = [pytis.data.EQ('roleid', pytis.data.Value(I, r)) for r in roles]
+        my_roles_values = [pytis.data.EQ('roleid', r[0]) for r in roles]
         condition = pytis.data.OR(*my_roles_values)
         rights_data = specifications['rights'].create(connection_data=connection)
         rights = {}
@@ -423,12 +428,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             menuid, name, title, parent, actionid = [row[i].value() for i in (0, 1, 2, 3, 4,)]
             item_rights = rights.get(menuid, {})
             if not parents: # the top pseudonode, should be the first one
-                if not item_rights.get('show'):
+                if False: #not item_rights.get('show'):
                     # Menu not visible
                     return None
                 parents.append((menuid, menu_template,))
                 current_template = menu_template
-            elif not name: # separator
+            elif not title: # separator
                 pass
             elif item_rights.get('show') == False:
                 pass
@@ -455,7 +460,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     process(item)
             elif isinstance(prototype, MItem):
                 menu_index[prototype.menu_item_id()] = prototype
-        process(menu_prototype)
+        for p in menu_prototype:
+            process(p)
         def build(template):
             if isinstance(template, list):
                 heading = template[0]
@@ -465,14 +471,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     result = Menu(heading[1], items, rights=heading[2])
             else:
-                item_id = heading[1]
+                heading = template
+                item_id = heading[0]
                 item = menu_index[item_id]
-                result = MItem(item_id, item.command(), args=item.args(),
+                result = MItem(heading[1], item.command(), args=item.args(),
                                help=item.help(), hotkey=item.hotkey(), icon=item.icon(),
-                               menu_item_id=heading[0], action_id=item.action_id(),
+                               menu_item_id=item_id, action_id=item.action_id(),
                                rights=heading[2])
             return result
-        return build(menu_template)
+        return [build(t) for t in menu_template]
 
 # Ostatní metody
 

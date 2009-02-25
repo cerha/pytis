@@ -1115,6 +1115,10 @@ class MItem(_TitledMenuObject):
         """Vra» text nápovìdy polo¾ky zadaný v konstruktoru."""
         return self._help
 
+    def icon(self):
+        """Return icon given in the constructor."""
+        return self._icon
+
     def action_id(self):
         """Return action id string of the menu item or 'None' if it is unavailable."""
         return self._action_id
