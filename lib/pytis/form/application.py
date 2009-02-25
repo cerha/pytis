@@ -509,6 +509,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _update_recent_forms(self, item=None):
         if self._recent_forms_menu is not None:
             menu = self._recent_forms_menu.wx_menu()
+            if menu is None:
+                return
             recent = self._recent_forms
             if item is not None:
                 try:
