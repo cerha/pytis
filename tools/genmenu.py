@@ -62,7 +62,7 @@ def super_menu_id(menu, menu_items):
 def process_menu(menu, parent, menu_items, actions, position=100):
     if isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
-        menu_items[menu_id] = supmenu = Menu(name=menu_id, title=menu.title(), parent=parent, position=position)
+        menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position)
         parent.children.append(supmenu)
         process_menu(menu.items(), supmenu, menu_items, actions)
     elif isinstance(menu, pytis.form.MItem):
@@ -76,7 +76,10 @@ def process_menu(menu, parent, menu_items, actions, position=100):
         else:
             if action.description is None:
                 action.description = menu.help()
-        menu_id = super_menu_id(menu, menu_items)
+        menu_id = menu.menu_item_id()
+        if menu_id is None:
+            print "Menu with empty menu id, add one explicitly:", menu.title()
+            return
         if menu_items.has_key(menu_id):
             print "Duplicate menu id, change it:", menu.title()
             return
