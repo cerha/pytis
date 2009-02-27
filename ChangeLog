@@ -1,3 +1,11 @@
+2009-02-27  Tomas Cerha  <cerha@brailcom.org>
+
+	* db/cms.sql: 
+	* lib/pytis/extensions/cms/__init__.py: 
+	* lib/pytis/extensions/cms/cms.py: 
+	* lib/pytis/extensions/cms/web.py: 
+	Added generic Pytis CMS.
+
 2008-12-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/help.py:
