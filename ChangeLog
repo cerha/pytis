@@ -1,6 +1,7 @@
 2009-02-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* db/cms.sql: 
+	* lib/pytis/extensions/__init__.py (Module): 
 	* lib/pytis/extensions/cms/__init__.py: 
 	* lib/pytis/extensions/cms/cms.py: 
 	* lib/pytis/extensions/cms/web.py: 
