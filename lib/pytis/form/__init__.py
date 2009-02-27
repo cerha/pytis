@@ -34,7 +34,7 @@ else:
     try:
         import wx
     except ImportError:
-        version = '2.8'
+        version = '2.6'
     else:
         version = None
 if version is not None:
