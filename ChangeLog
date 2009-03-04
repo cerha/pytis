@@ -1,3 +1,8 @@
+2009-03-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* db/db_pytis_cms.py: 
+	Added Pytis CMS gensql definition.
+
 2009-02-27  Tomas Cerha  <cerha@brailcom.org>
 
 	* db/cms.sql: 
