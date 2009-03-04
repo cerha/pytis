@@ -2,7 +2,7 @@ import pytis.data as pd
 Relation = SelectRelation
 
 db_rights = ()
-cms_rights = db_rights + (('select', 'www-data'),)
+cms_rights = db_rights + (('select', '"www-data"'),)
 
 table('cms_languages',
       doc="Codebook of languages available in the CMS.",
@@ -16,7 +16,7 @@ table('cms_modules',
                Column('modname', pd.String(maxlen=64), constraints=('UNIQUE', 'NOT NULL'))),
       grant=cms_rights)
 
-table('cms_menu_structure'
+table('cms_menu_structure',
       doc="Language independent menu structure.",
       columns=(PrimaryColumn('menu_item_id', pd.Serial()),
                Column('identifier', pd.String(maxlen=32), constraints=('UNIQUE', 'NOT NULL')),
@@ -34,11 +34,12 @@ sql_raw("CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order "
 function('cms_menu_structure_tree_order',
          doc="Generate a sortable string representing the hierarchical position of given menu item.",
          arguments=(pd.Integer(),), output_type=pd.String(),
-         body=("SELECT CASE WHEN $1 IS NULL THEN '' ELSE "
-               "(SELECT cms_menu_structure_tree_order(parent) || '.' ||"
-               "        to_char(coalesce(ord, 999999), 'FM000000') "
-               " FROM cms_menu_structure where menu_item_id=$1) "
-               "END AS RESULT"),
+         body="""
+         SELECT CASE WHEN $1 IS NULL THEN '''' ELSE
+           (SELECT cms_menu_structure_tree_order(parent) || ''.'' ||
+                   to_char(coalesce(ord, 999999), ''FM000000'')
+            FROM cms_menu_structure where menu_item_id=$1)
+         END AS RESULT""",
          depends=('cms_menu_structure', ))
 
 table('cms_menu_texts',
@@ -48,7 +49,7 @@ table('cms_menu_texts',
                Column('lang',  pd.String(minlen=2, maxlen=2),  constraints=('NOT NULL',),
                       references='cms_languages(lang)'),
                Column('published', pd.Boolean(), constraints=('NOT NULL',),
-                      default='TRUE'),
+                      default="'TRUE'"),
                Column('title', pd.String(), constraints=('NOT NULL',)),
                Column('description', pd.String()),
                Column('content', pd.String())),
@@ -61,7 +62,7 @@ viewng('cms_menu',
                            jointype=JoinType.CROSS,exclude_columns=('lang_id',)),
                   Relation('cms_menu_texts', alias='t', key_column=('menu_item_id', 'lang'),
                            jointype=JoinType.LEFT_OUTER,
-                           condition='t.menu_item_id = s.menu_item_id AND t.lang = s.lang',
+                           condition='t.menu_item_id = s.menu_item_id AND t.lang = l.lang',
                            exclude_columns=('menu_item_id', 'lang', 'published')),
                   Relation('cms_modules', alias='m', key_column='mod_id',
                            jointype=JoinType.LEFT_OUTER,
@@ -82,9 +83,9 @@ viewng('cms_menu',
        SELECT (SELECT menu_item_id FROM cms_menu_structure WHERE identifier=new.identifier),
               new.lang, new.published, new.title, new.description, new.content
        RETURNING 
-         menu_item_id ||'.'|| lang, menu_item_id, lang, 
-          NULL::varchar(32), NULL::int, NULL::int, NULL::int, NULL::text, NULL::varchar(64),
-         published, title, title, description, content
+          menu_item_id, NULL::varchar(32), NULL::int, NULL::int, NULL::int, NULL::text, 
+          lang, title, description, content, NULL::varchar(64), 
+          menu_item_id ||'.'|| lang, published, title
        )""",
        update="""(
        UPDATE cms_menu_structure SET
