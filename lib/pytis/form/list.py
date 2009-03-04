@@ -2043,7 +2043,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     # Ostatní veøejné metody
 
     def on_key_down(self, event, dont_skip=True):
-        self._run_callback(self.CALL_USER_INTERACTION)
+        if self._search_panel is None:
+            # Running this callback in dual-form would lead to focus loss on Shift, Ctrl etc.
+            self._run_callback(self.CALL_USER_INTERACTION)
         if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
             return True
         def evil_key(event):
