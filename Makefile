@@ -27,8 +27,8 @@ uninstall:
 cvs-install: check-lib compile translations link-lib link-share
 
 check-lib:
-	@echo -e "import sys\nif '$(lib)' not in sys.path: sys.exit(1)" \
-	| python || echo 'WARNING: $(lib) not in Python path!'
+	@python -c "import sys; '$(lib)' not in sys.path and sys.exit(1)" || \
+           echo 'WARNING: $(lib) not in Python path!'
 
 link-lib:
 	@if [ -d $(lib)/pytis ]; then echo "$(lib)/pytis already exists!"; \
