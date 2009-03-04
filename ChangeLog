@@ -1,5 +1,8 @@
 2009-03-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* tools/gensql.py: 
+	Use `char' instead of `varchar' for strings with minlen == maxlen.
+	
 	* Makefile: 
 	Avoid using echo -e in `check-lib'.
 

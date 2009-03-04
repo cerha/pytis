@@ -3,7 +3,7 @@
 #
 # Nástroj pro zpracování specifikací databází
 # 
-# Copyright (C) 2002, 2003, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,9 +91,12 @@ def _gsql_format_type(type_):
     if type(type_) == type(''):
         result = type_
     elif type_.__class__ == pytis.data.String:
+        minlen = type_.minlen()
         maxlen = type_.maxlen()
         if maxlen is None:
             result = 'text'
+        elif maxlen == minlen:
+            result = 'char(%d)' % maxlen
         else:
             result = 'varchar(%d)' % maxlen
     else:
