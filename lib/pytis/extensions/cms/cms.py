@@ -27,7 +27,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 import lcg
 import pytis.data as pd, pytis.presentation as pp
-from pytis.presentation import Specification, FieldSpec as Field, Fields, \
+from pytis.presentation import Specification, Field, Fields, \
      HGroup, VGroup, Binding, CodebookSpec, Computer, CbComputer, computer
 from pytis.extensions import nextval, ONCE, NEVER, ALWAYS
 ASC = pd.ASCENDENT
@@ -54,6 +54,7 @@ class Languages(Specification):
     layout = ('lang',)
     columns = ('lang', 'name')
 
+
 class Modules(Specification):
     title = _("Moduly")
     help = _("Správa roy¹iøujících modulù pou¾itelných ve stránkách.")
@@ -70,7 +71,8 @@ class Modules(Specification):
     cb = CodebookSpec(display='modname', prefer_display=True)
     layout = ('modname', 'descr')
     columns = ('modname', 'descr')
-    
+    bindings = (Binding(_("Dostupné akce tohoto modulu"), 'cms.Actions', 'mod_id'),)
+
 
 class MenuParents(Specification):
     # Codebook of parent items for Menu (to prevent recursion).
@@ -89,7 +91,7 @@ class MenuParents(Specification):
     sorting = ('tree_order', ASC),
     columns = ('title_or_identifier', 'identifier', 'modname')
     cb = CodebookSpec(display='title_or_identifier', prefer_display=True)
-    
+
 
 class Menu(Specification):
     title = _("Menu")
@@ -148,3 +150,83 @@ class Menu(Specification):
               VGroup('lang', 'title', 'description', 'content', 'published',
                      label=_("Text stránky (pro aktuální jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
+    bindings = (Binding(_("Pøístupová práva"), 'cms.Rights',
+                        condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id'])),)
+
+
+class Roles(Specification):
+    title = _("U¾ivatelské role")
+    help = _("Správa dostupných u¾ivatelských rolí, které je mo¾né pøiøazovat u¾ivatelùm.")
+    table = 'cms_roles'
+    fields = (Field('role_id', default=nextval('cms_roles_role_id_seq')),
+              Field('name', _("Název"), width=16),
+              Field('description', _("Popis"), width=64))
+    layout = ('name', 'description')
+    columns = ('name', 'description')
+    bindings = (Binding(_("U¾ivatelé zaøazení do této role"), 'cms.RoleUsers', 'role_id'),)
+    cb = CodebookSpec(display='name')
+
+
+class UserRoles(Specification):
+    title = _("Pøiøazení u¾ivatelských rolí")
+    help = _("Správa pøiøazení u¾ivatelských rolí jednotlivým u¾ivatelùm.")
+    table = 'cms_user_roles'
+    fields = (Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
+              Field('role_id', _("Role"), codebook='cms.Roles'),
+              Field('uid', _('UID'), codebook='cms.Users', width=5),
+              Field('login', _("Pøihla¹ovací jméno"), width=16),
+              Field('fullname', _("Celé jméno"), width=50),
+              Field('name', _("Název role"), width=16),
+              Field('description', _("Popis"), width=50))
+    layout = ('role_id',)
+    columns = ('name', 'description')
+
+
+class RoleUsers(UserRoles):
+    help = _("Správa pøiøazení u¾ivatelù jednotlivým u¾ivatelským rolím.")
+    layout = ('uid',)
+    columns = ('uid', 'login', 'fullname')
+
+
+class Actions(Specification):
+    title = _("Dostupné akce")
+    help = _("Výèet podporovaných akcí pro jednotlivé moduly.")
+    table = 'cms_actions'
+    fields = (Field('action_id', default=nextval('cms_actions_action_id_seq')),
+              Field('mod_id', _("Modul"), codebook='cms.Modules'),
+              Field('name', _("Název"), width=16),
+              Field('description', _("Popis"), width=64))
+    sorting = (('name', ASC),)
+    layout = ('name', 'description')
+    columns = ('name', 'description')
+
+    
+class GenericActions(Actions):
+    title = _("Akce spoleèné pro v¹echny polo¾ky menu")
+    help = _("Výèet podporovaných akcí spoleèných pro v¹echny polo¾ky menu.")
+    condition = pd.EQ('mod_id', pd.Value(pd.Integer(), None))
+
+    
+class Rights(Specification):
+    title = _("Pøístupová práva")
+    help = _("Pøiøazení práv k akcím modulù pro jednotlivé u¾ivatelské role.")
+    table = 'cms_rights'
+    fields = (Field('right_id'),
+              Field('menu_item_id'),
+              Field('role_id'),
+              Field('action_id'),
+              Field('role_name', _("Role"), editable=NEVER),
+              Field('mod_id'),
+              Field('action_name', _("Akce"), editable=NEVER),
+              Field('action_description', _("Popis"), width=30, editable=NEVER),
+              Field('permitted', _("Povoleno"), width=3, fixed=True))
+    grouping = 'role_id'
+    sorting = (('role_name', ASC), ('mod_id', DESC), ('action_name', ASC))
+    layout = columns = ('role_name', 'action_name', 'action_description', 'permitted')
+    def row_style(self, record):
+        if not record['mod_id'].value():
+            return None
+        else:
+            return pp.Style(background='#ffd')
+
+

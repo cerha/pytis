@@ -1,3 +1,10 @@
+2009-03-05  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* db/db_pytis_cms.py: 
+	* lib/pytis/extensions/cms/__init__.py: 
+	* lib/pytis/extensions/cms/cms.py: 
+	Added support for users, roles and rights management.
+
 2009-03-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* db/db_pytis_cms.py: 

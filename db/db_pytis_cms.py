@@ -1,7 +1,7 @@
 import pytis.data as pd
 Relation = SelectRelation
 
-db_rights = ()
+db_rights = (('all', '"pytis-demo"'),)
 cms_rights = db_rights + (('select', '"www-data"'),)
 
 table('cms_languages',
@@ -107,7 +107,111 @@ viewng('cms_menu',
                  AND (new.title IS NOT NULL OR new.description IS NOT NULL OR new.content IS NOT NULL);
        )""",
        delete="(DELETE FROM cms_menu_structure WHERE menu_item_id = old.menu_item_id;)",
-       grant=cms_rights,
        depends=('cms_menu_structure', 'cms_languages', 'cms_menu_texts', 'cms_modules'),
-       )
+       grant=cms_rights)
 
+table('cms_roles',
+      doc="CMS roles.",
+      columns=(PrimaryColumn('role_id', pd.Serial()),
+               Column('name', pd.String(), constraints=('NOT NULL',)),
+               Column('description', pd.String())),
+      grant=cms_rights)
+
+# TODO: This table doesn't belong here.  It is application specific.
+table('cms_users',
+      doc="CMS users.",
+      columns=(PrimaryColumn('uid', pd.Serial()),
+               Column('login', pd.String(), constraints=('NOT NULL',)),
+               Column('fullname', pd.String())),
+               Column('passwd', pd.String())),
+      grant=cms_rights)
+
+table('cms_user_role_assignment',
+      doc="Binding table assigning CMS roles to CMS users.",
+      columns=(PrimaryColumn('user_role_id', pd.Serial()),
+               Column('uid', pd.Integer(), constraints=('NOT NULL',),
+                      references='cms_users'),
+               Column('role_id', pd.Integer(), constraints=('NOT NULL',),
+                      references='cms_roles')),
+      sql='UNIQUE (uid, role_id)',
+      grant=cms_rights)
+
+viewng('cms_user_roles',
+       relations=(Relation('cms_user_role_assignment', alias='a', key_column='user_role_id'),
+                  Relation('cms_users', alias='u', key_column='uid', exclude_columns='*',
+                           jointype=JoinType.INNER, condition='a.uid = u.uid'),
+                  Relation('cms_roles', alias='r', key_column='role_id',
+                           exclude_columns=('role_id',),
+                           jointype=JoinType.INNER, condition='a.role_id = r.role_id')),
+       include_columns=(ViewColumn('u.login'),
+                        ViewColumn('u.fullname')),
+       insert=("INSERT INTO cms_user_role_assignment (user_role_id, uid, role_id) "
+               "VALUES (new.user_role_id, new.uid, new.role_id) "
+               "RETURNING user_role_id, uid, role_id, "
+                         "NULL::text, NULL::text, NULL::text, NULL::text"),
+       update=("UPDATE cms_user_role_assignment SET uid = new.uid, role_id = new.role_id "
+               "WHERE user_role_id=old.user_role_id"),
+       delete=("DELETE FROM cms_user_role_assignment WHERE user_role_id = old.user_role_id"),
+       depends=('cms_user_role_assignment', 'cms_users'),
+       grant=cms_rights)
+
+table('cms_actions',
+      doc=("Enumeration of valid actions (including both module independent actions and per "
+           "module actions).  Module independent actions have NULL in the mod_id column."),
+      columns=(PrimaryColumn('action_id', pd.Serial()),
+               Column('mod_id', pd.Integer(), references='cms_modules'),
+               Column('name', pd.String(maxlen=16), constraints=('NOT NULL',)),
+               Column('description', pd.String(), constraints=('NOT NULL',))),
+      sql='UNIQUE (mod_id, name)',
+      grant=cms_rights)
+
+table('cms_rights_assignment',
+      doc="Underlying binding table between menu items, roles and module actions.",
+      columns=(PrimaryColumn('rights_assignment_id', pd.Serial()),
+               Column('menu_item_id', pd.Integer(), constraints=('NOT NULL',), references='cms_menu_structure'),
+               Column('role_id', pd.Integer(), constraints=('NOT NULL',), references='cms_roles'),
+               Column('action_id', pd.Integer(), constraints=('NOT NULL',), references='cms_actions')),
+      sql='UNIQUE (menu_item_id, role_id, action_id)',
+      grant=cms_rights)
+
+viewng('cms_rights',
+       doc="User editable access rights assignment joining all menu items, roles and actions.",
+       relations=(Relation('cms_menu_structure', alias='s', key_column='menu_item_id',
+                           exclude_columns='*'),
+                  Relation('cms_roles', alias='r', key_column='role_id',
+                           exclude_columns=('name', 'description'),
+                           jointype=JoinType.CROSS),
+                  Relation('cms_actions', alias='a', key_column='action_id',
+                           exclude_columns=('name', 'description'),
+                           jointype=JoinType.INNER,
+                           condition='a.mod_id = s.mod_id OR a.mod_id IS NULL'),
+                  #Relation('cms_modules', alias='m', key_column='mod_id',
+                  #         jointype=JoinType.LEFT_OUTER,
+                  #         condition='m.mod_id = s.mod_id'),
+                  Relation('cms_rights_assignment', alias='x', key_column='rights_assignment_id',
+                           jointype=JoinType.LEFT_OUTER,
+                           condition=('x.menu_item_id = s.menu_item_id AND x.role_id = r.role_id '
+                                      'AND x.action_id = a.action_id'),
+                           exclude_columns=('menu_item_id', 'role_id', 'action_id'))),
+       include_columns=(ViewColumn(None, alias='right_id',
+                                   sql="s.menu_item_id ||'.'|| r.role_id ||'.'|| a.action_id"),
+                        ViewColumn('s.menu_item_id'),
+                        ViewColumn('r.name', alias='role_name'),
+                        ViewColumn('r.description', alias='role_description'),
+                        ViewColumn('a.name', alias='action_name'),
+                        ViewColumn('a.description', alias='action_description'),
+                        ViewColumn(None, alias='permitted',
+                                   sql="x.rights_assignment_id IS NOT NULL"),
+                        ),
+       insert=None,
+       update="""(
+       INSERT INTO cms_rights_assignment (menu_item_id, role_id, action_id)
+         SELECT new.menu_item_id, new.role_id, new.action_id
+         WHERE new.permitted;
+       DELETE FROM cms_rights_assignment
+         WHERE menu_item_id=new.menu_item_id AND role_id=new.role_id
+         AND action_id=new.action_id AND NOT new.permitted;
+       )""",
+       delete=None,
+       depends=('cms_menu_structure', 'cms_roles', 'cms_actions', 'cms_rights_assignment'),
+       grant=cms_rights)
