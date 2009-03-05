@@ -1,3 +1,17 @@
+2009-03-05  Pavel Hanak  <hanak@asellus.cz>
+
+	* pytis/util/configuration.py:
+	New option `clipboard_primary_selection'.
+
+	* pytis/form/search.py: Use `wx_spin_panel' instead of
+	`wx_spin_ctrl' in filter dialog.
+
+	* pytis/form/screen.py: New function `wx_spin_panel' which adds
+	verticaly aligned label to `wx_spin_ctrl'.
+
+	* pytis/form/list.py: Use `copy_to_clipboard' instead of the hack
+	with wx.TextCtrl.
+
 2009-03-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* pytis/form/list.py:

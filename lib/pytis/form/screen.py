@@ -99,7 +99,8 @@ def copy_to_clipboard(text):
     assert isinstance(text, (str, unicode))
     clipboard = wx.TheClipboard
     if clipboard.Open():
-        #clipboard.UsePrimarySelection(True)
+        if config.clipboard_primary_selection:
+            clipboard.UsePrimarySelection(True)
         clipboard.SetData(wx.TextDataObject(text))
         clipboard.Flush()
         clipboard.Close()
@@ -1624,6 +1625,16 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
 def wx_spin_ctrl(parent, value=None, **kwargs):
     return wx_text_ctrl(parent, value=value, _spin=True, **kwargs)
 
+def wx_spin_panel(parent, value, label, **kwargs):
+    panel = wx.Panel(parent, -1)
+    sizer = wx.BoxSizer(wx.HORIZONTAL)
+    spin = wx_spin_ctrl(panel, value=value, **kwargs)
+    _label = wx.StaticText(panel, -1, label)
+    sizer.Add(_label, 0, wx.ALIGN_CENTER_VERTICAL)
+    sizer.Add((1,1), 1)
+    sizer.Add(spin)
+    panel.SetSizer(sizer)
+    return panel
 
 def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     checkbox = wx.CheckBox(parent, -1, label=label)

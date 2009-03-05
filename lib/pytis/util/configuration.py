@@ -687,6 +687,10 @@ class Configuration(object):
                    " apod.")
         _DEFAULT = None
 
+    class _Option_clipboard_primary_selection(BooleanOption):
+        _DESCR = _("Flag urèující, zda se má pøi exportu pou¾ít primary selection.")
+        _DEFAULT = False
+        
     # Volby pøizpùsobení u¾ivatelského rozhraní
         
     class _Option_show_tooltips(BooleanOption):
