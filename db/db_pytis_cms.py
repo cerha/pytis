@@ -122,8 +122,8 @@ table('cms_users',
       doc="CMS users.",
       columns=(PrimaryColumn('uid', pd.Serial()),
                Column('login', pd.String(), constraints=('NOT NULL',)),
-               Column('fullname', pd.String())),
-               Column('passwd', pd.String())),
+               Column('fullname', pd.String(), constraints=('NOT NULL',)),
+               Column('passwd', pd.String(), constraints=('NOT NULL',))),
       grant=cms_rights)
 
 table('cms_user_role_assignment',
