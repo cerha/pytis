@@ -1,5 +1,8 @@
 2009-03-05  Tomas Cerha  <cerha@debian.brailcom.xx>
 
+	* db/cms.sql: 
+	File removed (replaced by `db_pytis_cms.py').
+
 	* db/db_pytis_cms.py: 
 	* lib/pytis/extensions/cms/__init__.py: 
 	* lib/pytis/extensions/cms/cms.py: 
