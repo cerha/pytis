@@ -737,7 +737,7 @@ class LookupForm(InnerForm):
     def _load_user_filters(self):
         packed = self._get_state_param(self._USER_FILTERS_PARAM, None, tuple, tuple)
         if packed:
-            unpacked = [(n, self._unpack_condition(c)) for n, c in packed]
+            unpacked = [(unicode(n), self._unpack_condition(c)) for n, c in packed]
             return tuple([Filter(name, cond, fixed=False) for name, cond in unpacked if cond])
         else:
             return ()
