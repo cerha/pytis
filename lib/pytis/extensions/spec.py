@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,8 +32,6 @@ import config
 
 # Zkratky na často používané identifikátory.
     
-Field = FieldSpec
-
 ASC = pytis.data.ASCENDENT
 DESC = pytis.data.DESCENDANT
 
@@ -329,7 +327,7 @@ class ReusableSpec:
         """Vrať seznam specifikací sloupců vyjmenovaných sloupců.
 
         Pokud nejsou vyjmenovány žádné identifikátory sloupců, vrátí seznam
-        všech sloupců.  Vrací sekvenci instancí 'FieldSpec'.
+        všech sloupců.  Vrací sekvenci instancí 'Field'.
 
         """
         if len(args) == 0:
@@ -354,7 +352,7 @@ class ReusableSpec:
         """Vrať seznam specifikací sloupců, které nejsou vyjmenovány.
 
         Pokud nejsou vyjmenovány žádné identifikátory sloupců, vrátí seznam
-        všech sloupců.  Vrací sekvenci instancí 'FieldSpec'.
+        všech sloupců.  Vrací sekvenci instancí 'Field'.
 
         """
         if len(args) == 0:
