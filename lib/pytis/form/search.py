@@ -101,9 +101,15 @@ class SFSDialog(GenericDialog):
 
     def _create_spin_ctrl(self, value, **kwargs):
         return wx_spin_ctrl(self._dialog, value, height=self._FIELD_HEIGHT, **kwargs)
-
-    def _create_spin_panel(self, value, label, **kwargs):
-        return wx_spin_panel(self._dialog, value, label, height=self._FIELD_HEIGHT, **kwargs)
+        
+    def _create_label(self, label, **kwargs):
+        panel = wx.Panel(self._dialog, -1)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        label_ctrl = wx.StaticText(panel, -1, label)
+        sizer.Add(label_ctrl, border=12, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT)
+        panel.SetSizer(sizer)
+        panel.SetMinSize((label_ctrl.GetSize().width+12, self._FIELD_HEIGHT))
+        return panel
 
     def _create_content(self, sizer):
         self._controls = []
@@ -309,17 +315,16 @@ class SFDialog(SFSDialog):
             raise Exception("Unsupported operator: "+ name)
 
     def _create_controls(self):
-        choice, spinpanel, field, button = self._create_choice, self._create_spin_panel, \
-            self._create_text_ctrl, self._create_button
+        choice, spin, label, field, button = self._create_choice, self._create_spin_ctrl, \
+            self._create_label, self._create_text_ctrl, self._create_button
         # Construct the ui controls based on the current condition.
         def create_logical_operator(i, n, operator, level):
             return (
                 choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
                        selected=operator,
                        tooltip=_("Zvolte zpùsob spojení s pøedchozími podmínkami")),
-                spinpanel(level, _(" Váha operátoru: "), length=4,
-                     tooltip=_("Zvolte váhu logického operátoru.")),
-                )
+                label(_("Váha operátoru:")),
+                spin(level, length=4, tooltip=_("Zvolte váhu logického operátoru.")))
         def create_relational_operator(i, n, operator, col1, col2, value):
             return (
                 choice([(c.label(), c) for c in self._columns], selected=col1,
@@ -375,7 +380,7 @@ class SFDialog(SFSDialog):
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
         def logical_operator(i):
-            wop, wweight = self._controls[i]
+            wop, wlabel, wweight = self._controls[i]
             op = self._LOGICAL_OPERATORS[wop.GetSelection()]
             weight = wweight.GetValue()
             return (op, weight)
