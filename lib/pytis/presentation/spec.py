@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 """Třídy pro specifikaci prezentační vlastností formulářů.
 
 Třída 'ViewSpec' zastřešuje ostatní specifikační třídy definované tímto
-modulem ('FieldSpec', 'GroupSpec', 'LayoutSpec').
+modulem ('Field', 'GroupSpec', 'LayoutSpec').
 
 Vytvoření instance formulářové třídy je potom v podstatě interpretací
 příslušných specifikací.
@@ -84,7 +84,7 @@ class Color(object):
 class Style(object):
     """Text style specification.
 
-    Style instance is returned by the 'style' attribute of 'FieldSpec' or 'row_style' attribute of
+    Style instance is returned by the 'style' attribute of 'Field' or 'row_style' attribute of
     'ViewSpec'.  Both specifiers may be functions and compute the style based on the values of the
     current row.  They may also return None to indicate the default style.  Field style has a
     higher precedence, so all properties not defined by field style default to those defined by row
@@ -977,7 +977,7 @@ class ViewSpec(object):
                                 "Zero width field in layout:", item)
             recourse_group(layout.group())
             for f in fields:
-                assert isinstance(f, FieldSpec)
+                assert isinstance(f, Field)
                 assert not isinstance(f.computer(), CbComputer) \
                        or f.computer().field() in self._field_dict.keys()
                 for (s, c) in (('computer', f.computer()),
@@ -1112,7 +1112,7 @@ class ViewSpec(object):
         return self._fields
         
     def field(self, id):
-        """Vrať specifikaci políčka daného 'id' jako instanci 'FieldSpec'.
+        """Vrať specifikaci políčka daného 'id' jako instanci 'Field'.
 
         Pokud takové políčko neexistuje, vrať 'None'.
         
@@ -1612,7 +1612,7 @@ class CodebookSpec(object):
     """Specification of codebook properties of given view.
 
     The specification of any view may define the properties of the view, when used as a codebook
-    (see the 'codebook' argument of 'FieldSpec' for more information about codebooks).
+    (see the 'codebook' argument of 'Field' for more information about codebooks).
 
     'CodebookSpec' may be defined as the 'cb' attribute of a 'Specification'.
     
@@ -1726,7 +1726,7 @@ class FormType(object):
 class Link(object):
     """Specification of a link from field to a differnt view.
 
-    Used as a value of 'FieldSpec' constructor argument  'link'.
+    Used as a value of 'Field' constructor argument  'link'.
 
     """
     
@@ -1893,7 +1893,7 @@ class ListLayout(object):
         return self._allow_index
     
     
-class FieldSpec(object):
+class Field(object):
     """Specifikace abstraktního políčka zobrazujícího datovou hodnotu.
 
     Tato specifikace je použitelná pro všechny druhy práce s políčky
@@ -1921,7 +1921,7 @@ class FieldSpec(object):
           label -- user visible field label as a string or unicode.  This argument (unlike
             the remaining arguments) may also be passed as positional.
 
-          inherit -- may be used to inherit from other field specification.  If a 'FieldSpec'
+          inherit -- may be used to inherit from other field specification.  If a 'Field'
             instance is passed in this argument, all constructor arguments not overriden in the
             current constructor call will be inherited from that instance.
           
@@ -2136,7 +2136,7 @@ class FieldSpec(object):
             if value is not None:
                 kwargs[key] = value
         if inherit:
-            assert isinstance(inherit, FieldSpec), inherit
+            assert isinstance(inherit, Field), inherit
             kwargs = dict(inherit._kwargs, **kwargs)
         self._kwargs = kwargs
         self._init(**kwargs)
@@ -2201,7 +2201,7 @@ class FieldSpec(object):
             for k in kwargs.keys():
                 assert k in ('not_null', 'unique', 'constraints', 'enumerator', 'minlen', 'maxlen',
                              'precision', 'format', 'mindate', 'maxdate', 'validation_messages'), \
-                             "Invalid FieldSpec argument for field '%s': %r" % (id, k)
+                             "Invalid Field argument for field '%s': %r" % (id, k)
         if label is None:
             label = id
         self._label = label
@@ -2263,7 +2263,7 @@ class FieldSpec(object):
         self._enumerator_kwargs = enumerator_kwargs
         
     def __str__(self):
-        return "<FieldSpec for '%s'>" % self.id()
+        return "<Field for '%s'>" % self.id()
         
     def id(self):
         return self._id
@@ -2405,6 +2405,9 @@ class FieldSpec(object):
     def enumerator_kwargs(self):
         return self._enumerator_kwargs
 
+# Backwards compatibility alias
+FieldSpec = Field
+
 
 class Fields(object):
     """Field specification container for convenient field specification inheritance.
@@ -2424,7 +2427,7 @@ class Fields(object):
     def __init__(self, fields):
         """Initialize the instance.
 
-        The argument is a sequence of field specifications as 'FieldSpec' instances.
+        The argument is a sequence of field specifications as 'Field' instances.
         
         """
         self._fields = tuple(fields)
@@ -2444,13 +2447,13 @@ class Fields(object):
 
         Arguments:
 
-          override -- sequence of 'FieldSpec' instances that should replace the items of the same
+          override -- sequence of 'Field' instances that should replace the items of the same
             id within the original list.
 
           exclude -- sequence of field identifiers to be excluded from the resulting list.
 
         """
-        #exclude = [isinstance(x, FieldSpec) and x.id() or x for x in exclude]
+        #exclude = [isinstance(x, Field) and x.id() or x for x in exclude]
         override = dict([(f.id(), f) for f in override])
         return [override.get(f.id(), f) for f in self._fields if f.id() not in exclude]
     
@@ -2690,7 +2693,7 @@ class Specification(object):
     'fields' is used."""
 
     fields = ()
-    """Specification of all fields as a sequence of 'FieldSpec' instances.
+    """Specification of all fields as a sequence of 'Field' instances.
     
     May be also defined as a method of the same name."""
     

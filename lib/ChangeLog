@@ -1,3 +1,8 @@
+2009-03-06  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* pytis/presentation/spec.py:
+	`FieldSpec' renamed to `Field' (keeping backwards compatibility alias).
+
 2009-03-05  Pavel Hanak  <hanak@asellus.cz>
 
 	* pytis/util/configuration.py:
