@@ -44,7 +44,7 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Správcovské role nelze editovat"))
             return None
-        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['roleid'])
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['name'])
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
@@ -63,9 +63,10 @@ class ApplicationRoles(ApplicationRolesSpecification):
     table = 'ev_pytis_roles'
     title = _("Role")
     fields = (
-        Field('roleid', "", default=nextval('e_pytis_roles_roleid_seq')),
+        Field('roleid', "",     # to allow binding of ApplicationRolesMembers
+              virtual=True, computer=pytis.presentation.computer(lambda row, name: name)),
         Field('member', "",     # to allow binding of ApplicationRolesOwners
-              virtual=True, computer=pytis.presentation.computer(lambda row, roleid: roleid)),
+              virtual=True, computer=pytis.presentation.computer(lambda row, name: name)),
         Field('name', _("Název"),
               fixed=True,
               descr=_("Struèný název role nebo u¾ivatelské jméno v databázi.")),
@@ -84,7 +85,6 @@ class ApplicationRoles(ApplicationRolesSpecification):
     columns = ('name', 'description', 'purpose', 'deleted',)
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
-    cb = pytis.presentation.CodebookSpec(display='name')
     bindings = (pytis.presentation.Binding(_("Obsahuje role"), 'menu.ApplicationRolesMembers', id='members',
                                            binding_column='roleid'),
                 pytis.presentation.Binding(_("Patøí do rolí"), 'menu.ApplicationRolesOwners', id='owners',
@@ -109,13 +109,9 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
     title = "Èlenství v rolích"
     fields = (
         Field('id', "", default=nextval('e_pytis_role_members_id_seq')),
-        Field('roleid', _("Skupina"), codebook='menu.ApplicationApplicationRoles'),
-        Field('member', _("Zaøazovaná role"), codebook='menu.CommonApplicationRoles'),
-        Field('name', _("Skupina"),
-              fixed=True,
+        Field('roleid', _("Skupina"), fixed=True, codebook='menu.ApplicationApplicationRoles',
               descr=_("Role, do ní¾ jsou zahrnuty jiné role.")),
-        Field('mname', _("Obsa¾ená role"),
-              fixed=True,
+        Field('member', _("Obsa¾ená role"), fixed=True, codebook='menu.CommonApplicationRoles',
               descr=_("Role, která je èlenem skupinové role.")),
         Field('purposeid', "", codebook='menu.ApplicationRolePurposes'),
         Field('mpurposeid', "", codebook='menu.ApplicationRolePurposes'),
@@ -124,9 +120,9 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
         Field('mdescription', _("Popis"),
               descr=_("Popis urèení role.")),
         )
-    columns = ('name', 'mname',)
+    columns = ('roleid', 'member',)
     layout = ('roleid', 'member',)
-    sorting = (('name', pytis.data.ASCENDENT,), ('mname', pytis.data.ASCENDENT,),)
+    sorting = (('roleid', pytis.data.ASCENDENT,), ('member', pytis.data.ASCENDENT,),)
 
     def _row_editable(self, row):
         # This is here to prevent deletion of admin role memberships
@@ -138,11 +134,11 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
 
 class ApplicationRolesOwners(ApplicationRolesMembership):
     title = _("Zaøazení do skupiny")
-    columns = ('name', 'description',)
+    columns = ('roleid', 'description',)
 
 class ApplicationRolesMembers(ApplicationRolesMembership):
     title = _("Pøiøazení role")
-    columns = ('mname', 'mdescription',)
+    columns = ('member', 'mdescription',)
 
 class ApplicationActions(pytis.presentation.Specification):
     table = 'c_pytis_menu_actions'
