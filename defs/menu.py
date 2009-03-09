@@ -25,10 +25,10 @@ from pytis.extensions import Field, nextval
 
 class ApplicationRolePurposes(pytis.presentation.Specification):
     table = 'c_pytis_role_purposes'
-    title = "Úèely rolí"
+    title = _("Úèely rolí")
     fields = (
-        Field('purposeid', "Id"),
-        Field('purpose', "Úèel"),
+        Field('purposeid', _("Identifikátor")),
+        Field('purpose', _("Popis")),
         )
     cb = pytis.presentation.CodebookSpec(display='purpose')
 
@@ -42,13 +42,13 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
     
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, "Správcovské role nelze editovat")
+            pytis.form.run_dialog(pytis.form.Warning, _("Správcovské role nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['roleid'])
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, "Správcovské role nelze mazat")
+            pytis.form.run_dialog(pytis.form.Warning, _("Správcovské role nelze mazat"))
             return False
         return True
         
@@ -61,39 +61,39 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
     
 class ApplicationRoles(ApplicationRolesSpecification):
     table = 'ev_pytis_roles'
-    title = "Role"
+    title = _("Role")
     fields = (
-        Field('roleid', "Id", default=nextval('e_pytis_roles_roleid_seq')),
+        Field('roleid', "", default=nextval('e_pytis_roles_roleid_seq')),
         Field('member', "",     # to allow binding of ApplicationRolesOwners
               virtual=True, computer=pytis.presentation.computer(lambda row, roleid: roleid)),
-        Field('name', "Název",
+        Field('name', _("Název"),
               fixed=True,
-              descr="Struèný název role nebo u¾ivatelské jméno v databázi."),
+              descr=_("Struèný název role nebo u¾ivatelské jméno v databázi.")),
         Field('description', "Popis",
               descr=_("Popis urèení role.")),
-        Field('purposeid', "Kód úèelu", codebook='menu.CommonApplicationRolePurposes',
+        Field('purposeid', _("Kód úèelu"), codebook='menu.CommonApplicationRolePurposes',
               fixed=True, selection_type=pytis.presentation.SelectionType.CHOICE,
-              descr="Kód role: normální, u¾ivatelský úèet, správcovská."),
-        Field('purpose', "Úèel",
+              descr=_("Kód role: normální, u¾ivatelský úèet, správcovská.")),
+        Field('purpose', _("Úèel"),
               fixed=True,
-              descr="Význam role: normální, u¾ivatelský úèet, správcovská."),              
-        Field('deleted', "Datum zru¹ení",
+              descr=_("Význam role: normální, u¾ivatelský úèet, správcovská.")),              
+        Field('deleted', _("Datum zru¹ení"),
               fixed=True,
-              descr="Je-li nastaveno, role je od daného data neaktivní."),
+              descr=_("Je-li nastaveno, role je od daného data neaktivní.")),
         )
     columns = ('name', 'description', 'purpose', 'deleted',)
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='name')
-    bindings = (pytis.presentation.Binding("Zahrnuté role", 'menu.ApplicationRolesMembers', id='members',
+    bindings = (pytis.presentation.Binding(_("Obsahuje role"), 'menu.ApplicationRolesMembers', id='members',
                                            binding_column='roleid'),
-                pytis.presentation.Binding("Èlenství v rolích", 'menu.ApplicationRolesOwners', id='owners',
+                pytis.presentation.Binding(_("Patøí do rolí"), 'menu.ApplicationRolesOwners', id='owners',
                                            binding_column='member'),
                 )
     
     def on_delete_record(self, row):
         if self._row_deleteable(row):
-            pytis.form.run_dialog(pytis.form.Warning, "Role nelze mazat, nastavte datum zru¹ení")
+            pytis.form.run_dialog(pytis.form.Warning, _("Role nelze mazat, nastavte datum zru¹ení"))
         return None
 
 class ApplicationApplicationRoles(ApplicationRoles):
@@ -106,20 +106,20 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
     table = 'ev_pytis_valid_role_members'
     title = "Èlenství v rolích"
     fields = (
-        Field('id', "Id", default=nextval('e_pytis_role_members_id_seq')),
-        Field('roleid', "Id obsahující role", codebook='menu.ApplicationApplicationRoles'),
-        Field('member', "Id obsa¾ené role", codebook='menu.CommonApplicationRoles'),
-        Field('name', "Role jako skupina",
+        Field('id', "", default=nextval('e_pytis_role_members_id_seq')),
+        Field('roleid', _("Skupina"), codebook='menu.ApplicationApplicationRoles'),
+        Field('member', _("Zaøazovaná role"), codebook='menu.CommonApplicationRoles'),
+        Field('name', _("Skupina"),
               fixed=True,
-              descr="Role, do ní¾ jsou zahrnuty jiné role."),
-        Field('mname', "Role jako èlen",
+              descr=_("Role, do ní¾ jsou zahrnuty jiné role.")),
+        Field('mname', _("Obsa¾ená role"),
               fixed=True,
-              descr="Role, která je èlenem skupinové role."),
-        Field('purposeid', "Úèel", codebook='menu.ApplicationRolePurposes'),
-        Field('mpurposeid', "Úèel", codebook='menu.ApplicationRolePurposes'),
-        Field('description', "Popis",
+              descr=_("Role, která je èlenem skupinové role.")),
+        Field('purposeid', "", codebook='menu.ApplicationRolePurposes'),
+        Field('mpurposeid', "", codebook='menu.ApplicationRolePurposes'),
+        Field('description', _("Popis"),
               descr=_("Popis urèení role.")),
-        Field('mdescription', "Popis",
+        Field('mdescription', _("Popis"),
               descr=_("Popis urèení role.")),
         )
     columns = ('name', 'mname',)
@@ -135,11 +135,11 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
         return None
 
 class ApplicationRolesOwners(ApplicationRolesMembership):
-    title = "Èlenství v rolích"
+    title = _("Zaøazení do skupiny")
     columns = ('name', 'description',)
 
 class ApplicationRolesMembers(ApplicationRolesMembership):
-    title = "Vlastnìné role"
+    title = _("Pøiøazení role")
     columns = ('mname', 'mdescription',)
 
 class ApplicationActions(pytis.presentation.Specification):
