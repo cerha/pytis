@@ -125,7 +125,8 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
     sorting = (('name', pytis.data.ASCENDENT,), ('mname', pytis.data.ASCENDENT,),)
 
     def _row_editable(self, row):
-        return row['purposeid'].value() != 1 and row['mpurposeid'] != 1
+        # This is here to prevent deletion of admin role memberships
+        return row['purposeid'].value() != 'admn' and row['mpurposeid'].value() != 'admn'
     
     def on_edit_record(self, row):
         pytis.form.run_dialog(pytis.form.Warning, _("Pøiøazení rolí nelze editovat, jen pøidávat a mazat"))
