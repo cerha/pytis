@@ -77,7 +77,7 @@ class ApplicationRoles(ApplicationRolesSpecification):
               descr="Je-li nastaveno, role je od daného data neaktivní."),
         )
     columns = ('name', 'description', 'purpose', 'deleted',)
-    layout = ('name', 'description', 'purposeid',)
+    layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='name')
     bindings = (pytis.presentation.Binding("Zahrnuté role", 'menu.ApplicationRolesMembers', id='members',
