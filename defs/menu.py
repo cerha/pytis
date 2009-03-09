@@ -94,13 +94,19 @@ class ApplicationRoles(ApplicationRolesSpecification):
             pytis.form.run_dialog(pytis.form.Warning, "Role nelze mazat, nastavte datum zru¹ení")
         return None
 
+class ApplicationApplicationRoles(ApplicationRoles):
+    condition = pytis.data.EQ('purposeid', pytis.data.Value(pytis.data.String(), 'appl'))
+
+class CommonApplicationRoles(ApplicationRoles):
+    condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
+
 class ApplicationRolesMembership(ApplicationRolesSpecification):
     table = 'ev_pytis_valid_role_members'
     title = "Èlenství v rolích"
     fields = (
         Field('id', "Id", default=nextval('e_pytis_role_members_id_seq')),
-        Field('roleid', "Id obsahující role", codebook='menu.ApplicationRoles'),
-        Field('member', "Id obsa¾ené role", codebook='menu.ApplicationRoles'),
+        Field('roleid', "Id obsahující role", codebook='menu.ApplicationApplicationRoles'),
+        Field('member', "Id obsa¾ené role", codebook='menu.CommonApplicationRoles'),
         Field('name', "Role jako skupina",
               fixed=True,
               descr="Role, do ní¾ jsou zahrnuty jiné role."),
