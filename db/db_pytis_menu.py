@@ -273,36 +273,20 @@ Entries in this table define `member's of each `roleid'.
 
 viewng('ev_pytis_valid_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
-        SelectRelation('ev_pytis_valid_roles', alias='roles1',
-                       exclude_columns=('roleid', 'name', 'description', 'purposeid', 'deleted',),
-                       condition="roles1.roleid = main.roleid", jointype=JoinType.INNER),
-        SelectRelation('ev_pytis_valid_roles', alias='roles2',
-                       exclude_columns=('roleid', 'name', 'description', 'purposeid', 'deleted',),
-                       condition="roles1.roleid = main.member", jointype=JoinType.INNER),
-        ),
-       insert_order=('e_pytis_role_members',),
-       update_order=('e_pytis_role_members',),
-       delete_order=('e_pytis_role_members',),
-       grant=db_rights,
-       depends=('e_pytis_role_members', 'ev_pytis_valid_roles',)       
-       )
-
-viewng('ev_pytis_role_members',
-       (SelectRelation('e_pytis_role_members', alias='main'),
-        SelectRelation('e_pytis_roles', alias='t1', exclude_columns=('roleid',),
-                       condition='t1.roleid = main.roleid', jointype=JoinType.INNER),
-        SelectRelation('e_pytis_roles', alias='t2', exclude_columns=('roleid',),
+        SelectRelation('ev_pytis_valid_roles', alias='roles1', exclude_columns=('roleid',),
+                       condition='roles1.roleid = main.roleid', jointype=JoinType.INNER),
+        SelectRelation('ev_pytis_valid_roles', alias='roles2', exclude_columns=('roleid',),
                        column_aliases=(('name', 'mname',),
                                        ('description', 'mdescription',),
                                        ('purposeid', 'mpurposeid',),
                                        ('deleted', 'mdeleted',),),
-                       condition='t2.roleid = main.member', jointype=JoinType.INNER),
+                       condition='roles2.roleid = main.member', jointype=JoinType.INNER),
         ),
        insert_order=('e_pytis_role_members',),
        update_order=('e_pytis_role_members',),
        delete_order=('e_pytis_role_members',),
        grant=db_rights,
-       depends=('e_pytis_role_members', 'e_pytis_roles',)
+       depends=('e_pytis_role_members', 'ev_pytis_valid_roles',)
        )
 
 ### Menus

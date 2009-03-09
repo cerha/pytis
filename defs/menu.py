@@ -95,7 +95,7 @@ class ApplicationRoles(ApplicationRolesSpecification):
         return None
 
 class ApplicationRolesMembership(ApplicationRolesSpecification):
-    table = 'ev_pytis_role_members'
+    table = 'ev_pytis_valid_role_members'
     title = "Èlenství v rolích"
     fields = (
         Field('id', "Id", default=nextval('e_pytis_role_members_id_seq')),
