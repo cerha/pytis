@@ -64,6 +64,8 @@ class ApplicationRoles(ApplicationRolesSpecification):
     title = "Role"
     fields = (
         Field('roleid', "Id", default=nextval('e_pytis_roles_roleid_seq')),
+        Field('member', "",     # to allow binding of ApplicationRolesOwners
+              virtual=True, computer=pytis.presentation.computer(lambda row, roleid: roleid)),
         Field('name', "Název",
               fixed=True,
               descr="Struèný název role nebo u¾ivatelské jméno v databázi."),
@@ -84,9 +86,9 @@ class ApplicationRoles(ApplicationRolesSpecification):
     sorting = (('name', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='name')
     bindings = (pytis.presentation.Binding("Zahrnuté role", 'menu.ApplicationRolesMembers', id='members',
-                                           condition=(lambda row: pytis.data.OR(pytis.data.EQ('roleid', row['roleid'],),))),
+                                           binding_column='roleid'),
                 pytis.presentation.Binding("Èlenství v rolích", 'menu.ApplicationRolesOwners', id='owners',
-                                           condition=(lambda row: pytis.data.OR(pytis.data.EQ('member', row['roleid'],)))),
+                                           binding_column='member'),
                 )
     
     def on_delete_record(self, row):
