@@ -126,6 +126,10 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
 
     def _row_editable(self, row):
         return row['purposeid'].value() != 1 and row['mpurposeid'] != 1
+    
+    def on_edit_record(self, row):
+        pytis.form.run_dialog(pytis.form.Warning, _("Pøiøazení rolí nelze editovat, jen pøidávat a mazat"))
+        return None
 
 class ApplicationRolesOwners(ApplicationRolesMembership):
     title = "Èlenství v rolích"
