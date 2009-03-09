@@ -223,9 +223,11 @@ _std_table('e_pytis_roles',
 viewng('ev_pytis_valid_roles',
        (SelectRelation('e_pytis_roles', alias='main',
                        condition='main.deleted is null or main.deleted > now()'),
+        SelectRelation('c_pytis_role_purposes', alias='codebook', exclude_columns=('purposeid',),
+                       condition='main.purposeid = codebook.purposeid', jointype=JoinType.INNER),
         ),
        grant=db_rights,
-       depends=('e_pytis_roles',)
+       depends=('e_pytis_roles', 'c_pytis_role_purposes',)
        )
 
 viewng('ev_pytis_user_roles',
@@ -273,9 +275,9 @@ Entries in this table define `member's of each `roleid'.
 
 viewng('ev_pytis_valid_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
-        SelectRelation('ev_pytis_valid_roles', alias='roles1', exclude_columns=('roleid',),
+        SelectRelation('ev_pytis_valid_roles', alias='roles1', exclude_columns=('roleid', 'purpose',),
                        condition='roles1.roleid = main.roleid', jointype=JoinType.INNER),
-        SelectRelation('ev_pytis_valid_roles', alias='roles2', exclude_columns=('roleid',),
+        SelectRelation('ev_pytis_valid_roles', alias='roles2', exclude_columns=('roleid', 'purpose',),
                        column_aliases=(('name', 'mname',),
                                        ('description', 'mdescription',),
                                        ('purposeid', 'mpurposeid',),

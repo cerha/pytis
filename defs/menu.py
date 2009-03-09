@@ -97,9 +97,11 @@ class ApplicationRoles(ApplicationRolesSpecification):
         return None
 
 class ApplicationApplicationRoles(ApplicationRoles):
+    table = 'ev_pytis_valid_roles'
     condition = pytis.data.EQ('purposeid', pytis.data.Value(pytis.data.String(), 'appl'))
 
 class CommonApplicationRoles(ApplicationRoles):
+    table = 'ev_pytis_valid_roles'
     condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
 
 class ApplicationRolesMembership(ApplicationRolesSpecification):
