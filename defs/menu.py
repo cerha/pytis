@@ -32,6 +32,9 @@ class ApplicationRolePurposes(pytis.presentation.Specification):
         )
     cb = pytis.presentation.CodebookSpec(display='purpose')
 
+class CommonApplicationRolePurposes(ApplicationRolePurposes):
+    condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
+
 class ApplicationRolesSpecification(pytis.presentation.Specification):
     
     def _row_editable(self, row):
@@ -66,9 +69,9 @@ class ApplicationRoles(ApplicationRolesSpecification):
               descr="Struèný název role nebo u¾ivatelské jméno v databázi."),
         Field('description', "Popis",
               descr=_("Popis urèení role.")),
-        Field('purposeid', "Kód úèelu", codebook='menu.ApplicationRolePurposes',
+        Field('purposeid', "Kód úèelu", codebook='menu.CommonApplicationRolePurposes',
               fixed=True, selection_type=pytis.presentation.SelectionType.CHOICE,
-              descr="Kód role: normální, u¾ivatelský úèet, správcovská."),              
+              descr="Kód role: normální, u¾ivatelský úèet, správcovská."),
         Field('purpose', "Úèel",
               fixed=True,
               descr="Význam role: normální, u¾ivatelský úèet, správcovská."),              
