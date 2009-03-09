@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-2 -*-
 
 """Gensql definitions for dynamic application menus and access rights."""
 
@@ -17,9 +17,9 @@ _std_table_nolog('c_pytis_role_purposes',
 2. Roles corresponding to system accounts (login roles).
 3. Pure application roles.
 """,
-                 init_values=(("'admn'", "'Spr√°vcovsk√°'",),
-                              ("'user'", "'U≈æivatelsk√°'",),
-                              ("'appl'", "'Aplikaƒçn√≠'",),)
+                 init_values=(("'admn'", "'Spr·vcovsk·'",),
+                              ("'user'", "'Uæivatelsk·'",),
+                              ("'appl'", "'AplikaËnÌ'",),)
             )
 
 _std_table('e_pytis_roles',
@@ -30,9 +30,9 @@ _std_table('e_pytis_roles',
               references='c_pytis_role_purposes'),
             C('deleted', TDate),),
             """Application user roles.""",
-           init_values=(('-1', "'admin_roles'", "'Administr√°tor rol√≠'", "'admn'", 'NULL',),
-                        ('-2', "'admin_menu'", "'Administr√°tor menu'", "'admn'", 'NULL',),
-                        ('-3', "'admin'", "'Administr√°tor rol√≠ a menu'", "'admn'", 'NULL',),
+           init_values=(('-1', "'admin_roles'", "'Administr·tor rolÌ'", "'admn'", 'NULL',),
+                        ('-2', "'admin_menu'", "'Administr·tor menu'", "'admn'", 'NULL',),
+                        ('-3', "'admin'", "'Administr·tor rolÌ a menu'", "'admn'", 'NULL',),
                         ),
            depends=('c_pytis_role_purposes',))
 
@@ -174,14 +174,14 @@ _std_table_nolog('c_pytis_access_rights',
                   C('description', 'varchar(32)', constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
-                 init_values=(("'show'", "'Viditelnost polo≈æek menu'",),
-                              ("'view'", "'Prohl√≠≈æen√≠ existuj√≠c√≠ch z√°znam≈Ø'",),
-                              ("'insert'", "'Vkl√°d√°n√≠ nov√Ωch z√°znam≈Ø'",),
-                              ("'edit'", "'Editace existuj√≠c√≠ch z√°znam≈Ø'",),
-                              ("'delete'", "'Maz√°n√≠ z√°znam≈Ø'",),
+                 init_values=(("'show'", "'Viditelnost poloæek menu'",),
+                              ("'view'", "'ProhlÌæenÌ existujÌcÌch z·znam˘'",),
+                              ("'insert'", "'Vkl·d·nÌ nov˝ch z·znam˘'",),
+                              ("'edit'", "'Editace existujÌcÌch z·znam˘'",),
+                              ("'delete'", "'Maz·nÌ z·znam˘'",),
                               ("'print'", "'Tisky'",),
                               ("'export'", "'Exporty'",),
-                              ("'run'", "'Spou≈°tƒõn√≠ aplikaƒçn√≠ch procedur'",),
+                              ("'run'", "'SpouπtÏnÌ aplikaËnÌch procedur'",),
                               ))
 
 _std_table('e_pytis_action_rights',
