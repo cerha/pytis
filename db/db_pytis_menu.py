@@ -2,8 +2,7 @@
 
 """Gensql definitions for dynamic application menus and access rights."""
 
-#db_rights = globals().get('Gpytis_menu', None)
-db_rights = (('all', 'pytis',),)
+db_rights = globals().get('Gall_pytis', None)
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gpytis_menu')
 
