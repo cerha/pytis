@@ -1,3 +1,8 @@
+2009-03-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* ev/null:
+	Add common database definitions.
+
 2009-03-06  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* lib/pytis/extensions/spec.py:
