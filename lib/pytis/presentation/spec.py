@@ -2883,4 +2883,10 @@ class Specification(object):
         """Vra» sekvenci specifikací tiskových náhledù."""
         return self.prints
 
+    def access_spec(self):
+        """Return the 'access_rights' attribute value.
 
+        This is here to make access rights easily accessible by method call from resolvers.
+        
+        """
+        return self.access_rights

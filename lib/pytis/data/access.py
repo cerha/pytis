@@ -2,7 +2,7 @@
 
 # Access rights
 # 
-# Copyright (C) 2002, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2004, 2005, 2006, 2007, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,6 +92,7 @@ class AccessRights(object):
         corresponding permissions are added together.
 
         """
+        self._specification = access_rights
         self._permission_table = self._build_permission_table(access_rights)
         self._query_cache = {}
 
@@ -163,6 +164,10 @@ class AccessRights(object):
             if g not in groups:
                 groups = groups + (g,)
         return groups
+
+    def specification(self):
+        """Return original specification given in the constructor."""
+        return self._specification
 
 
 class DBAccessRights(AccessRights):
