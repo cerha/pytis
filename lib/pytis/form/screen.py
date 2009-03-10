@@ -1062,26 +1062,26 @@ class MItem(_TitledMenuObject):
                 extra = ('/binding=%s' % (args['binding'],)); del args['binding']
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
-                return ('item/form/%s/%s%s' % (class_name, form_name, extra,))
+                return ('form/%s/%s%s' % (class_name, form_name, extra,))
         elif command == 'NEW_RECORD' and args:
             form_name = args.pop('name', '')
             if form_name is not None and not args:
-                return ('item/%s/%s' % (command, form_name,))
+                return ('%s/%s' % (command, form_name,))
         elif command == 'HANDLED_ACTION':
             handler = args.pop('handler', None)
             if not args and type(handler) == types.FunctionType:
                 name = modulify(handler, handler.func_name)
-                return ('item/handle/%s' % (name,))
+                return ('handle/%s' % (name,))
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')
             spec_name = args.pop('spec_name')
             if args.has_key('enabled'):
                 del args['enabled']
             if not args:
-                return ('item/proc/%s/%s' % (proc_name, spec_name,))
+                return ('proc/%s/%s' % (proc_name, spec_name,))
         if args:
             return None
-        return ('item/%s' % (command,))
+        return ('%s' % (command,))
 
     def _create_icon(self, item):
         icon = get_icon(self._icon or command_icon(self._command, self._args))
