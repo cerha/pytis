@@ -364,8 +364,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             specifications[name] = factory
         add_spec('menu', 'e_pytis_menu', ('menuid', 'name', 'title', 'parent', 'actionid', 'fullposition',))
-        add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
-        add_spec('membership', 'ev_pytis_valid_role_members', ('roleid', 'member',))
+        add_spec('roles', 'ev_pytis_user_roles', ('name',))
+        add_spec('membership', 'ev_pytis_valid_role_members', ('name', 'member',))
         add_spec('rights', 'e_pytis_menu_rights', ('menuid', 'roleid', 'rightid', 'granted',))
         add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications
