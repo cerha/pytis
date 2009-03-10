@@ -144,6 +144,37 @@ _std_table('e_pytis_menu',
            """Menu structure definition.""",
            depends=('c_pytis_menu_actions',))
 
+def e_pytis_menu_trigger():
+    class Menu(BaseTriggerObject):
+        def _do_before_insert(self):
+            parent_id = self._new['parent']
+            if not parent_id:
+                return
+            data = plpy.execute("select indentation, fullposition from e_pytis_menu where menuid = %s" %
+                                (parent_id,))
+            parent = data[0]
+            self._new['indentation'] = parent['indentation'] + '   '
+            self._new['fullposition'] = parent['fullposition'] + str(self._new['position'])
+            self._return_code = self._RETURN_CODE_MODYFY
+        def _do_before_update(self):
+            self._do_before_insert()
+        def _do_after_update(self):
+            plpy.execute("update e_pytis_menu set parent=parent where parent=%s" %
+                         (self._new['menuid'],))
+    menu = Menu(TD)
+    return menu.do_trigger()
+_trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
+                  doc="Updates indentations and fullpositions",
+                  depends=('e_pytis_menu',))
+sql_raw("""
+create trigger e_pytis_menu_all before insert or update on e_pytis_menu
+for each row execute procedure e_pytis_menu_trigger();
+create trigger e_pytis_menu_all after insert or update on e_pytis_menu
+for each row execute procedure e_pytis_menu_trigger();
+""",
+        name='e_pytis_menu_triggers',
+        depends=('e_pytis_menu_trigger',))
+
 viewng('ev_pytis_menu',
        (SelectRelation('e_pytis_menu', alias='main'),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('actionid', 'description',),
