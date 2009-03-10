@@ -1,3 +1,11 @@
+2009-03-10  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Use `_cbname()' also in `UserRoles'.
+
+	* db/db_pytis_cms.py:
+	Added Wiking session support.
+
 2009-03-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* ev/null:

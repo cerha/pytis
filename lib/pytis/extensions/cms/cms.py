@@ -27,11 +27,18 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 import lcg
 import pytis.data as pd, pytis.presentation as pp
-from pytis.presentation import Specification, Field, Fields, \
-     HGroup, VGroup, Binding, CodebookSpec, Computer, CbComputer, computer
+from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, CodebookSpec, \
+     Computer, CbComputer, computer
 from pytis.extensions import nextval, ONCE, NEVER, ALWAYS
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT
+
+class Specification(pp.Specification):
+    def _cbname(self, name):
+        # Hack to allow namespaced spec names in wx app and plain module names in Wiking (the
+        # specification is inherited by the Wiking Module).
+        return 'cms.'+ name
+
 
 
 class Languages(Specification):
@@ -97,10 +104,6 @@ class Menu(Specification):
     title = _("Menu")
     help = _("Správa polo¾ek hlavního menu, jejich hierarchie a obsahu.")
     table = 'cms_menu'
-    def _cbname(self, name):
-        # Hack to allow namespaced spec names in wx app and plain module names in Wiking (the
-        # specification is inherited by the Wiking Module).
-        return 'cms.'+ name
     def _parent_filter(self, record, lang):
         return pd.EQ('lang', pd.Value(pd.String(), lang))
     def fields(self): return (
@@ -154,6 +157,22 @@ class Menu(Specification):
                         condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id'])),)
 
 
+class Users(Specification):
+    title = _("U¾ivatelé")
+    help = _("Správa u¾ivatelských úètù, které je poté mo¾no zaøazovat do rolí.")
+    table = 'cms_users'
+    fields = (Field('uid', _("UID"), width=5,
+                    default=nextval('cms_users_uid_seq')),
+              Field('login', _("Pøihla¹ovací jméno"), width=16),
+              Field('fullname', _("Celé jméno"), width=40),
+              Field('passwd', _("Heslo"),
+                    type=pd.Password(not_null=True, minlen=4, md5=True)))
+    layout = ('uid', 'login', 'fullname', 'passwd')
+    columns = ('uid', 'login', 'fullname')
+    bindings = (Binding(_("U¾ivatelské role aktivního u¾ivatele"), 'cms.UserRoles', 'uid'),)
+    cb = CodebookSpec(display='fullname')
+
+
 class Roles(Specification):
     title = _("U¾ivatelské role")
     help = _("Správa dostupných u¾ivatelských rolí, které je mo¾né pøiøazovat u¾ivatelùm.")
@@ -166,18 +185,19 @@ class Roles(Specification):
     bindings = (Binding(_("U¾ivatelé zaøazení do této role"), 'cms.RoleUsers', 'role_id'),)
     cb = CodebookSpec(display='name')
 
-
+    
 class UserRoles(Specification):
     title = _("Pøiøazení u¾ivatelských rolí")
     help = _("Správa pøiøazení u¾ivatelských rolí jednotlivým u¾ivatelùm.")
     table = 'cms_user_roles'
-    fields = (Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
-              Field('role_id', _("Role"), codebook='cms.Roles'),
-              Field('uid', _('UID'), codebook='cms.Users', width=5),
-              Field('login', _("Pøihla¹ovací jméno"), width=16),
-              Field('fullname', _("Celé jméno"), width=50),
-              Field('name', _("Název role"), width=16),
-              Field('description', _("Popis"), width=50))
+    def fields(self): return (
+        Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
+        Field('role_id', _("Role"), codebook=self._cbname('Roles')),
+        Field('uid', _('UID'), codebook=self._cbname('Users'), width=5),
+        Field('login', _("Pøihla¹ovací jméno"), width=16),
+        Field('fullname', _("Celé jméno"), width=50),
+        Field('name', _("Název role"), width=16),
+        Field('description', _("Popis"), width=50))
     layout = ('role_id',)
     columns = ('name', 'description')
 
@@ -214,9 +234,9 @@ class Rights(Specification):
     fields = (Field('right_id'),
               Field('menu_item_id'),
               Field('role_id'),
-              Field('action_id'),
               Field('role_name', _("Role"), editable=NEVER),
               Field('mod_id'),
+              Field('action_id'),
               Field('action_name', _("Akce"), editable=NEVER),
               Field('action_description', _("Popis"), width=30, editable=NEVER),
               Field('permitted', _("Povoleno"), width=3, fixed=True))

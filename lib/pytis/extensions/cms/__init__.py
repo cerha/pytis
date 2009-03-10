@@ -13,6 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cms import Menu, MenuParents, Languages, Modules, Roles, Actions, GenericActions, \
-     UserRoles, RoleUsers, Rights
+from cms import Menu, MenuParents, Languages, Modules, Actions, GenericActions, \
+     Users, Roles, UserRoles, RoleUsers, Rights
 import web
