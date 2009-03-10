@@ -173,14 +173,14 @@ _std_table_nolog('c_pytis_access_rights',
                   C('description', 'varchar(32)', constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
-                 init_values=(("'show'", "'Viditelnost polo¾ek menu'",),
-                              ("'view'", "'Prohlí¾ení existujících záznamù'",),
-                              ("'insert'", "'Vkládání nových záznamù'",),
-                              ("'edit'", "'Editace existujících záznamù'",),
-                              ("'delete'", "'Mazání záznamù'",),
-                              ("'print'", "'Tisky'",),
-                              ("'export'", "'Exporty'",),
-                              ("'run'", "'Spou¹tìní aplikaèních procedur'",),
+                 init_values=(("'show'", _("'Viditelnost polo¾ek menu'"),),
+                              ("'view'", _("'Prohlí¾ení existujících záznamù'"),),
+                              ("'insert'", _("'Vkládání nových záznamù'"),),
+                              ("'edit'", _("'Editace existujících záznamù'"),),
+                              ("'delete'", _("'Mazání záznamù'"),),
+                              ("'print'", _("'Tisky'"),),
+                              ("'export'", _("'Exporty'"),),
+                              ("'run'", _("'Spou¹tìní aplikaèních procedur'"),),
                               ))
 
 _std_table('e_pytis_action_rights',
@@ -189,14 +189,23 @@ _std_table('e_pytis_action_rights',
             C('actionid', TInteger, references='c_pytis_menu_actions', constraints=('not null',)),
             C('roleid', TUser, references='e_pytis_roles', constraints=('not null',)),
             C('rightid', 'varchar(8)', references='c_pytis_access_rights', constraints=('not null',)),
+            C('system', TBoolean, constraints=('not null',), default=False,
+              doc="Iff true, this is a system (noneditable) permission."),
             ),
            """Assignments of access rights to actions.
-Actions have access rights given here and only those access rights,
-unless overridden by menu items access rights.
 
-Action rights are supported in the application, but they are not exposed in the
-current user interface.  They are introduced to support extend rights
-assignment, e.g. in context menus etc.
+Extent of each action right is strictly limited by its granted system
+permissions.  Non-system rights can only further limit the system rights.  If
+there is no system permission for a given action, the action is forbidden.  The
+resulting right is not broader than the intersection of all the related
+permissions.
+
+Some actions, e.g. dual form actions, form its access rights set by inclusion
+of other action rights.
+
+Action rights are supported and used in the application, but they are not
+exposed in the current user interface.  In future they may also support
+extended rights assignment, e.g. in context menus etc.
 """,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
@@ -210,13 +219,12 @@ _std_table('e_pytis_menu_rights',
               doc="If true the right is granted, otherwise it is denied"),
             ),
            """Assignments of access rights to menu items.
-These right assignments have preference over rights assigned to actions.
-If a right is assigned or denied to a terminal menu item, it takes absolute precedence.
-If a right is assigned or denied to a non-terminal menu item, it applies
-implicitly to all the items included in it.  But particular terminal or
-non-terminal menu items can override the assignment.
-Action rights take precedence over implicit rights set by non-terminal menu
-items, but have lower precedence than terminal menu items rights.
+Only non-terminal menu items may have access rights assigned here.  Terminal
+menu items propagate their access rights to and take them from the
+corresponding actions.
+Access rights of non-terminal items define default rights, used when no
+non-system access right definition is present for the item.  More nested access
+rights have higher precedence.
 """,
            depends=('e_pytis_menu', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
