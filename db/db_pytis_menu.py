@@ -106,7 +106,7 @@ viewng('ev_pytis_valid_role_members',
        depends=('e_pytis_role_members', 'ev_pytis_valid_roles',)
        )
 
-### Menus
+### Actions
 
 _std_table_nolog('c_pytis_menu_actions',
                  (P('actionid', TInteger),
@@ -115,6 +115,8 @@ _std_table_nolog('c_pytis_menu_actions',
                   ),
                  """List of available (pre-defined and visible) application actions."""
                  )
+
+### Menus
 
 _std_table('e_pytis_menu',
            (P('menuid', TSerial),
@@ -176,11 +178,11 @@ _std_table_nolog('c_pytis_access_rights',
                  init_values=(("'show'", _("'Viditelnost polo¾ek menu'"),),
                               ("'view'", _("'Prohlí¾ení existujících záznamù'"),),
                               ("'insert'", _("'Vkládání nových záznamù'"),),
-                              ("'edit'", _("'Editace existujících záznamù'"),),
+                              ("'update'", _("'Editace existujících záznamù'"),),
                               ("'delete'", _("'Mazání záznamù'"),),
                               ("'print'", _("'Tisky'"),),
                               ("'export'", _("'Exporty'"),),
-                              ("'run'", _("'Spou¹tìní aplikaèních procedur'"),),
+                              ("'call'", _("'Spou¹tìní aplikaèních procedur'"),),
                               ))
 
 _std_table('e_pytis_action_rights',
