@@ -23,6 +23,8 @@ import pytis.presentation
 from pytis.presentation import Editable
 from pytis.extensions import Field, nextval
 
+### Roles
+
 class ApplicationRolePurposes(pytis.presentation.Specification):
     table = 'c_pytis_role_purposes'
     title = _("Úèely rolí")
@@ -140,19 +142,23 @@ class ApplicationRolesMembers(ApplicationRolesMembership):
     title = _("Pøiøazení role")
     columns = ('member', 'mdescription',)
 
+### Actions
+
 class ApplicationActions(pytis.presentation.Specification):
     table = 'c_pytis_menu_actions'
-    title = "U¾ivatelské akce"
+    title = _("U¾ivatelské akce")
     fields = (
-        Field('actionid', "Id"),
-        Field('name', "Id", editable=Editable.NEVER),
-        Field('description', "Id"),
+        Field('actionid', ""),
+        Field('name', _("Action"), editable=Editable.NEVER),
+        Field('description', _("Description")),
         )
     columns = ('name', 'description',)
     layout = ('name', 'description',)
     sorting = (('name', pytis.data.ASCENDENT,),)    
     cb = pytis.presentation.CodebookSpec(display='name')
-        
+
+### Menus
+
 class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_menu'
     title = "Menu"
@@ -198,6 +204,8 @@ class ApplicationMenus(pytis.presentation.Specification):
     layout = ('title', 'position',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
+
+### Rights
 
 class ApplicationRights(pytis.presentation.Specification):
     table = 'c_pytis_access_rights'
