@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-2 -*-
 
 # Copyright (C) 2009 Brailcom, o.p.s.
 #
@@ -134,7 +134,6 @@ def fill_rights(cursor, rights):
             if specification[0] is not None:
                 print "Can't process column specifications for action: %s" % (action.name,)
                 continue
-            print specification
             for groups_permissions in specification[1:]:
                 groups = groups_permissions[0]
                 if not pytis.util.is_sequence(groups):
@@ -169,7 +168,7 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
 def run(def_dir):
     resolver = pytis.util.FileResolver(def_dir)
     menu = resolver.get('application', 'menu')
-    top = Menu(name='', title="Top", parent=None, position=0, action=None)
+    top = Menu(name='', title=_("CELÉ MENU"), parent=None, position=0, action=None)
     menu_items = {}
     actions = {}
     process_menu(menu, top, menu_items, actions)
@@ -178,8 +177,8 @@ def run(def_dir):
     cursor = connection.cursor()
     cursor.execute("set client_encoding to 'latin2'") # grrr
     cursor.execute("delete from e_pytis_menu")
-    cursor.execute("delete from c_pytis_menu_actions")
     cursor.execute("delete from e_pytis_action_rights")
+    cursor.execute("delete from c_pytis_menu_actions")
     cursor.execute("delete from e_pytis_roles where purposeid = 'appl'")
     fill_actions(cursor, actions)
     fill_rights(cursor, rights)
