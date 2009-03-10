@@ -48,6 +48,11 @@ class Menu(Serial):
         self.action = action
         self.children = []
 
+class Rights(object):
+    def __init__(self, rights, action):
+        self.rights = rights
+        self.action = action
+
 def super_menu_id(menu, menu_items):
     title = menu.title()
     id_title = title.replace(' ', '-')
@@ -94,10 +99,61 @@ def process_menu(menu, parent, menu_items, actions, position=100):
     else:
         print 'Unknown menu: %s' % (menu,)
 
+def process_rights(resolver, actions):
+    rights = {}
+    for action in actions.values():
+        action_name = action.name
+        if rights.has_key(action_name):
+            continue
+        action_components = action_name.split('/')
+        if action_components[0] != 'form':
+            print "Non-form action, no rights assigned: %s" % (action_name,)
+            continue
+        form_name = action_components[2]
+        try:
+            access_rights = resolver.get(form_name, 'access_spec')
+        except Exception, e:
+            print "Couldn't get access rights for form %s: %s" % (form_name, e,)
+            continue
+        if access_rights is None:
+            print "No access rights specified for form %s" % (form_name,)
+            continue
+        rights[action_name] = Rights(access_rights, action)
+    return rights
+
 def fill_actions(cursor, actions):
     for action in actions.values():
         cursor.execute("insert into c_pytis_menu_actions (actionid, name, description) values(%s, %s, %s)",
                        (action.id, action.name, action.description,))
+
+def fill_rights(cursor, rights):
+    roles = {}
+    for right in rights.values():
+        action = right.action
+        for specification in right.rights.specification():
+            if specification[0] is not None:
+                print "Can't process column specifications for action: %s" % (action.name,)
+                continue
+            print specification
+            for groups_permissions in specification[1:]:
+                groups = groups_permissions[0]
+                if not pytis.util.is_sequence(groups):
+                    groups = [groups]
+                permissions = groups_permissions[1:]
+                if pytis.data.Permission.ALL in permissions:
+                    permissions = pytis.data.Permission.all_permissions()
+                permissions = [p.lower() for p in permissions]
+                action_id = action.id
+                for group in groups:
+                    if not roles.has_key(group):
+                        cursor.execute(("insert into e_pytis_roles (name, description, purposeid)"
+                                        "values (%s, %s, %s)"),
+                                       (group, "", 'appl',))
+                        roles[group] = None
+                    for permission in permissions:
+                        cursor.execute(("insert into e_pytis_action_rights (actionid, roleid, rightid, system) "
+                                        "values(%s, %s, %s, %s)"),
+                                       (action_id, group, permission, True,))
 
 def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     fullposition += str(menu.position)
@@ -117,12 +173,16 @@ def run(def_dir):
     menu_items = {}
     actions = {}
     process_menu(menu, top, menu_items, actions)
+    rights = process_rights(resolver, actions)
     connection = dbapi.connect(database='pytis-demo')
     cursor = connection.cursor()
     cursor.execute("set client_encoding to 'latin2'") # grrr
     cursor.execute("delete from e_pytis_menu")
     cursor.execute("delete from c_pytis_menu_actions")
+    cursor.execute("delete from e_pytis_action_rights")
+    cursor.execute("delete from e_pytis_roles where purposeid = 'appl'")
     fill_actions(cursor, actions)
+    fill_rights(cursor, rights)
     fill_menu_items(cursor, top)
     connection.commit()
 
