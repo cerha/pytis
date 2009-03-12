@@ -271,3 +271,18 @@ support extended rights assignment, e.g. in context menus etc.
 """,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
+
+viewng('ev_pytis_menu_rights',
+       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
+        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
+                       condition='menu.action = actions.name', jointype=JoinType.INNER),
+        SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=(),
+                       condition='actions.shortname = rights.action', jointype=JoinType.INNER),
+        ),
+       insert_order=('e_pytis_action_rights',),
+       update_order=('e_pytis_action_rights',),
+       delete_order=('e_pytis_action_rights',),
+       grant=db_rights,
+       depends=('e_pytis_menu', 'c_pytis_menu_actions', 'e_pytis_action_rights',)
+       )
+

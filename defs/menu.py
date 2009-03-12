@@ -182,9 +182,9 @@ class ApplicationMenu(pytis.presentation.Specification):
     layout = ('title', 'position', 'parent',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
-    bindings = {'menu.ApplicationMenuRights':
-                    pytis.presentation.BindingSpec(title=_("Práva polo¾ky menu"), binding_column='menuid')
-                }
+    bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
+                                           binding_column='menuid'),
+                )
     
     def on_edit_record(self, row):
         if not row['indentation'].value():
@@ -245,16 +245,17 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_menu_rights'
     title = "Práva"
     fields = (
-        Field('id', "Id", default=nextval('e_pytis_menu_rights_id_seq')),
-        Field('menuid', "Id Menu", codebook='menu.ApplicationMenu'),
-        Field('title', "Polo¾ka menu"),
-        Field('roleid', "Id Role", codebook='menu.ApplicationRoles'),
-        Field('name', "Role", fixed=True),
-        Field('rightid', "Právo", codebook='menu.ApplicationRights',
+        Field('id', "Id", default=nextval('e_pytis_action_rights_id_seq')),
+        Field('menuid', "", codebook='menu.ApplicationMenu'),
+        Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('granted', "Povoleno/zakázáno", fixed=True),
+        #Field('name', "Role", fixed=True),
+        Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
+              fixed=True),
+        Field('system', _("Systémové"), fixed=True),
+        Field('granted', _("Ano/Ne"), fixed=True),
         )
-    columns = ('title', 'name', 'rightid', 'granted',)
-    layout = ('menuid', 'roleid', 'rightid', 'granted',)
-    sorting = (('name', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
+    columns = ('menuid', 'roleid', 'rightid', 'granted',)
+    layout = ('roleid', 'rightid', 'granted',)
+    sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
 
