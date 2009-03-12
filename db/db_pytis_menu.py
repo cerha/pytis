@@ -196,7 +196,7 @@ viewng('ev_pytis_menu',
 
 viewng('ev_pytis_menu_parents',
        (SelectRelation('ev_pytis_menu', alias='main',
-                       condition='main.name is null and main.title is not null'),),
+                       condition='main.actionid is null and main.title is not null'),),
        insert_order=('e_pytis_menu',),
        update_order=('e_pytis_menu',),
        delete_order=('e_pytis_menu',),
