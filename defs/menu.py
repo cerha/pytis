@@ -148,8 +148,8 @@ class ApplicationActions(pytis.presentation.Specification):
     table = 'c_pytis_menu_actions'
     title = _("U¾ivatelské akce")
     fields = (
-        Field('actionid', ""),
         Field('name', _("Action"), editable=Editable.NEVER),
+        Field('shortname', "", editable=Editable.NEVER),
         Field('description', _("Description")),
         )
     columns = ('name', 'description',)
@@ -176,8 +176,7 @@ class ApplicationMenu(pytis.presentation.Specification):
               fixed=True, default=500),
         Field('indentation', ""),
         Field('fullposition', _("Pozice v celém menu")),
-        Field('actionid', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
-        Field('action', _("Navì¹ená akce")),
+        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
         )
     columns = ('ititle', 'position', 'action',)
     layout = ('title', 'position', 'parent',)
@@ -197,7 +196,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         if not row['position'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze smazat"))
             return None
-        if row['actionid'].value():
+        if row['name'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Koncové polo¾ky menu nelze mazat"))
             return None
         if row.data().select(condition=pytis.data.EQ('parent', row['menuid'])) > 0:
@@ -222,8 +221,7 @@ class ApplicationMenus(pytis.presentation.Specification):
         Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
               fixed=True, default=500),
         Field('fullposition', _("Pozice v celém menu")),
-        Field('actionid', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
-        Field('action', _("Navì¹ená akce")),
+        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
         )
     columns = ('ititle',)
     layout = ('title', 'position',)

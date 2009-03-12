@@ -32,11 +32,13 @@ class Serial(object):
     def __init__(self):
         self.id = Serial._counter.next()
 
-class Action(Serial):
-    def __init__(self, name, description):
-        Serial.__init__(self)
+class Action(object):
+    def __init__(self, name, description, shortname=None):
         self.name = name
         self.description = description
+        if shortname is None:
+            shortname = name
+        self.shortname = shortname
 
 class Menu(Serial):
     def __init__(self, name, title, parent, position, action=None):
@@ -77,7 +79,12 @@ def process_menu(menu, parent, menu_items, actions, position=110):
             return
         action = actions.get(action_id)
         if action is None:
-            actions[action_id] = action = Action(name=action_id, description=menu.help())
+            action_components = action_id.split('/')
+            if action_components == 'form':
+                shortname = 'form/' + action_components[-1]
+            else:
+                shortname = action_id
+            actions[action_id] = action = Action(name=action_id, shortname=shortname, description=menu.help())
         else:
             if action.description is None:
                 action.description = menu.help()
@@ -101,6 +108,16 @@ def process_menu(menu, parent, menu_items, actions, position=110):
 
 def process_rights(resolver, actions):
     rights = {}
+    def add_rights(form_name, action, action_name):
+        try:
+            access_rights = resolver.get(form_name, 'access_spec')
+        except Exception, e:
+            print "Couldn't get access rights for form %s: %s" % (form_name, e,)
+            return
+        if access_rights is None:
+            print "No access rights specified for form %s" % (form_name,)
+            return
+        rights[action_name] = Rights(access_rights, action)
     for action in actions.values():
         action_name = action.name
         if rights.has_key(action_name):
@@ -110,21 +127,15 @@ def process_rights(resolver, actions):
             print "Non-form action, no rights assigned: %s" % (action_name,)
             continue
         form_name = action_components[2]
-        try:
-            access_rights = resolver.get(form_name, 'access_spec')
-        except Exception, e:
-            print "Couldn't get access rights for form %s: %s" % (form_name, e,)
-            continue
-        if access_rights is None:
-            print "No access rights specified for form %s" % (form_name,)
-            continue
-        rights[action_name] = Rights(access_rights, action)
+        form_components = form_name.split('::')
+        if len(form_components) <= 2:
+            add_rights(form_name, action, action_name)
     return rights
 
 def fill_actions(cursor, actions):
     for action in actions.values():
-        cursor.execute("insert into c_pytis_menu_actions (actionid, name, description) values(%s, %s, %s)",
-                       (action.id, action.name, action.description,))
+        cursor.execute("insert into c_pytis_menu_actions (name, shortname, description) values(%s, %s, %s)",
+                       (action.name, action.shortname, action.description,))
 
 def fill_rights(cursor, rights):
     roles = {}
@@ -142,24 +153,24 @@ def fill_rights(cursor, rights):
                 if pytis.data.Permission.ALL in permissions:
                     permissions = pytis.data.Permission.all_permissions()
                 permissions = [p.lower() for p in permissions]
-                action_id = action.id
+                action_name = action.shortname
                 for group in groups:
                     if not roles.has_key(group):
-                        cursor.execute(("insert into e_pytis_roles (name, description, purposeid)"
+                        cursor.execute(("insert into e_pytis_roles (name, description, purposeid) "
                                         "values (%s, %s, %s)"),
                                        (group, "", 'appl',))
                         roles[group] = None
                     for permission in permissions:
                         for c in columns:
-                            cursor.execute(("insert into e_pytis_action_rights (actionid, roleid, rightid, system, colname) "
-                                            "values(%s, %s, %s, %s, %s)"),
-                                           (action_id, group, permission, True, c,))
+                            cursor.execute(("insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname) "
+                                            "values(%s, %s, %s, %s, %s, %s)"),
+                                           (action_name, group, permission, True, True, c,))
 
 def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     fullposition += str(menu.position)
     parent = menu.parent and -menu.parent.id
-    action = menu.action and menu.action.id
-    cursor.execute(("insert into e_pytis_menu(menuid, name, title, parent, position, fullposition, indentation, actionid) "
+    action = menu.action and menu.action.name
+    cursor.execute(("insert into e_pytis_menu(menuid, name, title, parent, position, fullposition, indentation, action) "
                     "values(%s, %s, %s, %s, %s, %s, %s, %s)"),
                    (-menu.id, menu.name, menu.title, parent, menu.position, fullposition, indentation, action,))
     next_indentation = indentation + '   '
@@ -169,7 +180,7 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
 def run(def_dir):
     resolver = pytis.util.FileResolver(def_dir)
     menu = resolver.get('application', 'menu')
-    top = Menu(name='', title=_("CELÉ MENU"), parent=None, position=0, action=None)
+    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
     menu_items = {}
     actions = {}
     process_menu(menu, top, menu_items, actions)

@@ -109,8 +109,8 @@ viewng('ev_pytis_valid_role_members',
 ### Actions
 
 _std_table_nolog('c_pytis_menu_actions',
-                 (P('actionid', TInteger),
-                  C('name', TString, constraints=('not null', 'unique',)),
+                 (P('name', TString),
+                  C('shortname', TString, constraints=('not null',)),
                   C('description', TString),
                   ),
                  """List of available (pre-defined and visible) application actions."""
@@ -136,7 +136,7 @@ _std_table('e_pytis_menu',
                    "Lexicographical ordering of all menu items. ")),
             C('indentation', 'varchar(8)',
               doc="Indentation of the menu item in the menu structure"),
-            C('actionid', TInteger, references='c_pytis_menu_actions',
+            C('action', TString, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
                    "if they do not, the assigned action is ignored.")),
@@ -146,7 +146,9 @@ _std_table('e_pytis_menu',
 
 def e_pytis_menu_trigger():
     class Menu(BaseTriggerObject):
-        def _do_before_insert(self):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _do_before_insert(self, old=None):
             parent_id = self._new['parent']
             if not parent_id:
                 return
@@ -155,17 +157,31 @@ def e_pytis_menu_trigger():
             parent = data[0]
             self._new['indentation'] = parent['indentation'] + '   '
             self._new['fullposition'] = parent['fullposition'] + str(self._new['position'])
+            if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
+                # New non-terminal menu item
+                self._new['action'] = action = 'menu/' + str(self._new['menuid'])
+                plpy.execute(("insert into c_pytis_menu_actions (name, shortname, description) "
+                              "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
             self._return_code = self._RETURN_CODE_MODYFY
         def _do_before_update(self):
-            self._do_before_insert()
+            self._do_before_insert(old=self._old)
         def _do_after_update(self):
             plpy.execute("update e_pytis_menu set parent=parent where parent=%s" %
                          (self._new['menuid'],))
+            if not self._new['name'] and self._old['title'] and not self._new['title']:
+                # Non-terminal item changed to separator
+                plpy.execute("delete from c_pytis_actions where name = '%s'" % (self._old['action'],))
+                plpy.execute("delete from e_pytis_action_rights where action = '%s'" % (self._old['action'],))
         def _do_before_delete(self):
             data = plpy.execute("select * from e_pytis_menu where parent=%s" %
                                 (self._old['menuid'],))
             if data:
                 self._return_code = self._RETURN_CODE_SKIP
+        def _do_after_delete(self):
+            if not self._old['name'] and self._old['title']:
+                # Non-terminal menu item
+                plpy.execute("delete from c_pytis_actions where name = '%s'" % (self._old['action'],))
+                plpy.execute("delete from e_pytis_action_rights where action = '%s'" % (self._old['action'],))
     menu = Menu(TD)
     return menu.do_trigger()
 _trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
@@ -174,17 +190,17 @@ _trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
 sql_raw("""
 create trigger e_pytis_menu_all_before before insert or update or delete on e_pytis_menu
 for each row execute procedure e_pytis_menu_trigger();
-create trigger e_pytis_menu_all_after after insert or update on e_pytis_menu
+create trigger e_pytis_menu_all_after after update or delete on e_pytis_menu
 for each row execute procedure e_pytis_menu_trigger();
 """,
         name='e_pytis_menu_triggers',
         depends=('e_pytis_menu_trigger',))
 
 viewng('ev_pytis_menu',
-       (SelectRelation('e_pytis_menu', alias='main'),
-        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('actionid', 'description',),
+       (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('action',)),
+        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('description',),
                        column_aliases=(('name', 'action',),),
-                       condition='main.actionid = actions.actionid', jointype=JoinType.LEFT_OUTER),
+                       condition='main.action = actions.name', jointype=JoinType.LEFT_OUTER),
         ),
        include_columns=(V(None, 'ititle', "main.indentation || ' ' || main.title"),),
        insert_order=('e_pytis_menu',),
@@ -196,7 +212,7 @@ viewng('ev_pytis_menu',
 
 viewng('ev_pytis_menu_parents',
        (SelectRelation('ev_pytis_menu', alias='main',
-                       condition='main.actionid is null and main.title is not null'),),
+                       condition='main.name is null and main.title is not null'),),
        insert_order=('e_pytis_menu',),
        update_order=('e_pytis_menu',),
        delete_order=('e_pytis_menu',),
@@ -224,12 +240,14 @@ _std_table_nolog('c_pytis_access_rights',
 _std_table('e_pytis_action_rights',
            (P('id', TSerial,
               doc="Just to make logging happy"),
-            C('actionid', TInteger, references='c_pytis_menu_actions', constraints=('not null',)),
+            C('action', TString, constraints=('not null',)),
             C('roleid', TUser, references='e_pytis_roles', constraints=('not null',)),
             C('rightid', 'varchar(8)', references='c_pytis_access_rights', constraints=('not null',)),
             C('colname', TUser),
             C('system', TBoolean, constraints=('not null',), default=False,
               doc="Iff true, this is a system (noneditable) permission."),
+            C('granted', TBoolean, constraints=('not null',), default=True,
+              doc="If true the right is granted, otherwise it is denied; system rights are always granted."),
             ),
            """Assignments of access rights to actions.
 
@@ -242,43 +260,14 @@ permissions.
 Some actions, e.g. dual form actions, form its access rights set by inclusion
 of other action rights.
 
+Access rights of non-terminal menu items, identified by action name
+'menu/MENUID' define default rights, used when no non-system access right
+definition is present for a terminal item.  More nested access rights of
+non-terminal menu items have higher precedence.
+
 Action rights are supported and used in the application, but they are not
-exposed in the current user interface.  In future they may also support
-extended rights assignment, e.g. in context menus etc.
+exposed in the current user interface directly.  In future they may also
+support extended rights assignment, e.g. in context menus etc.
 """,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
-
-_std_table('e_pytis_menu_rights',
-           (P('id', TSerial),
-            C('menuid', TInteger, references='e_pytis_menu', constraints=('not null',)),
-            C('roleid', TUser, references='e_pytis_roles', constraints=('not null',)),
-            C('rightid', 'varchar(8)', references='c_pytis_access_rights', constraints=('not null',)),
-            C('granted', TBoolean, constraints=('not null',),
-              doc="If true the right is granted, otherwise it is denied"),
-            ),
-           """Assignments of access rights to menu items.
-Only non-terminal menu items may have access rights assigned here.  Terminal
-menu items propagate their access rights to and take them from the
-corresponding actions.
-Access rights of non-terminal items define default rights, used when no
-non-system access right definition is present for the item.  More nested access
-rights have higher precedence.
-""",
-           depends=('e_pytis_menu', 'e_pytis_roles', 'c_pytis_access_rights',)
-           )
-
-viewng('ev_pytis_menu_rights',
-       (SelectRelation('e_pytis_menu_rights', alias='main'),
-        SelectRelation('e_pytis_menu', alias='menu',
-                       exclude_columns=('menuid', 'name', 'parent', 'position', 'fullposition', 'indentation', 'actionid',),
-                       condition='main.menuid = menu.menuid', jointype=JoinType.INNER),
-        SelectRelation('e_pytis_roles', alias='roles', exclude_columns=('description', 'purposeid',),
-                       condition='main.roleid = roles.name', jointype=JoinType.INNER),
-        ),
-       insert_order=('e_pytis_menu_rights',),
-       update_order=('e_pytis_menu_rights',),
-       delete_order=('e_pytis_menu_rights',),
-       grant=db_rights,
-       depends=('e_pytis_menu_rights', 'e_pytis_menu', 'e_pytis_roles',)
-       )
