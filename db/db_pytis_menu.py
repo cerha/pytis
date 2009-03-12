@@ -161,15 +161,20 @@ def e_pytis_menu_trigger():
         def _do_after_update(self):
             plpy.execute("update e_pytis_menu set parent=parent where parent=%s" %
                          (self._new['menuid'],))
+        def _do_before_delete(self):
+            data = plpy.execute("select * from e_pytis_menu where parent=%s" %
+                                (self._old['menuid'],))
+            if data:
+                self._return_code = self._RETURN_CODE_SKIP
     menu = Menu(TD)
     return menu.do_trigger()
 _trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
                   doc="Updates indentations and fullpositions",
                   depends=('e_pytis_menu',))
 sql_raw("""
-create trigger e_pytis_menu_all before insert or update on e_pytis_menu
+create trigger e_pytis_menu_all_before before insert or update or delete on e_pytis_menu
 for each row execute procedure e_pytis_menu_trigger();
-create trigger e_pytis_menu_all after insert or update on e_pytis_menu
+create trigger e_pytis_menu_all_after after insert or update on e_pytis_menu
 for each row execute procedure e_pytis_menu_trigger();
 """,
         name='e_pytis_menu_triggers',

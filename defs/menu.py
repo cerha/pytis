@@ -170,6 +170,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('parent', "Rodièovské menu", codebook='menu.ApplicationMenus'),
         Field('position', "Pozice v menu",
               fixed=True),
+        Field('indentation', ""),
         Field('fullposition', "Pozice v celém menu"),
         Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
         Field('action', "Navì¹ená akce"),
@@ -181,6 +182,26 @@ class ApplicationMenu(pytis.presentation.Specification):
     bindings = {'menu.ApplicationMenuRights':
                     pytis.presentation.BindingSpec(title="Práva polo¾ky menu", binding_column='menuid')
                 }
+    
+    def on_edit_record(self, row):
+        if not row['indentation'].value():
+            pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze editovat"))
+            return None
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['menuid'])
+    
+    def on_delete_record(self, row):
+        if not row['indentation'].value():
+            pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze smazat"))
+            return None
+        if row['actionid'].value():
+            pytis.form.run_dialog(pytis.form.Warning, _("Koncové polo¾ky menu nelze mazat"))
+            return None
+        if row.data().select(condition=pytis.data.EQ('parent', row['menuid'])) > 0:
+            pytis.form.run_dialog(pytis.form.Warning, _("Nelze mazat polo¾ky obsahující jiné polo¾ky"))
+            return None
+        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
+            return None
+        return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationMenus(pytis.presentation.Specification):
     # This is almost the same as ApplicationMenu.
