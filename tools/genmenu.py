@@ -131,9 +131,9 @@ def fill_rights(cursor, rights):
     for right in rights.values():
         action = right.action
         for specification in right.rights.specification():
-            if specification[0] is not None:
-                print "Can't process column specifications for action: %s" % (action.name,)
-                continue
+            columns = specification[0]
+            if columns is None:
+                columns = (None,)
             for groups_permissions in specification[1:]:
                 groups = groups_permissions[0]
                 if not pytis.util.is_sequence(groups):
@@ -150,9 +150,10 @@ def fill_rights(cursor, rights):
                                        (group, "", 'appl',))
                         roles[group] = None
                     for permission in permissions:
-                        cursor.execute(("insert into e_pytis_action_rights (actionid, roleid, rightid, system) "
-                                        "values(%s, %s, %s, %s)"),
-                                       (action_id, group, permission, True,))
+                        for c in columns:
+                            cursor.execute(("insert into e_pytis_action_rights (actionid, roleid, rightid, system, colname) "
+                                            "values(%s, %s, %s, %s, %s)"),
+                                           (action_id, group, permission, True, c,))
 
 def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     fullposition += str(menu.position)
