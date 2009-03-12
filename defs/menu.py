@@ -165,26 +165,26 @@ def _position_range(value):
     return None
 class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_menu'
-    title = "Menu"
+    title = _("Menu")
     fields = (
-        Field('menuid', "Id", default=nextval('e_pytis_menu_menuid_seq')),
-        Field('name', "Id obsahující role"),
-        Field('title', "Titulek polo¾ky menu"),
-        Field('ititle', "Titulek polo¾ky menu"),
-        Field('parent', "Rodièovské menu", codebook='menu.ApplicationMenus'),
-        Field('position', "Pozice v menu", type=pytis.data.Integer(constraints=(_position_range,)),
+        Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
+        Field('name', _("Id obsahující role")),
+        Field('title', _("Titulek polo¾ky menu")),
+        Field('ititle', _("Titulek polo¾ky menu")),
+        Field('parent', _("Rodièovské menu"), codebook='menu.ApplicationMenus'),
+        Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
               fixed=True, default=500),
         Field('indentation', ""),
-        Field('fullposition', "Pozice v celém menu"),
-        Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
-        Field('action', "Navì¹ená akce"),
+        Field('fullposition', _("Pozice v celém menu")),
+        Field('actionid', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
+        Field('action', _("Navì¹ená akce")),
         )
     columns = ('ititle', 'position', 'action',)
     layout = ('title', 'position', 'parent',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
     bindings = {'menu.ApplicationMenuRights':
-                    pytis.presentation.BindingSpec(title="Práva polo¾ky menu", binding_column='menuid')
+                    pytis.presentation.BindingSpec(title=_("Práva polo¾ky menu"), binding_column='menuid')
                 }
     
     def on_edit_record(self, row):
@@ -212,18 +212,18 @@ class ApplicationMenus(pytis.presentation.Specification):
     # But we can't inherit from it because pytis would suffer from infinite
     # recursion.
     table = 'ev_pytis_menu_parents'
-    title = "Menu"
+    title = _("Menu")
     fields = (
-        Field('menuid', "Id", default=nextval('e_pytis_menu_menuid_seq')),
-        Field('name', "Id obsahující role"),
-        Field('title', "Titulek polo¾ky menu"),
-        Field('ititle', "Titulek polo¾ky menu"),
-        Field('parent', "Rodièovské menu"),
-        Field('position', "Pozice v menu",
-              fixed=True),
-        Field('fullposition', "Pozice v celém menu"),
-        Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
-        Field('action', "Navì¹ená akce"),
+        Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
+        Field('name', _("Id obsahující role")),
+        Field('title', _("Titulek polo¾ky menu")),
+        Field('ititle', _("Titulek polo¾ky menu")),
+        Field('parent', _("Rodièovské menu")),
+        Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
+              fixed=True, default=500),
+        Field('fullposition', _("Pozice v celém menu")),
+        Field('actionid', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
+        Field('action', _("Navì¹ená akce")),
         )
     columns = ('ititle',)
     layout = ('title', 'position',)
