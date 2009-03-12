@@ -176,7 +176,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('action', "Navì¹ená akce"),
         )
     columns = ('ititle', 'position', 'action',)
-    layout = ('title', 'position',)
+    layout = ('title', 'position', 'parent',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
     bindings = {'menu.ApplicationMenuRights':
@@ -221,7 +221,7 @@ class ApplicationMenus(pytis.presentation.Specification):
         Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
         Field('action', "Navì¹ená akce"),
         )
-    columns = ('ititle', 'position', 'action',)
+    columns = ('ititle',)
     layout = ('title', 'position',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
