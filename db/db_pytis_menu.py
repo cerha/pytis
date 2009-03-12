@@ -126,7 +126,7 @@ _std_table('e_pytis_menu',
               doc='User title of the item. If NULL then it is a separator.'),
             C('parent', TInteger, references='e_pytis_menu',
               doc="Parent menu item, NULL for top level items."),
-            C('position', TInteger,
+            C('position', TInteger, constraints=('not null',),
               doc=("Order of the item within the given submenu. "
                    "Lower numbers put the item higher. "
                    "No two items in the same submenu should have the same order number; "

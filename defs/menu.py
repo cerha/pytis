@@ -159,6 +159,10 @@ class ApplicationActions(pytis.presentation.Specification):
 
 ### Menus
 
+def _position_range(value):
+    if value < 100 or value > 999:
+        return _("Hodnota smí být pouze v rozsahu 100-999")
+    return None
 class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_menu'
     title = "Menu"
@@ -168,8 +172,8 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('title', "Titulek polo¾ky menu"),
         Field('ititle', "Titulek polo¾ky menu"),
         Field('parent', "Rodièovské menu", codebook='menu.ApplicationMenus'),
-        Field('position', "Pozice v menu",
-              fixed=True),
+        Field('position', "Pozice v menu", type=pytis.data.Integer(constraints=(_position_range,)),
+              fixed=True, default=500),
         Field('indentation', ""),
         Field('fullposition', "Pozice v celém menu"),
         Field('actionid', "Navì¹ená akce", codebook='menu.ApplicationActions'),
@@ -190,7 +194,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['menuid'])
     
     def on_delete_record(self, row):
-        if not row['indentation'].value():
+        if not row['position'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze smazat"))
             return None
         if row['actionid'].value():

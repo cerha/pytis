@@ -64,7 +64,7 @@ def super_menu_id(menu, menu_items):
         i += 1
     return menu_id
 
-def process_menu(menu, parent, menu_items, actions, position=100):
+def process_menu(menu, parent, menu_items, actions, position=110):
     if isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
         menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position)
