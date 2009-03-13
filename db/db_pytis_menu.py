@@ -321,10 +321,9 @@ def pytis_compute_rights(menuid, roleid, name):
                                 "system = 'F' and granted = 'F' and %s"))
     while True:
         parents = plpy.execute("select parent from e_pytis_menu where menuid = '%s'" % (menuid,))
-        if not parents:
-            break
         menuid = parents[0]['parent']
         if menuid is None:
+            # Root menu item
             break
         condition[0] = "menuid = '%s' and roleid = '%s'" % (menuid, roleid,)
         query = ("select rightid from ev_pytis_menu_rights where "
