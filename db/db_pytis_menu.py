@@ -370,3 +370,27 @@ viewng('ev_pytis_summary_rights',
        grant=db_rights,
        depends=('ev_pytis_summary_rights_raw',)
        )
+
+viewng('ev_pytis_role_menu_raw',
+       (SelectRelation('ev_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'indentation', 'action',)),
+        SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
+                       jointype=JoinType.CROSS,
+                       column_aliases=(('name', 'roleid',),),
+                       ),
+        ),
+       include_columns=(V(None, 'rights', "pytis_compute_rights(menu.menuid, roles.name, menu.name)"),),
+       insert=None,
+       update=None,
+       delete=None,
+       grant=db_rights,
+       depends=('ev_pytis_menu', 'ev_pytis_valid_roles', 'pytis_compute_rights',)
+       )
+
+viewng('ev_pytis_role_menu',
+       (SelectRelation('ev_pytis_role_menu_raw', alias='menu', condition="rights like '%show%'"),),
+       insert=None,
+       update=None,
+       delete=None,
+       grant=db_rights,
+       depends=('ev_pytis_role_menu_raw',)
+       )

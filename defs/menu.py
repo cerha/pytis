@@ -91,6 +91,8 @@ class ApplicationRoles(ApplicationRolesSpecification):
                                            binding_column='roleid'),
                 pytis.presentation.Binding(_("Patøí do rolí"), 'menu.ApplicationRolesOwners', id='owners',
                                            binding_column='member'),
+                pytis.presentation.Binding(_("Náhled menu"), 'menu.ApplicationRoleMenu', id='menu',
+                                           binding_column='roleid'),
                 )
     
     def on_delete_record(self, row):
@@ -272,3 +274,18 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     columns = ('menuid', 'name', 'rights',)
     layout = ('menuid', 'name', 'rights',)
     sorting = (('name', pytis.data.ASCENDENT,),)
+
+class ApplicationRoleMenu(pytis.presentation.Specification):
+    table = 'ev_pytis_role_menu'
+    title = _("Menu u¾ivatele")
+    fields = (
+        Field('menuid', "", codebook='menu.ApplicationMenu'),
+        Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
+              fixed=True),
+        Field('rights', _("Práva")),
+        Field('ititle', _("Titulek polo¾ky menu"), fixed=True),
+        Field('fullposition', _("Pozice v celém menu")),
+        )
+    columns = ('ititle', 'roleid', 'rights',)
+    layout = ('ititle', 'roleid', 'rights',)
+    sorting = (('fullposition', pytis.data.ASCENDENT,),)
