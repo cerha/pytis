@@ -338,6 +338,8 @@ def pytis_compute_rights(menuid, roleid, name):
     if max_rights is None:
         max_rights = allowed_rights
     rights = [right for right in max_rights if right not in forbidden_rights]
+    if 'show' not in forbidden_rights:
+        rights.append('show')
     if rights:
         import string
         formatted_rights = string.join(rights, ' ')
