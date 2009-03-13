@@ -184,6 +184,8 @@ class ApplicationMenu(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='title')
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
                                            binding_column='menuid'),
+                pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
+                                           binding_column='menuid'),
                 )
     
     def on_edit_record(self, row):
@@ -243,13 +245,12 @@ class ApplicationRights(pytis.presentation.Specification):
 
 class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_menu_rights'
-    title = "Práva"
+    title = _("Práva")
     fields = (
         Field('id', "Id", default=nextval('e_pytis_action_rights_id_seq')),
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        #Field('name', "Role", fixed=True),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True),
         Field('system', _("Systémové"), fixed=True),
@@ -259,3 +260,15 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     layout = ('roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
 
+class ApplicationSummaryRights(pytis.presentation.Specification):
+    table = 'ev_pytis_summary_rights'
+    title = _("Souhrnná práva")
+    fields = (
+        Field('menuid', "", codebook='menu.ApplicationMenu'),
+        Field('name', _("Role"), codebook='menu.ApplicationRoles',
+              fixed=True),
+        Field('rights', _("Práva")),
+        )
+    columns = ('menuid', 'name', 'rights',)
+    layout = ('menuid', 'name', 'rights',)
+    sorting = (('name', pytis.data.ASCENDENT,),)

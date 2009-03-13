@@ -272,10 +272,27 @@ support extended rights assignment, e.g. in context menus etc.
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
 
+def pytis_matching_actions(complex_action, simple_action):
+    complex_action = args[0]
+    simple_action = args[1]
+    if complex_action is None:
+        return False
+    components = complex_action.split('/')
+    if components[0] == 'form':
+        last_components = components[-1].split('::')
+        if len(last_components) == 2:
+            import string
+            prefix = string.join(components[:-1], '/')
+            return ((prefix + last_components[0]) == simple_action or
+                    (prefix + last_components[1]) == simple_action)
+    return complex_action == simple_action
+_plpy_function('pytis_matching_actions', (TString, TString), TBoolean,
+               body=pytis_matching_actions)
+    
 viewng('ev_pytis_menu_rights',
        (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
-                       condition='menu.action = actions.name', jointype=JoinType.INNER),
+                       condition='pytis_matching_actions(menu.action, actions.name)', jointype=JoinType.INNER),
         SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=(),
                        condition='actions.shortname = rights.action', jointype=JoinType.INNER),
         ),
@@ -286,3 +303,69 @@ viewng('ev_pytis_menu_rights',
        depends=('e_pytis_menu', 'c_pytis_menu_actions', 'e_pytis_action_rights',)
        )
 
+def pytis_compute_rights(menuid, roleid, name):
+    menuid = args[0]
+    roleid = args[1]
+    name = args[2]
+    condition = ["menuid = '%s' and roleid = '%s'" % (menuid, roleid,)]
+    def execute(query):
+        return [row['rightid'] for row in plpy.execute(query % condition[0])]
+    if name:
+        max_rights = execute("select rightid from ev_pytis_menu_rights where "
+                             "system = 'T' and %s")
+    else:
+        max_rights = None
+    allowed_rights = execute(("select rightid from ev_pytis_menu_rights where "
+                              "system = 'F' and granted = 'T' and %s"))
+    forbidden_rights = execute(("select rightid from ev_pytis_menu_rights where "
+                                "system = 'F' and granted = 'F' and %s"))
+    while True:
+        parents = plpy.execute("select parent from e_pytis_menu where menuid = '%s'" % (menuid,))
+        if not parents:
+            break
+        menuid = parents[0]['parent']
+        if menuid is None:
+            break
+        condition[0] = "menuid = '%s' and roleid = '%s'" % (menuid, roleid,)
+        query = ("select rightid from ev_pytis_menu_rights where "
+                 "system = 'F' and granted = 'T' and %s")
+        allowed_rights += [right for right in execute(query)
+                           if right not in allowed_rights and right not in forbidden_rights]
+        query = ("select rightid from ev_pytis_menu_rights where "
+                 "system = 'F' and granted = 'F' and %s")
+        forbidden_rights += [right for right in execute(query)
+                             if right not in allowed_rights and right not in forbidden_rights]
+    if max_rights is None:
+        max_rights = allowed_rights
+    rights = [right for right in max_rights if right not in forbidden_rights]
+    if rights:
+        import string
+        formatted_rights = string.join(rights, ' ')
+    else:
+        formatted_rights = None
+    return formatted_rights
+_plpy_function('pytis_compute_rights', (TInteger, TUser, TString), TString,
+               body=pytis_compute_rights,
+               depends=('e_pytis_action_rights',),)
+
+viewng('ev_pytis_summary_rights_raw',
+       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
+        SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
+                       jointype=JoinType.CROSS),
+        ),
+       include_columns=(V(None, 'rights', "pytis_compute_rights(menu.menuid, roles.name, menu.name)"),),
+       insert=None,
+       update=None,
+       delete=None,
+       grant=db_rights,
+       depends=('e_pytis_menu', 'ev_pytis_valid_roles', 'pytis_compute_rights',)
+       )
+
+viewng('ev_pytis_summary_rights',
+       (SelectRelation('ev_pytis_summary_rights_raw', alias='rights', condition='rights is not null'),),
+       insert=None,
+       update=None,
+       delete=None,
+       grant=db_rights,
+       depends=('ev_pytis_summary_rights_raw',)
+       )
