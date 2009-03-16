@@ -265,6 +265,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
 class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'ev_pytis_summary_rights'
     title = _("Souhrnná práva")
+    access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW,),),)
     fields = (
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('name', _("Role"), codebook='menu.ApplicationRoles',
@@ -278,6 +279,7 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
 class ApplicationRoleMenu(pytis.presentation.Specification):
     table = 'ev_pytis_role_menu'
     title = _("Menu u¾ivatele")
+    access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW,),),)
     fields = (
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
