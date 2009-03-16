@@ -243,7 +243,7 @@ class ApplicationRights(pytis.presentation.Specification):
         )
     columns = ('rightid', 'description',)
     layout = ('rightid', 'description',)
-    cb = pytis.presentation.CodebookSpec(display='rightid')        
+    cb = pytis.presentation.CodebookSpec(display='description')
 
 class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_menu_rights'
