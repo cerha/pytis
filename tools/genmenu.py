@@ -80,7 +80,7 @@ def process_menu(menu, parent, menu_items, actions, position=110):
         action = actions.get(action_id)
         if action is None:
             action_components = action_id.split('/')
-            if action_components == 'form':
+            if action_components[0] == 'form':
                 shortname = 'form/' + action_components[-1]
             else:
                 shortname = action_id
