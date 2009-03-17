@@ -1,5 +1,8 @@
 2009-03-17  Tomas Cerha  <cerha@debian.brailcom.xx>
 
+	* lib/pytis/extensions/cms/__init__.py: 
+	Added documentation.
+
 	* lib/pytis/extensions/cms/web.py:
 	Implemented authentication/authorization and session management.
 
