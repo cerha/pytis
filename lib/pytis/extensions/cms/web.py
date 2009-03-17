@@ -25,12 +25,20 @@ Example application using these Wiking modules can be found in pytis-demo.
 
 """
 
-import os, re, lcg, wiking, pytis.util
+import os, re, md5, lcg, wiking, pytis.util, pytis.presentation as pp, pytis.data as pd
 import cms
 
+class Specification(wiking.Specification):
+    def _cbname(self, name):
+        # Some codebooks are not needed for the web modules, so just ignore them.
+        if name in ('Languages',):
+            return name
+        else:
+            return None
+    
 
 class Languages(wiking.PytisModule):
-    class Spec(wiking.Specification, cms.Languages):
+    class Spec(Specification, cms.Languages):
         pass
 
     def languages(self):
@@ -39,13 +47,8 @@ class Languages(wiking.PytisModule):
 
 class Menu(wiking.PytisModule):
 
-    class Spec(wiking.Specification, cms.Menu):
-        def _cbname(self, name):
-            # Some codebooks are not needed for the web module, so just ignore them.
-            if name in ('Languages'):
-                return name
-            else:
-                return None
+    class Spec(Specification, cms.Menu):
+        pass
     
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
 
@@ -63,8 +66,9 @@ class Menu(wiking.PytisModule):
                 raise wiking.NotFound()
         variants = [str(row['lang'].value()) for row in rows]
         lang = req.prefered_language(variants)
+        row = rows[variants.index(lang)]
         del req.unresolved_path[0]
-        return rows[variants.index(lang)]
+        return row
 
     def _bindings(self, req, record):
         bindings = super(Menu, self)._bindings(req, record)
@@ -74,10 +78,33 @@ class Menu(wiking.PytisModule):
             if cls and issubclass(cls, EmbeddablePytisModule):
                 bindings.append(cls.binding())
         return bindings
+
+    def _handle(self, req, action, **kwargs):
+        # HACK: We need to store the current resolved menu item somewhere.
+        # Wiking support for resolution tracking would be a clean solution.
+        req.cms_current_menu_record = kwargs.get('record')
+        return super(Menu, self)._handle(req, action, **kwargs)
+    
+    def authorize(self, req, module, action=None, record=None, **kwargs):
+        if hasattr(req, 'cms_current_menu_record'):
+            rights = self._module('Rights')
+            menu_record = req.cms_current_menu_record
+            menu_item_id = menu_record['menu_item_id'].value()
+            if module is self and action in ('view', 'subpath') \
+                   and record['menu_item_id'].value() == menu_item_id:
+                roles = rights.permitted_roles(menu_item_id, 'visit')
+            elif module.name() == menu_record['modname'].value():
+                roles = rights.permitted_roles(menu_item_id, action)
+            else:
+                roles = ()
+            return req.check_roles(roles)
+        else:
+            return False
     
     def menu(self, req):
         children = {None: []}
         translations = {}
+        rights = self._module('Rights')
         def item(row):
             menu_item_id = row['menu_item_id'].value()
             identifier = str(row['identifier'].value())
@@ -96,9 +123,11 @@ class Menu(wiking.PytisModule):
             else:
                 submenu = []
             submenu += [item(r) for r in children.get(menu_item_id, ())]
-            hidden = False # TODO: get visibility for the current user
-            return wiking.MenuItem(identifier, title, descr=descr, hidden=hidden,
-                                   variants=titles.keys(), submenu=submenu)
+            # TODO: Optimize (avoid separate DB queries for each menu item).
+            hidden = not req.check_roles(rights.permitted_roles(menu_item_id, 'show'))
+            active = req.check_roles(rights.permitted_roles(menu_item_id, 'visit'))
+            return wiking.MenuItem(identifier, title, descr=descr, hidden=hidden, active=active,
+                                   variants=titles.keys(), submenu=submenu,)
         # First process all rows and build a dictionary of descendants for each item and
         # translations of titles and descriptions.  Then construct the menu structure.
         for row in self._data.get_rows(sorting=self._sorting, published=True):
@@ -156,12 +185,105 @@ class Menu(wiking.PytisModule):
             return '/'+ row['identifier'].value() +'/'+ self.binding_id(row['modname'].value())
         else:
             return None
+
+
+class UserRoles(wiking.PytisModule):
+    class Spec(Specification, cms.UserRoles):
+        pass
+
+    @classmethod
+    def role(cls, role_id):
+        return 'cms-role-%d' % role_id
     
+    def roles(self, uid):
+        """Return list of user's roles as unique string identifiers."""
+        return [self.role(row['role_id'].value()) for row in self._data.get_rows(uid=uid)]
+
+    
+class Rights(wiking.PytisModule):
+    class Spec(Specification, cms.Rights):
+        pass
+
+    def permitted_roles(self, menu_item_id, action):
+        """Return list of roles as unique string identifiers."""
+        return [UserRoles.role(row['role_id'].value())
+                for row in self._data.get_rows(menu_item_id=menu_item_id,
+                                               action_name=action, permitted=True)]
+
+
+class Users(wiking.PytisModule):
+    class Spec(Specification, cms.Users):
+        pass
+
+    def user(self, login):
+        """Return the list of user's roles as unique string identifiers."""
+        row = self._data.get_row(login=login)
+        if row:
+            uid = row['uid'].value()
+            roles = self._module('UserRoles').roles(uid)
+            return wiking.User(login, uid=uid, name=row['fullname'].value(),
+                               roles=roles, data=row)
+        else:
+            return None
+
+    def check_password(self, user, password):
+        return user.data()['passwd'].value() == md5.new(password).hexdigest()
+        
+    
+class Session(wiking.PytisModule, wiking.Session):
+    class Spec(wiking.Specification):
+        table = 'cms_session'
+        fields = (pp.Field('session_id'),
+                  pp.Field('login'),
+                  pp.Field('key'),
+                  pp.Field('expire'))
+
+    def init(self, user):
+        # Nasty hack: Remove all expired records first.
+        self._data.delete_many(pd.AND(pd.EQ('login', pd.Value(pd.String(), user.login())),
+                                      pd.LT('expire', pd.Value(pd.DateTime(),
+                                                               pd.DateTime.current_gmtime()))))
+        session_key = self._new_session_key()
+        row = self._data.make_row(login=user.login(), key=session_key, expire=self._expiration())
+        self._data.insert(row)
+        return session_key
+        
+    def check(self, req, user, key):
+        row = self._data.get_row(login=user.login(), key=key)
+        if row and not self._expired(row['expire'].value()):
+            self._record(req, row).update(expire=self._expiration())
+            return True
+        else:
+            return False
+
+    def close(self, req, user, key):
+        row = self._data.get_row(login=user.login(), key=key)
+        if row:
+            self._delete(self._record(req, row))
+            
     
 class Application(wiking.CookieAuthentication, wiking.Application):
-
+    
     _MAPPING = dict(wiking.Application._MAPPING,
                     _resources='Resources')
+    
+    _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
+               'Stylesheets': (wiking.Roles.ANYONE,),
+               'Resources': (wiking.Roles.ANYONE,)}
+    
+    def _auth_user(self, req, login):
+        return self._module('Users').user(login)
+        
+    def _auth_check_password(self, user, password):
+        return self._module('Users').check_password(user, password)
+    
+    def authorize(self, req, module, **kwargs):
+        try:
+            roles = self._RIGHTS[module.name()]
+        except KeyError:
+            return self._module('Menu').authorize(req, module, **kwargs)
+        else:
+            return req.check_roles(roles)
     
     def menu(self, req):
         return self._module('Menu').menu(req)
@@ -183,17 +305,9 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         else:
             return super(Application, self).handle(req)
     
-    #def panels(self, req, lang):
-    #    return
-    
-    #def _auth_user(self, req, login):
-    #    return self._module('Authentication').user(req, login)
+    def panels(self, req, lang):
+        return [wiking.LoginPanel()]
         
-    #def _auth_check_password(self, user, password):
-    #    return user.data().check_passwd(password)
-    
-    #def authorize(self, req, module, action=None, record=None, **kwargs):
-    #    return True
 
     
 class Embeddable(object):
@@ -239,5 +353,10 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
                               id=Menu.binding_id(cls.name()))
     
     def embed(self, req, record):
-        return [self.related(req, self.binding(), record, req.uri())]
+        if self._application.authorize(req, self, action='list'):
+            return [self.related(req, self.binding(), record, req.uri())]
+        else:
+            #return [lcg.coerce(_("Listing not permitted."))]
+            return []
+        
 
