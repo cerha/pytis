@@ -1,8 +1,28 @@
+"""Gensql specification of database objects used by Pytis CMS.
+
+This specification is designed to be included in project specific gensql script.
+
+Requirements:
+
+The top level gensql script should define the following objects:
+
+  * table (or view) `cms_users' with (at least) the following columns:
+      uid -- user id used also as a reference from other tables (integer, unique, not null),
+      login -- web user's login name (string, unique, not null),
+      fullname -- web user's displayed name (string, not null),
+      passwd -- password for web user's authentication (string, not null)
+      
+  * variable 'cms_rights' defining DB rights to be used for CMS DB objects.  These rights should
+    contain 'select' (read only) rights for the role used by the webserver (such as 'www-data').
+
+  * variable 'cms_rights_rw' defining DB rigts for CMS objects requiring read/write access by the
+    webserver user.  These rights should contain read/write rights for the DB role used by the
+    webserver (such as 'www-data').
+
+"""
+
 import pytis.data as pd
 Relation = SelectRelation
-
-db_rights = (('all', '"pytis-demo"'),)
-cms_rights = db_rights + (('select', '"www-data"'),)
 
 table('cms_languages',
       doc="Codebook of languages available in the CMS.",
@@ -117,15 +137,6 @@ table('cms_roles',
                Column('description', pd.String())),
       grant=cms_rights)
 
-# TODO: This table doesn't belong here.  It is application specific.
-table('cms_users',
-      doc="CMS users.",
-      columns=(PrimaryColumn('uid', pd.Serial()),
-               Column('login', pd.String(), constraints=('NOT NULL',)),
-               Column('fullname', pd.String(), constraints=('NOT NULL',)),
-               Column('passwd', pd.String(), constraints=('NOT NULL',))),
-      grant=cms_rights)
-
 table('cms_user_role_assignment',
       doc="Binding table assigning CMS roles to CMS users.",
       columns=(PrimaryColumn('user_role_id', pd.Serial()),
@@ -222,4 +233,4 @@ table('cms_session',
                Column('expire', pd.DateTime(), constraints=('NOT NULL',),
                       default='localtimestamp')),
       sql="UNIQUE (login, key)",
-      grant=cms_rights + (('all', '"www-data"'),))
+      grant=cms_rights_rw)
