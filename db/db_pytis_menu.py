@@ -34,6 +34,34 @@ _std_table('e_pytis_roles',
                         ("'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
                         ),
            depends=('c_pytis_role_purposes',))
+def e_pytis_roles_trigger():
+    class Roles(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_roles(self):
+            plpy.execute("select pytis_update_transitive_roles()")
+        def _do_after_insert(self):
+            role = self._pg_escape(self._new['name'])
+            plpy.execute("insert into a_pytis_valid_role_members(roleid, member) values ('%s', '%s')" %
+                         (role, role,))
+        def _do_after_update(self):
+            if self._new['deleted'] != self._old['deleted']:
+                self._update_roles()
+        def _do_after_delete(self):
+            self._update_roles()
+    roles = Roles(TD)
+    return roles.do_trigger()
+_trigger_function('e_pytis_roles_trigger', body=e_pytis_roles_trigger,
+                  doc="Updates total role memberships.",
+                  depends=('e_pytis_roles', 'a_pytis_valid_role_members', 'pytis_update_transitive_roles',))
+sql_raw("""
+create trigger e_pytis_roles_insert_after after insert on e_pytis_roles
+for each row execute procedure e_pytis_roles_trigger();
+create trigger e_pytis_roles_update_after after update or delete on e_pytis_roles
+for each statement execute procedure e_pytis_roles_trigger();
+""",
+        name='e_pytis_roles_triggers',
+        depends=('e_pytis_roles_trigger',))
 
 viewng('ev_pytis_valid_roles',
        (SelectRelation('e_pytis_roles', alias='main',
@@ -87,6 +115,29 @@ Entries in this table define `member's of each `roleid'.
                         ('-2', "'admin_menu'", "'admin'",),
                         ),
            depends=('e_pytis_roles',))
+def e_pytis_role_members_trigger():
+    class Roles(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_roles(self):
+            plpy.execute("select pytis_update_transitive_roles()")
+        def _do_after_insert(self):
+            self._update_roles()
+        def _do_after_update(self):
+            self._update_roles()
+        def _do_after_delete(self):
+            self._update_roles()
+    roles = Roles(TD)
+    return roles.do_trigger()
+_trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
+                  doc="Updates total role memberships.",
+                  depends=('e_pytis_role_members', 'a_pytis_valid_role_members', 'pytis_update_transitive_roles',))
+sql_raw("""
+create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
+for each statement execute procedure e_pytis_roles_trigger();
+""",
+        name='e_pytis_role_members_triggers',
+        depends=('e_pytis_role_members_trigger',))
 
 viewng('ev_pytis_valid_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
@@ -105,6 +156,44 @@ viewng('ev_pytis_valid_role_members',
        grant=db_rights,
        depends=('e_pytis_role_members', 'ev_pytis_valid_roles',)
        )
+
+_std_table_nolog('a_pytis_valid_role_members',
+                 (C('roleid', TUser, constraints=('not null',), references='e_pytis_roles on delete cascade on update cascade'),
+                  C('member', TUser, constraints=('not null',), references='e_pytis_roles on delete cascade on update cascade'),),
+                 """Complete membership of roles, including transitive relations.
+This table is modified only by triggers.
+""",
+                 depends=('e_pytis_roles',))
+def pytis_update_transitive_roles():
+    membership = {}
+    for row in plpy.execute("select name from ev_pytis_valid_roles"):
+        role = row['name']
+        membership[role] = []
+    for row in plpy.execute("select name, mname from ev_pytis_valid_role_members"):
+        role = row['name']
+        member = row['mname']
+        membership[member].append(role)
+    total_membership = {}
+    for role in membership.keys():
+        all_roles = []
+        new_roles = [role]
+        while new_roles:
+            r = new_roles.pop()
+            if r in all_roles:
+                continue
+            all_roles.append(r)
+            new_roles += membership.get(r, [])
+        total_membership[role] = all_roles
+    def _pg_escape(val):
+        return str(val).replace("'", "''")
+    plpy.execute("delete from a_pytis_valid_role_members")
+    for role, total_roles in total_membership.items():
+        for total in total_roles:
+            plpy.execute("insert into a_pytis_valid_role_members (roleid, member) values ('%s', '%s')" %
+                         (_pg_escape(total), _pg_escape(role)))
+    return True
+_plpy_function('pytis_update_transitive_roles', (), TBoolean,
+               body=pytis_update_transitive_roles)
 
 ### Actions
 
