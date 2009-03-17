@@ -184,18 +184,11 @@ class ApplicationMenu(pytis.presentation.Specification):
     layout = ('title', 'position', 'parent',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
-    bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
-                                           binding_column='menuid'),
-                pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
-                                           binding_column='menuid'),
-                )
-    
     def on_edit_record(self, row):
         if not row['indentation'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze editovat"))
             return None
-        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['menuid'])
-    
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['menuid'])    
     def on_delete_record(self, row):
         if not row['position'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze smazat"))
@@ -210,6 +203,14 @@ class ApplicationMenu(pytis.presentation.Specification):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
+class ApplicationMenuM(ApplicationMenu):
+    condition = pytis.data.NE('title', pytis.data.Value(pytis.data.String(), None))
+    bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
+                                           binding_column='menuid'),
+                pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
+                                           binding_column='menuid'),
+                )
+
 class ApplicationMenus(pytis.presentation.Specification):
     # This is almost the same as ApplicationMenu.
     # But we can't inherit from it because pytis would suffer from infinite
@@ -246,6 +247,7 @@ class ApplicationRights(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='description')
 
 def _shortname_computer(row):
+    # This is duplicate with genmenu, how to share it?
     action = row.cb_value('menuid', 'action').value()
     action_components = action.split('/')
     if action_components[0] == 'form':
