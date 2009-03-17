@@ -290,10 +290,10 @@ _plpy_function('pytis_matching_actions', (TString, TString), TBoolean,
                body=pytis_matching_actions)
     
 viewng('ev_pytis_menu_rights',
-       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation',)),
+       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('name', 'description',),
                        condition='pytis_matching_actions(menu.action, actions.name)', jointype=JoinType.INNER),
-        SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=('action',),
+        SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=(),
                        condition='actions.shortname = rights.action', jointype=JoinType.INNER),
         ),
        insert_order=('e_pytis_action_rights',),

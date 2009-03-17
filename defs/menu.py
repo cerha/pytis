@@ -254,14 +254,15 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
         Field('shortname', _("Primitivní akce"), fixed=True),
-        Field('action', _("Akce"), editable=pytis.presentation.Editable.NEVER, fixed=True),
+        Field('action', _("Akce"), editable=pytis.presentation.Editable.NEVER,
+              fixed=True, computer=pytis.presentation.CbComputer('menuid', 'action')),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True),
         Field('system', _("Systémové"), fixed=True),
-        Field('granted', _("Ano/Ne"), fixed=True),
+        Field('granted', _("Ano/Ne"), fixed=True, default=True),
         )
     columns = ('menuid', 'roleid', 'shortname', 'rightid', 'granted',)
-    layout = ('roleid', 'action', 'rightid', 'granted',)
+    layout = ('action', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
 
 class ApplicationSummaryRights(pytis.presentation.Specification):
