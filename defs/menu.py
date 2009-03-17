@@ -245,6 +245,14 @@ class ApplicationRights(pytis.presentation.Specification):
     layout = ('rightid', 'description',)
     cb = pytis.presentation.CodebookSpec(display='description')
 
+def _shortname_computer(row):
+    action = row.cb_value('menuid', 'action').value()
+    action_components = action.split('/')
+    if action_components[0] == 'form':
+        shortname = 'form/' + action_components[-1]
+    else:
+        shortname = action
+    return shortname
 class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_menu_rights'
     title = _("Práva")
@@ -253,16 +261,15 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('shortname', _("Primitivní akce"), fixed=True),
-        Field('action', _("Akce"), editable=pytis.presentation.Editable.NEVER,
-              fixed=True, computer=pytis.presentation.CbComputer('menuid', 'action')),
+        Field('shortname', _("Primitivní akce"), editable=pytis.presentation.Editable.NEVER,
+              fixed=True, computer=pytis.presentation.computer(_shortname_computer)),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True),
         Field('system', _("Systémové"), fixed=True),
         Field('granted', _("Ano/Ne"), fixed=True, default=True),
         )
     columns = ('menuid', 'roleid', 'shortname', 'rightid', 'system', 'granted',)
-    layout = ('action', 'roleid', 'rightid', 'granted',)
+    layout = ('shortname', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     def _row_editable(self, row):
         return not row['system'].value()
