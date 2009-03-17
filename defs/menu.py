@@ -261,9 +261,27 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('system', _("Systémové"), fixed=True),
         Field('granted', _("Ano/Ne"), fixed=True, default=True),
         )
-    columns = ('menuid', 'roleid', 'shortname', 'rightid', 'granted',)
+    columns = ('menuid', 'roleid', 'shortname', 'rightid', 'system', 'granted',)
     layout = ('action', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
+    def _row_editable(self, row):
+        return not row['system'].value()
+    def on_edit_record(self, row):
+        if not self._row_editable(row):
+            pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
+            return None
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
+    def _row_deleteable(self, row):
+        if not self._row_editable(row):
+            pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze mazat"))
+            return False
+        return True
+    def on_delete_record(self, row):
+        if not self._row_deleteable(row):
+            return None
+        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
+            return None
+        return pytis.data.EQ(row.keys()[0], row.key()[0])
 
 class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'ev_pytis_summary_rights'
