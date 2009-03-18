@@ -363,10 +363,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             specifications[name] = factory
-        add_spec('menu', 'e_pytis_menu', ('menuid', 'name', 'title', 'parent', 'actionid', 'fullposition',))
-        add_spec('roles', 'ev_pytis_user_roles', ('name',))
-        add_spec('membership', 'ev_pytis_valid_role_members', ('name', 'member',))
-        add_spec('rights', 'e_pytis_menu_rights', ('menuid', 'roleid', 'rightid', 'granted',))
+        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'parent', 'action', 'fullposition', 'rights',))
         add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications
 
@@ -385,65 +382,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menu_rows = menu_data.select_map(identity, sort=(('fullposition', pytis.data.ASCENDENT,),))
         if not menu_rows:
             return None
-        # Find my roles
-        roles_data = specifications['roles'].create(connection_data=connection)
-        roles = roles_data.select_map(identity)
-        if not roles:
-            return []
-        roleid = roles[0][0].value()
-        membership = {}
-        membership_data = specifications['membership'].create(connection_data=connection)
-        def add_membership(row):
-            role, member = [row[i].value() for i in (1, 2,)]
-            if not membership.has_key(member):
-                membership[member] = []
-            membership[member].append(role)
-        membership_data.select_map(add_membership)
-        my_roles = []
-        new_roles = [roleid]
-        while new_roles:
-            r = new_roles.pop()
-            if r in my_roles:
-                continue
-            my_roles.append(r)
-            new_roles += membership.get(r, [])
-        # Find my rights
-        I = pytis.data.Integer()
-        my_roles_values = [pytis.data.EQ('roleid', r[0]) for r in roles]
-        condition = pytis.data.OR(*my_roles_values)
-        rights_data = specifications['rights'].create(connection_data=connection)
-        rights = {}
-        def add_right(row):
-            menuid, rightid, granted = [row[i].value() for i in (0, 2, 3,)]
-            if not rights.has_key(menuid):
-                rights[menuid] = {}
-            elif rights[menuid].has_key(rightid):
-                raise Exception("Multiple right specification")
-            rights[menuid][rightid] = granted
-        rights_data.select_map(add_right, condition=condition)
         # Build visible menu items
         menu_template = []
         parents = []
         for row in menu_rows:
-            menuid, name, title, parent, actionid = [row[i].value() for i in (0, 1, 2, 3, 4,)]
-            item_rights = rights.get(menuid, {})
+            menuid, name, title, parent, actionid, rights_string = [row[i].value() for i in (0, 1, 2, 3, 4, 6,)]
+            rights = rights_string.split(' ')
+            rights.remove('show') # always present
             if not parents: # the top pseudonode, should be the first one
-                if False: #not item_rights.get('show'):
-                    # Menu not visible
-                    return None
                 parents.append((menuid, menu_template,))
                 current_template = menu_template
             elif not title: # separator
                 pass
-            elif item_rights.get('show') == False:
-                pass
             elif actionid: # terminal item
-                current_template.append((name, title, item_rights,))
+                current_template.append((name, title, rights,))
             else:          # non-terminal item
                 while parent != parents[-1][0]:
                     parents.pop()
                 upper_template = parents[-1][1]
-                current_template = [(name, title, item_rights,)]
+                current_template = [(name, title, rights,)]
                 upper_template.append(current_template)
                 parents.append((menuid, current_template,))
         # Done, return the menu structure
