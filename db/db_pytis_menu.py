@@ -626,3 +626,16 @@ viewng('ev_pytis_role_menu',
        grant=db_rights,
        depends=('ev_pytis_role_menu_raw',)
        )
+
+viewng('ev_pytis_user_menu',
+       (SelectRelation('e_pytis_menu', alias='menu'),
+        SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid',),
+                       condition="menu.menuid = rights.menuid and rights.roleid = user and rights.rights like '%show%'" ,
+                       jointype=JoinType.INNER),
+        ),
+       insert=None,
+       update=None,
+       delete=None,
+       grant=db_rights,
+       depends=('e_pytis_menu',)
+       )
