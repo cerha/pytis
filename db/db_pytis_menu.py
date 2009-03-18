@@ -119,8 +119,8 @@ viewng('ev_pytis_roles',
 _std_table('e_pytis_role_members',
            (P('id', TSerial,
               doc="Just to make logging happy"),
-            C('roleid', TUser, constraints=('not null',), references='e_pytis_roles'),
-            C('member', TUser, constraints=('not null',), references='e_pytis_roles'),
+            C('roleid', TUser, constraints=('not null',), references='e_pytis_roles on update cascade'),
+            C('member', TUser, constraints=('not null',), references='e_pytis_roles on update cascade'),
             ),
            """Mutual memberships of roles.
 Entries in this table define `member's of each `roleid'.
