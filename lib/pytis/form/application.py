@@ -1441,6 +1441,28 @@ def block_refresh(function, *args, **kwargs):
     """
     return Refreshable.block_refresh(function, *args, **kwargs)
 
+_access_rights = UNDEFINED
+
+def init_access_rights():
+    global _access_rights    
+    specifications = {}
+    def add_spec(name, table, columns):
+        bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
+        factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+        specifications[name] = factory
+    add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
+    try:
+        rights_data = specifications['rights'].create(connection_data=config.dbconnection)
+    except pytis.data.DBException:
+        _access_rights = None
+        return
+    _access_rights = {}
+    def process(row):
+        shortname, rights_string = row[0].value(), row[1].value()
+        rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
+        _access_rights[shortname] = _access_rights.get(shortname, []) + rights
+    rights_data.select_map(process)
+    
 def has_access(name, perm=pytis.data.Permission.VIEW):
     """Return true if the current user has given permission for given spec.
 
@@ -1454,17 +1476,25 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
     Raises 'ResolverError' if given specification name cannot be found.
 
     """
-    try:
-        main, side = name.split('::')
-    except ValueError:
-        pass
+    if _access_rights is UNDEFINED:
+        init_access_rights()
+    if _access_rights is None:
+        try:
+            main, side = name.split('::')
+        except ValueError:
+            pass
+        else:
+            return has_access(main, perm=perm) and has_access(side, perm=perm)
+        rights = resolver().get(name, 'data_spec').access_rights()
+        if not rights:
+            return True
+        groups = pytis.data.default_access_groups(config.dbconnection)
+        return rights.permitted(perm, groups)
     else:
-        return has_access(main, perm=perm) and has_access(side, perm=perm)
-    rights = resolver().get(name, 'data_spec').access_rights()
-    if not rights:
-        return True
-    groups = pytis.data.default_access_groups(config.dbconnection)
-    return rights.permitted(perm, groups)
+        rights = _access_rights.get('form/'+name)
+        if rights is None:      # shouldn't happen in common situations
+            return True
+        return perm in rights
 
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontì.
