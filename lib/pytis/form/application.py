@@ -388,21 +388,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for row in menu_rows:
             menuid, name, title, parent, actionid, rights_string = [row[i].value() for i in (0, 1, 2, 3, 4, 6,)]
             rights = rights_string.split(' ')
-            rights.remove('show') # always present
+            rights.remove('show') # always present, i.e. redundant
             if not parents: # the top pseudonode, should be the first one
                 parents.append((menuid, menu_template,))
                 current_template = menu_template
             elif not title: # separator
                 pass
-            elif actionid: # terminal item
-                current_template.append((name, title, rights,))
-            else:          # non-terminal item
+            else:
                 while parent != parents[-1][0]:
                     parents.pop()
-                upper_template = parents[-1][1]
-                current_template = [(name, title, rights,)]
-                upper_template.append(current_template)
-                parents.append((menuid, current_template,))
+                current_template = parents[-1][1]
+                if name: # terminal item
+                    current_template.append((name, title, rights,))
+                else:          # non-terminal item
+                    upper_template = parents[-1][1]
+                    current_template = [(name, title, rights,)]
+                    upper_template.append(current_template)
+                    parents.append((menuid, current_template,))
         # Done, return the menu structure
         return menu_template
         
@@ -436,7 +438,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                menu_item_id=item_id, action_id=item.action_id(),
                                rights=heading[2])
             return result
-        return [build(t) for t in menu_template]
+        menu = [build(t) for t in menu_template]
+        return menu
 
 # Ostatní metody
 
