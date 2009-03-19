@@ -485,7 +485,9 @@ def pytis_compute_rights(menuid, roleid, name):
         return str(val).replace("'", "''")
     safe_roleid = _pg_escape(roleid)
     def compute(menuid, name):
-        default_condition = ("menuid = %s and roleid in (select roleid from a_pytis_valid_role_members where member='%s')"
+        default_condition = (("menuid = %s and "
+                              "(roleid in (select roleid from a_pytis_valid_role_members where member='%s') or "
+                              "roleid = '*')")
                              % (menuid, safe_roleid,))
         condition = [default_condition]
         def execute(query):
@@ -493,14 +495,8 @@ def pytis_compute_rights(menuid, roleid, name):
         if name:
             max_rights = execute("select rightid from ev_pytis_menu_rights where "
                                  "system = 'T' and %s")
-            if not max_rights:  # no specific system rights => check implicit rights for the role
-                if roleid != '*':
-                    max_rights = [row['rightid'] for row in
-                                  plpy.execute(("select rightid from ev_pytis_menu_rights where "
-                                                "system = 'T' and menuid = %s and roleid = '*'") %
-                                               (menuid,))]
-                if not max_rights:  # no implicit system rights => everything permitted
-                    max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
+            if not max_rights:  # no implicit system rights => everything permitted
+                max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
         else:
             max_rights = None
         allowed_rights = execute(("select rightid from ev_pytis_menu_rights where "
@@ -515,7 +511,10 @@ def pytis_compute_rights(menuid, roleid, name):
             if parent_menuid is None:
                 # Root menu item
                 break
-            condition[0] = "menuid = %s and roleid = '%s'" % (parent_menuid, roleid,)
+            condition[0] = (("menuid = %s and "
+                             "(roleid in (select roleid from a_pytis_valid_role_members where member='%s') or "
+                             "roleid = '*')") %
+                            (parent_menuid, roleid,))
             query = ("select rightid from ev_pytis_menu_rights where "
                      "system = 'F' and granted = 'T' and %s")
             allowed_rights += [right for right in execute(query)
@@ -546,10 +545,11 @@ def pytis_compute_rights(menuid, roleid, name):
             plpy.execute(("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) "
                           "values (%s, '%s', pytis_summary_rights(%s, '%s'))")
                          % (menuid, safe_roleid, menuid, safe_roleid,))
-            submenus = plpy.execute("select menuid, name from e_pytis_menu where parent = '%s'" %
-                                    (menuid,))
-        else:
-            submenus = []
+        # We have to always walk through submenus, even when there is no change
+        # in summary rights.  This is because the menu may deny some
+        # rights unavailable here, but available in submenus.
+        submenus = plpy.execute("select menuid, name from e_pytis_menu where parent = %s" %
+                                (menuid,))
         return submenus
     menus = [dict(menuid=menuid, name=name)]
     while menus:
