@@ -234,6 +234,27 @@ _std_table_nolog('c_pytis_menu_actions',
                  """List of available (pre-defined and visible) application actions."""
                  )
 
+def pytis_matching_actions(complex_action, simple_action):
+    complex_action = args[0]
+    simple_action = args[1]
+    if complex_action is None:
+        return False
+    components = complex_action.split('/')
+    if components[0] == 'form':
+        last_components = components[-1].split('::')
+        if len(last_components) == 2:
+            import string
+            prefix = string.join(components[:-1], '/')
+            result = ((prefix + last_components[0]) == simple_action or
+                      (prefix + last_components[1]) == simple_action)
+        else:
+            result = ('form/'+components[-1] == simple_action)
+    else:
+        result = (complex_action == simple_action)
+    return result
+_plpy_function('pytis_matching_actions', (TString, TString), TBoolean,
+               body=pytis_matching_actions)
+
 ### Menus
 
 _std_table('e_pytis_menu',
@@ -430,27 +451,6 @@ for each row execute procedure e_pytis_action_rights_trigger();
 """,
         name='e_pytis_action_rights_triggers',
         depends=('e_pytis_action_rights_trigger',))
-
-def pytis_matching_actions(complex_action, simple_action):
-    complex_action = args[0]
-    simple_action = args[1]
-    if complex_action is None:
-        return False
-    components = complex_action.split('/')
-    if components[0] == 'form':
-        last_components = components[-1].split('::')
-        if len(last_components) == 2:
-            import string
-            prefix = string.join(components[:-1], '/')
-            result = ((prefix + last_components[0]) == simple_action or
-                      (prefix + last_components[1]) == simple_action)
-        else:
-            result = ('form/'+components[-1] == simple_action)
-    else:
-        result = (complex_action == simple_action)
-    return result
-_plpy_function('pytis_matching_actions', (TString, TString), TBoolean,
-               body=pytis_matching_actions)
     
 viewng('ev_pytis_menu_rights',
        (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
@@ -466,6 +466,8 @@ viewng('ev_pytis_menu_rights',
        grant=db_rights,
        depends=('e_pytis_menu', 'c_pytis_menu_actions', 'e_pytis_action_rights',)
        )
+
+### Summarization
 
 def pytis_compute_rights(menuid, roleid, name):
     menuid = args[0]
@@ -632,7 +634,9 @@ viewng('ev_pytis_role_menu',
 viewng('ev_pytis_user_menu',
        (SelectRelation('e_pytis_menu', alias='menu'),
         SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid',),
-                       condition="menu.menuid = rights.menuid and rights.roleid = user and rights.rights like '%show%'" ,
+                       condition=("menu.menuid = rights.menuid and "
+                                  "rights.roleid = user and "
+                                  "rights.rights like '%show%'"),
                        jointype=JoinType.INNER),
         ),
        insert=None,
