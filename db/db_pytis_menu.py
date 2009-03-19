@@ -485,6 +485,8 @@ def pytis_compute_rights(menuid, roleid, name):
         if name:
             max_rights = execute("select rightid from ev_pytis_menu_rights where "
                                  "system = 'T' and %s")
+            if not max_rights:  # no system rights => everything permitted
+                max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
         else:
             max_rights = None
         allowed_rights = execute(("select rightid from ev_pytis_menu_rights where "
