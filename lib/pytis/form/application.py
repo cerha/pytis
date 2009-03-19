@@ -387,8 +387,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         parents = []
         for row in menu_rows:
             menuid, name, title, parent, actionid, rights_string = [row[i].value() for i in (0, 1, 2, 3, 4, 6,)]
-            rights = rights_string.split(' ')
-            rights.remove('show') # always present, i.e. redundant
+            rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
             if not parents: # the top pseudonode, should be the first one
                 parents.append((menuid, menu_template,))
                 current_template = menu_template

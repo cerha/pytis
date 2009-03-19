@@ -841,14 +841,15 @@ class Menu(_TitledMenuObject):
     metody 'create()'.
 
     """ 
-    def __init__(self, title, items, allow_autoindex=True, rights={}):
+    def __init__(self, title, items, allow_autoindex=True, rights=[]):
         """Initialize menu specification.
 
         Arguments:
 
           title -- menu title as a string
           items -- sequence of menu items as 'Menu', 'MItem' and 'MSeparator' instances
-          allow_autoindex -- allow automatic keyboard access index numbers on this menu 
+          allow_autoindex -- allow automatic keyboard access index numbers on this menu
+          rights -- list of access rights ('Permission' constants) assigned to the given menu
 
         """
         assert is_sequence(items)
@@ -969,7 +970,7 @@ class MItem(_TitledMenuObject):
     _used_titles = {}
     
     def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None, menu_item_id=None, action_id=None, rights={}):
+                 icon=None, menu_item_id=None, action_id=None, rights=[]):
         """Uschovej parametry.
 
         Argumenty:
@@ -1008,6 +1009,9 @@ class MItem(_TitledMenuObject):
             change a menu item, consider either retaining or changing its id,
             depending on whether its customizations in the database should be
             retained or discarded.
+
+          rights -- list of access rights ('Permission' constants) assigned to
+            the given menu item
             
         Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
         'command' automaticky nastavena tato klávesa.
