@@ -29,7 +29,8 @@ _std_table('e_pytis_roles',
               references='c_pytis_role_purposes'),
             C('deleted', TDate),),
             """Application user roles.""",
-           init_values=(("'admin_roles'", "'Administrátor rolí'", "'admn'", 'NULL',),
+           init_values=(("'*'", "'Zástupná role pro v¹echny role'", "'admn'", 'NULL',),
+                        ("'admin_roles'", "'Administrátor rolí'", "'admn'", 'NULL',),
                         ("'admin_menu'", "'Administrátor menu'", "'admn'", 'NULL',),
                         ("'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
                         ),
@@ -429,10 +430,15 @@ def e_pytis_action_rights_trigger():
         def _update_rights(self, action, roleid):
             menus = plpy.execute("select menuid, name from e_pytis_menu where pytis_matching_actions(action, '%s')" %
                                  (action,))
-            safe_roleid = self._pg_escape(roleid)
-            for row in menus:
-                plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
-                             (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
+            if roleid == '*':
+                roles = [row['name'] for row in plpy.execute("select name from ev_pytis_valid_roles")]
+            else:
+                roles = [roleid]
+            for r in roles:
+                safe_roleid = self._pg_escape(r)
+                for row in menus:
+                    plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
+                                 (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
         def _do_after_insert(self):
             self._update_rights(self._new['action'], self._new['roleid'])
         def _do_after_update(self):
@@ -487,8 +493,14 @@ def pytis_compute_rights(menuid, roleid, name):
         if name:
             max_rights = execute("select rightid from ev_pytis_menu_rights where "
                                  "system = 'T' and %s")
-            if not max_rights:  # no system rights => everything permitted
-                max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
+            if not max_rights:  # no specific system rights => check implicit rights for the role
+                if roleid != '*':
+                    max_rights = [row['rightid'] for row in
+                                  plpy.execute(("select rightid from ev_pytis_menu_rights where "
+                                                "system = 'T' and menuid = %s and roleid = '*'") %
+                                               (menuid,))]
+                if not max_rights:  # no implicit system rights => everything permitted
+                    max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
         else:
             max_rights = None
         allowed_rights = execute(("select rightid from ev_pytis_menu_rights where "

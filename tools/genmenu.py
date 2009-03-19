@@ -148,6 +148,8 @@ def fill_rights(cursor, rights):
             for groups_permissions in specification[1:]:
                 groups = groups_permissions[0]
                 if not pytis.util.is_sequence(groups):
+                    if groups is None:
+                        groups = '*'
                     groups = [groups]
                 permissions = groups_permissions[1:]
                 if pytis.data.Permission.ALL in permissions:
@@ -155,7 +157,7 @@ def fill_rights(cursor, rights):
                 permissions = [p.lower() for p in permissions]
                 action_name = action.shortname
                 for group in groups:
-                    if not roles.has_key(group):
+                    if group and not roles.has_key(group):
                         cursor.execute(("insert into e_pytis_roles (name, description, purposeid) "
                                         "values (%s, %s, %s)"),
                                        (group, "", 'appl',))
