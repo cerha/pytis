@@ -453,6 +453,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     
     _access_groups = {}
     _access_groups_data_objects = {}
+    _logical_access_groups = UNDEFINED
 
     def __init__ (self, *args, **kwargs):
         super(PostgreSQLUserGroups, self).__init__(*args, **kwargs)
@@ -501,12 +502,33 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
 
         """
         connection_data = self._pg_connection_data()
-        key = self._pgg_connection_key(connection_data)
-        groups = PostgreSQLUserGroups._access_groups.get(key, UNDEFINED)
-        if groups is UNDEFINED:
-            data = self._access_groups_data_objects[key]
-            groups = PostgreSQLUserGroups._access_groups[key] = \
-                self._pgg_retrieve_access_groups(data)
+        if PostgreSQLUserGroups._logical_access_groups is UNDEFINED:
+            PostgreSQLUserGroups._logical_access_groups = None
+            specifications = {}
+            def add_spec(name, table, columns):
+                bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
+                factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+                specifications[name] = factory
+            add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
+            try:
+                roles_data = specifications['roles'].create(connection_data=connection_data)
+            except pytis.data.DBException:
+                pass
+            else:
+                logical_access_groups = []
+                def process(row):
+                    logical_access_groups.append(row[0].value())
+                roles_data.select_map(process)
+                PostgreSQLUserGroups._logical_access_groups = logical_access_groups
+        if PostgreSQLUserGroups._logical_access_groups is None:
+            key = self._pgg_connection_key(connection_data)
+            groups = PostgreSQLUserGroups._access_groups.get(key, UNDEFINED)
+            if groups is UNDEFINED:
+                data = self._access_groups_data_objects[key]
+                groups = PostgreSQLUserGroups._access_groups[key] = \
+                    self._pgg_retrieve_access_groups(data)
+        else:
+            groups = PostgreSQLUserGroups._logical_access_groups
         return groups
 
     # TODO: Temporary compatibility hack:
