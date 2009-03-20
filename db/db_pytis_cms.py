@@ -134,6 +134,7 @@ table('cms_roles',
       doc="CMS roles.",
       columns=(PrimaryColumn('role_id', pd.Serial()),
                Column('name', pd.String(), constraints=('NOT NULL',)),
+               Column('system_role', pd.String(), constraints=('UNIQUE',)),
                Column('description', pd.String())),
       grant=cms_rights)
 

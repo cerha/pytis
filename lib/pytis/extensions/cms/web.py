@@ -192,12 +192,13 @@ class UserRoles(wiking.PytisModule):
         pass
 
     @classmethod
-    def role(cls, role_id):
-        return 'cms-role-%d' % role_id
+    def role(cls, role_id, system_role):
+        return system_role or 'cms-role-%d' % role_id
     
     def roles(self, uid):
         """Return list of user's roles as unique string identifiers."""
-        return [self.role(row['role_id'].value()) for row in self._data.get_rows(uid=uid)]
+        return [self.role(row['role_id'].value(), row['system_role'].value())
+                for row in self._data.get_rows(uid=uid)]
 
     
 class Rights(wiking.PytisModule):
@@ -206,7 +207,7 @@ class Rights(wiking.PytisModule):
 
     def permitted_roles(self, menu_item_id, action):
         """Return list of roles as unique string identifiers."""
-        return [UserRoles.role(row['role_id'].value())
+        return [UserRoles.role(row['role_id'].value(), row['system_role'].value())
                 for row in self._data.get_rows(menu_item_id=menu_item_id,
                                                action_name=action, permitted=True)]
 

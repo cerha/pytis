@@ -179,8 +179,9 @@ class Roles(Specification):
     table = 'cms_roles'
     fields = (Field('role_id', default=nextval('cms_roles_role_id_seq')),
               Field('name', _("Název"), width=16),
+              Field('system_role', _("Systémová role"), width=16),
               Field('description', _("Popis"), width=64))
-    layout = ('name', 'description')
+    layout = ('name', 'system_role', 'description')
     columns = ('name', 'description')
     bindings = (Binding(_("U¾ivatelé zaøazení do této role"), 'cms.RoleUsers', 'role_id'),)
     cb = CodebookSpec(display='name')
@@ -235,6 +236,7 @@ class Rights(Specification):
               Field('menu_item_id'),
               Field('role_id'),
               Field('role_name', _("Role"), editable=NEVER),
+              Field('system_role'),
               Field('mod_id'),
               Field('action_id'),
               Field('action_name', _("Akce"), editable=NEVER),
