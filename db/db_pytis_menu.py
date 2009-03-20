@@ -672,3 +672,12 @@ viewng('ev_pytis_user_rights',
        grant=db_rights,
        depends=('a_pytis_computed_summary_rights', 'e_pytis_menu', 'c_pytis_menu_actions',)
        )
+
+viewng('ev_pytis_user_roles',
+       (SelectRelation('a_pytis_valid_role_members', alias='members', exclude_columns=('member'),
+                       condition="members.member = user"),),
+       insert=None,
+       update=None,
+       delete=None,
+       grant=db_rights,
+       depends=('a_pytis_valid_role_members',))
