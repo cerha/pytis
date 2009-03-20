@@ -139,6 +139,8 @@ def fill_actions(cursor, actions):
 
 def fill_rights(cursor, rights):
     roles = {}
+    for r in ('admin', 'admin_menu', 'admin_roles',):
+        roles[r] = None
     for right in rights.values():
         action = right.action
         for specification in right.rights.specification():

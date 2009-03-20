@@ -39,6 +39,8 @@ class CommonApplicationRolePurposes(ApplicationRolePurposes):
 
 class ApplicationRolesSpecification(pytis.presentation.Specification):
     
+    access_rights = pytis.data.AccessRights((None, (['admin_roles'], pytis.data.Permission.ALL)),)
+    
     def _row_editable(self, row):
         return row['purposeid'].value() != 'admn'
     
@@ -158,6 +160,7 @@ class ApplicationActions(pytis.presentation.Specification):
     layout = ('name', 'description',)
     sorting = (('name', pytis.data.ASCENDENT,),)    
     cb = pytis.presentation.CodebookSpec(display='name')
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 ### Menus
 
@@ -184,6 +187,7 @@ class ApplicationMenu(pytis.presentation.Specification):
     layout = ('title', 'position', 'parent',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
     def on_edit_record(self, row):
         if not row['indentation'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze editovat"))
@@ -232,6 +236,7 @@ class ApplicationMenus(pytis.presentation.Specification):
     layout = ('title', 'position',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 ### Rights
 
@@ -273,6 +278,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     columns = ('menuid', 'roleid', 'shortname', 'rightid', 'system', 'granted',)
     layout = ('shortname', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
+    access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
         return not row['system'].value()
     def on_edit_record(self, row):
@@ -295,7 +301,6 @@ class ApplicationMenuRights(pytis.presentation.Specification):
 class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'ev_pytis_summary_rights'
     title = _("Souhrnná práva")
-    access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW,),),)
     fields = (
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('name', _("Role"), codebook='menu.ApplicationRoles',
@@ -305,11 +310,11 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     columns = ('menuid', 'name', 'rights',)
     layout = ('menuid', 'name', 'rights',)
     sorting = (('name', pytis.data.ASCENDENT,),)
+    access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
 
 class ApplicationRoleMenu(pytis.presentation.Specification):
     table = 'ev_pytis_role_menu'
     title = _("Menu u¾ivatele")
-    access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW,),),)
     fields = (
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
@@ -321,3 +326,4 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
     columns = ('ititle', 'roleid', 'rights',)
     layout = ('ititle', 'roleid', 'rights',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
+    access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
