@@ -19,6 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import optparse
 import sys
 import types
 
@@ -26,6 +27,10 @@ import psycopg2 as dbapi
 
 import pytis.form
 import pytis.util
+
+
+class Configuration(object):
+    dbparameters = dict(host=None, database=None, user=None, password=None)
 
 class Serial(object):
     _counter = pytis.util.Counter()
@@ -180,8 +185,25 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     next_indentation = indentation + '   '
     for m in menu.children:
         fill_menu_items(cursor, m, fullposition=fullposition, indentation=next_indentation)
+
+def parse_options():
+    usage = "usage: %prog [options] DEF_DIRECTORY"
+    parser = optparse.OptionParser(usage)
+    parser.add_option("-H", "--host", default=None, action="store", dest="host")
+    parser.add_option("-d", "--database", default=None, action="store", dest="database")
+    parser.add_option("-U", "--user", default=None, action="store", dest="user")
+    parser.add_option("-P", "--password", default=None, action="store", dest="password")
+    options, args = parser.parse_args()
+    dbparameters = Configuration.dbparameters
+    dbparameters['host'] = options.host
+    dbparameters['database'] = options.database
+    dbparameters['user'] = options.user
+    dbparameters['password'] = options.password
+    return args
     
-def run(def_dir):
+def run():
+    args = parse_options()
+    def_dir = args[0]
     resolver = pytis.util.FileResolver(def_dir)
     menu = resolver.get('application', 'menu')
     top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
@@ -189,7 +211,11 @@ def run(def_dir):
     actions = {}
     process_menu(menu, top, menu_items, actions)
     rights = process_rights(resolver, actions)
-    connection = dbapi.connect(database='pytis-demo')
+    parameters = {}
+    for k, v in Configuration.dbparameters.items():
+        if v is not None:
+            parameters[k] = v
+    connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
     cursor.execute("set client_encoding to 'latin2'") # grrr
     cursor.execute("delete from e_pytis_menu")
@@ -202,4 +228,4 @@ def run(def_dir):
     connection.commit()
 
 if __name__ == '__main__':
-    run(sys.argv[1])
+    run()
