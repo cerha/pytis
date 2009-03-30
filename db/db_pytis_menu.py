@@ -88,23 +88,6 @@ viewng('ev_pytis_valid_roles',
        depends=('e_pytis_roles', 'c_pytis_role_purposes',)
        )
 
-viewng('ev_pytis_user_roles',
-       (SelectRelation('e_pytis_roles', alias='main',
-                       condition=("(main.deleted is null or main.deleted > now()) and "
-                                  "main.purposeid = 'user' and "
-                                  "main.name = session_user")),
-        SelectRelation('pg_roles', alias='roles', key_column='pg_roles', exclude_columns=('*',),
-                       condition=("main.name = roles.rolname and "
-                                  "pg_has_role(roles.rolname, 'member')"),
-                       jointype=JoinType.INNER),
-        ),
-       insert_order=('e_pytis_roles',),
-       update_order=('e_pytis_roles',),
-       delete_order=('e_pytis_roles',),
-       grant=db_rights,
-       depends=('e_pytis_roles',)
-       )
-
 viewng('ev_pytis_roles',
        (SelectRelation('e_pytis_roles', alias='t1'),
         SelectRelation('c_pytis_role_purposes', alias='t2', exclude_columns=('purposeid',),
