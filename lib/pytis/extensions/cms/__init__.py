@@ -58,6 +58,6 @@ CMS in an existing Pytis Application are:
 
 """
 
-from cms import Menu, MenuParents, Languages, Modules, Actions, GenericActions, \
-     Users, Roles, UserRoles, RoleUsers, Rights
+from cms import set_prefix, Menu, MenuParents, Languages, Modules, Actions, GenericActions, \
+     Users, Roles, UserRoles, RoleUsers, Rights, SessionLog, UserSessionLog
 import web

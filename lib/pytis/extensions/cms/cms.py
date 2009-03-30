@@ -25,6 +25,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 """
 
+import socket
 import lcg
 import pytis.data as pd, pytis.presentation as pp
 from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, CodebookSpec, \
@@ -33,13 +34,12 @@ from pytis.extensions import nextval, ONCE, NEVER, ALWAYS
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT
 
+
 class Specification(pp.Specification):
-    def _cbname(self, name):
+    def _spec_name(self, name, needed_in_wiking=True):
         # Hack to allow namespaced spec names in wx app and plain module names in Wiking (the
         # specification is inherited by the Wiking Module).
         return 'cms.'+ name
-
-
 
 class Languages(Specification):
     title = _("Jazyky")
@@ -78,7 +78,8 @@ class Modules(Specification):
     cb = CodebookSpec(display='modname', prefer_display=True)
     layout = ('modname', 'descr')
     columns = ('modname', 'descr')
-    bindings = (Binding(_("Dostupné akce tohoto modulu"), 'cms.Actions', 'mod_id'),)
+    def bindings(self):
+        return (Binding(_("Dostupné akce tohoto modulu"), self._spec_name('Actions'), 'mod_id'),)
 
 
 class MenuParents(Specification):
@@ -116,7 +117,7 @@ class Menu(Specification):
                       "v odkazech na tuto stránku v rámci textu jiných stránek. Platný "
                       "identifikátor mù¾e obsahovat pouze písmena bez diakritiky, èíslice, "
                       "pomlèky a podtr¾ítka a musí zaèínat písmenem.")),
-        Field('lang', _("Jazyk"), editable=ONCE, codebook=self._cbname('Languages'),
+        Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
               value_column='lang', selection_type=pp.SelectionType.CHOICE),
         Field('title_or_identifier', _("Název"), width=30),
         Field('title', _("Název"), width=32, not_null=True),
@@ -125,12 +126,12 @@ class Menu(Specification):
         Field('content', _("Obsah"), type=pd.StructuredText(), compact=True, height=20, width=80,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
         Field('mod_id', _("Modul"), not_null=False,
-              codebook=self._cbname('Modules'),
+              codebook=self._spec_name('Modules', False),
               descr=_("Vyberte roz¹iøující modul zobrazený uvnitø stránky.  Ponechte prázdné pro "
                       "prostou textovou stránku.")),
         Field('modname', _("Modul")),
         Field('parent', _("Nadøízená polo¾ka"), not_null=False,
-              codebook=self._cbname('MenuParents'), value_column='menu_item_id',
+              codebook=self._spec_name('MenuParents', False), value_column='menu_item_id',
               runtime_filter=computer(self._parent_filter),
               descr=_("Vyberte bezprostøednì nadøízenou polo¾ku v hierarchii menu.  Ponechte "
                       "prázdné pro stránky na nejvy¹¹í úrovni menu.")),
@@ -153,7 +154,8 @@ class Menu(Specification):
               VGroup('lang', 'title', 'description', 'content', 'published',
                      label=_("Text stránky (pro aktuální jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
-    bindings = (Binding(_("Pøístupová práva"), 'cms.Rights',
+    def bindings(self):
+        return (Binding(_("Pøístupová práva"), self._spec_name('Rights'),
                         condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id'])),)
 
 
@@ -161,16 +163,18 @@ class Users(Specification):
     title = _("U¾ivatelé")
     help = _("Správa u¾ivatelských úètù, které je poté mo¾no zaøazovat do rolí.")
     table = 'cms_users'
-    fields = (Field('uid', _("UID"), width=5,
-                    default=nextval('cms_users_uid_seq')),
+    fields = (Field('uid', _("UID"), width=5),
               Field('login', _("Pøihla¹ovací jméno"), width=16),
               Field('fullname', _("Celé jméno"), width=40),
               Field('passwd', _("Heslo"),
                     type=pd.Password(not_null=True, minlen=4, md5=True)))
-    layout = ('uid', 'login', 'fullname', 'passwd')
+    layout = ('login', 'fullname', 'passwd')
     columns = ('uid', 'login', 'fullname')
-    bindings = (Binding(_("U¾ivatelské role aktivního u¾ivatele"), 'cms.UserRoles', 'uid'),)
     cb = CodebookSpec(display='fullname')
+    def bindings(self):
+        return (Binding(_("U¾ivatelské role"), self._spec_name('UserRoles'), 'uid'),
+                #Binding(_("Historie pøihlá¹ení"), self._spec_name('UserSessionLog'), 'uid'),
+                )
 
 
 class Roles(Specification):
@@ -183,7 +187,9 @@ class Roles(Specification):
               Field('description', _("Popis"), width=64))
     layout = ('name', 'system_role', 'description')
     columns = ('name', 'description')
-    bindings = (Binding(_("U¾ivatelé zaøazení do této role"), 'cms.RoleUsers', 'role_id'),)
+    def bindings(self):
+        return (Binding(_("U¾ivatelé zaøazení do této role"),
+                        self._spec_name('RoleUsers'), 'role_id'),)
     cb = CodebookSpec(display='name')
 
     
@@ -193,8 +199,8 @@ class UserRoles(Specification):
     table = 'cms_user_roles'
     def fields(self): return (
         Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
-        Field('role_id', _("Role"), codebook=self._cbname('Roles')),
-        Field('uid', _('UID'), codebook=self._cbname('Users'), width=5),
+        Field('role_id', _("Role"), codebook=self._spec_name('Roles', False)),
+        Field('uid', _('UID'), codebook=self._spec_name('Users', False), width=5),
         Field('login', _("Pøihla¹ovací jméno"), width=16),
         Field('fullname', _("Celé jméno"), width=50),
         Field('name', _("Název role"), width=16),
@@ -213,10 +219,11 @@ class Actions(Specification):
     title = _("Dostupné akce")
     help = _("Výèet podporovaných akcí pro jednotlivé moduly.")
     table = 'cms_actions'
-    fields = (Field('action_id', default=nextval('cms_actions_action_id_seq')),
-              Field('mod_id', _("Modul"), codebook='cms.Modules'),
-              Field('name', _("Název"), width=16),
-              Field('description', _("Popis"), width=64))
+    def fields(self): return (
+        Field('action_id', default=nextval('cms_actions_action_id_seq')),
+        Field('mod_id', _("Modul"), codebook=self._spec_name('Modules', False)),
+        Field('name', _("Název"), width=16),
+        Field('description', _("Popis"), width=64))
     sorting = (('name', ASC),)
     layout = ('name', 'description')
     columns = ('name', 'description')
@@ -252,3 +259,38 @@ class Rights(Specification):
             return pp.Style(background='#ffd')
 
 
+class SessionLog(Specification):
+    title = _("Log pøihlá¹ení")
+    help = _("Záznam informací o pøihlá¹ení u¾ivatelù k webu.")
+    table = 'cms_session_log'
+    def fields(self): return (
+        Field('id'),
+        Field('start_time', _("Èas"), width=17),
+        Field('uid', codebook=self._spec_name('Users')),
+        Field('login', _("Login"), width=8),
+        Field('fullname', _("Jméno"), width=15),
+        Field('ip', _("IP adresa"), width=12, editable=NEVER),
+        Field('hostname', _("Hostname"), width=15, virtual=True, computer=computer(self._hostname)),
+        Field('success', _("Úspìch"), width=3),
+        Field('user_agent', _("User agent"), width=25),
+        Field('referer', _("Referer"), width=25))
+    def _hostname(self, row, ip):
+        try:
+            hostname = socket.gethostbyaddr(ip)[0]
+        except:
+            hostname = 'Unknown'
+        return hostname
+    def row_style(self, row):
+        if row['success'].value():
+            return None
+        else:
+            return pp.Style(foreground='#f00')
+    layout = ('start_time', 'login', 'fullname', 'ip', 'hostname', 'success', 'user_agent', 'referer')
+    columns = ('start_time', 'login', 'fullname', 'ip', 'success', 'user_agent', 'referer')
+    sorting = (('start_time', DESC),)
+
+class UserSessionLog(SessionLog):
+    """Login log customization for user sideform."""
+    layout = ('start_time', 'ip', 'hostname', 'success', 'user_agent', 'referer')
+    columns = ('start_time', 'ip', 'success', 'user_agent', 'referer')
+    

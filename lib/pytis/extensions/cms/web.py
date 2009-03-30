@@ -29,9 +29,8 @@ import os, re, md5, lcg, wiking, pytis.util, pytis.presentation as pp, pytis.dat
 import cms
 
 class Specification(wiking.Specification):
-    def _cbname(self, name):
-        # Some codebooks are not needed for the web modules, so just ignore them.
-        if name in ('Languages',):
+    def _spec_name(self, name, needed_in_wiking=True):
+        if needed_in_wiking:
             return name
         else:
             return None
@@ -221,7 +220,7 @@ class Users(wiking.PytisModule):
         row = self._data.get_row(login=login)
         if row:
             uid = row['uid'].value()
-            roles = self._module('UserRoles').roles(uid)
+            roles = [wiking.Roles.USER] + self._module('UserRoles').roles(uid)
             return wiking.User(login, uid=uid, name=row['fullname'].value(),
                                roles=roles, data=row)
         else:
@@ -235,22 +234,25 @@ class Session(wiking.PytisModule, wiking.Session):
     class Spec(wiking.Specification):
         table = 'cms_session'
         fields = (pp.Field('session_id'),
-                  pp.Field('login'),
+                  pp.Field('uid'),
                   pp.Field('key'),
                   pp.Field('expire'))
-
-    def init(self, user):
+    
+    def init(self, req, user):
         # Nasty hack: Remove all expired records first.
-        self._data.delete_many(pd.AND(pd.EQ('login', pd.Value(pd.String(), user.login())),
+        self._data.delete_many(pd.AND(pd.EQ('uid', pd.Value(pd.Integer(), user.uid())),
                                       pd.LT('expire', pd.Value(pd.DateTime(),
                                                                pd.DateTime.current_gmtime()))))
         session_key = self._new_session_key()
-        row = self._data.make_row(login=user.login(), key=session_key, expire=self._expiration())
+        row = self._data.make_row(uid=user.uid(), key=session_key, expire=self._expiration())
         self._data.insert(row)
         return session_key
         
+    def failure(self, req, user, login):
+        pass
+        
     def check(self, req, user, key):
-        row = self._data.get_row(login=user.login(), key=key)
+        row = self._data.get_row(uid=user.uid(), key=key)
         if row and not self._expired(row['expire'].value()):
             self._record(req, row).update(expire=self._expiration())
             return True
@@ -258,9 +260,25 @@ class Session(wiking.PytisModule, wiking.Session):
             return False
 
     def close(self, req, user, key):
-        row = self._data.get_row(login=user.login(), key=key)
+        row = self._data.get_row(uid=user.uid(), key=key)
         if row:
             self._delete(self._record(req, row))
+
+
+class SessionLog(wiking.PytisModule):
+    class Spec(wiking.Specification):
+        table = 'cms_session_log_data'
+        fields = [pp.Field(_id) for _id in
+                  ('id', 'uid', 'start_time', 'ip', 'success', 'user_agent', 'referer')]
+
+    def log(self, req, user, success):
+        row = self._data.make_row(uid=user.uid(),
+                                  start_time=pd.DateTime.current_gmtime(),
+                                  ip=req.header('X-Forwarded-For') or req.remote_host(),
+                                  success=success,
+                                  user_agent=req.header('User-Agent'),
+                                  referer=req.header('Referer'))
+        result = self._data.insert(row)
             
     
 class Application(wiking.CookieAuthentication, wiking.Application):
@@ -277,7 +295,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         
     def _auth_check_password(self, user, password):
         return self._module('Users').check_password(user, password)
-    
+
     def authorize(self, req, module, **kwargs):
         try:
             roles = self._RIGHTS[module.name()]

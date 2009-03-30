@@ -1,3 +1,14 @@
+2009-03-30  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* lib/pytis/extensions/cms/cms.py: 
+	* lib/pytis/extensions/cms/web.py:
+	Added support for distinction of logged in and anonymous users.
+	Refer to `uid', not `login' form session.  Wrap all module
+	references by `_spec_name()'.  Added (unused) session log module.
+
+	* db/db_pytis_cms.py: 
+	
+
 2009-03-20  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* db/db_pytis_cms.py:
