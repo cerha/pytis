@@ -186,6 +186,29 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     for m in menu.children:
         fill_menu_items(cursor, m, fullposition=fullposition, indentation=next_indentation)
 
+def transfer_roles(cursor):
+    excluded_roles = ('postgres',)
+    # roles
+    cursor.execute("select rolname, rolcanlogin from pg_roles")
+    roles_rows = [cursor.fetchone() for i in range(cursor.rowcount)]
+    for role, login in roles_rows:
+        if role not in excluded_roles:
+            if login:
+                purpose = 'user'
+            else:
+                purpose = 'appl'
+            cursor.execute("insert into e_pytis_roles (name, purposeid) values (%s, %s)",
+                           (role, purpose,))
+    # membership
+    cursor.execute("select roles1.rolname as owner, roles2.rolname as member "
+                   "from pg_auth_members, pg_roles as roles1, pg_roles as roles2 "
+                   "where pg_auth_members.roleid = roles1.oid and pg_auth_members.member = roles2.oid")
+    membership_rows = [cursor.fetchone() for i in range(cursor.rowcount)]
+    for owner, member in membership_rows:
+        if owner not in excluded_roles and member not in excluded_roles:
+            cursor.execute("insert into e_pytis_role_members (roleid, member) values (%s, %s)",
+                           (owner, member,))
+
 def parse_options():
     usage = "usage: %prog [options] DEF_DIRECTORY"
     parser = optparse.OptionParser(usage)
@@ -225,10 +248,12 @@ def run():
             break
     cursor.execute("delete from e_pytis_action_rights")
     cursor.execute("delete from c_pytis_menu_actions")
-    cursor.execute("delete from e_pytis_roles where purposeid = 'appl'")
+    cursor.execute("delete from e_pytis_role_members where id >= 0")
+    cursor.execute("delete from e_pytis_roles where purposeid != 'admn'")
     fill_actions(cursor, actions)
     fill_rights(cursor, rights)
     fill_menu_items(cursor, top)
+    transfer_roles(cursor)
     connection.commit()
 
 if __name__ == '__main__':
