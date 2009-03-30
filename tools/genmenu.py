@@ -218,7 +218,11 @@ def run():
     connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
     cursor.execute("set client_encoding to 'latin2'") # grrr
-    cursor.execute("delete from e_pytis_menu")
+    while True:
+        # delete trigger!
+        cursor.execute("delete from e_pytis_menu")
+        if cursor.rowcount <= 0:
+            break
     cursor.execute("delete from e_pytis_action_rights")
     cursor.execute("delete from c_pytis_menu_actions")
     cursor.execute("delete from e_pytis_roles where purposeid = 'appl'")
