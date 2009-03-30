@@ -1450,12 +1450,18 @@ def init_access_rights():
         bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
         factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
         specifications[name] = factory
-    add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
+    add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
     try:
-        rights_data = specifications['rights'].create(connection_data=config.dbconnection)
+        roles_data = specifications['roles'].create(connection_data=config.dbconnection)
+        roles = roles_data.select()
     except pytis.data.DBException:
         _access_rights = None
         return
+    if roles == 0:
+        _access_rights = 'nonuser'
+        return
+    add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
+    rights_data = specifications['rights'].create(connection_data=config.dbconnection)
     _access_rights = {}
     def process(row):
         shortname, rights_string = row[0].value(), row[1].value()
@@ -1490,9 +1496,11 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
             return True
         groups = pytis.data.default_access_groups(config.dbconnection)
         return rights.permitted(perm, groups)
+    elif _access_rights == 'nonuser':
+        return False
     else:
         rights = _access_rights.get('form/'+name)
-        if rights is None:      # shouldn't happen in common situations
+        if rights is None:
             return True
         return perm in rights
 
