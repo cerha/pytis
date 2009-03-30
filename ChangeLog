@@ -7,7 +7,8 @@
 	references by `_spec_name()'.  Added (unused) session log module.
 
 	* db/db_pytis_cms.py: 
-	
+	Added session and session log support.  Allow configurable user
+	table.  Added dependencies.
 
 2009-03-20  Tomas Cerha  <cerha@debian.brailcom.xx>
 

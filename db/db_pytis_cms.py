@@ -11,13 +11,14 @@ The top level gensql script should define the following objects:
       login -- web user's login name (string, unique, not null),
       fullname -- web user's displayed name (string, not null),
       passwd -- password for web user's authentication (string, not null)
-      
-  * variable 'cms_rights' defining DB rights to be used for CMS DB objects.  These rights should
-    contain 'select' (read only) rights for the role used by the webserver (such as 'www-data').
 
-  * variable 'cms_rights_rw' defining DB rigts for CMS objects requiring read/write access by the
-    webserver user.  These rights should contain read/write rights for the DB role used by the
-    webserver (such as 'www-data').
+  * variables:
+      cms_users_table -- name of the table of web users.
+      cms_rights -- DB rights to be used for CMS DB objects.  These rights should contain 'select'
+        (read only) rights for the role used by the webserver (such as 'www-data').
+      cms_rights_rw -- DB rigts for CMS objects requiring read/write access by the webserver user.
+        These rights should contain read/write rights for the DB role used by the webserver (such
+        as 'www-data').
 
 """
 
@@ -44,6 +45,7 @@ table('cms_menu_structure',
                Column('mod_id', pd.Integer(), references='cms_modules',),
                Column('ord', pd.Integer(), constraints=('NOT NULL',)),
                Column('tree_order', pd.String())),
+      depends=('cms_modules',),
       grant=cms_rights)
 
 sql_raw("CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order "
@@ -73,6 +75,7 @@ table('cms_menu_texts',
                Column('title', pd.String(), constraints=('NOT NULL',)),
                Column('description', pd.String()),
                Column('content', pd.String())),
+      depends=('cms_menu_structure', 'cms_languages',),
       sql='PRIMARY KEY (menu_item_id, lang)')
 
 viewng('cms_menu',
@@ -142,10 +145,11 @@ table('cms_user_role_assignment',
       doc="Binding table assigning CMS roles to CMS users.",
       columns=(PrimaryColumn('user_role_id', pd.Serial()),
                Column('uid', pd.Integer(), constraints=('NOT NULL',),
-                      references='cms_users'),
+                      references=cms_users_table),
                Column('role_id', pd.Integer(), constraints=('NOT NULL',),
                       references='cms_roles')),
       sql='UNIQUE (uid, role_id)',
+      depends=(cms_users_table, 'cms_roles'),
       grant=cms_rights)
 
 viewng('cms_user_roles',
@@ -160,11 +164,11 @@ viewng('cms_user_roles',
        insert=("INSERT INTO cms_user_role_assignment (user_role_id, uid, role_id) "
                "VALUES (new.user_role_id, new.uid, new.role_id) "
                "RETURNING user_role_id, uid, role_id, "
-                         "NULL::text, NULL::text, NULL::text, NULL::text"),
+                         "NULL::text, NULL::text, NULL::text, NULL::text, NULL::text"),
        update=("UPDATE cms_user_role_assignment SET uid = new.uid, role_id = new.role_id "
                "WHERE user_role_id=old.user_role_id"),
        delete=("DELETE FROM cms_user_role_assignment WHERE user_role_id = old.user_role_id"),
-       depends=('cms_user_role_assignment', 'cms_users'),
+       depends=('cms_user_role_assignment', 'cms_users', 'cms_roles'),
        grant=cms_rights)
 
 table('cms_actions',
@@ -175,6 +179,7 @@ table('cms_actions',
                Column('name', pd.String(maxlen=16), constraints=('NOT NULL',)),
                Column('description', pd.String(), constraints=('NOT NULL',))),
       sql='UNIQUE (mod_id, name)',
+      depends=('cms_modules',),
       grant=cms_rights)
 
 table('cms_rights_assignment',
@@ -184,6 +189,7 @@ table('cms_rights_assignment',
                Column('role_id', pd.Integer(), constraints=('NOT NULL',), references='cms_roles'),
                Column('action_id', pd.Integer(), constraints=('NOT NULL',), references='cms_actions')),
       sql='UNIQUE (menu_item_id, role_id, action_id)',
+      depends=('cms_menu_structure', 'cms_roles', 'cms_actions'),
       grant=cms_rights)
 
 viewng('cms_rights',
@@ -226,12 +232,40 @@ viewng('cms_rights',
        grant=cms_rights)
 
 table('cms_session',
-      doc="Active session storage for web user authentication.",
+      doc="Web user session information for authentication and login history.",
       columns=(PrimaryColumn('session_id', pd.Serial()), 
-               Column('login', pd.String(maxlen=32), constraints=('NOT NULL',),
-                      references='cms_users(login)'),
+               Column('uid', pd.Integer(), constraints=('NOT NULL',),
+                      references=cms_users_table),
                Column('key', pd.String(), constraints=('NOT NULL',)),
                Column('expire', pd.DateTime(), constraints=('NOT NULL',),
                       default='localtimestamp')),
-      sql="UNIQUE (login, key)",
+      sql="UNIQUE (uid, key)",
+      depends=(cms_users_table,),
       grant=cms_rights_rw)
+
+table('cms_session_log_data',
+      doc= "Log of web user logins (underlying data).",
+      columns=(PrimaryColumn('id', pd.Serial()),
+               Column('uid', pd.Integer(), constraints=('NOT NULL',),
+                      references=cms_users_table+' ON DELETE CASCADE'),
+               Column('start_time', pd.DateTime(), constraints=('NOT NULL',),
+                      default='localtimestamp'),
+               Column('ip', pd.String(), constraints=('NOT NULL',)),
+               Column('success', pd.Boolean(), constraints=('NOT NULL',), default="False"),
+               Column('user_agent', pd.String()),
+               Column('referer', pd.String())),
+      depends=(cms_users_table,),
+      grant=cms_rights_rw)
+
+viewng('cms_session_log',
+       doc= "Log of web user logins (user visible information).",
+       relations=(Relation('cms_session_log_data', alias='l', key_column='id'),
+                  Relation('cms_users', alias='u', key_column='uid', exclude_columns='*',
+                           jointype=JoinType.INNER, condition='l.uid = u.uid')),
+       include_columns=(ViewColumn('u.login'),
+                        ViewColumn('u.fullname')),
+       insert_order=('cms_session_log_data',),
+       update_order=('cms_session_log_data',),
+       delete_order=('cms_session_log_data',),
+       depends=('cms_session_log_data', cms_users_table),
+       grant=cms_rights)
