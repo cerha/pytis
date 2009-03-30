@@ -512,14 +512,13 @@ def pytis_compute_rights(menuid, roleid, name):
         if 'show' not in forbidden_rights:
             rights.append('show')
         rights.sort()
+        reduced_condition = ("menuid = %s and roleid = '%s'" % (menuid, safe_roleid,))
         old_rights = [row['rightid'] for row in
                       plpy.execute("select rightid from a_pytis_computed_rights where %s" %
-                                   (default_condition,))]
+                                   (reduced_condition,))]
         old_rights.sort()
         different = (old_rights != rights)
         if different:
-            reduced_condition = ("menuid = %s and roleid = '%s'"
-                                 % (menuid, safe_roleid,))
             plpy.execute("delete from a_pytis_computed_rights where %s" % (reduced_condition,))
             for r in rights:
                 plpy.execute("insert into a_pytis_computed_rights (menuid, roleid, rightid) values (%s, '%s', '%s')" %
