@@ -2199,7 +2199,8 @@ class _GsqlDefs(UserDict.UserDict):
 
     def _process_resolved(self, function):
         for o in self._unresolved:
-            sys.stderr.write('Unresolved object: %s\n' % o)
+            sys.stderr.write('Unresolved object: %s\n' % (o,))
+        resolved = {}
         for o in self._resolved:
             function(o)
 
@@ -2231,6 +2232,9 @@ class _GsqlDefs(UserDict.UserDict):
                     self._update_unresolved()
                 else:
                     self._unresolved.append(vname)
+        if self.has_key(name):
+            sys.stderr.write("Duplicate objects for name `%s': %s %s\n" %
+                             (name, spec, self[name],))
         self[name] = spec
         if self._resolvedp(spec):
             self._add_resolved(name)
