@@ -1,3 +1,8 @@
+2009-03-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/gensql.py:
+	Gensql: Check for duplicate definitions and warn about them.
+
 2009-03-06  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* pytis/form/screen.py: 
