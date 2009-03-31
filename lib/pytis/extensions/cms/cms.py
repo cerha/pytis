@@ -163,11 +163,12 @@ class Users(Specification):
     title = _("U¾ivatelé")
     help = _("Správa u¾ivatelských úètù, které je poté mo¾no zaøazovat do rolí.")
     table = 'cms_users'
-    fields = (Field('uid', _("UID"), width=5),
-              Field('login', _("Pøihla¹ovací jméno"), width=16),
-              Field('fullname', _("Celé jméno"), width=40),
-              Field('passwd', _("Heslo"),
-                    type=pd.Password(not_null=True, minlen=4, md5=True)))
+    def fields(self): return (
+        Field('uid', _("UID"), width=5),
+        Field('login', _("Pøihla¹ovací jméno"), width=16),
+        Field('fullname', _("Celé jméno"), width=40),
+        Field('passwd', _("Heslo"),
+              type=pd.Password(not_null=True, minlen=4, md5=True)))
     layout = ('login', 'fullname', 'passwd')
     columns = ('uid', 'login', 'fullname')
     cb = CodebookSpec(display='fullname')
