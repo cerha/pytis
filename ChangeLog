@@ -1,3 +1,11 @@
+2009-03-31  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* lib/pytis/extensions/cms/web.py: 
+	(EmbeddablePytisModule): Use specification title by default.
+
+	* lib/pytis/extensions/cms/cms.py:
+	(Users.fields): Define as a method.
+
 2009-03-30  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* lib/pytis/extensions/cms/cms.py: 
