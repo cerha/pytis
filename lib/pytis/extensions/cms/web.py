@@ -360,6 +360,7 @@ class Embeddable(object):
 
 class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
     _EMBED_BINDING_COLUMN = None
+    _HONOUR_SPEC_TITLE = True
 
     @staticmethod
     def _embed_condition(row):
