@@ -201,6 +201,7 @@ class UserRoles(Specification):
     def fields(self): return (
         Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
         Field('role_id', _("Role"), codebook=self._spec_name('Roles', False)),
+        Field('system_role'),
         Field('uid', _('UID'), codebook=self._spec_name('Users', False), width=5),
         Field('login', _("Pøihla¹ovací jméno"), width=16),
         Field('fullname', _("Celé jméno"), width=50),
