@@ -51,10 +51,6 @@ class Menu(wiking.PytisModule):
     
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
 
-    @classmethod
-    def binding_id(cls, modname):
-        return pytis.util.camel_case_to_lower(modname, '-')
-    
     def _resolve(self, req):
         identifier = req.unresolved_path[0]
         rows = self._data.get_rows(identifier=identifier, published=True)
@@ -78,6 +74,14 @@ class Menu(wiking.PytisModule):
                 bindings.append(cls.binding())
         return bindings
 
+    def _action(self, req, record=None):
+        # The only supported action of this module is `view' and the `action' argument is ignored
+        # here (left for the embedded module action resolution).
+        if record is not None and req.unresolved_path:
+            return 'subpath'
+        else:
+            return 'view'
+    
     def _handle(self, req, action, **kwargs):
         # HACK: We need to store the current resolved menu item somewhere.
         # Wiking support for resolution tracking would be a clean solution.
@@ -146,18 +150,14 @@ class Menu(wiking.PytisModule):
                # TODO: Add hidden menu items for static mapping items.
                #[MenuItem('_doc', _("Wiking Documentation"), hidden=True)]
     
-    def _action(self, req, **kwargs):
-        # The only supported action of this module is `view' and the `action' argument is ignored
-        # here (left for the embedded module action resolution).
-        return 'view'
-    
     def action_view(self, req, record, err=None, msg=None):
         # Main content
         modname = record['modname'].value()
         if modname is not None:
             module = self._module(modname)
             content = module.embed(req, record)
-            if isinstance(content, int):
+            wiking.debug("===", modname, content)
+            if isinstance(content, (int, tuple)):
                 # The request has already been served by the embedded module. 
                 return content
         else:
@@ -186,7 +186,7 @@ class Menu(wiking.PytisModule):
     def module_uri(self, modname):
         row = self._data.get_row(modname=modname)
         if row:
-            return '/'+ row['identifier'].value() +'/'+ self.binding_id(row['modname'].value())
+            return '/'+ row['identifier'].value() +'/data'
         else:
             return None
 
@@ -315,6 +315,12 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     def languages(self):
         return self._module('Languages').languages()
 
+    def module_uri(self, modname):
+        uri = super(Application, self).module_uri(modname)
+        if uri is None:
+            uri = self._module('Menu').module_uri(modname)
+        return uri
+    
     def handle(self, req):
         if req.unresolved_path:
             try:
@@ -352,7 +358,7 @@ class Embeddable(object):
         """
         return []
     
-    def embed(self, req, record):
+    def embed(self, req, menu_item_record):
         """Return a list of content instances extending the page content.
 
         The returned value can also be an integer to indicate that the request has already been
@@ -374,14 +380,14 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
     @classmethod
     def binding(cls):
         return wiking.Binding(cls.title(), cls.name(), cls._EMBED_BINDING_COLUMN,
-                              condition=cls._embed_condition,
-                              id=Menu.binding_id(cls.name()))
+                              condition=cls._embed_condition, id='data')
     
-    def embed(self, req, record):
+    def embed(self, req, menu_item_record):
         if self._application.authorize(req, self, action='list'):
-            return [self.related(req, self.binding(), record, req.uri())]
+            return [self.related(req, self.binding(), menu_item_record, req.uri())]
         else:
-            #return [lcg.coerce(_("Listing not permitted."))]
+            #return [lcg.coerce(_("Access denied."))]
             return []
+            
         
 
