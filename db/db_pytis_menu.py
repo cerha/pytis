@@ -468,16 +468,48 @@ def pytis_compute_rights(menuid, roleid, name):
         return str(val).replace("'", "''")
     safe_roleid = _pg_escape(roleid)
     def compute(menuid, name):
-        default_condition = (("menuid = %s and "
-                              "(roleid in (select roleid from a_pytis_valid_role_members where member='%s') or "
-                              "roleid = '*')")
-                             % (menuid, safe_roleid,))
-        condition = [default_condition]
-        def execute(query):
-            return [row['rightid'] for row in plpy.execute(query % condition[0])]
+        big_query = ("select rightid, granted, roleid, system from ev_pytis_menu_rights where "
+                     "(roleid in (select roleid from a_pytis_valid_role_members where member='%s') or roleid = '*') "
+                     "and menuid = %%s") % (safe_roleid,)
+        max_rights = []
+        allowed_rights = []
+        forbidden_rights = []
+        def append_rights(menuid):
+            rights_rows = plpy.execute(big_query % (menuid,))
+            a_rights = []
+            f_rights = []
+            a_defaults = []
+            f_defaults = []
+            for row in rights_rows:
+                rightid = row['rightid']
+                if row['system']:
+                    max_rights.append(rightid)
+                elif rightid not in allowed_rights and rightid not in forbidden_rights:
+                    granted = row['granted']
+                    if row['roleid'] == '*':
+                        if granted:
+                            l = a_defaults
+                        else:
+                            l = f_defaults
+                    else:
+                        if granted:
+                            l = a_rights
+                        else:
+                            l = f_rights
+                    l.append(rightid)
+            a_rights = [r for r in a_rights if r not in f_rights]
+            for r in f_defaults:
+                if r not in a_rights and r not in f_rights:
+                    f_rights.append(r) # not forbidden_rights, because of the check below
+            for r in a_defaults:
+                if r not in a_rights and r not in f_rights:
+                    allowed_rights.append(r)
+            for r in f_rights:
+                forbidden_rights.append(r)
+            for r in a_rights:
+                allowed_rights.append(r)            
+        append_rights(menuid)
         if name:
-            max_rights = execute("select rightid from ev_pytis_menu_rights where "
-                                 "system = 'T' and %s")
             if (not max_rights and
                 not plpy.execute(("select rightid from ev_pytis_menu_rights where "
                                   "system = 'T' and menuid = %s") % (menuid,))):
@@ -485,10 +517,6 @@ def pytis_compute_rights(menuid, roleid, name):
                 max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
         else:
             max_rights = None
-        allowed_rights = execute(("select rightid from ev_pytis_menu_rights where "
-                                  "system = 'F' and granted = 'T' and %s"))
-        forbidden_rights = execute(("select rightid from ev_pytis_menu_rights where "
-                                    "system = 'F' and granted = 'F' and %s"))
         parent_menuid = menuid
         while True:
             parents = plpy.execute("select parent from e_pytis_menu where menuid = %s" %
@@ -497,18 +525,7 @@ def pytis_compute_rights(menuid, roleid, name):
             if parent_menuid is None:
                 # Root menu item
                 break
-            condition[0] = (("menuid = %s and "
-                             "(roleid in (select roleid from a_pytis_valid_role_members where member='%s') or "
-                             "roleid = '*')") %
-                            (parent_menuid, roleid,))
-            query = ("select rightid from ev_pytis_menu_rights where "
-                     "system = 'F' and granted = 'T' and %s")
-            allowed_rights += [right for right in execute(query)
-                               if right not in allowed_rights and right not in forbidden_rights]
-            query = ("select rightid from ev_pytis_menu_rights where "
-                     "system = 'F' and granted = 'F' and %s")
-            forbidden_rights += [right for right in execute(query)
-                                 if right not in allowed_rights and right not in forbidden_rights]
+            append_rights(parent_menuid,)
         if max_rights is None:
             max_rights = allowed_rights
         rights = [right for right in max_rights if right not in forbidden_rights]
