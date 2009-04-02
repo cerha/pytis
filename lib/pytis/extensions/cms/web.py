@@ -146,6 +146,11 @@ class Menu(wiking.PytisModule):
                # TODO: Add hidden menu items for static mapping items.
                #[MenuItem('_doc', _("Wiking Documentation"), hidden=True)]
     
+    def _action(self, req, **kwargs):
+        # The only supported action of this module is `view' and the `action' argument is ignored
+        # here (left for the embedded module action resolution).
+        return 'view'
+    
     def action_view(self, req, record, err=None, msg=None):
         # Main content
         modname = record['modname'].value()

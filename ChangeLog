@@ -1,3 +1,9 @@
+2009-04-02  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* lib/pytis/extensions/cms/web.py:
+	Make `view' the only possible action of `Menu' module and leave
+	the `action' argument for the use of the embedded module.
+
 2009-04-01  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* lib/pytis/extensions/cms/cms.py:
