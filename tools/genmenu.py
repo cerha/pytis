@@ -222,6 +222,9 @@ def parse_options():
     dbparameters['database'] = options.database
     dbparameters['user'] = options.user
     dbparameters['password'] = options.password
+    if len(args) != 1:
+        parser.print_help()
+        sys.exit(1)
     return args
     
 def run():
