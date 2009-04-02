@@ -188,11 +188,12 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
 
 def transfer_roles(cursor):
     excluded_roles = ('postgres',)
+    semi_excluded_roles = ('admin', 'admin_roles', 'admin_menu',) + excluded_roles
     # roles
     cursor.execute("select rolname, rolcanlogin from pg_roles")
     roles_rows = [cursor.fetchone() for i in range(cursor.rowcount)]
     for role, login in roles_rows:
-        if role not in excluded_roles:
+        if role not in semi_excluded_roles:
             if login:
                 purpose = 'user'
             else:
