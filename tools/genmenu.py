@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2009 Brailcom, o.p.s.
 #
@@ -233,7 +233,7 @@ def run():
     def_dir = args[0]
     resolver = pytis.util.FileResolver(def_dir)
     menu = resolver.get('application', 'menu')
-    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
+    top = Menu(name=None, title=_("CELÃ‰ MENU"), parent=None, position=0, action=None)
     menu_items = {}
     actions = {}
     process_menu(menu, top, menu_items, actions)
