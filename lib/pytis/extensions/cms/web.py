@@ -53,9 +53,9 @@ class Menu(wiking.PytisModule):
 
     def _resolve(self, req):
         identifier = req.unresolved_path[0]
-        rows = self._data.get_rows(identifier=identifier, published=True)
+        rows = self._menu_item_rows(req, identifier=identifier, published=True)
         if not rows:
-            if self._data.get_rows(identifier=identifier):
+            if self._menu_item_rows(req, identifier=identifier):
                 raise wiking.Forbidden()
             else:
                 raise wiking.NotFound()
@@ -87,19 +87,25 @@ class Menu(wiking.PytisModule):
         # Wiking support for resolution tracking would be a clean solution.
         req.cms_current_menu_record = kwargs.get('record')
         return super(Menu, self)._handle(req, action, **kwargs)
+
+    def _menu_item_rows(self, req, **kwargs):
+        return self._data.get_rows(**kwargs)
     
     def authorize(self, req, module, action=None, record=None, **kwargs):
+        #wiking.debug("...", module.name(), action, hasattr(req, 'cms_current_menu_record'))
         if hasattr(req, 'cms_current_menu_record'):
             rights = self._module('Rights')
             menu_record = req.cms_current_menu_record
             menu_item_id = menu_record['menu_item_id'].value()
             if module is self and action in ('view', 'subpath') \
-                   and record['menu_item_id'].value() == menu_item_id:
+                   and record is not None and record['menu_item_id'].value() == menu_item_id:
                 roles = rights.permitted_roles(menu_item_id, 'visit')
             elif module.name() == menu_record['modname'].value():
                 roles = rights.permitted_roles(menu_item_id, action)
             else:
                 roles = ()
+            #wiking.debug(">>>", module.name(), action,
+            #             menu_item_id, roles, req.check_roles(roles))
             return req.check_roles(roles)
         else:
             return False
@@ -133,7 +139,7 @@ class Menu(wiking.PytisModule):
                                    variants=titles.keys(), submenu=submenu,)
         # First process all rows and build a dictionary of descendants for each item and
         # translations of titles and descriptions.  Then construct the menu structure.
-        for row in self._data.get_rows(sorting=self._sorting, published=True):
+        for row in self._menu_item_rows(req, published=True, sorting=self._sorting):
             menu_item_id = row['menu_item_id'].value()
             if not translations.has_key(menu_item_id):
                 parent = row['parent'].value()
@@ -156,7 +162,6 @@ class Menu(wiking.PytisModule):
         if modname is not None:
             module = self._module(modname)
             content = module.embed(req, record)
-            wiking.debug("===", modname, content)
             if isinstance(content, (int, tuple)):
                 # The request has already been served by the embedded module. 
                 return content

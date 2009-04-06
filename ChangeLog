@@ -1,3 +1,8 @@
+2009-04-06  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* lib/pytis/extensions/cms/web.py: 
+	Allow overriding condition for menu item selection.
+
 2009-04-02  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* lib/pytis/extensions/cms/web.py:
