@@ -80,8 +80,6 @@ _trigger_function('e_pytis_roles_trigger', body=e_pytis_roles_trigger,
                   doc="Updates total role memberships.",
                   depends=('e_pytis_roles', 'a_pytis_valid_role_members', 'pytis_update_transitive_roles',))
 sql_raw("""
-create trigger e_pytis_roles_insert_after after insert on e_pytis_roles
-for each row execute procedure e_pytis_roles_trigger();
 create trigger e_pytis_roles_update_after after insert or update or delete on e_pytis_roles
 for each row execute procedure e_pytis_roles_trigger();
 """,
