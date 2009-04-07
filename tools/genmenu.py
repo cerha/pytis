@@ -212,6 +212,7 @@ def transfer_roles(cursor):
                            (owner, member,))
 
 def recompute_tables(cursor):
+    print "Computing membership..."
     # Update role membership
     cursor.execute("select pytis_update_transitive_roles()")
     # Retrieve roles
@@ -223,6 +224,7 @@ def recompute_tables(cursor):
         if members is None:
             roles[member] = members = []
         members.append(roleid)
+    print "Computing membership...done"
     # Delete old rights
     cursor.execute("delete from a_pytis_computed_rights")
     cursor.execute("delete from a_pytis_computed_summary_rights")
@@ -250,6 +252,7 @@ def recompute_tables(cursor):
             r = role_rights.forbidden
         r.append(rightid)
     # Compute rights
+    print "Computing rights..."
     class Rights(object):
         def __init__(self, total, allowed, forbidden, parent):
             self.total = total
@@ -320,7 +323,9 @@ def recompute_tables(cursor):
                 rights.append('show')
             rights.sort()
             computed_rights[(menuid, roleid)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
+    print "Computing rights...done"
     # Store computed rights
+    print "Storing rights..."
     for (menuid, roleid), all_rights in computed_rights.items():
         rights = all_rights.total
         cursor.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, %s, %s)",
@@ -328,6 +333,7 @@ def recompute_tables(cursor):
         for r in rights:
             cursor.execute("insert into a_pytis_computed_rights (menuid, roleid, rightid) values (%s, %s, %s)",
                            (menuid, roleid, r,))
+    print "Storing rights...done"
             
 def parse_options():
     usage = "usage: %prog [options] DEF_DIRECTORY"
@@ -355,14 +361,19 @@ def run():
     top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
     menu_items = {}
     actions = {}
+    print "Retrieving menu..."
     process_menu(menu, top, menu_items, actions)
+    print "Retrieving menu...done"
+    print "Retrieving rights..."
     rights = process_rights(resolver, actions)
+    print "Retrieving rights...done"
     parameters = {}
     for k, v in Configuration.dbparameters.items():
         if v is not None:
             parameters[k] = v
     connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
+    print "Deleting old data..."
     cursor.execute("set client_encoding to 'latin2'") # grrr
     cursor.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('genmenu')")
     cursor.execute("delete from e_pytis_menu")
@@ -370,10 +381,19 @@ def run():
     cursor.execute("delete from c_pytis_menu_actions")
     cursor.execute("delete from e_pytis_role_members where id >= 0")
     cursor.execute("delete from e_pytis_roles where purposeid != 'admn'")
+    print "Deleting old data...done"
+    print "Inserting actions..."
     fill_actions(cursor, actions)
+    print "Inserting actions...done"
+    print "Inserting rights..."
     fill_rights(cursor, rights)
+    print "Inserting rights...done"
+    print "Inserting menu..."
     fill_menu_items(cursor, top)
+    print "Inserting menu...done"
+    print "Importing roles..."
     transfer_roles(cursor)
+    print "Importing roles...done"
     recompute_tables(cursor)
     cursor.execute("delete from e_pytis_disabled_dmp_triggers")
     connection.commit()
