@@ -66,7 +66,6 @@ def e_pytis_roles_trigger():
                 if self._new['deleted']:
                     condition = ("roleid = '%s' or roleid = '%s'" %
                                  (self._pg_escape(self._old['name']), self._pg_escape(self._new['name']),))
-                    plpy.execute("delete from a_pytis_computed_rights where %s" % (condition,))
                     plpy.execute("delete from a_pytis_computed_summary_rights where %s" % (condition,))
                 else:
                     self._update_rights(self._new['name'])
@@ -552,21 +551,21 @@ def pytis_compute_rights(menuid, roleid, name):
         if 'show' not in forbidden_rights:
             rights.append('show')
         rights.sort()
+        import string
+        formatted_rights = string.join(rights, ' ')
         reduced_condition = ("menuid = %s and roleid = '%s'" % (menuid, safe_roleid,))
-        old_rights = [row['rightid'] for row in
-                      plpy.execute("select rightid from a_pytis_computed_rights where %s" %
-                                   (reduced_condition,))]
-        old_rights.sort()
-        different = (old_rights != rights)
+        old_rights_rows = plpy.execute("select rights from a_pytis_computed_summary_rights where %s" %
+                                       (reduced_condition,))
+        if old_rights_rows:
+            old_rights = old_rights_rows[0]['rights']
+        else:
+            old_rights = None
+        different = (old_rights != formatted_rights)
         if different:
-            plpy.execute("delete from a_pytis_computed_rights where %s" % (reduced_condition,))
-            for r in rights:
-                plpy.execute("insert into a_pytis_computed_rights (menuid, roleid, rightid) values (%s, '%s', '%s')" %
-                             (menuid, safe_roleid, r,))
             plpy.execute("delete from a_pytis_computed_summary_rights where %s" % (reduced_condition,))
             plpy.execute(("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) "
-                          "values (%s, '%s', pytis_summary_rights(%s, '%s'))")
-                         % (menuid, safe_roleid, menuid, safe_roleid,))
+                          "values (%s, '%s', '%s')")
+                         % (menuid, safe_roleid, formatted_rights,))
         # We have to always walk through submenus, even when there is no change
         # in summary rights.  This is because the menu may deny some
         # rights unavailable here, but available in submenus.
@@ -580,32 +579,7 @@ def pytis_compute_rights(menuid, roleid, name):
     return True
 _plpy_function('pytis_compute_rights', (TInteger, TUser, TString), TBoolean,
                body=pytis_compute_rights,
-               depends=('e_pytis_action_rights', 'a_pytis_computed_rights', 'a_pytis_computed_summary_rights', 'pytis_summary_rights',),)
-
-def pytis_summary_rights(menuid, roleid):
-    menuid = args[0]
-    roleid = args[1]
-    def _pg_escape(val):
-        return str(val).replace("'", "''")
-    q = ("select distinct rightid from a_pytis_computed_rights where menuid = '%s' and roleid = '%s'"
-         % (menuid, _pg_escape(roleid),))
-    rights = [row['rightid'] for row in plpy.execute(q)]
-    import string
-    formatted_rights = string.join(rights, ' ')
-    return formatted_rights    
-_plpy_function('pytis_summary_rights', (TInteger, TUser), TString,
-               body=pytis_summary_rights,
-               depends=('a_pytis_computed_rights',),)
-
-_std_table_nolog('a_pytis_computed_rights',
-                 (C('menuid', TInteger, constraints=('not null',), references='e_pytis_menu on delete cascade on update cascade'),
-                  C('roleid', TString, constraints=('not null',), references='e_pytis_roles on delete cascade on update cascade'),
-                  C('rightid', 'varchar(8)', constraints=('not null',), references='c_pytis_access_rights on delete cascade on update cascade'),
-                  ),
-                 """Precomputed summary access rights line by line.
-This table is modified only by triggers.
-""",
-                 depends=('e_pytis_menu', 'e_pytis_roles', 'c_pytis_access_rights',))
+               depends=('e_pytis_action_rights', 'a_pytis_computed_summary_rights',),)
 
 _std_table_nolog('a_pytis_computed_summary_rights',
                  (C('menuid', TInteger, constraints=('not null',), references='e_pytis_menu on delete cascade on update cascade'),

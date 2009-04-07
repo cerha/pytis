@@ -226,7 +226,6 @@ def recompute_tables(cursor):
         members.append(roleid)
     print "Computing membership...done"
     # Delete old rights
-    cursor.execute("delete from a_pytis_computed_rights")
     cursor.execute("delete from a_pytis_computed_summary_rights")
     # Retrieve rights
     cursor.execute("select rightid, granted, roleid, menuid, system from ev_pytis_menu_rights")
@@ -330,9 +329,6 @@ def recompute_tables(cursor):
         rights = all_rights.total
         cursor.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, %s, %s)",
                        (menuid, roleid, string.join(rights, ' '),))
-        for r in rights:
-            cursor.execute("insert into a_pytis_computed_rights (menuid, roleid, rightid) values (%s, %s, %s)",
-                           (menuid, roleid, r,))
     print "Storing rights...done"
             
 def parse_options():
