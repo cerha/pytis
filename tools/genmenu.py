@@ -318,6 +318,7 @@ def recompute_tables(cursor):
             rights = [right for right in max_rights if right not in forbidden_rights]
             if 'show' not in forbidden_rights:
                 rights.append('show')
+            rights.sort()
             computed_rights[(menuid, roleid)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
     # Store computed rights
     for (menuid, roleid), all_rights in computed_rights.items():
