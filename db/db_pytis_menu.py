@@ -6,6 +6,12 @@ db_rights = globals().get('Gall_pytis', None)
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gpytis_menu')
 
+_std_table_nolog('e_pytis_disabled_dmp_triggers',
+                 (P('id', TUser),),
+                 """This table allows disabling some trigger calls.
+Right now inserting any value into it disables insert and delete trigger actions over
+computed tables.  This allows computing the tables separately.""")
+
 ### Roles
 
 _std_table_nolog('c_pytis_role_purposes',
@@ -48,6 +54,8 @@ def e_pytis_roles_trigger():
                 plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
                              (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
         def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             role = self._pg_escape(self._new['name'])
             plpy.execute("insert into a_pytis_valid_role_members(roleid, member) values ('%s', '%s')" %
                          (role, role,))
@@ -63,6 +71,8 @@ def e_pytis_roles_trigger():
                 else:
                     self._update_rights(self._new['name'])
         def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             self._update_roles()
     roles = Roles(TD)
     return roles.do_trigger()
@@ -130,6 +140,8 @@ def e_pytis_role_members_trigger():
                     plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
                                  (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
         def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             self._update_roles()
             self._update_rights(self._new['member'])
         def _do_after_update(self):
@@ -138,6 +150,8 @@ def e_pytis_role_members_trigger():
             if self._new['member'] != self._old['member']:
                 self._update_rights(self._old['member'])                
         def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             self._update_roles()
             self._update_rights(self._old['member'])                
     roles = Roles(TD)
@@ -295,6 +309,8 @@ def e_pytis_menu_trigger():
                 plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
                              (menuid, self._pg_escape(roleid), self._pg_escape(name or ''),))
         def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             self._update_rights(self._new)
         def _do_before_update(self):
             self._do_before_insert(old=self._old)
@@ -308,6 +324,8 @@ def e_pytis_menu_trigger():
             if self._new['parent'] != self._old['parent']:
                 self._update_rights(self._new)
         def _do_before_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             data = plpy.execute("select * from e_pytis_menu where parent=%s" %
                                 (self._old['menuid'],))
             if data:
@@ -423,11 +441,15 @@ def e_pytis_action_rights_trigger():
                     plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
                                  (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
         def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             self._update_rights(self._new['action'], self._new['roleid'])
         def _do_after_update(self):
             self._update_rights(self._old['action'], self._old['roleid'])
             self._update_rights(self._new['action'], self._new['roleid'])
         def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
+                return
             self._update_rights(self._old['action'], self._old['roleid'])
     rights = Rights(TD)
     return rights.do_trigger()
@@ -504,10 +526,8 @@ def pytis_compute_rights(menuid, roleid, name):
             for r in a_defaults:
                 if r not in a_rights and r not in f_rights:
                     allowed_rights.append(r)
-            for r in f_rights:
-                forbidden_rights.append(r)
-            for r in a_rights:
-                allowed_rights.append(r)            
+            forbidden_rights += f_rights
+            allowed_rights += a_rights
         append_rights(menuid)
         if name:
             if (not max_rights and

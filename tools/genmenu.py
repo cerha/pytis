@@ -20,6 +20,7 @@
 
 import copy
 import optparse
+import string
 import sys
 import types
 
@@ -210,6 +211,123 @@ def transfer_roles(cursor):
             cursor.execute("insert into e_pytis_role_members (roleid, member) values (%s, %s)",
                            (owner, member,))
 
+def recompute_tables(cursor):
+    # Update role membership
+    cursor.execute("select pytis_update_transitive_roles()")
+    # Retrieve roles
+    roles = {}
+    cursor.execute("select roleid, member from a_pytis_valid_role_members")
+    for i in range(cursor.rowcount):
+        roleid, member = cursor.fetchone()
+        members = roles.get(member)
+        if members is None:
+            roles[member] = members = []
+        members.append(roleid)
+    # Delete old rights
+    cursor.execute("delete from a_pytis_computed_rights")
+    cursor.execute("delete from a_pytis_computed_summary_rights")
+    # Retrieve rights
+    cursor.execute("select rightid, granted, roleid, menuid, system from ev_pytis_menu_rights")
+    class RawRights(object):
+        def __init__(self):
+            self.system = []
+            self.allowed = []
+            self.forbidden = []
+    raw_rights = {}
+    for i in range(cursor.rowcount):
+        rightid, granted, roleid, menuid, system = cursor.fetchone()
+        item_rights = raw_rights.get(menuid)
+        if item_rights is None:
+            raw_rights[menuid] = item_rights = {}
+        role_rights = item_rights.get(roleid)
+        if role_rights is None:
+            item_rights[roleid] = role_rights = RawRights()
+        if system:
+            r = role_rights.system
+        elif granted:
+            r = role_rights.allowed
+        else:
+            r = role_rights.forbidden
+        r.append(rightid)
+    # Compute rights
+    class Rights(object):
+        def __init__(self, total, allowed, forbidden, parent):
+            self.total = total
+            self.allowed = allowed
+            self.forbidden = forbidden
+            self.parent = parent
+    computed_rights = {}
+    cursor.execute("select menuid, name, parent from e_pytis_menu order by fullposition")
+    for i in range(cursor.rowcount):
+        menuid, name, parent = cursor.fetchone()
+        if not menuid:
+            continue
+        menu_rights = raw_rights.get(menuid, {})
+        for roleid, role_roles in roles.items():
+            max_ = []
+            allowed = []
+            forbidden = []
+            for role in role_roles:
+                raw = menu_rights.get(role) or RawRights()
+                max_ += raw.system
+                allowed += raw.allowed
+                forbidden += raw.forbidden
+            max_rights = []
+            for r in max_:
+                if r not in max_rights:
+                    max_rights.append(r)
+            forbidden_rights = []
+            for r in forbidden:
+                if r not in forbidden_rights:
+                    forbidden_rights.append(r)
+            allowed_rights = []
+            for r in allowed:
+                if r not in forbidden_rights and r not in allowed_rights:
+                    allowed_rights.append(r)
+            raw = menu_rights.get('*') or RawRights()
+            for r in raw.system:
+                if r not in max_rights:
+                    max_rights.append(r)
+            for r in raw.forbidden:
+                if r not in forbidden_rights and f not in allowed_rights:
+                    forbidden_rights.append(r)
+            for r in raw.allowed:
+                if r not in forbidden_rights and f not in allowed_rights:
+                    allowed_rights.append(r)
+            if name:
+                if not max_rights:
+                    for r in menu_rights.values():
+                        if r:
+                            break
+                    else:
+                        max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
+            else:
+                max_rights = None
+            parent_menuid = parent
+            while parent_menuid is not None:
+                parent_rights = computed_rights[(parent_menuid, roleid,)]
+                for r in parent_rights.forbidden:
+                    if r not in forbidden_rights and r not in allowed_rights:
+                        forbidden_rights.append(r)                
+                for r in parent_rights.allowed:
+                    if r not in forbidden_rights and r not in allowed_rights:
+                        allowed_rights.append(r)
+                parent_menuid = parent_rights.parent
+            if max_rights is None:
+                max_rights = allowed_rights
+            rights = [right for right in max_rights if right not in forbidden_rights]
+            if 'show' not in forbidden_rights:
+                rights.append('show')
+            computed_rights[(menuid, roleid)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
+    # Store computed rights
+    for (menuid, roleid), all_rights in computed_rights.items():
+        rights = all_rights.total
+        cursor.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, %s, %s)",
+                       (menuid, roleid, string.join(rights, ' '),))
+        for r in rights:
+            cursor.execute("insert into a_pytis_computed_rights (menuid, roleid, rightid) values (%s, %s, %s)",
+                           (menuid, roleid, r,))
+            
 def parse_options():
     usage = "usage: %prog [options] DEF_DIRECTORY"
     parser = optparse.OptionParser(usage)
@@ -245,11 +363,8 @@ def run():
     connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
     cursor.execute("set client_encoding to 'latin2'") # grrr
-    while True:
-        # delete trigger!
-        cursor.execute("delete from e_pytis_menu")
-        if cursor.rowcount <= 0:
-            break
+    cursor.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('genmenu')")
+    cursor.execute("delete from e_pytis_menu")
     cursor.execute("delete from e_pytis_action_rights")
     cursor.execute("delete from c_pytis_menu_actions")
     cursor.execute("delete from e_pytis_role_members where id >= 0")
@@ -258,6 +373,8 @@ def run():
     fill_rights(cursor, rights)
     fill_menu_items(cursor, top)
     transfer_roles(cursor)
+    recompute_tables(cursor)
+    cursor.execute("delete from e_pytis_disabled_dmp_triggers")
     connection.commit()
 
 if __name__ == '__main__':
