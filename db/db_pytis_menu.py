@@ -524,8 +524,10 @@ def pytis_compute_rights(menuid, roleid, name):
             for r in a_defaults:
                 if r not in a_rights and r not in f_rights:
                     allowed_rights.append(r)
-            forbidden_rights += f_rights
-            allowed_rights += a_rights
+            for r in f_rights:
+                forbidden_rights.append(r)
+            for r in a_rights:
+                allowed_rights.append(r)            
         append_rights(menuid)
         if name:
             if (not max_rights and
