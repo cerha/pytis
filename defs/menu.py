@@ -305,10 +305,28 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('name', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('rights', _("Práva")),
+        Field('rights', _("Práva"), fixed=True),
+        Field('rights_show', _("Menu"), fixed=True,
+              descr=_("Zobrazení v menu")),
+        Field('rights_view', _("Náhled"), fixed=True,
+              descr=_("Zobrazení formuláøe")),
+        Field('rights_insert', _("Vlo¾ení"), fixed=True,
+              descr=_("Vlo¾ení nového záznamu")),
+        Field('rights_update', _("Editace"), fixed=True,
+              descr=_("Zmìna hodnot existujícího záznamu")),
+        Field('rights_delete', _("Smazání"), fixed=True,
+              descr=_("Smazání existujícího záznamu")),
+        Field('rights_print', _("Tisk"), fixed=True,
+              descr=_("Tisk formuláøe")),
+        Field('rights_export', _("Export"), fixed=True,
+              descr=_("Export formuláøe do souboru")),
+        Field('rights_call', _("Spu¹tìní"), fixed=True,
+              descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('menuid', 'name', 'rights',)
-    layout = ('menuid', 'name', 'rights',)
+    columns = ('menuid', 'name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
+    layout = ('menuid', 'name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+              'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
 
@@ -319,11 +337,29 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('rights', _("Práva")),
         Field('ititle', _("Titulek polo¾ky menu"), fixed=True),
         Field('fullposition', _("Pozice v celém menu")),
+        Field('rights', _("Práva")),
+        Field('rights_show', _("Menu"), fixed=True,
+              descr=_("Zobrazení v menu")),
+        Field('rights_view', _("Náhled"), fixed=True,
+              descr=_("Zobrazení formuláøe")),
+        Field('rights_insert', _("Vlo¾ení"), fixed=True,
+              descr=_("Vlo¾ení nového záznamu")),
+        Field('rights_update', _("Editace"), fixed=True,
+              descr=_("Zmìna hodnot existujícího záznamu")),
+        Field('rights_delete', _("Smazání"), fixed=True,
+              descr=_("Smazání existujícího záznamu")),
+        Field('rights_print', _("Tisk"), fixed=True,
+              descr=_("Tisk formuláøe")),
+        Field('rights_export', _("Export"), fixed=True,
+              descr=_("Export formuláøe do souboru")),
+        Field('rights_call', _("Spu¹tìní"), fixed=True,
+              descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('ititle', 'roleid', 'rights',)
-    layout = ('ititle', 'roleid', 'rights',)
+    columns = ('ititle', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
+               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
+    layout = ('ititle', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
+               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
