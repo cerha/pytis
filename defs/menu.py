@@ -329,6 +329,12 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
+    def on_new_record(self, *args, **kwargs):
+        return None
+    def on_edit_record(self, row):
+        return None
+    def on_delete_record(self, row):
+        return None
 
 class ApplicationRoleMenu(pytis.presentation.Specification):
     table = 'ev_pytis_role_menu'
@@ -363,3 +369,9 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('fullposition', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
+    def on_new_record(self, *args, **kwargs):
+        return None
+    def on_edit_record(self, row):
+        return None
+    def on_delete_record(self, row):
+        return None
