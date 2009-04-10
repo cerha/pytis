@@ -181,7 +181,8 @@ class ApplicationMenu(pytis.presentation.Specification):
               fixed=True, default=500),
         Field('indentation', ""),
         Field('fullposition', _("Pozice v celém menu")),
-        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
+        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
+              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         )
     columns = ('ititle', 'position', 'action',)
     layout = ('title', 'position', 'parent',)
@@ -230,7 +231,8 @@ class ApplicationMenus(pytis.presentation.Specification):
         Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
               fixed=True, default=500),
         Field('fullposition', _("Pozice v celém menu")),
-        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions'),
+        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
+              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         )
     columns = ('ititle',)
     layout = ('title', 'position',)
@@ -269,11 +271,15 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
         Field('shortname', _("Primitivní akce"), editable=pytis.presentation.Editable.NEVER,
-              fixed=True, computer=pytis.presentation.computer(_shortname_computer)),
+              fixed=True, computer=pytis.presentation.computer(_shortname_computer),
+              descr=_("Identifikátor akce související s danou polo¾kou menu")),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
-              fixed=True),
-        Field('system', _("Systémové"), fixed=True),
-        Field('granted', _("Ano/Ne"), fixed=True, default=True),
+              fixed=True,
+              descr=_("Pøidìlené nebo odebrané právo")),
+        Field('system', _("Systémové"), fixed=True,
+              descr=_("Jde o nemìnné právo definováno tvùrcem aplikace?")),
+        Field('granted', _("Ano/Ne"), fixed=True, default=True,
+              descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
         )
     columns = ('menuid', 'roleid', 'shortname', 'rightid', 'system', 'granted',)
     layout = ('shortname', 'roleid', 'rightid', 'granted',)
