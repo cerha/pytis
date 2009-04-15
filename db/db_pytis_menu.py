@@ -459,6 +459,12 @@ for each row execute procedure e_pytis_action_rights_trigger();
 """,
         name='e_pytis_action_rights_triggers',
         depends=('e_pytis_action_rights_trigger',))
+
+viewng('ev_pytis_user_system_rights',
+       (SelectRelation('e_pytis_action_rights', alias='rights',
+                       condition="rights.system = 'T' and roleid = '*' or roleid in (select roleid from ev_pytis_user_roles)"),
+        ),
+       depends=('e_pytis_action_rights', 'ev_pytis_user_roles',))
     
 viewng('ev_pytis_menu_rights',
        (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
