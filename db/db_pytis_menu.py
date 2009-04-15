@@ -274,6 +274,13 @@ _std_table('e_pytis_menu',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
                    "if they do not, the assigned action is ignored.")),
+            C('help', TString,
+              doc=("Arbitrary single-line help string.")),
+            C('hotkey', TString,
+              doc=("Sequence of command keys, separated by single spaces."
+                   "The space key is represented by 'SPC' string.")),
+            C('icon', TString,
+              doc=("Icon identifier for 'get_icon'.")),
             ),
            """Menu structure definition.""",
            depends=('c_pytis_menu_actions',))

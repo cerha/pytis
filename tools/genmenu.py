@@ -47,13 +47,16 @@ class Action(object):
         self.shortname = shortname
 
 class Menu(Serial):
-    def __init__(self, name, title, parent, position, action=None):
+    def __init__(self, name, title, parent, position, action=None, help=None, icon=None, hotkey=None):
         Serial.__init__(self)
         self.name = name
         self.title = title
         self.parent = parent
         self.position = position
         self.action = action
+        self.help = help
+        self.icon = icon
+        self.hotkey = hotkey
         self.children = []
 
 class Rights(object):
@@ -101,7 +104,16 @@ def process_menu(menu, parent, menu_items, actions, position=110):
         if menu_items.has_key(menu_id):
             print "Duplicate menu id, change it:", menu.title()
             return
-        menu_items[menu_id] = submenu = Menu(name=menu_id, title=menu.title(), parent=parent, position=position, action=action)
+        help = menu.help()
+        icon = menu.icon()
+        hotkey = menu.hotkey()
+        if hotkey == (None,):
+            hotkey_spec = None
+        else:
+            hotkey_spec = string.join([key.replace(' ', 'SPC') for key in hotkey], ' ')
+        menu_items[menu_id] = submenu = Menu(name=menu_id, title=menu.title(), parent=parent,
+                                             position=position, action=action, help=help, icon=icon,
+                                             hotkey=hotkey_spec)
         parent.children.append(submenu)        
     elif isinstance(menu, pytis.form.MSeparator):
         parent.children.append(Menu(name=None, title=None, parent=parent, position=position))
@@ -180,9 +192,11 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     fullposition += str(menu.position)
     parent = menu.parent and -menu.parent.id
     action = menu.action and menu.action.name
-    cursor.execute(("insert into e_pytis_menu(menuid, name, title, parent, position, fullposition, indentation, action) "
-                    "values(%s, %s, %s, %s, %s, %s, %s, %s)"),
-                   (-menu.id, menu.name, menu.title, parent, menu.position, fullposition, indentation, action,))
+    cursor.execute(("insert into e_pytis_menu "
+                    "(menuid, name, title, parent, position, fullposition, indentation, action, help, icon, hotkey) "
+                    "values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"),
+                   (-menu.id, menu.name, menu.title, parent, menu.position, fullposition, indentation, action,
+                     menu.help, menu.icon, menu.hotkey,))
     next_indentation = indentation + '   '
     for m in menu.children:
         fill_menu_items(cursor, m, fullposition=fullposition, indentation=next_indentation)
