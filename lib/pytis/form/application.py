@@ -1484,25 +1484,27 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
     """
     if _access_rights is UNDEFINED:
         init_access_rights()
-    if _access_rights is None:
-        try:
-            main, side = name.split('::')
-        except ValueError:
-            pass
-        else:
-            return has_access(main, perm=perm) and has_access(side, perm=perm)
-        rights = resolver().get(name, 'data_spec').access_rights()
-        if not rights:
-            return True
-        groups = pytis.data.default_access_groups(config.dbconnection)
-        return rights.permitted(perm, groups)
-    elif _access_rights == 'nonuser':
+    if _access_rights == 'nonuser':
         return False
+    try:
+        main, side = name.split('::')
+    except ValueError:
+        dual = False
     else:
+        if not has_access(main, perm=perm) or not has_access(side, perm=perm):
+            return False
+        dual = True
+    if not dual:
+        rights = resolver().get(name, 'data_spec').access_rights()
+        if rights:
+            groups = pytis.data.default_access_groups(config.dbconnection)
+            if not rights.permitted(perm, groups):
+                return False
+    if _access_rights is not None:
         rights = _access_rights.get('form/'+name)
-        if rights is None:
-            return True
-        return perm in rights
+        if rights is not None and perm not in rights:
+            return False
+    return True
 
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontì.

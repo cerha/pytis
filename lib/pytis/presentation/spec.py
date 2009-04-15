@@ -2758,6 +2758,53 @@ class Specification(object):
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
+    _access_rights = UNDEFINED
+
+    @classmethod
+    def _init_access_rights(class_):
+        specifications = {}
+        def add_spec(name, table, columns):
+            bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
+            factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+            specifications[name] = factory
+        add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
+        try:
+            roles_data = specifications['roles'].create(connection_data=config.dbconnection)
+            roles = roles_data.select()
+        except pytis.data.DBException:
+            _access_rights = None
+            return
+        if roles == 0:
+            _access_rights = 'nonuser'
+            return
+        add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
+        rights_data = specifications['rights'].create(connection_data=config.dbconnection)
+        access_rights = {}
+        def process(row):
+            shortname, rights_string = row[0].value(), row[1].value()
+            rights = {}
+            for r in rights_string.split(' '):
+                if r != 'show':
+                    shortname_rights = access_rights.get(shortname, {})
+                    shortname_rights[r] = (r, [],)
+        rights_data.select_map(process)
+        add_spec('sysrights', 'ev_pytis_user_system_rights', ('action', 'rightid', 'colname',))
+        sysrights_data = specifications['sysrights'].create(connection_data=config.dbconnection)
+        def process(row):
+            shortname, right, colname = row[0].value, row[1].value, row[2].value
+            columns = access_rights.get(shortname, {}).get(right)
+            if columns is not None:
+                columns.append(colname)
+        sysrights_data.select_map(process)
+        def process(right, columns):
+            if not columns or None in columns:
+                columns = None
+            return (columns, (None, (right.upper(),)))
+        for shortname, rights in access_rights.items():
+            access_rights_spec = [process(right, columns) for right, columns in rights.items()]
+            access_rights[shortname] = AccessRights(tuple(access_rights_spec))
+        Specification._access_rights = access_rights
+        
     def __init__(self, resolver):
         self._resolver = resolver
         for attr in ('fields', 'access_rights', 'condition', 'distinct_on',
@@ -2839,7 +2886,12 @@ class Specification(object):
                         type = type.__class__(**kwargs)
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
-        access_rights = self.access_rights
+        if Specification._access_rights is UNDEFINED:
+            self._init_access_rights()
+        if Specification._access_rights is None:
+            access_rights = self.access_rights
+        else:
+            access_rights = Specification._access_rights.get('form/'+self.__class__.__name__)
         assert access_rights is None or not issubclass(self.data_cls, pytis.data.MemData), \
                "Cannot set `access_rights' for a MemData data object."
         if access_rights is None:
