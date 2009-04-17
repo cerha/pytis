@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -165,6 +165,22 @@ class Command(object):
     pøíkazy definovat, musí být odvozena od tøídy 'CommandHandler'.
 
     """
+
+    _commands = {}
+
+    @classmethod
+    def command(class_, name):
+        """Return command instance named 'name'.
+
+        If there is no command with that name, return 'None'.
+
+        Arguments:
+
+          name -- name of the command, string
+          
+        """
+        return class_._commands.get(name)
+    
     def __init__(self, handler, name, doc=None, log_=True):
         """Definuj pøíkaz.
 
@@ -202,6 +218,7 @@ class Command(object):
         assert not hasattr(handler, 'COMMAND_' + name), \
                "Command '%s' already defined for %s" % (name, handler.__name__)
         setattr(handler, 'COMMAND_' + name, self)
+        Command._commands[name] = self
 
     def __call__(self, **kwargs):
         """Umo¾òuje pohodlnì vytvoøit definici pøíkazu a jeho argumentù.
