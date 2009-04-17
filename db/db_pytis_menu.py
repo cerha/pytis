@@ -278,9 +278,7 @@ _std_table('e_pytis_menu',
               doc=("Arbitrary single-line help string.")),
             C('hotkey', TString,
               doc=("Sequence of command keys, separated by single spaces."
-                   "The space key is represented by 'SPC' string.")),
-            C('icon', TString,
-              doc=("Icon identifier for 'get_icon'.")),
+                   "The space key is represented by SPC string.")),
             ),
            """Menu structure definition.""",
            depends=('c_pytis_menu_actions',))
