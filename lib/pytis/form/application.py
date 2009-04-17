@@ -336,6 +336,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 config.help_dir)
         return result
 
+    def _create_system_menu(self, menus):
+        # To be implemented
+        pass
+
     def _create_command_menu(self, menus):
         items = []
         for group in FORM_MENU_COMMANDS:
@@ -363,7 +367,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             specifications[name] = factory
-        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'parent', 'action', 'fullposition', 'rights',))
+        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'parent', 'action', 'fullposition', 'rights',
+                                                'help', 'hotkey',))
         add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications
 
@@ -386,7 +391,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menu_template = []
         parents = []
         for row in menu_rows:
-            menuid, name, title, parent, actionid, rights_string = [row[i].value() for i in (0, 1, 2, 3, 4, 6,)]
+            menuid, name, title, parent, action, rights_string, help, hotkey = \
+                [row[i].value() for i in (0, 1, 2, 3, 4, 6, 7, 8,)]
             rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
             if not parents: # the top pseudonode, should be the first one
                 parents.append((menuid, menu_template,))
@@ -398,10 +404,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     parents.pop()
                 current_template = parents[-1][1]
                 if name: # terminal item
-                    current_template.append((name, title, rights,))
+                    current_template.append((name, title, rights, action, help, hotkey,))
                 else:          # non-terminal item
                     upper_template = parents[-1][1]
-                    current_template = [(name, title, rights,)]
+                    current_template = [(name, title, rights, help, hotkey,)]
                     upper_template.append(current_template)
                     parents.append((menuid, current_template,))
         # Done, return the menu structure
@@ -411,15 +417,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menu_template = self._dynamic_menu()
         if not menu_template:
             return list(menu_prototype)
-        menu_index = {}
-        def process(prototype):
-            if isinstance(prototype, Menu):
-                for item in prototype.items():
-                    process(item)
-            elif isinstance(prototype, MItem):
-                menu_index[prototype.menu_item_id()] = prototype
-        for p in menu_prototype:
-            process(p)
         def build(template):
             if isinstance(template, list):
                 heading = template[0]
@@ -429,16 +426,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     result = Menu(heading[1], items, rights=heading[2])
             else:
-                heading = template
-                item_id = heading[0]
-                item = menu_index[item_id]
-                result = MItem(heading[1], item.command(), args=item.args(),
-                               help=item.help(), hotkey=item.hotkey(), icon=item.icon(),
-                               menu_item_id=item_id, action_id=item.action_id(),
-                               rights=heading[2])
+                name, title, rights, action, help, hotkey = template
+                command = MItem.parse_action(action)
+                if hotkey is None:
+                    hotkeys = None
+                else:
+                    hotkeys = [key.replace('SPC', ' ') for key in hotkey.split(' ')]
+                result = MItem(title, command, help=help, hotkey=hotkeys,
+                               action_id=action, rights=rights)
             return result
-        menu = [build(t) for t in menu_template]
-        return menu
+        menus = [build(t) for t in menu_template]
+        self._create_system_menu(menus)
+        return menus
 
 # Ostatní metody
 

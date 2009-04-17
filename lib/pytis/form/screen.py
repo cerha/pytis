@@ -970,7 +970,7 @@ class MItem(_TitledMenuObject):
     _used_titles = {}
     
     def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None, menu_item_id=None, action_id=None, rights=[]):
+                 icon=None, action_id=None, rights=[]):
         """Uschovej parametry.
 
         Argumenty:
@@ -1002,14 +1002,6 @@ class MItem(_TitledMenuObject):
             different menu items to have the same actionid as long as their
             actions are actually the same.
 
-          menu_item_id -- string uniquely identifying the menu item; if 'None'
-            it defaults to actionid.  No two menu items may have the same id.
-            The primary purpose of the menu item ids is to identify the menu
-            items in the dynamic menu stored in the database.  So when you
-            change a menu item, consider either retaining or changing its id,
-            depending on whether its customizations in the database should be
-            retained or discarded.
-
           rights -- list of access rights ('Permission' constants) assigned to
             the given menu item
             
@@ -1039,9 +1031,6 @@ class MItem(_TitledMenuObject):
         if action_id is None:
             action_id = self._make_action_id()
         self._action_id = action_id
-        if menu_item_id is None:
-            menu_item_id = action_id
-        self._menu_item_id = menu_item_id
         super(MItem, self).__init__(title)
 
     def _on_ui_event(self, event):
@@ -1050,8 +1039,11 @@ class MItem(_TitledMenuObject):
     def _make_action_id(self):
         def modulify(obj, name):
             module = obj.__module__
-            if module[:len('pytis.')] != 'pytis.':
-                name = '%s.%s' % (obj.__module__, name,)
+            module_name = str(obj.__module__)
+            if module_name == 'pytis.form.list':
+                # Well, not a very good idea to name a Python file `list'
+                module_name = 'pytis.form'
+            name = '%s.%s' % (module_name, name,)
             return name
         args = copy.copy(self.args())
         command = self.command().name()
@@ -1086,6 +1078,53 @@ class MItem(_TitledMenuObject):
         if args:
             return None
         return ('%s' % (command,))
+
+    @classmethod
+    def parse_action(class_, action):
+        """Parse action id back to command and its argumets.
+
+        Arguments:
+
+          action -- the action id, string
+          globals -- dictionary of global name space
+          locals -- dictionary of local name space
+
+        Return pair COMMAND, ARGUMENTS corresponding to the given action id.
+        If the action id is invalid, behavior of this method is undefined.
+
+        """
+        components = action.split('/')
+        kind = components[0]
+        def find_symbol(symbol):
+            # temporary hack to not crash on special situations to be solved
+            # later
+            try:
+                return eval(symbol)
+            except AttributeError:
+                import sys
+                sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
+                return None
+        if kind == 'form':
+            command = pytis.form.Application.COMMAND_RUN_FORM
+            class_name, form_name = components[1], components[2]
+            arguments = dict(form_class=find_symbol(class_name), name=form_name)
+            if len(components) > 3:
+                arguments['binding'] = components[3][len('binding='):]
+        elif kind == 'handle':
+            command = pytis.form.Application.COMMAND_HANDLED_ACTION
+            function_name = components[1]
+            arguments = dict(handler=find_symbol(function_name))
+        elif kind == 'proc':
+            command = pytis.form.Application.COMMAND_RUN_PROCEDURE
+            proc_name, spec_name = components[1:]
+            arguments = dict(proc_name=proc_name, spec_name=spec_name)
+        elif kind == 'NEW_RECORD':
+            command = pytis.form.RecordForm.COMMAND_NEW_RECORD
+            arguments = dict(name=components[1])
+        else:
+            command = pytis.form.Command.command(kind)
+            arguments = None
+        return command, arguments
 
     def _create_icon(self, item):
         icon = get_icon(self._icon or command_icon(self._command, self._args))
@@ -1126,10 +1165,6 @@ class MItem(_TitledMenuObject):
     def action_id(self):
         """Return action id string of the menu item or 'None' if it is unavailable."""
         return self._action_id
-
-    def menu_item_id(self):
-        """Return id string of the menu item or 'None' if it is unavailable."""
-        return self._menu_item_id
     
 
 class CheckItem(MItem):
