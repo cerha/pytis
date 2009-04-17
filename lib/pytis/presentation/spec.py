@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1009,7 +1009,7 @@ class ViewSpec(object):
                 assert is_sequence(columns)
                 for c in columns:
                     assert isinstance(c, str) and self._field_dict.has_key(c),\
-                      _("Unknown column id in 'columns' specification: %r") % c
+                      _("Unknown column id in 'columns' specification: %r") % (c,)
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
                            _("Disabled column in columns: %s") % c
