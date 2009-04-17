@@ -96,13 +96,9 @@ def process_menu(menu, parent, menu_items, actions, position=110):
         else:
             if action.description is None:
                 action.description = menu.help()
-        menu_id = menu.menu_item_id()
-        if menu_id is None:
-            print "Menu with empty menu id, add one explicitly:", menu.title()
-            return
-        if menu_items.has_key(menu_id):
-            print "Duplicate menu id, change it:", menu.title()
-            return
+        menu_id = action_id
+        while menu_items.has_key(menu_id):
+            menu_id = menu_id + '+'
         help = menu.help()
         hotkey = menu.hotkey()
         if hotkey == (None,):
