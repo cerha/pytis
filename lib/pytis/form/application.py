@@ -337,8 +337,35 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def _create_system_menu(self, menus):
-        # To be implemented
-        pass
+        from pytis.extensions import cmd_run_any_form, cmd_check_form, cmd_check_menus_defs, \
+            run_form_mitem
+        if _access_rights is UNDEFINED:
+            init_access_rights()
+        roles = _user_roles
+        items = (config_menu_items() +
+                 (MSeparator(),
+                  recent_forms_menu(),
+                  MItem(_("Spustit formuláø"), command=cmd_run_any_form),
+                  MItem(_("Zkontrolovat formuláø"), command=cmd_check_form),
+                  MItem(_("Zkontrolovat datové specifikace"), command=cmd_check_menus_defs),)
+                 )
+        if 'admin_menu' in roles or 'admin_roles' in roles:
+            management_items = ()
+            if 'admin_menu' in roles:
+                management_items = (management_items +
+                                    (run_form_mitem(_("Menu"), 'menu.ApplicationMenu',
+                                                    pytis.form.BrowseForm),
+                                     run_form_mitem(_("Práva menu"), 'menu.ApplicationMenuM',
+                                                    pytis.form.MultiBrowseDualForm),))
+            if 'admin_roles' in roles:
+                management_items = (management_items +
+                                    (run_form_mitem(_("U¾ivatelské role"), 'menu.ApplicationRoles',
+                                                    pytis.form.MultiBrowseDualForm),))
+            items = items + (Menu(_("Správa menu a u¾ivatelù"), management_items),)
+        items = (items +
+                 (MSeparator(),
+                  MItem(_("Konec"), command=pytis.form.Application.COMMAND_EXIT),))
+        menus.insert(0, Menu(_("&Systém"), items))
 
     def _create_command_menu(self, menus):
         items = []
@@ -1441,9 +1468,10 @@ def block_refresh(function, *args, **kwargs):
     return Refreshable.block_refresh(function, *args, **kwargs)
 
 _access_rights = UNDEFINED
+_user_roles = ()
 
 def init_access_rights():
-    global _access_rights    
+    global _access_rights, _user_roles
     specifications = {}
     def add_spec(name, table, columns):
         bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
@@ -1452,13 +1480,14 @@ def init_access_rights():
     add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
     try:
         roles_data = specifications['roles'].create(connection_data=config.dbconnection)
-        roles = roles_data.select()
+        roles = [row[0].value() for row in roles_data.select_map(identity)]
     except pytis.data.DBException:
         _access_rights = None
         return
-    if roles == 0:
+    if not roles:
         _access_rights = 'nonuser'
         return
+    _user_roles = roles
     add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
     rights_data = specifications['rights'].create(connection_data=config.dbconnection)
     _access_rights = {}
