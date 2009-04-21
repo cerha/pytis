@@ -85,6 +85,9 @@ def process_menu(menu, parent, menu_items, actions, position=110):
         if action_id is None:
             print "Menu item without action id, add one explicitly:", menu.title()
             return
+        if action_id == 'EXIT':
+            print "System menu item, skipping:", menu.title()
+            return
         action = actions.get(action_id)
         if action is None:
             action_components = action_id.split('/')
@@ -130,7 +133,10 @@ def process_rights(resolver, actions):
             print "No access rights specified for form %s" % (form_name,)
             return
         rights[action_name] = Rights(access_rights, action)
-    for action in actions.values():
+    for action in (actions.values() +
+                   [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
+                    Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM'),
+                    Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles')]):
         action_name = action.name
         if rights.has_key(action_name):
             continue
