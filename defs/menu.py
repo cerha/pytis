@@ -215,6 +215,7 @@ class ApplicationMenuM(ApplicationMenu):
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
                                            binding_column='menuid'),
                 )
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 class ApplicationMenus(pytis.presentation.Specification):
     # This is almost the same as ApplicationMenu.
