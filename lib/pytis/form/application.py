@@ -1510,10 +1510,6 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
     Raises 'ResolverError' if given specification name cannot be found.
 
     """
-    if _access_rights is UNDEFINED:
-        init_access_rights()
-    if _access_rights == 'nonuser':
-        return False
     try:
         main, side = name.split('::')
     except ValueError:
@@ -1528,8 +1524,23 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
             groups = pytis.data.default_access_groups(config.dbconnection)
             if not rights.permitted(perm, groups):
                 return False
+    return action_has_access('form/'+name)
+
+def action_has_access(action, perm=pytis.data.Permission.CALL):
+    """Return true iff 'action' has 'perm' permission.
+
+    Arguments:
+
+      action -- action identifier, string
+      perm -- access permission as one of `pytis.data.Permission' constants
+
+    """
+    if _access_rights is UNDEFINED:
+        init_access_rights()
+    if _access_rights == 'nonuser':
+        return False
     if _access_rights is not None:
-        rights = _access_rights.get('form/'+name)
+        rights = _access_rights.get(action)
         if rights is not None and perm not in rights:
             return False
     return True
