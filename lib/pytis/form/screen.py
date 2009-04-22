@@ -980,8 +980,11 @@ class MItem(_TitledMenuObject):
           command -- instance tøídy 'Command' odpovídající pøíkazu, který má
             být pøi aktivaci této polo¾ky menu vyvolán.  Zde mù¾e být pøedána
             také dvojice (COMMAND, ARGS).  V tom pøípadì je instance pøíkazu
-            prvním prvkem této dvojice a druhý prvek nahrazuje argument `args',
-            který tímto ji¾ nesmí být pøedán.
+            prvním prvkem této dvojice a druhý prvek nahrazuje argument 'args',
+            který tímto ji¾ nesmí být pøedán.  Nakonec mù¾e být tímto
+            argumentem string, který je pak identifikátorem specifikace ze
+            specifikaèního modulu 'commands'; tato specifikace je funkcí
+            vracející ký¾enou dvojici (COMMANDS, ARGS).
             
           args -- dictionary argumentù pøíkazu 'command'.
           
@@ -1012,6 +1015,8 @@ class MItem(_TitledMenuObject):
         a tudí¾ automaticky podléhají jazykové konverzi.
 
         """
+        if isinstance(command, str):
+            command = resolver().get('commands', command)
         if is_sequence(command):
             assert len(command) == 2
             assert args is None
@@ -1046,7 +1051,10 @@ class MItem(_TitledMenuObject):
             name = '%s.%s' % (module_name, name,)
             return name
         args = copy.copy(self.args())
-        command = self.command().name()
+        command_spec = self.command()
+        if isinstance(command_spec, str):
+            return 'command/%s' % (command_spec,)
+        command = command_spec.name()
         appstring = 'Application.'
         if command[:len(appstring)] == appstring:
             command = command[len(appstring):]
@@ -1104,7 +1112,10 @@ class MItem(_TitledMenuObject):
                 import sys
                 sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
                 return None
-        if kind == 'form':
+        if kind == 'command':
+            assert len(components) == 2
+            return components[1]
+        elif kind == 'form':
             command = pytis.form.Application.COMMAND_RUN_FORM
             class_name, form_name = components[1], components[2]
             arguments = dict(form_class=find_symbol(class_name), name=form_name)
