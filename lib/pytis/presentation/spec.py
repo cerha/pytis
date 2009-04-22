@@ -2772,10 +2772,10 @@ class Specification(object):
             roles_data = specifications['roles'].create(connection_data=config.dbconnection)
             roles = roles_data.select()
         except pytis.data.DBException:
-            _access_rights = None
+            Specification._access_rights = None
             return
         if roles == 0:
-            _access_rights = 'nonuser'
+            Specification._access_rights = 'nonuser'
             return
         add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
         rights_data = specifications['rights'].create(connection_data=config.dbconnection)
