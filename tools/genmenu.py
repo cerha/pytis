@@ -366,7 +366,9 @@ def parse_options():
 def run():
     args = parse_options()
     def_dir = args[0]
-    resolver = pytis.util.FileResolver(def_dir)
+    import config
+    config.def_dir = def_dir
+    resolver = pytis.util.resolver()
     menu = resolver.get('application', 'menu')
     top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
     menu_items = {}
