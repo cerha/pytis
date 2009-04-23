@@ -124,6 +124,8 @@ def process_menu(menu, parent, menu_items, actions, position=110):
 def process_rights(resolver, actions):
     rights = {}
     def add_rights(form_name, action, action_name):
+        if form_name.find(':'):
+            return
         try:
             access_rights = resolver.get(form_name, 'access_spec')
         except Exception, e:
