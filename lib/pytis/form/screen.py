@@ -1015,7 +1015,11 @@ class MItem(_TitledMenuObject):
         a tudí¾ automaticky podléhají jazykové konverzi.
 
         """
-        if isinstance(command, str):
+        if is_sequence(command):
+            command_spec = command[0]
+        else:
+            command_spec = command            
+        if isinstance(command, basestring):
             command = resolver().get('commands', command)
         if is_sequence(command):
             assert len(command) == 2
@@ -1034,14 +1038,14 @@ class MItem(_TitledMenuObject):
         self._hotkey = xtuple(hotkey)
         self._icon = icon
         if action_id is None:
-            action_id = self._make_action_id()
+            action_id = self._make_action_id(command_spec)
         self._action_id = action_id
         super(MItem, self).__init__(title)
 
     def _on_ui_event(self, event):
         event.Enable(self._command.enabled(**self._args))
 
-    def _make_action_id(self):
+    def _make_action_id(self, command_spec):
         def modulify(obj, name):
             module = obj.__module__
             module_name = str(obj.__module__)
@@ -1051,7 +1055,6 @@ class MItem(_TitledMenuObject):
             name = '%s.%s' % (module_name, name,)
             return name
         args = copy.copy(self.args())
-        command_spec = self.command()
         if isinstance(command_spec, str):
             return 'command/%s' % (command_spec,)
         command = command_spec.name()
