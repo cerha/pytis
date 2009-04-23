@@ -126,8 +126,17 @@ def process_rights(resolver, actions):
     def add_rights(form_name, action, action_name):
         if form_name.find(':') != -1:
             return
+        pos = form_name.rfind('.')
+        if pos == -1:
+            print 'Not caring about access rights of form %s' % (form_name,)
+            return
+        module_name = form_name[:pos].replace('.', '/')
+        class_name = form_name[pos+1:]
         try:
-            access_rights = resolver.get(form_name, 'access_spec')
+            form_spec = resolver.get_object(module_name, class_name)
+            access_rights = form_spec.access_rights
+            if callable(access_rights):
+                access_rights = access_rights()
         except Exception, e:
             print "Couldn't get access rights for form %s: %s" % (form_name, e,)
             return
