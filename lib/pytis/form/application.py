@@ -451,7 +451,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if heading is None:
                     result = items
                 else:
-                    result = Menu(heading[1], items, rights=heading[2])
+                    result = Menu(heading[1], items)
             else:
                 name, title, rights, action, help, hotkey = template
                 command = MItem.parse_action(action)
@@ -459,8 +459,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     hotkeys = None
                 else:
                     hotkeys = [key.replace('SPC', ' ') for key in hotkey.split(' ')]
-                result = MItem(title, command, help=help, hotkey=hotkeys,
-                               action_id=action, rights=rights)
+                result = MItem(title, command, help=help, hotkey=hotkeys, _rights=rights)
             return result
         menus = [build(t) for t in menu_template]
         self._create_system_menu(menus)

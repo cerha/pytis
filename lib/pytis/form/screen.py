@@ -841,7 +841,7 @@ class Menu(_TitledMenuObject):
     metody 'create()'.
 
     """ 
-    def __init__(self, title, items, allow_autoindex=True, rights=[]):
+    def __init__(self, title, items, allow_autoindex=True):
         """Initialize menu specification.
 
         Arguments:
@@ -849,7 +849,6 @@ class Menu(_TitledMenuObject):
           title -- menu title as a string
           items -- sequence of menu items as 'Menu', 'MItem' and 'MSeparator' instances
           allow_autoindex -- allow automatic keyboard access index numbers on this menu
-          rights -- list of access rights ('Permission' constants) assigned to the given menu
 
         """
         assert is_sequence(items)
@@ -970,7 +969,7 @@ class MItem(_TitledMenuObject):
     _used_titles = {}
     
     def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None, action_id=None, rights=[]):
+                 icon=None, _rights=[]):
         """Uschovej parametry.
 
         Argumenty:
@@ -1000,13 +999,8 @@ class MItem(_TitledMenuObject):
             Pokud není urèena, bude automaticky pou¾ita ikona podle typu
             pøíkazu (je-li pro pøíkaz definována).
 
-          action_id -- string uniquely identifying the action bound to the menu
-            item; if 'None' the id is generated if possible.  It is allowed for
-            different menu items to have the same actionid as long as their
-            actions are actually the same.
-
-          rights -- list of access rights ('Permission' constants) assigned to
-            the given menu item
+          _rights -- list of access rights ('Permission' constants) assigned to
+            the given menu item.  For internal use only.
             
         Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
         'command' automaticky nastavena tato klávesa.
@@ -1037,9 +1031,7 @@ class MItem(_TitledMenuObject):
         self._help = help
         self._hotkey = xtuple(hotkey)
         self._icon = icon
-        if action_id is None:
-            action_id = self._make_action_id(command_spec)
-        self._action_id = action_id
+        self._action_id = self._make_action_id(command_spec)
         super(MItem, self).__init__(title)
 
     def _on_ui_event(self, event):
