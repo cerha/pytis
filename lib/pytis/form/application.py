@@ -1477,6 +1477,7 @@ def init_access_rights():
         factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
         specifications[name] = factory
     add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
+    import config
     try:
         roles_data = specifications['roles'].create(connection_data=config.dbconnection)
         roles = [row[0].value() for row in roles_data.select_map(identity)]
