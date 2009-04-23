@@ -168,7 +168,7 @@ def fill_actions(cursor, actions):
 
 def fill_rights(cursor, rights):
     roles = {}
-    for r in ('admin', 'admin_menu', 'admin_roles',):
+    for r in ('*', 'admin', 'admin_menu', 'admin_roles',):
         roles[r] = None
     for right in rights.values():
         action = right.action
@@ -198,6 +198,7 @@ def fill_rights(cursor, rights):
                             cursor.execute(("insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname) "
                                             "values(%s, %s, %s, %s, %s, %s)"),
                                            (action_name, group, permission, True, True, c,))
+    return roles
 
 def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     fullposition += str(menu.position)
@@ -212,7 +213,7 @@ def fill_menu_items(cursor, menu, fullposition='', indentation=''):
     for m in menu.children:
         fill_menu_items(cursor, m, fullposition=fullposition, indentation=next_indentation)
 
-def transfer_roles(cursor):
+def transfer_roles(cursor, present_roles):
     excluded_roles = ('postgres',)
     semi_excluded_roles = ('admin', 'admin_roles', 'admin_menu',) + excluded_roles
     # roles
@@ -224,8 +225,12 @@ def transfer_roles(cursor):
                 purpose = 'user'
             else:
                 purpose = 'appl'
-            cursor.execute("insert into e_pytis_roles (name, purposeid) values (%s, %s)",
-                           (role, purpose,))
+            if not present_roles.has_key(role):
+                cursor.execute("insert into e_pytis_roles (name, purposeid) values (%s, %s)",
+                               (role, purpose,))
+            elif purpose != 'appl':
+                cursor.execute("update e_pytis_roles set purposeid=%s where role = %s)",
+                               (purpose, role,))
     # membership
     cursor.execute("select roles1.rolname as owner, roles2.rolname as member "
                    "from pg_auth_members, pg_roles as roles1, pg_roles as roles2 "
@@ -409,13 +414,13 @@ def run():
     fill_actions(cursor, actions)
     print "Inserting actions...done"
     print "Inserting rights..."
-    fill_rights(cursor, rights)
+    roles = fill_rights(cursor, rights)
     print "Inserting rights...done"
     print "Inserting menu..."
     fill_menu_items(cursor, top)
     print "Inserting menu...done"
     print "Importing roles..."
-    transfer_roles(cursor)
+    transfer_roles(cursor, roles)
     print "Importing roles...done"
     recompute_tables(cursor)
     cursor.execute("delete from e_pytis_disabled_dmp_triggers")
