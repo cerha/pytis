@@ -1055,7 +1055,7 @@ class MItem(_TitledMenuObject):
             name = '%s.%s' % (module_name, name,)
             return name
         args = copy.copy(self.args())
-        if isinstance(command_spec, str):
+        if isinstance(command_spec, basestring):
             return 'command/%s' % (command_spec,)
         command = command_spec.name()
         appstring = 'Application.'
