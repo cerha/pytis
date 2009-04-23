@@ -83,7 +83,7 @@ def process_menu(menu, parent, menu_items, actions, position=110):
     elif isinstance(menu, pytis.form.MItem):
         action_id = menu.action_id()
         if action_id is None:
-            print "Menu item without action id, add one explicitly:", menu.title()
+            print "Error: Special menu item action, define command specification:", menu.title()
             return
         if action_id == 'EXIT':
             print "System menu item, skipping:", menu.title()
