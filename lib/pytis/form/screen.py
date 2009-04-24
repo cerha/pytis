@@ -1077,9 +1077,7 @@ class MItem(_TitledMenuObject):
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')
             spec_name = args.pop('spec_name')
-            if args.has_key('enabled'):
-                del args['enabled']
-            if not args:
+            if not args or (len(args) == 1 and args.has_key('enabled') and not callable(args['enabled'])):
                 return ('proc/%s/%s/%s' % (proc_name, spec_name, command_proc,))
         if args and not command_proc:
             return None
