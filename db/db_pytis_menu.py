@@ -25,8 +25,9 @@ _std_table_nolog('c_pytis_role_purposes',
 """,
                  init_values=(("'admn'", "'Správcovská'",),
                               ("'user'", "'Uživatelská'",),
-                              ("'appl'", "'Aplikační'",),)
-            )
+                              ("'appl'", "'Aplikační'",),),
+                 grant=db_rights
+                 )
 
 _std_table('e_pytis_roles',
            (P('name', TUser),
@@ -40,6 +41,7 @@ _std_table('e_pytis_roles',
                         ("'admin_menu'", "'Administrátor menu'", "'admn'", 'NULL',),
                         ("'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
                         ),
+           grant=db_rights,
            depends=('c_pytis_role_purposes',))
 def e_pytis_roles_trigger():
     class Roles(BaseTriggerObject):
@@ -119,6 +121,7 @@ Entries in this table define `member's of each `roleid'.
            init_values=(('-1', "'admin_roles'", "'admin'",),
                         ('-2', "'admin_menu'", "'admin'",),
                         ),
+           grant=db_rights,
            depends=('e_pytis_roles',))
 def e_pytis_role_members_trigger():
     class Roles(BaseTriggerObject):
@@ -226,7 +229,8 @@ _std_table_nolog('c_pytis_menu_actions',
                   C('shortname', TString, constraints=('not null',)),
                   C('description', TString),
                   ),
-                 """List of available (pre-defined and visible) application actions."""
+                 """List of available (pre-defined and visible) application actions.""",
+                 grant=db_rights
                  )
 
 def pytis_matching_actions(complex_action, simple_action):
@@ -281,6 +285,7 @@ _std_table('e_pytis_menu',
                    "The space key is represented by SPC string.")),
             ),
            """Menu structure definition.""",
+           grant=db_rights,
            depends=('c_pytis_menu_actions',))
 
 def e_pytis_menu_trigger():
@@ -390,7 +395,8 @@ _std_table_nolog('c_pytis_access_rights',
                               ("'print'", _("'Tisky'"),),
                               ("'export'", _("'Exporty'"),),
                               ("'call'", _("'Spouštění aplikačních procedur'"),),
-                              ))
+                              ),
+                 grant=db_rights)
 
 _std_table('e_pytis_action_rights',
            (P('id', TSerial,
@@ -424,6 +430,7 @@ Action rights are supported and used in the application, but they are not
 exposed in the current user interface directly.  In future they may also
 support extended rights assignment, e.g. in context menus etc.
 """,
+           grant=db_rights,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
 def e_pytis_action_rights_trigger():
@@ -469,6 +476,7 @@ viewng('ev_pytis_user_system_rights',
        (SelectRelation('e_pytis_action_rights', alias='rights',
                        condition="rights.system = 'T' and roleid = '*' or roleid in (select roleid from ev_pytis_user_roles)"),
         ),
+       grant=db_rights,
        depends=('e_pytis_action_rights', 'ev_pytis_user_roles',))
     
 viewng('ev_pytis_menu_rights',
