@@ -26,6 +26,7 @@ import types
 
 import psycopg2 as dbapi
 
+import pytis.data
 import pytis.form
 import pytis.util
 
@@ -33,6 +34,23 @@ def cfg_param(*args, **kwargs):
     return pytis.data.Value(None, None)
 import pytis.extensions
 pytis.extensions.cfg_param = cfg_param
+
+def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
+    cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
+    if groups is not None:
+        assert isinstance(groups, (tuple, list))
+        assert enabled is None or callable(enabled)
+        if groups is not None:
+            if enabled is not None:
+                enabled = "Both groups and enabled specified"
+            else:
+                enabled = groups
+    return pytis.form.MItem(title, command=cmd, hotkey=hotkey,
+                            args=dict(spec_name=name, proc_name=proc_name,
+                                      enabled=enabled, **kwargs),
+                            help='Spustit proceduru "%s"' % title)
+pytis.extensions.run_procedure_mitem = run_procedure_mitem
+pytis.extensions.rp = run_procedure_mitem
 
 class Configuration(object):
     dbparameters = dict(host=None, database=None, user=None, password=None)
@@ -78,12 +96,12 @@ def super_menu_id(menu, menu_items):
         i += 1
     return menu_id
 
-def process_menu(menu, parent, menu_items, actions, position=110):
+def process_menu(menu, parent, menu_items, actions, rights, position=110):
     if isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
         menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position)
         parent.children.append(supmenu)
-        process_menu(menu.items(), supmenu, menu_items, actions)
+        process_menu(menu.items(), supmenu, menu_items, actions, rights)
     elif isinstance(menu, pytis.form.MItem):
         action_id = menu.action_id()
         if action_id is None:
@@ -95,11 +113,24 @@ def process_menu(menu, parent, menu_items, actions, position=110):
         action = actions.get(action_id)
         if action is None:
             action_components = action_id.split('/')
-            if action_components[0] == 'form':
+            action_kind = action_components[0]
+            if action_kind == 'form':
                 shortname = 'form/' + action_components[2]
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname, description=menu.help())
+            if action_kind == 'proc':
+                enabled = menu.args().get('enabled')
+                if isinstance(enabled, basestring):
+                    print "Error: Procedure with unhandled `enabled': ", enabled, menu.title()
+                elif pytis.util.is_sequence(enabled):
+                    proc_rights = (None, (enabled, pytis.data.Permission.CALL,),)
+                    other_proc_rights = rights.get(action_id)
+                    if other_proc_rights:
+                        proc_rights = proc_rights + other_proc_rights.rights.specification()
+                    rights[action_id] = Rights(pytis.data.AccessRights(proc_rights), action)
+                else:
+                    print "Error: Unexpected `enabled' value: ", enabled, menu.title()
         else:
             if action.description is None:
                 action.description = menu.help()
@@ -120,13 +151,12 @@ def process_menu(menu, parent, menu_items, actions, position=110):
         parent.children.append(Menu(name=None, title=None, parent=parent, position=position))
     elif isinstance(menu, tuple):
         for m in menu:
-            process_menu(m, parent, menu_items, actions, position=position)
+            process_menu(m, parent, menu_items, actions, rights, position=position)
             position += 10
     else:
         print 'Unknown menu: %s' % (menu,)
 
-def process_rights(resolver, actions):
-    rights = {}
+def process_rights(resolver, actions, rights):
     def add_rights(form_name, action, action_name):
         if form_name.find(':') != -1:
             return
@@ -413,11 +443,12 @@ def run():
     top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
     menu_items = {}
     actions = {}
+    rights = {}
     print "Retrieving menu..."
-    process_menu(menu, top, menu_items, actions)
+    process_menu(menu, top, menu_items, actions, rights)
     print "Retrieving menu...done"
     print "Retrieving rights..."
-    rights = process_rights(resolver, actions)
+    process_rights(resolver, actions, rights)
     print "Retrieving rights...done"
     print "Inserting actions..."
     fill_actions(cursor, actions)
