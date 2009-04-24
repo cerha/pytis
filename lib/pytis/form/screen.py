@@ -1048,7 +1048,10 @@ class MItem(_TitledMenuObject):
             return name
         args = copy.copy(self.args())
         if isinstance(command_spec, basestring):
-            return 'command/%s' % (command_spec,)
+            command_proc = command_spec
+            command_spec = self._command
+        else:
+            command_proc = ''
         command = command_spec.name()
         appstring = 'Application.'
         if command[:len(appstring)] == appstring:
@@ -1061,26 +1064,26 @@ class MItem(_TitledMenuObject):
                 extra = ('/binding=%s' % (args['binding'],)); del args['binding']
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
-                return ('form/%s/%s%s' % (class_name, form_name, extra,))
+                return ('form/%s/%s%s/%s' % (class_name, form_name, extra, command_proc,))
         elif command == 'NEW_RECORD' and args:
             form_name = args.pop('name', '')
             if form_name is not None and not args:
-                return ('%s/%s' % (command, form_name,))
+                return ('%s/%s/%s' % (command, form_name, command_proc,))
         elif command == 'HANDLED_ACTION':
             handler = args.pop('handler', None)
             if not args and type(handler) == types.FunctionType:
                 name = modulify(handler, handler.func_name)
-                return ('handle/%s' % (name,))
+                return ('handle/%s/%s' % (name, command_proc,))
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')
             spec_name = args.pop('spec_name')
             if args.has_key('enabled'):
                 del args['enabled']
             if not args:
-                return ('proc/%s/%s' % (proc_name, spec_name,))
-        if args:
+                return ('proc/%s/%s/%s' % (proc_name, spec_name, command_proc,))
+        if args and not command_proc:
             return None
-        return ('%s' % (command,))
+        return ('%s/%s' % (command, command_proc,))
 
     @classmethod
     def parse_action(class_, action):
@@ -1107,14 +1110,13 @@ class MItem(_TitledMenuObject):
                 import sys
                 sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
                 return None
-        if kind == 'command':
-            assert len(components) == 2
-            return components[1]
+        if components[-1]:
+            return components[-1]
         elif kind == 'form':
             command = pytis.form.Application.COMMAND_RUN_FORM
             class_name, form_name = components[1], components[2]
             arguments = dict(form_class=find_symbol(class_name), name=form_name)
-            if len(components) > 3:
+            if len(components) > 4:
                 arguments['binding'] = components[3][len('binding='):]
         elif kind == 'handle':
             command = pytis.form.Application.COMMAND_HANDLED_ACTION
@@ -1122,7 +1124,7 @@ class MItem(_TitledMenuObject):
             arguments = dict(handler=find_symbol(function_name))
         elif kind == 'proc':
             command = pytis.form.Application.COMMAND_RUN_PROCEDURE
-            proc_name, spec_name = components[1:]
+            proc_name, spec_name = components[1], components[2]
             arguments = dict(proc_name=proc_name, spec_name=spec_name,
                              enabled=lambda: action_has_access(action))
         elif kind == 'NEW_RECORD':
