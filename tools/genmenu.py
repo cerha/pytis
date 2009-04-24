@@ -379,27 +379,14 @@ def parse_options():
     dbparameters['database'] = options.database
     dbparameters['user'] = options.user
     dbparameters['password'] = options.password
-    if len(args) != 1:
+    if (options.delete_only and args or
+        not options.delete_only and len(args) != 1):
         parser.print_help()
         sys.exit(1)
     return options, args
     
 def run():
     options, args = parse_options()
-    def_dir = args[0]
-    import config
-    config.def_dir = def_dir
-    resolver = pytis.util.resolver()
-    menu = resolver.get('application', 'menu')
-    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
-    menu_items = {}
-    actions = {}
-    print "Retrieving menu..."
-    process_menu(menu, top, menu_items, actions)
-    print "Retrieving menu...done"
-    print "Retrieving rights..."
-    rights = process_rights(resolver, actions)
-    print "Retrieving rights...done"
     parameters = {}
     for k, v in Configuration.dbparameters.items():
         if v is not None:
@@ -416,7 +403,22 @@ def run():
     cursor.execute("delete from e_pytis_roles where purposeid != 'admn'")
     print "Deleting old data...done"
     if options.delete_only:
+        connection.commit()
         return
+    def_dir = args[0]
+    import config
+    config.def_dir = def_dir
+    resolver = pytis.util.resolver()
+    menu = resolver.get('application', 'menu')
+    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
+    menu_items = {}
+    actions = {}
+    print "Retrieving menu..."
+    process_menu(menu, top, menu_items, actions)
+    print "Retrieving menu...done"
+    print "Retrieving rights..."
+    rights = process_rights(resolver, actions)
+    print "Retrieving rights...done"
     print "Inserting actions..."
     fill_actions(cursor, actions)
     print "Inserting actions...done"
