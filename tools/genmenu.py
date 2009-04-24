@@ -29,6 +29,10 @@ import psycopg2 as dbapi
 import pytis.form
 import pytis.util
 
+def cfg_param(*args, **kwargs):
+    return pytis.data.Value(None, None)
+import pytis.extensions
+pytis.extensions.cfg_param = cfg_param
 
 class Configuration(object):
     dbparameters = dict(host=None, database=None, user=None, password=None)
