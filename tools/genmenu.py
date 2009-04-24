@@ -372,6 +372,7 @@ def parse_options():
     parser.add_option("-d", "--database", default=None, action="store", dest="database")
     parser.add_option("-U", "--user", default=None, action="store", dest="user")
     parser.add_option("-P", "--password", default=None, action="store", dest="password")
+    parser.add_option("--delete", action="store_true", dest="delete_only")
     options, args = parser.parse_args()
     dbparameters = Configuration.dbparameters
     dbparameters['host'] = options.host
@@ -381,10 +382,10 @@ def parse_options():
     if len(args) != 1:
         parser.print_help()
         sys.exit(1)
-    return args
+    return options, args
     
 def run():
-    args = parse_options()
+    options, args = parse_options()
     def_dir = args[0]
     import config
     config.def_dir = def_dir
@@ -414,6 +415,8 @@ def run():
     cursor.execute("delete from e_pytis_role_members where id >= 0")
     cursor.execute("delete from e_pytis_roles where purposeid != 'admn'")
     print "Deleting old data...done"
+    if options.delete_only:
+        return
     print "Inserting actions..."
     fill_actions(cursor, actions)
     print "Inserting actions...done"
