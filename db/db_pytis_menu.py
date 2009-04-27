@@ -327,7 +327,7 @@ viewng('ev_pytis_summary_rights_raw',
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('e_pytis_menu', 'ev_pytis_valid_roles', 'pytis_compute_rights', 'a_pytis_computed_summary_rights',)
+       depends=('e_pytis_menu', 'ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_summary_rights',
@@ -361,7 +361,7 @@ viewng('ev_pytis_role_menu_raw',
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('ev_pytis_menu', 'ev_pytis_valid_roles', 'pytis_compute_rights', 'a_pytis_computed_summary_rights',)
+       depends=('ev_pytis_menu', 'ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_role_menu',
