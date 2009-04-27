@@ -164,10 +164,9 @@ class ApplicationActions(pytis.presentation.Specification):
 
 ### Menus
 
-def _position_range(value):
-    if value < 100 or value > 999:
-        return _("Hodnota smí být pouze v rozsahu 100-999")
-    return None
+def _ititle_computer(row, title, position):
+    indentation = ' ' * len(position)
+    return indentation + title
 class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_menu'
     title = _("Menu")
@@ -175,33 +174,32 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
         Field('name', _("Id obsahující role")),
         Field('title', _("Titulek polo¾ky menu")),
-        Field('ititle', _("Titulek polo¾ky menu")),
-        Field('parent', _("Rodièovské menu"), codebook='menu.ApplicationMenus'),
-        Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
-              fixed=True, default=500),
-        Field('indentation', ""),
-        Field('fullposition', _("Pozice v celém menu")),
+        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
+              computer=pytis.presentation.computer(_ititle_computer)),
+        Field('position', _("Pozice v menu"), fixed=True),
         Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+        Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
-    columns = ('ititle', 'position', 'action',)
-    layout = ('title', 'position', 'parent',)
-    sorting = (('fullposition', pytis.data.ASCENDENT,),)
+    columns = ('ititle', 'action', 'locked',)
+    layout = ('title', 'position',)
+    sorting = (('position', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
     def on_edit_record(self, row):
-        if not row['indentation'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze editovat"))
+        if row['locked'].value():
+            pytis.form.run_dialog(pytis.form.Warning, _("Tuto polo¾ku menu nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['menuid'])    
     def on_delete_record(self, row):
-        if not row['position'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("Polo¾ku odpovídající celému menu nelze smazat"))
+        if row['locked'].value():
+            pytis.form.run_dialog(pytis.form.Warning, _("Tuto polo¾ku menu nelze smazat"))
             return None
         if row['name'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Koncové polo¾ky menu nelze mazat"))
             return None
-        if row.data().select(condition=pytis.data.EQ('parent', row['menuid'])) > 0:
+        wm_value = pytis.data.WMValue(pytis.data.String(), row['position'].value() + '*')
+        if row.data().select(condition=pytis.data.WM('position', wm_value)) > 0:
             pytis.form.run_dialog(pytis.form.Warning, _("Nelze mazat polo¾ky obsahující jiné polo¾ky"))
             return None
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
@@ -217,29 +215,29 @@ class ApplicationMenuM(ApplicationMenu):
                 )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
-class ApplicationMenus(pytis.presentation.Specification):
-    # This is almost the same as ApplicationMenu.
-    # But we can't inherit from it because pytis would suffer from infinite
-    # recursion.
-    table = 'ev_pytis_menu_parents'
-    title = _("Menu")
-    fields = (
-        Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
-        Field('name', _("Id obsahující role")),
-        Field('title', _("Titulek polo¾ky menu")),
-        Field('ititle', _("Titulek polo¾ky menu")),
-        Field('parent', _("Rodièovské menu")),
-        Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
-              fixed=True, default=500),
-        Field('fullposition', _("Pozice v celém menu")),
-        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
-              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
-        )
-    columns = ('ititle',)
-    layout = ('title', 'position',)
-    sorting = (('fullposition', pytis.data.ASCENDENT,),)
-    cb = pytis.presentation.CodebookSpec(display='title')
-    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
+# class ApplicationMenus(pytis.presentation.Specification):
+#     # This is almost the same as ApplicationMenu.
+#     # But we can't inherit from it because pytis would suffer from infinite
+#     # recursion.
+#     table = 'ev_pytis_menu_parents'
+#     title = _("Menu")
+#     fields = (
+#         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
+#         Field('name', _("Id obsahující role")),
+#         Field('title', _("Titulek polo¾ky menu")),
+#         Field('ititle', _("Titulek polo¾ky menu")),
+#         Field('parent', _("Rodièovské menu")),
+#         Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
+#               fixed=True, default=500),
+#         Field('fullposition', _("Pozice v celém menu")),
+#         Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
+#               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+#         )
+#     columns = ('ititle',)
+#     layout = ('title', 'position',)
+#     sorting = (('fullposition', pytis.data.ASCENDENT,),)
+#     cb = pytis.presentation.CodebookSpec(display='title')
+#     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 ### Rights
 
@@ -350,8 +348,10 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('ititle', _("Titulek polo¾ky menu"), fixed=True),
-        Field('fullposition', _("Pozice v celém menu")),
+        Field('title', _("Titulek polo¾ky menu"), fixed=True),
+        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
+              computer=pytis.presentation.computer(_ititle_computer)),
+        Field('position', _("Pozice v menu")),
         Field('rights', _("Práva")),
         Field('rights_show', _("Menu"), fixed=True,
               descr=_("Zobrazení v menu")),
@@ -372,9 +372,9 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         )
     columns = ('ititle', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    layout = ('ititle', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
+    layout = ('title', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    sorting = (('fullposition', pytis.data.ASCENDENT,),)
+    sorting = (('position', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def on_new_record(self, *args, **kwargs):
         return None
