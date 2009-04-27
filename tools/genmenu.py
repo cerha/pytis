@@ -69,7 +69,7 @@ class Action(object):
         self.shortname = shortname
 
 class Menu(Serial):
-    def __init__(self, name, title, parent, position, action=None, help=None, hotkey=None):
+    def __init__(self, name, title, parent, position, action=None, help=None, hotkey=None, system=False):
         Serial.__init__(self)
         self.name = name
         self.title = title
@@ -78,6 +78,7 @@ class Menu(Serial):
         self.action = action
         self.help = help
         self.hotkey = hotkey
+        self.system = system
         self.children = []
 
 class Rights(object):
@@ -96,19 +97,16 @@ def super_menu_id(menu, menu_items):
         i += 1
     return menu_id
 
-def process_menu(menu, parent, menu_items, actions, rights, position=110):
+def process_menu(menu, parent, menu_items, actions, rights, position, system=False):
     if isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
-        menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position)
+        menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position, system=system)
         parent.children.append(supmenu)
-        process_menu(menu.items(), supmenu, menu_items, actions, rights)
+        process_menu(menu.items(), supmenu, menu_items, actions, rights, position=position+'11', system=system)
     elif isinstance(menu, pytis.form.MItem):
         action_id = menu.action_id()
         if action_id is None:
             print "Error: Special menu item action, define command specification:", menu.title()
-            return
-        if action_id == 'EXIT':
-            print "System menu item, skipping:", menu.title()
             return
         action = actions.get(action_id)
         if action is None:
@@ -145,14 +143,16 @@ def process_menu(menu, parent, menu_items, actions, rights, position=110):
             hotkey_spec = string.join([key.replace(' ', 'SPC') for key in hotkey], ' ')
         menu_items[menu_id] = submenu = Menu(name=menu_id, title=menu.title(), parent=parent,
                                              position=position, action=action, help=help,
-                                             hotkey=hotkey_spec)
+                                             hotkey=hotkey_spec, system=system)
         parent.children.append(submenu)        
     elif isinstance(menu, pytis.form.MSeparator):
-        parent.children.append(Menu(name=None, title=None, parent=parent, position=position))
+        parent.children.append(Menu(name=None, title=None, parent=parent, position=position, system=system))
     elif isinstance(menu, tuple):
         for m in menu:
-            process_menu(m, parent, menu_items, actions, rights, position=position)
-            position += 10
+            process_menu(m, parent, menu_items, actions, rights, position=position, system=system)
+            if parent.parent is None:
+                system = False
+            position = str(long(position) + 2)
     else:
         print 'Unknown menu: %s' % (menu,)
 
@@ -234,18 +234,21 @@ def fill_rights(cursor, rights):
                                            (action_name, group, permission, True, True, c,))
     return roles
 
-def fill_menu_items(cursor, menu, fullposition='', indentation=''):
-    fullposition += str(menu.position)
+def fill_menu_items(cursor, menu, position=''):
+    position += str(menu.position)
     parent = menu.parent and -menu.parent.id
     action = menu.action and menu.action.name
+    if menu.system:
+        locked = 'T'
+    else:
+        locked = 'F'
     cursor.execute(("insert into e_pytis_menu "
-                    "(menuid, name, title, parent, position, fullposition, indentation, action, help, hotkey) "
-                    "values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"),
-                   (-menu.id, menu.name, menu.title, parent, menu.position, fullposition, indentation, action,
-                     menu.help, menu.hotkey,))
-    next_indentation = indentation + '   '
+                    "(menuid, name, title, position, action, help, hotkey, locked) "
+                    "values(%s, %s, %s, %s, %s, %s, %s, %s)"),
+                   (-menu.id, menu.name, menu.title, menu.position, action,
+                     menu.help, menu.hotkey, locked,))
     for m in menu.children:
-        fill_menu_items(cursor, m, fullposition=fullposition, indentation=next_indentation)
+        fill_menu_items(cursor, m, position=position)
 
 def transfer_roles(cursor, present_roles):
     excluded_roles = ('postgres',)
@@ -323,12 +326,18 @@ def recompute_tables(cursor):
             self.forbidden = forbidden
             self.parent = parent
     computed_rights = {}
-    cursor.execute("select menuid, name, parent from e_pytis_menu order by fullposition")
+    cursor.execute("select menuid, name, position from e_pytis_menu order by position")
+    position2parent = {}
     for i in range(cursor.rowcount):
-        menuid, name, parent = cursor.fetchone()
+        menuid, name, position = cursor.fetchone()
         if not menuid:
             continue
         menu_rights = raw_rights.get(menuid, {})
+        position2parent[position] = menuid
+        if position:
+            parent = position2parent[position[:-2]]
+        else:
+            parent = None
         for roleid, role_roles in roles.items():
             max_ = []
             allowed = []
@@ -440,12 +449,12 @@ def run():
     config.def_dir = def_dir
     resolver = pytis.util.resolver()
     menu = resolver.get('application', 'menu')
-    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position=0, action=None)
+    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position='', action=None, system=True)
     menu_items = {}
     actions = {}
     rights = {}
     print "Retrieving menu..."
-    process_menu(menu, top, menu_items, actions, rights)
+    process_menu(menu, top, menu_items, actions, rights, position='11', system=True)
     print "Retrieving menu...done"
     print "Retrieving rights..."
     process_rights(resolver, actions, rights)
