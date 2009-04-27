@@ -336,37 +336,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 config.help_dir)
         return result
 
-    def _create_system_menu(self, menus):
-        from pytis.extensions import cmd_run_any_form, cmd_check_form, cmd_check_menus_defs, \
-            run_form_mitem
-        if _access_rights is UNDEFINED:
-            init_access_rights()
-        roles = _user_roles
-        items = (config_menu_items() +
-                 (MSeparator(),
-                  recent_forms_menu(),
-                  MItem(_("Spustit formuláø"), command=cmd_run_any_form),
-                  MItem(_("Zkontrolovat formuláø"), command=cmd_check_form),
-                  MItem(_("Zkontrolovat datové specifikace"), command=cmd_check_menus_defs),)
-                 )
-        if 'admin_menu' in roles or 'admin_roles' in roles:
-            management_items = ()
-            if 'admin_menu' in roles:
-                management_items = (management_items +
-                                    (run_form_mitem(_("Menu"), 'menu.ApplicationMenu',
-                                                    pytis.form.BrowseForm),
-                                     run_form_mitem(_("Práva menu"), 'menu.ApplicationMenuM',
-                                                    pytis.form.MultiBrowseDualForm),))
-            if 'admin_roles' in roles:
-                management_items = (management_items +
-                                    (run_form_mitem(_("U¾ivatelské role"), 'menu.ApplicationRoles',
-                                                    pytis.form.MultiBrowseDualForm),))
-            items = items + (Menu(_("Správa menu a u¾ivatelù"), management_items),)
-        items = (items +
-                 (MSeparator(),
-                  MItem(_("Konec"), command=pytis.form.Application.COMMAND_EXIT),))
-        menus.insert(0, Menu(_("&Systém"), items))
-
     def _create_command_menu(self, menus):
         items = []
         for group in FORM_MENU_COMMANDS:
@@ -462,7 +431,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 result = MItem(title, command, help=help, hotkey=hotkeys, _rights=rights)
             return result
         menus = [build(t) for t in menu_template]
-        self._create_system_menu(menus)
         return menus
 
 # Ostatní metody
