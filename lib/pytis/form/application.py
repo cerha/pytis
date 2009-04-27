@@ -363,7 +363,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             specifications[name] = factory
-        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'parent', 'action', 'fullposition', 'rights',
+        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'action', 'position', 'rights',
                                                 'help', 'hotkey',))
         add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications
@@ -380,22 +380,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
             menu_data = specifications['menu'].create(connection_data=connection)
         except pytis.data.DBException:
             return None
-        menu_rows = menu_data.select_map(identity, sort=(('fullposition', pytis.data.ASCENDENT,),))
+        menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
         if not menu_rows:
             return None
         # Build visible menu items
         menu_template = []
         parents = []
         for row in menu_rows:
-            menuid, name, title, parent, action, rights_string, help, hotkey = \
-                [row[i].value() for i in (0, 1, 2, 3, 4, 6, 7, 8,)]
+            menuid, name, title, action, position, rights_string, help, hotkey = \
+                [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6, 7,)]
             rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
             if not parents: # the top pseudonode, should be the first one
-                parents.append((menuid, menu_template,))
+                parents.append((position, menu_template,))
                 current_template = menu_template
             elif not title: # separator
                 pass
             else:
+                parent = position[:-2]
                 while parent != parents[-1][0]:
                     parents.pop()
                 current_template = parents[-1][1]
@@ -405,7 +406,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     upper_template = parents[-1][1]
                     current_template = [(name, title, rights, help, hotkey,)]
                     upper_template.append(current_template)
-                    parents.append((menuid, current_template,))
+                    parents.append((position, current_template,))
         # Done, return the menu structure
         return menu_template
         
