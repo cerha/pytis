@@ -9,8 +9,10 @@ if not db_rights:
 _std_table_nolog('e_pytis_disabled_dmp_triggers',
                  (P('id', TUser),),
                  """This table allows disabling some trigger calls.
-Right now inserting any value into it disables insert and delete trigger actions over
-computed tables.  This allows computing the tables separately.""")
+Supported values (flags) are:
+genmenu -- initial insertion and deletion on certain tables
+positions -- automatic updates of positions in e_pytis_menu
+""")
 
 ### Roles
 
@@ -43,6 +45,41 @@ _std_table('e_pytis_roles',
                         ),
            grant=db_rights,
            depends=('c_pytis_role_purposes',))
+def e_pytis_roles_trigger():
+    class Roles(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_roles(self):
+            plpy.execute("select pytis_update_transitive_roles()")
+        def _update_rights(self):
+            plpy.execute("select pytis_update_summary_rights()")
+        def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            role = self._pg_escape(self._new['name'])
+            plpy.execute("insert into a_pytis_valid_role_members(roleid, member) values ('%s', '%s')" %
+                         (role, role,))
+            self._update_rights()
+        def _do_after_update(self):
+            if self._new['deleted'] != self._old['deleted']:
+                self._update_roles()
+                self._update_rights()
+        def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            self._update_roles()
+            self._update_rights()
+    roles = Roles(TD)
+    return roles.do_trigger()
+_trigger_function('e_pytis_roles_trigger', body=e_pytis_roles_trigger,
+                  depends=('e_pytis_roles', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
+                           'pytis_update_transitive_roles', 'pytis_update_summary_rights',))
+sql_raw("""
+create trigger e_pytis_roles_update_after after insert or update or delete on e_pytis_roles
+for each row execute procedure e_pytis_roles_trigger();
+""",
+        name='e_pytis_roles_triggers',
+        depends=('e_pytis_roles_trigger',))
 
 viewng('ev_pytis_valid_roles',
        (SelectRelation('e_pytis_roles', alias='main',
@@ -80,6 +117,40 @@ Entries in this table define `member's of each `roleid'.
                         ),
            grant=db_rights,
            depends=('e_pytis_roles',))
+def e_pytis_role_members_trigger():
+    class Roles(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_roles(self):
+            plpy.execute("select pytis_update_transitive_roles()")
+        def _update_rights(self):
+            plpy.execute("select pytis_update_summary_rights()")
+        def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            self._update_roles()
+            self._update_rights()
+        def _do_after_update(self):
+            self._update_roles()
+            self._update_rights(self._new['member'])
+            if self._new['member'] != self._old['member']:
+                self._update_rights()
+        def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            self._update_roles()
+            self._update_rights()
+    roles = Roles(TD)
+    return roles.do_trigger()
+_trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
+                  depends=('e_pytis_role_members', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
+                           'pytis_update_transitive_roles', 'pytis_update_summary_rights',))
+sql_raw("""
+create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
+for each row execute procedure e_pytis_role_members_trigger();
+""",
+        name='e_pytis_role_members_triggers',
+        depends=('e_pytis_role_members_trigger',))
 
 viewng('ev_pytis_valid_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
@@ -183,9 +254,9 @@ _std_table('e_pytis_menu',
                    "Each submenu has position two characters wider than its parent. "
                    "The two character suffix identifies position within the submenu, "
                    "lower numbers put the item higher. "
-                   "Only odd numbers from 11 to 99 are allowed, "
+                   "Only odd numbers from 11 to 97 are allowed, "
                    "other numbers are reserved for other purposes. "
-                   "Note these rules limit maximum number of items within a given submenu to 45.")),
+                   "Note these rules limit maximum number of items within a given submenu to 44.")),
             C('action', TString, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
@@ -201,7 +272,148 @@ _std_table('e_pytis_menu',
            """Menu structure definition.""",
            grant=db_rights,
            depends=('c_pytis_menu_actions',))
-
+def e_pytis_menu_trigger():
+    class Menu(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        ## BEFORE
+        def _validate_position(self):
+            position = self._pg_escape(self._new['position'])
+            # Completely invalid position?
+            try:
+                tail = int(position[-2:])
+                if tail < 10 or tail > 98:
+                    raise Exception()
+            except:
+                self._return_code = self._RETURN_CODE_SKIP
+                return False
+            # Duplicate?
+            if plpy.execute("select * from e_pytis_menu where position = '%s'" % (position,)):
+                self._new['position'] = str(long(position) + 1)
+                self._return_code = self._RETURN_CODE_MODYFY
+            # Valid predecessor?
+            else:
+                if (not plpy.execute("select * from e_pytis_menu where position = '%s'" % (position[:-2],)) or
+                    len(plpy.execute("select * from e_pytis_menu where position like '%s_%%'" % (position[:-2],))) >= 44):
+                    self._return_code = self._RETURN_CODE_SKIP
+                    return False
+                if position[:-2] != '10':
+                    prev_position = str(long(position) - 1)
+                    if not plpy.execute("select * from e_pytis_menu where position = '%s'" % (prev_position,)):
+                        self._return_code = self._RETURN_CODE_SKIP
+                        return False                        
+            # All right
+            return True
+        def _maybe_new_action(self, old=None):
+            if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
+                # New non-terminal menu item
+                self._new['action'] = action = 'menu/' + str(self._new['menuid'])
+                plpy.execute(("insert into c_pytis_menu_actions (name, shortname, description) "
+                              "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
+                self._return_code = self._RETURN_CODE_MODYFY
+        def _do_before_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            if not self._validate_position():
+                return
+            self._maybe_new_action()
+        def _do_before_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
+                return
+            if not self._validate_position():
+                return
+            self._maybe_new_action(old=self._old)
+        def _do_before_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            # If there are any children, reject deletion
+            data = plpy.execute("select * from e_pytis_menu where position like '%s_%%'" %
+                                (self._old['position'],),
+                                1)
+            if data:
+                self._return_code = self._RETURN_CODE_SKIP
+        ## AFTER      
+        def _update_positions(self, new=None, old=None):
+            if old:
+                position = old['position']
+                if new:
+                    plpy.execute("update e_pytis_menu set position='0'||substring(position from %s) where position like '%s_%%'" %
+                                 (len(position), position,))
+                plpy.execute("update e_pytis_menu set position=((substring (position from 1 for %s)::bigint - 2)::text||substring(position from %s)) where position > '%s' and position < '%s'" %
+                             (len(position), len(position)+1, position, str(long(position[:-2] or '98') + 1),))
+            if new:
+                position = new['position']
+                plpy.execute("update e_pytis_menu set position=((substring (position from 1 for %s)::bigint + 2)::text||substring(position from %s)) where position > '%s' and position < '%s'" %
+                             (len(position), len(position)+1, position, str(long(position[:-2] or '98') + 1),))
+                if old:
+                    plpy.execute("update e_pytis_menu set position='%s'||substring(position from 2) where position like '0%%'" %
+                                 (position,))
+        def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
+            self._update_positions(new=self._new)
+            plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
+        def _do_after_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
+                return
+            plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
+            if not self._new['name'] and self._old['title'] and not self._new['title']:
+                # Non-terminal item changed to separator
+                plpy.execute("delete from c_pytis_menu_actions where name = '%s'" % (self._old['action'],))
+                plpy.execute("delete from e_pytis_action_rights where action = '%s'" % (self._old['action'],))
+            self._update_positions(new=self._new, old=self._old)
+            plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
+        def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
+            if not self._old['name'] and self._old['title']:
+                # Non-terminal menu item
+                plpy.execute("delete from c_pytis_menu_actions where name = '%s'" % (self._old['action'],))
+                plpy.execute("delete from e_pytis_action_rights where action = '%s'" % (self._old['action'],))
+            self._update_positions(old=self._old)
+            plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
+    menu = Menu(TD)
+    return menu.do_trigger()
+_trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
+                  depends=('e_pytis_menu', 'c_pytis_menu_actions', 'e_pytis_disabled_dmp_triggers',))
+sql_raw("""
+create trigger e_pytis_menu_all_before before insert or update or delete on e_pytis_menu
+for each row execute procedure e_pytis_menu_trigger();
+create trigger e_pytis_menu_all_after after insert or update or delete on e_pytis_menu
+for each row execute procedure e_pytis_menu_trigger();
+""",
+        name='e_pytis_menu_triggers',
+        depends=('e_pytis_menu_trigger',))
+def e_pytis_menu_trigger_rights():
+    class Menu(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_rights(self):
+            plpy.execute("select pytis_update_summary_rights()")
+        def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                return
+            self._update_rights()
+        def _do_after_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
+                return
+            self._update_rights()
+        def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                return
+            self._update_rights()
+    menu = Menu(TD)
+    return menu.do_trigger()
+_trigger_function('e_pytis_menu_trigger_rights', body=e_pytis_menu_trigger_rights,
+                  depends=('e_pytis_menu', 'pytis_update_summary_rights', 'e_pytis_disabled_dmp_triggers',))
+sql_raw("""
+create trigger e_pytis_menu_all_after_rights after insert or update or delete on e_pytis_menu
+for each statement execute procedure e_pytis_menu_trigger_rights();
+""",
+        name='e_pytis_menu_triggers_rights',
+        depends=('e_pytis_menu_trigger_rights',))
 
 viewng('ev_pytis_menu',
        (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('action',)),
@@ -279,6 +491,33 @@ support extended rights assignment, e.g. in context menus etc.
            grant=db_rights,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
+def e_pytis_action_rights_trigger():
+    class Rights(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_rights(self, action, roleid):
+            plpy.execute("select pytis_update_summary_rights()")
+        def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            self._update_rights()
+        def _do_after_update(self):
+            self._update_rights()
+        def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            self._update_rights()
+    rights = Rights(TD)
+    return rights.do_trigger()
+_trigger_function('e_pytis_action_rights_trigger', body=e_pytis_action_rights_trigger,
+                  doc="Updates summary access rights.",
+                  depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_summary_rights',))
+sql_raw("""
+create trigger e_pytis_action_rights_all_after after insert or update or delete on e_pytis_action_rights
+for each statement execute procedure e_pytis_action_rights_trigger();
+""",
+        name='e_pytis_action_rights_triggers',
+        depends=('e_pytis_action_rights_trigger',))
 
 viewng('ev_pytis_user_system_rights',
        (SelectRelation('e_pytis_action_rights', alias='rights',
@@ -315,6 +554,8 @@ This table is modified only by triggers.
                  depends=('e_pytis_menu', 'e_pytis_roles',))
 
 def pytis_update_summary_rights():
+    if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
+        return
     import string
     # Retrieve roles
     roles = {}

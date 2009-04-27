@@ -354,7 +354,7 @@ def run():
     transfer_roles(cursor, roles)
     print "Importing roles...done"
     recompute_tables(cursor)
-    cursor.execute("delete from e_pytis_disabled_dmp_triggers")
+    cursor.execute("delete from e_pytis_disabled_dmp_triggers where id = 'genmenu'")
     connection.commit()
 
 if __name__ == '__main__':
