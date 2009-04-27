@@ -43,49 +43,6 @@ _std_table('e_pytis_roles',
                         ),
            grant=db_rights,
            depends=('c_pytis_role_purposes',))
-def e_pytis_roles_trigger():
-    class Roles(BaseTriggerObject):
-        def _pg_escape(self, val):
-            return str(val).replace("'", "''")
-        def _update_roles(self):
-            plpy.execute("select pytis_update_transitive_roles()")
-        def _update_rights(self, roleid):
-            menus = plpy.execute("select menuid, name from e_pytis_menu")
-            safe_roleid = self._pg_escape(roleid)
-            for row in menus:
-                plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
-                             (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
-        def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            role = self._pg_escape(self._new['name'])
-            plpy.execute("insert into a_pytis_valid_role_members(roleid, member) values ('%s', '%s')" %
-                         (role, role,))
-            self._update_rights(self._new['name'])
-        def _do_after_update(self):
-            if self._new['deleted'] != self._old['deleted']:
-                self._update_roles()
-                if self._new['deleted']:
-                    condition = ("roleid = '%s' or roleid = '%s'" %
-                                 (self._pg_escape(self._old['name']), self._pg_escape(self._new['name']),))
-                    plpy.execute("delete from a_pytis_computed_summary_rights where %s" % (condition,))
-                else:
-                    self._update_rights(self._new['name'])
-        def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            self._update_roles()
-    roles = Roles(TD)
-    return roles.do_trigger()
-_trigger_function('e_pytis_roles_trigger', body=e_pytis_roles_trigger,
-                  doc="Updates total role memberships.",
-                  depends=('e_pytis_roles', 'a_pytis_valid_role_members', 'pytis_update_transitive_roles',))
-sql_raw("""
-create trigger e_pytis_roles_update_after after insert or update or delete on e_pytis_roles
-for each row execute procedure e_pytis_roles_trigger();
-""",
-        name='e_pytis_roles_triggers',
-        depends=('e_pytis_roles_trigger',))
 
 viewng('ev_pytis_valid_roles',
        (SelectRelation('e_pytis_roles', alias='main',
@@ -123,48 +80,6 @@ Entries in this table define `member's of each `roleid'.
                         ),
            grant=db_rights,
            depends=('e_pytis_roles',))
-def e_pytis_role_members_trigger():
-    class Roles(BaseTriggerObject):
-        def _pg_escape(self, val):
-            return str(val).replace("'", "''")
-        def _update_roles(self):
-            plpy.execute("select pytis_update_transitive_roles()")
-        def _update_rights(self, changed_role):
-            menus = plpy.execute("select menuid, name from e_pytis_menu")
-            q = ("select member from a_pytis_valid_role_members where roleid = '%s'" %
-                 (self._pg_escape(changed_role),))
-            roles = [row['member'] for row in plpy.execute(q)]
-            for roleid in roles:
-                safe_roleid = self._pg_escape(roleid)
-                for row in menus:
-                    plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
-                                 (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
-        def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            self._update_roles()
-            self._update_rights(self._new['member'])
-        def _do_after_update(self):
-            self._update_roles()
-            self._update_rights(self._new['member'])
-            if self._new['member'] != self._old['member']:
-                self._update_rights(self._old['member'])                
-        def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            self._update_roles()
-            self._update_rights(self._old['member'])                
-    roles = Roles(TD)
-    return roles.do_trigger()
-_trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
-                  doc="Updates total role memberships.",
-                  depends=('e_pytis_role_members', 'a_pytis_valid_role_members', 'pytis_update_transitive_roles',))
-sql_raw("""
-create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
-for each row execute procedure e_pytis_role_members_trigger();
-""",
-        name='e_pytis_role_members_triggers',
-        depends=('e_pytis_role_members_trigger',))
 
 viewng('ev_pytis_valid_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
@@ -288,73 +203,6 @@ _std_table('e_pytis_menu',
            grant=db_rights,
            depends=('c_pytis_menu_actions',))
 
-def e_pytis_menu_trigger():
-    class Menu(BaseTriggerObject):
-        def _pg_escape(self, val):
-            return str(val).replace("'", "''")
-        def _do_before_insert(self, old=None):
-            parent_id = self._new['parent']
-            if not parent_id:
-                return
-            data = plpy.execute("select indentation, fullposition from e_pytis_menu where menuid = %s" %
-                                (parent_id,))
-            parent = data[0]
-            self._new['indentation'] = parent['indentation'] + '   '
-            self._new['fullposition'] = parent['fullposition'] + str(self._new['position'])
-            if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
-                # New non-terminal menu item
-                self._new['action'] = action = 'menu/' + str(self._new['menuid'])
-                plpy.execute(("insert into c_pytis_menu_actions (name, shortname, description) "
-                              "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
-            self._return_code = self._RETURN_CODE_MODYFY
-        def _update_rights(self, record):
-            menuid = record['menuid']
-            name = record['name']
-            q = "select name from ev_pytis_valid_roles"
-            roles = [row['name'] for row in plpy.execute(q)]
-            for roleid in roles:
-                plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
-                             (menuid, self._pg_escape(roleid), self._pg_escape(name or ''),))
-        def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            self._update_rights(self._new)
-        def _do_before_update(self):
-            self._do_before_insert(old=self._old)
-        def _do_after_update(self):
-            plpy.execute("update e_pytis_menu set parent=parent where parent=%s" %
-                         (self._new['menuid'],))
-            if not self._new['name'] and self._old['title'] and not self._new['title']:
-                # Non-terminal item changed to separator
-                plpy.execute("delete from c_pytis_menu_actions where name = '%s'" % (self._old['action'],))
-                plpy.execute("delete from e_pytis_action_rights where action = '%s'" % (self._old['action'],))
-            if self._new['parent'] != self._old['parent']:
-                self._update_rights(self._new)
-        def _do_before_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            data = plpy.execute("select * from e_pytis_menu where parent=%s" %
-                                (self._old['menuid'],))
-            if data:
-                self._return_code = self._RETURN_CODE_SKIP
-        def _do_after_delete(self):
-            if not self._old['name'] and self._old['title']:
-                # Non-terminal menu item
-                plpy.execute("delete from c_pytis_menu_actions where name = '%s'" % (self._old['action'],))
-                plpy.execute("delete from e_pytis_action_rights where action = '%s'" % (self._old['action'],))
-    menu = Menu(TD)
-    return menu.do_trigger()
-_trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
-                  doc="Updates indentations and fullpositions",
-                  depends=('e_pytis_menu',))
-sql_raw("""
-create trigger e_pytis_menu_all_before before insert or update or delete on e_pytis_menu
-for each row execute procedure e_pytis_menu_trigger();
-create trigger e_pytis_menu_all_after after insert or update or delete on e_pytis_menu
-for each row execute procedure e_pytis_menu_trigger();
-""",
-        name='e_pytis_menu_triggers',
-        depends=('e_pytis_menu_trigger',))
 
 viewng('ev_pytis_menu',
        (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('action',)),
@@ -433,44 +281,6 @@ support extended rights assignment, e.g. in context menus etc.
            grant=db_rights,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
-def e_pytis_action_rights_trigger():
-    class Rights(BaseTriggerObject):
-        def _pg_escape(self, val):
-            return str(val).replace("'", "''")
-        def _update_rights(self, action, roleid):
-            menus = plpy.execute("select menuid, name from e_pytis_menu where pytis_matching_actions(action, '%s')" %
-                                 (action,))
-            if roleid == '*':
-                roles = [row['name'] for row in plpy.execute("select name from ev_pytis_valid_roles")]
-            else:
-                roles = [roleid]
-            for r in roles:
-                safe_roleid = self._pg_escape(r)
-                for row in menus:
-                    plpy.execute("select pytis_compute_rights(%s, '%s', '%s')" %
-                                 (row['menuid'], safe_roleid, self._pg_escape(row['name'] or ''),))
-        def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            self._update_rights(self._new['action'], self._new['roleid'])
-        def _do_after_update(self):
-            self._update_rights(self._old['action'], self._old['roleid'])
-            self._update_rights(self._new['action'], self._new['roleid'])
-        def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers"):
-                return
-            self._update_rights(self._old['action'], self._old['roleid'])
-    rights = Rights(TD)
-    return rights.do_trigger()
-_trigger_function('e_pytis_action_rights_trigger', body=e_pytis_action_rights_trigger,
-                  doc="Updates summary access rights.",
-                  depends=('e_pytis_action_rights', 'e_pytis_menu', 'pytis_compute_rights', 'pytis_matching_actions',))
-sql_raw("""
-create trigger e_pytis_action_rights_all_after after insert or update or delete on e_pytis_action_rights
-for each row execute procedure e_pytis_action_rights_trigger();
-""",
-        name='e_pytis_action_rights_triggers',
-        depends=('e_pytis_action_rights_trigger',))
 
 viewng('ev_pytis_user_system_rights',
        (SelectRelation('e_pytis_action_rights', alias='rights',
@@ -495,110 +305,6 @@ viewng('ev_pytis_menu_rights',
        )
 
 ### Summarization
-
-def pytis_compute_rights(menuid, roleid, name):
-    menuid = args[0]
-    roleid = args[1]
-    name = args[2]
-    if not menuid:
-        return True
-    def _pg_escape(val):
-        return str(val).replace("'", "''")
-    safe_roleid = _pg_escape(roleid)
-    def compute(menuid, name):
-        big_query = ("select rightid, granted, roleid, system from ev_pytis_menu_rights where "
-                     "(roleid in (select roleid from a_pytis_valid_role_members where member='%s') or roleid = '*') "
-                     "and menuid = %%s") % (safe_roleid,)
-        max_rights = []
-        allowed_rights = []
-        forbidden_rights = []
-        def append_rights(menuid):
-            rights_rows = plpy.execute(big_query % (menuid,))
-            a_rights = []
-            f_rights = []
-            a_defaults = []
-            f_defaults = []
-            for row in rights_rows:
-                rightid = row['rightid']
-                if row['system']:
-                    max_rights.append(rightid)
-                elif rightid not in allowed_rights and rightid not in forbidden_rights:
-                    granted = row['granted']
-                    if row['roleid'] == '*':
-                        if granted:
-                            l = a_defaults
-                        else:
-                            l = f_defaults
-                    else:
-                        if granted:
-                            l = a_rights
-                        else:
-                            l = f_rights
-                    l.append(rightid)
-            a_rights = [r for r in a_rights if r not in f_rights]
-            for r in f_defaults:
-                if r not in a_rights and r not in f_rights:
-                    f_rights.append(r) # not forbidden_rights, because of the check below
-            for r in a_defaults:
-                if r not in a_rights and r not in f_rights:
-                    allowed_rights.append(r)
-            for r in f_rights:
-                forbidden_rights.append(r)
-            for r in a_rights:
-                allowed_rights.append(r)            
-        append_rights(menuid)
-        if name:
-            if (not max_rights and
-                not plpy.execute(("select rightid from ev_pytis_menu_rights where "
-                                  "system = 'T' and menuid = %s") % (menuid,))):
-                # no implicit system rights => everything permitted
-                max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
-        else:
-            max_rights = None
-        parent_menuid = menuid
-        while True:
-            parents = plpy.execute("select parent from e_pytis_menu where menuid = %s" %
-                                   (parent_menuid,))
-            parent_menuid = parents[0]['parent']
-            if parent_menuid is None:
-                # Root menu item
-                break
-            append_rights(parent_menuid,)
-        if max_rights is None:
-            max_rights = allowed_rights
-        rights = [right for right in max_rights if right not in forbidden_rights]
-        if 'show' not in forbidden_rights:
-            rights.append('show')
-        rights.sort()
-        import string
-        formatted_rights = string.join(rights, ' ')
-        reduced_condition = ("menuid = %s and roleid = '%s'" % (menuid, safe_roleid,))
-        old_rights_rows = plpy.execute("select rights from a_pytis_computed_summary_rights where %s" %
-                                       (reduced_condition,))
-        if old_rights_rows:
-            old_rights = old_rights_rows[0]['rights']
-        else:
-            old_rights = None
-        different = (old_rights != formatted_rights)
-        if different:
-            plpy.execute("delete from a_pytis_computed_summary_rights where %s" % (reduced_condition,))
-            plpy.execute(("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) "
-                          "values (%s, '%s', '%s')")
-                         % (menuid, safe_roleid, formatted_rights,))
-        # We have to always walk through submenus, even when there is no change
-        # in summary rights.  This is because the menu may deny some
-        # rights unavailable here, but available in submenus.
-        submenus = plpy.execute("select menuid, name from e_pytis_menu where parent = %s" %
-                                (menuid,))
-        return submenus
-    menus = [dict(menuid=menuid, name=name)]
-    while menus:
-        row = menus.pop()
-        menus += compute(row['menuid'], row['name'])
-    return True
-_plpy_function('pytis_compute_rights', (TInteger, TUser, TString), TBoolean,
-               body=pytis_compute_rights,
-               depends=('e_pytis_action_rights', 'a_pytis_computed_summary_rights',),)
 
 _std_table_nolog('a_pytis_computed_summary_rights',
                  (C('menuid', TInteger, constraints=('not null',), references='e_pytis_menu on delete cascade on update cascade'),
