@@ -177,18 +177,15 @@ _std_table('e_pytis_menu',
               doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
             C('title', 'varchar(64)',
               doc='User title of the item. If NULL then it is a separator.'),
-            C('parent', TInteger, references='e_pytis_menu',
-              doc="Parent menu item, NULL for top level items."),
-            C('position', TInteger, constraints=('not null',),
-              doc=("Order of the item within the given submenu. "
-                   "Lower numbers put the item higher. "
-                   "No two items in the same submenu should have the same order number; "
-                   "if they do, their mutual order is undefined.")),
-            C('fullposition', TString,
-              doc=("Full position including parent items. "
-                   "Lexicographical ordering of all menu items. ")),
-            C('indentation', 'varchar(8)',
-              doc="Indentation of the menu item in the menu structure"),
+            C('position', TString, constraints=('not null', 'unique',),
+              doc=("Unique identifier of menu item placement within menu. "
+                   "The top-menu item position is ''. "
+                   "Each submenu has position two characters wider than its parent. "
+                   "The two character suffix identifies position within the submenu, "
+                   "lower numbers put the item higher. "
+                   "Only odd numbers from 11 to 99 are allowed, "
+                   "other numbers are reserved for other purposes. "
+                   "Note these rules limit maximum number of items within a given submenu to 45.")),
             C('action', TString, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
@@ -198,6 +195,8 @@ _std_table('e_pytis_menu',
             C('hotkey', TString,
               doc=("Sequence of command keys, separated by single spaces."
                    "The space key is represented by SPC string.")),
+            C('locked', TBoolean,
+              doc=("Iff true, this item may not be edited.")),
             ),
            """Menu structure definition.""",
            grant=db_rights,
@@ -210,7 +209,6 @@ viewng('ev_pytis_menu',
                        column_aliases=(('name', 'action',),),
                        condition='main.action = actions.name', jointype=JoinType.LEFT_OUTER),
         ),
-       include_columns=(V(None, 'ititle', "main.indentation || ' ' || main.title"),),
        insert_order=('e_pytis_menu',),
        update_order=('e_pytis_menu',),
        delete_order=('e_pytis_menu',),
@@ -290,7 +288,7 @@ viewng('ev_pytis_user_system_rights',
        depends=('e_pytis_action_rights', 'ev_pytis_user_roles',))
     
 viewng('ev_pytis_menu_rights',
-       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
+       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',)),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
                        condition='pytis_matching_actions(menu.action, actions.shortname)', jointype=JoinType.INNER),
         SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=(),
@@ -317,7 +315,7 @@ This table is modified only by triggers.
                  depends=('e_pytis_menu', 'e_pytis_roles',))
 
 viewng('ev_pytis_summary_rights_raw',
-       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'fullposition', 'indentation', 'action',)),
+       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',)),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
                        jointype=JoinType.CROSS),
         SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('menuid', 'roleid',),
@@ -349,7 +347,7 @@ viewng('ev_pytis_summary_rights',
        )
 
 viewng('ev_pytis_role_menu_raw',
-       (SelectRelation('ev_pytis_menu', alias='menu', exclude_columns=('name', 'parent', 'position', 'indentation', 'action',)),
+       (SelectRelation('ev_pytis_menu', alias='menu', exclude_columns=('name', 'action',)),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
                        jointype=JoinType.CROSS,
                        column_aliases=(('name', 'roleid',),),
