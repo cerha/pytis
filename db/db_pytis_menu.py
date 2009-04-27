@@ -314,6 +314,137 @@ This table is modified only by triggers.
 """,
                  depends=('e_pytis_menu', 'e_pytis_roles',))
 
+def pytis_update_summary_rights():
+    import string
+    # Retrieve roles
+    roles = {}
+    for row in plpy.execute("select roleid, member from a_pytis_valid_role_members"):
+        roleid, member = row['roleid'], row['member']
+        members = roles.get(member)
+        if members is None:
+            roles[member] = members = []
+        members.append(roleid)
+    # Retrieve rights
+    class RawRights(object):
+        def __init__(self):
+            self.system = []
+            self.allowed = []
+            self.forbidden = []
+    raw_rights = {}
+    for row in plpy.execute("select rightid, granted, roleid, menuid, system from ev_pytis_menu_rights"):
+        rightid, granted, roleid, menuid, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['system']
+        item_rights = raw_rights.get(menuid)
+        if item_rights is None:
+            raw_rights[menuid] = item_rights = {}
+        role_rights = item_rights.get(roleid)
+        if role_rights is None:
+            item_rights[roleid] = role_rights = RawRights()
+        if system:
+            r = role_rights.system
+        elif granted:
+            r = role_rights.allowed
+        else:
+            r = role_rights.forbidden
+        r.append(rightid)
+    # Compute rights
+    class Rights(object):
+        def __init__(self, total, allowed, forbidden, parent):
+            self.total = total
+            self.allowed = allowed
+            self.forbidden = forbidden
+            self.parent = parent
+    computed_rights = {}
+    position2parent = {}
+    for row in plpy.execute("select menuid, name, position from e_pytis_menu order by position"):
+        menuid, name, position = row['menuid'], row['name'], row['position']
+        if not menuid:
+            continue
+        menu_rights = raw_rights.get(menuid, {})
+        position2parent[position] = menuid
+        if position:
+            parent = position2parent[position[:-2]]
+        else:
+            parent = None
+        for roleid, role_roles in roles.items():
+            max_ = []
+            allowed = []
+            forbidden = []
+            for role in role_roles:
+                raw = menu_rights.get(role) or RawRights()
+                max_ += raw.system
+                allowed += raw.allowed
+                forbidden += raw.forbidden
+            max_rights = []
+            for r in max_:
+                if r not in max_rights:
+                    max_rights.append(r)
+            forbidden_rights = []
+            for r in forbidden:
+                if r not in forbidden_rights:
+                    forbidden_rights.append(r)
+            allowed_rights = []
+            for r in allowed:
+                if r not in forbidden_rights and r not in allowed_rights:
+                    allowed_rights.append(r)
+            raw = menu_rights.get('*') or RawRights()
+            for r in raw.system:
+                if r not in max_rights:
+                    max_rights.append(r)
+            for r in raw.forbidden:
+                if r not in forbidden_rights and f not in allowed_rights:
+                    forbidden_rights.append(r)
+            for r in raw.allowed:
+                if r not in forbidden_rights and f not in allowed_rights:
+                    allowed_rights.append(r)
+            if name:
+                if not max_rights:
+                    for r in menu_rights.values():
+                        if r:
+                            break
+                    else:
+                        max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
+            else:
+                max_rights = None
+            parent_menuid = parent
+            while parent_menuid is not None:
+                parent_rights = computed_rights[(parent_menuid, roleid,)]
+                for r in parent_rights.forbidden:
+                    if r not in forbidden_rights and r not in allowed_rights:
+                        forbidden_rights.append(r)                
+                for r in parent_rights.allowed:
+                    if r not in forbidden_rights and r not in allowed_rights:
+                        allowed_rights.append(r)
+                parent_menuid = parent_rights.parent
+            if max_rights is None:
+                max_rights = allowed_rights
+            rights = [right for right in max_rights if right not in forbidden_rights]
+            if 'show' not in forbidden_rights:
+                rights.append('show')
+            rights.sort()
+            computed_rights[(menuid, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
+    # Insertion of new rights to the database takes most of the time, so we make only real changes
+    old_rights = {}
+    for row in plpy.execute("select menuid, roleid, rights from a_pytis_computed_summary_rights"):
+        old_rights[(row['menuid'], row['roleid'],)] = row['rights']
+    def _pg_escape(val):
+        return str(val).replace("'", "''")
+    for key, all_rights in computed_rights.items():
+        rights = string.join(all_rights.total, ' ')
+        if rights != old_rights.get(key):
+            menuid, roleid = key
+            plpy.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, '%s', '%s')" %
+                         (menuid, _pg_escape(roleid), rights,))
+        try:
+            del old_rights[key]
+        except KeyError:
+            pass
+    for menuid, roleid in old_rights.keys():
+        plpy.execute("delete from a_pytis_computed_summary_rights where menuid=%s and roleid = '%s'" %
+                     (menuid, _pg_escape(roleid),))
+_plpy_function('pytis_update_summary_rights', (), TBoolean,
+               body=pytis_update_summary_rights,
+               depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'e_pytis_menu',),)
+
 viewng('ev_pytis_summary_rights_raw',
        (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',)),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
