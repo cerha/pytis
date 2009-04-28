@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-2 -*-
 
 # Copyright (C) 2009 Brailcom, o.p.s.
 #
@@ -27,6 +27,7 @@ import types
 import psycopg2 as dbapi
 
 import pytis.data
+import pytis.extensions
 import pytis.form
 import pytis.util
 
@@ -331,7 +332,15 @@ def run():
     config.def_dir = def_dir
     resolver = pytis.util.resolver()
     menu = resolver.get('application', 'menu')
-    top = Menu(name=None, title=_("CELÃ‰ MENU"), parent=None, position='', action=None, system=True)
+    menu[0]._items = ((pytis.form.Menu(_("Správa menu a u¾ivatelských rolí"),
+                                       (pytis.extensions.run_form_mitem(_("Menu"), 'menu.ApplicationMenu',
+                                                                        pytis.form.BrowseForm),
+                                        pytis.extensions.run_form_mitem(_("Práva menu"), 'menu.ApplicationMenuM',
+                                                                        pytis.form.MultiBrowseDualForm),
+                                        pytis.extensions.run_form_mitem(_("U¾ivatelské role"), 'menu.ApplicationRoles',
+                                                                        pytis.form.MultiBrowseDualForm),)),)
+                      + menu[0]._items)
+    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position='', action=None, system=True)
     menu_items = {}
     actions = {}
     rights = {}
