@@ -226,14 +226,14 @@ def pytis_matching_actions(complex_action, simple_action):
         return False
     components = complex_action.split('/')
     if components[0] == 'form':
-        last_components = components[-1].split('::')
+        last_components = components[2].split('::')
         if len(last_components) == 2:
             import string
-            prefix = string.join(components[:-1], '/')
+            prefix = string.join(components[:-2], '/')
             result = ((prefix + last_components[0]) == simple_action or
                       (prefix + last_components[1]) == simple_action)
         else:
-            result = ('form/'+components[-1] == simple_action)
+            result = ('form/'+components[2] == simple_action)
     else:
         result = (complex_action == simple_action)
     return result
