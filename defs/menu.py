@@ -252,7 +252,7 @@ class ApplicationRights(pytis.presentation.Specification):
 def _shortname_computer(row):
     # This is duplicate with genmenu, how to share it?
     action = row.cb_value('menuid', 'action').value()
-    action_components = action.split('/')
+    action_components = (action or '').split('/')
     if action_components[0] == 'form':
         shortname = 'form/' + action_components[-1]
     else:
