@@ -314,11 +314,11 @@ def e_pytis_menu_trigger():
                               "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
                 self._return_code = self._RETURN_CODE_MODYFY
         def _do_before_insert(self):
+            self._maybe_new_action()
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             if not self._validate_position():
                 return
-            self._maybe_new_action()
         def _do_before_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
                 return
@@ -655,10 +655,10 @@ def pytis_update_summary_rights():
                 if r not in max_rights:
                     max_rights.append(r)
             for r in raw.forbidden:
-                if r not in forbidden_rights and f not in allowed_rights:
+                if r not in forbidden_rights and r not in allowed_rights:
                     forbidden_rights.append(r)
             for r in raw.allowed:
-                if r not in forbidden_rights and f not in allowed_rights:
+                if r not in forbidden_rights and r not in allowed_rights:
                     allowed_rights.append(r)
             if name:
                 if not max_rights:
@@ -694,10 +694,15 @@ def pytis_update_summary_rights():
         return str(val).replace("'", "''")
     for key, all_rights in computed_rights.items():
         rights = string.join(all_rights.total, ' ')
-        if rights != old_rights.get(key):
+        old_item_rights = old_rights.get(key)
+        if rights != old_item_rights:
             menuid, roleid = key
-            plpy.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, '%s', '%s')" %
-                         (menuid, _pg_escape(roleid), rights,))
+            if old_item_rights is None:
+                plpy.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, '%s', '%s')" %
+                             (menuid, _pg_escape(roleid), rights,))
+            else:
+                plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where menuid = '%s' and roleid = '%s'" %
+                             (rights, menuid, _pg_escape(roleid),))
         try:
             del old_rights[key]
         except KeyError:
