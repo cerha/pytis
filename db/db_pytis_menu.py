@@ -322,8 +322,9 @@ def e_pytis_menu_trigger():
         def _do_before_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
                 return
-            if not self._validate_position():
-                return
+            if self._new['position'] != self._old['position']:
+                if not self._validate_position():
+                    return
             self._maybe_new_action(old=self._old)
         def _do_before_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
@@ -336,6 +337,8 @@ def e_pytis_menu_trigger():
                 self._return_code = self._RETURN_CODE_SKIP
         ## AFTER      
         def _update_positions(self, new=None, old=None):
+            if old and new and old['position'] == new['position']:
+                return
             if old:
                 position = old['position']
                 if new:
