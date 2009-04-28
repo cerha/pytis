@@ -266,7 +266,7 @@ _std_table('e_pytis_menu',
             C('hotkey', TString,
               doc=("Sequence of command keys, separated by single spaces."
                    "The space key is represented by SPC string.")),
-            C('locked', TBoolean,
+            C('locked', TBoolean, default=False,
               doc=("Iff true, this item may not be edited.")),
             ),
            """Menu structure definition.""",
@@ -293,7 +293,7 @@ def e_pytis_menu_trigger():
                 self._return_code = self._RETURN_CODE_MODYFY
             # Valid predecessor?
             else:
-                if (not plpy.execute("select * from e_pytis_menu where position = '%s'" % (position[:-2],)) or
+                if (not plpy.execute("select * from e_pytis_menu where position = '%s' and name is NULL and title is not NULL" % (position[:-2],)) or
                     len(plpy.execute("select * from e_pytis_menu where position like '%s_%%'" % (position[:-2],))) >= 44):
                     self._return_code = self._RETURN_CODE_SKIP
                     return False
@@ -428,14 +428,33 @@ viewng('ev_pytis_menu',
        depends=('e_pytis_menu', 'c_pytis_menu_actions',)
        )
 
-viewng('ev_pytis_menu_parents',
-       (SelectRelation('ev_pytis_menu', alias='main',
-                       condition='main.name is null and main.title is not null'),),
-       insert_order=('e_pytis_menu',),
-       update_order=('e_pytis_menu',),
-       delete_order=('e_pytis_menu',),
+viewng('ev_pytis_menu_all_positions',
+       (SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu1', exclude_columns=('*',),
+                                         condition=""),),
+                         include_columns=(V(None, 'position', 'position'),))),
+        SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu2', exclude_columns=('*',),
+                                         condition="position != '' and substring(position from char_length(position)-2) != '97'"),),
+                         include_columns=(V(None, 'position', "(position::bigint+1)::text"),)),
+                  settype=UNION),
+        SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu3', exclude_columns=('*',),
+                                         condition="name is NULL and title is not NULL"),),
+                         include_columns=(V(None, 'position', "position||'10'"),)),
+                  settype=UNION),),
+       insert=(),
+       update=(),
+       delete=(),
        grant=db_rights,
-       depends=('ev_pytis_menu',)
+       depends=('e_pytis_menu',))
+
+viewng('ev_pytis_menu_positions',
+       (SelectRelation('ev_pytis_menu_all_positions', alias='positions'),
+        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'action', 'position', 'hotkey', 'help', 'locked',),
+                       condition='positions.position = menu.position', jointype=JoinType.LEFT_OUTER),),
+       insert_order=(),
+       update_order=(),
+       delete_order=(),
+       grant=db_rights,
+       depends=('ev_pytis_menu', 'ev_pytis_menu_all_positions',)
        )
 
 ### Access rights

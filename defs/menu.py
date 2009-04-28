@@ -176,7 +176,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('title', _("Titulek polo¾ky menu")),
         Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
               computer=pytis.presentation.computer(_ititle_computer)),
-        Field('position', _("Pozice v menu"), fixed=True),
+        Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
         Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
@@ -215,29 +215,26 @@ class ApplicationMenuM(ApplicationMenu):
                 )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
-# class ApplicationMenus(pytis.presentation.Specification):
-#     # This is almost the same as ApplicationMenu.
-#     # But we can't inherit from it because pytis would suffer from infinite
-#     # recursion.
-#     table = 'ev_pytis_menu_parents'
-#     title = _("Menu")
-#     fields = (
-#         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
-#         Field('name', _("Id obsahující role")),
-#         Field('title', _("Titulek polo¾ky menu")),
-#         Field('ititle', _("Titulek polo¾ky menu")),
-#         Field('parent', _("Rodièovské menu")),
-#         Field('position', _("Pozice v menu"), type=pytis.data.Integer(constraints=(_position_range,)),
-#               fixed=True, default=500),
-#         Field('fullposition', _("Pozice v celém menu")),
-#         Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
-#               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
-#         )
-#     columns = ('ititle',)
-#     layout = ('title', 'position',)
-#     sorting = (('fullposition', pytis.data.ASCENDENT,),)
-#     cb = pytis.presentation.CodebookSpec(display='title')
-#     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
+def _iposition_computer(row, title, position):
+    indentation = ' ' * len(position)
+    if position and position[-1] in '02468':
+        result = indentation + '++++'
+    else:
+        result = indentation + title
+    return result
+class ApplicationMenuPositions(pytis.presentation.Specification):
+    table = 'ev_pytis_menu_positions'
+    title = _("Menu")
+    fields = (
+        Field('position', _("Pozice v menu"), fixed=True),
+        Field('title', _("Titulek polo¾ky menu")),
+        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
+              computer=pytis.presentation.computer(_iposition_computer)),
+        )
+    columns = ('position', 'ititle',)
+    layout = ('title', 'position',)
+    sorting = (('position', pytis.data.ASCENDENT,),)
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 ### Rights
 
