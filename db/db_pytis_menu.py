@@ -340,7 +340,7 @@ def e_pytis_menu_trigger():
                 position = old['position']
                 if new:
                     plpy.execute("update e_pytis_menu set position='0'||substring(position from %s) where position like '%s_%%'" %
-                                 (len(position), position,))
+                                 (len(position)+1, position,))
                 plpy.execute("update e_pytis_menu set position=((substring (position from 1 for %s)::bigint - 2)::text||substring(position from %s)) where position > '%s' and position < '%s'" %
                              (len(position), len(position)+1, position, str(long(position[:-2] or '98') + 1),))
             if new:
@@ -349,7 +349,7 @@ def e_pytis_menu_trigger():
                              (len(position), len(position)+1, position, str(long(position[:-2] or '98') + 1),))
                 if old:
                     plpy.execute("update e_pytis_menu set position='%s'||substring(position from 2) where position like '0%%'" %
-                                 (position,))
+                                 (str(long(position)+1),))
                 plpy.execute("update e_pytis_menu set position=(position::bigint + 1)::text where position = '%s'" %
                              (position,))
         def _do_after_insert(self):
