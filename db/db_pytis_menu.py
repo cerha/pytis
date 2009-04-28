@@ -248,7 +248,7 @@ _std_table('e_pytis_menu',
               doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
             C('title', 'varchar(64)',
               doc='User title of the item. If NULL then it is a separator.'),
-            C('position', TString, constraints=('not null', 'unique',),
+            C('position', TString, constraints=('not null',),
               doc=("Unique identifier of menu item placement within menu. "
                    "The top-menu item position is ''. "
                    "Each submenu has position two characters wider than its parent. "
@@ -256,6 +256,8 @@ _std_table('e_pytis_menu',
                    "lower numbers put the item higher. "
                    "Only odd numbers from 11 to 97 are allowed, "
                    "other numbers are reserved for other purposes. "
+                   "Positions must be unique but it is not enforced by constraints "
+                   "to avoid troubles in triggers. "
                    "Note these rules limit maximum number of items within a given submenu to 44.")),
             C('action', TString, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
@@ -297,7 +299,7 @@ def e_pytis_menu_trigger():
                     len(plpy.execute("select * from e_pytis_menu where position like '%s_%%'" % (position[:-2],))) >= 44):
                     self._return_code = self._RETURN_CODE_SKIP
                     return False
-                if position[:-2] != '10':
+                if position[-2:] != '10':
                     prev_position = str(long(position) - 1)
                     if not plpy.execute("select * from e_pytis_menu where position = '%s'" % (prev_position,)):
                         self._return_code = self._RETURN_CODE_SKIP
@@ -348,6 +350,8 @@ def e_pytis_menu_trigger():
                 if old:
                     plpy.execute("update e_pytis_menu set position='%s'||substring(position from 2) where position like '0%%'" %
                                  (position,))
+                plpy.execute("update e_pytis_menu set position=(position::bigint + 1)::text where position = '%s'" %
+                             (position,))
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
@@ -514,7 +518,7 @@ def e_pytis_action_rights_trigger():
     class Rights(BaseTriggerObject):
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
-        def _update_rights(self, action, roleid):
+        def _update_rights(self):
             plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):

@@ -198,7 +198,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         if row['name'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Koncové polo¾ky menu nelze mazat"))
             return None
-        wm_value = pytis.data.WMValue(pytis.data.String(), row['position'].value() + '*')
+        wm_value = pytis.data.WMValue(pytis.data.String(), row['position'].value() + '?*')
         if row.data().select(condition=pytis.data.WM('position', wm_value)) > 0:
             pytis.form.run_dialog(pytis.form.Warning, _("Nelze mazat polo¾ky obsahující jiné polo¾ky"))
             return None
@@ -220,7 +220,7 @@ def _iposition_computer(row, title, position):
     if position and position[-1] in '02468':
         result = indentation + '++++'
     else:
-        result = indentation + title
+        result = indentation + (title or '')
     return result
 class ApplicationMenuPositions(pytis.presentation.Specification):
     table = 'ev_pytis_menu_positions'
