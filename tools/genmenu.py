@@ -128,7 +128,7 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
                     if other_proc_rights:
                         proc_rights = proc_rights + other_proc_rights.rights.specification()
                     rights[action_id] = Rights(pytis.data.AccessRights(proc_rights), action)
-                else:
+                elif enabled is not None:
                     print "Error: Unexpected `enabled' value: ", enabled, menu.title()
         else:
             if action.description is None:
