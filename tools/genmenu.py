@@ -168,6 +168,8 @@ def process_rights(resolver, actions, rights):
     def add_rights(form_name, action, action_name):
         global _current_form_name
         if form_name.find(':') != -1:
+            if form_name.find('::') == -1:
+                print "Error: Unhandled obsolete form specification %s" % (form_name,)
             return
         pos = form_name.rfind('.')
         if pos == -1:
