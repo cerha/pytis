@@ -1019,7 +1019,7 @@ class MItem(_TitledMenuObject):
             assert len(command) == 2
             assert args is None
             command, args = command
-        assert isinstance(command, Command)
+        assert isinstance(command, Command), (command, command_spec,)
         assert args is None or isinstance(args, types.DictType)
         assert help is None or isinstance(help, types.StringTypes)
         assert hotkey is None or isinstance(hotkey, (types.StringTypes,
