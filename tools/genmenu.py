@@ -35,6 +35,7 @@ def cfg_param(*args, **kwargs):
     return pytis.data.Value(None, None)
 import pytis.extensions
 pytis.extensions.cfg_param = cfg_param
+pytis.extensions.misc.cfg_param = cfg_param
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
