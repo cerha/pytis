@@ -166,7 +166,7 @@ class ApplicationActions(pytis.presentation.Specification):
 
 def _ititle_computer(row, title, position):
     indentation = ' ' * len(position)
-    return indentation + title
+    return indentation + (title or '')
 class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_menu'
     title = _("Menu")
