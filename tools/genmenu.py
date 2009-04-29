@@ -37,6 +37,12 @@ import pytis.extensions
 pytis.extensions.cfg_param = cfg_param
 pytis.extensions.misc.cfg_param = cfg_param
 
+_current_form_name = None
+def is_in_groups(groups):
+    print "Warning: is_in_groups called in %s for groups %s" % (_current_form_name, groups,)
+    return True
+pytis.extensions.is_in_groups = is_in_groups
+
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
     if groups is not None:
@@ -160,6 +166,7 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
 
 def process_rights(resolver, actions, rights):
     def add_rights(form_name, action, action_name):
+        global _current_form_name
         if form_name.find(':') != -1:
             return
         pos = form_name.rfind('.')
@@ -168,6 +175,7 @@ def process_rights(resolver, actions, rights):
             return
         module_name = form_name[:pos].replace('.', '/')
         class_name = form_name[pos+1:]
+        _current_form_name = form_name
         try:
             form_spec = resolver.get_object(module_name, class_name)
             access_rights = form_spec.access_rights
