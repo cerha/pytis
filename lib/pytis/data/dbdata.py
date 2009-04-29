@@ -116,8 +116,7 @@ class DBData(Data):
             del kwargs['key']
         except:
             pass
-        super(DBData, self).__init__(columns=columns, key=key, ordering=ordering,
-                                     **kwargs)
+        super(DBData, self).__init__(columns=columns, key=key, ordering=ordering, **kwargs)
 
     def _db_bindings_to_column_spec(self, bindings):
         """Vra» dvojici (COLUMNS, KEY) odpovídající argumentùm 'Data.__init__'.
@@ -208,9 +207,13 @@ class DBConnectionPool:
                     pass
         with_lock(self._lock, lfunction)
 
+    def _connection_spec_id(self, connection_spec):
+        c = connection_spec
+        return (c.database(), c.host(), c.port(), c.user(), c.password(), c.sslmode())
+
     def get(self, connection_spec):
         pool = self._pool
-        spec_id = tuple(connection_spec.__dict__.values())
+        spec_id = self._connection_spec_id(connection_spec)
         def lfunction():
             try:
                 connections = pool[spec_id]
@@ -229,7 +232,7 @@ class DBConnectionPool:
 
     def put_back(self, connection_spec, connection):
         pool = self._pool
-        spec_id = tuple(connection_spec.__dict__.values())
+        spec_id = self._connection_spec_id(connection_spec)
         def lfunction():
             try:
                 connections = pool[spec_id]
@@ -254,20 +257,29 @@ class DBConnection:
     Pro malé úpravy specifikace lze vyu¾ít metodu 'modified()'.
 
     """
+    _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode')
+    
     def __init__(self, user=None, password=None, host=None, port=None,
-                 database=None, sslmode='allow'):
-        """Nastav parametry pøipojení.
+                 database=None, sslmode='allow', alternatives={}, _name=None):
+        """Initialize connection specification instance.
 
-        Argumenty:
+        Arguments:
         
-          user -- databázový u¾ivatel jako string nebo 'None'
-          password -- heslo u¾ivatele jako string nebo 'None'
-          host -- jméno databázového serveru jako string nebo 'None'
-          port -- èíslo portu na serveru jako integer nebo 'None'
-          database -- jméno databáze jako string nebo 'None'
-          sslmode -- jedna z øetìzcových konstant akceptovaných PostgreSQL
+          user -- database user as a string or 'None'
+          password -- database password as a string or 'None'
+          host -- database server name as a string or 'None'
+          port -- database server port number as an int or 'None'
+          database -- database name as a string or 'None'
+          sslmode -- one of string constants accepted by PostgreSQL
+          alternatives -- dictionary of alternative connection parameters.  Alternative
+            database connections are identified by name and data object specifications may refer
+            to these names to use connect to alternative data sources (thus the number and names
+            of alternative connections is application specific).  The dictionary keys are
+            connection names and the values are dictionaries of connection options ('user',
+            'password', 'host', 'database', ...) with the same meaning as the corresponding
+            arguments.
 
-        Je-li kterýkoliv z argumentù 'None', není pøi pøipojování uva¾ován.
+        Arguments with the value 'None' will be ignored when connecting to the database.
 
         """
         self._user = user
@@ -276,13 +288,22 @@ class DBConnection:
         self._port = port
         self._database = database
         self._sslmode = sslmode
+        if not alternatives.has_key(None):
+            # Add the default connection to the alternatives if it is not already there, to be able
+            # to `select()' back to it.
+            alternatives[None] = self._options()
+        self._alternatives = alternatives
+        # Passing this private argument avoids unnecessay duplication of instances in `select()'.
+        self._name = _name
 
+    def _options(self, exclude=()):
+        return dict([(option, self.__dict__['_'+option])
+                     for option in self._OPTIONS
+                     if option not in exclude and self.__dict__['_'+option] is not None])
+    
     def __str__(self):
-        params = ["%s='%s'" % (k,v)
-                  for k,v in [(k, getattr(self, '_'+k))
-                              for k in ('user', 'host', 'port', 'database', 'sslmode',)]
-                  if v is not None]
-        return "<%s %s>" % (self.__class__.__name__, ", ".join(params))
+        options = ["%s='%s'" % item for item in self._options(exclude=('password',)).items()]
+        return "<%s %s>" % (self.__class__.__name__, ", ".join(options))
 
     def user(self):
         """Vra» databázového u¾ivatele jako string nebo 'None'."""
@@ -314,30 +335,37 @@ class DBConnection:
         rovnají odpovídající si parametry zadané jejich konstruktorùm.
 
         """
-        return compare_attr(self, other, ('_user', '_password', '_host',
-                                          '_port', '_database', '_sslmode',))
+        return compare_attr(self, other, ['_'+option for option in self._OPTIONS])
 
     def __hash__(self):
-        return hash_attr(self,
-                         ('_user', '_password', '_host', '_port', '_database', '_sslmode',))
+        return hash_attr(self, ['_'+option for option in self._OPTIONS])
+
+    def select(self, name):
+        """Return the specification instance activated for given connection name.
+
+        Available connection names are defined by the 'alternatives' constructor argument.  'None'
+        is reserved for the default connection.  The list of alternative connections is kept, so it
+        is possible to switch back to a previous connection using 'select()' again.
+        
+        """
+        if name == self._name:
+            return self
+        else:
+            options = dict(self._alternatives[name], alternatives=self._alternatives, _name=name)
+            return self.__class__(**options)
 
     def modified(self, **kwargs):
-        """Vra» novou instanci specifikace updatované zadanými argumenty.
+        """Return the new specification instance updated by given arguments.
 
-        Nová instance má se 'self' shodné v¹echny parametry a¾ na ty, jejich¾
-        nové hodnoty jsou specifikovány v 'kwargs'.
+        The new instance is the same as 'self', except for the values of passed keyword arguments.
 
-        Argumenty:
+        Arguments:
 
-          kwargs -- klíèované argumenty stejné jako v konstruktoru
+          kwargs -- keyword arguments same as in constructor.
 
         """
-        args = {}
-        for k, v in self.__dict__.items():
-            args[k[1:]] = v
-        args.update(kwargs)
-        new = apply(self.__class__, (), args)
-        return new
+        options = dict(self._options(), alternatives=self._alternatives, **kwargs)
+        return self.__class__(**options)
 
 
 class DBBinding:

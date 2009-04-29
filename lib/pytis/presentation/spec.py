@@ -2716,6 +2716,14 @@ class Specification(object):
     data_cls = pytis.data.DBDataDefault
     """Datová tøída pou¾itá pro vytvoøení datového objektu."""
 
+    connection = None
+    """Name of the database connection to use.
+
+    If None, the default database connection is used.  If not None, the value is a string
+    identifier of connection options defined within 'dbconnections' configuration option.
+
+    """
+
     bindings = {}
     """Specification of bindings for use in dual forms.
     
@@ -2751,8 +2759,8 @@ class Specification(object):
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
-                   attr not in ('table', 'key', 'access_rights', 'condition', 'distinct_on',
-                                'data_cls', 'bindings', 'cb', 'prints',
+                   attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
+                                'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
@@ -2825,7 +2833,7 @@ class Specification(object):
         if access_rights is None:
             perm = pytis.data.Permission.ALL
             access_rights = pytis.data.AccessRights((None, (None, perm)))
-        kwargs = dict(access_rights=access_rights,
+        kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on)
         return _DataFactoryWithOrigin(self.data_cls, *args, **kwargs)
 

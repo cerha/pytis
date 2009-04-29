@@ -1,5 +1,13 @@
 2009-04-29  Tomas Cerha  <cerha@debian.brailcom.xx>
 
+	* pytis/data/_test.py:
+	* pytis/data/dbdata.py:
+	* pytis/data/postgresql.py:
+	* pytis/data/types_.py:
+	* pytis/presentation/spec.py:
+	* pytis/util/configuration.py:
+	Added support for multiple database connections in one application.
+
 	* pytis/web/field.py: 
 	* pytis/web/form.py: 
 	Recognize `selection_type' for web codebook fields.

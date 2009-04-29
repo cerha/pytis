@@ -2,7 +2,7 @@
 
 # Prostøedky pro definici a zpracování konfigurace bìhu aplikace
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -518,15 +518,41 @@ class Configuration(object):
         _DESCR = _("Port databázového serveru.")
         _DEFAULT = None
     
+    class _Option_dbconnections(HiddenOption):
+        _DESCR = "Alternative database connections."
+        _DOC = ("The default database connection is normally defined by 'dbconnection'.  Certain "
+                "applications, however, may require multiple database connections, which are "
+                "configured using this option.  The value is a dictionary assigning a connection "
+                "specification to each connection by name.  Connection names are defined by "
+                "applications (each application should mention the names of used conections in its "
+                "documentation).  The connection specification (the value assigned to a connection "
+                "name) is a dictionary with keys 'dbname', 'dbhost', 'dbport', 'dbuser' and "
+                "'dbpass'.  Only 'dbname' is mandatory.  Their meaning and default values are the "
+                "same as for the configuration options of the same names specifying the properties "
+                "of the default connection.")
+        _DEFAULT = {}
+        
     class _Option_dbconnection(HiddenOption):
         _DESCR = _("Instance specifikace spojení do databáze "
                    "('pytis.data.DBConnection').")
         _DOC = _("Implicitnì se vytváøí z vý¹e uvedených databázových voleb.")
         def default(self):
-            c = self._configuration
-            return pytis.data.DBConnection(user=c.dbuser, password=c.dbpass,
-                                           database=c.dbname, host=c.dbhost,
-                                           port=c.dbport)
+            map = {'dbname': 'database',
+                   'dbhost': 'host',
+                   'dbport': 'port',
+                   'dbuser': 'user',
+                   'dbpass': 'password',
+                   'dbsslm': 'sslmode'}
+            def connection_options(items):
+                # Transform configuration option names to DBConnection option names.
+                return dict([(map[key], value) for key, value in items
+                             if value is not None])
+            cfg = self._configuration
+            options = connection_options([(option, getattr(cfg, option))
+                                          for option in map.keys() if hasattr(cfg, option)])
+            alternatives = [(name, connection_options(opts.items()))
+                            for name, opts in cfg.dbconnections.items()]
+            return pytis.data.DBConnection(alternatives=dict(alternatives), **options)
 
     class _Option_dblogtable(StringOption):
         _DESCR = _("Jméno tabulky, do které mají být logovány DML SQL pøíkazy.")

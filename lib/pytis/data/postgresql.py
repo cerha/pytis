@@ -321,7 +321,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
     _pg_connection_pool_ = None
     
-    def __init__(self, connection_data, **kwargs):
+    def __init__(self, connection_data, connection_name=None, **kwargs):
         """
         Arguments:
 
@@ -346,20 +346,21 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 DBConnectionPool(self._postgresql_new_connection,
                                  self._postgresql_close_connection)
         if isinstance(connection_data, DBConnection):
-            def _lambda(connection_data=connection_data):
+            def connection_data_function(connection_data=connection_data):
                 return connection_data
-            connection_data = _lambda
+            connection_data = connection_data_function
+        assert connection_data is not None
+        self._connection_name = connection_name
         self._pg_connection_data_ = connection_data
         self._pg_connections_ = []
         self._pg_query_lock = thread.allocate_lock()
-        super(PostgreSQLConnector, self).__init__(
-            connection_data=connection_data, **kwargs)
+        super(PostgreSQLConnector, self).__init__(connection_data=connection_data, **kwargs)
 
     def _pg_connection_pool(self):
         return PostgreSQLConnector._pg_connection_pool_
 
     def _pg_connection_data(self):
-        return self._pg_connection_data_()
+        return self._pg_connection_data_().select(self._connection_name)
 
     def _pg_connections(self):
         return self._pg_connections_
@@ -898,7 +899,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_kwargs['unique'] = unique
             enumerator = type_kwargs.get('enumerator')
             if enumerator and isinstance(enumerator, DataEnumerator):
-                enumerator.set_data_factory_kwargs(connection_data=self._pg_connection_data())
+                enumerator.set_connection_data(self._pg_connection_data())
             if type_class_ == String:
                 if type_ != 'text':
                     try:

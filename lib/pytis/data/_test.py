@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -597,7 +597,10 @@ class DBConnection(unittest.TestCase):
     def setUp(self):
         C = pytis.data.DBConnection
         self._connection = C(user='login', password='heslo',
-                             host='localhost', port=1234, database='db')
+                             host='localhost', port=1234, database='db',
+                             alternatives=dict(remote=dict(user='login2',
+                                                           host='remotehost',
+                                                           database='db2')))
         self._connection2 = C(user='login', password='heslo',
                               host='localhost', port=1234, database='db')
         self._connection3 = C(user='login', password='heslo',
@@ -622,6 +625,23 @@ class DBConnection(unittest.TestCase):
         assert c.database() == cc.database()
         assert c.host() == 'localhost'
         assert cc.host() == 'remotehost'
+    def test_select(self):
+        c = self._connection
+        c1 = c.select('remote')
+        assert c1.user() == 'login2'
+        assert c1.password() == None
+        assert c1.host() == 'remotehost'
+        assert c1.port() == None
+        assert c1.database() == 'db2'
+        c2 = c1.select(None)
+        assert c.user() == c2.user(), (c.user(), c2.user())
+        assert c.password() == c2.password()
+        assert c.host() == c2.host()
+        assert c.port() == c2.port()
+        assert c.database() == c2.database()
+        assert c == c2
+        c3 = c.select(None)
+        assert c == c3
 tests.add(DBConnection)
 
 

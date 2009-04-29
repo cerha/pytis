@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1644,7 +1644,7 @@ class DataEnumerator(Enumerator):
             validity_condition = EQ(validity_column, Value(Boolean(), True))            
         self._validity_condition = validity_condition
         self._change_callbacks = []
-        self._data_factory_kwargs = None
+        self._connection_data = None
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -1655,10 +1655,10 @@ class DataEnumerator(Enumerator):
         
     def _complete(self):
         # Finish the instance by data object creation.
-        if self._data_factory_kwargs is None:
+        if self._connection_data is None:
             import config
-            self._data_factory_kwargs = dict(connection_data=config.dbconnection)
-        self._data = data = self._data_factory.create(**self._data_factory_kwargs)
+            self._connection_data = config.dbconnection
+        self._data = data = self._data_factory.create(connection_data=self._connection_data)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()
         else:
@@ -1741,8 +1741,8 @@ class DataEnumerator(Enumerator):
         """Vra» specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""
         return self._data_factory
     
-    def set_data_factory_kwargs(self, **kwargs):
-        self._data_factory_kwargs = kwargs
+    def set_connection_data(self, connection_data):
+        self._connection_data = connection_data
     
     def value_column(self):
         """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""
