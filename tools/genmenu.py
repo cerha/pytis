@@ -278,7 +278,7 @@ def transfer_roles(cursor, present_roles):
                 cursor.execute("insert into e_pytis_roles (name, purposeid) values (%s, %s)",
                                (role, purpose,))
             elif purpose != 'appl':
-                cursor.execute("update e_pytis_roles set purposeid=%s where role = %s",
+                cursor.execute("update e_pytis_roles set purposeid=%s where name = %s",
                                (purpose, role,))
     # membership
     cursor.execute("select roles1.rolname as owner, roles2.rolname as member "
