@@ -1,3 +1,9 @@
+2009-04-29  Tomas Cerha  <cerha@debian.brailcom.xx>
+
+	* pytis/web/field.py: 
+	* pytis/web/form.py: 
+	Recognize `selection_type' for web codebook fields.
+
 2009-03-06  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* pytis/form/screen.py: 

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2006-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ class _Field(object):
         self.column_label = spec.column_label()
         self.label = spec.label()
         self.virtual = spec.virtual()
+        self.selection_type = spec.selection_type()
         # Initialize the formatter at the end.
         self.formatter = FieldFormatter(self, form, uri_provider)
 

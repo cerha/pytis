@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2006-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -337,7 +337,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             attr['checked'] = value.value()
         elif isinstance(type, pytis.data.Binary):
             ctrl = g.upload
-        elif type.enumerator():
+        elif type.enumerator() and field.selection_type in (SelectionType.CHOICE, None):
             ctrl = g.select
             enum = self._row.enumerate(field.id)
             attr['options'] = [("&nbsp;", "")] + \
