@@ -1,5 +1,10 @@
 2009-04-30  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/application.py:
+	Fixes of typos in has_access docstring.
+
+2009-04-30  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/dbapi.py:
 	Raise DBSystemException instead of DBException on database connection failure.
 

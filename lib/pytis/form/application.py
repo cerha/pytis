@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1321,16 +1321,16 @@ def block_refresh(function, *args, **kwargs):
     return Refreshable.block_refresh(function, *args, **kwargs)
 
 def has_access(name, perm=pytis.data.Permission.VIEW):
-    """Return true if the current user has given permition for given spec.
+    """Return true if the current user has given permission for given spec.
 
     Argumenty:
     
-      name -- sepcification name as a string.  May also be a dual name
-        (containing `::').  In such a case, the permition is checked for both
+      name -- specification name as a string.  May also be a dual name
+        (containing `::').  In such a case, the permission is checked for both
         names.
-      perm -- access permition as one of `pytis.data.Permission' constants.
+      perm -- access permission as one of `pytis.data.Permission' constants.
 
-    Raises 'ResolverError' if given specification name can not be found.
+    Raises 'ResolverError' if given specification name cannot be found.
 
     """
     try:
