@@ -1515,27 +1515,12 @@ class RecordForm(LookupForm):
         # The return value is used in derived classes!
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
             return False
-        # O¹etøení u¾ivatelské funkce pro mazání
-        on_delete_record = self._view.on_delete_record()
-        if on_delete_record is not None:
-            condition = on_delete_record(row=self.current_row())
-            if condition is None:
-                return False
-            assert isinstance(condition, pytis.data.Operator)
-            op, arg = self._data.delete_many, condition
-        else:
-            if not run_dialog(Question, _("Opravdu chcete záznam zcela vymazat?")):
-                return False
-            op, arg = self._data.delete, self._current_key()
-        log(EVENT, 'Deleting record:', arg)
-        success, result = db_operation(op, arg, transaction=self._transaction)
-        if success:
+        if delete_record(self._view, self._data, self._transaction, self.current_row()):
             self._signal_update()
-            log(ACTION, 'Record deleted.')
             return True
         else:
             return False
-
+        
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and len(self.selected_rows()) < 1:
             return False

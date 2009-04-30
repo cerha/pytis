@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1110,6 +1110,40 @@ def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
             
     """
     return Application.COMMAND_NEW_RECORD.invoke(**locals())
+
+def delete_record(view, data, transaction, record,
+                  question=_("Opravdu chcete záznam zcela vymazat?")):
+    # This is here only to prevent duplication of code in form.py and inputfield.py.
+    # It Shound not be used as a public API method.
+    ask = True
+    key = record.row().columns([c.id() for c in data.key()])
+    # Ošetření uživatelské funkce pro mazání
+    on_delete_record = view.on_delete_record()
+    if on_delete_record is not None:
+        result = on_delete_record(record)
+        if result is True:
+            op, arg = data.delete, key
+        elif result is False or result is None:
+            return False
+        elif isinstance(result, (str, unicode)):
+            run_dialog(Error, result)
+            return False
+        elif isinstance(result, pytis.data.Operator):
+            ask = False
+            op, arg = data.delete_many, result
+        else:
+            raise ProgramError("Invalid 'on_delete_record' return value.", result)
+    else:
+        op, arg = data.delete, key
+    if ask and not run_dialog(Question, question):
+        return False
+    log(EVENT, 'Deleting record:', arg)
+    success, result = db_operation(op, arg, transaction=transaction)
+    if success:
+        log(ACTION, 'Record deleted.')
+        return True
+    else:
+        return False
 
 def refresh():
     """Aktualizuj zobrazení viditelných oken aplikace, pokud je to třeba."""

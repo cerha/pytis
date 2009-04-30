@@ -888,13 +888,16 @@ class ViewSpec(object):
             jím¾ je instance 'PresentedRow', lze pøedefinovat editaci záznamu
             libovolnou vlastní funkcionalitou.
             
-          on_delete_record -- akce vymazání záznamu.  Pokud je None, bude
-            provedena výchozí akce (vymazání záznamu).  Pøedáním funkce
-            jednoho klíèového argumentu, jím¾ je instance 'PresentedRow', lze
-            pøedefinovat vymazání záznamu libovolnou vlastní
-            funkcionalitou. Pokud tato funkce vrací None, nedojde k ¾ádným
-            dal¹ím akcím, pokud vrací instancí 'pytis.data.Operator', bude
-            provedeno 'pytis.data.delete_many()' s pøíslu¹nou podmínkou.
+          on_delete_record -- user defined record deletion function.  If defined, it must be a
+            function of one argument (the current record as a PresentedRow instance) which will be
+            called on users request to delete a record.  Further processing of the deletion request
+            will depend on the result value of the function as follows: If the function returns
+            True, the deletion will continue by the default action (user is asked for confirmation
+            and record is deleted) as it the function was not defined.  If None or False is
+            returned the deletion is aborted.  If a string or unicode is returned, the message is
+            printed as an error message and the deletion is aborded.  Finally, if a
+            'pytis.data.Operator' instance is returned, all records matching given condition are
+            deleted without further prompting.
             
           redirect -- redirection for single record view/editation specified as a callable object
             (function) of one argument - the 'PresentedRow' instance.  The function should return

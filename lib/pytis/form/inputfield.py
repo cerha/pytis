@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1514,26 +1514,10 @@ class ListField(GenericCodebookField):
     def _cmd_delete_selected(self):
         view = resolver().get(self._cb_name, 'view_spec')
         data = create_data_object(self._cb_name)
+        transaction = self._row.transaction()
         row = self._current_row()
-        on_delete_record = view.on_delete_record()
-        # TODO: This code duplicates the code in `Form._cmd_delete_record()'.
-        if on_delete_record is not None:
-            condition = on_delete_record(row)
-            if condition is None:
-                self._reload_enumeration()
-                return
-            assert isinstance(condition, pytis.data.Operator)
-            op, arg = data.delete_many, condition
-        else:
-            msg = _("Opravdu chcete položku %s zcela vymazat z číselníku?")
-            if not run_dialog(Question, msg % self._row[self._id].export()):
-                return
-            key = row.row().columns([c.id() for c in data.key()])
-            op, arg = data.delete, key
-        log(EVENT, 'Deleting record:', arg)
-        success, result = db_operation(op, arg, transaction=self._row.transaction())
-        if success:
-            log(ACTION, 'Record deleted.')
+        question = _("Opravdu chcete položku %s zcela vymazat z číselníku?") % self._row[self._id].export()
+        delete_record(view, data, transaction, row, question=question)
         self._reload_enumeration()
         
     def _cmd_new_codebook_record(self):
