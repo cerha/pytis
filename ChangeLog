@@ -1,3 +1,8 @@
+2009-04-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Added hack clarification comment.
+
 2009-03-30  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/gensql.py:

@@ -899,6 +899,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_kwargs['unique'] = unique
             enumerator = type_kwargs.get('enumerator')
             if enumerator and isinstance(enumerator, DataEnumerator):
+                # This hack makes it possible to use the current connection in enumerator data
+                # object instead of config.dbconnection, which is not set in the web environment.
                 enumerator.set_connection_data(self._pg_connection_data())
             if type_class_ == String:
                 if type_ != 'text':
