@@ -64,7 +64,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if msg.find('password') != -1 or \
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
-            raise DBException(_("Can't connect to database"), e)
+            raise DBSystemException(_("Can't connect to database"), e)
         return class_._postgresql_Connection(connection, connection_data)
 
     @classmethod

@@ -1,3 +1,8 @@
+2009-04-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Raise DBSystemException instead of DBException on database connection failure.
+
 2009-04-29  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* pytis/data/_test.py:
