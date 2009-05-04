@@ -187,8 +187,8 @@ def process_rights(resolver, actions, rights):
             print "Couldn't get access rights for form %s: %s" % (form_name, e,)
             return
         if access_rights is None:
-            print "No access rights specified for form %s" % (form_name,)
-            return
+            print "No access rights specified for form %s, assuming everything permitted" % (form_name,)
+            access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.ALL)),)
         rights[action_name] = Rights(access_rights, action)
     for action in (actions.values() +
                    [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
