@@ -254,7 +254,7 @@ def _shortname_computer(row):
     action = row.cb_value('menuid', 'action').value()
     action_components = (action or '').split('/')
     if action_components[0] == 'form':
-        shortname = 'form/' + action_components[-1]
+        shortname = 'form/' + action_components[2]
     else:
         shortname = action
     return shortname
