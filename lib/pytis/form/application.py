@@ -1493,7 +1493,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
             groups = pytis.data.default_access_groups(config.dbconnection)
             if not rights.permitted(perm, groups):
                 return False
-    return action_has_access('form/'+name)
+    return action_has_access('form/'+name, perm=perm)
 
 def action_has_access(action, perm=pytis.data.Permission.CALL):
     """Return true iff 'action' has 'perm' permission.
