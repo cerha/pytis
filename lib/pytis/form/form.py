@@ -292,10 +292,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         DELETE = pytis.data.Permission.DELETE
         EXPORT = pytis.data.Permission.EXPORT
         if perm == DELETE:
-            result = self._data.permitted(None, perm)
+            result = has_access(self.name(), perm=perm)
         else:
             for col in self._data.columns():
-                if self._data.permitted(col.id(), perm):
+                if has_access(self.name(), perm=perm, column=col.id()):
                     result = True
                     break
             else:

@@ -1466,15 +1466,17 @@ def init_access_rights():
         _access_rights[shortname] = _access_rights.get(shortname, []) + rights
     rights_data.select_map(process)
     
-def has_access(name, perm=pytis.data.Permission.VIEW):
+def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     """Return true if the current user has given permission for given spec.
 
-    Argumenty:
+    Arguments:
     
       name -- specification name as a string.  May also be a dual name
         (containing `::').  In such a case, the permission is checked for both
         names.
-      perm -- access permission as one of `pytis.data.Permission' constants.
+      perm -- access permission as one of `pytis.data.Permission' constants.    
+      column -- string identifier of the column to check or 'None' (no specific
+        column checked).
 
     Raises 'ResolverError' if given specification name cannot be found.
 
@@ -1491,17 +1493,19 @@ def has_access(name, perm=pytis.data.Permission.VIEW):
         rights = resolver().get(name, 'data_spec').access_rights()
         if rights:
             groups = pytis.data.default_access_groups(config.dbconnection)
-            if not rights.permitted(perm, groups):
+            if not rights.permitted(perm, groups, column=column):
                 return False
-    return action_has_access('form/'+name, perm=perm)
+    return action_has_access('form/'+name, perm=perm, column=column)
 
-def action_has_access(action, perm=pytis.data.Permission.CALL):
+def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
     """Return true iff 'action' has 'perm' permission.
 
     Arguments:
 
       action -- action identifier, string
       perm -- access permission as one of `pytis.data.Permission' constants
+      column -- string identifier of the column to check or 'None' (no specific
+        column checked).
 
     """
     if _access_rights is UNDEFINED:
