@@ -579,6 +579,15 @@ class GroupSpec(object):
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
+        if __debug__:
+            allowed_item_types = (GroupSpec, Button, str, unicode)
+            try:
+                # Avoid the dependency on LCG, but allow LCG content if LCG is available.
+                import lcg
+            except:
+                pass
+            else:
+                allowed_item_types += (lcg.Content,)
         for i, item in enumerate(items):
             if isinstance(item, (tuple, list)):
                 if isinstance(items, tuple):
@@ -586,7 +595,7 @@ class GroupSpec(object):
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
                 # No need for recursion, since the check is performed for each group on its level.
-                assert isinstance(item, (GroupSpec, Button, str, unicode)), item
+                assert isinstance(item, allowed_item_types), item
         self._items = tuple(items)
         self._label = label
         self._orientation = orientation

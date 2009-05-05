@@ -160,6 +160,8 @@ class LayoutForm(FieldForm):
         for item in group.items():
             if isinstance(item, Button):
                 pass
+            elif isinstance(item, lcg.Content):
+                result.append(item.export(context))
             elif isinstance(item, GroupSpec):
                 if fields:
                     result.append(self._export_fields(g, fields))

@@ -1,3 +1,9 @@
+2009-05-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	* lib/pytis/web/form.py:
+	Added support for placing arbitrary content into web form layout.
+
 2009-04-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
