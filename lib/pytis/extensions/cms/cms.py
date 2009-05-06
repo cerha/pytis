@@ -80,6 +80,16 @@ class Modules(Specification):
     columns = ('modname', 'descr')
     def bindings(self):
         return (Binding(_("Dostupné akce tohoto modulu"), self._spec_name('Actions'), 'mod_id'),)
+    def on_delete_record(self, record):
+        import pytis.form
+        data = pytis.form.create_data_object(self._spec_name('Menu'))
+        count = data.select(condition=pd.EQ('mod_id', record['mod_id']))
+        data.close()
+        if count:
+            return _("Modul je pou¾íván v existujících stránkách.\n"
+                     "Pokud jej chcete vymazat, zru¹te nejprve v¹echny navázané stránky.")
+        else:
+            return True
 
 
 class MenuParents(Specification):
@@ -143,6 +153,15 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zaøazena "
                       "na konec.")),
         )
+    def on_delete_record(self, record):
+        data = record.data()
+        count = data.select(condition=pd.EQ('parent', record['menu_item_id']))
+        data.close()
+        if count:
+            return _("Polo¾ka má podøízené polo¾ky.\n"
+                     "Pokud ji chcete vymazat, vyma¾te nejprve v¹echny podpolo¾ky.")
+        else:
+            return True
     def row_style(self, record):
         if not record['published'].value():
             return pp.Style(foreground='#777', background='#eee')

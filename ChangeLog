@@ -1,3 +1,9 @@
+2009-04-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Handle deletion of referenced menu items and modules by
+	understandable error message.
+
 2009-04-06  Tomas Cerha  <cerha@debian.brailcom.xx>
 
 	* lib/pytis/extensions/cms/web.py: 
