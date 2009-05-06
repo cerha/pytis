@@ -676,7 +676,7 @@ def pytis_update_summary_rights():
             while parent_menuid is not None:
                 parent_rights = computed_rights[(parent_menuid, roleid,)]
                 for r in parent_rights.forbidden:
-                    if r not in forbidden_rights and r not in allowed_rights:
+                    if r not in forbidden_rights and (r == 'show' or r not in allowed_rights):
                         forbidden_rights.append(r)                
                 for r in parent_rights.allowed:
                     if r not in forbidden_rights and r not in allowed_rights:
