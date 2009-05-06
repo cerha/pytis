@@ -450,6 +450,26 @@
 	* lib/pytis/presentation/spec.py:
 	* lib/pytis/web/form.py:
 	Added support for placing arbitrary content into web form layout.
+	
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Don't display `menu/' action identifiers in DMP forms.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fix in computation of show rights.
+
+2009-05-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Genmenu: When there are no access rights specified, permit everything.
+
+2009-05-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Fix in computation of shortname in ApplicationMenuRights.
 
 2009-04-30  Tomas Cerha  <cerha@brailcom.org>
 
