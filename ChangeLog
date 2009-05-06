@@ -1,3 +1,8 @@
+2009-05-06  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Handle authentication correctly also for modules with pytis redirection..
+
 2009-04-30  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:

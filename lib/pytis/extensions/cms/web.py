@@ -100,11 +100,19 @@ class Menu(wiking.PytisModule):
             if module is self and action in ('view', 'subpath') \
                    and record is not None and record['menu_item_id'].value() == menu_item_id:
                 roles = rights.permitted_roles(menu_item_id, 'visit')
-            elif module.name() == menu_record['modname'].value():
-                roles = rights.permitted_roles(menu_item_id, action)
             else:
-                roles = ()
-            #wiking.debug(">>>", module.name(), action,
+                # Find the original module if the request was forwarded due to pytis redirection
+                # (access rights are defined for menu items which are bound to the original module).
+                forwards = req.forwards()
+                i = len(forwards) - 1
+                while i > 0 and forwards[i].arg('pytis_redirect'):
+                    module = forwards[i-1].module()
+                    i -= 1
+                if module.name() == menu_record['modname'].value():
+                    roles = rights.permitted_roles(menu_item_id, action)
+                else:
+                    roles = ()
+            #wiking.debug(">>>", module.name(), menu_record['modname'].value(), action,
             #             menu_item_id, roles, req.check_roles(roles))
             return req.check_roles(roles)
         else:
