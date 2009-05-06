@@ -167,6 +167,12 @@ class ApplicationActions(pytis.presentation.Specification):
 def _ititle_computer(row, title, position):
     indentation = ' ' * len(position)
     return indentation + (title or '')
+def _xaction_computer(row, action):
+    if action.startswith('menu/'):
+        result = ''
+    else:
+        result = action
+    return result
 class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_menu'
     title = _("Menu")
@@ -179,9 +185,12 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
         Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+        Field('xaction', _("Navì¹ená akce"), virtual=True,
+              computer=pytis.presentation.computer(_xaction_computer),
+              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
-    columns = ('ititle', 'action', 'locked',)
+    columns = ('ititle', 'xaction', 'locked',)
     layout = ('title', 'position',)
     sorting = (('position', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
@@ -258,6 +267,8 @@ def _shortname_computer(row):
     else:
         shortname = action
     return shortname
+def _xshortname_computer(row, shortname):
+    return _xaction_computer(row, shortname)
 class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_menu_rights'
     title = _("Práva")
@@ -269,6 +280,9 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('shortname', _("Primitivní akce"), editable=pytis.presentation.Editable.NEVER,
               fixed=True, computer=pytis.presentation.computer(_shortname_computer),
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
+        Field('xshortname', _("Primitivní akce"), virtual=True, fixed=True,
+              computer=pytis.presentation.computer(_xshortname_computer),
+              descr=_("Identifikátor akce související s danou polo¾kou menu")),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True,
               descr=_("Pøidìlené nebo odebrané právo")),
@@ -277,8 +291,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('granted', _("Ano/Ne"), fixed=True, default=True,
               descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
         )
-    columns = ('menuid', 'roleid', 'shortname', 'rightid', 'system', 'granted',)
-    layout = ('shortname', 'roleid', 'rightid', 'granted',)
+    columns = ('menuid', 'roleid', 'xshortname', 'rightid', 'system', 'granted',)
+    layout = ('xshortname', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
