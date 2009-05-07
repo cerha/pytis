@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -152,10 +152,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _init_columns(self, columns=None):
         if not columns:
-            default = self._default_columns()
-            columns = [id for id in self._get_state_param('columns', default,
-                                                          types.TupleType)
-                       if self._view.field(id)] or default
+            default_columns = self._default_columns()
+            columns = []
+            for id in self._get_state_param('columns', default_columns, types.TupleType):
+                f = self._view.field(id)
+                if f and not f.disable_column():
+                    columns.append(id)
+            if not columns:
+                columns = default_columns
         self._columns = [self._view.field(id) for id in columns]
     
     def _init_grouping(self, grouping=None):
