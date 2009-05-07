@@ -1,5 +1,10 @@
 2009-05-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* tools/make-tags.sh:
+	Create TAGS table in the package root directory, bot in `lib'..
+
+2009-05-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* COPYING:
 	* ChangeLog.lib.1:
 	* ChangeLog.lib.2:
