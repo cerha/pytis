@@ -1,3 +1,9 @@
+2009-05-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/__init__.py:
+	* lib/pytis/extensions/cms/cms.py:
+	Manage system roles separately to avoid confusion in user role assignment..
+
 2009-05-06  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:

@@ -187,10 +187,12 @@ class Users(Specification):
         Field('login', _("Pøihla¹ovací jméno"), width=16),
         Field('fullname', _("Celé jméno"), width=40),
         Field('passwd', _("Heslo"),
-              type=pd.Password(not_null=True, minlen=4, md5=True)))
+              type=pd.Password(not_null=True, minlen=4, md5=True)),
+        )
     layout = ('login', 'fullname', 'passwd')
     columns = ('uid', 'login', 'fullname')
     cb = CodebookSpec(display='fullname')
+    sorting = (('login', ASC),)
     def bindings(self):
         return (Binding(_("U¾ivatelské role"), self._spec_name('UserRoles'), 'uid'),
                 #Binding(_("Historie pøihlá¹ení"), self._spec_name('UserSessionLog'), 'uid'),
@@ -201,16 +203,28 @@ class Roles(Specification):
     title = _("U¾ivatelské role")
     help = _("Správa dostupných u¾ivatelských rolí, které je mo¾né pøiøazovat u¾ivatelùm.")
     table = 'cms_roles'
-    fields = (Field('role_id', default=nextval('cms_roles_role_id_seq')),
-              Field('name', _("Název"), width=16),
-              Field('system_role', _("Systémová role"), width=16),
-              Field('description', _("Popis"), width=64))
-    layout = ('name', 'system_role', 'description')
+    def fields(self): return (
+        Field('role_id', default=nextval('cms_roles_role_id_seq')),
+        Field('name', _("Název"), width=16),
+        Field('system_role', _("Systémová role"), width=16, not_null=True),
+        Field('description', _("Popis"), width=64),
+        )
+    layout = ('name', 'description')
     columns = ('name', 'description')
-    def bindings(self):
-        return (Binding(_("U¾ivatelé zaøazení do této role"),
-                        self._spec_name('RoleUsers'), 'role_id'),)
+    condition = pd.EQ('system_role', pd.Value(pd.String(), None))
+    def bindings(self): return (
+        Binding(_("U¾ivatelé zaøazení do této role"), self._spec_name('RoleUsers'), 'role_id'),
+        )
     cb = CodebookSpec(display='name')
+
+class SystemRoles(Roles):
+    title = _("Systémové role")
+    help = _("Systémové role jsou u¾ivatelùm pøiøazeny automaticky.")
+    layout = columns = ('name', 'system_role', 'description')
+    condition = pd.NE('system_role', pd.Value(pd.String(), None))
+    bindings = None
+
+    
 
     
 class UserRoles(Specification):
