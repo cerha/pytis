@@ -1729,10 +1729,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
         # Thus the terrible hack below...
         # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
-        # ctrl = wx.TextCtrl(self, -1, text)
-        # ctrl.SetSelection(0, len(text))
-        # ctrl.Copy()
-        # ctrl.Destroy()
+        # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
+        #                     so we must continue tu use this horrible hack  
+        ctrl = wx.TextCtrl(self, -1, text)
+        ctrl.SetSelection(0, len(text))
+        ctrl.Copy()
+        ctrl.Destroy()
         copy_to_clipboard(text)
         
     def _cmd_copy_aggregation_result(self, operation, cid):
