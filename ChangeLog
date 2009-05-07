@@ -1,5 +1,19 @@
 2009-05-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* COPYING:
+	* ChangeLog.lib.1:
+	* ChangeLog.lib.2:
+	* ChangeLog.lib.3:
+	* ChangeLog.lib.4:
+	* lib/COPYING:
+	* lib/ChangeLog:
+	* lib/ChangeLog.1:
+	* lib/ChangeLog.2:
+	* lib/ChangeLog.3:
+	Old roteted ChangeLogs and COPYING file moved from `lib' to the root directory..
+
+2009-05-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* ChangeLog.1:
 	* lib/ChangeLog:
 	Year 2009 changes from lib/Changelog merged into the main ChageLog.  Older changes rotated..
