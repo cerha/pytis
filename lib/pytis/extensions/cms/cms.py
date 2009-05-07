@@ -69,10 +69,16 @@ class Modules(Specification):
     def fields(self): return (
         Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
         Field('modname', _("Název"), width=32),
-        Field('descr', _("Popis"), width=64, virtual=True,
-              computer=computer(self._modtitle))
+        Field('descr', _("Popis"), width=64, virtual=True, computer=computer(self._descr)),
         )
-    def _modtitle(self, row, modname):
+    def _descr(self, row, modname):
+        if modname:
+            for module in self._MODULES:
+                if hasattr(module, modname):
+                    cls = getattr(module, modname)
+                    import wiking
+                    if type(cls) == type(wiking.Module) and issubclass(cls, wiking.Module):
+                        return cls.descr() or cls.title()
         return None
     sorting = ('modname', ASC),
     cb = CodebookSpec(display='modname', prefer_display=True)
@@ -90,6 +96,13 @@ class Modules(Specification):
                      "Pokud jej chcete vymazat, zru¹te nejprve v¹echny navázané stránky.")
         else:
             return True
+        
+    _MODULES = ()
+    """Defines the list of python modules which should be searched for available Wiking modules.
+
+    Should be defined in the derived class to make module descriptions work.
+    
+    """
 
 
 class MenuParents(Specification):

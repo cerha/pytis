@@ -1,5 +1,10 @@
 2009-05-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/cms/cms.py:
+	Automatically display module description/title..
+
+2009-05-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/extensions/cms/__init__.py:
 	* lib/pytis/extensions/cms/cms.py:
 	Manage system roles separately to avoid confusion in user role assignment..
