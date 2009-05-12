@@ -187,15 +187,16 @@ def pytis_config_reader():
 
     """
     import cPickle as pickle
+    import binascii,zlib
     def reader():
         try:
             value = dbfunction('read_pytis_config')
-            return pickle.loads(str(value))
+            pickled = zlib.decompress(binascii.a2b_base64(value))
+            return pickle.loads(pickled)
         except pickle.UnpicklingError, e:
             log(OPERATIONAL, "Couldn't restore saved configuration:", e)
             return ()
     return reader
-
 
 def pytis_config_writer():
     """Vra» funkci pro ulo¾ení u¾ivatelské konfigurace do databáze.
@@ -205,10 +206,12 @@ def pytis_config_writer():
 
     """
     import cPickle as pickle
+    import binascii,zlib
     def writer(items):
-        value = pytis.data.Value(pytis.data.String(), pickle.dumps(items).decode('latin2'))
+        pickled = pickle.dumps(items)
+        value = binascii.b2a_base64(zlib.compress(pickled))
         try:
-            dbfunction('write_pytis_config', ('value', value))
+            dbfunction('write_pytis_config', ('value', pytis.data.Value(pytis.data.String(), value)))
         except:
             log(OPERATIONAL, "Couldn't save user configuration:", e)
     return writer
