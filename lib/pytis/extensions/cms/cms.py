@@ -272,7 +272,7 @@ class Actions(Specification):
         Field('mod_id', _("Modul"), codebook=self._spec_name('Modules', False)),
         Field('name', _("Název"), width=16),
         Field('description', _("Popis"), width=64))
-    sorting = (('name', ASC),)
+    sorting = (('action_id', ASC),)
     layout = ('name', 'description')
     columns = ('name', 'description')
 
@@ -298,7 +298,7 @@ class Rights(Specification):
               Field('action_description', _("Popis"), width=30, editable=NEVER),
               Field('permitted', _("Povoleno"), width=3, fixed=True))
     grouping = 'role_id'
-    sorting = (('role_name', ASC), ('mod_id', DESC), ('action_name', ASC))
+    sorting = (('role_name', ASC), ('mod_id', DESC), ('action_id', ASC))
     layout = columns = ('role_name', 'action_name', 'action_description', 'permitted')
     def row_style(self, record):
         if not record['mod_id'].value():
