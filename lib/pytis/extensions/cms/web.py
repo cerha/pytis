@@ -109,6 +109,10 @@ class Menu(wiking.PytisModule):
                     module = forwards[i-1].module()
                     i -= 1
                 if module.name() == menu_record['modname'].value():
+                    if action == 'subpath':
+                        # Infer 'subpath' rights from 'view' rights to hide this mysterious
+                        # action from the CMS user.
+                        action = 'view'
                     roles = rights.permitted_roles(menu_item_id, action)
                 else:
                     roles = ()

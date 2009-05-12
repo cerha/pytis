@@ -1,3 +1,8 @@
+2009-05-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Infer 'subpath' rights from 'view' rights..
+
 2009-05-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:
