@@ -28,7 +28,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 import socket
 import lcg
 import pytis.data as pd, pytis.presentation as pp
-from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, CodebookSpec, \
+from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
 from pytis.extensions import nextval, ONCE, NEVER, ALWAYS
 ASC = pd.ASCENDENT
@@ -64,28 +64,36 @@ class Languages(Specification):
 
 class Modules(Specification):
     title = _("Moduly")
-    help = _("Správa roy¹iøujících modulù pou¾itelných ve stránkách.")
+    help = _("Správa roz¹iøujících modulù pou¾itelných ve stránkách.")
     table = 'cms_modules'
     def fields(self): return (
         Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
         Field('modname', _("Název"), width=32),
         Field('descr', _("Popis"), width=64, virtual=True, computer=computer(self._descr)),
         )
-    def _descr(self, row, modname):
+    def _module(self, modname):
         if modname:
-            for module in self._MODULES:
-                if hasattr(module, modname):
-                    cls = getattr(module, modname)
+            for python_module in self._MODULES:
+                if hasattr(python_module, modname):
+                    module = getattr(python_module, modname)
                     import wiking
-                    if type(cls) == type(wiking.Module) and issubclass(cls, wiking.Module):
-                        return cls.descr() or cls.title()
+                    if type(module) == type(wiking.Module) and issubclass(module, wiking.Module):
+                        return module
         return None
+    def _descr(self, rrecord, modname):
+        module = self._module(modname)
+        if module:
+            return module.descr() or module.title()
+        else:
+            return None
     sorting = ('modname', ASC),
     cb = CodebookSpec(display='modname', prefer_display=True)
     layout = ('modname', 'descr')
     columns = ('modname', 'descr')
     def bindings(self):
         return (Binding(_("Dostupné akce tohoto modulu"), self._spec_name('Actions'), 'mod_id'),)
+    def actions(self):
+        return (Action(_("Pøenaèíst dostupné akce"), self._reload_actions),)
     def on_delete_record(self, record):
         import pytis.form
         data = pytis.form.create_data_object(self._spec_name('Menu'))
@@ -96,7 +104,56 @@ class Modules(Specification):
                      "Pokud jej chcete vymazat, zru¹te nejprve v¹echny navázané stránky.")
         else:
             return True
-        
+    #def on_new_record(self, prefill, transaction=None):
+    #    import pytis.form
+    #    record = pytis.form.new_record(self._spec_name('Modules'), prefill=prefill,
+    #                                   block_on_new_record=True, transaction=transaction)
+    #    if record:
+    #    
+    #    return record
+    def _reload_actions(self, record):
+        def action_descr(module, action):
+            for a in module.Spec.actions:
+                if a.name() == action:
+                    return a.descr() or a.title()
+            try:
+                return dict(self._DEFAULT_ACTIONS)[action]
+            except KeyError:
+                method = getattr(module, 'action_'+action)
+                docstring = method.__doc__
+                return docstring and docstring.splitlines()[0] or ''
+        module = self._module(record['modname'].value())
+        if module:
+            from pytis.form import run_dialog, CheckListDialog, create_data_object
+            actions = [attr[7:] for attr in dir(module)
+                       if attr.startswith('action_') and callable(getattr(module, attr)) \
+                       and attr != 'action_subpath']
+            default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
+            # Order default actions first and in the order of self._DEFAULT_ACTIONS.
+            order = lambda a: a in default_actions and (default_actions.index(a)+1) or a
+            actions.sort(lambda a, b: cmp(order(a), order(b)))
+            descriptions = [action_descr(module, action) for action in actions] 
+            result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
+                                message=_("Za¹krtnìte akce, které chcete zpøístupnit webovým u¾ivatelùm:"), 
+                                items=zip([True for a in actions], actions, descriptions),
+                                columns=(_("Akce"), _("Popis")))
+            if result is not None:
+                # TODO: Use a transaction.  Respect existing actions.
+                data = create_data_object(self._spec_name('Actions'))
+                for i, action in enumerate(actions):
+                    if result[i]:
+                        rowdata = [('mod_id', record['mod_id']),
+                                   ('name', pd.Value(pd.String(), action)),
+                                   ('description', pd.Value(pd.String(), descriptions[i] or None))]
+                        data.insert(pd.Row(rowdata))
+                        
+    _DEFAULT_ACTIONS = (
+        ('view',    _(u"Zobrazení záznamu")),
+        ('list',    _(u"Výpis v¹ech záznamù")),
+        ('insert',  _(u"Vlo¾ení nového záznamu")),
+        ('update',  _(u"Editace stávajícího záznamu")),
+        ('delete',  _(u"Smazání záznamu")),
+        )
     _MODULES = ()
     """Defines the list of python modules which should be searched for available Wiking modules.
 
