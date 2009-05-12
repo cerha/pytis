@@ -362,7 +362,12 @@ class Rights(Specification):
             return None
         else:
             return pp.Style(background='#ffd')
-
+    def actions(self):
+        return (Action(_("Povolit/zakázat"), self._toggle_permission, hotkey=' '),)
+    def _toggle_permission(self, record):
+        permitted = pd.Value(pd.Boolean(), not record['permitted'].value())
+        record.data().update((record['right_id'],), pd.Row((('permitted', permitted),)))
+        
 
 class SessionLog(Specification):
     title = _("Log pøihlá¹ení")

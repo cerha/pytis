@@ -1,6 +1,11 @@
 2009-05-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:
+	Simplify rights management using a hotkey action to toggle permission..
+
+2009-05-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
 	Added support for automatic detection of available module actions and their descriptions..
 
 2009-05-12  Tomas Cerha  <cerha@brailcom.org>
