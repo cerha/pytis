@@ -29,6 +29,7 @@ import os, re, md5, lcg, wiking, pytis.util, pytis.presentation as pp, pytis.dat
 import cms
 
 class Specification(wiking.Specification):
+    access_rights = None
     def _spec_name(self, name, needed_in_wiking=True):
         if needed_in_wiking:
             return name

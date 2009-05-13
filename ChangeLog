@@ -1,5 +1,10 @@
 2009-05-13  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/cms/web.py:
+	Re-enable access of web server to CMS modules after previous access rights restriction..
+
+2009-05-13  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/extensions/cms/cms.py:
 	Update existing action descriptions when reloading module actions..
 
