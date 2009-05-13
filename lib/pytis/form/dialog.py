@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1203,6 +1203,65 @@ class BugReport(GenericDialog):
         self._end_modal(self._button_id(self._IGNORE_LABEL))
 
 
+class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
+    def __init__(self, parent, columns, items):
+        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
+        wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
+        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self, self.GetId(),
+                    lambda e: self.ToggleItem(e.m_itemIndex))
+        for i, label in enumerate(columns):
+            self.InsertColumn(i, label)
+        for i, item in enumerate(items):
+            self.InsertStringItem(i, "")
+            self.CheckItem(i, item[0])
+            for j in range(len(item)-1):
+                self.SetStringItem(i, j, item[j+1])
+        self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        self.SetMinSize((0, max(80, min(300, len(items)*20+30))))
+
+
+class CheckListDialog(Message):
+    """A question dialog with a list of checkable items.
+
+    The dialog displays a question with a list of items and a checkbox for each of the items.
+    Items can 
+
+    The result returned by the `run()' method is a sequence of boolean values, one for each item of
+    'items' passed to the constructor.  The value is True for items which were checked and False
+    for unchecked items.
+
+    """
+    _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
+    
+    def __init__(self, parent, columns=(), items=(), **kwargs):
+        """Arguments:
+             columns -- sequence of column labels (strings).
+             items -- a sequence of checkable items.  Each item is a sequence.  The first value
+               in this sequence is a boolean flag indicating the initial checkbox state for this
+               item.  The following values are textual fields describing the item.  The number of
+               textual fields must be the same as the numer of column labels passed in
+               'columns'.  These fields are presented in a table-like list.
+        """
+        super(CheckListDialog, self).__init__(parent, buttons=(Message.BUTTON_OK,
+                                                               Message.BUTTON_CANCEL), **kwargs)
+        assert isinstance(columns, (list, tuple))
+        assert isinstance(items, (list, tuple))
+        self._columns = columns
+        self._items = items
+
+    def _create_content(self, sizer):
+        super(CheckListDialog, self)._create_content(sizer)
+        self._checklist = _CheckListCtrl(self._dialog, self._columns, self._items)
+        sizer.Add(self._checklist, 1, wx.EXPAND|wx.ALL, 5)
+        
+    def _customize_result(self, result):
+        if self._button_label(result) == self.BUTTON_OK:
+            return [self._checklist.IsChecked(i) for i, triple in enumerate(self._items)]
+        else:
+            return None
+    
+        
 class ExitDialog(Question):
     """Application exit question with a choice of items to save for next startup.
 
@@ -1218,11 +1277,6 @@ class ExitDialog(Question):
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
-    class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
-        def __init__(self, parent):
-            wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
-            wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
-
     def __init__(self, parent, title=_("Ukončit aplikaci"),
                  message=_("Opravdu chcete ukončit aplikaci?"), icon=Message.ICON_QUIT,
                  save_label=_("Zapamatovat označené formuláře pro příští spuštění"),
@@ -1253,27 +1307,16 @@ class ExitDialog(Question):
     def _create_content(self, sizer):
         super(ExitDialog, self)._create_content(sizer)
         if self._save_items:
-            self._checkbox = checkbox = wx.CheckBox(self._dialog, -1, self._save_label)
-            checkbox.SetValue(self._save_state)
-            self._list = list = self._CheckListCtrl(self._dialog)
-            wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, list.GetId(),
-                        lambda e: list.ToggleItem(e.m_itemIndex))
-            for i, label in enumerate(self._save_columns):
-                list.InsertColumn(i, label)
-            for i, item in enumerate(self._save_items):
-                list.InsertStringItem(i, "")
-                list.CheckItem(i, item[0])
-                for j in range(len(item)-1):
-                    list.SetStringItem(i, j, item[j+1])
-            list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-            list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
-            sizer.Add(list, 1, wx.EXPAND|wx.ALL, 5)
-            sizer.Add(checkbox, 0, wx.ALL|wx.ALIGN_LEFT, 5)
+            self._checklist = _CheckListCtrl(self._dialog, self._save_columns, self._save_items)
+            self._checkbox = wx.CheckBox(self._dialog, -1, self._save_label)
+            self._checkbox.SetValue(self._save_state)
+            sizer.Add(self._checklist, 1, wx.EXPAND|wx.ALL, 5)
+            sizer.Add(self._checkbox, 0, wx.ALL|wx.ALIGN_LEFT, 5)
         
     def _customize_result(self, result):
         exit = super(ExitDialog, self)._customize_result(result)
         if self._save_items and self._checkbox.IsChecked():
-            items = [self._list.IsChecked(i) for i, triple in enumerate(self._save_items)]
+            items = [self._checklist.IsChecked(i) for i, triple in enumerate(self._save_items)]
         else:
             items = None
         return (exit, items)

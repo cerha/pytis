@@ -1,3 +1,8 @@
+2009-05-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/dialog.py:
+	Added `CheckListDialog' -- a dialog with a list of chackable items..
+
 2009-05-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* tools/make-tags.sh:
