@@ -191,8 +191,11 @@ def pytis_config_reader():
     def reader():
         try:
             value = dbfunction('read_pytis_config')
-            pickled = zlib.decompress(binascii.a2b_base64(value))
-            return pickle.loads(pickled)
+            if value:
+                pickled = zlib.decompress(binascii.a2b_base64(value))
+                return pickle.loads(pickled)
+            else:
+                return ()
         except pickle.UnpicklingError, e:
             log(OPERATIONAL, "Couldn't restore saved configuration:", e)
             return ()
