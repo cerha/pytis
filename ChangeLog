@@ -1,6 +1,11 @@
 2009-05-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:
+	Use a default action description when do description is found..
+
+2009-05-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
 	Added basic settings of access rights for the users of CMS..
 
 2009-05-12  Tomas Cerha  <cerha@brailcom.org>

@@ -123,7 +123,7 @@ class Modules(Specification):
             except KeyError:
                 method = getattr(module, 'action_'+action)
                 docstring = method.__doc__
-                return docstring and docstring.splitlines()[0] or ''
+                return docstring and docstring.splitlines()[0] or _(u"Neuvedeno")
         module = self._module(record['modname'].value())
         if module:
             from pytis.form import run_dialog, CheckListDialog, create_data_object
