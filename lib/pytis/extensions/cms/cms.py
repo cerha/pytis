@@ -142,12 +142,27 @@ class Modules(Specification):
             if result is not None:
                 # TODO: Use a transaction.  Respect existing actions.
                 data = create_data_object(self._spec_name('Actions'))
+                data.select(condition=pd.EQ('mod_id', record['mod_id']))
+                existing_actions = {}
+                while True:
+                    row = data.fetchone()
+                    if row is None:
+                        break
+                    else:
+                        existing_actions[row['name'].value()] = row['action_id']
+                data.close()
                 for i, action in enumerate(actions):
                     if result[i]:
-                        rowdata = [('mod_id', record['mod_id']),
-                                   ('name', pd.Value(pd.String(), action)),
-                                   ('description', pd.Value(pd.String(), descriptions[i] or None))]
-                        data.insert(pd.Row(rowdata))
+                        description_value = pd.Value(pd.String(), descriptions[i] or None)
+                        try:
+                            key = existing_actions[action]
+                        except KeyError:
+                            rowdata = [('mod_id', record['mod_id']),
+                                       ('name', pd.Value(pd.String(), action)),
+                                       ('description', description_value)]
+                            data.insert(pd.Row(rowdata))
+                        else:
+                            data.update((key,), pd.Row((('description', description_value),)))
                         
     _DEFAULT_ACTIONS = (
         ('view',    _(u"Zobrazení záznamu")),

@@ -1,6 +1,11 @@
 2009-05-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:
+	Update existing action descriptions when reloading module actions..
+
+2009-05-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
 	Use a default action description when do description is found..
 
 2009-05-13  Tomas Cerha  <cerha@brailcom.org>
