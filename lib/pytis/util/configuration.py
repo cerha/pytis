@@ -716,6 +716,11 @@ class Configuration(object):
     class _Option_clipboard_primary_selection(BooleanOption):
         _DESCR = _("Flag urèující, zda se má pøi exportu pou¾ít primary selection.")
         _DEFAULT = False
+
+    class _Option_use_wx_clipboard(BooleanOption):
+        _DESCR = _("Flag urèující, zda se má pro kopírování obsahu buòky pou¾ít wxClipboard")
+        _DEFAULT = True
+
         
     # Volby pøizpùsobení u¾ivatelského rozhraní
         

@@ -1730,12 +1730,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Thus the terrible hack below...
         # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
         # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
-        #                     so we must continue tu use this horrible hack  
-        ctrl = wx.TextCtrl(self, -1, text)
-        ctrl.SetSelection(0, len(text))
-        ctrl.Copy()
-        ctrl.Destroy()
-        copy_to_clipboard(text)
+        #                     so we must continue tu use this horrible hack
+        if config.use_wx_clipboard:
+            copy_to_clipboard(text)
+        else:
+            ctrl = wx.TextCtrl(self, -1, text)
+            ctrl.SetSelection(0, len(text))
+            ctrl.Copy()
+            ctrl.Destroy()
         
     def _cmd_copy_aggregation_result(self, operation, cid):
         self._copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
