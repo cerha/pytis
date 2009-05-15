@@ -1,3 +1,8 @@
+2009-05-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Added support for actions in static rights definitions and OWNER role checking. .
+
 2009-05-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:

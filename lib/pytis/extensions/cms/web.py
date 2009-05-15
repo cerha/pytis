@@ -92,7 +92,7 @@ class Menu(wiking.PytisModule):
     def _menu_item_rows(self, req, **kwargs):
         return self._data.get_rows(**kwargs)
     
-    def authorize(self, req, module, action=None, record=None, **kwargs):
+    def permitted_roles(self, req, module, action=None, record=None, **kwargs):
         #wiking.debug("...", module.name(), action, hasattr(req, 'cms_current_menu_record'))
         if hasattr(req, 'cms_current_menu_record'):
             rights = self._module('Rights')
@@ -100,7 +100,7 @@ class Menu(wiking.PytisModule):
             menu_item_id = menu_record['menu_item_id'].value()
             if module is self and action in ('view', 'subpath') \
                    and record is not None and record['menu_item_id'].value() == menu_item_id:
-                roles = rights.permitted_roles(menu_item_id, 'visit')
+                return rights.permitted_roles(menu_item_id, 'visit')
             else:
                 # Find the original module if the request was forwarded due to pytis redirection
                 # (access rights are defined for menu items which are bound to the original module).
@@ -114,14 +114,8 @@ class Menu(wiking.PytisModule):
                         # Infer 'subpath' rights from 'view' rights to hide this mysterious
                         # action from the CMS user.
                         action = 'view'
-                    roles = rights.permitted_roles(menu_item_id, action)
-                else:
-                    roles = ()
-            #wiking.debug(">>>", module.name(), menu_record['modname'].value(), action,
-            #             menu_item_id, roles, req.check_roles(roles))
-            return req.check_roles(roles)
-        else:
-            return False
+                    return rights.permitted_roles(menu_item_id, action)
+        return ()
     
     def menu(self, req):
         children = {None: []}
@@ -319,13 +313,22 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     def _auth_check_password(self, user, password):
         return self._module('Users').check_password(user, password)
 
-    def authorize(self, req, module, **kwargs):
+    def authorize(self, req, module, action=None, record=None, **kwargs):
         try:
             roles = self._RIGHTS[module.name()]
         except KeyError:
-            return self._module('Menu').authorize(req, module, **kwargs)
+            roles = self._module('Menu').permitted_roles(req, module, action=action,
+                                                         record=record, **kwargs)
         else:
-            return req.check_roles(roles)
+            if action is not None and isinstance(roles, dict):
+                roles = roles.get(action, ())
+        if req.check_roles(roles):
+            return True
+        elif wiking.Roles.OWNER in roles and record is not None and req.user() is not None \
+                 and isinstance(module, wiking.PytisModule):
+            return module.check_owner(req.user(), record)
+        else:
+            return False
     
     def menu(self, req):
         return self._module('Menu').menu(req)
