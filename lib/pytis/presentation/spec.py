@@ -2786,13 +2786,15 @@ class Specification(object):
             rights = {}
             for r in rights_string.split(' '):
                 if r != 'show':
-                    shortname_rights = access_rights.get(shortname, {})
-                    shortname_rights[r] = (r, [],)
+                    shortname_rights = access_rights.get(shortname)
+                    if shortname_rights is None:
+                        shortname_rights = access_rights[shortname] = {}
+                    shortname_rights[r] = []
         rights_data.select_map(process)
         add_spec('sysrights', 'ev_pytis_user_system_rights', ('action', 'rightid', 'colname',))
         sysrights_data = specifications['sysrights'].create(connection_data=config.dbconnection)
         def process(row):
-            shortname, right, colname = row[0].value, row[1].value, row[2].value
+            shortname, right, colname = row[0].value(), row[1].value(), row[2].value()
             columns = access_rights.get(shortname, {}).get(right)
             if columns is not None:
                 columns.append(colname)
@@ -2800,10 +2802,10 @@ class Specification(object):
         def process(right, columns):
             if not columns or None in columns:
                 columns = None
-            return (columns, (None, (right.upper(),)))
+            return (columns, (None, str(right.upper()),),)
         for shortname, rights in access_rights.items():
             access_rights_spec = [process(right, columns) for right, columns in rights.items()]
-            access_rights[shortname] = AccessRights(tuple(access_rights_spec))
+            access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         Specification._access_rights = access_rights
         
     def __init__(self, resolver):
@@ -2892,7 +2894,10 @@ class Specification(object):
         if Specification._access_rights is None:
             access_rights = self.access_rights
         else:
-            access_rights = Specification._access_rights.get('form/'+self.__class__.__name__)
+            spec_name = self.__class__.__name__
+            if self.__class__.__module__:
+                spec_name = self.__class__.__module__ + '.' + spec_name
+            access_rights = Specification._access_rights.get('form/'+spec_name)
         assert access_rights is None or not issubclass(self.data_cls, pytis.data.MemData), \
                "Cannot set `access_rights' for a MemData data object."
         if access_rights is None:
