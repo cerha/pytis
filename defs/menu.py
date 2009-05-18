@@ -168,7 +168,7 @@ def _ititle_computer(row, title, position):
     indentation = ' ' * len(position)
     return indentation + (title or '')
 def _xaction_computer(row, action):
-    if action.startswith('menu/'):
+    if action is None or action.startswith('menu/'):
         result = ''
     else:
         result = action

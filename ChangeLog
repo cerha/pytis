@@ -112,6 +112,33 @@
 	* lib/pytis/form/screen.py:
 	Print debug information about enabled menu items.
 
+2009-05-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Don't print tracebacks on void actions in Menu form.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/dmp:
+	DMP tutorial added.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Don't display `menu/' action identifiers in DMP forms.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fix in computation of show rights.
+
+2009-05-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Genmenu: When there are no access rights specified, permit everything.
+
+2009-05-04  Milan Zamazal  <pdm@brailcom.org>
+
 2009-04-30  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/application.py:
