@@ -67,7 +67,8 @@ class Modules(Specification):
     title = _("Moduly")
     help = _("Správa roz¹iøujících modulù pou¾itelných ve stránkách.")
     table = 'cms_modules'
-    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)))
+    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
+                                    (None, ('cms_user', pd.Permission.VIEW)))
     def fields(self): return (
         Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
         Field('modname', _("Název"), width=32),
@@ -310,7 +311,8 @@ class SystemRoles(Roles):
     layout = columns = ('name', 'system_role', 'description')
     condition = pd.NE('system_role', pd.Value(pd.String(), None))
     bindings = None
-    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)))
+    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
+                                    (None, ('cms_user', pd.Permission.VIEW)))
 
     
 
@@ -342,7 +344,8 @@ class Actions(Specification):
     title = _("Dostupné akce")
     help = _("Výèet podporovaných akcí pro jednotlivé moduly.")
     table = 'cms_actions'
-    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)))
+    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
+                                    (None, ('cms_user', pd.Permission.VIEW)))
     def fields(self): return (
         Field('action_id', default=nextval('cms_actions_action_id_seq')),
         Field('mod_id', _("Modul"), codebook=self._spec_name('Modules', False)),
@@ -357,7 +360,8 @@ class GenericActions(Actions):
     title = _("Akce spoleèné pro v¹echny polo¾ky menu")
     help = _("Výèet podporovaných akcí spoleèných pro v¹echny polo¾ky menu.")
     condition = pd.EQ('mod_id', pd.Value(pd.Integer(), None))
-    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)))
+    access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
+                                    (None, ('cms_user', pd.Permission.VIEW)))
 
     
 class Rights(Specification):
