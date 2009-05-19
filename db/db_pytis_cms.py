@@ -76,6 +76,7 @@ table('cms_menu_texts',
                Column('description', pd.String()),
                Column('content', pd.String())),
       depends=('cms_menu_structure', 'cms_languages',),
+      grant=cms_rights,
       sql='PRIMARY KEY (menu_item_id, lang)')
 
 viewng('cms_menu',
