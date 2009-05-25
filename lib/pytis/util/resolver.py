@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005, 2006, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -184,6 +184,19 @@ class Resolver(object):
             raise ResolverSpecError(module_name, spec_name)
         key = (module_name, spec_name)
         return self._object_cache[key]
+
+    def get_module(self, module_name):
+        """Vrať požadovaný modul.
+
+        Argumenty:
+
+          module_name -- jméno specifikačního modulu
+        
+        Není-li modul 'module_name' nalezen, je vyvolána výjimka
+        'ResolverModuleError'.
+
+        """
+        return self._get_module(module_name)
 
     def get_instance(self, module_name, spec_name, *args, **kwargs):
         # Nestačí nám pouhé 'get_object', protože třída jako taková obsahuje
