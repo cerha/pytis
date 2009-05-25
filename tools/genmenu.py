@@ -199,10 +199,21 @@ def process_rights(resolver, actions, rights, def_dir):
         if rights.has_key(action_name):
             continue
         action_components = action_name.split('/')
-        if action_components[0] != 'form':
+        if len(action_components) == 2 and action_components[0] == 'RUN_FORM':
+            try:
+                command, args = resolver.get('commands', action_components[1])
+                if not issubclass(args['form_class'], pytis.form.Form):
+                    raise Exception()
+                form_name = args['name']
+            except:
+                print 'Warning: failed to retrieve RUN_FORM command: %s' % (action_name,)
+        elif action_components[0] == 'NEW_RECORD':
+            form_name = action_components[1]
+        elif action_components[0] == 'form':
+            form_name = action_components[2]
+        else:
             print "Non-form action, no rights assigned: %s" % (action_name,)
             continue
-        form_name = action_components[2]
         form_components = form_name.split('::')
         if len(form_components) <= 2:
             add_rights(form_name, action, action_name)
