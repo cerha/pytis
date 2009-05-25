@@ -2746,19 +2746,19 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
     """Èítaè ulo¾ený v PostgreSQL."""
     
-    def __init__(self, name, connection_data):
-        """Inicializuj èítaè.
+    def __init__(self, name, connection_data, **kwargs):
+        """Initialize the instance.
 
-        Argumenty:
-
-          name -- identifikátor èítaèe v databázi, string
+        Arguments:
+          name -- identifier of the counter in the database as a string
           connection_data -- instance tøídy 'DBConnection' definující
             parametry pøipojení, nebo funkce bez argumentù vracející takovou
             instanci 'DBConnection'
+          kwargs -- passed to 'PostgreSQLConnector' constructor.
 
         """
         assert is_string(name)
-        PostgreSQLConnector.__init__(self, connection_data)
+        PostgreSQLConnector.__init__(self, connection_data, **kwargs)
         self._name = name
         self._query = "select nextval('%s')" % name
         

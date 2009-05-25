@@ -1,3 +1,8 @@
+2009-05-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Pass keyword arguments to the parent class in `DBPostgreSQLCounter' constructor..
+
 2009-05-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/dialog.py:
