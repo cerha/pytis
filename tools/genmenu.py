@@ -217,7 +217,9 @@ def process_rights(resolver, actions, rights, def_dir):
         form_components = form_name.split('::')
         if len(form_components) <= 2:
             add_rights(form_name, action, action_name)
-    actions_shortnames = [a.shortname for a in actions.values() if a.shortname.find('::') == -1]
+    actions_shortnames = {}
+    for shortname in [a.shortname for a in actions.values() if a.shortname.find('::') == -1]:
+        actions_shortnames[shortname] = True
     actions_extra_shortnames = copy.copy(actions_shortnames)
     def_dir_len = len(def_dir.split('/'))
     for root, dirs, files in os.walk(def_dir):
@@ -240,17 +242,17 @@ def process_rights(resolver, actions, rights, def_dir):
                     if isinstance(spec, type) and issubclass(spec, pytis.form.Specification):
                         spec_name = module_identifier + '.' + spec.__name__
                         action_shortname = 'form/'+spec_name
-                        if action_shortname not in actions_shortnames:
-                            actions_shortnames.append(action_shortname)
+                        if not actions_shortnames.has_key(action_shortname):
+                            actions_shortnames[action_shortname] = True
                             action_name = 'form/*/'+spec_name
                             actions[action_name] = Action(action_name, '', action_shortname)
                         else:
                             try:
-                                actions_extra_shortnames.remove(action_shortname)
-                            except IndexError:
+                                del actions_extra_shortnames[action_shortname]
+                            except KeyError:
                                 pass
     if actions_extra_shortnames:
-        print 'Warning: actions without met specifications: %s' % (actions_extra_shortnames,)
+        print 'Warning: actions without met specifications: %s' % (actions_extra_shortnames.keys(),)
     return rights
 
 def fill_actions(cursor, actions):
