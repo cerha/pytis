@@ -206,7 +206,8 @@ def process_rights(resolver, actions, rights, def_dir):
         form_components = form_name.split('::')
         if len(form_components) <= 2:
             add_rights(form_name, action, action_name)
-    actions_shortnames = [a.shortname for a in actions.values()]
+    actions_shortnames = [a.shortname for a in actions.values() if a.shortname.find('::') == -1]
+    actions_extra_shortnames = copy.copy(actions_shortnames)
     def_dir_len = len(def_dir.split('/'))
     for root, dirs, files in os.walk(def_dir):
         relative_root_path = root.split('/')[def_dir_len:]
@@ -232,6 +233,13 @@ def process_rights(resolver, actions, rights, def_dir):
                             actions_shortnames.append(action_shortname)
                             action_name = 'form/*/'+spec_name
                             actions[action_name] = Action(action_name, '', action_shortname)
+                        else:
+                            try:
+                                actions_extra_shortnames.remove(action_shortname)
+                            except IndexError:
+                                pass
+    if actions_extra_shortnames:
+        print 'Warning: actions without met specifications: %s' % (actions_extra_shortnames,)
     return rights
 
 def fill_actions(cursor, actions):

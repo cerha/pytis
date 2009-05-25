@@ -112,46 +112,6 @@
 	* lib/pytis/form/screen.py:
 	Print debug information about enabled menu items.
 
-2009-05-25  Milan Zamazal  <pdm@brailcom.org>
-
-	* tools/genmenu.py:
-	Import all specifications as actions in genmenu
-
-2009-05-18  Milan Zamazal  <pdm@brailcom.org>
-
-	* defs/menu.py:
-	Don't print tracebacks on void actions in Menu form.
-
-2009-05-06  Milan Zamazal  <pdm@brailcom.org>
-
-	* doc/tutorials/dmp:
-	DMP tutorial added.
-
-2009-05-06  Milan Zamazal  <pdm@brailcom.org>
-
-	* defs/menu.py:
-	Don't display `menu/' action identifiers in DMP forms.
-
-2009-05-06  Milan Zamazal  <pdm@brailcom.org>
-
-	* db/db_pytis_menu.py:
-	Fix in computation of show rights.
-
-2009-05-04  Milan Zamazal  <pdm@brailcom.org>
-
-	* tools/genmenu.py:
-	Genmenu: When there are no access rights specified, permit everything.
-
-2009-04-30  Milan Zamazal  <pdm@brailcom.org>
-
-	* lib/pytis/form/application.py:
-	Fixes of typos in has_access docstring.
-
-2009-04-30  Milan Zamazal  <pdm@brailcom.org>
-
-	* lib/pytis/data/dbapi.py:
-	Raise DBSystemException instead of DBException on database connection failure.
-
 2009-07-14  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
@@ -481,6 +441,51 @@
 	* lib/pytis/web/form.py:
 	Added support for placing arbitrary content into web form layout.
 	
+2009-05-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Warn about possible "hidden" actions in genmenu
+
+2009-05-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Import all specifications as actions in genmenu
+
+2009-05-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Don't print tracebacks on void actions in Menu form.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/dmp:
+	DMP tutorial added.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Don't display `menu/' action identifiers in DMP forms.
+
+2009-05-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fix in computation of show rights.
+
+2009-05-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Genmenu: When there are no access rights specified, permit everything.
+
+2009-04-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Fixes of typos in has_access docstring.
+
+2009-04-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Raise DBSystemException instead of DBException on database connection failure.
+
 2009-05-06  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
