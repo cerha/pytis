@@ -20,6 +20,7 @@
 
 import copy
 import optparse
+import os
 import string
 import sys
 import types
@@ -164,7 +165,7 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
     else:
         print 'Unknown menu: %s' % (menu,)
 
-def process_rights(resolver, actions, rights):
+def process_rights(resolver, actions, rights, def_dir):
     def add_rights(form_name, action, action_name):
         global _current_form_name
         if form_name.find(':') != -1:
@@ -205,6 +206,32 @@ def process_rights(resolver, actions, rights):
         form_components = form_name.split('::')
         if len(form_components) <= 2:
             add_rights(form_name, action, action_name)
+    actions_shortnames = [a.shortname for a in actions.values()]
+    def_dir_len = len(def_dir.split('/'))
+    for root, dirs, files in os.walk(def_dir):
+        relative_root_path = root.split('/')[def_dir_len:]
+        if relative_root_path:
+            relative_root = os.path.join(*relative_root_path) + '/'
+        else:
+            relative_root = ''
+        for f in files:
+            if f.endswith('.py'):
+                module_name = relative_root + f[:-3]
+                try:
+                    module = resolver.get_module(module_name)
+                except pytis.util.ResolverFileError:
+                    print 'Warning: module not loaded: %s' % (module,)
+                    continue
+                module_identifier = module_name.replace('/', '.')
+                for spec_attr in dir(module):
+                    spec = getattr(module, spec_attr)
+                    if isinstance(spec, type) and issubclass(spec, pytis.form.Specification):
+                        spec_name = module_identifier + '.' + spec.__name__
+                        action_shortname = 'form/'+spec_name
+                        if action_shortname not in actions_shortnames:
+                            actions_shortnames.append(action_shortname)
+                            action_name = 'form/*/'+spec_name
+                            actions[action_name] = Action(action_name, '', action_shortname)
     return rights
 
 def fill_actions(cursor, actions):
@@ -359,7 +386,7 @@ def run():
     process_menu(menu, top, menu_items, actions, rights, position='11', system=True)
     print "Retrieving menu...done"
     print "Retrieving rights..."
-    process_rights(resolver, actions, rights)
+    process_rights(resolver, actions, rights, def_dir)
     print "Retrieving rights...done"
     print "Inserting actions..."
     fill_actions(cursor, actions)
