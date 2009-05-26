@@ -237,7 +237,7 @@ def process_rights(resolver, actions, rights, def_dir):
                     print 'Warning: module not loaded: %s' % (module,)
                     continue
                 module_identifier = module_name.replace('/', '.')
-                for spec_attr in dir(module):
+                for spec_attr in [o for o in dir(module) if o[0] != '_']:
                     spec = getattr(module, spec_attr)
                     if isinstance(spec, type) and issubclass(spec, pytis.form.Specification):
                         spec_name = module_identifier + '.' + spec.__name__
