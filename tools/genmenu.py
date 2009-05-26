@@ -261,7 +261,7 @@ def fill_actions(cursor, actions):
         cursor.execute("insert into c_pytis_menu_actions (name, shortname, description) values(%s, %s, %s)",
                        (action.name, action.shortname, action.description,))
 
-def fill_rights(cursor, rights):
+def fill_rights(cursor, rights, check_rights=None):
     roles = {}
     for r in ('*', 'admin', 'admin_menu', 'admin_roles',):
         roles[r] = None
@@ -283,18 +283,70 @@ def fill_rights(cursor, rights):
                 permissions = [p.lower() for p in permissions]
                 action_name = action.shortname
                 for group in groups:
-                    if group and not roles.has_key(group):
-                        cursor.execute(("insert into e_pytis_roles (name, description, purposeid) "
-                                        "values (%s, %s, %s)"),
-                                       (group, "", 'appl',))
-                        roles[group] = None
+                    if check_rights is None:
+                        if group and not roles.has_key(group):
+                            cursor.execute(("insert into e_pytis_roles (name, description, purposeid) "
+                                            "values (%s, %s, %s)"),
+                                           (group, "", 'appl',))
+                            roles[group] = None
                     for permission in permissions:
                         for c in columns:
-                            cursor.execute(("insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname) "
-                                            "values(%s, %s, %s, %s, %s, %s)"),
-                                           (action_name, group, permission, True, True, c,))
+                            if check_rights is None:
+                                cursor.execute(("insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname) "
+                                                "values(%s, %s, %s, %s, %s, %s)"),
+                                               (action_name, group, permission, True, True, c,))
+                            else:
+                                action_info = check_rights[action_name] = check_rights.get(action_name, {})
+                                group_info = action_info[group] = action_info.get(group, {})
+                                columns = group_info[permission] = group_info.get(permission, [])
+                                if c not in columns:
+                                    columns.append(c)
+                                    columns.sort()
     return roles
 
+def check_rights(cursor, rights):
+    app_rights = {}
+    fill_rights(cursor, rights, app_rights)
+    db_rights = {}
+    cursor.execute("select action, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        action_name, group, permission, colname = row
+        action_info = db_rights[action_name] = db_rights.get(action_name, {})
+        group_info = action_info[group] = action_info.get(group, {})
+        columns = group_info[permission] = group_info.get(permission, [])
+        if colname in columns:
+            print 'Check: Multiple permission in the database:', action_name, group, permission, colname
+        else:
+            columns.append(colname)
+            columns.sort()
+    for action_name in app_rights.keys():
+        db_action_info = db_rights.get(action_name)
+        if db_action_info is None:
+            print 'Check: Missing action in the database:', action_name
+            continue
+        app_action_info = app_rights[action_name]
+        for group in app_action_info.keys():
+            db_group_info = db_action_info.get(group)
+            if db_group_info is None:
+                print 'Check: Missing group rights in the database:', action_name, group
+                continue
+            app_group_info = app_action_info[group]
+            for permission in app_group_info.keys():
+                db_columns = db_group_info.get(permission)
+                if columns is None:
+                    print 'Check: Missing permission in the database:', action_name, group, permission
+                    continue
+                if None in db_columns:
+                    db_columns = 'ALL'
+                app_columns = app_group_info.get(permission)
+                if None in app_columns:
+                    app_columns = 'ALL'
+                if app_columns != db_columns:
+                    print 'Check: Different column sets:', action_name, group, permission, app_columns, db_columns
+    
 def fill_menu_items(cursor, menu, position=''):
     position += str(menu.position)
     parent = menu.parent and -menu.parent.id
@@ -355,6 +407,7 @@ def parse_options():
     parser.add_option("-U", "--user", default=None, action="store", dest="user")
     parser.add_option("-P", "--password", default=None, action="store", dest="password")
     parser.add_option("--delete", action="store_true", dest="delete_only")
+    parser.add_option("--check", action="store_true", dest="check_only")
     options, args = parser.parse_args()
     dbparameters = Configuration.dbparameters
     dbparameters['host'] = options.host
@@ -365,8 +418,11 @@ def parse_options():
         not options.delete_only and len(args) != 1):
         parser.print_help()
         sys.exit(1)
+    if options.delete_only and options.check_only:
+        sys.stderr.write("Error: Can't check and delete at the same time.\n")
+        sys.exit(1)
     return options, args
-    
+
 def run():
     options, args = parse_options()
     parameters = {}
@@ -375,18 +431,20 @@ def run():
             parameters[k] = v
     connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
-    print "Deleting old data..."
-    cursor.execute("set client_encoding to 'latin2'") # grrr
-    cursor.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('genmenu')")
-    cursor.execute("delete from e_pytis_menu")
-    cursor.execute("delete from e_pytis_action_rights")
-    cursor.execute("delete from c_pytis_menu_actions")
-    cursor.execute("delete from e_pytis_role_members where id >= 0")
-    cursor.execute("delete from e_pytis_roles where purposeid != 'admn'")
-    print "Deleting old data...done"
-    if options.delete_only:
-        connection.commit()
-        return
+    check_only = options.check_only
+    if not check_only:
+        print "Deleting old data..."
+        cursor.execute("set client_encoding to 'latin2'") # grrr
+        cursor.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('genmenu')")
+        cursor.execute("delete from e_pytis_menu")
+        cursor.execute("delete from e_pytis_action_rights")
+        cursor.execute("delete from c_pytis_menu_actions")
+        cursor.execute("delete from e_pytis_role_members where id >= 0")
+        cursor.execute("delete from e_pytis_roles where purposeid != 'admn'")
+        print "Deleting old data...done"
+        if options.delete_only:
+            connection.commit()
+            return
     def_dir = args[0]
     import config
     config.def_dir = def_dir
@@ -410,21 +468,26 @@ def run():
     print "Retrieving rights..."
     process_rights(resolver, actions, rights, def_dir)
     print "Retrieving rights...done"
-    print "Inserting actions..."
-    fill_actions(cursor, actions)
-    print "Inserting actions...done"
-    print "Inserting rights..."
-    roles = fill_rights(cursor, rights)
-    print "Inserting rights...done"
-    print "Inserting menu..."
-    fill_menu_items(cursor, top)
-    print "Inserting menu...done"
-    print "Importing roles..."
-    transfer_roles(cursor, roles)
-    print "Importing roles...done"
-    recompute_tables(cursor)
-    cursor.execute("delete from e_pytis_disabled_dmp_triggers where id = 'genmenu'")
-    connection.commit()
+    if check_only:
+        print "Checking rights..."
+        roles = check_rights(cursor, rights)
+        print "Checking rights...done"
+    else:
+        print "Inserting actions..."
+        fill_actions(cursor, actions)
+        print "Inserting actions...done"
+        print "Inserting rights..."
+        roles = fill_rights(cursor, rights)
+        print "Inserting rights...done"
+        print "Inserting menu..."
+        fill_menu_items(cursor, top)
+        print "Inserting menu...done"
+        print "Importing roles..."
+        transfer_roles(cursor, roles)
+        print "Importing roles...done"
+        recompute_tables(cursor)
+        cursor.execute("delete from e_pytis_disabled_dmp_triggers where id = 'genmenu'")
+        connection.commit()
 
 if __name__ == '__main__':
     run()
