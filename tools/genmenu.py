@@ -245,7 +245,8 @@ def process_rights(resolver, actions, rights, def_dir):
                         if not actions_shortnames.has_key(action_shortname):
                             actions_shortnames[action_shortname] = True
                             action_name = 'form/*/'+spec_name
-                            actions[action_name] = Action(action_name, '', action_shortname)
+                            actions[action_name] = action = Action(action_name, '', action_shortname)
+                            add_rights(spec_name, action, action_name)
                         else:
                             try:
                                 del actions_extra_shortnames[action_shortname]
