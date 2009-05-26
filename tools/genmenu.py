@@ -185,7 +185,7 @@ def process_rights(resolver, actions, rights, def_dir):
             if callable(access_rights):
                 access_rights = access_rights()
         except Exception, e:
-            print "Couldn't get access rights for form %s: %s" % (form_name, e,)
+            print "Error: Couldn't get access rights for form %s: %s" % (form_name, e,)
             return
         if access_rights is None:
             print "No access rights specified for form %s, assuming everything permitted" % (form_name,)
