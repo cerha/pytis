@@ -2854,19 +2854,23 @@ class Specification(object):
         # Assign computed user rights
         S = pytis.data.String()
         rights_data = pytis.data.dbtable('pytis_view_user_rights',
-                                         (('shortname', S,), ('rights', S,),),
+                                         (('shortname', S,), ('rights', S,), ('columns', S,),),
                                          connection_data, arguments=())
         def process(row):
-            shortname, rights_string = row[0].value(), row[1].value()
+            shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
             if not rights_string:
                 return
+            if columns_string:
+                columns = string.split(columns_string, ' ')
+            else:
+                columns = [None]
             shortname_rights = access_rights.get(shortname)
             if shortname_rights is None:
                 shortname_rights = access_rights[shortname] = {}
                 user_rights[shortname] = True
             for r in rights_string.split(' '):
                 if r != 'show':
-                    shortname_rights[r] = []
+                    shortname_rights[r] = shortname_rights.get(r, []) + columns
         rights_data.select_map(process)
         # System rights may limit rights to certain columns
         sysrights_data = pytis.data.dbtable('ev_pytis_user_system_rights',

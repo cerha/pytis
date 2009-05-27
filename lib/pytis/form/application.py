@@ -1507,13 +1507,20 @@ def init_access_rights(connection_data):
         return
     _user_roles = roles
     S = pytis.data.String()
-    rights_data = pytis.data.dbtable('pytis_view_user_rights', (('shortname', S,), ('rights', S,),),
+    rights_data = pytis.data.dbtable('pytis_view_user_rights',
+                                     (('shortname', S,), ('rights', S,), ('columns', S,),),
                                      connection_data, arguments=())
     _access_rights = {}
     def process(row):
-        shortname, rights_string = row[0].value(), row[1].value()
+        shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
+        if columns_string:
+            columns = string.split(columns_string, ' ')
+        else:
+            columns = [None]
         rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
-        _access_rights[shortname] = _access_rights.get(shortname, []) + rights
+        action_rights = _access_rights[shortname] = _access_rights.get(shortname, {})
+        for r in rights:
+            action_rights[r] = action_rights.get(r, []) + columns
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
     
@@ -1574,7 +1581,13 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
             if access_rights is not None:
                 result = access_rights.permitted(perm, _user_roles, column=column)
         else:
-            result = perm in rights
+            columns = rights.get(perm)
+            if not columns:
+                result = False
+            elif column is not None and column not in columns and None not in columns:
+                result = False
+            else:
+                result = perm in rights
     return result
 
 def wx_yield_(full=False):

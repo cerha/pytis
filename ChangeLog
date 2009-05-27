@@ -1,3 +1,11 @@
+2009-05-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	* lib/pytis/presentation/spec.py:
+	Commit-All: yes.
+	-- End of Magit header --
+	Support for reading column access rights from database
+
 2009-11-03  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/application.py:
