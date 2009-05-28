@@ -1,3 +1,8 @@
+2009-05-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/search.py:
+	Fixed removal of the first operator in filtering dialog..
+
 2009-05-25  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

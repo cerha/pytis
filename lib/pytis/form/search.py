@@ -447,7 +447,9 @@ class SFDialog(SFSDialog):
         operators = []
         weights = []
         for i in range(len(self._controls)):
-            if omit is None or i not in (omit, omit-1):
+            # Omit the relational operator and the logical operator above, or below for the first
+            # operator.
+            if omit is None or i not in (omit, (omit == 0 and 1 or omit-1)):
                 if i % 2 == 1:
                     op, weight = logical_operator(i)
                     if weight not in weights:
