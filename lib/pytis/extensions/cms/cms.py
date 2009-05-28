@@ -242,6 +242,25 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zaøazena "
                       "na konec.")),
         )
+    def check(self, record):
+        data = record.data()
+        if record['parent'].value() is not None:
+            if record['parent'].value() == record['menu_item_id'].value():
+                return ('parent', _("Polo¾ka nemù¾e být nadøízená sama sobì."))
+            tree_order = pd.WMValue(pd.String(), record['tree_order'].value()+'*')
+            count = data.select(condition=pd.AND(pd.EQ('menu_item_id', record['parent']),
+                                                 pd.WM('tree_order', tree_order)))
+            data.close()
+            if count:
+                return ('parent', _("Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
+                                    "(cyklus v hierarchii)."))
+        count = data.select(condition=pd.AND(pd.EQ('parent', record['menu_item_id']),
+                                             pd.EQ('ord', record['ord'])))
+        data.close()
+        if count:
+            return ('ord', _("Stejné poøadové èíslo u¾ má jiná polo¾ka na této úrovni menu."))
+
+        
     def on_delete_record(self, record):
         data = record.data()
         count = data.select(condition=pd.EQ('parent', record['menu_item_id']))
