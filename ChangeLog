@@ -1,3 +1,8 @@
+2009-05-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Avoid startup dependency on web modules..
+
 2009-05-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:

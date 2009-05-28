@@ -76,7 +76,8 @@ class Modules(Specification):
         )
     def _module(self, modname):
         if modname:
-            for python_module in self._MODULES:
+            for python_module_name in self._SEARCH_MODULES:
+                python_module = __import__(python_module_name)
                 if hasattr(python_module, modname):
                     module = getattr(python_module, modname)
                     import wiking
@@ -172,8 +173,8 @@ class Modules(Specification):
         ('update',  _(u"Editace stávajícího záznamu")),
         ('delete',  _(u"Smazání záznamu")),
         )
-    _MODULES = ()
-    """Defines the list of python modules which should be searched for available Wiking modules.
+    _SEARCH_MODULES = ()
+    """Defines list of names python modules which should be searched for available Wiking modules.
 
     Should be defined in the derived class to make module descriptions work.
     
