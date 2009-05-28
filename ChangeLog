@@ -1,3 +1,10 @@
+2009-05-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Commit-All: yes.
+	-- End of Magit header --
+	Fix in action rights check
+
 2009-05-27  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/application.py:

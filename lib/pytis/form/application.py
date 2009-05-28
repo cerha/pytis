@@ -1576,7 +1576,9 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
     else:
         rights = _access_rights.get(action)
         if rights is None:
-            result = False
+            # No action rights defined => only system rights apply
+            # (this function is *action* rights check).
+            result = True
             access_rights = pytis.presentation.Specification.data_access_rights(action)
             if access_rights is not None:
                 result = access_rights.permitted(perm, _user_roles, column=column)
