@@ -427,7 +427,7 @@ class BrowseForm(LayoutForm):
 
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
-                 filter=None, message=None, req=None, **kwargs):
+                 filter=None, filters=None, message=None, req=None, **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
@@ -479,6 +479,13 @@ class BrowseForm(LayoutForm):
           filter -- filter condition as a 'pytis.data.Operator' instance.  This condition will be
             appended to 'condition', but the difference is that 'condition' is invisible to the
             user, but 'filter' may be indicated in the user interface.
+
+          filters -- sequence of user visible named filters as 'pytis.presentation.Filter'
+            instances.  These filters will be available in the user interface for user's selection.
+            If None, the default set of filters defined by specification is used.  If not None, the
+            filters from specification are ignored, so they need to be included in this argument
+            explicitly if they should be displayed.  This argument is mostly useful to construct
+            the list of filters dynamically (specification filters are static).
 
           message -- function returning a custom search result message.  If none, a default message
             will be used according to current query, such as 'Found 5 records matching the search
@@ -592,10 +599,15 @@ class BrowseForm(LayoutForm):
         self._query_condition = query_condition
         self._show_query_field = show_query_field
         self._allow_query_field = allow_query_field
+        # Determine the current set of user selectable filters.
+        if filters is None:
+            filters = self._view.filters()
+        self._filters = filters or ()
         # Determine the current filter.
         filter_id = params.get('filter', self._view.default_filter())
         if filter_id and filter_id != self._NULL_FILTER_ID:
-            condition = find(filter_id, self._view.filters(), key=lambda f: f.id())
+            condition = find(filter_id, self._filters, key=lambda f: f.id())
+            # Append the current user selected filter to the filter passed as 'filter' argument.
             if condition:
                 c = condition.condition()
                 if filter:
@@ -891,7 +903,8 @@ class BrowseForm(LayoutForm):
         g = context.generator()
         id = (bottom and '0' or '1') + '%x' % positive_id(self)
         content = []
-        filters = [(f.name(), f.id()) for f in self._view.filters()
+        # Construct a list of filters for export.
+        filters = [(f.name(), f.id()) for f in self._filters
                    if f.id() is not None and f.condition() is not None]
         show_filter = filters and (count or self._filter_id is not None)
         show_query_field = self._show_query_field
@@ -908,7 +921,7 @@ class BrowseForm(LayoutForm):
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
-            null_filter = find(None, self._view.filters(), key=lambda f: f.condition())
+            null_filter = find(None, self._filters, key=lambda f: f.condition())
             if null_filter:
                 null_filter_name = null_filter.name()
             else:

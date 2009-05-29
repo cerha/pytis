@@ -1,3 +1,8 @@
+2009-05-29  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Allow dynamic construction of user selactable filters..
+
 2009-05-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/search.py:
