@@ -114,10 +114,13 @@ class AccessRights(object):
                     for c in columns:
                         if None in groups:
                             table_p[c] = (None,)
+                            table_p[True] = (None,)
                         elif table_p.has_key(c):
                             table_p[c] = table_p[c] + groups
+                            table_p[True] = table_p[True] + groups
                         else:
                             table_p[c] = groups
+                            table_p[True] = table_p.get(True, ()) + groups
         return table
 
     def _permitted(self, permission, groups, column):
@@ -138,7 +141,8 @@ class AccessRights(object):
           groups -- sequence of group names (as strings); permission is valid
             if at least one of the listed groups has got the permission
           column -- name of the column (as a string) to test the permission
-            against, or 'None' in which case implicit rights are tested
+            against, or 'None' in which case implicit rights are tested, or
+            'True' to check that any of the columns has the permission
 
         """
         key = (permission, xtuple(groups), column)

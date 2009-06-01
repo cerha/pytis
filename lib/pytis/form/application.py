@@ -1524,7 +1524,7 @@ def init_access_rights(connection_data):
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
     
-def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
+def has_access(name, perm=pytis.data.Permission.VIEW, column=True):
     """Return true if the current user has given permission for given spec.
 
     Arguments:
@@ -1534,7 +1534,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         names.
       perm -- access permission as one of `pytis.data.Permission' constants.    
       column -- string identifier of the column to check or 'None' (no specific
-        column checked).
+        column checked) or 'True' (any of the columns is accessible)
 
     Raises 'ResolverError' if given specification name cannot be found.
 
@@ -1558,7 +1558,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     result = action_has_access('form/'+name, perm=perm, column=column)
     return result
 
-def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
+def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
     """Return true iff 'action' has 'perm' permission.
 
     Arguments:
@@ -1566,7 +1566,7 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
       action -- action identifier, string
       perm -- access permission as one of `pytis.data.Permission' constants
       column -- string identifier of the column to check or 'None' (no specific
-        column checked).
+        column checked) or 'True' (any of the columns is accessible)
 
     """
     if _access_rights == 'nonuser':
