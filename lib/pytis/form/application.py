@@ -1531,7 +1531,8 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=True):
     
       name -- specification name as a string.  May also be a dual name
         (containing `::').  In such a case, the permission is checked for both
-        names.
+        names and 'column=True' is assumed regardless of the actual 'column'
+        value.
       perm -- access permission as one of `pytis.data.Permission' constants.    
       column -- string identifier of the column to check or 'None' (no specific
         column checked) or 'True' (any of the columns is accessible)

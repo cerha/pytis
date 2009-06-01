@@ -1,5 +1,10 @@
 2009-06-01  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/application.py:
+	Be more specific about permission checking of dual forms in has_access docstring.
+
+2009-06-01  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/access.py:
 	* lib/pytis/form/application.py:
 	Allow and perform any-column permission checking.
