@@ -1,3 +1,8 @@
+2009-06-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Allow easier 'User' customization.  Compare password through 'User' instance..
+
 2009-05-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:

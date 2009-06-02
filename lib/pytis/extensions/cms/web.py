@@ -232,20 +232,26 @@ class Users(wiking.PytisModule):
     class Spec(Specification, cms.Users):
         pass
 
+    def _user_row(self, login):
+        """Override this method to customize the user search condition."""
+        return self._data.get_row(login=login)
+                    
+    def _user_args(self, row):
+        """Override this method to customize the 'User' instance constructor arguments."""
+        uid = row['uid'].value()
+        roles = [wiking.Roles.USER] + self._module('UserRoles').roles(uid)
+        return dict(uid=uid,
+                    name=row['fullname'].value(),
+                    password=row['passwd'].value(),
+                    roles=roles, data=row)
+
     def user(self, login):
-        """Return the list of user's roles as unique string identifiers."""
-        row = self._data.get_row(login=login)
+        row = self._user_row(login)
         if row:
-            uid = row['uid'].value()
-            roles = [wiking.Roles.USER] + self._module('UserRoles').roles(uid)
-            return wiking.User(login, uid=uid, name=row['fullname'].value(),
-                               roles=roles, data=row)
+            return wiking.User(login, **self._user_args(row))
         else:
             return None
 
-    def check_password(self, user, password):
-        return user.data()['passwd'].value() == md5.new(password).hexdigest()
-        
     
 class Session(wiking.PytisModule, wiking.Session):
     class Spec(wiking.Specification):
@@ -311,7 +317,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         return self._module('Users').user(login)
         
     def _auth_check_password(self, user, password):
-        return self._module('Users').check_password(user, password)
+        return user.password() == md5.new(password).hexdigest()
 
     def authorize(self, req, module, action=None, record=None, **kwargs):
         try:
