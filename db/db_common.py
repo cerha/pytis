@@ -335,6 +335,26 @@ stype=text, initcond='' );""",
         depends=('line_feed_aggregate',))
 
 
+sql_raw("""create or replace function space_aggregate(text,text) returns 
+text as '
+begin
+  if length($1)>0 and length($2)>0 then
+      return $1 || '' '' || $2;
+  elsif length($2)>0 then
+    return $2;
+  end if;
+  return $1;
+end;
+' language 'plpgsql';
+""",
+        name="space_aggregate",
+        depends=())
+
+sql_raw("""create aggregate space_concat (basetype=text, sfunc=space_aggregate,
+stype=text, initcond='' );""",
+        name="space_concat",
+        depends=('space_aggregate',))
+
 ##################################
 ### Logovací a pomocné tabulky ###
 ##################################
