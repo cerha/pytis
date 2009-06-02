@@ -1587,7 +1587,9 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
             columns = rights.get(perm)
             if not columns:
                 result = False
-            elif column is not None and column not in columns and None not in columns:
+            elif column is True:
+                result = True
+            elif column not in columns and None not in columns:
                 result = False
             else:
                 result = perm in rights

@@ -1,3 +1,8 @@
+2009-06-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Support column=True properly in action_has_access.
+
 2009-06-01  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/application.py:
