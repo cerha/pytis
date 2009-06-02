@@ -2050,6 +2050,9 @@ class SecretValue(Value):
     """
     def export(self, *args, **kwargs):
         return self.type().secret_export()
+
+    def value(self):
+        return self._type.default_value().value()
     
     @classmethod
     def conceal(class_, value):

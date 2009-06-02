@@ -1,5 +1,10 @@
 2009-06-02  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/types_.py:
+	Return default value instead of the real value in SecretValue.value.
+
+2009-06-02  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/access.py:
 	* lib/pytis/data/types_.py:
 	* lib/pytis/presentation/field.py:
