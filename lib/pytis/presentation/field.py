@@ -143,17 +143,21 @@ class PresentedRow(object):
         self._init_dependencies()
         self._set_row(row, reset=True, prefill=prefill)
 
+    def _secret_column(self, key, virtual):
+        return ((virtual and key in self._secret_computers) or
+                (not virtual and not self.permitted(key, pytis.data.Permission.VIEW)))
+    
     def _set_row(self, row, reset=False, prefill=None):
         if prefill:
             def value(v):
                 if isinstance(v, pytis.data.Value):
-                    return v.value()
-                else:
                     return v
-            prefill = dict([(k, pytis.data.Value(self._coldict[k].type, value(v)))
+                else:
+                    return pytis.data.Value(pytis.data.Type(), v)
+            prefill = dict([(k, value(v).retype(self._coldict[k].type))
                             for k, v in prefill.items()])
         self._cache = {}
-        def genval(key):
+        def genval(key, virtual):
             if row is None or not row.has_key(key):
                 if prefill and prefill.has_key(key):
                     value = prefill[key]
@@ -172,12 +176,14 @@ class PresentedRow(object):
                 value = prefill[key]
             else:
                 if self._coldict.has_key(key):
-                    value = pytis.data.Value(self._coldict[key].type, row[key].value())
+                    value = row[key].retype(self._coldict[key].type)
                 else:
                     value = row[key]
+            if self._secret_column(key, virtual):
+                value = pytis.data.SecretValue.conceal(value)
             return value
-        row_data = [(c.id, genval(c.id)) for c in self._columns if not c.virtual]
-        virtual = [(c.id, genval(c.id)) for c in self._columns if c.virtual]
+        row_data = [(c.id, genval(c.id, False)) for c in self._columns if not c.virtual]
+        virtual = [(c.id, genval(c.id, True)) for c in self._columns if c.virtual]
         for key in self._dirty.keys():
             # Prefill and default take precedence over the computer
             self._dirty[key] = not (not self._new and row is None or \
@@ -248,6 +254,16 @@ class PresentedRow(object):
                         self._runtime_filter_dependent[dep].append(key)
                     else:
                         self._runtime_filter_dependent[dep] = [key]
+        self._secret_computers = []
+        def add_secret(key):
+            for secret in self._dependent.get(key, []):
+                if secret not in self._secret_computers:
+                    self._secret_computers.append(secret)
+                    add_secret(secret)
+        for c in self._columns:
+            key = c.id
+            if not self.permitted(key, pytis.data.Permission.VIEW):
+                add_secret(key)
 
     def __getitem__(self, key, lazy=False):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
@@ -266,7 +282,11 @@ class PresentedRow(object):
             # the original value without recursion.
             self._dirty[key] = False
             func = column.computer.function()
-            new_value = pytis.data.Value(column.type, func(self))
+            if key in self._secret_computers:
+                value_class = pytis.data.SecretValue
+            else:
+                value_class = pytis.data.Value
+            new_value = value_class(column.type, func(self))
             if new_value.value() != value.value():
                 value = new_value
                 if self._row.has_key(key):
@@ -404,7 +424,7 @@ class PresentedRow(object):
         
     def row(self):
         """Return the current *data* row as a 'pytis.data.Row' instance."""
-        row_data = [(c.id, pytis.data.Value(c.data_column.type(), self[c.id].value()))
+        row_data = [(c.id, self[c.id].retype(c.data_column.type()),)
                     for c in self._columns if not c.virtual]
         return pytis.data.Row(row_data)
 
@@ -720,6 +740,8 @@ class PresentedRow(object):
         
         """
         column = self._coldict[key]
+        if self._secret_column(key, column.virtual):
+            return ''
         display = self._display_func(column)
         if not display:
             computer = column.computer
@@ -732,7 +754,8 @@ class PresentedRow(object):
         elif display:
             return display(value)
         else:
-            return ''
+            value = ''
+        return value
     
     def enumerate(self, key):
         """Vra» výèet hodnot èíselníku daného políèka jako seznam dvojic.
@@ -746,6 +769,8 @@ class PresentedRow(object):
        
         """
         column = self._coldict[key]
+        if self._secret_column(key, column.virtual):
+            return []
         display = self._display_func(column)
         if display is None:
             display = lambda v: column.type.export(v)

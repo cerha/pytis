@@ -435,6 +435,10 @@ class Type(object):
 
         """
         return Value(self, None)
+
+    def secret_export(self):
+        """Return string representation of a hidden value."""
+        return '***'
   
 
 class Number(Type):
@@ -1223,10 +1227,12 @@ class Boolean(Type):
                 return Value(self, False), None
         # Valid values are found in _SPECIAL_VALUES before _validate is called.
         return None, ValidationError(_("Neplatná vstupní hodnota typu boolean."))
-
     
     def default_value(self):
         return Value(self, False)
+    
+    def secret_export(self):
+        return ''
 
     
 class Binary(Limited):
@@ -1941,9 +1947,24 @@ class _Value(object):
         return self._type
 
     def value(self):
-        """Vra» hodnotu zadanou v '__init__()'."""
+        """Return value given in '__init__()'.
+
+        In some derived classes the returned value may be modified, e.g. when
+        it is necessary to hide the value.  If you need the unchanged value
+        (and you are sure this is really what you want), use 'true_value()'.
+
+        """
         return self._value
 
+    def true_value(self):
+        """Return true value of the instance.
+
+        In some derived classes, the value returned by 'value()' may be
+        transformed, e.g. when the true value should be hidden.  This method
+        always returns the actual unchanged value.
+
+        """
+        return self._value
 
 class Value(_Value):
     """Reprezentace hodnoty daného typu.
@@ -2000,6 +2021,48 @@ class Value(_Value):
                 self._exported = exported
         return exported
 
+    def retype(self, type):
+        """Return instance of the same class and value, but of diferent type.
+
+        Arguments:
+
+          type -- 'Type' instance to be used as the new value instance type
+
+        It is responsibility of the caller to ensure that the new type is
+        compatible with the type of the value.
+
+        """
+        assert isinstance(type, Type)
+        return self.__class__(type, self._value)
+
 
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
+
+
+class SecretValue(Value):
+    """Values not to be present to the user.
+
+    It's the same as 'Value' except that 'export()' method returns a special
+    string not related to the actual value.  The special string is defined by
+    'secret_export()' method of the value type.
+    
+    """
+    def export(self, *args, **kwargs):
+        return self.type().secret_export()
+    
+    @classmethod
+    def conceal(class_, value):
+        """Return 'SecretValue' instance corresponding to 'value'.
+
+        Arguments:
+
+          value -- 'Value' instance to use as the base of the 'SecretValue'
+            instance
+
+        """
+        if isinstance(value, class_):
+            instance = value
+        else:
+            instance = class_(type=value.type(), value=value.value())
+        return instance

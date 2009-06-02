@@ -301,13 +301,13 @@ class RestrictedData(Data):
         rights = self._access_rights
         if rights.permitted(permission, groups):
             return row
-        filtered_items = filter(lambda i: \
-                                rights.permitted(permission, groups,
-                                                 column=i[0]),
-                                row.items())
-        if not filtered_items:
-            table = self._bindings[0].table()
-            raise DataAccessException(permission, table=table)
+        def screen(item):
+            if rights.permitted(permission, groups, column=item[0]):
+                value = item
+            else:
+                value = (item[0], SecretValue.conceal(item[1]),)
+            return value
+        filtered_items = [screen(item) for item in row.items()]
         return pytis.data.Row(filtered_items)
 
     def permitted(self, column_id, permission):
