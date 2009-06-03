@@ -1413,9 +1413,10 @@ class RecordForm(LookupForm):
                 return failed_id
         return None
 
-    def _record_data(self, row):
+    def _record_data(self, row, permission=None):
         rdata = [(f.id(), row[f.id()]) for f in row.fields()
-                 if self._data.find_column(f.id()) is not None]
+                 if self._data.find_column(f.id()) is not None and
+                 (permission is None or self._data.permitted(f.id(), permission))]
         return pytis.data.Row(rdata)
     
     def _row_copy_prefill(self, the_row):
@@ -1925,6 +1926,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self.Refresh()
 
     def _commit_form(self, close=True):
+        if self._mode == self.MODE_INSERT:
+            permission = pytis.data.Permission.INSERT
+        elif self._mode == self.MODE_EDIT:
+            permission = pytis.data.Permission.UPDATE
+        else:
+            permission = None
         # Re-validate all fields.
         for f in self._fields:
             if self._mode == self.MODE_INSERT or self._row.field_changed(f.id()):
@@ -1942,7 +1949,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             return False
         transaction = self._transaction
         # Vytvoøení datového øádku.
-        rdata = self._record_data(self._row)
+        rdata = self._record_data(self._row, permission=permission)
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Inserting record...')
             op, args = self._data.insert, (rdata,)
