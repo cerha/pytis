@@ -343,7 +343,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         else:
             permission = pytis.data.Permission.UPDATE
         self._denied = denied = not row.permitted(id, permission)
-        self._readonly = readonly
+        self._readonly = readonly or denied
         self._enabled = not denied and not readonly and row.editable(id)
         self._callback_registered = False
         self._unregistered_widgets = {}
@@ -538,7 +538,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # Called on user interaction (editation, selection).  The actual processing of the event
         # is postponed to the idle thread to avoid user interface hangs on time-consuming
         # operations (such as complicated field recomputations).
-        self._needs_validation = True
+        if not self._readonly:
+            self._needs_validation = True
         if event:
             event.Skip()
 
@@ -1247,8 +1248,9 @@ class GenericCodebookField(InputField):
         
     def _on_enumeration_change(self):
         # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
-        self._needs_validation = True
-        self._enumeration_changed = True
+        if not self._readonly:
+            self._needs_validation = True
+            self._enumeration_changed = True
 
     def _on_idle(self, event):
         if self._enumeration_changed:
