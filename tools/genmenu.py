@@ -432,10 +432,10 @@ def fill_rights(cursor, rights, check_rights=None):
                             else:
                                 action_info = check_rights[action_name] = check_rights.get(action_name, {})
                                 group_info = action_info[group] = action_info.get(group, {})
-                                columns = group_info[permission] = group_info.get(permission, [])
-                                if c not in columns:
-                                    columns.append(c)
-                                    columns.sort()
+                                permitted_columns = group_info[permission] = group_info.get(permission, [])
+                                if c not in permitted_columns:
+                                    permitted_columns.append(c)
+                                    permitted_columns.sort()
     return roles
 
 def check_rights(cursor, rights, update):
