@@ -1,3 +1,8 @@
+2009-06-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Don't check hierarchy cycles on new records (they can't be parents of existing items)..
+
 2009-06-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:

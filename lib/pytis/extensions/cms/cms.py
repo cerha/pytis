@@ -247,13 +247,15 @@ class Menu(Specification):
         if record['parent'].value() is not None:
             if record['parent'].value() == record['menu_item_id'].value():
                 return ('parent', _("Polo¾ka nemù¾e být nadøízená sama sobì."))
-            tree_order = pd.WMValue(pd.String(), record['tree_order'].value()+'*')
-            count = data.select(condition=pd.AND(pd.EQ('menu_item_id', record['parent']),
-                                                 pd.WM('tree_order', tree_order)))
-            data.close()
-            if count:
-                return ('parent', _("Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
-                                    "(cyklus v hierarchii)."))
+            if not record.new():
+                # A new record can't be a parent of existing records.
+                tree_order = pd.WMValue(pd.String(), record['tree_order'].value()+'*')
+                count = data.select(condition=pd.AND(pd.EQ('menu_item_id', record['parent']),
+                                                     pd.WM('tree_order', tree_order)))
+                data.close()
+                if count:
+                    return ('parent', _("Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
+                                        "(cyklus v hierarchii)."))
         count = data.select(condition=pd.AND(pd.EQ('parent', record['menu_item_id']),
                                              pd.EQ('ord', record['ord'])))
         data.close()
