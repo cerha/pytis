@@ -1928,7 +1928,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Re-validate all fields.
         for f in self._fields:
             if self._mode == self.MODE_INSERT or self._row.field_changed(f.id()):
-                if not f.validate():
+                if f.enabled() and not f.validate():
                     f.set_focus()
                     return False
         # Ovìøení integrity záznamu (funkce check).
