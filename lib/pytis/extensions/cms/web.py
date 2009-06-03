@@ -25,7 +25,8 @@ Example application using these Wiking modules can be found in pytis-demo.
 
 """
 
-import os, re, md5, lcg, wiking, pytis.util, pytis.presentation as pp, pytis.data as pd
+import os, re, md5, lcg, wiking
+import pytis.util, pytis.presentation as pp, pytis.data as pd, pytis.web as pw
 import cms
 
 class Specification(wiking.Specification):
@@ -65,15 +66,6 @@ class Menu(wiking.PytisModule):
         row = rows[variants.index(lang)]
         del req.unresolved_path[0]
         return row
-
-    def _bindings(self, req, record):
-        bindings = super(Menu, self)._bindings(req, record)
-        modname = record['modname'].value()
-        if modname:
-            cls = wiking.cfg.resolver.wiking_module_cls(modname)
-            if cls and issubclass(cls, EmbeddablePytisModule):
-                bindings.append(cls.binding())
-        return bindings
 
     def _action(self, req, record=None):
         # The only supported action of this module is `view' and the `action' argument is ignored
@@ -163,37 +155,52 @@ class Menu(wiking.PytisModule):
                # TODO: Add hidden menu items for static mapping items.
                #[MenuItem('_doc', _("Wiking Documentation"), hidden=True)]
     
-    def action_view(self, req, record, err=None, msg=None):
-        # Main content
-        modname = record['modname'].value()
-        if modname is not None:
-            module = self._module(modname)
-            content = module.embed(req, record)
-            if isinstance(content, (int, tuple)):
-                # The request has already been served by the embedded module. 
-                return content
-        else:
-            content = []
+    def action_view(self, req, record):
         text = record['content'].value()
+        modname = record['modname'].value()
         if text:
-            if self._SEPARATOR.search(text):
-                pre, post = self._SEPARATOR.split(text, maxsplit=2)
-            else:
-                pre, post = text, ''
             parser = lcg.Parser()
-            sections = parser.parse(pre) + content + parser.parse(post)
-            content = [lcg.SectionContainer(sections, toc_depth=0)]
-        if not content and record['parent'].value() is None:
+            if self._SEPARATOR.search(text):
+                pre, post = [parser.parse(part) for part in self._SEPARATOR.split(text, maxsplit=2)]
+            else:
+                pre, post = parser.parse(text), []
+        else:
+            pre, post = [], []
+        if modname is not None:
+            result = req.forward(self._module(modname), menu_item=record)
+            if isinstance(result, (int, tuple)):
+                # The request has already been served by the embedded module. 
+                return result
+            else:
+                # Embed the resulting document into the current menu item content.
+                assert isinstance(result, wiking.Document)
+                content = result.content()
+                if isinstance(content, (tuple, list)):
+                    content = list(content)
+                else:
+                    content = [content]
+                document = result.clone(title=record['title'].value(), subtitle=None,
+                                        content=pre+content+post)
+        elif text is None and record['parent'].value() is None:
+            # Redirect to the first subitem from empty top level items.
             rows = self._data.get_rows(parent=record['menu_item_id'].value(), published=True,
                                        sorting=self._sorting)
             # TODO: Use only items, which are visible to the current user (access rights). 
             if rows:
                 return req.redirect('/'+rows[0]['identifier'].value())
-        return self._document(req, content, record, err=err, msg=msg)
+            else:
+                document = self._document(req, [], record)
+        else:
+            document = self._document(req, pre+post, record)
+        return document
+            
     
-    # TODO: Handle embeded modules without binding (not EmbeddablePytisModule).
-    #def action_subpath(self, req, record):
-    #    return super(Menu, self).action_subpath(req, record)
+    def action_subpath(self, req, record):
+        modname = record['modname'].value()
+        if req.unresolved_path[0] == 'data' and modname is not None:
+            del req.unresolved_path[0]
+            return req.forward(self._module(modname), menu_item=record)
+        raise wiking.NotFound()
     
     def module_uri(self, modname):
         row = self._data.get_row(modname=modname)
@@ -368,12 +375,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
 
     
 class Embeddable(object):
-    """Mix-in class for modules which may be embedded into page content.
-
-    Derived classes must implement the 'embed()' method to produce the content to be embedded into
-    page text.  The method 'submenu()' also allows the module to extend the main menu.
-
-    """
+    """Mix-in class for modules which may be embedded into page content."""
     
     def submenu(self, req, menu_item_id):
         """Return a list of 'MenuItem' instances to insert into the main menu.
@@ -385,36 +387,13 @@ class Embeddable(object):
         """
         return []
     
-    def embed(self, req, menu_item_record):
-        """Return a list of content instances extending the page content.
-
-        The returned value can also be an integer to indicate that the request has already been
-        served (with the resulting status code).
-        
-        """
-        return []
-
-
 
 class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
-    _EMBED_BINDING_COLUMN = None
-    _HONOUR_SPEC_TITLE = True
 
-    @staticmethod
-    def _embed_condition(row):
-        return None
-    
-    @classmethod
-    def binding(cls):
-        return wiking.Binding(cls.title(), cls.name(), cls._EMBED_BINDING_COLUMN,
-                              condition=cls._embed_condition, id='data')
-    
-    def embed(self, req, menu_item_record):
-        if self._application.authorize(req, self, action='list'):
-            return [self.related(req, self.binding(), menu_item_record, req.uri())]
-        else:
-            #return [lcg.coerce(_("Access denied."))]
-            return []
-            
-        
+    def _form(self, form, req, record=None, **kwargs):
+        return super(EmbeddablePytisModule, self)._form(form, req, record=record,
+                                                        binding_uri=req.uri() + '/data',
+                                                        **kwargs)
+
+
 
