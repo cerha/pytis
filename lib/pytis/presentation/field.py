@@ -606,6 +606,7 @@ class PresentedRow(object):
         if not error and column.type.unique() and not column.virtual and \
                (self._new or value != self._original_row[key]) and value.value() is not None:
             count = self._data.select(condition=pytis.data.EQ(column.id, value),
+                                      check_condition=False,
                                       transaction=self._transaction)
             self._data.close()
             if count != 0:

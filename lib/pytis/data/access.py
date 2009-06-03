@@ -333,8 +333,9 @@ class RestrictedData(Data):
         row = super(RestrictedData, self).row(key, **kwargs)
         return self._access_filter_row(row)
 
-    def select(self, condition=None, sort=(), **kwargs):
-        self._check_access_condition(condition)
+    def select(self, condition=None, sort=(), check_condition=True, **kwargs):
+        if check_condition:
+            self._check_access_condition(condition)
         self._check_access_sorting(sort)
         return super(RestrictedData, self).select(condition=condition,
                                                   sort=sort, **kwargs)

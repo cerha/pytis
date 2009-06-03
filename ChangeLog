@@ -1,5 +1,11 @@
 2009-06-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/access.py:
+	* lib/pytis/presentation/field.py:
+	Allow checking uniqueness of editable but nonviewable columns.
+
+2009-06-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/list.py:
 	Allow editing ListForm rows with forbidden columns.
 
