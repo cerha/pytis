@@ -1,6 +1,11 @@
 2009-06-03  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:
+	Small output clarification in genmenu.
+
+2009-06-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
 	Avoid storing multiple access rights records in genmenu.
 
 2009-06-03  Milan Zamazal  <pdm@brailcom.org>

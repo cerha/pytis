@@ -503,7 +503,8 @@ def check_rights(cursor, rights, update):
                 if None in app_columns:
                     app_columns = 'ALL'
                 if app_columns != db_columns:
-                    print 'Check: Different column sets:', action_name, group, permission, app_columns, db_columns
+                    print 'Check: Different column sets:', action_name, group, permission, \
+                        'app='+str(app_columns), 'db='+str(db_columns)
     
 def fill_menu_items(cursor, menu, position=''):
     if position:
