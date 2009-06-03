@@ -1,6 +1,11 @@
 2009-06-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:
+	Fix for bindings in embeddable CMS modules..
+
+2009-06-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
 	Invoke standard Wiking processing for embedded modules instead of using the `embed()' method..
 
 2009-06-03  Tomas Cerha  <cerha@brailcom.org>
