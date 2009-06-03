@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 """Gensql specification of database objects used by Pytis CMS.
 
 This specification is designed to be included in project specific gensql script.

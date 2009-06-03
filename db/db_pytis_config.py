@@ -1,10 +1,10 @@
-#-*- coding: iso-8859-2 -*-
-"""Tento soubor obsahuje definice databázovıch objektù pro ukládání a ètení
-u¾ivatelské konfigurace. Do hlavního db.py jednotlivıch projektù
-se pøidá symbolickım pøilinkováním do odpovídajícího adresáøe db v projektu
-a pøidáním pøíkazù
+#-*- coding: utf-8 -*-
+"""Tento soubor obsahuje definice databÃ¡zovÃ½ch objektÅ¯ pro uklÃ¡dÃ¡nÃ­ a ÄtenÃ­
+uÅ¾ivatelskÃ© konfigurace. Do hlavnÃ­ho db.py jednotlivÃ½ch projektÅ¯
+se pÅ™idÃ¡ symbolickÃ½m pÅ™ilinkovÃ¡nÃ­m do odpovÃ­dajÃ­cÃ­ho adresÃ¡Å™e db v projektu
+a pÅ™idÃ¡nÃ­m pÅ™Ã­kazÅ¯
 
-Gpytis_config = <práva pro objekty tohoto souboru>
+Gpytis_config = <prÃ¡va pro objekty tohoto souboru>
 execfile('db_pytis_config.py', copy.copy(globals()))
 """
 
@@ -17,7 +17,7 @@ table('_pytis_config',
       (P('uzivatel', TUser),
        C('config', TString)),
       grant=db_rights,
-      doc="""Tabulka pro ukládání configu pytisu."""      
+      doc="""Tabulka pro uklÃ¡dÃ¡nÃ­ configu pytisu."""      
       )
 
 function('read_pytis_config',
@@ -29,7 +29,7 @@ function('read_pytis_config',
                "(select uzivatel from _pytis_config); "
                "select config from _pytis_config "
                "where uzivatel = (select current_user)"),
-         doc="""Funkce na zji¹»ování configu pro daného u¾ivatele""",
+         doc="""Funkce na zjiÅ¡Å¥ovÃ¡nÃ­ configu pro danÃ©ho uÅ¾ivatele""",
          depends=('_pytis_config',))
 
 function('write_pytis_config',
@@ -44,6 +44,6 @@ function('write_pytis_config',
                "select config from _pytis_config "
                "where uzivatel = (select current_user)"
                ),
-         doc="""Funkce na zápis configu pro daného u¾ivatele.""",
+         doc="""Funkce na zÃ¡pis configu pro danÃ©ho uÅ¾ivatele.""",
          depends=('_pytis_config',))
 

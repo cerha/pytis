@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 import pytis.data
 
@@ -48,10 +48,10 @@ def _std_table_nolog(name, columns, doc, grant=Gall_pytis, **kwargs):
     return table(name, columns, inherits=('_changes',), grant=grant,
                  doc=doc, **kwargs)
 
-# Pomocná funkce, její¾ obsah se pøipojí k funkcím, definovanım jako _std_function
+# PomocnÃ¡ funkce, jejÃ­Å¾ obsah se pÅ™ipojÃ­ k funkcÃ­m, definovanÃ½m jako _std_function
 def _plpy_include():
-    """Funkce pro formátování pythonovskı promìnıch rùznıch typù, pro pou¾ití v SQL pøíkazech
-    plpythonu (napøíklad plpy.execute)"""
+    """Funkce pro formÃ¡tovÃ¡nÃ­ pythonovskÃ½ promÄ›nÃ½ch rÅ¯znÃ½ch typÅ¯, pro pouÅ¾itÃ­ v SQL pÅ™Ã­kazech
+    plpythonu (napÅ™Ã­klad plpy.execute)"""
     
     TMoney    = 'numeric(15,2)'
     TKurz     = 'numeric(12,6)'
@@ -79,13 +79,13 @@ def _plpy_include():
     
 def _plpy_function(name, input_types, output_type, body=None,
                    use_functions=(), **kwargs):
-    """Pro definici plpython funkcí. Doplòuje základní funkce pro formátování pythonovskıch
-    typù pro pou¾ití v SQL vırzech plpy.execute atp."""
+    """Pro definici plpython funkcÃ­. DoplÅˆuje zÃ¡kladnÃ­ funkce pro formÃ¡tovÃ¡nÃ­ pythonovskÃ½ch
+    typÅ¯ pro pouÅ¾itÃ­ v SQL vÃ½rzech plpy.execute atp."""
     return function(name, input_types, output_type, body=body,
                     use_functions=(_plpy_include,) + use_functions, **kwargs)
 
 def _plpy_trigger_include():
-    """Funkce pro vytváøení python trigger funkcí"""
+    """Funkce pro vytvÃ¡Å™enÃ­ python trigger funkcÃ­"""
 
     class BaseTriggerObject:
 
@@ -148,15 +148,15 @@ def _plpy_trigger_include():
             return self._return_code
         
 def _trigger_function(name, body=None, use_functions=(), **kwargs):
-    """Pro definici plpython funkcí, které jsou vyu¾ívány pro vytváøení triggrù."""
+    """Pro definici plpython funkcÃ­, kterÃ© jsou vyuÅ¾Ã­vÃ¡ny pro vytvÃ¡Å™enÃ­ triggrÅ¯."""
     return function(name, (), 'trigger', body=body,
                     use_functions=(_plpy_include, _plpy_trigger_include) + use_functions,
                     **kwargs)
 
 
 def _plpy_control_include():
-    """Funkce pro formátování pythonovskı promìnıch rùznıch typù, pro pou¾ití v SQL pøíkazech
-    plpythonu (napøíklad plpy.execute). Pøidává mo¾nost html vıstupu."""
+    """Funkce pro formÃ¡tovÃ¡nÃ­ pythonovskÃ½ promÄ›nÃ½ch rÅ¯znÃ½ch typÅ¯, pro pouÅ¾itÃ­ v SQL pÅ™Ã­kazech
+    plpythonu (napÅ™Ã­klad plpy.execute). PÅ™idÃ¡vÃ¡ moÅ¾nost html vÃ½stupu."""
     
     TMoney    = 'numeric(15,2)'
     TKurz     = 'numeric(12,6)'
@@ -192,12 +192,12 @@ def _plpy_control_include():
 
 def _control_function(name, input_types, output_type, body=None,
                       use_functions=(), **kwargs):
-    """Pro definici plpython kontrolních funkcí. Pøidává na vıstup html formátování"""
+    """Pro definici plpython kontrolnÃ­ch funkcÃ­. PÅ™idÃ¡vÃ¡ na vÃ½stup html formÃ¡tovÃ¡nÃ­"""
     return function(name, input_types, output_type, body=body,
                     use_functions=(_plpy_control_include,) + use_functions, **kwargs)
 
 def partitioning_trigger():
-    """Updatuje datum a místo odeslání"""
+    """Updatuje datum a mÃ­sto odeslÃ¡nÃ­"""
     class Part(BaseTriggerObject):
 
         def _get_table_name(self):
@@ -291,7 +291,7 @@ def partitioning_table(master_table, key_serial, max_id, step, index_columns=(),
             gen_idx(master_table, col, min_id_table, max_id_table)
 
 
-## U¾ivatelská funkce pro agregování  string hodnot
+## UÅ¾ivatelskÃ¡ funkce pro agregovÃ¡nÃ­  string hodnot
 sql_raw("""create or replace function comma_aggregate(text,text) returns 
 text as '
 begin
@@ -335,7 +335,7 @@ stype=text, initcond='' );""",
 
 
 ##################################
-### Logovací a pomocné tabulky ###
+### LogovacÃ­ a pomocnÃ© tabulky ###
 ##################################
 
 table('log',
@@ -344,11 +344,11 @@ table('log',
        Cuser('login'),
        Ctimestamp('timestamp')),
       grant=Gall_pytis,
-      doc="Tabulka pro logování provedenıch DML pøíkazù.")
+      doc="Tabulka pro logovÃ¡nÃ­ provedenÃ½ch DML pÅ™Ã­kazÅ¯.")
 
 function('only_digits', (TString,), TBoolean,
          "SELECT ($1 ~ ''^[0-9]+$'')",
-         doc="Pomocná funkce pro CHECK constraint.")
+         doc="PomocnÃ¡ funkce pro CHECK constraint.")
 
 table('_changes',
       (Cuser('vytvoril'),
@@ -356,19 +356,19 @@ table('_changes',
        Cuser('zmenil'),
        Ctimestamp('zmeneno')),
       grant=Gall_pytis,
-      doc="""Sloupeèky zaznamenávající u¾ivatele a èasy vytvoøení a zmìn údajù.
-      Je urèena k tomu, aby ji dìdily v¹echny ostatní tabulky."""
+      doc="""SloupeÄky zaznamenÃ¡vajÃ­cÃ­ uÅ¾ivatele a Äasy vytvoÅ™enÃ­ a zmÄ›n ÃºdajÅ¯.
+      Je urÄena k tomu, aby ji dÄ›dily vÅ¡echny ostatnÃ­ tabulky."""
       )
 
 sequence('tempnames_seq', grant=Gall_pytis)
 
 function('new_tempname',(), TString,
          "select ''__t'' || nextval(''tempnames_seq'')::text as jmeno",
-         doc="Pomocná funkce pro generování unikátních jmen.")
+         doc="PomocnÃ¡ funkce pro generovÃ¡nÃ­ unikÃ¡tnÃ­ch jmen.")
 
 table('_inserts',
       (P('id', TSerial,
-         doc="identifikace øádku"),
+         doc="identifikace Å™Ã¡dku"),
        Cuser('vytvoril'),
        Ctimestamp('vytvoreno'),
        C('tabulka', TString),
@@ -394,14 +394,14 @@ table('_inserts',
                       insert=None,
                       delete=None)),
       grant=Gall_pytis,
-      doc="""Tabulka zaznamenávající pøidávání záznamù standardních
+      doc="""Tabulka zaznamenÃ¡vajÃ­cÃ­ pÅ™idÃ¡vÃ¡nÃ­ zÃ¡znamÅ¯ standardnÃ­ch
       tabulek."""
       )
 
 
 table('_updates',
       (P('id', TSerial,
-         doc="identifikace zmìnového øádku"),
+         doc="identifikace zmÄ›novÃ©ho Å™Ã¡dku"),
        Cuser('zmenil'),
        Ctimestamp('zmeneno'),
        C('tabulka', TString),
@@ -428,13 +428,13 @@ table('_updates',
                       insert=None,
                       delete=None)),
       grant=Gall_pytis,
-      doc="""Tabulka zaznamenávající zmìny v záznamech standardních
+      doc="""Tabulka zaznamenÃ¡vajÃ­cÃ­ zmÄ›ny v zÃ¡znamech standardnÃ­ch
       tabulek."""
       )
 
 table('_deletes',
       (P('id', TSerial,
-         doc="identifikace øádku"),
+         doc="identifikace Å™Ã¡dku"),
        Cuser('smazal'),
        Ctimestamp('smazano'),
        C('tabulka', TString),
@@ -459,8 +459,8 @@ table('_deletes',
                       insert=None,
                       delete=None)),            
       grant=Gall_pytis,
-      doc="""Tabulka zaznamenávající vymazávání záznamù ve standardních
-      tabulkách."""
+      doc="""Tabulka zaznamenÃ¡vajÃ­cÃ­ vymazÃ¡vÃ¡nÃ­ zÃ¡znamÅ¯ ve standardnÃ­ch
+      tabulkÃ¡ch."""
       )
 
 def _log_update_trigger():
@@ -483,14 +483,14 @@ def _log_update_trigger():
     klice = TD["args"][0].split(',')
     klicestr = ','.join(["%s: %s" % (k, str(TD[newold][k]))
                          for k in klice])
-    # pro INSERT a DELETE zaznamenáme tabulku a klíè
+    # pro INSERT a DELETE zaznamenÃ¡me tabulku a klÃ­Ä
     if event in ("DELETE", "INSERT"):
         q = """insert into %s (tabulka, klic)
                select '%s', '%s'
             """ % (table, tabulka, klicestr)
         q = plpy.execute(q)
         return None
-    # Pro UPDATE zaznamenáme kromì jména tabulky a klíèe i zmìny v polo¾kách
+    # Pro UPDATE zaznamenÃ¡me kromÄ› jmÃ©na tabulky a klÃ­Äe i zmÄ›ny v poloÅ¾kÃ¡ch
     zmeny = []
     for k in TD["new"].keys():
         if TD["new"][k] != TD["old"][k]:
@@ -506,10 +506,10 @@ def _log_update_trigger():
 
 function('_log_update_trigger', (), 'trigger',
          body=_log_update_trigger,
-         doc="""Slou¾í k evidenci editací nad záznamy tabulek.""",
+         doc="""SlouÅ¾Ã­ k evidenci editacÃ­ nad zÃ¡znamy tabulek.""",
          depends=('_inserts', '_deletes', '_updates'))
 
-# Vypne v¹echny triggers na tabulkou pøedanou jako parametr funkce.
+# Vypne vÅ¡echny triggers na tabulkou pÅ™edanou jako parametr funkce.
 sql_raw("""
 CREATE FUNCTION DisableTriggers(Name) RETURNS BOOLEAN AS '
 DECLARE rel ALIAS FOR $1; rows INTEGER;
@@ -527,7 +527,7 @@ END;
 ' LANGUAGE plpgsql WITH (isstrict);""",
         name="DisableTriggers")
 
-# Zapne v¹echny triggers na tabulkou pøedanou jako parametr funkce pokud byly doèasnì vypnuté.
+# Zapne vÅ¡echny triggers na tabulkou pÅ™edanou jako parametr funkce pokud byly doÄasnÄ› vypnutÃ©.
 sql_raw("""
 CREATE FUNCTION EnableTriggers(Name) RETURNS BOOLEAN AS '
 DECLARE rel ALIAS FOR $1; rows INTEGER;
@@ -549,8 +549,8 @@ END;
 
 
 def drop_temptables(tables):
-    """Slou¾í k zru¹ení doèasnıch temporery tabulek. Funkce otestuje, zda tabulky uvedené
-    v seznamu existují a pøípadnì je dropne."""
+    """SlouÅ¾Ã­ k zruÅ¡enÃ­ doÄasnÃ½ch temporery tabulek. Funkce otestuje, zda tabulky uvedenÃ©
+    v seznamu existujÃ­ a pÅ™Ã­padnÄ› je dropne."""
 
     from sets import Set
     str_tables = args[0]
@@ -574,13 +574,13 @@ def drop_temptables(tables):
     return pocet
    
 function('drop_temptables', (TString,), TInteger,  body=drop_temptables,
-    doc=("Slou¾í k zru¹ení doèasnıch temporery tabulek. Funkce otestuje, zda tabulky uvedené "
-         "v seznamu existují a pøípadnì je dropne."))
+    doc=("SlouÅ¾Ã­ k zruÅ¡enÃ­ doÄasnÃ½ch temporery tabulek. Funkce otestuje, zda tabulky uvedenÃ© "
+         "v seznamu existujÃ­ a pÅ™Ã­padnÄ› je dropne."))
 
 _std_table('c_typ_formular',
            (P('id', 'varchar(2)'),
             C('popis', TString)),
-           doc="Slou¾í jako èíselník typù formuláøù",
-           init_values=(("'BF'", "'Jednoduchı náhled'"),
-                        ("'DF'", "'Duální náhled'"))
+           doc="SlouÅ¾Ã­ jako ÄÃ­selnÃ­k typÅ¯ formulÃ¡Å™Å¯",
+           init_values=(("'BF'", "'JednoduchÃ½ nÃ¡hled'"),
+                        ("'DF'", "'DuÃ¡lnÃ­ nÃ¡hled'"))
            )
