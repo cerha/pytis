@@ -1,0 +1,222 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""Pomùcky pro práci s konfigurací v Pytis aplikacích.
+
+Kromì standardních konfiguraèních voleb Pytisu jsou v aplikacích èasto potøeba
+hodnoty jednak globálních nastavení (spoleèných pro v¹echny u¾ivatele) a jednak
+u¾ivatelských nastavení.  Tyto hodnoty jsou vìt¹inou specifické pro danou
+aplikaci a je tøeba zajistit pøístup k nim i v rámci databázových procedur a
+jiných datových operací.  Proto jsou øe¹eny pomocí databázové konfiguraèní
+tabulky, která vrací v¾dy jeden øádek obsahující v¹echny dostupné volby.  Ní¾e
+definované tøídy a funkce zjednodu¹ují práci s tìmito hodnotami v rámci
+pythonového kódu ve specifikacích aplikace.
+
+""" 
+
+from pytis.extensions import *
+
+import thread, pytis.data
+
+import config
+
+
+class DBConfig(object):
+    """Konfigurace spojená s datovým objektem.
+
+    Konfigurace vnitønì pracuje s datovým objektem vytvoøeným nad specifikací
+    urèenou argumentem konstruktoru.  Pøedpokládá se, ¾e datový objekt vrací
+    v¾dy jen jeden øádek (na úrovni SQL omezený napø na aktuálního u¾ivatele).
+    Hodnotu datového sloupeèku je potom mo¾né z tohoto objektu získat jako ze
+    slovníku.
+
+    Zápis hodnoty do slovníku vyvolá zapsání zmìnìné hodnoty do databáze.
+    Pøípadné zmìny dat na úrvni databáze nejsou tímto objektem v souèasné
+    implementaci reflektovány.
+
+    """
+    _data_object_cache = {}
+    _data_object_lock = thread.allocate_lock()
+
+    def __init__(self, name, callback=None, transaction=None):
+        """Inicializuj instanci.
+
+        Argumenty:
+
+          name -- urèuje název specifikace datového objektu pro resolver.
+
+          callback -- pokud není None, bude daná funkce volána pøi ka¾dé zmìnì
+            v datovém objektu.  Jde o funkci jednoho argumentu, kterým je
+            (aktualizovaná) instance 'DBConfig'.
+
+        """
+        key = (name, transaction)
+        try:
+            data = DBConfig._data_object_cache[key]
+        except KeyError:
+            data = data_object(name)
+            if data is not None:
+                DBConfig._data_object_cache[key] = data
+        self._data = data
+        self._transaction = transaction
+        def lfunction():
+            data.select(transaction=transaction)
+            self._row = data.fetchone(transaction=transaction)
+            data.close()
+        with_lock(self._data_object_lock, lfunction)
+        self._key = [self._row[c.id()] for c in data.key()]
+        if callback:
+            self._callback = callback
+            self._data.add_callback_on_change(self._on_change)
+
+    def _on_change(self):
+        def lfunction():
+            self._data.select(transaction=self._transaction)
+            self._row = self._data.fetchone(transaction=self._transaction)
+            self._data.close()
+        with_lock(self._data_object_lock, lfunction)
+        self._callback(self)
+
+    def value(self, key):
+        """Vra» hodnotu 'key' jako instanci 'pytis.data.Value'."""
+        return self._row[key]
+        
+    def __getitem__(self, key):
+        """Vra» hodnotu 'key' jako Pythonovou hodnotu."""
+        return self._row[key].value()
+
+    def __setitem__(self, key, value):
+        """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
+        type = self._row[key].type()
+        self._row[key] = pytis.data.Value(type, value)
+        self._data.update(self._key, self._row, transaction=self._transaction)
+
+    def has_key(self, key):
+        return self._row.has_key(key)
+
+    def keys(self):
+        return self._row.keys()
+
+    def items(self):
+        return tuple([(key, self[key]) for key in self._row.keys()])
+
+
+def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, transaction=None):
+    """Vrací instanci Value pro konfiguraèní parametr.
+
+    Argumenty:
+
+      column -- název sloupce v konfiguraèní tabulce uvedené ve specifikaci
+        udané druhým parametrem.
+      cfgspec -- volitelný název specifikace s vazbou na konfiguraèní tabulku.
+      value_column -- pokud je po¾adavaný sloupec Codebook, umo¾òuje získat
+        hodnotu u¾ivatelského sloupce.
+      transaction -- transakce pro datové operace  
+
+    """
+    dbconfig = DBConfig(cfgspec, transaction=transaction)
+    if not dbconfig.has_key(column):
+        return pytis.data.Value(None, None)
+    value = dbconfig.value(column)
+    if value.type().enumerator():
+        return cb2colvalue(value, column=value_column, transaction=transaction)
+    else:
+        assert value_column is None, "Column '%s' has no enumerator!" % column
+        return value
+
+    
+def saved_config_reader(name, column):
+    """Vra» funkci pro naètení ulo¾ené u¾ivatelské konfigurace z databáze.
+
+    Argumenty:
+
+      name -- název specifikace, ze které je vytvoøen datový objekt.
+      column -- název sloupeèku, ve kterém je ulo¾ená zapicklovaná konfigurace.
+
+    Funkce je urèena pro pou¾ití ve specifikaèní funkci `read_config()' v
+    `application.py'.
+
+    """
+    import cPickle as pickle
+    def reader():
+        value = DBConfig(name)[column]
+        try:
+            return pickle.loads(str(value))
+        except pickle.UnpicklingError, e:
+            log(OPERATIONAL, "Couldn't restore saved configuration:", e)
+            return ()
+    return reader
+
+def saved_config_writer(name, column):
+    """Vra» funkci pro ulo¾ení u¾ivatelské konfigurace do databáze.
+
+    Argumenty:
+
+      name -- název specifikace, ze které je vytvoøen datový objekt.
+      column -- název sloupeèku, do kterého má být konfigurace ulo¾ena.
+
+    Funkce je urèena pro pou¾ití ve specifikaèní funkci `write_config()' v
+    `application.py'.
+
+    """
+    import cPickle as pickle
+    def writer(items):
+        DBConfig(name)[column] = pickle.dumps(items)
+    return writer
+
+def pytis_config_reader():
+    """Vra» funkci pro naètení ulo¾ené u¾ivatelské konfigurace z databáze.
+
+    Funkce je urèena pro pou¾ití ve specifikaèní funkci `read_config()' v
+    `application.py'.
+
+    """
+    import cPickle as pickle
+    import binascii,zlib
+    def reader():
+        try:
+            value = dbfunction('read_pytis_config')
+            if value:
+                pickled = zlib.decompress(binascii.a2b_base64(value))
+                return pickle.loads(pickled)
+            else:
+                return ()
+        except pickle.UnpicklingError, e:
+            log(OPERATIONAL, "Couldn't restore saved configuration:", e)
+            return ()
+    return reader
+
+def pytis_config_writer():
+    """Vra» funkci pro ulo¾ení u¾ivatelské konfigurace do databáze.
+
+    Funkce je urèena pro pou¾ití ve specifikaèní funkci `write_config()' v
+    `application.py'.
+
+    """
+    import cPickle as pickle
+    import binascii,zlib
+    def writer(items):
+        pickled = pickle.dumps(items)
+        value = binascii.b2a_base64(zlib.compress(pickled))
+        try:
+            dbfunction('write_pytis_config', ('value', pytis.data.Value(pytis.data.String(), value)))
+        except:
+            log(OPERATIONAL, "Couldn't save user configuration:", e)
+    return writer
+
+

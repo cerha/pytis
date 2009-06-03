@@ -1,0 +1,49 @@
+#-*- coding: iso-8859-2 -*-
+"""Tento soubor obsahuje definice databázových objektù pro ukládání a ètení
+u¾ivatelské konfigurace. Do hlavního db.py jednotlivých projektù
+se pøidá symbolickým pøilinkováním do odpovídajícího adresáøe db v projektu
+a pøidáním pøíkazù
+
+Gpytis_config = <práva pro objekty tohoto souboru>
+execfile('db_pytis_config.py', copy.copy(globals()))
+"""
+
+db_rights = globals().get('Gpytis_config', None)
+
+if not db_rights:
+    raise ProgramError('No rights specified! Please define Gpytis_config')
+
+table('_pytis_config',
+      (P('uzivatel', TUser),
+       C('config', TString)),
+      grant=db_rights,
+      doc="""Tabulka pro ukládání configu pytisu."""      
+      )
+
+function('read_pytis_config',
+         (),
+         TString,
+         body=("insert into _pytis_config (uzivatel, config) "
+               "select current_user, NULL::text "
+               "where (select current_user) not in "
+               "(select uzivatel from _pytis_config); "
+               "select config from _pytis_config "
+               "where uzivatel = (select current_user)"),
+         doc="""Funkce na zji¹»ování configu pro daného u¾ivatele""",
+         depends=('_pytis_config',))
+
+function('write_pytis_config',
+         (TString,),
+         TString,
+         body=("update _pytis_config set config = $1 "
+               "where uzivatel = (select current_user);"
+               "insert into _pytis_config (uzivatel, config) "
+               "select current_user, $1::text "
+               "where (select current_user) not in "
+               "(select uzivatel from _pytis_config); "               
+               "select config from _pytis_config "
+               "where uzivatel = (select current_user)"
+               ),
+         doc="""Funkce na zápis configu pro daného u¾ivatele.""",
+         depends=('_pytis_config',))
+
