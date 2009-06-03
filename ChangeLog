@@ -25,6 +25,39 @@
 
 2009-07-21  Tomas Cerha  <cerha@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	New gensql schema for dynmenu started.
+	
+	Conflicts:
+	
+		db/db_pytis_menu.py
+	
+
+2009-06-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* ChangeLog.1:
+	* ChangeLog.lib.1:
+	* ChangeLog.lib.2:
+	* ChangeLog.lib.3:
+	* ChangeLog.lib.4:
+	* db/db_common.py:
+	* db/db_pytis_cms.py:
+	* db/db_pytis_config.py:
+	* db/db_pytis_menu.py:
+	* lib/pytis/extensions/__init__.py:
+	* lib/pytis/extensions/cms/__init__.py:
+	* lib/pytis/extensions/cms/cms.py:
+	* lib/pytis/extensions/cms/web.py:
+	* lib/pytis/extensions/dbconfig.py:
+	* lib/pytis/extensions/dbutils.py:
+	* lib/pytis/extensions/defs.py:
+	* lib/pytis/extensions/email_.py:
+	* lib/pytis/extensions/help.py:
+	* lib/pytis/extensions/misc.py:
+	* lib/pytis/extensions/spec.py:
+	* lib/pytis/extensions/types.py:
+	* lib/pytis/extensions/www.py:
+	* lib/pytis/form/search.py:
 	* lib/pytis/web/form.py:
 	One more fix of the last commit (browse form links)..
 
