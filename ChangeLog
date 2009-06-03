@@ -1,6 +1,12 @@
 2009-06-03  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:
+	Don't store multiple instances of the same form access rights in genmenu.
+	
+
+2009-06-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
 	Fix variable name conflict in genmenu --check.
 
 2009-06-02  Milan Zamazal  <pdm@brailcom.org>

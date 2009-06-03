@@ -273,7 +273,7 @@ def process_rights(resolver, actions, rights, def_dir):
         action_name = action.name
         if rights.has_key(action_name):
             continue
-        action_components = action_name.split('/')
+        action_components = action.name.split('/')
         if len(action_components) == 2 and action_components[0] == 'RUN_FORM':
             form_name, form_class = command_form(resolver, action_components[1])
         elif action_components[0] == 'NEW_RECORD':
