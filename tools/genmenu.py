@@ -393,6 +393,7 @@ def fill_rights(cursor, rights, check_rights=None):
     roles = {}
     for r in ('*', 'admin', 'admin_menu', 'admin_roles',):
         roles[r] = None
+    already_stored = {}
     for right in rights.values():
         action = right.action
         for specification in right.rights.specification():
