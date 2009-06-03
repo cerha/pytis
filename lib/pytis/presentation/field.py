@@ -569,6 +569,12 @@ class PresentedRow(object):
         Význam argumentu 'key' je stejný jako v metodì '__getitem__'.
 
         """
+        if self._new:
+            permission = pytis.data.Permission.INSERT
+        else:
+            permission = pytis.data.Permission.UPDATE
+        if not self.permitted(key, permission):
+            return False
         if self._editable.has_key(key):
             if self._editability_dirty[key]:
                 return self._compute_editability(key)

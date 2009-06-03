@@ -1,5 +1,10 @@
 2009-06-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/field.py:
+	Let PresentedRow.editable returns False for columns without proper permissions.
+
+2009-06-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/form.py:
 	Don't try to store forbidden fields in RecordForm.
 
