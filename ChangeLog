@@ -1,3 +1,8 @@
+2009-06-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Remove duplicate rights when reading and parsing ev_pytis_user_menu.
+
 2009-06-02  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/types_.py:
