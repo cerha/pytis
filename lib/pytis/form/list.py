@@ -674,9 +674,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._edit_cell()
             return True
         # Urèení operace a klíèe
-        rdata = self._record_data(the_row)
+        newp = editing.the_row.new()
+        if newp:
+            permission = pytis.data.Permission.INSERT
+        else:
+            permission = pytis.data.Permission.UPDATE
+        rdata = self._record_data(the_row, permission)
         kc = [c.id() for c in self._data.key()]
-        if editing.the_row.new():
+        if newp:
             if row > 0:
                 after = table.row(row-1).row().columns(kc)
                 before = None
@@ -1945,7 +1950,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_insert_line(self, before=False, copy=False):
         row = self._current_cell()[0]
         log(EVENT, 'Vlo¾ení nového øádku:', (row, before, copy))
-        if not self._data.permitted(None, pytis.data.Permission.INSERT):
+        if not self._data.permitted(True, pytis.data.Permission.INSERT):
             message(_("Nemáte pøístupová práva pro vkládání záznamù do této tabulky!"), beep_=True)
             return False
         if not self.editable:
