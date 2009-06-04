@@ -2034,6 +2034,23 @@ class Value(_Value):
         """
         assert isinstance(type, Type)
         return self.__class__(type, self._value)
+    
+    @classmethod
+    def reconceal(class_, value):
+        """Return 'class_' instance corresponding to 'value'.
+
+        Arguments:
+
+          value -- 'Value' instance to use as the base of the 'class_'
+            instance
+
+        """
+        assert isinstance(value, Value)
+        if value.__class__ == class_:
+            instance = value
+        else:
+            instance = class_(type=value.type(), value=value.true_value())
+        return instance
 
 
 class WMValue(_Value):
@@ -2053,19 +2070,3 @@ class SecretValue(Value):
 
     def value(self):
         return self._type.default_value().value()
-    
-    @classmethod
-    def conceal(class_, value):
-        """Return 'SecretValue' instance corresponding to 'value'.
-
-        Arguments:
-
-          value -- 'Value' instance to use as the base of the 'SecretValue'
-            instance
-
-        """
-        if isinstance(value, class_):
-            instance = value
-        else:
-            instance = class_(type=value.type(), value=value.value())
-        return instance

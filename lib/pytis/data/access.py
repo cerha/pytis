@@ -305,7 +305,7 @@ class RestrictedData(Data):
             if rights.permitted(permission, groups, column=item[0]):
                 value = item
             else:
-                value = (item[0], SecretValue.conceal(item[1]),)
+                value = (item[0], SecretValue.reconceal(item[1]),)
             return value
         filtered_items = [screen(item) for item in row.items()]
         return pytis.data.Row(filtered_items)

@@ -180,7 +180,7 @@ class PresentedRow(object):
                 else:
                     value = row[key]
             if self._secret_column(key, virtual):
-                value = pytis.data.SecretValue.conceal(value)
+                value = pytis.data.SecretValue.reconceal(value)
             return value
         row_data = [(c.id, genval(c.id, False)) for c in self._columns if not c.virtual]
         virtual = [(c.id, genval(c.id, True)) for c in self._columns if c.virtual]
