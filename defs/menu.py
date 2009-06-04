@@ -419,8 +419,10 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('redundant', _("Nadbyteèné"), fixed=True,
               editable=pytis.presentation.Editable.NEVER,
               descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
+        Field('colname', _("Sloupec"), editable=pytis.presentation.Editable.NEVER, fixed=True,
+              descr=_("Sloupec, kterého se právo týká; není-li uveden, tak se týká v¹ech.")),
         )
-    columns = ('roleid', 'purpose', 'rightid', 'colname', 'system', 'granted', 'redundant',)
+    columns = ('roleid', 'purpose', 'colname', 'rightid', 'colname', 'system', 'granted', 'redundant',)
     layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
@@ -468,6 +470,9 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
               fixed=True),
         Field('purpose', _("Úèel role"), type=pytis.data.String(),
               editable=pytis.presentation.Editable.NEVER, fixed=True),
+        Field('columns', _("Sloupce"), type=pytis.data.String(),
+              editable=pytis.presentation.Editable.NEVER,
+              descr=_("Sloupce, na které je právo aplikováno; není-li uvedeno, tak v¹echny.")),
         Field('rights', _("Práva"), type=pytis.data.String(), fixed=True),
         Field('rights_show', _("Menu"), type=pytis.data.Boolean(), fixed=True,
               descr=_("Zobrazení v menu")),
@@ -486,7 +491,7 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('rights_call', _("Spu¹tìní"), type=pytis.data.Boolean(), fixed=True,
               descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('roleid', 'purpose', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    columns = ('roleid', 'purpose', 'columns', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     layout = ('roleid', 'purpose', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
