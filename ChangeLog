@@ -1,5 +1,10 @@
 2009-06-04  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/form.py:
+	Allow changing existent values of fields without VIEW permission.
+
+2009-06-04  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/access.py:
 	* lib/pytis/data/types_.py:
 	* lib/pytis/presentation/field.py:

@@ -1414,7 +1414,7 @@ class RecordForm(LookupForm):
         return None
 
     def _record_data(self, row, permission=None):
-        rdata = [(f.id(), row[f.id()]) for f in row.fields()
+        rdata = [(f.id(), pytis.data.Value.reconceal(row[f.id()])) for f in row.fields()
                  if self._data.find_column(f.id()) is not None and
                  (permission is None or self._data.permitted(f.id(), permission))]
         return pytis.data.Row(rdata)
@@ -1934,7 +1934,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             permission = None
         # Re-validate all fields.
         for f in self._fields:
-            if self._mode == self.MODE_INSERT or self._row.field_changed(f.id()):
+            fid = f.id()
+            if (self._mode == self.MODE_EDIT and
+                not self._row.permitted(fid, pytis.data.Permission.VIEW) and
+                self._row.has_key(fid) and not self._row[fid].value()):
+                self._row[fid] = self._row.original_row()[fid]
+            elif self._mode == self.MODE_INSERT or self._row.field_changed(fid):
                 if f.enabled() and not f.validate():
                     f.set_focus()
                     return False
