@@ -1,3 +1,9 @@
+2009-06-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
+	* lib/pytis/presentation/field.py:
+	Don't display secret values in editable input fields.
+
 2009-06-03  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/access.py:

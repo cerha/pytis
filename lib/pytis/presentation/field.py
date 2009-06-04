@@ -440,7 +440,7 @@ class PresentedRow(object):
         """Set the current transaction for data operations."""
         self._transaction = transaction
     
-    def format(self, key, pretty=False, form=None, **kwargs):
+    def format(self, key, pretty=False, form=None, edit=False, **kwargs):
         """Return the string representation of the field value.
 
         Arguments:
@@ -449,10 +449,16 @@ class PresentedRow(object):
           pretty -- boolean flag indicating whether pretty export should be
             used to format the value.
           form -- 'Form' instance of the row's form
+          edit -- if true, return a string suitable for use in an editing field,
+            i.e. don't return string representing a secret value.
           kwargs -- keyword arguments passed to the 'export()' method of the field's
             'Value' instance.
         
         """
+        if (edit and
+            not self.permitted(key, permission=pytis.data.Permission.VIEW) and
+            self.permitted(key, permission=True)):
+            return ''
         try:
             return self._cache[key]
         except KeyError:
@@ -569,11 +575,7 @@ class PresentedRow(object):
         Význam argumentu 'key' je stejný jako v metodì '__getitem__'.
 
         """
-        if self._new:
-            permission = pytis.data.Permission.INSERT
-        else:
-            permission = pytis.data.Permission.UPDATE
-        if not self.permitted(key, permission):
+        if not self.permitted(key, permission=True):
             return False
         if self._editable.has_key(key):
             if self._editability_dirty[key]:
@@ -654,11 +656,17 @@ class PresentedRow(object):
         
           key -- field identifier (string).
           permisson -- one of 'pytis.data.Permission' constants determinint the perission to be
-            checked.
+            checked or 'True' in which case corresponding editing permission
+            (insert or update) is checked.
           
         True is always returned for virtual fields.
 
         """
+        if permission is True:
+            if self._new:
+                permission = pytis.data.Permission.INSERT
+            else:
+                permission = pytis.data.Permission.UPDATE            
         if self._coldict[key].virtual:
             return True
         else:
