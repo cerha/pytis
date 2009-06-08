@@ -52,6 +52,7 @@ class Menu(wiking.PytisModule):
         pass
     
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
+    EMBED_BINDING_ID = 'data'
 
     def _resolve(self, req):
         identifier = req.unresolved_path[0]
@@ -66,6 +67,17 @@ class Menu(wiking.PytisModule):
         row = rows[variants.index(lang)]
         del req.unresolved_path[0]
         return row
+
+    def _embed_binding(self, modname):
+        return wiking.Binding(modname, modname, None, id=self.EMBED_BINDING_ID,
+                              condition=lambda r: None)
+
+    def _bindings(self, req, record):
+        bindings = super(Menu, self)._bindings(req, record)
+        modname = record['modname'].value()
+        if modname:
+            bindings.append(self._embed_binding(modname))
+        return bindings
 
     def _action(self, req, record=None):
         # The only supported action of this module is `view' and the `action' argument is ignored
@@ -167,7 +179,9 @@ class Menu(wiking.PytisModule):
         else:
             pre, post = [], []
         if modname is not None:
-            result = req.forward(self._module(modname), menu_item=record)
+            binding = self._embed_binding(modname)
+            result = req.forward(self._module(modname), binding=binding, record=record,
+                                 title=record['title'].value())
             if isinstance(result, (int, tuple)):
                 # The request has already been served by the embedded module. 
                 return result
@@ -193,18 +207,11 @@ class Menu(wiking.PytisModule):
         else:
             document = self._document(req, pre+post, record)
         return document
-            
-    def action_subpath(self, req, record):
-        modname = record['modname'].value()
-        if req.unresolved_path[0] == Embeddable.EMBED_SUBPATH and modname is not None:
-            del req.unresolved_path[0]
-            return req.forward(self._module(modname), menu_item=record)
-        raise wiking.NotFound()
     
     def module_uri(self, modname):
         row = self._data.get_row(modname=modname)
         if row:
-            return '/'+ row['identifier'].value() +'/'+ Embeddable.EMBED_SUBPATH
+            return '/'+ row['identifier'].value() +'/'+ self.EMBED_BINDING_ID
         else:
             return None
 
@@ -375,7 +382,6 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     
 class Embeddable(object):
     """Mix-in class for modules which may be embedded into page content."""
-    EMBED_SUBPATH = 'data'
     
     def submenu(self, req, menu_item_id):
         """Return a list of 'MenuItem' instances to insert into the main menu.
@@ -390,11 +396,16 @@ class Embeddable(object):
 
 class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
     
-    def _form(self, form, req, record=None, binding_uri=None, **kwargs):
-        if binding_uri is None:
-            binding_uri = req.uri() +'/'+ self.EMBED_SUBPATH
-        return super(EmbeddablePytisModule, self)._form(form, req, record=record,
-                                                        binding_uri=binding_uri, **kwargs)
+    def _current_base_uri(self, req, record=None):
+        uri = super(EmbeddablePytisModule, self)._current_base_uri(req, record=record)
+        if len(uri.lstrip('/').split('/')) == 1:
+            uri += '/'+ Menu.EMBED_BINDING_ID
+        return uri
 
-
-
+    def _binding_parent_uri(self, req):
+        fw = self._binding_forward(req)
+        if fw:
+            path = fw.uri().lstrip('/').split('/')
+            if len(path) == 4 and path[-1] == fw.arg('binding').id():
+                return '/'+ path[0]
+        return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
