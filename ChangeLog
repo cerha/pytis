@@ -1,3 +1,8 @@
+2009-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/field.py:
+	Translate field value before parsing it as structured text in web forms..
+
 2009-06-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:
