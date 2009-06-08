@@ -825,7 +825,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 kwargs['guardian'] = self
                 parent = self._frame
             args = (parent, resolver(), name)
-            form = catch('form-init-error', form_class, *args, **kwargs)
+            try:
+                form = form_class(*args, **kwargs)
+            except Form.InitError:
+                form = None
             if form is None:
                 self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit: %s") % name)
             else:

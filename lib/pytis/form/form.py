@@ -62,10 +62,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
     """Konstanta callbacku interakce u¾ivatele."""
 
-
     _STATUS_FIELDS = ()
     _PERSISTENT_FORM_PARAMS = ()
     DESCR = None
+
+    class InitError(Exception):
+        """Exception signaling errors on form initializations."""
 
     def _get_command_handler_instance(cls):
         return current_form(inner=False)
@@ -145,7 +147,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._data = self._create_data_object()
         except (ResolverError, ProgramError):
             log(OPERATIONAL, 'Form initialization error', format_traceback())
-            throw('form-init-error')
+            raise self.InitError()
         self._init_attributes(**kwargs)
         self._result = None
         start_time = time.time()
@@ -781,7 +783,7 @@ class LookupForm(InnerForm):
         success, self._lf_select_count = db_operation(self._init_data_select, self._data)
         if not success:
             log(EVENT, 'Selhání databázové operace')
-            throw('form-init-error')
+            raise self.InitError()
         return self._lf_select_count
 
     def _data_sorting(self):
