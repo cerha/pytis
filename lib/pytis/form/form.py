@@ -1061,7 +1061,8 @@ class LookupForm(InnerForm):
                            pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
                 sorting = tuple([(cid, mapping[dir]) for cid, dir in sorting])
         elif col is not None:
-            if not self._data.find_column(col):
+            if (not self._data.find_column(col) or
+                not self._data.permitted(col, pytis.data.Permission.VIEW)):
                 message(_("Podle tohoto sloupce nelze tøídit"),
                         beep_=True)
                 return None

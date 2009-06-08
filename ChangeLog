@@ -1,5 +1,10 @@
 2009-06-08  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/form.py:
+	Don't offer sorting of secret columns.
+
+2009-06-08  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/search.py:
 	Exclude secret columns from SF dialogs.
 
