@@ -1,5 +1,10 @@
 2009-06-08  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/search.py:
+	Exclude secret columns from SF dialogs.
+
+2009-06-08  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/application.py:
 	* lib/pytis/form/form.py:
 	Replace form-init-error by Form.InitError.

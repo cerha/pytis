@@ -690,6 +690,8 @@ def sfs_columns(columns, data, labelfunc=FieldSpec.label):
         if data.find_column(c.id()) is None or not label:
             continue
         id = c.id()
+        if not data.permitted(id, pytis.data.Permission.VIEW):
+            continue
         type_ = c.type(data)
         sfs_columns.append(SFSColumn(id, type_, label))
     return sfs_columns
