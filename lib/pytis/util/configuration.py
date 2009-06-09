@@ -817,6 +817,10 @@ class Configuration(object):
         _DESCR = _("Pozadí políèka needitovatelného kvùli pøístupovým právùm.")
         _DEFAULT = '#e0e4f0'
 
+    class _Option_field_hidden_color(ColorOption):
+        _DESCR = _("Pozadí políèka se skrytou hodnotou.")
+        _DEFAULT = '#404040'
+
     class _Option_field_invalid_color(ColorOption):
         _DESCR = _("Barva pozadí vstupního políèka pokud aktuální hodnota není validní.")
         _DEFAULT = '#ffffc0'

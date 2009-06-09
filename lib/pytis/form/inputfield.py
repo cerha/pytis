@@ -343,6 +343,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         else:
             permission = pytis.data.Permission.UPDATE
         self._denied = denied = not row.permitted(id, permission)
+        self._hidden = not row.permitted(id, pytis.data.Permission.VIEW)
         self._readonly = readonly or denied
         self._enabled = not denied and not readonly and row.editable(id)
         self._callback_registered = False
@@ -540,6 +541,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # operations (such as complicated field recomputations).
         if not self._readonly:
             self._needs_validation = True
+            self._update_background_color()
         if event:
             event.Skip()
 
@@ -560,6 +562,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             color = config.field_denied_color
         elif not self._enabled:
             color = config.field_disabled_color
+        elif self._hidden and not self._modified():
+            color = config.field_hidden_color
         elif not self._valid:
             color = config.field_invalid_color
         else:
