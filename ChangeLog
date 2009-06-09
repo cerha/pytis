@@ -1,5 +1,10 @@
 2009-06-09  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/list.py:
+	Forbid incremental search in secret columns.
+
+2009-06-09  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/inputfield.py:
 	* lib/pytis/util/configuration.py:
 	Indicate secret fields with a special background color.
