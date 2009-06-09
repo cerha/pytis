@@ -1,3 +1,9 @@
+2009-06-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/form.py:
+	* lib/pytis/form/list.py:
+	Update only changed fields after editing a row in a form.
+
 2009-06-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/form.py:

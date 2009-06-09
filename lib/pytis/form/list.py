@@ -679,7 +679,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             permission = pytis.data.Permission.INSERT
         else:
             permission = pytis.data.Permission.UPDATE
-        rdata = self._record_data(the_row, permission)
+        rdata = self._record_data(the_row, permission=permission, updated=(not newp))
         kc = [c.id() for c in self._data.key()]
         if newp:
             if row > 0:
