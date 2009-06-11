@@ -407,6 +407,6 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
         fw = self._binding_forward(req)
         if fw:
             path = fw.uri().lstrip('/').split('/')
-            if len(path) == 4 and path[-1] == fw.arg('binding').id():
+            if len(path) == 3 and path[-1] == fw.arg('binding').id():
                 return '/'+ path[0]
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
