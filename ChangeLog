@@ -1,3 +1,8 @@
+2009-06-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Don't use binding parent title in embeded CMS modules..
+
 2009-06-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:
