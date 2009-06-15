@@ -117,9 +117,10 @@ class Modules(Specification):
     #    return record
     def _reload_actions(self, record):
         def action_descr(module, action):
-            for a in module.Spec.actions:
-                if a.name() == action:
-                    return a.descr() or a.title()
+            if issubclass(module, wiking.PytisModule):
+                for a in module.Spec.actions:
+                    if a.name() == action:
+                        return a.descr() or a.title()
             try:
                 return dict(self._DEFAULT_ACTIONS)[action]
             except KeyError:

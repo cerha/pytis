@@ -1,3 +1,8 @@
+2009-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Fix CMS module action detection for modules not derived from `wiking.PytisModule'..
+
 2009-06-11  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:
