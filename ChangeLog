@@ -1,5 +1,10 @@
 2009-06-15  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/web/form.py:
+	Handle limit=0 correctly in web BrowseForms..
+
+2009-06-15  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/extensions/cms/cms.py:
 	Fix CMS module action detection for modules not derived from `wiking.PytisModule'..
 

@@ -783,6 +783,8 @@ class BrowseForm(LayoutForm):
         self._page = page
         if count == 0:
             pages = 0
+        elif limit is None:
+            pages = 1
         else:
             pages, modulo = divmod(count, min(limit, count))
             pages += modulo and 1 or 0
