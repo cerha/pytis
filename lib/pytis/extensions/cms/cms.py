@@ -116,6 +116,7 @@ class Modules(Specification):
     #    
     #    return record
     def _reload_actions(self, record):
+        import wiking
         def action_descr(module, action):
             if issubclass(module, wiking.PytisModule):
                 for a in module.Spec.actions:
