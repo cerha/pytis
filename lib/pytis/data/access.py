@@ -299,15 +299,10 @@ class RestrictedData(Data):
             return row
         groups = self.access_groups()
         rights = self._access_rights
-        if rights.permitted(permission, groups):
+        if permission == Permission.VIEW or rights.permitted(permission, groups):
             return row
-        def screen(item):
-            if rights.permitted(permission, groups, column=item[0]):
-                value = item
-            else:
-                value = (item[0], SecretValue.reconceal(item[1]),)
-            return value
-        filtered_items = [screen(item) for item in row.items()]
+        filtered_items = [item for item in row.items()
+                          if rights.permitted(permission, groups, column=item[0])]
         return pytis.data.Row(filtered_items)
 
     def permitted(self, column_id, permission):

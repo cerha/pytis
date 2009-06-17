@@ -2055,18 +2055,3 @@ class Value(_Value):
 
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
-
-
-class SecretValue(Value):
-    """Values not to be present to the user.
-
-    It's the same as 'Value' except that 'export()' method returns a special
-    string not related to the actual value.  The special string is defined by
-    'secret_export()' method of the value type.
-    
-    """
-    def export(self, *args, **kwargs):
-        return self.type().secret_export()
-
-    def value(self):
-        return self._type.default_value().value()

@@ -179,8 +179,6 @@ class PresentedRow(object):
                     value = row[key].retype(self._coldict[key].type)
                 else:
                     value = row[key]
-            if self._secret_column(key, virtual):
-                value = pytis.data.SecretValue.reconceal(value)
             return value
         row_data = [(c.id, genval(c.id, False)) for c in self._columns if not c.virtual]
         virtual = [(c.id, genval(c.id, True)) for c in self._columns if c.virtual]
@@ -282,11 +280,7 @@ class PresentedRow(object):
             # the original value without recursion.
             self._dirty[key] = False
             func = column.computer.function()
-            if key in self._secret_computers:
-                value_class = pytis.data.SecretValue
-            else:
-                value_class = pytis.data.Value
-            new_value = value_class(column.type, func(self))
+            new_value = pytis.data.Value(column.type, func(self))
             if new_value.value() != value.value():
                 value = new_value
                 if self._row.has_key(key):

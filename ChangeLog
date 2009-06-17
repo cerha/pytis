@@ -1,3 +1,10 @@
+2009-06-17  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/access.py:
+	* lib/pytis/data/types_.py:
+	* lib/pytis/presentation/field.py:
+	Don't use SecretValue anymore.
+
 2009-06-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/list.py:
