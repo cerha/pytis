@@ -51,23 +51,39 @@ class Menu(wiking.PytisModule):
     class Spec(Specification, cms.Menu):
         pass
     
+    _ITEM_PATH_LENGTH = 1
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
     EMBED_BINDING_ID = 'data'
 
     def _resolve(self, req):
-        identifier = req.unresolved_path[0]
-        rows = self._menu_item_rows(req, identifier=identifier, published=True)
+        kwargs = self._resolve_menu_args(req)
+        rows = self._data.get_rows(published=True, **kwargs)
         if not rows:
-            if self._menu_item_rows(req, identifier=identifier):
+            if self._data.get_rows(**kwargs):
                 raise wiking.Forbidden()
             else:
                 raise wiking.NotFound()
         variants = [str(row['lang'].value()) for row in rows]
         lang = req.prefered_language(variants)
         row = rows[variants.index(lang)]
-        del req.unresolved_path[0]
+        del req.unresolved_path[:self._ITEM_PATH_LENGTH]
+        # This is a big hack, but we need to mark the real number defined by the (potentially
+        # overriden) menu class.  This number is later used in 'EmbeddablePytisModule' class below.
+        req.menu_path_length = self._ITEM_PATH_LENGTH
         return row
 
+    def _resolve_menu_args(self, req):
+        """Return arguments identifying the current menu item rows.
+
+        Returns arguments for self._data.get_rows() which limit returned rows to match the current
+        menu item (multiple rows only represent language variants of the item).
+
+        """
+        return dict(identifier=req.unresolved_path[0])
+    
+    def _menu_item_rows(self, req, **kwargs):
+        return self._data.get_rows(req, **kwargs)
+    
     def _embed_binding(self, modname):
         return wiking.Binding(modname, modname, None, id=self.EMBED_BINDING_ID,
                               condition=lambda r: None)
@@ -120,14 +136,17 @@ class Menu(wiking.PytisModule):
                         action = 'view'
                     return rights.permitted_roles(menu_item_id, action)
         return ()
-    
+
+    def _menu_item_identifier(self, row):
+        return str(row['identifier'].value())
+
     def menu(self, req):
         children = {None: []}
         translations = {}
         rights = self._module('Rights')
         def item(row):
             menu_item_id = row['menu_item_id'].value()
-            identifier = str(row['identifier'].value())
+            identifier = self._menu_item_identifier(row)
             titles, descriptions = translations[menu_item_id]
             title = lcg.SelfTranslatableText(identifier, translations=titles)
             descr = lcg.SelfTranslatableText('', translations=descriptions)
@@ -201,7 +220,7 @@ class Menu(wiking.PytisModule):
                                        sorting=self._sorting)
             # TODO: Use only items, which are visible to the current user (access rights). 
             if rows:
-                return req.redirect('/'+rows[0]['identifier'].value())
+                return req.redirect('/'+self._menu_item_identifier(rows[0]))
             else:
                 document = self._document(req, [], record)
         else:
@@ -211,7 +230,7 @@ class Menu(wiking.PytisModule):
     def module_uri(self, modname):
         row = self._data.get_row(modname=modname)
         if row:
-            return '/'+ row['identifier'].value() +'/'+ self.EMBED_BINDING_ID
+            return '/'+ self._menu_item_identifier(row) +'/'+ self.EMBED_BINDING_ID
         else:
             return None
 
@@ -399,7 +418,7 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
     
     def _current_base_uri(self, req, record=None):
         uri = super(EmbeddablePytisModule, self)._current_base_uri(req, record=record)
-        if len(uri.lstrip('/').split('/')) == 1:
+        if len(uri.lstrip('/').split('/')) == req.menu_path_length:
             uri += '/'+ Menu.EMBED_BINDING_ID
         return uri
 
@@ -407,6 +426,6 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
         fw = self._binding_forward(req)
         if fw:
             path = fw.uri().lstrip('/').split('/')
-            if len(path) == 3 and path[-1] == fw.arg('binding').id():
-                return '/'+ path[0]
+            if len(path) == req.menu_path_length+2 and path[-1] == fw.arg('binding').id():
+                return '/'+ '/'.join(path[:req.menu_path_length])
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
