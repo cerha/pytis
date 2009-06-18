@@ -1,6 +1,11 @@
 2009-06-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:
+	Find pytis redirection origin in a separate method..
+
+2009-06-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
 	Allow CMS menu items to be refered by variable URI path length..
 
 2009-06-16  Tomas Cerha  <cerha@brailcom.org>

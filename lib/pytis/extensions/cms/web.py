@@ -109,9 +109,20 @@ class Menu(wiking.PytisModule):
         req.cms_current_menu_record = kwargs.get('record')
         return super(Menu, self)._handle(req, action, **kwargs)
 
-    def _menu_item_rows(self, req, **kwargs):
-        return self._data.get_rows(**kwargs)
-    
+    def _pytis_redirect_origin(self, req):
+        """Find the original module if the request was forwarded due to pytis redirection.
+        
+        Returns module instance of the original request handler (before pytis redirection) or None
+        
+        """
+        module = None
+        forwards = req.forwards()
+        i = len(forwards) - 1
+        while i > 0 and forwards[i].arg('pytis_redirect'):
+            module = forwards[i-1].module()
+            i -= 1
+        return module
+
     def permitted_roles(self, req, module, action=None, record=None, **kwargs):
         #wiking.debug("...", module.name(), action, hasattr(req, 'cms_current_menu_record'))
         if hasattr(req, 'cms_current_menu_record'):
@@ -122,13 +133,9 @@ class Menu(wiking.PytisModule):
                    and record is not None and record['menu_item_id'].value() == menu_item_id:
                 return rights.permitted_roles(menu_item_id, 'visit')
             else:
-                # Find the original module if the request was forwarded due to pytis redirection
-                # (access rights are defined for menu items which are bound to the original module).
-                forwards = req.forwards()
-                i = len(forwards) - 1
-                while i > 0 and forwards[i].arg('pytis_redirect'):
-                    module = forwards[i-1].module()
-                    i -= 1
+                # Access rights are defined for menu items which are bound to the original module
+                # before pytis redirection.
+                module = self._pytis_redirect_origin(req) or module
                 if module.name() == menu_record['modname'].value():
                     if action == 'subpath':
                         # Infer 'subpath' rights from 'view' rights to hide this mysterious
