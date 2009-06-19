@@ -1,3 +1,12 @@
+2009-06-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/extensions/www.py:
+	* lib/pytis/form/_grid.py:
+	* lib/pytis/form/inputfield.py:
+	* lib/pytis/form/list.py:
+	* lib/pytis/presentation/field.py:
+	First attempt to hide secret values.
+
 2009-06-17  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/access.py:

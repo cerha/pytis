@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,16 +96,20 @@ class BaseDBTable(object):
                         sort=self._sort)
         return [pytis.data.Row([(c, r[c]) for c in self._columns])
                 for r in rows]
-
         
     def table(self):
+        secret_columns = [c for c in self._columns
+                          if not self._data.permitted(c, pytis.data.Permission.VIEW)]
         aligns = self._col_aligns()
         rows = self.dbrows()
         if len(rows) > 0:
             for row in rows:
                 r = TR()
                 for i, c in enumerate(row):
-                    val = c.export()
+                    if c in secret_columns:
+                        val = c.type().secret_export()
+                    else:
+                        val = c.export()
                     if self._klass:
                         style = self._klass(row, self._columns[i])
                         if style:

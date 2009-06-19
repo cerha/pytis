@@ -691,7 +691,13 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     
     def reset(self):
         """Reset the field to its original value."""
-        self._set_value(self._row.original_row()[self.id()].export())
+        id = self.id()
+        value = self._row.original_row()[id]
+        if self._row.permitted(id, pytis.data.Permission.VIEW):
+            exported_value = value.export()
+        else:
+            exported_value = value.type().secret_export()
+        self._set_value(exported_value)
 
     def insert_text(self, text):
         """Insert given text into the field in the current place of the cursor."""

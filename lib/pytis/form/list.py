@@ -1656,6 +1656,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if col is None:
                 col = self._current_cell()[1]
             cid = self._columns[col].id()
+            if not self._data.permitted(cid, pytis.data.Permission.VIEW):
+                return
             cond = self._current_condition()
             distinct = self._data.distinct(cid, condition=cond)
             if len(distinct) > 60:
@@ -1809,10 +1811,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if not update(int(float(r)/number_rows*100)):
                     break
                 for cid, ctype in column_list:
+                    presented_row = self._table.row(r)
                     if isinstance(ctype, pytis.data.Float):
-                        s = self._table.row(r)[cid].export(locale_format=False)
+                        s = presented_row.format(cid, secure=True, locale_format=False)
                     else:
-                        s = self._table.row(r)[cid].export()
+                        s = presented_row.format(cid, secure=True)
                     if export_encoding and export_encoding != db_encoding:
                         if not is_unicode(s):
                             s = unicode(s, db_encoding)
@@ -1924,24 +1927,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if not update(int(float(r)/number_rows*100)):
                     break
                 for j, (cid, ctype) in enumerate(column_list):
+                    presented_row = self._table.row(r)
                     if isinstance(ctype, pytis.data.Float):
-                        s = self._table.row(r)[cid].export(locale_format=True)
+                        s = presented_row.format(cid, secure=True, locale_format=True)
                     elif isinstance(ctype, pytis.data.Number):
-                        s = self._table.row(r)[cid].value()
+                        s = presented_row.get(secure=True)
                     elif isinstance(ctype, pytis.data.Date):
-                        s = self._table.row(r)[cid].value()
+                        s = presented_row.get(secure=True)
                         if s:
                             s = datetime.date(s.year, s.month, s.day)
                     elif isinstance(ctype, pytis.data.Time):
-                        s = self._table.row(r)[cid].value()
+                        s = presented_row.get(secure=True)
                         if s:
                             s = datetime.time(s.hour, s.minute, int(s.second))
                     elif isinstance(ctype, pytis.data.DateTime):
-                        s = self._table.row(r)[cid].value()
+                        s = presented_row.get(secure=True)
                         if s:
                             s = s.strftime(pytis.data.DateTime.CZECH_FORMAT)
                     else:
-                        s = self._table.row(r)[cid].export()
+                        s = presented_row.format(cid, secure=True)
                         s = ';'.join(s.split('\n'))
                     if s is not None:                        
                         ws.write(r+1, j, s, column_styles[cid])

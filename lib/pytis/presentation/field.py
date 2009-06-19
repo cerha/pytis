@@ -377,17 +377,23 @@ class PresentedRow(object):
             self._runtime_filter_dirty[k] = True
             self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
 
-    def get(self, key, default=None, lazy=False):
+    def get(self, key, default=None, lazy=False, secure=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
 
           Arguments:
+          
             default -- the default value returned when the key does not exist.
             lazy -- if true, the value will not be computed even if it should
               be.  This may result in returning an invalid value, but prevents
               the computer from being invoked.  Does nothing for fields without
               a computer.
+            secure -- if 'False', the value is formatted in a common way; if
+              'True', the value is replaced by type secret value replacement if
+              its column is secret.
           
         """
+        if secure and not self.permitted(key, pytis.data.Permission.VIEW):
+            return default
         try:
             return self.__getitem__(key, lazy=lazy)
         except KeyError:
@@ -434,7 +440,7 @@ class PresentedRow(object):
         """Set the current transaction for data operations."""
         self._transaction = transaction
     
-    def format(self, key, pretty=False, form=None, edit=False, **kwargs):
+    def format(self, key, pretty=False, form=None, secure=False, **kwargs):
         """Return the string representation of the field value.
 
         Arguments:
@@ -443,16 +449,15 @@ class PresentedRow(object):
           pretty -- boolean flag indicating whether pretty export should be
             used to format the value.
           form -- 'Form' instance of the row's form
-          edit -- if true, return a string suitable for use in an editing field,
-            i.e. don't return string representing a secret value.
+          secure -- if 'False', the value is formatted in a common way; if
+            'True', the value is replaced by type secret value replacement if
+            its column is secret; if a basestring, secret values are replaced by
+            the string (this is useful for editable secret fields, to display an
+            empty string there)
           kwargs -- keyword arguments passed to the 'export()' method of the field's
             'Value' instance.
         
         """
-        if (edit and
-            not self.permitted(key, permission=pytis.data.Permission.VIEW) and
-            self.permitted(key, permission=True)):
-            return ''
         try:
             return self._cache[key]
         except KeyError:
@@ -463,12 +468,17 @@ class PresentedRow(object):
             # Mù¾e nastat napøíklad v pøípadì, kdy k danému sloupci nejsou
             # pøístupová práva.
             svalue = ''
-        else:            
+        elif secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
             value_type = value.type()
             if pretty and isinstance(value_type, PrettyType):
                 svalue = value_type.pretty_export(value.value(), row=self, form=form, **kwargs)
             else:
                 svalue = value.export(**kwargs)
+        else:
+            if secure is True:
+                svalue = value.type().secret_export()
+            else:
+                svalue = secure
         column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
             svalue = string.join(svalue.splitlines(), column.line_separator)
@@ -662,9 +672,10 @@ class PresentedRow(object):
             else:
                 permission = pytis.data.Permission.UPDATE            
         if self._coldict[key].virtual:
-            return True
+            permitted = key not in self._secret_computers
         else:
-            return self._data.permitted(key, permission)
+            permitted = self._data.permitted(key, permission)
+        return permitted
 
     def _cb_spec(self, column):
         try:
@@ -703,6 +714,9 @@ class PresentedRow(object):
         return completer
     
     def _display_func(self, column):
+        if self._secret_column(column.id, column.virtual):
+            hidden_value = column.type.secret_export()
+            return lambda v: hidden_value
         def get(enum, value, display, call=False):
             if value is None or self._transaction and not self._transaction.open():
                 return ''
