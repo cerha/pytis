@@ -271,6 +271,8 @@ def fill_rights(cursor, rights, check_rights=None):
             columns = specification[0]
             if columns is None:
                 columns = (None,)
+            elif isinstance(columns, str):
+                columns = [columns]
             for groups_permissions in specification[1:]:
                 groups = groups_permissions[0]
                 if not pytis.util.is_sequence(groups):

@@ -17,6 +17,55 @@
 
 	* lib/pytis/data/postgresql.py:
 	Allow aggregation functions MIN and MAX also on string and date/time columns..
+2009-06-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Fix processing of single column rights in genmenu.
+
+2009-06-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Find pytis redirection origin in a separate method..
+
+2009-06-18  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Allow CMS menu items to be refered by variable URI path length..
+
+2009-06-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Fixed loading module actions (added forgotten import of `wiking')..
+
+2009-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Handle limit=0 correctly in web BrowseForms..
+
+2009-06-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Fix CMS module action detection for modules not derived from `wiking.PytisModule'..
+
+2009-06-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Redefine binding parent uri only for modules which resolve to a single record..
+
+2009-06-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Don't use binding parent title in embeded CMS modules..
+
+2009-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/web.py:
+	Handle embedded CMS modules through bindings..
+
+2009-06-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/field.py:
+	Translate field value before parsing it as structured text in web forms..
 
 2009-07-21  Pavel Hanak  <hanak@wpb.cz>
 
