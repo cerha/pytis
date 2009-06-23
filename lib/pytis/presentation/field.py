@@ -663,7 +663,10 @@ class PresentedRow(object):
             checked or 'True' in which case corresponding editing permission
             (insert or update) is checked.
           
-        True is always returned for virtual fields.
+        Permission checking of virtual fields is limited to the VIEW
+        permission, based on the field dependencies.  VIEW of a virtual column
+        is permitted if all the fields from dependencies are allowed to VIEW.
+        The result is undefined for other permissions of virtual fields.
 
         """
         if permission is True:

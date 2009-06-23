@@ -1,5 +1,10 @@
 2009-06-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/field.py:
+	Document changed behavior of virtual column permission checks.
+
+2009-06-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/_grid.py:
 	* lib/pytis/form/inputfield.py:
 	* lib/pytis/form/list.py:
