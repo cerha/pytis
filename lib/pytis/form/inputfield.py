@@ -372,7 +372,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             row.register_callback(row.CALL_EDITABILITY_CHANGE, id, self._editability_change_callback)
         value = self._row.invalid_string(id)
         if value is None:
-            value = row.format(id, edit=True)
+            value = row.format(id, secure='')
         self._set_value(value)
         self._call_on_idle = self._update_background_color
         

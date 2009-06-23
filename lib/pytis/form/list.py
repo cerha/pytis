@@ -1739,7 +1739,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_copy_cell(self):
         row, col = self._current_cell()
         cid = self._columns[col].id()
-        self._copy_to_clipboard(self._table.row(row).format(cid))
+        self._copy_to_clipboard(self._table.row(row).format(cid, secure=True))
 
     def _copy_to_clipboard(self, text):
         # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
@@ -2694,7 +2694,7 @@ class BrowseForm(FoldableForm):
             if type == FormType.INSERT:
                 cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
                 hlp = _("Vlo¾it záznam pro hodnotu '%s' sloupce '%s'.") \
-                      % (row.format(f.id()), f.column_label())
+                      % (row.format(f.id(), secure=''), f.column_label())
                 icon = 'link-new-record'
             else:
                 kwargs = {}
@@ -2713,7 +2713,7 @@ class BrowseForm(FoldableForm):
                 cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls, select_row=pair,
                                                    **kwargs)
                 hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
-                      % (row.format(f.id()), f.column_label())
+                      % (row.format(f.id(), secure=''), f.column_label())
                 icon = 'link'
             if callable(enabled):
                 enabled = enabled(row)

@@ -534,7 +534,7 @@ class ListTable(wx.grid.PyGridTableBase):
             the_row = self._edited_row.the_row
             if the_row is None:
                 return ''
-            value = the_row.format(column.id)
+            value = the_row.format(column.id, secure=True)
         else:
             value = self._cached_value(row, column.id)
         if not inputfield and column.wxtype == wx.grid.GRID_VALUE_BOOL:

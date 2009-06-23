@@ -105,7 +105,7 @@ def data_table(resolver, name, condition=None, sorting=None,
         if row is None:
             return None
         presented_row.set_row(row)
-        return [presented_row.format(c.id) for c in columns]
+        return [presented_row.format(c.id, secure=True) for c in columns]
     long_table_args['separator_margin'] = \
       long_table_args['line_separator_margin'] = UFont(0.2)
     return LongTable(columns, table_row, **long_table_args)
@@ -152,7 +152,7 @@ def data_item(resolver, name, column, key=None):
     fields = view.fields()
     presented_row = pytis.presentation.PresentedRow(fields, data, row)
     try:
-        value = presented_row.format(column)
+        value = presented_row.format(column, secure=True)
     except KeyError:
         raise TemplateException(_("Chybný odkaz na sloupec"),
                                 name, column)
