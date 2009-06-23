@@ -275,21 +275,13 @@ class RestrictedData(Data):
             return [condition.args()[0]]
         
     def _check_access_condition(self, condition):
-        self._check_access_columns(
-            self._check_access_condition_columns(condition), Permission.VIEW)
+        return True
 
     def _check_access_sorting(self, sorting):
-        columns = []
-        for s in sorting:
-            if isinstance(s, str):
-                columns.append(s)
-            else:
-                columns.append(s[0])
-        self._check_access_columns(columns, Permission.VIEW)
+        return True
 
     def _check_access_key(self):
-        key_columns = map(lambda c: c.id(), self.key())
-        self._check_access_columns(key_columns, Permission.VIEW)
+        return True
 
     def _check_access_delete(self):
         self._check_access_columns([None], Permission.DELETE)

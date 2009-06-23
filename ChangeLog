@@ -1,5 +1,10 @@
 2009-06-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/access.py:
+	Don't filter on Permission.VIEW in data access methods.
+
+2009-06-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/form.py:
 	Refuse to commit EditForm if nothing has been changed.
 
