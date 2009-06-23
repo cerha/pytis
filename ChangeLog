@@ -1,3 +1,8 @@
+2009-06-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/extensions/cms/cms.py:
+	Define fields by a method in CMS Rithts module..
+
 2009-06-18  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/web.py:

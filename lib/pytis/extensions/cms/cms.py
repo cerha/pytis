@@ -392,16 +392,17 @@ class Rights(Specification):
     title = _("Pøístupová práva")
     help = _("Pøiøazení práv k akcím modulù pro jednotlivé u¾ivatelské role.")
     table = 'cms_rights'
-    fields = (Field('right_id'),
-              Field('menu_item_id'),
-              Field('role_id'),
-              Field('role_name', _("Role"), editable=NEVER),
-              Field('system_role'),
-              Field('mod_id'),
-              Field('action_id'),
-              Field('action_name', _("Akce"), editable=NEVER),
-              Field('action_description', _("Popis"), width=30, editable=NEVER),
-              Field('permitted', _("Povoleno"), width=3, fixed=True))
+    def fields(self): return (
+        Field('right_id'),
+        Field('menu_item_id'),
+        Field('role_id'),
+        Field('role_name', _("Role"), editable=NEVER),
+        Field('system_role'),
+        Field('mod_id'),
+        Field('action_id'),
+        Field('action_name', _("Akce"), editable=NEVER),
+        Field('action_description', _("Popis"), width=30, editable=NEVER),
+        Field('permitted', _("Povoleno"), width=3, fixed=True))
     grouping = 'role_id'
     sorting = (('role_name', ASC), ('mod_id', DESC), ('action_id', ASC))
     layout = columns = ('role_name', 'action_name', 'action_description', 'permitted')
