@@ -140,6 +140,13 @@ class PresentedRow(object):
             # present in field specifications.  This should not be supported in future and should
             # be removed.
             self._columns += (self._Column(FieldSpec(key), data),)
+        self._hidden_codebooks = []
+        for c in self._columns:
+            if c.codebook:
+                codebook_spec = self._resolver.get(c.codebook, 'data_spec')
+                enumerator = pytis.data.DataEnumerator(codebook_spec, **c.enumerator_kwargs)
+                if not enumerator.permitted():
+                    self._hidden_codebooks.append(c.id)
         self._init_dependencies()
         self._set_row(row, reset=True, prefill=prefill)
 
@@ -581,14 +588,21 @@ class PresentedRow(object):
         """
         if not self.permitted(key, permission=True):
             return False
+        if key in self._hidden_codebooks:
+            return False
         if self._editable.has_key(key):
             if self._editability_dirty[key]:
-                return self._compute_editability(key)
+                result = self._compute_editability(key)
             else:
-                return self._editable[key]
+                result = self._editable[key]
         else:
             editable = self._coldict[key].editable
-            return editable == Editable.ALWAYS or editable == Editable.ONCE and self._new
+            result = (editable == Editable.ALWAYS or editable == Editable.ONCE and self._new)
+        return result
+
+    def hidden_codebook(self, key):
+        """Return true iff field identified by 'key' is bound to a non-readable codebook."""
+        return key in self._hidden_codebooks
         
     def validate(self, key, string, **kwargs):
         """Validate user input and propagate the value to the row if the string is valid.

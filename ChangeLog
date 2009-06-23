@@ -1,5 +1,12 @@
 2009-06-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/types_.py:
+	* lib/pytis/form/inputfield.py:
+	* lib/pytis/presentation/field.py:
+	Handle codebooks with secret keys.
+
+2009-06-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/access.py:
 	Don't filter on Permission.VIEW in data access methods.
 

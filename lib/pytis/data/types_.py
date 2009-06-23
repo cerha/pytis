@@ -1850,6 +1850,10 @@ class DataEnumerator(Enumerator):
     def type(self, column):
         """Vra» datový typ daného sloupce v datovém objektu enumerátoru."""
         return self._data.find_column(column).type()
+
+    def permitted(self):
+        """Return whether access to this enumerator is permitted."""
+        return self._data.permitted(self._data.key()[0], pytis.data.Permission.VIEW)
     
 
 class ValidationError(Exception):
