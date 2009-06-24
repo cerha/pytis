@@ -1,3 +1,9 @@
+2009-06-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/data/types_.py:
+	LTree type added.
+
 2009-12-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/inputfield.py:
