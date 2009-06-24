@@ -1,5 +1,10 @@
 2009-06-24  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/types_.py:
+	Add necessary validation constraints to LTree type.
+
+2009-06-24  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/postgresql.py:
 	* lib/pytis/data/types_.py:
 	LTree type added.

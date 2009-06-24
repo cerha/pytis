@@ -1534,26 +1534,45 @@ class Image(Binary, Big):
 class LTree(Type):
     """Type representing a hierarchical (tree) structure.
 
-    It is very similar to 'String', but there are some differences:
+    It is similar to 'String', but there are some differences:
 
     - No length limits can be set in LTree.
 
     - Dots in LTree strings serve as item separators.  So LTree values are
       handled as lists of items in some situations, especially in sorting.
 
+    - The items between dots may not be empty, may contain only alphanumeric
+      characters and may be at most 255 characters long (each of them).
+
     """
-    VM_TREEFORMAT = 'VM_TREEFORMAT'
-    _VM_TREEFORMAT_MSG = _("Chybný formát hierarchické hodnoty")
-    
+    VM_TREE_FORMAT = 'VM_TREE_FORMAT'
+    _VM_TREE_FORMAT_MSG = _("Chybný formát hierarchické hodnoty")
+    VM_LONG_ITEM = 'VM_LONG_ITEM'
+    _VM_LONG_ITEM_MSG = _("Nìkterá z hierarchických polo¾ek je pøíli¹ dlouhá")
+    VM_INVALID_ITEM = 'VM_INVALID_ITEM'
+    _VM_INVALID_ITEM_MSG = _("Nìkterá z hierarchických polo¾ek obsahuje nepovolené znaky")
+
+    _REGEX = re.compile('^[a-zA-Z0-9_]+$')
+
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
-    
+
     def _validate(self, string):
         assert isinstance(string, basestring), ('Not a string', string)
         items = string.split('.')
-        if all(items):
+        error = None
+        for item in items:
+            if not item:
+                error = self.VM_TREE_FORMAT
+            elif len(item) > 255:
+                error = self.VM_LONG_ITEM
+            elif self._REGEX.match(item) is None:
+                error = self.VM_INVALID_ITEM
+            if error is not None:
+                break
+        if error is None:
             result = Value(self, unicode(string)), None
         else:
-            result = None, self._validation_error(self.VM_TREEFORMAT)
+            result = None, self._validation_error(error)
         return result
 
     def _export(self, value):
