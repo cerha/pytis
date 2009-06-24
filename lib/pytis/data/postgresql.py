@@ -904,6 +904,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'interval': Time,
                         'tsvector': FullTextIndex,
                         'varchar': String,
+                        'ltree': LTree,
                         'inet': Inet,
                         'macaddr': Macaddr,
                         'bytea': Binary,

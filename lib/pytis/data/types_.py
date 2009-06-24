@@ -1529,7 +1529,41 @@ class Image(Binary, Big):
                 raise self._validation_error(self.VM_FORMAT,
                                              format=image.format,
                                              formats=', '.join(self._formats))
-        
+
+
+class LTree(Type):
+    """Type representing a hierarchical (tree) structure.
+
+    It is very similar to 'String', but there are some differences:
+
+    - No length limits can be set in LTree.
+
+    - Dots in LTree strings serve as item separators.  So LTree values are
+      handled as lists of items in some situations, especially in sorting.
+
+    """
+    VM_TREEFORMAT = 'VM_TREEFORMAT'
+    _VM_TREEFORMAT_MSG = _("Chybný formát hierarchické hodnoty")
+    
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+    
+    def _validate(self, string):
+        assert isinstance(string, basestring), ('Not a string', string)
+        items = string.split('.')
+        if all(items):
+            result = Value(self, unicode(string)), None
+        else:
+            result = None, self._validation_error(self.VM_TREEFORMAT)
+        return result
+
+    def _export(self, value):
+        assert isinstance(value, basestring), ('Value not a string', value)
+        return value
+
+    def wm_validate(self, object):
+        assert isinstance(object, basestring)
+        return WMValue(self, object), None
+
 
 # Pomocné tøídy
 
