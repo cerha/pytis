@@ -911,7 +911,7 @@ class StructuredText(String):
     pass
 
     
-class TreeOrder(String):
+class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
 
     The type itself does not implement any specific features.  It has strictly specificational
@@ -919,6 +919,11 @@ class TreeOrder(String):
     tree structure of the items according to the tree level value.
     
     """
+    pass
+
+
+class TreeOrder(String, TreeOrderBase):
+    """String type with tree ordering property."""
     pass
 
 

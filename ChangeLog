@@ -1,6 +1,12 @@
 2009-06-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/types_.py:
+	* lib/pytis/form/_grid.py:
+	Indented display for future foldables.
+
+2009-06-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/types_.py:
 	Add necessary validation constraints to LTree type.
 
 2009-06-24  Milan Zamazal  <pdm@brailcom.org>

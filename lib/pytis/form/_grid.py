@@ -199,10 +199,13 @@ class ListTable(wx.grid.PyGridTableBase):
                                       c.style())
                          for c in columns]
         self._column_count = len(self._columns)
+        # [Well, I'm not very happy with transfering information about the
+        # order column through the column type, but it's already here and it
+        # works, so let's use this mechanism for now. -pdm]
         self._tree_order_column = None
         if self._sorting:
             cid = self._sorting[0][0]
-            if isinstance(self._presented_row[cid].type(), pytis.data.TreeOrder):
+            if isinstance(self._presented_row[cid].type(), pytis.data.TreeOrderBase):
                 self._tree_order_column = cid
         
     def _panic(self):
@@ -413,7 +416,10 @@ class ListTable(wx.grid.PyGridTableBase):
             if self._tree_order_column is not None:
                 order = the_row[self._tree_order_column].export()
                 if order is not None:
-                    level = len(order.split('.')) - 2
+                    if order and order[0] == '.':
+                        order = order[1:]
+                    order_items = order.split('.')
+                    level = len(order_items) - 1
                     if level > 0:
                         cid = self._columns[0].id
                         value_dict[cid] = 3*level*' ' +'- '+ value_dict[cid]
