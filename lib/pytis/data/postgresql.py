@@ -879,6 +879,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'text': String,
                         'timestamp': DateTime,
                         'timestamptz': DateTime,
+                        'interval': Time,
                         'tsvector': FullTextIndex,
                         'varchar': String,
                         'inet': Inet,

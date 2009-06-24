@@ -307,7 +307,7 @@ class Users(Specification):
     sorting = (('login', ASC),)
     def bindings(self):
         return (Binding(_("U¾ivatelské role"), self._spec_name('UserRoles'), 'uid'),
-                #Binding(_("Historie pøihlá¹ení"), self._spec_name('UserSessionLog'), 'uid'),
+                Binding(_("Historie pøihlá¹ení"), self._spec_name('UserSessionLog'), 'uid'),
                 )
 
 
@@ -423,33 +423,41 @@ class SessionLog(Specification):
     help = _("Záznam informací o pøihlá¹ení u¾ivatelù k webu.")
     table = 'cms_session_log'
     def fields(self): return (
-        Field('id'),
-        Field('start_time', _("Èas"), width=17),
+        Field('log_id'),
+        Field('session_id'),
         Field('uid', codebook=self._spec_name('Users')),
         Field('login', _("Login"), width=8),
         Field('fullname', _("Jméno"), width=15),
-        Field('ip', _("IP adresa"), width=12, editable=NEVER),
-        Field('hostname', _("Hostname"), width=15, virtual=True, computer=computer(self._hostname)),
         Field('success', _("Úspìch"), width=3),
-        Field('user_agent', _("User agent"), width=25),
-        Field('referer', _("Referer"), width=25))
-    def _hostname(self, row, ip):
+        Field('start_time', _("Zaèátek"), width=17),
+        Field('duration', _("Trvání"), width=17),
+        Field('active', _("Aktivní")),
+        Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
+        Field('hostname', _("Hostname"), virtual=True, computer=computer(self._hostname),
+              column_width=15, width=40),
+        Field('user_agent', _("User agent"), column_width=25, width=80),
+        Field('referer', _("Referer"), column_width=25, width=80))
+    def _hostname(self, row, ip_address):
         try:
-            hostname = socket.gethostbyaddr(ip)[0]
+            hostname = socket.gethostbyaddr(ip_address)[0]
         except:
-            hostname = 'Unknown'
+            hostname = _("Neznámý")
         return hostname
     def row_style(self, row):
         if row['success'].value():
             return None
         else:
             return pp.Style(foreground='#f00')
-    layout = ('start_time', 'login', 'fullname', 'ip', 'hostname', 'success', 'user_agent', 'referer')
-    columns = ('start_time', 'login', 'fullname', 'ip', 'success', 'user_agent', 'referer')
+    layout = ('start_time', 'duration', 'active', 'success', 'fullname', 'login',
+              'ip_address', 'hostname', 'user_agent', 'referer')
+    columns = ('start_time', 'duration', 'active', 'success', 'fullname', 'login',
+               'ip_address', 'user_agent')
     sorting = (('start_time', DESC),)
 
+    
 class UserSessionLog(SessionLog):
     """Login log customization for user sideform."""
-    layout = ('start_time', 'ip', 'hostname', 'success', 'user_agent', 'referer')
-    columns = ('start_time', 'ip', 'success', 'user_agent', 'referer')
+    layout = ('start_time', 'duration', 'active', 'success', 'ip_address', 'hostname',
+              'user_agent', 'referer')
+    columns = ('start_time', 'duration', 'active', 'success', 'ip_address', 'user_agent')
     

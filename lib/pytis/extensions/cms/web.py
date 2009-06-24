@@ -25,7 +25,7 @@ Example application using these Wiking modules can be found in pytis-demo.
 
 """
 
-import os, re, md5, lcg, wiking
+import os, re, md5, mx.DateTime, lcg, wiking
 import pytis.util, pytis.presentation as pp, pytis.data as pd, pytis.web as pw
 import cms
 
@@ -290,57 +290,63 @@ class Users(wiking.PytisModule):
             return wiking.User(login, **self._user_args(row))
         else:
             return None
+    
 
-    
 class Session(wiking.PytisModule, wiking.Session):
-    class Spec(wiking.Specification):
+    """Implement Wiking session management by storing session information in the database."""
+    class Spec(Specification):
         table = 'cms_session'
-        fields = (pp.Field('session_id'),
-                  pp.Field('uid'),
-                  pp.Field('key'),
-                  pp.Field('expire'))
-    
+        fields = [pp.Field(_id) for _id in ('session_id', 'uid', 'session_key', 'last_access')]
+
     def init(self, req, user):
-        # Nasty hack: Remove all expired records first.
-        self._data.delete_many(pd.AND(pd.EQ('uid', pd.Value(pd.Integer(), user.uid())),
-                                      pd.LT('expire', pd.Value(pd.DateTime(),
-                                                               pd.DateTime.current_gmtime()))))
+        data = self._data
+        # Delete all expired records first...
+        now = mx.DateTime.now().gmtime()
+        expiration = mx.DateTime.TimeDelta(hours=wiking.cfg.session_expiration)
+        data.delete_many(pd.LE('last_access', pd.Value(pd.DateTime(), now - expiration)))
+        # Create new data row for this session.
         session_key = self._new_session_key()
-        row = self._data.make_row(uid=user.uid(), key=session_key, expire=self._expiration())
-        self._data.insert(row)
+        row, success = data.insert(data.make_row(uid=user.uid(),
+                                                 session_key=session_key,
+                                                 last_access=now))
+        # Log session start for login history tracking.
+        self._module('SessionLog').log(req, now, row['session_id'].value(),
+                                       user.uid(), user.login())
         return session_key
         
     def failure(self, req, user, login):
-        pass
+        self._module('SessionLog').log(req, mx.DateTime.now().gmtime(), None,
+                                       user and user.uid(), login)
         
-    def check(self, req, user, key):
-        row = self._data.get_row(uid=user.uid(), key=key)
-        if row and not self._expired(row['expire'].value()):
-            self._record(req, row).update(expire=self._expiration())
-            return True
-        else:
-            return False
-
-    def close(self, req, user, key):
-        row = self._data.get_row(uid=user.uid(), key=key)
+    def check(self, req, user, session_key):
+        row = self._data.get_row(uid=user.uid(), session_key=session_key)
         if row:
-            self._delete(self._record(req, row))
+            now = mx.DateTime.now().gmtime()
+            expiration = mx.DateTime.TimeDelta(hours=wiking.cfg.session_expiration)
+            if row['last_access'].value() > now - expiration:
+                self._data.update((row['session_id'],), self._data.make_row(last_access=now))
+                return True
+        return False
 
+    def close(self, req, user, session_key):
+        self._data.delete_many(pd.AND(pd.EQ('uid', pd.Value(pd.Integer(), user.uid())),
+                                      pd.EQ('session_key', pd.Value(pd.DateTime(), session_key))))
+            
 
 class SessionLog(wiking.PytisModule):
     class Spec(wiking.Specification):
         table = 'cms_session_log_data'
         fields = [pp.Field(_id) for _id in
-                  ('id', 'uid', 'start_time', 'ip', 'success', 'user_agent', 'referer')]
+                  ('log_id', 'session_id', 'uid', 'login', 'success', 'start_time',
+                   'ip_address', 'user_agent', 'referer')]
 
-    def log(self, req, user, success):
-        row = self._data.make_row(uid=user.uid(),
-                                  start_time=pd.DateTime.current_gmtime(),
-                                  ip=req.header('X-Forwarded-For') or req.remote_host(),
-                                  success=success,
-                                  user_agent=req.header('User-Agent'),
-                                  referer=req.header('Referer'))
-        result = self._data.insert(row)
+    def log(self, req, time, session_id, uid, login):
+        row = self._data.make_row(session_id=session_id, uid=uid, login=login,
+                                  success=session_id is not None, start_time=time,
+                                  ip_address=req.header('X-Forwarded-For') or req.remote_host(),
+                                  referer=req.header('Referer'),
+                                  user_agent=req.header('User-Agent'))
+        self._data.insert(row)
             
     
 class Application(wiking.CookieAuthentication, wiking.Application):

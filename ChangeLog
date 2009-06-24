@@ -1,5 +1,13 @@
 2009-06-24  Tomas Cerha  <cerha@brailcom.org>
 
+	* db/db_pytis_cms.py:
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/extensions/cms/cms.py:
+	* lib/pytis/extensions/cms/web.py:
+	Pytis CMS: Added support for logging login attempts and session duration..
+
+2009-06-24  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/extensions/cms/cms.py:
 	Define fields by a method in CMS Rithts module..
 
