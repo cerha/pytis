@@ -108,7 +108,8 @@ def _gsql_format_type(type_):
                    pytis.data.DateTime:  'timestamp(0)',
                    pytis.data.Date:      'date',
                    pytis.data.Time:      'time',
-                   pytis.data.Image:     'bytea' 
+                   pytis.data.Image:     'bytea',
+                   pytis.data.Color:     'varchar(7)',
                    }
         try:
             result = MAPPING[type_.__class__]

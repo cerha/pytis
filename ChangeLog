@@ -1,3 +1,12 @@
+2009-06-25  Tomas Cerha  <cerha@brailcom.org>
+
+	* db/db_pytis_cms.py:
+	* lib/pytis/extensions/cms/__init__.py:
+	* lib/pytis/extensions/cms/cms.py:
+	* lib/pytis/extensions/cms/web.py:
+	* tools/gensql.py:
+	Pytis CMS: Added generic support for color themes..
+
 2009-06-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* db/db_pytis_cms.py:

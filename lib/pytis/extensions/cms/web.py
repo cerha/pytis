@@ -442,3 +442,20 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
             if len(path) == req.menu_path_length+2 and path[-1] == fw.arg('binding').id():
                 return '/'+ '/'.join(path[:req.menu_path_length])
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
+
+class Themes(wiking.PytisModule):
+    class Spec(Specification, cms.Themes):
+        pass
+    
+    class Theme(wiking.Theme):
+        def __init__(self, row):
+            self._theme_id = row['theme_id'].value()
+            colors = [(c.id(), row[c.id()].value())
+                      for c in self.COLORS if row[c.id()].value() is not None]
+            super(Themes.Theme, self).__init__(colors=dict(colors))
+        def theme_id(self):
+            return self._theme_id
+        
+    def theme(self, theme_id):
+        return self.Theme(self._data.get_row(theme_id=theme_id))
+

@@ -460,4 +460,110 @@ class UserSessionLog(SessionLog):
     layout = ('start_time', 'duration', 'active', 'success', 'ip_address', 'hostname',
               'user_agent', 'referer')
     columns = ('start_time', 'duration', 'active', 'success', 'ip_address', 'user_agent')
-    
+
+
+class Themes(Specification):
+    class _Field(Field):
+        def __init__(self, id, label, descr=None):
+            Field.__init__(self, id, label, descr=descr, type=pd.Color(),
+                           dbcolumn=id.replace('-','_'))
+    title = _("Barevné Motivy")
+    help = _("Správa barevných motivù.")
+    table = 'cms_themes'
+    fields = (
+        Field('theme_id'),
+        Field('name', _("Název"), nocopy=True),
+        _Field('foreground', _("Text"),
+               descr=("Barva popøedí hlavních obsahových ploch.")),
+        _Field('background', _("Pozadí"),
+               descr=("Barva pozadí hlavních obsahových ploch (vlastní text stránky, panely).")),
+        _Field('highlight-bg', _("Zvýraznìné pozadí"),
+               descr=_("Zvýraznìní pomocí barvy pozadí mù¾e být pou¾ito na rùzných místech, "
+                       "napø. pro odli¹ení aktuální polo¾ky menu, aktuálního jazyka, nalezeného "
+                       "záznamu ve formuláøi apod.")),
+        _Field('link', _("Odkaz"),
+               descr=_("Barva textu nenav¹tíveného odkazu.")),
+        _Field('link-visited', _("Nav¹tívený odkaz"),
+               descr=_("Barva textu nav¹tíveného odkazu.  Pokud ponecháte prázdné, bude "
+                       "pou¾ita stejná barva jako u nenav¹tíveného odkazu.")),
+        _Field('link-hover', _("Aktivní odkaz"),
+               descr=_("Obarvení odkazu pøi pøi pohybu my¹í nad ním.  Pokud ponecháte "
+                       "prázdné, nebude odkaz na pohyb my¹i reagovat.")),
+        _Field('border', _("Orámování")),
+        _Field('heading-fg', _("Text"),
+               descr=_("Barvy nadpisù jsou pou¾ívány pro zvýrazenìní názvù kapitol, panelù a "
+                       "jiných elementù majících povahu nadpisu èi záhlaví.  V závislosti na "
+                       "pou¾itých stylech mohou nìkteré typy nadpisù pou¾ívat odli¹nou barvu "
+                       "pozadí, jiné mohou být pouze podtr¾eny (viz dále).  Barva textu je "
+                       "v¹ak spoleèná pro oba typy nadpisù.")),
+        _Field('heading-bg', _("Pozadí"),
+               descr=_("Barva pozadí pro nadpisy, které pou¾ívají zvýraznìní barvou pozadí."
+                       "Typicky jsou to záhlaví èástí stránky (menu, panely apod.) a nadpisy "
+                       "vy¹¹ích úrovní.")),
+        _Field('heading-line', _("Podtr¾ení"),
+               descr=_("Barva podtr¾ení pro nadpisy, které pou¾ívají zvýraznìní podtr¾ením."
+                       "Typicky jsou to nadpisy ni¾¹ích úrovní.")),
+        _Field('frame-fg', _("Text"),
+               descr=_("Rámy jsou obecnì vyu¾ívány pro odli¹ení samostatných prvkù stránky, "
+                       "jako jsou napøíklad formuláøe, nástrojové li¹ty, rejstøíky apod. "
+                       "Rámy v tomto smyslu nemají nic spleèného s HTML rámy (frame).  Pokud "
+                       "barvu textu nevyplníte, bude pou¾ita standardní barva textu (èasto u "
+                       "rámù budete chtít nastavit pouze barvu pozadí a orámování).")),
+        _Field('frame-bg', _("Pozadí"),
+               descr=_("Barva pozadí rámù pro jejich vizuální odli¹ení od ostatního obsahu "
+                       "stránky.")),
+        _Field('frame-border', _("Orámování"),
+               descr=_("Barva orámování okrajù plochy rámu na pøechodu mezi barvou pozadí rámu "
+                       "a jeho podkladem.")),
+        #_Field('top-fg', _("Text"),
+        #       descr=_("Na podkladových plochách se vìt¹inou text pøímo nevyskytuje, ale "
+        #               "nìkteré styly to mohou pøedepisovat.")
+        _Field('top-bg', _("Pozadí"),
+               descr=_("Podkladové plochy tvoøí okolí hlavního obsahu stránky a panelù.")),
+        _Field('top-border', _("Orámování"),
+               descr=_("Urèuje barvu rámeèku na pøechodu mezi podkladovou plochou a obsahovými "
+                       "èástmi stránky")),
+        _Field('error-fg', _("Text")),
+        _Field('error-bg', _("Pozadí")),
+        _Field('error-border', _("Orámování")),
+        _Field('message-fg', _("Text")),
+        _Field('message-bg', _("Pozadí")),
+        _Field('message-border', _("Orámování")),
+        _Field('meta-fg', _("Text")),
+        _Field('meta-bg', _("Pozadí"),
+               descr=_("Odli¹ení informaèního øádku v detailních výpisech, jako napø. "
+                       "informace o datu a autorovi v seznamu èlánkù")),
+        _Field('table-cell', _("Standardní pozadí buòky")),
+        _Field('table-cell2', _("Stínované pozadí buòky")),
+        _Field('help', _("Nápovìda formuláøe")),
+        _Field('inactive-folder', _("Neaktivní zálo¾ka")),
+        )
+    layout = pp.HGroup(pp.VGroup(
+        'name',
+        pp.LVGroup(_("Standardní barvy stránky"),
+                   ('foreground', 'background', 'highlight-bg', 'link', 'link-visited',
+                    'link-hover', 'border')),
+        pp.LVGroup(_("Tabulky"),
+                   ('table-cell', 'table-cell2')),
+        pp.LVGroup(_("Rùzné"),
+                   ('help', 'inactive-folder')),
+        ), pp.VGroup(
+        pp.LVGroup(_("Barvy nadpisù"),
+                   ('heading-fg', 'heading-bg', 'heading-line')),
+        pp.LVGroup(_("Rámy"),
+                   ('frame-fg', 'frame-bg', 'frame-border')),
+        pp.LVGroup(_("Meta data záznamu"),
+                   ('meta-fg', 'meta-bg')),
+        pp.LVGroup(_("Barvy podkladových ploch"),
+                   ('top-bg', 'top-border')),
+        ), pp.VGroup(
+        pp.LVGroup(_("Chybové zprávy"),
+                   ('error-fg', 'error-bg', 'error-border')),
+        pp.LVGroup(_("Informaèní zprávy"),
+                   ('message-fg', 'message-bg', 'message-border')),
+        ))
+    columns = ('name',)
+    cb = CodebookSpec(display='name', prefer_display=True)
+
+
+        
