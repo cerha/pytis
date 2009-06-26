@@ -515,9 +515,9 @@ class Themes(Specification):
         _Field('frame-border', _("Orámování"),
                descr=_("Barva orámování okrajù plochy rámu na pøechodu mezi barvou pozadí rámu "
                        "a jeho podkladem.")),
-        #_Field('top-fg', _("Text"),
-        #       descr=_("Na podkladových plochách se vìt¹inou text pøímo nevyskytuje, ale "
-        #               "nìkteré styly to mohou pøedepisovat.")
+        _Field('top-fg', _("Text"),
+               descr=_("Na podkladových plochách se vìt¹inou text pøímo nevyskytuje, ale "
+                       "nìkteré styly to mohou pøedepisovat.")),
         _Field('top-bg', _("Pozadí"),
                descr=_("Podkladové plochy tvoøí okolí hlavního obsahu stránky a panelù.")),
         _Field('top-border', _("Orámování"),

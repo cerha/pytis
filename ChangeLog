@@ -1,5 +1,10 @@
 2009-06-26  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/extensions/cms/cms.py:
+	Pytis CMS: Uncommented theme field `top-fg', but still left outside layout..
+
+2009-06-26  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/inputfield.py:
 	Fix of prevoius change in enumeration fields (Show empty items for NULL value in SelectionType.CHOICE input fields)..
 
