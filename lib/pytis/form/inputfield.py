@@ -1047,6 +1047,7 @@ class RadioBoxField(Unlabeled, EnumerationField):
 class ListBoxField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.ListBox'."""
     _DEFAULT_HEIGHT = None
+    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
     def _create_ctrl(self):
         control = wx.ListBox(self._parent, choices=self._choices(),
@@ -1060,6 +1061,7 @@ class ListBoxField(EnumerationField):
     def _set_value(self, value):
         super(ListBoxField, self)._set_value(value)
         self._ctrl.SetFirstItem(self._ctrl.GetSelection())
+        
 
 class Invocable(object, CommandHandler):
     """Mix-in class for fields capable to invoke a selection.
