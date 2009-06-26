@@ -981,7 +981,7 @@ class EnumerationField(InputField):
         return self._row.enumerate(self.id())
     
     def _choices(self):
-        return [x[1] for x in self._enumeration()]
+        return [label for value, label in self._enumeration()]
 
     def _get_value(self):
         i = self._ctrl.GetSelection()
@@ -993,7 +993,7 @@ class EnumerationField(InputField):
 
     def _set_value(self, value):
         assert isinstance(value, (str, unicode)), value
-        values = [self._type.export(v) for v in self._type.enumerator().values()]
+        values = [self._type.export(v) for v, l in self._enumeration()]
         try:
             selection = values.index(value)
         except ValueError:

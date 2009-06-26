@@ -1,6 +1,11 @@
 2009-06-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/inputfield.py:
+	Fix of prevoius change in enumeration fields (Show empty items for NULL value in SelectionType.CHOICE input fields)..
+
+2009-06-26  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
 	Fix background color setting in SelectionType.LIST_BOX input fields..
 
 2009-06-26  Tomas Cerha  <cerha@brailcom.org>
