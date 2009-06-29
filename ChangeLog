@@ -1,5 +1,10 @@
 2009-06-29  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/form.py:
+	Substance of new class FoldableForm.
+
+2009-06-29  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/data.py:
 	* lib/pytis/data/postgresql.py:
 	New data query operator LTreeMatch.
