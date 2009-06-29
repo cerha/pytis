@@ -2199,6 +2199,106 @@ class SelectRowsForm(CodebookForm):
         return True
 
 
+class FoldableForm(ListForm):
+    
+    class _FoldingState(Structure):
+        _attributes = (Attribute('level'),
+                       Attribute('subnodes', dict),
+                       )
+        
+    class _Folding(object):
+        def __init__(self):
+            self._folding = FoldableForm._FoldingState(level=1, subnodes={})
+        def _find_node(self, node):
+            state = self._folding
+            labels = node.split('.')
+            while labels and state is not None:
+                l = labels.pop(0)
+                state = state.subnodes().get(l)
+            return state
+        def _expand(self, node, level):
+            def fold(self, states, path, level):
+                state = states[0]
+                state_level = state.level()
+                if path:
+                    if (state_level == 0 or
+                        state_level is None and level is None):
+                        new_state = state
+                    else:
+                        next_key = path[0]
+                        next_state = state.subnodes().get(next_key)
+                        if next_state is None:
+                            if state_level:
+                                next_level = state_level - 1
+                            else: # state_level == 0 or state_level == None
+                                next_level = state_level
+                            next_state = FoldableForm._FoldingState(level=next_level, subnodes={})
+                            state_subnodes()[next_key] = next_state
+                        new_state = fold([next_state]+states, path[1:], level)
+                        if state_level is None:
+                            redundant_level = None
+                        else:
+                            redundant_level = state_level - 1
+                        for key, key_state in state.subnodes().items():
+                            if key_state.level() == redundant_level:
+                                del state.subnodes()[key]
+                else:
+                    if state_level == level:
+                        new_state = state
+                    else:
+                        new_state = state.copy(level=level, subnodes={})
+                return new_state
+            path = string.split(node, '.')
+            state = self._folding
+            new_state = fold([state], path, level)
+            return state is not new_state
+        def expand(self, node, level=None):
+            # level==None => expand whole subtree
+            # level==0 => collapse whole subtree
+            # level==1 => expand just the next level
+            # level==N, N>0 => expand up to level N
+            return self._expand(node, level)
+        def collapse(self, node):
+            return self._expand(node, 0)
+        def expand_or_collapse(self, node):
+            state = self._find_node(node)
+            if state is None:
+                return
+            if state.level() == 0:
+                result = self.expand(node)
+            else:
+                result = self.collapse(node)
+            return result
+        def condition(self, column_id):
+            queries = []
+            def add(path_string, state):
+                state_level = state.level()
+                subnodes = state.subnodes()
+                if subnodes:
+                    if path:
+                        queries.append(path[:-1])
+                    if state_level != 0:
+                        q = path + '!' + string.join(subnodes.keys(), '|') + '.*'
+                        if state_level is not None:
+                            q = '%s{0,%d}' % (q, state_level - 1,)
+                        queries.append(q)
+                    for label, next_state in subnodes.items():
+                        next_path = path + label + '.'
+                        add(next_path, next_state)
+                else:
+                    q = path + '*'
+                    if state_level is not None:
+                        q = '%s{0,%d}' % (q, state_level,)
+                    subnodes.append(q)
+            add('', self._folding)
+            condition = pytis.data.OR(*[pytis.data.LTreeMatch(column_id, q) for q in queries])
+            return condition
+
+    def __init__(self, *args, **kwargs):
+        super(FoldableForm, self).__init__(*args, **kwargs)
+        self._folding = self._Folding()
+
+    
 class BrowseForm(ListForm):
     """Formuláø pro prohlí¾ení dat s mo¾ností editace."""
 
