@@ -339,7 +339,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     
 
 class InnerForm(Form):
-    """Formulø, kterı zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
+    """Formuláø, kterı zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
 
     Tato formuláøová tøída je zde pøedev¹ím kvùli definici a zpracování
     pøíkazù.  Pokud je aktuálním formuláøem jednoduchı formuláø, je zpracování
