@@ -1264,7 +1264,7 @@ def IN(column_id, data, table_column_id, table_condition):
 
 _ft_query_id = None
 def FT(column_id, query):
-    """Full text search
+    """Full text search.
 
     Arguments:
 
@@ -1282,6 +1282,17 @@ def FT(column_id, query):
         _ft_query_id = pytis.util.Counter()
     query_id = _ft_query_id.next()
     return Operator('FT', column_id, query, query_id)
+
+def LTreeMatch(column_id, match):
+    """ltree matching.
+
+    Arguments:
+
+      column_id -- column identifier, string
+      match -- lquery, string
+
+    """
+    return Operator('LTreeMatch', column_id, match)
 
 def reversed_sorting(sorting):
     """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.

@@ -1,5 +1,11 @@
 2009-06-29  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/data.py:
+	* lib/pytis/data/postgresql.py:
+	New data query operator LTreeMatch.
+
+2009-06-29  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/form.py:
 	Spelling fix in a docstring..
 

@@ -1352,6 +1352,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert len(op_args) == 3, ('Invalid number of arguments', op_args)
             col, query, query_id = op_args
             expression = '%s @@ %s' % (col, self._pdbb_fulltext_query_name(col),)
+        elif op_name == 'LTreeMatch':
+            assert len(op_args) == 2, ('Invalid number of arguments', op_args)
+            col, query = op_args
+            expression = "%s ~ '%s'" % (col, query,)
         else:
             raise ProgramError('Unknown operator', op_name)
         return '(%s)' % expression
