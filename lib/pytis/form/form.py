@@ -1228,6 +1228,13 @@ class FoldableForm(LookupForm):
     class _Folding(object):
         def __init__(self):
             self._folding = FoldableForm._FoldingState(level=1, subnodes={})
+        def _find_node(self, node):
+            state = self._folding
+            labels = node.split('.')
+            while labels and state is not None:
+                l = labels.pop(0)
+                state = state.subnodes().get(l)
+            return state
         def _expand(self, node, level):
             def fold(self, states, path, level):
                 state = states[0]
@@ -1272,6 +1279,15 @@ class FoldableForm(LookupForm):
             return self._expand(node, level)
         def collapse(self, node):
             return self._expand(node, 0)
+        def expand_or_collapse(self, node):
+            state = self._find_node(node)
+            if state is None:
+                return
+            if state.level() == 0:
+                result = self.expand(node)
+            else:
+                result = self.collapse(node)
+            return result
         def condition(self, column_id):
             queries = []
             def add(path_string, state):

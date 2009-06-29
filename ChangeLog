@@ -1,6 +1,11 @@
 2009-06-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/form.py:
+	New method FoldableForm._Folding.expand_or_collapse.
+
+2009-06-29  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/form.py:
 	Substance of new class FoldableForm.
 
 2009-06-29  Milan Zamazal  <pdm@brailcom.org>
