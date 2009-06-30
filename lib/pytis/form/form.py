@@ -750,7 +750,7 @@ class LookupForm(InnerForm):
                              if self._view.field(k.id()) is not None])
         return sorting
 
-    def _current_condition(self, filter=None):
+    def _current_condition(self, filter=None, display=False):
         conditions = (self._lf_condition, filter or self._lf_filter)
         conditions = [c for c in conditions if c is not None]
         if len(conditions) == 0:
@@ -761,7 +761,7 @@ class LookupForm(InnerForm):
             return pytis.data.AND(*conditions)
 
     def _init_data_select(self, data):
-        return data.select(condition=self._current_condition(),
+        return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._data_sorting(),
                            transaction=self._transaction, reuse=False)

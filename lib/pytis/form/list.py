@@ -481,7 +481,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 start_row = min(row+1, self._table.GetNumberRows())
         else:
             start_row = row
-        # TODO: Pøedhledání v aktuál~~ním selectu
+        # TODO: Pøedhledání v aktuálním selectu
         found = self._search(condition, direction, row_number=start_row, report_failure=False)
         if found is None:
             message(_("Dal¹í záznam nenalezen"), beep_=True)
@@ -2216,8 +2216,23 @@ class FoldableForm(ListForm):
                 l = labels.pop(0)
                 state = state.subnodes().get(l)
             return state
+        def _folded(self, node):
+            state = self._folding
+            labels = node.split('.')
+            while labels and state is not None:
+                level = state.level()
+                l = labels.pop(0)
+                state = state.subnodes().get(l)
+            if state is None:
+                if level is None:
+                    folded = False
+                else:
+                    folded = (level - len(labels) <= 1)
+            else:
+                folded = (state.level() == 0)
+            return folded
         def _expand(self, node, level):
-            def fold(self, states, path, level):
+            def fold(states, path, level):
                 state = states[0]
                 state_level = state.level()
                 if path:
@@ -2233,7 +2248,7 @@ class FoldableForm(ListForm):
                             else: # state_level == 0 or state_level == None
                                 next_level = state_level
                             next_state = FoldableForm._FoldingState(level=next_level, subnodes={})
-                            state_subnodes()[next_key] = next_state
+                            state.subnodes()[next_key] = next_state
                         new_state = fold([next_state]+states, path[1:], level)
                         if state_level is None:
                             redundant_level = None
@@ -2261,17 +2276,14 @@ class FoldableForm(ListForm):
         def collapse(self, node):
             return self._expand(node, 0)
         def expand_or_collapse(self, node):
-            state = self._find_node(node)
-            if state is None:
-                return
-            if state.level() == 0:
+            if self._folded(node):
                 result = self.expand(node)
             else:
                 result = self.collapse(node)
             return result
         def condition(self, column_id):
             queries = []
-            def add(path_string, state):
+            def add(path, state):
                 state_level = state.level()
                 subnodes = state.subnodes()
                 if subnodes:
@@ -2289,17 +2301,36 @@ class FoldableForm(ListForm):
                     q = path + '*'
                     if state_level is not None:
                         q = '%s{0,%d}' % (q, state_level,)
-                    subnodes.append(q)
+                    queries.append(q)
             add('', self._folding)
             condition = pytis.data.OR(*[pytis.data.LTreeMatch(column_id, q) for q in queries])
             return condition
 
     def __init__(self, *args, **kwargs):
+        self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
         self._folding = self._Folding()
+        for c in self._data.columns():
+            if isinstance(c.type(), pytis.data.LTree):
+                self._folding_column_id = c.id()
+                break
 
+    def _current_condition(self, filter=None, display=False):
+        condition = super(FoldableForm, self)._current_condition(filter=filter, display=display)
+        if display and self._folding_column_id is not None:
+            condition = pytis.data.AND(condition, self._folding.condition(self._folding_column_id))
+        return condition
+        
+    def _cmd_expand_or_collapse(self):
+        if self._folding_column_id is None:
+            return
+        row, _col = self._current_cell()
+        node = self._table.row(row)[self._folding_column_id].value()
+        if self._folding.expand_or_collapse(node):
+            self.refresh()
+        
     
-class BrowseForm(ListForm):
+class BrowseForm(FoldableForm):
     """Formuláø pro prohlí¾ení dat s mo¾ností editace."""
 
     class _PrintResolver (pytis.output.OutputResolver):
