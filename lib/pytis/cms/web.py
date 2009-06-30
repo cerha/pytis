@@ -192,6 +192,12 @@ class Menu(wiking.PytisModule):
         return [item(row) for row in children[None]]
                # TODO: Add hidden menu items for static mapping items.
                #[MenuItem('_doc', _("Wiking Documentation"), hidden=True)]
+
+    def _document_title(self, req, record):
+        if record:
+            return record['heading'].export() or record['title'].export()
+        else:
+            return super(Menu, self)._document_title(req, record)
     
     def action_view(self, req, record):
         text = record['content'].value()
@@ -219,7 +225,7 @@ class Menu(wiking.PytisModule):
                     content = list(content)
                 else:
                     content = [content]
-                document = result.clone(title=record['title'].value(), subtitle=None,
+                document = result.clone(title=self._document_title(req, record), subtitle=None,
                                         content=pre+content+post)
         elif text is None and record['parent'].value() is None:
             # Redirect to the first subitem from empty top level items.

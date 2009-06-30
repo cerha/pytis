@@ -74,6 +74,7 @@ table('cms_menu_texts',
                Column('published', pd.Boolean(), constraints=('NOT NULL',),
                       default="'TRUE'"),
                Column('title', pd.String(), constraints=('NOT NULL',)),
+               Column('heading', pd.String()),
                Column('description', pd.String()),
                Column('content', pd.String())),
       depends=('cms_menu_structure', 'cms_languages',),
@@ -104,12 +105,13 @@ viewng('cms_menu',
                coalesce(new.ord, (SELECT max(ord)+100 FROM cms_menu_structure 
                                   WHERE coalesce(parent, 0)=coalesce(new.parent, 0)), 100));
        UPDATE cms_menu_structure SET tree_order = cms_menu_structure_tree_order(menu_item_id);
-       INSERT INTO cms_menu_texts (menu_item_id, lang, published, title, description, content)
+       INSERT INTO cms_menu_texts (menu_item_id, lang, published,
+                                   title, heading, description, content)
        SELECT (SELECT menu_item_id FROM cms_menu_structure WHERE identifier=new.identifier),
-              new.lang, new.published, new.title, new.description, new.content
+              new.lang, new.published, new.title, new.heading, new.description, new.content
        RETURNING 
           menu_item_id, NULL::varchar(32), NULL::int, NULL::int, NULL::int, NULL::text, 
-          lang, title, description, content, NULL::varchar(64), 
+          lang, title, heading, description, content, NULL::varchar(64), 
           menu_item_id ||'.'|| lang, published, title
        )""",
        update="""(
@@ -123,13 +125,16 @@ viewng('cms_menu',
        UPDATE cms_menu_texts SET
          published = new.published,
          title = new.title,
+         heading = new.heading,
          description = new.description,
          content = new.content
        WHERE menu_item_id = old.menu_item_id AND lang = new.lang;
-       INSERT INTO cms_menu_texts (menu_item_id, lang, published, title, description, content)
-         SELECT old.menu_item_id, new.lang, new.published, new.title, new.description, new.content
-           WHERE new.lang NOT IN (SELECT lang FROM cms_menu_texts WHERE menu_item_id=old.menu_item_id)
-                 AND (new.title IS NOT NULL OR new.description IS NOT NULL OR new.content IS NOT NULL);
+       INSERT INTO cms_menu_texts (menu_item_id, lang, published,
+                                   title, heading, description, content)
+         SELECT old.menu_item_id, new.lang, new.published,
+                new.title, new.heading, new.description, new.content
+         WHERE new.lang NOT IN (SELECT lang FROM cms_menu_texts WHERE menu_item_id=old.menu_item_id)
+                AND coalesce(new.title, new.heading, new.description, new.content) IS NOT NULL;
        )""",
        delete="(DELETE FROM cms_menu_structure WHERE menu_item_id = old.menu_item_id;)",
        depends=('cms_menu_structure', 'cms_languages', 'cms_menu_texts', 'cms_modules'),

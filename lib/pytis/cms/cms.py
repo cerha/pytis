@@ -221,8 +221,13 @@ class Menu(Specification):
         Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
               value_column='lang', selection_type=pp.SelectionType.CHOICE),
         Field('title_or_identifier', _("Název"), width=30),
-        Field('title', _("Název"), width=32, not_null=True),
-        Field('description', _("Popis"), width=64,
+        Field('title', _("Název"), width=20, not_null=True, maxlen=32,
+              descr=_("Název polo¾ky menu - krátký a výsti¾ný.")),
+        Field('heading', _("Nadpis"), width=32, maxlen=40,
+              descr=_("Hlavní nadpis pøi zobrazení stránky.  Pokud ponecháte nevyplnìné, "
+                      "pou¾ije se název polo¾ky.  Ten je ale nìkdy kvùli pou¾ití v menu pøíli¹ "
+                      "krátký, tak¾e zde je mo¾né urèit jeho del¹í variantu.")),
+        Field('description', _("Popis"), width=72,
               descr=_("Struèný popis stránky (zobrazen v menu jako tooltip).")),
         Field('content', _("Obsah"), type=pd.StructuredText(), compact=True, height=20, width=80,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
@@ -282,7 +287,7 @@ class Menu(Specification):
     sorting = ('tree_order', ASC),
     layout = (VGroup('identifier', 'parent', 'mod_id', 'ord',
                      label=_("Globální vlastnosti (spoleèné pro v¹echny jazyky)")),
-              VGroup('lang', 'title', 'description', 'content', 'published',
+              VGroup('lang', 'title', 'heading', 'description', 'content', 'published',
                      label=_("Text stránky (pro aktuální jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
     def bindings(self):

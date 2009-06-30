@@ -1,5 +1,12 @@
 2009-06-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* db/db_pytis_cms.py:
+	* lib/pytis/cms/cms.py:
+	* lib/pytis/cms/web.py:
+	Pytis CMS: Allow using longer title for page heading and shorter for menu item..
+
+2009-06-30  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/cms/__init__.py:
 	* lib/pytis/cms/cms.py:
 	* lib/pytis/cms/web.py:
