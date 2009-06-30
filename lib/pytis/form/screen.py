@@ -1201,19 +1201,22 @@ class StatusBar(wx.StatusBar):
         self.SetFieldsCount(len(fields))
         self._field_numbers = {}
         self._timer = {}
-        widths = []
-        for i in range(len(fields)):
-            id, width = fields[i]
+        self._widths = widths = []
+        for i, field in enumerate(fields):
+            id, width = field
             self._field_numbers[id] = i
-            # each field has its own timer...
+            # Each field has its own timer...
             self._timer[id] = self._Timer(self, i)
-            widths.append(width is None and -1 or dlg2px(self, width*4))
-        if len(widths) and widths[-1] != -1:
+            if width is None:
+                width = -1
+            elif width > 0:
+                width = dlg2px(self, width*4)
+            widths.append(width)
+        if widths and widths[-1] > 0:
+            # Wx hack: Extend the last field to fit also the dragging triangle.
             widths[-1] += 22
+        self._orig_widths = widths[:]
         self.SetStatusWidths(widths)
-        c = wx.SYS_COLOUR_HIGHLIGHT
-
-        
 
     def _field_number(self, id):
         """Vra» poøadové èíslo pole 'id' pro wxWindows.
@@ -1246,13 +1249,21 @@ class StatusBar(wx.StatusBar):
         else:
             message = unicode(message)
         try:
-            field = self._field_number(id)
+            i = self._field_number(id)
         except KeyError:
             return False
-        if message != self.GetStatusText(field):
-            # Zmìnu provádíme jen pøi dané podmínce, aby nám status bar
-            # zbyteènì neblikal.
-            self.SetStatusText(message, field)
+        # Prevent status bar blinking by checking against the current value.
+        if message != self.GetStatusText(i):
+            # Adjust the field width to fit the new text (for fixed width fields only).  The
+            # "fixed" fields don't change their width as a percentage of the application frame
+            # width, but are not completely fixed...
+            if self._widths[i] > 0:
+                # Add 6 pixels below for the borders.
+                width = max(self.GetTextExtent(message)[0] + 6, self._orig_widths[i])
+                if width != self._widths[i]:
+                    self._widths[i] = width
+                    self.SetStatusWidths(self._widths)
+            self.SetStatusText(message, i)
         if timeout is not None:
             self._timer[id].start(timeout)
         return True

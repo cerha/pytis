@@ -1,5 +1,10 @@
 2009-06-30  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/form/screen.py:
+	Adjust status fields witdh automatically to fit the displayed text..
+
+2009-06-30  Tomas Cerha  <cerha@brailcom.org>
+
 	* db/db_pytis_cms.py:
 	* lib/pytis/cms/cms.py:
 	* lib/pytis/cms/web.py:
