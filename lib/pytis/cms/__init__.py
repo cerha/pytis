@@ -48,13 +48,13 @@ CMS in an existing Pytis Application are:
      documentation in 'db/db_pytis_cms.py' for more instructions).
 
   2) Create a file named 'cms.py' in the application's defs directory and import there all needed
-     Pytis CMS specifications from 'pytis.extensions.cms' (see 'cms.py' in pytis-demo).
+     Pytis CMS specifications from 'pytis.cms' (see 'cms.py' in pytis-demo).
 
   3) Add CMS forms into the main menu of your pytis application (see 'application.py' in
      pytis-demo).
 
-  4) Import all Wiking modules from 'pytis.extensions.cms.web' into the python module which is in
-     your web application's 'modules' search path.  See ('wwwdemo.py' in pytis-demo). 
+  4) Import all Wiking modules from 'pytis.cms.web' into the python module which is in
+     your web application's 'modules' search path.  See 'wwwdemo.py' in pytis-demo. 
 
 """
 

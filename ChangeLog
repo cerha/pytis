@@ -1,3 +1,14 @@
+2009-06-30  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/__init__.py:
+	* lib/pytis/cms/cms.py:
+	* lib/pytis/cms/web.py:
+	* lib/pytis/extensions/__init__.py:
+	* lib/pytis/extensions/cms/__init__.py:
+	* lib/pytis/extensions/cms/cms.py:
+	* lib/pytis/extensions/cms/web.py:
+	Pytis CMS moved from `pytis.extensions.cms' to `pytis.cms'..
+
 2009-06-26  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/extensions/cms/cms.py:

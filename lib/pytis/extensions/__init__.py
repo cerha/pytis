@@ -28,7 +28,6 @@ from misc import *
 from types import *
 from spec import *
 from defs import *
-import cms
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
