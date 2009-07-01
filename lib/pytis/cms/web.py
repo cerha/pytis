@@ -53,6 +53,26 @@ class Menu(wiking.PytisModule):
     
     _ITEM_PATH_LENGTH = 1
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
+    _SUBSTITUTION_PROVIDERS = ()
+    """Mapping of substitution variable names and modules providing their values.
+
+    Sequence of pairs (NAME, MODULE), where NAME is the string name of substitution variable and
+    MODULE is the string name of the module providing substitution values for this variable.  The
+    module must be derived from SubstitutionProvider class.  Such substitution variables are always
+    used as dictionaries, so the mapped module in fact provides the dictionary keys and their
+    values.
+
+    Example:
+
+    _SUBSTITUTION_PROVIDERS = (('cfg', 'Config'),
+                               ('user', 'UserConfig'))
+
+    Page text may than contain a variable '$cfg.optionxy' which will be substituted by the value of
+    field 'optionxy' obtained from the module 'Config' and a variable '$user.language' which will
+    be substituted by the value of 'language' field from the current user's record.  See also
+    'SubstitutionProvider' documentation for information how to implement such modules.
+
+    """
     EMBED_BINDING_ID = 'data'
 
     def _resolve(self, req):
@@ -198,6 +218,10 @@ class Menu(wiking.PytisModule):
             return record['heading'].export() or record['title'].export()
         else:
             return super(Menu, self)._document_title(req, record)
+
+    def _globals(self, req):
+        return dict([(name, self._module(modname).dict(req))
+                     for name, modname in self._SUBSTITUTION_PROVIDERS])
     
     def action_view(self, req, record):
         text = record['content'].value()
@@ -226,7 +250,7 @@ class Menu(wiking.PytisModule):
                 else:
                     content = [content]
                 document = result.clone(title=self._document_title(req, record), subtitle=None,
-                                        content=pre+content+post)
+                                        content=pre+content+post, globals=self._globals(req))
         elif text is None and record['parent'].value() is None:
             # Redirect to the first subitem from empty top level items.
             rows = self._data.get_rows(parent=record['menu_item_id'].value(), published=True,
@@ -235,9 +259,9 @@ class Menu(wiking.PytisModule):
             if rows:
                 return req.redirect('/'+self._menu_item_identifier(rows[0]))
             else:
-                document = self._document(req, [], record)
+                document = self._document(req, [], record, globals=self._globals(req))
         else:
-            document = self._document(req, pre+post, record)
+            document = self._document(req, pre+post, record, globals=self._globals(req))
         return document
     
     def module_uri(self, modname):
@@ -416,7 +440,6 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     def panels(self, req, lang):
         return [wiking.LoginPanel()]
         
-
     
 class Embeddable(object):
     """Mix-in class for modules which may be embedded into page content."""
@@ -448,6 +471,60 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
             if len(path) == req.menu_path_length+2 and path[-1] == fw.arg('binding').id():
                 return '/'+ '/'.join(path[:req.menu_path_length])
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
+
+
+class SubstitutionProvider(wiking.PytisModule):
+    """Base class for modules providing variable substitution.
+
+    Variables provided by modules derived from this class may be used for variable substitution in
+    CMS texts.  The constant `Menu._SUBSTITUTION_PROVIDERS' must be used to define which concrete
+    substitution modules (derived from this class) are available.
+    
+    Derived modules just need to define a pytis specification (class 'Spec').  The fields included
+    in this specification will be used as substitution variables.  More precisely the field
+    identifiers may by used as dictionary keys, where the dictionary name is given by
+    `Menu._SUBSTITUTION_PROVIDERS' mapping (see the docstring of this constant for more info).
+
+    The dictionary values are taken from this module's data row.  The first row is used by default.
+    If you want to select the used row based on some more specific condition, you may override the
+    method 'dict()' and pass selection arguments to 'SubstitutionDict' constructor.  These
+    arguments are passed to the 'self._data.get_rows()' call.  If more rows are returned, the first
+    one is used in any case.  Here are a few examples:
+
+      def dict(self, req):
+          # Always use the row with the value of column 'id' equal to 1.
+          return self.SubstitutionDict(self._data, id=1)
+
+      def dict(self, req):
+          # Use the row specific for the current user.
+          return self.SubstitutionDict(self._data, uid=req.user().uid())
+
+      def dict(self, req):
+          # Use the first row matching a pytis condition.
+          return self.SubstitutionDict(self._data,
+                                       condition=pd.AND(pd.EQ('xx', ...),
+                                                        pd.GE('yy', ...)),
+                                       sorting=(('xy', pd.ASC),))
+
+    """
+    class SubstitutionDict(object):
+        def __init__(self, data, **kwargs):
+            self._data = data
+            self._kwargs = kwargs
+            self._row = None
+        def __getitem__(self, key):
+            if self._row is None:
+                # Perform the database access only when needed.
+                rows = self._data.get_rows(limit=1, **self._kwargs)
+                if rows:
+                    self._row = rows[0]
+                else:
+                    self._row = pd.Row(())
+            return self._row[key].export()
+        
+    def dict(self, req):
+        return self.SubstitutionDict(self._data)
+
 
 class Themes(wiking.PytisModule):
     class Spec(Specification, cms.Themes):
