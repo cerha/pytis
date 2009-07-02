@@ -2849,6 +2849,7 @@ class Specification(object):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
                    attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                                 'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
+                                'data_access_rights',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
@@ -2915,20 +2916,12 @@ class Specification(object):
                         type = type.__class__(**kwargs)
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
-        if Specification._access_rights is UNDEFINED:
-            self._init_access_rights()
-        if Specification._access_rights is None:
-            access_rights = self.access_rights
-        else:
-            spec_name = self.__class__.__name__
-            if self.__class__.__module__:
-                spec_name = self.__class__.__module__ + '.' + spec_name
-            access_rights = Specification._access_rights.get('form/'+spec_name)
-        assert access_rights is None or not issubclass(self.data_cls, pytis.data.MemData), \
-               "Cannot set `access_rights' for a MemData data object."
+        spec_name = self.__class__.__name__
+        if self.__class__.__module__:
+            spec_name = self.__class__.__module__ + '.' + spec_name
+        access_rights = self.data_access_rights('form/' + spec_name)
         if access_rights is None:
-            perm = pytis.data.Permission.ALL
-            access_rights = pytis.data.AccessRights((None, (None, perm)))
+            access_rights = self.access_rights
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on)
         return _DataFactoryWithOrigin(self.data_cls, *args, **kwargs)
@@ -2974,3 +2967,26 @@ class Specification(object):
         
         """
         return self.access_rights
+
+    @classmethod
+    def data_access_rights(class_, name):
+        """Return form 'name' AccessRights read from the database.
+
+        If no access rights (of any form) are stored in the database, return
+        'None'.
+        
+        """
+        if class_._access_rights is UNDEFINED:
+            class_._init_access_rights()
+        if class_._access_rights is None:
+            access_rights = None
+        else:
+            access_rights_spec = class_._access_rights
+            if access_rights_spec == 'nonuser':
+                access_rights = pytis.data.AccessRights()
+            else:
+                access_rights = access_rights_spec.get(name)
+            if access_rights is None:
+                perm = pytis.data.Permission.ALL
+                access_rights = pytis.data.AccessRights((None, (None, perm)))
+        return access_rights

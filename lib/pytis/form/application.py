@@ -1481,21 +1481,29 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     Raises 'ResolverError' if given specification name cannot be found.
 
     """
+    if action_has_access('form/'+name, perm=perm, column=column):
+        return True
     try:
         main, side = name.split('::')
     except ValueError:
         dual = False
     else:
+        dual = True
+    if dual:
+        # The first action_has_access call ensured _access_rights is
+        # initialized, so we can check its value here.
+        if _access_rights is not None:
+            return action_has_access('form/'+name, perm=perm, column=column)
         if not has_access(main, perm=perm) or not has_access(side, perm=perm):
             return False
-        dual = True
-    if not dual:
+    else:
         rights = resolver().get(name, 'data_spec').access_rights()
         if rights:
             groups = pytis.data.default_access_groups(config.dbconnection)
             if not rights.permitted(perm, groups, column=column):
                 return False
-    return action_has_access('form/'+name, perm=perm, column=column)
+    result = action_has_access('form/'+name, perm=perm, column=column)
+    return result
 
 def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
     """Return true iff 'action' has 'perm' permission.
@@ -1512,11 +1520,18 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
         init_access_rights()
     if _access_rights == 'nonuser':
         return False
-    if _access_rights is not None:
+    if _access_rights is None:
+        result = True
+    else:
         rights = _access_rights.get(action)
-        if rights is not None and perm not in rights:
-            return False
-    return True
+        if rights is None:
+            result = False
+            access_rights = pytis.presentation.Specification.data_access_rights(action)
+            if access_rights is not None:
+                result = access_rights.permitted(perm, _user_roles)
+        else:
+            result = perm in rights
+    return result
 
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontì.
