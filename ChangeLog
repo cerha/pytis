@@ -19,6 +19,11 @@
 	Allow aggregation functions MIN and MAX also on string and date/time columns..
 2009-07-02  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/spec.py:
+	Fix reading in specification rights and recognize forbidden forms.
+
+2009-07-02  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Fix dual form matching in pytis_matching_actions db function.
 
