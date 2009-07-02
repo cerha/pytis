@@ -230,9 +230,7 @@ def pytis_matching_actions(complex_action, simple_action):
         if len(last_components) == 2:
             import string
             prefix = components[0] + '/'
-            result = ((prefix + last_components[0]) == simple_action or
-                      (prefix + last_components[1]) == simple_action or
-                      (prefix + last_components[0] + '::' + last_components[1] == simple_action))
+            result = (prefix + last_components[0] + '::' + last_components[1] == simple_action)
         else:
             result = ('form/'+components[2] == simple_action)
     else:

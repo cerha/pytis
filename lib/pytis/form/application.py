@@ -1481,8 +1481,8 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     Raises 'ResolverError' if given specification name cannot be found.
 
     """
-    if action_has_access('form/'+name, perm=perm, column=column):
-        return True
+    if not action_has_access('form/'+name, perm=perm, column=column):
+        return False
     try:
         main, side = name.split('::')
     except ValueError:
@@ -1490,12 +1490,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     else:
         dual = True
     if dual:
-        # The first action_has_access call ensured _access_rights is
-        # initialized, so we can check its value here.
-        if _access_rights is not None:
-            return action_has_access('form/'+name, perm=perm, column=column)
-        if not has_access(main, perm=perm) or not has_access(side, perm=perm):
-            return False
+        return has_access(main, perm=perm) and has_access(side, perm=perm)
     else:
         rights = resolver().get(name, 'data_spec').access_rights()
         if rights:
