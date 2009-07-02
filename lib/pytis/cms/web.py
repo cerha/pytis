@@ -219,7 +219,7 @@ class Menu(wiking.PytisModule):
         else:
             return super(Menu, self)._document_title(req, record)
 
-    def _globals(self, req):
+    def globals(self, req):
         return dict([(name, self._module(modname).dict(req))
                      for name, modname in self._SUBSTITUTION_PROVIDERS])
     
@@ -250,7 +250,7 @@ class Menu(wiking.PytisModule):
                 else:
                     content = [content]
                 document = result.clone(title=self._document_title(req, record), subtitle=None,
-                                        content=pre+content+post, globals=self._globals(req))
+                                        content=pre+content+post, globals=self.globals(req))
         elif text is None and record['parent'].value() is None:
             # Redirect to the first subitem from empty top level items.
             rows = self._data.get_rows(parent=record['menu_item_id'].value(), published=True,
@@ -259,9 +259,9 @@ class Menu(wiking.PytisModule):
             if rows:
                 return req.redirect('/'+self._menu_item_identifier(rows[0]))
             else:
-                document = self._document(req, [], record, globals=self._globals(req))
+                document = self._document(req, [], record, globals=self.globals(req))
         else:
-            document = self._document(req, pre+post, record, globals=self._globals(req))
+            document = self._document(req, pre+post, record, globals=self.globals(req))
         return document
     
     def module_uri(self, modname):
@@ -471,6 +471,14 @@ class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
             if len(path) == req.menu_path_length+2 and path[-1] == fw.arg('binding').id():
                 return '/'+ '/'.join(path[:req.menu_path_length])
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
+
+    def _document(self, req, content, record=None, **kwargs):
+        globals = self._module('Menu').globals(req)
+        if kwargs.has_key('globals') and kwargs['globals'] is not None:
+            kwargs['globals'].update(globals)
+        else:
+            kwargs['globals'] = globals
+        return super(EmbeddablePytisModule, self)._document(req, content, record=record, **kwargs)
 
 
 class SubstitutionProvider(wiking.PytisModule):
