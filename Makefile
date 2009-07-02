@@ -7,7 +7,11 @@ lib := $(shell python -c 'import sys; print "$(LIB)".find("%d") != -1 and \
 
 .PHONY: translations
 
-all: check-lib compile translations
+all: check compile translations
+
+check:
+	@python -c "import sys; '$(lib)' not in sys.path and sys.exit(1)" || \
+           echo 'WARNING: $(lib) not in Python path!'
 
 compile:
 	@echo "Compiling Python libraries from source..."
@@ -16,7 +20,7 @@ compile:
 translations:
 	make -C translations
 
-install: check-lib $(SHARE)/pytis
+install: $(SHARE)/pytis
 	cp -ruv translations $(SHARE)/pytis
 	cp -ruv lib/pytis $(lib)
 
@@ -24,11 +28,10 @@ uninstall:
 	rm -rf $(SHARE)/pytis
 	rm -rf $(lib)/pytis
 
-cvs-install: check-lib compile translations link-lib link-share
+install-links: check compile translations link-lib link-share
 
-check-lib:
-	@python -c "import sys; '$(lib)' not in sys.path and sys.exit(1)" || \
-           echo 'WARNING: $(lib) not in Python path!'
+tags:
+	./tools/make-tags.sh
 
 link-lib:
 	@if [ -d $(lib)/pytis ]; then echo "$(lib)/pytis already exists!"; \
@@ -41,19 +44,8 @@ link-share-%: $(SHARE)/pytis
 	@if [ -d $(SHARE)/pytis/$* ]; then echo "$(SHARE)/pytis/$* already exists!"; \
 	else echo "Linking $* to $(SHARE)/pytis"; ln -s $(CURDIR)/$* $(SHARE)/pytis; fi
 
-cvs-update: do-cvs-update compile translations
-
-do-cvs-update:
-	@echo "All local modifications will be lost and owerwritten with clean repository copies!"
-	@echo -n "Press Enter to continue or Ctrl-C to abort: "
-	@read || exit 1
-	cvs update -dPC
-
 $(SHARE)/pytis:
 	mkdir $(SHARE)/pytis
-
-tags:
-	./tools/make-tags.sh
 
 version = $(shell echo 'import pytis; print pytis.__version__' | python)
 dir = pytis-$(version)

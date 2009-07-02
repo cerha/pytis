@@ -10,27 +10,12 @@ Requirements:
   * python-imaging (only when using Image data types)  
 
 The simplest installation can be done using the provided Makefile.  Just run
-"make install" within the package root directory.  Feel free to edit the
-Makefile and setup your own installation paths.
+"make all && make install" within the package root directory.  Feel free to
+edit the Makefile and setup your own installation paths.
 
-You can also setup Pytis manually.  This is recommended when you checked Pytis
-out of CVS.  The two options described below will allow you to run the CVS
-version directly.  You will be able to check out a newer version at any time
-and this new version will be used automatically.
-
-You need to add Pytis libraries somewhere to your Python path.  The recommended
-approach is to link the library to your site packages directory.  On a
-unix/linux system invoke the following commands from the package root
-directory:
-
- $ ln -s `pwd`/lib/pytis /usr/local/lib/python2.4/site-packages/pytis
-
-Replace `python2.4' with the Python version you use.
-
-Alternatively, you may add Pytis to your PYTHONPATH environment variable:
-
- $ export PYTHONPATH=`pwd`/lib
-
-You will probably want to set PYTHONPATH from within your shell startup file to
-make it available permanently.
-
+You can also run the development version directly out of your checked out tree,
+being able to check out a newer version at any time and using this new version
+right away.  The Makefile supports this setup by linking the necessary
+directories into your checked out tree.  You need to run "make all && make
+install-links" for the first time, and then just "make all" after each
+checkout.

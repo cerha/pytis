@@ -1,3 +1,9 @@
+2009-07-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* INSTALL:
+	* Makefile:
+	CVS specific installation Makefile setup generalized..
+
 2009-07-01  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
