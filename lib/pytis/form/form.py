@@ -1609,12 +1609,12 @@ class RecordForm(LookupForm):
                 row_data = []
                 for id, type, val in zip(columns, types, values):
                     value, error = type.validate(val, transaction=self._transaction)
-                    assert value.type() == type, (value.type(), type)
                     if error:
                         msg = _("Chyba dat na øádku %d, sloupec '%s':\n%s") % \
                               (line_number, id, error.message())
                         run_dialog(Error, msg)
                         return False
+                    assert value.type() == type, (value.type(), type)
                     row_data.append((id, value))
                 data.append(pytis.data.Row(row_data))
         finally:

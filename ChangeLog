@@ -1,5 +1,10 @@
 2009-07-02  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/form/form.py:
+	Fixed input data validation within interactive import..
+
+2009-07-02  Tomas Cerha  <cerha@brailcom.org>
+
 	* INSTALL:
 	* Makefile:
 	CVS specific installation Makefile setup generalized..
