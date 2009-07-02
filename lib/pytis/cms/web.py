@@ -457,6 +457,7 @@ class Embeddable(object):
 
 class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
     _USE_BINDING_PARENT_TITLE = False
+    _BROWSE_FORM_LIMITS = (50, 100, 200, 300, 500)
     
     def _current_base_uri(self, req, record=None):
         uri = super(EmbeddablePytisModule, self)._current_base_uri(req, record=record)
