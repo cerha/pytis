@@ -1,5 +1,10 @@
 2009-07-02  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/web/form.py:
+	Documentation extended..
+
+2009-07-02  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/cms/web.py:
 	Pytis CMS: Customize BrowseForm limits for embeddable pytis modules..
 

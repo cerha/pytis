@@ -442,13 +442,17 @@ class BrowseForm(LayoutForm):
           limit -- maximal number of rows per page.  If the current condition produces more rows,
             the listing will be split into pages and the form will include controls for navigation
             between these pages.  None value results in an unlimited list -- all records will be
-            printed on just one page and paging controls will be disabled.  The request argument
-            'limit' overrides this value if 'req' is passed and the value is one of the valid
-            'limits' (see below).
+            printed on just one page and paging controls will be disabled.  The request parameter
+            'limit' overrides this value if 'req' is passed and it is stored as a cookie.  The
+            cookie has lower precedence than the request parameter, but still higher than the
+            'limit' constructor argument, so this argument really only serves as a default value.
+            The request parameter/cookie is checked against the 'limits' argument (see below) and
+            if it is not one of the values defined there, it is ignored, so the user may only use
+            one of the allowed limits. 
 
           limits -- a sequence of available 'limit' values.  These values are used to create the
             limit selection control and also determine valid values of the 'limit' request
-            parameter.
+            parameter and cookie (described above).
             
           offset -- determines the page within paged listing.  The number indicates the offset of
             the record within all the records of the current select.  The page, which contains this
