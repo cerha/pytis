@@ -929,6 +929,10 @@ class Menu(_TitledMenuObject):
                     # jsou správnì aktivovány i bez toho, ale první zobrazení menu
                     # je pomalej¹í.
                     menu.Enable(wxitem.GetId(), item.command().enabled(**item.args()))
+                    if __debug__:
+                        if config.debug:
+                            log(DEBUG, 'Menu item:', (item.title(),
+                                                      item.command().enabled(**item.args()),))
                     if isinstance(item, (RadioItem, CheckItem)):
                         wxitem.Check(item.state())
                     if hotkey_str.has_key(item):
