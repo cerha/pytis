@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-18 17:01+0100\n"
+"POT-Creation-Date: 2009-07-13 16:40+0200\n"
 "PO-Revision-Date: 2008-11-04 12:38+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -108,50 +108,71 @@ msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
 #. Translators: Default edit form submit button label.
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:257
-#: ../lib/pytis/web/form.py:269
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:259
+#: ../lib/pytis/web/form.py:271
 msgid "Submit"
 msgstr "Wyślij"
 
 #. Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
-#: ../lib/pytis/web/field.py:93
+#: ../lib/pytis/web/field.py:94
 msgid "Yes"
 msgstr "Tak"
 
-#: ../lib/pytis/web/field.py:93
+#: ../lib/pytis/web/field.py:94
 msgid "No"
 msgstr "Nie"
 
 #. Translators: The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:108
+#: ../lib/pytis/web/field.py:109
 msgid "image"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:108
+#: ../lib/pytis/web/field.py:109
 msgid "file"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:257
+#: ../lib/pytis/web/form.py:259
 msgid "Undo all changes"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:279
+#: ../lib/pytis/web/form.py:281
 msgid "Submit the form"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:282
+#: ../lib/pytis/web/form.py:284
 msgid "Reset"
 msgstr "Odśwież"
 
-#: ../lib/pytis/web/form.py:414
+#: ../lib/pytis/web/form.py:387
+msgid "today"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:444
 msgid "Fields marked by an asterisk are mandatory."
+msgstr ""
+
+#: ../lib/pytis/web/form.py:723
+#, fuzzy
+msgid "Sum"
+msgstr "Wyślij"
+
+#: ../lib/pytis/web/form.py:724
+msgid "Average"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:725
+msgid "Minimum"
+msgstr ""
+
+#: ../lib/pytis/web/form.py:726
+msgid "Maximum"
 msgstr ""
 
 #. Translators: This string uses plural forms.  '%d' is replaced by the number and
 #. this number also denotes the plural form used.  Please supply translations for
 #. all plural forms relevant for the target language.
-#: ../lib/pytis/web/form.py:712
+#: ../lib/pytis/web/form.py:776
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -160,18 +181,18 @@ msgstr[1] ""
 
 #. Translators: Used in empty list forms.  "Records" refers to database records in
 #. the most generic senese possible.
-#: ../lib/pytis/web/form.py:789
+#: ../lib/pytis/web/form.py:868
 msgid "No records."
 msgstr "Nie ma wpisu."
 
-#: ../lib/pytis/web/form.py:792
+#: ../lib/pytis/web/form.py:871
 #, fuzzy
 msgid "Total records:"
 msgstr "Nie ma wpisu."
 
 #. Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
 #. by the numbers corresponding to the current listing range.
-#: ../lib/pytis/web/form.py:796
+#: ../lib/pytis/web/form.py:875
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr ""
@@ -187,79 +208,79 @@ msgstr ""
 #. replaced by the selected letter or substring and 'on' has the meaning "beginning
 #. with".  Also take care to use the correct quotation marks for the target language
 #. (written as the corresponding unicode characters).
-#: ../lib/pytis/web/form.py:846
+#: ../lib/pytis/web/form.py:925
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr ""
 
 #. Translators: Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:851
+#: ../lib/pytis/web/form.py:930
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr ""
 
-#: ../lib/pytis/web/form.py:871
+#: ../lib/pytis/web/form.py:951
 msgid "Search expression"
 msgstr ""
 
 #. Translators: Search button label.
-#: ../lib/pytis/web/form.py:875 ../lib/pytis/web/form.py:918
+#: ../lib/pytis/web/form.py:955 ../lib/pytis/web/form.py:996
 msgid "Search"
 msgstr ""
 
 #. Translators: Label used in filter selection box for the option which disables
 #. filtering and thus results in all records to be displayed.
-#: ../lib/pytis/web/form.py:884
+#: ../lib/pytis/web/form.py:964
 msgid "All items"
 msgstr ""
 
 #. Translators: Label of filter selection box.  Filtering limits the displayed records
 #. by certain criterias.
-#: ../lib/pytis/web/form.py:889 ../lib/pytis/web/form.py:892
+#: ../lib/pytis/web/form.py:969 ../lib/pytis/web/form.py:972
 msgid "Filter"
 msgstr ""
 
 #. Translators: Tooltip text suggesting keyboard
 #. combination to use for selection without
 #. unexpected invocation of the option.
-#: ../lib/pytis/web/form.py:896 ../lib/pytis/web/form.py:926
-#: ../lib/pytis/web/form.py:942
+#: ../lib/pytis/web/form.py:976 ../lib/pytis/web/form.py:1004
+#: ../lib/pytis/web/form.py:1020
 msgid "(Use ALT+arrow down to select)"
 msgstr ""
 
 #. Translators: Button for manual selection invocation (when
 #. JavaScript is off.
-#: ../lib/pytis/web/form.py:901
+#: ../lib/pytis/web/form.py:981
 msgid "Apply"
 msgstr ""
 
 #. Translators: Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse forward/backwards.
-#: ../lib/pytis/web/form.py:923 ../lib/pytis/web/form.py:925
+#: ../lib/pytis/web/form.py:1001 ../lib/pytis/web/form.py:1003
 msgid "Page"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:931
+#: ../lib/pytis/web/form.py:1009
 msgid "Previous"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:932
+#: ../lib/pytis/web/form.py:1010
 msgid "Go to previous page"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:933
+#: ../lib/pytis/web/form.py:1011
 msgid "Next"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:934
+#: ../lib/pytis/web/form.py:1012
 msgid "Go to next page"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:939 ../lib/pytis/web/form.py:941
+#: ../lib/pytis/web/form.py:1017 ../lib/pytis/web/form.py:1019
 msgid "Records per page"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:946
+#: ../lib/pytis/web/form.py:1024
 msgid "Go"
 msgstr ""
 
