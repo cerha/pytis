@@ -376,24 +376,26 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             attr['id'] = attr['id'] + '-verify-pasword'
             result += g.br() + ctrl(**attr)
         if isinstance(type, pd.Date):
-            context.node().resource('prototype.js')
-            context.node().resource('calendarview.js')
-            context.node().resource('calendarview.css')
-            locale_data = context.locale_data()
-            js_values = dict(
-                id = attr['id'],
-                format = locale_data.date_format,
-                today = context.translate(_("today")),
-                day_names = g.js_value([context.translate(lcg.week_day_name(number, abbrev=True))
-                                        for number in (6,0,1,2,3,4,5)]),
-                month_names = g.js_value([context.translate(lcg.month_name(number))
-                                          for number in range(12)]),
-                first_week_day = (locale_data.first_week_day + 1) % 7,
-                )
-            result += \
-                   g.script_write(g.button(label='...', id='%s-button' % attr['id'],
-                                           cls='selection-invocation calendar-invocation')) + \
-                   g.script("""
+            result += g.script_write(g.button(label='...', id='%s-button' % attr['id'],
+                                              cls='selection-invocation calendar-invocation',
+                                              disabled=attr.get('disabled')))
+            if not attr.has_key('disabled'):
+                node = context.node()
+                node.resource('prototype.js')
+                node.resource('calendarview.js')
+                node.resource('calendarview.css')
+                locale_data = context.locale_data()
+                js_values = dict(
+                    id = attr['id'],
+                    format = locale_data.date_format,
+                    today = context.translate(_("today")),
+                    day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
+                                            for i in (6,0,1,2,3,4,5)]),
+                    month_names = g.js_value([context.translate(lcg.month_name(i))
+                                              for i in range(12)]),
+                    first_week_day = (locale_data.first_week_day + 1) % 7,
+                    )
+                result += g.script("""
                    Calendar.setup({dateField: '%(id)s',
                                    triggerElement: '%(id)s-button',
                                    dateFormat: '%(format)s'});
