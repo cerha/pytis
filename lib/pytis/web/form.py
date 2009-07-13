@@ -1135,6 +1135,7 @@ class ListView(BrowseForm):
         columns = self._list_layout.columns()
         if columns > 1:
             n, mod = divmod(len(rows), columns)
+            # Add empty cells to prevent spanning of unfinished grid rows.
             rows.extend(['' for i in range(columns-mod)])
             rows = g.table([g.tr([g.td(r, width="%d%%" % (100/columns), valign='top')
                                   for r in rows[i*columns:(i+1)*columns]])
