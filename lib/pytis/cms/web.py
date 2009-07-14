@@ -264,7 +264,7 @@ class Menu(wiking.PytisModule):
             document = self._document(req, pre+post, record, globals=self.globals(req))
         return document
     
-    def module_uri(self, modname):
+    def module_uri(self, req, modname):
         row = self._data.get_row(modname=modname)
         if row:
             return '/'+ self._menu_item_identifier(row) +'/'+ self.EMBED_BINDING_ID
@@ -417,10 +417,10 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     def languages(self):
         return self._module('Languages').languages()
 
-    def module_uri(self, modname):
-        uri = super(Application, self).module_uri(modname)
+    def module_uri(self, req, modname):
+        uri = super(Application, self).module_uri(req, modname)
         if uri is None:
-            uri = self._module('Menu').module_uri(modname)
+            uri = self._module('Menu').module_uri(req, modname)
         return uri
     
     def handle(self, req):
