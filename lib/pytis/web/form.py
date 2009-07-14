@@ -152,21 +152,24 @@ class LayoutForm(FieldForm):
         super(LayoutForm, self).__init__(view, row, **kwargs)
         self._allow_table_layout = allow_table_layout
         
-    def _export_group(self, context, group, inner=False):
+    def _export_group(self, context, group, inner=False, id=None):
         g = context.generator()
         result = []
         fields = []
         wrap = False
+        group_number = 0
         for item in group.items():
             if isinstance(item, Button):
                 pass
             elif isinstance(item, lcg.Content):
                 result.append(item.export(context))
             elif isinstance(item, GroupSpec):
+                group_number += 1
                 if fields:
                     result.append(self._export_fields(g, fields))
                 fields = []
-                result.append(self._export_group(context, item, inner=True))
+                result.append(self._export_group(context, item, inner=True,
+                                                 id='%s-%d' % (id or 'group', group_number)))
             else:
                 field = self._fields[item]
                 ctrl = self._export_field(context, field)
@@ -182,10 +185,11 @@ class LayoutForm(FieldForm):
                                     for i, x in enumerate(result)]),
                               cellspacing=0, cellpadding=0, cls='horizontal-group')]
             wrap = False
+        cls = 'group' + (id and ' ' + id or '')
         if group.label():
-            result = g.fieldset(group.label()+':', result, cls='group')
+            result = g.fieldset(group.label()+':', result, cls=cls)
         elif wrap:
-            result = g.div(result, cls='group')
+            result = g.div(result, cls=cls)
         elif not inner:
             # This fieldset fixes MSIE display of top-level horizontal groups...
             result = g.fieldset(None, result, cls='outer')

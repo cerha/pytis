@@ -1,5 +1,10 @@
 2009-07-14  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/web/form.py:
+	Automatically assign unique classes to web form layout groups to allow their CSS styling..
+
+2009-07-14  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/cms/web.py:
 	Pytis CMS: Respect changes in Wiking 'module_uri()' API..
 
