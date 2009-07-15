@@ -46,7 +46,7 @@ import pytis.data
 
 
 def pg_escape(string_):
-    return string_.replace("'", "''")
+    return string_.replace("'", "''").replace('\\', '\\\\')
 
 
 def pg_encoding(enc):

@@ -1395,6 +1395,21 @@ class DBDataDefault(_DBTest):
         check1('lazy&fox', ["The quick brown <b>fox</b> jumps over the <b>lazy</b> dog. * cat",
                             "GNU's Not Unix * <b>lazy</b> <b>fox</b> and <b>lazy</b> dog"])
         check1('world', ["Hello, <b>world</b>! * bear"])
+    def test_backslash(self):
+        data = self.dstat
+        backslash = 'back\\012slash'
+        row_template = ('xx', backslash,)
+        row_data = []
+        for c, v in zip(data.columns(), row_template):
+            v, e = c.type().validate(v)
+            if e is not None:
+                raise e
+            row_data.append((c.id(), v))
+        row = pytis.data.Row(row_data)
+        result, success = data.insert(row)
+        assert success
+        assert result[1].value() == backslash, ('invalid inserted value', result[1].value(), backslash,)
+        assert data.delete(row[0]) == 1, 'row not deleted'
     def test_lock(self):
         us = pytis.data.String().validate('us')[0]
         cz = pytis.data.String().validate('cz')[0]
