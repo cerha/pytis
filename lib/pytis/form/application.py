@@ -393,14 +393,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if not parents: # the top pseudonode, should be the first one
                 parents.append((position, menu_template,))
                 current_template = menu_template
-            elif not title: # separator
-                pass
             else:
                 parent = position[:-2]
                 while parent != parents[-1][0]:
                     parents.pop()
                 current_template = parents[-1][1]
-                if name: # terminal item
+                if not title: # separator
+                    current_template.append(None)                    
+                elif name: # terminal item
                     current_template.append((name, title, rights, action, help, hotkey,))
                 else:          # non-terminal item
                     upper_template = parents[-1][1]
@@ -422,6 +422,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     result = items
                 else:
                     result = Menu(heading[1], items)
+            elif template is None:
+                result = MSeparator()
             else:
                 name, title, rights, action, help, hotkey = template
                 command = MItem.parse_action(action)
