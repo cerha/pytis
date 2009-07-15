@@ -21,7 +21,6 @@
 
 	* lib/pytis/form/application.py:
 	Create menu separators in menus read from database.
-	
 
 2009-07-03  Milan Zamazal  <pdm@brailcom.org>
 
