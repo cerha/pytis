@@ -25,7 +25,8 @@ Example application using these Wiking modules can be found in pytis-demo.
 
 """
 
-import os, re, md5, mx.DateTime, lcg, wiking
+import os, re, mx.DateTime, lcg, wiking
+import hashlib, binascii
 import pytis.util, pytis.presentation as pp, pytis.data as pd, pytis.web as pw
 import cms
 
@@ -392,8 +393,33 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         return self._module('Users').user(login)
         
     def _auth_check_password(self, user, password):
-        return user.password() == md5.new(password).hexdigest()
-
+        user_password = user.password()
+        if user_password is None:
+            return False
+        else:
+            user_password = user_password.strip()
+        if user_password.startswith('{'):
+            # We have a LDAP style password
+            s = re.match('{(.*)}(.*)', user_password)
+            if s and len(s.groups()) == 2:
+                hash_alg = s.group(1)
+                hash_value = s.group(2)
+                encode = 'base64'
+            else:
+                return False
+        else:
+            # We suppose to have a hexencoded md5 style password
+            hash_alg = 'MD5'
+            hash_value = user_password
+            encode = 'hex'
+        h = hashlib.new(hash_alg)
+        h.update(password)
+        if encode == "base64":
+            encoded = binascii.b2a_base64(h.digest()).strip()
+        else:
+            encoded = binascii.b2a_hex(h.digest()).strip()
+        return hash_value == encoded
+    
     def authorize(self, req, module, action=None, record=None, **kwargs):
         try:
             roles = self._RIGHTS[module.name()]
