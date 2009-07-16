@@ -1,0 +1,131 @@
+#title Editace dynamických práv a menu v databázi
+
+* Přidávání rolí a změny členství
+
+Přidání role se provede vložením řádku do tabulky e_pytis_roles:
+
+<example>
+insert into e_pytis_roles (name, description, purposeid)
+                   values ('NAME', 'DESCRIPTION', 'PURPOSEID');
+</example>
+
+  NAME ... jméno role
+  DESCRIPTION ... slovní popis účelu role
+  PURPOSEID ... jeden z řetězců `user', `appl', `admn'; viz tabulka c_pytis_role_purposes
+
+Přidání člena role se provede v tabulce `e_pytis_role_members':
+
+<example>
+insert into e_pytis_role_members (roleid, member)
+                          values ('GROUP', 'MEMBER');
+</example>
+
+  GROUP ... role, která má obsahovat MEMBER
+  MEMBER ... role, která se má stát členem GROUP
+
+
+* Přidání akce
+
+Všechny akce jsou evidovány v tabulce `c_pytis_menu_actions'.  Pro každou akci
+je potřeba správně zformulovat její identifikátor.  Existují následující druhy
+akcí a jejich identifikátorů:
+
+- Příkaz RUN_FORM:
+
+    form/CLASS_NAME/FORM_NAME/COMMAND_PROC
+    form/CLASS_NAME/FORM_NAME/binding=BINDING/COMMAND_PROC
+
+  CLASS_NAME ... plně kvalifikovaná třída formuláře, např. `pytis.form.BrowseForm'
+  FORM_NAME ... specifikace formuláře kvalifikovaná vůči adresáři `defs', např. `misc.Products'
+  COMMAND_PROC ... argument `command' nebo prázdné
+  BINDING ... binding formuláře
+  
+- Příkaz NEW_RECORD:
+
+    NEW_RECORD/NAME/COMMAND_PROC
+
+  NAME ... argument `name'
+  COMMAND_PROC ... argument `command' nebo prázdné 
+
+- Příkaz HANDLED_ACTION:
+
+    handle/NAME/COMMAND_PROC
+
+  NAME ... plně kvalifikované jméno funkce
+  COMMAND_PROC ... argument `command' nebo prázdné
+
+- Příkaz RUN_PROCEDURE:
+
+    proc/PROC_NAME/SPEC_NAME/COMMAND_PROC
+
+  PROC_NAME ... argument `proc_name'
+  SPEC_NAME ... argument `spec_name'
+  COMMAND_PROC ... argument `command' nebo prázdné
+
+- Ostatní příkazy:
+
+    COMMAND/COMMAND_PROC
+
+  COMMAND ... název příkazu (např. `EXIT')
+  COMMAND_PROC ... argument `command' nebo prázdné
+
+
+Pokud mají nějaké akce extra argumenty, které nejsou pokryty výše uvedenými
+pravidly, je pro ně potřeba vytvořit definici v commands.py.
+
+Zajisté nejjednodušším způsobem, jak správný identifikátor akce vytvořit, je
+zkopírovat ho upravit podle nějaké podobné akce již v tabulce přítomné.
+  
+Přidání akce se provede takto:
+
+<example>
+insert into c_pytis_menu_actions (name, shortname, description)
+                          values ('NAME', 'SHORTNAME', 'DESCRIPTION');
+<example>
+
+  NAME ... identifikátor akce vytvořený dle pravidel výše
+  SHORTNAME ... pro akce s prefixem `form/' má podobu `form/FORM_NAME', pro
+    ostatní akce je shodné s NAME
+  DESCRIPTION ... nepovinný slovní popis akce
+
+
+* Přidání práv
+
+Práva se evidují v tabulce `e_pytis_action_rights':
+
+<example>
+insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname)
+                           values ('ACTION', 'ROLE', 'RIGHTID', SYSTEM, GRANTED, COLUMN);
+</example>
+
+  ACTION ... stručné jméno akce, která je přítomná v tabulce c_pytis_menu_actions
+  ROLE ... role, které se položka týká; `*' značí všechny role
+  RIGHTID ... jedna z hodnot klíčového sloupce číselníku `c_pytis_access_rights'
+  SYSTEM ... boolean flag určující, zda se jedná o systémové právo
+  GRANTED ... boolean flag určující, zda je právo povoleno nebo odepřeno;
+    pozor, systémová práva smí být jen povolena
+  COLUMN ... jméno sloupce, na který se právo vztahuje (string), nebo NULL
+    pokud se vztahuje na všechny sloupce
+
+
+* Přidání položky menu
+
+Menu je uloženo v tabulce `e_pytis_menu':
+
+<example>
+insert into e_pytis_menu (name, title, position, action, help, hotkey, locked) 
+                  values ('NAME', 'TITLE', 'POSITION', 'ACTION', 'HELP', 'HOTKEY', LOCKED);
+</example>
+
+  NAME ... NULL pro podmenu a separátory, unikátní jméno (obvykle ACTION) pro
+    koncové položky menu
+  TITLE ... titulek menu jak se objeví v uživatelském rozhraní
+  POSITION ... pozice v menu skládající se z prefixu rodičovského menu o sudém
+    počtu cifer a z dvojciferné pozice uvnitř rodičovského menu v rozsahu 10-98
+  ACTION ... `name' akce navěšené na položku menu, u koncových položek musí být
+    z číselníku `c_pytis_menu_actions', u podmenu a separátorů NULL
+  HELP ... nápověda k položce nebo NULL
+  HOTKEY ... sekvence hotkeys oddělených mezerami, např. `Alt-a a', mezerník se
+    zapisuje jako `SPC'
+  LOCKED .. boolean flag udávající, že položka menu není editovatelná správcem
+    menu (používá se obvykle jen pro systémové menu)
