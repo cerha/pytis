@@ -1,3 +1,8 @@
+2009-07-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Fixed check for duplicit order at the same level..
+
 2009-07-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/_test.py:
