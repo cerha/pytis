@@ -264,7 +264,8 @@ class Menu(Specification):
                     return ('parent', _("Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
                                         "(cyklus v hierarchii)."))
         count = data.select(condition=pd.AND(pd.EQ('parent', record['parent']),
-                                             pd.EQ('ord', record['ord'])))
+                                             pd.EQ('ord', record['ord']),
+                                             pd.NE('menu_item_id', record['menu_item_id']))),
         data.close()
         if count:
             return ('ord', _("Stejné poøadové èíslo u¾ má jiná polo¾ka na této úrovni menu."))
