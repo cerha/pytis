@@ -249,6 +249,13 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zaøazena "
                       "na konec.")),
         )
+    def _check_menu_order_condition(self, record):
+        # Return a list of 'pd.Operator' instances to find menu items with duplicate order at the
+        # same level.  The returned operators will be applied in conjunction.  Designed to allow
+        # overriding in a derived class with more complicated menu structure.
+        return [pd.EQ('parent', record['parent']),
+                pd.EQ('ord', record['ord']),
+                pd.NE('menu_item_id', record['menu_item_id'])]
     def check(self, record):
         data = record.data()
         if record['parent'].value() is not None:
@@ -263,9 +270,7 @@ class Menu(Specification):
                 if count:
                     return ('parent', _("Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
                                         "(cyklus v hierarchii)."))
-        count = data.select(condition=pd.AND(pd.EQ('parent', record['parent']),
-                                             pd.EQ('ord', record['ord']),
-                                             pd.NE('menu_item_id', record['menu_item_id']))),
+        count = data.select(condition=pd.AND(*self._check_menu_order_condition(record)))
         data.close()
         if count:
             return ('ord', _("Stejné poøadové èíslo u¾ má jiná polo¾ka na této úrovni menu."))
