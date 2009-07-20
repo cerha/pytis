@@ -2232,31 +2232,35 @@ class FoldableForm(ListForm):
                 folded = (state.level() == 0)
             return folded
         def _expand(self, node, level):
-            def fold(states, path, level):
-                state = states[0]
+            def fold(state, path, level):
                 state_level = state.level()
                 if path:
-                    if (state_level == 0 or
-                        state_level is None and level is None):
-                        new_state = state
+                    next_key = path[0]
+                    state_subnodes = state.subnodes()
+                    if state_level is None and level is None:
+                        if state_subnodes.has_key(next_key):
+                            new_state = state.copy(level=state_level, subnodes=copy.copy(state_subnodes))
+                            del new_state.subnodes()[next_key]
+                        else:
+                            new_state = state
                     else:
-                        next_key = path[0]
-                        next_state = state.subnodes().get(next_key)
+                        new_state = state.copy(level=state_level, subnodes=copy.copy(state_subnodes))
+                        next_state = new_state.subnodes().get(next_key)
                         if next_state is None:
                             if state_level:
                                 next_level = state_level - 1
-                            else: # state_level == 0 or state_level == None
+                            else: # state_level == 0 or state_level == None -> inherit it
                                 next_level = state_level
                             next_state = FoldableForm._FoldingState(level=next_level, subnodes={})
-                            state.subnodes()[next_key] = next_state
-                        new_state = fold([next_state]+states, path[1:], level)
+                        new_next_state = fold(next_state, path[1:], level)
+                        new_state.subnodes()[next_key] = new_next_state
                         if state_level is None:
                             redundant_level = None
                         else:
                             redundant_level = state_level - 1
-                        for key, key_state in state.subnodes().items():
+                        for key, key_state in new_state.subnodes().items():
                             if key_state.level() == redundant_level:
-                                del state.subnodes()[key]
+                                del new_state.subnodes()[key]
                 else:
                     if state_level == level:
                         new_state = state
@@ -2265,7 +2269,8 @@ class FoldableForm(ListForm):
                 return new_state
             path = string.split(node, '.')
             state = self._folding
-            new_state = fold([state], path, level)
+            new_state = fold(state, path, level)
+            self._folding = new_state
             return state is not new_state
         def expand(self, node, level=None):
             # level==None => expand whole subtree
