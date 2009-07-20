@@ -3,6 +3,11 @@
 	* lib/pytis/web/form.py:
 	Allow key search also in web forms without paging limit..
 
+2009-07-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/util/util.py:
+	Print attribute values, not their accessors, in Structure.__str__.
+
 2009-07-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/cms.py:

@@ -644,7 +644,7 @@ class Structure (object):
         result = '<%s:' % (self.__class__.__name__,)
         for member in self._attributes:
             name = member.name()
-            result = result + (' %s=%s;' % (name, str (getattr (self, name)),))
+            result = result + (' %s=%s;' % (name, str (getattr (self, name)()),))
         result = result + '>'
         return result
 
