@@ -2319,6 +2319,8 @@ class FoldableForm(ListForm):
             if isinstance(c.type(), pytis.data.LTree):
                 self._folding_column_id = c.id()
                 break
+        # Any better way to display the form with initial folding?
+        self.refresh()
 
     def _current_condition(self, filter=None, display=False):
         condition = super(FoldableForm, self)._current_condition(filter=filter, display=display)
