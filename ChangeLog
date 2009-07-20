@@ -1,3 +1,8 @@
+2009-07-20  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Allow key search also in web forms without paging limit..
+
 2009-07-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/cms.py:

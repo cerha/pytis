@@ -594,11 +594,20 @@ class BrowseForm(LayoutForm):
             if limit_ in limits:
                 limit = limit_
         self._limit = limit
-        self._index_search_string = ''
         # Determine the current offset.
         if limit is None:
             offset = 0
-        elif req is not None and search is None:
+        elif req is not None:
+            if params.has_key('offset'):
+                offset = params['offset']
+            if params.has_key('next'):
+                offset += limit
+            if params.has_key('prev') and offset >= limit:
+                offset -= limit
+        self._offset = offset
+        # Determine the curren key or index search condition.
+        index_search_string = ''
+        if req is not None and search is None:
             if params.has_key('search'):
                 type = self._row.data().find_column(self._key).type()
                 value, error = type.validate(params['search'])
@@ -606,16 +615,9 @@ class BrowseForm(LayoutForm):
                     search = pytis.data.EQ(self._key, value)
             elif params.has_key('index_search'):
                 if isinstance(self._row[sorting[0][0]].type(), pd.String):
-                    self._index_search_string = search_string = params['index_search']
-                    search = self._index_search_condition(search_string)
-            else:
-                if params.has_key('offset'):
-                    offset = params['offset']
-                if params.has_key('next'):
-                    offset += limit
-                if params.has_key('prev') and offset >= limit:
-                    offset -= limit
-        self._offset = offset
+                    index_search_string = params['index_search']
+                    search = self._index_search_condition(index_search_string)
+        self._index_search_string = index_search_string
         self._search = search
         # Determine the current query search condition.
         if query is not None:
@@ -852,7 +854,8 @@ class BrowseForm(LayoutForm):
                         exported_heading = self._export_group_heading(context, group_heading)
                         if exported_heading is not None:
                             exported_rows.append(exported_heading)
-            if found and offset == (n + page * limit):
+            if found and (limit is None and offset == n or \
+                          limit is not None and offset == (n + page * limit)):
                 id = 'found-record'
             else:
                 id = None
