@@ -890,9 +890,9 @@ class BrowseForm(LayoutForm):
         if not kwargs['sort']:
             sort, dir = self._sorting[0]
             kwargs = dict(kwargs, sort=sort, dir=dict(self._SORTING_DIRECTIONS)[dir])
+        # TODO: Excluding the 'submit' argument is actually a hack, since it is defined in Wiking
+        # and should be transparent for the form.
         args = [('form_name', self._name), ('filter', self._filter_id)] + \
-               # TODO: Excluding the 'submit' argument is actually a hack, since it is
-               # defined in Wiking and should be transparent for the form.
                [(k, v) for k, v in self._hidden if k != 'submit']
         return generator.uri(self._handler, *args, **kwargs)
 

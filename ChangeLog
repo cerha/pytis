@@ -1,6 +1,11 @@
 2009-07-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
+	Fixed invalid syntax in the previous commit..
+
+2009-07-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
 	Pass hidden field values also to browse form control links..
 
 2009-07-20  Tomas Cerha  <cerha@brailcom.org>
