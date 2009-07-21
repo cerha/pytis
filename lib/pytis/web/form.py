@@ -887,7 +887,7 @@ class BrowseForm(LayoutForm):
             return self._wrap_exported_rows(context, exported_rows, summary)
 
     def _link_ctrl_uri(self, generator, **kwargs):
-        if not kwargs['sort']:
+        if not kwargs.get('sort'):
             sort, dir = self._sorting[0]
             kwargs = dict(kwargs, sort=sort, dir=dict(self._SORTING_DIRECTIONS)[dir])
         # TODO: Excluding the 'submit' argument is actually a hack, since it is defined in Wiking
