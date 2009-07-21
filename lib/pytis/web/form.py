@@ -886,14 +886,15 @@ class BrowseForm(LayoutForm):
                             total=g.strong(str(count)))
             return self._wrap_exported_rows(context, exported_rows, summary)
 
-    def _link_ctrl_uri(self, generator, sort=None, dir=None, **kwargs):
-        if sort is None:
-            sort, dir_ = self._sorting[0]
-            dir = dict(self._SORTING_DIRECTIONS)[dir_]
-        return generator.uri(self._handler,
-                             ('form_name', self._name),
-                             ('filter', self._filter_id),
-                             sort=sort, dir=dir, **kwargs)
+    def _link_ctrl_uri(self, generator, **kwargs):
+        if not kwargs['sort']:
+            sort, dir = self._sorting[0]
+            kwargs = dict(kwargs, sort=sort, dir=dict(self._SORTING_DIRECTIONS)[dir])
+        args = [('form_name', self._name), ('filter', self._filter_id)] + \
+               # TODO: Excluding the 'submit' argument is actually a hack, since it is
+               # defined in Wiking and should be transparent for the form.
+               [(k, v) for k, v in self._hidden if k != 'submit']
+        return generator.uri(self._handler, *args, **kwargs)
 
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string+"*")
