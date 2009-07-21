@@ -417,12 +417,14 @@ class PresentedRow(object):
         """Set the current transaction for data operations."""
         self._transaction = transaction
     
-    def format(self, key, **kwargs):
+    def format(self, key, pretty=False, **kwargs):
         """Return the string representation of the field value.
 
         Arguments:
 
           key -- field identifier (string).
+          pretty -- boolean flag indicating whether pretty export should be
+            used to format the value.
           kwargs -- keyword arguments passed to the 'export()' method of the field's
             'Value' instance.
         
@@ -438,7 +440,12 @@ class PresentedRow(object):
             # pøístupová práva.
             svalue = ''
         else:
-            svalue = value.export(**kwargs)
+            value_type = value.type()
+            value_value = value.value()
+            if pretty and isinstance(value_type, PrettyType):
+                svalue = value_type.pretty_export(value_value, row=self, **kwargs)
+            else:
+                svalue = value_type.export(value_value, **kwargs)
         column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
             svalue = string.join(svalue.splitlines(), column.line_separator)

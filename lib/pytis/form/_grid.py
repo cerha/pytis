@@ -199,14 +199,6 @@ class ListTable(wx.grid.PyGridTableBase):
                                       c.style())
                          for c in columns]
         self._column_count = len(self._columns)
-        # [Well, I'm not very happy with transfering information about the
-        # order column through the column type, but it's already here and it
-        # works, so let's use this mechanism for now. -pdm]
-        self._tree_order_column = None
-        if self._sorting:
-            cid = self._sorting[0][0]
-            if isinstance(self._presented_row[cid].type(), pytis.data.TreeOrderBase):
-                self._tree_order_column = cid
         
     def _panic(self):
         if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
@@ -411,22 +403,11 @@ class ListTable(wx.grid.PyGridTableBase):
                 s = c.style
                 if callable(s):
                     style_dict[cid] = s(the_row)
-                value_dict[cid] = the_row.format(cid)
-            # Indent the first column if tree order is defined.
-            if self._tree_order_column is not None:
-                order = the_row[self._tree_order_column].export()
-                if order is not None:
-                    if order and order[0] == '.':
-                        order = order[1:]
-                    order_items = order.split('.')
-                    level = len(order_items) - 1
-                    if level > 0:
-                        cid = self._columns[0].id
-                        value_dict[cid] = 3*level*' ' +'- '+ value_dict[cid]
+                value_dict[cid] = the_row.format(cid, pretty=True)
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
                 if not value_dict.has_key(gcol):
-                    value_dict[gcol] = the_row.format(gcol)
+                    value_dict[gcol] = the_row.format(gcol, pretty=True)
             # If row_style is defined, lets compute it.
             if callable(self._row_style):
                 style_dict[None] = self._row_style(the_row)

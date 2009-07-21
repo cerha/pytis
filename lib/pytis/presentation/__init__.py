@@ -2,7 +2,7 @@
 
 # Transformace a prezentace dat
 # 
-# Copyright (C) 2002, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ rùzného druhu do stringové podoby nebo formátování stringového textu.
 
 from spec import *
 from field import *
+from types_ import PrettyType, PrettyTreeOrder, PrettyFoldable
 
 for file in (spec, field):
     file.__dict__.update(globals())
