@@ -1,3 +1,8 @@
+2009-07-21  Pavel Hanak  <hanak@wpb.cz>
+
+	* lib/pytis/data/postgresql.py:
+	Report column and table name in DBException dialog for unknown column type..
+
 2009-07-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
