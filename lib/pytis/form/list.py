@@ -2280,9 +2280,9 @@ class FoldableForm(ListForm):
             return self._expand(node, level)
         def collapse(self, node):
             return self._expand(node, 0)
-        def expand_or_collapse(self, node):
+        def expand_or_collapse(self, node, level):
             if self._folding_level(node) == 0:
-                result = self.expand(node)
+                result = self.expand(node, level=level)
             else:
                 result = self.collapse(node)
             return result
@@ -2330,14 +2330,17 @@ class FoldableForm(ListForm):
             condition = pytis.data.AND(condition, self._folding.condition(self._folding_column_id))
         return condition
         
-    def _cmd_expand_or_collapse(self):
+    def _cmd_expand_or_collapse_subtree(self, level=None):
         if self._folding_column_id is None:
             return
         row, _col = self._current_cell()
         node = self._table.row(row)[self._folding_column_id].value()
-        if self._folding.expand_or_collapse(node):
+        if self._folding.expand_or_collapse(node, level=level):
             self.refresh()
 
+    def _cmd_expand_or_collapse(self):
+        self._cmd_expand_or_collapse_subtree(level=1)
+            
     def folding_level(self, row):
         if row is not None and self._folding_column_id is not None:
             node = row[self._folding_column_id].value()
