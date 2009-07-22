@@ -2216,7 +2216,7 @@ class FoldableForm(ListForm):
                 l = labels.pop(0)
                 state = state.subnodes().get(l)
             return state
-        def _folded(self, node):
+        def _folding_level(self, node):
             state = self._folding
             labels = node.split('.')
             while labels and state is not None:
@@ -2225,12 +2225,12 @@ class FoldableForm(ListForm):
                 state = state.subnodes().get(l)
             if state is None:
                 if level is None:
-                    folded = False
+                    folding_level = None
                 else:
-                    folded = (level - len(labels) <= 1)
+                    folding_level = max(level - len(labels) - 1, 0)
             else:
-                folded = (state.level() == 0)
-            return folded
+                folding_level = state.level()
+            return folding_level
         def _expand(self, node, level):
             def fold(state, path, level):
                 state_level = state.level()
@@ -2281,7 +2281,7 @@ class FoldableForm(ListForm):
         def collapse(self, node):
             return self._expand(node, 0)
         def expand_or_collapse(self, node):
-            if self._folded(node):
+            if self._folding_level(node) == 0:
                 result = self.expand(node)
             else:
                 result = self.collapse(node)
@@ -2310,6 +2310,8 @@ class FoldableForm(ListForm):
             add('', self._folding)
             condition = pytis.data.OR(*[pytis.data.LTreeMatch(column_id, q) for q in queries])
             return condition
+        def level(self, node):
+            return self._folding_level(node)
 
     def __init__(self, *args, **kwargs):
         self._folding_column_id = None
@@ -2335,8 +2337,15 @@ class FoldableForm(ListForm):
         node = self._table.row(row)[self._folding_column_id].value()
         if self._folding.expand_or_collapse(node):
             self.refresh()
-        
-    
+
+    def folding_level(self, row):
+        if row is not None and self._folding_column_id is not None:
+            node = row[self._folding_column_id].value()
+            level = self._folding.level(node)
+        else:
+            level = None
+        return level
+
 class BrowseForm(FoldableForm):
     """Formuláø pro prohlí¾ení dat s mo¾ností editace."""
 

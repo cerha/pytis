@@ -132,6 +132,7 @@ class PresentedRow(object):
         self._coldict = dict([(c.id, c) for c in columns])
         self._cb_spec_cache = {}
         self._completer_cache = {}
+        self._properties = {}
         key = data.key()[0].id()
         if not self._coldict.has_key(key):
             # TODO: This is a temporary hack for old applications which have data columns not
@@ -185,6 +186,7 @@ class PresentedRow(object):
         self._row = pytis.data.Row(row_data)
         self._virtual = dict(virtual)
         self._invalid = {}
+        self._properties = {}
         if reset:
             self._original_row_empty = row is None
             if not hasattr(self, '_original_row'):
@@ -417,7 +419,7 @@ class PresentedRow(object):
         """Set the current transaction for data operations."""
         self._transaction = transaction
     
-    def format(self, key, pretty=False, **kwargs):
+    def format(self, key, pretty=False, form=None, **kwargs):
         """Return the string representation of the field value.
 
         Arguments:
@@ -425,6 +427,7 @@ class PresentedRow(object):
           key -- field identifier (string).
           pretty -- boolean flag indicating whether pretty export should be
             used to format the value.
+          form -- 'Form' instance of the row's form
           kwargs -- keyword arguments passed to the 'export()' method of the field's
             'Value' instance.
         
@@ -443,7 +446,7 @@ class PresentedRow(object):
             value_type = value.type()
             value_value = value.value()
             if pretty and isinstance(value_type, PrettyType):
-                svalue = value_type.pretty_export(value_value, row=self, **kwargs)
+                svalue = value_type.pretty_export(value_value, row=self, form=form, **kwargs)
             else:
                 svalue = value_type.export(value_value, **kwargs)
         column = self._coldict[key]

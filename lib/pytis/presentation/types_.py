@@ -62,19 +62,34 @@ class PrettyTreeOrder(PrettyType):
         """
         super(PrettyTreeOrder, self).__init__(**kwargs)
         self._tree_column_id = tree_column_id
-        
-    def pretty_export(self, value, row, **kwargs):
+
+    def _indentation(self, level, row, form):
+        if level > 0:
+            indentation = 3*level*' ' + '- '
+        else:
+            indentation = ''
+        return indentation
+    
+    def pretty_export(self, value, row, form=None, **kwargs):
         exported = self.export(value, **kwargs)
         order = row[self._tree_column_id].export()
         if order is not None:
             if order and order[0] == '.':
                 order = order[1:]
             level = len(order.split('.')) - 1
-            if level > 0:
-                exported = 3*level*' ' +'- '+ exported
+            exported = self._indentation(level, row, form) + exported
         return exported
 
 class PrettyFoldable(PrettyTreeOrder):
     """Similar as 'PrettyTreeOrder' but with an additional folding indicator.
     """
-    # Not yet implemented
+    def _indentation(self, level, row, form):
+        if form is None:
+            mark = ''
+        else:
+            folding = form.folding_level(row)
+            if folding == 0:
+                mark = u'⊞ '
+            else:
+                mark = u'⊟ '
+        return 3*level*' ' + mark
