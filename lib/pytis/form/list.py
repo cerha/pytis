@@ -240,6 +240,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
+        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, g, self._on_left_dclick)
         wx_callback(wx.EVT_MOUSEWHEEL,   g,      self._on_wheel)
         wx_callback(wx.EVT_IDLE,         g,      self._on_idle)
         wx_callback(wx.EVT_KEY_DOWN,     g,      self.on_key_down)
@@ -1249,6 +1250,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             row, col = event.GetRow(), event.GetCol()
             self._select_cell(row, col)
             self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
+        event.Skip()
+        
+    def _on_left_dclick(self, event):
         event.Skip()
             
     def _on_wheel(self, event):
@@ -2329,9 +2333,17 @@ class FoldableForm(ListForm):
         if display and self._folding_column_id is not None:
             condition = pytis.data.AND(condition, self._folding.condition(self._folding_column_id))
         return condition
+
+    def _folding_enabled(self):
+        return self._folding_column_id is not None
+    
+    def _on_left_dclick(self, event):
+        if self._folding_enabled():
+            self._cmd_expand_or_collapse()
+        event.Skip()
         
     def _cmd_expand_or_collapse_subtree(self, level=None):
-        if self._folding_column_id is None:
+        if not self._folding_enabled():
             return
         row, _col = self._current_cell()
         node = self._table.row(row)[self._folding_column_id].value()
@@ -2342,7 +2354,18 @@ class FoldableForm(ListForm):
         self._cmd_expand_or_collapse_subtree(level=1)
             
     def folding_level(self, row):
-        if row is not None and self._folding_column_id is not None:
+        """Return current folding level of 'row'.
+
+        If 'None' is returned then the node is completely expanded (or folding
+        is not enabled).  If 0 is returned then the node is completely folded.
+        If N, N > 0, is returned then the node is expanded up to level N.
+
+        Arguments:
+
+          row -- 'Row' or 'PresentedRow' instance
+        
+        """
+        if row is not None and self._folding_enabled():
             node = row[self._folding_column_id].value()
             level = self._folding.level(node)
         else:
@@ -2539,7 +2562,6 @@ class BrowseForm(FoldableForm):
                 items.append(Menu(title, subitems))
         return items
                            
-        
     def _context_menu(self):
         menu = self._context_menu_static_part
         if self._explicit_links:
