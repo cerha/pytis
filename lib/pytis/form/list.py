@@ -2330,12 +2330,13 @@ class FoldableForm(ListForm):
 
     def _current_condition(self, filter=None, display=False):
         condition = super(FoldableForm, self)._current_condition(filter=filter, display=display)
-        if display and self._folding_column_id is not None:
+        if display and self._folding_enabled():
             condition = pytis.data.AND(condition, self._folding.condition(self._folding_column_id))
         return condition
 
     def _folding_enabled(self):
-        return self._folding_column_id is not None
+        return (self._folding_column_id is not None and
+                self._lf_sorting == self._lf_initial_sorting)
     
     def _on_left_dclick(self, event):
         if self._folding_enabled():
@@ -2356,9 +2357,10 @@ class FoldableForm(ListForm):
     def folding_level(self, row):
         """Return current folding level of 'row'.
 
-        If 'None' is returned then the node is completely expanded (or folding
-        is not enabled).  If 0 is returned then the node is completely folded.
-        If N, N > 0, is returned then the node is expanded up to level N.
+        If 'None' is returned then the node is completely expanded.  If 0 is
+        returned then the node is completely folded.  If N, N > 0, is returned
+        then the node is expanded up to level N.  If an empty string is
+        returned, folding is not enabled.
 
         Arguments:
 
@@ -2369,7 +2371,7 @@ class FoldableForm(ListForm):
             node = row[self._folding_column_id].value()
             level = self._folding.level(node)
         else:
-            level = None
+            level = ''
         return level
 
 class BrowseForm(FoldableForm):

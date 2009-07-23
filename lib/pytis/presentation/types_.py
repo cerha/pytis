@@ -88,6 +88,8 @@ class PrettyFoldable(PrettyTreeOrder):
             mark = ''
         else:
             folding = form.folding_level(row)
+            if folding == '':
+                return ''
             if folding == 0:
                 mark = u'⊞ '
             else:
