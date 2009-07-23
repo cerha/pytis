@@ -25,6 +25,7 @@ u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
 """
 
 import os.path
+import string
 import sys
 import time
 import cPickle as pickle
@@ -415,17 +416,30 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if not menu_template:
             return list(menu_prototype)
         def build(template):
+            used_letters = []
+            def add_key(title):
+                # This actually works only for the top menubar, other
+                # accelerators are assigned by wx independently.  But it's OK
+                # as it's consistent with pre-DMP era.
+                for i in range(len(title)):
+                    letter = title[i]
+                    if letter in string.ascii_letters and letter not in used_letters:
+                        used_letters.append(letter)
+                        return title[:i] + '&' + title[i:]
+                return title
             if isinstance(template, list):
                 heading = template[0]
                 items = [build(i) for i in template[1:]]
                 if heading is None:
                     result = items
                 else:
-                    result = Menu(heading[1], items)
+                    title = add_key(heading[1])
+                    result = Menu(title, items)
             elif template is None:
                 result = MSeparator()
             else:
                 name, title, rights, action, help, hotkey = template
+                title = add_key(title)
                 command = MItem.parse_action(action)
                 if hotkey is None:
                     hotkeys = None
