@@ -2204,6 +2204,18 @@ class SelectRowsForm(CodebookForm):
 
 
 class FoldableForm(ListForm):
+    """Form able to expand or collapse sets of rows.
+
+    Its typical use is for tree structured data such as menus or file system
+    objects.
+
+    The folding facilities are automatically enabled when a column of type
+    'PrettyFoldable' is present.  At most one such column may be present.  The
+    tree order column referred by the PrettyFoldable column must have unique
+    not-NULL values (typically it is the primary key in the corresponding
+    database table).
+
+    """
     
     class _FoldingState(Structure):
         _attributes = (Attribute('level'),

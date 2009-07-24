@@ -50,6 +50,9 @@ class PrettyTreeOrder(PrettyType):
     The type inserts indentation in front of the values based on another column
     of the 'TreeOrder' type providing indirect indentation information.  This
     is useful for presenting hierarchical records such as menus.
+
+    The other column of 'TreeOrder' type must have unique non-NULL values
+    (typically it should be a primary key).
     
     """
     def __init__(self, tree_column_id, **kwargs):
