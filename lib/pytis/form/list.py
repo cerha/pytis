@@ -2211,8 +2211,8 @@ class FoldableForm(ListForm):
                        )
         
     class _Folding(object):
-        def __init__(self):
-            self._folding = FoldableForm._FoldingState(level=1, subnodes={})
+        def __init__(self, level=1):
+            self._folding = FoldableForm._FoldingState(level=level, subnodes={})
         def _find_node(self, node):
             state = self._folding
             labels = node.split('.')
@@ -2263,7 +2263,7 @@ class FoldableForm(ListForm):
                         else:
                             redundant_level = state_level - 1
                         for key, key_state in new_state.subnodes().items():
-                            if key_state.level() == redundant_level:
+                            if not key_state.subnodes() and key_state.level() == redundant_level:
                                 del new_state.subnodes()[key]
                 else:
                     if state_level == level:
@@ -2322,8 +2322,8 @@ class FoldableForm(ListForm):
         super(FoldableForm, self).__init__(*args, **kwargs)
         self._folding = self._Folding()
         for c in self._data.columns():
-            if isinstance(c.type(), pytis.data.LTree):
-                self._folding_column_id = c.id()
+            if isinstance(c.type(), pytis.presentation.PrettyFoldable):
+                self._folding_column_id = c.type().tree_column_id()
                 break
         # Any better way to display the form with initial folding?
         self.refresh()
@@ -2337,6 +2337,29 @@ class FoldableForm(ListForm):
     def _folding_enabled(self):
         return (self._folding_column_id is not None and
                 self._lf_sorting == self._lf_initial_sorting)
+    
+    def _search(self, condition, direction, row_number=None, report_failure=True):
+        if not self._folding_enabled():
+            return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
+                                                     report_failure=report_failure)
+        orig_folding = self._folding
+        self._folding = self._Folding(level=None)
+        self.refresh()
+        try:
+            result = super(FoldableForm, self)._search(condition, direction, row_number=row_number,
+                                                       report_failure=report_failure)
+            row = self.current_row()
+        finally:
+            self._folding = orig_folding
+        if result is None:
+            self.refresh()
+            return None
+        node = row[self._folding_column_id].value()
+        if self._folding.level(node) == 0:
+            self._folding.expand(node, level=0)
+        self.refresh()
+        return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
+                                                       report_failure=report_failure)
     
     def _on_left_dclick(self, event):
         if self._folding_enabled():

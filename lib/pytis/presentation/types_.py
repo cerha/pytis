@@ -69,6 +69,10 @@ class PrettyTreeOrder(PrettyType):
         else:
             indentation = ''
         return indentation
+
+    def tree_column_id(self):
+        """Return id of the column defining the tree ordering."""
+        return self._tree_column_id
     
     def pretty_export(self, value, row, form=None, **kwargs):
         exported = self.export(value, **kwargs)
