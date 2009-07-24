@@ -2342,11 +2342,18 @@ class FoldableForm(ListForm):
         if not self._folding_enabled():
             return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
                                                      report_failure=report_failure)
+        if row_number is not None:
+            self._table.rewind(position=row_number)
         orig_folding = self._folding
         self._folding = self._Folding(level=None)
         self.refresh()
+        if row_number is None:
+            unfolded_row_number = row_number
+        else:
+            unfolded_row_number = self._table.current_row()
         try:
-            result = super(FoldableForm, self)._search(condition, direction, row_number=row_number,
+            result = super(FoldableForm, self)._search(condition, direction,
+                                                       row_number=unfolded_row_number,
                                                        report_failure=report_failure)
             row = self.current_row()
         finally:
