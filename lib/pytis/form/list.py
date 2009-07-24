@@ -2395,6 +2395,14 @@ class FoldableForm(ListForm):
 
     def _cmd_expand_or_collapse(self):
         self._cmd_expand_or_collapse_subtree(level=1)
+        
+    def _cmd_expand_all(self):
+        self._folding = self._Folding(level=None)
+        self.refresh()
+
+    def _cmd_collapse_all(self):
+        self._folding = self._Folding()
+        self.refresh()
             
     def folding_level(self, row):
         """Return current folding level of 'row'.

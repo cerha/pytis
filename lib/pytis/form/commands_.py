@@ -176,6 +176,10 @@ Command(FoldableForm, 'EXPAND_OR_COLLAPSE',
         "Sbalování a rozbalování øádkù")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE_SUBTREE',
         "Sbalování a rozbalování podstromù")
+Command(FoldableForm, 'EXPAND_ALL',
+        "Kompletní rozbalení celého formuláøe")
+Command(FoldableForm, 'COLLAPSE_ALL',
+        "Sbalení v¹ech hlavních uzlù formuláøe")
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn (arg. 'close', PopupEditForm also 'next')")
 Command(EditForm, 'NAVIGATE',
@@ -294,6 +298,8 @@ DEFAULT_KEYMAP = (
     ('Ctrl-=',           ListForm.COMMAND_FILTER_BY_CELL),
     ('\\',               FoldableForm.COMMAND_EXPAND_OR_COLLAPSE),
     ('Ctrl-\\',          FoldableForm.COMMAND_EXPAND_OR_COLLAPSE_SUBTREE),
+    ('Shift-\\',         FoldableForm.COMMAND_EXPAND_ALL),
+    ('Ctrl-Shift-\\',    FoldableForm.COMMAND_COLLAPSE_ALL),
     ('Ctrl-Enter',       EditForm.COMMAND_COMMIT_RECORD),
     ('Ctrl-Shift-Enter', EditForm.COMMAND_COMMIT_RECORD(next=True)),
     ('Tab',              EditForm.COMMAND_NAVIGATE),
