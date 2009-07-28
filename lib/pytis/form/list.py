@@ -2348,8 +2348,7 @@ class FoldableForm(ListForm):
 
     def _folding_enabled(self):
         return (self._folding_column_id is not None and
-                self._lf_sorting == self._lf_initial_sorting and
-                self._lf_filter is None)
+                self._lf_sorting == self._lf_initial_sorting)
     
     def _search(self, condition, direction, row_number=None, report_failure=True):
         if not self._folding_enabled():
@@ -2380,7 +2379,12 @@ class FoldableForm(ListForm):
         self.refresh()
         return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
                                                        report_failure=report_failure)
-    
+
+    def _apply_filter(self, condition):
+        if condition is not None:
+            self._folding = self._Folding(level=None)
+        return super(FoldableForm, self)._apply_filter(condition)
+
     def _on_left_dclick(self, event):
         if self._folding_enabled():
             self._cmd_expand_or_collapse()
