@@ -2922,6 +2922,9 @@ class Specification(object):
         access_rights = self.data_access_rights('form/' + spec_name)
         if access_rights is None:
             access_rights = self.access_rights
+            if access_rights is None:
+                perm = pytis.data.Permission.ALL
+                access_rights = pytis.data.AccessRights((None, (None, perm)))
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on)
         return _DataFactoryWithOrigin(self.data_cls, *args, **kwargs)
