@@ -397,10 +397,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6, 7,)]
             rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
             if not parents: # the top pseudonode, should be the first one
-                parents.append((position, menu_template,))
+                parents.append((position or '', menu_template,))
                 current_template = menu_template
             else:
-                parent = position[:-2]
+                parent = string.join(position.split('.')[:-1], '.')
                 while parent != parents[-1][0]:
                     parents.pop()
                 current_template = parents[-1][1]

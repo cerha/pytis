@@ -11,7 +11,6 @@ _std_table_nolog('e_pytis_disabled_dmp_triggers',
                  """This table allows disabling some trigger calls.
 Supported values (flags) are:
 genmenu -- initial insertion and deletion on certain tables
-positions -- automatic updates of positions in e_pytis_menu
 """)
 
 ### Roles
@@ -247,17 +246,12 @@ _std_table('e_pytis_menu',
               doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
             C('title', 'varchar(64)',
               doc='User title of the item. If NULL then it is a separator.'),
-            C('position', TString, constraints=('not null',),
+            C('position', TLTree, constraints=('not null', 'unique',),
               doc=("Unique identifier of menu item placement within menu. "
                    "The top-menu item position is ''. "
-                   "Each submenu has position two characters wider than its parent. "
-                   "The two character suffix identifies position within the submenu, "
-                   "lower numbers put the item higher. "
-                   "Only odd numbers from 11 to 97 are allowed, "
-                   "other numbers are reserved for other purposes. "
-                   "Positions must be unique but it is not enforced by constraints "
-                   "to avoid troubles in triggers. "
-                   "Note these rules limit maximum number of items within a given submenu to 44.")),
+                   "Each submenu has exactly one label more than its parent. ")),
+            C('next_position', TLTree, constraints=('not null', 'unique',),
+              doc=("Free position just after this menu item.")),
             C('action', TString, references='c_pytis_menu_actions',
               doc=("Application action assigned to the menu item."
                    "Menu items bound to submenus should have this value NULL; "
@@ -278,33 +272,6 @@ def e_pytis_menu_trigger():
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
         ## BEFORE
-        def _validate_position(self):
-            position = self._pg_escape(self._new['position'])
-            # Completely invalid position?
-            try:
-                tail = int(position[-2:])
-                if tail < 10 or tail > 98:
-                    raise Exception()
-            except:
-                self._return_code = self._RETURN_CODE_SKIP
-                return False
-            # Duplicate?
-            if plpy.execute("select * from e_pytis_menu where position = '%s'" % (position,)):
-                self._new['position'] = str(long(position) + 1)
-                self._return_code = self._RETURN_CODE_MODYFY
-            # Valid predecessor?
-            else:
-                if (not plpy.execute("select * from e_pytis_menu where position = '%s' and name is NULL and title is not NULL" % (position[:-2],)) or
-                    len(plpy.execute("select * from e_pytis_menu where position like '%s_%%'" % (position[:-2],))) >= 44):
-                    self._return_code = self._RETURN_CODE_SKIP
-                    return False
-                if position[-2:] != '10':
-                    prev_position = str(long(position) - 1)
-                    if not plpy.execute("select * from e_pytis_menu where position = '%s'" % (prev_position,)):
-                        self._return_code = self._RETURN_CODE_SKIP
-                        return False                        
-            # All right
-            return True
         def _maybe_new_action(self, old=None):
             if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
                 # New non-terminal menu item
@@ -316,14 +283,9 @@ def e_pytis_menu_trigger():
             self._maybe_new_action()
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
-            if not self._validate_position():
-                return
         def _do_before_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
                 return
-            if self._new['position'] != self._old['position']:
-                if not self._validate_position():
-                    return
             self._maybe_new_action(old=self._old)
         def _do_before_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
@@ -338,22 +300,50 @@ def e_pytis_menu_trigger():
         def _update_positions(self, new=None, old=None):
             if old and new and old['position'] == new['position']:
                 return
-            if old:
-                position = old['position']
-                if new:
-                    plpy.execute("update e_pytis_menu set position='0'||substring(position from %s) where position like '%s_%%'" %
-                                 (len(position)+1, position,))
-                plpy.execute("update e_pytis_menu set position=((substring (position from 1 for %s)::bigint - 2)::text||substring(position from %s)) where position > '%s' and position < '%s'" %
-                             (len(position), len(position)+1, position, str(long(position[:-2] or '98') + 1),))
+            if old and new:
+                old_position = old['position']
+                new_position = new['position']
+                plpy.execute("update e_pytis_menu set position='%s'||subpath(position, nlevel('%s')) where position <@ '%s'" %
+                             (new_position, old_position, old_position,))
             if new:
-                position = new['position']
-                plpy.execute("update e_pytis_menu set position=((substring (position from 1 for %s)::bigint + 2)::text||substring(position from %s)) where position > '%s' and position < '%s'" %
-                             (len(position), len(position)+1, position, str(long(position[:-2] or '98') + 1),))
-                if old:
-                    plpy.execute("update e_pytis_menu set position='%s'||substring(position from 2) where position like '0%%'" %
-                                 (str(long(position)+1),))
-                plpy.execute("update e_pytis_menu set position=(position::bigint + 1)::text where position = '%s'" %
-                             (position,))
+                data = plpy.execute("select * from e_pytis_menu order by position where position != ''")
+                sequences = {}
+                for row in data:
+                    position = row[i]['position'].split('.')
+                    next_position = row[i]['next_position'].split('.')
+                    position_length = len(position)
+                    if not sequences.has_key(position_length):
+                        sequences[position_length] = []
+                    sequences[position_length].append((position, next_position,))
+                import string
+                def update_next_position(position, next_position):
+                    plpy.execute("update e_pytis_menu set next_position='%s' where position='%s'" %
+                                 (string.join(next_position, '.'), string.join(position, '.'),))
+                for position_list in sequences.items():
+                    position_list_len = len(position_list)
+                    for i in range(position_list_len - 1):
+                        position = position_list[i][0]
+                        next_position = position_list[i][1]
+                        next_item_position = position_list[i+1][0]
+                        if (len(position) != len(next_position) or
+                            position >= next_position or
+                            next_position >= next_item_position):
+                            suffix = position[-1]
+                            new_suffix = str(long(long() + long(next_item_position[-1]) / 2))
+                            if new_suffix == suffix:
+                                new_suffix = suffix + '4'
+                            next_position = position[:-1] + [new_suffix]
+                            update_next_position(position, next_position)
+                    last_item = position_list[position_list_len - 1]
+                    position, next_position = last_item
+                    if (len(position) != len(next_position) or
+                        position >= next_position):
+                        suffix = position[-1]
+                        if suffix[-1] == '9':
+                            next_position = position[:-1] + [position[-1] + '4']
+                        else:
+                            next_position = position[:-1] + [str(long(position[-1]) + 1)]
+                        update_next_position(position, next_position)
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
@@ -439,12 +429,12 @@ viewng('ev_pytis_menu_all_positions',
                                          condition=""),),
                          include_columns=(V(None, 'position', 'position'),))),
         SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu2', exclude_columns=('*',),
-                                         condition="position != '' and substring(position from char_length(position)-2) != '97'"),),
-                         include_columns=(V(None, 'position', "(position::bigint+1)::text"),)),
+                                         condition="position != ''"),),
+                         include_columns=(V(None, 'position', "next_position"),)),
                   settype=UNION),
         SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu3', exclude_columns=('*',),
                                          condition="name is NULL and title is not NULL"),),
-                         include_columns=(V(None, 'position', "position||'10'"),)),
+                         include_columns=(V(None, 'position', "position||'1'"),)),
                   settype=UNION),),
        insert=(),
        update=(),
@@ -628,7 +618,7 @@ def pytis_update_summary_rights():
         menu_rights = raw_rights.get(menuid, {})
         position2parent[position] = menuid
         if position:
-            parent = position2parent[position[:-2]]
+            parent = position2parent[string.join(position.split('.')[:-1], '.')]
         else:
             parent = None
         for roleid, role_roles in roles.items():

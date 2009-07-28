@@ -111,7 +111,11 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
         menu_id = super_menu_id(menu, menu_items)
         menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position, system=system)
         parent.children.append(supmenu)
-        process_menu(menu.items(), supmenu, menu_items, actions, rights, position=position+'11', system=system)
+        if position:
+            next_position = position+'.1111'
+        else:
+            next_position = '1111'
+        process_menu(menu.items(), supmenu, menu_items, actions, rights, position=next_position, system=system)
     elif isinstance(menu, pytis.form.MItem):
         action_id = menu.action_id()
         if action_id is None:
@@ -161,7 +165,9 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
             process_menu(m, parent, menu_items, actions, rights, position=position, system=system)
             if parent.parent is None:
                 system = False
-            position = str(long(position) + 2)
+            position_labels = string.split(position, '.')
+            position_labels[-1] = str(long(position[-4:]) + 1)
+            position = string.join(position_labels, '.')
     else:
         print 'Unknown menu: %s' % (menu,)
 
@@ -350,7 +356,10 @@ def check_rights(cursor, rights):
                     print 'Check: Different column sets:', action_name, group, permission, app_columns, db_columns
     
 def fill_menu_items(cursor, menu, position=''):
-    position += str(menu.position)
+    if position:
+        position = position + '.' + str(menu.position)
+    else:
+        position = position + str(menu.position)
     parent = menu.parent and -menu.parent.id
     action = menu.action and menu.action.name
     if menu.system:
@@ -358,9 +367,9 @@ def fill_menu_items(cursor, menu, position=''):
     else:
         locked = 'F'
     cursor.execute(("insert into e_pytis_menu "
-                    "(menuid, name, title, position, action, help, hotkey, locked) "
-                    "values(%s, %s, %s, %s, %s, %s, %s, %s)"),
-                   (-menu.id, menu.name, menu.title, menu.position, action,
+                    "(menuid, name, title, position, next_position, action, help, hotkey, locked) "
+                    "values(%s, %s, %s, %s, %s, %s, %s, %s, %s)"),
+                   (-menu.id, menu.name, menu.title, menu.position, menu.position+'4', action,
                      menu.help, menu.hotkey, locked,))
     for m in menu.children:
         fill_menu_items(cursor, m, position=position)
@@ -465,7 +474,7 @@ def run():
     actions = {}
     rights = {}
     print "Retrieving menu..."
-    process_menu(menu, top, menu_items, actions, rights, position='11', system=True)
+    process_menu(menu, top, menu_items, actions, rights, position='1111', system=True)
     print "Retrieving menu...done"
     print "Retrieving rights..."
     process_rights(resolver, actions, rights, def_dir)

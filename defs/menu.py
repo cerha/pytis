@@ -164,9 +164,10 @@ class ApplicationActions(pytis.presentation.Specification):
 
 ### Menus
 
-def _ititle_computer(row, title, position):
-    indentation = ' ' * len(position)
-    return indentation + (title or '')
+class _Title(pytis.presentation.PrettyFoldable, pytis.data.String):
+    def __init__(self, **kwargs):
+        super(_Title, self).__init__(tree_column_id='position', **kwargs)
+
 def _xaction_computer(row, action):
     if action is None or action.startswith('menu/'):
         result = ''
@@ -179,9 +180,7 @@ class ApplicationMenu(pytis.presentation.Specification):
     fields = (
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
         Field('name', _("Id obsahující role")),
-        Field('title', _("Titulek polo¾ky menu")),
-        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
-              computer=pytis.presentation.computer(_ititle_computer)),
+        Field('title', _("Titulek polo¾ky menu"), type=_Title()),
         Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
         Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
@@ -190,7 +189,7 @@ class ApplicationMenu(pytis.presentation.Specification):
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
-    columns = ('ititle', 'xaction', 'locked',)
+    columns = ('title', 'xaction', 'locked',)
     layout = ('title', 'position',)
     sorting = (('position', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
@@ -224,23 +223,14 @@ class ApplicationMenuM(ApplicationMenu):
                 )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
-def _iposition_computer(row, title, position):
-    indentation = ' ' * len(position)
-    if position and position[-1] in '02468':
-        result = indentation + '++++'
-    else:
-        result = indentation + (title or '')
-    return result
 class ApplicationMenuPositions(pytis.presentation.Specification):
     table = 'ev_pytis_menu_positions'
     title = _("Menu")
     fields = (
         Field('position', _("Pozice v menu"), fixed=True),
-        Field('title', _("Titulek polo¾ky menu")),
-        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
-              computer=pytis.presentation.computer(_iposition_computer)),
+        Field('title', _("Titulek polo¾ky menu"), type=_Title()),
         )
-    columns = ('position', 'ititle',)
+    columns = ('title', 'position',)
     layout = ('title', 'position',)
     sorting = (('position', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
@@ -360,8 +350,6 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
         Field('title', _("Titulek polo¾ky menu"), fixed=True),
-        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
-              computer=pytis.presentation.computer(_ititle_computer)),
         Field('position', _("Pozice v menu")),
         Field('rights', _("Práva")),
         Field('rights_show', _("Menu"), fixed=True,
@@ -381,7 +369,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         Field('rights_call', _("Spu¹tìní"), fixed=True,
               descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('ititle', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
+    columns = ('title', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     layout = ('title', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
