@@ -19,6 +19,12 @@
 	Allow aggregation functions MIN and MAX also on string and date/time columns..
 2009-07-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/dbdata.py:
+	* lib/pytis/form/application.py:
+	Update config.dbconnection destructively after Login dialog.
+
+2009-07-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/presentation/spec.py:
 	If there are no DMP and no form rights, assign default rights in Specification.
 

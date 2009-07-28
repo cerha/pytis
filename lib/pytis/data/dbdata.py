@@ -367,6 +367,18 @@ class DBConnection:
         options = dict(self._options(), alternatives=self._alternatives, **kwargs)
         return self.__class__(**options)
 
+    def update_login_data(self, user, password):
+        """Set given login parameters in the instance.
+
+        Arguments:
+
+          user -- database user as a string or 'None'
+          password -- database password as a string or 'None'
+
+        """
+        self._user = user
+        self._password = password
+
 
 class DBBinding:
     """Definice napojení dat do databáze.

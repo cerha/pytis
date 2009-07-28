@@ -1300,7 +1300,7 @@ def db_operation(operation, *args, **kwargs):
 	    login, password = login_and_password
             if password is None:
                 return FAILURE
-            config.dbconnection = config.dbconnection.modified(user=login, password=password)
+            config.dbconnection.update_login_data(user=login, password=password)
         except pytis.data.DBException, e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
