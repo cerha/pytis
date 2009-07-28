@@ -141,14 +141,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _get_aggregation_result(self, key):
         cid, operation = key
         c = self._data.find_column(cid)
-        if c is not None and isinstance(c.type(), pytis.data.Number):
-            result = self._data.select_aggregate((operation, cid),
-                                                condition=self._current_condition(),
-                                                transaction=self._transaction)
-            #result = pytis.data.Value(self._row[cid].type(), value.value())
-        else:
-            result = None
-        return result
+        if c is not None:
+            allowed_types = (pytis.data.Number,)
+            if operation in (pytis.data.Data.AGG_MIN, pytis.data.Data.AGG_MAX):
+                allowed_types += (pytis.data.String, pytis.data.DateTime)
+            if isinstance(c.type(), allowed_types):
+                return self._data.select_aggregate((operation, cid),
+                                                   condition=self._current_condition(),
+                                                   transaction=self._transaction)
+        return None
         
     def _init_columns(self, columns=None):
         if not columns:
@@ -1192,11 +1193,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         value = self._aggregation_results[(id, op)]
                         if value is not None:
                             icon = get_icon(icon_id)
-                            align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
-                            if icon:
-                                dc.DrawImageLabel(' '+ value.export(), icon, rect, align)
+                            if isinstance(value.type(), pytis.data.Number):
+                                align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
                             else:
-                                dc.DrawLabel(label +' '+ value.export(), rect, align)
+                                align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT
+                            label_rect = (x-d+2, y, width+d0, row_height)
+                            if icon:
+                                dc.DrawImageLabel(' '+ value.export(), icon, label_rect, align)
+                            else:
+                                dc.DrawLabel(label +' '+ value.export(), label_rect, align)
                         y += row_height
                 dc.DrawLine(x-d, y, x+width, y)
             x += width
