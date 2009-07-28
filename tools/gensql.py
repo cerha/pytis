@@ -110,6 +110,7 @@ def _gsql_format_type(type_):
                    pytis.data.Time:      'time',
                    pytis.data.Image:     'bytea',
                    pytis.data.Color:     'varchar(7)',
+                   pytis.data.LTree:    'ltree',
                    }
         try:
             result = MAPPING[type_.__class__]
