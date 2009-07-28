@@ -1,6 +1,11 @@
 2009-07-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
+	Handle unicode in string values of aggregation results..
+
+2009-07-28  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
 	Make the DBException error message for unknown column even less confusing and translate it to English..
 
 2009-07-28  Tomas Cerha  <cerha@brailcom.org>

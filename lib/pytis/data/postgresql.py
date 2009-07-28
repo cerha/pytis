@@ -1566,21 +1566,28 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self.close()
         I = Integer()
         F = Float()
-        def make_value(cid, i):
+        def make_value(cid, dbvalue):
             if operation == self.AGG_COUNT:
                 t = I
             elif operation == self.AGG_AVG:
                 t = F
             else:
                 t = self.find_column(cid).type()
-            if isinstance(t, DateTime):
-                kwargs = dict(format=t.SQL_FORMAT, local=not t.is_utc())
+            if isinstance(t, String):
+                if dbvalue is None:
+                    v = None
+                else:
+                    v = unicode(dbvalue, 'utf-8')
+                value = Value(t, v)
             else:
-                kwargs = dict()
-            value, error = t.validate(data[0][i], **kwargs)
-            assert error is None, (error, t, data[0][i])
+                if isinstance(t, DateTime):
+                    kwargs = dict(format=t.SQL_FORMAT, local=not t.is_utc())
+                else:
+                    kwargs = dict()
+                value, error = t.validate(dbvalue, **kwargs)
+                assert error is None, (error, t, dbvalue)
             return value
-        result = [make_value(cid, i) for i, cid in enumerate(colids)]
+        result = [make_value(cid, data[0][i]) for i, cid in enumerate(colids)]
         return result
 
     def _pg_select_aggregate_1(self, operation, colids, condition, transaction=None):
@@ -2153,7 +2160,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if dbvalue is None:
                     v = None
                 else:
-                    v = unicode(dbvalue, 'utf-8')  #TODO: patøí jinam
+                    #TODO: This belongs elsewhere (if moving, move also from _pg_select_aggregate)
+                    v = unicode(dbvalue, 'utf-8')
                 value = Value(type_, v)
             elif typid == 2:            # time
                 local = not type_.is_utc()
