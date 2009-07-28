@@ -1539,9 +1539,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pg_select_aggregate(self, operation, colids, condition, transaction=None):
         if __debug__:
             if operation != self.AGG_COUNT:
+                if operation in (self.AGG_MIN, self.AGG_MAX):
+                    allowed = (Number, DateTime, String)
+                else:
+                    allowed = Number
                 for cid in colids:
                     t = self.find_column(cid).type()
-                    assert isinstance(t, Number)
+                    assert isinstance(t, allowed)
         close_select = False
         if not self._pg_is_in_select:
             self.select(condition=condition, transaction=transaction)
@@ -1562,18 +1566,21 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self.close()
         I = Integer()
         F = Float()
-        def make_value(i):
-            cid = colids[i]
+        def make_value(cid, i):
             if operation == self.AGG_COUNT:
                 t = I
             elif operation == self.AGG_AVG:
                 t = F
             else:
                 t = self.find_column(cid).type()
-            value, error = t.validate(data[0][i])
-            assert error is None, error
+            if isinstance(t, DateTime):
+                kwargs = dict(format=t.SQL_FORMAT, local=not t.is_utc())
+            else:
+                kwargs = dict()
+            value, error = t.validate(data[0][i], **kwargs)
+            assert error is None, (error, t, data[0][i])
             return value
-        result = [make_value(i) for i in range(len(colids))]
+        result = [make_value(cid, i) for i, cid in enumerate(colids)]
         return result
 
     def _pg_select_aggregate_1(self, operation, colids, condition, transaction=None):
