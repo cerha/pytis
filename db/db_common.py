@@ -7,6 +7,7 @@ TDate     = pytis.data.Date()
 TTime     = pytis.data.Time()
 TDateTime = pytis.data.DateTime()
 TInteger  = pytis.data.Integer()
+TLTree    = pytis.data.LTree()
 TMoney    = 'numeric(15,2)'
 TKurz     = 'numeric(12,6)'
 TOid      = pytis.data.Oid()
