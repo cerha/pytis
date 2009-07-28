@@ -2227,14 +2227,14 @@ class FoldableForm(ListForm):
             self._folding = FoldableForm._FoldingState(level=level, subnodes={})
         def _find_node(self, node):
             state = self._folding
-            labels = node.split('.')
+            labels = (node or '').split('.')
             while labels and state is not None:
                 l = labels.pop(0)
                 state = state.subnodes().get(l)
             return state
         def _folding_level(self, node):
             state = self._folding
-            labels = node.split('.')
+            labels = (node or '').split('.')
             while labels and state is not None:
                 level = state.level()
                 l = labels.pop(0)
@@ -2283,7 +2283,7 @@ class FoldableForm(ListForm):
                     else:
                         new_state = state.copy(level=level, subnodes={})
                 return new_state
-            path = string.split(node, '.')
+            path = (node or '').split('.')
             state = self._folding
             new_state = fold(state, path, level)
             self._folding = new_state
