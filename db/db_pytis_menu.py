@@ -217,6 +217,34 @@ _std_table_nolog('c_pytis_menu_actions',
                  """List of available (pre-defined and visible) application actions.""",
                  grant=db_rights
                  )
+def c_pytis_menu_actions_trigger():
+    class Menu(BaseTriggerObject):
+        def _pg_escape(self, val):
+            return str(val).replace("'", "''")
+        def _update_all(self):
+            plpy.execute("select pytis_update_actions_structure()")
+        def _do_after_insert(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                return
+            self._update_all()
+        def _do_after_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                return
+            self._update_all()
+        def _do_after_delete(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                return
+            self._update_all()
+    menu = Menu(TD)
+    return menu.do_trigger()
+_trigger_function('c_pytis_menu_actions_trigger', body=c_pytis_menu_actions_trigger,
+                  depends=('c_pytis_menu_actions', 'a_pytis_actions_structure', 'e_pytis_disabled_dmp_triggers',))
+sql_raw("""
+create trigger c_pytis_menu_actions_all_after_rights after insert or update or delete on c_pytis_menu_actions
+for each statement execute procedure c_pytis_menu_actions_trigger();
+""",
+        name='c_pytis_menu_actions_triggers',
+        depends=('c_pytis_menu_actions_trigger',))
 
 def pytis_matching_actions(complex_action, simple_action):
     complex_action = args[0]
@@ -386,24 +414,25 @@ def e_pytis_menu_trigger_rights():
     class Menu(BaseTriggerObject):
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
-        def _update_rights(self):
+        def _update_all(self):
             plpy.execute("select pytis_update_summary_rights()")
+            plpy.execute("select pytis_update_actions_structure()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
                 return
-            self._update_rights()
+            self._update_all()
         def _do_after_update(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
                 return
-            self._update_rights()
+            self._update_all()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
                 return
-            self._update_rights()
+            self._update_all()
     menu = Menu(TD)
     return menu.do_trigger()
 _trigger_function('e_pytis_menu_trigger_rights', body=e_pytis_menu_trigger_rights,
-                  depends=('e_pytis_menu', 'pytis_update_summary_rights', 'e_pytis_disabled_dmp_triggers',))
+                  depends=('e_pytis_menu', 'pytis_update_summary_rights', 'e_pytis_disabled_dmp_triggers', 'a_pytis_actions_structure',))
 sql_raw("""
 create trigger e_pytis_menu_all_after_rights after insert or update or delete on e_pytis_menu
 for each statement execute procedure e_pytis_menu_trigger_rights();
@@ -706,6 +735,56 @@ _plpy_function('pytis_update_summary_rights', (), TBoolean,
                body=pytis_update_summary_rights,
                depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'e_pytis_menu',),)
 
+_std_table_nolog('a_pytis_actions_structure',
+                 (C('action', TString, constraints=('not null',)),
+                  C('menuid', TInteger),
+                  C('position', TString, constraints=('not null',)),
+                  ),
+                 """Precomputed actions structure as presented to menu admin.
+Item positions and indentations are determined by positions.
+This table is modified only by triggers.
+""",
+                 depends=())
+sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structure(position);",
+        depends=('a_pytis_actions_structure',))
+
+def pytis_update_actions_structure():
+    import string
+    def _pg_escape(val):
+        return str(val).replace("'", "''")
+    plpy.execute("delete from a_pytis_actions_structure")
+    actions = {}
+    def add_row(action, menuid, position):
+        if menuid is None:
+            menuid = 'NULL'
+        plpy.execute("insert into a_pytis_actions_structure (action, menuid, position) values('%s', %s, '%s')" %
+                     (action, menuid, position,))
+        actions[action] = True
+    for row in plpy.execute("select menuid, position, shortname from e_pytis_menu, c_pytis_menu_actions "
+                            "where e_pytis_menu.action = c_pytis_menu_actions.name "
+                            "order by position"):
+        menuid, position, action = row['menuid'], row['position'], row['shortname']
+        add_row(action, menuid, position)
+        action_components = action.split('/')
+        if action_components[0] == 'form':
+            specifications = action_components[1].split('::')
+            if len(specifications) == 2:
+                for i in range(len(specifications)):
+                    subaction = 'form/' + specifications[i]
+                    subposition = '%s%02d' % (position, i,)
+                    add_row(subaction, None, subposition)
+    position = str(int(position[:2]) + 1) + '.0001'
+    for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
+        action = row['shortname']
+        if actions.has_key(action):
+            continue
+        add_row(action, None, position)
+        position_components = position.split('.')
+        position = string.join(position_components[:-1] + ['%04d' % (int(position_components[-1]) + 1)], '.')
+_plpy_function('pytis_update_actions_structure', (), TBoolean,
+               body=pytis_update_actions_structure,
+               depends=('a_pytis_actions_structure', 'e_pytis_menu', 'c_pytis_menu_actions',),)
+    
 viewng('ev_pytis_summary_rights_raw',
        (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',)),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),

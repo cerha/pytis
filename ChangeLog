@@ -414,6 +414,12 @@
 	* lib/pytis/form/application.py:
 	Added forgotten argument 'column' when calling 'permitted' check..
 
+2009-07-29  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* tools/genmenu.py:
+	a_pytis_actions_structure db table created.
+
 2009-07-28  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/list.py:
