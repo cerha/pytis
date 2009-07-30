@@ -17,6 +17,11 @@
 
 	* lib/pytis/data/postgresql.py:
 	Allow aggregation functions MIN and MAX also on string and date/time columns..
+2009-07-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Fixes of connection dictionary key handling in PostgreSQLUserGroups.
+
 2009-07-28  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/dbdata.py:
