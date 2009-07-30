@@ -414,6 +414,12 @@
 	* lib/pytis/form/application.py:
 	Added forgotten argument 'column' when calling 'permitted' check..
 
+2009-07-30  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Switch menu rights editing form to ev_pytis_menu_structure db view.
+
 2009-07-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

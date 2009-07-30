@@ -453,6 +453,18 @@ viewng('ev_pytis_menu',
        depends=('e_pytis_menu', 'c_pytis_menu_actions',)
        )
 
+viewng('ev_pytis_menu_structure',
+       (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('menuid',)),
+        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('action', 'position',),
+                       condition='structure.menuid = menu.menuid', jointype=JoinType.LEFT_OUTER),
+        ),
+       insert_order=(),
+       update_order=(),
+       delete_order=(),
+       grant=db_rights,
+       depends=('e_pytis_menu', 'a_pytis_actions_structure',)
+       )
+
 viewng('ev_pytis_menu_all_positions',
        (SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu1', exclude_columns=('*',),
                                          condition=""),),
@@ -571,18 +583,18 @@ viewng('ev_pytis_user_system_rights',
        depends=('e_pytis_action_rights', 'ev_pytis_user_roles',))
     
 viewng('ev_pytis_menu_rights',
-       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',)),
-        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
-                       condition='pytis_matching_actions(menu.action, actions.shortname)', jointype=JoinType.INNER),
+       (SelectRelation('a_pytis_actions_structure', alias='actions', exclude_columns=('menuid',)),
+        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',),
+                       condition='menu.action = actions.action', jointype=JoinType.LEFT_OUTER),
         SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=(),
-                       condition='actions.shortname = rights.action', jointype=JoinType.INNER,
+                       condition='actions.action = rights.action', jointype=JoinType.INNER,
                        column_aliases=(('action', 'shortname',),)),
         ),
        insert_order=('e_pytis_action_rights',),
        update_order=('e_pytis_action_rights',),
        delete_order=('e_pytis_action_rights',),
        grant=db_rights,
-       depends=('e_pytis_menu', 'c_pytis_menu_actions', 'e_pytis_action_rights',)
+       depends=('e_pytis_menu', 'e_pytis_action_rights', 'a_pytis_actions_structure',)
        )
 
 ### Summarization

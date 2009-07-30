@@ -215,13 +215,30 @@ class ApplicationMenu(pytis.presentation.Specification):
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationMenuM(ApplicationMenu):
-    condition = pytis.data.NE('title', pytis.data.Value(pytis.data.String(), None))
+    table = 'ev_pytis_menu_structure'
+    fields = (
+        Field('action', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
+              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+        Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
+        Field('name', _("Id obsahující role")),
+        Field('title', _("Titulek polo¾ky menu")),
+        Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
+              computer=pytis.presentation.computer(_ititle_computer)),
+        Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
+        Field('xaction', _("Navì¹ená akce"), virtual=True,
+              computer=pytis.presentation.computer(_xaction_computer),
+              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+        Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
+        )
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
                                            binding_column='menuid'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
                                            binding_column='menuid'),
                 )
-    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'],
+                                                    pytis.data.Permission.VIEW,
+                                                    pytis.data.Permission.EXPORT,
+                                                    pytis.data.Permission.PRINT)),)
 
 class ApplicationMenuPositions(pytis.presentation.Specification):
     table = 'ev_pytis_menu_positions'
