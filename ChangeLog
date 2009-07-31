@@ -1,6 +1,7 @@
-2009-08-03  Milan Zamazal  <pdm@brailcom.org>
+2009-07-31  Pavel Hanak  <hanak@wpb.cz>
 
-	.
+	* lib/pytis/form/application.py:
+	Added forgotten argument 'column' when calling 'permitted' check..
 
 2009-07-28  Tomas Cerha  <cerha@brailcom.org>
 
@@ -21,6 +22,7 @@
 
 	* lib/pytis/data/postgresql.py:
 	Allow aggregation functions MIN and MAX also on string and date/time columns..
+
 2009-07-30  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

@@ -1539,7 +1539,7 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
             result = False
             access_rights = pytis.presentation.Specification.data_access_rights(action)
             if access_rights is not None:
-                result = access_rights.permitted(perm, _user_roles)
+                result = access_rights.permitted(perm, _user_roles, column=column)
         else:
             result = perm in rights
     return result
