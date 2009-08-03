@@ -1,5 +1,10 @@
 2009-08-03  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/cms/web.py:
+	Added support for site icons..
+
+2009-08-03  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/data/postgresql.py:
 	Fixed "Unknown column ..." error message..
 

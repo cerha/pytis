@@ -387,7 +387,8 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     
     _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
                'Stylesheets': (wiking.Roles.ANYONE,),
-               'Resources': (wiking.Roles.ANYONE,)}
+               'Resources': (wiking.Roles.ANYONE,),
+               'SiteIcon': (wiking.Roles.ANYONE,)}
     
     def _auth_user(self, req, login):
         return self._module('Users').user(login)
