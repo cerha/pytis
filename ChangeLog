@@ -1,3 +1,8 @@
+2009-08-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/presentation/_test.py:
+	Updated `display' test to reflect the previous change in display specification..
+
 2009-08-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:

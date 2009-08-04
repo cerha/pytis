@@ -282,7 +282,7 @@ class PresentedRow_(unittest.TestCase):
         fields = (FieldSpec('a'),
                   FieldSpec('b', display='y'),
                   FieldSpec('c', display=lambda x: '-'+x+'-'),
-                  FieldSpec('d', display=(lambda x: x.lower(), 'y')),
+                  FieldSpec('d', display=lambda row: row['y'].value().lower()),
                   )
         row = PresentedRow(fields, data, None,
                            prefill={'b': '2', 'c': '3', 'd': '1'})
