@@ -20,6 +20,11 @@
 
 2009-08-04  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/postgresql.py:
+	Don't use query lock on connection initialization queries.
+
+2009-08-04  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/dbapi.py:
 	Try to reopen db connection on before raising any DBSystemException.
 

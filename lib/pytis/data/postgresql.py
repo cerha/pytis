@@ -245,21 +245,21 @@ class PostgreSQLAccessor(object):
         """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
         # Nastavujeme serializované transakce, abychom v rámci jedné transakce
         # nemohli dostat rùzné výsledky pro opakované selecty.
-        def lfunction():
-            self._postgresql_query(connection,
-                                   ('set session characteristics as transaction '+
-                                    'isolation level serializable'),
-                                   False)
-        with_lock(self._pg_query_lock, lfunction)
+        # This query is intentionally run without _pg_query_lock to avoid
+        # deadlock on connection reopening in dbapi.py.
+        self._postgresql_query(connection,
+                               ('set session characteristics as transaction '+
+                                'isolation level serializable'),
+                               False)
 
     def _postgresql_initialize_coding(self, connection):
-        query = ['set client_encoding to "utf-8"']
-        def lfunction():
-            return self._postgresql_query(connection, query[0], False)
-        with_lock(self._pg_query_lock, lfunction)
-        query[0] = ("select pg_encoding_to_char(encoding) "
-                    "from pg_database where datname = current_database()")
-        result = with_lock(self._pg_query_lock, lfunction)
+        # This queries are intentionally run without _pg_query_lock to avoid
+        # deadlock on connection reopening in dbapi.py.
+        query = 'set client_encoding to "utf-8"'
+        self._postgresql_query(connection, query, False)
+        query = ("select pg_encoding_to_char(encoding) "
+                 "from pg_database where datname = current_database()")
+        result = self._postgresql_query(connection, query, False)
         coding = result[0].result().fetchone()[0]
         if coding != 'UTF8':
             self._pg_encoding = coding
