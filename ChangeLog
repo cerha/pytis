@@ -18,6 +18,11 @@
 	* lib/pytis/data/postgresql.py:
 	Fixed "Unknown column ..." error message..
 
+2009-08-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Raise DBSystemException instead of DBUserException on disconnection from db.
+
 2009-07-31  Pavel Hanak  <hanak@wpb.cz>
 
 	* lib/pytis/form/application.py:

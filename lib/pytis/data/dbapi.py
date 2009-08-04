@@ -102,6 +102,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBLockException()
                 elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
+                elif e.args[0].find('server closed the connection unexpectedly') != -1:
+                    raise DBSystemException(_("Database connection error"), e, e.args, query)
             raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)
