@@ -457,7 +457,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                        _("Fields marked by an asterisk are mandatory.")
         return None
 
-    def _export_script(self, context):
+    def export(self, context):
+        result = super(EditForm, self).export(context)
         layout_fields = self._layout.order()
         active_fields = []
         for id in layout_fields:
@@ -467,13 +468,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             g = context.generator()
             context.resource('prototype.js')
             context.resource('pytis.js')
-            return g.script(g.js_call("new PytisFormHandler", self._id, active_fields))
-        else:
-            return None
-    
-    def export(self, context):
-        return concat(super(EditForm, self).export(context),
-                      self._export_script(context))
+            result += g.script(g.js_call("new PytisFormHandler", self._id, active_fields))
+        return result
                       
     
 class BrowseForm(LayoutForm):

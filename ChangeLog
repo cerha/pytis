@@ -1,5 +1,10 @@
 2009-08-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/web/form.py:
+	Fix export of forms with no active fields..
+
+2009-08-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* Makefile:
 	* lib/pytis/presentation/_test.py:
 	* lib/pytis/presentation/field.py:
