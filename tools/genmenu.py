@@ -264,7 +264,7 @@ def process_rights(resolver, actions, rights, def_dir):
 
 def fill_actions(cursor, actions):
     for action in actions.values():
-        cursor.execute("insert into c_pytis_menu_actions (name, shortname, description) values(%s, %s, %s)",
+        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, description) values(%s, %s, %s)",
                        (action.name, action.shortname, action.description,))
 
 def fill_rights(cursor, rights, check_rights=None):
@@ -300,7 +300,7 @@ def fill_rights(cursor, rights, check_rights=None):
                     for permission in permissions:
                         for c in columns:
                             if check_rights is None:
-                                cursor.execute(("insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname) "
+                                cursor.execute(("insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname) "
                                                 "values(%s, %s, %s, %s, %s, %s)"),
                                                (action_name, group, permission, True, True, c,))
                             else:
@@ -316,7 +316,7 @@ def check_rights(cursor, rights):
     app_rights = {}
     fill_rights(cursor, rights, app_rights)
     db_rights = {}
-    cursor.execute("select action, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
+    cursor.execute("select fullname, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
     while True:
         row = cursor.fetchone()
         if row is None:
@@ -367,7 +367,7 @@ def fill_menu_items(cursor, menu, position=''):
     else:
         locked = 'F'
     cursor.execute(("insert into e_pytis_menu "
-                    "(menuid, name, title, position, next_position, action, help, hotkey, locked) "
+                    "(menuid, name, title, position, next_position, fullname, help, hotkey, locked) "
                     "values(%s, %s, %s, %s, %s, %s, %s, %s, %s)"),
                    (-menu.id, menu.name, menu.title, menu.position, menu.position+'4', action,
                      menu.help, menu.hotkey, locked,))

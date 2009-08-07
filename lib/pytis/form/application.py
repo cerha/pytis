@@ -369,7 +369,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             specifications[name] = factory
-        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'action', 'position', 'rights',
+        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'fullname', 'position', 'rights',
                                                 'help', 'hotkey',))
         add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications

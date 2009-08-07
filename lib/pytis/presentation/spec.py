@@ -2806,7 +2806,7 @@ class Specification(object):
                     shortname_rights[r] = []
         rights_data.select_map(process)
         # System rights may limit rights to certain columns
-        add_spec('sysrights', 'ev_pytis_user_system_rights', ('action', 'rightid', 'colname',))
+        add_spec('sysrights', 'ev_pytis_user_system_rights', ('shortname', 'rightid', 'colname',))
         sysrights_data = specifications['sysrights'].create(connection_data=config.dbconnection)
         def process(row):
             shortname, right, colname = row[0].value(), row[1].value(), row[2].value()
@@ -2829,10 +2829,10 @@ class Specification(object):
             access_rights_spec = [process(right, columns) for right, columns in rights.items()]
             access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         # Forbid actions without any rights for the current user
-        add_spec('actions', 'e_pytis_action_rights', ('action', 'system',))
+        add_spec('actions', 'e_pytis_action_rights', ('shortname', 'system',))
         actions_data = specifications['actions'].create(connection_data=config.dbconnection)
         condition = pytis.data.EQ('system', pytis.data.Value(pytis.data.Boolean(), True))
-        for value in actions_data.distinct('action', condition=condition):
+        for value in actions_data.distinct('shortname', condition=condition):
             shortname = value.value()
             if not access_rights.has_key(shortname):
                 access_rights[shortname] = pytis.data.AccessRights()
