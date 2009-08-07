@@ -586,9 +586,8 @@ viewng('ev_pytis_menu_rights',
        (SelectRelation('a_pytis_actions_structure', alias='actions', exclude_columns=('menuid',)),
         SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',),
                        condition='menu.action = actions.action', jointype=JoinType.LEFT_OUTER),
-        SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=(),
-                       condition='actions.action = rights.action', jointype=JoinType.INNER,
-                       column_aliases=(('action', 'shortname',),)),
+        SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=('action',),
+                       condition='actions.action = rights.action', jointype=JoinType.INNER),
         ),
        insert_order=('e_pytis_action_rights',),
        update_order=('e_pytis_action_rights',),
@@ -600,14 +599,15 @@ viewng('ev_pytis_menu_rights',
 ### Summarization
 
 _std_table_nolog('a_pytis_computed_summary_rights',
-                 (C('menuid', TInteger, constraints=('not null',), references='e_pytis_menu on delete cascade on update cascade'),
+                 (C('action', TString, constraints=('not null',), references='c_pytis_menu_actions on delete cascade on update cascade'),
+                  C('menuid', TInteger, references='e_pytis_menu on delete cascade on update cascade'),
                   C('roleid', TString, constraints=('not null',), references='e_pytis_roles on delete cascade on update cascade'),
                   C('rights', TString, constraints=('not null',)),
                   ),
                  """Precomputed summary access rights as a single line string.
 This table is modified only by triggers.
 """,
-                 depends=('e_pytis_menu', 'e_pytis_roles',))
+                 depends=('c_pytis_menu_actions', 'e_pytis_roles',))
 
 def pytis_update_summary_rights():
     if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
@@ -628,21 +628,26 @@ def pytis_update_summary_rights():
             self.allowed = []
             self.forbidden = []
     raw_rights = {}
-    for row in plpy.execute("select rightid, granted, roleid, menuid, system from ev_pytis_menu_rights"):
-        rightid, granted, roleid, menuid, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['system']
-        item_rights = raw_rights.get(menuid)
-        if item_rights is None:
-            raw_rights[menuid] = item_rights = {}
-        role_rights = item_rights.get(roleid)
-        if role_rights is None:
-            item_rights[roleid] = role_rights = RawRights()
-        if system:
-            r = role_rights.system
-        elif granted:
-            r = role_rights.allowed
-        else:
-            r = role_rights.forbidden
-        r.append(rightid)
+    for row in plpy.execute("select rightid, granted, roleid, menuid, action, system from ev_pytis_menu_rights"):
+        rightid, granted, roleid, menuid, action, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['action'], row['system']
+        keys = [(action, menuid,)]
+        if menuid is not None:
+            keys.append((action, None,))
+        for key in keys:
+            key = (action, menuid,)
+            item_rights = raw_rights.get(key)
+            if item_rights is None:
+                raw_rights[key] = item_rights = {}
+            role_rights = item_rights.get(roleid)
+            if role_rights is None:
+                item_rights[roleid] = role_rights = RawRights()
+            if system:
+                r = role_rights.system
+            elif granted:
+                r = role_rights.allowed
+            else:
+                r = role_rights.forbidden
+            r.append(rightid)
     # Compute rights
     class Rights(object):
         def __init__(self, total, allowed, forbidden, parent):
@@ -652,12 +657,20 @@ def pytis_update_summary_rights():
             self.parent = parent
     computed_rights = {}
     position2parent = {}
-    for row in plpy.execute("select menuid, name, position from e_pytis_menu order by position"):
-        menuid, name, position = row['menuid'], row['name'], row['position']
-        if not menuid:
-            continue
-        menu_rights = raw_rights.get(menuid, {})
-        position2parent[position] = menuid
+    menuid2action = {}
+    action2menuids = {}
+    for row in plpy.execute("select menuid, e_pytis_menu.name, position, c_pytis_menu_actions.name as fullaction, shortname "
+                            "from c_pytis_menu_actions left outer join e_pytis_menu "
+                            "on c_pytis_menu_actions.name = e_pytis_menu.action "
+                            "order by position"):
+        menuid, name, position, action = row['menuid'], row['name'], row['position'], row['fullaction']
+        menu_rights = raw_rights.get((action, menuid,), {})
+        if menuid:
+            position2parent[position] = menuid
+            menuid2action[menuid] = action
+            action_menuids = action2menuids.get(action, [])
+            action_menuids.append(menuid)
+            action2menuids[action] = action_menuids
         if position:
             parent = position2parent[string.join(position.split('.')[:-1], '.')]
         else:
@@ -718,31 +731,44 @@ def pytis_update_summary_rights():
             if 'show' not in forbidden_rights:
                 rights.append('show')
             rights.sort()
-            computed_rights[(menuid, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
+            computed_rights[(menuid or action, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
     # Insertion of new rights to the database takes most of the time, so we make only real changes
     old_rights = {}
-    for row in plpy.execute("select menuid, roleid, rights from a_pytis_computed_summary_rights"):
-        old_rights[(row['menuid'], row['roleid'],)] = row['rights']
+    for row in plpy.execute("select action, menuid, roleid, rights from a_pytis_computed_summary_rights"):
+        old_rights[(row['action'], row['menuid'], row['roleid'],)] = row['rights']
     def _pg_escape(val):
         return str(val).replace("'", "''")
-    for key, all_rights in computed_rights.items():
+    for short_key, all_rights in computed_rights.items():
+        menuid_or_action, roleid = short_key
+        if isinstance(menuid_or_action, int):
+            menuid = menuid_or_action
+            action = menuid2action[menuid]
+        else:
+            menuid = None
+            action = menuid_or_action
+            total = all_rights.total
+            for mid in action2menuids.get(action, []):
+                for r in computed_rights[(mid, roleid,)].total:
+                    if r not in total:
+                        total.append(r)
+            all_rights.total = total
+        key = action, menuid, roleid
         rights = string.join(all_rights.total, ' ')
         old_item_rights = old_rights.get(key)
         if rights != old_item_rights:
-            menuid, roleid = key
             if old_item_rights is None:
-                plpy.execute("insert into a_pytis_computed_summary_rights (menuid, roleid, rights) values(%s, '%s', '%s')" %
-                             (menuid, _pg_escape(roleid), rights,))
+                plpy.execute("insert into a_pytis_computed_summary_rights (action, menuid, roleid, rights) values('%s', %s, '%s', '%s')" %
+                             (_pg_escape(action), menuid or "NULL", _pg_escape(roleid), rights,))
             else:
-                plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where menuid = '%s' and roleid = '%s'" %
-                             (rights, menuid, _pg_escape(roleid),))
+                plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where actionid='%s' and menuid=%s and roleid='%s'" %
+                             (rights, _pg_escape(action), menuid or "NULL", _pg_escape(roleid),))
         try:
             del old_rights[key]
         except KeyError:
             pass
-    for menuid, roleid in old_rights.keys():
-        plpy.execute("delete from a_pytis_computed_summary_rights where menuid=%s and roleid = '%s'" %
-                     (menuid, _pg_escape(roleid),))
+    for action, menuid, roleid in old_rights.keys():
+        plpy.execute("delete from a_pytis_computed_summary_rights where action='%s' and menuid=%s and roleid='%s'" %
+                     (_pg_escape(action), menuid or "NULL", _pg_escape(roleid),))
 _plpy_function('pytis_update_summary_rights', (), TBoolean,
                body=pytis_update_summary_rights,
                depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'e_pytis_menu',),)
@@ -798,11 +824,13 @@ _plpy_function('pytis_update_actions_structure', (), TBoolean,
                depends=('a_pytis_actions_structure', 'e_pytis_menu', 'c_pytis_menu_actions',),)
     
 viewng('ev_pytis_summary_rights_raw',
-       (SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action',)),
+       (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('position',)),
+        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'action', 'menuid',),
+                       condition="structure.menuid = menu.menuid", jointype=JoinType.LEFT_OUTER),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
                        jointype=JoinType.CROSS),
-        SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('menuid', 'roleid',),
-                       condition="menu.menuid = summary.menuid and roles.name = summary.roleid" , jointype=JoinType.INNER),
+        SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('action', 'roleid', 'menuid',),
+                       condition="structure.action = summary.action and roles.name = summary.roleid" , jointype=JoinType.INNER),
         ),
        insert=None,
        update=None,
@@ -835,7 +863,7 @@ viewng('ev_pytis_role_menu_raw',
                        jointype=JoinType.CROSS,
                        column_aliases=(('name', 'roleid',),),
                        ),
-        SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('menuid', 'roleid',),
+        SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('menuid', 'roleid', 'action',),
                        condition="menu.menuid = summary.menuid and roles.name = summary.roleid" , jointype=JoinType.INNER),
         ),
        insert=None,
@@ -865,7 +893,7 @@ viewng('ev_pytis_role_menu',
 
 viewng('ev_pytis_user_menu',
        (SelectRelation('e_pytis_menu', alias='menu'),
-        SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid',),
+        SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid', 'action',),
                        condition=("menu.menuid = rights.menuid and "
                                   "rights.roleid = user and "
                                   "rights.rights like '%show%'"),
@@ -879,7 +907,7 @@ viewng('ev_pytis_user_menu',
        )
 
 viewng('ev_pytis_user_rights',
-       (SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid',),
+       (SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid', 'action',),
                        condition="rights.roleid = user"),
         SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('*'),
                        condition="rights.menuid = menu.menuid", jointype=JoinType.INNER),
