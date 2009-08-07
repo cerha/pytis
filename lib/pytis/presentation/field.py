@@ -2,7 +2,7 @@
 
 # Prezentace dat v políèkách.
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002-2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -212,7 +212,7 @@ class PresentedRow(object):
         self._runtime_filter_dependent = {}
         # Pro v¹echna poèítaná políèka si pamatuji, zda potøebují pøepoèítat,
         # èi nikoliv (po pøepoèítání je políèko èisté, po zmìnì políèka na
-        # kterém závisí jiná políèka, nastavím závislım políèkùm pøíznak
+        # kterém závisí jiná políèka nastavím závislım políèkùm pøíznak
         # dirty).  Pøepoèítávání potom mohu provádìt a¾ pøi skuteèném po¾adavku
         # na získání hodnoty políèka.
         self._dirty = {}
@@ -808,3 +808,20 @@ class PresentedRow(object):
         else:
             return None
 
+    def depends(self, key, keys):
+        """Return True iff any of the columns in 'keys' depend on column 'key'.
+
+        Arguments:
+          key -- field identifier as a string
+          keys -- sequence of field identifiers as strings
+
+        Dependencies are established through 'computer', 'editability' or 'runtime_filter'
+        specifications of 'Field'.
+
+        """
+        for deps in (self._dependent, self._editability_dependent, self._runtime_filter_dependent):
+            if deps.has_key(key):
+                for k in deps[key]:
+                    if k in keys:
+                        return True
+        return False

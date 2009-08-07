@@ -21,7 +21,7 @@ translations:
 	make -C translations
 
 install: $(SHARE)/pytis
-	cp -ruv translations $(SHARE)/pytis
+	cp -ruv resources translations $(SHARE)/pytis
 	cp -ruv lib/pytis $(lib)
 
 uninstall:
@@ -38,7 +38,7 @@ link-lib:
 	else echo "Linking Pytis libraries to $(lib)/pytis"; \
 	ln -s $(CURDIR)/lib/pytis $(lib)/pytis; fi
 
-link-share: link-share-translations
+link-share: link-share-translations link-share-resources
 
 link-share-%: $(SHARE)/pytis
 	@if [ -d $(SHARE)/pytis/$* ]; then echo "$(SHARE)/pytis/$* already exists!"; \

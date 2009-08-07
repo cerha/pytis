@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -290,7 +290,19 @@ class PresentedRow_(unittest.TestCase):
         assert row.display('b') == 'SECOND', row.display('b')
         assert row.display('c') == '-3-', row.display('c')
         assert row.display('d') == 'first', row.display('d')
-        
+    def test_depends(self):
+        row = PresentedRow(self._fields, self._data, None)
+        any = ('a','b','c','d','e','sum','inc')
+        assert not row.depends('a', any)
+        assert not row.depends('b', ('a','b','c'))
+        assert row.depends('b', ('d',))
+        assert row.depends('b', ('a','b','c','d'))
+        assert row.depends('c', ('d',))
+        assert not row.depends('d', any)
+        assert not row.depends('e', any)
+        assert row.depends('sum', ('inc', 'd'))
+        assert not row.depends('sum', ('a','b','c','e','sum'))
+        assert not row.depends('inc', any)
         
 tests.add(PresentedRow_)
 

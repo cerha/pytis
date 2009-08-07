@@ -89,7 +89,7 @@ class Form(lcg.Content):
         self._hidden = list(hidden)
         self._name = name
         self._enctype = None
-
+        self._id = '%x' % positive_id(self)
 
     def _export_body(self, context):
         pass
@@ -103,14 +103,14 @@ class Form(lcg.Content):
     def export(self, context):
         g = context.generator()
         content = [self._export_body(context)] + \
-                  [wrap(part, cls=name) for wrap, part, name in
-                   ((g.div, self._export_submit(context), 'submit'),
-                    (g.div, self._export_footer(context), 'footer')) if part]
+                  [g.div(part, cls=name) for part, name in
+                   (self._export_submit(context), 'submit'),
+                   (self._export_footer(context), 'footer') if part]
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
         return g.form(content, action=g.uri(self._handler), method=self._HTTP_METHOD, cls=cls,
-                      enctype=self._enctype)
+                      id=self._id, enctype=self._enctype)
 
 
 class FieldForm(Form):
@@ -384,10 +384,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                               cls='selection-invocation calendar-invocation',
                                               disabled=attr.get('disabled')))
             if not attr.has_key('disabled'):
-                node = context.node()
-                node.resource('prototype.js')
-                node.resource('calendarview.js')
-                node.resource('calendarview.css')
+                context.resource('prototype.js')
+                context.resource('calendarview.js')
+                context.resource('calendarview.css')
                 locale_data = context.locale_data()
                 js_values = dict(
                     id = attr['id'],
@@ -429,7 +428,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         descr = field.spec.descr()
         return descr and context.generator().div(descr, cls="help")
 
-    def _export_body(self, context):
+    def _export_errors(self, context):
         g = context.generator()
         errors = []
         for id, msg in self._errors:
@@ -438,9 +437,18 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 msg = g.strong(f and f.label() or id) + ": " + msg
             errors.append(g.p(msg))
         if errors:
-            errors = g.div(errors, cls='errors')
-        return concat(errors, super(EditForm, self)._export_body(context))
-                      
+            return g.div(errors, cls='errors')
+        else:
+            return None
+    
+    def _export_body(self, context):
+        errors = self._export_errors(context)
+        body = super(EditForm, self)._export_body(context)
+        if errors:
+            return concat(errors, body)
+        else:
+            return body
+    
     def _export_footer(self, context):
         for f in self._fields.values():
             if f.label and self._has_not_null_indicator(f) and f.id in self._layout.order():
@@ -449,6 +457,24 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                        _("Fields marked by an asterisk are mandatory.")
         return None
 
+    def _export_script(self, context):
+        layout_fields = self._layout.order()
+        active_fields = []
+        for id in layout_fields:
+            if self._row.depends(id, layout_fields):
+                active_fields.append(id)
+        if active_fields:
+            g = context.generator()
+            context.resource('prototype.js')
+            context.resource('pytis.js')
+            return g.script(g.js_call("new PytisFormHandler", self._id, active_fields))
+        else:
+            return None
+    
+    def export(self, context):
+        return concat(super(EditForm, self).export(context),
+                      self._export_script(context))
+                      
     
 class BrowseForm(LayoutForm):
     _CSS_CLS = 'browse-form'
@@ -944,7 +970,7 @@ class BrowseForm(LayoutForm):
     def _export_controls(self, context, bottom=False):
         limit, page, count, pages = self._limit, self._page, self._count, self._pages
         g = context.generator()
-        id = (bottom and '0' or '1') + '%x' % positive_id(self)
+        id = (bottom and '0' or '1') + self._id
         content = []
         # Construct a list of filters for export.
         filters = [(f.name(), f.id()) for f in self._filters
