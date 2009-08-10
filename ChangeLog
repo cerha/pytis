@@ -1,5 +1,10 @@
 2009-08-10  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Limit rights of multiforms in pytis_update_summary_rights.
+
+2009-08-10  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Amend: yes.
 	Improvements of ApplicationMenuRights columns

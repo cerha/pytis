@@ -649,11 +649,12 @@ def pytis_update_summary_rights():
             r.append(rightid)
     # Compute rights
     class Rights(object):
-        def __init__(self, total, allowed, forbidden, parent):
+        def __init__(self, total, allowed, forbidden, parent, subforms):
             self.total = total
             self.allowed = allowed
             self.forbidden = forbidden
             self.parent = parent
+            self.subforms = subforms
     computed_rights = {}
     position2parent = {}
     menuid2action = {}
@@ -662,14 +663,29 @@ def pytis_update_summary_rights():
                             "from c_pytis_menu_actions left outer join e_pytis_menu "
                             "on c_pytis_menu_actions.fullname = e_pytis_menu.fullname "
                             "order by position"):
-        menuid, name, position, action = row['menuid'], row['name'], row['position'], row['shortname']
+        menuid, name, position, action, fullname = row['menuid'], row['name'], row['position'], row['shortname'], row['fullname']
         menu_rights = raw_rights.get((action, menuid,), {})
+        subforms = []
         if menuid:
             position2parent[position] = menuid
             menuid2action[menuid] = action
             action_menuids = action2menuids.get(action, [])
             action_menuids.append(menuid)
             action2menuids[action] = action_menuids
+            fullname_components = fullname.split('/')
+            if fullname_components[0] == 'form':
+                specifications = fullname_components[2].split('::')
+                if len(specifications) == 2:
+                    for i in range(len(specifications)):
+                        subaction = 'form/' + specifications[i]
+                        subforms.append(subaction)
+                elif fullname_components[3]:
+                    for extra in fullname_components[3].split('&'):
+                        if extra[:len('sideforms=')] == 'sideforms=':
+                            sideforms = extra[len('sideforms='):].split('+')
+                            for i in range(len(sideforms)):
+                                subaction = 'form/' + sideforms[i]
+                                subforms.append(subaction)
         if position:
             parent = position2parent[string.join(position.split('.')[:-1], '.')]
         else:
@@ -730,7 +746,8 @@ def pytis_update_summary_rights():
             if 'show' not in forbidden_rights:
                 rights.append('show')
             rights.sort()
-            computed_rights[(menuid or action, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent)
+            computed_rights[(menuid or action, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent,
+                                                                  subforms=subforms)
     # Insertion of new rights to the database takes most of the time, so we make only real changes
     old_rights = {}
     for row in plpy.execute("select shortname, menuid, roleid, rights from a_pytis_computed_summary_rights"):
@@ -751,6 +768,25 @@ def pytis_update_summary_rights():
                     if r not in total:
                         total.append(r)
             all_rights.total = total
+        # Multiform rights are valid if they are permitted by the main form and
+        # at least one of the side forms.
+        subforms = all_rights.subforms
+        if subforms:
+            subforms_total = []
+            for sub in subforms[1:]:
+                r = computed_rights.get((sub, None,))
+                if r is None:
+                    break
+                else:
+                    subforms_total += r.total
+            else:
+                r = computed_rights.get((subforms[0], None,))
+                if r is None:
+                    total = ['show', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call']
+                else:
+                    total = r.total
+                all_rights.total = [r for r in total if r in subforms_total]
+        # Format and store the rights
         key = action, menuid, roleid
         rights = string.join(all_rights.total, ' ')
         old_item_rights = old_rights.get(key)
