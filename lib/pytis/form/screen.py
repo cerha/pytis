@@ -28,7 +28,7 @@ i tøídy, které tyto specifikace následnì zpracovávají.
 """
 
 import copy
-
+import string
 
 from pytis.form import *
 import wx
@@ -1059,12 +1059,20 @@ class MItem(_TitledMenuObject):
         if command == 'RUN_FORM':
             form_class = args.pop('form_class', None)
             form_name = args.pop('name', None)
-            extra = ''
+            extra = []
             if args.has_key('binding'):
-                extra = ('/binding=%s' % (args['binding'],)); del args['binding']
+                extra.append('binding=%s' % (args['binding'],)); del args['binding']
+            if issubclass(form_class, MultiBrowseDualForm):
+                form_name_components = form_name.split('.')
+                form_module = string.join(form_name_components[:-1], '.')
+                base_form_name = form_name_components[-1]
+                bindings = resolver().get_object(form_module, base_form_name).bindings
+                if is_sequence(bindings):
+                    side_forms = [b.name() for b in bindings]
+                    extra.append('sideforms=%s' % (string.join(side_forms, '+'),))
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
-                return ('form/%s/%s%s/%s' % (class_name, form_name, extra, command_proc,))
+                return ('form/%s/%s/%s/%s' % (class_name, form_name, string.join(extra, '&'), command_proc,))
         elif command == 'NEW_RECORD' and args:
             form_name = args.pop('name', '')
             if form_name is not None and not args:
@@ -1114,8 +1122,11 @@ class MItem(_TitledMenuObject):
             command = pytis.form.Application.COMMAND_RUN_FORM
             class_name, form_name = components[1], components[2]
             arguments = dict(form_class=find_symbol(class_name), name=form_name)
-            if len(components) > 4:
-                arguments['binding'] = components[3][len('binding='):]
+            if components[3]:
+                for extra in string.split(components[3], '&'):
+                    if extra[:len('binding=')] == 'binding=':
+                        arguments['binding'] = extra[len('binding='):]
+                        break
         elif kind == 'handle':
             command = pytis.form.Application.COMMAND_HANDLED_ACTION
             function_name = components[1]

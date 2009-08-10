@@ -1,3 +1,9 @@
+2009-08-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* lib/pytis/form/screen.py:
+	Add multiforms to DMP menu structure.
+
 2009-08-07  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

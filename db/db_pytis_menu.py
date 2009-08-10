@@ -804,6 +804,7 @@ def pytis_update_actions_structure():
         menuid, position, action, fullname = row['menuid'], row['position'], row['shortname'], row['fullname']
         add_row(fullname, action, menuid, position)
         action_components = action.split('/')
+        fullname_components = fullname.split('/')
         if action_components[0] == 'form':
             specifications = action_components[1].split('::')
             if len(specifications) == 2:
@@ -811,6 +812,14 @@ def pytis_update_actions_structure():
                     subaction = 'form/' + specifications[i]
                     subposition = '%s%02d' % (position, i,)
                     add_row(subaction, subaction, None, subposition)
+            elif fullname_components[3]:
+                for extra in fullname_components[3].split('&'):
+                    if extra[:len('sideforms=')] == 'sideforms=':
+                        sideforms = extra[len('sideforms='):].split('+')
+                        for i in range(len(sideforms)):
+                            subaction = 'form/' + sideforms[i]
+                            subposition = '%s%02d' % (position, i,)
+                            add_row(subaction, subaction, None, subposition)
     position = str(int(position[:2]) + 1) + '.0001'
     for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
         action = row['shortname']
