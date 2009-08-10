@@ -1,5 +1,18 @@
 2009-08-10  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Amend: yes.
+	Improvements of ApplicationMenuRights columns
+	
+	
+
+2009-08-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Improvements of ApplicationMenuRights columns.
+
+2009-08-10  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* lib/pytis/form/screen.py:
 	Add multiforms to DMP menu structure.

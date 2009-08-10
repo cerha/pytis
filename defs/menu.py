@@ -274,8 +274,6 @@ def _shortname_computer(row):
     else:
         shortname = action
     return shortname
-def _xshortname_computer(row, fullname):
-    return _xaction_computer(row, fullname)
 class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_menu_rights'
     title = _("Práva")
@@ -287,8 +285,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('fullname', _("Plná specifikace akce"), editable=pytis.presentation.Editable.NEVER,
               codebook='menu.ApplicationActions',
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
-        Field('xshortname', _("Primitivní akce"), virtual=True, fixed=True,
-              computer=pytis.presentation.computer(_xshortname_computer),
+        Field('xaction', _("Akce"), virtual=True,
+              computer=pytis.presentation.computer(_xaction_computer),
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True,
@@ -298,8 +296,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('granted', _("Ano/Ne"), fixed=True, default=True,
               descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
         )
-    columns = ('menuid', 'roleid', 'xshortname', 'rightid', 'system', 'granted',)
-    layout = ('xshortname', 'roleid', 'rightid', 'granted',)
+    columns = ('roleid', 'rightid', 'system', 'granted',)
+    layout = ('xaction', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
