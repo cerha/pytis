@@ -217,7 +217,7 @@ class ApplicationMenu(pytis.presentation.Specification):
 class ApplicationMenuM(ApplicationMenu):
     table = 'ev_pytis_menu_structure'
     fields = (
-        Field('fullname', _("Navì¹ená akce!"), codebook='menu.ApplicationActions',
+        Field('fullname', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
         Field('title', _("Titulek polo¾ky menu")),

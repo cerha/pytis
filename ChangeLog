@@ -1,5 +1,10 @@
 2009-08-11  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Minor typo fix in a form label.
+
+2009-08-11  Milan Zamazal  <pdm@brailcom.org>
+
 	* tools/genmenu.py:
 	Don't store duplicate access rights in genmenu.
 
