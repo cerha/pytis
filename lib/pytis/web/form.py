@@ -372,7 +372,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 attr['value'] = self._prefill.get(field.id) or value.export()
         if not self._row.editable(field.id):
             attr['disabled'] = True
-            attr['name'] = None # w3m bug workaround (sends disabled fields)
+            # Avoid this workaround now, since it prevents AJAX updates of the field...
+            # TODO: Maybe this is completely unnecessary since Wiking doesn't really care about
+            # disabled fields...
+            #attr['name'] = None # w3m bug workaround (sends disabled fields)
         if field.id in [id for id, msg in self._errors]:
             attr['cls'] = (attr.has_key('cls') and attr['cls']+' ' or '') + 'invalid'
         result = ctrl(**attr)
