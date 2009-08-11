@@ -870,8 +870,6 @@ _plpy_function('pytis_update_actions_structure', (), TBoolean,
     
 viewng('ev_pytis_summary_rights_raw',
        (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('position',)),
-        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'fullname', 'menuid',),
-                       condition="structure.menuid = menu.menuid", jointype=JoinType.LEFT_OUTER),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
                        jointype=JoinType.CROSS),
         SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('shortname', 'roleid', 'menuid',),
@@ -881,7 +879,7 @@ viewng('ev_pytis_summary_rights_raw',
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('e_pytis_menu', 'ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
+       depends=('ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_summary_rights',

@@ -1,6 +1,11 @@
 2009-08-11  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Don't include e_pytis_menu in ev_pytis_summary_rights_raw.
+
+2009-08-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Bind a_pytis_actions_structure to e_pytis_menu by menuid in ev_pytis_menu_rights.
 
 2009-08-11  Milan Zamazal  <pdm@brailcom.org>
