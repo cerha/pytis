@@ -159,6 +159,8 @@ class LayoutForm(FieldForm):
         wrap = False
         group_number = 0
         for item in group.items():
+            if callable(item):
+                item = item(self._row)
             if isinstance(item, Button):
                 pass
             elif isinstance(item, lcg.Content):

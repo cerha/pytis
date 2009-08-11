@@ -551,7 +551,10 @@ class GroupSpec(object):
         Arguments:
 
           items -- contents of the group as a sequence of field identifiers (strings), button
-            specifications ('Button' instances) or nested groups ('GroupSpec' instances).
+            specifications ('Button' instances), nested groups ('GroupSpec' instances) or callable
+            objects which return one of the above when passed the current record ('PresentedRow'
+            instance) as an argument.  The last option allows building layouts dynamically
+            depending on the values/properties of the current record.
             
           orientation -- orientace skládání obsa¾ených prvkù; konstanta
             tøídy 'Orientation'.
@@ -595,7 +598,7 @@ class GroupSpec(object):
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
                 # No need for recursion, since the check is performed for each group on its level.
-                assert isinstance(item, allowed_item_types), item
+                assert isinstance(item, allowed_item_types) or callable(item), item
         self._items = tuple(items)
         self._label = label
         self._orientation = orientation
