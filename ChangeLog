@@ -1,5 +1,10 @@
 2009-08-11  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Bind a_pytis_actions_structure to e_pytis_menu by menuid in ev_pytis_menu_rights.
+
+2009-08-11  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Minor typo fix in a form label.
 
