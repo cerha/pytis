@@ -268,6 +268,7 @@ def fill_actions(cursor, actions):
                        (action.name, action.shortname, action.description,))
 
 def fill_rights(cursor, rights, check_rights=None):
+    already_stored = {}
     roles = {}
     for r in ('*', 'admin', 'admin_menu', 'admin_roles',):
         roles[r] = None
@@ -300,9 +301,13 @@ def fill_rights(cursor, rights, check_rights=None):
                     for permission in permissions:
                         for c in columns:
                             if check_rights is None:
+                                key = (action_name, group, permission, c,)
+                                if already_stored.has_key(key):
+                                    continue
                                 cursor.execute(("insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname) "
                                                 "values(%s, %s, %s, %s, %s, %s)"),
                                                (action_name, group, permission, True, True, c,))
+                                already_stored[key] = True
                             else:
                                 action_info = check_rights[action_name] = check_rights.get(action_name, {})
                                 group_info = action_info[group] = action_info.get(group, {})
