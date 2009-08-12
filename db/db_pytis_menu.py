@@ -729,7 +729,7 @@ def pytis_update_summary_rights():
                             break
                     else:
                         max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
-            else:
+            elif menuid:
                 max_rights = None
             parent_menuid = parent
             while parent_menuid is not None:

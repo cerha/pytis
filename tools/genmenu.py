@@ -411,12 +411,12 @@ def recompute_tables(cursor):
     print "Computing membership..."
     cursor.execute("select pytis_update_transitive_roles()")
     print "Computing membership...done"
-    print "Computing rights..."
-    cursor.execute("select pytis_update_summary_rights()")
-    print "Computing rights...done"
     print "Creating actions structure..."
     cursor.execute("select pytis_update_actions_structure()")
     print "Creating actions structure...done"
+    print "Computing rights..."
+    cursor.execute("select pytis_update_summary_rights()")
+    print "Computing rights...done"
             
 def parse_options():
     usage = "usage: %prog [options] DEF_DIRECTORY"

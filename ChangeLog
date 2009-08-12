@@ -1,6 +1,12 @@
 2009-08-12  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	* tools/genmenu.py:
+	Fix access rights summarization for plain actions.
+
+2009-08-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Simplify db view ev_pytis_summary_rights_raw and avoid duplicates in it.
 
