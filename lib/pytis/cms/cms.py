@@ -429,7 +429,21 @@ class Rights(Specification):
         record.data().update((record['right_id'],), pd.Row((('permitted', permitted),)))
         
 
-class SessionLog(Specification):
+class _Log(Specification):
+    def fields(self): return (
+        Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
+        Field('hostname', _("Hostname"), virtual=True, computer=computer(self._hostname),
+              column_width=15, width=40),
+        Field('user_agent', _("User agent"), column_width=25, width=80),
+        Field('referer', _("Referer"), column_width=25, width=80))
+    def _hostname(self, row, ip_address):
+        try:
+            hostname = socket.gethostbyaddr(ip_address)[0]
+        except:
+            hostname = _("Neznámý")
+        return hostname
+        
+class SessionLog(_Log):
     title = _("Log pøihlá¹ení")
     help = _("Záznam informací o pøihlá¹ení u¾ivatelù k webu.")
     table = 'cms_session_log'
@@ -443,17 +457,7 @@ class SessionLog(Specification):
         Field('start_time', _("Zaèátek"), width=17),
         Field('duration', _("Trvání"), width=17),
         Field('active', _("Aktivní")),
-        Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
-        Field('hostname', _("Hostname"), virtual=True, computer=computer(self._hostname),
-              column_width=15, width=40),
-        Field('user_agent', _("User agent"), column_width=25, width=80),
-        Field('referer', _("Referer"), column_width=25, width=80))
-    def _hostname(self, row, ip_address):
-        try:
-            hostname = socket.gethostbyaddr(ip_address)[0]
-        except:
-            hostname = _("Neznámý")
-        return hostname
+        ) + super(SessionLog, self).fields()
     def row_style(self, row):
         if row['success'].value():
             return None
@@ -473,6 +477,25 @@ class UserSessionLog(SessionLog):
     columns = ('start_time', 'duration', 'active', 'success', 'ip_address', 'user_agent')
 
 
+class AccessLog(Specification):
+    title = _("Log pøístupù")
+    help = _("Záznam informací o pøístupu u¾ivatelù k jednotlivým stránkám/modulùm webu.")
+    table = 'cms_access_log'
+    def fields(self): return (
+        Field('log_id'),
+        Field('timestamp', _("Datum a èas"), width=17),
+        Field('uri', _("Cesta"), width=17),
+        Field('uid', _("U¾ivatel"), codebook=self._spec_name('Users')),
+        Field('module', _("Modul"), width=17),
+        Field('action', _("Akce"), width=17),
+        ) + super(SessionLog, self).fields()
+    lauout = ('timestamp', 'uri', 'uid', 'module', 'action',
+              'ip_address', 'hostname', 'user_agent', 'referer')
+    columns = ('timestamp', 'uri', 'uid', 'module', 'action',
+               'ip_address', 'user_agent', 'referer')
+    sorting = (('timestamp', DESC),)
+
+    
 class Themes(Specification):
     class _Field(Field):
         def __init__(self, id, label, descr=None):
