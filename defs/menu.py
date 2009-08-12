@@ -162,6 +162,24 @@ class ApplicationActions(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='fullname')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
+class ApplicationShortActions(pytis.presentation.Specification):
+    table = 'c_pytis_menu_actions'
+    title = _("U¾ivatelské akce")
+    fields = (
+        Field('shortname', "", editable=Editable.NEVER),
+        )
+    sorting = (('shortname', pytis.data.ASCENDENT,),)    
+    cb = pytis.presentation.CodebookSpec(display='shortname')
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
+
+class SummaryIds(pytis.presentation.Specification):
+    table = 'ev_pytis_summary_rights'
+    fields = (
+        Field('summaryid', _("")),
+        )
+    cb = pytis.presentation.CodebookSpec(display='summaryid')
+    access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW)),)
+    
 ### Menus
 
 class _Title(pytis.presentation.PrettyFoldable, pytis.data.String):
@@ -219,7 +237,9 @@ class ApplicationMenuM(ApplicationMenu):
     fields = (
         Field('fullname', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+        Field('shortname', _(""), codebook='menu.ApplicationShortActions'),
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
+        Field('summaryid', _("Id")),
         Field('title', _("Titulek polo¾ky menu")),
         Field('ititle', _("Titulek polo¾ky menu"), type=pytis.data.String(), virtual=True,
               computer=pytis.presentation.computer(_ititle_computer)),
@@ -231,9 +251,9 @@ class ApplicationMenuM(ApplicationMenu):
         )
     columns = ('ititle', 'fullname', 'locked',)
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
-                                           binding_column='fullname'),
+                                           binding_column='shortname'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
-                                           binding_column='fullname'),
+                                           binding_column='summaryid'),
                 )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
                                                     pytis.data.Permission.VIEW,
@@ -265,28 +285,15 @@ class ApplicationRights(pytis.presentation.Specification):
     layout = ('rightid', 'description',)
     cb = pytis.presentation.CodebookSpec(display='description')
 
-def _shortname_computer(row):
-    # This is duplicate with genmenu, how to share it?
-    action = row.cb_value('menuid', 'fullname').value()
-    action_components = (action or '').split('/')
-    if action_components[0] == 'form':
-        shortname = 'form/' + action_components[2]
-    else:
-        shortname = action
-    return shortname
 class ApplicationMenuRights(pytis.presentation.Specification):
-    table = 'ev_pytis_menu_rights'
+    table = 'e_pytis_action_rights'
     title = _("Práva")
     fields = (
         Field('id', "Id", default=nextval('e_pytis_action_rights_id_seq')),
-        Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('fullname', _("Plná specifikace akce"), editable=pytis.presentation.Editable.NEVER,
-              codebook='menu.ApplicationActions',
-              descr=_("Identifikátor akce související s danou polo¾kou menu")),
-        Field('xaction', _("Akce"), virtual=True,
-              computer=pytis.presentation.computer(_xaction_computer),
+        Field('shortname', _("Akce"), editable=pytis.presentation.Editable.NEVER,
+              codebook='menu.ApplicationShortActions',
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True,
@@ -297,7 +304,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
               descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
         )
     columns = ('roleid', 'rightid', 'system', 'granted',)
-    layout = ('xaction', 'roleid', 'rightid', 'granted',)
+    layout = ('shortname', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
@@ -323,6 +330,7 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'ev_pytis_summary_rights'
     title = _("Souhrnná práva")
     fields = (
+        Field('summaryid', "", codebook='menu.SummaryIds'),
         Field('fullname', "", codebook='menu.ApplicationActions'),
         Field('name', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
@@ -344,9 +352,9 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('rights_call', _("Spu¹tìní"), fixed=True,
               descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('fullname', 'name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    columns = ('name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    layout = ('fullname', 'name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    layout = ('name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)

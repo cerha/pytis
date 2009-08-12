@@ -600,6 +600,7 @@ viewng('ev_pytis_menu_rights',
 _std_table_nolog('a_pytis_computed_summary_rights',
                  (C('shortname', TString, constraints=('not null',)),
                   C('menuid', TInteger, references='e_pytis_menu on delete cascade on update cascade'),
+                  C('summaryid', TString),
                   C('roleid', TString, constraints=('not null',), references='e_pytis_roles on delete cascade on update cascade'),
                   C('rights', TString, constraints=('not null',)),
                   ),
@@ -792,8 +793,10 @@ def pytis_update_summary_rights():
         old_item_rights = old_rights.get(key)
         if rights != old_item_rights:
             if old_item_rights is None:
-                plpy.execute("insert into a_pytis_computed_summary_rights (shortname, menuid, roleid, rights) values('%s', %s, '%s', '%s')" %
-                             (_pg_escape(action), menuid or "NULL", _pg_escape(roleid), rights,))
+                summaryid = '%s+%s' % (menuid or '', action,)
+                plpy.execute(("insert into a_pytis_computed_summary_rights (shortname, menuid, roleid, rights, summaryid) "
+                              "values('%s', %s, '%s', '%s', '%s')") %
+                             (_pg_escape(action), menuid or "NULL", _pg_escape(roleid), rights, summaryid,))
             else:
                 plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where shortname='%s' and menuid=%s and roleid='%s'" %
                              (rights, _pg_escape(action), menuid or "NULL", _pg_escape(roleid),))
@@ -812,6 +815,7 @@ _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),
                   C('shortname', TString, constraints=('not null',)),
                   C('menuid', TInteger),
+                  C('summaryid', TString),
                   C('position', TString, constraints=('not null',)),
                   ),
                  """Precomputed actions structure as presented to menu admin.
@@ -829,10 +833,11 @@ def pytis_update_actions_structure():
     plpy.execute("delete from a_pytis_actions_structure")
     actions = {}
     def add_row(fullname, action, menuid, position):
+        summaryid = '%s+%s' % (menuid or '', action,)
         if menuid is None:
             menuid = 'NULL'
-        plpy.execute("insert into a_pytis_actions_structure (fullname, shortname, menuid, position) values('%s', '%s', %s, '%s')" %
-                     (_pg_escape(fullname), _pg_escape(action), menuid, position,))
+        plpy.execute("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, summaryid) values('%s', '%s', %s, '%s', '%s')" %
+                     (_pg_escape(fullname), _pg_escape(action), menuid, position, summaryid,))
         actions[action] = True
     for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname from e_pytis_menu, c_pytis_menu_actions "
                             "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
@@ -872,14 +877,14 @@ viewng('ev_pytis_summary_rights_raw',
        (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('position',)),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
                        jointype=JoinType.CROSS),
-        SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('shortname', 'roleid', 'menuid',),
-                       condition="structure.shortname = summary.shortname and roles.name = summary.roleid" , jointype=JoinType.INNER),
+        SelectRelation('a_pytis_computed_summary_rights', alias='summary', exclude_columns=('shortname', 'roleid', 'menuid', 'summaryid',),
+                       condition="structure.summaryid = summary.summaryid and roles.name = summary.roleid" , jointype=JoinType.INNER),
         ),
        insert=None,
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
+       depends=('a_pytis_actions_structure', 'ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_summary_rights',

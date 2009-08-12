@@ -1,3 +1,9 @@
+2009-08-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Display relevant and only relevant rows in DMP sideforms.
+
 2009-08-11  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
