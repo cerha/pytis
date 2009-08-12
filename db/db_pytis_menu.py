@@ -769,8 +769,8 @@ def pytis_update_summary_rights():
                     if r not in total:
                         total.append(r)
             all_rights.total = total
-        # Multiform rights are valid if they are permitted by the main form and
-        # at least one of the side forms.
+        # Multiform view rights are valid if they are permitted by the main
+        # form and at least one of the side forms.
         subforms = all_rights.subforms
         if subforms:
             subforms_total = []
@@ -786,7 +786,7 @@ def pytis_update_summary_rights():
                     total = ['show', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call']
                 else:
                     total = r.total
-                all_rights.total = [r for r in total if r in subforms_total]
+                all_rights.total = [r for r in total if r != 'view' or r in subforms_total]
         # Format and store the rights
         key = action, menuid, roleid
         rights = string.join(all_rights.total, ' ')
