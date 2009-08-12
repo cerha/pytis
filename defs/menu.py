@@ -330,9 +330,8 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'ev_pytis_summary_rights'
     title = _("Souhrnná práva")
     fields = (
-        Field('summaryid', "", codebook='menu.SummaryIds'),
-        Field('fullname', "", codebook='menu.ApplicationActions'),
-        Field('name', _("Role"), codebook='menu.ApplicationRoles',
+        Field('summaryid', "", codebook='menu.SummaryIds', fixed=True),
+        Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
         Field('rights', _("Práva"), fixed=True),
         Field('rights_show', _("Menu"), fixed=True,
@@ -352,11 +351,11 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('rights_call', _("Spu¹tìní"), fixed=True,
               descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    columns = ('roleid', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    layout = ('name', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    layout = ('roleid', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    sorting = (('name', pytis.data.ASCENDENT,),)
+    sorting = (('roleid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def on_new_record(self, *args, **kwargs):
         return None
