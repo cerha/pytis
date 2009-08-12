@@ -514,8 +514,12 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
         return 'view'
     
     def _handle(self, req, action, **kwargs):
-        self._module('AccessLog').log(req, self.name(), action)
-        return super(EmbeddableModule, self)._handle(req, action, **kwargs)
+        result = super(EmbeddableModule, self)._handle(req, action, **kwargs)
+        if isinstance(result, wiking.Document):
+            # Log only displayed pages, not objects displayed on them, such as images.  If logging
+            # of downloaded files is desired, the module will need to do it explicitly.
+            self._module('AccessLog').log(req, self.name(), action)
+        return result
 
 
 class EmbeddablePytisModule(wiking.PytisModule, EmbeddableModule):

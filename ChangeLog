@@ -1,5 +1,10 @@
 2009-08-12  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/cms/web.py:
+	Log only displayed pages, not images or other content displayed on them..
+
+2009-08-12  Tomas Cerha  <cerha@brailcom.org>
+
 	* db/db_pytis_cms.py:
 	* lib/pytis/cms/__init__.py:
 	* lib/pytis/cms/cms.py:
