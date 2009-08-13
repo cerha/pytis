@@ -238,7 +238,7 @@ def c_pytis_menu_actions_trigger():
     menu = Menu(TD)
     return menu.do_trigger()
 _trigger_function('c_pytis_menu_actions_trigger', body=c_pytis_menu_actions_trigger,
-                  depends=('c_pytis_menu_actions', 'a_pytis_actions_structure', 'e_pytis_disabled_dmp_triggers',))
+                  depends=('c_pytis_menu_actions', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
 sql_raw("""
 create trigger c_pytis_menu_actions_all_after_rights after insert or update or delete on c_pytis_menu_actions
 for each statement execute procedure c_pytis_menu_actions_trigger();
@@ -432,7 +432,7 @@ def e_pytis_menu_trigger_rights():
     menu = Menu(TD)
     return menu.do_trigger()
 _trigger_function('e_pytis_menu_trigger_rights', body=e_pytis_menu_trigger_rights,
-                  depends=('e_pytis_menu', 'pytis_update_summary_rights', 'e_pytis_disabled_dmp_triggers', 'a_pytis_actions_structure',))
+                  depends=('e_pytis_menu', 'pytis_update_summary_rights', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
 sql_raw("""
 create trigger e_pytis_menu_all_after_rights after insert or update or delete on e_pytis_menu
 for each statement execute procedure e_pytis_menu_trigger_rights();
@@ -904,7 +904,7 @@ viewng('ev_pytis_summary_rights_raw',
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('a_pytis_actions_structure', 'ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
+       depends=('ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_summary_rights',
@@ -971,7 +971,7 @@ viewng('ev_pytis_user_menu',
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('e_pytis_menu',)
+       depends=('e_pytis_menu', 'a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_user_rights',

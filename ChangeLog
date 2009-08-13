@@ -1,6 +1,11 @@
 2009-08-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Some fixes of dependencies in db_pytis_menu.py.
+
+2009-08-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fixes in summary access rights computation.
 	
 
