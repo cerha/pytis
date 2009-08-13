@@ -50,6 +50,7 @@ var PytisFormHandler = Class.create({
       },
 
       on_change: function(form, value) {
+	 // Send AJAX request in reaction to user changes of form values.
 	 var handler = form._handler;
 	 // TODO: Avoid AJAX requests during continuous typing.
 	 //var now = new Date().valueOf();
@@ -61,7 +62,9 @@ var PytisFormHandler = Class.create({
 	 var fields = handler._fields;
 	 for (i=0; i<fields.length; i++) {
 	    var field = fields[i];
-	    if (values[field].toJSON() != last_values[field].toJSON()) {
+	    // Disabled fields are not present in values/last_values.
+	    if (field in values && field in last_values &&
+		values[field].toJSON() != last_values[field].toJSON()) {
 	       var update = function(data) { handler.update(form, data) };
 	       form.request({
 		     parameters: {_pytis_form_update_request: field},
@@ -73,15 +76,13 @@ var PytisFormHandler = Class.create({
       },
 
       update: function(form, data) {
+	 // Update the form state in reaction to previously sent AJAX request.
 	 for (id in data) {
 	    var cdata = data[id];
 	    for (key in cdata) {
 	       var value = cdata[key];
 	       var field = form[id];
 	       if (field) { 
-		  // TODO: Statically disabled fields are not found, since they
-		  // don't have `name' set to prevent faulty browsers to submit
-		  // them.
 		  if (key == 'editable')
 		     field.disabled = !value;
 		  else if (key == 'value')
