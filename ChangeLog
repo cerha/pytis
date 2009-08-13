@@ -1,6 +1,11 @@
 2009-08-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/cms.py:
+	Pytis CMS: AccessLog inheritance fixed..
+
+2009-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
 	Pytis CMS: Fixed access log table name..
 
 2009-08-12  Tomas Cerha  <cerha@brailcom.org>

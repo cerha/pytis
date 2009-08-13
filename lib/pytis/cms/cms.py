@@ -477,7 +477,7 @@ class UserSessionLog(SessionLog):
     columns = ('start_time', 'duration', 'active', 'success', 'ip_address', 'user_agent')
 
 
-class AccessLog(Specification):
+class AccessLog(_Log):
     title = _("Log pøístupù")
     help = _("Záznam informací o pøístupu u¾ivatelù k jednotlivým stránkám/modulùm webu.")
     table = 'cms_access_log_data'
@@ -488,7 +488,7 @@ class AccessLog(Specification):
         Field('uid', _("U¾ivatel"), codebook=self._spec_name('Users')),
         Field('module', _("Modul"), width=17),
         Field('action', _("Akce"), width=17),
-        ) + super(SessionLog, self).fields()
+        ) + super(AccessLog, self).fields()
     lauout = ('timestamp', 'uri', 'uid', 'module', 'action',
               'ip_address', 'hostname', 'user_agent', 'referer')
     columns = ('timestamp', 'uri', 'uid', 'module', 'action',
