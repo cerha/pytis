@@ -480,7 +480,7 @@ class UserSessionLog(SessionLog):
 class AccessLog(Specification):
     title = _("Log pøístupù")
     help = _("Záznam informací o pøístupu u¾ivatelù k jednotlivým stránkám/modulùm webu.")
-    table = 'cms_access_log'
+    table = 'cms_access_log_data'
     def fields(self): return (
         Field('log_id'),
         Field('timestamp', _("Datum a èas"), width=17),
