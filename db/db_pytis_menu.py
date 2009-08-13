@@ -612,7 +612,7 @@ This table is modified only by triggers.
 def pytis_update_summary_rights():
     if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
         return
-    import string
+    import copy, string
     # Retrieve roles
     roles = {}
     for row in plpy.execute("select roleid, member from a_pytis_valid_role_members"):
@@ -684,10 +684,11 @@ def pytis_update_summary_rights():
                     for extra in fullname_components[3].split('&'):
                         if extra[:len('sideforms=')] == 'sideforms=':
                             sideforms = extra[len('sideforms='):].split('+')
+                            subforms.append(action)
                             for i in range(len(sideforms)):
                                 subaction = 'form/' + sideforms[i]
                                 subforms.append(subaction)
-        if position:
+        if position and position.find('.') != -1 and menuid:
             parent = position2parent[string.join(position.split('.')[:-1], '.')]
         else:
             parent = None
@@ -722,33 +723,40 @@ def pytis_update_summary_rights():
             for r in raw.allowed:
                 if r not in forbidden_rights and r not in allowed_rights:
                     allowed_rights.append(r)
-            if name:
+            if menuid and not name:
+                max_rights = None
+            else:
                 if not max_rights:
                     for r in menu_rights.values():
                         if r.system:
                             break
                     else:
                         max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
-            elif menuid:
-                max_rights = None
-            parent_menuid = parent
-            while parent_menuid is not None:
-                parent_rights = computed_rights[(parent_menuid, roleid,)]
-                for r in parent_rights.forbidden:
-                    if r not in forbidden_rights and (r == 'show' or r not in allowed_rights):
-                        forbidden_rights.append(r)                
-                for r in parent_rights.allowed:
-                    if r not in forbidden_rights and r not in allowed_rights:
-                        allowed_rights.append(r)
-                parent_menuid = parent_rights.parent
-            if max_rights is None:
-                max_rights = allowed_rights
-            rights = [right for right in max_rights if right not in forbidden_rights]
-            if 'show' not in forbidden_rights:
-                rights.append('show')
-            rights.sort()
-            computed_rights[(menuid or action, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent,
-                                                                  subforms=subforms)
+            if menuid:
+                menu_allowed_rights = copy.copy(allowed_rights)
+                menu_forbidden_rights = copy.copy(forbidden_rights)
+                parent_menuid = parent
+                while parent_menuid is not None:
+                    parent_rights = computed_rights[(parent_menuid, roleid,)]
+                    for r in parent_rights.forbidden:
+                        if r not in menu_forbidden_rights and (r == 'show' or r not in menu_allowed_rights):
+                            menu_forbidden_rights.append(r)                
+                    for r in parent_rights.allowed:
+                        if r not in menu_forbidden_rights and r not in menu_allowed_rights:
+                            menu_allowed_rights.append(r)
+                    parent_menuid = parent_rights.parent
+            def store_rights(menu_or_action, max_rights, allowed_rights, forbidden_rights):
+                if max_rights is None:
+                    max_rights = allowed_rights
+                rights = [right for right in max_rights if right not in forbidden_rights]
+                if 'show' not in forbidden_rights:
+                    rights.append('show')
+                rights.sort()
+                computed_rights[(menu_or_action, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent,
+                                                                    subforms=subforms)
+            store_rights(action, max_rights, allowed_rights, forbidden_rights)
+            if menuid:
+                store_rights(menuid, max_rights, menu_allowed_rights, menu_forbidden_rights)
     # Insertion of new rights to the database takes most of the time, so we make only real changes
     old_rights = {}
     for row in plpy.execute("select shortname, menuid, roleid, rights from a_pytis_computed_summary_rights"):
@@ -757,13 +765,13 @@ def pytis_update_summary_rights():
         return str(val).replace("'", "''")
     for short_key, all_rights in computed_rights.items():
         menuid_or_action, roleid = short_key
+        total = all_rights.total
         if isinstance(menuid_or_action, int):
             menuid = menuid_or_action
             action = menuid2action[menuid]
         else:
             menuid = None
             action = menuid_or_action
-            total = all_rights.total
             for mid in action2menuids.get(action, []):
                 for r in computed_rights[(mid, roleid,)].total:
                     if r not in total:
@@ -775,13 +783,13 @@ def pytis_update_summary_rights():
         if subforms:
             subforms_total = []
             for sub in subforms[1:]:
-                r = computed_rights.get((sub, None,))
+                r = computed_rights.get((sub, roleid,))
                 if r is None:
                     break
                 else:
                     subforms_total += r.total
             else:
-                r = computed_rights.get((subforms[0], None,))
+                r = computed_rights.get((subforms[0], roleid,))
                 if r is None:
                     total = ['show', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call']
                 else:
@@ -792,14 +800,14 @@ def pytis_update_summary_rights():
         rights = string.join(all_rights.total, ' ')
         old_item_rights = old_rights.get(key)
         if rights != old_item_rights:
+            summaryid = '%s+%s' % (menuid or '', action,)
             if old_item_rights is None:
-                summaryid = '%s+%s' % (menuid or '', action,)
                 plpy.execute(("insert into a_pytis_computed_summary_rights (shortname, menuid, roleid, rights, summaryid) "
                               "values('%s', %s, '%s', '%s', '%s')") %
-                             (_pg_escape(action), menuid or "NULL", _pg_escape(roleid), rights, summaryid,))
+                             (_pg_escape(action), menuid or "NULL", _pg_escape(roleid), rights, _pg_escape(summaryid),))
             else:
-                plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where shortname='%s' and menuid=%s and roleid='%s'" %
-                             (rights, _pg_escape(action), menuid or "NULL", _pg_escape(roleid),))
+                plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where summaryid='%s' and roleid='%s'" %
+                             (rights, _pg_escape(summaryid), _pg_escape(roleid),))
         try:
             del old_rights[key]
         except KeyError:

@@ -1,6 +1,12 @@
 2009-08-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Fixes in summary access rights computation.
+	
+
+2009-08-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Add item types to a_pytis_actions_structure db table.
 
 2009-08-12  Milan Zamazal  <pdm@brailcom.org>
