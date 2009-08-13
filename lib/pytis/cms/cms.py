@@ -486,12 +486,12 @@ class AccessLog(_Log):
         Field('timestamp', _("Datum a èas"), width=17),
         Field('uri', _("Cesta"), width=17),
         Field('uid', _("U¾ivatel"), codebook=self._spec_name('Users')),
-        Field('module', _("Modul"), width=17),
+        Field('modname', _("Modul"), width=17),
         Field('action', _("Akce"), width=17),
         ) + super(AccessLog, self).fields()
-    layout = ('timestamp', 'uri', 'uid', 'module', 'action',
+    layout = ('timestamp', 'uri', 'uid', 'modname', 'action',
               'ip_address', 'hostname', 'user_agent', 'referer')
-    columns = ('timestamp', 'uri', 'uid', 'module', 'action',
+    columns = ('timestamp', 'uri', 'uid', 'modname', 'action',
                'ip_address', 'user_agent', 'referer')
     sorting = (('timestamp', DESC),)
 

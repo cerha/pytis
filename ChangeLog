@@ -1,6 +1,11 @@
 2009-08-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/cms.py:
+	Pytis CMS: Fix access log column names..
+
+2009-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
 	Pytis CMS: Typo fix..
 
 2009-08-13  Tomas Cerha  <cerha@brailcom.org>
