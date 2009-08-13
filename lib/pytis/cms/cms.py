@@ -489,7 +489,7 @@ class AccessLog(_Log):
         Field('module', _("Modul"), width=17),
         Field('action', _("Akce"), width=17),
         ) + super(AccessLog, self).fields()
-    lauout = ('timestamp', 'uri', 'uid', 'module', 'action',
+    layout = ('timestamp', 'uri', 'uid', 'module', 'action',
               'ip_address', 'hostname', 'user_agent', 'referer')
     columns = ('timestamp', 'uri', 'uid', 'module', 'action',
                'ip_address', 'user_agent', 'referer')
