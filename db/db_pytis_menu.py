@@ -817,6 +817,13 @@ _std_table_nolog('a_pytis_actions_structure',
                   C('menuid', TInteger),
                   C('summaryid', TString),
                   C('position', TString, constraints=('not null',)),
+                  C('type', 'char(4)', constraints=('not null',),
+                    doc="""One of the following values:
+item -- menu item with an action
+menu -- menu possibly containing menu items or other menus
+sepa -- menu separator
+spec -- specification not bound to a menu item
+"""), 
                   ),
                  """Precomputed actions structure as presented to menu admin.
 Item positions and indentations are determined by positions.
@@ -835,9 +842,18 @@ def pytis_update_actions_structure():
     def add_row(fullname, action, menuid, position):
         summaryid = '%s+%s' % (menuid or '', action,)
         if menuid is None:
+            item_type = 'spec'
+        elif not fullname:
+            item_type = 'sepa'
+        elif fullname[:5] == 'menu/':
+            item_type = 'menu'
+        else:
+            item_type = 'item'
+        if menuid is None:
             menuid = 'NULL'
-        plpy.execute("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, summaryid) values('%s', '%s', %s, '%s', '%s')" %
-                     (_pg_escape(fullname), _pg_escape(action), menuid, position, summaryid,))
+        plpy.execute(("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, summaryid, type) "
+                      "values('%s', '%s', %s, '%s', '%s', '%s') ") %
+                     (_pg_escape(fullname), _pg_escape(action), menuid, position, summaryid, item_type,))
         actions[action] = True
     for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname from e_pytis_menu, c_pytis_menu_actions "
                             "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
