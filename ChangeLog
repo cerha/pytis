@@ -1,3 +1,8 @@
+2009-08-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/screen.py:
+	Fix retrieving objects from the resolver in DMP MultiBrowseDualForm handling.
+
 2009-08-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

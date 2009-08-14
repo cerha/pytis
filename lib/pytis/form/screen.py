@@ -1064,7 +1064,7 @@ class MItem(_TitledMenuObject):
                 extra.append('binding=%s' % (args['binding'],)); del args['binding']
             if issubclass(form_class, MultiBrowseDualForm):
                 form_name_components = form_name.split('.')
-                form_module = string.join(form_name_components[:-1], '.')
+                form_module = string.join(form_name_components[:-1], '/')
                 base_form_name = form_name_components[-1]
                 bindings = resolver().get_object(form_module, base_form_name).bindings
                 if is_sequence(bindings):
