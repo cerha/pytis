@@ -1,3 +1,11 @@
+2009-08-17  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	* lib/pytis/form/list.py:
+	* tools/genmenu.py:
+	Fixes in foldable DMP, make it runnable.
+
 2009-08-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/screen.py:

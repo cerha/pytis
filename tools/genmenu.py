@@ -477,12 +477,12 @@ def run():
                                         pytis.extensions.run_form_mitem(_("U¾ivatelské role"), 'menu.ApplicationRoles',
                                                                         pytis.form.MultiBrowseDualForm),)),)
                       + menu[0]._items)
-    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position='', action=None, system=True)
+    top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position='2', action=None, system=True)
     menu_items = {}
     actions = {}
     rights = {}
     print "Retrieving menu..."
-    process_menu(menu, top, menu_items, actions, rights, position='1111', system=True)
+    process_menu(menu, top, menu_items, actions, rights, position='2.1111', system=True)
     print "Retrieving menu...done"
     print "Retrieving rights..."
     process_rights(resolver, actions, rights, def_dir)

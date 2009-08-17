@@ -2348,7 +2348,9 @@ class FoldableForm(ListForm):
 
     def _folding_enabled(self):
         return (self._folding_column_id is not None and
-                not self._lf_sorting)
+                (not self._lf_sorting or
+                 (len(self._lf_sorting) == 1 and
+                  self._lf_sorting[0][0] == self._folding_column_id)))
     
     def _search(self, condition, direction, row_number=None, report_failure=True):
         if not self._folding_enabled():

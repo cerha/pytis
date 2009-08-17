@@ -824,7 +824,7 @@ _std_table_nolog('a_pytis_actions_structure',
                   C('shortname', TString, constraints=('not null',)),
                   C('menuid', TInteger),
                   C('summaryid', TString),
-                  C('position', TString, constraints=('not null',)),
+                  C('position', TLTree, constraints=('not null',)),
                   C('type', 'char(4)', constraints=('not null',),
                     doc="""One of the following values:
 item -- menu item with an action
@@ -875,7 +875,7 @@ def pytis_update_actions_structure():
             if len(specifications) == 2:
                 for i in range(len(specifications)):
                     subaction = 'form/' + specifications[i]
-                    subposition = '%s%02d' % (position, i,)
+                    subposition = '%s.%02d' % (position, i,)
                     add_row(subaction, subaction, None, subposition)
             elif fullname_components[3]:
                 for extra in fullname_components[3].split('&'):
@@ -883,9 +883,10 @@ def pytis_update_actions_structure():
                         sideforms = extra[len('sideforms='):].split('+')
                         for i in range(len(sideforms)):
                             subaction = 'form/' + sideforms[i]
-                            subposition = '%s%02d' % (position, i,)
+                            subposition = '%s.%02d' % (position, i,)
                             add_row(subaction, subaction, None, subposition)
-    position = str(int(position[:2]) + 1) + '.0001'
+    position = '8.0001'
+    add_row('SAMOSTATNÉ AKCE', None, None, '8')
     for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
         action = row['shortname']
         if actions.has_key(action):
