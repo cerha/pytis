@@ -1,3 +1,8 @@
+2009-08-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Fix web form export when a function is used within form layout..
+
 2009-08-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/cms.py:

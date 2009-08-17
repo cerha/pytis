@@ -153,6 +153,15 @@ class LayoutForm(FieldForm):
         self._allow_table_layout = allow_table_layout
         
     def _export_group(self, context, group, inner=False, id=None):
+        # Fields are first stacked into `fields' and every continuous sequence of fields is
+        # appended to the result all together wrapped into a grid.  Other elements are inserted
+        # directly, but previously stacked fields must be added before.
+        def append(result, fields, content):
+            if fields:
+                result.append(self._export_fields(g, fields))
+                del fields[:]
+            if content:
+                result.append(content)
         g = context.generator()
         result = []
         fields = []
@@ -164,14 +173,12 @@ class LayoutForm(FieldForm):
             if isinstance(item, Button):
                 pass
             elif isinstance(item, lcg.Content):
-                result.append(item.export(context))
+                append(result, fields, item.export(context))
             elif isinstance(item, GroupSpec):
                 group_number += 1
-                if fields:
-                    result.append(self._export_fields(g, fields))
-                fields = []
-                result.append(self._export_group(context, item, inner=True,
-                                                 id='%s-%d' % (id or 'group', group_number)))
+                append(result, fields,
+                       self._export_group(context, item, inner=True,
+                                          id='%s-%d' % (id or 'group', group_number)))
             else:
                 field = self._fields[item]
                 ctrl = self._export_field(context, field)
@@ -180,8 +187,7 @@ class LayoutForm(FieldForm):
                     help = self._export_field_help(context, field)
                     fields.append((field, label, ctrl, help))
                     wrap = True
-        if fields:
-            result.append(self._export_fields(g, fields))
+        append(result, fields, None) # Make sure all remaining fields are appended.
         if group.orientation() == Orientation.HORIZONTAL:
             result = [g.table(g.tr([g.td(x, valign='top', cls=(i != 0 and 'spaced' or None))
                                     for i, x in enumerate(result)]),
