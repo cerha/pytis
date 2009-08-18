@@ -109,7 +109,7 @@ _std_table('e_pytis_role_members',
             C('member', TUser, constraints=('not null',), references='e_pytis_roles on update cascade'),
             ),
            """Mutual memberships of roles.
-Entries in this table define `member's of each `roleid'.
+Entries in this table define members of each roleid.
 """,
            init_values=(('-1', "'admin_roles'", "'admin'",),
                         ('-2', "'admin_menu'", "'admin'",),

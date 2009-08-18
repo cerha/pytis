@@ -1,3 +1,8 @@
+2009-08-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Don't use quotes in db table docstrings in db_pytis_genmenu.py.
+
 2009-08-17  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
