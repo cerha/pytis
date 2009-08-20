@@ -1,3 +1,8 @@
+2009-08-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Fix of typo in an ApplicationMenuM field after merges.
+
 2009-08-18  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
