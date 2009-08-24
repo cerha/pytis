@@ -2761,10 +2761,20 @@ class Specification(object):
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
-    _access_rights = UNDEFINED
+    _access_rights = None
 
-    @classmethod
-    def _init_access_rights(class_):
+    @staticmethod
+    def _init_access_rights(connection_data):
+        """Read access rights of data specifications from the database.
+
+        Arguments:
+
+          connection_data -- 'pytis.data.DBConnection' instance
+
+        This is actually a public method, but pytis doesn't allow its name to
+        start with something else than underscore.
+
+        """
         import config
         specifications = {}
         def add_spec(name, table, columns):
@@ -2774,10 +2784,9 @@ class Specification(object):
         # Read in and check roles
         add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
         try:
-            roles_data = specifications['roles'].create(connection_data=config.dbconnection)
+            roles_data = specifications['roles'].create(connection_data=connection_data)
             roles = roles_data.select()
         except pytis.data.DBException:
-            Specification._access_rights = None
             return
         if roles == 0:
             Specification._access_rights = 'nonuser'
@@ -2785,14 +2794,14 @@ class Specification(object):
         access_rights = {}
         # Read in all menu actions
         add_spec('menuactions', 'ev_pytis_menu', ('shortname',))
-        menuactions_data = specifications['menuactions'].create(connection_data=config.dbconnection)
+        menuactions_data = specifications['menuactions'].create(connection_data=connection_data)
         menu_actions = {}
         def process(row):
             menu_actions[row[0].value()] = True
         menuactions_data.select_map(process)
         # Assign computed user rights
         add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
-        rights_data = specifications['rights'].create(connection_data=config.dbconnection)
+        rights_data = specifications['rights'].create(connection_data=connection_data)
         def process(row):
             shortname, rights_string = row[0].value(), row[1].value()
             if not rights_string:
@@ -2807,7 +2816,7 @@ class Specification(object):
         rights_data.select_map(process)
         # System rights may limit rights to certain columns
         add_spec('sysrights', 'ev_pytis_user_system_rights', ('shortname', 'rightid', 'colname',))
-        sysrights_data = specifications['sysrights'].create(connection_data=config.dbconnection)
+        sysrights_data = specifications['sysrights'].create(connection_data=connection_data)
         def process(row):
             shortname, right, colname = row[0].value(), row[1].value(), row[2].value()
             shortname_rights = access_rights.get(shortname)
@@ -2830,7 +2839,7 @@ class Specification(object):
             access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         # Forbid actions without any rights for the current user
         add_spec('actions', 'e_pytis_action_rights', ('shortname', 'system',))
-        actions_data = specifications['actions'].create(connection_data=config.dbconnection)
+        actions_data = specifications['actions'].create(connection_data=connection_data)
         condition = pytis.data.EQ('system', pytis.data.Value(pytis.data.Boolean(), True))
         for value in actions_data.distinct('shortname', condition=condition):
             shortname = value.value()
@@ -2985,8 +2994,6 @@ class Specification(object):
         'None'.
         
         """
-        if class_._access_rights is UNDEFINED:
-            class_._init_access_rights()
         if class_._access_rights is None:
             access_rights = None
         else:

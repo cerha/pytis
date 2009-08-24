@@ -1,3 +1,14 @@
+2009-08-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	* lib/pytis/presentation/spec.py:
+	Cleanup of reading DMP information from the database.
+	
+	- Read it explicitly, not implicitly.
+	- Read it only in wx application.
+	- Use given connection data instead of config.dbconnection.
+	
+
 2009-08-20  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:

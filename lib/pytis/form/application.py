@@ -177,6 +177,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if option != 'dbconnection':
                 setattr(config, option, value)
         log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
+        # Initialize login and password.
+        def test():
+            bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id) for id in ('tablename',)]
+            factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+            dummy_data = factory.create(connection_data=config.dbconnection)
+        db_operation(test)
+        # Read in access rights.
+        init_access_rights(config.dbconnection)
         # Init the recent forms list.
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
@@ -189,7 +197,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Initialize the menubar.
         self._recent_forms_menu = None
         menus_prototype = self._spec('menu', ())
-        menus = self._build_menu(menus_prototype)
+        menus = self._build_menu(menus_prototype, config.dbconnection)
         menus.append(Menu(self._WINDOW_MENU_TITLE, (
             MItem(_("Pøedchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
                   help=_("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
@@ -371,19 +379,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             specifications[name] = factory
         add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'fullname', 'position', 'rights',
                                                 'help', 'hotkey',))
-        add_spec('tables', 'pg_catalog.pg_tables', ('tablename',))
         return specifications
 
-    def _dynamic_menu(self):
+    def _dynamic_menu(self, connection_data):
         specifications = self._dynamic_menu_specifications()
-        # Initialize login and password
-        def test():
-            dummy_data = specifications['tables'].create(connection_data=config.dbconnection)
-        db_operation(test)
-        connection = config.dbconnection
         # Check for menu presence, if not available, return None
         try:
-            menu_data = specifications['menu'].create(connection_data=connection)
+            menu_data = specifications['menu'].create(connection_data=connection_data)
         except pytis.data.DBException:
             return None
         menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
@@ -416,8 +418,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Done, return the menu structure
         return menu_template
         
-    def _build_menu(self, menu_prototype):
-        menu_template = self._dynamic_menu()
+    def _build_menu(self, menu_prototype, connection_data):
+        menu_template = self._dynamic_menu(connection_data)
         if not menu_template:
             return list(menu_prototype)
         def build(template):
@@ -1456,11 +1458,22 @@ def block_refresh(function, *args, **kwargs):
     """
     return Refreshable.block_refresh(function, *args, **kwargs)
 
-_access_rights = UNDEFINED
+_access_rights = None
+_access_dbconnection = None
 _user_roles = ()
 
-def init_access_rights():
-    global _access_rights, _user_roles
+def init_access_rights(connection_data):
+    """Read application access rights from the database.
+
+    This function must be called very early after start of an application.
+
+    Arguments:
+
+      connection_data -- 'pytis.data.DBConnection' instance
+    
+    """
+    global _access_rights, _user_roles, _access_dbconnection
+    _access_dbconnection = connection_data
     specifications = {}
     def add_spec(name, table, columns):
         bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
@@ -1469,23 +1482,23 @@ def init_access_rights():
     add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
     import config
     try:
-        roles_data = specifications['roles'].create(connection_data=config.dbconnection)
+        roles_data = specifications['roles'].create(connection_data=connection_data)
         roles = [row[0].value() for row in roles_data.select_map(identity)]
     except pytis.data.DBException:
-        _access_rights = None
         return
     if not roles:
         _access_rights = 'nonuser'
         return
     _user_roles = roles
     add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
-    rights_data = specifications['rights'].create(connection_data=config.dbconnection)
+    rights_data = specifications['rights'].create(connection_data=connection_data)
     _access_rights = {}
     def process(row):
         shortname, rights_string = row[0].value(), row[1].value()
         rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
         _access_rights[shortname] = _access_rights.get(shortname, []) + rights
     rights_data.select_map(process)
+    Specification._init_access_rights(connection_data)
     
 def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     """Return true if the current user has given permission for given spec.
@@ -1515,7 +1528,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     else:
         rights = resolver().get(name, 'data_spec').access_rights()
         if rights:
-            groups = pytis.data.default_access_groups(config.dbconnection)
+            groups = pytis.data.default_access_groups(_access_dbconnection)
             if not rights.permitted(perm, groups, column=column):
                 return False
     result = action_has_access('form/'+name, perm=perm, column=column)
@@ -1532,8 +1545,6 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
         column checked).
 
     """
-    if _access_rights is UNDEFINED:
-        init_access_rights()
     if _access_rights == 'nonuser':
         return False
     if _access_rights is None:
