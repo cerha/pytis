@@ -1,6 +1,11 @@
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Remove obsolete db function pytis_matching_actions.
+
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Limit access rights of forms and handlers to meaningful values.
 
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>

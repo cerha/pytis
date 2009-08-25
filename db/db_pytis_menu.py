@@ -260,26 +260,6 @@ for each statement execute procedure c_pytis_menu_actions_trigger();
         name='c_pytis_menu_actions_triggers',
         depends=('c_pytis_menu_actions_trigger',))
 
-def pytis_matching_actions(complex_action, simple_action):
-    complex_action = args[0]
-    simple_action = args[1]
-    if complex_action is None:
-        return False
-    components = complex_action.split('/')
-    if components[0] == 'form':
-        last_components = components[2].split('::')
-        if len(last_components) == 2:
-            import string
-            prefix = components[0] + '/'
-            result = (prefix + last_components[0] + '::' + last_components[1] == simple_action)
-        else:
-            result = ('form/'+components[2] == simple_action)
-    else:
-        result = (complex_action == simple_action)
-    return result
-_plpy_function('pytis_matching_actions', (TString, TString), TBoolean,
-               body=pytis_matching_actions)
-
 ### Menus
 
 _std_table('e_pytis_menu',
