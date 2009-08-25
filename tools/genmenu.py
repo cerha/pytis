@@ -70,12 +70,13 @@ class Serial(object):
         self.id = Serial._counter.next()
 
 class Action(object):
-    def __init__(self, name, description, shortname=None):
+    def __init__(self, name, description, shortname=None, subactions=()):
         self.name = name
         self.description = description
         if shortname is None:
             shortname = name
         self.shortname = shortname
+        self.subactions = subactions
 
 class Menu(Serial):
     def __init__(self, name, title, parent, position, action=None, help=None, hotkey=None, system=False):
@@ -106,7 +107,7 @@ def super_menu_id(menu, menu_items):
         i += 1
     return menu_id
 
-def process_menu(menu, parent, menu_items, actions, rights, position, system=False):
+def process_menu(resolver, menu, parent, menu_items, actions, rights, position, system=False):
     if isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
         menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position, system=system)
@@ -115,7 +116,7 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
             next_position = position+'.1111'
         else:
             next_position = '1111'
-        process_menu(menu.items(), supmenu, menu_items, actions, rights, position=next_position, system=system)
+        process_menu(resolver, menu.items(), supmenu, menu_items, actions, rights, position=next_position, system=system)
     elif isinstance(menu, pytis.form.MItem):
         action_id = menu.action_id()
         if action_id is None:
@@ -125,11 +126,26 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
         if action is None:
             action_components = action_id.split('/')
             action_kind = action_components[0]
+            subactions = []
             if action_kind == 'form':
-                shortname = 'form/' + action_components[2]
+                form_name = action_components[2]
+                shortname = 'form/' + form_name
+                form_name_components = form_name.split('.')
+                form_module = string.join(form_name_components[:-1], '/')
+                base_form_name = form_name_components[-1]
+                try:
+                    bindings = resolver.get_object(form_module, base_form_name).bindings
+                except:
+                    bindings = None
+                if pytis.util.is_sequence(bindings):
+                    for b in bindings:
+                        subaction = 'form/'+b.name()
+                        if subaction not in subactions:
+                            subactions.append(subaction)
             else:
                 shortname = action_id
-            actions[action_id] = action = Action(name=action_id, shortname=shortname, description=menu.help())
+            actions[action_id] = action = Action(name=action_id, shortname=shortname, description=menu.help(),
+                                                 subactions=subactions)
             if action_kind == 'proc':
                 enabled = menu.args().get('enabled')
                 if isinstance(enabled, basestring):
@@ -162,7 +178,7 @@ def process_menu(menu, parent, menu_items, actions, rights, position, system=Fal
         parent.children.append(Menu(name=None, title=None, parent=parent, position=position, system=system))
     elif isinstance(menu, tuple):
         for m in menu:
-            process_menu(m, parent, menu_items, actions, rights, position=position, system=system)
+            process_menu(resolver, m, parent, menu_items, actions, rights, position=position, system=system)
             if parent.parent is None:
                 system = False
             position_labels = string.split(position, '.')
@@ -199,8 +215,13 @@ def process_rights(resolver, actions, rights, def_dir):
         rights[action_name] = Rights(access_rights, action)
     for action in (actions.values() +
                    [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
-                    Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM'),
-                    Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles')]):
+                    Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM',
+                           subactions=('form/menu.ApplicationMenuRights',
+                                       'form/menu.ApplicationSummaryRights',)),
+                    Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles',
+                           subactions=('form/menu.ApplicationRolesMembers',
+                                       'form/menu.ApplicationRolesOwners',
+                                       'form/menu.ApplicationRoleMenu',))]):
         action_name = action.name
         if rights.has_key(action_name):
             continue
@@ -264,8 +285,8 @@ def process_rights(resolver, actions, rights, def_dir):
 
 def fill_actions(cursor, actions):
     for action in actions.values():
-        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, description) values(%s, %s, %s)",
-                       (action.name, action.shortname, action.description,))
+        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, description, subactions) values(%s, %s, %s, %s)",
+                       (action.name, action.shortname, action.description, string.join(action.subactions, ' ')))
 
 def fill_rights(cursor, rights, check_rights=None):
     already_stored = {}
@@ -482,7 +503,7 @@ def run():
     actions = {}
     rights = {}
     print "Retrieving menu..."
-    process_menu(menu, top, menu_items, actions, rights, position='2.1111', system=True)
+    process_menu(resolver, menu, top, menu_items, actions, rights, position='2.1111', system=True)
     print "Retrieving menu...done"
     print "Retrieving rights..."
     process_rights(resolver, actions, rights, def_dir)

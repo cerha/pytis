@@ -1,5 +1,12 @@
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* lib/pytis/form/screen.py:
+	* tools/genmenu.py:
+	Store side forms as subactions in DMP.
+
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/presentation/field.py:
 	Use Value.export instead of Type.export in PresentedRow again.
 	

@@ -1062,14 +1062,6 @@ class MItem(_TitledMenuObject):
             extra = []
             if args.has_key('binding'):
                 extra.append('binding=%s' % (args['binding'],)); del args['binding']
-            if issubclass(form_class, MultiBrowseDualForm):
-                form_name_components = form_name.split('.')
-                form_module = string.join(form_name_components[:-1], '/')
-                base_form_name = form_name_components[-1]
-                bindings = resolver().get_object(form_module, base_form_name).bindings
-                if is_sequence(bindings):
-                    side_forms = [b.name() for b in bindings]
-                    extra.append('sideforms=%s' % (string.join(side_forms, '+'),))
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
                 return ('form/%s/%s/%s/%s' % (class_name, form_name, string.join(extra, '&'), command_proc,))

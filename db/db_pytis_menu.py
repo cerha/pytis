@@ -212,9 +212,10 @@ _plpy_function('pytis_update_transitive_roles', (), TBoolean,
 _std_table_nolog('c_pytis_menu_actions',
                  (P('fullname', TString),
                   C('shortname', TString, constraints=('not null',)),
+                  C('subactions', TString),
                   C('description', TString),
                   ),
-                 """List of available (pre-defined and visible) application actions.""",
+                 """List of available application actions.""",
                  grant=db_rights
                  )
 def c_pytis_menu_actions_trigger():
@@ -665,11 +666,11 @@ def pytis_update_summary_rights():
     position2parent = {}
     menuid2action = {}
     action2menuids = {}
-    for row in plpy.execute("select menuid, e_pytis_menu.name, position, c_pytis_menu_actions.fullname, shortname "
+    for row in plpy.execute("select menuid, e_pytis_menu.name, position, c_pytis_menu_actions.fullname, shortname, subactions "
                             "from c_pytis_menu_actions left outer join e_pytis_menu "
                             "on c_pytis_menu_actions.fullname = e_pytis_menu.fullname "
                             "order by position"):
-        menuid, name, position, action, fullname = row['menuid'], row['name'], row['position'], row['shortname'], row['fullname']
+        menuid, name, position, action, fullname, subactions = row['menuid'], row['name'], row['position'], row['shortname'], row['fullname'], row['subactions']
         menu_rights = raw_rights.get((action, menuid,), {})
         subforms = []
         if menuid:
@@ -685,14 +686,10 @@ def pytis_update_summary_rights():
                     for i in range(len(specifications)):
                         subaction = 'form/' + specifications[i]
                         subforms.append(subaction)
-                elif fullname_components[3]:
-                    for extra in fullname_components[3].split('&'):
-                        if extra[:len('sideforms=')] == 'sideforms=':
-                            sideforms = extra[len('sideforms='):].split('+')
-                            subforms.append(action)
-                            for i in range(len(sideforms)):
-                                subaction = 'form/' + sideforms[i]
-                                subforms.append(subaction)
+                elif subactions:
+                    subforms.append(action)
+                    for subaction in subactions.split(' '):
+                        subforms.append(subaction)
         if position and position.find('.') != -1 and menuid:
             parent = position2parent[string.join(position.split('.')[:-1], '.')]
         else:
@@ -868,10 +865,11 @@ def pytis_update_actions_structure():
                       "values('%s', '%s', %s, '%s', '%s', '%s') ") %
                      (_pg_escape(fullname), _pg_escape(action), menuid, position, summaryid, item_type,))
         actions[action] = True
-    for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname from e_pytis_menu, c_pytis_menu_actions "
+    for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname, subactions "
+                            "from e_pytis_menu, c_pytis_menu_actions "
                             "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
                             "order by position"):
-        menuid, position, action, fullname = row['menuid'], row['position'], row['shortname'], row['fullname']
+        menuid, position, action, fullname, subactions = row['menuid'], row['position'], row['shortname'], row['fullname'], row['subactions']
         add_row(fullname, action, menuid, position)
         action_components = action.split('/')
         fullname_components = fullname.split('/')
@@ -882,14 +880,12 @@ def pytis_update_actions_structure():
                     subaction = 'form/' + specifications[i]
                     subposition = '%s.%02d' % (position, i,)
                     add_row(subaction, subaction, None, subposition)
-            elif fullname_components[3]:
-                for extra in fullname_components[3].split('&'):
-                    if extra[:len('sideforms=')] == 'sideforms=':
-                        sideforms = extra[len('sideforms='):].split('+')
-                        for i in range(len(sideforms)):
-                            subaction = 'form/' + sideforms[i]
-                            subposition = '%s.%02d' % (position, i,)
-                            add_row(subaction, subaction, None, subposition)
+            elif subactions:
+                subaction_list = subactions.split(' ')
+                for i in range(len(subaction_list)):
+                    subaction = subaction_list[i]
+                    subposition = '%s.%02d' % (position, i,)
+                    add_row(subaction, subaction, None, subposition)
     position = '8.0001'
     add_row('SAMOSTATNÉ AKCE', None, None, '8')
     for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
