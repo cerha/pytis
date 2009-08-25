@@ -1,3 +1,8 @@
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Add unique constraint to e_pytis_action_rights db table.
+
 2009-08-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/application.py:

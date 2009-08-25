@@ -546,6 +546,11 @@ support extended rights assignment, e.g. in context menus etc.
            grant=db_rights,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
+sql_raw("""
+alter table e_pytis_action_rights add unique (shortname, roleid, rightid, colname, system, granted);
+""",
+        name='e_pytis_action_rights_constraints',
+        depends='e_pytis_action_rights')
 def e_pytis_action_rights_trigger():
     class Rights(BaseTriggerObject):
         def _pg_escape(self, val):
