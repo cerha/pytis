@@ -1,5 +1,10 @@
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/genmenu.py:
+	Add action checking to genmenu.
+
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Add missing 'on update cascade' declarations in db_pytis_menu.py.
 

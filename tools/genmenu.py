@@ -288,6 +288,33 @@ def fill_actions(cursor, actions):
         cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, description, subactions) values(%s, %s, %s, %s)",
                        (action.name, action.shortname, action.description, string.join(action.subactions, ' ')))
 
+def check_actions(cursor, actions):
+    cursor.execute("select fullname, shortname, subactions from c_pytis_menu_actions")
+    actions = copy.copy(actions)
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        fullname, shortname, subactions = row
+        if fullname[:5] == 'menu/':
+            continue
+        action = actions.get(fullname)
+        if action is None:
+            print 'Check: Extra action: %s (%s)' % (fullname, shortname,)
+        else:
+            del actions[fullname]
+            subactions_list = copy.copy(list(action.subactions))
+            subactions_list.sort()
+            if subactions:
+                db_subactions_list = subactions.split(' ')
+                db_subactions_list.sort()
+            else:
+                db_subactions_list = []
+            if subactions_list != db_subactions_list:
+                print 'Check: Subactions mismatch: %s app="%s" db="%s"' % (fullname, string.join(action.subactions, ' '), subactions or '',)
+    for fullname, action in actions.items():
+        print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
+
 def fill_rights(cursor, rights, check_rights=None):
     already_stored = {}
     roles = {}
@@ -342,7 +369,7 @@ def check_rights(cursor, rights):
     app_rights = {}
     fill_rights(cursor, rights, app_rights)
     db_rights = {}
-    cursor.execute("select fullname, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
+    cursor.execute("select shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
     while True:
         row = cursor.fetchone()
         if row is None:
@@ -509,6 +536,9 @@ def run():
     process_rights(resolver, actions, rights, def_dir)
     print "Retrieving rights...done"
     if check_only:
+        print "Checking actions..."
+        check_actions(cursor, actions)
+        print "Checking actions...done"
         print "Checking rights..."
         roles = check_rights(cursor, rights)
         print "Checking rights...done"
