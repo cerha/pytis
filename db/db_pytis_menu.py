@@ -551,7 +551,7 @@ sql_raw("""
 alter table e_pytis_action_rights add unique (shortname, roleid, rightid, colname, system, granted);
 """,
         name='e_pytis_action_rights_constraints',
-        depends='e_pytis_action_rights')
+        depends=('e_pytis_action_rights',))
 def e_pytis_action_rights_trigger():
     class Rights(BaseTriggerObject):
         def _pg_escape(self, val):
