@@ -429,8 +429,8 @@ def e_pytis_menu_trigger_rights():
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
         def _update_all(self):
-            plpy.execute("select pytis_update_summary_rights()")
             plpy.execute("select pytis_update_actions_structure()")
+            plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
                 return
@@ -679,11 +679,11 @@ def pytis_update_summary_rights():
     position2parent = {}
     menuid2action = {}
     action2menuids = {}
-    for row in plpy.execute("select menuid, e_pytis_menu.name, position, c_pytis_menu_actions.fullname, shortname, subactions "
-                            "from c_pytis_menu_actions left outer join e_pytis_menu "
-                            "on c_pytis_menu_actions.fullname = e_pytis_menu.fullname "
+    for row in plpy.execute("select menuid, type, position, c_pytis_menu_actions.fullname, c_pytis_menu_actions.shortname, subactions "
+                            "from c_pytis_menu_actions left outer join a_pytis_actions_structure "
+                            "on c_pytis_menu_actions.fullname = a_pytis_actions_structure.fullname "
                             "order by position"):
-        menuid, name, position, action, fullname, subactions = row['menuid'], row['name'], row['position'], row['shortname'], row['fullname'], row['subactions']
+        menuid, type_, position, action, fullname, subactions = row['menuid'], row['type'], row['position'], row['shortname'], row['fullname'], row['subactions']
         menu_rights = raw_rights.get((action, menuid,), {})
         subforms = []
         if menuid:
@@ -738,7 +738,7 @@ def pytis_update_summary_rights():
             for r in raw.allowed:
                 if r not in forbidden_rights and r not in allowed_rights:
                     allowed_rights.append(r)
-            if menuid and not name:
+            if menuid and type_ is None:
                 max_rights = None
             else:
                 if not max_rights:
@@ -832,7 +832,7 @@ def pytis_update_summary_rights():
                      (_pg_escape(action), menuid or "NULL", _pg_escape(roleid),))
 _plpy_function('pytis_update_summary_rights', (), TBoolean,
                body=pytis_update_summary_rights,
-               depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'e_pytis_menu',),)
+               depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'a_pytis_actions_structure',),)
 
 _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),

@@ -1,6 +1,11 @@
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Use a_pytis_actions_structure instead of e_pytis_menu in pytis_update_summary_rights.
+
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	New codebook c_pytis_action_types.
 
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
