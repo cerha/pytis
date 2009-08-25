@@ -710,7 +710,12 @@ def pytis_update_summary_rights():
         for roleid, role_roles in roles.items():
             max_ = []
             allowed = []
-            forbidden = []
+            if fullname[:5] == 'form/':
+                forbidden = ['call']
+            elif fullname[:7] == 'handle/':
+                forbidden = ['view', 'insert', 'update', 'delete', 'print', 'export']
+            else:
+                forbidden = []
             for role in role_roles:
                 raw = menu_rights.get(role) or RawRights()
                 max_ += raw.system
