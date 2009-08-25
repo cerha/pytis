@@ -442,13 +442,12 @@ class PresentedRow(object):
             # Mù¾e nastat napøíklad v pøípadì, kdy k danému sloupci nejsou
             # pøístupová práva.
             svalue = ''
-        else:
+        else:            
             value_type = value.type()
-            value_value = value.value()
             if pretty and isinstance(value_type, PrettyType):
-                svalue = value_type.pretty_export(value_value, row=self, form=form, **kwargs)
+                svalue = value_type.pretty_export(value.value(), row=self, form=form, **kwargs)
             else:
-                svalue = value_type.export(value_value, **kwargs)
+                svalue = value.export(**kwargs)
         column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
             svalue = string.join(svalue.splitlines(), column.line_separator)

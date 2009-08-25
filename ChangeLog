@@ -1,5 +1,12 @@
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/field.py:
+	Use Value.export instead of Type.export in PresentedRow again.
+	
+	(Among others it avoids crashes on string types containing numeric values.)
+
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Add unique constraint to e_pytis_action_rights db table.
 
