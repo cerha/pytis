@@ -1,6 +1,11 @@
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	New codebook c_pytis_action_types.
+
+2009-08-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fix typo in db_pytis_menu.py.
 
 2009-08-25  Milan Zamazal  <pdm@brailcom.org>

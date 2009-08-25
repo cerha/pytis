@@ -209,6 +209,19 @@ _plpy_function('pytis_update_transitive_roles', (), TBoolean,
 
 ### Actions
 
+_std_table_nolog('c_pytis_action_types',
+                 (P('type', 'char(4)'),
+                  C('description', TString),
+                  ),
+                 """List of defined action types.""",
+                 init_values=(("'item'", _("'Standardní akce na položce menu'"),),
+                              ("'menu'", _("'Menu obsahující další položky'"),),
+                              ("'sepa'", _("'Separátor v menu'"),),
+                              ("'spec'", _("'Specifikace bez uživatelské akce'"),),
+                              ("'proc'", _("'Procedura'"),),
+                              ),
+                 grant=db_rights
+                 )
 _std_table_nolog('c_pytis_menu_actions',
                  (P('fullname', TString),
                   C('shortname', TString, constraints=('not null',)),
@@ -828,12 +841,7 @@ _std_table_nolog('a_pytis_actions_structure',
                   C('summaryid', TString),
                   C('position', TLTree, constraints=('not null',)),
                   C('type', 'char(4)', constraints=('not null',),
-                    doc="""One of the following values:
-item -- menu item with an action
-menu -- menu possibly containing menu items or other menus
-sepa -- menu separator
-spec -- specification not bound to a menu item
-"""), 
+                    references='c_pytis_action_types'),
                   ),
                  """Precomputed actions structure as presented to menu admin.
 Item positions and indentations are determined by positions.
@@ -841,7 +849,7 @@ This table is modified only by triggers.
 """,
                  depends=())
 sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structure(position);",
-        depends=('a_pytis_actions_structure',))
+        depends=('a_pytis_actions_structure', 'c_pytis_action_types',))
 
 def pytis_update_actions_structure():
     import string
