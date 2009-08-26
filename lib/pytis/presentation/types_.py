@@ -90,8 +90,15 @@ class PrettyTreeOrder(PrettyType):
 class PrettyFoldable(PrettyTreeOrder):
     """Similar as 'PrettyTreeOrder' but with an additional folding indicator.
     """
+    def __init__(self, *args, **kwargs):
+        super(PrettyFoldable, self).__init__(*args, **kwargs)
+        self._tree_column_nsub_id = self._tree_column_id + '_nsub'
+        
     def _indentation(self, level, row, form):
         if form is None:
+            mark = ''
+        elif (row.has_key(self._tree_column_nsub_id) and
+              not row[self._tree_column_nsub_id].value()):
             mark = ''
         else:
             folding = form.folding_level(row)

@@ -1,6 +1,13 @@
 2009-08-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	* lib/pytis/presentation/types_.py:
+	Show folding indicators only on rows without children (if known).
+
+2009-08-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fix dependency mistake in db_pytis_menu.py.
 
 2009-08-26  Milan Zamazal  <pdm@brailcom.org>
