@@ -2222,8 +2222,21 @@ class FoldableForm(ListForm):
                        Attribute('subnodes', dict),
                        )
         
-    class _Folding(object):
+    class Folding(object):
+        """Representation of current folding state.
+
+        Initial folding level can be specified in the constructor.  Then
+        folding can be changed using 'expand()' method.
+
+        """
         def __init__(self, level=1):
+            """
+            Arguments:
+
+              level -- initial folding level, integer (0=everything folded,
+                1=single level unfolded, etc.) or 'None' (everything unfolded)
+              
+            """
             self._folding = FoldableForm._FoldingState(level=level, subnodes={})
         def _find_node(self, node):
             state = self._folding
@@ -2289,6 +2302,15 @@ class FoldableForm(ListForm):
             self._folding = new_state
             return state is not new_state
         def expand(self, node, level=None):
+            """Set folding level of 'node' to 'level'.
+
+            Arguments:
+
+              node -- tree column value of the node
+              level -- new folding level of the node, integer or 'None', see
+                '__init__()' for more details
+
+            """
             # level==None => expand whole subtree
             # level==0 => collapse whole subtree
             # level==1 => expand just the next level
@@ -2332,7 +2354,7 @@ class FoldableForm(ListForm):
     def __init__(self, *args, **kwargs):
         self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
-        self._folding = self._Folding()
+        self._folding = self._resolver.get(self._name, 'initial_folding_spec') or self.Folding()
         for c in self._data.columns():
             if isinstance(c.type(), pytis.presentation.PrettyFoldable):
                 self._folding_column_id = c.type().tree_column_id()
@@ -2359,7 +2381,7 @@ class FoldableForm(ListForm):
         if row_number is not None:
             self._table.rewind(position=row_number)
         orig_folding = self._folding
-        self._folding = self._Folding(level=None)
+        self._folding = self.Folding(level=None)
         self.refresh()
         if row_number is None:
             unfolded_row_number = row_number
@@ -2384,7 +2406,7 @@ class FoldableForm(ListForm):
 
     def _apply_filter(self, condition):
         if condition is not None:
-            self._folding = self._Folding(level=None)
+            self._folding = self.Folding(level=None)
         return super(FoldableForm, self)._apply_filter(condition)
 
     def _on_left_dclick(self, event):
@@ -2404,11 +2426,11 @@ class FoldableForm(ListForm):
         self._cmd_expand_or_collapse_subtree(level=1)
         
     def _cmd_expand_all(self):
-        self._folding = self._Folding(level=None)
+        self._folding = self.Folding(level=None)
         self.refresh()
 
     def _cmd_collapse_all(self):
-        self._folding = self._Folding()
+        self._folding = self.Folding()
         self.refresh()
             
     def folding_level(self, row):

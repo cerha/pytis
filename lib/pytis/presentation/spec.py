@@ -2761,6 +2761,15 @@ class Specification(object):
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
+    initial_folding = None
+    """'FoldableForm.Folding' instance defining initial folding.
+
+    'None' means use the standard folding.
+
+    Obviously useful only in foldable forms.
+
+    """
+
     _access_rights = None
 
     @staticmethod
@@ -2851,7 +2860,8 @@ class Specification(object):
     def __init__(self, resolver):
         self._resolver = resolver
         for attr in ('fields', 'access_rights', 'condition', 'distinct_on',
-                     'bindings', 'cb', 'sorting', 'filters', 'conditions'):
+                     'bindings', 'cb', 'sorting', 'filters', 'conditions',
+                     'initial_folding',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if callable(value):
@@ -2863,7 +2873,7 @@ class Specification(object):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
                    attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                                 'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                                'data_access_rights',
+                                'data_access_rights', 'initial_folding',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
@@ -2985,6 +2995,10 @@ class Specification(object):
         
         """
         return self.access_rights
+
+    def initial_folding_spec(self):
+        """Return initial folding."""
+        return self.initial_folding
 
     @classmethod
     def data_access_rights(class_, name):

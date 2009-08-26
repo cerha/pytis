@@ -213,6 +213,7 @@ class ApplicationMenu(pytis.presentation.Specification):
     sorting = (('position', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
+    initial_folding = pytis.form.FoldableForm.Folding(level=2)
     def on_edit_record(self, row):
         if row['locked'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Tuto polo¾ku menu nelze editovat"))
@@ -259,6 +260,10 @@ class ApplicationMenuM(ApplicationMenu):
                                                     pytis.data.Permission.VIEW,
                                                     pytis.data.Permission.EXPORT,
                                                     pytis.data.Permission.PRINT)),)
+    def initial_folding(self):
+        folding = pytis.form.FoldableForm.Folding(level=2)
+        folding.expand('8', level=0)
+        return folding
 
 class ApplicationMenuPositions(pytis.presentation.Specification):
     table = 'ev_pytis_menu_positions'

@@ -1,5 +1,12 @@
 2009-08-26  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	* lib/pytis/form/list.py:
+	* lib/pytis/presentation/spec.py:
+	New `initial_folding' specification parameter.
+
+2009-08-26  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	* lib/pytis/presentation/types_.py:
