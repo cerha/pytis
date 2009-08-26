@@ -289,6 +289,8 @@ _std_table('e_pytis_menu',
            """Menu structure definition.""",
            grant=db_rights,
            depends=('c_pytis_menu_actions',))
+sql_raw("create index e_pytis_menu_position_index on e_pytis_menu using gist (position);",
+        depends=('e_pytis_menu',))
 def e_pytis_menu_trigger():
     class Menu(BaseTriggerObject):
         def _pg_escape(self, val):
@@ -833,7 +835,7 @@ Item positions and indentations are determined by positions.
 This table is modified only by triggers.
 """,
                  depends=())
-sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structure(position);",
+sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structure using gist (position);",
         depends=('a_pytis_actions_structure', 'c_pytis_action_types',))
 
 def pytis_update_actions_structure():
