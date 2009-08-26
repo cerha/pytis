@@ -834,9 +834,9 @@ _std_table_nolog('a_pytis_actions_structure',
 Item positions and indentations are determined by positions.
 This table is modified only by triggers.
 """,
-                 depends=())
+                 depends=('c_pytis_action_types',))
 sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structure using gist (position);",
-        depends=('a_pytis_actions_structure', 'c_pytis_action_types',))
+        depends=('a_pytis_actions_structure',))
 
 def pytis_update_actions_structure():
     import string
