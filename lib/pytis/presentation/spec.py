@@ -2795,6 +2795,8 @@ class Specification(object):
         rights_data = specifications['rights'].create(connection_data=config.dbconnection)
         def process(row):
             shortname, rights_string = row[0].value(), row[1].value()
+            if not rights_string:
+                return
             rights = {}
             for r in rights_string.split(' '):
                 if r != 'show':

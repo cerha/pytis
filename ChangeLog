@@ -1,3 +1,16 @@
+2009-08-26  Milan Zamazal  <pdm@brailcom.org>
+
+	Amend: yes.
+	Don't try to split empty strings when reading access rights
+	
+	
+
+2009-08-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Handle splitting empty strings when reading access rights.
+	
+
 2009-08-17  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
