@@ -32,31 +32,36 @@ akcí a jejich identifikátorů:
 
 - Příkaz RUN_FORM:
 
-    form/CLASS_NAME/FORM_NAME/COMMAND_PROC
-    form/CLASS_NAME/FORM_NAME/binding=BINDING/COMMAND_PROC
+    form/CLASS_NAME/FORM_NAME/COMMAND_PROC/
+    form/CLASS_NAME/FORM_NAME/binding=BINDING/COMMAND_PROC/
 
   CLASS_NAME ... plně kvalifikovaná třída formuláře, např. `pytis.form.BrowseForm'
   FORM_NAME ... specifikace formuláře kvalifikovaná vůči adresáři `defs', např. `misc.Products'
   COMMAND_PROC ... argument `command' nebo prázdné
   BINDING ... binding formuláře
+
+  Pokud je potřeba mít evidovanou formulářovou akci, která je přítomna pouze
+  jako specifikace a neexistuje pro ni uživatelská akce, ukládá se ve tvaru
+
+    form/*/FORM_NAME
   
 - Příkaz NEW_RECORD:
 
-    NEW_RECORD/NAME/COMMAND_PROC
+    NEW_RECORD/NAME/COMMAND_PROC/
 
   NAME ... argument `name'
   COMMAND_PROC ... argument `command' nebo prázdné 
 
 - Příkaz HANDLED_ACTION:
 
-    handle/NAME/COMMAND_PROC
+    handle/NAME/COMMAND_PROC/
 
   NAME ... plně kvalifikované jméno funkce
   COMMAND_PROC ... argument `command' nebo prázdné
 
 - Příkaz RUN_PROCEDURE:
 
-    proc/PROC_NAME/SPEC_NAME/COMMAND_PROC
+    proc/PROC_NAME/SPEC_NAME/COMMAND_PROC/
 
   PROC_NAME ... argument `proc_name'
   SPEC_NAME ... argument `spec_name'
@@ -69,24 +74,29 @@ akcí a jejich identifikátorů:
   COMMAND ... název příkazu (např. `EXIT')
   COMMAND_PROC ... argument `command' nebo prázdné
 
-
 Pokud mají nějaké akce extra argumenty, které nejsou pokryty výše uvedenými
 pravidly, je pro ně potřeba vytvořit definici v commands.py.
 
 Zajisté nejjednodušším způsobem, jak správný identifikátor akce vytvořit, je
-zkopírovat ho upravit podle nějaké podobné akce již v tabulce přítomné.
+zkopírovat ho a upravit podle nějaké podobné akce již v tabulce přítomné.
   
 Přidání akce se provede takto:
 
 <example>
-insert into c_pytis_menu_actions (name, shortname, description)
-                          values ('NAME', 'SHORTNAME', 'DESCRIPTION');
+insert into c_pytis_menu_actions (fullname, shortname, description)
+                          values ('FULLNAME', 'SHORTNAME', 'DESCRIPTION');
 <example>
 
-  NAME ... identifikátor akce vytvořený dle pravidel výše
+  FULLNAME ... identifikátor akce vytvořený dle pravidel výše
   SHORTNAME ... pro akce s prefixem `form/' má podobu `form/FORM_NAME', pro
-    ostatní akce je shodné s NAME
+    ostatní akce je shodné s FULLNAME
   DESCRIPTION ... nepovinný slovní popis akce
+
+Tabulka `c_pytis_menu_actions' navíc obsahuje sloupec `subactions'.  Ten se
+týká násobných formulářů (duálních i multiside) a obsahuje názvy akcí
+odpovídající vedlejším formulářům daného formuláře.  Jde o textový sloupec, kde
+akce vedlejších formulářů se uvádí jako SHORTNAMEs vzájemně oddělené jednou
+mezerou.
 
 
 * Přidání práv
@@ -94,11 +104,11 @@ insert into c_pytis_menu_actions (name, shortname, description)
 Práva se evidují v tabulce `e_pytis_action_rights':
 
 <example>
-insert into e_pytis_action_rights (action, roleid, rightid, system, granted, colname)
-                           values ('ACTION', 'ROLE', 'RIGHTID', SYSTEM, GRANTED, COLUMN);
+insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname)
+                           values ('SHORTNAME', 'ROLE', 'RIGHTID', SYSTEM, GRANTED, COLUMN);
 </example>
 
-  ACTION ... stručné jméno akce, která je přítomná v tabulce c_pytis_menu_actions
+  SHORTNAME ... stručné jméno akce, která je přítomná v tabulce c_pytis_menu_actions
   ROLE ... role, které se položka týká; `*' značí všechny role
   RIGHTID ... jedna z hodnot klíčového sloupce číselníku `c_pytis_access_rights'
   SYSTEM ... boolean flag určující, zda se jedná o systémové právo
@@ -113,16 +123,17 @@ insert into e_pytis_action_rights (action, roleid, rightid, system, granted, col
 Menu je uloženo v tabulce `e_pytis_menu':
 
 <example>
-insert into e_pytis_menu (name, title, position, action, help, hotkey, locked) 
-                  values ('NAME', 'TITLE', 'POSITION', 'ACTION', 'HELP', 'HOTKEY', LOCKED);
+insert into e_pytis_menu (name, title, position, fullname, help, hotkey, locked) 
+                  values ('NAME', 'TITLE', 'POSITION', 'FULLNAME', 'HELP', 'HOTKEY', LOCKED);
 </example>
 
   NAME ... NULL pro podmenu a separátory, unikátní jméno (obvykle ACTION) pro
     koncové položky menu
   TITLE ... titulek menu jak se objeví v uživatelském rozhraní
-  POSITION ... pozice v menu skládající se z prefixu rodičovského menu o sudém
-    počtu cifer a z dvojciferné pozice uvnitř rodičovského menu v rozsahu 10-98
-  ACTION ... `name' akce navěšené na položku menu, u koncových položek musí být
+  POSITION ... pozice v menu jako ltree řetězec skládající se z prefixu
+    rodičovského menu, ke kterému se přidá další položka obsahující pouze čísla
+    a určující pozici v rámci rodičovského menu
+  FULLNAME ... jméno akce navěšené na položku menu, u koncových položek musí být
     z číselníku `c_pytis_menu_actions', u podmenu a separátorů NULL
   HELP ... nápověda k položce nebo NULL
   HOTKEY ... sekvence hotkeys oddělených mezerami, např. `Alt-a a', mezerník se

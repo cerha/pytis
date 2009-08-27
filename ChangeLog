@@ -1,3 +1,8 @@
+2009-08-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/DmpDb:
+	DMP db admin documentation updated.
+
 2009-08-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
