@@ -244,6 +244,7 @@ class ApplicationMenuM(ApplicationMenu):
         Field('fullname', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('shortname', _(""), codebook='menu.ApplicationShortActions'),
+        Field('actiontype', _("Typ polo¾ky"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
         Field('summaryid', _("Id")),
         Field('title', _("Titulek polo¾ky menu"), type=_Title()),
@@ -254,7 +255,7 @@ class ApplicationMenuM(ApplicationMenu):
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
-    columns = ('title', 'fullname', 'locked',)
+    columns = ('title', 'actiontype', 'fullname', 'locked',)
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
                                            binding_column='shortname'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
