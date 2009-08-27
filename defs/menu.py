@@ -120,7 +120,11 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
         Field('member', _("Obsa¾ená role"), fixed=True, codebook='menu.CommonApplicationRoles',
               descr=_("Role, která je èlenem skupinové role.")),
         Field('purposeid', "", codebook='menu.ApplicationRolePurposes'),
+        Field('purpose', _("Úèel role"),
+              editable=pytis.presentation.Editable.NEVER, fixed=True),
         Field('mpurposeid', "", codebook='menu.ApplicationRolePurposes'),
+        Field('mpurpose', _("Úèel role"),
+              editable=pytis.presentation.Editable.NEVER, fixed=True),
         Field('description', _("Popis"),
               descr=_("Popis urèení role.")),
         Field('mdescription', _("Popis"),
@@ -140,11 +144,11 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
 
 class ApplicationRolesOwners(ApplicationRolesMembership):
     title = _("Zaøazení do skupiny")
-    columns = ('roleid', 'description',)
+    columns = ('roleid', 'purpose', 'description',)
 
 class ApplicationRolesMembers(ApplicationRolesMembership):
     title = _("Pøiøazení role")
-    columns = ('member', 'mdescription',)
+    columns = ('member', 'mpurpose', 'mdescription',)
 
 ### Actions
 
@@ -291,12 +295,14 @@ class ApplicationRights(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='description')
 
 class ApplicationMenuRights(pytis.presentation.Specification):
-    table = 'e_pytis_action_rights'
+    table = 'ev_pytis_action_rights'
     title = _("Práva")
     fields = (
         Field('id', "Id", default=nextval('e_pytis_action_rights_id_seq')),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
+        Field('purpose', _("Úèel role"),
+              editable=pytis.presentation.Editable.NEVER, fixed=True),
         Field('shortname', _("Akce"), editable=pytis.presentation.Editable.NEVER,
               codebook='menu.ApplicationShortActions',
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
@@ -308,8 +314,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('granted', _("Ano/Ne"), fixed=True, default=True,
               descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
         )
-    columns = ('roleid', 'rightid', 'system', 'granted',)
-    layout = ('shortname', 'roleid', 'rightid', 'granted',)
+    columns = ('roleid', 'purpose', 'rightid', 'system', 'granted',)
+    layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
@@ -338,6 +344,8 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('summaryid', "", codebook='menu.SummaryIds', fixed=True),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
+        Field('purpose', _("Úèel role"),
+              editable=pytis.presentation.Editable.NEVER, fixed=True),
         Field('rights', _("Práva"), fixed=True),
         Field('rights_show', _("Menu"), fixed=True,
               descr=_("Zobrazení v menu")),
@@ -356,9 +364,9 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('rights_call', _("Spu¹tìní"), fixed=True,
               descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
         )
-    columns = ('roleid', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    columns = ('roleid', 'purpose', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    layout = ('roleid', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
+    layout = ('roleid', 'purpose', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('roleid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)

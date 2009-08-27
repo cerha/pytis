@@ -1,5 +1,11 @@
 2009-08-27  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Display role purposes in DMP forms containing roles.
+
+2009-08-27  Milan Zamazal  <pdm@brailcom.org>
+
 	* doc/tutorials/DmpDb:
 	DMP db admin documentation updated.
 

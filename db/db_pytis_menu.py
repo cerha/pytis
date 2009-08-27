@@ -153,12 +153,13 @@ for each row execute procedure e_pytis_role_members_trigger();
 
 viewng('ev_pytis_valid_role_members',
        (SelectRelation('e_pytis_role_members', alias='main'),
-        SelectRelation('ev_pytis_valid_roles', alias='roles1', exclude_columns=('purpose',),
+        SelectRelation('ev_pytis_valid_roles', alias='roles1',
                        condition='roles1.name = main.roleid', jointype=JoinType.INNER),
-        SelectRelation('ev_pytis_valid_roles', alias='roles2', exclude_columns=('purpose',),
+        SelectRelation('ev_pytis_valid_roles', alias='roles2',
                        column_aliases=(('name', 'mname',),
                                        ('description', 'mdescription',),
                                        ('purposeid', 'mpurposeid',),
+                                       ('purpose', 'mpurpose',),
                                        ('deleted', 'mdeleted',),),
                        condition='roles2.name = main.member', jointype=JoinType.INNER),
         ),
@@ -579,6 +580,19 @@ for each statement execute procedure e_pytis_action_rights_trigger();
         name='e_pytis_action_rights_triggers',
         depends=('e_pytis_action_rights_trigger',))
 
+viewng('ev_pytis_action_rights',
+       (SelectRelation('e_pytis_action_rights', alias='rights'),
+        SelectRelation('e_pytis_roles', alias='roles', exclude_columns=('*',),
+                       condition="rights.roleid = roles.name", jointype=JoinType.LEFT_OUTER),
+        SelectRelation('c_pytis_role_purposes', alias='purposes', exclude_columns=('purposeid',),
+                       condition="roles.purposeid = purposes.purposeid", jointype=JoinType.LEFT_OUTER),
+        ),
+       insert_order=('e_pytis_action_rights',),
+       update_order=('e_pytis_action_rights',),
+       delete_order=('e_pytis_action_rights',),
+       grant=db_rights,
+       depends=('e_pytis_action_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
+       
 viewng('ev_pytis_user_system_rights',
        (SelectRelation('e_pytis_action_rights', alias='rights',
                        condition="rights.system = 'T' and roleid = '*' or roleid in (select roleid from ev_pytis_user_roles)"),
@@ -900,12 +914,16 @@ _plpy_function('pytis_update_actions_structure', (), TBoolean,
     
 viewng('ev_pytis_summary_rights_raw',
        (SelectRelation('a_pytis_computed_summary_rights', alias='summary'),
+        SelectRelation('e_pytis_roles', alias='roles', exclude_columns=('*',),
+                       condition="summary.roleid = roles.name", jointype=JoinType.LEFT_OUTER),
+        SelectRelation('c_pytis_role_purposes', alias='purposes', exclude_columns=('purposeid',),
+                       condition="roles.purposeid = purposes.purposeid", jointype=JoinType.LEFT_OUTER),
         ),
        insert=None,
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('ev_pytis_valid_roles', 'a_pytis_computed_summary_rights',)
+       depends=('e_pytis_roles', 'a_pytis_computed_summary_rights', 'c_pytis_role_purposes',)
        )
 
 viewng('ev_pytis_summary_rights',
