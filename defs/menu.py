@@ -384,7 +384,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         Field('menuid', "", codebook='menu.ApplicationMenu'),
         Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('title', _("Titulek polo¾ky menu"), fixed=True),
+        Field('title', _("Titulek polo¾ky menu"), type=_Title(), fixed=True),
         Field('position', _("Pozice v menu")),
         Field('rights', _("Práva")),
         Field('rights_show', _("Menu"), fixed=True,
@@ -409,6 +409,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
     layout = ('title', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     sorting = (('position', pytis.data.ASCENDENT,),)
+    initial_folding = pytis.form.FoldableForm.Folding(level=None)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def on_new_record(self, *args, **kwargs):
         return None

@@ -1,5 +1,10 @@
 2009-08-27  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Use folding in role menu preview.
+
+2009-08-27  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Display role purposes in DMP forms containing roles.
