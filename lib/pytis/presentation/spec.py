@@ -2924,6 +2924,7 @@ class Specification(object):
         spec_name = self.__class__.__name__
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
+        spec_name = spec_name.replace('/', '.')
         access_rights = self.data_access_rights('form/' + spec_name)
         if access_rights is None:
             access_rights = self.access_rights

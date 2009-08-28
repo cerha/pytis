@@ -1,3 +1,9 @@
+2009-08-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Replace slashes with dots in the specification name before calling data_access_rights.
+	
+
 2009-08-26  Milan Zamazal  <pdm@brailcom.org>
 
 	Amend: yes.
