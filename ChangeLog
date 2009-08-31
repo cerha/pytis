@@ -1,5 +1,10 @@
 2009-08-31  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Set title for separators in the menu editing form.
+
+2009-08-31  Milan Zamazal  <pdm@brailcom.org>
+
 	* doc/tutorials/DmpDb:
 	Minor update of DmpDb documentation.
 

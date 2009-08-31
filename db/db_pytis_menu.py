@@ -440,12 +440,14 @@ for each statement execute procedure e_pytis_menu_trigger_rights();
         depends=('e_pytis_menu_trigger_rights',))
 
 viewng('ev_pytis_menu',
-       (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('fullname',)),
+       (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('fullname', 'title',)),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('description',),
                        condition='main.fullname = actions.fullname', jointype=JoinType.LEFT_OUTER),
         ),
        include_columns=(V(None, 'position_nsub',
-                          "(select count(*)-1 from e_pytis_menu where position <@ main.position)"),),
+                          "(select count(*)-1 from e_pytis_menu where position <@ main.position)"),
+                        V(None, 'title',
+                          "coalesce(main.title, '――――')"),),
        insert_order=('e_pytis_menu',),
        update_order=('e_pytis_menu',),
        delete_order=('e_pytis_menu',),
