@@ -1,6 +1,12 @@
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* TODO:
+	* lib/pytis/form/dialog.py:
+	Fix exit dialog column sizing in wx 2.8..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* TODO:
 	* lib/pytis/form/form.py:
 	Avoid unnecessary frame title manipulation to prevent wx 2.8 problem in codebook insert..
 

@@ -1212,12 +1212,12 @@ class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
         for i, label in enumerate(columns):
             self.InsertColumn(i, label)
         for i, item in enumerate(items):
-            self.InsertStringItem(i, "")
+            self.InsertStringItem(i, item[1])
             self.CheckItem(i, item[0])
-            for j in range(len(item)-1):
-                self.SetStringItem(i, j, item[j+1])
-        self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+            for j, value in enumerate(item[1:]):
+                self.SetStringItem(i, j, value)
+        for i in range(len(columns)):
+            self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
         self.SetMinSize((0, max(80, min(300, len(items)*20+30))))
 
 
