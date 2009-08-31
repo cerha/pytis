@@ -83,13 +83,14 @@ zkopírovat ho a upravit podle nějaké podobné akce již v tabulce přítomn�
 Přidání akce se provede takto:
 
 <example>
-insert into c_pytis_menu_actions (fullname, shortname, description)
-                          values ('FULLNAME', 'SHORTNAME', 'DESCRIPTION');
+insert into c_pytis_menu_actions (fullname, shortname, title, description)
+                          values ('FULLNAME', 'SHORTNAME', 'TITLE', 'DESCRIPTION');
 <example>
 
   FULLNAME ... identifikátor akce vytvořený dle pravidel výše
   SHORTNAME ... pro akce s prefixem `form/' má podobu `form/FORM_NAME', pro
     ostatní akce je shodné s FULLNAME
+  TITLE ... libovolný stručný titulek akce, odpovídá atributu `title' ve specifikaci
   DESCRIPTION ... nepovinný slovní popis akce
 
 Tabulka `c_pytis_menu_actions' navíc obsahuje sloupec `subactions'.  Ten se

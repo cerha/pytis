@@ -1,5 +1,10 @@
 2009-08-31  Milan Zamazal  <pdm@brailcom.org>
 
+	* doc/tutorials/DmpDb:
+	Minor update of DmpDb documentation.
+
+2009-08-31  Milan Zamazal  <pdm@brailcom.org>
+
 	* tools/genmenu.py:
 	New genmenu command line option --check-update.
 
