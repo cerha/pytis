@@ -1,5 +1,10 @@
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/form/_grid.py:
+	Fix grid bool value display in wx 2.8..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/inputfield.py:
 	Preserve text selection when incrementing/decrementing field value..
 

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -542,20 +542,20 @@ class ListTable(wx.grid.PyGridTableBase):
         # Je tabulka již uzavřena?
         if not self._data or col >= self.GetNumberCols():
             return ''
-        col_id = self._columns[col].id
+        column = self._columns[col]
         if self._edited_row and row == self._edited_row.row:
             the_row = self._edited_row.the_row
             if the_row is None:
                 return ''
-            value = the_row.format(col_id)
+            value = the_row.format(column.id)
         else:
-            value = self._cached_value(row, col_id)
-        # Vytáhni hodnotu sloupce
-        if not inputfield \
-               and self._columns[col].wxtype == wx.grid.GRID_VALUE_BOOL and value == 'F':
-            # V této podobě gridu je 0 považována za pravdu.
-            # Možná to souvisí s C++ přijímajícím zde pouze strings.
-            value = ''
+            value = self._cached_value(row, column.id)
+        if not inputfield and column.wxtype == wx.grid.GRID_VALUE_BOOL:
+            # wx pro boolean sloupce rozeznává pouze následující *stringové* hodnoty:
+            if value == 'T':
+                value = '1'
+            else:
+                value = ''
         return value
 
     def SetValue(self, row, col, value):
