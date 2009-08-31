@@ -389,6 +389,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
               fixed=True),
         Field('title', _("Titulek polo¾ky menu"), type=_Title(), fixed=True),
         Field('position', _("Pozice v menu")),
+        Field('position_nsub'),
         Field('rights', _("Práva")),
         Field('rights_show', _("Menu"), fixed=True,
               descr=_("Zobrazení v menu")),
