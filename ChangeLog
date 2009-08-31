@@ -1,5 +1,10 @@
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/form/inputfield.py:
+	Added `spinning' ability to time fields..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/commands_.py:
 	* lib/pytis/form/inputfield.py:
 	Allow incrementing/decrementing field value through a keyboard shortcut (for numeric and date fields).
