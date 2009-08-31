@@ -2055,17 +2055,12 @@ class PopupEditForm(PopupForm, EditForm):
     DESCR = _("editaèní formuláø")
     
     def __init__(self, parent, *args, **kwargs):
-        parent = self._popup_frame(parent)
-        EditForm.__init__(self, parent, *args, **kwargs)
+        EditForm.__init__(self, self._popup_frame(parent), *args, **kwargs)
         if self._inserted_data is not None:
             self._load_next_row()
         size = copy.copy(self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
         self.SetSize(size)
-        p = parent
-        while not p.GetTitle() and p.GetParent():
-            p = p.GetParent()
-        parent.SetTitle('%s: %s' % (p.GetTitle(), self.title()))
 
     def _default_transaction(self):
         return pytis.data.DBTransactionDefault(config.dbconnection)

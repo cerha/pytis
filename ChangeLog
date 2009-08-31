@@ -1,5 +1,11 @@
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 
+	* TODO:
+	* lib/pytis/form/form.py:
+	Avoid unnecessary frame title manipulation to prevent wx 2.8 problem in codebook insert..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/_grid.py:
 	Fix grid bool value display in wx 2.8..
 
