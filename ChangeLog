@@ -1,6 +1,11 @@
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/inputfield.py:
+	Preserve text selection when incrementing/decrementing field value..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
 	Added `spinning' ability to time fields..
 
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>

@@ -969,7 +969,14 @@ class SpinnableField(InputField):
     def _cmd_spin(self, up=True):
         value = self._row[self._id].value()
         new_value = self._spin(value, up=up)
+        ctrl = self._ctrl
+        if isinstance(ctrl, wx.TextCtrl) and ctrl.GetStringSelection() == ctrl.GetValue() != '':
+            select_all = True
+        else:
+            select_all = False
         self._row[self._id] = pytis.data.Value(self.type(), new_value)
+        if select_all:
+            ctrl.SetSelection(-1, -1)
         
     def _can_spin(self, up=True):
         return self._valid
