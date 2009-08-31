@@ -1,5 +1,10 @@
 2009-08-31  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/types_.py:
+	Add indicator to unfoldable items too in folding columns.
+
+2009-08-31  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Add position_nsub to role menu views.
 

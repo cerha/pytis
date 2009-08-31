@@ -99,7 +99,7 @@ class PrettyFoldable(PrettyTreeOrder):
             mark = ''
         elif (row.has_key(self._tree_column_nsub_id) and
               not row[self._tree_column_nsub_id].value()):
-            mark = ''
+            mark = u'⊙ ' #u'⊡ '
         else:
             folding = form.folding_level(row)
             if folding == '':
