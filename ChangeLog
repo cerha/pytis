@@ -1,5 +1,10 @@
 2009-08-31  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Remove forgotten redundant condition from db_pytis_menu.py.
+
+2009-08-31  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/presentation/types_.py:
 	Add indicator to unfoldable items too in folding columns.
 

@@ -1008,7 +1008,7 @@ viewng('ev_pytis_extended_role_menu_raw',
        )
 
 viewng('ev_pytis_extended_role_menu',
-       (SelectRelation('ev_pytis_extended_role_menu_raw', alias='menu', condition="rights like '%show%' or type='spec'"),),
+       (SelectRelation('ev_pytis_extended_role_menu_raw', alias='menu', condition="rights like '%show%'"),),
        include_columns=(V(None, 'rights_show', "strpos(rights, 'show')::bool"),
                         V(None, 'rights_view', "strpos(rights, 'view')::bool"),
                         V(None, 'rights_insert', "strpos(rights, 'insert')::bool"),
