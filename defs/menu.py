@@ -95,6 +95,8 @@ class ApplicationRoles(ApplicationRolesSpecification):
                                            binding_column='member'),
                 pytis.presentation.Binding(_("Náhled menu"), 'menu.ApplicationRoleMenu', id='menu',
                                            binding_column='roleid'),
+                pytis.presentation.Binding(_("Roz¹íøený náhled menu"), 'menu.ApplicationRoleMenuExtended', id='extmenu',
+                                           binding_column='roleid'),
                 )
     
     def on_delete_record(self, row):
@@ -418,3 +420,13 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         return None
     def on_delete_record(self, row):
         return None
+
+class ApplicationRoleMenuExtended(ApplicationRoleMenu):
+    table = 'ev_pytis_extended_role_menu'
+    title = _("Roz¹íøené menu u¾ivatele")
+    fields = (ApplicationRoleMenu.fields +
+              (Field('actiontype', _("Typ polo¾ky"), fixed=True, editable=pytis.presentation.Editable.NEVER),))
+    columns = ('title', 'actiontype', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
+               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
+    layout = ('title', 'actiontype', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
+               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
