@@ -30,6 +30,7 @@ import pytis.data
 from pytis.form import *
 import wx.lib.colourselect
 from cStringIO import StringIO
+import mx.DateTime
 #from wxPython.pytis.maskededit import wxMaskedTextCtrl
 
 
@@ -939,10 +940,32 @@ class PasswordField(StringField):
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
 
+class SpinnableField(InputField):
+    """Field capable of spinning its value up/down (incrementing/decrementing)."""
+
+    def _spin(self, value, up=True):
+        """Return the incremented (if 'up' is true) or decremented (if 'up' is false) 'value'.
+
+        This method must be implemented in the derived class.
+        
+        """
+        raise ProgramError("This method must be overriden!")
     
-class NumericField(TextField):
+    def _cmd_spin(self, up=True):
+        value = self._row[self._id].value()
+        new_value = self._spin(value, up=up)
+        self._row[self._id] = pytis.data.Value(self.type(), new_value)
+        
+    def _can_spin(self, up=True):
+        return self._valid
+        
+    
+class NumericField(TextField, SpinnableField):
     """Textové vstupní políèko pro data typu 'pytis.data.Number'."""
-    pass
+
+    def _spin(self, value, up=True):
+        diff = up and +1 or -1
+        return value + diff
 
 
 class CheckBoxField(Unlabeled, InputField):
@@ -1128,7 +1151,7 @@ class Invocable(object, CommandHandler):
         return self.enabled()
 
     
-class DateField(Invocable, TextField):
+class DateField(Invocable, TextField, SpinnableField):
     """Vstupní pole pro datový typ 'pytis.data.Date'.
 
     Jako akci pro vyvolání výbìru definuje zobrazení dialogu s kalendáøem,
@@ -1149,6 +1172,13 @@ class DateField(Invocable, TextField):
         date = run_dialog(Calendar, d)
         if date != None:
             self._set_value(self._type.export(date))
+
+    def _spin(self, value, up=True):
+        if up:
+            value += mx.DateTime.oneDay
+        else:
+            value -= mx.DateTime.oneDay
+        return value
 
 
 class ColorSelectionField(Invocable, TextField):

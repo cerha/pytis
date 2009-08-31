@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002-2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -202,6 +202,8 @@ Command(TextField, 'SELECT_ALL',
         "Provedení výbìru celého textu políèka.")
 Command(Invocable, 'INVOKE_SELECTION',
         "Vyvolání výbìru hodnoty vstupního políèka (arg. 'alternate')")
+Command(SpinnableField, 'SPIN',
+        "Spinning the field value up/down (arg. 'up')")
 Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
         "Vyvolání alternativního výbìru hodnoty políèka")
 Command(ListField, 'SELECT',
@@ -308,6 +310,8 @@ DEFAULT_KEYMAP = (
     ('Backspace',        FileField.COMMAND_CLEAR),
     ('Delete',           FileField.COMMAND_CLEAR),
     ('Backspace',        ListField.COMMAND_SHOW_SELECTED),
+    ('Prior',            SpinnableField.COMMAND_SPIN(up=True)),
+    ('Next',             SpinnableField.COMMAND_SPIN(up=False)),
     ('Escape',           Dialog.COMMAND_CLOSE_DIALOG),
     ('Enter',            Dialog.COMMAND_COMMIT_DIALOG),
     ('Ctrl-Enter',       Dialog.COMMAND_COMMIT_DIALOG(force=True)),
