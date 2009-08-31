@@ -1,5 +1,10 @@
 2009-08-31  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/genmenu.py:
+	New genmenu command line option --check-update.
+
+2009-08-31  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* tools/genmenu.py:
 	Add labels to non-menu actions in DMP forms.

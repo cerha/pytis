@@ -300,14 +300,15 @@ def fill_actions(cursor, actions):
         cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description, subactions) values(%s, %s, %s, %s, %s)",
                        (action.name, action.shortname, action.title, action.description, string.join(action.subactions, ' ')))
 
-def check_actions(cursor, actions):
-    cursor.execute("select fullname, shortname, subactions from c_pytis_menu_actions")
+def check_actions(cursor, actions, update):
+    cursor.execute("select fullname, shortname, action_title, subactions from c_pytis_menu_actions")
     actions = copy.copy(actions)
+    missing_titles = []
     while True:
         row = cursor.fetchone()
         if row is None:
             break
-        fullname, shortname, subactions = row
+        fullname, shortname, title, subactions = row
         if fullname[:5] == 'menu/':
             continue
         action = actions.get(fullname)
@@ -324,8 +325,16 @@ def check_actions(cursor, actions):
                 db_subactions_list = []
             if subactions_list != db_subactions_list:
                 print 'Check: Subactions mismatch: %s app="%s" db="%s"' % (fullname, string.join(action.subactions, ' '), subactions or '',)
+            if not title and action.title:
+                missing_titles.append((fullname, action.title,))
     for fullname, action in actions.items():
         print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
+    for fullname, title in missing_titles:
+        if update:
+            print 'Setting title for %s: %s' % (fullname , title,)
+            cursor.execute("update c_pytis_menu_actions set action_title=%s where fullname=%s", (title, fullname,))
+        else:
+            print 'Missing action title in %s: %s' % (fullname , title,)
 
 def fill_rights(cursor, rights, check_rights=None):
     already_stored = {}
@@ -487,7 +496,10 @@ def parse_options():
     parser.add_option("-P", "--password", default=None, action="store", dest="password")
     parser.add_option("--delete", action="store_true", dest="delete_only")
     parser.add_option("--check", action="store_true", dest="check_only")
+    parser.add_option("--check-update", action="store_true", dest="check_update")
     options, args = parser.parse_args()
+    if options.check_update:
+        options.check_only = True
     dbparameters = Configuration.dbparameters
     dbparameters['host'] = options.host
     dbparameters['database'] = options.database
@@ -511,9 +523,9 @@ def run():
     connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
     check_only = options.check_only
+    cursor.execute("set client_encoding to 'latin2'") # grrr
     if not check_only:
         print "Deleting old data..."
-        cursor.execute("set client_encoding to 'latin2'") # grrr
         cursor.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('genmenu')")
         cursor.execute("delete from e_pytis_menu")
         cursor.execute("delete from e_pytis_action_rights")
@@ -549,7 +561,7 @@ def run():
     print "Retrieving rights...done"
     if check_only:
         print "Checking actions..."
-        check_actions(cursor, actions)
+        check_actions(cursor, actions, options.check_update)
         print "Checking actions...done"
         print "Checking rights..."
         roles = check_rights(cursor, rights)
@@ -569,7 +581,7 @@ def run():
         print "Importing roles...done"
         recompute_tables(cursor)
         cursor.execute("delete from e_pytis_disabled_dmp_triggers where id = 'genmenu'")
-        connection.commit()
+    connection.commit()
 
 if __name__ == '__main__':
     run()
