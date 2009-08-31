@@ -70,13 +70,14 @@ class Serial(object):
         self.id = Serial._counter.next()
 
 class Action(object):
-    def __init__(self, name, description, shortname=None, subactions=()):
+    def __init__(self, name, description, shortname=None, subactions=(), title=None):
         self.name = name
         self.description = description
         if shortname is None:
             shortname = name
         self.shortname = shortname
         self.subactions = subactions
+        self.title = title
 
 class Menu(Serial):
     def __init__(self, name, title, parent, position, action=None, help=None, hotkey=None, system=False):
@@ -127,12 +128,17 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             action_components = action_id.split('/')
             action_kind = action_components[0]
             subactions = []
+            spec_title = None
             if action_kind == 'form':
                 form_name = action_components[2]
                 shortname = 'form/' + form_name
                 form_name_components = form_name.split('.')
                 form_module = string.join(form_name_components[:-1], '/')
                 base_form_name = form_name_components[-1]
+                try:
+                    spec_title = resolver.get_object(form_module, base_form_name).title
+                except:
+                    pass
                 try:
                     bindings = resolver.get_object(form_module, base_form_name).bindings
                 except:
@@ -145,7 +151,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname, description=menu.help(),
-                                                 subactions=subactions)
+                                                 subactions=subactions, title=spec_title)
             if action_kind == 'proc':
                 enabled = menu.args().get('enabled')
                 if isinstance(enabled, basestring):
@@ -272,21 +278,27 @@ def process_rights(resolver, actions, rights, def_dir):
                         if not actions_shortnames.has_key(action_shortname):
                             actions_shortnames[action_shortname] = True
                             action_name = 'form/*/'+spec_name
-                            actions[action_name] = action = Action(action_name, '', action_shortname)
+                            try:
+                                spec_title = spec.title
+                            except:
+                                spec_title = None
+                            actions[action_name] = action = Action(action_name, '', action_shortname,
+                                                                   title=spec_title)
                             add_rights(spec_name, action, action_name)
                         else:
                             try:
                                 del actions_extra_shortnames[action_shortname]
                             except KeyError:
                                 pass
+    actions['label/1'] = Action('label/1', None, title="SAMOSTATNÉ AKCE")
     if actions_extra_shortnames:
         print 'Warning: actions without met specifications: %s' % (actions_extra_shortnames.keys(),)
     return rights
 
 def fill_actions(cursor, actions):
     for action in actions.values():
-        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, description, subactions) values(%s, %s, %s, %s)",
-                       (action.name, action.shortname, action.description, string.join(action.subactions, ' ')))
+        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description, subactions) values(%s, %s, %s, %s, %s)",
+                       (action.name, action.shortname, action.title, action.description, string.join(action.subactions, ' ')))
 
 def check_actions(cursor, actions):
     cursor.execute("select fullname, shortname, subactions from c_pytis_menu_actions")

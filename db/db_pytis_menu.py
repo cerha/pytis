@@ -215,7 +215,8 @@ _std_table_nolog('c_pytis_action_types',
                   C('description', TString),
                   ),
                  """List of defined action types.""",
-                 init_values=(("'item'", _("'Položka menu'"),),
+                 init_values=(("'----'", _("''"),),
+                              ("'item'", _("'Položka menu'"),),
                               ("'menu'", _("'Menu'"),),
                               ("'sepa'", _("'Separátor'"),),
                               ("'spec'", _("'Specifikace'"),),
@@ -226,6 +227,7 @@ _std_table_nolog('c_pytis_action_types',
 _std_table_nolog('c_pytis_menu_actions',
                  (P('fullname', TString),
                   C('shortname', TString, constraints=('not null',)),
+                  C('action_title', TString),
                   C('subactions', TString),
                   C('description', TString),
                   ),
@@ -453,20 +455,24 @@ viewng('ev_pytis_menu',
 
 viewng('ev_pytis_menu_structure',
        (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('menuid',)),
-        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'fullname', 'position',),
+        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'fullname', 'position', 'title',),
                        condition='structure.menuid = menu.menuid', jointype=JoinType.LEFT_OUTER),
         SelectRelation('c_pytis_action_types', alias='atypes', exclude_columns=('type',),
                        column_aliases=(('description', 'actiontype',),),
-                       condition='structure.type = atypes.type', jointype=JoinType.LEFT_OUTER,
-                       ),
+                       condition='structure.type = atypes.type', jointype=JoinType.LEFT_OUTER),
+        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
+                       condition='structure.shortname = actions.shortname', jointype=JoinType.LEFT_OUTER)
         ),
        include_columns=(V(None, 'position_nsub',
-                          "(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)"),),
+                          "(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)"),
+                        V(None, 'title',
+                          "coalesce(menu.title, '('||actions.action_title||')')"),
+                        ),
        insert_order=(),
        update_order=(),
        delete_order=(),
        grant=db_rights,
-       depends=('e_pytis_menu', 'a_pytis_actions_structure',)
+       depends=('e_pytis_menu', 'a_pytis_actions_structure', 'c_pytis_menu_actions',)
        )
 
 viewng('ev_pytis_menu_all_positions',
@@ -868,7 +874,9 @@ def pytis_update_actions_structure():
     actions = {}
     def add_row(fullname, action, menuid, position):
         summaryid = '%s+%s' % (menuid or '', action,)
-        if menuid is None:
+        if position.find('.') == -1:
+            item_type = '----'
+        elif menuid is None:
             item_type = 'spec'
         elif not fullname:
             item_type = 'sepa'
@@ -904,7 +912,7 @@ def pytis_update_actions_structure():
                     subposition = '%s.%02d' % (position, i,)
                     add_row(subaction, subaction, None, subposition)
     position = '8.0001'
-    add_row('SAMOSTATNÉ AKCE', None, None, '8')
+    add_row('label/1', 'label/1', None, '8')
     for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
         action = row['shortname']
         if actions.has_key(action):
@@ -984,7 +992,7 @@ viewng('ev_pytis_role_menu',
 
 viewng('ev_pytis_extended_role_menu_raw',
        (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('menuid',)),
-        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'fullname', 'position',),
+        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'fullname', 'position', 'title',),
                        condition='structure.menuid = menu.menuid', jointype=JoinType.LEFT_OUTER),
         SelectRelation('ev_pytis_valid_roles', alias='roles', exclude_columns=('description', 'purposeid', 'deleted',),
                        jointype=JoinType.CROSS,
@@ -996,9 +1004,14 @@ viewng('ev_pytis_extended_role_menu_raw',
                        column_aliases=(('description', 'actiontype',),),
                        condition='structure.type = atypes.type', jointype=JoinType.LEFT_OUTER,
                        ),
+        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
+                       condition='structure.shortname = actions.shortname', jointype=JoinType.LEFT_OUTER)
         ),
        include_columns=(V(None, 'position_nsub',
-                          "(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)"),),
+                          "(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)"),
+                        V(None, 'title',
+                          "coalesce(menu.title, '('||actions.action_title||')')"),
+                        ),
        insert=None,
        update=None,
        delete=None,
