@@ -1,5 +1,11 @@
 2009-09-01  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Column `description' added to menu rights editing.
+
+2009-09-01  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/form.py:
 	* lib/pytis/form/list.py:
 	Set default sorting after sorting is set to empty in FoldableForm.

@@ -255,8 +255,10 @@ class ApplicationMenuM(ApplicationMenu):
               computer=pytis.presentation.computer(_xaction_computer),
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
+        Field('description', _("Poznámka")),
         )
-    columns = ('title', 'actiontype', 'fullname', 'locked',)
+    columns = ('title', 'actiontype', 'fullname', 'locked', 'description',)
+    layout = ('title', 'position', 'actiontype', 'fullname', 'locked', 'description',)
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
                                            binding_column='shortname'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
