@@ -97,14 +97,14 @@ class PrettyFoldable(PrettyTreeOrder):
     def _indentation(self, level, row, form):
         if form is None:
             mark = ''
-        elif (row.has_key(self._tree_column_nsub_id) and
-              not row[self._tree_column_nsub_id].value()):
-            mark = u'⊙ ' #u'⊡ '
         else:
             folding = form.folding_level(row)
             if folding == '':
                 return ''
-            if folding == 0:
+            if (row.has_key(self._tree_column_nsub_id) and
+                not row[self._tree_column_nsub_id].value()):
+                mark = u'⊙ '
+            elif folding == 0:
                 mark = u'⊞ '
             else:
                 mark = u'⊟ '

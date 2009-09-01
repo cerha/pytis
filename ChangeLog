@@ -1,3 +1,8 @@
+2009-09-01  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/types_.py:
+	Don't display terminal node marks in foldable columns when folding is disabled.
+
 2009-08-31  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
