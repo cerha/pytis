@@ -1007,6 +1007,29 @@ class LookupForm(InnerForm):
         automaticky vyvolán dialog pro výbìr tøídících kritérií.
         
         """
+        sorting = self._determine_sorting(col=col, direction=direction, primary=primary)
+        if sorting is not None and sorting != self._lf_sorting:
+            self._lf_sorting = sorting
+            self._set_state_param('sorting', sorting)
+            self.select_row(self._current_key())
+        return sorting
+    
+    def _can_sort(self, col=None, direction=None, primary=False):
+        # `col' je zde identifikátor sloupce.
+        sorting_columns = tuple(self._sorting_columns())
+        if direction == self.SORTING_NONE:
+            return sorting_columns and (col is None or col in sorting_columns)
+        elif direction is not None and col is not None:
+            pos = self._sorting_position(col)
+            dir = self._sorting_direction(col)
+            if primary:
+                return pos != 0 or direction != dir
+            else:
+                return pos != 0 and direction != dir and sorting_columns
+        else:
+            return True
+
+    def _determine_sorting(self, col, direction, primary):
         if col is None and direction == self.SORTING_NONE:
             sorting = ()
         elif col is None or direction is None:
@@ -1049,26 +1072,7 @@ class LookupForm(InnerForm):
             sorting = tuple(sorting)
         else:
             raise ProgramError("Invalid sorting arguments:", (col, direction))
-        if sorting is not None and sorting != self._lf_sorting:
-            self._lf_sorting = sorting
-            self._set_state_param('sorting', sorting)
-            self.select_row(self._current_key())
         return sorting
-    
-    def _can_sort(self, col=None, direction=None, primary=False):
-        # `col' je zde identifikátor sloupce.
-        sorting_columns = tuple(self._sorting_columns())
-        if direction == self.SORTING_NONE:
-            return sorting_columns and (col is None or col in sorting_columns)
-        elif direction is not None and col is not None:
-            pos = self._sorting_position(col)
-            dir = self._sorting_direction(col)
-            if primary:
-                return pos != 0 or direction != dir
-            else:
-                return pos != 0 and direction != dir and sorting_columns
-        else:
-            return True
         
     # Veøejné metody
     
