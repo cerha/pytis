@@ -1,5 +1,11 @@
 2009-09-01  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	* lib/pytis/form/list.py:
+	Determine default sorting of FoldableForms automatically.
+
+2009-09-01  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/presentation/types_.py:
 	Don't display terminal node marks in foldable columns when folding is disabled.
 

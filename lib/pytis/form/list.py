@@ -2355,13 +2355,28 @@ class FoldableForm(ListForm):
         self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
         self._folding = self._resolver.get(self._name, 'initial_folding_spec') or self.Folding()
-        for c in self._data.columns():
-            if isinstance(c.type(), pytis.presentation.PrettyFoldable):
-                self._folding_column_id = c.type().tree_column_id()
-                break
+        self._folding_column_id = self._find_folding_column()
         # Any better way to display the form with initial folding?
         self.refresh()
 
+    def _find_folding_column(self):
+        if self._folding_column_id is not None:
+            return self._folding_column_id
+        folding_column_id = None
+        for c in self._data.columns():
+            if isinstance(c.type(), pytis.presentation.PrettyFoldable):
+                folding_column_id = c.type().tree_column_id()
+                break
+        return folding_column_id
+
+    def _default_sorting(self):
+        sorting = self._view.sorting()
+        if sorting is None:
+            folding_column_id = self._find_folding_column()
+            if folding_column_id is not None:
+                sorting = ((folding_column_id, pytis.data.ASCENDENT,),)
+        return sorting
+        
     def _current_condition(self, filter=None, display=False):
         condition = super(FoldableForm, self)._current_condition(filter=filter, display=display)
         if display and self._folding_enabled():

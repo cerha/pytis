@@ -216,7 +216,6 @@ class ApplicationMenu(pytis.presentation.Specification):
         )
     columns = ('title', 'xaction', 'locked',)
     layout = ('title', 'position',)
-    sorting = (('position', pytis.data.ASCENDENT,),)
     cb = pytis.presentation.CodebookSpec(display='title')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
     initial_folding = pytis.form.FoldableForm.Folding(level=2)
@@ -281,7 +280,6 @@ class ApplicationMenuPositions(pytis.presentation.Specification):
         )
     columns = ('title', 'position',)
     layout = ('title', 'position',)
-    sorting = (('position', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 ### Rights
@@ -412,7 +410,6 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     layout = ('title', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    sorting = (('position', pytis.data.ASCENDENT,),)
     initial_folding = pytis.form.FoldableForm.Folding(level=None)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def on_new_record(self, *args, **kwargs):
