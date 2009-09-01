@@ -801,7 +801,8 @@ class ViewSpec(object):
                  actions=(), sorting=None, grouping=None, group_heading=None, check=(),
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
-                 filters=(), conditions=(), default_filter=None, aggregations=(), bindings=()):
+                 filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
+                 initial_folding=None):
         
         """Inicializuj instanci.
 
@@ -948,7 +949,10 @@ class ViewSpec(object):
             'pytis.data.Data'.
 
           bindings -- a sequence of binding specifications as 'Binding' instances.
-            
+
+          initial_folding -- 'FoldableForm.Folding' instance defining initial
+            folding.  'None' means use the standard folding.
+
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
         the field specifications in 'fields'.
@@ -1100,6 +1104,7 @@ class ViewSpec(object):
         self._default_filter = default_filter
         self._aggregations = tuple(aggregations)
         self._bindings = tuple(bindings)
+        self._initial_folding = initial_folding
         
     def _linearize_actions(self, spec):
         actions = []
@@ -1219,6 +1224,10 @@ class ViewSpec(object):
     def bindings(self):
         """Return bindings as a tuple."""
         return self._bindings
+
+    def initial_folding(self):
+        """Return initial folding as a 'FoldableForm.Folding' instance or 'None'."""
+        return self._initial_folding
 
     
 class BindingSpec(object):
@@ -2873,7 +2882,7 @@ class Specification(object):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
                    attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                                 'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                                'data_access_rights', 'initial_folding',
+                                'data_access_rights',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)

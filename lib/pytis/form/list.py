@@ -2354,7 +2354,7 @@ class FoldableForm(ListForm):
     def __init__(self, *args, **kwargs):
         self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
-        self._folding = self._resolver.get(self._name, 'initial_folding_spec') or self.Folding()
+        self._folding = self._view.initial_folding() or self.Folding()
         self._folding_column_id = self._find_folding_column()
         # Any better way to display the form with initial folding?
         self.refresh()
