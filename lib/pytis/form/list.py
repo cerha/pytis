@@ -2375,6 +2375,8 @@ class FoldableForm(ListForm):
             folding_column_id = self._find_folding_column()
             if folding_column_id is not None:
                 sorting = ((folding_column_id, pytis.data.ASCENDENT,),)
+            else:
+                sorting = super(FoldableForm, self)._default_sorting()
         return sorting
         
     def _current_condition(self, filter=None, display=False):

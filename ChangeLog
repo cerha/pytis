@@ -1,6 +1,11 @@
 2009-09-01  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/list.py:
+	Fix initial sorting for non-foldable forms in FoldableForm.
+
+2009-09-01  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/list.py:
 	* lib/pytis/presentation/spec.py:
 	Cleanup of passing initial folding specifications.
 
