@@ -650,8 +650,16 @@ class BrowseForm(LayoutForm):
         if filters is None:
             filters = self._view.filters()
         self._filters = filters or ()
-        # Determine the current filter.
-        filter_id = params.get('filter', self._view.default_filter())
+        # Determine the currently selected filter.
+        filter_id = params.get('filter')
+        if filter_id is not None:
+            req.set_cookie('pytis-form-last-filter', self._name +':'+ filter_id)
+        else:
+            cookie = req.cookie('pytis-form-last-filter')
+            if cookie and cookie.startswith(self._name +':'):
+                filter_id = cookie[len(self._name)+1:]
+            else:
+                filter_id = self._view.default_filter()
         if filter_id and filter_id != self._NULL_FILTER_ID:
             condition = find(filter_id, self._filters, key=lambda f: f.id())
             # Append the current user selected filter to the filter passed as 'filter' argument.

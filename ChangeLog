@@ -1,3 +1,8 @@
+2009-09-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Web: Remember the last selected BrowseForm filter using a cookie..
+
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 
 	* TODO:
