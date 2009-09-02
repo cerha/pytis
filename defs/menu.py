@@ -205,6 +205,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
         Field('name', _("Id obsahující role")),
         Field('title', _("Titulek polo¾ky menu"), type=_Title()),
+        Field('xtitle', _("Titulek polo¾ky menu"), type=_Title()),
         Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
         Field('position_nsub'),
         Field('fullname', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
@@ -214,7 +215,7 @@ class ApplicationMenu(pytis.presentation.Specification):
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
         Field('locked', _("Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
-    columns = ('title', 'xaction', 'locked',)
+    columns = ('xtitle', 'xaction', 'locked',)
     layout = ('title', 'position',)
     cb = pytis.presentation.CodebookSpec(display='title')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)

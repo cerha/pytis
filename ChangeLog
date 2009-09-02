@@ -1,5 +1,11 @@
 2009-09-02  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Fix menu title editing.
+
+2009-09-02  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/evaction.py:
 	Add question mark to identifier characters in evaction parsing.
 
