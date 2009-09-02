@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2007 Brailcom, o.p.s.
+# Copyright (C) 2007, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ def _evparse_identifier(text, skip_whitespace=True):
         while text[0] == ' ':
             text = text[1:]
     i = 0
-    letters = string.ascii_letters + string.digits + '_*'
+    letters = string.ascii_letters + string.digits + '_*?'
     while True:
         char = text[i]
         if char == '\\':
