@@ -1,3 +1,8 @@
+2009-09-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Catch connection error in _postgresql_rollback_transaction of dbapi.
+
 2009-09-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:

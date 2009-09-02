@@ -168,7 +168,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # For unknown reasons, connection client encoding gets reset after
         # rollback
         cursor = connection.cursor()
-        cursor.execute('set client_encoding to "utf-8"')
+        try:
+            cursor.execute('set client_encoding to "utf-8"')
+        except dbapi.OperationalError, e:
+            if e.args[0].find('server closed the connection unexpectedly') != -1:
+                raise DBSystemException(_("Database connection error"), e, e.args)
 
     
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
