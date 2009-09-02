@@ -1,5 +1,10 @@
 2009-09-02  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/list.py:
+	Make CodebookForm a successor of FoldableForm.
+
+2009-09-02  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Fix menu title editing.

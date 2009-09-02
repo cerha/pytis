@@ -2098,111 +2098,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._update_selection_colors()
 
 
-
-class CodebookForm(PopupForm, ListForm, KeyHandler):
-    """Formuláø pro zobrazení výbìrového seznamu (èíselníku).
-
-    Výbìrový seznam zobrazuje øádky dat, z nich¾ u¾ivatel nìkterý øádek
-    vybere.  U¾ivatel kromì výbìru a listování nemù¾e s øádky nijak
-    manipulovat.
-
-    Formuláø je zobrazen jako modální okno pomocí metody 'run()', která skonèí
-    po výbìru polo¾ky a vrátí instanci PresentedRow pro vybraný øádek.  Pokud
-    byl formuláø ukonèen jinak ne¾ výbìrem záznamu, je vrácena hodnota 'None'.
-
-    """
-    DESCR = _("èíselník")
-
-    _DEFAULT_WINDOW_HEIGHT = 500
-
-    def __init__(self, parent, *args, **kwargs):
-        parent = self._popup_frame(parent)
-        super(CodebookForm, self).__init__(parent, *args, **kwargs)
-        h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
-        self.SetSize((self._total_width()+30, h))
-        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
-                    lambda e: self.COMMAND_ACTIVATE.invoke())
-
-    def _init_attributes(self, begin_search=None, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
-
-        Argumenty:
-
-          begin_search -- Pokud není None, bude po otevøení formuláøe
-            automaticky nastartováno inkrementální vyhledávání. Pokud
-            je hodnota øetìzec, je chápán jako identifikátor
-            sloupce, ve kterém se má provádìt vyhledávání. Není-li ho
-            hodnota øetìzec, nebo neodpovídá-li ¾ádnému sloupci,
-            je vyhledávání provádìno automaticky nad sloupeèkem s
-            primárním tøídìním.
-            
-        """
-        try:
-            self._cb_spec = self._resolver.get(self._name, 'cb_spec')
-        except ResolverError:
-            self._cb_spec = CodebookSpec()
-        self._begin_search = begin_search
-        super(CodebookForm, self)._init_attributes(**kwargs)
-          
-    def _on_idle(self, event):
-        ListForm._on_idle(self, event)
-        if not hasattr(self, '_focus_forced_to_grid'):
-            self._grid.SetFocus()
-            self._focus_forced_to_grid = True
-        if self._begin_search:
-            begin_search = self._begin_search
-            self._begin_search = None
-            prefill = None
-            if isinstance(begin_search, str):
-                col_id = begin_search
-            elif isinstance(begin_search, tuple):
-                col_id, prefill = begin_search
-            else:
-                cols = self._sorting_columns()
-                if cols:
-                    col_id = cols[0]
-                else:
-                    message(_("Nelze zaèít inkrementální vyhledávání. "
-                              "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
-                            beep_=True)
-            col = find(col_id, self._columns, key=lambda c:c.id())
-            if col is not None:
-                self._select_cell(row=0, col=self._columns.index(col))
-                self.COMMAND_INCREMENTAL_SEARCH.invoke(prefill=prefill)
-            else:
-                log(OPERATIONAL, "Invalid search column:", col_id)
-
-    def _default_columns(self):
-        return self._cb_spec.columns() \
-               or super(CodebookForm, self)._default_columns()
-
-    def _default_sorting(self):
-        sorting = self._cb_spec.sorting()
-        if sorting is not None:
-            return sorting
-        else:
-            return super(CodebookForm, self)._default_sorting()
-        
-    def _context_menu(self):
-        return (MItem(_("Vybrat"),
-                      command = ListForm.COMMAND_ACTIVATE),
-                )
-
-    def _on_activation(self, alternate=False):
-        """Nastav návratovou hodnotu a ukonèi modální dialog."""
-        self._result = self.current_row()
-        self._parent.EndModal(1)
-        return True
-
-class SelectRowsForm(CodebookForm):
-    """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
-
-    def _on_activation(self, alternate=False):
-        self._result = tuple(self.selected_rows())
-        self._parent.EndModal(1)
-        return True
-
-
 class FoldableForm(ListForm):
     """Form able to expand or collapse sets of rows.
 
@@ -2354,10 +2249,13 @@ class FoldableForm(ListForm):
     def __init__(self, *args, **kwargs):
         self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
-        self._folding = self._view.initial_folding() or self.Folding()
+        self._folding = self._initial_folding()
         self._folding_column_id = self._find_folding_column()
         # Any better way to display the form with initial folding?
         self.refresh()
+
+    def _initial_folding(self):
+        return self._view.initial_folding() or self.Folding()
 
     def _find_folding_column(self):
         if self._folding_column_id is not None:
@@ -2478,6 +2376,112 @@ class FoldableForm(ListForm):
         else:
             level = ''
         return level
+
+class CodebookForm(PopupForm, FoldableForm, KeyHandler):
+    """Formuláø pro zobrazení výbìrového seznamu (èíselníku).
+
+    Výbìrový seznam zobrazuje øádky dat, z nich¾ u¾ivatel nìkterý øádek
+    vybere.  U¾ivatel kromì výbìru a listování nemù¾e s øádky nijak
+    manipulovat.
+
+    Formuláø je zobrazen jako modální okno pomocí metody 'run()', která skonèí
+    po výbìru polo¾ky a vrátí instanci PresentedRow pro vybraný øádek.  Pokud
+    byl formuláø ukonèen jinak ne¾ výbìrem záznamu, je vrácena hodnota 'None'.
+
+    """
+    DESCR = _("èíselník")
+
+    _DEFAULT_WINDOW_HEIGHT = 500
+
+    def __init__(self, parent, *args, **kwargs):
+        parent = self._popup_frame(parent)
+        super(CodebookForm, self).__init__(parent, *args, **kwargs)
+        h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
+        self.SetSize((self._total_width()+30, h))
+        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
+                    lambda e: self.COMMAND_ACTIVATE.invoke())
+
+    def _init_attributes(self, begin_search=None, **kwargs):
+        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+
+        Argumenty:
+
+          begin_search -- Pokud není None, bude po otevøení formuláøe
+            automaticky nastartováno inkrementální vyhledávání. Pokud
+            je hodnota øetìzec, je chápán jako identifikátor
+            sloupce, ve kterém se má provádìt vyhledávání. Není-li ho
+            hodnota øetìzec, nebo neodpovídá-li ¾ádnému sloupci,
+            je vyhledávání provádìno automaticky nad sloupeèkem s
+            primárním tøídìním.
+            
+        """
+        try:
+            self._cb_spec = self._resolver.get(self._name, 'cb_spec')
+        except ResolverError:
+            self._cb_spec = CodebookSpec()
+        self._begin_search = begin_search
+        super(CodebookForm, self)._init_attributes(**kwargs)
+        
+    def _initial_folding(self):
+        return self._view.initial_folding() or self.Folding(level=None)
+          
+    def _on_idle(self, event):
+        ListForm._on_idle(self, event)
+        if not hasattr(self, '_focus_forced_to_grid'):
+            self._grid.SetFocus()
+            self._focus_forced_to_grid = True
+        if self._begin_search:
+            begin_search = self._begin_search
+            self._begin_search = None
+            prefill = None
+            if isinstance(begin_search, str):
+                col_id = begin_search
+            elif isinstance(begin_search, tuple):
+                col_id, prefill = begin_search
+            else:
+                cols = self._sorting_columns()
+                if cols:
+                    col_id = cols[0]
+                else:
+                    message(_("Nelze zaèít inkrementální vyhledávání. "
+                              "Èíselník neobsahuje ¾ádný setøídìný sloupec!"),
+                            beep_=True)
+            col = find(col_id, self._columns, key=lambda c:c.id())
+            if col is not None:
+                self._select_cell(row=0, col=self._columns.index(col))
+                self.COMMAND_INCREMENTAL_SEARCH.invoke(prefill=prefill)
+            else:
+                log(OPERATIONAL, "Invalid search column:", col_id)
+
+    def _default_columns(self):
+        return self._cb_spec.columns() \
+               or super(CodebookForm, self)._default_columns()
+
+    def _default_sorting(self):
+        sorting = self._cb_spec.sorting()
+        if sorting is not None:
+            return sorting
+        else:
+            return super(CodebookForm, self)._default_sorting()
+        
+    def _context_menu(self):
+        return (MItem(_("Vybrat"),
+                      command = ListForm.COMMAND_ACTIVATE),
+                )
+
+    def _on_activation(self, alternate=False):
+        """Nastav návratovou hodnotu a ukonèi modální dialog."""
+        self._result = self.current_row()
+        self._parent.EndModal(1)
+        return True
+
+class SelectRowsForm(CodebookForm):
+    """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
+
+    def _on_activation(self, alternate=False):
+        self._result = tuple(self.selected_rows())
+        self._parent.EndModal(1)
+        return True
 
 class BrowseForm(FoldableForm):
     """Formuláø pro prohlí¾ení dat s mo¾ností editace."""
