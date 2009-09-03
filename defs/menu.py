@@ -280,8 +280,9 @@ class ApplicationMenuPositions(pytis.presentation.Specification):
     fields = (
         Field('position', _("Pozice v menu"), fixed=True),
         Field('title', _("Titulek polo¾ky menu"), type=_Title()),
+        Field('xtitle', _("Titulek polo¾ky menu"), type=_Title()),
         )
-    columns = ('title', 'position',)
+    columns = ('xtitle',)
     layout = ('title', 'position',)
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
