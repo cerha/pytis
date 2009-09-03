@@ -356,7 +356,10 @@ def e_pytis_menu_trigger():
                             position >= next_position or
                             next_position >= next_item_position):
                             suffix = position[-1]
-                            new_suffix = str(long(long(position[-1]) + long(next_item_position[-1]) / 2))
+                            next_suffix = next_item_position[-1]
+                            suffix += '0' * max(len(next_suffix) - len(suffix), 0)
+                            next_suffix += '0' * max(len(suffix) - len(next_suffix), 0)
+                            new_suffix = str(long(long(suffix) + long(next_suffix)) / 2)
                             if new_suffix == suffix:
                                 new_suffix = suffix + '4'
                             next_position = position[:-1] + [new_suffix]
@@ -479,23 +482,39 @@ viewng('ev_pytis_menu_structure',
        depends=('e_pytis_menu', 'a_pytis_actions_structure', 'c_pytis_menu_actions',)
        )
 
+def pytis_first_position(position):
+    position = args[0]
+    start = '1' + '0' * (len(position) - 1)
+    first = str(long((long(start) + long(position)) / 2))
+    if first == start:
+        first += '8'
+    return first
+_plpy_function('pytis_first_position', (TString,), TString,
+               body=pytis_first_position,
+               depends=())
 viewng('ev_pytis_menu_all_positions',
        (SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu1', exclude_columns=('*',),
                                          condition=""),),
-                         include_columns=(V(None, 'position', 'position'),))),
+                         include_columns=(V(None, 'position', 'position'),
+                                          V(None, 'xtitle', "coalesce(menu1.title, '――――')"),
+                                          ))),
         SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu2', exclude_columns=('*',),
                                          condition="position != ''"),),
-                         include_columns=(V(None, 'position', "next_position"),)),
+                         include_columns=(V(None, 'position', "next_position"),
+                                          V(None, 'xtitle', "''"),
+                                          )),
                   settype=UNION),
         SelectSet(Select((SelectRelation('e_pytis_menu', alias='menu3', exclude_columns=('*',),
                                          condition="name is NULL and title is not NULL"),),
-                         include_columns=(V(None, 'position', "position||'1'"),)),
+                         include_columns=(V(None, 'position', "menu3.position||pytis_first_position(subpath((select position from e_pytis_menu where position <@ menu3.position and position != menu3.position union select '9' order by position limit 1), -1)::text)::ltree"),
+                                          V(None, 'xtitle', "''"),
+                                          )),
                   settype=UNION),),
        insert=(),
        update=(),
        delete=(),
        grant=db_rights,
-       depends=('e_pytis_menu',))
+       depends=('e_pytis_menu', 'pytis_first_position',))
 
 viewng('ev_pytis_menu_positions',
        (SelectRelation('ev_pytis_menu_all_positions', alias='positions'),
