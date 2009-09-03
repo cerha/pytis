@@ -333,11 +333,11 @@ def e_pytis_menu_trigger():
                 plpy.execute("update e_pytis_menu set position='%s'||subpath(position, nlevel('%s')) where position <@ '%s'" %
                              (new_position, old_position, old_position,))
             if new:
-                data = plpy.execute("select * from e_pytis_menu order by position where position != ''")
+                data = plpy.execute("select * from e_pytis_menu where position != '' order by position")
                 sequences = {}
                 for row in data:
-                    position = row[i]['position'].split('.')
-                    next_position = row[i]['next_position'].split('.')
+                    position = row['position'].split('.')
+                    next_position = row['next_position'].split('.')
                     position_length = len(position)
                     if not sequences.has_key(position_length):
                         sequences[position_length] = []
@@ -346,7 +346,7 @@ def e_pytis_menu_trigger():
                 def update_next_position(position, next_position):
                     plpy.execute("update e_pytis_menu set next_position='%s' where position='%s'" %
                                  (string.join(next_position, '.'), string.join(position, '.'),))
-                for position_list in sequences.items():
+                for position_list in sequences.values():
                     position_list_len = len(position_list)
                     for i in range(position_list_len - 1):
                         position = position_list[i][0]
@@ -356,7 +356,7 @@ def e_pytis_menu_trigger():
                             position >= next_position or
                             next_position >= next_item_position):
                             suffix = position[-1]
-                            new_suffix = str(long(long() + long(next_item_position[-1]) / 2))
+                            new_suffix = str(long(long(position[-1]) + long(next_item_position[-1]) / 2))
                             if new_suffix == suffix:
                                 new_suffix = suffix + '4'
                             next_position = position[:-1] + [new_suffix]

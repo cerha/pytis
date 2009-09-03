@@ -1,3 +1,8 @@
+2009-09-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fixes in menu items movement in the menu editing form.
+
 2009-09-02  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/list.py:
