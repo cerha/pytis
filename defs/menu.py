@@ -207,6 +207,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('title', _("Titulek polo¾ky menu"), type=_Title()),
         Field('xtitle', _("Titulek polo¾ky menu"), type=_Title()),
         Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
+        Field('next_position', _(""), default='0'),
         Field('position_nsub'),
         Field('fullname', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
               descr=_("Akce aplikace vyvolaná polo¾kou menu")),
@@ -232,8 +233,10 @@ class ApplicationMenu(pytis.presentation.Specification):
         if row['name'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Koncové polo¾ky menu nelze mazat"))
             return None
-        wm_value = pytis.data.WMValue(pytis.data.String(), row['position'].value() + '?*')
-        if row.data().select(condition=pytis.data.WM('position', wm_value)) > 0:
+        wm_value = row['position'].value() + '.*'
+        if (row.data().select(condition=pytis.data.AND(pytis.data.LTreeMatch('position', wm_value),
+                                                       pytis.data.NE('position', row['position'])))
+            > 0):
             pytis.form.run_dialog(pytis.form.Warning, _("Nelze mazat polo¾ky obsahující jiné polo¾ky"))
             return None
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):

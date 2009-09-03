@@ -318,8 +318,9 @@ def e_pytis_menu_trigger():
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             # If there are any children, reject deletion
-            data = plpy.execute("select * from e_pytis_menu where position like '%s_%%'" %
-                                (self._old['position'],),
+            old_position = self._old['position']
+            data = plpy.execute("select * from e_pytis_menu where position ~ '%s.*' and position != '%s'" %
+                                (old_position, old_position,),
                                 1)
             if data:
                 self._return_code = self._RETURN_CODE_SKIP

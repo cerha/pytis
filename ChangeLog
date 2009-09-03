@@ -1,5 +1,11 @@
 2009-09-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Fixes in menu editing.
+
+2009-09-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Improvements of the menu position selection form.
 
