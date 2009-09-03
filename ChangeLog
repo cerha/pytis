@@ -7,6 +7,11 @@
 2009-09-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/application.py:
+	Fix DB connection display in application window title when using local DB connections..
+
+2009-09-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/application.py:
 	Work around changed wx release number constant in *some* wx 2.8 versions..
 >>>>>>> Work around changed wx release number constant in *some* wx 2.8 versions.:ChangeLog
 

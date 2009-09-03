@@ -285,11 +285,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
             # databázi (není vyvolána ¾ádná databázová operace), nemusí být
             # hodnoty správnì.
-            title = frame.GetTitle()            
-            title += " %s@%s %s" % (conn.user(), conn.database(),
-                                    conn.host())
-            if conn.port():
-                title += ":%d" % conn.port()
+            title = frame.GetTitle()
+            title += " %s@%s" % (conn.user(), conn.database())
+            if conn.host():
+                title += " "+conn.host()
+                if conn.port():
+                    title += ":%d" % conn.port()
             frame.SetTitle(title)
         return True
 
