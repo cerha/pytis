@@ -468,7 +468,7 @@ viewng('ev_pytis_menu_structure',
                        column_aliases=(('description', 'actiontype',),),
                        condition='structure.type = atypes.type', jointype=JoinType.LEFT_OUTER),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
-                       condition='structure.shortname = actions.shortname', jointype=JoinType.LEFT_OUTER)
+                       condition='structure.fullname = actions.fullname', jointype=JoinType.LEFT_OUTER)
         ),
        include_columns=(V(None, 'position_nsub',
                           "(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)"),
@@ -940,11 +940,11 @@ def pytis_update_actions_structure():
                 add_row(sub_fullname, sub_shortname, None, subposition)
     position = '8.0001'
     add_row('label/1', 'label/1', None, '8')
-    for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
-        shortname = row['shortname']
+    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
+        fullname, shortname = row['fullname'], row['shortname']
         if actions.has_key(shortname):
             continue
-        add_row(shortname, shortname, None, position)
+        add_row(fullname, shortname, None, position)
         position_components = position.split('.')
         position = string.join(position_components[:-1] + ['%04d' % (int(position_components[-1]) + 1)], '.')
 _plpy_function('pytis_update_actions_structure', (), TBoolean,
