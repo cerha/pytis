@@ -30,6 +30,7 @@ import psycopg2 as dbapi
 import pytis.data
 import pytis.extensions
 import pytis.form
+import pytis.presentation
 import pytis.util
 
 def cfg_param(*args, **kwargs):
@@ -137,10 +138,27 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     spec_title = resolver.get_object(form_module, base_form_name).title
                 except:
                     pass
-                try:
-                    bindings = resolver.get_object(form_module, base_form_name).bindings
-                except:
-                    bindings = None
+                bindings = None
+                form_class = eval(action_components[1])
+                if issubclass(form_class, pytis.form.DualForm):
+                    pos = form_name.find('::')
+                    if pos == -1:
+                        try:
+                            bindings = resolver.get_object(form_module, base_form_name).bindings
+                        except:
+                            pass
+                    else:
+                        def binding(name):
+                            form_name_components = name.split('.')
+                            form_module = string.join(form_name_components[:-1], '/')
+                            base_form_name = form_name_components[-1]
+                            try:
+                                title = resolver.get_object(form_module, base_form_name).title
+                            except:
+                                title = ''
+                            return pytis.presentation.Binding(id=name, title=title, name=('form/%s' % (name,)),
+                                                              binding_column='dummy')
+                        bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
                 if pytis.util.is_sequence(bindings):
                     for i in range(len(bindings)):
                         b = bindings[i]
