@@ -103,7 +103,7 @@ class Menu(wiking.PytisModule):
         return dict(identifier=req.unresolved_path[0])
     
     def _menu_item_rows(self, req, **kwargs):
-        return self._data.get_rows(req, **kwargs)
+        return self._data.get_rows(**kwargs)
     
     def _embed_binding(self, modname):
         return wiking.Binding(modname, modname, None, id=self.EMBED_BINDING_ID,

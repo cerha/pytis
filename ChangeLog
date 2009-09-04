@@ -1,5 +1,10 @@
 2009-09-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/cms/web.py:
+	Pytis CMS: Fix menu construction in the default implementation..
+
+2009-09-04  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/cms/cms.py:
 	Pytis CMS: Set default `uid' value for the default implementation of CMS Users module..
 
