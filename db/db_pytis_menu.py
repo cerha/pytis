@@ -220,6 +220,7 @@ _std_table_nolog('c_pytis_action_types',
                               ("'menu'", _("'Menu'"),),
                               ("'sepa'", _("'Separátor'"),),
                               ("'spec'", _("'Specifikace'"),),
+                              ("'subf'", _("'Podformulář'"),),
                               ("'proc'", _("'Procedura'"),),
                               ),
                  grant=db_rights
@@ -228,8 +229,8 @@ _std_table_nolog('c_pytis_menu_actions',
                  (P('fullname', TString),
                   C('shortname', TString, constraints=('not null',)),
                   C('action_title', TString),
-                  C('subactions', TString),
                   C('description', TString),
+                  C('parent_action', TString),
                   ),
                  """List of available application actions.""",
                  grant=db_rights
@@ -682,12 +683,12 @@ def pytis_update_summary_rights():
             self.forbidden = []
     raw_rights = {}
     for row in plpy.execute("select rightid, granted, roleid, menuid, shortname, system from ev_pytis_menu_rights"):
-        rightid, granted, roleid, menuid, action, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['shortname'], row['system']
-        keys = [(action, menuid,)]
+        rightid, granted, roleid, menuid, shortname, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['shortname'], row['system']
+        keys = [(shortname, menuid,)]
         if menuid is not None:
-            keys.append((action, None,))
+            keys.append((shortname, None,))
         for key in keys:
-            key = (action, menuid,)
+            key = (shortname, menuid,)
             item_rights = raw_rights.get(key)
             if item_rights is None:
                 raw_rights[key] = item_rights = {}
@@ -701,6 +702,15 @@ def pytis_update_summary_rights():
             else:
                 r = role_rights.forbidden
             r.append(rightid)
+    # Retrieve subactions
+    subactions = {}
+    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%'"):
+        fullname, shortname = row['fullname'], row['shortname']
+        parent = fullname[fullname.find('/', 4)+1:]
+        parent_subactions = subactions.get(parent)
+        if parent_subactions is None:
+            parent_subactions = subactions[parent] = []
+        parent_subactions.append(shortname)
     # Compute rights
     class Rights(object):
         def __init__(self, total, allowed, forbidden, parent, subforms):
@@ -713,30 +723,20 @@ def pytis_update_summary_rights():
     position2parent = {}
     menuid2action = {}
     action2menuids = {}
-    for row in plpy.execute("select menuid, type, position, c_pytis_menu_actions.fullname, c_pytis_menu_actions.shortname, subactions "
+    for row in plpy.execute("select menuid, type, position, c_pytis_menu_actions.fullname, c_pytis_menu_actions.shortname "
                             "from c_pytis_menu_actions left outer join a_pytis_actions_structure "
                             "on c_pytis_menu_actions.fullname = a_pytis_actions_structure.fullname "
                             "order by position"):
-        menuid, type_, position, action, fullname, subactions = row['menuid'], row['type'], row['position'], row['shortname'], row['fullname'], row['subactions']
-        menu_rights = raw_rights.get((action, menuid,), {})
-        subforms = []
+        menuid, type_, position, shortname, fullname = row['menuid'], row['type'], row['position'], row['shortname'], row['fullname']
+        menu_rights = raw_rights.get((shortname, menuid,), {})
+        subforms = subactions.get(fullname, ())
         if menuid:
             position2parent[position] = menuid
-            menuid2action[menuid] = action
-            action_menuids = action2menuids.get(action, [])
+            menuid2action[menuid] = shortname
+            action_menuids = action2menuids.get(shortname, [])
             action_menuids.append(menuid)
-            action2menuids[action] = action_menuids
+            action2menuids[shortname] = action_menuids
             fullname_components = fullname.split('/')
-            if fullname_components[0] == 'form':
-                specifications = fullname_components[2].split('::')
-                if len(specifications) == 2:
-                    for i in range(len(specifications)):
-                        subaction = 'form/' + specifications[i]
-                        subforms.append(subaction)
-                elif subactions:
-                    subforms.append(action)
-                    for subaction in subactions.split(' '):
-                        subforms.append(subaction)
         if position and position.find('.') != -1 and menuid:
             parent = position2parent[string.join(position.split('.')[:-1], '.')]
         else:
@@ -808,7 +808,7 @@ def pytis_update_summary_rights():
                 rights.sort()
                 computed_rights[(menu_or_action, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights, parent=parent,
                                                                     subforms=subforms)
-            store_rights(action, max_rights, allowed_rights, forbidden_rights)
+            store_rights(shortname, max_rights, allowed_rights, forbidden_rights)
             if menuid:
                 store_rights(menuid, max_rights, menu_allowed_rights, menu_forbidden_rights)
     # Insertion of new rights to the database takes most of the time, so we make only real changes
@@ -822,11 +822,11 @@ def pytis_update_summary_rights():
         total = all_rights.total
         if isinstance(menuid_or_action, int):
             menuid = menuid_or_action
-            action = menuid2action[menuid]
+            shortname = menuid2action[menuid]
         else:
             menuid = None
-            action = menuid_or_action
-            for mid in action2menuids.get(action, []):
+            shortname = menuid_or_action
+            for mid in action2menuids.get(shortname, []):
                 for r in computed_rights[(mid, roleid,)].total:
                     if r not in total:
                         total.append(r)
@@ -850,15 +850,15 @@ def pytis_update_summary_rights():
                     total = r.total
                 all_rights.total = [r for r in total if r != 'view' or r in subforms_total]
         # Format and store the rights
-        key = action, menuid, roleid
+        key = shortname, menuid, roleid
         rights = string.join(all_rights.total, ' ')
         old_item_rights = old_rights.get(key)
         if rights != old_item_rights:
-            summaryid = '%s+%s' % (menuid or '', action,)
+            summaryid = '%s+%s' % (menuid or '', shortname,)
             if old_item_rights is None:
                 plpy.execute(("insert into a_pytis_computed_summary_rights (shortname, menuid, roleid, rights, summaryid) "
                               "values('%s', %s, '%s', '%s', '%s')") %
-                             (_pg_escape(action), menuid or "NULL", _pg_escape(roleid), rights, _pg_escape(summaryid),))
+                             (_pg_escape(shortname), menuid or "NULL", _pg_escape(roleid), rights, _pg_escape(summaryid),))
             else:
                 plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where summaryid='%s' and roleid='%s'" %
                              (rights, _pg_escape(summaryid), _pg_escape(roleid),))
@@ -866,9 +866,9 @@ def pytis_update_summary_rights():
             del old_rights[key]
         except KeyError:
             pass
-    for action, menuid, roleid in old_rights.keys():
+    for shortname, menuid, roleid in old_rights.keys():
         plpy.execute("delete from a_pytis_computed_summary_rights where shortname='%s' and menuid=%s and roleid='%s'" %
-                     (_pg_escape(action), menuid or "NULL", _pg_escape(roleid),))
+                     (_pg_escape(shortname), menuid or "NULL", _pg_escape(roleid),))
 _plpy_function('pytis_update_summary_rights', (), TBoolean,
                body=pytis_update_summary_rights,
                depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'a_pytis_actions_structure',),)
@@ -895,10 +895,20 @@ def pytis_update_actions_structure():
     def _pg_escape(val):
         return str(val).replace("'", "''")
     plpy.execute("delete from a_pytis_actions_structure")
+    subactions = {}
+    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
+        fullname, shortname = row['fullname'], row['shortname']
+        parent = fullname[fullname.find('/', 4)+1:]
+        parent_subactions = subactions.get(parent)
+        if parent_subactions is None:
+            parent_subactions = subactions[parent] = []
+        parent_subactions.append((fullname, shortname,))
     actions = {}
-    def add_row(fullname, action, menuid, position):
-        summaryid = '%s+%s' % (menuid or '', action,)
-        if position.find('.') == -1:
+    def add_row(fullname, shortname, menuid, position):
+        summaryid = '%s+%s' % (menuid or '', shortname,)
+        if fullname[:4] == 'sub/':
+            item_type = 'subf'
+        elif position.find('.') == -1:
             item_type = '----'
         elif menuid is None:
             item_type = 'spec'
@@ -912,36 +922,29 @@ def pytis_update_actions_structure():
             menuid = 'NULL'
         plpy.execute(("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, summaryid, type) "
                       "values('%s', '%s', %s, '%s', '%s', '%s') ") %
-                     (_pg_escape(fullname), _pg_escape(action), menuid, position, summaryid, item_type,))
-        actions[action] = True
-    for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname, subactions "
+                     (_pg_escape(fullname), _pg_escape(shortname), menuid, position, summaryid, item_type,))
+        actions[shortname] = True
+    for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname "
                             "from e_pytis_menu, c_pytis_menu_actions "
                             "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
                             "order by position"):
-        menuid, position, action, fullname, subactions = row['menuid'], row['position'], row['shortname'], row['fullname'], row['subactions']
-        add_row(fullname, action, menuid, position)
-        action_components = action.split('/')
+        menuid, position, shortname, fullname = row['menuid'], row['position'], row['shortname'], row['fullname']
+        add_row(fullname, shortname, menuid, position)
+        action_components = shortname.split('/')
         fullname_components = fullname.split('/')
         if action_components[0] == 'form':
-            specifications = action_components[1].split('::')
-            if len(specifications) == 2:
-                for i in range(len(specifications)):
-                    subaction = 'form/' + specifications[i]
-                    subposition = '%s.%02d' % (position, i,)
-                    add_row(subaction, subaction, None, subposition)
-            elif subactions:
-                subaction_list = subactions.split(' ')
-                for i in range(len(subaction_list)):
-                    subaction = subaction_list[i]
-                    subposition = '%s.%02d' % (position, i,)
-                    add_row(subaction, subaction, None, subposition)
+            subaction_list = subactions.get(fullname, ())
+            for i in range(len(subaction_list)):
+                sub_fullname, sub_shortname = subaction_list[i]
+                subposition = '%s.%02d' % (position, i,)
+                add_row(sub_fullname, sub_shortname, None, subposition)
     position = '8.0001'
     add_row('label/1', 'label/1', None, '8')
     for row in plpy.execute("select distinct shortname from c_pytis_menu_actions order by shortname"):
-        action = row['shortname']
-        if actions.has_key(action):
+        shortname = row['shortname']
+        if actions.has_key(shortname):
             continue
-        add_row(action, action, None, position)
+        add_row(shortname, shortname, None, position)
         position_components = position.split('.')
         position = string.join(position_components[:-1] + ['%04d' % (int(position_components[-1]) + 1)], '.')
 _plpy_function('pytis_update_actions_structure', (), TBoolean,

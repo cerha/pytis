@@ -70,13 +70,12 @@ class Serial(object):
         self.id = Serial._counter.next()
 
 class Action(object):
-    def __init__(self, name, description, shortname=None, subactions=(), title=None):
+    def __init__(self, name, description, shortname=None, title=None):
         self.name = name
         self.description = description
         if shortname is None:
             shortname = name
         self.shortname = shortname
-        self.subactions = subactions
         self.title = title
 
 class Menu(Serial):
@@ -127,7 +126,6 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
         if action is None:
             action_components = action_id.split('/')
             action_kind = action_components[0]
-            subactions = []
             spec_title = None
             if action_kind == 'form':
                 form_name = action_components[2]
@@ -144,14 +142,18 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                 except:
                     bindings = None
                 if pytis.util.is_sequence(bindings):
-                    for b in bindings:
-                        subaction = 'form/'+b.name()
-                        if subaction not in subactions:
-                            subactions.append(subaction)
+                    for i in range(len(bindings)):
+                        b = bindings[i]
+                        subaction_id = 'sub/%02d/%s' % (i, action_id,)
+                        subaction_title = b.title()
+                        subaction_shortname = 'form/'+b.name()
+                        actions[subaction_id] = Action(subaction_id, '',
+                                                       shortname=subaction_shortname,
+                                                       title=subaction_title)
             else:
                 shortname = action_id
-            actions[action_id] = action = Action(name=action_id, shortname=shortname, description=menu.help(),
-                                                 subactions=subactions, title=spec_title)
+            actions[action_id] = action = Action(name=action_id, shortname=shortname,
+                                                 description=menu.help(), title=spec_title)
             if action_kind == 'proc':
                 enabled = menu.args().get('enabled')
                 if isinstance(enabled, basestring):
@@ -221,13 +223,21 @@ def process_rights(resolver, actions, rights, def_dir):
         rights[action_name] = Rights(access_rights, action)
     for action in (actions.values() +
                    [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
-                    Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM',
-                           subactions=('form/menu.ApplicationMenuRights',
-                                       'form/menu.ApplicationSummaryRights',)),
-                    Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles',
-                           subactions=('form/menu.ApplicationRolesMembers',
-                                       'form/menu.ApplicationRolesOwners',
-                                       'form/menu.ApplicationRoleMenu',))]):
+                    Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM'),
+                    Action('sub/01/form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuRights',
+                           title='Rozpis práv polo¾ky menu'),
+                    Action('sub/02/form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationSummaryRights',
+                           title='Práva polo¾ky menu'),
+                    Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles'),
+                    Action('sub/01/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesMembers',
+                           title='Obsahuje role'),
+                    Action('sub/02/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesOwners',
+                           title='Patøí do rolí'),
+                    Action('sub/03/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesMenu',
+                           title='Náhled menu'),
+                    Action('sub/04/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesExtendedMenu',
+                           title='Roz¹íøený náhled menu'),
+                    ]):
         action_name = action.name
         if rights.has_key(action_name):
             continue
@@ -244,6 +254,8 @@ def process_rights(resolver, actions, rights, def_dir):
             form_name = action_components[1]
         elif action_components[0] == 'form':
             form_name = action_components[2]
+        elif action_components[0] == 'sub':
+            continue
         else:
             print "Non-form action, no rights assigned: %s" % (action_name,)
             continue
@@ -297,8 +309,8 @@ def process_rights(resolver, actions, rights, def_dir):
 
 def fill_actions(cursor, actions):
     for action in actions.values():
-        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description, subactions) values(%s, %s, %s, %s, %s)",
-                       (action.name, action.shortname, action.title, action.description, string.join(action.subactions, ' ')))
+        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values(%s, %s, %s, %s)",
+                       (action.name, action.shortname, action.title, action.description,))
 
 def check_actions(cursor, actions, update):
     cursor.execute("select fullname, shortname, action_title, subactions from c_pytis_menu_actions")
