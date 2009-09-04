@@ -1,9 +1,8 @@
-<<<<<<< HEAD:ChangeLog
-2009-09-02  Milan Zamazal  <pdm@brailcom.org>
+2009-09-04  Tomas Cerha  <cerha@brailcom.org>
 
-	* lib/pytis/data/dbapi.py:
-	Catch connection error in _postgresql_rollback_transaction of dbapi.
-=======
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Set default `uid' value for the default implementation of CMS Users module..
+
 2009-09-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/application.py:
@@ -13,12 +12,16 @@
 
 	* lib/pytis/form/application.py:
 	Work around changed wx release number constant in *some* wx 2.8 versions..
->>>>>>> Work around changed wx release number constant in *some* wx 2.8 versions.:ChangeLog
 
 2009-09-02  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
 	Web: Remember the last selected BrowseForm filter using a cookie..
+
+2009-09-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Catch connection error in _postgresql_rollback_transaction of dbapi.
 
 2009-08-31  Tomas Cerha  <cerha@brailcom.org>
 

@@ -306,7 +306,7 @@ class Users(Specification):
     help = _("Správa u¾ivatelských úètù, které je poté mo¾no zaøazovat do rolí.")
     table = 'cms_users'
     def fields(self): return (
-        Field('uid', _("UID"), width=5),
+        Field('uid', _("UID"), width=5, default=nextval('cms_users_uid_seq')),
         Field('login', _("Pøihla¹ovací jméno"), width=16),
         Field('fullname', _("Celé jméno"), width=40),
         Field('passwd', _("Heslo"),
