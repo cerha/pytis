@@ -1,3 +1,145 @@
+2009-09-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Allow codebook insert in menu module selection..
+
+2009-09-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
+	Pytis CMS: Fix menu construction in the default implementation..
+
+2009-09-04  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Set default `uid' value for the default implementation of CMS Users module..
+
+2009-09-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Fix DB connection display in application window title when using local DB connections..
+
+2009-09-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Work around changed wx release number constant in *some* wx 2.8 versions..
+
+2009-09-02  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Web: Remember the last selected BrowseForm filter using a cookie..
+
+2009-09-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Catch connection error in _postgresql_rollback_transaction of dbapi.
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* TODO:
+	* lib/pytis/form/dialog.py:
+	Fix exit dialog column sizing in wx 2.8..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* TODO:
+	* lib/pytis/form/form.py:
+	Avoid unnecessary frame title manipulation to prevent wx 2.8 problem in codebook insert..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/_grid.py:
+	Fix grid bool value display in wx 2.8..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
+	Preserve text selection when incrementing/decrementing field value..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
+	Added `spinning' ability to time fields..
+
+2009-08-31  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/commands_.py:
+	* lib/pytis/form/inputfield.py:
+	Allow incrementing/decrementing field value through a keyboard shortcut (for numeric and date fields).
+
+2009-08-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Replace slashes with dots in the specification name before calling data_access_rights.
+	
+
+2009-08-26  Milan Zamazal  <pdm@brailcom.org>
+
+	Amend: yes.
+	Don't try to split empty strings when reading access rights
+	
+	
+
+2009-08-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Handle splitting empty strings when reading access rights.
+	
+
+2009-08-17  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Fix web form export when a function is used within form layout..
+
+2009-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Fix access log column names..
+
+2009-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Typo fix..
+
+2009-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: AccessLog inheritance fixed..
+
+2009-08-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Fixed access log table name..
+
+2009-08-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
+	Log only displayed pages, not images or other content displayed on them..
+
+2009-08-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* db/db_pytis_cms.py:
+	* lib/pytis/cms/__init__.py:
+	* lib/pytis/cms/cms.py:
+	* lib/pytis/cms/web.py:
+	Pytis CMS: Added support for access logging.
+
+2009-08-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	* lib/pytis/web/form.py:
+	Allow functions in form layout to support record specific dynamic layouts..
+
+2009-08-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* translations/pytis.cs.po:
+	* translations/pytis.de.po:
+	* translations/pytis.es.po:
+	* translations/pytis.fr.po:
+	* translations/pytis.hu.po:
+	* translations/pytis.pl.po:
+	* translations/pytis.sk.po:
+	Translation files updated..
+
 2009-08-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* resources/scripts/pytis.js:
@@ -41,6 +183,21 @@
 
 	* lib/pytis/data/postgresql.py:
 	Fixed "Unknown column ..." error message..
+
+2009-08-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Don't use query lock on connection initialization queries.
+
+2009-08-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Try to reopen db connection on before raising any DBSystemException.
+
+2009-08-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Raise DBSystemException instead of DBUserException on disconnection from db.
 
 2009-07-31  Pavel Hanak  <hanak@wpb.cz>
 

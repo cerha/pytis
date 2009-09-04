@@ -71,7 +71,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_close_connection(class_, connection):
         connection.connection().close()
     
-    def _postgresql_query(self, connection, query, outside_transaction, query_args=()):
+    def _postgresql_query(self, connection, query, outside_transaction, query_args=(), _retry=True):
         result = None
         def do_query(raw_connection):
             cursor = raw_connection.cursor()
@@ -86,6 +86,18 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if outside_transaction:
                     raw_connection.commit()
             return cursor
+        def retry(message, exception):
+            if _retry and outside_transaction:
+                cdata = connection.connection_data()
+                connection = self._postgresql_new_connection(cdata)
+                try:
+                    result = do_query(connection)
+                except Exception, e:
+                    raise DBSystemException(message, e, e.args, query)
+                return self._postgresql_query(connection, query, outside_transaction,
+                                              query_args=query_args, _retry=False)
+            else:
+                raise DBSystemException(message, exception, exception.args, query)
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
@@ -102,22 +114,15 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBLockException()
                 elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
+                elif e.args[0].find('server closed the connection unexpectedly') != -1:
+                    return retry(_("Database connection error"), e)
             raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.OperationalError, e:
             if e.args and e.args[0].find('could not obtain lock') != -1:
                 raise DBLockException()
-            if not outside_transaction:
-                raise DBSystemException(_("Database operational error"),
-                                        e, e.args, query)
-            cdata = connection.connection_data()
-            connection = self._postgresql_new_connection(cdata)
-            try:
-                result = do_query(connection)
-            except Exception, e:
-                raise DBSystemException(_("Database operational error"),
-                                        e, e.args, query)
+            return retry(_("Database operational error"), e)
         except dbapi.InternalError, e:
             raise DBException(None, e, query)
         except dbapi.IntegrityError, e:
@@ -163,7 +168,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # For unknown reasons, connection client encoding gets reset after
         # rollback
         cursor = connection.cursor()
-        cursor.execute('set client_encoding to "utf-8"')
+        try:
+            cursor.execute('set client_encoding to "utf-8"')
+        except dbapi.OperationalError, e:
+            if e.args[0].find('server closed the connection unexpectedly') != -1:
+                raise DBSystemException(_("Database connection error"), e, e.args)
 
     
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):

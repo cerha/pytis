@@ -551,7 +551,10 @@ class GroupSpec(object):
         Arguments:
 
           items -- contents of the group as a sequence of field identifiers (strings), button
-            specifications ('Button' instances) or nested groups ('GroupSpec' instances).
+            specifications ('Button' instances), nested groups ('GroupSpec' instances) or callable
+            objects which return one of the above when passed the current record ('PresentedRow'
+            instance) as an argument.  The last option allows building layouts dynamically
+            depending on the values/properties of the current record.
             
           orientation -- orientace skládání obsa¾ených prvkù; konstanta
             tøídy 'Orientation'.
@@ -595,7 +598,7 @@ class GroupSpec(object):
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
                 # No need for recursion, since the check is performed for each group on its level.
-                assert isinstance(item, allowed_item_types), item
+                assert isinstance(item, allowed_item_types) or callable(item), item
         self._items = tuple(items)
         self._label = label
         self._orientation = orientation
@@ -2792,6 +2795,8 @@ class Specification(object):
         rights_data = specifications['rights'].create(connection_data=config.dbconnection)
         def process(row):
             shortname, rights_string = row[0].value(), row[1].value()
+            if not rights_string:
+                return
             rights = {}
             for r in rights_string.split(' '):
                 if r != 'show':
@@ -2919,6 +2924,7 @@ class Specification(object):
         spec_name = self.__class__.__name__
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
+        spec_name = spec_name.replace('/', '.')
         access_rights = self.data_access_rights('form/' + spec_name)
         if access_rights is None:
             access_rights = self.access_rights

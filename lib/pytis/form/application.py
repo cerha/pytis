@@ -122,8 +122,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Create the main application window.
         title = config.application_name
         if __debug__:
-            title += ' (wxWidgets %d.%d.%d)' % \
-                     (wx.MAJOR_VERSION, wx.MINOR_VERSION, wx.RELEASE_NUMBER)
+            try:
+                release_version = wx.RELEASE_NUMBER
+            except AttributeError:
+                # *Some* wx 2.8 versions have the constant renemed!
+                release_version = wx.RELEASE_VERSION
+            title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
         frame = self._frame = wx.Frame(None, -1, title, pos=(0,0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
@@ -281,11 +285,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
             # databázi (není vyvolána ¾ádná databázová operace), nemusí být
             # hodnoty správnì.
-            title = frame.GetTitle()            
-            title += " %s@%s %s" % (conn.user(), conn.database(),
-                                    conn.host())
-            if conn.port():
-                title += ":%d" % conn.port()
+            title = frame.GetTitle()
+            title += " %s@%s" % (conn.user(), conn.database())
+            if conn.host():
+                title += " "+conn.host()
+                if conn.port():
+                    title += ":%d" % conn.port()
             frame.SetTitle(title)
         return True
 

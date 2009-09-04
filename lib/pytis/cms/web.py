@@ -103,7 +103,7 @@ class Menu(wiking.PytisModule):
         return dict(identifier=req.unresolved_path[0])
     
     def _menu_item_rows(self, req, **kwargs):
-        return self._data.get_rows(req, **kwargs)
+        return self._data.get_rows(**kwargs)
     
     def _embed_binding(self, modname):
         return wiking.Binding(modname, modname, None, id=self.EMBED_BINDING_ID,
@@ -263,6 +263,9 @@ class Menu(wiking.PytisModule):
                 document = self._document(req, [], record, globals=self.globals(req))
         else:
             document = self._document(req, pre+post, record, globals=self.globals(req))
+        if modname is None:
+            # Module access is logged in EmbeddablePytisModule._handle().
+            self._module('AccessLog').log(req, None, None)
         return document
     
     def module_uri(self, req, modname):
@@ -378,7 +381,26 @@ class SessionLog(wiking.PytisModule):
                                   referer=req.header('Referer'),
                                   user_agent=req.header('User-Agent'))
         self._data.insert(row)
-            
+
+
+class AccessLog(wiking.PytisModule):
+    class Spec(wiking.Specification):
+        table = 'cms_access_log_data'
+        fields = [pp.Field(_id) for _id in
+                  ('log_id', 'timestamp', 'uri', 'uid', 'modname', 'action',
+                   'ip_address', 'user_agent', 'referer')]
+
+    def log(self, req, modname, action):
+        row = self._data.make_row(timestamp=mx.DateTime.now().gmtime(),
+                                  uri=req.uri(),
+                                  uid=req.user() and req.user().uid(),
+                                  modname=modname,
+                                  action=action,
+                                  ip_address=req.header('X-Forwarded-For') or req.remote_host(),
+                                  referer=req.header('Referer'),
+                                  user_agent=req.header('User-Agent'))
+        self._data.insert(row)
+        
     
 class Application(wiking.CookieAuthentication, wiking.Application):
     
@@ -466,10 +488,17 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     
     def panels(self, req, lang):
         return [wiking.LoginPanel()]
-        
-    
-class Embeddable(object):
-    """Mix-in class for modules which may be embedded into page content."""
+
+
+class EmbeddableModule(wiking.Module, wiking.ActionHandler):
+    """Base class for modules which may be embedded into page content.
+
+    Most CMS modules will be derived from 'EmbeddablePytisModule', but this module allows creation
+    of modules not bound to database.  As this module is derived from 'wiking.ActionHandler' with
+    action 'view' as the default action, so you usually just define the method 'action_view()' to
+    display the content.
+
+    """
     
     def submenu(self, req, menu_item_id):
         """Return a list of 'MenuItem' instances to insert into the main menu.
@@ -480,9 +509,21 @@ class Embeddable(object):
 
         """
         return []
-    
 
-class EmbeddablePytisModule(wiking.PytisModule, Embeddable):
+    def _default_action(self, req):
+        return 'view'
+    
+    def _handle(self, req, action, **kwargs):
+        result = super(EmbeddableModule, self)._handle(req, action, **kwargs)
+        if isinstance(result, wiking.Document):
+            # Log only displayed pages, not objects displayed on them, such as images.  If logging
+            # of downloaded files is desired, the module will need to do it explicitly.
+            self._module('AccessLog').log(req, self.name(), action)
+        return result
+
+
+class EmbeddablePytisModule(wiking.PytisModule, EmbeddableModule):
+    """Base class for pytis modules which may be embedded into page content."""
     _USE_BINDING_PARENT_TITLE = False
     _BROWSE_FORM_LIMITS = (50, 100, 200, 300, 500)
     

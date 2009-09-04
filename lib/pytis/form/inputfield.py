@@ -30,6 +30,7 @@ import pytis.data
 from pytis.form import *
 import wx.lib.colourselect
 from cStringIO import StringIO
+import mx.DateTime
 #from wxPython.pytis.maskededit import wxMaskedTextCtrl
 
 
@@ -254,6 +255,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = FileField
         elif isinstance(type, pytis.data.Date):
             field = DateField
+        elif isinstance(type, pytis.data.Time):
+            field = TimeField
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
         elif isinstance(type, pytis.data.Password):
@@ -939,10 +942,49 @@ class PasswordField(StringField):
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
 
+class SpinnableField(InputField):
+    """Field capable of spinning its value up/down (incrementing/decrementing)."""
+
+    _SPIN_STEP = None
+    """Value incremented/decremented on each spin step.
+
+    This constant must be set by derived classes to the value which is incremented/decremented
+    to/from the current field value on each spin command.  Thus the value must be compatible for
+    addition/subtraction with the internal value of the field's type.
+
+    """
+    def _spin(self, value, up=True):
+        """Return the incremented (if 'up' is true) or decremented (if 'up' is false) 'value'.
+
+        The derived classes will usually just define '_SPIN_STEP' value, but for more complicated
+        spinning logic, it is possible to override this method as well.
+        
+        """
+        if up:
+            value += self._SPIN_STEP
+        else:
+            value -= self._SPIN_STEP
+        return value
     
-class NumericField(TextField):
+    def _cmd_spin(self, up=True):
+        value = self._row[self._id].value()
+        new_value = self._spin(value, up=up)
+        ctrl = self._ctrl
+        if isinstance(ctrl, wx.TextCtrl) and ctrl.GetStringSelection() == ctrl.GetValue() != '':
+            select_all = True
+        else:
+            select_all = False
+        self._row[self._id] = pytis.data.Value(self.type(), new_value)
+        if select_all:
+            ctrl.SetSelection(-1, -1)
+        
+    def _can_spin(self, up=True):
+        return self._valid
+        
+    
+class NumericField(TextField, SpinnableField):
     """Textové vstupní políèko pro data typu 'pytis.data.Number'."""
-    pass
+    _SPIN_STEP = 1
 
 
 class CheckBoxField(Unlabeled, InputField):
@@ -1128,18 +1170,19 @@ class Invocable(object, CommandHandler):
         return self.enabled()
 
     
-class DateField(Invocable, TextField):
-    """Vstupní pole pro datový typ 'pytis.data.Date'.
+class DateField(Invocable, TextField, SpinnableField):
+    """Input field for values of type 'pytis.data.Date'.
 
-    Jako akci pro vyvolání výbìru definuje zobrazení dialogu s kalendáøem,
-    který je nastaven na datum odpovídající hodnotì políèka a po ukonèení
-    nastaví hodnotu políèka na vybraný datum.
+    The field implements selection invocation using a calendar widget.
+
+    The field also supports spinning (see 'SpinnableField') by one day per one step.
 
     """
 
     _DEFAULT_WIDTH = 10
     _INVOKE_TITLE = _("Vybrat z kalendáøe")
     _INVOKE_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
+    _SPIN_STEP = mx.DateTime.oneDay
     
     def _on_invoke_selection(self, alternate=False):
         if self._valid:
@@ -1150,6 +1193,15 @@ class DateField(Invocable, TextField):
         if date != None:
             self._set_value(self._type.export(date))
 
+
+class TimeField(TextField, SpinnableField):
+    """Input field for values of type 'pytis.data.Time'.
+    
+    The field also supports spinning (see 'SpinnableField') by one hour per one step.
+
+    """
+    _SPIN_STEP = mx.DateTime.oneHour
+    
 
 class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výbìr barvy."""
