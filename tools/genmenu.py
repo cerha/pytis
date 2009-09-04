@@ -71,13 +71,14 @@ class Serial(object):
         self.id = Serial._counter.next()
 
 class Action(object):
-    def __init__(self, name, description, shortname=None, title=None):
+    def __init__(self, name, description, shortname=None, title=None, subactions=()):
         self.name = name
         self.description = description
         if shortname is None:
             shortname = name
         self.shortname = shortname
         self.title = title
+        self.subactions = subactions
 
 class Menu(Serial):
     def __init__(self, name, title, parent, position, action=None, help=None, hotkey=None, system=False):
@@ -124,6 +125,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             print "Error: Special menu item action, define command specification:", menu.title()
             return
         action = actions.get(action_id)
+        subactions = []
         if action is None:
             action_components = action_id.split('/')
             action_kind = action_components[0]
@@ -168,10 +170,12 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                         actions[subaction_id] = Action(subaction_id, '',
                                                        shortname=subaction_shortname,
                                                        title=subaction_title)
+                        subactions.append(subaction_id)
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname,
-                                                 description=menu.help(), title=spec_title)
+                                                 description=menu.help(), title=spec_title,
+                                                 subactions=subactions)
             if action_kind == 'proc':
                 enabled = menu.args().get('enabled')
                 if isinstance(enabled, basestring):
@@ -331,14 +335,26 @@ def fill_actions(cursor, actions):
                        (action.name, action.shortname, action.title, action.description,))
 
 def check_actions(cursor, actions, update):
-    cursor.execute("select fullname, shortname, action_title, subactions from c_pytis_menu_actions")
+    subactions = {}
+    cursor.execute("select fullname from c_pytis_menu_actions where fullname like 'sub/%'")
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        fullname = row[0]
+        parent_name = fullname[7:]
+        subactions_list = subactions.get(parent_name)
+        if subactions_list is None:
+            subactions_list = subactions[parent_name] = []
+        subactions_list.append(fullname)
+    cursor.execute("select fullname, shortname, action_title from c_pytis_menu_actions")
     actions = copy.copy(actions)
     missing_titles = []
     while True:
         row = cursor.fetchone()
         if row is None:
             break
-        fullname, shortname, title, subactions = row
+        fullname, shortname, title = row
         if fullname[:5] == 'menu/':
             continue
         action = actions.get(fullname)
@@ -346,15 +362,15 @@ def check_actions(cursor, actions, update):
             print 'Check: Extra action: %s (%s)' % (fullname, shortname,)
         else:
             del actions[fullname]
+            db_subactions_list = subactions.get(fullname)
             subactions_list = copy.copy(list(action.subactions))
             subactions_list.sort()
-            if subactions:
-                db_subactions_list = subactions.split(' ')
+            if db_subactions_list:
                 db_subactions_list.sort()
             else:
                 db_subactions_list = []
             if subactions_list != db_subactions_list:
-                print 'Check: Subactions mismatch: %s app="%s" db="%s"' % (fullname, string.join(action.subactions, ' '), subactions or '',)
+                print 'Check: Subactions mismatch: %s app="%s" db="%s"' % (fullname, action.subactions, db_subactions_list,)
             if not title and action.title:
                 missing_titles.append((fullname, action.title,))
     for fullname, action in actions.items():
