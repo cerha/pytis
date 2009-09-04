@@ -232,7 +232,7 @@ class Menu(Specification):
         Field('content', _("Obsah"), type=pd.StructuredText(), compact=True, height=20, width=80,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
         Field('mod_id', _("Modul"), not_null=False,
-              codebook=self._spec_name('Modules', False),
+              codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
               descr=_("Vyberte roz¹iøující modul zobrazený uvnitø stránky.  Ponechte prázdné pro "
                       "prostou textovou stránku.")),
         Field('modname', _("Modul")),

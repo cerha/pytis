@@ -1,5 +1,10 @@
 2009-09-04  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Allow codebook insert in menu module selection..
+
+2009-09-04  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/cms/web.py:
 	Pytis CMS: Fix menu construction in the default implementation..
 
