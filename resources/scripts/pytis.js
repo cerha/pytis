@@ -30,12 +30,13 @@
 
 var PytisFormHandler = Class.create({
 
-      initialize: function(form_id, fields) {
+      initialize: function(form_id, fields, filters) {
 	 var form = $(form_id);
 	 if (form != null) {
 	    form._handler = this;
 	    this._form = form;
 	    this._fields = fields; 
+	    this._filters = filters; 
 	    this._last_keypress = null; 
 	    new Form.Observer(form, 1, this.on_change);
 	    //for (i=0; i<fields.length; i++)
@@ -60,14 +61,15 @@ var PytisFormHandler = Class.create({
 	 var values = value.parseQuery(); 
 	 var last_values = this.lastValue.parseQuery();
 	 var fields = handler._fields;
-	 for (i=0; i<fields.length; i++) {
+	 for (var i=0; i<fields.length; i++) {
 	    var field = fields[i];
-	    // Disabled fields are not present in values/last_values.
-	    if (field in values && field in last_values &&
-		values[field].toJSON() != last_values[field].toJSON()) {
+	    // Disabled fields are not present in values/last_values, but also
+	    // checkbox fields are not there if unchecked.
+	    if ((field in values || field in last_values) && values[field] != last_values[field]) {
 	       var update = function(data) { handler.update(form, data) };
 	       form.request({
-		     parameters: {_pytis_form_update_request: field},
+		     parameters: {_pytis_form_update_request: field,
+			          _pytis_form_filter_state: $H(handler._filters).toJSON()},
 		     onSuccess: function(transport, data) { update(data) }
 	       });
 	       break;
@@ -85,9 +87,33 @@ var PytisFormHandler = Class.create({
 	       if (field) { 
 		  if (key == 'editable')
 		     field.disabled = !value;
-		  else if (key == 'value')
-		     // TODO: Set different field types differently.
-		     field.value = value;
+		  else if (key == 'value') {
+		     // Set the field value depending on field type.
+		     if (field.type == 'checkbox')
+			field.checked = value == 'T';
+		     else
+			field.value = value;
+		  } 
+		  else if (key == 'filter')
+		     form._handler._filters[id] = value;
+		  else if (key == 'enumeration' && field.type == 'select-one') {
+		     var options = field.options;
+		     var selected = $F(field);
+		     for (var i=options.length-1; i>=0; --i) {
+			//Remove all options except for the (first) NULL option (if present).
+			var option = $(options[i]);
+			if (option.value != '') option.remove();
+		     }
+		     field.cleanWhitespace();
+		     for (var i=0, len=value.length; i<len; ++i) {
+			//Append options according to the new enumeration received;
+			var item = value[i];
+			var attr = {value: item[0], selected: item[0] == selected};
+			var text = item[1].escapeHTML().gsub(' ', '&nbsp;');
+			var option = new Element('option', attr).update(text);
+			field.insert(option);
+		     }
+		  }
 	       }
 	    }
 	 }

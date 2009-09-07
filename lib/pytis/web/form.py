@@ -468,20 +468,84 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                        _("Fields marked by an asterisk are mandatory.")
         return None
 
+    @classmethod
+    def _op2str(self, operator):
+        # Return a unique string representation of 'pytis.data.Operator' for storing current
+        # runtime filter state during AJAX updates.  The default 'Operator' __str__ method doesn't
+        # work for this purpose since it doesnt expose argument values.
+        def arg2str(arg):
+            if isinstance(arg, pd.Operator):
+                return self._op2str(arg)
+            elif isinstance(arg, (pd.Value, pd.WMValue)):
+                return repr(arg.value())
+            else:
+                return repr(arg)
+        if operator is None:
+            return ''
+        else:
+            return '%s(%s)' % (operator.name(), ','.join([arg2str(a) for a in operator.args()]))
+    
     def export(self, context):
         result = super(EditForm, self).export(context)
         layout_fields = self._layout.order()
         active_fields = []
-        for id in layout_fields:
-            if self._row.depends(id, layout_fields):
-                active_fields.append(id)
+        filters = {}
+        for fid in layout_fields:
+            if self._row.depends(fid, layout_fields):
+                active_fields.append(fid)
+            enumerator = self._row[fid].type().enumerator()
+            if enumerator and isinstance(enumerator, pytis.data.DataEnumerator):
+                filters[fid] = self._op2str(self._row.runtime_filter(fid))
         if active_fields:
             g = context.generator()
             context.resource('prototype.js')
             context.resource('pytis.js')
-            result += g.script(g.js_call("new PytisFormHandler", self._id, active_fields))
+            result += g.script(g.js_call("new PytisFormHandler", self._id, active_fields, filters))
         return result
-                      
+
+    @classmethod
+    def ajax_response(cls, req, row, layout, errors, translator):
+        """Return the AJAX request response as a JSON encoded data structure.
+
+        Arguemnts:
+          req -- AJAX request object as an instance of class implementing the pytis 'Request' API.
+          row -- edited form record as a 'PresentedRow' instance.
+          layout -- edited form layout as a 'GroupSpec' instance.
+          errors -- form data validation result as a sequence of pairs (field_id, error_message).
+          translator -- 'lcg.Translator' instance used for localization of computed field values.
+
+        The returned string is supposed to be sent back to the client within the 'X-Json' HTTP
+        header of the request response.
+
+        This method acts as the server side counter-part of the client side code defined in the
+        pytis form JavaScript code in 'pytis.js'.
+        
+        """
+        import simplejson as json
+        changed_field = str(req.param('_pytis_form_update_request'))
+        filters = json.loads(req.param('_pytis_form_filter_state'))
+        data = {}
+        for fid in layout.order():
+            data[fid] = fdata = {}
+            if fid != changed_field:
+                fdata['editable'] = row.editable(fid)
+                if row.invalid_string(fid) is None:
+                    value = translator.translate(row[fid].export())
+                    # Values of disabled fields are not in the request, so send them always...
+                    if not req.has_param(fid) or value != req.param(fid):
+                        fdata['value'] = value
+                if filters.has_key(fid):
+                    old_filter = filters[fid]
+                    new_filter = cls._op2str(row.runtime_filter(fid))
+                    if new_filter != old_filter:
+                        fdata['filter'] = new_filter
+                        fdata['enumeration'] = row.enumerate(fid)
+        for fid, error in errors:
+            if data.has_key(fid):
+                data[fid]['error'] = error
+        return json.dumps(data)
+
+    
     
 class BrowseForm(LayoutForm):
     _CSS_CLS = 'browse-form'
