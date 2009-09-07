@@ -1,3 +1,9 @@
+2009-09-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Fix editing menu records in the menu rights multiform.
+
 2009-09-04  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:
