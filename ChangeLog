@@ -1,3 +1,8 @@
+2009-09-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Pass type kwargs to the constructor of virtual field default type..
+
 2009-09-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:

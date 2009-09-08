@@ -2229,11 +2229,11 @@ class Field(object):
             column_width = width
         self._column_width = column_width
         if virtual and type is None:
-            type = pytis.data.String()
+            type = pytis.data.String(**kwargs)
         self._virtual = virtual
+        self._type = type
         self._fixed = fixed
         self._disable_column = disable_column
-        self._type = type
         self._compact = compact
         self._nocopy = nocopy
         self._default = default
