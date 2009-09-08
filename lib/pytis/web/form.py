@@ -89,7 +89,7 @@ class Form(lcg.Content):
         self._hidden = list(hidden)
         self._name = name
         self._enctype = None
-        self._id = '%x' % positive_id(self)
+        self._id = 'x%x' % positive_id(self)
 
     def _export_body(self, context):
         pass
