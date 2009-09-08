@@ -169,7 +169,7 @@ class ApplicationActions(pytis.presentation.Specification):
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 class ApplicationShortActions(pytis.presentation.Specification):
-    table = 'c_pytis_menu_actions'
+    table = 'ev_pytis_short_actions'
     title = _("U¾ivatelské akce")
     fields = (
         Field('shortname', "", editable=Editable.NEVER),

@@ -1,5 +1,11 @@
 2009-09-08  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Fix crash in menu editing of multiform rights.
+
+2009-09-08  Milan Zamazal  <pdm@brailcom.org>
+
 	* tools/genmenu.py:
 	Fixes of subforms definitions in genmenu.
 

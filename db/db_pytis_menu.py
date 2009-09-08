@@ -264,6 +264,13 @@ for each statement execute procedure c_pytis_menu_actions_trigger();
         name='c_pytis_menu_actions_triggers',
         depends=('c_pytis_menu_actions_trigger',))
 
+sql_raw("""
+create or replace view ev_pytis_short_actions
+as select distinct shortname from c_pytis_menu_actions;
+""",
+        name='ev_pytis_short_actions',
+        depends=('c_pytis_menu_actions',))
+
 ### Menus
 
 _std_table('e_pytis_menu',
