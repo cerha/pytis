@@ -702,7 +702,7 @@ def pytis_update_summary_rights():
             r.append(rightid)
     # Retrieve subactions
     subactions = {}
-    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%'"):
+    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
         fullname, shortname = row['fullname'], row['shortname']
         parent = fullname[fullname.find('/', 4)+1:]
         parent_subactions = subactions.get(parent)
