@@ -344,28 +344,41 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         value = self._row[field.id]
         type = value.type()
         attr = {'name': field.id,
-                'id': field.unique_id}
+                'id': field.unique_id,
+                'disabled': not self._row.editable(field.id) or None,
+                'cls': field.id in [id for id, msg in self._errors] and 'invalid' or None}
         if isinstance(type, pytis.data.Boolean):
             ctrl = g.checkbox
             attr['value'] = 'T'
             attr['checked'] = value.value()
         elif isinstance(type, pytis.data.Binary):
             ctrl = g.upload
-        elif type.enumerator() and field.selection_type in (SelectionType.CHOICE, None):
-            ctrl = g.select
-            enum = self._row.enumerate(field.id)
-            attr['options'] = [("&nbsp;", "")] + \
-                              [(g.escape(display).replace(' ',  '&nbsp;'), type.export(val))
-                               for val, display in enum]
-            if value.value() in [val for val, display in enum]:
-                attr['selected'] = type.export(value.value())
+        elif type.enumerator() and \
+                field.selection_type in (SelectionType.RADIO, SelectionType.CHOICE, None):
+            options = [(val, type.export(val), g.escape(display).replace(' ',  '&nbsp;'))
+                       for val, display in self._row.enumerate(field.id)]
+            if field.selection_type == SelectionType.RADIO:
+                ctrls = []
+                del attr['id'] # Replace by unique id for each radio button separately.
+                for val, strval, display in options:
+                    unique_id = field.unique_id +'-'+ strval
+                    radio = g.radio(value=strval, checked=(val==value), id=unique_id, **attr)
+                    label = g.label(display, unique_id)
+                    ctrls.append(g.div(radio + label))
+                return g.div(ctrls, cls='radio-group', id=field.unique_id)
+            else:
+                ctrl = g.select
+                attr['options'] = [("&nbsp;", "")] + \
+                                  [(display, strval) for val, strval, display in options]
+                if value.value() in [val for val, strval, display in options]:
+                    attr['selected'] = type.export(value.value())
         else:
             if field.spec.height() > 1:
                 ctrl = g.textarea
                 attr['rows'] = field.spec.height()
                 attr['cols'] = width = field.spec.width()
                 if width >= 80:
-                    attr['cls'] = 'fullsize'
+                    attr['cls'] = (attr['cls'] and attr['cls']+' ' or '') + 'fullsize'
             else:
                 if isinstance(type, pytis.data.String):
                     maxlen = type.maxlen()
@@ -378,14 +391,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 attr['password'] = True
             else:
                 attr['value'] = self._prefill.get(field.id) or value.export()
-        if not self._row.editable(field.id):
-            attr['disabled'] = True
-            # Avoid this workaround now, since it prevents AJAX updates of the field...
-            # TODO: Maybe this is completely unnecessary since Wiking doesn't really care about
-            # disabled fields...
-            #attr['name'] = None # w3m bug workaround (sends disabled fields)
-        if field.id in [id for id, msg in self._errors]:
-            attr['cls'] = (attr.has_key('cls') and attr['cls']+' ' or '') + 'invalid'
+        # Warning: This common part is not as common as it might seem to be.
+        # It is not executed for radio buttons, since they return before.
         result = ctrl(**attr)
         if isinstance(type, pytis.data.Password) and type.verify():
             attr['id'] = attr['id'] + '-verify-pasword'

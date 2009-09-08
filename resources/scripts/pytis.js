@@ -77,6 +77,51 @@ var PytisFormHandler = Class.create({
 	 }
       },
 
+      _set_editability: function(form, field, value) {
+	 // Disable/enable field depending on type.
+	 if (field.type == undefined && field.length)
+	    // We get an array of input elements for a radio button group.
+	    for (var i=0; i<field.length; i++)
+	       field[i].disabled = !value;
+	 else
+	    field.disabled = !value;
+      },
+
+      _set_value: function(form, field, value) {
+	 // Set the field value depending on type.
+	 if (field.type == undefined && field.length) {
+	    // We get an array of input elements for a radio button group.
+	    for (var i=0; i<field.length; i++) {
+	       var f = field[i];
+	       f.checked = f.value == value;
+	    }
+	 } else if (field.type == 'checkbox')
+	    field.checked = value == 'T';
+	 else
+	    field.value = value;
+      },
+
+      _set_enumeration: function(form, field, value) {
+	 // Currently only supported for select boxes.
+	 if (field.type != 'select-one') return;
+	 var options = field.options;
+	 var selected = $F(field);
+	 for (var i=options.length-1; i>=0; --i) {
+	    //Remove all options except for the (first) NULL option (if present).
+	    var option = $(options[i]);
+	    if (option.value != '') option.remove();
+	 }
+	 field.cleanWhitespace();
+	 for (var i=0, len=value.length; i<len; ++i) {
+	    //Append options according to the new enumeration received;
+	    var item = value[i];
+	    var attr = {value: item[0], selected: item[0] == selected};
+	    var text = item[1].escapeHTML().gsub(' ', '&nbsp;');
+	    var option = new Element('option', attr).update(text);
+	    field.insert(option);
+	 }
+      },
+
       update: function(form, data) {
 	 // Update the form state in reaction to previously sent AJAX request.
 	 for (id in data) {
@@ -84,36 +129,11 @@ var PytisFormHandler = Class.create({
 	    for (key in cdata) {
 	       var value = cdata[key];
 	       var field = form[id];
-	       if (field) { 
-		  if (key == 'editable')
-		     field.disabled = !value;
-		  else if (key == 'value') {
-		     // Set the field value depending on field type.
-		     if (field.type == 'checkbox')
-			field.checked = value == 'T';
-		     else
-			field.value = value;
-		  } 
-		  else if (key == 'filter')
-		     form._handler._filters[id] = value;
-		  else if (key == 'enumeration' && field.type == 'select-one') {
-		     var options = field.options;
-		     var selected = $F(field);
-		     for (var i=options.length-1; i>=0; --i) {
-			//Remove all options except for the (first) NULL option (if present).
-			var option = $(options[i]);
-			if (option.value != '') option.remove();
-		     }
-		     field.cleanWhitespace();
-		     for (var i=0, len=value.length; i<len; ++i) {
-			//Append options according to the new enumeration received;
-			var item = value[i];
-			var attr = {value: item[0], selected: item[0] == selected};
-			var text = item[1].escapeHTML().gsub(' ', '&nbsp;');
-			var option = new Element('option', attr).update(text);
-			field.insert(option);
-		     }
-		  }
+	       if (field) {
+		  if      (key == 'editable')    this._set_editability(form, field, value);
+		  else if (key == 'value')       this._set_value(form, field, value);
+		  else if (key == 'filter')      form._handler._filters[id] = value;
+		  else if (key == 'enumeration') this._set_enumeration(form, field, value);
 	       }
 	    }
 	 }
