@@ -142,24 +142,25 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     pass
                 bindings = None
                 form_class = eval(action_components[1])
+                def binding(name):
+                    form_name_components = name.split('.')
+                    form_module = string.join(form_name_components[:-1], '/')
+                    base_form_name = form_name_components[-1]
+                    try:
+                        title = resolver.get_object(form_module, base_form_name).title
+                    except:
+                        title = ''
+                    return pytis.presentation.Binding(id=name, title=title, name=name,
+                                                      binding_column='dummy')
                 if issubclass(form_class, pytis.form.DualForm):
                     pos = form_name.find('::')
                     if pos == -1:
                         try:
                             bindings = resolver.get_object(form_module, base_form_name).bindings
+                            bindings = (binding(form_name),) + tuple(bindings)
                         except:
                             pass
                     else:
-                        def binding(name):
-                            form_name_components = name.split('.')
-                            form_module = string.join(form_name_components[:-1], '/')
-                            base_form_name = form_name_components[-1]
-                            try:
-                                title = resolver.get_object(form_module, base_form_name).title
-                            except:
-                                title = ''
-                            return pytis.presentation.Binding(id=name, title=title, name=('form/%s' % (name,)),
-                                                              binding_column='dummy')
                         bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
                 if pytis.util.is_sequence(bindings):
                     for i in range(len(bindings)):
@@ -246,19 +247,7 @@ def process_rights(resolver, actions, rights, def_dir):
     for action in (actions.values() +
                    [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
                     Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM'),
-                    Action('sub/01/form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuRights',
-                           title='Rozpis práv polo¾ky menu'),
-                    Action('sub/02/form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationSummaryRights',
-                           title='Práva polo¾ky menu'),
                     Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles'),
-                    Action('sub/01/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesMembers',
-                           title='Obsahuje role'),
-                    Action('sub/02/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesOwners',
-                           title='Patøí do rolí'),
-                    Action('sub/03/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesMenu',
-                           title='Náhled menu'),
-                    Action('sub/04/form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRolesExtendedMenu',
-                           title='Roz¹íøený náhled menu'),
                     ]):
         action_name = action.name
         if rights.has_key(action_name):
@@ -285,8 +274,9 @@ def process_rights(resolver, actions, rights, def_dir):
         if len(form_components) <= 2:
             add_rights(form_name, action, action_name)
     actions_shortnames = {}
-    for shortname in [a.shortname for a in actions.values() if a.shortname.find('::') == -1]:
-        actions_shortnames[shortname] = True
+    for a in actions.values():
+        if a.name.find('::') == -1 and a.name[:4] != 'sub/':
+            actions_shortnames[a.shortname] = True
     actions_extra_shortnames = copy.copy(actions_shortnames)
     def_dir_len = len(def_dir.split('/'))
     for root, dirs, files in os.walk(def_dir):
@@ -309,7 +299,12 @@ def process_rights(resolver, actions, rights, def_dir):
                     if isinstance(spec, type) and issubclass(spec, pytis.form.Specification):
                         spec_name = module_identifier + '.' + spec.__name__
                         action_shortname = 'form/'+spec_name
-                        if not actions_shortnames.has_key(action_shortname):
+                        if actions_shortnames.has_key(action_shortname):
+                            try:
+                                del actions_extra_shortnames[action_shortname]
+                            except KeyError:
+                                pass
+                        else:
                             actions_shortnames[action_shortname] = True
                             action_name = 'form/*/'+spec_name
                             try:
@@ -319,11 +314,6 @@ def process_rights(resolver, actions, rights, def_dir):
                             actions[action_name] = action = Action(action_name, '', action_shortname,
                                                                    title=spec_title)
                             add_rights(spec_name, action, action_name)
-                        else:
-                            try:
-                                del actions_extra_shortnames[action_shortname]
-                            except KeyError:
-                                pass
     actions['label/1'] = Action('label/1', None, title="SAMOSTATNÉ AKCE")
     if actions_extra_shortnames:
         print 'Warning: actions without met specifications: %s' % (actions_extra_shortnames.keys(),)
