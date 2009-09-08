@@ -1,6 +1,11 @@
 2009-09-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Remove obsolete db column c_pytis_menu_actions.parent_action.
+
+2009-09-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Fix crash in menu editing of multiform rights.
 
