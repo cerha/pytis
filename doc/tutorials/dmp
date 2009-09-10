@@ -113,7 +113,9 @@ databáze.
 Ve vedlejším formuláři =Náhled menu= se zobrazuje struktura menu odpovídající
 dané roli včetně zohlednění jejího případného členství v jiných rolích, spolu
 s informací o konkrétních přístupových právech k jednotlivým položkám menu
-(o přístupových právech pojednává jiná sekce tohoto dokumentu).
+(o přístupových právech pojednává jiná sekce tohoto dokumentu).  Vedlejší
+formulář =Rozšířený náhled menu= zobrazuje strukturu menu včetně rozpisu
+podformulářů násobných formulářů.
 
 
 == Správa menu ==
@@ -142,7 +144,7 @@ oddělovače
 Kteroukoliv položku, která nemá zakázánu editaci, lze editovat.  V editačním
 formuláři lze změnit její titulek nebo pozici.  Změna pozice se provádí
 v editačním formuláři výběrem z číselníku, který zobrazí strukturu menu
-s možnými pozicemi vyznačenými křížky.
+s prázdnými řádky odpovídajícími možným pozicím v menu.
 
 Podmenu a oddělovače lze i přidávat a mazat.  Při přidání nové položky menu
 platí pravidlo, že je-li její titulek nevyplněný, jde o oddělovač, v opačném
@@ -152,13 +154,14 @@ případě jde o podmenu.  Mazat lze jen ta podmenu, která jsou prázdná.
 == Správa přístupových práv ==
 
 Správa přístupových práv položek menu vychází z editačního formuláře menu,
-ovšem doplněného o dva vedlejší formuláře přístupových práv.  Každá položka
-menu může mít přiřazen libovolný počet položek přístupových práv, tyto položky
-jsou zobrazeny ve formuláři =Rozpis práv položky menu=.  Z těchto jednotlivých
-položek se pak dle níže uvedených pravidel automaticky sestaví výsledná
-přístupová práva, zobrazená pro jednotlivé role ve formuláři
-=Práva položky menu=.  Editovatelný je pouze formulář =Rozpis práv položky
-menu=, výsledná práva jsou určena pouze k prohlížení a kontrole výsledku.
+ovšem doplněného o další informace a několik vedlejších formulářů přístupových
+práv.  Každá položka menu může mít přiřazen libovolný počet položek
+přístupových práv, tyto položky jsou zobrazeny ve formuláři =Rozpis práv
+položky menu=.  Z těchto jednotlivých položek se pak dle níže uvedených
+pravidel automaticky sestaví výsledná přístupová práva, zobrazená pro
+jednotlivé role ve formuláři =Práva položky menu=.  Editovatelný je pouze
+formulář =Rozpis práv položky menu=, výsledná práva jsou určena pouze
+k prohlížení a kontrole výsledku.
 
 Práva aplikace se dělí na *systémová* a *aplikační*.  Systémová práva jsou
 definována vývojářem aplikace, jsou definována pouze pro koncové položky menu a
@@ -220,8 +223,10 @@ pravidla:
    přičemž pro jednu z těchto rolí je právo povoleno a pro druhou zakázáno, pak
    platí zákaz.
 
- * U duálních formulářů se kromě jejich vlastních práv uplatňují i práva jejich
-   jednotlivých podformulářů.
+ * U násobných formulářů (duálních formulářů a multiformulářů) se kromě jejich
+   vlastních práv uplatňují i práva jejich jednotlivých podformulářů.  Násobný
+   formulář má práva hlavního formuláře, v případě práva _view_ musí toto právo
+   mít i alespoň jeden z vedlejších formulářů.
 
 Tato pravidla jsou poměrně složitá, nicméně výsledná práva pro /konkrétní
 položku menu/ a všechny role lze vždy zkontrolovat ve vedlejším formuláři
@@ -236,6 +241,17 @@ Pravidla lze měnit, vkládat a mazat ve vedlejším formuláři
 má být povoleno (*Ano/ne* zaškrtnuté) nebo odepřeno (nezaškrtnuté).  Systémová
 práva nelze ve formuláři upravovat, vkládat ani mazat, tato práva může měnit
 pouze správce databáze.
+
+Oproti formuláři pro editaci menu je hlavní formulář editace práv rozšířen
+o některé řádky.  Jednak je to seznam samostatných akcí, které nejsou přímo
+navěšeny na žádnou z položek menu.  Tyto akce odpovídají specifikacím
+používaným ke speciálním účelům, např. jako číselníky.  Dalšími řádky navíc
+jsou řádky odpovídající podformulářům násobných formulářů (duálních formulářů a
+násobných formulářů), uváděné vždy u položek menu odpovídajících násobným
+formulářům.  Editací jejich práv lze měnit práva podformulářů a změny v nich se
+mohou promítnout i do práv hlavního formuláře.
+
+Ke všem položkám hlavního formuláře lze uvádět libovolné poznámky.
 
 
 == Příklady ==

@@ -44,6 +44,14 @@ akcí a jejich identifikátorů:
   jako specifikace a neexistuje pro ni uživatelská akce, ukládá se ve tvaru
 
     form/*/FORM_NAME
+
+  Specifikace částí násobných formulářů (podrobněji viz níže) se ukládají ve
+  tvaru
+
+    sub/NN/FORM_ACTION
+
+  NN .. dvojciferné pořadové číslo podformuláře, `00' odpovídá vždy hlavnímu formuláři
+  FORM_ACTION .. plná specifikace akce násobného formuláře
   
 - Příkaz NEW_RECORD:
 
@@ -83,21 +91,35 @@ zkopírovat ho a upravit podle nějaké podobné akce již v tabulce přítomn�
 Přidání akce se provede takto:
 
 <example>
-insert into c_pytis_menu_actions (fullname, shortname, title, description)
+insert into c_pytis_menu_actions (fullname, shortname, action_title, description)
                           values ('FULLNAME', 'SHORTNAME', 'TITLE', 'DESCRIPTION');
 <example>
 
   FULLNAME ... identifikátor akce vytvořený dle pravidel výše
-  SHORTNAME ... pro akce s prefixem `form/' má podobu `form/FORM_NAME', pro
-    ostatní akce je shodné s FULLNAME
+  SHORTNAME ... pro akce s prefixem `form/' a `sub/' má podobu `form/FORM_NAME'
+    pro ostatní akce je shodné s FULLNAME
   TITLE ... libovolný stručný titulek akce, odpovídá atributu `title' ve specifikaci
-  DESCRIPTION ... nepovinný slovní popis akce
+  DESCRIPTION ... nepovinná poznámka vztahující se k akci, správce DMP ji může
+    editovat
 
-Tabulka `c_pytis_menu_actions' navíc obsahuje sloupec `subactions'.  Ten se
-týká násobných formulářů (duálních i multiside) a obsahuje názvy akcí
-odpovídající vedlejším formulářům daného formuláře.  Jde o textový sloupec, kde
-akce vedlejších formulářů se uvádí jako SHORTNAMEs vzájemně oddělené jednou
-mezerou.
+** Přidávání akcí násobných formulářů (DualForm a MultiBrowseDualForm)
+
+Pro násobné formuláře je třeba v tabulce `c_pytis_menu_actions' definovat akci
+formuláře jako celku a kromě toho akce všech jeho podformulářů (hlavního
+i vedlejších).  Formulář jako celek se definuje obvyklým způsobem.  Každý
+z podformulářů má akci s fullname prefixem `sub/' ve tvaru popsaném výše,
+přičemž hlavní formulář musí mít vždy pořadové číslo `00' a vedlejší formuláře
+mají čísla následující, odpovídající pořadí formulářů.  Ve fullname se za
+`sub/NN/' uvádí akce celého formuláře (je u všech podformulářů stejná), zatímco
+v shortname se uvádí akce odpovídající danému podformuláři.  Příklad akcí
+násobného formuláře `menu.ApplicationMenuM':
+
+                                  fullname                                   |             shortname              |       action_title       
+-----------------------------------------------------------------------------+------------------------------------+--------------------------
+ form/pytis.form.dualform.MultiBrowseDualForm/menu.ApplicationMenuM//        | form/menu.ApplicationMenuM         | Menu
+ sub/00/form/pytis.form.dualform.MultiBrowseDualForm/menu.ApplicationMenuM// | form/menu.ApplicationMenuM         | Menu
+ sub/01/form/pytis.form.dualform.MultiBrowseDualForm/menu.ApplicationMenuM// | form/menu.ApplicationMenuRights    | Rozpis práv položky menu
+ sub/02/form/pytis.form.dualform.MultiBrowseDualForm/menu.ApplicationMenuM// | form/menu.ApplicationSummaryRights | Práva položky menu
 
 
 * Přidání práv
@@ -117,6 +139,12 @@ insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, 
     pozor, systémová práva smí být jen povolena
   COLUMN ... jméno sloupce, na který se právo vztahuje (string), nebo NULL
     pokud se vztahuje na všechny sloupce
+
+Poznámka k právům násobných formulářů: Právo násobného formuláře je odvozováno
+od práv jeho podformulářů.  Základem jsou práva hlavního podformuláře,
+v případě práva VIEW musí být navíc toto povoleno pro aspoň jeden z vedlejších
+podformulářů.  Formulář jako celek explicitní vlastní práva nemá, může však
+dědit práva z nadřazených položek menu.
 
 
 * Přidání položky menu
