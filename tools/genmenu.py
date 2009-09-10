@@ -216,7 +216,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             position_labels[-1] = str(long(position[-4:]) + 1)
             position = string.join(position_labels, '.')
     else:
-        print 'Note: Unknown menu: %s' % (menu,)
+        print 'Error: Unknown menu item: %s' % (menu,)
 
 def process_rights(resolver, actions, rights, def_dir):
     def add_rights(form_name, action, action_name):
@@ -260,7 +260,7 @@ def process_rights(resolver, actions, rights, def_dir):
                     raise Exception()
                 form_name = args['name']
             except:
-                print 'Warning: failed to retrieve RUN_FORM command: %s' % (action_name,)
+                print 'Warning: Failed to retrieve RUN_FORM command: %s' % (action_name,)
         elif action_components[0] == 'NEW_RECORD':
             form_name = action_components[1]
         elif action_components[0] == 'form':
@@ -291,7 +291,7 @@ def process_rights(resolver, actions, rights, def_dir):
                 try:
                     module = resolver.get_module(module_name)
                 except pytis.util.ResolverFileError:
-                    print 'Warning: module not loaded: %s' % (module,)
+                    print 'Warning: Module not loaded: %s' % (module,)
                     continue
                 module_identifier = module_name.replace('/', '.')
                 for spec_attr in [o for o in dir(module) if o[0] != '_']:
@@ -316,7 +316,7 @@ def process_rights(resolver, actions, rights, def_dir):
                             add_rights(spec_name, action, action_name)
     actions['label/1'] = Action('label/1', None, title="SAMOSTATNÉ AKCE")
     if actions_extra_shortnames:
-        print 'Warning: actions without met specifications: %s' % (actions_extra_shortnames.keys(),)
+        print 'Warning: Actions without met specifications: %s' % (actions_extra_shortnames.keys(),)
     return rights
 
 def fill_actions(cursor, actions):
@@ -443,19 +443,19 @@ def check_rights(cursor, rights):
     for action_name in app_rights.keys():
         db_action_info = db_rights.get(action_name)
         if db_action_info is None:
-            print 'Check: Missing action in the database:', action_name
+            print 'Check: Missing action:', action_name
             continue
         app_action_info = app_rights[action_name]
         for group in app_action_info.keys():
             db_group_info = db_action_info.get(group)
             if db_group_info is None:
-                print 'Check: Missing group rights in the database:', action_name, group
+                print 'Check: Missing group rights:', action_name, group
                 continue
             app_group_info = app_action_info[group]
             for permission in app_group_info.keys():
                 db_columns = db_group_info.get(permission)
                 if columns is None:
-                    print 'Check: Missing permission in the database:', action_name, group, permission
+                    print 'Check: Missing permission:', action_name, group, permission
                     continue
                 if None in db_columns:
                     db_columns = 'ALL'

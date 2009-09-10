@@ -1,6 +1,11 @@
 2009-09-10  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:
+	Minor improvements of genmenu messages.
+
+2009-09-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
 	Add `Note:' prefix to genmenu notification messages.
 
 2009-09-10  Milan Zamazal  <pdm@brailcom.org>
