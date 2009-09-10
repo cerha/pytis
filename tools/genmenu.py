@@ -216,7 +216,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             position_labels[-1] = str(long(position[-4:]) + 1)
             position = string.join(position_labels, '.')
     else:
-        print 'Unknown menu: %s' % (menu,)
+        print 'Note: Unknown menu: %s' % (menu,)
 
 def process_rights(resolver, actions, rights, def_dir):
     def add_rights(form_name, action, action_name):
@@ -227,7 +227,7 @@ def process_rights(resolver, actions, rights, def_dir):
             return
         pos = form_name.rfind('.')
         if pos == -1:
-            print 'Not caring about access rights of form %s' % (form_name,)
+            print 'Note: Not caring about access rights of form %s' % (form_name,)
             return
         module_name = form_name[:pos].replace('.', '/')
         class_name = form_name[pos+1:]
@@ -241,7 +241,7 @@ def process_rights(resolver, actions, rights, def_dir):
             print "Error: Couldn't get access rights for form %s: %s" % (form_name, e,)
             return
         if access_rights is None:
-            print "No access rights specified for form %s, assuming everything permitted" % (form_name,)
+            print "Note: No access rights specified for form %s, assuming everything permitted" % (form_name,)
             access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.ALL)),)
         rights[action_name] = Rights(access_rights, action)
     for action in (actions.values() +
@@ -268,7 +268,7 @@ def process_rights(resolver, actions, rights, def_dir):
         elif action_components[0] == 'sub':
             continue
         else:
-            print "Non-form action, no rights assigned: %s" % (action_name,)
+            print "Note: Non-form action, no rights assigned: %s" % (action_name,)
             continue
         form_components = form_name.split('::')
         if len(form_components) <= 2:
