@@ -1,6 +1,12 @@
 2009-09-10  Milan Zamazal  <pdm@brailcom.org>
 
 	* doc/tutorials/DmpDb:
+	* tools/genmenu.py:
+	Additional reports in `genmenu --check-update'.
+
+2009-09-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* doc/tutorials/DmpDb:
 	Genmenu documented.
 
 2009-09-10  Milan Zamazal  <pdm@brailcom.org>

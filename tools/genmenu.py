@@ -39,6 +39,9 @@ import pytis.extensions
 pytis.extensions.cfg_param = cfg_param
 pytis.extensions.misc.cfg_param = cfg_param
 
+import pytis.data.postgresql
+pg_escape = pytis.data.postgresql.pg_escape
+
 _current_form_name = None
 def is_in_groups(groups):
     print "Warning: is_in_groups called in %s for groups %s" % (_current_form_name, groups,)
@@ -365,12 +368,13 @@ def check_actions(cursor, actions, update):
                 missing_titles.append((fullname, action.title,))
     for fullname, action in actions.items():
         print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
-    for fullname, title in missing_titles:
         if update:
-            print 'Setting title for %s: %s' % (fullname , title,)
-            cursor.execute("update c_pytis_menu_actions set action_title=%s where fullname=%s", (title, fullname,))
-        else:
-            print 'Missing action title in %s: %s' % (fullname , title,)
+            print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values('%s', '%s', '%s', '%s');" %
+                   (action.name, action.shortname, action.title, action.description,))
+    for fullname, title in missing_titles:
+        print 'Check: Missing action title in %s: %s' % (fullname , title,)
+        if update:
+            print "Update: update c_pytis_menu_actions set action_title='%s' where fullname='%s';" % (pg_escape(title), pg_escape(fullname),)
 
 def fill_rights(cursor, rights, check_rights=None):
     already_stored = {}
@@ -422,37 +426,60 @@ def fill_rights(cursor, rights, check_rights=None):
                                     columns.sort()
     return roles
 
-def check_rights(cursor, rights):
+def check_rights(cursor, rights, update):
     app_rights = {}
     fill_rights(cursor, rights, app_rights)
     db_rights = {}
-    cursor.execute("select shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
+    cursor.execute("select id, shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
     while True:
         row = cursor.fetchone()
         if row is None:
             break
-        action_name, group, permission, colname = row
+        row_id, action_name, group, permission, colname = row
         action_info = db_rights[action_name] = db_rights.get(action_name, {})
         group_info = action_info[group] = action_info.get(group, {})
         columns = group_info[permission] = group_info.get(permission, [])
         if colname in columns:
             print 'Check: Multiple permission in the database:', action_name, group, permission, colname
+            if update:
+                print "Update: delete from e_pytis_action_rights where id=%s;" % (row_id,)
         else:
             columns.append(colname)
             columns.sort()
     for action_name in app_rights.keys():
         db_action_info = db_rights.get(action_name)
         if db_action_info is None:
-            print 'Check: Missing action:', action_name
-            continue
+            print 'Check: Missing action rights:', action_name
+            missing = True
+        else:
+            missing = False
+        rights_seen = {}
         app_action_info = app_rights[action_name]
         for group in app_action_info.keys():
-            db_group_info = db_action_info.get(group)
-            if db_group_info is None:
-                print 'Check: Missing group rights:', action_name, group
-                continue
+            if not missing:
+                db_group_info = db_action_info.get(group)
+                if db_group_info is None:
+                    print 'Check: Missing group rights:', action_name, group
+                    continue
             app_group_info = app_action_info[group]
             for permission in app_group_info.keys():
+                if missing:
+                    for c in (columns or [None]):
+                        if c is None:
+                            cc = 'NULL'
+                        else:
+                            cc = "'%s'" % (c,)
+                        if group is None:
+                            gg = '*'
+                        else:
+                            gg = group
+                        rights_args = (pg_escape(action_name), pg_escape(gg), permission, cc,)
+                        if rights_seen.has_key(rights_args):
+                            continue
+                        print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname) "
+                                "values('%s', '%s', '%s', 't', 't', %s);") % rights_args)
+                        rights_seen[rights_args] = True
+                    continue
                 db_columns = db_group_info.get(permission)
                 if columns is None:
                     print 'Check: Missing permission:', action_name, group, permission
@@ -600,7 +627,7 @@ def run():
         check_actions(cursor, actions, options.check_update)
         print "Checking actions...done"
         print "Checking rights..."
-        roles = check_rights(cursor, rights)
+        roles = check_rights(cursor, rights, options.check_update)
         print "Checking rights...done"
     else:
         print "Inserting actions..."

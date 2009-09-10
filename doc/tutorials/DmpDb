@@ -283,6 +283,11 @@ Hlášení kontrol:
     o novou akci, která ještě není v databázi, nebo o akci, která byla
     v databázi zrušena.
 
+  Missing action rights :: Akce má nastavena práva ve specifikacích, ale ne
+    v databázi.  Může jít o novou akci, která ještě není v databázi, nebo
+    o akci, která byla v databázi zrušena, nebo o vymazání práv akce
+    v databázi.
+
   Missing action title in :: Akce nemá v databázi uvedený název.  Je vhodné ho
     doplnit.
 
