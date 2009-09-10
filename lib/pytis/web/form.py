@@ -284,7 +284,6 @@ class _SubmittableForm(Form):
         self._submit = submit
         self._reset = reset
         super(_SubmittableForm, self).__init__(view, row, **kwargs)
-
     
     def _export_submit(self, context):
         g = context.generator()
@@ -400,8 +399,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if isinstance(type, pd.Date):
             result += g.script_write(g.button(label='...', id='%s-button' % attr['id'],
                                               cls='selection-invocation calendar-invocation',
-                                              disabled=attr.get('disabled')))
-            if not attr.has_key('disabled'):
+                                              disabled=attr['disabled']))
+            if not attr['disabled']:
                 context.resource('prototype.js')
                 context.resource('calendarview.js')
                 context.resource('calendarview.css')
