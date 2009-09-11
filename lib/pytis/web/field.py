@@ -144,7 +144,7 @@ class FieldFormatter(object):
         if len(blocks) == 1 and isinstance(blocks[0], lcg.Paragraph):
             content = lcg.Container(blocks[0].content())
         else:
-            content = lcg.SectionContainer(blocks)
+            content = lcg.SectionContainer(blocks, toc_depth=0)
         content.set_parent(context.node())
         return context.generator().div(content.export(context)), None
         

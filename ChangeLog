@@ -1,3 +1,8 @@
+2009-09-11  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/field.py:
+	Web: Don't generate table of contents at the top of StructuredText fields..
+
 2009-09-10  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
