@@ -1,3 +1,8 @@
+2009-09-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fixes in the next menu position computation in e_pytis_menu_trigger.
+
 2009-09-10  Milan Zamazal  <pdm@brailcom.org>
 
 	* doc/tutorials/DmpDb:

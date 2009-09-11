@@ -341,15 +341,15 @@ def e_pytis_menu_trigger():
                 plpy.execute("update e_pytis_menu set position='%s'||subpath(position, nlevel('%s')) where position <@ '%s'" %
                              (new_position, old_position, old_position,))
             if new:
-                data = plpy.execute("select * from e_pytis_menu where position != '' order by position")
+                data = plpy.execute("select position, next_position from e_pytis_menu where position != '' order by position")
                 sequences = {}
                 for row in data:
                     position = row['position'].split('.')
                     next_position = row['next_position'].split('.')
-                    position_length = len(position)
-                    if not sequences.has_key(position_length):
-                        sequences[position_length] = []
-                    sequences[position_length].append((position, next_position,))
+                    position_stamp = tuple(position[:-1])
+                    if not sequences.has_key(position_stamp):
+                        sequences[position_stamp] = []
+                    sequences[position_stamp].append((position, next_position,))
                 import string
                 def update_next_position(position, next_position):
                     plpy.execute("update e_pytis_menu set next_position='%s' where position='%s'" %
@@ -367,7 +367,7 @@ def e_pytis_menu_trigger():
                             next_suffix = next_item_position[-1]
                             suffix += '0' * max(len(next_suffix) - len(suffix), 0)
                             next_suffix += '0' * max(len(suffix) - len(next_suffix), 0)
-                            new_suffix = str(long(long(suffix) + long(next_suffix)) / 2)
+                            new_suffix = str(long((long(suffix) + long(next_suffix)) / 2))
                             if new_suffix == suffix:
                                 new_suffix = suffix + '4'
                             next_position = position[:-1] + [new_suffix]
