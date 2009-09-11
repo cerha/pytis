@@ -1168,15 +1168,24 @@ class BrowseForm(LayoutForm):
 class ListView(BrowseForm):
     """Listing with a customizable layout for each record.
 
-    This form behaves similarly to a regular 'BrowseForm', but the records are not represented as
-    table rows but as individual (sub)sections of a document.  Field values can be displayed within
-    each section and their layout can be customized through the 'list_view' argument within
-    specification (see 'ViewSpec').  If 'list_view' is not defined, the form will use the standard
-    table presentation like 'BrowseForm'.
-    
+    This form behaves similarly to a regular 'BrowseForm', but the records are
+    not represented as table rows but as individual (sub)sections of a
+    document.  Field values can be displayed within each section and their
+    layout can be customized through the 'list_view' argument within
+    specification (see 'ViewSpec').  If 'list_view' is not defined, the form
+    presentation will degrade to the regular table presentation as in
+    'BrowseForm'.
+
+    If list layout is used, each record is wrapped in a div with CSS class
+    `list-item' and also all class identifiers supported by 'BrowseForm', such
+    as even/odd row and group identifiers and any identifiers computed through
+    'row_style' specification (see 'ViewSpec').  Direct row style attributes
+    such as color, background or font styles are not supported in list layout,
+    since they are considered specific for table layout (used by BrowseForm).
+
     """
     _CSS_CLS = 'list-view'
-    
+
     def __init__(self, view, row, **kwargs):
         self._list_layout = list_layout = view.list_layout()
         layout = list_layout and list_layout.layout() or None
@@ -1237,7 +1246,9 @@ class ListView(BrowseForm):
                 container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content,
                                                                              anchor=anchor)))
                 parts.append(g.div(content.export(context), cls='content id-'+ fid))
-        return g.div(parts, id=id, cls='list-item ' + (n % 2 and 'even' or 'odd'))
+        # We use only css class name from row_style, since other attributes are BrowseForm specific.
+        cls = self._style(self._view.row_style(), row, n)['cls']
+        return g.div(parts, id=id, cls='list-item '+cls)
 
     def _export_field(self, context, field):
         return self._format_field(context, field)
