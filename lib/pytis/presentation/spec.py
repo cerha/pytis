@@ -311,14 +311,16 @@ class Action(_ActionItem):
     
     """
     
-    def __init__(self, title, handler, context=ActionContext.CURRENT_ROW, secondary_context=None,
-                 name=None, enabled=True, access_groups=None, descr=None, hotkey=None, **kwargs):
+    def __init__(self, id, title, handler, context=ActionContext.CURRENT_ROW,
+                 secondary_context=None, enabled=True, access_groups=None,
+                 descr=None, hotkey=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
 
+          id -- action identifier as a string.  It must be unique among all
+            objects identifiers within a given form.
           title -- titulek akce zobrazený v u¾ivatelském rozhraní.
-
           handler -- callable objekt o¹etøující danou akci.  Handleru jsou pøi
             vyvolání akce pøedány argumenty odpovídající danému kontextu.
             Pokud argument 'context' není None, bude pøedán první pozièní
@@ -328,12 +330,10 @@ class Action(_ActionItem):
             'secondary_context', bude pøedán také druhý pozièní argument
             odpovídající kontextu ve druhém formuláøi duálního formuláøe.  Dále
             jsou handleru pøedány také ve¹keré zbylé klíèové argumenty.
-        
           context -- Instance 'ActionContext' urèující v jakém kontextu mù¾e
             být akce vyvolána.  Tato hodnota ovlivòuje argumenty, které jsou
             handleru akce pøedány pøi jejím vyvolání.  Mù¾e být také None, v
             kterém¾to pøípadì nejsou handleru pøadávány ¾ádné argumenty.
-        
           secondary_context -- Instance 'ActionContext', nebo None.  Nìkteré
             akce mohou v duálním formuláøi pracovat i s kontextovou informací z
             druhého formuláøe.  Tímto argumentem, podobnì jako argumentem
@@ -341,24 +341,17 @@ class Action(_ActionItem):
             pozièní argument pøedaný handleru akce.  Pokud je None, s ¾ádným
             dal¹ím kontextem se nepracuje a druhý pozièní argument se handleru
             nepøedává.
-
-          name -- action name as a string.  This name will identify the action for use with a form
-            'Button'.  May be None if the action is not refered by any button.
-
           enabled -- funkce, vracející pravdu, pokud je akce aktivní a nepravdu
             v opaèném pøípadì.  Funkci jsou pøadány stejné argumenty, jako
             handleru.  Není-li uvedeno, je akce aktivní v závislosti na
             'access_groups'.  Namísto funkce mù¾e být pøedána té¾ pøímo boolean
             hodnota, která dostupnost akce urèuje staticky.
-
           access_groups -- seznam u¾ivatelských skupin, které mají právo akci
             vyvolat.  Akce se pro ostatní u¾ivatele stane automaticky
             neaktivní.  Teprve pokud u¾ivatel patøí do jedné z vyjmenovaných
             skupin, je dostupnost akce zji¹tìna pomocí funkce 'enabled'.
-              
           descr -- textový popis akce, který mù¾e být pou¾it jak k vytvoøení
             nápovìdy, tak k zobrazení v u¾ivatelském rozhraní.
-
           hotkey -- pøípadná klávesová zkratka, která akci vyvolá.
 
           V¹echny ostatní klíèové argumenty budou pøi vyvolání akce pøedány
@@ -376,14 +369,20 @@ class Action(_ActionItem):
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
-        self._name = name
+        self._id = id
         self._enabled = enabled
         self._access_groups = access_groups
         self._descr = descr
         self._hotkey = hotkey
         self._kwargs = kwargs
         super(Action, self).__init__(title)
-        
+
+    def id(self):
+        return self._id
+
+    def name(self):
+        return self.id()
+    
     def handler(self):
         return self._handler
 
@@ -392,9 +391,6 @@ class Action(_ActionItem):
     
     def secondary_context(self):
         return self._secondary_context
-
-    def name(self):
-        return self._name
     
     def enabled(self):
         return self._enabled
@@ -449,28 +445,24 @@ class ActionGroup(_ActionItem):
     
 class Filter(object):
     """Predefined filtering condition specification."""
-    def __init__(self, name, condition, fixed=True, id=None):
+    
+    def __init__(self, id, name, condition, fixed=True):
         """Initialize condition specification.
 
         Arguments:
+        
+          id -- action identifier as a string.  It must be unique among all
+            objects identifiers within a given form.
           name -- condition name as a string
-          condition -- condition as a 'pytis.data.Operator' instance.
-
-            The
+          condition -- condition as a 'pytis.data.Operator' instance.  The
             condition must be displayable in the serach/filtering dialog, thus
             certain restrictions apply.  It is not possible to use the logical
             operator 'NOT', logical operators 'AND' and 'OR' must always have
             exactly two operands and only the first of the two may be a nested
             logical operator.  For example instead of AND(a, b, c) use
             AND(AND(a, b), c), insteda of NOT(EQ(x, y)) use NE(x, y), etc.
-
-            
           fixed -- indicates, whether the user is allowed to manipulate the
             condition.
-          id -- string identifier of the condition.  This string must be unique
-            within all conditions defined for one view.  It can be used to refer
-            to the condition (for example in the 'default_filter' 'ViewSpec'
-            argument).
 
         """
         def check(cond):
@@ -493,13 +485,17 @@ class Filter(object):
                    ('Second operand must be column id or Value instance:',
                     str(arg2))
             return True
+        assert isinstance(id, basestring)
         assert isinstance(name, basestring), name
         assert condition is None or isinstance(condition, pytis.data.Operator), condition
-        assert id is None or isinstance(id, basestring)
         self._name = name
         self._condition = condition
         self._fixed = fixed
         self._id = id
+    
+    def id(self):
+        """Return the filter identifier."""
+        return self._id
         
     def name(self):
         """Return the name passed to the constructor."""
@@ -512,9 +508,6 @@ class Filter(object):
     def fixed(self):
         """Return True if the user is allowed to manipulate this condition."""
         return self._fixed
-    
-    def id(self):
-        return self._id
     
 # For backwards compatibility
 Condition = Filter
@@ -1368,10 +1361,12 @@ class Binding(object):
     Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
 
     """
-    def __init__(self, title, name, binding_column=None, condition=None, id=None, descr=None,
+    def __init__(self, id, title, name, binding_column=None, condition=None, descr=None,
                  single=False, arguments=None):
         """Arguments:
 
+          id -- identifier of the binding as a string.  It must be unique among
+            all objects identifiers within a given form.
           title -- title used for the list of related records
           name -- name of the related specification
           binding_column -- the string identifier of the binding column.  The meaning depends on
@@ -1391,8 +1386,6 @@ class Binding(object):
             table arguments.  This function may be provided only when the side
             form table is actually a row returning function.  Otherwise
             'arguments' must be 'None'.
-          id -- unique string identifier of the binding.  This identifier may be used to
-            refer to the binding.
           descr -- binding description text (to be used in on-line help etc).
           single -- boolean flag indicating whether this binding corresponds to a 1:1 relation
             (True value) or 1:N relation (False value).  The value of this flag determines the
@@ -1412,7 +1405,7 @@ class Binding(object):
         assert condition is not None or binding_column is not None or arguments is not None, \
                "At least one of 'binding_column', 'condition', `arguments' must be used."
         assert isinstance(single, bool), single
-        assert id is None or isinstance(id, basestring), id
+        assert isinstance(id, basestring), id
         assert arguments is None or callable(arguments), arguments
         self._name = name
         self._title = title
@@ -1422,6 +1415,9 @@ class Binding(object):
         self._descr = descr
         self._single = single
         self._arguments = arguments
+        
+    def id(self):
+        return self._id
 
     def title(self):
         return self._title
@@ -1434,9 +1430,6 @@ class Binding(object):
     
     def condition(self):
         return self._condition
-        
-    def id(self):
-        return self._id
         
     def descr(self):
         return self._descr

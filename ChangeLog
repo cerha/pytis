@@ -1,3 +1,13 @@
+2009-09-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	* lib/pytis/presentation/spec.py:
+	Make mandatory argument `id' in in Action, Binding and Filter constructors.
+	
+	This is a backwards incompatible change and all applications and Wiking must be
+	updated.
+	
+
 2009-06-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

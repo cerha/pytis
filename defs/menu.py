@@ -93,12 +93,12 @@ class ApplicationRoles(ApplicationRolesSpecification):
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     def actions(self): return (
-        pytis.presentation.Action(_("Zkopírovat role od..."), self._copy_roles,
+        pytis.presentation.Action(id='copy_roles', _("Zkopírovat role od..."), self._copy_roles,
                                   descr=("Nastavení aplikaèních rolí dle jiného u¾ivatele.")),
         )
-    bindings = (pytis.presentation.Binding(_("Obsahuje role"), 'menu.ApplicationRolesMembers', id='members',
+    bindings = (pytis.presentation.Binding('members', _("Obsahuje role"), 'menu.ApplicationRolesMembers',
                                            binding_column='roleid'),
-                pytis.presentation.Binding(_("Patøí do rolí"), 'menu.ApplicationRolesOwners', id='owners',
+                pytis.presentation.Binding('owners', _("Patøí do rolí"), 'menu.ApplicationRolesOwners',
                                            binding_column='member'),
                 pytis.presentation.Binding(_("Náhled menu"), 'menu.ApplicationRoleMenu', id='menu',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
