@@ -1,5 +1,10 @@
 2009-09-12  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/pytis-transform.el:
+	Tool for adding the recently introduced common `id' argument in the sources.
+
+2009-09-12  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	* lib/pytis/presentation/spec.py:
 	Make mandatory argument `id' in in Action, Binding and Filter constructors.
