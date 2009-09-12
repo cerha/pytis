@@ -367,11 +367,11 @@ class SFDialog(SFSDialog):
         choice, button = self._create_choice, self._create_button
         buttons = [
             button(_("Pøidat AND"), lambda e: self._on_add(),
-                   tooltip=_("Pøidat novou podmínku v konjunkci")),
+                   tooltip=_("Pøidat novou podmínku v konjunkci (a zároveò)")),
             button(_("Pøidat OR"), lambda e: self._on_add(or_=True),
-                   tooltip=_("Pøidat novou podmínku v disjunkci")),
+                   tooltip=_("Pøidat novou podmínku v disjunkci (a nebo)")),
             button(_("Odebrat v¹e"), lambda e: self._on_reset(),
-                   tooltip=_("Pøidat novou podmínku v disjunkci"))]
+                   tooltip=_("Zru¹it v¹echny stávající podmínky"))]
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
             bsizer.Add(b, 0, wx.RIGHT, 10)

@@ -1,3 +1,8 @@
+2009-09-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/search.py:
+	Improved search dialog button tooltips.
+
 2009-09-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
