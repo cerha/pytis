@@ -232,6 +232,7 @@ _std_table_nolog('c_pytis_action_types',
                               ("'spec'", _("'Specifikace'"),),
                               ("'subf'", _("'Podformulář'"),),
                               ("'proc'", _("'Procedura'"),),
+                              ("'actf'", _("'Akce formuláře'"),),
                               ),
                  grant=db_rights
                  )
@@ -1112,10 +1113,20 @@ def pytis_update_actions_structure():
             if parent_subactions is None:
                 parent_subactions = subactions[parent] = []
             parent_subactions.append((fullname, shortname,))
+        formactions = {}
+        for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'action/%' order by fullname"):
+            fullname = row['fullname']
+            parent = fullname[fullname.find('/', 7)+1:]
+            parent_formactions = formactions.get(parent)
+            if parent_formactions is None:
+                parent_formactions = formactions[parent] = []
+            parent_formactions.append(fullname)
         actions = {}
         def add_row(fullname, shortname, menuid, position):
             if fullname[:4] == 'sub/':
                 item_type = 'subf'
+            elif fullname[:7] == 'action/':
+                item_type = 'actf'
             elif position.find('.') == -1:
                 item_type = '----'
             elif menuid is None:
@@ -1145,6 +1156,11 @@ def pytis_update_actions_structure():
                     sub_fullname, sub_shortname = subaction_list[i]
                     subposition = '%s.%02d' % (position, i,)
                     add_row(sub_fullname, sub_shortname, None, subposition)
+                formaction_list = formactions.get(fullname, ())
+                for i in range(len(formaction_list)):
+                    faction_fullname = formaction_list[i]
+                    subposition = '%s.%02d' % (position, (i + 50),)
+                    add_row(faction_fullname, faction_fullname, None, subposition)
         position = '8.0001'
         add_row('label/1', 'label/1', None, '8')
         for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):

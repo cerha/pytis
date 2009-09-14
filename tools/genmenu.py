@@ -156,9 +156,15 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                 form_module = string.join(form_name_components[:-1], '/')
                 base_form_name = form_name_components[-1]
                 try:
-                    spec_title = resolver.get_object(form_module, base_form_name).title
+                    spec = resolver.get_object(form_module, base_form_name)
                 except:
-                    pass
+                    spec = None
+                if spec is not None:
+                    try:
+                        spec_title = spec.title
+                    except:
+                        pass
+                # Subforms
                 bindings = None
                 def binding(name):
                     form_name_components = name.split('.')
@@ -193,6 +199,20 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                                                        shortname=subaction_shortname,
                                                        title=subaction_title)
                         subactions.append(subaction_id)
+                # Actions
+                if hasattr(spec, 'actions'):
+                    try:
+                        spec_instance = spec(resolver)
+                    except:
+                        spec_instance = None
+                        print "Error: Can't get actions of %s -- specification instance " % (spec.__name__,)
+                    if spec_instance is not None:
+                        form_actions = spec_instance.actions()
+                        for a in form_actions:
+                            form_action_id = 'action/%s/%s' % (a.id(), action_id,)
+                            actions[form_action_id] = Action(form_action_id, a.descr(),
+                                                             shortname=form_action_id,
+                                                             title=a.title(raw=True))
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname,

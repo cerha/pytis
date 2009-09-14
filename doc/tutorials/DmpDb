@@ -62,6 +62,13 @@ akcí a jejich identifikátorů:
 
   NN .. dvojciferné pořadové číslo podformuláře, `00' odpovídá vždy hlavnímu formuláři
   FORM_ACTION .. plná specifikace akce násobného formuláře
+
+  Specifikace akcí formulářů se ukládají ve tvaru
+
+    action/ACTION_NAME/FORM_ACTION
+
+  ACTION_NAME .. identifikátor akce (uvedený v pythonové specifikaci)
+  FORM_ACTION .. plná specifikace akce násobného formuláře
   
 - Příkaz NEW_RECORD:
 
