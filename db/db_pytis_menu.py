@@ -132,7 +132,7 @@ def e_pytis_role_members_trigger():
             self._update_rights()
         def _do_after_update(self):
             self._update_roles()
-            self._update_rights(self._new['member'])
+            self._update_rights()
             if self._new['member'] != self._old['member']:
                 self._update_rights()
         def _do_after_delete(self):
