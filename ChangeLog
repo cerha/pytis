@@ -1,6 +1,11 @@
 2009-09-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Fix displaying extended menu in the role editing multiform.
+
+2009-09-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fix checking for system rights presence in the summary rights computation.
 
 2009-09-14  Milan Zamazal  <pdm@brailcom.org>

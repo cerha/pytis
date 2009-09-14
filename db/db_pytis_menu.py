@@ -1034,7 +1034,7 @@ viewng('ev_pytis_extended_role_menu_raw',
                        condition='structure.type = atypes.type', jointype=JoinType.LEFT_OUTER,
                        ),
         SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('*',),
-                       condition='structure.shortname = actions.shortname', jointype=JoinType.LEFT_OUTER)
+                       condition='structure.fullname = actions.fullname', jointype=JoinType.LEFT_OUTER)
         ),
        include_columns=(V(None, 'position_nsub',
                           "(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)"),
