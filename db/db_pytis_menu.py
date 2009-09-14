@@ -665,7 +665,7 @@ def pytis_update_summary_rights():
             if name:
                 if not max_rights:
                     for r in menu_rights.values():
-                        if r:
+                        if r.system:
                             break
                     else:
                         max_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
