@@ -1,5 +1,10 @@
 2009-09-14  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Display column names in the rights editing side form.
+
+2009-09-14  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Fix displaying extended menu in the role editing multiform.
 
