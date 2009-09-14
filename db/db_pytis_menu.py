@@ -950,7 +950,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
         subforms = subactions.get(fullname, ())
         if shortname[:5] == 'form/' or shortname[:9] == 'RUN_FORM/':
             default_forbidden = [('call', None,)]
-        elif shortname[:7] == 'handle/':
+        elif shortname[:7] in ('handle/', 'action/',):
             default_forbidden = [('view', None,), ('insert', None,), ('update', None,),
                                  ('delete', None,), ('print', None,), ('export', None,)]
         elif shortname[:5] == 'menu/':

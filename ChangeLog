@@ -1,6 +1,11 @@
 2009-09-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Limit form actions access rights to the call right.
+
+2009-09-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* doc/tutorials/DmpDb:
 	* tools/genmenu.py:
 	Initial support for form actions in DMP.
