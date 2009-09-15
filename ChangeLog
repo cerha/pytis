@@ -1,6 +1,11 @@
 2009-09-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/presentation/spec.py:
+	Read form actions rights from the database.
+
+2009-09-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
 	Fix column limiting of user rights by system rights.
 
 2009-09-15  Milan Zamazal  <pdm@brailcom.org>

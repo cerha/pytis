@@ -398,6 +398,10 @@ class Action(_ActionItem):
     def access_groups(self):
         return self._access_groups
         
+    def set_access_groups(self, access_groups):
+        assert access_groups is None or is_sequence(access_groups)
+        self._access_groups = access_groups
+        
     def descr(self):
         return self._descr
         
@@ -795,7 +799,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
                  filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
-                 initial_folding=None, arguments=None):
+                 initial_folding=None, spec_name='', arguments=None):
         
         """Inicializuj instanci.
 
@@ -951,6 +955,8 @@ class ViewSpec(object):
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
 
+          spec_name -- name of the original form specification if any, string.
+
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
         the field specifications in 'fields'.
@@ -967,6 +973,16 @@ class ViewSpec(object):
         assert is_sequence(fields)
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
+        self._spec_name = spec_name
+        for action in self._linearize_actions(actions):
+            rights = Specification.data_access_rights('action/%s/%s' % (action.id(), self._spec_name,))
+            if rights is None:
+                groups = None
+            else:
+                groups = rights.permitted_groups(pytis.data.Permission.CALL, None)
+                if None in groups:
+                    groups = None
+            action.set_access_groups(groups)
         # Initialize the layout
         if layout is None:
             layout = LayoutSpec(singular, GroupSpec([f.id() for f in self._fields],
@@ -2940,6 +2956,13 @@ class Specification(object):
             #if not self._view_spec_kwargs.has_key('help') and len(parts) > 1:
             #    self._view_spec_kwargs['help'] = parts[1]
 
+    def _spec_name(self):
+        spec_name = self.__class__.__name__
+        if self.__class__.__module__:
+            spec_name = self.__class__.__module__ + '.' + spec_name
+        spec_name = spec_name.replace('/', '.')
+        return spec_name
+
     def _create_data_spec(self):
         def type_kwargs(f):
             kwargs = copy.copy(f.type_kwargs())
@@ -2989,11 +3012,7 @@ class Specification(object):
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
             arguments = None
-        spec_name = self.__class__.__name__
-        if self.__class__.__module__:
-            spec_name = self.__class__.__module__ + '.' + spec_name
-        spec_name = spec_name.replace('/', '.')
-        access_rights = self.data_access_rights('form/' + spec_name)
+        access_rights = self.data_access_rights('form/' + self._spec_name())
         if access_rights is None:
             access_rights = self.access_rights
             if access_rights is None:
@@ -3015,7 +3034,7 @@ class Specification(object):
             spec = self._view_spec
         except AttributeError:
             kwargs = self._view_spec_kwargs
-            spec = self._view_spec = self._create_view_spec(**kwargs)
+            spec = self._view_spec = self._create_view_spec(spec_name=self._spec_name(), **kwargs)
         return spec
         
     def data_spec(self):
