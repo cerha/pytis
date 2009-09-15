@@ -731,7 +731,8 @@ class TextField(InputField):
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
-        if self._row.completions(self.id(), '') is not None:
+        if not self._denied and not self._readonly \
+               and self._row.completions(self.id(), '') is not None:
             self._completer = _Completer(control)
         else:
             self._completer = None
@@ -772,7 +773,7 @@ class TextField(InputField):
             value = post_process(self._get_value())
             if value != self._get_value():
                 self._set_value(value)
-        if event and self._completer:
+        if event and self._completer and self._enabled:
             self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
 
