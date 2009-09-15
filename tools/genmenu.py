@@ -209,7 +209,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     if spec_instance is not None:
                         form_actions = spec_instance.actions()
                         for a in form_actions:
-                            form_action_id = 'action/%s/%s' % (a.id(), action_id,)
+                            form_action_id = 'action/%s/%s' % (a.id(), form_name,)
                             actions[form_action_id] = action = Action(form_action_id, a.descr(),
                                                                       shortname=form_action_id,
                                                                       title=a.title(raw=True))

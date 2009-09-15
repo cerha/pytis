@@ -65,10 +65,10 @@ akcí a jejich identifikátorů:
 
   Specifikace akcí formulářů se ukládají ve tvaru
 
-    action/ACTION_NAME/FORM_ACTION
+    action/ACTION_NAME/FORM_NAME
 
   ACTION_NAME .. identifikátor akce (uvedený v pythonové specifikaci)
-  FORM_ACTION .. plná specifikace akce násobného formuláře
+  FORM_NAME ... specifikace formuláře kvalifikovaná vůči adresáři `defs', např. `misc.Products'
   
 - Příkaz NEW_RECORD:
 
