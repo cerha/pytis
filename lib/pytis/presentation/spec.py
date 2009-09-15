@@ -2956,7 +2956,7 @@ class Specification(object):
             #if not self._view_spec_kwargs.has_key('help') and len(parts) > 1:
             #    self._view_spec_kwargs['help'] = parts[1]
 
-    def _spec_name(self):
+    def _action_spec_name(self):
         spec_name = self.__class__.__name__
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
@@ -3012,7 +3012,7 @@ class Specification(object):
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
             arguments = None
-        access_rights = self.data_access_rights('form/' + self._spec_name())
+        access_rights = self.data_access_rights('form/' + self._action_spec_name())
         if access_rights is None:
             access_rights = self.access_rights
             if access_rights is None:
@@ -3034,7 +3034,7 @@ class Specification(object):
             spec = self._view_spec
         except AttributeError:
             kwargs = self._view_spec_kwargs
-            spec = self._view_spec = self._create_view_spec(spec_name=self._spec_name(), **kwargs)
+            spec = self._view_spec = self._create_view_spec(spec_name=self._action_spec_name(), **kwargs)
         return spec
         
     def data_spec(self):
