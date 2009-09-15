@@ -1,5 +1,10 @@
 2009-09-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/genmenu.py:
+	Fixes in genmenu.
+
+2009-09-15  Milan Zamazal  <pdm@brailcom.org>
+
 	* doc/tutorials/DmpDb:
 	* tools/genmenu.py:
 	Support ActionGroup's in genmenu.

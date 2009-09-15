@@ -214,8 +214,10 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                                     form_actions.append(a)
                                 elif isinstance(a, pytis.presentation.ActionGroup):
                                     add_form_actions(a.actions())
+                                elif pytis.util.is_sequence(a):
+                                    add_form_actions(a)                                    
                                 else:
-                                    print "Error: Unknown form action class: %s" % (a,)
+                                    print "Error: Unknown form action class in %s: %s" % (spec.__name__, a,)
                         add_form_actions(spec_instance.actions())
                         for a in form_actions:
                             form_action_id = 'action/%s/%s' % (a.id(), form_name,)
@@ -534,8 +536,9 @@ def check_rights(cursor, rights, update):
                         rights_args = (pg_escape(action_name), pg_escape(gg), permission, cc,)
                         if rights_seen.has_key(rights_args):
                             continue
-                        print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
-                                "values('%s', '%s', '%s', 't', 't', %s, 0);") % rights_args)
+                        if update:
+                            print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
+                                    "values('%s', '%s', '%s', 't', 't', %s, 0);") % rights_args)
                         rights_seen[rights_args] = True
                     continue
                 db_columns = db_group_info.get(permission)
