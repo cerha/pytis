@@ -210,9 +210,11 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                         form_actions = spec_instance.actions()
                         for a in form_actions:
                             form_action_id = 'action/%s/%s' % (a.id(), action_id,)
-                            actions[form_action_id] = Action(form_action_id, a.descr(),
-                                                             shortname=form_action_id,
-                                                             title=a.title(raw=True))
+                            actions[form_action_id] = action = Action(form_action_id, a.descr(),
+                                                                      shortname=form_action_id,
+                                                                      title=a.title(raw=True))
+                            formaction_rights = (None, (a.access_groups(), pytis.data.Permission.CALL,),)
+                            rights[form_action_id] = Rights(pytis.data.AccessRights(formaction_rights), action)
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname,
@@ -430,6 +432,7 @@ def fill_rights(cursor, rights, check_rights=None):
     already_stored = {}
     for right in rights.values():
         action = right.action
+        action_name = action.shortname
         for specification in right.rights.specification():
             columns = specification[0]
             if columns is None:
@@ -446,7 +449,6 @@ def fill_rights(cursor, rights, check_rights=None):
                 if pytis.data.Permission.ALL in permissions:
                     permissions = pytis.data.Permission.all_permissions()
                 permissions = [p.lower() for p in permissions]
-                action_name = action.shortname
                 for group in groups:
                     if check_rights is None:
                         if group and not roles.has_key(group):
