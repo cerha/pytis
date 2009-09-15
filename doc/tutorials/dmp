@@ -267,9 +267,10 @@ o některé řádky.  Jednak je to seznam samostatných akcí, které nejsou p�
 navěšeny na žádnou z položek menu.  Tyto akce odpovídají specifikacím
 používaným ke speciálním účelům, např. jako číselníky.  Dalšími řádky navíc
 jsou řádky odpovídající podformulářům násobných formulářů (duálních formulářů a
-násobných formulářů), uváděné vždy u položek menu odpovídajících násobným
-formulářům.  Editací jejich práv lze měnit práva podformulářů a změny v nich se
-mohou promítnout i do práv hlavního formuláře.
+násobných formulářů) a akcím formulářů, uváděné vždy u položek menu
+odpovídajících formulářů.  Editací jejich práv lze měnit práva podformulářů a
+akcí formulářů a změny v právech podformulářů se mohou promítnout i do práv
+hlavního formuláře.
 
 Ke všem položkám hlavního formuláře lze uvádět libovolné poznámky.
 
