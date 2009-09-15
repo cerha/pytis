@@ -1,5 +1,10 @@
 2009-09-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/spec.py:
+	Fix column limiting of user rights by system rights.
+
+2009-09-15  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* doc/tutorials/DmpDb:
 	* tools/genmenu.py:
