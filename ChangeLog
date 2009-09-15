@@ -1,3 +1,8 @@
+2009-09-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Read user access rights directly from a_pytis_computed_summary_rights db table.
+
 2009-09-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:

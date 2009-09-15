@@ -1083,18 +1083,14 @@ viewng('ev_pytis_user_menu',
        )
 
 viewng('ev_pytis_user_rights',
-       (SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid', 'shortname',),
+       (SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid',),
                        condition="rights.roleid = user"),
-        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('*'),
-                       condition="rights.menuid = menu.menuid", jointype=JoinType.INNER),
-        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('fullname', 'description',),
-                       condition="menu.fullname = actions.fullname", jointype=JoinType.INNER),
         ),
        insert=None,
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('a_pytis_computed_summary_rights', 'e_pytis_menu', 'c_pytis_menu_actions',)
+       depends=('a_pytis_computed_summary_rights',)
        )
 
 viewng('ev_pytis_user_roles',
