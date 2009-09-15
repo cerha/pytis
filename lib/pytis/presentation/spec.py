@@ -2810,13 +2810,7 @@ class Specification(object):
             Specification._access_rights = 'nonuser'
             return
         access_rights = {}
-        # Read in all menu actions
-        add_spec('menuactions', 'ev_pytis_menu', ('shortname',))
-        menuactions_data = specifications['menuactions'].create(connection_data=connection_data)
-        menu_actions = {}
-        def process(row):
-            menu_actions[row[0].value()] = True
-        menuactions_data.select_map(process)
+        user_rights = {}
         # Assign computed user rights
         add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
         rights_data = specifications['rights'].create(connection_data=connection_data)
@@ -2824,12 +2818,12 @@ class Specification(object):
             shortname, rights_string = row[0].value(), row[1].value()
             if not rights_string:
                 return
-            rights = {}
+            shortname_rights = access_rights.get(shortname)
+            if shortname_rights is None:
+                shortname_rights = access_rights[shortname] = {}
+                user_rights[shortname] = True
             for r in rights_string.split(' '):
                 if r != 'show':
-                    shortname_rights = access_rights.get(shortname)
-                    if shortname_rights is None:
-                        shortname_rights = access_rights[shortname] = {}
                     shortname_rights[r] = []
         rights_data.select_map(process)
         # System rights may limit rights to certain columns
@@ -2840,7 +2834,7 @@ class Specification(object):
             shortname_rights = access_rights.get(shortname)
             columns = (shortname_rights or {}).get(right)
             if columns is None:
-                if not menu_actions.has_key(shortname):
+                if not user_rights.has_key(shortname):
                     if shortname_rights is None:
                         shortname_rights = access_rights[shortname] = {}
                     shortname_rights[right] = shortname_rights.get(right, []) + [colname]
