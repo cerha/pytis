@@ -265,6 +265,15 @@ Chybová a varovná hlášení:
   Couldn't get access rights for form :: Nelze zjistit přístupová práva daného
     formuláře, přestože by to být možné mělo.
 
+  Can't create specification instance to get form actions :: Nelze vytvořit
+    instanci specifikace obsahující formulářové akce.  Typickým důvodem je, že
+    při vytváření instance dochází k přístupu do databáze.  Je nutné buď
+    specifikaci modifikovat, aby bylo možno vytvořit její instanci (i bez
+    přístupné databáze), nebo její akce do databáze vložit ručně.
+
+  Unknown form action class :: Ve specifikaci formulářových akcí se objevila
+    nečekaná třída.  Nutno doplnit její podporu do genmenu.
+
   is_in_groups called in %s for groups %s :: Ve specifikacích je používáno
     volání funkce =is_in_groups= a genmenu místo něho použilo svůj wrapper,
     protože není možné při importu obecných specifikací zohledňovat přihlášení

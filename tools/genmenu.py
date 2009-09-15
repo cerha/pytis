@@ -205,9 +205,18 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                         spec_instance = spec(resolver)
                     except:
                         spec_instance = None
-                        print "Error: Can't get actions of %s -- specification instance " % (spec.__name__,)
+                        print "Error: Can't create specification instance to get form actions of %s" % (spec.__name__,)
                     if spec_instance is not None:
-                        form_actions = spec_instance.actions()
+                        form_actions = []
+                        def add_form_actions(actions):
+                            for a in actions:
+                                if isinstance(a, pytis.presentation.Action):
+                                    form_actions.append(a)
+                                elif isinstance(a, pytis.presentation.ActionGroup):
+                                    add_form_actions(a.actions())
+                                else:
+                                    print "Error: Unknown form action class: %s" % (a,)
+                        add_form_actions(spec_instance.actions())
                         for a in form_actions:
                             form_action_id = 'action/%s/%s' % (a.id(), form_name,)
                             actions[form_action_id] = action = Action(form_action_id, a.descr(),
