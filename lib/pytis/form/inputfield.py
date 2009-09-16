@@ -774,6 +774,8 @@ class TextField(InputField):
             if value != self._get_value():
                 self._set_value(value)
         if event and self._completer and self._enabled:
+            # TODO: Maybe also omit this if the field has no focus (the change comes from the
+            # computer).
             self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
 
