@@ -2245,14 +2245,30 @@ class FoldableForm(ListForm):
             return condition
         def level(self, node):
             return self._folding_level(node)
-
+        def folding_state(self):
+            def transform(folding):
+                level = folding.level()
+                subnodes = [(k, transform(v),) for k, v in folding.subnodes().items()]
+                return (level, subnodes,)
+            return transform(self._folding)
+        def set_folding_state(self, state):
+            def transform(state):
+                level, subnodes_state = state
+                subnodes = [(k, transform(v),) for k, v in subnodes_state]
+                return FoldableForm._FoldingState(level=level, subnodes=dict(subnodes))
+            self._folding = transform(state)
+            
     def __init__(self, *args, **kwargs):
         self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
         self._folding = self._initial_folding()
+        folding_state = self._get_state_param('folding')
+        if folding_state is not None:
+            self._folding.set_folding_state(folding_state)
         self._folding_column_id = self._find_folding_column()
-        # Any better way to display the form with initial folding?
-        self.refresh()
+        # Any better way to display the form with initial folding than to
+        # refresh it?
+        self._refresh_folding()
 
     def _initial_folding(self):
         return self._view.initial_folding() or self.Folding()
@@ -2306,7 +2322,7 @@ class FoldableForm(ListForm):
             self._table.rewind(position=row_number)
         orig_folding = self._folding
         self._folding = self.Folding(level=None)
-        self.refresh()
+        self._refresh_folding()
         if row_number is None:
             unfolded_row_number = row_number
         else:
@@ -2319,15 +2335,15 @@ class FoldableForm(ListForm):
         finally:
             self._folding = orig_folding
         if result is None:
-            self.refresh()
+            self._refresh_folding()
             return None
         node = row[self._folding_column_id].value()
         if self._folding.level(node) == 0:
             self._folding.expand(node, level=0)
-        self.refresh()
+        self._refresh_folding()
         return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
-                                                       report_failure=report_failure)
-
+                                                 report_failure=report_failure)
+    
     def _apply_filter(self, condition):
         if condition is not None:
             self._folding = self.Folding(level=None)
@@ -2337,6 +2353,10 @@ class FoldableForm(ListForm):
         if self._folding_enabled():
             self._cmd_expand_or_collapse()
         event.Skip()
+
+    def _refresh_folding(self):
+        self._set_state_param('folding', self._folding.folding_state())
+        self.refresh()
         
     def _cmd_expand_or_collapse_subtree(self, level=None):
         if not self._folding_enabled():
@@ -2344,18 +2364,18 @@ class FoldableForm(ListForm):
         row, _col = self._current_cell()
         node = self._table.row(row)[self._folding_column_id].value()
         if self._folding.expand_or_collapse(node, level=level):
-            self.refresh()
+            self._refresh_folding()
 
     def _cmd_expand_or_collapse(self):
         self._cmd_expand_or_collapse_subtree(level=1)
         
     def _cmd_expand_all(self):
         self._folding = self.Folding(level=None)
-        self.refresh()
+        self._refresh_folding()
 
     def _cmd_collapse_all(self):
         self._folding = self.Folding()
-        self.refresh()
+        self._refresh_folding()
             
     def folding_level(self, row):
         """Return current folding level of 'row'.

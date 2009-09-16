@@ -1,3 +1,8 @@
+2009-09-16  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/list.py:
+	Store and restore form folding state.
+
 2009-09-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/presentation/spec.py:
