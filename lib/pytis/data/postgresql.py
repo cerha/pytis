@@ -509,17 +509,23 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                 bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
                 factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
                 specifications[name] = factory
-            add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
-            try:
-                roles_data = specifications['roles'].create(connection_data=connection_data)
-            except pytis.data.DBException:
-                pass
-            else:
-                logical_access_groups = []
-                def process(row):
-                    logical_access_groups.append(row[0].value())
-                roles_data.select_map(process)
-                PostgreSQLUserGroups._logical_access_groups = logical_access_groups
+            # Check for ev_pytis_user_roles presence first, to prevent logging
+            # error messages in non-DMP applications
+            add_spec('tables', 'pg_catalog.pg_class', ('relname',))
+            tables = specifications['tables'].create(connection_data=connection_data)
+            roles_data = None
+            if tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles'))) > 0:
+                add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
+                try:
+                    roles_data = specifications['roles'].create(connection_data=connection_data)
+                except pytis.data.DBException:
+                    pass
+                else:
+                    logical_access_groups = []
+                    def process(row):
+                        logical_access_groups.append(row[0].value())
+                    roles_data.select_map(process)
+                    PostgreSQLUserGroups._logical_access_groups = logical_access_groups
         if PostgreSQLUserGroups._logical_access_groups is None:
             key = self._pgg_connection_key(connection_data)
             groups = PostgreSQLUserGroups._access_groups.get(key, UNDEFINED)
