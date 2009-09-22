@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-2 -*-
-# Copyright (C) 2001, 2002, 2003, 2005 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2005, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,3 +33,6 @@ class StringNotNull(pytis.data.String):
     def __init__(self, **kwargs):
         kwargs['not_null'] = True
         super(StringNotNull, self).__init__(**kwargs)
+
+class _TreeOrder(pytis.presentation.PrettyTreeOrder, pytis.data.String):
+      pass

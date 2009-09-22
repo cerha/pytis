@@ -26,6 +26,7 @@ from dbconfig import *
 from dbutils import *
 from misc import *
 from types import *
+from types import _TreeOrder
 from spec import *
 from defs import *
 
