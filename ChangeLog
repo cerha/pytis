@@ -1,3 +1,9 @@
+2009-09-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* lib/pytis/form/application.py:
+	Add separators again to menu read from the database.
+
 2009-09-22  Pavel Hanak  <hanak@wpb.cz>
 
 	* lib/pytis/cms/cms.py:

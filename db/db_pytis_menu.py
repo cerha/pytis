@@ -1068,12 +1068,12 @@ viewng('ev_pytis_extended_role_menu',
        )
 
 viewng('ev_pytis_user_menu',
-       (SelectRelation('e_pytis_menu', alias='menu'),
+       (SelectRelation('e_pytis_menu', alias='menu',
+                       condition="(name is null and title is null) or (rights.rights like '%show%')"),
         SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid', 'shortname',),
                        condition=("menu.menuid = rights.menuid and "
-                                  "rights.roleid = user and "
-                                  "rights.rights like '%show%'"),
-                       jointype=JoinType.INNER),
+                                  "rights.roleid = user"),
+                       jointype=JoinType.LEFT_OUTER),
         ),
        insert=None,
        update=None,

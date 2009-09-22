@@ -379,7 +379,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for row in menu_rows:
             menuid, name, title, action, position, rights_string, help, hotkey = \
                 [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6, 7,)]
-            rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
+            if title:
+                rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
             if not parents: # the top pseudonode, should be the first one
                 parents.append((position or '', menu_template,))
                 current_template = menu_template
