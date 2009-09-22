@@ -1,3 +1,10 @@
+2009-09-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	* lib/pytis/form/commands_.py:
+	* tools/genmenu.py:
+	Support on-line reloading of menus and access rights from the database.
+
 2009-09-17  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

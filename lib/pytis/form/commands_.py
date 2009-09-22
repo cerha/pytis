@@ -67,6 +67,8 @@ Command(Application, 'CLEAR_RECENT_FORMS',
         "Vyèisti menu poslednì otevøených formuláøù")
 Command(Application, 'HANDLED_ACTION',
         "Perform application defined action (arg. 'handler', 'enabled')")
+Command(Application, 'RELOAD_RIGHTS',
+        "Reload application rights and menu from the database")
 Command(Application, 'NOTHING',
         "Fake command which does nothing (arg. 'enabled')")
 Command(Form, 'LEAVE_FORM',

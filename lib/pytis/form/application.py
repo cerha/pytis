@@ -195,30 +195,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._recent_forms.append((title, args))
         self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
         # Initialize the menubar.
-        self._recent_forms_menu = None
-        menus_prototype = self._spec('menu', ())
-        menus = self._build_menu(menus_prototype, config.dbconnection)
-        menus.append(Menu(self._WINDOW_MENU_TITLE, (
-            MItem(_("Pøedchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
-                  help=_("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
-            MItem(_("Následující okno"), command=Application.COMMAND_RAISE_NEXT_FORM,
-                  help=_("Pøepnout na následující okno v poøadí seznamu oken.")),
-            MItem(_("Poslednì aktivní okno"), command=Application.COMMAND_RAISE_RECENT_FORM,
-                  help=_("Umo¾òuje cyklicky pøepínat mezi dvìma poslednì aktivními okny.")),
-            MItem(_("Uzavøít aktuální okno"), command=Form.COMMAND_LEAVE_FORM,
-                  help=_("Uzavøít okno aktuálního formuláøe.")),
-            MSeparator(),
-            ), allow_autoindex=False))
-        self._create_command_menu(menus)
-        self._create_help_menu(menus)
-        # Determining availability of menu items may invoke database operations...
-        success, mb = db_operation(MenuBar, frame, menus, self.keymap)
-        if not success:
+        mb = self._create_menubar()
+        if mb is None:
             return False
-        self._menubar = mb
         self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         assert self._window_menu is not None
-        # Try to find the recent forms menu.
+        # Finish and show the frame.
         default_font_encoding = self._spec('default_font_encoding')
         if default_font_encoding is not None:
             wx.Font.SetDefaultEncoding(default_font_encoding)
@@ -456,6 +438,30 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return result
         menus = [build(t) for t in menu_template]
         return menus
+
+    def _create_menubar(self):
+        self._recent_forms_menu = None
+        menus_prototype = self._spec('menu', ())
+        menus = self._build_menu(menus_prototype, config.dbconnection)
+        menus.append(Menu(self._WINDOW_MENU_TITLE, (
+                    MItem(_("Pøedchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
+                          help=_("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
+                    MItem(_("Následující okno"), command=Application.COMMAND_RAISE_NEXT_FORM,
+                          help=_("Pøepnout na následující okno v poøadí seznamu oken.")),
+                    MItem(_("Poslednì aktivní okno"), command=Application.COMMAND_RAISE_RECENT_FORM,
+                          help=_("Umo¾òuje cyklicky pøepínat mezi dvìma poslednì aktivními okny.")),
+                    MItem(_("Uzavøít aktuální okno"), command=Form.COMMAND_LEAVE_FORM,
+                          help=_("Uzavøít okno aktuálního formuláøe.")),
+                    MSeparator(),
+                    ), allow_autoindex=False))
+        self._create_command_menu(menus)
+        self._create_help_menu(menus)
+        # Determining availability of menu items may invoke database operations...
+        success, mb = db_operation(MenuBar, self._frame, menus, self.keymap)
+        if not success:
+            return None
+        self._menubar = mb
+        return mb
 
 # Ostatní metody
 
@@ -938,6 +944,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if topic == 'pytis':
             return 'pytis' in [index for filename, index, title in self._help_files]
         return True
+
+    def _cmd_reload_rights(self):
+        init_access_rights(config.dbconnection)
+        self._create_menubar()
         
     def _cmd_custom_debug(self):
         if __debug__:

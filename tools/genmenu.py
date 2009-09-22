@@ -610,7 +610,10 @@ def run():
                                         pytis.extensions.run_form_mitem(_("Práva menu"), 'menu.ApplicationMenuM',
                                                                         pytis.form.MultiBrowseDualForm),
                                         pytis.extensions.run_form_mitem(_("U¾ivatelské role"), 'menu.ApplicationRoles',
-                                                                        pytis.form.MultiBrowseDualForm),)),)
+                                                                        pytis.form.MultiBrowseDualForm),
+                                        pytis.form.MItem(_("Pøenaètení menu a práv"),
+                                                         command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),
+                                        )),)
                       + menu[0]._items)
     top = Menu(name=None, title=_("CELÉ MENU"), parent=None, position='2', action=None, system=True)
     menu_items = {}
