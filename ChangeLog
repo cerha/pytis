@@ -1,5 +1,10 @@
 2009-09-22  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/spec.py:
+	Make sure no SHOW right passes to AccessRights.
+
+2009-09-22  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/cms/cms.py:
 	Use _TreeOrder pretty type in cms.py.
 

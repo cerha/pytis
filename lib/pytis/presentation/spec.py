@@ -2847,7 +2847,7 @@ class Specification(object):
                 columns = None
             return (columns, (None, str(right.upper()),),)
         for shortname, rights in access_rights.items():
-            access_rights_spec = [process(right, columns) for right, columns in rights.items()]
+            access_rights_spec = [process(right, columns) for right, columns in rights.items() if right != 'show']
             access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         # Forbid actions without any rights for the current user
         add_spec('actions', 'e_pytis_action_rights', ('shortname', 'system',))
