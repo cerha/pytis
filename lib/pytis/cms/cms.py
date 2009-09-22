@@ -27,7 +27,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 import socket
 import lcg
-import pytis.data as pd, pytis.presentation as pp
+import pytis.data as pd, pytis.extensions as pe, pytis.presentation as pp
 from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
 from pytis.extensions import nextval, ONCE, NEVER, ALWAYS
@@ -190,7 +190,7 @@ class MenuParents(Specification):
     def fields(self): return (
         Field('menu_id'),
         Field('menu_item_id'),
-        Field('tree_order', type=pd.TreeOrder()),
+        Field('tree_order', type=pe._TreeOrder()),
         Field('lang'),
         Field('title_or_identifier', _("Název"), width=32),
         Field('identifier', _("Identifikátor"), width=20),
@@ -211,7 +211,7 @@ class Menu(Specification):
     def fields(self): return (
         Field('menu_id'),
         Field('menu_item_id'),
-        Field('tree_order', type=pd.TreeOrder()),
+        Field('tree_order', type=pe._TreeOrder()),
         Field('identifier', _("Identifikátor"), width=20, fixed=True, editable=ONCE,
               type=pd.RegexString(maxlen=32, not_null=True, regex='^[a-zA-Z][0-9a-zA-Z_-]*$'),
               descr=_("Identifikátor bude vystupovat jako vnìj¹í adresa stránky.  Mù¾e být pou¾it "

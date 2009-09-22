@@ -1,5 +1,10 @@
 2009-09-22  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/cms/cms.py:
+	Use _TreeOrder pretty type in cms.py.
+
+2009-09-22  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/extensions/__init__.py:
 	* lib/pytis/extensions/types.py:
 	_TreeOrder type added.
