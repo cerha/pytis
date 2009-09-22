@@ -1,3 +1,8 @@
+2009-09-22  Pavel Hanak  <hanak@wpb.cz>
+
+	* lib/pytis/cms/cms.py:
+	Correct an error in the constructor of _TreeOrder type..
+
 2009-09-22  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/presentation/spec.py:

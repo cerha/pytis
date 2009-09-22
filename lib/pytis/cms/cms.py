@@ -190,9 +190,10 @@ class MenuParents(Specification):
     def fields(self): return (
         Field('menu_id'),
         Field('menu_item_id'),
-        Field('tree_order', type=pe._TreeOrder()),
+        Field('tree_order'),
         Field('lang'),
-        Field('title_or_identifier', _("Název"), width=32),
+        Field('title_or_identifier', _("Název"), width=32,
+              type=pe._TreeOrder(tree_column_id='tree_order')),
         Field('identifier', _("Identifikátor"), width=20),
         Field('modname', _("Modul")),
         #Field('description', _("Popis"), width=64),
@@ -211,7 +212,7 @@ class Menu(Specification):
     def fields(self): return (
         Field('menu_id'),
         Field('menu_item_id'),
-        Field('tree_order', type=pe._TreeOrder()),
+        Field('tree_order'),
         Field('identifier', _("Identifikátor"), width=20, fixed=True, editable=ONCE,
               type=pd.RegexString(maxlen=32, not_null=True, regex='^[a-zA-Z][0-9a-zA-Z_-]*$'),
               descr=_("Identifikátor bude vystupovat jako vnìj¹í adresa stránky.  Mù¾e být pou¾it "
@@ -220,7 +221,8 @@ class Menu(Specification):
                       "pomlèky a podtr¾ítka a musí zaèínat písmenem.")),
         Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
               value_column='lang', selection_type=pp.SelectionType.CHOICE),
-        Field('title_or_identifier', _("Název"), width=30),
+        Field('title_or_identifier', _("Název"), width=30,
+              type=pe._TreeOrder(tree_column_id='tree_order')),
         Field('title', _("Název"), width=20, not_null=True, maxlen=32,
               descr=_("Název polo¾ky menu - krátký a výsti¾ný.")),
         Field('heading', _("Nadpis"), width=32, maxlen=40,
