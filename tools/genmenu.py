@@ -112,6 +112,18 @@ def super_menu_id(menu, menu_items):
         i += 1
     return menu_id
 
+def command_form(resolver, form_string):
+    try:
+        command, args = resolver.get('commands', form_string)
+        form_class = args['form_class']
+        if not issubclass(form_class, pytis.form.Form):
+            raise Exception()
+        form_name = args['name']
+    except:
+        print 'Warning: Failed to retrieve RUN_FORM command: %s' % (form_string,)
+        return None, None
+    return form_name, form_class
+
 def process_menu(resolver, menu, parent, menu_items, actions, rights, position, system=False):
     if isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
@@ -133,8 +145,12 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             action_components = action_id.split('/')
             action_kind = action_components[0]
             spec_title = None
-            if action_kind == 'form':
-                form_name = action_components[2]
+            if action_kind == 'form' or action_kind == 'RUN_FORM':
+                if action_kind == 'RUN_FORM':
+                    form_name, form_class = command_form(resolver, action_components[1])
+                else:
+                    form_name = action_components[2]
+                    form_class = eval(action_components[1])
                 shortname = 'form/' + form_name
                 form_name_components = form_name.split('.')
                 form_module = string.join(form_name_components[:-1], '/')
@@ -144,7 +160,6 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                 except:
                     pass
                 bindings = None
-                form_class = eval(action_components[1])
                 def binding(name):
                     form_name_components = name.split('.')
                     form_module = string.join(form_name_components[:-1], '/')
@@ -257,13 +272,7 @@ def process_rights(resolver, actions, rights, def_dir):
             continue
         action_components = action_name.split('/')
         if len(action_components) == 2 and action_components[0] == 'RUN_FORM':
-            try:
-                command, args = resolver.get('commands', action_components[1])
-                if not issubclass(args['form_class'], pytis.form.Form):
-                    raise Exception()
-                form_name = args['name']
-            except:
-                print 'Warning: Failed to retrieve RUN_FORM command: %s' % (action_name,)
+            form_name, form_class = command_form(resolver, action_components[1])
         elif action_components[0] == 'NEW_RECORD':
             form_name = action_components[1]
         elif action_components[0] == 'form':
