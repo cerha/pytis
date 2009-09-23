@@ -1,5 +1,10 @@
 2009-09-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Support RUN_FORM actions better in db table computing functions.
+
+2009-09-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* tools/genmenu.py:
 	Handle bindings and other special features in genmenu for command-like forms.
 

@@ -748,7 +748,7 @@ def pytis_update_summary_rights():
         for roleid, role_roles in roles.items():
             max_ = []
             allowed = []
-            if fullname[:5] == 'form/':
+            if fullname[:5] == 'form/' or fullname[:9] == 'RUN_FORM/':
                 forbidden = ['call']
             elif fullname[:7] == 'handle/':
                 forbidden = ['view', 'insert', 'update', 'delete', 'print', 'export']
@@ -934,7 +934,7 @@ def pytis_update_actions_structure():
         add_row(fullname, shortname, menuid, position)
         action_components = shortname.split('/')
         fullname_components = fullname.split('/')
-        if action_components[0] == 'form':
+        if action_components[0] == 'form' or action_components[0] == 'RUN_FORM':
             subaction_list = subactions.get(fullname, ())
             for i in range(len(subaction_list)):
                 sub_fullname, sub_shortname = subaction_list[i]
