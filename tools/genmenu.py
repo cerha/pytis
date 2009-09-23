@@ -481,7 +481,7 @@ def check_rights(cursor, rights, update):
                         rights_seen[rights_args] = True
                     continue
                 db_columns = db_group_info.get(permission)
-                if columns is None:
+                if db_columns is None:
                     print 'Check: Missing permission:', action_name, group, permission
                     continue
                 if None in db_columns:

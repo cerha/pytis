@@ -1,3 +1,8 @@
+2009-09-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	genmenu fix.
+
 2009-09-22  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
