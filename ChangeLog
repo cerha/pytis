@@ -1,3 +1,9 @@
+2009-09-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* doc/tutorials/dmp:
+	Menu rights propagation removed.
+
 2009-10-05  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
