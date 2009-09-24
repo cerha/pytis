@@ -89,15 +89,16 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         def retry(message, exception):
             if _retry and outside_transaction:
                 cdata = connection.connection_data()
-                connection = self._postgresql_new_connection(cdata)
+                new_connection = self._postgresql_new_connection(cdata)
                 try:
-                    result = do_query(connection)
+                    result = do_query(new_connection)
                 except Exception, e:
                     raise DBSystemException(message, e, e.args, query)
-                return self._postgresql_query(connection, query, outside_transaction,
-                                              query_args=query_args, _retry=False)
+                result = self._postgresql_query(new_connection, query, outside_transaction,
+                                                query_args=query_args, _retry=False)
             else:
                 raise DBSystemException(message, exception, exception.args, query)
+            return result
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
