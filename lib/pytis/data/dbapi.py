@@ -91,11 +91,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 cdata = connection.connection_data()
                 new_connection = self._postgresql_new_connection(cdata)
                 try:
-                    result = do_query(new_connection)
+                    result = do_query(new_connection.connection())
                 except Exception, e:
                     raise DBSystemException(message, e, e.args, query)
-                result = self._postgresql_query(new_connection, query, outside_transaction,
-                                                query_args=query_args, _retry=False)
             else:
                 raise DBSystemException(message, exception, exception.args, query)
             return result

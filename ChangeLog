@@ -1,6 +1,11 @@
 2009-09-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/dbapi.py:
+	Try to completely fix query retry in dbapi.py.
+
+2009-09-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
 	Amend: yes.
 	Fix invalid local variable reference in dbapi.py
 	
