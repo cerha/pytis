@@ -658,6 +658,17 @@ viewng('ev_pytis_menu_rights',
        depends=('e_pytis_menu', 'e_pytis_action_rights', 'a_pytis_actions_structure',)
        )
 
+function('pytis_copy_rights', (TString, TString), 'void',
+         """
+delete from e_pytis_action_rights where shortname=$2;
+insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted)
+       select $2 as shortname, roleid, rightid, colname, system, granted from e_pytis_action_rights
+              where shortname=$1;
+""",
+         doc="Make access rights of a menu item the same as of another menu item.",
+         grant=db_rights,
+         depends=('e_pytis_action_rights',))
+
 ### Summarization
 
 _std_table_nolog('a_pytis_computed_summary_rights',

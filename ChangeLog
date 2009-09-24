@@ -1,6 +1,11 @@
 2009-09-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	New db function pytis_copy_rights.
+
+2009-09-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* doc/tutorials/dmp:
 	Menu rights propagation removed.
 
