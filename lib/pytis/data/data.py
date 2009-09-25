@@ -1294,6 +1294,26 @@ def LTreeMatch(column_id, match):
     """
     return Operator('LTreeMatch', column_id, match)
 
+def LTreeAncestor(column_id_1, column_id_2):
+    """ltree comparison: The left an ancestor or equal to the right.
+
+    Arguments:
+
+      column_id_1, column_id_2 -- column identifier, string
+
+    """
+    return Operator('LTreeLE', column_id_1, column_id_2)
+
+def LTreeDescendant(column_id_1, column_id_2):
+    """ltree comparison: The left descendant or equal to the right.
+
+    Arguments:
+
+      column_id_1, column_id_2 -- column identifier, string
+
+    """
+    return Operator('LTreeGE', column_id_1, column_id_2)
+
 def reversed_sorting(sorting):
     """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.
 

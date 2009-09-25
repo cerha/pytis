@@ -1,3 +1,9 @@
+2009-09-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/data.py:
+	* lib/pytis/data/postgresql.py:
+	New data operators LTreeAncestor and LTreeDescendant.
+
 2009-09-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/dbapi.py:
