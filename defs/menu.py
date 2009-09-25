@@ -89,6 +89,10 @@ class ApplicationRoles(ApplicationRolesSpecification):
     columns = ('name', 'description', 'purpose', 'deleted',)
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
+    def actions(self): return (
+        pytis.presentation.Action(_("Zkopírovat role od..."), self._copy_roles,
+                                  descr=("Nastavení aplikaèních rolí dle jiného u¾ivatele.")),
+        )
     bindings = (pytis.presentation.Binding(_("Obsahuje role"), 'menu.ApplicationRolesMembers', id='members',
                                            binding_column='roleid'),
                 pytis.presentation.Binding(_("Patøí do rolí"), 'menu.ApplicationRolesOwners', id='owners',
@@ -103,6 +107,17 @@ class ApplicationRoles(ApplicationRolesSpecification):
         if self._row_deleteable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Role nelze mazat, nastavte datum zru¹ení"))
         return None
+    
+    def _copy_roles(self, row):
+        template_row = pytis.extensions.run_cb('menu.UserApplicationRolesCodebook')
+        if template_row is None:
+            return
+        pytis.extensions.dbfunction('pytis_copy_role', ('copy_from', template_row['name'],), ('copy_to', row['name'],))
+
+class UserApplicationRolesCodebook(ApplicationRoles):
+    table = 'ev_pytis_valid_roles'
+    columns = ('name', 'description',)
+    condition = pytis.data.EQ('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
 
 class ApplicationApplicationRoles(ApplicationRoles):
     table = 'ev_pytis_valid_roles'
@@ -152,6 +167,7 @@ class ApplicationRolesMembers(ApplicationRolesMembership):
     title = _("Pøiøazení role")
     columns = ('member', 'mpurpose', 'mdescription',)
 
+
 ### Actions
 
 class ApplicationActions(pytis.presentation.Specification):
@@ -185,7 +201,8 @@ class SummaryIds(pytis.presentation.Specification):
         )
     cb = pytis.presentation.CodebookSpec(display='summaryid')
     access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW)),)
-    
+
+
 ### Menus
 
 class _Title(pytis.presentation.PrettyFoldable, pytis.data.String):
@@ -341,6 +358,7 @@ class ApplicationMenuPositions(pytis.presentation.Specification):
     layout = ('title', 'position',)
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
+
 ### Rights
 
 class ApplicationRights(pytis.presentation.Specification):

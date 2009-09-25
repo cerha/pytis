@@ -1,5 +1,11 @@
 2009-09-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Add action for copying user application roles membership.
+
+2009-09-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Add form action for copying menu item rights.
 

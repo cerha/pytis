@@ -210,6 +210,19 @@ def pytis_update_transitive_roles():
 _plpy_function('pytis_update_transitive_roles', (), TBoolean,
                body=pytis_update_transitive_roles)
 
+function('pytis_copy_role', (TString, TString), 'void',
+         """
+delete from e_pytis_role_members
+       where member=$2 and roleid in (select roleid from e_pytis_roles where purposeid=''appl'');
+insert into e_pytis_role_members (roleid, member)
+       select roleid, $2 as member from e_pytis_role_members left join e_pytis_roles on roleid=name
+              where member=$1 and purposeid=''appl'';
+""",
+         doc="Make application roles of a user the same as those of another user.",
+         grant=db_rights,
+         depends=('e_pytis_roles', 'e_pytis_role_members',))
+
+
 ### Actions
 
 _std_table_nolog('c_pytis_action_types',
@@ -272,6 +285,7 @@ as select distinct shortname from c_pytis_menu_actions;
         name='ev_pytis_short_actions',
         depends=('c_pytis_menu_actions',))
 
+
 ### Menus
 
 _std_table('e_pytis_menu',
@@ -536,6 +550,7 @@ viewng('ev_pytis_menu_positions',
        depends=('ev_pytis_menu', 'ev_pytis_menu_all_positions',)
        )
 
+
 ### Access rights
 
 _std_table_nolog('c_pytis_access_rights',
@@ -669,6 +684,7 @@ insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, 
          grant=db_rights,
          depends=('e_pytis_action_rights',))
 
+
 ### Summarization
 
 _std_table_nolog('a_pytis_computed_summary_rights',
