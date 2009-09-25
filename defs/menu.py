@@ -281,6 +281,10 @@ class ApplicationMenuM(pytis.presentation.Specification):
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
                                            binding_column='summaryid'),
                 )
+    def actions(self): return (
+        pytis.presentation.Action(_("Zkopírovat práva z..."), self._copy_rights,
+                                  descr=("Zkopírování práv z jiné polo¾ky.")),
+        )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
                                                     pytis.data.Permission.VIEW,
                                                     pytis.data.Permission.EXPORT,
@@ -290,6 +294,40 @@ class ApplicationMenuM(pytis.presentation.Specification):
         folding = pytis.form.FoldableForm.Folding(level=2)
         folding.expand('8', level=0)
         return folding
+
+    def _copy_rights(self, row):
+        template_row = pytis.extensions.run_cb('menu.ApplicationMenuCodebook')
+        if template_row is None:
+            return
+        pytis.extensions.dbfunction('pytis_copy_rights', ('copy_from', template_row['shortname'],), ('copy_to', row['shortname'],))
+
+class ApplicationMenuCodebook(pytis.presentation.Specification):
+    table = 'ev_pytis_menu_structure'
+    title = _("Menu")
+    fields = (
+        Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
+              editable=pytis.presentation.Editable.NEVER),
+        Field('position_nsub',
+              editable=pytis.presentation.Editable.NEVER),
+        Field('fullname', _("Navì¹ená akce"), codebook='menu.ApplicationActions',
+              editable=pytis.presentation.Editable.NEVER,
+              descr=_("Akce aplikace vyvolaná polo¾kou menu")),
+        Field('shortname', _(""), codebook='menu.ApplicationShortActions',
+              editable=pytis.presentation.Editable.NEVER),
+        Field('actiontype', _("Typ polo¾ky"), fixed=True,
+              editable=pytis.presentation.Editable.NEVER),
+        Field('title', _("Titulek polo¾ky menu"), type=_Title(),
+              editable=pytis.presentation.Editable.NEVER),
+        Field('description', _("Poznámka")),
+        )
+    columns = ('title', 'actiontype', 'description',)
+    sorting=(('position', pytis.data.ASCENDENT,),)
+    initial_folding = pytis.form.FoldableForm.Folding(level=None)
+    access_rights = pytis.data.AccessRights((None, (['admin_menu'],
+                                                    pytis.data.Permission.VIEW,
+                                                    pytis.data.Permission.EXPORT,
+                                                    pytis.data.Permission.PRINT,
+                                                    pytis.data.Permission.UPDATE,)))
 
 class ApplicationMenuPositions(pytis.presentation.Specification):
     table = 'ev_pytis_menu_positions'
