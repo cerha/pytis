@@ -2261,17 +2261,24 @@ class FoldableForm(ListForm):
     def __init__(self, *args, **kwargs):
         self._folding_column_id = None
         super(FoldableForm, self).__init__(*args, **kwargs)
-        self._folding = self._initial_folding()
-        folding_state = self._get_state_param('folding')
-        if folding_state is not None:
-            self._folding.set_folding_state(folding_state)
+        self._init_folding()
         self._folding_column_id = self._find_folding_column()
         # Any better way to display the form with initial folding than to
         # refresh it?
         self._refresh_folding()
 
-    def _initial_folding(self):
-        return self._view.initial_folding() or self.Folding()
+    def _init_folding(self):
+        self._folding = self._default_folding()
+        folding_state = self._get_state_param('folding')
+        if folding_state is None:
+            view_folding = self._view.initial_folding()
+            if view_folding is not None:
+                folding_state = view_folding.folding_state()
+        if folding_state is not None:
+            self._folding.set_folding_state(folding_state)
+
+    def _default_folding(self):
+        return self.Folding()
 
     def _find_folding_column(self):
         if self._folding_column_id is not None:
@@ -2353,6 +2360,10 @@ class FoldableForm(ListForm):
         if self._folding_enabled():
             self._cmd_expand_or_collapse()
         event.Skip()
+        
+    def _on_form_state_change(self):
+        super(FoldableForm, self)._on_form_state_change()
+        self._init_folding()
 
     def _refresh_folding(self):
         self._set_state_param('folding', self._folding.folding_state())
@@ -2442,8 +2453,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         self._begin_search = begin_search
         super(CodebookForm, self)._init_attributes(**kwargs)
         
-    def _initial_folding(self):
-        return self._view.initial_folding() or self.Folding(level=None)
+    def _default_folding(self):
+        return self.Folding(level=None)
           
     def _on_idle(self, event):
         ListForm._on_idle(self, event)

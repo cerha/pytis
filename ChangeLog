@@ -1,5 +1,10 @@
 2009-09-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/list.py:
+	Initialize form folding properly and honor reload/reset requests.
+
+2009-09-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	* lib/pytis/presentation/types_.py:
 	Make subcount column id explicit in PrettyFoldable, don't use naming convention.
