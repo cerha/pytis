@@ -1,5 +1,11 @@
 2009-09-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	* lib/pytis/presentation/types_.py:
+	Make subcount column id explicit in PrettyFoldable, don't use naming convention.
+
+2009-09-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/data.py:
 	* lib/pytis/data/postgresql.py:
 	Allow using values, not only columns, in LTreeAncestor and LTreeDescendant.

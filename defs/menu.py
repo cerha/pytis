@@ -190,7 +190,9 @@ class SummaryIds(pytis.presentation.Specification):
 
 class _Title(pytis.presentation.PrettyFoldable, pytis.data.String):
     def __init__(self, **kwargs):
-        super(_Title, self).__init__(tree_column_id='position', **kwargs)
+        super(_Title, self).__init__(tree_column_id='position',
+                                     subcount_column_id='position_nsub',
+                                     **kwargs)
 
 def _xaction_computer(row, fullname):
     if fullname is None or fullname.startswith('menu/'):
