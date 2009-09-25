@@ -1294,25 +1294,29 @@ def LTreeMatch(column_id, match):
     """
     return Operator('LTreeMatch', column_id, match)
 
-def LTreeAncestor(column_id_1, column_id_2):
+def LTreeAncestor(x, y):
     """ltree comparison: The left an ancestor or equal to the right.
 
     Arguments:
 
-      column_id_1, column_id_2 -- column identifier, string
+      x -- column identifier as a string
+      y -- column identifier as a string, or a non-NULL ltree value as a
+        'types._Value' instance
 
     """
-    return Operator('LTreeAncestor', column_id_1, column_id_2)
+    return Operator('LTreeAncestor', x, y)
 
-def LTreeDescendant(column_id_1, column_id_2):
+def LTreeDescendant(x, y):
     """ltree comparison: The left a descendant or equal to the right.
 
     Arguments:
 
-      column_id_1, column_id_2 -- column identifier, string
+      x -- column identifier as a string
+      y -- column identifier as a string, or a non-NULL ltree value as a
+        'types._Value' instance
 
     """
-    return Operator('LTreeDescendant', column_id_1, column_id_2)
+    return Operator('LTreeDescendant', x, y)
 
 def reversed_sorting(sorting):
     """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.

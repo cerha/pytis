@@ -1,6 +1,12 @@
 2009-09-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/data.py:
+	* lib/pytis/data/postgresql.py:
+	Allow using values, not only columns, in LTreeAncestor and LTreeDescendant.
+
+2009-09-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/data.py:
 	Fix of data operators LTreeAncestor and LTreeDescendant.
 
 2009-09-25  Milan Zamazal  <pdm@brailcom.org>

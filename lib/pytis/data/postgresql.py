@@ -1309,6 +1309,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      'GT': '>',
                      'LE': '<=',
                      'GE': '>=',
+                     'LTreeAncestor': '@>',
+                     'LTreeDescendant': '<@',
                      }
         if operators.has_key(op_name):
             expression = relop(operators[op_name], op_args, op_kwargs)
@@ -1362,14 +1364,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert len(op_args) == 2, ('Invalid number of arguments', op_args)
             col, query = op_args
             expression = "%s ~ '%s'" % (col, query,)
-        elif op_name == 'LTreeAncestor':
-            assert len(op_args) == 2, ('Invalid number of arguments', op_args)
-            col_1, col_2 = op_args
-            expression = "%s @< '%s'" % (col_1, col_2,)
-        elif op_name == 'LTreeDescendant':
-            assert len(op_args) == 2, ('Invalid number of arguments', op_args)
-            col_1, col_2 = op_args
-            expression = "%s @> '%s'" % (col_1, col_2,)
         else:
             raise ProgramError('Unknown operator', op_name)
         return '(%s)' % expression
