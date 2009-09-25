@@ -1302,17 +1302,17 @@ def LTreeAncestor(column_id_1, column_id_2):
       column_id_1, column_id_2 -- column identifier, string
 
     """
-    return Operator('LTreeLE', column_id_1, column_id_2)
+    return Operator('LTreeAncestor', column_id_1, column_id_2)
 
 def LTreeDescendant(column_id_1, column_id_2):
-    """ltree comparison: The left descendant or equal to the right.
+    """ltree comparison: The left a descendant or equal to the right.
 
     Arguments:
 
       column_id_1, column_id_2 -- column identifier, string
 
     """
-    return Operator('LTreeGE', column_id_1, column_id_2)
+    return Operator('LTreeDescendant', column_id_1, column_id_2)
 
 def reversed_sorting(sorting):
     """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.
