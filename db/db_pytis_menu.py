@@ -285,6 +285,7 @@ _std_table('e_pytis_menu',
                    "The top-menu item position is ''. "
                    "Each submenu has exactly one label more than its parent. ")),
             C('next_position', TLTree, constraints=('not null', 'unique',),
+              default="'dummy'",
               doc=("Free position just after this menu item.")),
             C('fullname', TString, references='c_pytis_menu_actions on update cascade',
               doc=("Application action assigned to the menu item."
