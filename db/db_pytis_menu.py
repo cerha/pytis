@@ -60,6 +60,8 @@ def e_pytis_roles_trigger():
                          (role, role,))
             self._update_rights()
         def _do_after_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
             if self._new['deleted'] != self._old['deleted']:
                 self._update_roles()
                 self._update_rights()
@@ -130,6 +132,8 @@ def e_pytis_role_members_trigger():
             self._update_roles()
             self._update_rights()
         def _do_after_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
             self._update_roles()
             self._update_rights()
             if self._new['member'] != self._old['member']:
@@ -602,6 +606,8 @@ def e_pytis_action_rights_trigger():
                 return
             self._update_rights()
         def _do_after_update(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
             self._update_rights()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):

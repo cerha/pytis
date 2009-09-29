@@ -1,3 +1,8 @@
+2009-09-29  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Disable DMP triggers when requested even on updates.
+
 2009-09-29  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
