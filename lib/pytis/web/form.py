@@ -1293,10 +1293,10 @@ class ItemizedView(BrowseForm):
             passed, multiple values will be shown (separated by the 'separator').
           separator -- string used to separate individual values when multiple 'columns' are shown.
           template -- if used, the list items will be formatted using given template string.  The
-            string must be an `lcg.TranslatableText' instance.  The final item text will be
+            string must be an 'lcg.TranslatableText' instance.  The final item text will be
             produced by interpolating variables in the string by the formatted values of
             corresponding fields.  The argument may also be a callable object (function), which
-            returns the template string when called with a `PresentedRow' instance as an argument.
+            returns the template string when called with a 'PresentedRow' instance as an argument.
 
           See the parent classes for definition of the remaining arguments.
           
