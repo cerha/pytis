@@ -124,28 +124,34 @@ def e_pytis_role_members_trigger():
             return str(val).replace("'", "''")
         def _update_roles(self):
             plpy.execute("select pytis_update_transitive_roles()")
+        def _update_redundancy(self):
+            plpy.execute("select pytis_update_rights_redundancy()")
         def _update_rights(self):
             plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
+            self._update_redundancy()
             self._update_rights()
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
+            if not plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
+                self._update_redundancy()
             self._update_rights()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
+            self._update_redundancy()
             self._update_rights()
     roles = Roles(TD)
     return roles.do_trigger()
 _trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
                   depends=('e_pytis_role_members', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
-                           'pytis_update_transitive_roles', 'pytis_update_summary_rights',))
+                           'pytis_update_transitive_roles', 'pytis_update_summary_rights', 'pytis_update_rights_redundancy',))
 sql_raw("""
 create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
 for each row execute procedure e_pytis_role_members_trigger();
@@ -310,7 +316,7 @@ _std_table('e_pytis_menu',
             C('hotkey', TString,
               doc=("Sequence of command keys, separated by single spaces."
                    "The space key is represented by SPC string.")),
-            C('locked', TBoolean, default=False,
+            C('locked', TBoolean, default="'f'",
               doc=("Iff true, this item may not be edited.")),
             ),
            """Menu structure definition.""",
@@ -576,10 +582,12 @@ _std_table('e_pytis_action_rights',
             C('roleid', TUser, references='e_pytis_roles on update cascade', constraints=('not null',)),
             C('rightid', 'varchar(8)', references='c_pytis_access_rights on update cascade', constraints=('not null',)),
             C('colname', TUser),
-            C('system', TBoolean, constraints=('not null',), default=False,
+            C('system', TBoolean, constraints=('not null',), default="'f'",
               doc="Iff true, this is a system (noneditable) permission."),
-            C('granted', TBoolean, constraints=('not null',), default=True,
+            C('granted', TBoolean, constraints=('not null',), default="'t'",
               doc="If true the right is granted, otherwise it is denied; system rights are always granted."),
+            C('redundant', TBoolean, default="'f'",
+              doc="If true, the right is redundant in the current set of access rights."),
             ),
            """Assignments of access rights to actions.
 
@@ -609,29 +617,117 @@ alter table e_pytis_action_rights add unique (shortname, roleid, rightid, colnam
 """,
         name='e_pytis_action_rights_constraints',
         depends=('e_pytis_action_rights',))
+def pytis_update_rights_redundancy():
+    plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('redundancy')")
+    roles = {}
+    for row in plpy.execute("select roleid, member from a_pytis_valid_role_members"):
+        roleid, member = row['roleid'], row['member']
+        role_list = roles.get(roleid)
+        if role_list is None:
+            role_list = roles[roleid] = [roleid]
+        role_list.append(member)
+    class Right(object):
+        properties = ('id', 'shortname', 'roleid', 'rightid', 'granted', 'colname', 'system', 'redundant',)
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                if k not in ('vytvoril', 'vytvoreno', 'zmenil', 'zmeneno',):
+                    if k not in self.properties:
+                        raise Exception('programming error', k)
+                    setattr(self, k, v)
+        def __cmp__(self, other):
+            return cmp(self.id, other.id)
+        def strong_redundant(self, other):
+            for attr in Right.properties:
+                if attr not in ('id', 'redundant', 'roleid', 'system',):
+                    if getattr(self, attr) != getattr(other, attr):
+                        return False
+            if self.system == 't' and other.system == 'f':
+                return False
+            if self.roleid not in roles[other.roleid]:
+                return False
+            return True
+        def default_redundant(self, other):
+            for attr in Right.properties:
+                if attr not in ('id', 'redundant', 'roleid', 'colname', 'system', 'granted',):
+                    if getattr(self, attr) != getattr(other, attr):
+                        return False
+            if self.system == 't' and other.system == 'f':
+                return False
+            if self.roleid not in roles[other.roleid] and other.roleid != '*':
+                return False
+            if self.colname != other.colname and other.colname:
+                return False
+            if self.granted == 't' and other.granted == 'f':
+                if (self.roleid != other.roleid and
+                    self.colname != other.colname):
+                    return False
+            return True
+    rights = {}
+    for row in plpy.execute("select * from e_pytis_action_rights"):
+        r = Right(**row)
+        comrades = rights.get(r.shortname)
+        if comrades is None:
+            comrades = rights[r.shortname] = []
+        comrades.append(r)
+    base_rights = []
+    redundant_rights = []
+    for key, comrades in rights.items():
+        base = []
+        for r in comrades:
+            for rr in base:
+                if r.strong_redundant(rr):
+                    redundant_rights.append(r)
+                    break
+            base.append(r)
+        rights[key] = base
+    for comrades in rights.values():
+        base = []
+        for r in comrades:
+            for rr in base:
+                if r.default_redundant(rr):
+                    redundant_rights.append(r)
+                    break
+            base.append(r)
+        base_rights += base
+    for r in base_rights:
+        if r.redundant != 'f':
+            plpy.execute("update e_pytis_action_rights set redundant='F' where id='%d'" % (r.id,))
+    for r in redundant_rights:
+        if r.redundant != 't':
+            plpy.execute("update e_pytis_action_rights set redundant='T' where id='%d'" % (r.id,))
+    plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='redundancy'")
+_plpy_function('pytis_update_rights_redundancy', (), TBoolean,
+               body=pytis_update_rights_redundancy,
+               depends=('e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members', 'e_pytis_action_rights',))
 def e_pytis_action_rights_trigger():
     class Rights(BaseTriggerObject):
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
+        def _update_redundancy(self):
+            plpy.execute("select pytis_update_rights_redundancy()")
         def _update_rights(self):
             plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
+            self._update_redundancy()
             self._update_rights()
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
+            if not plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
+                self._update_redundancy()
             self._update_rights()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
+            self._update_redundancy()
             self._update_rights()
     rights = Rights(TD)
     return rights.do_trigger()
 _trigger_function('e_pytis_action_rights_trigger', body=e_pytis_action_rights_trigger,
                   doc="Updates summary access rights.",
-                  depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_summary_rights',))
+                  depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_summary_rights', 'pytis_update_rights_redundancy',))
 sql_raw("""
 create trigger e_pytis_action_rights_all_after after insert or update or delete on e_pytis_action_rights
 for each statement execute procedure e_pytis_action_rights_trigger();
