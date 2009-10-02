@@ -641,7 +641,7 @@ def pytis_update_rights_redundancy():
                 if attr not in ('id', 'redundant', 'roleid', 'system',):
                     if getattr(self, attr) != getattr(other, attr):
                         return False
-            if self.system == 't' and other.system == 'f':
+            if self.system and not other.system:
                 return False
             if self.roleid not in roles[other.roleid]:
                 return False
@@ -651,14 +651,16 @@ def pytis_update_rights_redundancy():
                 if attr not in ('id', 'redundant', 'roleid', 'colname', 'system', 'granted',):
                     if getattr(self, attr) != getattr(other, attr):
                         return False
-            if self.system == 't' and other.system == 'f':
+            if self.system and not other.system:
                 return False
             if self.roleid not in roles[other.roleid] and other.roleid != '*':
                 return False
             if self.colname != other.colname and other.colname:
                 return False
-            if self.granted == 't' and other.granted == 'f':
-                if (self.roleid != other.roleid and
+            if not self.granted and other.granted:
+                return False
+            if self.granted and not other.granted:
+                if (self.roleid != other.roleid or
                     self.colname != other.colname):
                     return False
             return True
@@ -673,27 +675,31 @@ def pytis_update_rights_redundancy():
     redundant_rights = []
     for key, comrades in rights.items():
         base = []
-        for r in comrades:
-            for rr in base:
-                if r.strong_redundant(rr):
+        while comrades:
+            r = comrades.pop()
+            for rr in comrades + base:
+                if r is not rr and r.strong_redundant(rr):
                     redundant_rights.append(r)
                     break
-            base.append(r)
+            else:
+                base.append(r)
         rights[key] = base
     for comrades in rights.values():
         base = []
-        for r in comrades:
-            for rr in base:
-                if r.default_redundant(rr):
+        while comrades:
+            r = comrades.pop()
+            for rr in comrades + base:
+                if r is not rr and r.default_redundant(rr):
                     redundant_rights.append(r)
                     break
-            base.append(r)
+            else:
+                base.append(r)
         base_rights += base
     for r in base_rights:
-        if r.redundant != 'f':
+        if r.redundant:
             plpy.execute("update e_pytis_action_rights set redundant='F' where id='%d'" % (r.id,))
     for r in redundant_rights:
-        if r.redundant != 't':
+        if not r.redundant:
             plpy.execute("update e_pytis_action_rights set redundant='T' where id='%d'" % (r.id,))
     plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='redundancy'")
 _plpy_function('pytis_update_rights_redundancy', (), TBoolean,

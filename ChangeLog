@@ -1,6 +1,18 @@
 2009-10-02  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Amend: yes.
+	Fixes in redundant rights recognition
+	
+
+2009-10-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fix in redundant rights recognition.
+
+2009-10-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Initial implementation of action rights redundancy.
 
 2009-09-25  Milan Zamazal  <pdm@brailcom.org>
