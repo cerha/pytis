@@ -1129,7 +1129,7 @@ class MItem(_TitledMenuObject):
             arguments = dict(proc_name=proc_name, spec_name=spec_name,
                              enabled=lambda: action_has_access(action))
         elif kind == 'NEW_RECORD':
-            command = pytis.form.RecordForm.COMMAND_NEW_RECORD
+            command = pytis.form.Application.COMMAND_NEW_RECORD
             arguments = dict(name=components[1])
         else:
             command = pytis.form.Command.command(kind)
