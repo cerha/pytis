@@ -1,6 +1,12 @@
 2009-10-02  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/screen.py:
+	* tools/genmenu.py:
+	Use app_commands.py instead of commands.py.
+
+2009-10-02  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/screen.py:
 	Fix NEW_RECORD command in DMP.
 
 2009-09-29  Milan Zamazal  <pdm@brailcom.org>

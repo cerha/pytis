@@ -114,7 +114,7 @@ def super_menu_id(menu, menu_items):
 
 def command_form(resolver, form_string):
     try:
-        command, args = resolver.get('commands', form_string)
+        command, args = resolver.get('app_commands', form_string)
         form_class = args['form_class']
         if not issubclass(form_class, pytis.form.Form):
             raise Exception()

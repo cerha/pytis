@@ -982,7 +982,7 @@ class MItem(_TitledMenuObject):
             prvním prvkem této dvojice a druhý prvek nahrazuje argument 'args',
             který tímto ji¾ nesmí být pøedán.  Nakonec mù¾e být tímto
             argumentem string, který je pak identifikátorem specifikace ze
-            specifikaèního modulu 'commands'; tato specifikace je funkcí
+            specifikaèního modulu 'app_commands'; tato specifikace je funkcí
             vracející ký¾enou dvojici (COMMANDS, ARGS).
             
           args -- dictionary argumentù pøíkazu 'command'.
@@ -1014,7 +1014,7 @@ class MItem(_TitledMenuObject):
         else:
             command_spec = command            
         if isinstance(command, basestring):
-            command = resolver().get('commands', command)
+            command = resolver().get('app_commands', command)
         if is_sequence(command):
             assert len(command) == 2
             assert args is None
