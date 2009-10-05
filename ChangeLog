@@ -1,3 +1,16 @@
+2009-10-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Amend: yes.
+	Split pytis_update_summary_rights to computational and storage parts
+	
+	
+
+2009-10-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Split pytis_update_summary_rights to computational and storage parts.
+
 2009-10-02  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

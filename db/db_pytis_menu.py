@@ -800,14 +800,24 @@ _std_table_nolog('a_pytis_computed_summary_rights',
 This table is modified only by triggers.
 """,
                  depends=('c_pytis_menu_actions', 'e_pytis_roles',))
-
-def pytis_update_summary_rights():
-    if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
-        return
+    
+sqltype('typ_summary_rights',
+        (C('shortname', TString),
+         C('menuid', TInteger),
+         C('summaryid', TString),
+         C('roleid', TString),
+         C('rights', TString),))
+def pytis_compute_summary_rights(shortname_arg, role_arg):
+    shortname_arg, role_arg = args[0], args[1]
     import copy, string
+    def _pg_escape(val):
+        return str(val).replace("'", "''")
     # Retrieve roles
     roles = {}
-    for row in plpy.execute("select roleid, member from a_pytis_valid_role_members"):
+    query = "select roleid, member from a_pytis_valid_role_members"
+    if role_arg:
+        query = "%s where roleid='%s'" % (query, _pg_escape(role_arg),)
+    for row in plpy.execute(query):
         roleid, member = row['roleid'], row['member']
         members = roles.get(member)
         if members is None:
@@ -820,7 +830,12 @@ def pytis_update_summary_rights():
             self.allowed = []
             self.forbidden = []
     raw_rights = {}
-    for row in plpy.execute("select rightid, granted, roleid, menuid, shortname, system from ev_pytis_menu_rights"):
+    condition = 'true'
+    if role_arg:
+        condition = "%s and roleid='%s'" % (condition, _pg_escape(role_arg),)
+    if shortname_arg:
+        condition = "%s and shortname='%s'" % (condition, shortname_arg,)
+    for row in plpy.execute("select rightid, granted, roleid, menuid, shortname, system from ev_pytis_menu_rights where %s" % (condition,)):
         rightid, granted, roleid, menuid, shortname, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['shortname'], row['system']
         keys = [(shortname, menuid,)]
         if menuid is not None:
@@ -842,7 +857,13 @@ def pytis_update_summary_rights():
             r.append(rightid)
     # Retrieve subactions
     subactions = {}
-    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
+    if shortname_arg:
+        shortname_condition = "c_pytis_menu_actions.shortname='%s'" % (_pg_escape(shortname_arg),)
+        condition = 'fullname in (select fullname from c_pytis_menu_actions where %s)' % (shortname_condition,)
+    else:
+        shortname_condition = condition = 'true'
+    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%%' and %s order by fullname"
+                            % (condition,)):
         fullname, shortname = row['fullname'], row['shortname']
         parent = fullname[fullname.find('/', 4)+1:]
         parent_subactions = subactions.get(parent)
@@ -859,10 +880,12 @@ def pytis_update_summary_rights():
     computed_rights = {}
     menuid2action = {}
     action2menuids = {}
-    for row in plpy.execute("select menuid, type, position, c_pytis_menu_actions.fullname, c_pytis_menu_actions.shortname "
-                            "from c_pytis_menu_actions left outer join a_pytis_actions_structure "
-                            "on c_pytis_menu_actions.fullname = a_pytis_actions_structure.fullname "
-                            "order by position"):
+    for row in plpy.execute(("select menuid, type, position, c_pytis_menu_actions.fullname, c_pytis_menu_actions.shortname "
+                             "from c_pytis_menu_actions left outer join a_pytis_actions_structure "
+                             "on c_pytis_menu_actions.fullname = a_pytis_actions_structure.fullname "
+                             "where %s "
+                             "order by position")
+                            % (shortname_condition,)):
         menuid, type_, position, shortname, fullname = row['menuid'], row['type'], row['position'], row['shortname'], row['fullname']
         menu_rights = raw_rights.get((shortname, menuid,), {})
         subforms = subactions.get(fullname, ())
@@ -932,11 +955,7 @@ def pytis_update_summary_rights():
             if menuid:
                 store_rights(menuid, max_rights, allowed_rights, forbidden_rights)
     # Insertion of new rights to the database takes most of the time, so we make only real changes
-    old_rights = {}
-    for row in plpy.execute("select shortname, menuid, roleid, rights from a_pytis_computed_summary_rights"):
-        old_rights[(row['shortname'], row['menuid'], row['roleid'],)] = row['rights']
-    def _pg_escape(val):
-        return str(val).replace("'", "''")
+    result = []
     for short_key, all_rights in computed_rights.items():
         menuid_or_action, roleid = short_key
         total = all_rights.total
@@ -970,26 +989,21 @@ def pytis_update_summary_rights():
         # Format and store the rights
         key = shortname, menuid, roleid
         rights = string.join(all_rights.total, ' ')
-        old_item_rights = old_rights.get(key)
-        if rights != old_item_rights:
-            summaryid = '%s+%s' % (menuid or '', shortname,)
-            if old_item_rights is None:
-                plpy.execute(("insert into a_pytis_computed_summary_rights (shortname, menuid, roleid, rights, summaryid) "
-                              "values('%s', %s, '%s', '%s', '%s')") %
-                             (_pg_escape(shortname), menuid or "NULL", _pg_escape(roleid), rights, _pg_escape(summaryid),))
-            else:
-                plpy.execute("update a_pytis_computed_summary_rights set rights='%s' where summaryid='%s' and roleid='%s'" %
-                             (rights, _pg_escape(summaryid), _pg_escape(roleid),))
-        try:
-            del old_rights[key]
-        except KeyError:
-            pass
-    for shortname, menuid, roleid in old_rights.keys():
-        plpy.execute("delete from a_pytis_computed_summary_rights where shortname='%s' and menuid=%s and roleid='%s'" %
-                     (_pg_escape(shortname), menuid or "NULL", _pg_escape(roleid),))
-_plpy_function('pytis_update_summary_rights', (), TBoolean,
-               body=pytis_update_summary_rights,
-               depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights', 'a_pytis_actions_structure',),)
+        summaryid = '%s+%s' % (menuid or '', shortname,)
+        result.append((shortname, menuid, summaryid, roleid, rights,))
+    return result
+_plpy_function('pytis_compute_summary_rights', (TString, TString,), RT('typ_summary_rights', setof=True),
+               body=pytis_compute_summary_rights,
+               depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights',),)
+
+function('pytis_update_summary_rights', (), TBoolean,
+         body="""
+delete from a_pytis_computed_summary_rights;
+insert into a_pytis_computed_summary_rights (shortname, menuid, summaryid, roleid, rights)
+       (select * from pytis_compute_summary_rights(NULL::text, NULL::text));
+select ''t''::boolean;
+""",
+         depends=('a_pytis_computed_summary_rights', 'pytis_compute_summary_rights',))
 
 _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),
