@@ -23,6 +23,16 @@ reads these database structures and behaves according to them.
 
 Example application using these Wiking modules can be found in pytis-demo.
 
+The applications built on top of Pytis CMS may be extended by so called embedded modules -- dynamic
+content embeddable into CMS pages.  Embedded modules are Wiking modules derived from
+`EmbeddablePytisModule' (for modules bound to pytis data object) or `EmbeddableModule' (for non
+database modules).  See the documentation of these classes for more information.
+
+The class 'Application' implements the necessary methods defined by `wiking.Application' API
+(constructing the application menu out of the database defined menu structure, authentication,
+access rights checking etc.  However this class may be further customized for a particular
+application.  Full API defined and documented by `wiking.Application' may be used.
+
 """
 
 import os, re, mx.DateTime, lcg, wiking
@@ -523,7 +533,23 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
 
 
 class EmbeddablePytisModule(wiking.PytisModule, EmbeddableModule):
-    """Base class for pytis modules which may be embedded into page content."""
+    """Base class for pytis modules which may be embedded into page content.
+
+    This class only modifies the generic class `wiking.PytisModule' to be usable within Pytis CMS
+    pages.  Documentation of the parent class should be used for Pytis CMS module development.  It
+    applies completely except for the following specific customizations:
+
+      * The method `_document()' automatically adds global variables defined through
+        `Menu._SUBSTITUTION_PROVIDERS'.  The variables may be used within all content.
+        
+      * The methods `_current_base_uri()' and `_binding_parent_uri()' are modified to respect the
+        specific way of embedding modules into CMS pages.
+
+      * The constant `_USE_BINDING_PARENT_TITLE' is set to False by default.
+
+      * The constant `_BROWSE_FORM_LIMITS' is set to (50, 100, 200, 300, 500) by default.
+
+    """
     _USE_BINDING_PARENT_TITLE = False
     _BROWSE_FORM_LIMITS = (50, 100, 200, 300, 500)
     

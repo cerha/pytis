@@ -1,5 +1,10 @@
 2009-10-05  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/cms/web.py:
+	Pytis CMS application and module development documentation added..
+
+2009-10-05  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/presentation/spec.py:
 	Docstring typo fix..
 
