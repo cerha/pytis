@@ -2107,7 +2107,7 @@ class Field(object):
             konstruktoru 'ViewSpec').
 
           link -- specification of a link, or a series of links to other forms related to the
-            current filed value.  The value is a 'Link' instance or their sequence.  The links will
+            current field value.  The value is a 'Link' instance or their sequence.  The links will
             be presented as separate menu items in the context menu of a record in the GUI.  The
             web forms currently only support one link per field and present it as a hypertext link
             on field's value.  The links will open the related form and locate the record
