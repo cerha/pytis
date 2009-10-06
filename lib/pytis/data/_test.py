@@ -785,6 +785,8 @@ class _DBTest(_DBBaseTest):
                   "create view viewtest5 as select * from viewtest6",
                   "create rule viewtest5_insert as on insert to viewtest5 do instead insert into viewtest6 (y) values (new.y)",
                   "create view rudeview as select * from viewtest2 union select * from viewtest2",
+                  "create type typ_xcosi as (id int, popis varchar(12))",
+                  "create function tablefunc(int) returns setof typ_xcosi language 'sql' as $$ select * from xcosi where id > $1 $$",
                   ):
             try:
                 self._sql_command(q)
@@ -793,16 +795,26 @@ class _DBTest(_DBBaseTest):
                 raise 
     def tearDown(self):
         c = self._connector
+        for t in ('tablefunc(int)',):
+            try:
+                self._sql_command('drop function %s' % (t,))
+            except:
+                pass
         for t in ('viewtest3', 'viewtest4', 'viewtest5', 'viewtest7',
                   'viewtest1', 'rudeview',):
             try:
-                self._sql_command('drop view %s' % t)
+                self._sql_command('drop view %s' % (t,))
             except:
                 pass            
         for t in ('bin', 'fulltext', 'dist', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
                   'viewtest0', 'viewtest6',):
             try:
-                self._sql_command('drop table %s' % t)
+                self._sql_command('drop table %s' % (t,))
+            except:
+                pass
+        for t in ('typ_xcosi',):
+            try:
+                self._sql_command('drop type %s' % (t,))
             except:
                 pass
         _DBBaseTest.tearDown(self)        
@@ -920,6 +932,14 @@ class DBDataDefault(_DBTest):
              B('index', 'fulltext', 'index', type_=pytis.data.FullTextIndex(columns=('text1','text2',))),),
             key,
             conn)
+        # testfunc
+        key = B('id', 'testfunc', 'id', type_=pytis.data.Integer())
+        testfunc = pytis.data.DBDataDefault(
+            (key,
+             B('popis', 'testfunc', 'popis', type_=pytis.data.String(maxlen=12)),),
+            key,
+            conn,
+            arguments = (B('id', 'testfunc', 'id', type_=pytis.data.Integer()),))
         # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -953,6 +973,7 @@ class DBDataDefault(_DBTest):
         self.view5 = view5
         self.view7 = view7
         self.rudeview = rudeview
+        self.testfunc = testfunc
         #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
@@ -1332,6 +1353,14 @@ class DBDataDefault(_DBTest):
         assert self.data.delete_many(pytis.data.EQ('castka', x3000)) == 1, \
                'row not deleted'
         lines((3,))
+    def test_table_function(self):
+        I = pytis.data.Integer()
+        id_value = pytis.data.Value(I, 3)
+        assert self.data.select(arguments=dict(id=id_value)) == 2
+        assert self.data.fetchone() is not None
+        assert self.data.fetchone() is not None
+        assert self.data.fetchone() is None
+        self.data.close()        
     def test_binary(self):
         B = pytis.data.Binary()
         I = pytis.data.Integer()

@@ -1,3 +1,10 @@
+2009-10-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/_test.py:
+	* lib/pytis/data/dbdata.py:
+	* lib/pytis/data/postgresql.py:
+	Basic support for table functions in the database.
+
 2009-10-05  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

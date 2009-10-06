@@ -81,7 +81,8 @@ class DBData(Data):
     V¹echny metody této tøídy pøístupující k datùm mohou metat 'DBException'.
     
     """
-    def __init__(self, bindings, ordering=None, distinct_on=(), **kwargs):
+    def __init__(self, bindings, ordering=None, distinct_on=(), arguments=None,
+                 **kwargs):
         """Inicializuj tabulku s napojením do databáze.
 
         Argumenty:
@@ -90,6 +91,9 @@ class DBData(Data):
           ordering -- stejné jako v pøedkovi
           distinct_on -- sequence of column names to add as a DISTINCT TO part
             to SELECT commands
+          arguments -- sequence of 'DBBinding' instances defining table
+            arguments, when the table is actually a row returning function.
+            Otherwise it must be 'None'.
           kwargs -- k pøedání pøedkovi
 
         Sloupce datové tabulky se urèí automaticky na základì 'bindings'.
@@ -107,6 +111,14 @@ class DBData(Data):
         assert not filter(lambda b: not isinstance(b, DBBinding),
                           bindings), \
                ('Invalid binding type', bindings)
+        assert arguments is None or is_sequence(arguments), ('Invalid binding type', arguments)
+        if arguments is None:
+            self._arguments = None
+        else:
+            self._arguments = tuple(arguments)
+            assert not filter(lambda b: not isinstance(b, DBBinding),
+                              arguments), \
+                   ('Invalid "argument" type', arguments)
         if __debug__: log(DEBUG, 'Bindings databázové instance', self._bindings)
         columns, key = self._db_bindings_to_column_spec(self._bindings)
         if __debug__: log(DEBUG, 'Sloupce databázové instance:', columns)
@@ -451,7 +463,15 @@ class DBColumnBinding(DBBinding):
         assert isinstance(table, str), table
         assert isinstance(column, str), column
         assert isinstance(type_, Type) or type_ is None, type_
-        assert kwargs == {} or type_ is None, (type_, kwargs)
+        if __debug__:
+            if type_ is not None:
+                kwargs_copy = copy.copy(kwargs)
+                if type_.not_null() == kwargs_copy.get('not_null', type_.not_null()):
+                    try:
+                        del kwargs_copy['not_null']
+                    except KeyError:
+                        pass                        
+                assert kwargs == {}, (type_, kwargs)
         self._table = table
         self._column = column
         self._related_to = related_to

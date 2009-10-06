@@ -962,7 +962,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            t = self._pdbb_get_table_type(b.table(), b.column(), b.type(), type_kwargs=b.kwargs())
+            if self._arguments is None:
+                t = self._pdbb_get_table_type(b.table(), b.column(), b.type(), type_kwargs=b.kwargs())
+            else:
+                t = b.type()
+                assert t is not None, ("Column types must be specified for table functions",
+                                       b.id(), b.table(),)
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
@@ -1006,6 +1011,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                                  full_text_handler=self._pdbb_full_text_handler)
         table_names = map(lambda b: b.table(), bindings)
         table_names = remove_duplicates(table_names)
+        if self._arguments is not None:
+            assert len(table_names) == 1, "Only single tables supported for table functions"
+            table_names[0] = (table_names[0] +
+                              ('(%s)' % string.join (['%%(__arg_%d)s' % (i+1,)
+                                                      for i in range(len(self._arguments))],
+                                                     ', ')))
         table_list = string.join(table_names, ', ')
         if len(table_names) <= 1:
             relation = 'true'
@@ -1016,6 +1027,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             relation = ' and '.join(rels)
         main_table = self._key_binding[0].table()
         schema, main_table_name = self._pdbb_split_table_name(main_table)
+        if self._arguments is None:
+            main_table_from = main_table
+        else:
+            main_table_from = table_names[0]
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
         assert len (keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
@@ -1154,9 +1169,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 "select count(*) from (select%s * from %s%%(fulltext_queries)s where %%(condition)s and (%s)%s) as %s" % \
                 (distinct_on, table_list, relation, filter_condition, table_names[0])
         else:
+            if self._arguments is None:
+                count_column = first_key_column
+            else:
+                count_column = '*'
             self._pdbb_command_count = \
                 'select count(%s) from %s%%(fulltext_queries)s where %%(condition)s and (%s)%s' % \
-                (first_key_column, table_list, relation, filter_condition,)
+                (count_column, table_list, relation, filter_condition,)
         self._pdbb_command_distinct = \
           'select distinct %%s from %s where %%s and (%s)%s order by %%s' % \
           (table_list, relation, filter_condition,)
@@ -1194,22 +1213,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (main_table, relation, filter_condition, ordering,)),
+             (main_table_from, relation, filter_condition, ordering,)),
             {'columns': column_list})
         self._pdbb_command_search_last = \
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
               'order by %%(ordering)s %s limit 1') %
-             (main_table, relation, filter_condition, rordering,)),
+             (main_table_from, relation, filter_condition, rordering,)),
             {'columns': column_list})
         if distinct_on:
             self._pdbb_command_search_distance = \
-                'select count(*) from (select%s * from %s where (%s)%s and %%s) as %s' % \
-                (distinct_on, main_table, relation, filter_condition, table_names[0])
+                'select count(*) from (select%s * from %s where (%s)%s and %%(condition)s) as %s' % \
+                (distinct_on, main_table_from, relation, filter_condition, table_names[0])
         else:
             self._pdbb_command_search_distance = \
-                'select count(%s) from %s where (%s)%s and %%s' % \
-                (first_key_column, main_table, relation, filter_condition,)
+                'select count(%s) from %s where (%s)%s and %%(condition)s' % \
+                (first_key_column, main_table_from, relation, filter_condition,)
         self._pdbb_command_insert = \
           ('insert into %s (%%s) values (%%s) returning %s' %
            (main_table, first_key_column,))
@@ -1410,15 +1429,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             values.append(value)
         return columns, values
 
+    def _pg_make_arguments(self, args, arguments):
+        if self._arguments is not None:
+            for i in range(len(self._arguments)):
+                b = self._arguments[i]
+                arg_value = arguments.get(b.id(), b.type().default_value())
+                args['__arg_%d' % (i+1,)] = self._pg_value(arg_value)
+    
     def _pg_row (self, key_value, columns, transaction=None, supplement=''):
         """Retrieve and return raw data corresponding to 'key_value'."""
         args = {'key': key_value, 'supplement': supplement}
         if columns:
             args['columns'] = self._pdbb_sql_column_list_from_names(columns)
+        self._pg_make_arguments(args, {})
         query = self._pdbb_command_row.format(args)
         return self._pg_query(query, transaction=transaction)
     
-    def _pg_search(self, row, condition, direction, transaction=None):
+    def _pg_search(self, row, condition, direction, transaction=None, arguments={}):
         sorting = self._pg_last_select_sorting
         if direction == FORWARD:
             pass
@@ -1484,6 +1511,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         qargs = {'condition': cond_string, 'ordering': sort_string}
         if self._pdbb_select_column_list:
             qargs['columns'] = self._pdbb_select_column_list
+        self._pg_make_arguments(qargs, arguments)
         query = sql_command.format(qargs)
         data_ = self._pg_query(query, transaction=transaction)
         if not data_:
@@ -1495,8 +1523,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                           sorting_condition(sorting, False,
                                             row_found, True))
         cond_string = self._pdbb_condition2sql(search_cond)
-        data_ = self._pg_query((self._pdbb_command_search_distance %
-                                (cond_string,)),
+        args = {'condition': cond_string}
+        self._pg_make_arguments(args, arguments)
+        data_ = self._pg_query(self._pdbb_command_search_distance % args,
                                transaction=transaction)
         try:
             result = int(data_[0][0])
@@ -1504,7 +1533,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Unexpected result', data_)
         return result
 
-    def _pg_select (self, condition, sort, columns, transaction=None):
+    def _pg_select (self, condition, sort, columns, arguments={}, transaction=None):
         """Initiate select and return the number of its lines or 'None'.
 
         Arguments:
@@ -1513,6 +1542,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           sort -- unprocessed sorting specification or 'None'
           operation -- unprocessed specification of an aggregation function
           columns -- sequence of IDs of columns to select
+          arguments -- dictionary of function call arguments
           transaction -- transaction object
           
         """
@@ -1534,6 +1564,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                             find_fulltext(a)
             find_fulltext(condition)
         args['fulltext_queries'] = fulltext_queries[0]
+        self._pg_make_arguments(args, arguments)
         data = self._pg_query(self._pdbb_command_count % args, transaction=transaction)
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
@@ -2297,7 +2328,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
         
-    def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None):
+    def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
+               arguments={}):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if (reuse and not self._pg_changed and self._pg_number_of_rows and
@@ -2324,7 +2356,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             self._pg_make_row_template_limited = None        
         try:
-            number_of_rows = self._pg_select(condition, sort, columns, transaction=transaction)
+            number_of_rows = self._pg_select(condition, sort, columns, transaction=transaction,
+                                             arguments=arguments)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -2527,7 +2560,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if pos >= 0:
             self.skip(pos+1, BACKWARD)
         
-    def search(self, condition, direction=FORWARD, transaction=None):
+    def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
         """Vyhledej ve smìru 'direction' první øádek od 'row' dle 'condition'.
 
         Vrací: Vzdálenost od øádku 'row' jako kladný integer nebo 0, pokud
@@ -2550,7 +2583,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             try:
                 result = self._pg_search(row, condition, direction,
-                                         transaction=transaction)
+                                         transaction=transaction, arguments=arguments)
             except:
                 cls, e, tb = sys.exc_info()
                 try:
