@@ -802,7 +802,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
                  filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
-                 initial_folding=None):
+                 initial_folding=None, arguments=None):
         
         """Inicializuj instanci.
 
@@ -952,6 +952,10 @@ class ViewSpec(object):
 
           initial_folding -- 'FoldableForm.Folding' instance defining initial
             folding.  'None' means use the standard folding.
+            
+          arguments -- sequence of 'DBBinding' instances defining table
+            arguments, when the table is actually a row returning function.
+            Otherwise it must be 'None'.
 
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
@@ -1105,6 +1109,7 @@ class ViewSpec(object):
         self._aggregations = tuple(aggregations)
         self._bindings = tuple(bindings)
         self._initial_folding = initial_folding
+        self._arguments = arguments
         
     def _linearize_actions(self, spec):
         actions = []
@@ -1360,7 +1365,7 @@ class Binding(object):
 
     """
     def __init__(self, title, name, binding_column=None, condition=None, id=None, descr=None,
-                 single=False):
+                 single=False, arguments=None):
         """Arguments:
 
           title -- title used for the list of related records
@@ -1377,6 +1382,11 @@ class Binding(object):
             dependent form for given main form row.  If used together with the binding column, the
             condition will be used in conjunction with the binding column condition.  If
             'binding_column' is None, this condition will be used solely.
+          arguments -- function of a single argument (the 'PresentedRow'
+            instance) returning a sequence of 'DBBinding' instances defining
+            table arguments.  This function may be provided only when the side
+            form table is actually a row returning function.  Otherwise
+            'arguments' must be 'None'.
           id -- unique string identifier of the binding.  This identifier may be used to
             refer to the binding.
           descr -- binding description text (to be used in on-line help etc).
@@ -1389,16 +1399,17 @@ class Binding(object):
             relation the binding column must exist in the related view and must have a codebook
             (foreign key) specification pointing to the main form (the view for which the binding
             is used).
-            
+          
         """
         assert isinstance(name, basestring), name
         assert isinstance(title, basestring), title
         assert binding_column is None or isinstance(binding_column, (str, unicode)), binding_column
         assert condition is None or callable(condition), condition
-        assert condition is not None or binding_column is not None, \
-               "At least one of 'binding_column', 'condition' must be used."
+        assert condition is not None or binding_column is not None or arguments is not None, \
+               "At least one of 'binding_column', 'condition', `arguments' must be used."
         assert isinstance(single, bool), single
         assert id is None or isinstance(id, basestring), id
+        assert arguments is None or callable(arguments), arguments
         self._name = name
         self._title = title
         self._binding_column = binding_column
@@ -1406,6 +1417,7 @@ class Binding(object):
         self._id = id
         self._descr = descr
         self._single = single
+        self._arguments = arguments
 
     def title(self):
         return self._title
@@ -1427,7 +1439,10 @@ class Binding(object):
         
     def single(self):
         return self._single
-        
+
+    def arguments(self):
+        return self._arguments
+
 
 class Editable(object):
     """Definition of available constants for field editability specification."""
@@ -2720,6 +2735,14 @@ class Specification(object):
     """Specification of all fields as a sequence of 'Field' instances.
     
     May be also defined as a method of the same name."""
+
+    arguments = None
+    """Specification of all table arguments as a sequence of 'Field' instances.
+
+    Useful only when the table is actually a row returning function, otherwise
+    it must be 'None'.
+    
+    May be also defined as a method of the same name."""
     
     access_rights = None
     """Access rights for the view as an 'AccessRights' instance.
@@ -2862,7 +2885,7 @@ class Specification(object):
         
     def __init__(self, resolver):
         self._resolver = resolver
-        for attr in ('fields', 'access_rights', 'condition', 'distinct_on',
+        for attr in ('fields', 'arguments', 'access_rights', 'condition', 'distinct_on',
                      'bindings', 'cb', 'sorting', 'filters', 'conditions',
                      'initial_folding',):
             if hasattr(self, attr):
@@ -2871,6 +2894,7 @@ class Specification(object):
                     setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
         assert isinstance(self.fields, (list, tuple))
+        assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
@@ -2904,7 +2928,7 @@ class Specification(object):
         def type_kwargs(f):
             kwargs = copy.copy(f.type_kwargs())
             assert f.type() is None or not kwargs, \
-                   ("Can't define type and its arguemtns at the same time.", f.id(), kwargs)
+                   ("Can't define type and its arguments at the same time.", f.id(), kwargs)
             enumerator = kwargs.get('enumerator')
             if enumerator is None and f.codebook():
                 enumerator = f.codebook()
@@ -2933,6 +2957,11 @@ class Specification(object):
             else:
                 key = bindings[0]
             args = (bindings, key,)
+            if self.arguments is None:
+                arguments = None
+            else:
+                arguments = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **type_kwargs(f))
+                             for f in self.arguments]
         else:
             columns = []
             for f in self.fields:
@@ -2943,6 +2972,7 @@ class Specification(object):
                         type = type.__class__(**kwargs)
                     columns.append(pytis.data.ColumnSpec(f.id(), type))
             args = (columns,)
+            arguments = None
         spec_name = self.__class__.__name__
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
@@ -2954,7 +2984,8 @@ class Specification(object):
                 perm = pytis.data.Permission.ALL
                 access_rights = pytis.data.AccessRights((None, (None, perm)))
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
-                      condition=self.condition, distinct_on=self.distinct_on)
+                      condition=self.condition, distinct_on=self.distinct_on,
+                      arguments=arguments)
         return _DataFactoryWithOrigin(self.data_cls, *args, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -355,7 +355,8 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
                               binding_column=self._view.binding_column(),
                               side_binding_column=self._view.side_binding_column(),
                               hide_binding_column=self._view.hide_binding_column(),
-                              condition=self._view.condition())
+                              condition=self._view.condition(),
+                              arguments=self._view.arguments())
 
     def _set_side_form_callbacks(self):
         f = self._side_form
@@ -704,7 +705,7 @@ class MultiSideForm(MultiForm):
             else:
                 bcol = None
             kwargs = dict(kwargs, binding_column=bcol, side_binding_column=sbcol,
-                          condition=binding.condition())
+                          condition=binding.condition(), arguments=binding.arguments())
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
     class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):

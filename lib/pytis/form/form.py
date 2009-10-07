@@ -618,7 +618,8 @@ class LookupForm(InnerForm):
     _UNNAMED_FILTER_LABEL = _("Nepojmenovaný filtr")
 
     
-    def _init_attributes(self, sorting=None, filter=None, condition=None, **kwargs):
+    def _init_attributes(self, sorting=None, filter=None, condition=None, arguments=None,
+                         **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
@@ -631,6 +632,10 @@ class LookupForm(InnerForm):
           condition -- 'pytis.data.Operator' instance filtering the rows of the
             underlying data object.  This filter is not indicated to the user
             nor is there a chance to turn it off.
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the table is actually a row
+            returning function, otherwise ignored.
           kwargs -- arguments passed to the parent class
         
         """
@@ -652,6 +657,7 @@ class LookupForm(InnerForm):
         self._lf_last_filter = filter or self._load_condition(self._FILTER_CONDITION_PARAM)
         self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
         self._user_filters = self._load_user_filters()
+        self._arguments = arguments
         self._init_select()
         
     def _new_form_kwargs(self):
@@ -760,10 +766,14 @@ class LookupForm(InnerForm):
         else:
             return pytis.data.AND(*conditions)
 
+    def _current_arguments(self):
+        return {}
+
     def _init_data_select(self, data):
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._data_sorting(),
+                           arguments=self._current_arguments(),
                            transaction=self._transaction, reuse=False)
 
     def _init_select(self):

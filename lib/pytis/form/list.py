@@ -2739,7 +2739,8 @@ class SideBrowseForm(BrowseForm):
     """Form displaying records depending on other form's current row."""
 
     def _init_attributes(self, main_form, binding_column=None, side_binding_column=None,
-                         hide_binding_column=True, condition=None, **kwargs):
+                         hide_binding_column=True, condition=None, arguments=None,
+                         **kwargs):
         """Process constructor arguments and initialize attributes.
         
         Arguments:
@@ -2751,6 +2752,8 @@ class SideBrowseForm(BrowseForm):
         self._binding_column = binding_column
         self._side_binding_column = side_binding_column
         self._hide_binding_column = hide_binding_column
+        self._xarguments = arguments
+        self._selection_arguments = {}
         if binding_column:
             column_condition = lambda row: pytis.data.EQ(side_binding_column, row[binding_column])
             if condition is not None:
@@ -2763,6 +2766,9 @@ class SideBrowseForm(BrowseForm):
         self._selection_condition = condition
         kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
         super(SideBrowseForm, self)._init_attributes(**kwargs)
+        
+    def _current_arguments(self):
+        return self._selection_arguments
 
     def on_selection(self, row):
         """Update form after main form selection.
@@ -2773,11 +2779,17 @@ class SideBrowseForm(BrowseForm):
 
         """
         #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, row))
+        if self._xarguments is not None:
+            self._selection_arguments = copy.copy(self._arguments or {})
+            self._selection_arguments.update(self._xarguments(row))
         if self._binding_column:
             value = pytis.data.Value(self._side_binding_column_type,
                                      row[self._binding_column].value())
             self._prefill = {self._side_binding_column: value}
-        self._lf_condition = self._selection_condition(row)
+        if self._selection_condition is not None:
+            self._lf_condition = self._selection_condition(row)
+        elif self._xarguments is not None:
+            self._lf_condition = None
         self._refresh()
 
     def _default_columns(self):
