@@ -807,8 +807,8 @@ sqltype('typ_summary_rights',
          C('summaryid', TString),
          C('roleid', TString),
          C('rights', TString),))
-def pytis_compute_summary_rights(shortname_arg, role_arg):
-    shortname_arg, role_arg = args[0], args[1]
+def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
+    menuid_arg, shortname_arg, role_arg = args[0], args[1], args[2]
     import copy, string
     def _pg_escape(val):
         return str(val).replace("'", "''")
@@ -831,10 +831,17 @@ def pytis_compute_summary_rights(shortname_arg, role_arg):
             self.forbidden = []
     raw_rights = {}
     condition = 'true'
+    if shortname_arg:
+        s = _pg_escape(shortname_arg)
+        q = (("select distinct shortname from c_pytis_menu_actions "
+              "where shortname='%s' or "
+              "substr(fullname, 8) in (select fullname from c_pytis_menu_actions where shortname='%s')")
+             % (s, s,))
+        related_shortnames_list = ["'%s'" % (_pg_escape(row['shortname']),) for row in plpy.execute(q)]
+        related_shortnames = string.join(related_shortnames_list, ', ')
+        condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
     if role_arg:
         condition = "%s and roleid='%s'" % (condition, _pg_escape(role_arg),)
-    if shortname_arg:
-        condition = "%s and shortname='%s'" % (condition, shortname_arg,)
     for row in plpy.execute("select rightid, granted, roleid, menuid, shortname, system from ev_pytis_menu_rights where %s" % (condition,)):
         rightid, granted, roleid, menuid, shortname, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['shortname'], row['system']
         keys = [(shortname, menuid,)]
@@ -858,10 +865,10 @@ def pytis_compute_summary_rights(shortname_arg, role_arg):
     # Retrieve subactions
     subactions = {}
     if shortname_arg:
-        shortname_condition = "c_pytis_menu_actions.shortname='%s'" % (_pg_escape(shortname_arg),)
+        shortname_condition = "c_pytis_menu_actions.shortname in (%s)" % (related_shortnames,)
         condition = 'fullname in (select fullname from c_pytis_menu_actions where %s)' % (shortname_condition,)
     else:
-        shortname_condition = condition = 'true'
+        shortname_condition = condition = 'true'    
     for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%%' and %s order by fullname"
                             % (condition,)):
         fullname, shortname = row['fullname'], row['shortname']
@@ -895,17 +902,18 @@ def pytis_compute_summary_rights(shortname_arg, role_arg):
             action_menuids.append(menuid)
             action2menuids[shortname] = action_menuids
             fullname_components = fullname.split('/')
+        if shortname[:5] == 'form/' or shortname[:9] == 'RUN_FORM/':
+            default_forbidden = ['call']
+        elif shortname[:7] == 'handle/':
+            default_forbidden = ['view', 'insert', 'update', 'delete', 'print', 'export']
+        elif shortname[:5] == 'menu/':
+            default_forbidden = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
+        else:
+            default_forbidden = []
         for roleid, role_roles in roles.items():
             max_ = []
             allowed = []
-            if fullname[:5] == 'form/' or fullname[:9] == 'RUN_FORM/':
-                forbidden = ['call']
-            elif fullname[:7] == 'handle/':
-                forbidden = ['view', 'insert', 'update', 'delete', 'print', 'export']
-            elif fullname[:5] == 'menu/':
-                forbidden = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
-            else:
-                forbidden = []
+            forbidden = copy.copy(default_forbidden)
             for role in role_roles:
                 raw = menu_rights.get(role) or RawRights()
                 max_ += raw.system
@@ -970,6 +978,10 @@ def pytis_compute_summary_rights(shortname_arg, role_arg):
                     if r not in total:
                         total.append(r)
             all_rights.total = total
+        if shortname_arg is not None and shortname != shortname_arg:
+            continue
+        if menuid_arg != 0 and menuid != menuid_arg:
+            continue
         # Multiform view rights are valid if they are permitted by the main
         # form and (in case of the VIEW right) at least one of the side forms.
         subforms = all_rights.subforms
@@ -992,7 +1004,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg):
         summaryid = '%s+%s' % (menuid or '', shortname,)
         result.append((shortname, menuid, summaryid, roleid, rights,))
     return result
-_plpy_function('pytis_compute_summary_rights', (TString, TString,), RT('typ_summary_rights', setof=True),
+_plpy_function('pytis_compute_summary_rights', (TInteger, TString, TString,), RT('typ_summary_rights', setof=True),
                body=pytis_compute_summary_rights,
                depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights',),)
 
@@ -1000,7 +1012,7 @@ function('pytis_update_summary_rights', (), TBoolean,
          body="""
 delete from a_pytis_computed_summary_rights;
 insert into a_pytis_computed_summary_rights (shortname, menuid, summaryid, roleid, rights)
-       (select * from pytis_compute_summary_rights(NULL::text, NULL::text));
+       (select * from pytis_compute_summary_rights(0, NULL::text, NULL::text));
 select ''t''::boolean;
 """,
          depends=('a_pytis_computed_summary_rights', 'pytis_compute_summary_rights',))
@@ -1114,6 +1126,40 @@ viewng('ev_pytis_summary_rights',
        grant=db_rights,
        depends=('ev_pytis_summary_rights_raw',)
        )
+
+sqltype('typ_preview_rights',
+        (C('shortname', TString),
+         C('menuid', TInteger),
+         C('summaryid', TString),
+         C('roleid', TString),
+         C('rights', TString),
+         C('purpose', TString),
+         C('rights_show', TBoolean),
+         C('rights_view', TBoolean),
+         C('rights_insert', TBoolean),
+         C('rights_update', TBoolean),
+         C('rights_delete', TBoolean),
+         C('rights_print', TBoolean),
+         C('rights_export', TBoolean),
+         C('rights_call', TBoolean),
+         ))
+function('pytis_preview_summary_rights', (TInteger, TString, TString,), RT('typ_preview_rights', setof=True),
+         body="""
+select summary.shortname, summary.menuid, summary.summaryid, summary.roleid, summary.rights,
+       purposes.purpose,
+       strpos(summary.rights, ''show'')::bool as rights_show,
+       strpos(summary.rights, ''view'')::bool as rights_view,
+       strpos(summary.rights, ''insert'')::bool as rights_insert,
+       strpos(summary.rights, ''update'')::bool as rights_update,
+       strpos(summary.rights, ''delete'')::bool as rights_delete,
+       strpos(summary.rights, ''print'')::bool as rights_print,
+       strpos(summary.rights, ''export'')::bool as rights_export,
+       strpos(summary.rights, ''call'')::bool as rights_call
+       from pytis_compute_summary_rights($1, $2, $3) as summary
+            left outer join e_pytis_roles as roles on summary.roleid = roles.name
+            left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
+""",
+         depends=('pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
 
 viewng('ev_pytis_role_menu_raw',
        (SelectRelation('ev_pytis_menu', alias='menu', exclude_columns=('name', 'fullname',)),

@@ -1,5 +1,11 @@
 2009-10-07  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Initial implementation of on-fly computed summary access rights.
+
+2009-10-07  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/dualform.py:
 	* lib/pytis/form/form.py:
 	* lib/pytis/form/list.py:
