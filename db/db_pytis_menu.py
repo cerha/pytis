@@ -50,31 +50,26 @@ def e_pytis_roles_trigger():
             return str(val).replace("'", "''")
         def _update_roles(self):
             plpy.execute("select pytis_update_transitive_roles()")
-        def _update_rights(self):
-            plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             role = self._pg_escape(self._new['name'])
             plpy.execute("insert into a_pytis_valid_role_members(roleid, member) values ('%s', '%s')" %
                          (role, role,))
-            self._update_rights()
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             if self._new['deleted'] != self._old['deleted']:
                 self._update_roles()
-                self._update_rights()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
-            self._update_rights()
     roles = Roles(TD)
     return roles.do_trigger()
 _trigger_function('e_pytis_roles_trigger', body=e_pytis_roles_trigger,
                   depends=('e_pytis_roles', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
-                           'pytis_update_transitive_roles', 'pytis_update_summary_rights',))
+                           'pytis_update_transitive_roles',))
 sql_raw("""
 create trigger e_pytis_roles_update_after after insert or update or delete on e_pytis_roles
 for each row execute procedure e_pytis_roles_trigger();
@@ -126,32 +121,27 @@ def e_pytis_role_members_trigger():
             plpy.execute("select pytis_update_transitive_roles()")
         def _update_redundancy(self):
             plpy.execute("select pytis_update_rights_redundancy()")
-        def _update_rights(self):
-            plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
             self._update_redundancy()
-            self._update_rights()
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
             if not plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
                 self._update_redundancy()
-            self._update_rights()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_roles()
             self._update_redundancy()
-            self._update_rights()
     roles = Roles(TD)
     return roles.do_trigger()
 _trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
                   depends=('e_pytis_role_members', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
-                           'pytis_update_transitive_roles', 'pytis_update_summary_rights', 'pytis_update_rights_redundancy',))
+                           'pytis_update_transitive_roles', 'pytis_update_rights_redundancy',))
 sql_raw("""
 create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
 for each row execute procedure e_pytis_role_members_trigger();
@@ -449,7 +439,6 @@ def e_pytis_menu_trigger_rights():
             return str(val).replace("'", "''")
         def _update_all(self):
             plpy.execute("select pytis_update_actions_structure()")
-            plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
                 return
@@ -465,7 +454,7 @@ def e_pytis_menu_trigger_rights():
     menu = Menu(TD)
     return menu.do_trigger()
 _trigger_function('e_pytis_menu_trigger_rights', body=e_pytis_menu_trigger_rights,
-                  depends=('e_pytis_menu', 'pytis_update_summary_rights', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
+                  depends=('e_pytis_menu', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
 sql_raw("""
 create trigger e_pytis_menu_all_after_rights after insert or update or delete on e_pytis_menu
 for each statement execute procedure e_pytis_menu_trigger_rights();
@@ -711,29 +700,24 @@ def e_pytis_action_rights_trigger():
             return str(val).replace("'", "''")
         def _update_redundancy(self):
             plpy.execute("select pytis_update_rights_redundancy()")
-        def _update_rights(self):
-            plpy.execute("select pytis_update_summary_rights()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_redundancy()
-            self._update_rights()
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             if not plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
                 self._update_redundancy()
-            self._update_rights()
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
             self._update_redundancy()
-            self._update_rights()
     rights = Rights(TD)
     return rights.do_trigger()
 _trigger_function('e_pytis_action_rights_trigger', body=e_pytis_action_rights_trigger,
                   doc="Updates summary access rights.",
-                  depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_summary_rights', 'pytis_update_rights_redundancy',))
+                  depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_rights_redundancy',))
 sql_raw("""
 create trigger e_pytis_action_rights_all_after after insert or update or delete on e_pytis_action_rights
 for each statement execute procedure e_pytis_action_rights_trigger();

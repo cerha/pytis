@@ -1,5 +1,24 @@
 #title Editace dynamických práv a menu v databázi
 
+* Obecné zásady
+
+- Doporučuje se všechny úpravy provádět v transakcích, aby nedocházelo
+  k dočasným nekonzistencím v databázi.
+
+- Doporučuje se okamžik provádění změn konzultovat se správcem DMP, aby
+  nedocházelo k editaci a prokládanému ukládání zeditovaných práv současně
+  správci databáze a správcem DMP.
+
+- Po provedení jakýchkoliv změn je nutné provést jejich uložení, tj. promítnutí
+  do počítaných tabulek, SQL příkazem
+
+    select pytis_update_summary_rights();
+
+  Pokud funkce pytis_update_summary_rights vrátí pravdu, byla práva skutečně
+  uložena.  Pokud vrátí nepravdu, nebyla práva uložena, protože v daný okamžik
+  probíhala jiná aktualizace práv.
+
+
 * Přidávání rolí a změny členství
 
 Přidání role se provede vložením řádku do tabulky e_pytis_roles:

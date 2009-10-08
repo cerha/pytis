@@ -1,6 +1,12 @@
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	* doc/tutorials/DmpDb:
+	Don't call pytis_update_summary_rights in triggers.
+
+2009-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Add on-fly menu preview to the role editing form.
 
