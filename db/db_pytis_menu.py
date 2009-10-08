@@ -1271,7 +1271,7 @@ viewng('ev_pytis_user_menu',
         SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid', 'shortname',),
                        condition=("menu.menuid = rights.menuid and "
                                   "rights.roleid = user"),
-                       jointype=JoinType.LEFT_OUTER),
+                       jointype=JoinType.LEFT_INNER),
         ),
        insert=None,
        update=None,
