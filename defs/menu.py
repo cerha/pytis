@@ -421,6 +421,14 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
+    def proc_spec(self):
+        def commit_changes():
+            if pytis.extensions.dbfunction("pytis_update_summary_rights"):
+                message = _("Zmìny aplikovány")
+            else:
+                message = _("Provádìní zmìn uzamèeno, zmìny nebyly aplikovány")
+            pytis.form.run_dialog(pytis.form.Message, message)
+        return {'commit_changes': commit_changes}
 
 class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'ev_pytis_summary_rights'

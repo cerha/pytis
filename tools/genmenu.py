@@ -620,6 +620,8 @@ def run():
                                                                         pytis.form.MultiBrowseDualForm),
                                         pytis.extensions.run_form_mitem(_("U¾ivatelské role"), 'menu.ApplicationRoles',
                                                                         pytis.form.MultiBrowseDualForm),
+                                        pytis.extensions.run_procedure_mitem(_("Aplikace zmìn práv"),
+                                                                             'menu.ApplicationMenuRights', 'commit_changes'),
                                         pytis.form.MItem(_("Pøenaètení menu a práv"),
                                                          command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),
                                         )),)

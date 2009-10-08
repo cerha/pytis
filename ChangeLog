@@ -1,5 +1,12 @@
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	* doc/tutorials/dmp:
+	* tools/genmenu.py:
+	Add a procedure for commiting access rights changes.
+
+2009-10-08  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Lock when updating a_pytis_actions_structure db table.
 

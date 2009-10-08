@@ -29,6 +29,29 @@ správce databáze
 Tento dokument popisuje správu z hlediska správce aplikace.
 
 
+== Obecné zásady ==
+
+Prováděné změny práv (práva položek menu, členství v rolích) se okamžitě
+ukládají do databáze, avšak jejich účinky se neprojeví okamžitě.  V přehledu
+práv se objeví pouze v podformulářích náhledů chystaných práv položek a menu.
+Aby změny byly skutečně aplikovány, je třeba vyvolat funkci "Aplikace změny
+práv".
+
+Aplikace změny práv nemusí být provedena, pokud je současně prováděna někým
+jiným (je uzamčena).  Správce aplikace je o výsledku v každém případě
+informován.  V případě uzamčení lze zkusit po chvíli provést aplikaci změny
+práv znovu.
+
+Pokud jsou prováděny změny ve struktuře menu nebo dochází k deaktivaci
+uživatelů, mohou se v některých formulářích správy aplikace vyskytnout
+nesrovnalosti jako např. chybějící řádky ve struktuře menu.  V takových
+případech je třeba vyvolat funkci "Aplikace změny práv" a poté se již vše
+zobrazí v pořádku.  Obecně se doporučuje neprovádět současně změny struktury
+menu, změny uživatelů a/nebo změny práv, nýbrž tyto okruhy změny provádět
+samostatně.  Po každém provedeném okruhu změn pak zavolat funkci "Aplikace
+změny práv".
+
+
 == Správa uživatelských rolí ==
 
 === Terminologie ===
