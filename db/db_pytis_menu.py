@@ -1007,9 +1007,11 @@ select * from pytis_compute_summary_rights(0, NULL::text, NULL::text);
          depends=('pytis_compute_summary_rights',))
 
 def pytis_update_summary_rights():
-    lock_id = plpy.execute("select pytis_summary_lock_id")[0][0]
-    if not plpy.execute("select pg_try_advisory_lock(%s)" % (lock_id,))[0][0]:
-        return False
+    for row in plpy.execute("select pytis_actions_lock_id() as lock_id"):
+        lock_id = row['lock_id']
+    for row in plpy.execute("select pg_try_advisory_lock(%s) as result" % (lock_id,)):
+        if not row['result']:
+            return False
     try:
         plpy.execute("delete from a_pytis_computed_summary_rights")
         plpy.execute("insert into a_pytis_computed_summary_rights (shortname, menuid, summaryid, roleid, rights) "
@@ -1285,7 +1287,7 @@ viewng('ev_pytis_user_menu',
         SelectRelation('a_pytis_computed_summary_rights', alias='rights', exclude_columns=('menuid', 'roleid', 'shortname',),
                        condition=("menu.menuid = rights.menuid and "
                                   "rights.roleid = user"),
-                       jointype=JoinType.LEFT_INNER),
+                       jointype=JoinType.INNER),
         ),
        insert=None,
        update=None,

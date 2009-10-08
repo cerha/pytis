@@ -1,6 +1,11 @@
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Fix mistakes in db_pytis_menu.py.
+
+2009-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Use locking pytis_update_summary_rights db function.
 
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
