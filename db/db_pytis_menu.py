@@ -780,6 +780,13 @@ select 200910081356;
          doc="Id of the advisory lock for a_pytis_computed_summary_rights.",
          grant=db_rights,
          depends=())
+function('pytis_actions_lock_id', (), 'bigint',
+         """
+select 200910081415;
+""",
+         doc="Id of the advisory lock for a_pytis_actions_structure.",
+         grant=db_rights,
+         depends=())
 
 _std_table_nolog('a_pytis_computed_summary_rights',
                  (C('shortname', TString, constraints=('not null',)),
@@ -1041,65 +1048,71 @@ sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structu
         depends=('a_pytis_actions_structure',))
 
 def pytis_update_actions_structure():
-    import string
-    def _pg_escape(val):
-        return str(val).replace("'", "''")
-    plpy.execute("delete from a_pytis_actions_structure")
-    subactions = {}
-    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
-        fullname, shortname = row['fullname'], row['shortname']
-        parent = fullname[fullname.find('/', 4)+1:]
-        parent_subactions = subactions.get(parent)
-        if parent_subactions is None:
-            parent_subactions = subactions[parent] = []
-        parent_subactions.append((fullname, shortname,))
-    actions = {}
-    def add_row(fullname, shortname, menuid, position):
-        summaryid = '%s+%s' % (menuid or '', shortname,)
-        if fullname[:4] == 'sub/':
-            item_type = 'subf'
-        elif position.find('.') == -1:
-            item_type = '----'
-        elif menuid is None:
-            item_type = 'spec'
-        elif not fullname:
-            item_type = 'sepa'
-        elif fullname[:5] == 'menu/':
-            item_type = 'menu'
-        else:
-            item_type = 'item'
-        if menuid is None:
-            menuid = 'NULL'
-        plpy.execute(("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, summaryid, type) "
-                      "values('%s', '%s', %s, '%s', '%s', '%s') ") %
-                     (_pg_escape(fullname), _pg_escape(shortname), menuid, position, summaryid, item_type,))
-        actions[shortname] = True
-    for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname "
-                            "from e_pytis_menu, c_pytis_menu_actions "
-                            "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
-                            "order by position"):
-        menuid, position, shortname, fullname = row['menuid'], row['position'], row['shortname'], row['fullname']
-        add_row(fullname, shortname, menuid, position)
-        action_components = shortname.split('/')
-        fullname_components = fullname.split('/')
-        if action_components[0] == 'form' or action_components[0] == 'RUN_FORM':
-            subaction_list = subactions.get(fullname, ())
-            for i in range(len(subaction_list)):
-                sub_fullname, sub_shortname = subaction_list[i]
-                subposition = '%s.%02d' % (position, i,)
-                add_row(sub_fullname, sub_shortname, None, subposition)
-    position = '8.0001'
-    add_row('label/1', 'label/1', None, '8')
-    for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
-        fullname, shortname = row['fullname'], row['shortname']
-        if actions.has_key(shortname):
-            continue
-        add_row(fullname, shortname, None, position)
-        position_components = position.split('.')
-        position = string.join(position_components[:-1] + ['%04d' % (int(position_components[-1]) + 1)], '.')
+    for row in plpy.execute("select pytis_actions_lock_id() as lock_id"):
+        lock_id = row['lock_id']
+    plpy.execute("select pg_advisory_lock(%s)" % (lock_id,))
+    try:
+        import string
+        def _pg_escape(val):
+            return str(val).replace("'", "''")
+        plpy.execute("delete from a_pytis_actions_structure")
+        subactions = {}
+        for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
+            fullname, shortname = row['fullname'], row['shortname']
+            parent = fullname[fullname.find('/', 4)+1:]
+            parent_subactions = subactions.get(parent)
+            if parent_subactions is None:
+                parent_subactions = subactions[parent] = []
+            parent_subactions.append((fullname, shortname,))
+        actions = {}
+        def add_row(fullname, shortname, menuid, position):
+            summaryid = '%s+%s' % (menuid or '', shortname,)
+            if fullname[:4] == 'sub/':
+                item_type = 'subf'
+            elif position.find('.') == -1:
+                item_type = '----'
+            elif menuid is None:
+                item_type = 'spec'
+            elif not fullname:
+                item_type = 'sepa'
+            elif fullname[:5] == 'menu/':
+                item_type = 'menu'
+            else:
+                item_type = 'item'
+            if menuid is None:
+                menuid = 'NULL'
+            plpy.execute(("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, summaryid, type) "
+                          "values('%s', '%s', %s, '%s', '%s', '%s') ") %
+                         (_pg_escape(fullname), _pg_escape(shortname), menuid, position, summaryid, item_type,))
+            actions[shortname] = True
+        for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname "
+                                "from e_pytis_menu, c_pytis_menu_actions "
+                                "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
+                                "order by position"):
+            menuid, position, shortname, fullname = row['menuid'], row['position'], row['shortname'], row['fullname']
+            add_row(fullname, shortname, menuid, position)
+            action_components = shortname.split('/')
+            fullname_components = fullname.split('/')
+            if action_components[0] == 'form' or action_components[0] == 'RUN_FORM':
+                subaction_list = subactions.get(fullname, ())
+                for i in range(len(subaction_list)):
+                    sub_fullname, sub_shortname = subaction_list[i]
+                    subposition = '%s.%02d' % (position, i,)
+                    add_row(sub_fullname, sub_shortname, None, subposition)
+        position = '8.0001'
+        add_row('label/1', 'label/1', None, '8')
+        for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
+            fullname, shortname = row['fullname'], row['shortname']
+            if actions.has_key(shortname):
+                continue
+            add_row(fullname, shortname, None, position)
+            position_components = position.split('.')
+            position = string.join(position_components[:-1] + ['%04d' % (int(position_components[-1]) + 1)], '.')
+    finally:
+        plpy.execute("select pg_advisory_unlock(%s)" % (lock_id,))
 _plpy_function('pytis_update_actions_structure', (), TBoolean,
                body=pytis_update_actions_structure,
-               depends=('a_pytis_actions_structure', 'e_pytis_menu', 'c_pytis_menu_actions',),)
+               depends=('a_pytis_actions_structure', 'e_pytis_menu', 'c_pytis_menu_actions', 'pytis_actions_lock_id',),)
     
 viewng('ev_pytis_summary_rights_raw',
        (SelectRelation('a_pytis_computed_summary_rights', alias='summary'),

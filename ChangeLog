@@ -1,6 +1,11 @@
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Lock when updating a_pytis_actions_structure db table.
+
+2009-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fix mistakes in db_pytis_menu.py.
 
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
