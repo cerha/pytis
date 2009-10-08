@@ -1,6 +1,11 @@
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Use locking pytis_update_summary_rights db function.
+
+2009-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Make inner join of a_pytis_computed_summary_rights in ev_pytis_user_menu.
 
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>

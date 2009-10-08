@@ -773,6 +773,14 @@ insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, 
 
 ### Summarization
 
+function('pytis_summary_lock_id', (), 'bigint',
+         """
+select 200910081356;
+""",
+         doc="Id of the advisory lock for a_pytis_computed_summary_rights.",
+         grant=db_rights,
+         depends=())
+
 _std_table_nolog('a_pytis_computed_summary_rights',
                  (C('shortname', TString, constraints=('not null',)),
                   C('menuid', TInteger, references='e_pytis_menu on delete cascade on update cascade'),
@@ -998,14 +1006,20 @@ select * from pytis_compute_summary_rights(0, NULL::text, NULL::text);
 """,
          depends=('pytis_compute_summary_rights',))
 
-function('pytis_update_summary_rights', (), TBoolean,
-         body="""
-delete from a_pytis_computed_summary_rights;
-insert into a_pytis_computed_summary_rights (shortname, menuid, summaryid, roleid, rights)
-       (select * from pytis_all_summary_rights());
-select ''t''::boolean;
-""",
-         depends=('a_pytis_computed_summary_rights', 'pytis_all_summary_rights',))
+def pytis_update_summary_rights():
+    lock_id = plpy.execute("select pytis_summary_lock_id")[0][0]
+    if not plpy.execute("select pg_try_advisory_lock(%s)" % (lock_id,))[0][0]:
+        return False
+    try:
+        plpy.execute("delete from a_pytis_computed_summary_rights")
+        plpy.execute("insert into a_pytis_computed_summary_rights (shortname, menuid, summaryid, roleid, rights) "
+                     "(select * from pytis_all_summary_rights())")
+    finally:
+        plpy.execute("select pg_advisory_unlock(%s)" % (lock_id,))
+    return True
+_plpy_function('pytis_update_summary_rights', (), TBoolean,
+         body=pytis_update_summary_rights,
+         depends=('a_pytis_computed_summary_rights', 'pytis_all_summary_rights', 'pytis_summary_lock_id',))
 
 _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),
