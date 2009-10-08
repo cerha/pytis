@@ -816,7 +816,7 @@ def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
     roles = {}
     query = "select roleid, member from a_pytis_valid_role_members"
     if role_arg:
-        query = "%s where roleid='%s'" % (query, _pg_escape(role_arg),)
+        query = "%s where member='%s'" % (query, role_arg,)
     for row in plpy.execute(query):
         roleid, member = row['roleid'], row['member']
         members = roles.get(member)
@@ -840,8 +840,6 @@ def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
         related_shortnames_list = ["'%s'" % (_pg_escape(row['shortname']),) for row in plpy.execute(q)]
         related_shortnames = string.join(related_shortnames_list, ', ')
         condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
-    if role_arg:
-        condition = "%s and roleid='%s'" % (condition, _pg_escape(role_arg),)
     for row in plpy.execute("select rightid, granted, roleid, menuid, shortname, system from ev_pytis_menu_rights where %s" % (condition,)):
         rightid, granted, roleid, menuid, shortname, system = row['rightid'], row['granted'], row['roleid'], row['menuid'], row['shortname'], row['system']
         keys = [(shortname, menuid,)]
@@ -982,6 +980,8 @@ def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
             continue
         if menuid_arg != 0 and menuid != menuid_arg:
             continue
+        if role_arg is not None and roleid != role_arg:
+            continue
         # Multiform view rights are valid if they are permitted by the main
         # form and (in case of the VIEW right) at least one of the side forms.
         subforms = all_rights.subforms
@@ -998,7 +998,7 @@ def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
                 else:
                     subforms_total += r.total
             all_rights.total = [r for r in total if r != 'view' or r in subforms_total]
-        # Format and store the rights
+        # Format and return the rights
         key = shortname, menuid, roleid
         rights = string.join(all_rights.total, ' ')
         summaryid = '%s+%s' % (menuid or '', shortname,)
