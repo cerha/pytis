@@ -99,6 +99,8 @@ class ApplicationRoles(ApplicationRolesSpecification):
                                            binding_column='member'),
                 pytis.presentation.Binding(_("Náhled menu"), 'menu.ApplicationRoleMenu', id='menu',
                                            binding_column='roleid'),
+                pytis.presentation.Binding(_("Náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenu', id='previewmenu',
+                                           arguments=(lambda row: dict(roleid=row['roleid']))),
                 pytis.presentation.Binding(_("Roz¹íøený náhled menu"), 'menu.ApplicationRoleMenuExtended', id='extmenu',
                                            binding_column='roleid'),
                 )
@@ -535,6 +537,39 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
     def on_delete_record(self, row):
         return None
 
+class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
+    table = 'pytis_preview_role_menu'
+    title = _("Chystané menu u¾ivatele")
+    arguments = (Field('roleid', "", type=pytis.data.String()),
+                 )
+    fields = (
+        Field('menuid', "", type=pytis.data.Integer()),
+        Field('roleid', _("Role"), type=pytis.data.String(),
+              fixed=True),
+        Field('title', _("Titulek polo¾ky menu"), type=_Title(), fixed=True),
+        Field('position', _("Pozice v menu"), type=pytis.data.String()),
+        Field('position_nsub', type=pytis.data.Integer()),
+        Field('rights', _("Práva"), type=pytis.data.String()),
+        Field('rights_show', _("Menu"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Zobrazení v menu")),
+        Field('rights_view', _("Náhled"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Zobrazení formuláøe")),
+        Field('rights_insert', _("Vlo¾ení"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Vlo¾ení nového záznamu")),
+        Field('rights_update', _("Editace"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Zmìna hodnot existujícího záznamu")),
+        Field('rights_delete', _("Smazání"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Smazání existujícího záznamu")),
+        Field('rights_print', _("Tisk"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Tisk formuláøe")),
+        Field('rights_export', _("Export"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Export formuláøe do souboru")),
+        Field('rights_call', _("Spu¹tìní"), fixed=True, type=pytis.data.Boolean(),
+              descr=_("Spu¹tìní funkce (netýká se formuláøù)")),
+        )
+    columns = ('title', 'rights_view', 'rights_insert', 'rights_update',
+               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
+    
 class ApplicationRoleMenuExtended(ApplicationRoleMenu):
     table = 'ev_pytis_extended_role_menu'
     title = _("Roz¹íøené menu u¾ivatele")

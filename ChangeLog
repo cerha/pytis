@@ -1,6 +1,12 @@
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Add on-fly menu preview to the role editing form.
+
+2009-10-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fix role specific summary rights computation.
 
 2009-10-07  Milan Zamazal  <pdm@brailcom.org>

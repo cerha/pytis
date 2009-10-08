@@ -1008,14 +1008,20 @@ _plpy_function('pytis_compute_summary_rights', (TInteger, TString, TString,), RT
                body=pytis_compute_summary_rights,
                depends=('a_pytis_computed_summary_rights', 'a_pytis_valid_role_members', 'ev_pytis_menu_rights',),)
 
+function('pytis_all_summary_rights', (), RT('typ_summary_rights', setof=True),
+         body="""
+select * from pytis_compute_summary_rights(0, NULL::text, NULL::text);
+""",
+         depends=('pytis_compute_summary_rights',))
+
 function('pytis_update_summary_rights', (), TBoolean,
          body="""
 delete from a_pytis_computed_summary_rights;
 insert into a_pytis_computed_summary_rights (shortname, menuid, summaryid, roleid, rights)
-       (select * from pytis_compute_summary_rights(0, NULL::text, NULL::text));
+       (select * from pytis_all_summary_rights());
 select ''t''::boolean;
 """,
-         depends=('a_pytis_computed_summary_rights', 'pytis_compute_summary_rights',))
+         depends=('a_pytis_computed_summary_rights', 'pytis_all_summary_rights',))
 
 _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),
@@ -1159,7 +1165,7 @@ select summary.shortname, summary.menuid, summary.summaryid, summary.roleid, sum
             left outer join e_pytis_roles as roles on summary.roleid = roles.name
             left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
 """,
-         depends=('pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
+         depends=('typ_preview_rights', 'pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
 
 viewng('ev_pytis_role_menu_raw',
        (SelectRelation('ev_pytis_menu', alias='menu', exclude_columns=('name', 'fullname',)),
@@ -1194,6 +1200,38 @@ viewng('ev_pytis_role_menu',
        grant=db_rights,
        depends=('ev_pytis_role_menu_raw',)
        )
+
+sqltype('typ_preview_role_menu',
+        (C('menuid', TInteger),
+         C('title', TString),
+         C('position', 'ltree'),
+         C('position_nsub', 'bigint'),         
+         C('roleid', TString),
+         C('rights', TString),
+         C('rights_show', TBoolean),
+         C('rights_view', TBoolean),
+         C('rights_insert', TBoolean),
+         C('rights_update', TBoolean),
+         C('rights_delete', TBoolean),
+         C('rights_print', TBoolean),
+         C('rights_export', TBoolean),
+         C('rights_call', TBoolean),
+         ))
+function('pytis_preview_role_menu', (TString,), RT('typ_preview_role_menu', setof=True),
+         body="""
+select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.roleid, summary.rights,
+       strpos(summary.rights, ''show'')::bool as rights_show,
+       strpos(summary.rights, ''view'')::bool as rights_view,
+       strpos(summary.rights, ''insert'')::bool as rights_insert,
+       strpos(summary.rights, ''update'')::bool as rights_update,
+       strpos(summary.rights, ''delete'')::bool as rights_delete,
+       strpos(summary.rights, ''print'')::bool as rights_print,
+       strpos(summary.rights, ''export'')::bool as rights_export,
+       strpos(summary.rights, ''call'')::bool as rights_call
+       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(0, NULL, $1) as summary
+            on menu.menuid = summary.menuid;
+""",
+         depends=('typ_preview_role_menu', 'pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
 
 viewng('ev_pytis_extended_role_menu_raw',
        (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('menuid',)),
