@@ -2779,6 +2779,7 @@ class SideBrowseForm(BrowseForm):
 
         """
         #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, row))
+        print 'called!!!'
         if self._xarguments is not None:
             self._selection_arguments = copy.copy(self._arguments or {})
             self._selection_arguments.update(self._xarguments(row))

@@ -471,10 +471,13 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     def on_delete_record(self, row):
         return None
 
+class _MenuidPreviewType(pytis.data.Integer):
+    def default_value(self):
+        return pytis.data.Value(self, 0)
 class ApplicationPreviewRights(ApplicationSummaryRights):
     table = 'pytis_preview_summary_rights'
     title = _("Chystaná práva")
-    arguments = (Field('menuid', "", type=pytis.data.Integer()),
+    arguments = (Field('menuid', "", type=_MenuidPreviewType()),
                  Field('shortname', "", type=pytis.data.String()),
                  Field('roleid', "", type=pytis.data.String()),
                  )

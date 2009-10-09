@@ -1,3 +1,9 @@
+2009-10-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	* lib/pytis/form/list.py:
+	Fix default value of ApplicationPreviewRights/menuid.
+
 2009-10-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
