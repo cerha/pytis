@@ -1,5 +1,10 @@
 2009-10-09  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Fix lock id in pytis_update_summary_rights.
+
+2009-10-09  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/list.py:
 	Amend: yes.
 	Don't try to reselect SideBrowseForm row after main form row selection

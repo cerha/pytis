@@ -1014,7 +1014,7 @@ select * from pytis_compute_summary_rights(0, NULL::text, NULL::text);
          depends=('pytis_compute_summary_rights',))
 
 def pytis_update_summary_rights():
-    for row in plpy.execute("select pytis_actions_lock_id() as lock_id"):
+    for row in plpy.execute("select pytis_summary_lock_id() as lock_id"):
         lock_id = row['lock_id']
     for row in plpy.execute("select pg_try_advisory_lock(%s) as result" % (lock_id,)):
         if not row['result']:
