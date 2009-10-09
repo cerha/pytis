@@ -1323,7 +1323,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=row_number)
         return True
 
-    def _refresh(self, when=None, reset=None):
+    def _refresh(self, when=None, reset=None, key_update=True):
         """Aktualizuj data seznamu z datového zdroje.
 
         Pøekresli celý seznam v okam¾iku daném argumentem 'when' se zachováním
@@ -1334,12 +1334,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
           when -- urèuje, zda a kdy má být aktualizace provedena, musí to být
             jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
             'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
-
           reset -- urèuje, které parametry zobrazení mají být zachovány a které zmìnìny.  Hodnotou
             je buï 'None', nebo dictionary.  Je-li hodnotou 'None', zùstane zachována filtrovací
             podmínka i tøídìní.  Jinak jsou resetovány právì ty parametry, pro nì¾
             v dictionary existuje klíè (jeden z øetìzcù 'sorting', 'filter'), a to na hodnotou
             z dictionary pro daný klíè.
+          key_update -- if true, try to select the previously selected row
 
         Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
 
@@ -1368,7 +1368,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if __debug__:
                 log(DEBUG, 'Refresh postponed until end of editation.')
             return False
-        # Refresh nyní bude skuteènì proveden
         if reset:
             for k, v in reset.items():
                 if k == 'filter':
@@ -1381,7 +1380,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         row = max(0, self._current_cell()[0])
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         self._update_grid(data_init=True)
-        if key is not None:
+        if key is not None and key_update:
             if self._current_key() != key:
                 self.select_row(key, quiet=True)
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
@@ -2779,7 +2778,6 @@ class SideBrowseForm(BrowseForm):
 
         """
         #log(EVENT, 'Filtrace obsahu formuláøe:', (self._name, row))
-        print 'called!!!'
         if self._xarguments is not None:
             self._selection_arguments = copy.copy(self._arguments or {})
             self._selection_arguments.update(self._xarguments(row))
@@ -2791,7 +2789,7 @@ class SideBrowseForm(BrowseForm):
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
             self._lf_condition = None
-        self._refresh()
+        self._refresh(key_update=False)
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
