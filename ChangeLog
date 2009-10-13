@@ -1,3 +1,8 @@
+2009-10-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Add `redundant' column to the rights listing form.
+
 2009-10-21  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

@@ -392,8 +392,11 @@ class ApplicationMenuRights(pytis.presentation.Specification):
               descr=_("Jde o nemìnné právo definováno tvùrcem aplikace?")),
         Field('granted', _("Ano/Ne"), fixed=True, default=True,
               descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
+        Field('redundant', _("Nadbyteèné"), fixed=True,
+              editable=pytis.presentation.Editable.NEVER,
+              descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
         )
-    columns = ('roleid', 'purpose', 'rightid', 'colname', 'system', 'granted',)
+    columns = ('roleid', 'purpose', 'rightid', 'colname', 'system', 'granted', 'redundant',)
     layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
