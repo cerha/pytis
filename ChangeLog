@@ -1,5 +1,10 @@
 2009-10-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/spec.py:
+	Add `public' argument to ViewSpec.
+
+2009-10-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Another argument conversion in menu.py.
 

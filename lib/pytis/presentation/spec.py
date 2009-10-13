@@ -799,7 +799,7 @@ class ViewSpec(object):
                  cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
                  redirect=None, focus_field=None, description=None, help=None, row_style=None,
                  filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
-                 initial_folding=None, spec_name='', arguments=None):
+                 initial_folding=None, spec_name='', arguments=None, public=None):
         
         """Inicializuj instanci.
 
@@ -956,6 +956,8 @@ class ViewSpec(object):
             Otherwise it must be 'None'.
 
           spec_name -- name of the original form specification if any, string.
+
+          public -- boolean flag indicating a public specification.
 
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
