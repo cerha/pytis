@@ -29,6 +29,7 @@ from pytis.extensions import Field, nextval
 ### Roles
 
 class ApplicationRolePurposes(pytis.presentation.Specification):
+    public = True
     table = 'c_pytis_role_purposes'
     title = _("Úèely rolí")
     fields = (
@@ -38,9 +39,11 @@ class ApplicationRolePurposes(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='purpose')
 
 class CommonApplicationRolePurposes(ApplicationRolePurposes):
+    public = True
     condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
 
 class ApplicationRolesSpecification(pytis.presentation.Specification):
+    public = True
     
     access_rights = pytis.data.AccessRights((None, (['admin_roles'], pytis.data.Permission.ALL)),)
     
@@ -67,6 +70,7 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationRoles(ApplicationRolesSpecification):
+    public = True
     table = 'ev_pytis_roles'
     title = _("Role")
     fields = (
@@ -93,7 +97,7 @@ class ApplicationRoles(ApplicationRolesSpecification):
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     def actions(self): return (
-        pytis.presentation.Action(id='copy_roles', _("Zkopírovat role od..."), self._copy_roles,
+        pytis.presentation.Action('copy_roles', _("Zkopírovat role od..."), self._copy_roles,
                                   descr=("Nastavení aplikaèních rolí dle jiného u¾ivatele.")),
         )
     bindings = (pytis.presentation.Binding('members', _("Obsahuje role"), 'menu.ApplicationRolesMembers',
@@ -125,19 +129,23 @@ class ApplicationRoles(ApplicationRolesSpecification):
         pytis.extensions.dbfunction('pytis_copy_role', ('copy_from', template_row['name'],), ('copy_to', row['name'],))
 
 class UserApplicationRolesCodebook(ApplicationRoles):
+    public = True
     table = 'ev_pytis_valid_roles'
     columns = ('name', 'description',)
     condition = pytis.data.EQ('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
 
 class ApplicationApplicationRoles(ApplicationRoles):
+    public = True
     table = 'ev_pytis_valid_roles'
     condition = pytis.data.EQ('purposeid', pytis.data.Value(pytis.data.String(), 'appl'))
 
 class CommonApplicationRoles(ApplicationRoles):
+    public = True
     table = 'ev_pytis_valid_roles'
     condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
 
 class ApplicationRolesMembership(ApplicationRolesSpecification):
+    public = True
     table = 'ev_pytis_valid_role_members'
     title = "Èlenství v rolích"
     fields = (
@@ -170,10 +178,12 @@ class ApplicationRolesMembership(ApplicationRolesSpecification):
         return None
 
 class ApplicationRolesOwners(ApplicationRolesMembership):
+    public = True
     title = _("Zaøazení do skupiny")
     columns = ('roleid', 'purpose', 'description',)
 
 class ApplicationRolesMembers(ApplicationRolesMembership):
+    public = True
     title = _("Pøiøazení role")
     columns = ('member', 'mpurpose', 'mdescription',)
 
@@ -181,6 +191,7 @@ class ApplicationRolesMembers(ApplicationRolesMembership):
 ### Actions
 
 class ApplicationActions(pytis.presentation.Specification):
+    public = True
     table = 'c_pytis_menu_actions'
     title = _("U¾ivatelské akce")
     fields = (
@@ -195,6 +206,7 @@ class ApplicationActions(pytis.presentation.Specification):
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
 class ApplicationShortActions(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_short_actions'
     title = _("U¾ivatelské akce")
     fields = (
@@ -220,6 +232,7 @@ def _xaction_computer(row, fullname):
         result = fullname
     return result
 class ApplicationMenu(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_menu'
     title = _("Menu")
     fields = (
@@ -265,6 +278,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationMenuM(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_menu_structure'
     title = _("Menu")
     fields = (
@@ -348,6 +362,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
         result = pytis.extensions.dbfunction('pytis_remove_redundant', ('shortname', row['shortname'],),)
 
 class ApplicationMenuCodebook(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_menu_structure'
     title = _("Menu")
     fields = (
@@ -376,6 +391,7 @@ class ApplicationMenuCodebook(pytis.presentation.Specification):
                                                     pytis.data.Permission.UPDATE,)))
 
 class ApplicationMenuPositions(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_menu_positions'
     title = _("Menu")
     fields = (
@@ -391,6 +407,7 @@ class ApplicationMenuPositions(pytis.presentation.Specification):
 ### Rights
 
 class ApplicationRights(pytis.presentation.Specification):
+    public = True
     table = 'c_pytis_access_rights'
     title = "Seznam práv"
     fields = (
@@ -432,6 +449,7 @@ class ApplicationColumns(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='colname')
 
 class ApplicationMenuRights(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_action_rights'
     title = _("Práva")
     fields = (
@@ -519,6 +537,7 @@ class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
                                           **kwargs)
 
 class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
+    public = True
     table = 'pytis_action_rights_foldable'
     arguments = (Field('shortname', "", type=pytis.data.String()),
                  Field('column', "", type=pytis.data.String()),
@@ -671,6 +690,7 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         return None
 
 class ApplicationPreviewRights(ApplicationSummaryRights):
+    public = True
     table = 'pytis_view_summary_rights'
     title = _("Chystaná práva")
 
@@ -723,6 +743,7 @@ class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
     title = _("Chystané menu u¾ivatele")
     
 class ApplicationRoleMenuExtended(ApplicationRoleMenu):
+    public = True
     table = 'pytis_view_extended_role_menu'
     title = _("Roz¹íøené menu u¾ivatele")
     arguments = (Field('roleid', "", type=pytis.data.String()),

@@ -2743,6 +2743,21 @@ class Specification(object):
     hodnotou argumentu 'help' pro 'ViewSpec' je dokumentaèní øetìzec
     specifikaèní tøídy.
 
+    Set 'public' attribute to True in specifications intended to serve for
+    making forms or running procedures in the user interface.
+
+    """
+    public = False
+    """Flag indicating whether the specification may be used in interactive calls.
+
+    Specifications can be either public or private.  Public specifications can
+    be used by forms and procedures run by the user.  Private specifications
+    are only available to internal procedures.
+
+    Each specification should explicitly set this attribute in order to make
+    the status of the specification clear.  Set it to True iff the
+    specification is public.
+    
     """
     
     table = None

@@ -299,6 +299,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             return True
 
+    def _public_spec(self, name):
+        spec_class = None
+        pos = name.rfind('.')
+        if pos >= 0:
+            module, spec_name = name[:pos], name[pos+1:]
+            try:
+                spec_class = resolver().get_object(module, spec_name)
+            except Exception, e:
+                pass
+        return (spec_class is None or
+                (issubclass(spec_class, Specification) and spec_class.public))
+
     def _find_help_files(self):
         if not os.path.exists(config.help_dir):
             log(OPERATIONAL, "Neexistující adresáø nápovìdy:", config.help_dir)
@@ -768,6 +780,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
         if isinstance(self.current_form(), PopupForm) and not issubclass(form_class, PopupForm):
             return False
+        if not self._public_spec(name):
+            return False
         try:
             if has_access(name):
                 if binding is not None or issubclass(form_class, MultiBrowseDualForm):
@@ -899,6 +913,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _can_run_procedure(self, spec_name, proc_name, args=(),
                            block_refresh_=False, enabled=None, **kwargs):
+        if not self._public_spec(spec_name):
+            return False
         return enabled is None and True or enabled(**kwargs)
     
     def _cmd_run_procedure(self, spec_name, proc_name, args=(),

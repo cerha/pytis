@@ -342,9 +342,11 @@ def process_rights(resolver, actions, rights, def_dir):
                     print 'Warning: Module not loaded: %s' % (module,)
                     continue
                 module_identifier = module_name.replace('/', '.')
-                for spec_attr in [o for o in dir(module) if o[0] != '_']:
+                for spec_attr in [o for o in dir(module)]:
                     spec = getattr(module, spec_attr)
-                    if isinstance(spec, type) and issubclass(spec, pytis.form.Specification):
+                    if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
+                        if spec_attr[0] == '_':
+                            print 'Warning: Public specification starting with underscore: %s.%s' % (module_identifier, spec_attr,)
                         spec_name = module_identifier + '.' + spec.__name__
                         action_shortname = 'form/'+spec_name
                         if actions_shortnames.has_key(action_shortname):
@@ -362,6 +364,8 @@ def process_rights(resolver, actions, rights, def_dir):
                             actions[action_name] = action = Action(action_name, '', action_shortname,
                                                                    title=spec_title)
                             add_rights(spec_name, action, action_name)
+                    elif isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec_attr != 'Specification':
+                        print 'Note: Private specification, ignored: %s.%s' % (module_identifier, spec_attr,)
     actions['label/1'] = Action('label/1', None, title="SAMOSTATNÉ AKCE")
     if actions_extra_shortnames:
         print 'Warning: Actions without met specifications: %s' % (actions_extra_shortnames.keys(),)

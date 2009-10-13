@@ -280,6 +280,10 @@ Chybová a varovná hlášení:
     konkrétního uživatele.  Specifikace používající =is_in_groups= mohou být
     naimportovány chybně.
 
+  Public specification starting with underscore :: Jméno veřejné specifikace
+    začíná podtržítkem.  Může jít např. o neveřejnou specifikaci, která je
+    potomkem veřejné specifikace.
+
   Failed to retrieve RUN_FORM command :: Akce =RUN_FORM= specifikuje příkaz,
     ten však nebyl nalezen.  Akce je ignorována.
 
@@ -296,6 +300,10 @@ Chybová a varovná hlášení:
 
   No access rights specified for form %s, assuming everything permitted ::
     Formulář bez specifikace přístupových práv.
+
+  Private specification, ignored :: Privátní specifikace, genmenu ji nenačítá.
+    Lze potenciálně využít pro kontrolu, zda mezi privátními specifikacemi
+    nezůstala nějaká veřejná.
 
   Non-form action, no rights assigned :: Jiná než formulářová akce, genmenu
     předpokládá, že pro takové akce nejsou specifikována přístupová práva.

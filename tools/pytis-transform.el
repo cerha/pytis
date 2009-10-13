@@ -103,7 +103,7 @@
                   (push (cdr id) ids))
                 (insert (format "%s, " (car id))))))))))))
                
-(defun pytis-transform-dired ()
+(defun pytis-transform-dired (&optional transform-function)
   (interactive)
   (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p))
     (let ((buffer (get-file-buffer file)))
@@ -111,7 +111,29 @@
 	  (error "File `%s' is visited read-only" file))))
   (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p))  
     (find-file file)
-    (pytis-transform-buffer)))
+    (funcall (or transform-function #'pytis-transform-buffer))))
+
+(defun pytis-transform-specifications ()
+  (interactive)
+  (goto-char (point-min))
+  (while (re-search-forward pytis-spec-class-regexp nil t)
+    (beginning-of-line 2)
+    (when (looking-at "^    \"")
+      (forward-sexp)
+      (beginning-of-line 2))
+    (let* ((bound (save-excursion (or (re-search-forward pytis-spec-class-regexp nil t)
+                                      (point-max))))
+           (marked (save-excursion (re-search-forward "^    public =" bound t)))
+           (answer (unless marked (read-char "Public? (y, n, s) "))))
+      (cond
+       ((equal answer ?y)
+        (insert "    public = True\n"))
+       ((equal answer ?n)
+        (insert "    public = False\n"))))))
+
+(defun pytis-transform-specifications-dired ()
+  (interactive)
+  (pytis-transform-dired #'pytis-transform-specifications))
 
 
 ;;; Announce

@@ -1,3 +1,13 @@
+2009-10-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	* doc/tutorials/DmpDb:
+	* lib/pytis/form/application.py:
+	* lib/pytis/presentation/spec.py:
+	* tools/genmenu.py:
+	* tools/pytis-transform.el:
+	Public/private specifications introduced.
+
 2009-09-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/presentation/spec.py:
