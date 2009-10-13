@@ -1,3 +1,8 @@
+2009-10-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Add dummy `arguments' method to BindingSpec.
+
 2009-10-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

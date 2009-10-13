@@ -1357,6 +1357,9 @@ class BindingSpec(object):
     def orientation(self):
         return self._orientation
 
+    def arguments(self):
+        return None
+
 
 class Binding(object):
     """Specification of a binding to other view.
