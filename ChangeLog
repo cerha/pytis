@@ -1,6 +1,11 @@
 2009-10-13  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
+	Pytis CMS: Respect changes in Wiking Session interface.
+
+2009-10-13  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
 	Pytis CMS: Pass the current request object to user creation methods.
 
 2009-10-13  Milan Zamazal  <pdm@brailcom.org>
