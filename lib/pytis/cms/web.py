@@ -315,11 +315,11 @@ class Users(wiking.PytisModule):
     class Spec(Specification, cms.Users):
         pass
 
-    def _user_row(self, login):
+    def _user_row(self, req, login):
         """Override this method to customize the user search condition."""
         return self._data.get_row(login=login)
                     
-    def _user_args(self, row):
+    def _user_args(self, req, row):
         """Override this method to customize the 'User' instance constructor arguments."""
         uid = row['uid'].value()
         roles = [wiking.Roles.USER] + self._module('UserRoles').roles(uid)
@@ -328,10 +328,10 @@ class Users(wiking.PytisModule):
                     password=row['passwd'].value(),
                     roles=roles, data=row)
 
-    def user(self, login):
-        row = self._user_row(login)
+    def user(self, req, login):
+        row = self._user_row(req, login)
         if row:
-            return wiking.User(login, **self._user_args(row))
+            return wiking.User(login, **self._user_args(req, row))
         else:
             return None
     
@@ -423,7 +423,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
                'SiteIcon': (wiking.Roles.ANYONE,)}
     
     def _auth_user(self, req, login):
-        return self._module('Users').user(login)
+        return self._module('Users').user(req, login)
         
     def _auth_check_password(self, user, password):
         user_password = user.password()
