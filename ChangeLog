@@ -1,5 +1,11 @@
 2009-10-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/data.py:
+	* lib/pytis/form/configui.py:
+	Add `arguments' argument to all `select' methods.
+
+2009-10-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/presentation/spec.py:
 	Add dummy `arguments' method to BindingSpec.
 

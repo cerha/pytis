@@ -306,6 +306,10 @@ class Data(object):
             included
           transaction -- transaction object encapsulating the database
             operation environment or 'None' (meaning default environment)
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the table is actually a row
+            returning database function, otherwise ignored.
 
         Length of 'key' must correspond to the number of key columns.
 
@@ -314,7 +318,8 @@ class Data(object):
         """
         return None
     
-    def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None):
+    def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None,
+               arguments={}):
         """Initialize selection of records from the data source.
         
         The method itself does not necessarily load any data, the selection is only initialized if
@@ -975,10 +980,12 @@ class MemData(Data):
             else:
                 raise ProgramError("Operator not supported:", op_name)
 
-    def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None):
+    def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
+               arguments={}):
         """Inicializace vytahování záznamù.
 
-        Bli¾¹í popis viz nadtøída.  Argumenty 'condition', 'sort' a 'transaction' jsou ignorovány.
+        Bli¾¹í popis viz nadtøída.  Argumenty 'condition', 'sort',
+        'transaction' a 'arguments' jsou ignorovány.
         
         """
         if self._condition is not None:
