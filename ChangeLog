@@ -1,6 +1,11 @@
 2009-10-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
+	Another argument conversion in menu.py.
+
+2009-10-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
 	* doc/tutorials/DmpDb:
 	* lib/pytis/form/application.py:
 	* lib/pytis/presentation/spec.py:

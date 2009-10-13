@@ -325,7 +325,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                                                        ))),
                 )
     def actions(self): return (
-        pytis.presentation.Action(_("Zkopírovat práva z..."), self._copy_rights,
+        pytis.presentation.Action('copy_rights', _("Zkopírovat práva z..."), self._copy_rights,
                                   descr=("Zkopírování práv z jiné polo¾ky.")),
         pytis.presentation.Action(_("Odstranit nadbyteèná práva"), self._remove_redundant,
                                   descr=("Odstranìní polo¾ek práv, které nemají vliv na výsledná práva.")),
