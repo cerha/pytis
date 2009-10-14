@@ -1,0 +1,291 @@
+#!/usr/bin/env python
+
+import codecs
+import optparse
+import string
+import sys
+
+import psycopg2 as dbapi
+
+import pytis.data.postgresql
+pg_escape = pytis.data.postgresql.pg_escape
+
+class Configuration(object):
+    dbparameters = dict(host=None, database=None, user=None, password=None)
+
+decoder = codecs.getdecoder('utf-8')
+def decode(string):
+    return decoder(string)[0]
+
+def run_queries(queries, cursor, connection, dry_run):
+    for q in queries:
+        if dry_run:
+            print q
+        else:
+            cursor.execute(q)
+    if not dry_run:
+        connection.commit()
+    print "Changes applied, don't forget to update summary rights to get them fully applied."
+
+def command_ls(connection, dry_run, args):
+    cursor = connection.cursor()
+    def ls_menu():
+        cursor.execute("select menuid, position, xtitle, shortname, fullname from ev_pytis_menu order by position")
+        for row in cursor.fetchall():
+            label = ('%s * %s' % (row[1], decode(row[2]),))[:40]
+            print '%4s %-40s %-30s %s' % (row[0], label, row[3] or '', row[4] or '',)
+    def ls_roles():
+        cursor.execute("select name, purposeid, coalesce(description, '') from e_pytis_roles order by name")
+        for row in cursor.fetchall():
+            print '%-32s %s %s' % row
+    def ls_rights(shortname):
+        cursor.execute(("select shortname, roleid, granted, substr(rightid, 1, 4), system, redundant, coalesce(colname, '') "
+                        "from e_pytis_action_rights where shortname like %s "
+                        "order by shortname, rightid, roleid, colname, system"), (shortname,))
+        for row in cursor.fetchall():
+            row = list(row)
+            for i, yes, no in ((2, '+', '-',),
+                               (4, 'sys', '   ',),
+                               (5, 'red', '   ',),
+                               ):
+                if row[i]:
+                    row[i] = yes
+                else:
+                    row[i] = no
+            print '%-60s %-32s %s%s %s %s %s' % tuple(row)
+    if not args:
+        args = ['menu']
+    spec = args.pop(0)
+    if spec == 'menu':
+        handler = ls_menu
+    elif spec == 'roles':
+        handler = ls_roles
+    elif spec == 'rights':
+        if args:
+            shortname = args.pop(0)
+        else:
+            shortname = '%'
+        handler = lambda: ls_rights(shortname)
+    else:
+        print "Error: wrong argument:", spec
+        return
+    if args:
+        print "Error: extra arguments:", args
+        return
+    handler()
+
+def command_add(connection, dry_run, args):
+    cursor = connection.cursor()
+    if not args:
+        print "Error: missing action"
+        return
+    action = args.pop(0)
+    if args:
+        title = args.pop(0)
+        if not args:
+            print "Error: missing parent menu"
+            return
+        position = args.pop(0)
+        if args:
+            print "Error: extra arguments", args
+            return
+    else:
+        title = position = None
+    components = action.split('/')
+    if len(components) < 2:
+        print "Error: invalid action:", action
+        return
+    if len(components) > 2:
+        if components[0] != 'form':
+            print "Error: invalid action:", action
+            return
+        fullname = action
+        shortname = '%s/%s' % (components[0], components[2])
+    elif components[0] == 'form':
+        fullname = '%s/pytis.form.BrowseForm/%s//' % tuple(components)
+        shortname = action
+    else:
+        fullname = shortname = action
+    queries = []
+    queries.append("insert into c_pytis_menu_actions (fullname, shortname) values ('%s', '%s')" % (fullname, shortname,))
+    if title is not None:
+        last_dot = position.rfind('.')
+        if last_dot < 0:
+            parent_position = position
+            cursor.execute("select fullname, position from e_pytis_menu where title like %s", (position,))
+        else:
+            cursor.execute("select fullname, position from e_pytis_menu where position=%s", (position,))
+            if cursor.rowcount > 0:
+                print "Error: position already present:", position
+                return
+            parent_position = position[:last_dot]
+            cursor.execute("select fullname, position from e_pytis_menu where position=%s", (parent_position,))
+        if not cursor.rowcount:
+            print "Error: no such parent:", parent_position
+            return
+        row = cursor.fetchone()
+        if row[0][:5] != 'menu/':
+            print "Error: parent not a menu:", parent_position
+            return
+        if last_dot < 0:
+            parent_position = row[1]
+            cursor.execute("select position from e_pytis_menu where position~'%s.*{1}' order by position desc limit 1"
+                           % (parent_position,))
+            if cursor.rowcount:
+                row = cursor.fetchone()
+                last_position = row[0]
+                position_components = last_position.split('.')
+                n = str(int(position_components[-1]) + 1)
+                while len(n) < len(position_components[-1]):
+                    n = '0' + n
+                position_components[-1] = n
+                position = string.join(position_components, '.')
+            else:
+                position = parent_position + '.11'
+        queries.append("insert into e_pytis_menu (name, title, position, fullname) values ('%s', '%s', '%s', '%s')"
+                       % (fullname, pg_escape(title), position, fullname,))
+    run_queries(queries, cursor, connection, dry_run)
+
+def command_del(connection, dry_run, args):
+    cursor = connection.cursor()
+    if not args:
+        print "Error: missing action identifier"
+        return
+    action = args.pop(0)
+    if args:
+        print "Error: extra arguments:", args
+        return
+    if not action:
+        print "Error: empty action"
+    queries = []
+    if action[0] in ('-' + string.digits):
+        action_type = 'menuid'
+        try:
+            action_number = int(action)
+        except:
+            print "Error: invalid menuid:", action
+            return
+        cursor.execute("select menuid from e_pytis_menu where menuid=%s" % (action,))
+        if not cursor.rowcount:
+            print "Error: invalid menuid:", action
+            return
+    elif len(action.split('/')) > 2:
+        action_type = 'fullname'
+    else:
+        action_type = 'shortname'
+    if action_type == 'menuid':
+        queries.append("delete from e_pytis_menu where %s=%s" % (action_type, action,))
+    else:
+        action_string = "'%s'" % (action,)
+        cursor.execute("select shortname from c_pytis_menu_actions where %s=%s" % (action_type, action_string,))
+        if not cursor.rowcount:
+            print "Error: no such action:", action
+            return
+        shortname = cursor.fetchone()[0]
+        if action_type == 'fullname':
+            queries.append("delete from e_pytis_menu where fullname=%s" % (action_string,))
+        else:
+            queries.append(("delete from e_pytis_menu where fullname in "
+                            "(select fullname from c_pytis_menu_actions where shortname=%s)") % (action_string,))
+        queries.append("delete from e_pytis_action_rights where shortname='%s'" % (shortname,))
+        queries.append("delete from c_pytis_menu_actions where %s=%s" % (action_type, action_string,))
+    run_queries(queries, cursor, connection, dry_run)
+    
+def command_sys(connection, dry_run, args):
+    cursor = connection.cursor()
+    if not args:
+        print "Error: missing shortname"
+        return
+    shortname = args.pop(0)
+    cursor.execute("select shortname from c_pytis_menu_actions where shortname=%s", (shortname,))
+    if not cursor.rowcount:
+        print "Error: wrong shortname:", shortname
+        return
+    cursor.execute("select name from e_pytis_roles")
+    roles = [row[0] for row in cursor.fetchall()]
+    requests = []
+    for spec in args:
+        if not spec:
+            print "Error: invalid argument:", spec
+            return
+        if spec[0] == '+':
+            granted = True
+            spec = spec[1:]
+        elif spec[0] == '-':
+            granted = 'f'
+            spec = spec[1:]
+        else:
+            granted = 't'
+        separator_pos = spec.find(':')
+        if separator_pos < 0:
+            print "Error: invalid argument:", spec
+            return
+        role = spec[:separator_pos]
+        right = spec[separator_pos+1:]
+        if role not in roles:
+            print "Error: invalid role:", role
+            return
+        if right not in ('view', 'insert', 'update', 'delete', 'print', 'export', 'call',):
+            print "Error: invalid right:", right
+            return
+        requests.append((shortname, role, right, granted,))
+    queries = []
+    for request in requests:
+        query = ("insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system) "
+                 "values ('%s', '%s', '%s', '%s', 't')" % request)
+        queries.append(query)
+    run_queries(queries, cursor, connection, dry_run)
+
+COMMANDS = {'ls': command_ls,
+            'add': command_add,
+            'del': command_del,
+            'sys': command_sys,
+            }
+
+USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
+
+Commands:
+  ls [ menu | roles | rights [ SHORTNAME ] ]
+  add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
+  del { SHORTNAME | FULLNAME | MENU-ID }
+  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call} ..."""
+    
+def parse_options():
+    parser = optparse.OptionParser(usage=USAGE)
+    parser.add_option("--host", default=None, action="store", dest="host")
+    parser.add_option("--database", default=None, action="store", dest="database")
+    parser.add_option("--user", default=None, action="store", dest="user")
+    parser.add_option("--password", default=None, action="store", dest="password")
+    parser.add_option("--dry-run", action="store_true", dest="dry_run")
+    command_index = 1
+    while command_index < len(sys.argv):
+        arg = sys.argv[command_index]
+        if not arg or arg[0] != '-':
+            break
+        command_index += 1
+    args = sys.argv[command_index:]
+    if not args or args[0] not in COMMANDS.keys():
+        parser.print_help()
+        sys.exit(1)
+    options, _args = parser.parse_args(args=sys.argv[1:command_index])
+    dbparameters = Configuration.dbparameters
+    dbparameters['host'] = options.host
+    dbparameters['database'] = options.database
+    dbparameters['user'] = options.user
+    dbparameters['password'] = options.password
+    return options, args
+
+def run():
+    options, args = parse_options()
+    parameters = {}
+    for k, v in Configuration.dbparameters.items():
+        if v is not None:
+            parameters[k] = v
+    connection = dbapi.connect(**parameters)
+    command = args[0]
+    command_args = args[1:]
+    command_function = COMMANDS[command]
+    command_function(connection, options.dry_run, command_args)
+
+if __name__ == '__main__':
+    run()
