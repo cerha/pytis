@@ -1,3 +1,14 @@
+2009-10-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Revert "Make inner join of a_pytis_computed_summary_rights in ev_pytis_user_menu".
+	
+	This reverts commit 13dfa6c6062f48a59deff5c519d6818f8a99599e.
+	
+	This change, intended to give some access protection when making menu changes,
+	discards menu separators from the menu view.
+	
+
 2009-10-16  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/pytis-transform.el:
