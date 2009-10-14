@@ -1,5 +1,10 @@
 2009-10-14  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/application.py:
+	Make sure the menu window stack is still present after reloading menu&rights.
+
+2009-10-14  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Revert "Make inner join of a_pytis_computed_summary_rights in ev_pytis_user_menu".
 	

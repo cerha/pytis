@@ -198,8 +198,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         mb = self._create_menubar()
         if mb is None:
             return False
-        self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
-        assert self._window_menu is not None
         # Finish and show the frame.
         default_font_encoding = self._spec('default_font_encoding')
         if default_font_encoding is not None:
@@ -462,6 +460,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if not success:
             return None
         self._menubar = mb
+        self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
+        assert self._window_menu is not None
         return mb
 
 # Ostatní metody
@@ -949,6 +949,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_reload_rights(self):
         init_access_rights(config.dbconnection)
         self._create_menubar()
+        self._update_window_menu()
         
     def _cmd_custom_debug(self):
         if __debug__:
