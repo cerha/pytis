@@ -1,3 +1,8 @@
+2009-10-16  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/pytis-transform.el:
+	Fixes in pytis-transform.el.
+
 2009-10-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/cms/cms.py:

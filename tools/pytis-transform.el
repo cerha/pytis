@@ -57,11 +57,12 @@
         (regexp (concat pytis-spec-class-regexp
                         "\\|\\<\\("
                         (mapconcat 'first pytis-transformations "\\|")
-                        "\\)("))
+                        "\\)([^']"))
         (ids '()))
     (while (re-search-forward regexp nil t)
       (let ((beg (match-beginning 0))
-            (end (match-end 0)))
+            (end (1- (match-end 0))))
+        (forward-char -1)
         (cond
          ((eq (plist-get (text-properties-at (point)) 'face)
               'font-lock-comment-face)
@@ -80,7 +81,7 @@
                      (while (member id ids)
                        (setq id (concat id "x")))
                      (cons (concat "'" id "'") id)))
-              (let ((id (when (looking-at "\\(_(\\)?['\"]\\([^'\"\n]+\\)")
+              (let ((id (when (looking-at "\\(_(\\)?u?['\"]\\([^'\"\n]+\\)")
                           (adjusted-id (pytis-transform-string-to-id (match-string 2)) prefix)))
                     (id-arg-regexp (format ",[ \n]*%s=['\"]\\([^'\"\n]*\\)['\"]" id-arg))
                     (general-id-arg-regexp (format ",[ \n]*%s=\\([a-zA-Z0-9_]+\\)" id-arg)))
