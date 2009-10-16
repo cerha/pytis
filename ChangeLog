@@ -1,3 +1,8 @@
+2009-10-16  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/util/configuration.py:
+	Added configuration option database connection SSL mode setting..
+
 2009-10-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/dmp:

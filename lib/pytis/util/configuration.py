@@ -428,13 +428,11 @@ class Configuration(object):
         _DEFAULT = False
         
     class _Option_test_run_interactive(BooleanOption, HiddenOption):
-        _DESCR = _("Pøíznak urèující, zda mají být spou¹tìny i interaktivní "
-                   "testy.")
+        _DESCR = _("Pøíznak urèující, zda mají být spou¹tìny i interaktivní testy.")
         _DOC = _("Týká se pouze regresivního testování.")
 
     class _Option_custom_debug(HiddenOption):
-        _DESCR = _("Zvlá¹tní ladící funkce, napojená na pøíkaz "
-                   "'COMMAND_CUSTOM_DEBUG'.")
+        _DESCR = _("Zvlá¹tní ladící funkce, napojená na pøíkaz 'COMMAND_CUSTOM_DEBUG'.")
         _DEFAULT = (lambda: None)
 
     # Cesty a adresáøe
@@ -496,46 +494,49 @@ class Configuration(object):
     # Databáze
     
     class _Option_dbuser(StringOption, CommandlineOption):
-        _DESCR = _("U¾ivatelské jméno (login) pro databázové spojení.")
+        _DESCR = _("Database user login name.")
         _DEFAULT_STRING = 'getpass.getuser()'
         def default(self):
             import getpass
             return getpass.getuser()
 
     class _Option_dbpass(StringOption):
-        _DESCR = _("Heslo pro pøihlá¹ení k databázi.")
+        _DESCR = _("Database login password.")
         _DEFAULT = None
         
     class _Option_dbname(StringOption):
-        _DESCR = _("Jméno aplikaèní databáze.")
-        _DEFAULT = 'pytis'
+        _DESCR = _("Database name.")
+        _DEFAULT = None
 
     class _Option_dbhost(StringOption, CommandlineOption):
-        _DESCR = _("Jméno databázového serveru.")
+        _DESCR = _("Database host name.")
         _DEFAULT = 'localhost'
     
     class _Option_dbport(NumericOption, CommandlineOption):
-        _DESCR = _("Port databázového serveru.")
+        _DESCR = _("Database port number.")
+        _DEFAULT = None
+    
+    class _Option_dbsslm(StringOption, CommandlineOption):
+        _DESCR = _("Database SSL mode (one of string constants supported by the DB system).")
         _DEFAULT = None
     
     class _Option_dbconnections(HiddenOption):
-        _DESCR = "Alternative database connections."
+        _DESCR = _("Alternative database connections")
         _DOC = ("The default database connection is normally defined by 'dbconnection'.  Certain "
                 "applications, however, may require multiple database connections, which are "
                 "configured using this option.  The value is a dictionary assigning a connection "
                 "specification to each connection by name.  Connection names are defined by "
-                "applications (each application should mention the names of used conections in its "
-                "documentation).  The connection specification (the value assigned to a connection "
-                "name) is a dictionary with keys 'dbname', 'dbhost', 'dbport', 'dbuser' and "
-                "'dbpass'.  Only 'dbname' is mandatory.  Their meaning and default values are the "
-                "same as for the configuration options of the same names specifying the properties "
-                "of the default connection.")
+                "applications (each application should mention the names of used conections in "
+                "its documentation).  The connection specification (the value assigned to a "
+                "connection name) is a dictionary with keys 'dbname', 'dbhost', 'dbport', "
+                "'dbuser', 'dbpass' and 'dbsslm'.  Only 'dbname' is mandatory.  Their meaning "
+                "and default values are the same as for the configuration options of the same "
+                "names specifying the properties of the default connection.")
         _DEFAULT = {}
         
     class _Option_dbconnection(HiddenOption):
-        _DESCR = _("Instance specifikace spojení do databáze "
-                   "('pytis.data.DBConnection').")
-        _DOC = _("Implicitnì se vytváøí z vý¹e uvedených databázových voleb.")
+        _DESCR = _("Database connection specification instance ('pytis.data.DBConnection').")
+        _DOC = _("The instance is constructed from the above db* option by default.")
         def default(self):
             map = {'dbname': 'database',
                    'dbhost': 'host',
