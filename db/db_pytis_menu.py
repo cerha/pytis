@@ -1156,7 +1156,7 @@ def pytis_update_actions_structure():
                     sub_fullname, sub_shortname = subaction_list[i]
                     subposition = '%s.%02d' % (position, i,)
                     add_row(sub_fullname, sub_shortname, None, subposition)
-                formaction_list = formactions.get(shortname[:5], ())
+                formaction_list = formactions.get(shortname[5:], ())
                 for i in range(len(formaction_list)):
                     faction_shortname = formaction_list[i]
                     subposition = '%s.%02d' % (position, (i + 50),)

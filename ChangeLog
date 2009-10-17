@@ -1,3 +1,8 @@
+2009-10-17  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Fix formactions typo in pytis_update_actions_structure db function.
+
 2009-10-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
