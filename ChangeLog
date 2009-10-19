@@ -1,3 +1,9 @@
+2009-10-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* TODO:
+	List new wx2.8 bug: Traceback window layout.
+	
+
 2009-10-16  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/util/configuration.py:

@@ -274,3 +274,6 @@ INTERNÍ ZÁLE®ITOSTI:
 wx-2.8:
 
  * Po zmìnì ve filtraèním formuláøi se "zboøí" layout celého formuláøe.
+
+ * Tracebackový dialog má chybný layout: Tlaèítka jsou uvnitø tracebackového
+   okna.
