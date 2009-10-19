@@ -353,11 +353,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _dynamic_menu(self, connection_data):
         # Check for menu presence, if not available, return None
+        I = pytis.data.Integer()
+        S = pytis.data.String()
         try:
-            menu_data = pytis.data.dbtable('ev_pytis_user_menu',
-                                           ('menuid', 'name', 'title', 'fullname', 'position',
-                                            'rights', 'help', 'hotkey',),
-                                           connection_data)
+            menu_data = pytis.data.dbtable('pytis_view_user_menu',
+                                           (('menuid', I,),
+                                            ('name', S,), ('title', S,), ('fullname', S,),
+                                            ('position', pytis.data.LTree(),),
+                                            ('rights', S,), ('help', S,), ('hotkey', S,),),
+                                           connection_data, arguments=())
         except pytis.data.DBException:
             return None
         menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
@@ -1489,8 +1493,9 @@ def init_access_rights(connection_data):
         _access_rights = 'nonuser'
         return
     _user_roles = roles
-    rights_data = pytis.data.dbtable('ev_pytis_user_rights', ('shortname', 'rights',),
-                                     connection_data)
+    S = pytis.data.String()
+    rights_data = pytis.data.dbtable('pytis_view_user_rights', (('shortname', S,), ('rights', S,),),
+                                     connection_data, arguments=())
     _access_rights = {}
     def process(row):
         shortname, rights_string = row[0].value(), row[1].value()

@@ -2832,8 +2832,10 @@ class Specification(object):
         access_rights = {}
         user_rights = {}
         # Assign computed user rights
-        rights_data = pytis.data.dbtable('ev_pytis_user_rights', ('shortname', 'rights',),
-                                         connection_data)
+        S = pytis.data.String()
+        rights_data = pytis.data.dbtable('pytis_view_user_rights',
+                                         (('shortname', S,), ('rights', S,),),
+                                         connection_data, arguments=())
         def process(row):
             shortname, rights_string = row[0].value(), row[1].value()
             if not rights_string:

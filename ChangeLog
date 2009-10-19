@@ -1,3 +1,13 @@
+2009-10-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	* doc/tutorials/DmpDb:
+	* lib/pytis/form/application.py:
+	* lib/pytis/presentation/spec.py:
+	* tools/genmenu.py:
+	Don't store computed rights, always compute them.
+
 2009-10-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/data.py:
