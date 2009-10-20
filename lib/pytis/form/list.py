@@ -309,7 +309,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
             ndiff = new_row_count - old_row_count
             if new_row_count < old_row_count:
-                if new_row_count == 0:
+                if new_row_count == 0 or current_row is None:
                     current_row = 1
                 notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -ndiff)
             elif new_row_count > old_row_count:
