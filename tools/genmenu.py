@@ -422,8 +422,8 @@ def fill_rights(cursor, rights, check_rights=None):
                                 key = (action_name, group, permission, c,)
                                 if already_stored.has_key(key):
                                     continue
-                                cursor.execute(("insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname) "
-                                                "values(%s, %s, %s, %s, %s, %s)"),
+                                cursor.execute(("insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
+                                                "values(%s, %s, %s, %s, %s, %s, 0)"),
                                                (action_name, group, permission, True, True, c,))
                                 already_stored[key] = True
                             else:
@@ -439,7 +439,7 @@ def check_rights(cursor, rights, update):
     app_rights = {}
     fill_rights(cursor, rights, app_rights)
     db_rights = {}
-    cursor.execute("select id, shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T'")
+    cursor.execute("select id, shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T' and status<=0")
     while True:
         row = cursor.fetchone()
         if row is None:
@@ -485,8 +485,8 @@ def check_rights(cursor, rights, update):
                         rights_args = (pg_escape(action_name), pg_escape(gg), permission, cc,)
                         if rights_seen.has_key(rights_args):
                             continue
-                        print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname) "
-                                "values('%s', '%s', '%s', 't', 't', %s);") % rights_args)
+                        print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
+                                "values('%s', '%s', '%s', 't', 't', %s, 0);") % rights_args)
                         rights_seen[rights_args] = True
                     continue
                 db_columns = db_group_info.get(permission)

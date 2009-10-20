@@ -2873,9 +2873,10 @@ class Specification(object):
             access_rights_spec = [process(right, columns) for right, columns in rights.items() if right != 'show']
             access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         # Forbid actions without any rights for the current user
-        actions_data = pytis.data.dbtable('e_pytis_action_rights', ('shortname', 'system',),
+        actions_data = pytis.data.dbtable('e_pytis_action_rights', ('shortname', 'system', 'status',),
                                           connection_data)
-        condition = pytis.data.EQ('system', pytis.data.Value(pytis.data.Boolean(), True))
+        condition = pytis.data.AND(pytis.data.EQ('system', pytis.data.Value(pytis.data.Boolean(), True)),
+                                   pytis.data.LE('status', pytis.data.Value(pytis.data.Integer(), 0)))
         for value in actions_data.distinct('shortname', condition=condition):
             shortname = value.value()
             if not access_rights.has_key(shortname):

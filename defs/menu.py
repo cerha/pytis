@@ -98,9 +98,11 @@ class ApplicationRoles(ApplicationRolesSpecification):
                 pytis.presentation.Binding(_("Patøí do rolí"), 'menu.ApplicationRolesOwners', id='owners',
                                            binding_column='member'),
                 pytis.presentation.Binding(_("Náhled menu"), 'menu.ApplicationRoleMenu', id='menu',
-                                           arguments=(lambda row: dict(roleid=row['roleid']))),
+                                           arguments=(lambda row: dict(roleid=row['roleid'],
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), False,)))),
                 pytis.presentation.Binding(_("Náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenu', id='previewmenu',
-                                           arguments=(lambda row: dict(roleid=row['roleid']))),
+                                           arguments=(lambda row: dict(roleid=row['roleid'],
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), True,)))),
                 pytis.presentation.Binding(_("Roz¹íøený náhled menu"), 'menu.ApplicationRoleMenuExtended', id='extmenu',
                                            arguments=(lambda row: dict(roleid=row['roleid']))),
                 )
@@ -298,9 +300,13 @@ class ApplicationMenuM(pytis.presentation.Specification):
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
                                            binding_column='shortname'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
-                                           arguments=(lambda row: dict(shortname=row['shortname'], menuid=row['menuid']))),
+                                           arguments=(lambda row: dict(shortname=row['shortname'],
+                                                                       menuid=row['menuid'],
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), False,)))),
                 pytis.presentation.Binding(_("Chystaná práva polo¾ky"), 'menu.ApplicationPreviewRights', id='preview_rights',
-                                           arguments=(lambda row: dict(shortname=row['shortname'], menuid=row['menuid']))),
+                                           arguments=(lambda row: dict(shortname=row['shortname'],
+                                                                       menuid=row['menuid'],
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), True,)))),
                 )
     def actions(self): return (
         pytis.presentation.Action(_("Zkopírovat práva z..."), self._copy_rights,
@@ -440,6 +446,7 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     arguments = (Field('menuid', "", type=_MenuidPreviewType()),
                  Field('shortname', "", type=pytis.data.String()),
                  Field('roleid', "", type=pytis.data.String()),
+                 Field('new', "", type=pytis.data.Boolean()),
                  )
     fields = (
         Field('summaryid', "",  type=pytis.data.String(not_null=True),
@@ -487,6 +494,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
     table = 'pytis_view_role_menu'
     title = _("Menu u¾ivatele")
     arguments = (Field('roleid', "", type=pytis.data.String()),
+                 Field('new', "", type=pytis.data.Boolean()),
                  )
     fields = (
         Field('menuid', "", type=pytis.data.Integer()),
@@ -533,6 +541,7 @@ class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
 class ApplicationRoleMenuExtended(ApplicationRoleMenu):
     table = 'pytis_view_extended_role_menu'
     title = _("Roz¹íøené menu u¾ivatele")
+    arguments = (Field('roleid', "", type=pytis.data.String()),)
     fields = (ApplicationRoleMenu.fields +
               (Field('actiontype', _("Typ polo¾ky"), fixed=True, editable=pytis.presentation.Editable.NEVER,
                type=pytis.data.String()),))

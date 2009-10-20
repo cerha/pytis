@@ -592,6 +592,10 @@ _std_table('e_pytis_action_rights',
               doc="If true the right is granted, otherwise it is denied; system rights are always granted."),
             C('redundant', TBoolean, default="'f'",
               doc="If true, the right is redundant in the current set of access rights."),
+            C('status', 'smallint', default='1', constraints=('not null',),
+              doc="""Status of the right: 0 = current; -1 = old (to be deleted after the next global rights update);
+1 = new (not yet active, to be activated after the next global rights update)."""
+              ),
             ),
            """Assignments of access rights to actions.
 
@@ -616,11 +620,6 @@ support extended rights assignment, e.g. in context menus etc.
            grant=db_rights,
            depends=('c_pytis_menu_actions', 'e_pytis_roles', 'c_pytis_access_rights',)
            )
-sql_raw("""
-alter table e_pytis_action_rights add unique (shortname, roleid, rightid, colname, system, granted);
-""",
-        name='e_pytis_action_rights_constraints',
-        depends=('e_pytis_action_rights',))
 def pytis_update_rights_redundancy():
     plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('redundancy')")
     roles = {}
@@ -631,7 +630,7 @@ def pytis_update_rights_redundancy():
             role_list = roles[roleid] = [roleid]
         role_list.append(member)
     class Right(object):
-        properties = ('id', 'shortname', 'roleid', 'rightid', 'granted', 'colname', 'system', 'redundant',)
+        properties = ('id', 'shortname', 'roleid', 'rightid', 'granted', 'colname', 'system', 'redundant', 'status',)
         def __init__(self, **kwargs):
             for k, v in kwargs.items():
                 if k not in ('vytvoril', 'vytvoreno', 'zmenil', 'zmeneno',):
@@ -669,7 +668,7 @@ def pytis_update_rights_redundancy():
                     return False
             return True
     rights = {}
-    for row in plpy.execute("select * from e_pytis_action_rights"):
+    for row in plpy.execute("select * from e_pytis_action_rights where status>=0"):
         r = Right(**row)
         comrades = rights.get(r.shortname)
         if comrades is None:
@@ -715,6 +714,12 @@ def e_pytis_action_rights_trigger():
             return str(val).replace("'", "''")
         def _update_redundancy(self):
             plpy.execute("select pytis_update_rights_redundancy()")
+        def _do_before_insert(self):
+            if self._new is None:
+                return
+            if self._new['status'] is None:
+                self._new['status'] = 1
+                self._return_code = self._RETURN_CODE_MODYFY
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
@@ -731,9 +736,10 @@ def e_pytis_action_rights_trigger():
     rights = Rights(TD)
     return rights.do_trigger()
 _trigger_function('e_pytis_action_rights_trigger', body=e_pytis_action_rights_trigger,
-                  doc="Updates summary access rights.",
                   depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_rights_redundancy',))
 sql_raw("""
+create trigger e_pytis_action_rights_all_before before insert on e_pytis_action_rights
+for each row execute procedure e_pytis_action_rights_trigger();
 create trigger e_pytis_action_rights_all_after after insert or update or delete on e_pytis_action_rights
 for each statement execute procedure e_pytis_action_rights_trigger();
 """,
@@ -741,15 +747,15 @@ for each statement execute procedure e_pytis_action_rights_trigger();
         depends=('e_pytis_action_rights_trigger',))
 
 viewng('ev_pytis_action_rights',
-       (SelectRelation('e_pytis_action_rights', alias='rights'),
+       (SelectRelation('e_pytis_action_rights', alias='rights', condition="rights.status>=0"),
         SelectRelation('e_pytis_roles', alias='roles', exclude_columns=('*',),
                        condition="rights.roleid = roles.name", jointype=JoinType.LEFT_OUTER),
         SelectRelation('c_pytis_role_purposes', alias='purposes', exclude_columns=('purposeid',),
                        condition="roles.purposeid = purposes.purposeid", jointype=JoinType.LEFT_OUTER),
         ),
        insert_order=('e_pytis_action_rights',),
-       update_order=('e_pytis_action_rights',),
-       delete_order=('e_pytis_action_rights',),
+       update=None,
+       delete="update e_pytis_action_rights set status=-1 where id=old.id",
        grant=db_rights,
        depends=('e_pytis_action_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
        
@@ -767,19 +773,19 @@ viewng('ev_pytis_menu_rights',
         SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=('fullname', 'shortname', 'action',),
                        condition='actions.shortname = rights.shortname', jointype=JoinType.INNER),
         ),
-       insert_order=('e_pytis_action_rights',),
-       update_order=('e_pytis_action_rights',),
-       delete_order=('e_pytis_action_rights',),
+       insert=None,
+       update=None,
+       delete=None,
        grant=db_rights,
        depends=('e_pytis_menu', 'e_pytis_action_rights', 'a_pytis_actions_structure',)
        )
 
 function('pytis_copy_rights', (TString, TString), 'void',
          """
-delete from e_pytis_action_rights where shortname=$2;
+update e_pytis_action_rights set status=-1 where shortname=$2;
 insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted)
        select $2 as shortname, roleid, rightid, colname, system, granted from e_pytis_action_rights
-              where shortname=$1;
+              where shortname=$1 and status>=0;
 """,
          doc="Make access rights of a menu item the same as of another menu item.",
          grant=db_rights,
@@ -802,8 +808,8 @@ sqltype('typ_summary_rights',
          C('summaryid', TString),
          C('roleid', TString),
          C('rights', TString),))
-def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
-    menuid_arg, shortname_arg, role_arg = args[0], args[1], args[2]
+def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg, new_arg):
+    menuid_arg, shortname_arg, role_arg, new_arg = args[0], args[1], args[2], args[3]
     import copy, string
     def _pg_escape(val):
         return str(val).replace("'", "''")
@@ -825,7 +831,10 @@ def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
             self.allowed = []
             self.forbidden = []
     raw_rights = {}
-    condition = 'true'
+    if new_arg:
+        condition = 'status >= 0'
+    else:
+        condition = 'status <= 0'
     if shortname_arg:
         s = _pg_escape(shortname_arg)
         q = (("select distinct shortname from c_pytis_menu_actions "
@@ -999,15 +1008,17 @@ def pytis_compute_summary_rights(menuid_arg, shortname_arg, role_arg):
         summaryid = '%s+%s' % (menuid or '', shortname,)
         result.append((shortname, menuid, summaryid, roleid, rights,))
     return result
-_plpy_function('pytis_compute_summary_rights', (TInteger, TString, TString,), RT('typ_summary_rights', setof=True),
+_plpy_function('pytis_compute_summary_rights', (TInteger, TString, TString, TBoolean,),
+               RT('typ_summary_rights', setof=True),
                body=pytis_compute_summary_rights,
                depends=('a_pytis_valid_role_members', 'ev_pytis_menu_rights',),)
 
-function('pytis_all_summary_rights', (), RT('typ_summary_rights', setof=True),
+function('pytis_update_summary_rights', (), 'void',
          body="""
-select * from pytis_compute_summary_rights(0, NULL::text, NULL::text);
+delete from e_pytis_action_rights where status<0;
+update e_pytis_action_rights set status=0 where status>0;
 """,
-         depends=('pytis_compute_summary_rights',))
+         depends=('e_pytis_action_rights',))
 
 _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),
@@ -1109,7 +1120,8 @@ sqltype('typ_preview_summary_rights',
          C('rights_export', TBoolean),
          C('rights_call', TBoolean),
          ))
-function('pytis_view_summary_rights', (TInteger, TString, TString,), RT('typ_preview_summary_rights', setof=True),
+function('pytis_view_summary_rights', (TInteger, TString, TString, TBoolean,),
+         RT('typ_preview_summary_rights', setof=True),
          body="""
 select summary.shortname, summary.menuid, summary.summaryid, summary.roleid, summary.rights,
        purposes.purpose,
@@ -1121,7 +1133,7 @@ select summary.shortname, summary.menuid, summary.summaryid, summary.roleid, sum
        strpos(summary.rights, ''print'')::bool as rights_print,
        strpos(summary.rights, ''export'')::bool as rights_export,
        strpos(summary.rights, ''call'')::bool as rights_call
-       from pytis_compute_summary_rights($1, $2, $3) as summary
+       from pytis_compute_summary_rights($1, $2, $3, $4) as summary
             left outer join e_pytis_roles as roles on summary.roleid = roles.name
             left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
 """,
@@ -1143,7 +1155,7 @@ sqltype('typ_preview_role_menu',
          C('rights_export', TBoolean),
          C('rights_call', TBoolean),
          ))
-function('pytis_view_role_menu', (TString,), RT('typ_preview_role_menu', setof=True),
+function('pytis_view_role_menu', (TString, TBoolean,), RT('typ_preview_role_menu', setof=True),
          body="""
 select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.roleid, summary.rights, 
        strpos(summary.rights, ''show'')::bool as rights_show,
@@ -1154,7 +1166,7 @@ select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.rolei
        strpos(summary.rights, ''print'')::bool as rights_print,
        strpos(summary.rights, ''export'')::bool as rights_export,
        strpos(summary.rights, ''call'')::bool as rights_call
-       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(0, NULL, $1) as summary
+       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(0, NULL, $1, $2) as summary
             on menu.menuid = summary.menuid;
 """,
          depends=('typ_preview_role_menu', 'pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
@@ -1203,7 +1215,7 @@ select structure.shortname, structure.summaryid, structure.position, structure.t
        strpos(summary.rights, ''call'')::bool as rights_call
 from a_pytis_actions_structure as structure
      left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
-     inner join pytis_compute_summary_rights(0, NULL, $1) as summary on (structure.summaryid = summary.summaryid)
+     inner join pytis_compute_summary_rights(0, NULL, $1, ''f'') as summary on (structure.summaryid = summary.summaryid)
      left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
      left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname);
 """,
@@ -1228,7 +1240,7 @@ function('pytis_view_user_menu', (), RT('typ_preview_user_menu', setof=True),
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked, rights.summaryid, rights.rights
 from e_pytis_menu as menu
-left outer join pytis_compute_summary_rights(0, NULL, user) as rights on (menu.menuid = rights.menuid)
+left outer join pytis_compute_summary_rights(0, NULL, user, ''f'') as rights on (menu.menuid = rights.menuid)
 where (name is null and title is null) or (rights.rights like ''%show%'');
 """,
          depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights',))
@@ -1241,7 +1253,7 @@ sqltype('typ_preview_rights',
 function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
          body="""
 select rights.shortname, rights.summaryid, rights.rights
-from pytis_compute_summary_rights(0, NULL, user) as rights;
+from pytis_compute_summary_rights(0, NULL, user, ''f'') as rights;
 """,
          depends=('typ_preview_rights', 'pytis_compute_summary_rights',))
 
