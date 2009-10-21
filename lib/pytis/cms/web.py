@@ -65,23 +65,11 @@ class Menu(wiking.PytisModule):
     _ITEM_PATH_LENGTH = 1
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
     _SUBSTITUTION_PROVIDERS = ()
-    """Mapping of substitution variable names and modules providing their values.
+    """Sequence of names of modules providing substitution variables.
 
-    Sequence of pairs (NAME, MODULE), where NAME is the string name of substitution variable and
-    MODULE is the string name of the module providing substitution values for this variable.  The
-    module must be derived from SubstitutionProvider class.  Such substitution variables are always
-    used as dictionaries, so the mapped module in fact provides the dictionary keys and their
-    values.
-
-    Example:
-
-    _SUBSTITUTION_PROVIDERS = (('cfg', 'Config'),
-                               ('user', 'UserConfig'))
-
-    Page text may than contain a variable '$cfg.optionxy' which will be substituted by the value of
-    field 'optionxy' obtained from the module 'Config' and a variable '$user.language' which will
-    be substituted by the value of 'language' field from the current user's record.  See also
-    'SubstitutionProvider' documentation for information how to implement such modules.
+    Each string in the sequence must be a name of a module derived from
+    'SubstitutionProvider' (see its documentation for information about
+    variable substitution).
 
     """
     EMBED_BINDING_ID = 'data'
@@ -231,18 +219,24 @@ class Menu(wiking.PytisModule):
             return super(Menu, self)._document_title(req, record)
 
     def globals(self, req):
-        return dict([(name, self._module(modname).dict(req))
-                     for name, modname in self._SUBSTITUTION_PROVIDERS])
-    
+        globals = {}
+        for modname in self._SUBSTITUTION_PROVIDERS:
+            module = self._module(modname)
+            globals.update(module.variables(req))
+        return globals
+
     def action_view(self, req, record):
         text = record['content'].value()
         modname = record['modname'].value()
         if text:
             parser = lcg.Parser()
+            mparser = lcg.MacroParser(self.globals(req))
+            def parse(text):
+                return parser.parse(mparser.parse(text))
             if self._SEPARATOR.search(text):
-                pre, post = [parser.parse(part) for part in self._SEPARATOR.split(text, maxsplit=2)]
+                pre, post = [parse(part) for part in self._SEPARATOR.split(text, maxsplit=2)]
             else:
-                pre, post = parser.parse(text), []
+                pre, post = parse(text), []
         else:
             pre, post = [], []
         if modname is not None:
@@ -576,41 +570,82 @@ class EmbeddablePytisModule(wiking.PytisModule, EmbeddableModule):
         return super(EmbeddablePytisModule, self)._document(req, content, record=record, **kwargs)
 
 
-class SubstitutionProvider(wiking.PytisModule):
+class SubstitutionProvider(wiking.Module):
     """Base class for modules providing variable substitution.
 
-    Variables provided by modules derived from this class may be used for variable substitution in
-    CMS texts.  The constant `Menu._SUBSTITUTION_PROVIDERS' must be used to define which concrete
+    Variables provided by modules derived from this class may be used for
+    variable substitution in CMS texts.  The constant
+    `Menu._SUBSTITUTION_PROVIDERS' must be used to define which concrete
     substitution modules (derived from this class) are available.
-    
-    Derived modules just need to define a pytis specification (class 'Spec').  The fields included
-    in this specification will be used as substitution variables.  More precisely the field
-    identifiers may by used as dictionary keys, where the dictionary name is given by
-    `Menu._SUBSTITUTION_PROVIDERS' mapping (see the docstring of this constant for more info).
 
-    The dictionary values are taken from this module's data row.  The first row is used by default.
-    If you want to select the used row based on some more specific condition, you may override the
-    method 'dict()' and pass selection arguments to 'SubstitutionDict' constructor.  These
-    arguments are passed to the 'self._data.get_rows()' call.  If more rows are returned, the first
-    one is used in any case.  Here are a few examples:
+    Derived modules need to implement the method 'variables()' returning the
+    dictionary of substitution values defined by the module.
 
-      def dict(self, req):
-          # Always use the row with the value of column 'id' equal to 1.
-          return self.SubstitutionDict(self._data, id=1)
+    Example:
 
-      def dict(self, req):
-          # Use the row specific for the current user.
-          return self.SubstitutionDict(self._data, uid=req.user().uid())
-
-      def dict(self, req):
-          # Use the first row matching a pytis condition.
-          return self.SubstitutionDict(self._data,
-                                       condition=pd.AND(pd.EQ('xx', ...),
-                                                        pd.GE('yy', ...)),
-                                       sorting=(('xy', pd.ASC),))
+    If the method 'variables()' returns the dictionary:
+       {'foo': 'bar', 'count': 5, 'cfg': {'min': 3, 'max': 8}}
+    the CMS page text:
+       The $foo has $count items ranging from $cfg.min to $cfg.max.
+    will be substituted by:
+       The bar has 5 items ranging from 3 to 8.
 
     """
-    class SubstitutionDict(object):
+
+    def variables(self, req):
+        """Return the substitution values defined by this module as a dictionary."""
+        return {}
+
+
+class DataSubstitutionProvider(wiking.PytisModule, SubstitutionProvider):
+    """Base class for modules providing variable substitution from a pytis data object.
+
+    This class makes it possible to simply define substitution variables
+    obtaining their substitution values from a pytis data object.
+
+    Derived modules need to define a pytis specification (class 'Spec') and the
+    method 'variables()' which defines concrete variable names and values.  The
+    values may use the predefined helper classes, such as 'SingleRowDict' (see
+    its documentation for more information).
+
+    """
+    class SingleRowDict(object):
+        """Dictionary-like substitution variable taking its values from one data row.
+
+	The dictionary keys are field identifiers and their substitution values
+        are the exported field values.  The concrete data row used for
+        substitution may be specified by constructor arguments (see below).
+        The database lookup is only performed when needed.
+
+        If you want to select the row based on some specific condition, you may
+        pass selection arguments to 'SingleRowDict' constructor.  These
+        arguments are actually passed to 'self._data.get_rows()' when the first
+        dictionary value is needed and the returned row is stored for further
+        substitutions.  If more rows are returned, the first one is used in any
+        case.  Here are a few examples:
+
+        Usage examples:
+
+          def variables(self, req):
+              # Return the first row from the data object.
+              return {'cfg': self.SingleRowDict(self._data)}
+
+          def variables(self, req):
+              # Always use the row with the value of column 'id' equal to 1.
+              return {'foo': self.SingleRowDict(self._data, id=1)}
+
+          def variables(self, req):
+              # Use the row specific for the current user.
+              return {'user': self.SingleRowDict(self._data, uid=req.user().uid())}
+
+          def variables(self, req):
+              # Use the first row matching a pytis condition.
+              return {'foo': self.SingleRowDict(self._data,
+                                                condition=pd.AND(pd.EQ('xx', ...),
+                                                                 pd.GE('yy', ...)),
+                                                sorting=(('xy', pd.ASC),))}
+
+        """
         def __init__(self, data, **kwargs):
             self._data = data
             self._kwargs = kwargs
@@ -624,15 +659,12 @@ class SubstitutionProvider(wiking.PytisModule):
                 else:
                     self._row = pd.Row(())
             return self._row[key].export()
-        
-    def dict(self, req):
-        return self.SubstitutionDict(self._data)
 
 
 class Themes(wiking.PytisModule):
     class Spec(Specification, cms.Themes):
         pass
-    
+
     class Theme(wiking.Theme):
         def __init__(self, row):
             self._theme_id = row['theme_id'].value()
@@ -641,7 +673,7 @@ class Themes(wiking.PytisModule):
             super(Themes.Theme, self).__init__(colors=dict(colors))
         def theme_id(self):
             return self._theme_id
-        
+
     def theme(self, theme_id):
         return self.Theme(self._data.get_row(theme_id=theme_id))
 
