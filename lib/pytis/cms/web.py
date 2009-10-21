@@ -228,15 +228,15 @@ class Menu(wiking.PytisModule):
     def action_view(self, req, record):
         text = record['content'].value()
         modname = record['modname'].value()
+        globals = self.globals(req)
         if text:
-            parser = lcg.Parser()
-            mparser = lcg.MacroParser(self.globals(req))
-            def parse(text):
-                return parser.parse(mparser.parse(text))
+            p = lcg.Parser()
+            mp = lcg.MacroParser(globals=globals)
             if self._SEPARATOR.search(text):
-                pre, post = [parse(part) for part in self._SEPARATOR.split(text, maxsplit=2)]
+                pre, post = [p.parse(mp.parse(part))
+                             for part in self._SEPARATOR.split(text, maxsplit=2)]
             else:
-                pre, post = parse(text), []
+                pre, post = p.parse(mp.parse(text)), []
         else:
             pre, post = [], []
         if modname is not None:
@@ -255,7 +255,7 @@ class Menu(wiking.PytisModule):
                 else:
                     content = [content]
                 document = result.clone(title=self._document_title(req, record), subtitle=None,
-                                        content=pre+content+post, globals=self.globals(req))
+                                        content=pre+content+post, globals=globals)
         elif text is None and record['parent'].value() is None:
             # Redirect to the first subitem from empty top level items.
             rows = self._data.get_rows(parent=record['menu_item_id'].value(), published=True,
@@ -264,9 +264,9 @@ class Menu(wiking.PytisModule):
             if rows:
                 return req.redirect('/'+self._menu_item_identifier(rows[0]))
             else:
-                document = self._document(req, [], record, globals=self.globals(req))
+                document = self._document(req, [], record, globals=globals)
         else:
-            document = self._document(req, pre+post, record, globals=self.globals(req))
+            document = self._document(req, pre+post, record, globals=globals)
         if modname is None:
             # Module access is logged in EmbeddablePytisModule._handle().
             self._module('AccessLog').log(req, None, None)

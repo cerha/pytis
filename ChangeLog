@@ -1,6 +1,11 @@
 2009-10-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
+	Parse macros in CMS texts..
+
+2009-10-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
 	Pytis CMS: Variable substitution generalized..
 
 2009-10-20  Milan Zamazal  <pdm@brailcom.org>
