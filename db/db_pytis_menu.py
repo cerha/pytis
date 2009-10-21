@@ -11,6 +11,10 @@ _std_table_nolog('e_pytis_disabled_dmp_triggers',
                  """This table allows disabling some trigger calls.
 Supported values (flags) are:
 genmenu -- initial insertion and deletion on certain tables
+positions -- set during trigger update of menu positions to prevent recursive trigger calls;
+  note this way of doing it is not safe in case of parallel table updates
+redundancy -- set during rights redundancy update to prevent recursive trigger calls;
+  note this way of doing it is not safe in case of parallel table updates
 """)
 
 ### Roles
@@ -121,22 +125,17 @@ def e_pytis_role_members_trigger():
             plpy.execute("select pytis_update_transitive_roles()")
         def _update_redundancy(self):
             plpy.execute("select pytis_update_rights_redundancy()")
+        def _update_all(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
+            self._update_roles()
+            self._update_redundancy()
         def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
-                return
-            self._update_roles()
-            self._update_redundancy()
+            self._update_all()
         def _do_after_update(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
-                return
-            self._update_roles()
-            if not plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
-                self._update_redundancy()
+            self._update_all()
         def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
-                return
-            self._update_roles()
-            self._update_redundancy()
+            self._update_all()
     roles = Roles(TD)
     return roles.do_trigger()
 _trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
@@ -250,18 +249,14 @@ def c_pytis_menu_actions_trigger():
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
         def _update_all(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
             plpy.execute("select pytis_update_actions_structure()")
         def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
-                return
             self._update_all()
         def _do_after_update(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
-                return
             self._update_all()
         def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
-                return
             self._update_all()
     menu = Menu(TD)
     return menu.do_trigger()
@@ -453,18 +448,14 @@ def e_pytis_menu_trigger_rights():
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
         def _update_all(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                return
             plpy.execute("select pytis_update_actions_structure()")
         def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
-                return
             self._update_all()
         def _do_after_update(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
-                return
             self._update_all()
         def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
-                return
             self._update_all()
     menu = Menu(TD)
     return menu.do_trigger()
@@ -700,10 +691,10 @@ def pytis_update_rights_redundancy():
         base_rights += base
     for r in base_rights:
         if r.redundant:
-            plpy.execute("update e_pytis_action_rights set redundant='F' where id='%d'" % (r.id,))
+            plpy.execute("update e_pytis_action_rights set redundant='F' where id='%d' and redundant!='F'" % (r.id,))
     for r in redundant_rights:
         if not r.redundant:
-            plpy.execute("update e_pytis_action_rights set redundant='T' where id='%d'" % (r.id,))
+            plpy.execute("update e_pytis_action_rights set redundant='T' where id='%d' and redundant!='T'" % (r.id,))
     plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='redundancy'")
 _plpy_function('pytis_update_rights_redundancy', (), TBoolean,
                body=pytis_update_rights_redundancy,
@@ -713,30 +704,25 @@ def e_pytis_action_rights_trigger():
         def _pg_escape(self, val):
             return str(val).replace("'", "''")
         def _update_redundancy(self):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+                return
             plpy.execute("select pytis_update_rights_redundancy()")
         def _do_before_insert(self):
-            if self._new is None:
-                return
             if self._new['status'] is None:
                 self._new['status'] = 1
                 self._return_code = self._RETURN_CODE_MODYFY
         def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
-                return
             self._update_redundancy()
         def _do_after_update(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
                 return
-            if not plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
-                self._update_redundancy()
+            self._update_redundancy()
         def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
-                return
             self._update_redundancy()
     rights = Rights(TD)
     return rights.do_trigger()
 _trigger_function('e_pytis_action_rights_trigger', body=e_pytis_action_rights_trigger,
-                  depends=('e_pytis_action_rights', 'e_pytis_disabled_dmp_triggers', 'pytis_update_rights_redundancy',))
+                  depends=('e_pytis_action_rights', 'pytis_update_rights_redundancy', 'e_pytis_disabled_dmp_triggers',))
 sql_raw("""
 create trigger e_pytis_action_rights_all_before before insert on e_pytis_action_rights
 for each row execute procedure e_pytis_action_rights_trigger();
@@ -765,20 +751,6 @@ viewng('ev_pytis_user_system_rights',
         ),
        grant=db_rights,
        depends=('e_pytis_action_rights', 'ev_pytis_user_roles',))
-    
-viewng('ev_pytis_menu_rights',
-       (SelectRelation('a_pytis_actions_structure', alias='actions', exclude_columns=('menuid',)),
-        SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'position', 'fullname',),
-                       condition='menu.menuid = actions.menuid', jointype=JoinType.LEFT_OUTER),
-        SelectRelation('e_pytis_action_rights', alias='rights', exclude_columns=('fullname', 'shortname', 'action',),
-                       condition='actions.shortname = rights.shortname', jointype=JoinType.INNER),
-        ),
-       insert=None,
-       update=None,
-       delete=None,
-       grant=db_rights,
-       depends=('e_pytis_menu', 'e_pytis_action_rights', 'a_pytis_actions_structure',)
-       )
 
 function('pytis_copy_rights', (TString, TString), 'void',
          """
@@ -842,7 +814,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg):
         related_shortnames_list = ["'%s'" % (_pg_escape(row['shortname']),) for row in plpy.execute(q)]
         related_shortnames = string.join(related_shortnames_list, ', ')
         condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
-    for row in plpy.execute("select rightid, granted, roleid, shortname, system from ev_pytis_menu_rights where %s" % (condition,)):
+    for row in plpy.execute("select rightid, granted, roleid, shortname, system from e_pytis_action_rights where %s" % (condition,)):
         rightid, granted, roleid, shortname, system = row['rightid'], row['granted'], row['roleid'], row['shortname'], row['system']
         keys = [shortname]
         for key in keys:
@@ -974,7 +946,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg):
 _plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean,),
                RT('typ_summary_rights', setof=True),
                body=pytis_compute_summary_rights,
-               depends=('a_pytis_valid_role_members', 'ev_pytis_menu_rights',),)
+               depends=('a_pytis_valid_role_members', 'e_pytis_action_rights',),)
 
 function('pytis_update_summary_rights', (), 'void',
          body="""
