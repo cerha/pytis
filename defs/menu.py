@@ -198,14 +198,6 @@ class ApplicationShortActions(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='shortname')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
 
-class SummaryIds(pytis.presentation.Specification):
-    table = 'pytis_view_summary_rights'
-    fields = (
-        Field('summaryid', _("")),
-        )
-    cb = pytis.presentation.CodebookSpec(display='summaryid')
-    access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.VIEW)),)
-
 
 ### Menus
 
@@ -279,8 +271,6 @@ class ApplicationMenuM(pytis.presentation.Specification):
               editable=pytis.presentation.Editable.NEVER),
         Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq'),
               editable=pytis.presentation.Editable.NEVER),
-        Field('summaryid', _("Id"),
-              editable=pytis.presentation.Editable.NEVER),
         Field('title', _("Titulek polo¾ky menu"), type=_Title(),
               editable=pytis.presentation.Editable.NEVER),
         Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
@@ -301,11 +291,9 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                            binding_column='shortname'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
-                                                                       menuid=row['menuid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,)))),
                 pytis.presentation.Binding(_("Chystaná práva polo¾ky"), 'menu.ApplicationPreviewRights', id='preview_rights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
-                                                                       menuid=row['menuid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True,)))),
                 )
     def actions(self): return (
@@ -443,14 +431,11 @@ class _MenuidPreviewType(pytis.data.Integer):
 class ApplicationSummaryRights(pytis.presentation.Specification):
     table = 'pytis_view_summary_rights'
     title = _("Souhrnná práva")
-    arguments = (Field('menuid', "", type=_MenuidPreviewType()),
-                 Field('shortname', "", type=pytis.data.String()),
+    arguments = (Field('shortname', "", type=pytis.data.String()),
                  Field('roleid', "", type=pytis.data.String()),
                  Field('new', "", type=pytis.data.Boolean()),
                  )
     fields = (
-        Field('summaryid', "",  type=pytis.data.String(not_null=True),
-              fixed=True),
         Field('roleid', _("Role"), type=pytis.data.String(not_null=True),
               fixed=True),
         Field('purpose', _("Úèel role"), type=pytis.data.String(),
