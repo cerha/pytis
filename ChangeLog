@@ -1,6 +1,11 @@
 2009-10-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
+	Pytis CMS: Process macros before splitting to upper and lower page text.
+
+2009-10-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
 	Parse macros in CMS texts..
 
 2009-10-21  Tomas Cerha  <cerha@brailcom.org>

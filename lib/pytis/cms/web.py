@@ -230,13 +230,12 @@ class Menu(wiking.PytisModule):
         modname = record['modname'].value()
         globals = self.globals(req)
         if text:
-            p = lcg.Parser()
-            mp = lcg.MacroParser(globals=globals)
+            text = lcg.MacroParser(globals=globals).parse(text)
+            parser = lcg.Parser()
             if self._SEPARATOR.search(text):
-                pre, post = [p.parse(mp.parse(part))
-                             for part in self._SEPARATOR.split(text, maxsplit=2)]
+                pre, post = [parser.parse(part) for part in self._SEPARATOR.split(text, maxsplit=2)]
             else:
-                pre, post = p.parse(mp.parse(text)), []
+                pre, post = parser.parse(text), []
         else:
             pre, post = [], []
         if modname is not None:
