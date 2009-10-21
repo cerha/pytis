@@ -1,6 +1,11 @@
 2009-10-21  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Fix ev_pytis_action_rights rules.
+
+2009-10-21  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Another round of cleanup of DMP database schema.
 
 2009-10-21  Milan Zamazal  <pdm@brailcom.org>

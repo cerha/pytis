@@ -740,8 +740,12 @@ viewng('ev_pytis_action_rights',
                        condition="roles.purposeid = purposes.purposeid", jointype=JoinType.LEFT_OUTER),
         ),
        insert_order=('e_pytis_action_rights',),
-       update=None,
-       delete="update e_pytis_action_rights set status=-1 where id=old.id",
+       update_order=('e_pytis_action_rights',),
+       update=("update e_pytis_action_rights set status=-1 where id=new.id and status=0",),
+       delete="""(
+delete from e_pytis_action_rights where id=old.id and status=1;
+update e_pytis_action_rights set status=-1 where id=old.id and status=0;
+)""",
        grant=db_rights,
        depends=('e_pytis_action_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
        
