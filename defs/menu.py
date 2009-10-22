@@ -299,6 +299,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
     def actions(self): return (
         pytis.presentation.Action(_("Zkopírovat práva z..."), self._copy_rights,
                                   descr=("Zkopírování práv z jiné polo¾ky.")),
+        pytis.presentation.Action(_("Odstranit nadbyteèná práva"), self._remove_redundant,
+                                  descr=("Odstranìní polo¾ek práv, které nemají vliv na výsledná práva.")),
         )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
                                                     pytis.data.Permission.VIEW,
@@ -315,6 +317,9 @@ class ApplicationMenuM(pytis.presentation.Specification):
         if template_row is None:
             return
         pytis.extensions.dbfunction('pytis_copy_rights', ('copy_from', template_row['shortname'],), ('copy_to', row['shortname'],))
+
+    def _remove_redundant(self, row):
+        pytis.extensions.dbfunction('pytis_remove_redundant', ('shortname', row['shortname'],),)
 
 class ApplicationMenuCodebook(pytis.presentation.Specification):
     table = 'ev_pytis_menu_structure'
