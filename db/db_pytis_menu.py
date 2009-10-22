@@ -769,7 +769,7 @@ insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, 
 
 function('pytis_remove_redundant', (TString,), 'void',
          """
-delete from e_pytis_action_rights where shortname=$1 and redundant=''t'';
+delete from ev_pytis_action_rights where shortname=$1 and redundant=''t'';
 """,
          doc="Remove redundant rights of the given action.",
          grant=db_rights,

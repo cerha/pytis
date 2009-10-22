@@ -1,5 +1,10 @@
 2009-10-22  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Remove redundant rights from the view, not from the table.
+
+2009-10-22  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Add confirmation dialog to removal of redundant rights.
 
