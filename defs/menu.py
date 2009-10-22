@@ -319,7 +319,11 @@ class ApplicationMenuM(pytis.presentation.Specification):
         pytis.extensions.dbfunction('pytis_copy_rights', ('copy_from', template_row['shortname'],), ('copy_to', row['shortname'],))
 
     def _remove_redundant(self, row):
-        pytis.extensions.dbfunction('pytis_remove_redundant', ('shortname', row['shortname'],),)
+        if not pytis.form.run_dialog(pytis.form.Question,
+                                     (_("Opravdu chcete odstranit nadbyteèná práva polo¾ky \"%s\"?") %
+                                      (row['title'].value() or '',))):
+            return
+        result = pytis.extensions.dbfunction('pytis_remove_redundant', ('shortname', row['shortname'],),)
 
 class ApplicationMenuCodebook(pytis.presentation.Specification):
     table = 'ev_pytis_menu_structure'
