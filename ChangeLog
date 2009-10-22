@@ -1,6 +1,11 @@
 2009-10-22  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Don't compare status when checking rights for redundancy.
+
+2009-10-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Remove redundant rights from the view, not from the table.
 
 2009-10-22  Milan Zamazal  <pdm@brailcom.org>

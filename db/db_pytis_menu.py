@@ -632,7 +632,7 @@ def pytis_update_rights_redundancy():
             return cmp(self.id, other.id)
         def strong_redundant(self, other):
             for attr in Right.properties:
-                if attr not in ('id', 'redundant', 'roleid', 'system',):
+                if attr not in ('id', 'redundant', 'roleid', 'system', 'status',):
                     if getattr(self, attr) != getattr(other, attr):
                         return False
             if self.system and not other.system:
@@ -642,7 +642,7 @@ def pytis_update_rights_redundancy():
             return True
         def default_redundant(self, other):
             for attr in Right.properties:
-                if attr not in ('id', 'redundant', 'roleid', 'colname', 'system', 'granted',):
+                if attr not in ('id', 'redundant', 'roleid', 'colname', 'system', 'granted', 'status',):
                     if getattr(self, attr) != getattr(other, attr):
                         return False
             if self.system and not other.system:
