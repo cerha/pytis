@@ -1,3 +1,11 @@
+2009-10-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	* lib/pytis/form/configui.py:
+	* lib/pytis/form/dualform.py:
+	* lib/pytis/form/form.py:
+	Pass spec kwargs also to data spec to make dynamic virtual forms work as expected.
+
 2009-10-21  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:

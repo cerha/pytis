@@ -136,11 +136,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._guardian = guardian or parent
         self._governing_transaction = transaction
         self._transaction = transaction or self._default_transaction()
+        self._spec_kwargs = spec_kwargs
         Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
-            self._view = self._create_view_spec(**spec_kwargs)
+            self._view = self._create_view_spec()
             self._data = self._create_data_object()
         except (ResolverError, ProgramError):
             log(OPERATIONAL, 'Form initialization error', format_traceback())
@@ -166,15 +167,15 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._form_state = config.form_state[key] = {}
         self._initial_form_state = copy.copy(self._form_state)
 
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         t = time.time()
-        spec = self._resolver.get(self._name, 'view_spec', **kwargs)
+        spec = self._resolver.get(self._name, 'view_spec', **self._spec_kwargs)
         log(EVENT, 'Specification read in %.3fs:' % (time.time() - t), spec)
         assert isinstance(spec, ViewSpec)
         return spec        
 
     def _create_data_object(self):
-        return create_data_object(self._name)
+        return create_data_object(self._name, spec_kwargs=self._spec_kwargs)
 
     def _create_form(self):
         # Build the form from parts

@@ -165,7 +165,7 @@ class ConfigForm(PopupEditForm):
     def _layout(self):
         return dict(_LAYOUT)[self._name]
 
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         def descr(name):
             option = config.option(name)
             descr = option.description()
@@ -177,9 +177,9 @@ class ConfigForm(PopupEditForm):
                             **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
-                        fields, layout=self._layout(), **kwargs)
+                        fields, layout=self._layout(), **self._spec_kwargs)
 
-    def _create_data_object(self, **kwargs):
+    def _create_data_object(self):
         columns = [pytis.data.ColumnSpec(option, config.option(option).type())
                    for option in self._layout().order()]
         return pytis.data.DataFactory(_ConfigData, columns).create()

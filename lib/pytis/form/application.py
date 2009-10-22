@@ -1426,17 +1426,18 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             message = message[:-1]
         _application.set_status('message', message, timeout=timeout, root=root)
 
-def create_data_object(name):
+def create_data_object(name, spec_kwargs={}):
     """Create a data object for given specification.
 
     Arguments:
 
       name -- specification name for resolver as a string.
+      spec_kwargs -- a dictionary of keyword arguments passed to the specification.
 
     Raises 'ResolverError' or 'ProgramError' if data object creation fails.
     
     """
-    factory = resolver().get(name, 'data_spec')
+    factory = resolver().get(name, 'data_spec', **spec_kwargs)
     import config
     if __debug__ and config.server:
         import pytis.remote

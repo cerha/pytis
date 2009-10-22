@@ -126,7 +126,7 @@ class DualForm(Form, Refreshable):
         #return Orientation.VERTICAL
         return self._view.orientation()
 
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         self._main_name, self._side_name = main, side = self._name.split('::')
         return self._resolver.get(main, 'binding_spec')[side]
 
@@ -487,7 +487,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
     def _initial_orientation(self):
         return self._orientation
         
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         return None
 
     def _create_side_form(self, parent):
@@ -526,7 +526,7 @@ class MultiForm(Form, Refreshable):
             form = form.active_form()
         return form
 
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         return None
     
     def _create_data_object(self):
@@ -771,7 +771,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         def bindings(self):
             return self._view.bindings()
     
-    def _create_view_spec(self, **kwargs):
+    def _create_view_spec(self):
         return None
 
     def _create_data_object(self):
