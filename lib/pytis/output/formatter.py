@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1020,7 +1020,7 @@ class LoutFormatter(Tmpdir):
                 stream.write('\n//\n')
 
     def _lout(self, lout_args, stream):
-        command = 'lout %s -' % string.join(lout_args, ' ')
+        command = '%s %s -' % (config.lout_command, string.join(lout_args, ' '),)
         def lfunction():
             log(EVENT, 'Start Lout')
             process = Popen(command, from_child=stream,

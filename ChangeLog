@@ -1,5 +1,11 @@
 2009-10-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/output/formatter.py:
+	* lib/pytis/util/configuration.py:
+	Make `lout' program configurable.
+
+2009-10-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/output/flibdata.py:
 	Relax data_table name type to basestring in output processing.
 
