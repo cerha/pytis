@@ -718,16 +718,19 @@ class InputNumeric(InputDialog):
     def _create_content(self, sizer):
         if self._message is not None:
             Message._create_content(self, sizer)
+        kwargs = {}
+        if self._thousands_sep:
+            kwargs['groupChar'] = self._thousands_sep
         control = masked.NumCtrl(self._dialog, -1, 0,
                                  allowNegative=self._allow_negative,
                                  allowNone=self._allow_empty,
                                  selectOnEntry=self._select_on_entry,
                                  integerWidth=self._integer_width,
                                  fractionWidth=self._decimal_width,
-                                 groupChar=self._thousands_sep,
                                  groupDigits=True,
                                  decimalChar=self._decimal_point,
-                                 signedForegroundColour=self._signed_colour
+                                 signedForegroundColour=self._signed_colour,
+                                 **kwargs
                                  )
         if self._value is not None:
             control.SetValue(self._value)
