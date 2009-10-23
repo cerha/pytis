@@ -1,5 +1,11 @@
 2009-10-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/commands_.py:
+	* lib/pytis/form/list.py:
+	New command FOLDING_LEVEL.
+
+2009-10-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/output/formatter.py:
 	* lib/pytis/util/configuration.py:
 	Make `lout' program configurable.

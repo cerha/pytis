@@ -2386,6 +2386,22 @@ class FoldableForm(ListForm):
     def _cmd_collapse_all(self):
         self._folding = self.Folding()
         self._refresh_folding()
+        
+    def _cmd_folding_level(self):
+        if self._folding_enabled():
+            while True:
+                result = run_dialog(InputDialog,
+                                    message=_("Sbalení/rozbalení uzlù formuláøe"),
+                                    prompt="Úroveò rozbalení (1-...):")
+                if result is None:
+                    break
+                elif result.isdigit():
+                    level = int(result)
+                    if level < 1:
+                        level = 1
+                    self._folding = self.Folding(level=level)
+                    self._refresh_folding()
+                    break
             
     def folding_level(self, row):
         """Return current folding level of 'row'.

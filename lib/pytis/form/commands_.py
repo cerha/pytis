@@ -182,6 +182,8 @@ Command(FoldableForm, 'EXPAND_ALL',
         "Kompletní rozbalení celého formuláøe")
 Command(FoldableForm, 'COLLAPSE_ALL',
         "Sbalení v¹ech hlavních uzlù formuláøe")
+Command(FoldableForm, 'FOLDING_LEVEL',
+        "Rozbalení uzlù formuláøe na zadanou úroveò")
 Command(EditForm, 'COMMIT_RECORD',
         "Ukonèení editaèního formuláøe s ulo¾ením zmìn (arg. 'close', PopupEditForm also 'next')")
 Command(EditForm, 'NAVIGATE',
@@ -302,6 +304,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-\\',          FoldableForm.COMMAND_EXPAND_OR_COLLAPSE_SUBTREE),
     ('Shift-\\',         FoldableForm.COMMAND_EXPAND_ALL),
     ('Ctrl-Shift-\\',    FoldableForm.COMMAND_COLLAPSE_ALL),
+    ('Ctrl-Shift-j',     FoldableForm.COMMAND_FOLDING_LEVEL),
     ('Ctrl-Enter',       EditForm.COMMAND_COMMIT_RECORD),
     ('Ctrl-Shift-Enter', EditForm.COMMAND_COMMIT_RECORD(next=True)),
     ('Tab',              EditForm.COMMAND_NAVIGATE),
