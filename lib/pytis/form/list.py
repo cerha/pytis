@@ -2445,7 +2445,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
         self.SetSize((self._total_width()+30, h))
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
-                    lambda e: self.COMMAND_ACTIVATE.invoke())
+                    self._on_dclick)
 
     def _init_attributes(self, begin_search=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
@@ -2520,6 +2520,13 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         self._result = self.current_row()
         self._parent.EndModal(1)
         return True
+
+    def _on_dclick(self, event):
+        if event.AltDown():
+            command = self.COMMAND_EXPAND_OR_COLLAPSE
+        else:
+            command = self.COMMAND_ACTIVATE
+        return command.invoke()
 
 class SelectRowsForm(CodebookForm):
     """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
