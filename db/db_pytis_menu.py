@@ -326,13 +326,28 @@ def e_pytis_menu_trigger():
                 plpy.execute(("insert into c_pytis_menu_actions (fullname, shortname, description) "
                               "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
                 self._return_code = self._RETURN_CODE_MODYFY
+        def _check_parent(self, old_position=None):
+            # Prevent menu item movement to non-existent parents or to self
+            new_position = self._new['position']
+            if new_position == old_position:
+                return
+            if old_position is not None:
+                if new_position[:len(old_position)] == old_position:
+                    raise Exception('error', "Can't move menu item to itself")
+            components = new_position.split('.')
+            import string
+            parent = string.join(components[:-1], '.')
+            if parent and not plpy.execute("select menuid from e_pytis_menu where position='%s'" % (parent,)):
+                raise Exception('error', "No menu item parent")
         def _do_before_insert(self):
             self._maybe_new_action()
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                 return
+            self._check_parent()
         def _do_before_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
                 return
+            self._check_parent(self._old['position'])
             self._maybe_new_action(old=self._old)
         def _do_before_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
