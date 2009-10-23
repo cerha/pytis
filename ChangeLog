@@ -1,3 +1,8 @@
+2009-10-23  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/output/flibdata.py:
+	Relax data_table name type to basestring in output processing.
+
 2009-10-22  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/application.py:
