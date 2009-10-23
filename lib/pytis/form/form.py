@@ -835,14 +835,11 @@ class LookupForm(InnerForm):
     def _cmd_jump(self):
         if self._lf_select_count > 0:
             prompt = _("Záznam èíslo (1-%s):") % (self._lf_select_count)
-            while True:
-                result = run_dialog(InputDialog, message=_("Skok na záznam"),
-                                    prompt=prompt)
-                if result is None:
-                    break
-                elif result.isdigit():
-                    self.select_row(int(result)-1)
-                    break
+            result = run_dialog(InputNumeric, message=_("Skok na záznam"), prompt=prompt,
+                                min_value=1, max_value=self._lf_select_count)
+            row = result.value()
+            if row is not None:
+                self.select_row(row-1)
 
     def _cmd_first_record(self):
         self.select_row(0)

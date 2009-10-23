@@ -1,5 +1,11 @@
 2009-10-23  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/form.py:
+	* lib/pytis/form/list.py:
+	Use InputNumeric in JUMP and FOLDING_LEVEL commands.
+
+2009-10-23  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/dialog.py:
 	Prevent InputNumeric crash with certain locales.
 
