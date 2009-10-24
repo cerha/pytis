@@ -1163,7 +1163,8 @@ def pytis_update_actions_structure():
                     subposition = '%s.%02d' % (position, i,)
                     add_row(sub_fullname, sub_shortname, None, subposition)
                     add_formactions(sub_shortname, subposition)
-                add_formactions(shortname, position)
+                if not subaction_list:
+                    add_formactions(shortname, position)
         position = '8.0001'
         add_row('label/1', 'label/1', None, '8')
         for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
