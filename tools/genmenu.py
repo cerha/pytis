@@ -199,33 +199,6 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                                                        shortname=subaction_shortname,
                                                        title=subaction_title)
                         subactions.append(subaction_id)
-                # Actions
-                if hasattr(spec, 'actions'):
-                    try:
-                        spec_instance = spec(resolver)
-                    except:
-                        spec_instance = None
-                        print "Error: Can't create specification instance to get form actions of %s" % (spec.__name__,)
-                    if spec_instance is not None:
-                        form_actions = []
-                        def add_form_actions(actions):
-                            for a in actions:
-                                if isinstance(a, pytis.presentation.Action):
-                                    form_actions.append(a)
-                                elif isinstance(a, pytis.presentation.ActionGroup):
-                                    add_form_actions(a.actions())
-                                elif pytis.util.is_sequence(a):
-                                    add_form_actions(a)                                    
-                                else:
-                                    print "Error: Unknown form action class in %s: %s" % (spec.__name__, a,)
-                        add_form_actions(spec_instance.actions())
-                        for a in form_actions:
-                            form_action_id = 'action/%s/%s' % (a.id(), form_name,)
-                            actions[form_action_id] = action = Action(form_action_id, a.descr(),
-                                                                      shortname=form_action_id,
-                                                                      title=a.title(raw=True))
-                            formaction_rights = (None, (a.access_groups(), pytis.data.Permission.CALL,),)
-                            rights[form_action_id] = Rights(pytis.data.AccessRights(formaction_rights), action)
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname,
@@ -271,6 +244,46 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             position = string.join(position_labels, '.')
     else:
         print 'Error: Unknown menu item: %s' % (menu,)
+
+def process_form_actions(resolver, actions, rights):
+    for action in actions.values():
+        shortname = action.shortname
+        components = shortname.split('/')
+        if components[0] == 'form':
+            form_name = components[1]
+            form_name_components = form_name.split('.')
+            form_module = string.join(form_name_components[:-1], '/')
+            base_form_name = form_name_components[-1]
+            try:
+                spec = resolver.get_object(form_module, base_form_name)
+            except:
+                continue
+        if hasattr(spec, 'actions'):
+            try:
+                spec_instance = spec(resolver)
+            except:
+                spec_instance = None
+                print "Error: Can't create specification instance to get form actions of %s" % (spec.__name__,)
+            if spec_instance is not None:
+                form_actions = []
+                def add_form_actions(actions):
+                    for a in actions:
+                        if isinstance(a, pytis.presentation.Action):
+                            form_actions.append(a)
+                        elif isinstance(a, pytis.presentation.ActionGroup):
+                            add_form_actions(a.actions())
+                        elif pytis.util.is_sequence(a):
+                            add_form_actions(a)                                    
+                        else:
+                            print "Error: Unknown form action class in %s: %s" % (spec.__name__, a,)
+                add_form_actions(spec_instance.actions())
+                for a in form_actions:
+                    form_action_id = 'action/%s/%s' % (a.id(), form_name,)
+                    actions[form_action_id] = action = Action(form_action_id, a.descr(),
+                                                              shortname=form_action_id,
+                                                              title=a.title(raw=True))
+                    formaction_rights = (None, (a.access_groups(), pytis.data.Permission.CALL,),)
+                    rights[form_action_id] = Rights(pytis.data.AccessRights(formaction_rights), action)
 
 def process_rights(resolver, actions, rights, def_dir):
     def add_rights(form_name, action, action_name):
@@ -694,6 +707,7 @@ def run():
     rights = {}
     print "Retrieving menu..."
     process_menu(resolver, menu, top, menu_items, actions, rights, position='2.1111', system=True)
+    process_form_actions(resolver, actions, rights)
     print "Retrieving menu...done"
     print "Retrieving rights..."
     process_rights(resolver, actions, rights, def_dir)
