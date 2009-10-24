@@ -1,3 +1,8 @@
+2009-10-24  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	When computing menu structure, add form actions to all occurrences of the form.
+
 2009-10-17  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

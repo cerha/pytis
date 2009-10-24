@@ -1143,6 +1143,12 @@ def pytis_update_actions_structure():
                           "values('%s', '%s', %s, '%s', '%s') ") %
                          (_pg_escape(fullname), _pg_escape(shortname), menuid, position, item_type,))
             actions[shortname] = True
+        def add_formactions(shortname, position):
+            formaction_list = formactions.get(shortname[5:], ())
+            for i in range(len(formaction_list)):
+                faction_shortname = formaction_list[i]
+                subposition = '%s.%02d' % (position, (i + 50),)
+                add_row(faction_shortname, faction_shortname, None, subposition)
         for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname "
                                 "from e_pytis_menu, c_pytis_menu_actions "
                                 "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
@@ -1156,11 +1162,8 @@ def pytis_update_actions_structure():
                     sub_fullname, sub_shortname = subaction_list[i]
                     subposition = '%s.%02d' % (position, i,)
                     add_row(sub_fullname, sub_shortname, None, subposition)
-                formaction_list = formactions.get(shortname[5:], ())
-                for i in range(len(formaction_list)):
-                    faction_shortname = formaction_list[i]
-                    subposition = '%s.%02d' % (position, (i + 50),)
-                    add_row(faction_shortname, faction_shortname, None, subposition)
+                    add_formactions(sub_shortname, subposition)
+                add_formactions(shortname, position)
         position = '8.0001'
         add_row('label/1', 'label/1', None, '8')
         for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
