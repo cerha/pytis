@@ -1750,16 +1750,29 @@ class DataFactory(object):
 #         return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))
 
 
-def dbtable(table, columns, connection_data):
+def dbtable(table, columns, connection_data, arguments=None):
     """Return 'DBDataDefault' instance corresponding to a 'table' with 'columns'.
 
     Arguments:
 
       table -- table name, string
-      columns -- sequence of column ids (strings)
+      columns -- sequence of column ids (strings); instead of column ids pairs
+        of the form (ID, TYPE,) may be used where ID is the column id and TYPE
+        is 'Type' instance corresponding to the type of the column,
+        specifying types is necessary in case of table functions
+      arguments -- optional sequence of table function arguments in case the
+        table is actually a database function returning rows; sequence items
+        must be 'DBBinding' instances
     
     """
-    bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
-    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+    def binding(spec):
+        if is_sequence(spec):
+            id, type_ = spec
+        else:
+            id, type_ = spec, None
+        return pytis.data.DBColumnBinding(id,  table, id, type_=type_)
+    bindings = [binding(spec) for spec in columns]
+    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0],
+                                     arguments=arguments)
     data = factory.create(connection_data=connection_data)
     return data

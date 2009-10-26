@@ -1,5 +1,10 @@
 2009-10-26  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/data.py:
+	Make pytis.data.dbtable usable also for table functions.
+
+2009-10-26  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/extensions/defs.py:
 	get_menu_defs: Get defs from DMP if available.
 
