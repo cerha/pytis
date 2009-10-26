@@ -1,6 +1,12 @@
 2009-10-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Add extended menu preview to the roles administration form.
+
+2009-10-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fix update rules for ev_pytis_action_rights.
 
 2009-10-22  Milan Zamazal  <pdm@brailcom.org>

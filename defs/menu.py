@@ -102,9 +102,12 @@ class ApplicationRoles(ApplicationRolesSpecification):
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,)))),
                 pytis.presentation.Binding(_("Náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenu', id='previewmenu',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
-                                                                       new=pytis.data.Value(pytis.data.Boolean(), True,)))),
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), True)))),
                 pytis.presentation.Binding(_("Roz¹íøený náhled menu"), 'menu.ApplicationRoleMenuExtended', id='extmenu',
                                            arguments=(lambda row: dict(roleid=row['roleid']))),
+                pytis.presentation.Binding(_("Roz¹íøený náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenuExtended', id='previewextmenu',
+                                           arguments=(lambda row: dict(roleid=row['roleid'],
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), True)))),
                 )
     
     def on_delete_record(self, row):
@@ -538,7 +541,9 @@ class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
 class ApplicationRoleMenuExtended(ApplicationRoleMenu):
     table = 'pytis_view_extended_role_menu'
     title = _("Roz¹íøené menu u¾ivatele")
-    arguments = (Field('roleid', "", type=pytis.data.String()),)
+    arguments = (Field('roleid', "", type=pytis.data.String()),
+                 Field('new', "", type=pytis.data.Boolean()),
+                 )
     fields = (ApplicationRoleMenu.fields +
               (Field('actiontype', _("Typ polo¾ky"), fixed=True, editable=pytis.presentation.Editable.NEVER,
                type=pytis.data.String()),))
@@ -546,3 +551,7 @@ class ApplicationRoleMenuExtended(ApplicationRoleMenu):
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     layout = ('title', 'actiontype', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
+
+class ApplicationPreviewRoleMenuExtended(ApplicationRoleMenuExtended):
+    table = 'pytis_view_extended_role_menu'
+    title = _("Chystané roz¹íøené menu u¾ivatele")
