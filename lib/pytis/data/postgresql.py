@@ -504,20 +504,13 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         connection_data = self._pg_connection_data()
         if PostgreSQLUserGroups._logical_access_groups is UNDEFINED:
             PostgreSQLUserGroups._logical_access_groups = None
-            specifications = {}
-            def add_spec(name, table, columns):
-                bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
-                factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
-                specifications[name] = factory
             # Check for ev_pytis_user_roles presence first, to prevent logging
             # error messages in non-DMP applications
-            add_spec('tables', 'pg_catalog.pg_class', ('relname',))
-            tables = specifications['tables'].create(connection_data=connection_data)
+            tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data)
             roles_data = None
             if tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles'))) > 0:
-                add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
                 try:
-                    roles_data = specifications['roles'].create(connection_data=connection_data)
+                    roles_data = dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
                 except pytis.data.DBException:
                     pass
                 else:

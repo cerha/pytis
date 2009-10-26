@@ -351,21 +351,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                       mitem(UICommands.DESCRIBE)))
         menus.append(Menu(_("Nápovìda"), items))
 
-    def _dynamic_menu_specifications(self):
-        specifications = {}
-        def add_spec(name, table, columns):
-            bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
-            factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
-            specifications[name] = factory
-        add_spec('menu', 'ev_pytis_user_menu', ('menuid', 'name', 'title', 'fullname', 'position', 'rights',
-                                                'help', 'hotkey',))
-        return specifications
-
     def _dynamic_menu(self, connection_data):
-        specifications = self._dynamic_menu_specifications()
         # Check for menu presence, if not available, return None
         try:
-            menu_data = specifications['menu'].create(connection_data=connection_data)
+            menu_data = pytis.data.dbtable('ev_pytis_user_menu',
+                                           ('menuid', 'name', 'title', 'fullname', 'position',
+                                            'rights', 'help', 'hotkey',),
+                                           connection_data)
         except pytis.data.DBException:
             return None
         menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
@@ -1487,15 +1479,9 @@ def init_access_rights(connection_data):
     """
     global _access_rights, _user_roles, _access_dbconnection
     _access_dbconnection = connection_data
-    specifications = {}
-    def add_spec(name, table, columns):
-        bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
-        factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
-        specifications[name] = factory
-    add_spec('roles', 'ev_pytis_user_roles', ('roleid',))
     import config
     try:
-        roles_data = specifications['roles'].create(connection_data=connection_data)
+        roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
         roles = [row[0].value() for row in roles_data.select_map(identity)]
     except pytis.data.DBException:
         return
@@ -1503,8 +1489,8 @@ def init_access_rights(connection_data):
         _access_rights = 'nonuser'
         return
     _user_roles = roles
-    add_spec('rights', 'ev_pytis_user_rights', ('shortname', 'rights',))
-    rights_data = specifications['rights'].create(connection_data=connection_data)
+    rights_data = pytis.data.dbtable('ev_pytis_user_rights', ('shortname', 'rights',),
+                                     connection_data)
     _access_rights = {}
     def process(row):
         shortname, rights_string = row[0].value(), row[1].value()

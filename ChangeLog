@@ -1,3 +1,11 @@
+2009-10-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/data.py:
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/form/application.py:
+	* lib/pytis/presentation/spec.py:
+	Replace add_spec calls and definitions by new function dbtable.
+
 2009-10-23  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

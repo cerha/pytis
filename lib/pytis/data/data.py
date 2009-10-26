@@ -1748,3 +1748,18 @@ class DataFactory(object):
 #         return compare_attr(self, other, ('_class_', '_args', '_kwargs'))
 #     def __hash__(self):
 #         return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))
+
+
+def dbtable(table, columns, connection_data):
+    """Return 'DBDataDefault' instance corresponding to a 'table' with 'columns'.
+
+    Arguments:
+
+      table -- table name, string
+      columns -- sequence of column ids (strings)
+    
+    """
+    bindings = [pytis.data.DBColumnBinding(id,  table, id) for id in columns]
+    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+    data = factory.create(connection_data=connection_data)
+    return data
