@@ -740,8 +740,11 @@ viewng('ev_pytis_action_rights',
                        condition="roles.purposeid = purposes.purposeid", jointype=JoinType.LEFT_OUTER),
         ),
        insert_order=('e_pytis_action_rights',),
-       update_order=('e_pytis_action_rights',),
-       update=("update e_pytis_action_rights set status=-1 where id=new.id and status=0",),
+       update="""(
+insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted, status)
+       values (new.shortname, new.roleid, new.rightid, new.colname, new.system, new.granted, 1);
+update e_pytis_action_rights set status=-1 where id=new.id;
+)""",
        delete="""(
 delete from e_pytis_action_rights where id=old.id and status=1;
 update e_pytis_action_rights set status=-1 where id=old.id and status=0;
