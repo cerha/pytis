@@ -1,6 +1,11 @@
 2009-10-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Add some grant's to DMP functions.
+
+2009-10-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Add extended menu preview to the roles administration form.
 

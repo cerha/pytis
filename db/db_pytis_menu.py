@@ -968,6 +968,7 @@ function('pytis_update_summary_rights', (), 'void',
 delete from e_pytis_action_rights where status<0;
 update e_pytis_action_rights set status=0 where status>0;
 """,
+         grant=db_rights,
          depends=('e_pytis_action_rights',))
 
 _std_table_nolog('a_pytis_actions_structure',
@@ -1082,6 +1083,7 @@ select summary.shortname, summary.roleid, summary.rights,
             left outer join e_pytis_roles as roles on summary.roleid = roles.name
             left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
 """,
+         grant=db_rights,
          depends=('typ_preview_summary_rights', 'pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
 
 sqltype('typ_preview_role_menu',
@@ -1114,6 +1116,7 @@ select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.rolei
        from ev_pytis_menu as menu inner join pytis_compute_summary_rights(NULL, $1, $2) as summary
             on menu.shortname = summary.shortname;
 """,
+         grant=db_rights,
          depends=('typ_preview_role_menu', 'pytis_compute_summary_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
 
 sqltype('typ_preview_extended_role_menu',
@@ -1163,6 +1166,7 @@ from a_pytis_actions_structure as structure
      left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
      left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname);
 """,
+         grant=db_rights,
          depends=('typ_preview_extended_role_menu', 'a_pytis_actions_structure', 'e_pytis_menu',
                   'ev_pytis_valid_roles', 'pytis_compute_summary_rights', 'c_pytis_action_types',))
 
@@ -1186,6 +1190,7 @@ from ev_pytis_menu as menu
 left outer join pytis_compute_summary_rights(NULL, user, ''f'') as rights on (menu.shortname = rights.shortname)
 where (name is null and title is null) or (rights.rights like ''%show%'');
 """,
+         grant=db_rights,
          depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights',))
 
 sqltype('typ_preview_rights',
@@ -1197,6 +1202,7 @@ function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
 select rights.shortname, rights.rights
 from pytis_compute_summary_rights(NULL, user, ''f'') as rights;
 """,
+         grant=db_rights,
          depends=('typ_preview_rights', 'pytis_compute_summary_rights',))
 
 viewng('ev_pytis_user_roles',
