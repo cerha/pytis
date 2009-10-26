@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 """Funkce pro načítání, caching, kontrolu a reporty z defsů.""" 
 
+import pytis.data
 from pytis.extensions import *
 
 
@@ -32,12 +33,25 @@ def get_menu_defs():
         else:
             result = found                
         return result
-    resolver = pytis.util.resolver()
-    specs = [item.args()['name']
-             for item in flatten_menus(resolver.get('application', 'menu'), [])
-             if (isinstance(item, pytis.form.MItem) \
-                 and item.command() == pytis.form.Application.COMMAND_RUN_FORM \
-                 and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
+    try:
+        data = pytis.data.dbtable('ev_pytis_menu', ('shortname', 'fullname',), config.dbconnection)
+    except:
+        data = None
+    if data is None:
+        resolver = pytis.util.resolver()
+        specs = [item.args()['name']
+                 for item in flatten_menus(resolver.get('application', 'menu'), [])
+                 if (isinstance(item, pytis.form.MItem) \
+                     and item.command() == pytis.form.Application.COMMAND_RUN_FORM \
+                     and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
+    else:
+        specs = []
+        def get_values(row):
+            return row['shortname'].value(), row['fullname'].value()
+        for shortname, fullname in data.select_map(get_values):
+            if (shortname and shortname[:5] == 'form/' and
+                fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm'):
+                specs.append(shortname[5:])
     specs = remove_duplicates(specs)
     # Zjistíme i varianty podle konstanty VARIANTS
     variants = []
