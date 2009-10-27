@@ -1,3 +1,8 @@
+2009-10-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Don't try to include menu items without parent.
+
 2009-10-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

@@ -380,8 +380,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 current_template = menu_template
             else:
                 parent = string.join(position.split('.')[:-1], '.')
-                while parent != parents[-1][0]:
-                    parents.pop()
+                parent_index = len(parents) - 1
+                while parent_index >= 0 and parent != parents[parent_index][0]:
+                    parent_index -= 1
+                if parent_index >= 0:
+                    parents = parents[:parent_index+1]
+                else:
+                    continue
                 current_template = parents[-1][1]
                 if not title: # separator
                     current_template.append(None)                    
