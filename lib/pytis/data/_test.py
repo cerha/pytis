@@ -2095,11 +2095,18 @@ class TutorialTest(_DBBaseTest):
                   "INSERT INTO tab VALUES (1, 'one', '1')",
                   "INSERT INTO tab VALUES (2, 'two', '2')",
                   ):
-            self._sql_command(q)
+            try:
+                self._sql_command(q)
+            except:
+                self.tearDown()
+                raise
     def tearDown(self):
         c = self._connector
-        self._sql_command("DROP TABLE tab")
-        self._sql_command("DROP TABLE cis")
+        for t in ('tab', 'cis'):
+            try:
+                self._sql_command("DROP TABLE %s" % (t,))
+            except:
+                pass
     def test_it(self):
         # set up
         connection = pytis.data.DBConnection(**_connection_data)

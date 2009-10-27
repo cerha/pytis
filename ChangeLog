@@ -1,5 +1,10 @@
 2009-10-27  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/_test.py:
+	Make cleanup in TutorialTest a bit more robust.
+
+2009-10-27  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/application.py:
 	Don't try to include menu items without parent.
 
