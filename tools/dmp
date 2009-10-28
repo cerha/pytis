@@ -222,24 +222,36 @@ def command_sys(connection, dry_run, args):
             print "Error: invalid argument:", spec
             return
         role = spec[:separator_pos]
-        right = spec[separator_pos+1:]
+        right_columns = spec[separator_pos+1:].split('/')
+        right = right_columns[0]
+        columns = right_columns[1:] or [None]
         if role not in roles:
             print "Error: invalid role:", role
             return
         if right not in ('view', 'insert', 'update', 'delete', 'print', 'export', 'call',):
             print "Error: invalid right:", right
             return
-        requests.append((shortname, role, right, granted,))
+        requests.append((shortname, role, right, granted, columns,))
     queries = []
     for request in requests:
         args = request[:3]
-        if request[3]:
-            query = ("insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system) "
-                     "values ('%s', '%s', '%s', 't', 't')" % args)
-        else:
-            query = ("delete from e_pytis_action_rights where shortname='%s' and roleid='%s' and rightid='%s' and system='t'"
-                     % args)
-        queries.append(query)
+        for column in request[-1]:
+            if request[-2]:
+                if column is None:
+                    column_string = "NULL"
+                else:
+                    column_string = "'%s'" % (column,)
+                query = ("insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system, colname) "
+                         "values ('%s', '%s', '%s', 't', 't', %s)" % (args + (column_string,)))
+            else:
+                if column is None:
+                    column_condition = "colname IS NULL"
+                else:
+                    column_condition = "colname='%s'" % (column,)
+                query = (("delete from e_pytis_action_rights where "
+                          "shortname='%s' and roleid='%s' and rightid='%s' and system='t' and %s")
+                         % (args + (column_condition,)))
+            queries.append(query)
     run_queries(queries, cursor, connection, dry_run)
 
 def command_commit(connection, dry_run, args):
@@ -263,7 +275,7 @@ Commands:
   ls [ menu | roles | rights [ SHORTNAME ] ]
   add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
   del { SHORTNAME | FULLNAME | MENU-ID }
-  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call} ...
+  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call}[/COLUMN] ...
   commit"""
 
 def parse_options():

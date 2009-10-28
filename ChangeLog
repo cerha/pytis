@@ -1,6 +1,11 @@
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/dmp:
+	Allow adding column rights in tools/dmp.
+
+2009-10-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/dmp:
 	Don't print "Changes applied" on dry runs of tools/dmp.
 
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
