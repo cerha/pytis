@@ -212,10 +212,10 @@ def command_sys(connection, dry_run, args):
             granted = True
             spec = spec[1:]
         elif spec[0] == '-':
-            granted = 'f'
+            granted = False
             spec = spec[1:]
         else:
-            granted = 't'
+            granted = True
         separator_pos = spec.find(':')
         if separator_pos < 0:
             print "Error: invalid argument:", spec
@@ -231,8 +231,13 @@ def command_sys(connection, dry_run, args):
         requests.append((shortname, role, right, granted,))
     queries = []
     for request in requests:
-        query = ("insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system) "
-                 "values ('%s', '%s', '%s', '%s', 't')" % request)
+        args = request[:3]
+        if request[3]:
+            query = ("insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system) "
+                     "values ('%s', '%s', '%s', 't', 't')" % args)
+        else:
+            query = ("delete from e_pytis_action_rights where shortname='%s' and roleid='%s' and rightid='%s' and system='t'"
+                     % args)
         queries.append(query)
     run_queries(queries, cursor, connection, dry_run)
 
