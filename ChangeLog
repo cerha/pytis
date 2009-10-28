@@ -1,6 +1,11 @@
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Use simplified rights in DMP menu views with respect to column rights.
+
+2009-10-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Avoid duplicate menu entries when column rights are used.
 
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>

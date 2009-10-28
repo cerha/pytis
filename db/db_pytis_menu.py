@@ -794,8 +794,8 @@ sqltype('typ_summary_rights',
          C('roleid', TString),
          C('rights', TString),
          C('columns', TString),))
-def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_arg):
-    shortname_arg, role_arg, new_arg, multirights_arg = args
+def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_arg, compress_arg):
+    shortname_arg, role_arg, new_arg, multirights_arg, compress_arg = args
     import copy, string
     def _pg_escape(val):
         return str(val).replace("'", "''")
@@ -962,26 +962,35 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                     subforms_total += r.total
             all_rights.total = [r for r in total if r[0] != 'view' or r in subforms_total or (r[0], None,) in subforms_total]
         # Format and return the rights
-        rights = all_rights.total
-        column_rights = {}
-        general_rights = [r for r, column in rights if column is None]
-        general_rights.sort()
-        for r, column in rights:
-            if column is not None and r not in general_rights:
-                column_rights[column] = column_rights.get(column, []) + [r]
-        summarized_rights = {}
-        for column, rights in column_rights.items():
-            rights = rights + general_rights
+        if compress_arg:
+            rights = []
+            for r, column in all_rights.total:
+                if r not in rights:
+                    rights.append(r)
             rights.sort()
             rights_string = string.join(rights, ' ')
-            summarized_rights[rights_string] = summarized_rights.get(rights_string, []) + [column]
-        summarized_rights[string.join(general_rights, ' ')] = None
-        for rights_string, columns in summarized_rights.items():
-            if columns is None:
-                columns_string = ''
-            else:
-                columns_string = string.join(columns, ' ')
-            result.append((shortname, roleid, rights_string, columns_string,))
+            result.append((shortname, roleid, rights_string, ''))
+        else:
+            rights = all_rights.total
+            column_rights = {}
+            general_rights = [r for r, column in rights if column is None]
+            general_rights.sort()
+            for r, column in rights:
+                if column is not None and r not in general_rights:
+                    column_rights[column] = column_rights.get(column, []) + [r]
+            summarized_rights = {}
+            for column, rights in column_rights.items():
+                rights = rights + general_rights
+                rights.sort()
+                rights_string = string.join(rights, ' ')
+                summarized_rights[rights_string] = summarized_rights.get(rights_string, []) + [column]
+            summarized_rights[string.join(general_rights, ' ')] = None
+            for rights_string, columns in summarized_rights.items():
+                if columns is None:
+                    columns_string = ''
+                else:
+                    columns_string = string.join(columns, ' ')
+                result.append((shortname, roleid, rights_string, columns_string,))
     return result
 _plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean, TBoolean,),
                RT('typ_summary_rights', setof=True),
@@ -1110,7 +1119,7 @@ select summary.shortname, summary.roleid, summary.rights, summary.columns,
        strpos(summary.rights, ''print'')::bool as rights_print,
        strpos(summary.rights, ''export'')::bool as rights_export,
        strpos(summary.rights, ''call'')::bool as rights_call
-       from pytis_compute_summary_rights($1, $2, $3, $4) as summary
+       from pytis_compute_summary_rights($1, $2, $3, $4, ''f'') as summary
             left outer join e_pytis_roles as roles on summary.roleid = roles.name
             left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
 """,
@@ -1144,7 +1153,7 @@ select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.rolei
        strpos(summary.rights, ''print'')::bool as rights_print,
        strpos(summary.rights, ''export'')::bool as rights_export,
        strpos(summary.rights, ''call'')::bool as rights_call
-       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(NULL, $1, $2, ''t'') as summary
+       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(NULL, $1, $2, ''t'', ''t'') as summary
             on menu.shortname = summary.shortname;
 """,
          grant=db_rights,
@@ -1193,7 +1202,7 @@ select structure.shortname, structure.position, structure.type,
        strpos(summary.rights, ''call'')::bool as rights_call
 from a_pytis_actions_structure as structure
      left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
-     inner join pytis_compute_summary_rights(NULL, $1, $2, ''t'') as summary on (structure.shortname = summary.shortname)
+     inner join pytis_compute_summary_rights(NULL, $1, $2, ''t'', ''t'') as summary on (structure.shortname = summary.shortname)
      left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
      left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname)
      where pytis_multiform_spec(structure.fullname)
@@ -1215,7 +1224,7 @@ select structure.shortname, structure.position, structure.type,
        strpos(summary.rights, ''call'')::bool as rights_call
 from a_pytis_actions_structure as structure
      left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
-     inner join pytis_compute_summary_rights(NULL, $1, $2, ''f'') as summary on (structure.shortname = summary.shortname)
+     inner join pytis_compute_summary_rights(NULL, $1, $2, ''f'', ''t'') as summary on (structure.shortname = summary.shortname)
      left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
      left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname)
      where not pytis_multiform_spec(structure.fullname);
@@ -1238,16 +1247,16 @@ sqltype('typ_preview_user_menu',
          ))
 function('pytis_view_user_menu', (), RT('typ_preview_user_menu', setof=True),
          body="""
-select distinct menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
+select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
-left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
+left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'', ''t'') as rights on (menu.shortname = rights.shortname)
 where pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''))
 union
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked, rights.rights
 from ev_pytis_menu as menu
-left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''f'') as rights on (menu.shortname = rights.shortname)
+left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
 where not pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''));
 """,
          grant=db_rights,
@@ -1261,7 +1270,7 @@ sqltype('typ_preview_rights',
 function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
          body="""
 select rights.shortname, rights.rights, rights.columns
-from pytis_compute_summary_rights(NULL, user, ''f'', ''f'') as rights;
+from pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''t'') as rights;
 """,
          grant=db_rights,
          depends=('typ_preview_rights', 'pytis_compute_summary_rights',))
