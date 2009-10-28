@@ -1,5 +1,10 @@
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/dmp:
+	Don't print "Changes applied" on dry runs of tools/dmp.
+
+2009-10-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* lib/pytis/presentation/field.py:
 	Basic post-merge fixes in column access rights.
