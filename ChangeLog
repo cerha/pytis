@@ -1,5 +1,10 @@
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Avoid duplicate menu entries when column rights are used.
+
+2009-10-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/application.py:
 	* lib/pytis/form/screen.py:
 	Remove unused MItem argument `_rights'.

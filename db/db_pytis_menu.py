@@ -1235,12 +1235,11 @@ sqltype('typ_preview_user_menu',
          C('help', TString),
          C('hotkey', TString),
          C('locked', TBoolean),
-         C('rights', TString),
          ))
 function('pytis_view_user_menu', (), RT('typ_preview_user_menu', setof=True),
          body="""
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked, rights.rights
+select distinct menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
 left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
 where pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''))
