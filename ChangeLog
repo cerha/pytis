@@ -1,5 +1,10 @@
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Fix column string in summary rights db tables.
+
+2009-10-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* tools/dmp:
 	Allow adding column rights in tools/dmp.
 

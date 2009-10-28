@@ -981,7 +981,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                 columns_string = ''
             else:
                 columns_string = string.join(columns, ' ')
-            result.append((shortname, roleid, rights_string, columns,))
+            result.append((shortname, roleid, rights_string, columns_string,))
     return result
 _plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean, TBoolean,),
                RT('typ_summary_rights', setof=True),
