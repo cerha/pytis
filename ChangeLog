@@ -1,5 +1,11 @@
 2009-10-28  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/application.py:
+	* lib/pytis/form/screen.py:
+	Remove unused MItem argument `_rights'.
+
+2009-10-28  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Fix column string in summary rights db tables.
 

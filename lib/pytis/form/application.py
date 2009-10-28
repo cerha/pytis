@@ -360,7 +360,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                            (('menuid', I,),
                                             ('name', S,), ('title', S,), ('fullname', S,),
                                             ('position', pytis.data.LTree(),),
-                                            ('rights', S,), ('help', S,), ('hotkey', S,),),
+                                            ('help', S,), ('hotkey', S,),),
                                            connection_data, arguments=())
             menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
         except pytis.data.DBException:
@@ -371,10 +371,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menu_template = []
         parents = []
         for row in menu_rows:
-            menuid, name, title, action, position, rights_string, help, hotkey = \
-                [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6, 7,)]
-            if title:
-                rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
+            menuid, name, title, action, position, help, hotkey = \
+                [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6,)]
             if not parents: # the top pseudonode, should be the first one
                 parents.append((position or '', menu_template,))
                 current_template = menu_template
@@ -391,10 +389,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if not title: # separator
                     current_template.append(None)                    
                 elif name: # terminal item
-                    current_template.append((name, title, rights, action, help, hotkey,))
+                    current_template.append((name, title, action, help, hotkey,))
                 else:          # non-terminal item
                     upper_template = parents[-1][1]
-                    current_template = [(name, title, rights, help, hotkey,)]
+                    current_template = [(name, title, help, hotkey,)]
                     upper_template.append(current_template)
                     parents.append((position, current_template,))
         # Done, return the menu structure
@@ -427,14 +425,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             elif template is None:
                 result = MSeparator()
             else:
-                name, title, rights, action, help, hotkey = template
+                name, title, action, help, hotkey = template
                 title = add_key(title)
                 command = MItem.parse_action(action)
                 if hotkey is None:
                     hotkeys = None
                 else:
                     hotkeys = [key.replace('SPC', ' ') for key in hotkey.split(' ')]
-                result = MItem(title, command, help=help, hotkey=hotkeys, _rights=rights)
+                result = MItem(title, command, help=help, hotkey=hotkeys)
             return result
         menus = [build(t) for t in menu_template]
         return menus

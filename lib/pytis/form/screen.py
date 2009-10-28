@@ -969,7 +969,7 @@ class MItem(_TitledMenuObject):
     _used_titles = {}
     
     def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None, _rights=[]):
+                 icon=None):
         """Uschovej parametry.
 
         Argumenty:
@@ -998,9 +998,6 @@ class MItem(_TitledMenuObject):
             identifikátor ikony pou¾itelný jako argument funkce 'get_icon'.
             Pokud není urèena, bude automaticky pou¾ita ikona podle typu
             pøíkazu (je-li pro pøíkaz definována).
-
-          _rights -- list of access rights ('Permission' constants) assigned to
-            the given menu item.  For internal use only.
             
         Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
         'command' automaticky nastavena tato klávesa.
