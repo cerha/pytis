@@ -474,8 +474,8 @@ class PresentedRow(object):
         except KeyError:
             # Mù¾e nastat napøíklad v pøípadì, kdy k danému sloupci nejsou
             # pøístupová práva.
-            svalue = ''
-        elif secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
+            return ''
+        if secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
             value_type = value.type()
             if pretty and isinstance(value_type, PrettyType):
                 svalue = value_type.pretty_export(value.value(), row=self, form=form, **kwargs)

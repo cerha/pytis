@@ -419,10 +419,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('redundant', _("Nadbyteèné"), fixed=True,
               editable=pytis.presentation.Editable.NEVER,
               descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
-        Field('colname', _("Sloupec"), editable=pytis.presentation.Editable.NEVER, fixed=True,
-              descr=_("Sloupec, kterého se právo týká; není-li uveden, tak se týká v¹ech.")),
         )
-    columns = ('roleid', 'purpose', 'colname', 'rightid', 'colname', 'system', 'granted', 'redundant',)
+    columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
     layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)

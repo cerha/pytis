@@ -1086,6 +1086,7 @@ sqltype('typ_preview_summary_rights',
         (C('shortname', TString),
          C('roleid', TString),
          C('rights', TString),
+         C('columns', TString),
          C('purpose', TString),
          C('rights_show', TBoolean),
          C('rights_view', TBoolean),
@@ -1099,7 +1100,7 @@ sqltype('typ_preview_summary_rights',
 function('pytis_view_summary_rights', (TString, TString, TBoolean, TBoolean,),
          RT('typ_preview_summary_rights', setof=True),
          body="""
-select summary.shortname, summary.roleid, summary.rights,
+select summary.shortname, summary.roleid, summary.rights, summary.columns,
        purposes.purpose,
        strpos(summary.rights, ''show'')::bool as rights_show,
        strpos(summary.rights, ''view'')::bool as rights_view,
@@ -1120,7 +1121,7 @@ sqltype('typ_preview_role_menu',
         (C('menuid', TInteger),
          C('title', TString),
          C('position', 'ltree'),
-         C('position_nsub', 'bigint'),         
+         C('position_nsub', 'bigint'),
          C('roleid', TString),
          C('rights', TString),
          C('rights_show', TBoolean),
@@ -1256,10 +1257,11 @@ where not pytis_multiform_spec(menu.fullname) and ((name is null and title is nu
 sqltype('typ_preview_rights',
         (C('shortname', TString),
          C('rights', TString),
+         C('columns', TString),
          ))
 function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
          body="""
-select rights.shortname, rights.rights
+select rights.shortname, rights.rights, rights.columns
 from pytis_compute_summary_rights(NULL, user, ''f'', ''f'') as rights;
 """,
          grant=db_rights,
