@@ -751,7 +751,66 @@ update e_pytis_action_rights set status=-1 where id=old.id and status=0;
 )""",
        grant=db_rights,
        depends=('e_pytis_action_rights', 'e_pytis_roles', 'c_pytis_role_purposes',))
-       
+
+sqltype('typ_action_rights_foldable',
+        (C('id', TInteger),
+         C('roleid', TString),
+         C('purpose', TString),
+         C('shortname', TString),
+         C('colname', TString),
+         C('rightid', TString),
+         C('system', TBoolean),
+         C('granted', TBoolean),
+         C('redundant', TBoolean),
+         C('tree', 'ltree'),
+         C('subcount', TInteger),
+         ))
+def pytis_action_rights_foldable(shortname, column):
+    shortname, column = args
+    import string
+    tree = {}
+    query = ("select id, roleid, purpose, shortname, colname, rightid, system, granted, redundant "
+             "from ev_pytis_action_rights where shortname='%s'")
+    for row in plpy.execute(query % (shortname,)):
+        column_value = row[column]
+        column_rows = tree.get(column_value, [])
+        column_rows.append(row)
+        tree[column_value] = column_rows
+    if column == 'roleid':
+        other_column = 'colname'
+    else:
+        other_column = 'roleid'
+    result = []
+    def ltree_value(value):
+        if not value:
+            return '_'
+        safe_value = []
+        for c in value:
+            if c not in string.ascii_letters and c not in string.digits:
+                c = '_'
+            safe_value.append(c)
+        return string.join(safe_value, '')
+    for column_value, rows in tree.items():
+        def maybe_label(target_column):
+            if target_column == column:
+                label = column_value
+            else:
+                label = None
+            return label
+        result.append((-1, maybe_label('roleid'), None, shortname, maybe_label('colname'),
+                       maybe_label('rightid'), None, None, None,
+                       ltree_value(column_value), len(rows),))
+        for row in rows:
+            tree_id = ltree_value(column_value) + '.' + ltree_value(row[other_column])
+            result.append((row['id'], row['roleid'], row['purpose'], row['shortname'], row['colname'],
+                           row['rightid'], row['system'], row['granted'], row['redundant'],
+                           tree_id, 0,))
+    return result
+_plpy_function('pytis_action_rights_foldable', (TString, TString,),
+               RT('typ_action_rights_foldable', setof=True),
+               body=pytis_action_rights_foldable,
+               depends=('ev_pytis_action_rights',),)
+
 viewng('ev_pytis_user_system_rights',
        (SelectRelation('e_pytis_action_rights', alias='rights',
                        condition="rights.system = 'T' and roleid = '*' or roleid in (select roleid from ev_pytis_user_roles)"),

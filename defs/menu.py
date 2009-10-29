@@ -292,6 +292,12 @@ class ApplicationMenuM(pytis.presentation.Specification):
     layout = ('title', 'position', 'actiontype', 'fullname', 'description',)
     bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
                                            binding_column='shortname'),
+                pytis.presentation.Binding(_("Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable', id='role_rights',
+                                           arguments=(lambda row: dict(shortname=row['shortname'],
+                                                                       column=pytis.data.Value(pytis.data.String(), 'roleid',)))),
+                pytis.presentation.Binding(_("Rozpis práv podle sloupcù"), 'menu.ApplicationMenuRightsFoldableColumn', id='column_rights',
+                                           arguments=(lambda row: dict(shortname=row['shortname'],
+                                                                       column=pytis.data.Value(pytis.data.String(), 'colname',)))),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,),
@@ -429,8 +435,6 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
-            return None
-        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
     def _row_deleteable(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze mazat"))
@@ -450,6 +454,77 @@ class ApplicationMenuRights(pytis.presentation.Specification):
                 message = _("Provádìní zmìn uzamèeno, zmìny nebyly aplikovány")
             pytis.form.run_dialog(pytis.form.Message, message)
         return {'commit_changes': commit_changes}
+    
+class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
+    def __init__(self, **kwargs):
+        super(_RightsTree, self).__init__(tree_column_id='tree',
+                                          subcount_column_id='subcount',
+                                          **kwargs)
+class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
+    table = 'pytis_action_rights_foldable'
+    arguments = (Field('shortname', "", type=pytis.data.String()),
+                 Field('column', "", type=pytis.data.String()),
+                 )
+    title = _("Práva")
+    fields = (
+        Field('id', "Id", type=pytis.data.Integer()),
+        Field('tree', "", type=pytis.data.LTree()),
+        Field('subcount', "", type=pytis.data.Integer()),
+        Field('roleid', _("Role"), type=_RightsTree(),
+              fixed=True),
+        Field('purpose', _("Úèel role"), type=pytis.data.String(),
+              fixed=True),
+        Field('shortname', _("Akce"), type=pytis.data.String(),
+              descr=_("Identifikátor akce související s danou polo¾kou menu")),
+        Field('colname', _("Sloupec"), type=pytis.data.String(),
+              fixed=True,
+              descr=_("Sloupec, na který se právo vztahuje")),
+        Field('rightid', _("Právo"), type=pytis.data.String(),
+              fixed=True,
+              descr=_("Pøidìlené nebo odebrané právo")),
+        Field('system', _("Systémové"), type=pytis.data.Boolean(),
+              fixed=True,
+              descr=_("Jde o nemìnné právo definováno tvùrcem aplikace?")),
+        Field('granted', _("Ano/Ne"), type=pytis.data.Boolean(),
+              fixed=True, default=True,
+              descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
+        Field('redundant', _("Nadbyteèné"), type=pytis.data.Boolean(),
+              fixed=True,
+              descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
+        )
+    columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
+    layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
+    sorting = (('tree', pytis.data.ASCENDENT,),)
+    access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.VIEW)),)
+class ApplicationMenuRightsFoldableColumn(ApplicationMenuRightsFoldable):
+    table = 'pytis_action_rights_foldable'
+    fields = (
+        Field('id', "Id", type=pytis.data.Integer()),
+        Field('tree', "", type=pytis.data.LTree()),
+        Field('subcount', "", type=pytis.data.Integer()),
+        Field('roleid', _("Role"), type=pytis.data.String(),
+              fixed=True),
+        Field('purpose', _("Úèel role"), type=pytis.data.String(),
+              fixed=True),
+        Field('shortname', _("Akce"), type=pytis.data.String(),
+              descr=_("Identifikátor akce související s danou polo¾kou menu")),
+        Field('colname', _("Sloupec"), type=_RightsTree(),
+              fixed=True,
+              descr=_("Sloupec, na který se právo vztahuje")),
+        Field('rightid', _("Právo"), type=pytis.data.String(),
+              fixed=True,
+              descr=_("Pøidìlené nebo odebrané právo")),
+        Field('system', _("Systémové"), type=pytis.data.Boolean(),
+              fixed=True,
+              descr=_("Jde o nemìnné právo definováno tvùrcem aplikace?")),
+        Field('granted', _("Ano/Ne"), type=pytis.data.Boolean(),
+              fixed=True, default=True,
+              descr=_("Je právo povoleno (ano) nebo zakázáno (ne)?")),
+        Field('redundant', _("Nadbyteèné"), type=pytis.data.Boolean(),
+              fixed=True,
+              descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
+        )
+    columns = ('colname', 'roleid', 'purpose', 'rightid', 'system', 'granted', 'redundant',)
 
 class _MenuidPreviewType(pytis.data.Integer):
     def default_value(self):
