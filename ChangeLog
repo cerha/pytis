@@ -1,5 +1,10 @@
 2009-10-29  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Add mistakenly removed lines in menu.py.
+
+2009-10-29  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Add role and column groupped subforms to the right editing form.

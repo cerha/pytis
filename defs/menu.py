@@ -435,6 +435,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
+            return None
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
     def _row_deleteable(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze mazat"))
