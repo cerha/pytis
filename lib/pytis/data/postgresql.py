@@ -1296,7 +1296,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # when using cross-class transactions and additionally to avoid
         # conflicts when using data instance cache.
         cursor_name = '%s_%%(selection)s' % (self._PDBB_CURSOR_NAME,)
-        cursor_sequence_name = '%s_%%(selection)s_seq' % (self._PDBB_CURSOR_NAME,)
         # Vytvoø ¹ablony pøíkazù
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
@@ -1340,21 +1339,25 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         elif distinct_on:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                (('declare %s scroll cursor for select %%(columns)s, '+
-                  'row_number() over (order by %%(ordering)s %s) as _number '+
-                  'from (select%s * from %s%%(fulltext_queries)s '+
-                  'where %%(condition)s and (%s)%s) '+
-                  'as %s %s order by %%(ordering)s %s') %
+                (("declare %s scroll cursor for select %%(columns)s, "
+                  "row_number() over (order by %%(ordering)s %s) as _number "
+                  "from (select%s * from %s%%(fulltext_queries)s "
+                  "where %%(condition)s and (%s)%s) "
+                  "as %s %s order by %%(ordering)s %s") %
                  (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
                   table_names[0], groupby, ordering,)),
+        self._pdbb_command_fetch_last = \
+            self._SQLCommandTemplate('fetch last from %s' % (cursor_name,))
+        self._pdbb_command_move_to_start = \
+            self._SQLCommandTemplate('move absolute 0 from %s' % (cursor_name,))
                 {'columns': column_list})
         else:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                (('declare %s scroll cursor for select %%(columns)s, '+
-                  'row_number() over (order by %%(ordering)s %s) as _number '+
-                  'from %s%%(fulltext_queries)s '+
-                  'where %%(condition)s and (%s)%s %s order by %%(ordering)s %s') %
+                (("declare %s scroll cursor for select %%(columns)s, "
+                  "row_number() over (order by %%(ordering)s %s) as _number "
+                  "from %s%%(fulltext_queries)s "
+                  "where %%(condition)s and (%s)%s %s order by %%(ordering)s %s") %
                  (cursor_name, ordering, table_list, relation, filter_condition, groupby, ordering,)),
                 {'columns': column_list})
         self._pdbb_command_close_select = \
@@ -1761,13 +1764,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pdbb_select_column_list = None
         args['selection'] = self._pdbb_selection_number = \
             self._pdbb_next_selection_number()
-        self._pg_query(self._pdbb_command_create_select_sequence.format(args), transaction=transaction)
         self._pg_query(self._pdbb_command_select.format(args), transaction=transaction)
-        self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
+        data = self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
         self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
-        data = self._pg_query(self._pdbb_command_row_count.format(args), transaction=transaction)
         if data:
-            result = int(data[0][0])
+            result = int(data[0][-1])
         else:
             result = 0
         self._pdbb_select_rows = result
@@ -2816,18 +2817,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select:
             _, self._pg_last_select_row_number = self._pg_buffer.current()
             args = dict(selection=self._pdbb_selection_number)
-            drop_sequence_query = self._pdbb_command_drop_select_sequence.format(args)
         if self._pg_is_in_select is True: # no user transaction
             try:
                 self._pg_commit_transaction()
-                self._pg_query(drop_sequence_query)
             except DBSystemException: # e.g. after db engine restart
                 pass
         elif self._pg_is_in_select: # inside user transaction
             query = self._pdbb_command_close_select.format(args)
             transaction = self._pg_is_in_select
             self._pg_query(query, transaction=transaction)
-            self._pg_query(drop_sequence_query, transaction=transaction)
         self._pg_is_in_select = False
         # Flush cached data
         self._pg_buffer.reset()

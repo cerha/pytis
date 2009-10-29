@@ -1,3 +1,11 @@
+2009-10-29  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Use PostgreSQL 8.4 window functions to count query result rows.
+	
+	WARNING: This change makes pytis incompatible with PostgreSQL < 8.4!
+	
+
 2009-10-27  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
