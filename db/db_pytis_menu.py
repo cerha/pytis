@@ -637,7 +637,7 @@ def pytis_update_rights_redundancy():
                         return False
             if self.system and not other.system:
                 return False
-            if self.roleid not in roles[other.roleid]:
+            if self.roleid not in roles.get(other.roleid, []):
                 return False
             return True
         def default_redundant(self, other):
@@ -647,7 +647,7 @@ def pytis_update_rights_redundancy():
                         return False
             if self.system and not other.system:
                 return False
-            if self.roleid not in roles[other.roleid] and other.roleid != '*':
+            if self.roleid not in roles.get(other.roleid, []) and other.roleid != '*':
                 return False
             if self.colname != other.colname and other.colname:
                 return False
