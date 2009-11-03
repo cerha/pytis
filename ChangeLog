@@ -1,5 +1,10 @@
 2009-11-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/application.py:
+	Handle multiform VIEW right in Application._can_run_form.
+
+2009-11-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Distinguish between single and multi form rights of the same specification.

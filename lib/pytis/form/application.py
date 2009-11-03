@@ -772,11 +772,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return False
         try:
             if has_access(name):
-                if binding is not None:
+                if binding is not None or issubclass(form_class, MultiBrowseDualForm):
                     spec = resolver().get(name, 'view_spec')
-                    b = find(binding, spec.bindings(), key=lambda b: b.id())
-                    assert b is not None, "Unknown binding for %s: %s" % (name, binding)
-                    return has_access(b.name())
+                    if binding is None:
+                        for b in spec.bindings():
+                            if has_access(b.name()):
+                                return True
+                        return False
+                    else:
+                        b = find(binding, spec.bindings(), key=lambda b: b.id())
+                        assert b is not None, "Unknown binding for %s: %s" % (name, binding)
+                        return has_access(b.name())
                 return True
             else:
                 return False
