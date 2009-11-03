@@ -767,11 +767,17 @@ sqltype('typ_action_rights_foldable',
          ))
 def pytis_action_rights_foldable(shortname, column):
     shortname, column = args
+    if column is None:
+        column = 'roleid'
     import string
     tree = {}
+    if shortname:
+        condition = "shortname='%s'" % (shortname,)
+    else:
+        condition = "true"
     query = ("select id, roleid, purpose, shortname, colname, rightid, system, granted, redundant "
-             "from ev_pytis_action_rights where shortname='%s'")
-    for row in plpy.execute(query % (shortname,)):
+             "from ev_pytis_action_rights where %s" % (condition,))
+    for row in plpy.execute(query):
         column_value = row[column]
         column_rows = tree.get(column_value, [])
         column_rows.append(row)

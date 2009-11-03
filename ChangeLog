@@ -1,3 +1,8 @@
+2009-11-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Make pytis_action_rights_foldable db function work even with NULL arguments.
+
 2009-10-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
