@@ -533,8 +533,7 @@ class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
             return None
         data = pytis.extensions.data_object('menu.ApplicationMenuRights')
         data.delete((row['id'],))
-        form.refresh(when=form.DOIT_AFTEREDIT)
-        return False
+        return 1
 
 class ApplicationMenuRightsFoldableColumn(ApplicationMenuRightsFoldable):
     table = 'pytis_action_rights_foldable'

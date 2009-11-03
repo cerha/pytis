@@ -1,6 +1,14 @@
 2009-11-03  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
+	* lib/pytis/form/application.py:
+	* lib/pytis/presentation/spec.py:
+	Allow on_delete_record actions to perform regular deletions.
+	
+
+2009-11-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
 	Direct editing of rights items in ApplicationMenuRightsFoldable.
 
 2009-11-03  Milan Zamazal  <pdm@brailcom.org>
