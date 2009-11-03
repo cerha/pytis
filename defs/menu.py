@@ -17,7 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
+
 import pytis.data
+import pytis.extensions
 import pytis.form
 import pytis.presentation
 from pytis.presentation import Editable
@@ -290,9 +293,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
         )
     columns = ('title', 'actiontype', 'fullname', 'description',)
     layout = ('title', 'position', 'actiontype', 'fullname', 'description',)
-    bindings = (pytis.presentation.Binding(_("Rozpis práv polo¾ky menu"), 'menu.ApplicationMenuRights', id='raw_rights',
-                                           binding_column='shortname'),
-                pytis.presentation.Binding(_("Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable', id='role_rights',
+    bindings = (pytis.presentation.Binding(_("Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable', id='role_rights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        column=pytis.data.Value(pytis.data.String(), 'roleid',)))),
                 pytis.presentation.Binding(_("Rozpis práv podle sloupcù"), 'menu.ApplicationMenuRightsFoldableColumn', id='column_rights',
@@ -427,7 +428,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
               descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
         )
     columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
-    layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
+    layout = ('shortname', 'roleid', 'rightid', 'granted',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
@@ -462,6 +463,7 @@ class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
         super(_RightsTree, self).__init__(tree_column_id='tree',
                                           subcount_column_id='subcount',
                                           **kwargs)
+
 class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
     table = 'pytis_action_rights_foldable'
     arguments = (Field('shortname', "", type=pytis.data.String()),
@@ -497,7 +499,43 @@ class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
     columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
     layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
     sorting = (('tree', pytis.data.ASCENDENT,),)
-    access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.VIEW)),)
+    access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
+    def on_new_record(self, prefill=None, transaction=None):
+        shortname = pytis.form.current_form()._main_form.current_row()['shortname']
+        if prefill is None:
+            prefill = {}
+        else:
+            prefill = copy.copy(prefill)
+        prefill['shortname'] = shortname
+        new = pytis.form.new_record('menu.ApplicationMenuRights',
+                                    prefill=prefill, transaction=transaction,
+                                    block_on_new_record=True, multi_insert=True)
+        if new:
+            return new
+        return None
+    def _row_editable(self, row):
+        return not row['system'].value() and row['id'] >= 0
+    def on_edit_record(self, row):
+        if not self._row_editable(row):
+            pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
+            return None
+        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.ApplicationMenuRights', select_row=row['id'])
+    def _row_deleteable(self, row):
+        if not self._row_editable(row):
+            pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze mazat"))
+            return False
+        return True
+    def on_delete_record(self, row):
+        form = pytis.form.current_form()
+        if not self._row_deleteable(row):
+            return None
+        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
+            return None
+        data = pytis.extensions.data_object('menu.ApplicationMenuRights')
+        data.delete((row['id'],))
+        form.refresh(when=form.DOIT_AFTEREDIT)
+        return False
+
 class ApplicationMenuRightsFoldableColumn(ApplicationMenuRightsFoldable):
     table = 'pytis_action_rights_foldable'
     fields = (

@@ -1,5 +1,10 @@
 2009-11-03  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Direct editing of rights items in ApplicationMenuRightsFoldable.
+
+2009-11-03  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/list.py:
 	New method SideBrowseForm.main_form.
 
