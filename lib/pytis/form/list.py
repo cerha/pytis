@@ -2840,3 +2840,7 @@ class SideBrowseForm(BrowseForm):
         else:
             g.SelectRow(g.GetGridCursorRow())
             super(SideBrowseForm, self)._update_selection_colors()
+
+    def main_form(self):
+        """Return main form instance corresponding to this side form."""
+        return self._main_form
