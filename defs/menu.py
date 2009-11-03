@@ -294,10 +294,14 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                            binding_column='shortname'),
                 pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
-                                                                       new=pytis.data.Value(pytis.data.Boolean(), False,)))),
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), False,),
+                                                                       multirights=ApplicationMenuM._multiform_row(row),
+                                                                       ))),
                 pytis.presentation.Binding(_("Chystaná práva polo¾ky"), 'menu.ApplicationPreviewRights', id='preview_rights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
-                                                                       new=pytis.data.Value(pytis.data.Boolean(), True,)))),
+                                                                       new=pytis.data.Value(pytis.data.Boolean(), True,),
+                                                                       multirights=ApplicationMenuM._multiform_row(row),
+                                                                       ))),
                 )
     def actions(self): return (
         pytis.presentation.Action(_("Zkopírovat práva z..."), self._copy_rights,
@@ -314,6 +318,14 @@ class ApplicationMenuM(pytis.presentation.Specification):
         folding = pytis.form.FoldableForm.Folding(level=2)
         folding.expand('8', level=0)
         return folding
+
+    @staticmethod
+    def _multiform_row(row):
+        fullname = row['fullname'].value() or ''
+        result = fullname[:4] != 'sub/' and (fullname.find('::') >= 0 or fullname.find('.Multi') >= 0)
+        return pytis.data.Value(pytis.data.Boolean(), result)
+    
+    ## Form actions
 
     def _copy_rights(self, row):
         template_row = pytis.extensions.run_cb('menu.ApplicationMenuCodebook')
@@ -449,6 +461,7 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
     arguments = (Field('shortname', "", type=pytis.data.String()),
                  Field('roleid', "", type=pytis.data.String()),
                  Field('new', "", type=pytis.data.Boolean()),
+                 Field('multirights', "", type=pytis.data.Boolean()),
                  )
     fields = (
         Field('roleid', _("Role"), type=pytis.data.String(not_null=True),

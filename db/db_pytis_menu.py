@@ -793,8 +793,8 @@ sqltype('typ_summary_rights',
         (C('shortname', TString),
          C('roleid', TString),
          C('rights', TString),))
-def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg):
-    shortname_arg, role_arg, new_arg = args[0], args[1], args[2]
+def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_arg):
+    shortname_arg, role_arg, new_arg, multirights_arg = args
     import copy, string
     def _pg_escape(val):
         return str(val).replace("'", "''")
@@ -941,7 +941,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg):
         # form and (in case of the VIEW right) at least one of the side forms.
         total = all_rights.total
         subforms = all_rights.subforms
-        if subforms:
+        if multirights_arg and subforms:
             r = computed_rights.get((subforms[0], roleid,))
             if r is not None:
                 total = [rr for rr in total if rr in r.total]
@@ -958,7 +958,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg):
         rights = string.join(all_rights.total, ' ')
         result.append((shortname, roleid, rights,))
     return result
-_plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean,),
+_plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean, TBoolean,),
                RT('typ_summary_rights', setof=True),
                body=pytis_compute_summary_rights,
                depends=('a_pytis_valid_role_members', 'e_pytis_action_rights',),)
@@ -1052,6 +1052,11 @@ _plpy_function('pytis_update_actions_structure', (), TBoolean,
                body=pytis_update_actions_structure,
                depends=('a_pytis_actions_structure', 'e_pytis_menu', 'c_pytis_menu_actions', 'pytis_actions_lock_id',),)
 
+function('pytis_multiform_spec', (TString,), TBoolean,
+         body="""
+select $1 not like ''sub/%'' and ($1 like ''%::%'' or $1 like ''%.Multi%'');
+""")
+ 
 sqltype('typ_preview_summary_rights',
         (C('shortname', TString),
          C('roleid', TString),
@@ -1066,7 +1071,7 @@ sqltype('typ_preview_summary_rights',
          C('rights_export', TBoolean),
          C('rights_call', TBoolean),
          ))
-function('pytis_view_summary_rights', (TString, TString, TBoolean,),
+function('pytis_view_summary_rights', (TString, TString, TBoolean, TBoolean,),
          RT('typ_preview_summary_rights', setof=True),
          body="""
 select summary.shortname, summary.roleid, summary.rights,
@@ -1079,7 +1084,7 @@ select summary.shortname, summary.roleid, summary.rights,
        strpos(summary.rights, ''print'')::bool as rights_print,
        strpos(summary.rights, ''export'')::bool as rights_export,
        strpos(summary.rights, ''call'')::bool as rights_call
-       from pytis_compute_summary_rights($1, $2, $3) as summary
+       from pytis_compute_summary_rights($1, $2, $3, $4) as summary
             left outer join e_pytis_roles as roles on summary.roleid = roles.name
             left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
 """,
@@ -1113,7 +1118,7 @@ select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.rolei
        strpos(summary.rights, ''print'')::bool as rights_print,
        strpos(summary.rights, ''export'')::bool as rights_export,
        strpos(summary.rights, ''call'')::bool as rights_call
-       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(NULL, $1, $2) as summary
+       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(NULL, $1, $2, ''t'') as summary
             on menu.shortname = summary.shortname;
 """,
          grant=db_rights,
@@ -1162,13 +1167,37 @@ select structure.shortname, structure.position, structure.type,
        strpos(summary.rights, ''call'')::bool as rights_call
 from a_pytis_actions_structure as structure
      left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
-     inner join pytis_compute_summary_rights(NULL, $1, $2) as summary on (structure.shortname = summary.shortname)
+     inner join pytis_compute_summary_rights(NULL, $1, $2, ''t'') as summary on (structure.shortname = summary.shortname)
      left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
-     left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname);
+     left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname)
+     where pytis_multiform_spec(structure.fullname)
+union
+select structure.shortname, structure.position, structure.type,
+       menu.menuid, menu.next_position, menu.help, menu.hotkey, menu.locked,
+       atypes.description as actiontype,
+       (select count(*)-1 from a_pytis_actions_structure where position <@ structure.position) as position_nsub,
+       coalesce(menu.title, ''(''||actions.action_title||'')'') as title,
+       structure.fullname, summary.roleid,
+       summary.rights,
+       strpos(summary.rights, ''show'')::bool as rights_show,
+       strpos(summary.rights, ''view'')::bool as rights_view,
+       strpos(summary.rights, ''insert'')::bool as rights_insert,
+       strpos(summary.rights, ''update'')::bool as rights_update,
+       strpos(summary.rights, ''delete'')::bool as rights_delete,
+       strpos(summary.rights, ''print'')::bool as rights_print,
+       strpos(summary.rights, ''export'')::bool as rights_export,
+       strpos(summary.rights, ''call'')::bool as rights_call
+from a_pytis_actions_structure as structure
+     left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
+     inner join pytis_compute_summary_rights(NULL, $1, $2, ''f'') as summary on (structure.shortname = summary.shortname)
+     left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
+     left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname)
+     where not pytis_multiform_spec(structure.fullname);
 """,
          grant=db_rights,
          depends=('typ_preview_extended_role_menu', 'a_pytis_actions_structure', 'e_pytis_menu',
-                  'ev_pytis_valid_roles', 'pytis_compute_summary_rights', 'c_pytis_action_types',))
+                  'ev_pytis_valid_roles', 'pytis_compute_summary_rights', 'c_pytis_action_types',
+                  'pytis_multiform_spec',))
 
 sqltype('typ_preview_user_menu',
         (C('menuid', TInteger),
@@ -1187,11 +1216,17 @@ function('pytis_view_user_menu', (), RT('typ_preview_user_menu', setof=True),
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked, rights.rights
 from ev_pytis_menu as menu
-left outer join pytis_compute_summary_rights(NULL, user, ''f'') as rights on (menu.shortname = rights.shortname)
-where (name is null and title is null) or (rights.rights like ''%show%'');
+left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
+where pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''))
+union
+select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, rights.rights
+from ev_pytis_menu as menu
+left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''f'') as rights on (menu.shortname = rights.shortname)
+where not pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''));
 """,
          grant=db_rights,
-         depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights',))
+         depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights', 'pytis_multiform_spec',))
 
 sqltype('typ_preview_rights',
         (C('shortname', TString),
@@ -1200,7 +1235,7 @@ sqltype('typ_preview_rights',
 function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
          body="""
 select rights.shortname, rights.rights
-from pytis_compute_summary_rights(NULL, user, ''f'') as rights;
+from pytis_compute_summary_rights(NULL, user, ''f'', ''f'') as rights;
 """,
          grant=db_rights,
          depends=('typ_preview_rights', 'pytis_compute_summary_rights',))
