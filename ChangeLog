@@ -1,3 +1,18 @@
+2009-11-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/list.py:
+	New method SideBrowseForm.main_form.
+
+2009-11-03  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Make pytis_action_rights_foldable db function work even with NULL arguments.
+
+2009-10-29  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Add mistakenly removed lines in menu.py.
+
 2009-12-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/data/types_.py:
