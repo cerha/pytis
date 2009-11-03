@@ -908,9 +908,10 @@ class ViewSpec(object):
             True, the deletion will continue by the default action (user is asked for confirmation
             and record is deleted) as it the function was not defined.  If None or False is
             returned the deletion is aborted.  If a string or unicode is returned, the message is
-            printed as an error message and the deletion is aborded.  Finally, if a
-            'pytis.data.Operator' instance is returned, all records matching given condition are
-            deleted without further prompting.
+            printed as an error message and the deletion is aborted.  If 1 is returned, the
+            deletion is considered being already successfuly applied so only after-deletion actions
+            (such as refresh) are performed.  Finally, if a 'pytis.data.Operator' instance is
+            returned, all records matching given condition are deleted without further prompting.
             
           redirect -- redirection for single record view/editation specified as a callable object
             (function) of one argument - the 'PresentedRow' instance.  The function should return

@@ -1242,6 +1242,8 @@ def delete_record(view, data, transaction, record,
             op, arg = data.delete, key
         elif result is False or result is None:
             return False
+        elif result == 1:
+            return True
         elif isinstance(result, (str, unicode)):
             run_dialog(Error, result)
             return False
