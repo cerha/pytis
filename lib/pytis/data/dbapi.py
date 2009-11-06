@@ -31,6 +31,7 @@ import select
 import types as pytypes
 
 import psycopg2 as dbapi
+import psycopg2.extensions
 
 from pytis.util import *
 from dbdata import *
@@ -65,6 +66,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
             raise DBSystemException(_("Can't connect to database"), e)
+        connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         return class_._postgresql_Connection(connection, connection_data)
 
     @classmethod
@@ -199,7 +201,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection_data = self._pg_connection_data()
                 connection = self._postgresql_new_connection(connection_data)
                 self._pgnotif_connection = connection
-                connection.connection().set_isolation_level(0)
+                connection.connection().set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             
         def _notif_do_registration(self, notification):
             connection = self._pgnotif_connection

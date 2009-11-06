@@ -1,3 +1,8 @@
+2009-11-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Set transaction level explicitly in dbapi.
+
 2009-12-04  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
