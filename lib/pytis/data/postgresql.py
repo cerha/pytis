@@ -243,14 +243,7 @@ class PostgreSQLAccessor(object):
 
     def _postgresql_initialize_transactions(self, connection):
         """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
-        # Nastavujeme serializované transakce, abychom v rámci jedné transakce
-        # nemohli dostat rùzné výsledky pro opakované selecty.
-        # This query is intentionally run without _pg_query_lock to avoid
-        # deadlock on connection reopening in dbapi.py.
-        self._postgresql_query(connection,
-                               ('set session characteristics as transaction '+
-                                'isolation level serializable'),
-                               False)
+        pass
 
     def _postgresql_initialize_coding(self, connection):
         # This queries are intentionally run without _pg_query_lock to avoid

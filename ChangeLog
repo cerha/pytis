@@ -1,5 +1,10 @@
 2009-11-06  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/postgresql.py:
+	Don't set transaction isolation level in _postgresql_initialize_transactions.
+
+2009-11-06  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/_test.py:
 	Rename testing sequence in db tests.
 
