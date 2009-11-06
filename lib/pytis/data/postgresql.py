@@ -1268,6 +1268,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
            % (schema, main_table_name,))
         self._pdbb_command_delete = \
           'delete from %s where %%s' % main_table
+        self._pdbb_command_serializable = 'set transaction isolation level serializable'
         self._pdbb_command_notify = \
           'notify "MODIF_%s"' % main_table
         self._pg_notifications = map(lambda t: 'MODIF_%s' % t, table_names)
@@ -2329,6 +2330,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self.close()
         if transaction is None:
             self._pg_begin_transaction ()
+            self._pg_query(self._pdbb_command_serializable)
         self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
