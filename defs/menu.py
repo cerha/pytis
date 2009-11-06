@@ -463,12 +463,28 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     layout = ('shortname', 'roleid', 'rightid', 'granted', 'colname',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
+    def _multiaction_warning(self):
+        main_form = pytis.form.current_form().main_form()
+        shortname = main_form.current_row()['shortname']
+        if not shortname.value():
+            return
+        data = main_form.data()
+        count = data.select(pytis.data.EQ('shortname', shortname))
+        if count > 1:
+            pytis.form.run_dialog(pytis.form.Warning,
+                                  _("Pozor, tato polo¾ka se v menu vyskytuje na více místech."))
     def _row_editable(self, row):
         return not row['system'].value()
+    def on_new_record(self, *args, **kwargs):
+        self._multiaction_warning()
+        return pytis.form.run_form(pytis.form.PopupInsertForm,
+                                   'menu.ApplicationMenuRights',
+                                   *args, **kwargs)
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
             return None
+        self._multiaction_warning()
         return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
     def _row_deleteable(self, row):
         if not self._row_editable(row):
@@ -478,6 +494,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     def on_delete_record(self, row):
         if not self._row_deleteable(row):
             return None
+        self._multiaction_warning()
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
