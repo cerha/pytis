@@ -514,7 +514,7 @@ class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
             return new
         return None
     def _row_editable(self, row):
-        return not row['system'].value() and row['id'] >= 0
+        return not row['system'].value() and row['id'].value() >= 0
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
