@@ -1,6 +1,11 @@
 2009-11-06  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
+	Print related menu items when displaying the editing access rights warning.
+
+2009-11-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
 	Display warning when editing access rights belonging to several menu items.
 
 2009-11-03  Milan Zamazal  <pdm@brailcom.org>

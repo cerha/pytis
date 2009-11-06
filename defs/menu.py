@@ -469,10 +469,15 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         if not shortname.value():
             return
         data = main_form.data()
-        count = data.select(pytis.data.EQ('shortname', shortname))
-        if count > 1:
-            pytis.form.run_dialog(pytis.form.Warning,
-                                  _("Pozor, tato polo¾ka se v menu vyskytuje na více místech."))
+        items = data.select_map(lambda row: (row['menuid'].value(), row['title'].value()),
+                                condition=pytis.data.EQ('shortname', shortname))
+        if len(items) > 1:
+            current_menuid = main_form.current_row()['menuid'].value()
+            message = _("Pozor, tato polo¾ka se vyskytuje i na jiných místech menu:")
+            for menuid, title in items:
+                if menuid != current_menuid:
+                    message = message + '\n  ' + title
+            pytis.form.run_dialog(pytis.form.Warning, message)
     def _row_editable(self, row):
         return not row['system'].value()
     def on_new_record(self, *args, **kwargs):
