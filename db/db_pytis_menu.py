@@ -971,15 +971,15 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             for r in allowed:
                 if r not in forbidden_rights and r not in allowed_rights:
                     allowed_rights.append(r)
-            raw = item_rights.get('*') or RawRights()
-            for r in raw.system:
+            raw_default = item_rights.get('*') or RawRights()
+            for r in raw_default.system:
                 if r not in max_rights and (r[0], None,) not in max_rights:
                     max_rights.append(r)
-            for r in raw.forbidden:
+            for r in raw_default.forbidden:
                 if (r not in forbidden_rights and r not in allowed_rights and
                     (r[0], None,) not in forbidden_rights and (r[0], None,) not in allowed_rights):
                     forbidden_rights.append(r)
-            for r in raw.allowed:
+            for r in raw_default.allowed:
                 if (r not in forbidden_rights and r not in allowed_rights
                     (r[0], None,) not in forbidden_rights and (r[0], None,) not in allowed_rights):
                     allowed_rights.append(r)
@@ -994,6 +994,8 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                 if max_rights is None:
                     max_rights = allowed_rights
                 rights = [right for right in max_rights if right not in forbidden_rights]
+                rights += [right for right in allowed_rights
+                           if right not in forbidden_rights and (right in max_rights or (right[0], None,) in max_rights)]
                 if ('show', None,) not in forbidden_rights:
                     rights.append(('show', None,))
                 rights.sort()

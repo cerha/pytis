@@ -1,5 +1,10 @@
 2009-11-06  Milan Zamazal  <pdm@brailcom.org>
 
+	* db/db_pytis_menu.py:
+	Pass allowed column rights even when a corresponding form right is forbidden.
+
+2009-11-06  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Fix checking of access rights item editability.
 
