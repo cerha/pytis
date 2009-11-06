@@ -1957,16 +1957,16 @@ class DBCounter(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
         c = self._connector
-        for q in ("create sequence foo",):
+        for q in ("create sequence fooseq",):
             try:
                 self._sql_command(q)
             except:
                 self.tearDown()
                 raise
-        self._counter = pytis.data.DBCounterDefault('foo', self._dconnection)
+        self._counter = pytis.data.DBCounterDefault('fooseq', self._dconnection)
     def tearDown(self):
         c = self._connector
-        for q in ("drop sequence foo",):
+        for q in ("drop sequence fooseq",):
             try:
                 self._sql_command(q)
             except:

@@ -1,5 +1,10 @@
 2009-11-06  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/_test.py:
+	Rename testing sequence in db tests.
+
+2009-11-06  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/dbapi.py:
 	Set transaction level explicitly in dbapi.
 
