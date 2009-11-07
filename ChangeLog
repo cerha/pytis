@@ -1,5 +1,10 @@
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/_grid.py:
+	Hide column styles of the columns without VIEW right.
+
+2009-11-07  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Fix pytis_compute_summary_rights arguments in pytis_view_user_rights db function.
 

@@ -162,6 +162,7 @@ class ListTable(wx.grid.PyGridTableBase):
         self._prefill = prefill
         self._current_row = None
         self._row_style = row_style
+        self._plain_style = pytis.presentation.Style()
         # Zpracuj sloupce
         self._update_columns(columns)
         # Vytvoø cache
@@ -199,6 +200,8 @@ class ListTable(wx.grid.PyGridTableBase):
                                       c.style())
                          for c in columns]
         self._column_count = len(self._columns)
+        self._secret_columns = [c.id() for c in columns
+                                if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
         
     def _panic(self):
         if __debug__: log(DEBUG, 'Zpanikaøení gridové tabulky')
@@ -580,14 +583,17 @@ class ListTable(wx.grid.PyGridTableBase):
         if row >= self.GetNumberRows() or col >= self.GetNumberCols(): # mù¾e se stát...
             return None
         column = self._columns[col]
-        row_style = self._row_style
-        if callable(row_style):
-            row_style = self._cached_value(row, None, style=True)
-        style = column.style
-        if callable(style):
-            style = self._cached_value(row, column.id, style=True)
-        if row_style:
-            style += row_style
+        if column.id in self._secret_columns:
+            style = self._plain_style
+        else:
+            row_style = self._row_style
+            if callable(row_style):
+                row_style = self._cached_value(row, None, style=True)
+            style = column.style
+            if callable(style):
+                style = self._cached_value(row, column.id, style=True)
+            if row_style:
+                style += row_style
         try:
             fg, bg, font = self._attr_cache[style]
         except KeyError:
