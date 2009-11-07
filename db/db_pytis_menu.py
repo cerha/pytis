@@ -1344,7 +1344,7 @@ sqltype('typ_preview_rights',
 function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
          body="""
 select rights.shortname, rights.rights, rights.columns
-from pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''t'') as rights;
+from pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''f'') as rights;
 """,
          grant=db_rights,
          depends=('typ_preview_rights', 'pytis_compute_summary_rights',))

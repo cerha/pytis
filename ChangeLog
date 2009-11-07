@@ -1,6 +1,11 @@
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Fix pytis_compute_summary_rights arguments in pytis_view_user_rights db function.
+
+2009-11-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	* defs/menu.py:
 	Make VIEW column rights relevant to determining multiform rights.
 
