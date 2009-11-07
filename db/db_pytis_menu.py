@@ -1066,7 +1066,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                     columns_string = string.join(columns, ' ')
                 result.append((shortname, roleid, rights_string, columns_string,))
     return result
-_plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean, TBoolean,),
+_plpy_function('pytis_compute_summary_rights', (TString, TString, TBoolean, TBoolean, TBoolean,),
                RT('typ_summary_rights', setof=True),
                body=pytis_compute_summary_rights,
                depends=('a_pytis_valid_role_members', 'e_pytis_action_rights',),)
@@ -1328,7 +1328,7 @@ left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'', ''t'') as
 where pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''))
 union
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked, rights.rights
+       menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
 left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
 where not pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''));

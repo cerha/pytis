@@ -1,6 +1,11 @@
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	Fixes after merge of column rights and multiforms rights.
+
+2009-11-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Don't mistakenly classify some access rights as redundant.
 
 2009-11-06  Milan Zamazal  <pdm@brailcom.org>
