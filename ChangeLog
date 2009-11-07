@@ -1,5 +1,10 @@
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/presentation/spec.py:
+	Fix column rights computation when reading rights from the database.
+
+2009-11-07  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/_grid.py:
 	Hide column styles of the columns without VIEW right.
 

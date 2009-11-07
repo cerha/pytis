@@ -2885,8 +2885,6 @@ class Specification(object):
                     if shortname_rights is None:
                         shortname_rights = access_rights[shortname] = {}
                     shortname_rights[right] = shortname_rights.get(right, []) + [colname]
-            else:
-                columns.append(colname)
         sysrights_data.select_map(process)
         # Transform access rights specifications to AccessRights instances
         def process(right, columns):
