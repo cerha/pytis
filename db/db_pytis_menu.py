@@ -1034,7 +1034,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                     break
                 else:
                     subforms_total += r.total
-            all_rights.total = [r for r in total if r[0] != 'view' or r in subforms_total or (r[0], None,) in subforms_total]
+            all_rights.total = [r for r in total if r[0] != 'view' or r[0] in [rr[0] for rr in subforms_total]]
         # Format and return the rights
         if compress_arg:
             rights = []

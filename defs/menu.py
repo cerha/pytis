@@ -413,7 +413,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
         Field('shortname', _("Akce"), editable=pytis.presentation.Editable.NEVER,
               codebook='menu.ApplicationShortActions',
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
-        Field('colname', _("Sloupec"), editable=pytis.presentation.Editable.NEVER,
+        Field('colname', _("Sloupec"),
               fixed=True,
               descr=_("Sloupec, na který se právo vztahuje")),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
@@ -428,7 +428,7 @@ class ApplicationMenuRights(pytis.presentation.Specification):
               descr=_("Je toto právo nadbyteèné, bez vlivu na výsledná práva?")),
         )
     columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
-    layout = ('shortname', 'roleid', 'rightid', 'granted',)
+    layout = ('shortname', 'roleid', 'rightid', 'granted', 'colname',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):

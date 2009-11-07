@@ -1,6 +1,12 @@
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Make VIEW column rights relevant to determining multiform rights.
+
+2009-11-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
 	Fixes after merge of column rights and multiforms rights.
 
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
