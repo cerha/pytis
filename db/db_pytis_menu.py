@@ -657,6 +657,13 @@ def pytis_update_rights_redundancy():
                 if (self.roleid != other.roleid or
                     self.colname != other.colname):
                     return False
+            if self.granted and other.granted:
+                if self.colname != other.colname:
+                    # The right may be or may not be redundant here, depending
+                    # on whether there is a corresponding right forbidding
+                    # access for all columns (if it exists, the right is NOT
+                    # redundant).
+                    return False
             return True
     rights = {}
     for row in plpy.execute("select * from e_pytis_action_rights where status>=0"):
