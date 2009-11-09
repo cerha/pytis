@@ -1,3 +1,10 @@
+2009-11-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	* defs/menu.py:
+	Add codebook to `colname' field in rights editing.
+	
+
 2009-11-07  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/presentation/spec.py:

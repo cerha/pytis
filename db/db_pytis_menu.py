@@ -1360,3 +1360,10 @@ viewng('ev_pytis_user_roles',
        delete=None,
        grant=db_rights,
        depends=('a_pytis_valid_role_members',))
+
+sql_raw("""
+create or replace view ev_pytis_colnames as select distinct shortname, colname
+from e_pytis_action_rights where system = 't' and colname is not null;
+""",
+        name='ev_pytis_colnames',
+        depends=('e_pytis_action_rights',))

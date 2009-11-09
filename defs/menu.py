@@ -401,6 +401,36 @@ class ApplicationRights(pytis.presentation.Specification):
     layout = ('rightid', 'description',)
     cb = pytis.presentation.CodebookSpec(display='description')
 
+def _colname_description(row, shortname, colname):
+    components = shortname.split('/')
+    if components[0] != 'form':
+        return None
+    if not colname:
+        return _("Celý formuláø")
+    spec_name = components[1]
+    resolver = pytis.util.resolver()
+    try:
+        view_spec = resolver.get(spec_name, 'view_spec')
+    except ResolverError:
+        return None
+    field = view_spec.field(colname)
+    if field is None:
+        return None
+    description = field.label()
+    return description
+class ApplicationColumns(pytis.presentation.Specification):
+    table = 'ev_pytis_colnames'
+    title = "Sloupce"
+    fields = (
+        Field('colname', _("Identifikátor"), fixed=True),
+        Field('shortname'),
+        Field('description', _("Popis"), type=pytis.data.String(),
+              virtual=True, computer=pytis.presentation.computer(_colname_description)),
+        )
+    columns = ('colname', 'description',)
+    layout = ('colname', 'description',)
+    cb = pytis.presentation.CodebookSpec(display='colname')
+
 class ApplicationMenuRights(pytis.presentation.Specification):
     table = 'ev_pytis_action_rights'
     title = _("Práva")
@@ -415,6 +445,8 @@ class ApplicationMenuRights(pytis.presentation.Specification):
               descr=_("Identifikátor akce související s danou polo¾kou menu")),
         Field('colname', _("Sloupec"),
               fixed=True,
+              codebook='menu.ApplicationColumns', not_null=False,
+              runtime_filter=pytis.presentation.Computer(lambda row: pytis.data.EQ('shortname', row['shortname']), depends=('shortname',)),
               descr=_("Sloupec, na který se právo vztahuje")),
         Field('rightid', _("Právo"), codebook='menu.ApplicationRights',
               fixed=True,
