@@ -96,7 +96,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBSystemException(message, e, e.args, query)
             else:
                 raise DBSystemException(message, exception, exception.args, query)
-            return result
+            return result, new_connection
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
@@ -114,14 +114,14 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
-                    return retry(_("Database connection error"), e)
+                    result, connection = retry(_("Database connection error"), e)
             raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.OperationalError, e:
             if e.args and e.args[0].find('could not obtain lock') != -1:
                 raise DBLockException()
-            return retry(_("Database operational error"), e)
+            result, connection = retry(_("Database operational error"), e)
         except dbapi.InternalError, e:
             raise DBException(None, e, query)
         except dbapi.IntegrityError, e:

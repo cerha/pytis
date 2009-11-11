@@ -1,3 +1,8 @@
+2009-11-11  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/dbapi.py:
+	Fix return values of db connection retry results.
+
 2009-10-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
