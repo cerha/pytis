@@ -362,9 +362,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                             ('position', pytis.data.LTree(),),
                                             ('rights', S,), ('help', S,), ('hotkey', S,),),
                                            connection_data, arguments=())
+            menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
         except pytis.data.DBException:
             return None
-        menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
         if not menu_rows:
             return None
         # Build visible menu items

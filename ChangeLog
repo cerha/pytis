@@ -1,3 +1,8 @@
+2009-11-16  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/application.py:
+	Prevent delayed crashes of non-DMP applications in Application._dynamic_menu.
+
 2009-11-11  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/dbapi.py:
