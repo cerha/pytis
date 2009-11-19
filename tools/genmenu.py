@@ -175,9 +175,11 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     if pos == -1:
                         try:
                             bindings = resolver.get_object(form_module, base_form_name).bindings
+                            if callable(bindings):
+                                bindings = bindings()
                             bindings = (binding(form_name),) + tuple(bindings)
-                        except:
-                            pass
+                        except Exception, e:
+                            print "Warning: Can't import bindings of %s: %s" % (form_name, e,)
                     else:
                         bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
                 if pytis.util.is_sequence(bindings):

@@ -1,6 +1,11 @@
 2009-11-19  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:
+	Handle bindings as a method in genmenu.
+
+2009-11-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
 	Add help texts to genmenu command line options.
 
 2009-11-16  Milan Zamazal  <pdm@brailcom.org>
