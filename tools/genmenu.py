@@ -557,15 +557,19 @@ def recompute_tables(cursor):
     print "Creating actions structure...done"
             
 def parse_options():
-    usage = "usage: %prog [options] DEF_DIRECTORY"
+    usage = """usage: %prog [options] DEF_DIRECTORY
+Delete all DMP data and import them from DEF_DIRECTORY specifications again."""
     parser = optparse.OptionParser(usage)
     parser.add_option("-H", "--host", default=None, action="store", dest="host")
     parser.add_option("-d", "--database", default=None, action="store", dest="database")
     parser.add_option("-U", "--user", default=None, action="store", dest="user")
     parser.add_option("-P", "--password", default=None, action="store", dest="password")
-    parser.add_option("--delete", action="store_true", dest="delete_only")
-    parser.add_option("--check", action="store_true", dest="check_only")
-    parser.add_option("--check-update", action="store_true", dest="check_update")
+    parser.add_option("--delete", action="store_true", dest="delete_only",
+                      help="Just delete everything from DMP tables and exit")
+    parser.add_option("--check", action="store_true", dest="check_only",
+                      help="Only check DMP data, do not modify the database")
+    parser.add_option("--check-update", action="store_true", dest="check_update",
+                      help="The same as --check, but print SQL commands needed for update")
     options, args = parser.parse_args()
     if options.check_update:
         options.check_only = True
