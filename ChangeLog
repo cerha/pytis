@@ -1,3 +1,8 @@
+2009-11-20  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	genmenu: Make specification instances when necessary to determine bindings.
+
 2009-11-19  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:

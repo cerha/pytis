@@ -176,7 +176,8 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                         try:
                             bindings = resolver.get_object(form_module, base_form_name).bindings
                             if callable(bindings):
-                                bindings = bindings()
+                                spec_inst = resolver.get_object(form_module, base_form_name)
+                                bindings = spec_inst(resolver).bindings
                             bindings = (binding(form_name),) + tuple(bindings)
                         except Exception, e:
                             print "Warning: Can't import bindings of %s: %s" % (form_name, e,)
@@ -597,6 +598,8 @@ def run():
             parameters[k] = v
     connection = dbapi.connect(**parameters)
     cursor = connection.cursor()
+    import config               # this is pytis virtual module
+    config.dbconnection = pytis.data.DBConnection(**parameters)
     check_only = options.check_only
     cursor.execute("set client_encoding to 'latin2'") # grrr
     if not check_only:
