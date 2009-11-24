@@ -1,3 +1,11 @@
+2009-11-24  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
+	* lib/pytis/presentation/field.py:
+	* lib/pytis/presentation/spec.py:
+	* lib/pytis/web/form.py:
+	Allow setting a custom label (display) for enumeration field NULL value..
+
 2009-11-20  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:

@@ -1052,7 +1052,7 @@ class ChoiceField(EnumerationField):
     _INVALID_SELECTION = 0
     
     def _enumeration(self):
-        return [(None, '')] + super(ChoiceField, self)._enumeration()
+        return [(None, self._spec.null_display() or '')] + super(ChoiceField, self)._enumeration()
     
     def _create_ctrl(self):
         control = wx.Choice(self._parent, choices=self._choices())

@@ -2052,17 +2052,28 @@ class Field(object):
             field's data type is automatically set to a 'DataEnumerator' bound to given
             specification.
 
-          display -- overrides this option for particular field.  If not defined, the value
-            defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
-            information.  Only relevant if the option 'codebook' (above) was defined.
+          display -- defines the method of retrieving the user visible value of an enumeration
+            item.  None means to use the exported enumeration value itself.  A function of one
+            argument may be used to provide custom display values.  The function receives an
+            enumeration value as its argument and returns a string representing that value.  For
+            fields with a 'codebook', the 'display' overrides the 'display' defined by the related
+            'CodebookSpec' and has the same meaning as defined by 'CodebookSpec' (namely may refer
+            to a codebook column providing the codebook value or work with a codebook row within
+            the display function).  In any case, display is always used only for valid enumaration
+            values -- see 'null_display' for a way to customize the displayed value of the
+            unselected state.  This option is only relevant for fields with a 'codebook' or
+            'enumerator'.
+           
+          prefer_display -- has the same meaning as the same option in the related 'CodebookSpec',
+            but higher priority (only relevant for fields with a 'codebook').
 
-          prefer_display -- overrides this option for particular field.  If not defined, the value
-            defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
-            information.
+          display_size -- has the same meaning as the same option in the related 'CodebookSpec',
+            but higher priority (only relevant for fields with a 'codebook').
 
-          display_size -- overrides this option for particular field.  If not defined, the value
-            defaults to the value defined by the related codebook.  See 'CodebookSpec' for more
-            information.
+          null_display -- display value (string) to use for the unselected state of an enumeration
+            field (null field value).  Null value is not part of the enumeration, but if the field
+            is not 'not_null', it is a valid field value, but as it is not within the enumeration,
+            'display' may not be used.
 
           allow_codebook_insert -- true value enables a button for codebook new record insertion.
             This button is displayed next to the codebook field.
@@ -2187,7 +2198,7 @@ class Field(object):
               type=None, type_=None, width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
-              display_size=None, allow_codebook_insert=False, codebook_insert_spec=None,
+              display_size=None, null_display=None, allow_codebook_insert=False, codebook_insert_spec=None,
               codebook_runtime_filter=None, runtime_filter=None, selection_type=None,
               completer=None, orientation=Orientation.VERTICAL, post_process=None, filter=None,
               filter_list=None, style=None, link=(), filename=None, **kwargs):
@@ -2214,6 +2225,9 @@ class Field(object):
         assert completer is None or isinstance(completer, (str, list,tuple, pytis.data.Enumerator))
         assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
+        assert null_display is None or isinstance(null_display, basestring)
+        # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
+        # and not not_null and (codebook or enumerator)
         assert isinstance(allow_codebook_insert, bool)
         assert codebook_insert_spec is None or isinstance(codebook_insert_spec, str)
         assert width is None or isinstance(width, int)
@@ -2284,6 +2298,7 @@ class Field(object):
         self._display = display
         self._prefer_display = prefer_display
         self._display_size = display_size
+        self._null_display = null_display
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._runtime_filter = runtime_filter
@@ -2404,6 +2419,9 @@ class Field(object):
 
     def display_size(self):
         return self._display_size
+
+    def null_display(self):
+        return self._null_display
 
     def allow_codebook_insert(self):
         return self._allow_codebook_insert

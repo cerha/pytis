@@ -367,7 +367,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 return g.div(ctrls, cls='radio-group', id=field.unique_id)
             else:
                 ctrl = g.select
-                attr['options'] = [("&nbsp;", "")] + \
+                attr['options'] = [(field.spec.null_display() or "&nbsp;", "")] + \
                                   [(display, strval) for val, strval, display in options]
                 if value.value() in [val for val, strval, display in options]:
                     attr['selected'] = type.export(value.value())

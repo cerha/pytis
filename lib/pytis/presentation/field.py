@@ -69,6 +69,7 @@ class PresentedRow(object):
             self.default = f.default()
             self.editable = f.editable()
             self.display = f.display()
+            self.null_display = f.null_display()
             self.prefer_display = f.prefer_display()
             self.codebook = f.codebook(data)
             self.completer = f.completer()
@@ -725,8 +726,11 @@ class PresentedRow(object):
             if computer and isinstance(computer, CbComputer):
                 column = self._coldict[computer.field()]
                 display = self._display_func(column)
-        if display:
-            return display(self[column.id].value())
+        value = self[column.id].value()
+        if value is None:
+            return column.null_display or ''
+        elif display:
+            return display(value)
         else:
             return ''
     
