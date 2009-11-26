@@ -17,7 +17,7 @@ decoder = codecs.getdecoder('utf-8')
 def decode(string):
     return decoder(string)[0]
 
-def run_queries(queries, cursor, connection, dry_run):
+def run_queries(queries, cursor, connection, dry_run, quiet=False):
     for q in queries:
         if dry_run:
             print q
@@ -25,7 +25,8 @@ def run_queries(queries, cursor, connection, dry_run):
             cursor.execute(q)
     if not dry_run:
         connection.commit()
-    print "Changes applied, don't forget to update summary rights to get them fully applied."
+    if not quiet:
+        print "Changes applied, don't forget to update summary rights to get them fully applied."
 
 def command_ls(connection, dry_run, args):
     cursor = connection.cursor()
@@ -241,10 +242,19 @@ def command_sys(connection, dry_run, args):
         queries.append(query)
     run_queries(queries, cursor, connection, dry_run)
 
+def command_commit(connection, dry_run, args):
+    if args:
+        print "Error: commit takes no arguments"
+        return
+    cursor = connection.cursor()
+    queries = ["select pytis_update_summary_rights()"]
+    run_queries(queries, cursor, connection, dry_run, quiet=True)
+
 COMMANDS = {'ls': command_ls,
             'add': command_add,
             'del': command_del,
             'sys': command_sys,
+            'commit': command_commit,
             }
 
 USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
@@ -253,8 +263,9 @@ Commands:
   ls [ menu | roles | rights [ SHORTNAME ] ]
   add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
   del { SHORTNAME | FULLNAME | MENU-ID }
-  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call} ..."""
-    
+  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call} ...
+  commit"""
+
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
     parser.add_option("--host", default=None, action="store", dest="host")

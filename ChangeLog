@@ -1,3 +1,8 @@
+2009-11-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/dmp:
+	Add `commit' command to tools/dmp.
+
 2009-11-24  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/inputfield.py:
