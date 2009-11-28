@@ -1,3 +1,13 @@
+2009-11-28  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/dialog.py:
+	Make BugReport dialog a bit smaller vertically.
+	
+	This fixes button placement layout problems experienced in at least one
+	environment when running wx2.8.  In other environments, including wx2.6, this
+	change seems to have no impact on the layout, so it should be safe to apply.
+	
+
 2009-11-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/dmp:

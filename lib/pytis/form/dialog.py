@@ -1175,7 +1175,7 @@ class BugReport(GenericDialog):
             #traceback.SetFonts('Arial', 'Fixed', sizes=(6,7,8,9,10,11,12))
         else:
             style = wx.TE_MULTILINE|wx.TE_DONTWRAP #|wx.TE_READONLY
-            traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 400))
+            traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 360))
             font = wx.Font(traceback.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
             traceback.SetFont(font)
             for line in exception_info(self._einfo).splitlines():
