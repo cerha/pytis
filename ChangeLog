@@ -1,6 +1,11 @@
 2009-12-03  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/web/form.py:
+	New prototype of web filter forms.
+
+2009-12-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
 	Make it possible to disable calendar widgets for a particular web form (accessibility).
 
 2009-12-03  Tomas Cerha  <cerha@brailcom.org>

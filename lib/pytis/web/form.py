@@ -557,6 +557,21 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return json.dumps(data)
 
     
+class FilterForm(EditForm):
+    """Simple form for displaying a list of fields for advanced filtering."""
+    # This form is currently only used in Wiking Biblio CatalogNews module.  The whole thing needs
+    # some further work to be generally usable ...
+    _CSS_CLS = 'edit-form filter-form'
+    
+    def __init__(self, fields, row, **kwargs):
+        view = ViewSpec(_("Filter"), fields)
+        kwargs['reset'] = kwargs.get('reset') # Default to None in this class.
+        kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
+        super(FilterForm, self).__init__(view, row, **kwargs)
+        
+    def _export_footer(self, context):
+        return None
+
     
 class BrowseForm(LayoutForm):
     _CSS_CLS = 'browse-form'
