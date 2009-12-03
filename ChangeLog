@@ -1,5 +1,16 @@
 2009-12-03  Tomas Cerha  <cerha@brailcom.org>
 
+	* translations/pytis.cs.po:
+	* translations/pytis.de.po:
+	* translations/pytis.es.po:
+	* translations/pytis.fr.po:
+	* translations/pytis.hu.po:
+	* translations/pytis.pl.po:
+	* translations/pytis.sk.po:
+	Translations updated.
+
+2009-12-03  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/web/form.py:
 	New prototype of web filter forms.
 
