@@ -307,7 +307,7 @@ class ShowForm(_SingleRecordForm):
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     
-    def __init__(self, view, row, errors=(), **kwargs):
+    def __init__(self, view, row, errors=(), allow_calendar_widget=True, **kwargs):
         """Arguments:
 
           errors -- a sequence of error messages to display within the form (results of previous
@@ -317,10 +317,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             pass field identifiers, which don't appear in the current form or even don't exist in
             the current specification (typically for fields which only appear in the underlying
             database objects).
+
+          allow_calendar_widget -- boolean flag for disabling the calendar widget.  The calendar
+            widget is currently inaccessible, so this option is just a hack for applications, which
+            don't want to disturb the accessibility.
             
           See the parent classes for definition of the remaining arguments.
 
         """
+        self._allow_calendar_widget = allow_calendar_widget
         super(EditForm, self).__init__(view, row, **kwargs)
         key, order = self._key, tuple(self._layout.order())
         self._hidden += [(k, v) for k, v in self._prefill.items()
@@ -396,7 +401,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if isinstance(type, pytis.data.Password) and type.verify():
             attr['id'] = attr['id'] + '-verify-pasword'
             result += g.br() + ctrl(**attr)
-        if isinstance(type, pd.Date):
+        if isinstance(type, pd.Date) and self._allow_calendar_widget:
             result += g.script_write(g.button(label='...', id='%s-button' % attr['id'],
                                               cls='selection-invocation calendar-invocation',
                                               disabled=attr['disabled']))
