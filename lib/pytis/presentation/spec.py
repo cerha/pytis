@@ -2335,7 +2335,8 @@ class Field(object):
         if data:
             column = data.find_column(self.id())
             if type is not None:
-                assert column is None or isinstance(type, column.type().__class__)
+                assert column is None or isinstance(type, column.type().__class__), \
+                       (type, column.type().__class__)
             elif column is not None:
                 type = column.type()
             elif isinstance(self._computer, CbComputer):

@@ -1,3 +1,8 @@
+2009-12-03  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Make the assertion message more informative.
+
 2009-11-28  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/dialog.py:
