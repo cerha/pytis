@@ -8,10 +8,10 @@ Requirements:
 The top level gensql script should define the following objects:
 
   * table (or view) `cms_users' with (at least) the following columns:
-      uid -- user id used also as a reference from other tables (integer, unique, not null),
-      login -- web user's login name (string, unique, not null),
-      fullname -- web user's displayed name (string, not null),
-      passwd -- password for web user's authentication (string, not null)
+      uid -- user id used also as a reference from other tables (int, unique, not null),
+      login -- web user's login name (text, unique, not null),
+      fullname -- web user's displayed name (text, not null),
+      passwd -- password for web user's authentication (text, not null)
 
   * variables:
       cms_users_table -- name of the table of web users.

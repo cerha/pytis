@@ -1,5 +1,10 @@
 2009-12-03  Tomas Cerha  <cerha@brailcom.org>
 
+	* db/db_pytis_cms.py:
+	Pytis CMS: Minor docstring improvement.
+
+2009-12-03  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/presentation/spec.py:
 	Make the assertion message more informative.
 
