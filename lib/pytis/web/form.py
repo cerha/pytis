@@ -796,6 +796,11 @@ class BrowseForm(LayoutForm):
         self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
         self._align = dict([(f.id, 'right') for f in cfields if isinstance(f.type, pd.Number)])
         self._custom_message = message
+        # Hack allowing locale dependent index search controls.
+        try:
+            self._lang = req.prefered_language()
+        except:
+            self._lang = None
 
     def _export_cell(self, context, field):
         value = self._format_field(context, field)
@@ -1048,6 +1053,27 @@ class BrowseForm(LayoutForm):
             values = [v.value() for v in data.distinct(field.id, prefix=level+1,
                                                        condition=self._conditions(condition))
                       if v.value() is not None]
+            if self._lang == 'cs':
+                # Total hack allowing correct usage of Czech character 'ch' in index search.
+                # A more appropriate sloution would be to handle that on the database level.
+                values = [v for v in values if not v.lower().endswith('ch')]
+                if search_string and search_string[-1] == search_string[-1].lower():
+                    ch = 'ch'
+                else:
+                    ch = 'CH'
+                search_ch_string = (search_string or '')+ch
+                condition = self._index_search_condition(search_ch_string)
+                try:
+                    count = data.select(condition=self._conditions(condition))
+                finally:
+                    data.close()
+                if count:
+                    i = 0;
+                    while i < len(values) \
+                              and (values[i][-1].lower() in (u'á',u'è',u'ï',u'é',u'ì') \
+                                   or values[i][-1].lower() < u'i'):
+                        i += 1
+                    values.insert(i, search_ch_string)
             if len(values) < 3 or len(values) > 100:
                 break
             if search_string:
