@@ -1325,13 +1325,18 @@ select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, me
        menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
 left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'', ''t'') as rights on (menu.shortname = rights.shortname)
-where pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''))
+where pytis_multiform_spec(menu.fullname) and rights.rights like ''%show%''
 union
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
 left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
-where not pytis_multiform_spec(menu.fullname) and ((name is null and title is null) or (rights.rights like ''%show%''));
+where not pytis_multiform_spec(menu.fullname) and rights.rights like ''%show%''
+union
+select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked
+from ev_pytis_menu as menu
+where name is null and title is null;
 """,
          grant=db_rights,
          depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights', 'pytis_multiform_spec',))
