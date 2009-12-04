@@ -30,6 +30,7 @@ import operator
 import re
 import string
 import thread
+import threading
 import time
 import weakref
 
@@ -1326,6 +1327,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_distinct = \
           'select distinct %%s from %s where %%s and (%s)%s order by %%s' % \
           (table_list, relation, filter_condition,)
+        self._pdbb_command_fetch_last = \
+            self._SQLCommandTemplate('fetch last from %s' % (cursor_name,))
+        self._pdbb_command_move_to_start = \
+            self._SQLCommandTemplate('move absolute 0 from %s' % (cursor_name,))
+                {'columns': column_list})
         if self._pdbb_operations:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
@@ -1346,11 +1352,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                   "as %s %s order by %%(ordering)s %s") %
                  (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
                   table_names[0], groupby, ordering,)),
-        self._pdbb_command_fetch_last = \
-            self._SQLCommandTemplate('fetch last from %s' % (cursor_name,))
-        self._pdbb_command_move_to_start = \
-            self._SQLCommandTemplate('move absolute 0 from %s' % (cursor_name,))
-                {'columns': column_list})
         else:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
@@ -1378,6 +1379,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           self._SQLCommandTemplate('move forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_move_backward = \
           self._SQLCommandTemplate('move backward %%(number)d from %s' % (cursor_name,))
+        self._pdbb_command_move_absolute = \
+          self._SQLCommandTemplate('move absolute %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_search_first = \
           self._SQLCommandTemplate(
             (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
@@ -1713,7 +1716,55 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Unexpected result', data_)
         return result
 
-    def _pg_select (self, condition, sort, columns, arguments={}, transaction=None):
+    class _PgRowCountingThread(threading.Thread):
+        _PG_INITIAL_STEP = 1000
+        _PG_MAX_STEP = 100000
+        def __init__(self, data, initial_count, transaction, selection, **kwargs):
+            threading.Thread.__init__(self, **kwargs)
+            self._pg_data = data
+            self._pg_transaction = transaction
+            self._pg_selection = selection
+            self._pg_current_count = 0
+            self._pg_initial_count = initial_count
+            self._pg_finished = False
+            self._pg_terminate = False
+            self._pg_terminate_event = threading.Event()
+        def run(self):
+            try:
+                data = self._pg_data
+                step = self._PG_INITIAL_STEP
+                max_step = self._PG_MAX_STEP
+                test_count = self._pg_initial_count + step
+                selection = self._pg_selection
+                transaction = self._pg_transaction
+                while True:
+                    if self._pg_terminate:
+                        return
+                    args = dict(selection=selection, number=test_count)
+                    query = data._pdbb_command_move_absolute.format(args)
+                    result = data._pg_query(query, transaction=transaction)
+                    self._pg_current_count = result[0][0]
+                    if self._pg_current_count < test_count:
+                        break
+                    if step < max_step:
+                        step = min(2*step, max_step)
+                    test_count += step
+                self._pg_finished = True
+            finally:
+                self._pg_terminate_event.set()
+        def pg_count(self, timeout=None):
+            self._pg_terminate_event.wait(timeout)
+            return self._pg_current_count, self._pg_finished
+        def pg_stop(self):
+            self._pg_terminate = True
+            self._pg_terminate_event.wait()
+                
+    def _pg_start_row_counting_thread(self, initial_count, transaction, selection):
+        t = self._PgRowCountingThread(self, initial_count, transaction, selection)
+        t.start()
+        return t
+        
+    def _pg_select (self, condition, sort, columns, arguments={}, transaction=None, async_count=False):
         """Initiate select and return the number of its lines or 'None'.
 
         Arguments:
@@ -1724,6 +1775,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           columns -- sequence of IDs of columns to select
           arguments -- dictionary of function call arguments
           transaction -- transaction object
+          async_count -- if true, count result lines asynchronously and return
+            a '_PgRowCountingThread' instance instead of the number of lines;
+            this is useful on large tables where row counting may take
+            significant amount of time
           
         """
         cond_string = self._pdbb_condition2sql(condition)
@@ -1765,12 +1820,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         args['selection'] = self._pdbb_selection_number = \
             self._pdbb_next_selection_number()
         self._pg_query(self._pdbb_command_select.format(args), transaction=transaction)
-        data = self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
-        self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
-        if data:
-            result = int(data[0][-1])
+        if async_count:
+            result = self._pg_start_row_counting_thread(0, transaction, args['selection'])
         else:
-            result = 0
+            data = self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
+            self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
+            if data:
+                result = int(data[0][-1])
+            else:
+                result = 0
         self._pdbb_select_rows = result
         return result
 
@@ -2541,13 +2599,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
         
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
-               arguments={}):
+               arguments={}, async_count=False):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if (reuse and not self._pg_changed and self._pg_number_of_rows and
             condition == self._pg_last_select_condition and
             sort == self._pg_last_select_sorting and
-            transaction is self._pg_last_select_transaction):
+            transaction is self._pg_last_select_transaction and
+            not async_count):
             use_cache = True
         else:
             use_cache = False
@@ -2568,8 +2627,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             self._pg_make_row_template_limited = None        
         try:
-            number_of_rows = self._pg_select(condition, sort, columns, transaction=transaction,
-                                             arguments=arguments)
+            row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
+                                             arguments=arguments, async_count=async_count)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -2579,15 +2638,16 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             self._pg_is_in_select = False
             raise cls, e, tb
-        if use_cache and number_of_rows != self._pg_number_of_rows:
+        if (use_cache and
+            (not isinstance(row_count_info, int) or row_count_info != self._pg_number_of_rows)):
             use_cache = False
         if use_cache:
             self._pg_buffer.goto(-1)
         else:
             self._pg_buffer.reset()
             self._pg_initial_select = True
-        self._pg_number_of_rows = number_of_rows
-        return number_of_rows
+        self._pg_number_of_rows = row_count_info
+        return row_count_info
 
     def select_aggregate(self, operation, condition=None, transaction=None):
         return self._pg_select_aggregate(operation[0], (operation[1],),

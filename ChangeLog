@@ -1,3 +1,8 @@
+2009-12-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Initial attempt to support asynchronous select row number counting.
+
 2009-10-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

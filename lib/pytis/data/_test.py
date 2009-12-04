@@ -1219,6 +1219,18 @@ class DBDataDefault(_DBTest):
         test_select(None, 2)
         test_select(pytis.data.LT('id', I(5)), 1)
         test_select(pytis.data.GT('id', I(6)), 0)
+    def test_async_select(self):
+        self.data.select(async_count=True)
+        return
+        for r in (self.ROW1, self.ROW2):
+            result = self.data.fetchone()
+            assert result != None, 'missing lines'
+            for i in range(len(r)):
+                assert r[i] == result[i].value(), \
+                       ('invalid value', r[i], result[i].value())
+        assert self.data.fetchone() == None, 'too many lines'
+        assert self.data.fetchone() == None, 'data reincarnation'
+        self.data.close()
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)
