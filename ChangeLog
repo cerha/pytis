@@ -1,3 +1,8 @@
+2009-12-04  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Add GRANT to db view ev_pytis_colnames.
+
 2009-11-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
