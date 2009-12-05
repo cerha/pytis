@@ -157,7 +157,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # In psycopg2 `begin' is called automatically.
         # By disabling its explicit call we avoid PostgreSQL warnings about
         # transactions in progress.
-        pass
+        # Not only that, we even close previous transaction here.  This so that
+        # contingent connection initialization commands such as coding settings
+        # don't prevent to set (non-default) transaction isolation level at the
+        # beginning of transaction.
+        self._postgresql_commit_transaction()
     
     def _postgresql_commit_transaction(self):
         connection = self._pg_get_connection().connection()
