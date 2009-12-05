@@ -341,19 +341,20 @@ def fill_actions(cursor, actions):
 
 def check_actions(cursor, actions, update):
     subactions = {}
-    cursor.execute("select fullname from c_pytis_menu_actions where fullname like 'sub/%'")
+    cursor.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%'")
     while True:
         row = cursor.fetchone()
         if row is None:
             break
-        fullname = row[0]
+        fullname, shortname = row
+        index = fullname[4:6]
         parent_name = fullname[7:]
-        subactions_list = subactions.get(parent_name)
-        if subactions_list is None:
-            subactions_list = subactions[parent_name] = []
-        subactions_list.append(fullname)
+        subactions_dict = subactions.get(parent_name)
+        if subactions_dict is None:
+            subactions_dict = subactions[parent_name] = {}
+        subactions_dict[shortname] = index
     cursor.execute("select fullname, shortname, action_title from c_pytis_menu_actions")
-    actions = copy.copy(actions)
+    missing_actions = copy.copy(actions)
     missing_titles = []
     while True:
         row = cursor.fetchone()
@@ -366,23 +367,36 @@ def check_actions(cursor, actions, update):
         if action is None:
             print 'Check: Extra action: %s (%s)' % (fullname, shortname,)
         else:
-            del actions[fullname]
-            db_subactions_list = subactions.get(fullname)
-            subactions_list = copy.copy(list(action.subactions))
-            subactions_list.sort()
-            if db_subactions_list:
-                db_subactions_list.sort()
-            else:
-                db_subactions_list = []
-            if subactions_list != db_subactions_list:
-                print 'Check: Subactions mismatch: %s app="%s" db="%s"' % (fullname, action.subactions, db_subactions_list,)
+            del missing_actions[fullname]
+            db_subactions_dict = subactions.get(fullname, {})
+            subactions_list = action.subactions
+            subactions_dict = {}
+            for i in range(len(subactions_list)):
+                key = actions[subactions_list[i]].shortname
+                subactions_dict[key] = '%02d' % (i,)
+            for sub_shortname, index in subactions_dict.items():
+                if db_subactions_dict.get(sub_shortname) == index:
+                    del subactions_dict[sub_shortname]
+                    del db_subactions_dict[sub_shortname]
+            for sub_shortname, index in db_subactions_dict.items():
+                print 'Check: Extra subaction: %s %s %s' % (fullname, index, sub_shortname,)
+                if update:
+                    print ("Update: delete from c_pytis_menu_actions where fullname='sub/%s/%s';" %
+                           (index, fullname,))
+            for sub_shortname, index in subactions_dict.items():
+                print 'Check: Missing subaction: %s %s %s' % (fullname, index, sub_shortname,)
+                if update:
+                    subaction = actions['sub/%s/%s' % (index, fullname,)]
+                    print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values('%s', '%s', '%s', '%s');" %
+                           (subaction.name, subaction.shortname, subaction.title, subaction.description,))
             if not title and action.title:
                 missing_titles.append((fullname, action.title,))
-    for fullname, action in actions.items():
-        print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
-        if update:
-            print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values('%s', '%s', '%s', '%s');" %
-                   (action.name, action.shortname, action.title, action.description,))
+    for fullname, action in missing_actions.items():
+        if fullname[:4] != 'sub/':
+            print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
+            if update:
+                print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values('%s', '%s', '%s', '%s');" %
+                       (action.name, action.shortname, action.title, action.description,))
     for fullname, title in missing_titles:
         print 'Check: Missing action title in %s: %s' % (fullname , title,)
         if update:
