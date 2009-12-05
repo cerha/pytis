@@ -1,5 +1,10 @@
 2009-12-05  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/genmenu.py:
+	Require explicit command line options for any genmenu actions.
+
+2009-12-05  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/dbapi.py:
 	* lib/pytis/data/postgresql.py:
 	Ensure transaction isolation level is set at the very beginning of a transaction.

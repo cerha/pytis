@@ -576,19 +576,20 @@ def recompute_tables(cursor):
     print "Creating actions structure...done"
             
 def parse_options():
-    usage = """usage: %prog [options] DEF_DIRECTORY
-Delete all DMP data and import them from DEF_DIRECTORY specifications again."""
+    usage = """usage: %prog [options] DEF_DIRECTORY"""
     parser = optparse.OptionParser(usage)
     parser.add_option("-H", "--host", default=None, action="store", dest="host")
     parser.add_option("-d", "--database", default=None, action="store", dest="database")
     parser.add_option("-U", "--user", default=None, action="store", dest="user")
     parser.add_option("-P", "--password", default=None, action="store", dest="password")
-    parser.add_option("--delete", action="store_true", dest="delete_only",
-                      help="Just delete everything from DMP tables and exit")
     parser.add_option("--check", action="store_true", dest="check_only",
                       help="Only check DMP data, do not modify the database")
     parser.add_option("--check-update", action="store_true", dest="check_update",
                       help="The same as --check, but print SQL commands needed for update")
+    parser.add_option("--rebuild", action="store_true", dest="rebuild",
+                      help="Delete all DMP data and import them from DEF_DIRECTORY specifications again")
+    parser.add_option("--delete", action="store_true", dest="delete_only",
+                      help="Just delete everything from DMP tables and exit")
     options, args = parser.parse_args()
     if options.check_update:
         options.check_only = True
@@ -598,7 +599,8 @@ Delete all DMP data and import them from DEF_DIRECTORY specifications again."""
     dbparameters['user'] = options.user
     dbparameters['password'] = options.password
     if (options.delete_only and args or
-        not options.delete_only and len(args) != 1):
+        not options.delete_only and len(args) != 1 or
+        not options.delete_only and not options.rebuild and not options.check_only and not options.check_update):
         parser.print_help()
         sys.exit(1)
     if options.delete_only and options.check_only:
