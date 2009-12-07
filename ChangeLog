@@ -1,5 +1,11 @@
 2009-12-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/data/types_.py:
+	* lib/pytis/presentation/field.py:
+	Fix permission handling for data objects not derived from `RestrictedData'.
+
+2009-12-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/form.py:
 	Revert "Refuse to commit EditForm if nothing has been changed".
 	

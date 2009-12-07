@@ -690,8 +690,10 @@ class PresentedRow(object):
                 permission = pytis.data.Permission.UPDATE            
         if self._coldict[key].virtual:
             permitted = key not in self._secret_computers
-        else:
+        elif isinstance(self._data, pytis.data.RestrictedData):
             permitted = self._data.permitted(key, permission)
+        else:
+            permitted = True
         return permitted
 
     def _cb_spec(self, column):
