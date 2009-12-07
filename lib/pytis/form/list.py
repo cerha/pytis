@@ -1931,17 +1931,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     if isinstance(ctype, pytis.data.Float):
                         s = presented_row.format(cid, secure=True, locale_format=True)
                     elif isinstance(ctype, pytis.data.Number):
-                        s = presented_row.get(secure=True)
+                        s = presented_row.get(cid, secure=True)
                     elif isinstance(ctype, pytis.data.Date):
-                        s = presented_row.get(secure=True)
+                        s = presented_row.get(cid, secure=True)
                         if s:
                             s = datetime.date(s.year, s.month, s.day)
                     elif isinstance(ctype, pytis.data.Time):
-                        s = presented_row.get(secure=True)
+                        s = presented_row.get(cid, secure=True)
                         if s:
                             s = datetime.time(s.hour, s.minute, int(s.second))
                     elif isinstance(ctype, pytis.data.DateTime):
-                        s = presented_row.get(secure=True)
+                        s = presented_row.get(cid, secure=True)
                         if s:
                             s = s.strftime(pytis.data.DateTime.CZECH_FORMAT)
                     else:

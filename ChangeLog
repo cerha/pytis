@@ -1,5 +1,10 @@
 2009-12-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/form/list.py:
+	Fix XLS export after secret value hiding implementation.
+
+2009-12-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/inputfield.py:
 	Avoid traceback during ListField ctrl initialization (multiform+columns regression).
 
