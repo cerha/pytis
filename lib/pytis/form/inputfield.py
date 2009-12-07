@@ -1444,7 +1444,7 @@ class ListField(GenericCodebookField):
         wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, wxid, self._on_activation)
         wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
         self._selected_item = None
-        self._reload_enumeration()
+        self._enumeration_changed = True
         return list
 
     def _on_select(self, event):

@@ -1,3 +1,8 @@
+2009-12-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/inputfield.py:
+	Avoid traceback during ListField ctrl initialization (multiform+columns regression).
+
 2009-12-05  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:
