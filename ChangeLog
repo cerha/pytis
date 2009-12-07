@@ -1,5 +1,16 @@
 2009-12-07  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/form/form.py:
+	Revert "Refuse to commit EditForm if nothing has been changed".
+	
+	The form transaction may contain uncommitted changes (for example resulting
+	from form button actions) even if the form itself (more precisely its
+	PresentedRow instance) is unchanged.  We need to be able to commit the form
+	anyway in such cases.  PDM thinks that refusing was needed because of column
+	right management, but it will need to be fixed otherwise when it appears.
+
+2009-12-07  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/form/list.py:
 	Fix XLS export after secret value hiding implementation.
 

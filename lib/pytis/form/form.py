@@ -1960,9 +1960,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row, permission=permission,
                                   updated=(self._mode == self.MODE_EDIT))
-        if not rdata.keys():
-            run_dialog(pytis.form.Error, _("Nebyla zmìnìna ¾ádná hodnota"))
-            return False
         if self._mode == self.MODE_INSERT:
             log(ACTION, 'Inserting record...')
             op, args = self._data.insert, (rdata,)
