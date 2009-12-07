@@ -1719,8 +1719,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     class _PgRowCountingThread(threading.Thread):
         _PG_INITIAL_STEP = 1000
         _PG_MAX_STEP = 100000
-        def __init__(self, data, initial_count, transaction, selection, **kwargs):
-            threading.Thread.__init__(self, **kwargs)
+        _PG_DEFAULT_TIMEOUT = 0.1
+        def __init__(self, data, initial_count, transaction, selection):
+            threading.Thread.__init__(self)
             self._pg_data = data
             self._pg_transaction = transaction
             self._pg_selection = selection
@@ -1729,6 +1730,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pg_finished = False
             self._pg_terminate = False
             self._pg_terminate_event = threading.Event()
+            self._pg_original_position = 0
         def run(self):
             try:
                 data = self._pg_data
@@ -1739,6 +1741,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 transaction = self._pg_transaction
                 while True:
                     if self._pg_terminate:
+                        self._pg_initial_count = self._pg_current_count
+                        args = dict(selection=selection, number=self._pg_original_position)
+                        query = data._pdbb_command_move_absolute.format(args)
+                        data._pg_query(query, transaction=transaction)
                         return
                     args = dict(selection=selection, number=test_count)
                     query = data._pdbb_command_move_absolute.format(args)
@@ -1752,12 +1758,35 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_finished = True
             finally:
                 self._pg_terminate_event.set()
-        def pg_count(self, timeout=None):
-            self._pg_terminate_event.wait(timeout)
+        def pg_count(self, min_value=None, timeout=None, position=None):
+            if self._pg_terminate:
+                if not self._pg_finished and (min_value is None or self._pg_current_count < min_value):
+                    if position is not None:
+                        self._pg_original_position = position
+                    new_thread = self.pg_restart(self._pg_original_position)
+                    new_thread.pg_count(min_value=min_value, timeout=timeout)
+                    self._pg_initial_count = new_thread._pg_initial_count
+                    self._pg_current_count = new_thread._pg_current_count
+                    self._pg_finished = new_thread._pg_finished
+            elif min_value is not None:
+                while self._pg_current_count < min_value and not self._pg_finished:
+                    self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
+            else:
+                self._pg_terminate_event.wait(timeout)
             return self._pg_current_count, self._pg_finished
         def pg_stop(self):
             self._pg_terminate = True
             self._pg_terminate_event.wait()
+            data = self._pg_data
+            args = dict(selection=self._pg_selection, number=self._pg_original_position)
+            query = data._pdbb_command_move_absolute.format(args)            
+            data._pg_query(query, transaction=self._pg_transaction)
+        def pg_restart(self, position):
+            new_thread = self.__class__(self._pg_data, self._pg_initial_count,
+                                        self._pg_transaction, self._pg_selection)
+            new_thread._pg_original_position = position
+            new_thread.start()
+            return new_thread
                 
     def _pg_start_row_counting_thread(self, initial_count, transaction, selection):
         t = self._PgRowCountingThread(self, initial_count, transaction, selection)
@@ -2145,10 +2174,19 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         def __init__(self):
             if __debug__: log(DEBUG, 'Nový buffer')
             self.reset()
+
+        def _number_of_rows(self, row_count_info, min_value=None):
+            if isinstance(row_count_info, int):
+                number = row_count_info
+            else:
+                number, finished = row_count_info.pg_count(min_value=min_value,
+                                                           position=self._dbposition)
+            return number
             
         def reset(self):
             """Kompletnì resetuj buffer."""
-            if __debug__: log(DEBUG, 'Resetuji buffer')
+            if __debug__:
+                log(DEBUG, 'Resetuji buffer')
             self._buffer = []
             # _dbpointer ... pozice ukazovátka kursoru v databázi, na který
             #   prvek kursoru poèínaje od 0 ukazuje
@@ -2176,7 +2214,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 row = buffer[pointer]
             return row, position
 
-        def fetch(self, direction, number_of_rows):
+        def fetch(self, direction, row_count_info):
             """Vra» øádek nebo 'None' a updatuj ukazovátka.
 
             Pokud øádek není v bufferu, je vráceno 'None' a pøedpokládá se
@@ -2201,15 +2239,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 # správnou pozici, tj. mimo rozsah dat.
                 if pos < 0:
                     self._pointer = -1 - self._dbposition
-                elif pos >= number_of_rows:
-                    self._pointer = number_of_rows - self._dbposition
+                elif pos >= self._number_of_rows(row_count_info, pos+1):
+                    self._pointer = self._number_of_rows(row_count_info) - self._dbposition
                 return None
             self._pointer = pointer
             result = buffer[pointer]
             if __debug__: log(DEBUG, 'Buffer hit:', pointer) #, str(result))
             return result
 
-        def correction(self, direction, number_of_rows):
+        def correction(self, direction, row_count_info):
             """Vra» argument pro DB operaci SKIP pøed naplnìním bufferu.
 
             Kladná návratová hodnota odpovídá posunu vpøed, záporná posunu
@@ -2229,7 +2267,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 # naètena je¹tì nìjaká data proti smìru bufferu.  Jak to ale
                 # udìlat èistì?
                 if pos >= 0:
-                    pos = min(pos, number_of_rows)
+                    pos = min(pos, self._number_of_rows(row_count_info, pos))
                 else:
                     pos = max(pos, -1)
                 correction = pos - self._dbpointer
@@ -2262,14 +2300,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pointer = position - self._dbposition
             self._dbpointer = position
             
-        def skip(self, count, direction, number_of_rows):
+        def skip(self, count, direction, row_count_info):
             """Proveï skip.
 
             Argumenty:
 
               count -- poèet øádkù, o kolik se má skok provést
               direction -- jedna ze smìrových konstant modulu
-              number_of_rows -- poèet øádkù v aktuálním selectu
+              row_count_info -- informace o poètu øádkù v aktuálním selectu
 
             Vrací: Poèet skuteènì pøeskoèených øádkù ve smìru 'direction'.
             
@@ -2284,8 +2322,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             pos = self._dbposition + pointer
             if pos < -1:
                 pointer = -1 - self._dbposition
-            elif pos > number_of_rows:
-                pointer = number_of_rows - self._dbposition
+            elif pos > self._number_of_rows(row_count_info, pos):
+                pointer = self._number_of_rows(row_count_info) - self._dbposition
             result = pointer - self._pointer
             if direction == BACKWARD:
                 result = -result
@@ -2334,6 +2372,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._dbpointer = dbpointer
             self._dbposition = dbposition
             self._buffer = buffer
+
+        def dbposition(self):
+            """Return absolute position within the database cursor."""
+            return self._dbposition
 
         def copy(self):
             """Vra» \"rozumnou\" kopii instance."""
@@ -2570,6 +2612,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self.skip(row_number)
         return True
 
+    def _pg_number_of_rows_(self, min_value=None):
+        if isinstance(self._pg_number_of_rows, int):
+            number = self._pg_number_of_rows
+        else:
+            number, finished = self._pg_number_of_rows.pg_count(min_value=min_value)
+            if finished:
+                self._pg_number_of_rows = number
+        return number
+
     # Veøejné metody a jimi pøímo volané abstraktní metody
 
     def row(self, key, columns=None, transaction=None, arguments={}):
@@ -2630,6 +2681,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
                                              arguments=arguments, async_count=async_count)
         except:
+            if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+                try:
+                    self._pg_number_of_rows.pg_stop()
+                except:
+                    pass
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
@@ -2726,6 +2782,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             # kolabují pøi pøekroèení hranic dat a mnohdy správnì nefunguje
             # FETCH BACKWARD.  V následujícím kódu se sna¾íme nìkteré
             # nejèastìj¹í chyby PostgreSQL obejít.
+            def stop_counting():
+                if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+                    self._pg_number_of_rows.pg_stop()
+            def start_counting():
+                if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+                    self._pg_number_of_rows = self._pg_number_of_rows.pg_restart(buffer.dbposition())
             def skip():
                 xcount = buffer.correction(FORWARD, self._pg_number_of_rows)
                 if xcount < 0:
@@ -2747,6 +2809,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                             pass
                         self._pg_is_in_select = False
                         raise cls, e, tb
+            stop_counting()
             skip()
             if self._pg_initial_select:
                 self._pg_initial_select = False
@@ -2755,9 +2818,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 std_size = self._pg_fetch_size
             current_row_number = buffer.current()[1]
             last_row_number = min(current_row_number + 1,
-                                  self._pg_number_of_rows)
+                                  self._pg_number_of_rows_(current_row_number+1))
             if direction == FORWARD:
-                size = min(self._pg_number_of_rows-last_row_number, std_size)
+                size = min(self._pg_number_of_rows_(last_row_number+std_size)-last_row_number, std_size)
             else:
                 if current_row_number <= 0:
                     if current_row_number == 0:
@@ -2766,8 +2829,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         assert skipped == 1, skipped
                         skip()
                     return None
-                size = min(self._pg_number_of_rows, std_size)
-            assert size >= 0 and size <= self._pg_number_of_rows
+                size = min(self._pg_number_of_rows_(std_size), std_size)
+            assert size >= 0 and size <= self._pg_number_of_rows_(size)
             if direction == FORWARD:
                 xskip = None
             else:
@@ -2798,6 +2861,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 result = buffer.fetch(direction, self._pdbb_select_rows)
             else:
                 result = None
+            start_counting()
         self._pg_last_fetch_row = result
         if __debug__: log(DEBUG, 'Vrácený øádek', str(result))
         return result
@@ -2849,7 +2913,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
         row, pos = self._pg_buffer.current()
-        if not row and pos >= 0 and pos < self._pg_number_of_rows:
+        if not row and pos >= 0 and pos < self._pg_number_of_rows_(pos+1):
             self.skip(1, BACKWARD)
             row = self.fetchone()
         if not row and (pos < 0 and direction == BACKWARD or \
@@ -2861,6 +2925,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                          transaction=transaction, arguments=arguments)
             except:
                 cls, e, tb = sys.exc_info()
+                if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+                    try:
+                        self._pg_number_of_rows.pg_stop()
+                    except:
+                        pass
                 try:
                     if transaction is None:
                         self._pg_rollback_transaction()
@@ -2875,6 +2944,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__:
             log(DEBUG, 'Explicitly closing current select')
         if self._pg_is_in_select:
+            if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+                self._pg_number_of_rows.pg_stop()
             _, self._pg_last_select_row_number = self._pg_buffer.current()
             args = dict(selection=self._pdbb_selection_number)
         if self._pg_is_in_select is True: # no user transaction

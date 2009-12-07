@@ -1,3 +1,8 @@
+2009-12-07  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Try to implement complete support of asynchronous selects.
+
 2009-12-04  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
