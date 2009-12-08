@@ -1960,7 +1960,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Vytvoøení datového øádku.
         rdata = self._record_data(self._row, permission=permission,
                                   updated=(self._mode == self.MODE_EDIT))
-        if self._mode == self.MODE_INSERT:
+        if not rdata.keys():
+            # We don't want to insert/update the form row when it was not
+            # changed, but we still want to commit the transaction, because it
+            # may contain uncommited changes invoked through various form
+            # actions.
+            log(ACTION, 'Record unchanged')
+            op, args = None, ()
+        elif self._mode == self.MODE_INSERT:
             log(ACTION, 'Inserting record...')
             op, args = self._data.insert, (rdata,)
         elif self._mode == self.MODE_EDIT:
@@ -1974,7 +1981,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             success = True
         if success:
-            success, result = db_operation(op, *args, **dict(transaction=transaction))
+            if op is not None:
+                success, result = db_operation(op, *args, **dict(transaction=transaction))
+            else:
+                success, result = True, (None, True)
         if success and result[1]:
             new_row = result[0]
             original_row = copy.copy(self._row)
@@ -1982,10 +1992,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 new_row = self._row.row()
             self._row.set_row(new_row, reset=True)
             self._signal_update()
-            if self._mode == self.MODE_INSERT:
-                log(ACTION, 'Record inserted')
-            else:
-                log(ACTION, 'Record updated')
+            if op is not None:
+                if self._mode == self.MODE_INSERT:
+                    log(ACTION, 'Record inserted')
+                else:
+                    log(ACTION, 'Record updated')
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row, original_row)
@@ -1999,6 +2010,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     self._transaction = self._default_transaction()
                 self._row.set_transaction(self._transaction)
+                log(ACTION, 'Transaction committed')
             return True
         else:
             if transaction is not None:

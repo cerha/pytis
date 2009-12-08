@@ -1,3 +1,8 @@
+2009-12-08  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/form.py:
+	Don't perform the DB operation when EditForm has not changed, but commit the transaction.
+
 2009-11-06  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
