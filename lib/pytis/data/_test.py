@@ -1221,7 +1221,6 @@ class DBDataDefault(_DBTest):
         test_select(pytis.data.GT('id', I(6)), 0)
     def test_async_select(self):
         self.data.select(async_count=True)
-        return
         for r in (self.ROW1, self.ROW2):
             result = self.data.fetchone()
             assert result != None, 'missing lines'

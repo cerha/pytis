@@ -1,3 +1,9 @@
+2009-12-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/_test.py:
+	* lib/pytis/data/postgresql.py:
+	Make asynchronous select actually work.
+
 2009-12-07  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
