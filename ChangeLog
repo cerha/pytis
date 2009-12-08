@@ -1,5 +1,10 @@
 2009-12-08  Milan Zamazal  <pdm@brailcom.org>
 
+	* tools/genmenu.py:
+	Fix form actions retrieval in genmenu.
+
+2009-12-08  Milan Zamazal  <pdm@brailcom.org>
+
 	* defs/menu.py:
 	Update pubspec conversion of defs/menu.py.
 

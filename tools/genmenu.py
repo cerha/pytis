@@ -276,7 +276,7 @@ def process_form_actions(resolver, actions, rights):
                             add_form_actions(a)                                    
                         else:
                             print "Error: Unknown form action class in %s: %s" % (spec.__name__, a,)
-                add_form_actions(spec_instance.actions())
+                add_form_actions(spec_instance.view_spec().actions())
                 for a in form_actions:
                     form_action_id = 'action/%s/%s' % (a.id(), form_name,)
                     actions[form_action_id] = action = Action(form_action_id, a.descr(),
