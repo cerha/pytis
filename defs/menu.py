@@ -104,15 +104,15 @@ class ApplicationRoles(ApplicationRolesSpecification):
                                            binding_column='roleid'),
                 pytis.presentation.Binding('owners', _("Patøí do rolí"), 'menu.ApplicationRolesOwners',
                                            binding_column='member'),
-                pytis.presentation.Binding(_("Náhled menu"), 'menu.ApplicationRoleMenu', id='menu',
+                pytis.presentation.Binding('menu', _("Náhled menu"), 'menu.ApplicationRoleMenu',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,)))),
-                pytis.presentation.Binding(_("Náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenu', id='previewmenu',
+                pytis.presentation.Binding('previewmenu', _("Náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenu',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True)))),
-                pytis.presentation.Binding(_("Roz¹íøený náhled menu"), 'menu.ApplicationRoleMenuExtended', id='extmenu',
+                pytis.presentation.Binding('extmenu', _("Roz¹íøený náhled menu"), 'menu.ApplicationRoleMenuExtended',
                                            arguments=(lambda row: dict(roleid=row['roleid']))),
-                pytis.presentation.Binding(_("Roz¹íøený náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenuExtended', id='previewextmenu',
+                pytis.presentation.Binding('previewextmenu', _("Roz¹íøený náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenuExtended',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True)))),
                 )
@@ -307,18 +307,18 @@ class ApplicationMenuM(pytis.presentation.Specification):
         )
     columns = ('title', 'actiontype', 'fullname', 'description',)
     layout = ('title', 'position', 'actiontype', 'fullname', 'description',)
-    bindings = (pytis.presentation.Binding(_("Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable', id='role_rights',
+    bindings = (pytis.presentation.Binding('role_rights', _("Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        column=pytis.data.Value(pytis.data.String(), 'roleid',)))),
-                pytis.presentation.Binding(_("Rozpis práv podle sloupcù"), 'menu.ApplicationMenuRightsFoldableColumn', id='column_rights',
+                pytis.presentation.Binding('column_rights', _("Rozpis práv podle sloupcù"), 'menu.ApplicationMenuRightsFoldableColumn',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        column=pytis.data.Value(pytis.data.String(), 'colname',)))),
-                pytis.presentation.Binding(_("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights', id='summary_rights',
+                pytis.presentation.Binding('summary_rights', _("Práva polo¾ky menu"), 'menu.ApplicationSummaryRights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,),
                                                                        multirights=ApplicationMenuM._multiform_row(row),
                                                                        ))),
-                pytis.presentation.Binding(_("Chystaná práva polo¾ky"), 'menu.ApplicationPreviewRights', id='preview_rights',
+                pytis.presentation.Binding('preview_rights', _("Chystaná práva polo¾ky"), 'menu.ApplicationPreviewRights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True,),
                                                                        multirights=ApplicationMenuM._multiform_row(row),
@@ -327,7 +327,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
     def actions(self): return (
         pytis.presentation.Action('copy_rights', _("Zkopírovat práva z..."), self._copy_rights,
                                   descr=("Zkopírování práv z jiné polo¾ky.")),
-        pytis.presentation.Action(_("Odstranit nadbyteèná práva"), self._remove_redundant,
+        pytis.presentation.Action('a_odstranit_nadbytecna_prava', _("Odstranit nadbyteèná práva"), self._remove_redundant,
                                   descr=("Odstranìní polo¾ek práv, které nemají vliv na výsledná práva.")),
         )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
@@ -436,6 +436,7 @@ def _colname_description(row, shortname, colname):
     description = field.label()
     return description
 class ApplicationColumns(pytis.presentation.Specification):
+    public = True
     table = 'ev_pytis_colnames'
     title = "Sloupce"
     fields = (
@@ -609,6 +610,7 @@ class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
         return 1
 
 class ApplicationMenuRightsFoldableColumn(ApplicationMenuRightsFoldable):
+    public = True
     table = 'pytis_action_rights_foldable'
     fields = (
         Field('id', "Id", type=pytis.data.Integer()),
@@ -643,6 +645,7 @@ class _MenuidPreviewType(pytis.data.Integer):
         return pytis.data.Value(self, 0)
 
 class ApplicationSummaryRights(pytis.presentation.Specification):
+    public = True
     table = 'pytis_view_summary_rights'
     title = _("Souhrnná práva")
     arguments = (Field('shortname', "", type=pytis.data.String()),
@@ -695,6 +698,7 @@ class ApplicationPreviewRights(ApplicationSummaryRights):
     title = _("Chystaná práva")
 
 class ApplicationRoleMenu(pytis.presentation.Specification):
+    public = True
     table = 'pytis_view_role_menu'
     title = _("Menu u¾ivatele")
     arguments = (Field('roleid', "", type=pytis.data.String()),
@@ -739,6 +743,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
         return None
 
 class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
+    public = True
     table = 'pytis_view_role_menu'
     title = _("Chystané menu u¾ivatele")
     
@@ -758,5 +763,6 @@ class ApplicationRoleMenuExtended(ApplicationRoleMenu):
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
 
 class ApplicationPreviewRoleMenuExtended(ApplicationRoleMenuExtended):
+    public = True
     table = 'pytis_view_extended_role_menu'
     title = _("Chystané roz¹íøené menu u¾ivatele")

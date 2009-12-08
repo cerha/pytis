@@ -1,3 +1,8 @@
+2009-12-08  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Update pubspec conversion of defs/menu.py.
+
 2009-10-24  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
