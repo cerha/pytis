@@ -1,6 +1,11 @@
 2009-12-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/form.py:
+	Filter out unchanged RecordForm data on update again, but update their values first.
+
+2009-12-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/form.py:
 	When retrieving RecordForm data, retrieve all data, not only changed ones.
 	
 	All data have to be retrieved because information about changed fields may be

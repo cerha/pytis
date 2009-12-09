@@ -1417,9 +1417,14 @@ class RecordForm(LookupForm):
         return None
 
     def _record_data(self, row, permission=None, updated=False):
+        # We must retrieve all the values first, in order to recompute all
+        # fields, even those which are not present in the form.  Only then we
+        # can filter them to retain only those which are actually changed.
         rdata = [(f.id(), pytis.data.Value.reconceal(row[f.id()])) for f in row.fields()
                  if self._data.find_column(f.id()) is not None and
                  (permission is None or self._data.permitted(f.id(), permission))]
+        if updated:
+            rdata = [id_value for id_value in rdata if row.field_changed(id_value[0])]
         return pytis.data.Row(rdata)
     
     def _row_copy_prefill(self, the_row):
