@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ from pytis.presentation import PresentedRow
 
 import config
 
-class ListTable(wx.grid.PyGridTableBase):
+class DataTable(object):
     # Tato třída není až tak triviální, jak bychom si možná přáli.
     # Požadavky na ni jsou následující:
     # - základní práce s tabulkovými daty
@@ -68,17 +68,10 @@ class ListTable(wx.grid.PyGridTableBase):
     class _EditedRow(_CurrentRow):
         def __init__(self, row, data_row, record):
             assert data_row is None or isinstance(data_row, pytis.data.Row)
-            ListTable._CurrentRow.__init__(self, row, record)
+            DataTable._CurrentRow.__init__(self, row, record)
             self.orig_row = copy.copy(data_row)
         def update(self, colid, value):
-            self.the_row[colid] = value
-            
-    class _Column:
-        def __init__(self, id, wxtype, label, style):
-            self.id = id
-            self.wxtype = wxtype
-            self.label = label
-            self.style = style
+            self.the_row[colid] = value    
 
     class EditInfo:
         def __init__(self, row, the_row, orig_row):
@@ -129,22 +122,14 @@ class ListTable(wx.grid.PyGridTableBase):
                 self._start_row = new_start
                 cache[row-new_start] = the_row
                 self._cache = cache
-                    
-    class CustomBoolRenderer(wx.grid.PyGridCellRenderer):
-        def Draw(self, grid, attr, dc, rect, row, col, isSelected):
-            # TODO: respect selection background for selected cells
-            dc.SetBackgroundMode(wx.SOLID)
-            dc.SetBrush(wx.Brush(attr.GetBackgroundColour(), wx.SOLID))
-            dc.SetPen(wx.TRANSPARENT_PEN)
-            dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
-            value = grid.GetCellValue(row, col)
-            if value == 'T':
-                dc.SetBackgroundMode(wx.TRANSPARENT)
-                dc.SetFont(attr.GetFont())
-                dc.SetTextForeground(attr.GetTextColour())
-                dc.DrawText('x', rect.x+2, rect.y)
+            
+    class _Column(object):
+        def __init__(self, id_, type_, label, style):
+            self.id = id_
+            self.type = type_
+            self.label = label
+            self.style = style
 
-    _TYPE_MAPPING = None
     _DEFAULT_FOREGROUND_COLOR = pytis.presentation.Color.BLACK
     _DEFAULT_BACKGROUND_COLOR = pytis.presentation.Color.WHITE
         
@@ -152,7 +137,6 @@ class ListTable(wx.grid.PyGridTableBase):
                  sorting=(), grouping=(), prefill=None, row_style=None):
         assert isinstance(form, Form)
         assert isinstance(grouping, types.TupleType)
-        wx.grid.PyGridTableBase.__init__(self)
         self._form = form
         self._data = data
         self._presented_row = presented_row
@@ -171,7 +155,6 @@ class ListTable(wx.grid.PyGridTableBase):
         self._font_cache = {}
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        self._init_group_bg_downgrade()
         # Nastav řádek
         self.rewind()
         self._edited_row = None
@@ -182,20 +165,10 @@ class ListTable(wx.grid.PyGridTableBase):
             prefill = self._prefill
         record = self._form.record(data_row, new=new, singleline=True, prefill=prefill)
         return self._EditedRow(row_number, data_row, record)
-        
-    # Pomocné metody
-
-    def _wx_type(self, t):
-        if self._TYPE_MAPPING is None:
-            # Musíme inicializovat až zde kvůli neXovému serveru.
-            # Nepoužíváme mapování pro Float, protože to by nám zrušilo
-            # naše formátování čísel.
-            self.__class__._TYPE_MAPPING = {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
-        return self._TYPE_MAPPING.get(t.__class__, wx.grid.GRID_VALUE_STRING)
 
     def _update_columns(self, columns):
         self._columns = [self._Column(c.id(),
-                                      self._wx_type(self._presented_row[c.id()].type()),
+                                      c.type(self._data),
                                       c.column_label() or '',
                                       c.style())
                          for c in columns]
@@ -204,8 +177,8 @@ class ListTable(wx.grid.PyGridTableBase):
                                 if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
         
     def _panic(self):
-        if __debug__: log(DEBUG, 'Zpanikaření gridové tabulky')
-        Form.COMMAND_LEAVE_FORM.invoke()
+        if __debug__:
+            log(DEBUG, 'Zpanikaření gridové tabulky')
 
     def _get_row(self, row, autoadjust=False):
         """Return the row number 'row' from the database as a 'PresentedRow' instance.
@@ -312,36 +285,48 @@ class ListTable(wx.grid.PyGridTableBase):
                 self._group_cache = {row: False}
                 self._group_value_cache = {values: False}
                 return False
+
+    ## Public methods
+
+    def row(self, row):
+        """Vrať řádek číslo 'row' jako instanci třídy 'PresentedRow'.
         
-    def _make_attr(self, style):
-        flags = wx.FONTFLAG_DEFAULT
-        fg, bg = (self._DEFAULT_FOREGROUND_COLOR, self._DEFAULT_BACKGROUND_COLOR)
-        if style:
-            if style.slanted():
-                flags |= wx.FONTFLAG_ITALIC
-            if style.bold():
-                flags |= wx.FONTFLAG_BOLD
-            if style.overstrike():
-                flags |= wx.FONTFLAG_STRIKETHROUGH
-            if style.underline():
-                flags |= wx.FONTFLAG_UNDERLINED
-            if style.foreground():
-                fg = style.foreground()
-            if style.background():
-                bg = style.background()
-        flags |= wx.FONTFLAG_STRIKETHROUGH
-        try:
-            font = self._font_cache[flags]
-        except KeyError:
-            size = self._form.GetFont().GetPointSize()
-            font = self._font_cache[flags] = font = wx.FFont(size, wx.DEFAULT, flags)
-        return (color2wx(fg), color2wx(bg), font)
+        Vrácený řádek zahrnuje změny provedené případnou editací a
+        obsahuje pouze sloupce datového objektu (nepočítané i počítané),
+        takže je možné jej přímo použít v databázových operacích.
+        
+        Jestliže řádek daného čísla neexistuje, vrať 'None'.
+        
+        Argumenty:
+        
+        row -- nezáporný integer, první řádek má číslo 0
+        
+        """
+        if row < 0 or row >= self.number_of_rows():
+            return None
+        return self._get_row(row, autoadjust=True)
 
-    # Naše veřejné metody
-
-    def _init_group_bg_downgrade(self):
-        c = wx.NamedColor(config.grouping_background_downgrade)
-        self._group_bg_downgrade = (255-c.Red(), 255-c.Green(), 255-c.Blue())
+    def rewind(self, position=None):
+        """Přesuň datové ukazovátko na začátek dat.
+        
+        Jestliže 'position' není 'None', přesuň ukazovátko na 'position'.
+        
+        """
+        if self._current_row is None:
+            return
+        if position is None:
+            self._data.rewind()
+            self._cache = self._DisplayCache()
+            self._current_row = None
+        elif position < -1 or position >= self.number_of_rows() - 1:
+            pass
+        else:
+            row = position
+            success, result = db_operation(self._retrieve_row, row)
+            if not success:
+                self._panic()
+            self._presented_row.set_row(result)
+            self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
     
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row_prefill, prefill):
@@ -354,7 +339,6 @@ class ListTable(wx.grid.PyGridTableBase):
         # Smaž cache
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        self._init_group_bg_downgrade()
         # Nastav řádek
         self.rewind()
         if inserted_row_number is None:
@@ -418,24 +402,6 @@ class ListTable(wx.grid.PyGridTableBase):
         cached_row = cached_things[style and 1 or 0]
         return cached_row[col_id]
 
-    def row(self, row):
-        """Vrať řádek číslo 'row' jako instanci třídy 'PresentedRow'.
-        
-        Vrácený řádek zahrnuje změny provedené případnou editací a
-        obsahuje pouze sloupce datového objektu (nepočítané i počítané),
-        takže je možné jej přímo použít v databázových operacích.
-        
-        Jestliže řádek daného čísla neexistuje, vrať 'None'.
-        
-        Argumenty:
-        
-        row -- nezáporný integer, první řádek má číslo 0
-        
-        """
-        if row < 0 or row >= self.GetNumberRows():
-            return None
-        return self._get_row(row, autoadjust=True)
-
     def edit_row(self, row):
         """Zahaj editaci řádku číslo 'row'.
         
@@ -484,28 +450,6 @@ class ListTable(wx.grid.PyGridTableBase):
     def column_label(self, col):
         return self._columns[col].label
 
-    def rewind(self, position=None):
-        """Přesuň datové ukazovátko na začátek dat.
-        
-        Jestliže 'position' není 'None', přesuň ukazovátko na 'position'.
-        
-        """
-        if self._current_row is None:
-            return
-        if position is None:
-            self._data.rewind()
-            self._cache = self._DisplayCache()
-            self._current_row = None
-        elif position < -1 or position >= self.GetNumberRows() - 1:
-            pass
-        else:
-            row = position
-            success, result = db_operation(self._retrieve_row, row)
-            if not success:
-                self._panic()
-            self._presented_row.set_row(result)
-            self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
-
     def current_row(self):
         """Vrať číslo aktuálního řádku datového objektu tabulky.
         
@@ -515,14 +459,86 @@ class ListTable(wx.grid.PyGridTableBase):
         """
         current = self._current_row
         return current and current.row
-        
-    # Povinné gridové metody
     
-    def GetNumberRows(self):
+    def number_of_rows(self):
         return self._row_count
     
-    def GetNumberCols(self):
+    def number_of_columns(self):
         return self._column_count
+            
+
+class ListTable(wx.grid.PyGridTableBase, DataTable):    
+            
+    class _Column(DataTable._Column):
+        
+        _TYPE_MAPPING = None
+        
+        def __init__(self, id_, type_, label, style):
+            DataTable._Column.__init__(self, id_, type_, label, style)
+            self.wxtype = self._wx_type(type_)
+            
+        def _wx_type(self, t):
+            if self._TYPE_MAPPING is None:
+                # Musíme inicializovat až zde kvůli neXovému serveru.
+                # Nepoužíváme mapování pro Float, protože to by nám zrušilo
+                # naše formátování čísel.
+                self.__class__._TYPE_MAPPING = {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
+            return self._TYPE_MAPPING.get(t.__class__, wx.grid.GRID_VALUE_STRING)
+                            
+    def __init__(self, form, data, presented_row, columns, row_count,
+                 sorting=(), grouping=(), prefill=None, row_style=None):
+        assert isinstance(form, Form)
+        assert isinstance(grouping, types.TupleType)
+        wx.grid.PyGridTableBase.__init__(self)
+        DataTable.__init__(self, form, data, presented_row, columns, row_count,
+                           sorting=sorting, grouping=grouping, prefill=prefill, row_style=row_style)
+        self._init_group_bg_downgrade()
+        
+    # Pomocné metody
+        
+    def _panic(self):
+        DataTable._panic(self)
+        Form.COMMAND_LEAVE_FORM.invoke()
+        
+    def _make_attr(self, style):
+        flags = wx.FONTFLAG_DEFAULT
+        fg, bg = (self._DEFAULT_FOREGROUND_COLOR, self._DEFAULT_BACKGROUND_COLOR)
+        if style:
+            if style.slanted():
+                flags |= wx.FONTFLAG_ITALIC
+            if style.bold():
+                flags |= wx.FONTFLAG_BOLD
+            if style.overstrike():
+                flags |= wx.FONTFLAG_STRIKETHROUGH
+            if style.underline():
+                flags |= wx.FONTFLAG_UNDERLINED
+            if style.foreground():
+                fg = style.foreground()
+            if style.background():
+                bg = style.background()
+        flags |= wx.FONTFLAG_STRIKETHROUGH
+        try:
+            font = self._font_cache[flags]
+        except KeyError:
+            size = self._form.GetFont().GetPointSize()
+            font = self._font_cache[flags] = font = wx.FFont(size, wx.DEFAULT, flags)
+        return (color2wx(fg), color2wx(bg), font)
+
+    def _init_group_bg_downgrade(self):
+        c = wx.NamedColor(config.grouping_background_downgrade)
+        self._group_bg_downgrade = (255-c.Red(), 255-c.Green(), 255-c.Blue())
+        
+    def update(self, *args, **kwargs):
+        super(ListTable, self).update(*args, **kwargs)
+        self._init_group_bg_downgrade()
+
+    # Povinné wx gridové metody
+    
+    def GetNumberRows(self):
+        return self.number_of_rows()
+    
+    def GetNumberCols(self):
+        return self.number_of_columns()
     
     def IsEmptyCell(self, row, col):
         return False
@@ -566,7 +582,7 @@ class ListTable(wx.grid.PyGridTableBase):
         log(EVENT, 'Nastavena hodnota editovaného políčka:',
             (row, col, value))
 
-    # Nepovinné gridové metody
+    # Nepovinné wx gridové metody
 
     #def GetColLabelValue(self, col):
     # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
@@ -610,7 +626,6 @@ class ListTable(wx.grid.PyGridTableBase):
                 attr.SetFont(font)
                 if column.wxtype == wx.grid.GRID_VALUE_BOOL:
                     attr.SetRenderer(wx.grid.GridCellBoolRenderer())
-                    #attr.SetRenderer(self.CustomBoolRenderer())
                 return attr
         return None
 

@@ -1,3 +1,8 @@
+2009-12-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/_grid.py:
+	Split ListTable to DataTable and new ListTable.
+
 2009-12-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/_test.py:
