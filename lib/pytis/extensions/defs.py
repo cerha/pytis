@@ -158,6 +158,16 @@ def check_menus_defs():
                 return "Binding item for %s not found." % side
             return None
         def check_spec(name):
+            pos = name.rfind('.')
+            if pos >= 0:
+                module_name = name[:pos].replace('.', '/')
+                class_name = name[pos+1:]
+                try:
+                    spec = resolver.get_object(module_name, class_name)
+                except ResolverError, e:
+                    return str(e)
+                if not spec.public:
+                    return "Neveøejná specifikace v menu."
             try:
                 data_spec = resolver.get(name, 'data_spec')
             except ResolverError, e:

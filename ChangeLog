@@ -1,5 +1,10 @@
 2009-12-09  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/extensions/defs.py:
+	Checking private specifications in menu.
+
+2009-12-09  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/presentation/spec.py:
 	Disable setting form action rights from the database.
 	
