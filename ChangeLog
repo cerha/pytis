@@ -1,3 +1,10 @@
+2009-12-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/presentation/spec.py:
+	Disable setting form action rights from the database.
+	
+	This is just a temporary testing change to be reverted later.
+
 2009-12-08  Milan Zamazal  <pdm@brailcom.org>
 
 	* tools/genmenu.py:

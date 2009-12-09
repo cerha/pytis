@@ -399,6 +399,7 @@ class Action(_ActionItem):
         return self._access_groups
         
     def set_access_groups(self, access_groups):
+        return
         assert access_groups is None or is_sequence(access_groups)
         self._access_groups = access_groups
         
