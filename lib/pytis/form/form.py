@@ -1419,8 +1419,7 @@ class RecordForm(LookupForm):
     def _record_data(self, row, permission=None, updated=False):
         rdata = [(f.id(), pytis.data.Value.reconceal(row[f.id()])) for f in row.fields()
                  if self._data.find_column(f.id()) is not None and
-                 (permission is None or self._data.permitted(f.id(), permission)) and
-                 (not updated or row.field_changed(f.id()))]
+                 (permission is None or self._data.permitted(f.id(), permission))]
         return pytis.data.Row(rdata)
     
     def _row_copy_prefill(self, the_row):

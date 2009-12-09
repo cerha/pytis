@@ -1,3 +1,15 @@
+2009-12-09  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/form.py:
+	When retrieving RecordForm data, retrieve all data, not only changed ones.
+	
+	All data have to be retrieved because information about changed fields may be
+	incorrect.  At least no change is signalled for some CbComputer fields that are
+	not displayed in the RecordForm.
+	
+	This change should be revised later.
+	
+
 2009-12-08  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/list.py:
