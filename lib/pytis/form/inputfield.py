@@ -556,10 +556,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._ctrl.Enable(False)
 
     def _update_background_color(self):
-        if self._readonly:
-            return
-        elif self._denied:
+        if self._denied:
             color = config.field_denied_color
+        elif self._readonly:
+            color = config.field_disabled_color
         elif not self._enabled:
             color = config.field_disabled_color
         elif self._hidden and not self._modified():

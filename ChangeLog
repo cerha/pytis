@@ -1,5 +1,10 @@
 2009-12-09  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/inputfield.py:
+	Fix background colors for some kinds of non-editable fields.
+
+2009-12-09  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/form.py:
 	Filter out unchanged RecordForm data on update again, but update their values first.
 
