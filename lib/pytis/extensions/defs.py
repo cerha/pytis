@@ -160,6 +160,7 @@ def check_menus_defs():
             return errors
         def check_spec(name):
             errors = []
+            ## Public specification
             pos = name.rfind('.')
             if pos >= 0:
                 module_name = name[:pos].replace('.', '/')
@@ -170,19 +171,39 @@ def check_menus_defs():
                     return errors + [str(e)]
                 if not spec.public:
                     errors.append("Neveøejná specifikace v menu.")
+            ## Data specification
             try:
                 data_spec = resolver.get(name, 'data_spec')
             except ResolverError, e:
                 return errors + [str(e)]
             try:
+                view_spec = resolver.get(name, 'view_spec')
+                fields = view_spec.fields()
+                ## Codebook access rights
+                for f in fields:
+                    codebook = f.codebook()
+                    if codebook is not None:
+                        def arg(name, value):
+                            return name, pytis.data.Value(pytis.data.String(), value)
+                        arguments = (arg('form', name),
+                                     arg('field', f.id()),
+                                     arg('codebook', codebook),
+                                     ('new', (pytis.data.Value(pytis.data.Boolean(), False)),),
+                                     )
+                        users = pytis.extensions.dbfunction('pytis_check_codebook_rights', *arguments)
+                        if users:
+                            if is_sequence(users):
+                                users = [str(row[0].value()) for row in users]
+                                users.sort()
+                            errors.append("Rozporuplná pøístupová práva k èíselníku %s políèka %s pro u¾ivatele %s" %
+                                          (codebook, f.id(), users,))
+                ## Data object working
                 success, data = pytis.form.db_operation(data_spec.create, dbconnection_spec=dbconn)
                 if not success:
                     return errors + ["Nepodaøilo se vytvoøit datový objekt."]
                 data.select()
                 row = data.fetchone()
                 if row:
-                    view_spec = resolver.get(name, 'view_spec')
-                    fields = view_spec.fields()
                     prow = PresentedRow(fields, data, row)
             except Exception, e:
                 errors.append(str(e))
