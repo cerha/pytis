@@ -1,3 +1,8 @@
+2009-12-10  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/form.py:
+	Fix saving and loading user filters for new Filter arguments.
+
 2009-12-09  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/extensions/defs.py:

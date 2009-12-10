@@ -747,9 +747,15 @@ class LookupForm(InnerForm):
         packed = self._get_state_param(self._USER_FILTERS_PARAM, None, tuple, tuple)
         if packed:
             unpacked = [(unicode(n), self._unpack_condition(c)) for n, c in packed]
-            return tuple([Filter(name, cond, fixed=False) for name, cond in unpacked if cond])
+            user_filters = []
+            for i in range(len(unpacked)):
+                name, cond = unpacked[i]
+                if cond:
+                    filter_id = '_filter_%d' % (i,)
+                    user_filters.append(Filter(filter_id, name, cond, fixed=False))
         else:
-            return ()
+            user_filters = ()
+        return tuple(user_filters)
 
     def _default_sorting(self):
         sorting = self._view.sorting()
@@ -973,7 +979,8 @@ class LookupForm(InnerForm):
                 elif f.condition().is_same(self._lf_filter):
                     message(_("Shodný filtr ji¾ existuje pod názvem '%s'.") % f.name(), beep_=True)
                     return
-            self._user_filters += (Filter(name, self._lf_filter),)
+            filter_id = '_filter_%d' % (len(self._user_filters),)
+            self._user_filters += (Filter(filter_id, name, self._lf_filter),)
             self._save_user_filters(self._user_filters)
             message(_("Filtr ulo¾en pod názvem '%s'.") % name)
         self.focus()
@@ -984,7 +991,8 @@ class LookupForm(InnerForm):
         
     def _cmd_update_saved_filter(self, index):
         filters = list(self._user_filters)
-        filters[index] = Filter(filters[index].name(), self._lf_filter)
+        f = filters[index]
+        filters[index] = Filter(f.id(), f.name(), self._lf_filter)
         self._user_filters = tuple(filters)
         self._save_user_filters(self._user_filters)
     
