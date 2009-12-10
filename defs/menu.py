@@ -449,7 +449,44 @@ class ApplicationColumns(pytis.presentation.Specification):
     layout = ('colname', 'description',)
     cb = pytis.presentation.CodebookSpec(display='colname')
 
-class ApplicationMenuRights(pytis.presentation.Specification):
+class _ApplicationMenuRightsBase(pytis.presentation.Specification):
+    public = False
+    
+    def _multiaction_check(self):
+        main_form = pytis.form.current_form().main_form()
+        shortname = main_form.current_row()['shortname']
+        if not shortname.value():
+            return
+        data = main_form.data()
+        items = data.select_map(lambda row: (row['menuid'].value(), row['title'].value()),
+                                condition=pytis.data.EQ('shortname', shortname))
+        if len(items) > 1:
+            current_menuid = main_form.current_row()['menuid'].value()
+            message = _("Pozor, tato polo¾ka se vyskytuje i na jiných místech menu:")
+            for menuid, title in items:
+                if menuid != current_menuid:
+                    message = message + '\n  ' + title
+            pytis.form.run_dialog(pytis.form.Warning, message)
+    def _codebook_rights_check(self):
+        main_form = pytis.form.current_form().main_form()
+        shortname = main_form.current_row()['shortname'].value()
+        components = shortname.split('/')
+        if components[0] != 'form':
+            return
+        spec_name = components[1]
+        menu_checker = pytis.extensions.MenuChecker()
+        errors = (menu_checker.check_codebook_rights(spec_name, new=True) +
+                  menu_checker.check_reverse_codebook_rights(spec_name, new=True))
+        if errors:
+            message = ('\n'.join(errors)) + '\n\n\n'
+            pytis.form.run_dialog(pytis.form.Warning, "Rozporuplná pøístupová práva k èíselníku",
+                                  report=message)
+    def _before_edit_checks(self):
+        self._multiaction_check()
+    def _after_edit_checks(self):
+        self._codebook_rights_check()
+    
+class ApplicationMenuRights(_ApplicationMenuRightsBase):
     public = True
     table = 'ev_pytis_action_rights'
     title = _("Práva")
@@ -482,34 +519,25 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     layout = ('shortname', 'roleid', 'rightid', 'granted', 'colname',)
     sorting = (('roleid', pytis.data.ASCENDENT,), ('rightid', pytis.data.ASCENDENT,),)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
-    def _multiaction_warning(self):
-        main_form = pytis.form.current_form().main_form()
-        shortname = main_form.current_row()['shortname']
-        if not shortname.value():
-            return
-        data = main_form.data()
-        items = data.select_map(lambda row: (row['menuid'].value(), row['title'].value()),
-                                condition=pytis.data.EQ('shortname', shortname))
-        if len(items) > 1:
-            current_menuid = main_form.current_row()['menuid'].value()
-            message = _("Pozor, tato polo¾ka se vyskytuje i na jiných místech menu:")
-            for menuid, title in items:
-                if menuid != current_menuid:
-                    message = message + '\n  ' + title
-            pytis.form.run_dialog(pytis.form.Warning, message)
     def _row_editable(self, row):
         return not row['system'].value()
     def on_new_record(self, *args, **kwargs):
-        self._multiaction_warning()
-        return pytis.form.run_form(pytis.form.PopupInsertForm,
-                                   'menu.ApplicationMenuRights',
-                                   *args, **kwargs)
+        self._before_edit_checks()
+        result = pytis.form.run_form(pytis.form.PopupInsertForm,
+                                     'menu.ApplicationMenuRights',
+                                     *args, **kwargs)
+        if result:
+            self._after_edit_checks()
+        return result
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
             return None
-        self._multiaction_warning()
-        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
+        self._before_edit_checks()
+        result = pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
+        if result:
+            self._after_edit_checks()
+        return result
     def _row_deleteable(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze mazat"))
@@ -518,10 +546,15 @@ class ApplicationMenuRights(pytis.presentation.Specification):
     def on_delete_record(self, row):
         if not self._row_deleteable(row):
             return None
-        self._multiaction_warning()
+        self._before_edit_checks()
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
             return None
-        return pytis.data.EQ(row.keys()[0], row.key()[0])
+        result = row.data().delete((row['id'],))
+        if result:
+            self._after_edit_checks()
+        else:
+            result = "Øádek se nepodaøilo vymazat"
+        return result
     def proc_spec(self):
         def commit_changes():
             if pytis.extensions.dbfunction("pytis_update_summary_rights"):
@@ -537,7 +570,7 @@ class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
                                           subcount_column_id='subcount',
                                           **kwargs)
 
-class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
+class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
     public = True
     table = 'pytis_action_rights_foldable'
     arguments = (Field('shortname', "", type=pytis.data.String()),
@@ -581,19 +614,24 @@ class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
         else:
             prefill = copy.copy(prefill)
         prefill['shortname'] = shortname
+        self._before_edit_checks()
         new = pytis.form.new_record('menu.ApplicationMenuRights',
                                     prefill=prefill, transaction=transaction,
                                     block_on_new_record=True, multi_insert=True)
         if new:
-            return new
-        return None
+            self._after_edit_checks()
+        return new or None
     def _row_editable(self, row):
         return not row['system'].value() and row['id'].value() >= 0
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze editovat"))
             return None
-        return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.ApplicationMenuRights', select_row=row['id'])
+        self._before_edit_checks()
+        result = pytis.form.run_form(pytis.form.PopupEditForm, 'menu.ApplicationMenuRights', select_row=row['id'])
+        if result:
+            self._after_edit_checks()
+        return result
     def _row_deleteable(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _("Systémová práva nelze mazat"))
@@ -603,10 +641,15 @@ class ApplicationMenuRightsFoldable(pytis.presentation.Specification):
         form = pytis.form.current_form()
         if not self._row_deleteable(row):
             return None
+        self._before_edit_checks()
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
             return None
         data = pytis.extensions.data_object('menu.ApplicationMenuRights')
-        data.delete((row['id'],))
+        result = data.delete((row['id'],))
+        if result:
+            self._after_edit_checks()
+        else:
+            result = "Øádek se nepodaøilo vymazat"
         return 1
 
 class ApplicationMenuRightsFoldableColumn(ApplicationMenuRightsFoldable):

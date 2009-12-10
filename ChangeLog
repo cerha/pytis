@@ -1,5 +1,11 @@
 2009-12-10  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	* lib/pytis/extensions/defs.py:
+	Warn about inappropriate codebook rights in DMP editing.
+
+2009-12-10  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	* lib/pytis/extensions/defs.py:
 	Check for invalid codebook rights in specification checking.
