@@ -1,3 +1,11 @@
+2009-12-10  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/data/data.py:
+	Implement `pytis.data.Row.has_key()' more efficiently.
+	
+	This simple change makes Biblio catalog generation nearly twice as fast (from
+	160 to 90 secs).
+
 2009-12-10  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/form.py:

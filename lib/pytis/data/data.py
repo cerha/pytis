@@ -1574,7 +1574,7 @@ class Row:
 
     def has_key(self, key):
         """Vra» pravdu, právì kdy¾ øádek obsahuje sloupec jména 'key'."""
-        return some(lambda c, key=key: c[0] == key, self._data)
+        return key in self.keys()
 
     def keys(self):
         """Vra» seznam názvù v¹ech sloupcù jako strings.
@@ -1582,7 +1582,7 @@ class Row:
         Poøadí polo¾ek vráceného seznamu je nedefinováno.
         
         """
-        return map (lambda c: c[0], self._data)
+        return [c[0] for c in self._data]
 
     def items(self):
         """Vra» seznam dvojic [ID, VALUE] odpovídajících v¹em sloupcùm.
