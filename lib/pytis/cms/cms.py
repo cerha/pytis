@@ -95,9 +95,10 @@ class Modules(Specification):
     layout = ('modname', 'descr')
     columns = ('modname', 'descr')
     def bindings(self):
-        return (Binding('b_dostupne_akce_tohoto_modulu', _("Dostupné akce tohoto modulu"), self._spec_name('Actions'), 'mod_id'),)
+        return (Binding('actions', _("Dostupné akce tohoto modulu"), self._spec_name('Actions'),
+                        'mod_id'),)
     def actions(self):
-        return (Action('a_prenacist_dostupne_akce', _("Pøenaèíst dostupné akce"), self._reload_actions),)
+        return (Action('reload', _("Pøenaèíst dostupné akce"), self._reload_actions),)
     def on_delete_record(self, record):
         import pytis.form
         data = pytis.form.create_data_object(self._spec_name('Menu'))
@@ -140,7 +141,8 @@ class Modules(Specification):
             actions.sort(lambda a, b: cmp(order(a), order(b)))
             descriptions = [action_descr(module, action) for action in actions] 
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
-                                message=_("Za¹krtnìte akce, které chcete zpøístupnit webovým u¾ivatelùm:"), 
+                                message=_("Za¹krtnìte akce, které chcete zpøístupnit webovým "
+                                          "u¾ivatelùm:"),
                                 items=zip([True for a in actions], actions, descriptions),
                                 columns=(_("Akce"), _("Popis")))
             if result is not None:
@@ -299,7 +301,7 @@ class Menu(Specification):
                      label=_("Text stránky (pro aktuální jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
     def bindings(self):
-        return (Binding('b_pristupova_prava', _("Pøístupová práva"), self._spec_name('Rights'),
+        return (Binding('rights', _("Pøístupová práva"), self._spec_name('Rights'),
                         condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id'])),)
 
 
@@ -319,8 +321,9 @@ class Users(Specification):
     cb = CodebookSpec(display='fullname')
     sorting = (('login', ASC),)
     def bindings(self):
-        return (Binding('b_uzivatelske_role', _("U¾ivatelské role"), self._spec_name('UserRoles'), 'uid'),
-                Binding('b_historie_prihlaseni', _("Historie pøihlá¹ení"), self._spec_name('UserSessionLog'), 'uid'),
+        return (Binding('roles', _("U¾ivatelské role"), self._spec_name('UserRoles'), 'uid'),
+                Binding('sessions', _("Historie pøihlá¹ení"), self._spec_name('UserSessionLog'),
+                        'uid'),
                 )
 
 
@@ -338,7 +341,8 @@ class Roles(Specification):
     columns = ('name', 'description')
     condition = pd.EQ('system_role', pd.Value(pd.String(), None))
     def bindings(self): return (
-        Binding('b_uzivatele_zarazeni_do_teto_role', _("U¾ivatelé zaøazení do této role"), self._spec_name('RoleUsers'), 'role_id'),
+        Binding('users', _("U¾ivatelé zaøazení do této role"), self._spec_name('RoleUsers'),
+                'role_id'),
         )
     cb = CodebookSpec(display='name')
 
@@ -425,7 +429,7 @@ class Rights(Specification):
         else:
             return pp.Style(background='#ffd')
     def actions(self):
-        return (Action('a_povolit_zakazat', _("Povolit/zakázat"), self._toggle_permission, hotkey=' '),)
+        return (Action('toggle', _("Povolit/zakázat"), self._toggle_permission, hotkey=' '),)
     def _toggle_permission(self, record):
         permitted = pd.Value(pd.Boolean(), not record['permitted'].value())
         record.data().update((record['right_id'],), pd.Row((('permitted', permitted),)))

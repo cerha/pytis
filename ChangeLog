@@ -1,5 +1,10 @@
 2009-12-10  Tomas Cerha  <cerha@brailcom.org>
 
+	* lib/pytis/cms/cms.py:
+	Pytis CMS: Use pretty action and binding ids.
+
+2009-12-10  Tomas Cerha  <cerha@brailcom.org>
+
 	* lib/pytis/data/data.py:
 	Implement `pytis.data.Row.has_key()' more efficiently.
 	
