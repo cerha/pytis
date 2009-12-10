@@ -148,16 +148,18 @@ def check_menus_defs():
     errors = []
     def check_specs(update, specnames):
         def check_bindings(main, side):
+            errors = []
             try:
                 bindings = resolver.get(main, 'binding_spec')
             except ResolverError, e:
-                return str(e)
+                return errors + [str(e)]
             try:
                 bspec = bindings[side]
             except KeyError:
-                return "Binding item for %s not found." % side
-            return None
+                errors.append("Binding item for %s not found." % (side,))
+            return errors
         def check_spec(name):
+            errors = []
             pos = name.rfind('.')
             if pos >= 0:
                 module_name = name[:pos].replace('.', '/')
@@ -165,17 +167,17 @@ def check_menus_defs():
                 try:
                     spec = resolver.get_object(module_name, class_name)
                 except ResolverError, e:
-                    return str(e)
+                    return errors + [str(e)]
                 if not spec.public:
-                    return "Neveøejná specifikace v menu."
+                    errors.append("Neveøejná specifikace v menu.")
             try:
                 data_spec = resolver.get(name, 'data_spec')
             except ResolverError, e:
-                return str(e)
+                return errors + [str(e)]
             try:
                 success, data = pytis.form.db_operation(data_spec.create, dbconnection_spec=dbconn)
                 if not success:
-                    return "Nepodaøilo se vytvoøit datový objekt."
+                    return errors + ["Nepodaøilo se vytvoøit datový objekt."]
                 data.select()
                 row = data.fetchone()
                 if row:
@@ -183,8 +185,8 @@ def check_menus_defs():
                     fields = view_spec.fields()
                     prow = PresentedRow(fields, data, row)
             except Exception, e:
-                return str(e)
-            return None
+                errors.append(str(e))
+            return errors
         total = len(specnames)
         last_error = ''
         step = 1 # aktualizujeme jen po ka¾dých 'step' procentech...
@@ -197,13 +199,12 @@ def check_menus_defs():
                 break
             if name.find('::') != -1:
                 main, side = name.split('::')
-                results = (check_bindings(main, side), check_spec(main), check_spec(side))
+                results = check_bindings(main, side) + check_spec(main) + check_spec(side)
             else:
-                results = (check_spec(name),)
+                results = check_spec(name)
             for error in results:
-                if error is not None:
-                    errors.append("Specifikace %s: %s" % (name, error))
-                    last_error = "%s\n%s...)" % (name, error[:width-4])
+                errors.append("Specifikace %s: %s" % (name, error))
+                last_error = "%s\n%s...)" % (name, error[:width-4])
     pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
                           message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
                           elapsed_time=True, can_abort=True)

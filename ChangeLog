@@ -1,5 +1,10 @@
 2009-12-10  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/extensions/defs.py:
+	Allow multiple error messages for a single check in specification checking.
+
+2009-12-10  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	When copying action rights, ignore column specific rights.
 
