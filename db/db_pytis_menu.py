@@ -834,10 +834,10 @@ viewng('ev_pytis_user_system_rights',
 
 function('pytis_copy_rights', (TString, TString), 'void',
          """
-update e_pytis_action_rights set status=-1 where shortname=$2;
+update e_pytis_action_rights set status=-1 where shortname=$2 and colname is null;
 insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted)
        select $2 as shortname, roleid, rightid, colname, system, granted from e_pytis_action_rights
-              where shortname=$1 and status>=0;
+              where shortname=$1 and status>=0 and colname is null;
 """,
          doc="Make access rights of a menu item the same as of another menu item.",
          grant=db_rights,
