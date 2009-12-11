@@ -305,7 +305,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._data.rewind()
             if inserted_row_number is not None:
                 row_count = row_count + 1
-            old_row_count = self._table.GetNumberRows()
+            old_row_count = self._table.number_of_rows()
             new_row_count = row_count
             t.update(columns=self._columns, row_count=row_count, sorting=self._lf_sorting,
                      grouping=self._grouping, inserted_row_number=inserted_row_number,
@@ -478,7 +478,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if direction == pytis.data.FORWARD:
                 start_row = max(row-1, 0)
             else:
-                start_row = min(row+1, self._table.GetNumberRows())
+                start_row = min(row+1, self._table.number_of_rows())
         else:
             start_row = row
         # TODO: Pøedhledání v aktuálním selectu
@@ -684,7 +684,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if row > 0:
                 after = table.row(row-1).row().columns(kc)
                 before = None
-            elif row < table.GetNumberRows() - 1:
+            elif row < table.number_of_rows() - 1:
                 after = None
                 before = table.row(row+1).row().columns(kc)
             else:
@@ -1277,7 +1277,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _show_position(self):
         row = self._current_cell()[0]
-        total = self._table.GetNumberRows()
+        total = self._table.number_of_rows()
         set_status('list-position', "%d/%d" % (row + 1, total))
 
     def _show_data_status(self):
@@ -1310,7 +1310,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
-        if isinstance(position, int) and position < self._table.GetNumberRows():
+        if isinstance(position, int) and position < self._table.number_of_rows():
             # Pro èíslo voláme rovnou _select_cell a nezdr¾ujeme se pøevodem na
             # row a zpìt, který probíhá v rodièovské metodì...
             self._select_cell(row=position)
@@ -1393,7 +1393,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
             # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
             if self._current_key() != key:
-                if row < self._table.GetNumberRows() and row >= 0:
+                if row < self._table.number_of_rows() and row >= 0:
                     self._select_cell(row=row)
                 else:
                     self._select_cell(row=0)
@@ -1518,7 +1518,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return deleted
         if block_refresh(blocked_code):
             r = self._current_cell()[0]
-            n = self._table.GetNumberRows()
+            n = self._table.number_of_rows()
             if r < n - 1:
                 self._select_cell(row=r)
             elif r > 0:
@@ -1913,7 +1913,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     " pro zápis!\n")
             run_dialog(Error, msg)
             return
-        number_rows = self._table.GetNumberRows()
+        number_rows = self._table.number_of_rows()
         def _process_table(update):
             # Export labelù
             for column in self._columns:
@@ -1947,7 +1947,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = _("Modul pro práci s XLS soubory není nainstalován. Konèím.")
             run_dialog(Error, msg)
             return            
-        number_rows = self._table.GetNumberRows()
+        number_rows = self._table.number_of_rows()
         def _process_table(update):
             w = pyxls.Workbook()
             ws = w.add_sheet('Export')            
