@@ -134,9 +134,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _default_columns(self):
         return self._view.columns()
 
-    def _init_select(self):
+    def _init_select(self, async_count=False):
         self._aggregation_results.reset()
-        return super(ListForm, self)._init_select()
+        return super(ListForm, self)._init_select(async_count=async_count)
 
     def _aggregation_valid(self, operation, type):
         allowed_types = (pytis.data.Number,)
@@ -217,7 +217,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Create the grid and table.  Initialize the data select.
         self._grid = g = wx.grid.Grid(self)
         self._table = table = \
-          _grid.ListTable(self, self._data, self._row, self._columns, self._lf_select_count,
+          _grid.ListTable(self, self._data, self._row, self._columns, self._lf_select_count_,
                           sorting=self._lf_sorting, grouping=self._grouping, prefill=self._prefill,
                           row_style=self._view.row_style())
         g.SetTable(table, True)
@@ -299,24 +299,23 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     self._set_state_param('columns', new_columns)
                     self._set_state_param('default_columns', default_columns)
             if data_init:
-                row_count = self._init_select()
+                row_count = self._init_select(async_count=True)
             else:
-                row_count = self._lf_select_count
+                row_count = self._lf_count(timeout=0)
                 self._data.rewind()
             if inserted_row_number is not None:
                 row_count = row_count + 1
-            old_row_count = self._table.number_of_rows()
-            new_row_count = row_count
-            t.update(columns=self._columns, row_count=row_count, sorting=self._lf_sorting,
+            t.update(columns=self._columns, row_count=self._lf_select_count_, sorting=self._lf_sorting,
                      grouping=self._grouping, inserted_row_number=inserted_row_number,
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
-            ndiff = new_row_count - old_row_count
-            if new_row_count < old_row_count:
-                if new_row_count == 0 or current_row is None:
+            old_row_count = g.GetNumberRows()
+            row_count_diff = row_count - old_row_count
+            if row_count_diff < 0:
+                if row_count == 0 or current_row is None:
                     current_row = 1
-                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -ndiff)
-            elif new_row_count > old_row_count:
-                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, ndiff)
+                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -row_count_diff)
+            elif row_count_diff > 0:
+                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, row_count_diff)
             notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
             if new_columns != old_columns or init_columns:
                 self._init_col_attr()
@@ -325,7 +324,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Závìreèné úpravy
         self._update_colors()
         self._resize_columns()
-        if new_row_count != old_row_count or new_columns != old_columns or init_columns:
+        if row_count != old_row_count or new_columns != old_columns or init_columns:
             # Force scrollbar update by generating a size event.
             #g.SetSize(g.GetSize())
             g.FitInside()
@@ -478,7 +477,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if direction == pytis.data.FORWARD:
                 start_row = max(row-1, 0)
             else:
-                start_row = min(row+1, self._table.number_of_rows())
+                start_row = min(row+1, self._table.number_of_rows(min_value=row+1))
         else:
             start_row = row
         # TODO: Pøedhledání v aktuálním selectu
@@ -684,7 +683,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if row > 0:
                 after = table.row(row-1).row().columns(kc)
                 before = None
-            elif row < table.number_of_rows() - 1:
+            elif row < table.number_of_rows(min_value=row+2) - 1:
                 after = None
                 before = table.row(row+1).row().columns(kc)
             else:
@@ -1277,8 +1276,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _show_position(self):
         row = self._current_cell()[0]
-        total = self._table.number_of_rows()
-        set_status('list-position', "%d/%d" % (row + 1, total))
+        total, finished = self._table.number_of_rows(timeout=0, full_result=True)
+        if not finished:
+            total = '%s?' % (total,)
+        set_status('list-position', "%d/%s" % (row + 1, total))
 
     def _show_data_status(self):
         if self._reshuffle_request > self._last_reshuffle_request:
@@ -1310,7 +1311,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Bìhem editace mù¾e `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
-        if isinstance(position, int) and position < self._table.number_of_rows():
+        if (isinstance(position, int) and
+            position < self._table.number_of_rows(min_value=position+1)):
             # Pro èíslo voláme rovnou _select_cell a nezdr¾ujeme se pøevodem na
             # row a zpìt, který probíhá v rodièovské metodì...
             self._select_cell(row=position)
@@ -1393,7 +1395,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Pokud se nepodaøilo nastavit pozici na pøedchozí klíè,
             # pokusíme se nastavit pozici na pøedchozí èíslo øádku v gridu.
             if self._current_key() != key:
-                if row < self._table.number_of_rows() and row >= 0:
+                if row < self._table.number_of_rows(min_value=row+1) and row >= 0:
                     self._select_cell(row=row)
                 else:
                     self._select_cell(row=0)
@@ -1518,8 +1520,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return deleted
         if block_refresh(blocked_code):
             r = self._current_cell()[0]
-            n = self._table.number_of_rows()
-            if r < n - 1:
+            if r < self._table.number_of_rows(min_value=r+2) - 1:
                 self._select_cell(row=r)
             elif r > 0:
                 self._select_cell(row=r-1)

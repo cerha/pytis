@@ -672,7 +672,7 @@ class LookupForm(InnerForm):
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
-        self._lf_select_count = None
+        self._lf_select_count_ = None
         self._init_sorting(sorting)
         self._lf_initial_sorting = self._lf_sorting
         # _lf_condition reprezentuje statickou podmínku danou argumentem
@@ -691,7 +691,23 @@ class LookupForm(InnerForm):
         self._user_filters = self._load_user_filters()
         self._arguments = arguments
         self._init_select()
-        
+
+    def __getattr__(self, name):
+        ## Compatibility with contingent external code using the old attribute
+        if name == '_lf_select_count':
+            return self._lf_count()
+        return super(LookupForm, self).__getattr__(name)
+
+    def _lf_count(self, min_value=None, timeout=None):
+        if self._lf_select_count_ is None or isinstance(self._lf_select_count_, int):
+            result = self._lf_select_count_
+        else:
+            count, finished = self._lf_select_count_.pg_count(min_value=min_value, timeout=timeout)
+            if finished:
+                self._lf_select_count_ = count
+            result = count
+        return result
+
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
 
@@ -810,19 +826,21 @@ class LookupForm(InnerForm):
     def _current_arguments(self):
         return {}
 
-    def _init_data_select(self, data):
+    def _init_data_select(self, data, async_count=False):
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._data_sorting(),
                            arguments=self._current_arguments(),
-                           transaction=self._transaction, reuse=False)
+                           transaction=self._transaction, reuse=False,
+                           async_count=async_count)
 
-    def _init_select(self):
-        success, self._lf_select_count = db_operation(self._init_data_select, self._data)
+    def _init_select(self, async_count=False):
+        success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
+                                                       async_count)
         if not success:
             log(EVENT, 'Selhání databázové operace')
             raise self.InitError()
-        return self._lf_select_count
+        return self._lf_count(timeout=0)
 
     def _data_sorting(self):
         mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
@@ -873,10 +891,11 @@ class LookupForm(InnerForm):
         self._select_row(row)
 
     def _cmd_jump(self):
-        if self._lf_select_count > 0:
-            prompt = _("Záznam èíslo (1-%s):") % (self._lf_select_count)
+        max_value = self._lf_count()
+        if max_value > 0:
+            prompt = _("Záznam èíslo (1-%s):") % (max_value,)
             result = run_dialog(InputNumeric, message=_("Skok na záznam"), prompt=prompt,
-                                min_value=1, max_value=self._lf_select_count)
+                                min_value=1, max_value=max_value)
             row = result.value()
             if row is not None:
                 self.select_row(row-1)
@@ -885,7 +904,7 @@ class LookupForm(InnerForm):
         self.select_row(0)
         
     def _cmd_last_record(self):
-        self.select_row(self._lf_select_count-1)
+        self.select_row(self._lf_count()-1)
         
     def _cmd_search(self, next=False, back=False):
         condition = self._lf_search_condition
@@ -2452,7 +2471,7 @@ class BrowsableShowForm(ShowForm):
             row_number = 0
         if not back:
             row_number += 1
-            if row_number == self._lf_select_count:
+            if row_number == self._lf_count(min_value=row_number+1):
                 message(_("Poslední záznam"), beep_=True)
                 return
         else:
@@ -2465,10 +2484,12 @@ class BrowsableShowForm(ShowForm):
     def _select_row(self, row, quiet=False):
         result = super(BrowsableShowForm, self)._select_row(row, quiet=quiet)
         current_row = self.current_row()
-        total = self._lf_select_count
+        total = self._lf_count(timeout=0)
+        if not isinstance(self._lf_select_count_, int):
+            total = '%s?' % (total,)
         if current_row and total:
             n = self._get_row_number(current_row)
-            position = "%d/%d" % (n is not None and n+1 or 0, total)
+            position = "%d/%s" % (n is not None and n+1 or 0, total)
             set_status('list-position', position)
         return result
                      

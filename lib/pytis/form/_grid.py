@@ -419,7 +419,7 @@ class DataTable(object):
         if row is None:
             self._edited_row = None
         else:
-            assert row >= 0 and row < self._row_count, ('Invalid row number', row)
+            assert row >= 0 and row < self.number_of_rows(min_value=row), ('Invalid row number', row)
             self._edited_row = self._init_edited_row(row, data_row=self._get_row(row).row())
 
     def editing(self):
@@ -460,8 +460,15 @@ class DataTable(object):
         current = self._current_row
         return current and current.row
     
-    def number_of_rows(self):
-        return self._row_count
+    def number_of_rows(self, min_value=None, timeout=None, full_result=False):
+        if isinstance(self._row_count, int):
+            count, finished = self._row_count, True
+        else:
+            count, finished = self._row_count.pg_count(min_value=min_value, timeout=timeout)
+        if full_result:
+            return count, finished
+        else:
+            return count
     
     def number_of_columns(self):
         return self._column_count

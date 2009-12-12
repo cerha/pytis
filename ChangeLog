@@ -1,3 +1,11 @@
+2009-12-12  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/form/_grid.py:
+	* lib/pytis/form/form.py:
+	* lib/pytis/form/list.py:
+	Initial support for asynchronous row counting in forms.
+
 2009-12-11  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/list.py:

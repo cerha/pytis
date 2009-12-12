@@ -1731,6 +1731,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pg_terminate = False
             self._pg_terminate_event = threading.Event()
             self._pg_original_position = 0
+            self._pg_correction = 0
         def run(self):
             try:
                 data = self._pg_data
@@ -1758,7 +1759,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_finished = True
             finally:
                 self._pg_terminate_event.set()
-        def pg_count(self, min_value=None, timeout=None, position=None):
+        def pg_count(self, min_value=None, timeout=None, position=None, corrected=False):
             if self._pg_terminate:
                 if not self._pg_finished and (min_value is None or self._pg_current_count < min_value):
                     if position is not None:
@@ -1773,7 +1774,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
             else:
                 self._pg_terminate_event.wait(timeout)
-            return self._pg_current_count, self._pg_finished
+            count = self._pg_current_count
+            if corrected:
+                count += self._pg_correction
+            return count, self._pg_finished
         def pg_stop(self):
             self._pg_terminate = True
             self._pg_terminate_event.wait()
@@ -1787,6 +1791,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             new_thread._pg_original_position = position
             new_thread.start()
             return new_thread
+        def __add__(self, correction):
+            self._pg_correction += correction
                 
     def _pg_start_row_counting_thread(self, initial_count, transaction, selection):
         t = self._PgRowCountingThread(self, initial_count, transaction, selection)
