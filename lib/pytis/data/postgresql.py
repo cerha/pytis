@@ -1750,7 +1750,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     args = dict(selection=selection, number=step)
                     query = data._pdbb_command_move_forward.format(args)
                     result = data._pg_query(query, transaction=transaction)
-                    self._pg_current_count = self._pg_initial_count + result[0][0]
+                    self._pg_current_count = self._pg_current_count + result[0][0]
                     if self._pg_current_count < test_count:
                         break
                     if step < max_step:

@@ -1,3 +1,8 @@
+2009-12-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Fix counting mistake in asynchronous rows counting.
+
 2009-12-12  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
