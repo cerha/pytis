@@ -874,7 +874,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._show_position()
             # Zobraz hodnotu displeje z èíselníku ve stavové øádce.
             row, col = self._current_cell()
-            message(self._table.row(row).display(self._columns[col].id()))
+            if row >= 0 and col >= 0:
+                message(self._table.row(row).display(self._columns[col].id()))
     
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
