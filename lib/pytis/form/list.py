@@ -130,7 +130,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._mouse_dragged = False
         self._check_default_columns = not columns
         self._search_panel = None
-
+        self._last_updated_row_count = 0
+        
     def _default_columns(self):
         return self._view.columns()
 
@@ -308,6 +309,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             t.update(columns=self._columns, row_count=self._lf_select_count_, sorting=self._lf_sorting,
                      grouping=self._grouping, inserted_row_number=inserted_row_number,
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
+            self._last_updated_row_count = row_count
             old_row_count = g.GetNumberRows()
             row_count_diff = row_count - old_row_count
             if row_count_diff < 0:
@@ -883,6 +885,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # callbacku pøi zmìnách v rámci _update_grid(), které nejsou
             # interaktivní.
             self._run_callback(self.CALL_USER_INTERACTION)
+            if self._last_updated_row_count != self._table.number_of_rows(timeout=0):
+                self._update_grid()
         if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
             # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
             # vùbec nìjaký úèinek, musíme zde zavolat originální handler, který
