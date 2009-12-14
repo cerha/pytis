@@ -901,6 +901,8 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
               "substr(fullname, 8) in (select fullname from c_pytis_menu_actions where shortname='%s')")
              % (s, s,))
         related_shortnames_list = ["'%s'" % (_pg_escape(row['shortname']),) for row in plpy.execute(q)]
+        if not related_shortnames_list:
+            return []
         related_shortnames = string.join(related_shortnames_list, ', ')
         condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
     for row in plpy.execute("select rightid, granted, roleid, shortname, colname, system from e_pytis_action_rights where %s" % (condition,)):

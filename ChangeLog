@@ -1,3 +1,8 @@
+2009-12-14  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Don't crash in pytis_compute_summary_rights when unknown shortname is given.
+
 2009-12-10  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:
