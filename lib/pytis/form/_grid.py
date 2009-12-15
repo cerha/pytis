@@ -542,7 +542,11 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
     # Povinné wx gridové metody
     
     def GetNumberRows(self):
-        return self.number_of_rows()
+        ## We have to get only approximate number of rows here.  The reason is
+        ## that wx functions call this method on form creation.  Hopefully this
+        ## doesn't break anything.  Our code should use `number_of_rows'
+        ## directly anyway.
+        return self.number_of_rows(timeout=0)
     
     def GetNumberCols(self):
         return self.number_of_columns()

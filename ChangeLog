@@ -1,6 +1,11 @@
 2009-12-15  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/_grid.py:
+	Let ListTable.GetNumberRows returns only approximate number of rows.
+
+2009-12-15  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/_grid.py:
 	* lib/pytis/form/form.py:
 	Use asynchronous row counting wherever needed.
 	
