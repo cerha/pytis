@@ -690,7 +690,7 @@ class LookupForm(InnerForm):
         self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
         self._user_filters = self._load_user_filters()
         self._arguments = arguments
-        self._init_select()
+        self._init_select(async_count=True)
 
     def __getattr__(self, name):
         ## Compatibility with contingent external code using the old attribute
@@ -950,7 +950,7 @@ class LookupForm(InnerForm):
 
     def _apply_filter(self, condition):
         self._lf_filter = condition
-        self._init_select()
+        self._init_select(async_count=False)
         self.select_row(self._current_key())
 
     def _can_filter(self, condition=None, last=False):
@@ -1361,7 +1361,7 @@ class RecordForm(LookupForm):
             data.skip(row_number)
             return data.fetchone(transaction=self._transaction)
         success, row = db_operation(dbop)
-        self._init_select()
+        self._init_select(async_count=True)
         if not success or not row:
             return None
         else:
@@ -1392,7 +1392,7 @@ class RecordForm(LookupForm):
                             transaction=self._transaction)
             return data.fetchone(transaction=self._transaction)
         success, row = db_operation(dbop, condition)
-        self._init_select()
+        self._init_select(async_count=True)
         return row
         
     def _find_row_by_key(self, key):

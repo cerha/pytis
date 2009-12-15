@@ -302,7 +302,7 @@ class DataTable(object):
         row -- nezáporný integer, první øádek má èíslo 0
         
         """
-        if row < 0 or row >= self.number_of_rows():
+        if row < 0 or row >= self.number_of_rows(min_value=row+1):
             return None
         return self._get_row(row, autoadjust=True)
 
@@ -603,7 +603,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return wx.grid.GRID_VALUE_STRING
     
     def GetAttr(self, row, col, kind):
-        if row >= self.GetNumberRows() or col >= self.GetNumberCols(): # mù¾e se stát...
+        if row >= self.number_of_rows(min_value=row+1) or col >= self.number_of_columns(): # mù¾e se stát...
             return None
         column = self._columns[col]
         if column.id in self._secret_columns:
