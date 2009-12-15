@@ -1716,86 +1716,102 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Unexpected result', data_)
         return result
 
-    class _PgRowCountingThread(threading.Thread):
-        _PG_INITIAL_STEP = 1000
-        _PG_MAX_STEP = 100000
-        _PG_DEFAULT_TIMEOUT = 0.1
-        def __init__(self, data, initial_count, transaction, selection):
-            threading.Thread.__init__(self)
-            self._pg_data = data
-            self._pg_transaction = transaction
-            self._pg_selection = selection
-            self._pg_current_count = 0
-            self._pg_initial_count = initial_count
-            self._pg_finished = False
-            self._pg_terminate = False
-            self._pg_terminate_event = threading.Event()
-            self._pg_original_position = 0
-            self._pg_correction = 0
-        def run(self):
-            try:
+    class _PgRowCounting(object):
+        class _Thread(threading.Thread):
+            _PG_INITIAL_STEP = 1000
+            _PG_MAX_STEP = 100000
+            _PG_DEFAULT_TIMEOUT = 0.1
+            def __init__(self, data, initial_count, transaction, selection):
+                threading.Thread.__init__(self)
+                self._pg_data = data
+                self._pg_transaction = transaction
+                self._pg_selection = selection
+                self._pg_current_count = initial_count
+                self._pg_initial_count = initial_count
+                self._pg_finished = False
+                self._pg_terminate = False
+                self._pg_terminate_event = threading.Event()
+                self._pg_original_position = 0
+                self._pg_correction = 0
+            def run(self):
+                try:
+                    data = self._pg_data
+                    step = self._PG_INITIAL_STEP
+                    max_step = self._PG_MAX_STEP
+                    test_count = self._pg_initial_count + step
+                    selection = self._pg_selection
+                    transaction = self._pg_transaction
+                    while True:
+                        if self._pg_terminate:
+                            self._pg_initial_count = self._pg_current_count
+                            args = dict(selection=selection, number=self._pg_original_position)
+                            query = data._pdbb_command_move_absolute.format(args)
+                            data._pg_query(query, transaction=transaction)
+                            return
+                        args = dict(selection=selection, number=step)
+                        query = data._pdbb_command_move_forward.format(args)
+                        result = data._pg_query(query, transaction=transaction)
+                        self._pg_current_count = self._pg_current_count + result[0][0]
+                        if self._pg_current_count < test_count:
+                            break
+                        if step < max_step:
+                            step = min(2*step, max_step)
+                        test_count += step
+                    self._pg_finished = True
+                finally:
+                    self._pg_terminate_event.set()
+            def pg_count(self, min_value=None, timeout=None, position=None, corrected=False):
+                if self._pg_terminate:
+                    if not self._pg_finished and (min_value is None or self._pg_current_count < min_value):
+                        if position is not None:
+                            self._pg_original_position = position
+                        new_thread = self.pg_restart(self._pg_original_position)
+                        new_thread.pg_count(min_value=min_value, timeout=timeout)
+                        self._pg_initial_count = new_thread._pg_initial_count
+                        self._pg_current_count = new_thread._pg_current_count
+                        self._pg_finished = new_thread._pg_finished
+                elif min_value is not None:
+                    while self._pg_current_count < min_value and not self._pg_finished:
+                        self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
+                else:
+                    while self._pg_current_count == 0 and not self._pg_finished:
+                        self._pg_terminate_event.wait(timeout)
+                count = self._pg_current_count
+                if corrected:
+                    count += self._pg_correction
+                return count, self._pg_finished
+            def pg_stop(self):
+                self._pg_terminate = True
+                self._pg_terminate_event.wait()
                 data = self._pg_data
-                step = self._PG_INITIAL_STEP
-                max_step = self._PG_MAX_STEP
-                test_count = self._pg_initial_count + step
-                selection = self._pg_selection
-                transaction = self._pg_transaction
-                while True:
-                    if self._pg_terminate:
-                        self._pg_initial_count = self._pg_current_count
-                        args = dict(selection=selection, number=self._pg_original_position)
-                        query = data._pdbb_command_move_absolute.format(args)
-                        data._pg_query(query, transaction=transaction)
-                        return
-                    args = dict(selection=selection, number=step)
-                    query = data._pdbb_command_move_forward.format(args)
-                    result = data._pg_query(query, transaction=transaction)
-                    self._pg_current_count = self._pg_current_count + result[0][0]
-                    if self._pg_current_count < test_count:
-                        break
-                    if step < max_step:
-                        step = min(2*step, max_step)
-                    test_count += step
-                self._pg_finished = True
-            finally:
-                self._pg_terminate_event.set()
-        def pg_count(self, min_value=None, timeout=None, position=None, corrected=False):
-            if self._pg_terminate:
-                if not self._pg_finished and (min_value is None or self._pg_current_count < min_value):
-                    if position is not None:
-                        self._pg_original_position = position
-                    new_thread = self.pg_restart(self._pg_original_position)
-                    new_thread.pg_count(min_value=min_value, timeout=timeout)
-                    self._pg_initial_count = new_thread._pg_initial_count
-                    self._pg_current_count = new_thread._pg_current_count
-                    self._pg_finished = new_thread._pg_finished
-            elif min_value is not None:
-                while self._pg_current_count < min_value and not self._pg_finished:
-                    self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
-            else:
-                self._pg_terminate_event.wait(timeout)
-            count = self._pg_current_count
-            if corrected:
-                count += self._pg_correction
-            return count, self._pg_finished
-        def pg_stop(self):
-            self._pg_terminate = True
-            self._pg_terminate_event.wait()
-            data = self._pg_data
-            args = dict(selection=self._pg_selection, number=self._pg_original_position)
-            query = data._pdbb_command_move_absolute.format(args)            
-            data._pg_query(query, transaction=self._pg_transaction)
-        def pg_restart(self, position):
-            new_thread = self.__class__(self._pg_data, self._pg_initial_count,
-                                        self._pg_transaction, self._pg_selection)
-            new_thread._pg_original_position = position
-            new_thread.start()
-            return new_thread
+                args = dict(selection=self._pg_selection, number=self._pg_original_position)
+                query = data._pdbb_command_move_absolute.format(args)            
+                data._pg_query(query, transaction=self._pg_transaction)
+            def pg_restart(self, position):
+                new_thread = self.__class__(self._pg_data, self._pg_current_count,
+                                            self._pg_transaction, self._pg_selection)
+                new_thread._pg_original_position = position
+                new_thread.start()
+                return new_thread
+            def pg_correct(self, correction):
+                self._pg_correction += correction
+        def __init__(self, data, transaction, selection):
+            self._thread = self._Thread(data, 0, transaction, selection)
+        def start(self):
+            self._thread.start()
+        def count(self, min_value=None, timeout=None, position=None, corrected=False):
+            result = self._thread.pg_count(min_value, timeout, position, corrected)
+            return result
+        def stop(self):
+            self._thread.pg_stop()
+        def restart(self, position):
+            self._thread = self._thread.pg_restart(position)
         def __add__(self, correction):
-            self._pg_correction += correction
-                
-    def _pg_start_row_counting_thread(self, initial_count, transaction, selection):
-        t = self._PgRowCountingThread(self, initial_count, transaction, selection)
+            self._thread.pg_correct(correction)
+            return self
+            
+    def _pg_start_row_counting_thread(self, transaction, selection):
+        t = self._PgRowCounting(self, transaction, selection)
         t.start()
         return t
         
@@ -1811,7 +1827,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           arguments -- dictionary of function call arguments
           transaction -- transaction object
           async_count -- if true, count result lines asynchronously and return
-            a '_PgRowCountingThread' instance instead of the number of lines;
+            a '_PgRowCounting' instance instead of the number of lines;
             this is useful on large tables where row counting may take
             significant amount of time
           
@@ -1856,7 +1872,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pdbb_next_selection_number()
         self._pg_query(self._pdbb_command_select.format(args), transaction=transaction)
         if async_count:
-            result = self._pg_start_row_counting_thread(0, transaction, args['selection'])
+            result = self._pg_start_row_counting_thread(transaction, args['selection'])
         else:
             data = self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
             self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
@@ -2185,8 +2201,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             if isinstance(row_count_info, int):
                 number = row_count_info
             else:
-                number, finished = row_count_info.pg_count(min_value=min_value,
-                                                           position=self._dbposition)
+                number, finished = row_count_info.count(min_value=min_value,
+                                                        position=self._dbposition)
             return number
             
         def reset(self):
@@ -2622,7 +2638,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if isinstance(self._pg_number_of_rows, int):
             number = self._pg_number_of_rows
         else:
-            number, finished = self._pg_number_of_rows.pg_count(min_value=min_value)
+            number, finished = self._pg_number_of_rows.count(min_value=min_value)
             if finished:
                 self._pg_number_of_rows = number
         return number
@@ -2687,9 +2703,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
                                              arguments=arguments, async_count=async_count)
         except:
-            if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 try:
-                    self._pg_number_of_rows.pg_stop()
+                    self._pg_number_of_rows.stop()
                 except:
                     pass
             cls, e, tb = sys.exc_info()
@@ -2789,11 +2805,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             # FETCH BACKWARD.  V následujícím kódu se sna¾íme nìkteré
             # nejèastìj¹í chyby PostgreSQL obejít.
             def stop_counting():
-                if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
-                    self._pg_number_of_rows.pg_stop()
+                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                    self._pg_number_of_rows.stop()
             def start_counting():
-                if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
-                    self._pg_number_of_rows = self._pg_number_of_rows.pg_restart(buffer.dbposition())
+                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                    self._pg_number_of_rows.restart(buffer.dbposition())
             def skip():
                 xcount = buffer.correction(FORWARD, self._pg_number_of_rows)
                 if xcount < 0:
@@ -2931,9 +2947,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                          transaction=transaction, arguments=arguments)
             except:
                 cls, e, tb = sys.exc_info()
-                if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
+                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                     try:
-                        self._pg_number_of_rows.pg_stop()
+                        self._pg_number_of_rows.stop()
                     except:
                         pass
                 try:
@@ -2950,8 +2966,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__:
             log(DEBUG, 'Explicitly closing current select')
         if self._pg_is_in_select:
-            if isinstance(self._pg_number_of_rows, self._PgRowCountingThread):
-                self._pg_number_of_rows.pg_stop()
+            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                self._pg_number_of_rows.stop()
             _, self._pg_last_select_row_number = self._pg_buffer.current()
             args = dict(selection=self._pdbb_selection_number)
         if self._pg_is_in_select is True: # no user transaction

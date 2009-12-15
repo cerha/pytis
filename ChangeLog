@@ -1,5 +1,12 @@
 2009-12-15  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/form/_grid.py:
+	* lib/pytis/form/form.py:
+	Fix restarts of asynchronous row counting.
+
+2009-12-15  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/form/_grid.py:
 	Let ListTable.GetNumberRows returns only approximate number of rows.
 

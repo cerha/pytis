@@ -702,7 +702,7 @@ class LookupForm(InnerForm):
         if self._lf_select_count_ is None or isinstance(self._lf_select_count_, int):
             result = self._lf_select_count_
         else:
-            count, finished = self._lf_select_count_.pg_count(min_value=min_value, timeout=timeout)
+            count, finished = self._lf_select_count_.count(min_value=min_value, timeout=timeout)
             if finished:
                 self._lf_select_count_ = count
             result = count

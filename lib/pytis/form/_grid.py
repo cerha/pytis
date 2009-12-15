@@ -464,7 +464,7 @@ class DataTable(object):
         if isinstance(self._row_count, int):
             count, finished = self._row_count, True
         else:
-            count, finished = self._row_count.pg_count(min_value=min_value, timeout=timeout)
+            count, finished = self._row_count.count(min_value=min_value, timeout=timeout)
         if full_result:
             return count, finished
         else:
