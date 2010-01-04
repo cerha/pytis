@@ -1111,6 +1111,7 @@ class LookupForm(InnerForm):
                     LookupForm.COMMAND_FILTER.invoke(condition=condition)
                 else:
                     LookupForm.COMMAND_UNFILTER.invoke()
+                current_form().focus()
             ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(), on_change=on_change)
             cls._last_filter_menu_state = (None, None)
             def update(event):
@@ -1129,14 +1130,21 @@ class LookupForm(InnerForm):
                     ctrl.Clear()
                     ctrl.SetValue('')
             #frame = toolbar.GetParent()
-            wx_callback(wx.EVT_UPDATE_UI, ctrl, ctrl.GetId(), update)
+            wxid = ctrl.GetId()
+            wx_callback(wx.EVT_UPDATE_UI, ctrl, wxid, update)
             def on_context_menu(event):
                 form = current_form()
                 popup_menu(ctrl, form.filter_context_menu(ctrl))
             wx_callback(wx.EVT_RIGHT_DOWN, ctrl, on_context_menu)
             def on_enter(event):
                 LookupForm.COMMAND_SAVE_FILTER.invoke(name=ctrl.GetValue())
-            wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), on_enter)
+            wx_callback(wx.EVT_TEXT_ENTER, ctrl, wxid, on_enter)
+            def on_key_down(event):
+                event.Skip()
+                code = event.GetKeyCode()
+                if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+                    current_form().focus()
+            wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
             tool = toolbar.AddControl(ctrl)
             toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
         else:
