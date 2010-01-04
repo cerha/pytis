@@ -163,6 +163,13 @@ NOVÉ VLASTNOSTI:
    odpovídá nìjakému pojmenovanému filtru, zobrazí se místo "Poslední aplikovaný filtr"
    název pojmenovaného filtru.
 
+ * Dùslednìji promyslet klávesové zkratky.  napø.:
+   - Escape a Enter ve filtraèním dialogu
+   - Enter v pøihla¹ovacím dialogu
+   - Enter ve formuláøích (odeslat celý formuláø)?
+   - Tab v tabulce (pohybuje kurzorem, ale to dìlají i ¹ipky) -- mohl vyvolat COMMAND_OTHER_FORM
+   
+
 2) Specifikace
 
  * Dynamické urèení parametrù odkazu.
