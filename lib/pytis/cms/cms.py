@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2009 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ DESC = pd.DESCENDANT
 
 class Specification(pp.Specification):
     access_rights = pd.AccessRights((None, (('cms_user', 'cms_admin'), pd.Permission.ALL)))
+    public = True
     def _spec_name(self, name, needed_in_wiking=True):
         # Hack to allow namespaced spec names in wx app and plain module names in Wiking (the
         # specification is inherited by the Wiking Module).
@@ -436,6 +437,7 @@ class Rights(Specification):
         
 
 class _Log(Specification):
+    public = False
     def fields(self): return (
         Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
         Field('hostname', _("Hostname"), virtual=True, computer=computer(self._hostname),
@@ -453,6 +455,7 @@ class SessionLog(_Log):
     title = _("Log přihlášení")
     help = _("Záznam informací o přihlášení uživatelů k webu.")
     table = 'cms_session_log'
+    public = True
     def fields(self): return (
         Field('log_id'),
         Field('session_id'),
@@ -478,6 +481,7 @@ class SessionLog(_Log):
     
 class UserSessionLog(SessionLog):
     """Login log customization for user sideform."""
+    public = True
     layout = ('start_time', 'duration', 'active', 'success', 'ip_address', 'hostname',
               'user_agent', 'referer')
     columns = ('start_time', 'duration', 'active', 'success', 'ip_address', 'user_agent')
@@ -487,6 +491,7 @@ class AccessLog(_Log):
     title = _("Log přístupů")
     help = _("Záznam informací o přístupu uživatelů k jednotlivým stránkám/modulům webu.")
     table = 'cms_access_log_data'
+    public = True
     def fields(self): return (
         Field('log_id'),
         Field('timestamp', _("Datum a čas"), width=17),
