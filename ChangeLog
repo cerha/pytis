@@ -1,5 +1,12 @@
 2010-01-05  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/data.py:
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/form/form.py:
+	Fix performance problems when filtering side forms bound by arguments.
+
+2010-01-05  Milan Zamazal  <pdm@brailcom.org>
+
 	* tools/genmenu.py:
 	Use specification instances instead of classes everywhere in genmenu.
 	

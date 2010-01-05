@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1347,7 +1347,8 @@ class RecordForm(LookupForm):
     def _find_row_by_key(self, key):
         cols = self._select_columns()
         success, row = db_operation(self._data.row, key, columns=cols,
-                                    transaction=self._transaction)
+                                    transaction=self._transaction,
+                                    arguments=self._current_arguments())
         if success and row:
             return row
         else:
@@ -1363,7 +1364,8 @@ class RecordForm(LookupForm):
         key = data.key()[0].id()
         def dbop():
             data.rewind()
-            return data.search(pytis.data.EQ(key, row[key]), transaction=self._transaction)
+            return data.search(pytis.data.EQ(key, row[key]), transaction=self._transaction,
+                               arguments=self._current_arguments())
         success, result = db_operation(dbop)
         if not success or result == 0:
             return None

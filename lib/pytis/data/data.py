@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -291,7 +291,7 @@ class Data(object):
         """Vrať hodnoty klíče z 'row' jako tuple instancí 'Value'."""
         return row.columns([c.id() for c in self.key()])
         
-    def row(self, key, columns=None, transaction=None):
+    def row(self, key, columns=None, transaction=None, arguments={}):
         """Return row instance 'Row' identified by 'key'.
 
         If there is no such row, return 'None'.

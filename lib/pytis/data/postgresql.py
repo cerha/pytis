@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1423,12 +1423,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 arg_value = arguments.get(b.id(), b.type().default_value())
                 args['__arg_%d' % (i+1,)] = self._pg_value(arg_value)
     
-    def _pg_row (self, key_value, columns, transaction=None, supplement=''):
+    def _pg_row (self, key_value, columns, transaction=None, supplement='',
+                 arguments={}):
         """Retrieve and return raw data corresponding to 'key_value'."""
         args = {'key': key_value, 'supplement': supplement}
         if columns:
             args['columns'] = self._pdbb_sql_column_list_from_names(columns)
-        self._pg_make_arguments(args, {})
+        self._pg_make_arguments(args, arguments)
         query = self._pdbb_command_row.format(args)
         return self._pg_query(query, transaction=transaction)
     
@@ -2291,7 +2292,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Veřejné metody a jimi přímo volané abstraktní metody
 
-    def row(self, key, columns=None, transaction=None):
+    def row(self, key, columns=None, transaction=None, arguments={}):
         #log(EVENT, 'Zjištění obsahu řádku:', key)
         # TODO: Temporary compatibility hack.  The current internal db code
         # uses multikeys, but user code does not anymore.  Before we rewrite
@@ -2305,7 +2306,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             template = None
         try:
             data = self._pg_row(self._pg_value(key[0]), columns,
-                                transaction=transaction)
+                                transaction=transaction, arguments=arguments)
         except:
             cls, e, tb = sys.exc_info()
             try:
