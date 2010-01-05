@@ -1,3 +1,12 @@
+2010-01-05  Milan Zamazal  <pdm@brailcom.org>
+
+	* tools/genmenu.py:
+	Use specification instances instead of classes everywhere in genmenu.
+	
+	This change makes genmenu much more sensitive to errors in specifications.
+	Careful testing should be performed before genmenu results are applied!
+	
+
 2010-01-04  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/cms.py:

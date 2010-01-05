@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2009 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -159,9 +159,17 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     spec = resolver.get_object(form_module, base_form_name)
                 except:
                     spec = None
-                if spec is not None:
+                if spec is None:
+                    spec_instance = None
+                else:
                     try:
-                        spec_title = spec.title
+                        spec_instance = spec(resolver)
+                    except Exception, e:
+                        spec_instance = None
+                        print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
+                if spec_instance is not None:
+                    try:
+                        spec_title = spec_instance.view_spec().title()
                     except:
                         pass
                 # Subforms
@@ -171,21 +179,28 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     form_module = string.join(form_name_components[:-1], '/')
                     base_form_name = form_name_components[-1]
                     try:
-                        title = resolver.get_object(form_module, base_form_name).title
+                        spec = resolver.get_object(form_module, base_form_name)
                     except:
+                        spec = None
+                    if spec is None:
                         title = ''
+                    else:
+                        try:
+                            title = spec(resolver).view_spec().title()
+                        except Exception, e:
+                            title = ''
+                            print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
                     return pytis.presentation.Binding(id=name, title=title, name=name,
                                                       binding_column='dummy')
                 if issubclass(form_class, pytis.form.DualForm):
                     pos = form_name.find('::')
                     if pos == -1:
                         try:
-                            bindings = resolver.get_object(form_module, base_form_name).bindings
-                            if callable(bindings):
-                                spec_inst = resolver.get_object(form_module, base_form_name)
-                                bindings = spec_inst(resolver).bindings
+                            spec = resolver.get_object(form_module, base_form_name)
+                            bindings = spec(resolver).view_spec().bindings()
                             bindings = (binding(form_name),) + tuple(bindings)
                         except Exception, e:
+                            bindings = None
                             print "Warning: Can't import bindings of %s: %s" % (form_name, e,)
                     else:
                         bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
@@ -301,9 +316,8 @@ def process_rights(resolver, actions, rights, def_dir):
         _current_form_name = form_name
         try:
             form_spec = resolver.get_object(module_name, class_name)
-            access_rights = form_spec.access_rights
-            if callable(access_rights):
-                access_rights = access_rights()
+            form_spec_instance = form_spec(resolver)
+            access_rights = form_spec_instance.data_spec().access_rights()
         except Exception, e:
             print "Error: Couldn't get access rights for form %s: %s" % (form_name, e,)
             return
