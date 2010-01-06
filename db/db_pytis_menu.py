@@ -217,6 +217,13 @@ insert into e_pytis_role_members (roleid, member)
          grant=db_rights,
          depends=('e_pytis_roles', 'e_pytis_role_members',))
 
+function('pytis_user', (), TUser,
+         body="""
+select user;
+""",
+         doc="""Return current pytis user.
+By redefining this function, debugging of user behavior or sulogin may be possible.""")
+
 
 ### Actions
 
@@ -1346,13 +1353,13 @@ function('pytis_view_user_menu', (), RT('typ_preview_user_menu', setof=True),
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
-left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''t'', ''t'') as rights on (menu.shortname = rights.shortname)
+left outer join pytis_compute_summary_rights(NULL, pytis_user(), ''f'', ''t'', ''t'') as rights on (menu.shortname = rights.shortname)
 where pytis_multiform_spec(menu.fullname) and rights.rights like ''%show%''
 union
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
        menu.help, menu.hotkey, menu.locked
 from ev_pytis_menu as menu
-left outer join pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
+left outer join pytis_compute_summary_rights(NULL, pytis_user(), ''f'', ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
 where not pytis_multiform_spec(menu.fullname) and rights.rights like ''%show%''
 union
 select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
@@ -1361,7 +1368,7 @@ from ev_pytis_menu as menu
 where name is null and title is null;
 """,
          grant=db_rights,
-         depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights', 'pytis_multiform_spec',))
+         depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights', 'pytis_multiform_spec', 'pytis_user',))
 
 sqltype('typ_preview_rights',
         (C('shortname', TString),
@@ -1371,14 +1378,14 @@ sqltype('typ_preview_rights',
 function('pytis_view_user_rights',  (), RT('typ_preview_rights', setof=True),
          body="""
 select rights.shortname, rights.rights, rights.columns
-from pytis_compute_summary_rights(NULL, user, ''f'', ''f'', ''f'') as rights;
+from pytis_compute_summary_rights(NULL, pytis_user(), ''f'', ''f'', ''f'') as rights;
 """,
          grant=db_rights,
-         depends=('typ_preview_rights', 'pytis_compute_summary_rights',))
+         depends=('typ_preview_rights', 'pytis_compute_summary_rights', 'pytis_user',))
 
 viewng('ev_pytis_user_roles',
        (SelectRelation('a_pytis_valid_role_members', alias='members', exclude_columns=('member'),
-                       condition="members.member = user"),
+                       condition="members.member = pytis_user()"),
         SelectRelation('e_pytis_roles', alias='roles', exclude_columns=('*'),
                        condition="members.member = roles.name and roles.purposeid = 'user'", jointype=JoinType.INNER),
         ),
@@ -1386,7 +1393,7 @@ viewng('ev_pytis_user_roles',
        update=None,
        delete=None,
        grant=db_rights,
-       depends=('a_pytis_valid_role_members',))
+       depends=('e_pytis_roles', 'a_pytis_valid_role_members', 'pytis_user',))
 
 sql_raw("""
 create or replace view ev_pytis_colnames as select distinct shortname, colname

@@ -1,3 +1,8 @@
+2010-01-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	New db function pytis_user and its use in DMP.
+
 2010-01-05  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/data.py:
