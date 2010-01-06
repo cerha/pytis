@@ -867,7 +867,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     self._set_state_param('default_columns', columns)
         # Update grid when lazy row count computation is in progress
-        if self._last_updated_row_count != self._table.number_of_rows(timeout=0):
+        if (self._table.editing() is None and
+            self._last_updated_row_count != self._table.number_of_rows(timeout=0)):
             self._update_grid()
             self._show_position()
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat
@@ -889,7 +890,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # callbacku pøi zmìnách v rámci _update_grid(), které nejsou
             # interaktivní.
             self._run_callback(self.CALL_USER_INTERACTION)
-            if self._last_updated_row_count != self._table.number_of_rows(timeout=0):
+            if (self._table.editing() is None and
+                self._last_updated_row_count != self._table.number_of_rows(timeout=0)):
                 self._update_grid()
         if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
             # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mìlo
