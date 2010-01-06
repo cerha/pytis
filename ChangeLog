@@ -1,6 +1,11 @@
 2010-01-06  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/list.py:
+	Make original row selection in ListForm working with delayed row count.
+
+2010-01-06  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/list.py:
 	Don't update ListForm grid when editing a line.
 
 2010-01-06  Milan Zamazal  <pdm@brailcom.org>

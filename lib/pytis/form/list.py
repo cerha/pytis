@@ -264,11 +264,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                      init_columns=False):
         g = self._grid
         t = self._table
-        def notify(id, *args):
-            if id == wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED:
-                self._close_editors()
-            msg = wx.grid.GridTableMessage(t, id, *args)
-            g.ProcessTableMessage(msg)
+        notify = self._notify_grid
         current_row = self._table.current_row()
         old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
@@ -309,16 +305,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             t.update(columns=self._columns, row_count=self._lf_select_count_, sorting=self._lf_sorting,
                      grouping=self._grouping, inserted_row_number=inserted_row_number,
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
-            self._last_updated_row_count = row_count
             old_row_count = g.GetNumberRows()
-            row_count_diff = row_count - old_row_count
-            if row_count_diff < 0:
-                if row_count == 0 or current_row is None:
-                    current_row = 1
-                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -row_count_diff)
-            elif row_count_diff > 0:
-                notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, row_count_diff)
-            notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+            self._update_grid_length(g, row_count, current_row)
             if new_columns != old_columns or init_columns:
                 self._init_col_attr()
         finally:
@@ -330,6 +318,27 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Force scrollbar update by generating a size event.
             #g.SetSize(g.GetSize())
             g.FitInside()
+
+    def _update_grid_length(self, g, row_count, current_row):
+        notify = self._notify_grid
+        self._last_updated_row_count = row_count
+        old_row_count = g.GetNumberRows()
+        row_count_diff = row_count - old_row_count
+        if row_count_diff < 0:
+            if row_count == 0 or current_row is None:
+                current_row = 1
+            notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, current_row, -row_count_diff)
+        elif row_count_diff > 0:
+            notify(wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, row_count_diff)
+        notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
+        if row_count != old_row_count:
+            g.FitInside()
+
+    def _notify_grid(self, message_id, *args):
+        if message_id == wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED:
+            self._close_editors()
+        msg = wx.grid.GridTableMessage(self._table, message_id, *args)
+        self._grid.ProcessTableMessage(msg)
 
     def _init_col_attr(self):
         # (Re)inicializuj atributy sloupcù gridu.
@@ -564,6 +573,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     log(EVENT, 'Zamítnuto opu¹tìní editace øádku')
                     return False
                 else:
+                    if row >= g.GetNumberRows():
+                        row_count = self._table.number_of_rows(min_value=row+1)
+                        if row < row_count:
+                            self._update_grid_length(g, row_count, current_row)
                     if row < 0 or row >= g.GetNumberRows():
                         if g.IsSelection():
                             g.ClearSelection()
