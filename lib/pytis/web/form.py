@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006-2009 Brailcom, o.p.s.
+# Copyright (C) 2006-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -583,7 +583,8 @@ class BrowseForm(LayoutForm):
 
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
-                 filter=None, filters=None, message=None, req=None, **kwargs):
+                 allow_query_search=None, filter=None, filters=None, message=None, req=None,
+                 **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
@@ -635,6 +636,32 @@ class BrowseForm(LayoutForm):
             interface), but otherwise the form behaves as if the query was filled in its own search
             field.  The query string is split into query words by space and the form is filtered to
             contain only records containing all the words in any of its string columns.
+
+          allow_query_search -- explicitly enable or disable displaying the
+            query search controls.  Query search allows filtering the form
+            records by a text string.  By default (when None), query search
+            controls are displayed automatically when the number of records
+            exceeds one page.  The controls initially contain only a "Search"
+            button, which, when pressed, displays a text field for entering the
+            search query above the form.  When the query is submitted, the form
+            is filtered to contain only matching records (the query string is
+            split into separate query words by space and matching records must
+            contain all the words in any of its string columns).  Passing True
+            to this argument will force displaying the query field, which may
+            be practical for forms where searching is highly expected.  The
+            unnecessary step of pressing the "Search" button is not necessary,
+            but the user interface is a little more cluttered by search
+            controls.  Passing False, on the other hand, will disable the query
+            search controls altogether.  The search query string may still be
+            passed programatically through the 'query' argument in this case.
+
+          query -- query search string.  If None, the form displays query
+            search controls automatically.  If not None, it is considered, that
+            the application implements it's own search interface.  The passed
+            string has exactly the same effect as if the same string was
+            written into the form's query search field (see
+            'allow_query_search' for details).  The form search controls are
+            disabled in this case as if 'allow_query_search' was False.
 
           filter -- filter condition as a 'pytis.data.Operator' instance.  This condition will be
             appended to 'condition', but the difference is that 'condition' is invisible to the
@@ -743,12 +770,12 @@ class BrowseForm(LayoutForm):
         self._index_search_string = index_search_string
         self._search = search
         # Determine the current query search condition.
-        if query is not None:
+        if allow_query_search is False or query is not None:
             show_query_field = False
             allow_query_field = False
         else:
             query = params.get('query')
-            show_query_field = bool(query or params.get('show_query_field'))
+            show_query_field = bool(query or params.get('show_query_field') or allow_query_search)
             allow_query_field = True
         if query:
             query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
