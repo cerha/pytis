@@ -104,7 +104,7 @@ class Menu(wiking.PytisModule):
         return self._data.get_rows(**kwargs)
     
     def _embed_binding(self, modname):
-        return wiking.Binding(self.EMBED_BINDING_ID, modname, None, condition=lambda r: None)
+        return wiking.Binding(self.EMBED_BINDING_ID, None, modname, condition=lambda r: None)
 
     def _bindings(self, req, record):
         bindings = super(Menu, self)._bindings(req, record)

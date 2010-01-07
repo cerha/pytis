@@ -1,6 +1,11 @@
 2010-01-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
+	Pytis CMS: Use the new order of `Binding' arguments (fixed).
+
+2010-01-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
 	Pytis CMS: Use the new order of `Binding' arguments.
 
 2010-01-06  Milan Zamazal  <pdm@brailcom.org>
