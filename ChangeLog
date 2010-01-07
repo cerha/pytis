@@ -1,6 +1,11 @@
 2010-01-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
+	Pytis CMS: Use empty string as embed binding title (None is not valid anymore).
+
+2010-01-07  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/cms/web.py:
 	Pytis CMS: Use the new order of `Binding' arguments (fixed).
 
 2010-01-07  Tomas Cerha  <cerha@brailcom.org>
