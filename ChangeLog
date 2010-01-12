@@ -1,3 +1,8 @@
+2010-01-12  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/form/configui.py:
+	Only save options present in the updated row in the config form.
+
 2010-01-07  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/cms/web.py:
