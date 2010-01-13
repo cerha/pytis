@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2009 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -465,7 +465,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
             message = _("Pozor, tato položka se vyskytuje i na jiných místech menu:")
             for menuid, title in items:
                 if menuid != current_menuid:
-                    message = message + '\n  ' + title
+                    message = message + '\n  ' + (title or _("[bez titulku]"))
             pytis.form.run_dialog(pytis.form.Warning, message)
     def _codebook_rights_check(self):
         main_form = pytis.form.current_form().main_form()

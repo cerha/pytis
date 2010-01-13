@@ -1,3 +1,8 @@
+2010-01-13  Milan Zamazal  <pdm@brailcom.org>
+
+	* defs/menu.py:
+	Don't crash in access rights editing on empty menu titles.
+
 2010-01-12  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/form/configui.py:
