@@ -1750,7 +1750,7 @@ class DataFactory(object):
 #         return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))
 
 
-def dbtable(table, columns, connection_data, arguments=None):
+def dbtable(table, columns, connection_data, arguments=None, connection_name=None):
     """Return 'DBDataDefault' instance corresponding to a 'table' with 'columns'.
 
     Arguments:
@@ -1774,5 +1774,5 @@ def dbtable(table, columns, connection_data, arguments=None):
     bindings = [binding(spec) for spec in columns]
     factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0],
                                      arguments=arguments)
-    data = factory.create(connection_data=connection_data)
+    data = factory.create(connection_data=connection_data, connection_name=connection_name)
     return data

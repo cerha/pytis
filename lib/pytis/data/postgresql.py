@@ -499,7 +499,8 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
             PostgreSQLUserGroups._logical_access_groups = None
             # Check for ev_pytis_user_roles presence first, to prevent logging
             # error messages in non-DMP applications
-            tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data)
+            tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data,
+                             connection_name=self._connection_name)
             roles_data = None
             if tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles'))) > 0:
                 try:
@@ -546,10 +547,11 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
         # Jsou tu dva zámky -- pozor na uváznutí!
 
-        def __init__(self, connection_data):
+        def __init__(self, connection_data, connection_name=None):
             if __debug__:
                 log(DEBUG, 'Vytvoøení notifikátoru')
-            PostgreSQLConnector.__init__(self, connection_data)
+            PostgreSQLConnector.__init__(self, connection_data,
+                                         connection_name=connection_name)
             self._notif_data_lock = thread.allocate_lock()
             self._notif_data_objects = weakref.WeakKeyDictionary()
             self._notif_connection_lock = thread.allocate_lock()
@@ -667,7 +669,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             notifier = PostgreSQLNotifier.NOTIFIERS[spec]
         except KeyError:
             notifier = PostgreSQLNotifier.NOTIFIERS[spec] = \
-              self._PgNotifier(spec)
+              self._PgNotifier(spec, connection_name=self._connection_name)
         for n in notifications:
             notifier.register_notification(self, n)
 

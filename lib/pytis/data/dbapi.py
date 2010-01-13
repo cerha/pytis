@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -196,8 +196,9 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
 
     class _PgNotifier(_DBAPIAccessor, PostgreSQLNotifier._PgNotifier):
 
-        def __init__(self, connection_data):
-            PostgreSQLNotifier._PgNotifier.__init__(self, connection_data)
+        def __init__(self, connection_data, connection_name=None):
+            PostgreSQLNotifier._PgNotifier.__init__(self, connection_data,
+                                                    connection_name=connection_name)
             self._pgnotif_connection = None
 
         def _notif_init_connection(self):
