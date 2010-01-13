@@ -166,12 +166,19 @@ class PostgreSQLAccessor(object):
             """
             self._connection = connection
             self._connection_data = connection_data
+            self._connection_info = {}
 
         def connection(self):
             return self._connection
 
         def connection_data(self):
             return self._connection_data
+
+        def connection_info(self, key):
+            return self._connection_info.get(key)
+
+        def set_connection_info(self, key, value):
+            self._connection_info[key] = value
 
     class _postgresql_Result(object):
         """Výsledek SQL pøíkazu.
@@ -260,8 +267,10 @@ class PostgreSQLAccessor(object):
     def _postgresql_initialize_search_path(self, connection, schemas):
         if schemas:
             search_path = string.join(schemas, ',')
-            query = "set search_path to " + search_path
-            self._postgresql_query(connection, query, False)
+            if connection.connection_info('search_path') != search_path:
+                query = "set search_path to " + search_path
+                self._postgresql_query(connection, query, False)
+                connection.set_connection_info('search_path', search_path)
         
     def _postgresql_query(self, connection, query, restartable, query_args=()):
         """Perform SQL 'query' and return the result.

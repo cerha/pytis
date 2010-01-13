@@ -1,5 +1,10 @@
 2010-01-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/postgresql.py:
+	Make sure search_path setting SQL command is applied only when needed.
+
+2010-01-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/_test.py:
 	* lib/pytis/data/dbdata.py:
 	* lib/pytis/data/postgresql.py:
