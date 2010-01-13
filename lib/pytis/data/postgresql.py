@@ -256,6 +256,12 @@ class PostgreSQLAccessor(object):
         coding = result[0].result().fetchone()[0]
         if coding != 'UTF8':
             self._pg_encoding = coding
+
+    def _postgresql_initialize_search_path(self, connection, schemas):
+        if schemas:
+            search_path = string.join(schemas, ',')
+            query = "set search_path to " + search_path
+            self._postgresql_query(connection, query, False)
         
     def _postgresql_query(self, connection, query, restartable, query_args=()):
         """Perform SQL 'query' and return the result.
@@ -415,6 +421,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             log(DEBUG, 'SQL query', query)
         def lfunction(connection=connection):
             try:
+                self._postgresql_initialize_search_path(connection,
+                                                        self._pg_connection_data().schemas())
                 result, connection = self._postgresql_query(connection, query,
                                                             outside_transaction,
                                                             query_args=query_args)
@@ -747,6 +755,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return with_lock(class_._pdbb_selection_counter_lock, lfunction)
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
+        self._pdbb_table_schema = None
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_create_sql_commands()
@@ -795,7 +804,24 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pdbb_split_table_name(self, table):
         items = table.split('.')
         if len(items) < 2:
-            items.insert(0, 'public')
+            if self._pdbb_table_schema is None:
+                schemas = self._pg_connection_data().schemas()
+                if not schemas:
+                    self._pdbb_table_schema = 'public'
+                elif len(schemas) == 1:
+                    self._pdbb_table_schema = schemas[0]
+                else:
+                    for s in schemas:
+                        query = (("select pg_class.relname from pg_class, pg_namespace "
+                                  "where pg_class.relnamespace = pg_namespace.oid and "
+                                  "pg_class.relname='%s' and pg_namespace.nspname='%s'") %
+                                 (table, s,))
+                        if self._pg_query(query, outside_transaction=True):
+                            self._pdbb_table_schema = s
+                            break
+                    else:
+                        self._pdbb_table_schema = 'public'
+            items.insert(0, self._pdbb_table_schema)
         return items
 
     def _pdbb_unique_table_id(self, table):

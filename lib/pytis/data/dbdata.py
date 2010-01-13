@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -269,10 +269,10 @@ class DBConnection:
     Pro malé úpravy specifikace lze využít metodu 'modified()'.
 
     """
-    _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode')
+    _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode', 'schemas',)
     
     def __init__(self, user=None, password=None, host=None, port=None,
-                 database=None, sslmode='allow', alternatives={}, _name=None):
+                 database=None, sslmode='allow', schemas=None, alternatives={}, _name=None):
         """Initialize connection specification instance.
 
         Arguments:
@@ -283,6 +283,9 @@ class DBConnection:
           port -- database server port number as an int or 'None'
           database -- database name as a string or 'None'
           sslmode -- one of string constants accepted by PostgreSQL
+          schemas -- non-empty sequence of schema identifiers (strings) to use
+            in the database in the order of preference or 'None' (use default
+            schemas)
           alternatives -- dictionary of alternative connection parameters.  Alternative
             database connections are identified by name and data object specifications may refer
             to these names to use connect to alternative data sources (thus the number and names
@@ -300,6 +303,7 @@ class DBConnection:
         self._port = port
         self._database = database
         self._sslmode = sslmode
+        self._schemas = schemas
         if not alternatives.has_key(None):
             # Add the default connection to the alternatives if it is not already there, to be able
             # to `select()' back to it.
@@ -339,6 +343,10 @@ class DBConnection:
 
     def sslmode(self):
         return self._sslmode
+
+    def schemas(self):
+        """Return schemas given in the constructor."""
+        return self._schemas
 
     def __cmp__(self, other):
         """Vrať 0, právě když 'self' a 'other' definují totéž spojení.

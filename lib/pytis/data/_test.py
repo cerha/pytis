@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import copy
 import string
 import time
 
@@ -2076,6 +2077,54 @@ class DBFunction(_DBBaseTest):
         assert result == [10, 12], ('Invalid result', result)
 tests.add(DBFunction)
 
+
+class DBSearchPath(_DBTest):
+    def setUp(self):
+        _DBTest.setUp(self)
+        for q in ("create schema special",
+                  "create table special.cstat(stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL)",
+                  "insert into special.cstat values ('sk', 'Slovakia')",):
+            self._sql_command(q)
+        self._connection_name_counter = 1
+    def tearDown(self):
+        try:
+            for q in ("drop table special.cstat",
+                      "drop schema special",):
+                self._sql_command(q)
+        except:
+            pass
+        _DBTest.tearDown(self)
+    def _retrieve(self, schemas):
+        connection_data = copy.copy(_connection_data)
+        connection_data['schemas'] = schemas
+        connection_data['user'] = 'pdm'
+        name = 'alt' + str(self._connection_name_counter)
+        self._connection_name_counter += 1
+        connection = pytis.data.DBConnection(alternatives={name: connection_data},
+                                             **_connection_data)
+        B = pytis.data.DBColumnBinding
+        key = B('stat', 'cstat', 'stat')
+        dstat_spec = pytis.data.DataFactory(
+            pytis.data.DBDataDefault,
+            (key, (B('nazev', 'cstat', 'nazev'))),
+            key)
+        dstat = dstat_spec.create(connection_data=connection, connection_name=name)
+        return dstat.select_map(lambda row: row[0].value())
+    def test_default_path(self):
+        def test(schemas):
+            keys = self._retrieve(schemas)
+            assert len(keys) > 1 and keys[0] != 'sk', ('Invalid result', keys,)
+        test(None)
+        test([])
+        test(['public'])
+        test(['public', 'special'])
+    def test_special_path(self):
+        def test(schemas):
+            keys = self._retrieve(schemas)
+            assert len(keys) == 1 and keys[0] == 'sk', ('Invalid result', keys,)
+        test(['special'])
+        test(['special', 'public'])
+tests.add(DBSearchPath)
 
 
 ###################

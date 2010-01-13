@@ -1,5 +1,12 @@
 2010-01-13  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/_test.py:
+	* lib/pytis/data/dbdata.py:
+	* lib/pytis/data/postgresql.py:
+	Search_path support in DB interface.
+
+2010-01-13  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/data.py:
 	* lib/pytis/data/dbapi.py:
 	* lib/pytis/data/postgresql.py:
