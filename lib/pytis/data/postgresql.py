@@ -244,10 +244,14 @@ class PostgreSQLAccessor(object):
     
     def _postgresql_initialize_connection(self, connection):
         """Proveï potøebné inicializace nového spojení 'connection'.
+
+        Pozor, tato metoda mù¾e být volána z jakékoliv instance tøídy, nesmí
+        tedy zde být nic specifického pro konkrétní instanci.
+        
         """
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
-
+        
     def _postgresql_initialize_transactions(self, connection):
         """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
         pass

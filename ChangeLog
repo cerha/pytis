@@ -1,5 +1,10 @@
 2010-01-14  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/postgresql.py:
+	Add usage warning to PostgreSQLAccessor._postgresql_initialize_connection.
+
+2010-01-14  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/_test.py:
 	Cosmetic change in db schemas tests.
 
