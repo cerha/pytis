@@ -2085,7 +2085,6 @@ class DBSearchPath(_DBTest):
                   "create table special.cstat(stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL)",
                   "insert into special.cstat values ('sk', 'Slovakia')",):
             self._sql_command(q)
-        self._connection_name_counter = 1
     def tearDown(self):
         try:
             for q in ("drop table special.cstat",
@@ -2098,8 +2097,7 @@ class DBSearchPath(_DBTest):
         connection_data = copy.copy(_connection_data)
         connection_data['schemas'] = schemas
         connection_data['user'] = 'pdm'
-        name = 'alt' + str(self._connection_name_counter)
-        self._connection_name_counter += 1
+        name = 'schemas_' + string.join((schemas or ['default']), '_')
         connection = pytis.data.DBConnection(alternatives={name: connection_data},
                                              **_connection_data)
         B = pytis.data.DBColumnBinding
