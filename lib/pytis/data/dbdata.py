@@ -221,7 +221,10 @@ class DBConnectionPool:
 
     def _connection_spec_id(self, connection_spec):
         c = connection_spec
-        return (c.database(), c.host(), c.port(), c.user(), c.password(), c.sslmode())
+        schemas = c.schemas()
+        if isinstance(schemas, list):
+            schemas = tuple(schemas)
+        return (c.database(), c.host(), c.port(), c.user(), c.password(), c.sslmode(), schemas,)
 
     def get(self, connection_spec):
         pool = self._pool

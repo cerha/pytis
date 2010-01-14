@@ -1,5 +1,10 @@
 2010-01-14  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/data/dbdata.py:
+	Consider schemas in connection pool caching.
+
+2010-01-14  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/postgresql.py:
 	Add usage warning to PostgreSQLAccessor._postgresql_initialize_connection.
 
