@@ -557,7 +557,14 @@ class Configuration(object):
                                           for option in map.keys() if hasattr(cfg, option)])
             alternatives = [(name, connection_options(opts.items()))
                             for name, opts in cfg.dbconnections.items()]
-            return pytis.data.DBConnection(alternatives=dict(alternatives), **options)
+            schemas_string = cfg.dbschemas
+            if schemas_string:
+                schemas = [s.strip() for s in schemas_string.split(',')]
+            else:
+                schemas = None
+            return pytis.data.DBConnection(alternatives=dict(alternatives),
+                                           schemas=schemas,
+                                           **options)
 
     class _Option_dblogtable(StringOption):
         _DESCR = _("Jméno tabulky, do které mají být logovány DML SQL pøíkazy.")
