@@ -2836,8 +2836,8 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         self._name = name
         self._query = "select nextval('%s')" % name
         
-    def next(self):
-        result = self._pg_query(self._query)
+    def next(self, transaction=None):
+        result = self._pg_query(self._query, transaction=transaction)
         try:
             number = int(result[0][0])
         except Exception, e:

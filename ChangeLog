@@ -1,3 +1,9 @@
+2010-01-15  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	* lib/pytis/extensions/dbutils.py:
+	Allow passing transaction to db counter nextval().
+
 2010-01-13  Milan Zamazal  <pdm@brailcom.org>
 
 	* defs/menu.py:

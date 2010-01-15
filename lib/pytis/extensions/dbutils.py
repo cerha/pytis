@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -201,7 +201,7 @@ def nextval(seq):
     def conn_spec():
         return config.dbconnection
     counter = pytis.data.DBCounterDefault(seq, conn_spec)
-    return lambda: counter.next()
+    return lambda transaction=None: counter.next(transaction=transaction)
 
 
 def enum(name, **kwargs):
