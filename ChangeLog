@@ -1,3 +1,12 @@
+2010-01-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/util/configuration.py:
+	Add dbschemas configuration option (without real effect).
+	
+	This change is here not to break Wiking after adding dbschemas support to it.
+	Full pytis dbschemas support will be merged in after it is tested.
+	
+
 2010-01-15  Tomas Cerha  <cerha@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

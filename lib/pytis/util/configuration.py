@@ -2,7 +2,7 @@
 
 # Prostøedky pro definici a zpracování konfigurace bìhu aplikace
 # 
-# Copyright (C) 2002-2009 Brailcom, o.p.s.
+# Copyright (C) 2002-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -519,6 +519,10 @@ class Configuration(object):
     class _Option_dbsslm(StringOption, CommandlineOption):
         _DESCR = _("Database SSL mode (one of string constants supported by the DB system).")
         _DEFAULT = None
+
+    class _Option_dbschemas(StringOption, CommandlineOption):
+        _DESCR = _("List of database schemas to use in the order of their preference.")
+        _DEFAULT = None        
     
     class _Option_dbconnections(HiddenOption):
         _DESCR = _("Alternative database connections")
