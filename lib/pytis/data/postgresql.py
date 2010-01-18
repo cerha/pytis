@@ -769,6 +769,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
         self._pdbb_table_schemas = {}
+        self._pdbb_function_schemas = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_create_sql_commands()
@@ -814,29 +815,36 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         #return 'coalesce(%s%s, %s%s)' % (value, cast, default, cast)
         return '%s%s' % (value, cast)
 
-    def _pdbb_split_table_name(self, table):
-        items = table.split('.')
+    def _pdbb_split_object_name(self, obj, schema_dict, object_table, object_label):
+        items = obj.split('.')
         if len(items) < 2:
-            if self._pdbb_table_schemas.get(table) is None:
+            if schema_dict.get(obj) is None:
                 schemas = self._pg_connection_data().schemas()
                 if not schemas:
-                    self._pdbb_table_schemas[table] = 'public'
+                    schema_dict[obj] = 'public'
                 elif len(schemas) == 1:
-                    self._pdbb_table_schemas[table] = schemas[0]
+                    schema_dict[obj] = schemas[0]
                 else:
                     for s in schemas:
-                        query = (("select pg_class.relname from pg_class, pg_namespace "
-                                  "where pg_class.relnamespace = pg_namespace.oid and "
-                                  "pg_class.relname='%s' and pg_namespace.nspname='%s'") %
-                                 (table, s,))
+                        query = (("select %(table)s.%(label)sname from %(table)s, pg_namespace "
+                                  "where %(table)s.%(label)snamespace = pg_namespace.oid and "
+                                  "%(table)s.%(label)sname='%(name)s' and "
+                                  "pg_namespace.nspname='%(namespace)s'") %
+                                 dict(table=object_table, label=object_label, name=obj, namespace=s))
                         if self._pg_query(query, outside_transaction=True):
-                            self._pdbb_table_schemas[table] = s
+                            schema_dict[obj] = s
                             break
                     else:
-                        self._pdbb_table_schemas[table] = 'public'
-            items.insert(0, self._pdbb_table_schemas[table])
+                        schema_dict[obj] = 'public'
+            items.insert(0, schema_dict[obj])
         return items
-
+    
+    def _pdbb_split_table_name(self, table):
+        return self._pdbb_split_object_name(table, self._pdbb_table_schemas, 'pg_class', 'rel')
+        
+    def _pdbb_split_function_name(self, table):
+        return self._pdbb_split_object_name(table, self._pdbb_function_schemas, 'pg_proc', 'pro')
+        
     def _pdbb_unique_table_id(self, table):
         connection_data = self._pg_connection_data()
         return table, connection_data.host(), connection_data.port(), connection_data.database()
@@ -2920,8 +2928,10 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
     def _db_bindings_to_column_spec(self, __bindings):
         if self._pdbb_result_columns is not None:
             return self._pdbb_result_columns, ()
-        type_query = ("select proretset, prorettype, proargtypes from pg_proc"+
-                      " where proname = '%s'") % self._name
+        schema, name = self._pdbb_split_function_name(self._name)
+        type_query = ("select proretset, prorettype, proargtypes from pg_proc, pg_namespace "
+                      "where pg_proc.pronamespace = pg_namespace.oid and "
+                      "pg_namespace.nspname = '%s' and proname = '%s'") % (schema, name,)
         self._pg_begin_transaction()
         try:
             data = self._pg_query(type_query)
