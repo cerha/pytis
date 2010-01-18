@@ -768,7 +768,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return with_lock(class_._pdbb_selection_counter_lock, lfunction)
         
     def __init__(self, bindings=None, ordering=None, **kwargs):
-        self._pdbb_table_schema = None
+        self._pdbb_table_schemas = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_create_sql_commands()
@@ -817,12 +817,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pdbb_split_table_name(self, table):
         items = table.split('.')
         if len(items) < 2:
-            if self._pdbb_table_schema is None:
+            if self._pdbb_table_schemas.get(table) is None:
                 schemas = self._pg_connection_data().schemas()
                 if not schemas:
-                    self._pdbb_table_schema = 'public'
+                    self._pdbb_table_schemas[table] = 'public'
                 elif len(schemas) == 1:
-                    self._pdbb_table_schema = schemas[0]
+                    self._pdbb_table_schemas[table] = schemas[0]
                 else:
                     for s in schemas:
                         query = (("select pg_class.relname from pg_class, pg_namespace "
@@ -830,11 +830,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                   "pg_class.relname='%s' and pg_namespace.nspname='%s'") %
                                  (table, s,))
                         if self._pg_query(query, outside_transaction=True):
-                            self._pdbb_table_schema = s
+                            self._pdbb_table_schemas[table] = s
                             break
                     else:
-                        self._pdbb_table_schema = 'public'
-            items.insert(0, self._pdbb_table_schema)
+                        self._pdbb_table_schemas[table] = 'public'
+            items.insert(0, self._pdbb_table_schemas[table])
         return items
 
     def _pdbb_unique_table_id(self, table):

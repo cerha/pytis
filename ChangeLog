@@ -1,3 +1,8 @@
+2010-01-18  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Cache table schemas by actual table names, don't assume they are always the same.
+
 2010-01-14  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/util/configuration.py:
