@@ -1,3 +1,12 @@
+2010-01-19  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/types_.py:
+	* lib/pytis/form/inputfield.py:
+	* lib/pytis/form/list.py:
+	* lib/pytis/presentation/field.py:
+	* lib/pytis/presentation/spec.py:
+	Allow using variable db table function arguments in codebooks.
+
 2010-01-18  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/util/configuration.py:

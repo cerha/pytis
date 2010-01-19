@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1272,12 +1272,20 @@ class GenericCodebookField(InputField):
         pass
         
     def _select_row_arg(self):
-        """Return the value for RecordForm 'select_row' arguemnt."""
+        """Return the value for RecordForm 'select_row' argument."""
         value = self._row[self.id()]
         if self._valid and value.value():
             return {self._type.enumerator().value_column(): value}
         else:
             return None
+
+    def _codebook_arguments(self):
+        arguments_function = self._cb_spec.arguments()
+        if arguments_function is None:
+            arguments = None
+        else:
+            arguments = arguments_function(self._row)
+        return arguments
     
     def _run_codebook_form(self, begin_search=None):
         """Zobraz číselník a po jeho skončení nastav hodnotu políčka."""
@@ -1290,7 +1298,7 @@ class GenericCodebookField(InputField):
             condition = validity_condition or runtime_filter_condition
         result = run_form(CodebookForm, self._cb_name, begin_search=begin_search,
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
-                          condition=condition)
+                          condition=condition, arguments=self._codebook_arguments())
         if result: # may be None or False!
             self._set_value(result.format(enumerator.value_column()))
         self.set_focus()
@@ -1473,7 +1481,8 @@ class ListField(GenericCodebookField):
         if sorting is None:
             sorting = resolver().get(self._cb_name, 'view_spec').sorting()
         rows = enumerator.rows(condition=self._row.runtime_filter(self._id),
-                               transaction=self._row.transaction(), sort=sorting or ())
+                               transaction=self._row.transaction(), sort=sorting or (),
+                               arguments=self._codebook_arguments())
         for i, row in enumerate(rows):
             list.InsertStringItem(i, "")
             v = row[value_column]

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2470,6 +2470,9 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             self._cb_spec = CodebookSpec()
         self._begin_search = begin_search
         super(CodebookForm, self)._init_attributes(**kwargs)
+        
+    def _current_arguments(self):
+        return self._arguments
         
     def _default_folding(self):
         return self.Folding(level=None)

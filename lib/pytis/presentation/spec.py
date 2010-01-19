@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1400,10 +1400,9 @@ class Binding(object):
             condition will be used in conjunction with the binding column condition.  If
             'binding_column' is None, this condition will be used solely.
           arguments -- function of a single argument (the 'PresentedRow'
-            instance) returning a sequence of 'DBBinding' instances defining
-            table arguments.  This function may be provided only when the side
-            form table is actually a row returning function.  Otherwise
-            'arguments' must be 'None'.
+            instance) returning a dictionary of table arguments.  This function
+            may be provided only when the side form table is actually a row
+            returning function.  Otherwise 'arguments' must be 'None'.
           descr -- binding description text (to be used in on-line help etc).
           single -- boolean flag indicating whether this binding corresponds to a 1:1 relation
             (True value) or 1:N relation (False value).  The value of this flag determines the
@@ -1672,7 +1671,8 @@ class CodebookSpec(object):
     
     """
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
-                 display_size=20, enable_autocompletion=True, begin_search=None):
+                 display_size=20, enable_autocompletion=True, begin_search=None,
+                 arguments=None):
         """Initialize the instance.
 
         Arguments:
@@ -1687,18 +1687,19 @@ class CodebookSpec(object):
             be a string.  If a function is passed and this function has just one argument named
             'row', the function will recieve the data row of the corresponding codebook data object
             as an argument (instead of just the internal codebook value).
-
           prefer_display -- If true, the user interface will show the display value instead of the
             codebook internal value wherever possible.  For example the browse from will show the
             display value instead of the code (the display is normally only shown in the status
             line or tooltip).  See below for more details
-
           display_size -- width of the codebook display field in characters.  It is possible to
             override this value by the argument of the same name within the field specification
             (for particular field).
-          
           begin_search -- None or an identifier of a column, where incremental search whould be
             automatically started when a codebook form is invoked (GUI only).
+          arguments -- function of a single argument (the 'PresentedRow'
+            instance) returning a dictionary of table arguments.  This function
+            may be provided only when the codebook is actually a row
+            returning function.  Otherwise 'arguments' must be 'None'.
 
         The user visible value of the codebook is used in several situations.  The codebook field
         ('SelectionType.CODEBOOK') will show it in a display next to the form control for entering
@@ -1719,6 +1720,7 @@ class CodebookSpec(object):
         assert display_size is None or isinstance(display_size, int)
         assert begin_search is None or isinstance(begin_search, str)
         assert isinstance(enable_autocompletion, bool)
+        assert arguments is None or callable(arguments), arguments
         self._columns = columns
         self._sorting = sorting
         self._display = display
@@ -1726,6 +1728,7 @@ class CodebookSpec(object):
         self._display_size = display_size
         self._begin_search = begin_search
         self._enable_autocompletion = enable_autocompletion
+        self._arguments = arguments
         
     def columns(self):
         return self._columns
@@ -1751,6 +1754,9 @@ class CodebookSpec(object):
 
     def enable_autocompletion(self):
         return self._enable_autocompletion
+
+    def arguments(self):
+        return self._arguments
     
 
 class FormType(object):

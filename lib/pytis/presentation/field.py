@@ -2,7 +2,7 @@
 
 # Prezentace dat v políèkách.
 # 
-# Copyright (C) 2002-2009 Brailcom, o.p.s.
+# Copyright (C) 2002-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -731,7 +731,15 @@ class PresentedRow(object):
                     completer = column.type.enumerator()
             self._completer_cache[column.id] = completer
         return completer
-    
+
+    def _codebook_arguments(self, column):
+        arguments_function = self._cb_spec(column).arguments()
+        if arguments_function is None:
+            arguments = None
+        else:
+            arguments = arguments_function(self)
+        return arguments
+        
     def _display_func(self, column):
         if self._secret_column(column.id, column.virtual):
             hidden_value = column.type.secret_export()
@@ -741,7 +749,8 @@ class PresentedRow(object):
                 return ''
             try:
                 row = enum.row(value, condition=self.runtime_filter(column.id),
-                               transaction=self._transaction)
+                               transaction=self._transaction,
+                               arguments=self._codebook_arguments(column))
             except pytis.data.DataAccessException:
                 return ''
             if row is None:
@@ -818,7 +827,8 @@ class PresentedRow(object):
             display = lambda v: column.type.export(v)
         enumerator = column.type.enumerator()
         if isinstance(enumerator, pytis.data.DataEnumerator):
-            kwargs = dict(condition=self.runtime_filter(key))
+            kwargs = dict(condition=self.runtime_filter(key),
+                          arguments=self._codebook_arguments(column))
             sorting = None
             cb_spec = self._cb_spec(column)
             if cb_spec:

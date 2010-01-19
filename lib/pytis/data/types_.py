@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1675,15 +1675,12 @@ class DataEnumerator(Enumerator):
         Arguments:
         
           data_factory -- a 'DataFactory' instance for data object creation.
-
           value_column -- identifier of the column which provides the enumeration values.  If
             None, the key column is used.
-
           validity_column -- identifier of the column which determines valid rows (or None).  If
             defined, only rows with a true value in this column will be used for the enumeration
             (it must be a boolean column).  It is not possible to combine this argument with the
             'validity_condition' argument below.
-
           validity_condition -- a condition determining validity of data rows as a
             'pytis.data.Operator' instance (or None).  Only rows complying to this condition will
             be used for the enumeration.  This is a more general option than the 'validity_column'
@@ -1748,14 +1745,16 @@ class DataEnumerator(Enumerator):
         else:
             return condition
 
-    def _retrieve(self, value, transaction=None, condition=None):
+    def _retrieve(self, value, transaction=None, condition=None, arguments=None):
+        if arguments is None:
+            arguments = {}
         the_condition = EQ(self._value_column, Value(self._value_column_type, value))
         validity_condition = self._condition(condition=condition)
         if validity_condition is not None:
             the_condition = AND(the_condition, validity_condition)
         def lfunction():
             data = self._data
-            count = data.select(the_condition, transaction=transaction)
+            count = data.select(the_condition, transaction=transaction, arguments=arguments)
             if count > 1:
                 raise ProgramError('Insufficient runtime filter for DataEnumerator',
                                    str(the_condition))
@@ -1766,19 +1765,22 @@ class DataEnumerator(Enumerator):
 
     # Enumerator interface
     
-    def check(self, value, transaction=None, condition=None):
-        row = self._retrieve(value, transaction, condition)
+    def check(self, value, transaction=None, condition=None, arguments=None):
+        row = self._retrieve(value, transaction, condition, arguments=arguments)
         if row is None:
             result = False
         else:
             result = True
         return result
 
-    def values(self, condition=None, transaction=None, sort=(), max=None):
+    def values(self, condition=None, transaction=None, sort=(), max=None, arguments=None):
+        if arguments is None:
+            arguments = {}
         the_condition = self._condition(condition=condition)
         def lfunction():
             result = []
-            count = self._data.select(condition=the_condition, transaction=transaction, sort=sort)
+            count = self._data.select(condition=the_condition, transaction=transaction, sort=sort,
+                                      arguments=arguments)
             if max is not None and count > max:
                 self._data.close()
                 return None
@@ -1816,7 +1818,7 @@ class DataEnumerator(Enumerator):
         """Return static condition determining validity of data rows."""
         return self._validity_condition
     
-    def row(self, value, transaction=None, condition=None):
+    def row(self, value, transaction=None, condition=None, arguments=None):
         """Return a *data* row corresponding to given codebook value.
         
         Arguments:
@@ -1825,13 +1827,17 @@ class DataEnumerator(Enumerator):
             corresponding to this value is returned.
           transaction -- transaction for data operations.
           condition -- runtime filter condition for enumerator validation.
-  
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the table is actually a row
+            returning database function, otherwise ignored.
+
         Returns a 'pytis.data.Row' instance from the underlying data object.
 
         """
-        return self._retrieve(value, transaction=transaction, condition=condition)
+        return self._retrieve(value, transaction=transaction, condition=condition, arguments=arguments)
     
-    def rows(self, transaction=None, condition=None, sort=()):
+    def rows(self, transaction=None, condition=None, sort=(), arguments=None):
         """Return sequence of rows of the underlying data object.
 
         Arguments:
@@ -1839,12 +1845,19 @@ class DataEnumerator(Enumerator):
           transaction -- transaction for data operations.
           condition -- runtime filter condition as an 'Operator' instance or None.
           sort -- sorting specification as accepted by 'pytis.data.Data.select()'.
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the table is actually a row
+            returning database function, otherwise ignored.
 
         """
+        if arguments is None:
+            arguments = {}
         the_condition = self._condition(condition=condition)
         def lfunction():
             return self._data.select_map(identity, condition=the_condition,
-                                         transaction=transaction, sort=sort)
+                                         transaction=transaction, sort=sort,
+                                         arguments=arguments)
         return with_lock(self._data_lock, lfunction)
 
     def type(self, column):
