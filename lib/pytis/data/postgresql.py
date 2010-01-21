@@ -1100,9 +1100,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 return ''
             else:
                 qresult = self._pg_query(
-                    ("select definition from pg_views where viewname = '%s'" %
-                     (main_table,)),
+                    ("select definition from pg_views where schemaname = '%s' and viewname = '%s'" %
+                     (schema, main_table_name,)),
                     outside_transaction=True)
+                assert len(qresult) == 1, (schema, main_table_name,)
                 lock_query = qresult[0][0]
                 if lock_query[-1] == ';':
                     lock_query = lock_query[:-1]
@@ -1115,9 +1116,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 # the locking clause.  But first we need to know what may be put
                 # after OF without causing a database error.
                 qresult = self._pg_query(
-                    ("select ev_action from "+
-                     "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "+
-                     "where relname='%s'") % (main_table,),
+                    ("select ev_action from "
+                     "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "
+                     "join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) "
+                     "where nspname='%s' and relname='%s'") % (schema, main_table,),
                     outside_transaction=True)
                 ev_action_string = qresult[0][0]
                 ev_action = pg_parse_ev_action(ev_action_string)

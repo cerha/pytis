@@ -1,3 +1,8 @@
+2010-01-21  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/postgresql.py:
+	Handle name spaces in db view locking.
+
 2010-01-18  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:
