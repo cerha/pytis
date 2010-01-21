@@ -1,3 +1,10 @@
+2010-01-21  Tomas Cerha  <cerha@brailcom.org>
+
+	* INSTALL:
+	* NEWS:
+	* lib/pytis/__init__.py:
+	Released version 1.0.0.
+
 2010-01-19  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/types_.py:

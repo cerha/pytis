@@ -3,7 +3,7 @@ Pytis Installation Instructions
 Requirements:
 
   * Python 2.3 or later
-  * PostgreSQL 8.1 or later
+  * PostgreSQL 8.4 or later
   * python-psycopg2 library (for older versions - PyPgSQL Python library)
   * egenix-mx-datetime Python library
   * python-wxgtk2.6 or later (only for GUI apps)
