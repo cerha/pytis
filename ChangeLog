@@ -1,5 +1,10 @@
 2010-01-22  Milan Zamazal  <pdm@brailcom.org>
 
+	* defs/menu.py:
+	Add titles to all columns in DMP specifications.
+
+2010-01-22  Milan Zamazal  <pdm@brailcom.org>
+
 	* NEWS:
 	NEWS entry added.
 
