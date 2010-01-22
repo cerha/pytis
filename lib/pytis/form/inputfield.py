@@ -1280,12 +1280,7 @@ class GenericCodebookField(InputField):
             return None
 
     def _codebook_arguments(self):
-        arguments_function = self._cb_spec.arguments()
-        if arguments_function is None:
-            arguments = None
-        else:
-            arguments = arguments_function(self._row)
-        return arguments
+        return self._row.runtime_arguments(self.id())
     
     def _run_codebook_form(self, begin_search=None):
         """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""

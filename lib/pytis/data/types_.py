@@ -275,7 +275,8 @@ class Type(object):
         except KeyError:
             raise AttributeError(name)
 
-    def validate(self, object, strict=True, transaction=None, condition=None, **kwargs):
+    def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
+                 **kwargs):
         """Validate the 'object' and return a 'Value' instance and an error.
 
         Arguments:
@@ -287,6 +288,7 @@ class Type(object):
             reason is not validation, but the conversion.
           transaction -- transaction for data operations.
           condition -- runtime filter condition for enumerator validation.
+          arguments -- runtime table function arguments for enumerator validation.
           kwargs -- type specific keyword arguments
 
         Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
@@ -321,15 +323,17 @@ class Type(object):
         # s tím spojené.  Pokud by bylo potøeba v budoucnu toto rozli¹it, lze
         # pøidat dal¹í metodu nebo argument.  Nyní je to èásteènì øe¹eno
         # argumentem 'strict'.
+        if arguments:
+            arguments = tuple(arguments.items())
+        key = (object, strict, transaction, condition, arguments, tuple(kwargs.items()))
         try:
-            key = (object, strict, transaction, condition, tuple(kwargs.items()))
             result = self._validation_cache[key], None
         except ValidationError, e:
             result = None, e
         return result
 
     def _validating_provider(self, key):
-        object, strict, transaction, condition, kwargs_items = key
+        object, strict, transaction, condition, arguments, kwargs_items = key
         special = rassoc(object, self._SPECIAL_VALUES)
         if special:
             value = Value(self, special[0])
@@ -340,7 +344,10 @@ class Type(object):
             if error:
                 raise error
         if strict:
-            self._check_constraints(value.value(), transaction=transaction, condition=condition)
+            if arguments:
+                arguments = dict(arguments)
+            self._check_constraints(value.value(), transaction=transaction, condition=condition,
+                                    arguments=arguments)
         return value
     
     def _validate(self, object, **kwargs):

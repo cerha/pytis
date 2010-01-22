@@ -1644,7 +1644,8 @@ class CbComputer(Computer):
             e = cbvalue.type().enumerator()
             assert e is not None, "CbComputer field '%s' has no enumerator." % self._field
             row = e.row(cbvalue.value(), transaction=row.transaction(),
-                        condition=row.runtime_filter(self._field))
+                        condition=row.runtime_filter(self._field),
+                        arguments=row.runtime_arguments(self._field))
             if row:
                 value = row[self._column].value()
                 if value is None:
@@ -1671,8 +1672,7 @@ class CodebookSpec(object):
     
     """
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
-                 display_size=20, enable_autocompletion=True, begin_search=None,
-                 arguments=None):
+                 display_size=20, enable_autocompletion=True, begin_search=None):
         """Initialize the instance.
 
         Arguments:
@@ -1696,10 +1696,6 @@ class CodebookSpec(object):
             (for particular field).
           begin_search -- None or an identifier of a column, where incremental search whould be
             automatically started when a codebook form is invoked (GUI only).
-          arguments -- function of a single argument (the 'PresentedRow'
-            instance) returning a dictionary of table arguments.  This function
-            may be provided only when the codebook is actually a row
-            returning function.  Otherwise 'arguments' must be 'None'.
 
         The user visible value of the codebook is used in several situations.  The codebook field
         ('SelectionType.CODEBOOK') will show it in a display next to the form control for entering
@@ -1720,7 +1716,6 @@ class CodebookSpec(object):
         assert display_size is None or isinstance(display_size, int)
         assert begin_search is None or isinstance(begin_search, str)
         assert isinstance(enable_autocompletion, bool)
-        assert arguments is None or callable(arguments), arguments
         self._columns = columns
         self._sorting = sorting
         self._display = display
@@ -1728,7 +1723,6 @@ class CodebookSpec(object):
         self._display_size = display_size
         self._begin_search = begin_search
         self._enable_autocompletion = enable_autocompletion
-        self._arguments = arguments
         
     def columns(self):
         return self._columns
@@ -1968,7 +1962,8 @@ class Field(object):
 
     """
 
-    def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
+    def __init__(self, id=None, label=None, column_label=None, inherit=None,
+                 **kwargs):
         """Initialize field specification.
 
         Arguments:
@@ -1977,75 +1972,59 @@ class Field(object):
             all pytis operations.  The identifier is also used as the name of the related column in
             the underlying data object by default, but this may be overriden by the 'dbcolumn'
             argument.
-          
           label -- user visible field label as a string or unicode.  This argument (unlike
             the remaining arguments) may also be passed as positional.
-
           inherit -- may be used to inherit from other field specification.  If a 'Field'
             instance is passed in this argument, all constructor arguments not overriden in the
             current constructor call will be inherited from that instance.
-          
           column_label -- optional field label in the column view.  The column label is the same as
             'label' by default, but may be overriden by passing a string or unicode value.
-            
           descr -- brief field description in the extent of approx. one sentence, suitable for
             example for tooltip text.
-
           virtual -- boolean flag indicating that the field is not bound to the underlying data
             object.  The value of a virtual field will most often be computed on the fly by a
             'Computer'.  See the argument 'computer' for more information.  Since the data type of
             a virtual field cannot be obtained from the data object, the hardcoded default type of
             virtual fields is 'pytis.data.String'.  Use the 'type' argument to override it.
-
           dbcolumn -- name of the related column in the underlying data object.  The name is the
             same as the field identifier by default.  It is not recommended to use different column
             name than the field identifier unless there is a serious reason for it.
-
           type -- explicit data type as a 'pytis.data.Type' instance.  The data type is normally
             determined from the underlying data object, but you may need to define the type
             explicitly to improve field presentation or pass additional validation constraints.
             Given type, however, must be compatible with the type used by the data object.
-            
           width -- field width in characters (integer).  Default width is determined automatically
             if not specified here.  Certain types of input fields may interpret the value
             differently (e.g. as a number of columns) when number of characters doesn't make sense.
-            
           height -- field height in characters (integer).  Certain types of input fields may
             interpret the value differently (e.g. as a number of rows) when number of characters
             doesn't make sense.
-          
           column_width -- table column width in characters (integer).  If not defined, defaults to
             'width'.
-
           disable_column -- If true, it is not possible to display the field as a table
             column.  The field does not appear in the selection of columns to display and presence
             of such field in default columns ('ViewSpec' argument 'columns') is announced as
             an error.
-
           fixed -- passing True value will disable automatic scaling of column width when the table
             size is changed.  The default behavaior is to accommodate column widths to new form
             size, so that the available space is used evenly between all columns.  Fixed columns,
             however will be left out during these recomputations and will keep their prevoius
             widths.
-            
           editable -- one of 'Editable' constants or a 'Computer' instance.  The constants
             determine field editability statically, the computer may be used to compute editability
             dynamically based on the values of other fields of a record (see also notes about
             computer specifications below).  The default value is 'Editable.ALWAYS', but certain
             combinations of other specification parameters may lead to another default value (for
             example if a 'computer' is defined, the default value is 'Editable.NEVER').
-            
           compact -- pravdivá hodnota znamená, ¾e bude textový popisek políèka
             v editaèním formuláøi pøimknut k hornímu okraji vstupního prvku
             (bude tedy nad políèkem).  V opaèném pøípadì (výchozí chování) je
             popisek vlevo od políèka.
-
           nocopy -- pøíznak umo¾òující zakázat kopírování hodnoty políèka pøi
             kopírování záznamu.  Standardnì nejsou kopírovány klíèové sloupce a
             dopoèítávaná políèka na nich závisející.  Nìkdy je v¹ak tøeba
             zamezit také kopírování nìkterých dal¹ích hodnot.  V tom pøípadì je
             nutno pøedat pravdivou hodnotu tomuto argumentu.
-            
           default -- default value or a function for computing the default value.  The default
             value is used when a new record is initialized.  Please note, that if computer is
             defined, it has higher precedence than the default value.  You may pass a value
@@ -2054,14 +2033,11 @@ class Field(object):
             default value must be compatible with the internal Python representation for the data
             type of the field.  If not defined, the default value is determined by the data type
             (usually 'None').
-            
           computer -- a 'Computer' instance for computing the field value based on the values of
             other fields of the same record.  See below for more details about computed fields.
-            
           line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
             víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
             read-only políèka.
-            
           codebook -- name of the specification which acts as a codebook for this field.  If 'None',
             the field may still have an 'enumerator' on tha data level, but the user interface is
             not able to determine which specification it is, so displaying the codebook in a
@@ -2069,7 +2045,6 @@ class Field(object):
             'selection_type' is 'SelectionType.CODEBOOK'.  Also the default 'enumerator' for the
             field's data type is automatically set to a 'DataEnumerator' bound to given
             specification.
-
           display -- defines the method of retrieving the user visible value of an enumeration
             item.  None means to use the exported enumeration value itself.  A function of one
             argument may be used to provide custom display values.  The function receives an
@@ -2081,34 +2056,33 @@ class Field(object):
             values -- see 'null_display' for a way to customize the displayed value of the
             unselected state.  This option is only relevant for fields with a 'codebook' or
             'enumerator'.
-           
           prefer_display -- has the same meaning as the same option in the related 'CodebookSpec',
             but higher priority (only relevant for fields with a 'codebook').
-
           display_size -- has the same meaning as the same option in the related 'CodebookSpec',
             but higher priority (only relevant for fields with a 'codebook').
-
           null_display -- display value (string) to use for the unselected state of an enumeration
             field (null field value).  Null value is not part of the enumeration, but if the field
             is not 'not_null', it is a valid field value, but as it is not within the enumeration,
             'display' may not be used.
-
           allow_codebook_insert -- true value enables a button for codebook new record insertion.
             This button is displayed next to the codebook field.
-            
           codebook_insert_spec -- Název specifikace, která má být pou¾ita pro
             vkládání nových záznamù (viz 'allow_codebook_insert').  Pokud je
             'None', bude pou¾ita hodnota 'codebook', nebo její výchozí hodnota.
             Relevantní jen pro èíselníková políèka, kde 'allow_codebook_insert'
             je pravdivé.
-            
           runtime_filter -- provider of enumeration runtime filter as a 'Computer' instance.  The
             computer function computes the filter condition based on the current row data and
             returns it as a 'pytis.data.Operator' instance.  This condition is used to filter out
             enumerator data for codebook fields as well as available completions when
             autocompletion is enabled.  This is mostly useful for modification of available
             codebook values based on the current values of other fields within the form.
-
+          runtime_arguments -- provider of codebook table function arguments as a
+            'Computer' instance.  This is similar to 'runtime_filter' argument,
+            except that the computer function returns dictionary of table
+            function arguments.  'runtime_arguments' may be provided only when the
+            field is a codebook field and the codebook is actually a row
+            returning function.  Otherwise 'runtime_arguments' must be 'None'.
           completer -- enumerator used for automatic completion.  The available completions are
             taken from an enumerator object.  If the field has an enumerator (defined by
             'enumerator' or 'codebook'), it will be used for completions automatically (unless
@@ -2119,15 +2093,12 @@ class Field(object):
             (e.g. 'pytis.data.FixedEnumerator') or a name of the specification used to create a
             'pytis.data.DataEnumerator'.  Also a sequens (list or tuple) is accepted and converted
             to a 'FixedEnumerator' instance.
-            
           selection_type -- one of 'SelectionType' constants defining the type of user interface
             element used to present the related enumeration.  Only relevant for fields with an
             enumerator (specified either by 'codebook' or 'enumerator').
-            
           orientation -- orientace políèka, jedna z konstant tøídy
             'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
             napø. 'inputfield.RadioBoxInputField'.
-            
           post_process -- funkce upravující vkládaný text bìhem psaní.  Jedná
             se o funkci jednoho argumentu, kterým je øetìzcová hodnota políèka.
             Vrácená hodnota je potom nastavena jako nová hodnota políèka.  Tato
@@ -2137,29 +2108,24 @@ class Field(object):
             Hodnotou tohoto argumentu mù¾e být také nìkterá z konstant tøídy
             'PostProcess', èím¾ je u¹etøeno psaní nìkterých èasto pou¾ívaných
             funkcí.
-            
           filter -- specifikace jednoho z pøednastavených filtrù znakù
             propou¹tìných do textového políèka z u¾ivatelského vstupu.  Jedna
             z konstant tøídy 'TextFilter'.
-            
           filter_list -- sekvence povolených, nebo zakázaných znakù.
             Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
             'EXCLUDE_LIST'.
-            
           style -- instance tøídy 'Style' urèující vizuální styl políèka
             nebo funkce dvou argumentù vracející instanci tøídy 'Style'.
             Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
             a aktuální datový øádek jako instance 'PresentedRow'.  Pokud je
             'None', bude pou¾it výchozí styl øádku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
-
           link -- specification of a link, or a series of links to other forms related to the
             current field value.  The value is a 'Link' instance or their sequence.  The links will
             be presented as separate menu items in the context menu of a record in the GUI.  The
             web forms currently only support one link per field and present it as a hypertext link
             on field's value.  The links will open the related form and locate the record
             corresponding to the value of the refering field.
-
           filename -- identifier of the field, which provides the filename for downloading/saving
             the value of this field into a file.  If not None, the user interface should offer
             downloading/saving the content of the field into a file.  This may be relevant for
@@ -2216,9 +2182,10 @@ class Field(object):
               type=None, type_=None, width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
-              display_size=None, null_display=None, allow_codebook_insert=False, codebook_insert_spec=None,
-              codebook_runtime_filter=None, runtime_filter=None, selection_type=None,
-              completer=None, orientation=Orientation.VERTICAL, post_process=None, filter=None,
+              display_size=None, null_display=None, allow_codebook_insert=False,
+              codebook_insert_spec=None, codebook_runtime_filter=None, runtime_filter=None,
+              runtime_arguments=None, selection_type=None, completer=None,
+              orientation=Orientation.VERTICAL, post_process=None, filter=None,
               filter_list=None, style=None, link=(), filename=None, **kwargs):
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
@@ -2253,6 +2220,7 @@ class Field(object):
             assert runtime_filter is None
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
+        assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
         assert selection_type is None \
                or selection_type in public_attributes(SelectionType)
         assert orientation in public_attributes(Orientation)
@@ -2320,6 +2288,7 @@ class Field(object):
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._runtime_filter = runtime_filter
+        self._runtime_arguments = runtime_arguments
         self._selection_type = selection_type
         self._completer = completer
         self._orientation = orientation
@@ -2450,6 +2419,9 @@ class Field(object):
     
     def runtime_filter(self):
         return self._runtime_filter
+
+    def runtime_arguments(self):
+        return self._runtime_arguments
 
     def selection_type(self):
         return self._selection_type

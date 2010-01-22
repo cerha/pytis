@@ -1,3 +1,11 @@
+2010-01-22  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/data/types_.py:
+	* lib/pytis/form/inputfield.py:
+	* lib/pytis/presentation/field.py:
+	* lib/pytis/presentation/spec.py:
+	Specify runtime_arguments in Fields, not CodebookSpecs.
+
 2010-01-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/postgresql.py:

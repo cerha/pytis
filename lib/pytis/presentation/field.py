@@ -75,6 +75,7 @@ class PresentedRow(object):
             self.completer = f.completer()
             self.enumerator_kwargs = f.enumerator_kwargs()
             self.runtime_filter = f.runtime_filter()
+            self.runtime_arguments = f.runtime_arguments()
             self.data_column = data.find_column(f.id())
             self.virtual = self.data_column is None
             
@@ -224,6 +225,7 @@ class PresentedRow(object):
         self._dependent = {}
         self._editability_dependent = {}
         self._runtime_filter_dependent = {}
+        self._runtime_arguments_dependent = {}
         # Pro v¹echna poèítaná políèka si pamatuji, zda potøebují pøepoèítat,
         # èi nikoliv (po pøepoèítání je políèko èisté, po zmìnì políèka na
         # kterém závisí jiná políèka nastavím závislým políèkùm pøíznak
@@ -234,31 +236,30 @@ class PresentedRow(object):
         self._editable = {}
         self._runtime_filter_dirty = {}
         self._runtime_filter = {}
+        self._runtime_arguments_dirty = {}
+        self._runtime_arguments = {}
+        def make_deps(column, value_dict, dirty_dict, dependency_dict, computer):
+            key = column.id
+            if value_dict is not None:
+                value_dict[key] = None
+            dirty_dict[key] = True
+            for dep in self._all_deps(computer):
+                if dependency_dict.has_key(dep):
+                    dependency_dict[dep].append(key)
+                else:
+                    dependency_dict[dep] = [key]
         for c in self._columns:
-            key = c.id
             if c.computer is not None:
-                self._dirty[key] = True
-                for dep in self._all_deps(c.computer):
-                    if self._dependent.has_key(dep):
-                        self._dependent[dep].append(key)
-                    else:
-                        self._dependent[dep] = [key]
+                make_deps(c, None, self._dirty, self._dependent, c.computer)
             if isinstance(c.editable, Computer):
-                self._editable[key] = True
-                self._editability_dirty[key] = True
-                for dep in self._all_deps(c.editable):
-                    if self._editability_dependent.has_key(dep):
-                        self._editability_dependent[dep].append(key)
-                    else:
-                        self._editability_dependent[dep] = [key]
+                make_deps(c, self._editable, self._editability_dirty, self._editability_dependent,
+                          c.editable)
             if c.runtime_filter is not None:
-                self._runtime_filter[key] = None
-                self._runtime_filter_dirty[key] = True
-                for dep in self._all_deps(c.runtime_filter):
-                    if self._runtime_filter_dependent.has_key(dep):
-                        self._runtime_filter_dependent[dep].append(key)
-                    else:
-                        self._runtime_filter_dependent[dep] = [key]
+                make_deps(c, self._runtime_filter, self._runtime_filter_dirty,
+                          self._runtime_filter_dependent, c.runtime_filter)
+            if c.runtime_arguments is not None:
+                make_deps(c, self._runtime_arguments, self._runtime_arguments_dirty,
+                          self._runtime_arguments_dependent, c.runtime_arguments)
         self._secret_computers = []
         def add_secret(key):
             for secret in self._dependent.get(key, []):
@@ -377,11 +378,14 @@ class PresentedRow(object):
     
     def _notify_runtime_filter_change(self, key=None):
         if key is None:
-            keys = self._runtime_filter_dirty.keys()
+            keys = (self._runtime_filter_dirty.keys() +
+                    self._runtime_arguments_dirty.keys())
         else:
-            keys = self._runtime_filter_dependent.get(key, ())
-        for k in keys:
+            keys = (self._runtime_filter_dependent.get(key, []) +
+                    self._runtime_arguments_dependent.get(key, []))
+        for k in remove_duplicates(keys):
             self._runtime_filter_dirty[k] = True
+            self._runtime_arguments_dirty[k] = True
             self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
 
     def get(self, key, default=None, lazy=False, secure=False):
@@ -423,7 +427,8 @@ class PresentedRow(object):
         """
         value = self[key]
         row = value.type().enumerator().row(value.value(), transaction=self._transaction,
-                                            condition=self.runtime_filter(key))
+                                            condition=self.runtime_filter(key),
+                                            arguments=self.runtime_arguments(key))
         if row is not None:
             return row[column]
         else:
@@ -622,6 +627,8 @@ class PresentedRow(object):
         column = self._coldict[key]
         if column.runtime_filter is not None:
             kwargs = dict(kwargs, condition=self.runtime_filter(key))
+        if column.runtime_arguments:
+            kwargs = dict(kwargs, arguments=self.runtime_arguments(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error and column.type.unique() and not column.virtual and \
                (self._new or value != self._original_row[key]) and value.value() is not None:
@@ -731,14 +738,6 @@ class PresentedRow(object):
                     completer = column.type.enumerator()
             self._completer_cache[column.id] = completer
         return completer
-
-    def _codebook_arguments(self, column):
-        arguments_function = self._cb_spec(column).arguments()
-        if arguments_function is None:
-            arguments = None
-        else:
-            arguments = arguments_function(self)
-        return arguments
         
     def _display_func(self, column):
         if self._secret_column(column.id, column.virtual):
@@ -750,7 +749,7 @@ class PresentedRow(object):
             try:
                 row = enum.row(value, condition=self.runtime_filter(column.id),
                                transaction=self._transaction,
-                               arguments=self._codebook_arguments(column))
+                               arguments=self.runtime_arguments(column.id))
             except pytis.data.DataAccessException:
                 return ''
             if row is None:
@@ -828,7 +827,7 @@ class PresentedRow(object):
         enumerator = column.type.enumerator()
         if isinstance(enumerator, pytis.data.DataEnumerator):
             kwargs = dict(condition=self.runtime_filter(key),
-                          arguments=self._codebook_arguments(column))
+                          arguments=self.runtime_arguments(key))
             sorting = None
             cb_spec = self._cb_spec(column)
             if cb_spec:
@@ -841,6 +840,24 @@ class PresentedRow(object):
             kwargs = {}
         return [(v, display(v)) for v in enumerator.values(**kwargs)]
 
+    def _runtime_limit(self, key, dirty_dict, value_dict, column_attribute):
+        try:
+            dirty = dirty_dict[key]
+        except KeyError:
+            return None
+        if dirty:
+            column = self._coldict[key]
+            computer = getattr(column, column_attribute)
+            if computer is None:
+                result = value_dict[key] = None
+            else:
+                function = computer.function()
+                result = value_dict[key] = function(self)
+            dirty_dict[key] = False
+        else:
+            result = value_dict[key]
+        return result
+        
     def runtime_filter(self, key):
         """Return the current run-time filter condition for an enumerator of field KEY.
 
@@ -848,18 +865,18 @@ class PresentedRow(object):
         no enumerator or if the enumerator is not filtered.
 
         """
-        try:
-            dirty = self._runtime_filter_dirty[key]
-        except KeyError:
-            return None
-        if dirty:
-            column = self._coldict[key]
-            function = column.runtime_filter.function()
-            self._runtime_filter_dirty[key] = False
-            condition = self._runtime_filter[key] = function(self)
-        else:
-            condition = self._runtime_filter[key]
-        return condition
+        return self._runtime_limit(key, self._runtime_filter_dirty, self._runtime_filter,
+                                   'runtime_filter')
+
+    def runtime_arguments(self, key):
+        """Return the current run-time arguments for a table function based codebook of field KEY.
+
+        Returns an arguments dictionary (possibly empty), or 'None' if the
+        field has no table function based codebook.
+
+        """
+        return self._runtime_limit(key, self._runtime_arguments_dirty, self._runtime_arguments,
+                                   'runtime_arguments')
 
     def completions(self, key, prefix):
         """Return the sequence of available completions for given prefix.
@@ -887,7 +904,8 @@ class PresentedRow(object):
                 c1 = pytis.data.WM(completer.value_column(), wmvalue)
                 c2 = self.runtime_filter(key)
                 condition = c2 and pytis.data.AND(c1, c2) or c1
-                choices = completer.values(condition=condition, max=40) or ()
+                arguments = self.runtime_arguments(key)
+                choices = completer.values(condition=condition, arguments=arguments, max=40) or ()
             else:
                 import locale
                 choices = [x for x in completer.values() if x.lower().startswith(prefix)]
@@ -905,11 +923,14 @@ class PresentedRow(object):
           key -- field identifier as a string
           keys -- sequence of field identifiers as strings
 
-        Dependencies are established through 'computer', 'editability' or 'runtime_filter'
-        specifications of 'Field'.
+        Dependencies are established through 'computer', 'editability',
+        'runtime_filter' and 'runtime_arguments' specifications of 'Field'.
 
         """
-        for deps in (self._dependent, self._editability_dependent, self._runtime_filter_dependent):
+        for deps in (self._dependent,
+                     self._editability_dependent,
+                     self._runtime_filter_dependent,
+                     self._runtime_arguments_dependent):
             if deps.has_key(key):
                 for k in deps[key]:
                     if k in keys:
