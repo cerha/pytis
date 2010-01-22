@@ -1,3 +1,7 @@
+
+  * Support for setting search_path in PostgreSQL and new configuration option
+    `dbschemas'.
+
 Version 1.0.0 (2010-01-21):
  
   * First official release
