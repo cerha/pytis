@@ -1,3 +1,8 @@
+2010-01-25  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/extensions/defs.py:
+	Improve user message about suspicious codebook rights.
+
 2010-01-22  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/data/types_.py:

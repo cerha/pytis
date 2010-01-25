@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006, 2007, 2009 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2009, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -197,8 +197,10 @@ class MenuChecker(object):
                         if is_sequence(users):
                             users = [str(row[0].value()) for row in users]
                             users.sort()
-                        errors.append("Rozporuplná práva k číselníku %s políčka %s.%s pro uživatele %s" %
-                                      (codebook, spec_name, f.id(), users,))
+                        errors.append(("Právo update nebo insert pro políčko %(field)s náhledu %(view)s "
+                                       "je v rozporu s právem view číselníku %(codebook)s. "
+                                       "Týká se to těchto rolí: %(roles)s.") %
+                                      dict(codebook=codebook, view=spec_name, field=f.id(), roles=users))
         except Exception, e:
             errors.append(str(e))
         return errors
