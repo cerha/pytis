@@ -821,8 +821,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if schema_dict.get(obj) is None:
                 schemas = self._pg_connection_data().schemas()
                 if not schemas:
-                    schema_dict[obj] = 'public'
-                elif len(schemas) == 1:
+                    schemas = ['public', 'pg_catalog']
+                if len(schemas) == 1:
                     schema_dict[obj] = schemas[0]
                 else:
                     for s in schemas:
