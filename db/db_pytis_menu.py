@@ -914,22 +914,20 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
         condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
     for row in plpy.execute("select rightid, granted, roleid, shortname, colname, system from e_pytis_action_rights where %s" % (condition,)):
         rightid, granted, roleid, shortname, column, system = row['rightid'], row['granted'], row['roleid'], row['shortname'], row['colname'], row['system']
-        keys = [shortname]
-        for key in keys:
-            key = shortname
-            item_rights = raw_rights.get(key)
-            if item_rights is None:
-                raw_rights[key] = item_rights = {}
-            role_rights = item_rights.get(roleid)
-            if role_rights is None:
-                item_rights[roleid] = role_rights = RawRights()
-            if system:
-                r = role_rights.system
-            elif granted:
-                r = role_rights.allowed
-            else:
-                r = role_rights.forbidden
-            r.append((rightid, column,))
+        key = shortname
+        item_rights = raw_rights.get(key)
+        if item_rights is None:
+            raw_rights[key] = item_rights = {}
+        role_rights = item_rights.get(roleid)
+        if role_rights is None:
+            item_rights[roleid] = role_rights = RawRights()
+        if system:
+            r = role_rights.system
+        elif granted:
+            r = role_rights.allowed
+        else:
+            r = role_rights.forbidden
+        r.append((rightid, column,))
     # Retrieve subactions
     subactions = {}
     if shortname_arg:

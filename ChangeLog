@@ -1,3 +1,8 @@
+2010-01-26  Milan Zamazal  <pdm@brailcom.org>
+
+	* db/db_pytis_menu.py:
+	Remove redundant piece of obsolete code from pytis_compute_summary_rights.
+
 2010-01-25  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/extensions/defs.py:
