@@ -1,5 +1,12 @@
 2010-01-26  Milan Zamazal  <pdm@brailcom.org>
 
+	* lib/pytis/form/commands_.py:
+	* lib/pytis/form/form.py:
+	* lib/pytis/form/list.py:
+	Disable print command in forms which can't handle it.
+
+2010-01-26  Milan Zamazal  <pdm@brailcom.org>
+
 	* db/db_pytis_menu.py:
 	Remove redundant piece of obsolete code from pytis_compute_summary_rights.
 

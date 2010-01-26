@@ -2742,6 +2742,9 @@ class BrowseForm(FoldableForm):
                     tuple(self._link_mitems(self.current_row(), self._automatic_links))
         return menu
 
+    def _can_print(self):
+        return True
+    
     def _cmd_print(self, print_spec_path=None):
         log(EVENT, 'Vyvolání tiskového formuláøe:', print_spec_path)
         name = self._name

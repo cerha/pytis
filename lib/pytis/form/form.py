@@ -269,6 +269,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _cmd_leave_form(self):
         return self.close()
 
+    def _can_print(self):
+        return False
+
     # Veøejné metody
     
     def name(self):
@@ -383,7 +386,7 @@ class InnerForm(Form):
         # resources and no one is using it anyway...
         #if not print_spec:
         #    print_spec = ((_("Výchozí"), os.path.join('output', name)),)
-        return [MItem(title, command=InnerForm.COMMAND_PRINT(print_spec_path=path))
+        return [MItem(title, command=BrowseForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
 
     def _aggregation_menu(self):
