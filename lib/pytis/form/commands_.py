@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002-2006, 2007, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,6 +71,8 @@ Command(Application, 'RELOAD_RIGHTS',
         "Reload application rights and menu from the database")
 Command(Application, 'NOTHING',
         "Fake command which does nothing (arg. 'enabled')")
+Command(BrowseForm, 'PRINT',
+        "Print the current form data")
 Command(Form, 'LEAVE_FORM',
         "Close the form")
 Command(Form, 'HELP',
@@ -81,8 +83,6 @@ Command(InnerForm, 'AGGREGATION_MENU',
         "Show aggregation menu for the current form")
 Command(InnerForm, 'PRINT_MENU',
         "Show print menu for the current form")
-Command(InnerForm, 'PRINT',
-        "Print the current form data")
 Command(InnerForm, 'RELOAD_FORM_STATE',
         "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty")
 Command(InnerForm, 'RESET_FORM_STATE',
@@ -194,6 +194,8 @@ Command(DualForm, 'OTHER_FORM',
         "Pøechod mezi podformuláøi duálního formuláøe")
 Command(MultiForm, 'NEXT_FORM',
         "Advance to next/previous tab in a multi-form (arg. 'back')")
+Command(PrintFormInternal, 'PRINT',
+        "Po¹li data na tiskárnu")
 Command(PrintFormInternal, 'NEXT_PAGE',
         "Pøechod na dal¹í stránku tiskového náhledu")
 Command(PrintFormInternal, 'PREVIOUS_PAGE',
@@ -254,6 +256,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-F1',          Form.COMMAND_HELP),
     ('Escape',           Form.COMMAND_LEAVE_FORM),
     ('Ctrl-p',           BrowseForm.COMMAND_PRINT),
+    ('Ctrl-p',           PrintFormInternal.COMMAND_PRINT),
     ('Ctrl-Backspace',   InnerForm.COMMAND_RELOAD_FORM_STATE),
     ('Ctrl-Shift-Backspace', InnerForm.COMMAND_RESET_FORM_STATE),
     ('F6',               RecordForm.COMMAND_NEW_RECORD),
@@ -364,7 +367,8 @@ COMMAND_ICONS = (
     (InnerForm.COMMAND_DESCRIBE,                           'describe'),
     (InnerForm.COMMAND_AGGREGATION_MENU,                   'aggregate'),
     (InnerForm.COMMAND_PRINT_MENU,                         wx.ART_PRINT),
-    (BrowseForm.COMMAND_PRINT,                              wx.ART_PRINT),
+    (BrowseForm.COMMAND_PRINT,                             wx.ART_PRINT),
+    (PrintFormInternal.COMMAND_PRINT,                     wx.ART_PRINT),
     (InputField.COMMAND_RESET,                             wx.ART_UNDO),
     (TextField.COMMAND_CUT,                                wx.ART_CUT),
     (TextField.COMMAND_COPY,                               wx.ART_COPY),

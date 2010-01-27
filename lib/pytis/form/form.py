@@ -269,9 +269,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _cmd_leave_form(self):
         return self.close()
 
-    def _can_print(self):
-        return False
-
     # Veøejné metody
     
     def name(self):

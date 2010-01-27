@@ -1,3 +1,10 @@
+2010-01-27  Milan Zamazal  <pdm@brailcom.org>
+
+	* lib/pytis/form/commands_.py:
+	* lib/pytis/form/form.py:
+	* lib/pytis/form/list.py:
+	Move PRINT_COMMAND to BrowseForm.
+
 2010-01-26  Milan Zamazal  <pdm@brailcom.org>
 
 	* lib/pytis/form/commands_.py:
