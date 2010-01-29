@@ -3397,7 +3397,6 @@ class Specification(object):
             Specification._access_rights = 'nonuser'
             return
         access_rights = {}
-        user_rights = {}
         # Assign computed user rights
         S = pytis.data.String()
         rights_data = pytis.data.dbtable('pytis_view_user_rights',
@@ -3405,8 +3404,6 @@ class Specification(object):
                                          connection_data, arguments=())
         def process(row):
             shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
-            if not rights_string:
-                return
             if columns_string:
                 columns = string.split(columns_string, ' ')
             else:
@@ -3414,32 +3411,20 @@ class Specification(object):
             shortname_rights = access_rights.get(shortname)
             if shortname_rights is None:
                 shortname_rights = access_rights[shortname] = {}
-                user_rights[shortname] = True
-            for r in rights_string.split(' '):
-                if r != 'show':
-                    shortname_rights[r] = shortname_rights.get(r, []) + columns
+            if rights_string:
+                rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
+            else:
+                rights = []
+            for c in columns:
+                shortname_rights[c] = rights
         rights_data.select_map(process)
-        # System rights may limit rights to certain columns
-        sysrights_data = pytis.data.dbtable('ev_pytis_user_system_rights',
-                                            ('shortname', 'rightid', 'colname',),
-                                            connection_data)
-        def process(row):
-            shortname, right, colname = row[0].value(), row[1].value(), row[2].value()
-            shortname_rights = access_rights.get(shortname)
-            columns = (shortname_rights or {}).get(right)
-            if columns is None:
-                if shortname not in user_rights:
-                    if shortname_rights is None:
-                        shortname_rights = access_rights[shortname] = {}
-                    shortname_rights[right] = shortname_rights.get(right, []) + [colname]
-        sysrights_data.select_map(process)
         # Transform access rights specifications to AccessRights instances
-        def process(right, columns):
-            if not columns or None in columns:
-                columns = None
-            return (columns, (None, str(right.upper()),),)
+        def process(column, permissions):
+            if column is None:
+                column = False
+            return (column, (None,) + tuple(permissions),)
         for shortname, rights in access_rights.items():
-            access_rights_spec = [process(right, columns) for right, columns in rights.items() if right != 'show']
+            access_rights_spec = [process(column, permissions) for column, permissions in rights.items()]
             access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         # Forbid actions without any rights for the current user
         actions_data = pytis.data.dbtable('e_pytis_action_rights', ('shortname', 'system', 'status',),

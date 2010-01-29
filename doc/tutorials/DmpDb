@@ -117,7 +117,7 @@ Přidání akce se provede takto:
 <example>
 insert into c_pytis_menu_actions (fullname, shortname, action_title, description)
                           values ('FULLNAME', 'SHORTNAME', 'TITLE', 'DESCRIPTION');
-<example>
+</example>
 
   FULLNAME ... identifikátor akce vytvořený dle pravidel výše
   SHORTNAME ... pro akce s prefixem `form/' a `sub/' má podobu `form/FORM_NAME',
@@ -163,6 +163,15 @@ insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, 
     pozor, systémová práva smí být jen povolena
   COLUMN ... jméno sloupce, na který se právo vztahuje (string), nebo NULL
     pokud se vztahuje na všechny sloupce
+
+Sloupcová práva formuláře lze nastavovat jen v případě, že jsou sloupcová práva
+a jen sloupcová práva tohoto formuláře definována jako systémová.  Tzn. pokud
+má mít formulář nastavena sloupcová práva, je nutno nejprve zavést sloupcová
+práva jako systémová, nejlépe pro roli =*=.  Poté lze přístup k vybraným sloupcům
+omezovat a povolovat podle obvyklých pravidel.  Je-li definováno systémové pro
+formulář jako celek, na sloupcová práva se nebere zřetel.  Pro zřízení nebo
+aktualizaci systémových sloupcových práv pro vybraný formulář lze využít příkaz
+=pytis/tools/dmp col ...=.
 
 Poznámka k právům násobných formulářů: Právo násobného formuláře je odvozováno
 od práv jeho podformulářů.  Základem jsou práva hlavního podformuláře,

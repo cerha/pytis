@@ -234,6 +234,14 @@ pravidla:
    uplatňují se v případech, kdy pro žádnou z rolí uživatele není pro tutéž
    položku definováno stejné konkrétní právo.
 
+ * Sloupcové právo lze povolit nebo zakázat pouze tehdy, pokud je pro něj
+   definováno systémové právo.  To znamená, že sloupcová práva lze přidělovat
+   pouze těm sloupcům, u nichž to povolí správce databáze.
+
+ * Pokud nemá formulář povoleno právo jako celek, nemá povoleno ani žádné ze
+   sloupcových práv.  V ostatních směrech jsou sloupcová práva na právech
+   celých formulářů nezávislá.
+
  * Jsou-li práva pro nějakou roli ve vzájemném rozporu, např. je pro nějakou
    roli právo zároveň povoleno i zakázáno nebo je-li uživatel členem dvou rolí,
    přičemž pro jednu z těchto rolí je právo povoleno a pro druhou zakázáno, pak

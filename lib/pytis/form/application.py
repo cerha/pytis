@@ -1584,23 +1584,23 @@ def init_access_rights(connection_data):
             columns = [None]
         rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
         action_rights = _access_rights[shortname] = _access_rights.get(shortname, {})
-        for r in rights:
-            action_rights[r] = action_rights.get(r, []) + columns
+        for c in columns:
+            action_rights[c] = rights
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
     
-def has_access(name, perm=pytis.data.Permission.VIEW, column=True):
+def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     """Return true if the current user has given permission for given form specification.
 
     Arguments:
     
       name -- specification name as a string.  May also be a dual name
         (containing `::').  In such a case, the permission is checked for both
-        names and 'column=True' is assumed regardless of the actual 'column'
+        names and 'column=None' is assumed regardless of the actual 'column'
         value.
       perm -- access permission as one of `pytis.data.Permission' constants.    
       column -- string identifier of the column to check or 'None' (no specific
-        column checked) or 'True' (any of the columns is accessible)
+        column checked)
 
     Raises 'ResolverError' if given specification name cannot be found.
 
@@ -1624,7 +1624,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=True):
     result = action_has_access('form/'+name, perm=perm, column=column)
     return result
 
-def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
+def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
     """Return true iff 'action' has 'perm' permission.
 
     Arguments:
@@ -1632,7 +1632,7 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
       action -- action identifier, string
       perm -- access permission as one of `pytis.data.Permission' constants
       column -- string identifier of the column to check or 'None' (no specific
-        column checked) or 'True' (any of the columns is accessible)
+        column checked)
 
     """
     if _access_rights == 'nonuser':
@@ -1649,15 +1649,10 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
             if access_rights is not None:
                 result = access_rights.permitted(perm, _user_roles, column=column)
         else:
-            columns = rights.get(perm)
-            if not columns:
-                result = False
-            elif column is True:
-                result = True
-            elif column not in columns and None not in columns:
-                result = False
-            else:
-                result = perm in rights
+            permissions = rights.get(column, None)
+            if permissions is None:
+                permissions = rights.get(None, ())
+            result = perm in permissions
     return result
 
 _yield_lock = None

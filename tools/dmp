@@ -8,7 +8,7 @@ import sys
 import psycopg2 as dbapi
 
 import pytis.extensions
-
+import pytis.util
 import pytis.data.postgresql
 pg_escape = pytis.data.postgresql.pg_escape
 
@@ -18,6 +18,19 @@ class Configuration(object):
 decoder = codecs.getdecoder('utf-8')
 def decode(string):
     return decoder(string)[0]
+
+def specification(form_name):
+    resolver = pytis.util.resolver()
+    form_name_components = form_name.split('.')
+    if len(form_name_components) < 2:
+        return None
+    form_module = string.join(form_name_components[:-1], '/')
+    base_form_name = form_name_components[-1]
+    try:
+        spec = resolver.get_object(form_module, base_form_name)
+    except:
+        return None
+    return spec(resolver)
 
 def run_queries(queries, cursor, connection, dry_run, quiet=False):
     for q in queries:
