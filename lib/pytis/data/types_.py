@@ -2393,7 +2393,7 @@ class DataEnumerator(Enumerator):
     def permitted(self):
         """Return whether access to this enumerator is permitted."""
         if isinstance(self._data, pytis.data.RestrictedData):
-            return self._data.permitted(self._data.key()[0], pytis.data.Permission.VIEW)
+            return self._data.permitted(self._data.key()[0].id(), pytis.data.Permission.VIEW)
         else:
             return True
     
