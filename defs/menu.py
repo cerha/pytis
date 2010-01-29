@@ -323,6 +323,10 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True,),
                                                                        multirights=ApplicationMenuM._multiform_row(row),
                                                                        ))),
+                pytis.presentation.Binding('changes', _("Chystané zmìny"), 'menu.ApplicationChangedRights',
+                                           arguments=(lambda row: dict(shortname=row['shortname'],
+                                                                       multirights=ApplicationMenuM._multiform_row(row),
+                                                                       ))),
                 )
     def actions(self): return (
         pytis.presentation.Action('copy_rights', _("Zkopírovat práva z..."), self._copy_rights,
@@ -739,6 +743,22 @@ class ApplicationPreviewRights(ApplicationSummaryRights):
     public = True
     table = 'pytis_view_summary_rights'
     title = _("Chystaná práva")
+
+class ApplicationChangedRights(ApplicationSummaryRights):
+    public = True
+    table = 'pytis_changed_rights'
+    title = _("Chystané zmìny práv")
+    arguments = (Field('shortname', "", type=pytis.data.String()),
+                 Field('roleid', "", type=pytis.data.String()),
+                 Field('multirights', "", type=pytis.data.Boolean()),
+                 )
+    fields = (ApplicationSummaryRights.fields +
+              (Field('change', _("Nové"), type=pytis.data.Boolean(),
+                     editable=pytis.presentation.Editable.NEVER, fixed=True),))
+    _STYLE_OLD = pytis.presentation.Style(background=pytis.presentation.Color.GRAY10)
+    def row_style(self, row):
+        if not row['change'].value():
+            return self._STYLE_OLD
 
 class ApplicationRoleMenu(pytis.presentation.Specification):
     public = True

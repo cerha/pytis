@@ -1418,3 +1418,36 @@ select roleid from pytis_compute_summary_rights(''form/''||$3, NULL, $4, ''f'', 
          grant=db_rights,
          depends=('pytis_compute_summary_rights',))
 
+sqltype('typ_changed_rights',
+        (C('shortname', TString),
+         C('roleid', TString),
+         C('rights', TString),
+         C('columns', TString),
+         C('purpose', TString),
+         C('rights_show', TBoolean),
+         C('rights_view', TBoolean),
+         C('rights_insert', TBoolean),
+         C('rights_update', TBoolean),
+         C('rights_delete', TBoolean),
+         C('rights_print', TBoolean),
+         C('rights_export', TBoolean),
+         C('rights_call', TBoolean),
+         C('change', TBoolean),
+         ))
+function('pytis_changed_rights',  (TString, TString, TBoolean,),
+         RT('typ_changed_rights', setof=True),
+         body="""
+(
+ select *, False as change from pytis_view_summary_rights($1, $2, ''f'', $3)
+ except
+ select *, False as change from pytis_view_summary_rights($1, $2, ''t'', $3)
+)
+union
+(
+ select *, True as change from pytis_view_summary_rights($1, $2, ''t'', $3)
+ except
+ select *, True as change from pytis_view_summary_rights($1, $2, ''f'', $3)
+);
+""",
+         grant=db_rights,
+         depends=('typ_changed_rights', 'pytis_view_summary_rights',))
