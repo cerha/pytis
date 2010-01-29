@@ -2,7 +2,7 @@
 
 # Access rights
 # 
-# Copyright (C) 2002, 2004, 2005, 2006, 2007, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,7 +99,8 @@ class AccessRights(object):
         implicit value that applies to the given column, resp. group, if no
         more specific permission is defined for it.  Implicit permissions are
         added to the explicit permissions given to a column, resp. group, so
-        they can be extended but not limited.
+        they can be extended but not limited.  If COLUMN is 'False', it applies
+        only to those columns which don't have any own rights defined.
 
         If a column or a group within a column is given multiple times, the
         corresponding permissions are added together.
@@ -116,6 +117,13 @@ class AccessRights(object):
             table[p] = {}
         for a in access_rights:
             columns, groupdefs = xtuple(a[0]), a[1:]
+            for p in all_permissions:
+                table_p = table[p]
+                for c in columns:
+                    if not table_p.has_key(c):
+                        table_p[c] = ()
+                if not table_p.has_key(True):
+                    table_p[True] = ()
             for gd in groupdefs:
                 groups, permissions = xtuple(gd[0]), gd[1:]
                 if Permission.ALL in permissions:
@@ -138,8 +146,7 @@ class AccessRights(object):
         if groups is None:
             # If user groups can't be retrieved, allow it
             return True
-        ok_groups = self.permitted_groups(permission, column) + \
-                    self.permitted_groups(permission, None)
+        ok_groups = self.permitted_groups(permission, column)
         return (None in ok_groups) or some(lambda g: g in ok_groups, groups)
     
     def permitted(self, permission, groups, column=None):
@@ -156,6 +163,7 @@ class AccessRights(object):
             'True' to check that any of the columns has the permission
 
         """
+        assert isinstance(column, basestring) or column in (None, True, False,), column
         key = (permission, xtuple(groups), column)
         try:
             result = self._query_cache[key]
@@ -163,6 +171,17 @@ class AccessRights(object):
             result = self._query_cache[key] = \
                      self._permitted(permission, groups, column)
         return result
+
+    def _permitted_groups(self, permission, column):
+        permsets = self._permission_table[permission]
+        groups = permsets.get(column, ())
+        if isinstance(column, basestring):
+            for sets in self._permission_table.values():
+                if sets.has_key(column):
+                    break
+            else:
+                groups += permsets.get(False, ())
+        return groups        
 
     def permitted_groups(self, permission, column):
         """Return list of groups with 'permission' to 'column'.
@@ -175,12 +194,12 @@ class AccessRights(object):
             against, or 'None' in which case implicit rights are tested
             
         """
-        permsets = self._permission_table[permission]
-        groups = permsets.get(column, ())
-        for g in permsets.get(None, ()):
-            if g not in groups:
-                groups = groups + (g,)
-        return groups
+        groups = self._permitted_groups(permission, column)
+        if column is None:
+            groups += self._permitted_groups(permission, False)
+        else:
+            groups += self._permitted_groups(permission, None)            
+        return remove_duplicates(list(groups))
 
     def specification(self):
         """Return original specification given in the constructor."""

@@ -2515,17 +2515,17 @@ class AccessRightsTest(_DBBaseTest):
         P = pytis.data.Permission
         a = self._access_rights
         groups = a.permitted_groups(P.VIEW, 'column1')
-        assert groups == ('group1', 'group2',), ('Invalid groups', groups,)
+        assert groups == ['group1', 'group2'], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.INSERT, 'column2')
-        assert groups == (), ('Invalid groups', groups,)
+        assert groups == [], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.INSERT, 'column2')
-        assert groups == (), ('Invalid groups', groups,)
+        assert groups == [], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.UPDATE, 'column1')
-        assert groups == ('group1', 'group3',), ('Invalid groups', groups,)
+        assert groups == ['group1', 'group3'], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.UPDATE, None)
-        assert groups == ('group3',), ('Invalid groups', groups,)
+        assert groups == ['group3'], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.INSERT, 'column4')
-        assert groups == ('group1', 'group2',), ('Invalid groups', groups,)
+        assert groups == ['group1', 'group2'], ('Invalid groups', groups,)
     def test_permitted(self):
         P = pytis.data.Permission
         a = self._access_rights
