@@ -7,10 +7,14 @@ import sys
 
 import psycopg2 as dbapi
 
+import pytis.data.postgresql
 import pytis.extensions
 import pytis.util
-import pytis.data.postgresql
 pg_escape = pytis.data.postgresql.pg_escape
+
+def is_in_groups(groups):
+    return True
+pytis.extensions.is_in_groups = is_in_groups
 
 class Configuration(object):
     dbparameters = dict(host=None, database=None, user=None, password=None)
