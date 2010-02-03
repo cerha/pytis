@@ -62,7 +62,6 @@ class Menu(wiking.PytisModule):
     class Spec(Specification, cms.Menu):
         pass
     
-    _ITEM_PATH_LENGTH = 1
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
     _SUBSTITUTION_PROVIDERS = ()
     """Sequence of names of modules providing substitution variables.
@@ -73,6 +72,8 @@ class Menu(wiking.PytisModule):
 
     """
     EMBED_BINDING_ID = 'data'
+    ITEM_PATH_LENGTH = 1
+
 
     def _resolve(self, req):
         kwargs = self._resolve_menu_args(req)
@@ -85,10 +86,7 @@ class Menu(wiking.PytisModule):
         variants = [str(row['lang'].value()) for row in rows]
         lang = req.prefered_language(variants)
         row = rows[variants.index(lang)]
-        del req.unresolved_path[:self._ITEM_PATH_LENGTH]
-        # This is a big hack, but we need to mark the real number defined by the (potentially
-        # overriden) menu class.  This number is later used in 'EmbeddablePytisModule' class below.
-        req.menu_path_length = self._ITEM_PATH_LENGTH
+        del req.unresolved_path[:self.ITEM_PATH_LENGTH]
         return row
 
     def _resolve_menu_args(self, req):
@@ -546,17 +544,19 @@ class EmbeddablePytisModule(wiking.PytisModule, EmbeddableModule):
     _BROWSE_FORM_LIMITS = (50, 100, 200, 300, 500)
     
     def _current_base_uri(self, req, record=None):
+        menu = self._module('Menu')
         uri = super(EmbeddablePytisModule, self)._current_base_uri(req, record=record)
-        if len(uri.lstrip('/').split('/')) == req.menu_path_length:
-            uri += '/'+ Menu.EMBED_BINDING_ID
+        if len(uri.lstrip('/').split('/')) == menu.ITEM_PATH_LENGTH:
+            uri += '/'+ menu.EMBED_BINDING_ID
         return uri
 
     def _binding_parent_uri(self, req):
         fw = self._binding_forward(req)
         if fw:
             path = fw.uri().lstrip('/').split('/')
-            if len(path) == req.menu_path_length+2 and path[-1] == fw.arg('binding').id():
-                return '/'+ '/'.join(path[:req.menu_path_length])
+            path_length = self._module('Menu').ITEM_PATH_LENGTH
+            if len(path) == path_length+2 and path[-1] == fw.arg('binding').id():
+                return '/'+ '/'.join(path[:path_length])
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
 
     def _document(self, req, content, record=None, **kwargs):
