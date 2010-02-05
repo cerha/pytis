@@ -611,6 +611,7 @@ _std_table_nolog('e_pytis_form_log',
                   C('form', TString, constraints=('NOT NULL',)),
                   C('class', TString, constraints=('NOT NULL',)),
                   C('login', TUser, constraints=('NOT NULL',)),
+                  C('info', TString),
                   C('t_start', TDateTime, constraints=('NOT NULL',)),
                   C('t_show', TDateTime, constraints=('NOT NULL',)),
                   ),
@@ -619,6 +620,7 @@ Statistics about using forms by users and form opening performance.
 form is fully qualified specification name.
 class is pytis class name of the form instance.
 login is login name of the user who has opened the form.
+info is optional extra information provided by the form (e.g. sorting used).
 t_start is the time when user invoked the form opening command.
 t_show is the time when the form got actually ready for operation after its start.
 """)
@@ -628,9 +630,9 @@ create index e_pytis_form_log_user_index on e_pytis_form_log(user);
 """,
         depends=('e_pytis_form_log',))
 
-function('pytis_log_form', (TString, TString, TDateTime, TDateTime,), TInteger,
+function('pytis_log_form', (TString, TString, TString, TDateTime, TDateTime), TInteger,
          body="""
-insert into e_pytis_form_log (form, class, login, t_start, t_show) values($1, $2, user, $3, $4) returning id;
+insert into e_pytis_form_log (form, class, info, login, t_start, t_show) values($1, $2, user, $3, $4, $5) returning id;
 """,
          grant=Gall_pytis,
          depends=('e_pytis_form_log',))

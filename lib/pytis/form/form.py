@@ -157,8 +157,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             pytis.extensions.dbfunction('pytis_log_form',
                                         ('form', pytis.data.Value(pytis.data.String(), name),),
                                         ('class', pytis.data.Value(pytis.data.String(), self.__class__.__name__),),
+                                        ('info', pytis.data.Value(pytis.data.String(), self._form_log_info())),
                                         ('t_start', start_time,),
-                                        ('t_show', show_time,))
+                                        ('t_show', show_time,),)
         log(EVENT, 'Form created in %.3fs:' % (show_time.value() - start_time.value(),), self)
 
     def _init_attributes(self):
@@ -192,6 +193,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._create_form_parts(sizer)
         self.SetSizer(sizer)
         sizer.Fit(self) # Set the size of window `self' to size of the sizer.
+
+    def _form_log_info(self):
+        return ''
 
     def _default_transaction(self):
         return None
@@ -688,6 +692,9 @@ class LookupForm(InnerForm):
             sorting =  tuple([(cid, mapping[dir])
                               for cid, dir in self._default_sorting()])
         self._lf_sorting = sorting
+        
+    def _form_log_info(self):
+        return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
 
     def _pack_condition(self, condition):
         # We prefer saving the condition in our custom format, since its safer
