@@ -576,9 +576,8 @@ class FilterForm(EditForm):
 class BrowseForm(LayoutForm):
     _CSS_CLS = 'browse-form'
     _HTTP_METHOD = 'GET'
-    _SORTING_DIRECTIONS = ((pytis.data.ASCENDENT, 'asc'),
-                           (pytis.data.DESCENDANT, 'desc'),
-                           (None, 'none'))
+    _SORTING_DIRECTIONS = {pytis.data.ASCENDENT: 'asc',
+                           pytis.data.DESCENDANT: 'desc'}
     _NULL_FILTER_ID = '-'
 
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
@@ -723,7 +722,7 @@ class BrowseForm(LayoutForm):
         # Determine the current sorting.
         if params.has_key('sort') and params.has_key('dir'):
             cid = params['sort']
-            dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS]).get(params['dir'])
+            dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS.items()]).get(params['dir'])
             if self._row.data().find_column(cid) and dir:
                 sorting = ((cid, dir),)
         if sorting is None:
@@ -908,7 +907,6 @@ class BrowseForm(LayoutForm):
     def _export_headings(self, context):
         g = context.generator()
         current_sorting_column, current_dir = self._sorting[0]
-        directions = [dir for dir, name in self._SORTING_DIRECTIONS]
         def label(field):
             result = field.column_label
             if not field.virtual:
@@ -916,9 +914,12 @@ class BrowseForm(LayoutForm):
                     dir = current_dir
                 else:
                     dir = None
-                new_dir = directions[(directions.index(dir)+1) % len(directions)]
-                arg = dict(self._SORTING_DIRECTIONS)[new_dir]
-                result = g.link(result, self._link_ctrl_uri(g, sort=field.id, dir=arg))
+                if dir in (None, pytis.data.DESCENDANT):
+                    new_dir = pytis.data.ASCENDENT
+                else:
+                    new_dir = pytis.data.DESCENDANT
+                result = g.link(result, self._link_ctrl_uri(g, sort=field.id,
+                                                            dir=self._SORTING_DIRECTIONS[new_dir]))
                 if dir:
                     # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
@@ -1052,7 +1053,7 @@ class BrowseForm(LayoutForm):
     def _link_ctrl_uri(self, generator, **kwargs):
         if not kwargs.get('sort'):
             sort, dir = self._sorting[0]
-            kwargs = dict(kwargs, sort=sort, dir=dict(self._SORTING_DIRECTIONS)[dir])
+            kwargs = dict(kwargs, sort=sort, dir=self._SORTING_DIRECTIONS[dir])
         # TODO: Excluding the 'submit' argument is actually a hack, since it is defined in Wiking
         # and should be transparent for the form.
         args = [('form_name', self._name), ('filter', self._filter_id)] + \
@@ -1224,7 +1225,7 @@ class BrowseForm(LayoutForm):
             if len(self._sorting) == 1:
                 cid, dir = self._sorting[0]
                 content.extend((g.hidden('sort', cid),
-                                g.hidden('dir', dict(self._SORTING_DIRECTIONS)[dir])))
+                                g.hidden('dir', self._SORTING_DIRECTIONS[dir])))
             return g.form(content, action=g.uri(self._handler), method='GET',
                           cls='list-form-controls')
         else:

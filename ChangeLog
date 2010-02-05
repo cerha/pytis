@@ -1,3 +1,13 @@
+2010-02-05  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/web/form.py:
+	Allow changing sorting direction also for columns sorted desc in the specification.
+	
+	This change also gives up the possibility to unsort the column by the third
+	click.  This would be confusing for columns present in default sorting, so
+	let's give it up for all for consistency.  It is still possible to retutn to
+	the default sorting by re-entering the form.
+
 2010-01-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:
