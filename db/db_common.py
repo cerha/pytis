@@ -605,3 +605,32 @@ _std_table('c_typ_formular',
            init_values=(("'BF'", "'Jednoduchý náhled'"),
                         ("'DF'", "'Duální náhled'"))
            )
+
+_std_table_nolog('e_pytis_form_log',
+                 (P('id', TSerial),
+                  C('form', TString, constraints=('NOT NULL',)),
+                  C('class', TString, constraints=('NOT NULL',)),
+                  C('login', TUser, constraints=('NOT NULL',)),
+                  C('t_start', TDateTime, constraints=('NOT NULL',)),
+                  C('t_show', TDateTime, constraints=('NOT NULL',)),
+                  ),
+                 doc="""
+Statistics about using forms by users and form opening performance.
+form is fully qualified specification name.
+class is pytis class name of the form instance.
+login is login name of the user who has opened the form.
+t_start is the time when user invoked the form opening command.
+t_show is the time when the form got actually ready for operation after its start.
+""")
+sql_raw("""
+create index e_pytis_form_log_form_index on e_pytis_form_log(form);
+create index e_pytis_form_log_user_index on e_pytis_form_log(user);
+""",
+        depends=('e_pytis_form_log',))
+
+function('pytis_log_form', (TString, TString, TDateTime, TDateTime,), TInteger,
+         body="""
+insert into e_pytis_form_log (form, class, login, t_start, t_show) values($1, $2, user, $3, $4) returning id;
+""",
+         grant=Gall_pytis,
+         depends=('e_pytis_form_log',))

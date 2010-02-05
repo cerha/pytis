@@ -740,6 +740,10 @@ class Configuration(object):
         _DESCR = _("Flag urèující, zda se má pro kopírování obsahu buòky pou¾ít wxClipboard")
         _DEFAULT = True
 
+    class _Option_form_statistics(BooleanOption):
+        _DESCR = _("Flag urèující, zda mají být do databáze ukládány statistické informace "
+                   "o otevíraných formuláøích.")
+        _DEFAULT = False
         
     # Volby pøizpùsobení u¾ivatelského rozhraní
         

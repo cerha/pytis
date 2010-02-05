@@ -64,6 +64,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     _STATUS_FIELDS = ()
     _PERSISTENT_FORM_PARAMS = ()
+    _LOG_STATISTICS = True
     DESCR = None
 
     class InitError(Exception):
@@ -105,9 +106,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
         Odkaz na resolver samotný je také zapamatován pro pozdìj¹í pou¾ití
         (vytváøení dal¹ích formuláøù).
-
           
-        Inicializace je rozdìlena do nìkolika krokù.  Nejprve jsou zpracováný
+        Inicializace je rozdìlena do nìkolika krokù.  Nejprve jsou zpracovány
         v¹echny argumenty spoleèné v¹em formuáøovým tøídám.  Ty zpracovává
         konstruktor bázové tøídy 'Form'.  Jejich zpracování by nemìlo být
         pøedefinováváno v odvozených tøídách a ani ¾ádné dal¹í argumenty by
@@ -131,7 +131,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         být dodr¾ováno i v odvozených tøídách.
         
         """
-        start_time = time.time()
+        import pytis.extensions
+        start_time = pytis.data.DateTime.now()
         self._parent = parent
         self._resolver = resolver
         self._name = name
@@ -150,9 +151,15 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             raise self.InitError()
         self._init_attributes(**kwargs)
         self._result = None
-        start_time = time.time()
         self._create_form()
-        log(EVENT, 'Form created in %.3fs:' % (time.time() - start_time), self)
+        show_time = pytis.data.DateTime.now()
+        if self._LOG_STATISTICS and config.form_statistics:
+            pytis.extensions.dbfunction('pytis_log_form',
+                                        ('form', pytis.data.Value(pytis.data.String(), name),),
+                                        ('class', pytis.data.Value(pytis.data.String(), self.__class__.__name__),),
+                                        ('t_start', start_time,),
+                                        ('t_show', show_time,))
+        log(EVENT, 'Form created in %.3fs:' % (show_time.value() - start_time.value(),), self)
 
     def _init_attributes(self):
         """Process constructor keyword arguments and initialize the attributes.
@@ -1749,6 +1756,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     i k vytváøení nových záznamù (viz argument konstruktoru 'mode').
  
     """
+
+    _LOG_STATISTICS = False
 
     MODE_INSERT = 'MODE_INSERT'
     """Mód formuláøe pro vkládání nových záznamù."""
