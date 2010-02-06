@@ -70,3 +70,28 @@ class FormUsers(Specification):
         Field('last_used', _("Poslední spu¹tìní")),
         )
     columns = ('login', 'info', 'n_open', 'last_used',)
+
+class FormUserList(Specification):
+    public = True
+    table = 'ev_pytis_form_user_list'
+    title = _("U¾ivatelé")
+    fields = (
+        Field('login', _("Login")),
+        )
+    bindings = (Binding('users', _("Formuláøe"), 'statistics.FormUserStatistics',
+                        condition=(lambda row: pytis.data.EQ('login', row['login']))),
+                )
+
+class FormUserStatistics(Specification):
+    public = True
+    table = 'ev_pytis_form_user_statistics'
+    title = _("Formuláøe u¾ivatele")
+    fields = (
+        Field('login', _("Login")),
+        Field('form', _("Jméno formuláøe")),
+        Field('class', _("Tøída formuláøe")),
+        Field('info', _("Parametry formuláøe")),
+        Field('n_open', _("Poèet otevøení")),
+        Field('last_used', _("Poslední spu¹tìní")),
+        )
+    columns = ('form', 'class', 'info', 'n_open', 'last_used',)
