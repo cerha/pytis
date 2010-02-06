@@ -626,7 +626,7 @@ t_show is the time when the form got actually ready for operation after its star
 """)
 sql_raw("""
 create index e_pytis_form_log_form_index on e_pytis_form_log(form);
-create index e_pytis_form_log_user_index on e_pytis_form_log(user);
+create index e_pytis_form_log_user_index on e_pytis_form_log(login);
 """,
         depends=('e_pytis_form_log',))
 
