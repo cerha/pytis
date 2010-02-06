@@ -1,0 +1,72 @@
+# -*- coding: iso-8859-2 -*-
+
+# Copyright (C) 2010 Brailcom, o.p.s.
+#
+# COPYRIGHT NOTICE
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import pytis.data
+import pytis.presentation
+from pytis.presentation import Binding, Field, Specification
+
+class FormShortStatistics(Specification):
+    public = True
+    table = 'ev_pytis_form_short_summary'
+    title = _("Pøehled pou¾ívaných formuláøù")
+    fields = (
+        Field('form', _("Jméno formuláøe")),
+        Field('class', _("Tøída formuláøe")),
+        Field('n_users', _("Poèet u¾ivatelù")),
+        Field('n_open', _("Poèet otevøení")),
+        Field('avg_start', _("Prùmìrná doba startu")),
+        Field('last_used', _("Poslední spu¹tìní")),
+        )
+    bindings = (Binding('users', _("U¾ivatelé"), 'statistics.FormUsers',
+                        condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
+                                                              pytis.data.EQ('class', row['class'])))),
+                )
+
+class FormStatistics(Specification):
+    public = True
+    table = 'ev_pytis_form_summary'
+    title = _("Podrobný pøehled pou¾ívaných formuláøù")
+    fields = (
+        Field('form', _("Jméno formuláøe")),
+        Field('class', _("Tøída formuláøe")),
+        Field('info', _("Parametry formuláøe")),
+        Field('n_users', _("Poèet u¾ivatelù")),
+        Field('n_open', _("Poèet otevøení")),
+        Field('avg_start', _("Prùmìrná doba startu")),
+        Field('last_used', _("Poslední spu¹tìní")),
+        )
+    bindings = (Binding('users', _("U¾ivatelé"), 'statistics.FormUsers',
+                        condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
+                                                              pytis.data.EQ('class', row['class']),
+                                                              pytis.data.EQ('info', row['info'])))),
+                )
+
+class FormUsers(Specification):
+    public = True
+    table = 'ev_pytis_form_users'
+    title = _("U¾ivatelé formuláøe")
+    fields = (
+        Field('login', _("Login")),
+        Field('form', _("Jméno formuláøe")),
+        Field('class', _("Tøída formuláøe")),
+        Field('info', _("Parametry formuláøe")),
+        Field('n_open', _("Poèet otevøení")),
+        Field('last_used', _("Poslední spu¹tìní")),
+        )
+    columns = ('login', 'info', 'n_open', 'last_used',)
