@@ -232,11 +232,16 @@ def command_sys(connection, dry_run, args, system=True):
         if role not in roles:
             print "Error: invalid role:", role
             return
-        if right not in ('view', 'insert', 'update', 'delete', 'print', 'export', 'call',):
+        if right not in ('*', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call',):
             if system or right != 'show':
                 print "Error: invalid right:", right
                 return
-        requests.append((shortname, role, right, granted, columns,))
+        if right == '*':
+            rights_to_change = ('view', 'insert', 'update', 'delete', 'print', 'export', 'call',)
+        else:
+            rights_to_change = (right,)
+        for r in rights_to_change:
+            requests.append((shortname, role, r, granted, columns,))
     queries = []
     for request in requests:
         args = request[:3]
@@ -288,8 +293,8 @@ Commands:
   ls [ menu | roles | rights [ SHORTNAME ] ]
   add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
   del { SHORTNAME | FULLNAME | MENU-ID }
-  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call}[/COLUMN] ...
-  rig SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call}[/COLUMN] ...
+  sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
+  rig SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   commit"""
 
 def parse_options():
