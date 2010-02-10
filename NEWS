@@ -1,4 +1,7 @@
 
+  * Form statistics (database update needed!) and new configuration option
+    `form_statistics'.
+
   * Support for setting search_path in PostgreSQL and new configuration option
     `dbschemas'.
 
