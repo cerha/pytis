@@ -1389,12 +1389,22 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _enable(self):
         if self._insert_button:
             self._insert_button.Enable(True)
-        super(CodebookField, self)._enable()        
+        super(CodebookField, self)._enable()
+        
+    def _set_value(self, value):
+        super(CodebookField, self)._set_value(value)
+        self._update_display()
 
     def _on_change_hook(self):
         super(CodebookField, self)._on_change_hook()
+        self._update_display()
+
+    def _update_display(self):
         if self._display:
-            display = self._valid and self._row.display(self.id()) or ''
+            if self._readonly or self._valid:
+                display = self._row.display(self.id())
+            else:
+                display = ''
             self._display.SetValue(display)
         
     def _on_invoke_selection(self, alternate=False):
