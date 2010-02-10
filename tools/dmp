@@ -143,8 +143,12 @@ def command_add(connection, dry_run, args):
                 position = string.join(position_components, '.')
             else:
                 position = parent_position + '.11'
-        queries.append("insert into e_pytis_menu (name, title, position, fullname) values ('%s', '%s', '%s', '%s')"
-                       % (fullname, pg_escape(title), position, fullname,))
+        if fullname.startswith('menu/'):
+            name = 'NULL'
+        else:
+            name = "'%s'" % (fullname,)
+        queries.append("insert into e_pytis_menu (name, title, position, fullname) values (%s, '%s', '%s', '%s')"
+                       % (name, pg_escape(title), position, fullname,))
     run_queries(queries, cursor, connection, dry_run)
 
 def command_del(connection, dry_run, args):
