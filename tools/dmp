@@ -251,12 +251,16 @@ def command_sys(connection, dry_run, args, system=True):
                     column_string = "NULL"
                 else:
                     column_string = "'%s'" % (column,)
+                if system:
+                    system_string = 't'
+                else:
+                    system_string = 'f'
                 if request[-2]:
                     granted = 't'
                 else:
                     granted = 'f'
                 query = ("insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system, colname) "
-                         "values ('%s', '%s', '%s', '%s', 't', %s)" % (args + (granted, column_string,)))
+                         "values ('%s', '%s', '%s', '%s', '%s', %s)" % (args + (granted, system_string, column_string,)))
             else:
                 if column is None:
                     column_condition = "colname IS NULL"
