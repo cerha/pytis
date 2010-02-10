@@ -33,7 +33,7 @@ def command_ls(connection, dry_run, args):
     def ls_menu():
         cursor.execute("select menuid, position, xtitle, shortname, fullname from ev_pytis_menu order by position")
         for row in cursor.fetchall():
-            label = ('%s * %s' % (row[1], decode(row[2]),))[:40]
+            label = ('%s * %s' % (row[1], row[2],))[:40]
             print '%4s %-40s %-30s %s' % (row[0], label, row[3] or '', row[4] or '',)
     def ls_roles():
         cursor.execute("select name, purposeid, coalesce(description, '') from e_pytis_roles order by name")
