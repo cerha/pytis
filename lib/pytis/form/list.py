@@ -2445,10 +2445,12 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         super(CodebookForm, self).__init__(parent, *args, **kwargs)
-        h = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
-        self.SetSize((self._total_width()+30, h))
-        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid,
-                    self._on_dclick)
+        if self._folding_enabled():
+            height = self._DEFAULT_WINDOW_HEIGHT
+        else:
+            height = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
+        self.SetSize((self._total_width()+30, height))
+        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid, self._on_dclick)
 
     def _init_attributes(self, begin_search=None, **kwargs):
         """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
