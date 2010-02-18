@@ -429,6 +429,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                    Calendar.MONTH_NAMES = %(month_names)s;
                    Calendar.FIRST_WEEK_DAY = %(first_week_day)d;
                    """ % js_values)
+        if self._has_not_null_indicator(field):
+            script = "document.getElementById('%s').setAttribute('aria-required', 'true');"
+            result += g.script(script % field.unique_id)
         return result
 
     def _has_not_null_indicator(self, field):
@@ -448,7 +451,14 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         
     def _export_field_help(self, context, field):
         descr = field.spec.descr()
-        return descr and context.generator().div(descr, cls="help")
+        if descr:
+            g = context.generator()
+            id = field.unique_id + '-help'
+            # Set through a script to avoid invalid HTML ('aria-describedby' in not valid HTML).
+            script = "document.getElementById('%s').setAttribute('aria-describedby', '%s');"
+            return g.div(descr, id=id, cls="help") + g.script(script % (field.unique_id, id))
+        else:
+            return None
 
     def _export_errors(self, context):
         g = context.generator()
