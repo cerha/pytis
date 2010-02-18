@@ -815,7 +815,8 @@ class BrowseForm(LayoutForm):
         self._filter_id = filter_id
         self._filter = filter
         # Determine whether tree emulation should be used.
-        if sorting and isinstance(self._row[sorting[0][0]].type(), pytis.data.TreeOrder):
+        if sorting and isinstance(self._row[sorting[0][0]].type(),
+                                  (pytis.data.LTree, pytis.data.TreeOrder)):
             self._tree_order_column = sorting[0][0]
         else:
             self._tree_order_column = None
@@ -833,7 +834,8 @@ class BrowseForm(LayoutForm):
         if field.id == self._column_fields[0].id and self._tree_order_column:
             order = self._row[self._tree_order_column].value()
             if order is not None:
-                level = len(order.split('.')) - 2
+                # Strip, since LTree values look like '0.2.1', but TreeOrder like '.0.2.1'
+                level = len(order.strip('.').split('.')) - 1
                 if level > 0:
                     g = context.generator()
                     indent = level * g.span(2*'&nbsp;', cls='tree-indent')
