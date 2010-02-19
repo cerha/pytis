@@ -138,6 +138,20 @@ def check_form():
 cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                   dict(handler=check_form))
 
+class CheckReporter(object):
+
+    def start(self, number_of_items):
+        self._number_of_items = number_of_items
+
+    def end(self):
+        pass
+
+    def info(self, message):
+        print message
+
+    def error(self, message):
+        print "Error:", message
+
 class MenuChecker(object):
     _specnames = None
     _codebook_form_users_ = None
@@ -247,16 +261,18 @@ class MenuChecker(object):
         except Exception, e:
             errors.append(str(e))
         return errors
+    
+    def _check_spec(self, name):
+        return (self.check_public(name) +
+                self.check_data(name) +
+                self.check_codebook_rights(name))
 
     def interactive_check(self):
         specnames = self._specnames
         width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
         errors = []
         def check_specs(update, specnames):
-            def check_spec(name):
-                return (self.check_public(name) +
-                        self.check_data(name) +
-                        self.check_codebook_rights(name))
+            check_spec = self._check_spec
             total = len(specnames)
             last_error = ''
             step = 1 # aktualizujeme jen po ka¾dých 'step' procentech...
@@ -282,7 +298,19 @@ class MenuChecker(object):
             errors = remove_duplicates(errors)
             pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikacích",
                                   report="\n".join(errors))
-    
+
+    def batch_check(self, reporter):
+        reporter.start(len(self._specnames))
+        for s in self._specnames:
+            reporter.info("Specifikace: " + s)
+            try:
+                errors = self._check_spec(s)
+            except Exception, e:
+                errors = [str(e)]
+            for e in errors:
+                reporter.error(e)
+        reporter.end()
+            
 def check_menus_defs():
     """Zkontroluje v¹echny specifikace uvedené v menu aplikace."""
     MenuChecker().interactive_check()
