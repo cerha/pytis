@@ -161,6 +161,11 @@ class MenuChecker(object):
         self._dbconn = config.dbconnection
         if self.__class__._specnames is None:
             self.__class__._specnames = get_menu_defs()
+        connection_data = config.dbconnection
+        data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
+        condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
+        self._application_roles = [row[0].value()
+                                   for row in data.select_map(identity, condition=condition)]
 
     def check_public(self, spec_name):
         errors = []
@@ -211,10 +216,15 @@ class MenuChecker(object):
                         if is_sequence(users):
                             users = [str(row[0].value()) for row in users]
                             users.sort()
-                        errors.append(("Právo update nebo insert pro políèko %(field)s náhledu %(view)s "
-                                       "je v rozporu s právem view èíselníku %(codebook)s. "
-                                       "Týká se to tìchto rolí: %(roles)s.") %
-                                      dict(codebook=codebook, view=spec_name, field=f.id(), roles=users))
+                        else:
+                            users = [users]
+                        for u in users:
+                            if u not in self._application_roles:
+                                errors.append(("Právo update nebo insert pro políèko %(field)s náhledu %(view)s "
+                                               "je v rozporu s právem view èíselníku %(codebook)s. "
+                                               "Týká se to tìchto rolí: %(roles)s.") %
+                                              dict(codebook=codebook, view=spec_name, field=f.id(), roles=users))
+                                break
         except Exception, e:
             errors.append(str(e))
         return errors
