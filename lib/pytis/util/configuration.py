@@ -500,11 +500,11 @@ class Configuration(object):
             import getpass
             return getpass.getuser()
 
-    class _Option_dbpass(StringOption):
+    class _Option_dbpass(StringOption, CommandlineOption):
         _DESCR = _("Database login password.")
         _DEFAULT = None
         
-    class _Option_dbname(StringOption):
+    class _Option_dbname(StringOption, CommandlineOption):
         _DESCR = _("Database name.")
         _DEFAULT = None
 
