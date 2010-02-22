@@ -1,3 +1,4 @@
+  * Added support for ARIA properties 'aria-required' and 'aria-described-by' in web forms.
 
   * Form statistics (database update needed!) and new configuration option
     `form_statistics'.
