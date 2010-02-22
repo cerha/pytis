@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -218,5 +218,81 @@ def pytis_config_writer():
         except:
             log(OPERATIONAL, "Couldn't save user configuration:", e)
     return writer
+
+
+def pytis_config_update(oldname, newname):
+    """Update saved user configurations after specification name changes.
+
+    Arguments:
+      oldname -- original name of the renamed specification as a string
+      newname -- new name of the renamed specification as a string
+
+    Saved user configurations refer to the specification name, so if the name changes, saved user
+    settings, such as form sorting, displayed columns, saved filters etc. are lost.  This script
+    goes through all saved user configurations and fixes them to match the new specification name
+    if necessary (if given user has saved config for given specification name).
+
+    This function is designed to be invoked from a shell script.  It may prompt for a database
+    password on STDIN and write results to STDOUT or STDERR.
+
+    Limitation: Only form state is currently supported, recent forms and startup forms are
+    untouched.
+    
+    Returns the number of updated records (which contained 'oldname').
+    
+    """
+    import sys, binascii, zlib, cPickle as pickle
+    bindings = [pytis.data.DBColumnBinding(column, '_pytis_config', column)
+                for column in ('uzivatel', 'config')]
+    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+    while True:
+        try:
+            data = factory.create(dbconnection_spec=config.dbconnection)
+        except pytis.data.DBLoginException, e:
+            if config.dbconnection.password() is None:
+                import getpass
+                login = config.dbuser
+                password = getpass.getpass("Enter database password for %s: " % login)
+                config.dbconnection.update_login_data(user=login, password=password)
+            else:
+                sys.stderr.write("Login failed.\n")
+                sys.exit(1)
+        else:
+            break
+    updated = 0
+    transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+    try:
+        data.select(transaction=transaction)
+        while True:
+            row = data.fetchone(transaction=transaction)
+            if row is None:
+                break
+            saved_config = row['config'].value()
+            if saved_config:
+                changed = False
+                unpacked = dict(pickle.loads(zlib.decompress(binascii.a2b_base64(saved_config))))
+                form_state = unpacked.get('form_state')
+                if form_state:
+                    for key, value in form_state.items():
+                        form, name = key.split('/', 1)
+                        if name == oldname:
+                            del form_state[key]
+                            form_state['/'.join((form, newname))] = value
+                            changed = True
+                if changed:
+                    updated += 1
+                    v = binascii.b2a_base64(zlib.compress(pickle.dumps(tuple(unpacked.items()))))
+                    row['config'] = pytis.data.Value(row['config'].type(), v)
+                    error, success = data.update(row[0], row, transaction=transaction)
+                    if not success:
+                        raise Exception(error)
+        data.close()
+    except:
+        transaction.rollback()
+        sys.stderr.write("Transaction ROLLED BACK.\n")
+        raise
+    else:
+        transaction.commit()
+    return updated
 
 
