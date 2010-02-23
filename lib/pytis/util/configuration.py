@@ -846,15 +846,21 @@ class Configuration(object):
 
     # Metody
 
-    def __init__(self, command_line=None):
-        """Inicializuj konfiguraci.
+    def __init__(self):
+        self._init_options()
+
+    def add_command_line_options(self, command_line):
+        """Nastav volby dle pøíkazové øádky.
 
         Argumenty:
 
-          command_line -- volby pøíkazové øádky jako sekvence strings; mù¾e být
-            té¾ 'None', pak je pou¾ito 'sys.argv'
+          command_line -- volby pøíkazové øádky jako sekvence strings; typicky
+            'sys.argv'
 
         """
+        self._init_options(command_line=command_line)
+
+    def _init_options(self, command_line=None):
         PREFIX = '_Option_'
         options = {}
         for k, v in self.__class__.__dict__.items():
@@ -863,12 +869,9 @@ class Configuration(object):
                 options[name] = v(self)
         self.__dict__['_options'] = options
         if command_line is None:
-            command_line = sys.argv
-        if command_line[0] == 'pytis':
-            command_line_options = \
-              self._parse_command_line_options(command_line)
-        else:
             command_line_options = {}
+        else:
+            command_line_options = self._parse_command_line_options(command_line)
         self.__dict__['command_line_options'] = command_line_options
         for o in ('config_file', 'user_config_file'):
             if options.has_key(o):

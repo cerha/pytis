@@ -29,8 +29,9 @@ def usage(optexception=None):
     sys.exit(1)
 
 def run():
+    import config
     try:
-        import pytis.util       # process command line options and set up configuration
+        config.add_command_line_options(sys.argv)
     except getopt.GetoptError, e:
         usage(e)
     reporter = pytis.extensions.CheckReporter()
