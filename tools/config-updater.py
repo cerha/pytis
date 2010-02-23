@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, getopt
+import sys, getopt, pytis.util, pytis.extensions, config 
 
 def usage(msg=None):
     sys.stderr.write("Update saved Pytis user configurations after a specification name change.\n"
@@ -31,10 +31,9 @@ def usage(msg=None):
     sys.exit(1)
 
 def run():
-    sys.argv[0] = 'pytis' # Hack to make pytis command line options processing happy.
+    # Process command line options and init configuration.
     try:
-        # Process command line options and init configuration.
-        import pytis.util, pytis.extensions, config 
+        config.add_command_line_options(sys.argv)
         oldname, newname = sys.argv[1:]
     except getopt.GetoptError, e:
         usage(e.msg)
