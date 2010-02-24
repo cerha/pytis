@@ -2359,11 +2359,12 @@ database dumps if you want to be sure about your schema.
         self.check_db(_quietly=True)
         self.regensql()
 
-    def update_view(self):
-        view = _GsqlConfig.update_view
+    def update_views(self):
+        obj = _GsqlConfig.update_views
         connection = self.get_connection()
         depends = []
-        todo = [_GsqlConfig.update_view]
+        todo = [_GsqlConfig.update_views]
+        views = []
         while todo != []:
             v = todo.pop()
             if v in depends:
@@ -2371,20 +2372,22 @@ database dumps if you want to be sure about your schema.
             else:
                 depends.append(v)
             data = connection.query(
-               ("select distinct c.relname "+
-                " from pg_class d, pg_depend a join pg_rewrite b on a.objid=b.oid "+
-                " join pg_class c on ev_class=c.oid "+
-                " join pg_views e on e.viewname=c.relname "+
-                " where refclassid = 'pg_class'::regclass and refobjid = d.oid "+
+               ("select distinct c.relname "
+                " from pg_class d, pg_depend a join pg_rewrite b on a.objid=b.oid "
+                " join pg_class c on ev_class=c.oid "
+                " join pg_views e on e.viewname=c.relname "
+                " where refclassid = 'pg_class'::regclass and refobjid = d.oid "
                 " and ev_class<>d.oid and d.relname='%s'") %
-               view)
+               v)
             for i in range(data.ntuples):
                 todo.append(data.getvalue(i, 0))
-        sys.stdout.write('drop view %s cascade;\n' % view)        
+        # sys.stdout.write('drop view %s cascade;\n' % obj)        
         def process(o):
-            if self[o].name() not in depends:
+            name = self[o].name()
+            if name not in depends:
                 return
-            if isinstance(self[o], _GsqlView):
+            if isinstance(self[o], (_GsqlView, _GsqlViewNG)):
+                sys.stdout.write("DROP VIEW IF EXISTS %s CASCADE;\n\n" % name)
                 sys.stdout.write(self[o].reoutput(self._table_keys))
             else:
                 sys.stdout.write(self[o].reoutput())
@@ -2494,7 +2497,7 @@ class _GsqlConfig:
     RGNDB = _gsql_defs.regensql
     CHKDB = _gsql_defs.check_db
     FIXDB = _gsql_defs.fix_db
-    UPDVW = _gsql_defs.update_view
+    UPDVW = _gsql_defs.update_views
 
     request = RGNDB
     warnings = True
@@ -2510,7 +2513,7 @@ _GSQL_OPTIONS = (
     ('create-all       ', 'create all database objects with data'),
     ('recreate         ', 'recreate all non-data database objects'),
     ('check-db=DATABASE', 'check DATABASE contents against definitions'),
-    ('update-view=VIEW', 'update specific view'),
+    ('update-views=object', 'update views dependent on specified object (table or view)'),
     ('fix-db=DATABASE  ', 'update DATABASE contents according to definitions'),
     ('no-warn          ', 'suppress warnings when checking/fixing'),
     ('host=HOST        ', 'connect to DATABASE at HOST'),
@@ -2567,9 +2570,9 @@ def _go(argv=None):
         elif o == '--check-db':
             _GsqlConfig.request = _GsqlConfig.CHKDB
             _GsqlConfig.dbname = v
-        elif o == '--update-view':
+        elif o == '--update-views':
             _GsqlConfig.request = _GsqlConfig.UPDVW
-            _GsqlConfig.update_view = v
+            _GsqlConfig.update_views = v
         elif o == '--fix-db':
             _GsqlConfig.request = _GsqlConfig.FIXDB
             _GsqlConfig.dbname = v
