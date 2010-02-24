@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -799,7 +799,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         if alternate:
             form, name = (DescriptiveDualForm, self._name)
         else:
-            form, name = (ShowForm, self._name)
+            form, name = (BrowsableShowForm, self._name)
         run_form(form, name, select_row=self._main_form.current_key())
         
     def title(self):
