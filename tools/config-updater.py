@@ -20,11 +20,13 @@
 import sys, getopt, pytis.util, pytis.extensions, config 
 
 def usage(msg=None):
-    sys.stderr.write("Update saved Pytis user configurations after a specification name change.\n"
-                     "Usage: config-update [ options ] oldname newname\n"
+    sys.stderr.write("Update saved Pytis user configurations after application changes.\n"
+                     "Usage: config-update [ options ] old new\n"
                      "  options: Pytis command line options (defined by pytis configuration)\n"
-                     "  oldname: original name of the renamed specification\n"
-                     "  newname: new name of the renamed specification\n")
+                     "  old: original form specification\n"
+                     "  new: new form specification\n"
+                     "Form specification is a string <form-type>/<specification-name>, where\n"
+                     "form type may be a `*' to match any form type.\n")
     if msg:
         sys.stderr.write(msg)
         sys.stderr.write('\n')
@@ -34,7 +36,7 @@ def run():
     # Process command line options and init configuration.
     try:
         config.add_command_line_options(sys.argv)
-        oldname, newname = sys.argv[1:]
+        old, new = sys.argv[1:]
     except getopt.GetoptError, e:
         usage(e.msg)
     except ValueError, e:
@@ -42,7 +44,7 @@ def run():
     # Avoid pytis logging during the update.
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     # Do the actual update.
-    updated = pytis.extensions.pytis_config_update(oldname, newname)
+    updated = pytis.extensions.pytis_config_update(old, new)
     print "Updated %d records." % updated
 
 if __name__ == '__main__':

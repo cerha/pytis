@@ -220,17 +220,25 @@ def pytis_config_writer():
     return writer
 
 
-def pytis_config_update(oldname, newname):
-    """Update saved user configurations after specification name changes.
+def pytis_config_update(old, new):
+    """Update saved user configurations after application changes.
 
     Arguments:
-      oldname -- original name of the renamed specification as a string
-      newname -- new name of the renamed specification as a string
+      old -- original form specification string 
+      new -- new form specification string
+      
+    Saved user configurations refer to the form type and specification name, so
+    if one of those changes, saved user settings, such as form sorting,
+    displayed columns, saved filters etc. are lost.  This script goes through
+    all saved user configurations and fixes them to match the new specification
+    if necessary (if given user has saved config for given form type and
+    specification name).
 
-    Saved user configurations refer to the specification name, so if the name changes, saved user
-    settings, such as form sorting, displayed columns, saved filters etc. are lost.  This script
-    goes through all saved user configurations and fixes them to match the new specification name
-    if necessary (if given user has saved config for given specification name).
+    Form specification is a string <form-type>/<specification-name>, where form
+    type is a string name of the form class, such as 'BrowseForm'.  A `*' may
+    be used in front of the slash to match any form type.  Only specification
+    name will be updated in this case leaving the form type unchanged ('new'
+    contains only new specification name whithout form type in this case).
 
     This function is designed to be invoked from a shell script.  It may prompt for a database
     password on STDIN and write results to STDOUT or STDERR.
@@ -238,7 +246,7 @@ def pytis_config_update(oldname, newname):
     Limitation: Only form state is currently supported, recent forms and startup forms are
     untouched.
     
-    Returns the number of updated records (which contained 'oldname').
+    Returns the number of updated records (which contained 'old').
     
     """
     import sys, binascii, zlib, cPickle as pickle
@@ -274,10 +282,16 @@ def pytis_config_update(oldname, newname):
                 form_state = unpacked.get('form_state')
                 if form_state:
                     for key, value in form_state.items():
-                        form, name = key.split('/', 1)
-                        if name == oldname:
+                        new_key = None
+                        if old.startswith('*/'):
+                            form, name = key.split('/', 1)
+                            if name == old[2:]:
+                                new_key = '/'.join((form, new))
+                        elif old == key:
+                            new_key = new
+                        if new_key:
                             del form_state[key]
-                            form_state['/'.join((form, newname))] = value
+                            form_state[new_key] = value
                             changed = True
                 if changed:
                     updated += 1
