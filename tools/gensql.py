@@ -2207,7 +2207,8 @@ class _GsqlDefs(UserDict.UserDict):
 
     def _process_resolved(self, function):
         for o in self._unresolved:
-            _signal_error('Unresolved object: %s\n' % (o,))
+            missing = [d for d in self[o].depends() if d not in self._resolved]
+            _signal_error('Unresolved object: %s %s\n' % (o, missing,))
         resolved = {}
         for o in self._resolved:
             function(o)
