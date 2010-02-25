@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,9 @@
  *   - updating enumerations based on pytis runtime codebook filters.
  */
 
-var PytisFormHandler = Class.create({
+var pytis = {};
 
+pytis.FormHandler = Class.create({
       initialize: function(form_id, fields, filters) {
 	 var form = $(form_id);
 	 if (form != null) {
@@ -76,8 +77,8 @@ var PytisFormHandler = Class.create({
 	    }
 	 }
       },
-
-      _set_editability: function(form, field, value) {
+      
+      _set_editability: function(field, value) {
 	 // Disable/enable field depending on type.
 	 if (field.type == undefined && field.length)
 	    // We get an array of input elements for a radio button group.
@@ -86,8 +87,8 @@ var PytisFormHandler = Class.create({
 	 else
 	    field.disabled = !value;
       },
-
-      _set_value: function(form, field, value) {
+      
+      _set_value: function(field, value) {
 	 // Set the field value depending on type.
 	 if (field.type == undefined && field.length) {
 	    // We get an array of input elements for a radio button group.
@@ -100,8 +101,8 @@ var PytisFormHandler = Class.create({
 	 else
 	    field.value = value;
       },
-
-      _set_enumeration: function(form, field, value) {
+      
+      _set_enumeration: function(field, value) {
 	 // Currently only supported for select boxes.
 	 if (field.type != 'select-one') return;
 	 var options = field.options;
@@ -124,16 +125,16 @@ var PytisFormHandler = Class.create({
 
       update: function(form, data) {
 	 // Update the form state in reaction to previously sent AJAX request.
-	 for (id in data) {
+	 for (var id in data) {
 	    var cdata = data[id];
-	    for (key in cdata) {
+	    for (var key in cdata) {
 	       var value = cdata[key];
 	       var field = form[id];
 	       if (field) {
-		  if      (key == 'editable')    this._set_editability(form, field, value);
-		  else if (key == 'value')       this._set_value(form, field, value);
+		  if      (key == 'editable')    this._set_editability(field, value);
+		  else if (key == 'value')       this._set_value(field, value);
 		  else if (key == 'filter')      form._handler._filters[id] = value;
-		  else if (key == 'enumeration') this._set_enumeration(form, field, value);
+		  else if (key == 'enumeration') this._set_enumeration(field, value);
 	       }
 	    }
 	 }

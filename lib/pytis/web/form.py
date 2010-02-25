@@ -521,7 +521,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             g = context.generator()
             context.resource('prototype.js')
             context.resource('pytis.js')
-            result += g.script(g.js_call("new PytisFormHandler", self._id, active_fields, filters))
+            result += g.script(g.js_call("new pytis.FormHandler", self._id, active_fields, filters))
         return result
 
     @classmethod
