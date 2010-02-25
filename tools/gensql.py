@@ -3,7 +3,7 @@
 #
 # Nástroj pro zpracování specifikací databází
 # 
-# Copyright (C) 2002, 2003, 2005, 2009 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2009, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,9 +63,15 @@ from pytis.util import *
 import pytis.data
 
 
+exit_code = 0
 _EXIT_USAGE = 1
 _EXIT_NOT_IMPLEMENTED = 2
+_EXIT_ERROR = 3
 
+def _signal_error(message):
+    sys.stderr.write(message)
+    global exit_code
+    exit_code = _EXIT_ERROR
 
 class GensqlError(Exception):
     """Výjimka signalizovaná tímto programem pøi chybách specifikace."""
@@ -2201,7 +2207,7 @@ class _GsqlDefs(UserDict.UserDict):
 
     def _process_resolved(self, function):
         for o in self._unresolved:
-            sys.stderr.write('Unresolved object: %s\n' % (o,))
+            _signal_error('Unresolved object: %s\n' % (o,))
         resolved = {}
         for o in self._resolved:
             function(o)
@@ -2235,8 +2241,8 @@ class _GsqlDefs(UserDict.UserDict):
                 else:
                     self._unresolved.append(vname)
         if self.has_key(name):
-            sys.stderr.write("Duplicate objects for name `%s': %s %s\n" %
-                             (name, spec, self[name],))
+            _signal_error("Duplicate objects for name `%s': %s %s\n" %
+                          (name, spec, self[name],))
         self[name] = spec
         if self._resolvedp(spec):
             self._add_resolved(name)
@@ -2588,3 +2594,4 @@ def _go(argv=None):
 
 if __name__ == '__main__':
     _go()
+    sys.exit(exit_code)
