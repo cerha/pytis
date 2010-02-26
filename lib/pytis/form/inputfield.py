@@ -1270,6 +1270,10 @@ class GenericCodebookField(InputField):
 
     def _reload_enumeration(self):
         pass
+
+    def reload_enumeration(self):
+        """Reload enumeration data."""
+        self._reload_enumeration()
         
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' argument."""
