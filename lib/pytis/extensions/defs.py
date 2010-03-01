@@ -273,6 +273,9 @@ class MenuChecker(object):
         return errors
     
     def _check_spec(self, name):
+        if name.find('::') != -1:
+            main, side = name.split('::')
+            return self.check_bindings(main, side) + self._check_spec(main) + self._check_spec(side)
         return (self.check_public(name) +
                 self.check_data(name) +
                 self.check_codebook_rights(name))
